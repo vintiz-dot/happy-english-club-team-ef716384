@@ -49,97 +49,85 @@ Deno.serve(async (req) => {
     // Create admin client to bypass RLS
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
+    // ----- Wave 1: identity lookups + main enrollments, all in parallel -----
+    const [teacherRes, userStudentRes, familyRes, enrollmentsRes] = await Promise.all([
+      adminClient.from("teachers")
+        .select("id").eq("user_id", user.id).eq("is_active", true).maybeSingle(),
+      adminClient.from("students")
+        .select("id, family_id").eq("linked_user_id", user.id).maybeSingle(),
+      adminClient.from("families")
+        .select("id").eq("primary_user_id", user.id).maybeSingle(),
+      adminClient.from("enrollments")
+        .select(`id, student_id, students ( id, full_name, avatar_url )`)
+        .eq("class_id", classId).is("end_date", null),
+    ]);
+
+    const teacher = teacherRes.data;
+    const userStudent = userStudentRes.data;
+    const family = familyRes.data;
+    const { data: enrollments, error: enrollError } = enrollmentsRes;
+
+    if (enrollError) {
+      console.error("Error fetching enrollments:", enrollError);
+      return new Response(JSON.stringify({ error: "Failed to fetch enrollments" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const studentIds = enrollments?.map((e) => e.student_id) || [];
+
+    // ----- Wave 2: secondary auth checks + points, all in parallel -----
+    const [classRes, teacherSessionRes, studentEnrollRes, familyEnrollRes, pointsRes] =
+      await Promise.all([
+        teacher
+          ? adminClient.from("classes").select("id")
+              .eq("id", classId).eq("default_teacher_id", teacher.id).maybeSingle()
+          : Promise.resolve({ data: null as any }),
+        teacher
+          ? adminClient.from("sessions").select("id")
+              .eq("class_id", classId).eq("teacher_id", teacher.id).limit(1)
+          : Promise.resolve({ data: null as any }),
+        userStudent
+          ? adminClient.from("enrollments").select("id, end_date")
+              .eq("student_id", userStudent.id).eq("class_id", classId).limit(1)
+          : Promise.resolve({ data: null as any }),
+        family
+          ? adminClient.from("enrollments")
+              .select("id, student_id, end_date, students!inner(family_id)")
+              .eq("class_id", classId).eq("students.family_id", family.id).limit(1)
+          : Promise.resolve({ data: null as any }),
+        studentIds.length
+          ? adminClient.from("student_points")
+              .select("student_id, participation_points, homework_points, total_points")
+              .eq("class_id", classId).eq("month", month).in("student_id", studentIds)
+          : Promise.resolve({ data: [] as any[], error: null as any }),
+      ]);
+
+    // ----- Evaluate authorization (same precedence as before) -----
     let isAuthorized = false;
     let currentStudentId: string | null = null;
 
-    // Check if user is a teacher for this class
-    const { data: teacher } = await adminClient
-      .from("teachers")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("is_active", true)
-      .single();
-
     if (teacher) {
-      // Check if teacher is assigned to this class
-      const { data: classData } = await adminClient
-        .from("classes")
-        .select("id")
-        .eq("id", classId)
-        .eq("default_teacher_id", teacher.id)
-        .single();
-
-      if (classData) {
+      if ((classRes as any).data) isAuthorized = true;
+      if (!isAuthorized && (teacherSessionRes as any).data && (teacherSessionRes as any).data.length > 0) {
         isAuthorized = true;
       }
+    }
 
-      // Also check if teacher has any sessions for this class
-      if (!isAuthorized) {
-        const { data: teacherSession } = await adminClient
-          .from("sessions")
-          .select("id")
-          .eq("class_id", classId)
-          .eq("teacher_id", teacher.id)
-          .limit(1);
-
-        if (teacherSession && teacherSession.length > 0) {
-          isAuthorized = true;
-        }
+    if (!isAuthorized && userStudent) {
+      currentStudentId = userStudent.id;
+      const enr = (studentEnrollRes as any).data?.[0];
+      if (enr && (!enr.end_date || new Date(enr.end_date) >= new Date())) {
+        isAuthorized = true;
       }
     }
 
-    // Check if user is a student enrolled in this class
-    if (!isAuthorized) {
-      const { data: userStudent } = await adminClient
-        .from("students")
-        .select("id, family_id")
-        .eq("linked_user_id", user.id)
-        .single();
-
-      if (userStudent) {
-        currentStudentId = userStudent.id;
-        // Check if this student has ANY enrollment in the class (active or with future end_date)
-        const { data: enrollment } = await adminClient
-          .from("enrollments")
-          .select("id, end_date")
-          .eq("student_id", userStudent.id)
-          .eq("class_id", classId)
-          .limit(1);
-
-        if (enrollment && enrollment.length > 0) {
-          // Allow if no end_date or end_date is in the future
-          const enr = enrollment[0];
-          if (!enr.end_date || new Date(enr.end_date) >= new Date()) {
-            isAuthorized = true;
-          }
-        }
-      }
-    }
-
-    // Also check if user is a family primary user
-    if (!isAuthorized) {
-      const { data: family } = await adminClient
-        .from("families")
-        .select("id")
-        .eq("primary_user_id", user.id)
-        .single();
-
-      if (family) {
-        // Check if any family member is enrolled in this class
-        const { data: familyEnrollment } = await adminClient
-          .from("enrollments")
-          .select("id, student_id, end_date, students!inner(family_id)")
-          .eq("class_id", classId)
-          .eq("students.family_id", family.id)
-          .limit(1);
-
-        if (familyEnrollment && familyEnrollment.length > 0) {
-          const enr = familyEnrollment[0];
-          if (!enr.end_date || new Date(enr.end_date) >= new Date()) {
-            isAuthorized = true;
-            currentStudentId = enr.student_id;
-          }
-        }
+    if (!isAuthorized && family) {
+      const enr = (familyEnrollRes as any).data?.[0];
+      if (enr && (!enr.end_date || new Date(enr.end_date) >= new Date())) {
+        isAuthorized = true;
+        currentStudentId = enr.student_id;
       }
     }
 
@@ -150,39 +138,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch all active enrollments for this class
-    const { data: enrollments, error: enrollError } = await adminClient
-      .from("enrollments")
-      .select(`
-        id,
-        student_id,
-        students (
-          id,
-          full_name,
-          avatar_url
-        )
-      `)
-      .eq("class_id", classId)
-      .is("end_date", null);
-
-    if (enrollError) {
-      console.error("Error fetching enrollments:", enrollError);
-      return new Response(JSON.stringify({ error: "Failed to fetch enrollments" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Fetch points for all students in this class for the given month
-    const studentIds = enrollments?.map((e) => e.student_id) || [];
-
-    const { data: points, error: pointsError } = await adminClient
-      .from("student_points")
-      .select("student_id, participation_points, homework_points, total_points")
-      .eq("class_id", classId)
-      .eq("month", month)
-      .in("student_id", studentIds);
-
+    const { data: points, error: pointsError } = pointsRes as any;
     if (pointsError) {
       console.error("Error fetching points:", pointsError);
     }
