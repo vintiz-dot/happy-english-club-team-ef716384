@@ -183,13 +183,8 @@ Deno.serve(async (req) => {
     const rateAdjustmentSavings = new Map<string, number>(); // class_id -> savings
     const sessionDetails: Array<{ date: string; rate: number; status: AttendanceStatus | "Scheduled"; class_id: string; class_name: string }> = [];
 
-    // Fetch class names once for efficiency
-    const classIds = [...new Set((sessions ?? []).map(s => s.class_id))];
-    const { data: classesData } = await supabase
-      .from('classes')
-      .select('id, name')
-      .in('id', classIds);
-    const classNameMap = new Map(classesData?.map(c => [c.id, c.name]) || []);
+    // Class names already fetched in Wave 3
+    const classNameMap = new Map((classesNamesRes.data as any[])?.map((c: any) => [c.id, c.name]) || []);
 
     for (const s of sessions ?? []) {
       // Check if student was enrolled on this specific session date
