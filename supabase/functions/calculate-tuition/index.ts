@@ -74,50 +74,104 @@ Deno.serve(async (req) => {
 
     const { startDate, nextMonthStart } = monthRange(month);
 
-    // Student + family (left join to support students without families)
-    const { data: student, error: studentError } = await supabase
-      .from("students")
-      .select("id, family_id, families(id, sibling_percent_override)")
-      .eq("id", studentId)
-      .single();
+    // ----- Wave 1: independent queries (only depend on studentId/month) -----
+    const [
+      studentRes,
+      enrollmentsRes,
+      discountAssignmentsRes,
+      referralBonusesRes,
+      priorInvoicesRes,
+      currentInvoiceRes,
+    ] = await Promise.all([
+      supabase
+        .from("students")
+        .select("id, family_id, families(id, sibling_percent_override)")
+        .eq("id", studentId)
+        .single(),
+      supabase
+        .from("enrollments")
+        .select("class_id, discount_type, discount_value, discount_cadence, start_date, end_date, rate_override_vnd, allowed_days")
+        .eq("student_id", studentId),
+      supabase
+        .from("discount_assignments")
+        .select("discount_definitions(*)")
+        .eq("student_id", studentId)
+        .lte("effective_from", nextMonthStart)
+        .or(`effective_to.is.null,effective_to.gte.${startDate}`),
+      supabase
+        .from("referral_bonuses")
+        .select("*")
+        .eq("student_id", studentId)
+        .lte("effective_from", nextMonthStart)
+        .or(`effective_to.is.null,effective_to.gte.${startDate}`),
+      supabase
+        .from("invoices")
+        .select("total_amount, month, recorded_payment, class_breakdown")
+        .lt("month", month)
+        .eq("student_id", studentId)
+        .order("month", { ascending: true }),
+      supabase
+        .from("invoices")
+        .select("recorded_payment")
+        .eq("student_id", studentId)
+        .eq("month", month)
+        .maybeSingle(),
+    ]);
+
+    const { data: student, error: studentError } = studentRes;
     if (studentError) throw studentError;
-    
+    const { data: enrollments, error: enrollErr } = enrollmentsRes;
+    if (enrollErr) throw enrollErr;
+    const discountAssignments = discountAssignmentsRes.data;
+    const referralBonuses = referralBonusesRes.data;
+
     // Extract family data if it's an array, handle null families
     const family = student?.families ? (Array.isArray(student.families) ? student.families[0] : student.families) : null;
-
-    // Active enrollments (include rate_override_vnd and allowed_days)
-    const { data: enrollments, error: enrollErr } = await supabase
-      .from("enrollments")
-      .select("class_id, discount_type, discount_value, discount_cadence, start_date, end_date, rate_override_vnd, allowed_days")
-      .eq("student_id", studentId);
-    if (enrollErr) throw enrollErr;
 
     const activeClassIds = (enrollments ?? [])
       .filter((e) => !e.end_date || e.end_date >= startDate) // still active in this month
       .map((e) => e.class_id);
 
-    // Sessions for view (Scheduled + Held) within month
-    const { data: sessions, error: sessErr } = await supabase
-      .from("sessions")
-      .select("id, date, status, class_id, classes(session_rate_vnd)")
-      .in("class_id", activeClassIds.length ? activeClassIds : ["00000000-0000-0000-0000-000000000000"]) // guard empty IN
-      .gte("date", startDate)
-      .lt("date", nextMonthStart)
-      .in("status", ["Scheduled", "Held"]);
+    // ----- Wave 2: sessions + sibling state (depend on Wave 1) -----
+    const [sessionsRes, siblingStateRes] = await Promise.all([
+      supabase
+        .from("sessions")
+        .select("id, date, status, class_id, classes(session_rate_vnd)")
+        .in("class_id", activeClassIds.length ? activeClassIds : ["00000000-0000-0000-0000-000000000000"])
+        .gte("date", startDate)
+        .lt("date", nextMonthStart)
+        .in("status", ["Scheduled", "Held"]),
+      family?.id
+        ? supabase
+            .from("sibling_discount_state")
+            .select("status, winner_student_id, winner_class_id, sibling_percent, reason")
+            .eq("family_id", family.id)
+            .eq("month", month)
+            .maybeSingle()
+        : Promise.resolve({ data: null as any }),
+    ]);
+
+    const { data: sessions, error: sessErr } = sessionsRes;
     if (sessErr) throw sessErr;
 
-    // Batch attendance for these sessions for this student
+    // ----- Wave 3: attendance + class names (depend on Wave 2) -----
     const sessionIds = (sessions ?? []).map((s) => s.id);
-    let attendanceMap = new Map<string, AttendanceStatus>();
-    if (sessionIds.length) {
-      const { data: atts, error: attErr } = await supabase
-        .from("attendance")
-        .select("session_id, status")
-        .in("session_id", sessionIds)
-        .eq("student_id", studentId);
-      if (attErr) throw attErr;
-      for (const a of atts ?? []) attendanceMap.set(a.session_id, a.status);
-    }
+    const classIdsForNames = [...new Set((sessions ?? []).map((s) => s.class_id))];
+    const [attendanceRes, classesNamesRes] = await Promise.all([
+      sessionIds.length
+        ? supabase
+            .from("attendance")
+            .select("session_id, status")
+            .in("session_id", sessionIds)
+            .eq("student_id", studentId)
+        : Promise.resolve({ data: [] as any[], error: null as any }),
+      classIdsForNames.length
+        ? supabase.from("classes").select("id, name").in("id", classIdsForNames)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+    if ((attendanceRes as any).error) throw (attendanceRes as any).error;
+    const attendanceMap = new Map<string, AttendanceStatus>();
+    for (const a of (attendanceRes.data as any[]) ?? []) attendanceMap.set(a.session_id, a.status);
 
     // Calculate expected tuition using CLASS DEFAULT rates (for review comparison)
     let expectedClassTuition = 0;
@@ -129,13 +183,8 @@ Deno.serve(async (req) => {
     const rateAdjustmentSavings = new Map<string, number>(); // class_id -> savings
     const sessionDetails: Array<{ date: string; rate: number; status: AttendanceStatus | "Scheduled"; class_id: string; class_name: string }> = [];
 
-    // Fetch class names once for efficiency
-    const classIds = [...new Set((sessions ?? []).map(s => s.class_id))];
-    const { data: classesData } = await supabase
-      .from('classes')
-      .select('id, name')
-      .in('id', classIds);
-    const classNameMap = new Map(classesData?.map(c => [c.id, c.name]) || []);
+    // Class names already fetched in Wave 3
+    const classNameMap = new Map((classesNamesRes.data as any[])?.map((c: any) => [c.id, c.name]) || []);
 
     for (const s of sessions ?? []) {
       // Check if student was enrolled on this specific session date
@@ -253,13 +302,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Special per-student discounts
-    const { data: discountAssignments } = await supabase
-      .from("discount_assignments")
-      .select("discount_definitions(*)")
-      .eq("student_id", studentId)
-      .lte("effective_from", nextMonthStart)
-      .or(`effective_to.is.null,effective_to.gte.${startDate}`);
+    // Special per-student discounts (already fetched in Wave 1)
     for (const a of discountAssignments ?? []) {
       const def = (a as any).discount_definitions;
       if (!def || !def.is_active) continue;
@@ -270,13 +313,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Referral bonuses
-    const { data: referralBonuses } = await supabase
-      .from("referral_bonuses")
-      .select("*")
-      .eq("student_id", studentId)
-      .lte("effective_from", nextMonthStart)
-      .or(`effective_to.is.null,effective_to.gte.${startDate}`);
+    // Referral bonuses (already fetched in Wave 1)
     for (const b of referralBonuses ?? []) {
       const amt = b.type === "percent" ? Math.round(baseAmount * (b.value / 100)) : Math.round(b.value);
       if (amt > 0) {
@@ -285,15 +322,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Sibling discount if assigned
+    // Sibling discount if assigned (already fetched in Wave 2)
     let siblingState: any = null;
     if (family?.id) {
-      const { data: sd } = await supabase
-        .from("sibling_discount_state")
-        .select("status, winner_student_id, winner_class_id, sibling_percent, reason")
-        .eq("family_id", family.id)
-        .eq("month", month)
-        .maybeSingle();
+      const sd = (siblingStateRes as any).data;
       if (sd) {
         siblingState = {
           status: sd.status,
@@ -324,51 +356,14 @@ Deno.serve(async (req) => {
     const totalAmount = Math.max(0, baseAmount - totalDiscount);
 
     // ---------- Payments and carryovers ----------
-    // Prior charges: sum invoices before this month
-    let priorCharges = 0;
-    let priorInvoicesDetailed: any[] = [];
-    try {
-      const { data: priorInvoices } = await supabase
-        .from("invoices")
-        .select("total_amount, month, recorded_payment, class_breakdown")
-        .lt("month", month)
-        .eq("student_id", studentId)
-        .order("month", { ascending: true });
-      priorInvoicesDetailed = priorInvoices ?? [];
-      priorCharges = priorInvoicesDetailed.reduce((s, r) => s + Number(r.total_amount ?? 0), 0);
-    } catch {
-      priorCharges = 0;
-    }
-
-    // Payments: read from 'invoices.recorded_payment' using month
-    let priorPayments = 0;
-    let monthPayments = 0;
-
-    try {
-      // Sum recorded_payment from all prior invoices
-      priorPayments = priorInvoicesDetailed.reduce(
-        (s, inv) => s + Number(inv.recorded_payment ?? 0), 
-        0
-      );
-    } catch (e) {
-      console.error("Error fetching prior payments:", e);
-    }
-
-    try {
-      // Get recorded_payment from current month invoice if it exists
-      const { data: currentInvoice } = await supabase
-        .from("invoices")
-        .select("recorded_payment")
-        .eq("student_id", studentId)
-        .eq("month", month)
-        .single();
-      
-      monthPayments = Number(currentInvoice?.recorded_payment ?? 0);
-    } catch (e) {
-      // If no invoice exists yet, monthPayments stays 0
-      console.error("Error fetching month payments:", e);
-    }
-
+    // Prior charges and current month invoice already fetched in Wave 1
+    const priorInvoicesDetailed: any[] = priorInvoicesRes.data ?? [];
+    const priorCharges = priorInvoicesDetailed.reduce((s, r) => s + Number(r.total_amount ?? 0), 0);
+    const priorPayments = priorInvoicesDetailed.reduce(
+      (s, inv) => s + Number(inv.recorded_payment ?? 0),
+      0
+    );
+    const monthPayments = Number(currentInvoiceRes.data?.recorded_payment ?? 0);
     // Build prior balance breakdown for detailed view
     const priorBalanceBreakdown: {
       months: Array<{
@@ -502,9 +497,7 @@ Deno.serve(async (req) => {
       const classData = classSession?.classes ? 
         (Array.isArray(classSession.classes) ? classSession.classes[0] : classSession.classes) : null;
       
-      const className = classData ? 
-        (await supabase.from('classes').select('name').eq('id', classId).single()).data?.name || 'Unknown' : 
-        'Unknown';
+      const className = (classNameMap.get(classId) as string | undefined) || 'Unknown';
       const sessionRate = Number(classData?.session_rate_vnd ?? 0);
       const sessionsCount = sessionDetails.filter(sd => 
         sd.class_id === classId && (sd.status === 'Present' || sd.status === 'Absent')
