@@ -497,9 +497,7 @@ Deno.serve(async (req) => {
       const classData = classSession?.classes ? 
         (Array.isArray(classSession.classes) ? classSession.classes[0] : classSession.classes) : null;
       
-      const className = classData ? 
-        (await supabase.from('classes').select('name').eq('id', classId).single()).data?.name || 'Unknown' : 
-        'Unknown';
+      const className = (classNameMap.get(classId) as string | undefined) || 'Unknown';
       const sessionRate = Number(classData?.session_rate_vnd ?? 0);
       const sessionsCount = sessionDetails.filter(sd => 
         sd.class_id === classId && (sd.status === 'Present' || sd.status === 'Absent')
