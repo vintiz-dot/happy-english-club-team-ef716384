@@ -302,13 +302,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Special per-student discounts
-    const { data: discountAssignments } = await supabase
-      .from("discount_assignments")
-      .select("discount_definitions(*)")
-      .eq("student_id", studentId)
-      .lte("effective_from", nextMonthStart)
-      .or(`effective_to.is.null,effective_to.gte.${startDate}`);
+    // Special per-student discounts (already fetched in Wave 1)
     for (const a of discountAssignments ?? []) {
       const def = (a as any).discount_definitions;
       if (!def || !def.is_active) continue;
@@ -319,13 +313,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Referral bonuses
-    const { data: referralBonuses } = await supabase
-      .from("referral_bonuses")
-      .select("*")
-      .eq("student_id", studentId)
-      .lte("effective_from", nextMonthStart)
-      .or(`effective_to.is.null,effective_to.gte.${startDate}`);
+    // Referral bonuses (already fetched in Wave 1)
     for (const b of referralBonuses ?? []) {
       const amt = b.type === "percent" ? Math.round(baseAmount * (b.value / 100)) : Math.round(b.value);
       if (amt > 0) {
