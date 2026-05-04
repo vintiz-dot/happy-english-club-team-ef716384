@@ -322,15 +322,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Sibling discount if assigned
+    // Sibling discount if assigned (already fetched in Wave 2)
     let siblingState: any = null;
     if (family?.id) {
-      const { data: sd } = await supabase
-        .from("sibling_discount_state")
-        .select("status, winner_student_id, winner_class_id, sibling_percent, reason")
-        .eq("family_id", family.id)
-        .eq("month", month)
-        .maybeSingle();
+      const sd = (siblingStateRes as any).data;
       if (sd) {
         siblingState = {
           status: sd.status,
@@ -361,51 +356,14 @@ Deno.serve(async (req) => {
     const totalAmount = Math.max(0, baseAmount - totalDiscount);
 
     // ---------- Payments and carryovers ----------
-    // Prior charges: sum invoices before this month
-    let priorCharges = 0;
-    let priorInvoicesDetailed: any[] = [];
-    try {
-      const { data: priorInvoices } = await supabase
-        .from("invoices")
-        .select("total_amount, month, recorded_payment, class_breakdown")
-        .lt("month", month)
-        .eq("student_id", studentId)
-        .order("month", { ascending: true });
-      priorInvoicesDetailed = priorInvoices ?? [];
-      priorCharges = priorInvoicesDetailed.reduce((s, r) => s + Number(r.total_amount ?? 0), 0);
-    } catch {
-      priorCharges = 0;
-    }
-
-    // Payments: read from 'invoices.recorded_payment' using month
-    let priorPayments = 0;
-    let monthPayments = 0;
-
-    try {
-      // Sum recorded_payment from all prior invoices
-      priorPayments = priorInvoicesDetailed.reduce(
-        (s, inv) => s + Number(inv.recorded_payment ?? 0), 
-        0
-      );
-    } catch (e) {
-      console.error("Error fetching prior payments:", e);
-    }
-
-    try {
-      // Get recorded_payment from current month invoice if it exists
-      const { data: currentInvoice } = await supabase
-        .from("invoices")
-        .select("recorded_payment")
-        .eq("student_id", studentId)
-        .eq("month", month)
-        .single();
-      
-      monthPayments = Number(currentInvoice?.recorded_payment ?? 0);
-    } catch (e) {
-      // If no invoice exists yet, monthPayments stays 0
-      console.error("Error fetching month payments:", e);
-    }
-
+    // Prior charges and current month invoice already fetched in Wave 1
+    const priorInvoicesDetailed: any[] = priorInvoicesRes.data ?? [];
+    const priorCharges = priorInvoicesDetailed.reduce((s, r) => s + Number(r.total_amount ?? 0), 0);
+    const priorPayments = priorInvoicesDetailed.reduce(
+      (s, inv) => s + Number(inv.recorded_payment ?? 0),
+      0
+    );
+    const monthPayments = Number(currentInvoiceRes.data?.recorded_payment ?? 0);
     // Build prior balance breakdown for detailed view
     const priorBalanceBreakdown: {
       months: Array<{
