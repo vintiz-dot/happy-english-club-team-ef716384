@@ -2015,6 +2015,96 @@ export type Database = {
           },
         ]
       }
+      resource_class_access: {
+        Row: {
+          class_id: string
+          id: string
+          resource_id: string
+        }
+        Insert: {
+          class_id: string
+          id?: string
+          resource_id: string
+        }
+        Update: {
+          class_id?: string
+          id?: string
+          resource_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_class_access_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_class_access_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resources: {
+        Row: {
+          blooms_levels: string[] | null
+          created_at: string
+          description: string | null
+          external_url: string | null
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          id: string
+          pyp_themes: string[] | null
+          storage_key: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          uploaded_by: string
+          visibility: string
+          vocab_tags: string[] | null
+        }
+        Insert: {
+          blooms_levels?: string[] | null
+          created_at?: string
+          description?: string | null
+          external_url?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          pyp_themes?: string[] | null
+          storage_key?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          uploaded_by: string
+          visibility?: string
+          vocab_tags?: string[] | null
+        }
+        Update: {
+          blooms_levels?: string[] | null
+          created_at?: string
+          description?: string | null
+          external_url?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          pyp_themes?: string[] | null
+          storage_key?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          uploaded_by?: string
+          visibility?: string
+          vocab_tags?: string[] | null
+        }
+        Relationships: []
+      }
       session_participants: {
         Row: {
           created_at: string
