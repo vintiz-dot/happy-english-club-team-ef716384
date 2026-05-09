@@ -1015,6 +1015,7 @@ export type Database = {
       homework_submissions: {
         Row: {
           assignment_instructions: string | null
+          celebration_seen_at: string | null
           created_at: string
           file_name: string | null
           file_size: number | null
@@ -1032,6 +1033,7 @@ export type Database = {
         }
         Insert: {
           assignment_instructions?: string | null
+          celebration_seen_at?: string | null
           created_at?: string
           file_name?: string | null
           file_size?: number | null
@@ -1049,6 +1051,7 @@ export type Database = {
         }
         Update: {
           assignment_instructions?: string | null
+          celebration_seen_at?: string | null
           created_at?: string
           file_name?: string | null
           file_size?: number | null
@@ -3045,6 +3048,11 @@ export type Database = {
       }
       end_enrollment: {
         Args: { p_class_id: string; p_end_date: string; p_student_id: string }
+        Returns: Json
+      }
+      get_student_homeworks: { Args: { p_student_id: string }; Returns: Json }
+      get_student_weekly_stats: {
+        Args: { p_student_id: string; p_week_end: string; p_week_start: string }
         Returns: Json
       }
       get_user_role: {
