@@ -50,3 +50,6 @@ verify_jwt = true
 
 [functions.calculate-tuition-bulk]
 verify_jwt = false
+
+[functions.smart-dictation]
+verify_jwt = true
