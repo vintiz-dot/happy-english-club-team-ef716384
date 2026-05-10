@@ -2951,6 +2951,33 @@ export type Database = {
         }
         Relationships: []
       }
+      vocab_cache: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_urls: Json | null
+          payload: Json
+          root_word: string | null
+          word: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_urls?: Json | null
+          payload: Json
+          root_word?: string | null
+          word: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_urls?: Json | null
+          payload?: Json
+          root_word?: string | null
+          word?: string
+        }
+        Relationships: []
+      }
       xp_settings: {
         Row: {
           category: string
