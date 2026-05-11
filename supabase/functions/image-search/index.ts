@@ -1,16 +1,11 @@
 /**
  * image-search Edge Function
- * ============================
- * Proxies image search requests to Pixabay (primary) with Pexels fallback.
- * Appends "isolated white background" to queries for kid-friendly clarity.
- *
- * Input:  { query: string, count?: number }
- * Output: { images: { url: string, thumbnail: string, alt: string, source: string }[] }
- *
- * Secrets required:
- *   Pixabay_API — Pixabay API key
- *   Pexels_API  — Pexels API key
+ * Primary:  Pixabay (illustrations, safesearch on)
+ * Fallback: Pexels  (photos, kid-friendly hint)
+ * Query strategy: bias toward concrete, isolated illustrations to
+ * stop the abstract/unrelated results we were seeing on bare words.
  */
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,91 +26,79 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const rawQuery = (body.query || "").trim();
-    const count = Math.min(Math.max(body.count || 8, 1), 20);
-
-    if (!rawQuery) {
-      return new Response(
-        JSON.stringify({ error: "query is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const { query, count = 12 } = await req.json();
+    if (!query || typeof query !== "string") {
+      return new Response(JSON.stringify({ error: "query is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // Append kid-friendly search terms
-    const query = rawQuery + " isolated white background";
+    const word = query.trim().toLowerCase();
+    const pixabayQ = `${word} simple illustration isolated`;
+    const pexelsQ  = `${word} simple illustration isolated kid friendly clear`;
 
-    // ── Try Pixabay first ──
+    // ---------- Pixabay (primary) ----------
     const pixabayKey = Deno.env.get("Pixabay_API");
-    if (pixabayKey) {
-      try {
-        const pixabayUrl =
-          `https://pixabay.com/api/?key=${encodeURIComponent(pixabayKey)}` +
-          `&q=${encodeURIComponent(query)}` +
-          `&image_type=illustration&safesearch=true&per_page=${count}&lang=en`;
+    let images: ImageResult[] = [];
 
-        const res = await fetch(pixabayUrl);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.hits && data.hits.length > 0) {
-            const images: ImageResult[] = data.hits.map((hit: any) => ({
-              url: hit.webformatURL || hit.largeImageURL,
-              thumbnail: hit.previewURL || hit.webformatURL,
-              alt: hit.tags || rawQuery,
-              source: "pixabay" as const,
-            }));
-            return new Response(
-              JSON.stringify({ images, source: "pixabay" }),
-              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-          }
-        }
-      } catch (e) {
-        console.error("Pixabay search failed:", e);
+    if (pixabayKey) {
+      const url = new URL("https://pixabay.com/api/");
+      url.searchParams.set("key", pixabayKey);
+      url.searchParams.set("q", pixabayQ);
+      url.searchParams.set("image_type", "illustration");
+      url.searchParams.set("safesearch", "true");
+      url.searchParams.set("per_page", String(Math.max(3, Math.min(count, 20))));
+      url.searchParams.set("orientation", "horizontal");
+
+      const r = await fetch(url.toString());
+      if (r.ok) {
+        const data = await r.json();
+        images = (data.hits ?? []).map((h: any) => ({
+          url: h.largeImageURL || h.webformatURL,
+          thumbnail: h.previewURL || h.webformatURL,
+          alt: h.tags || word,
+          source: "pixabay" as const,
+        }));
+      } else {
+        console.error("Pixabay error", r.status, await r.text());
       }
     }
 
-    // ── Fallback to Pexels ──
-    const pexelsKey = Deno.env.get("Pexels_API");
-    if (pexelsKey) {
-      try {
-        const pexelsUrl =
-          `https://api.pexels.com/v1/search?query=${encodeURIComponent(rawQuery)}` +
-          `&per_page=${count}&size=small`;
+    // ---------- Pexels (fallback) ----------
+    if (images.length === 0) {
+      const pexelsKey = Deno.env.get("Pexels_API");
+      if (pexelsKey) {
+        const url = new URL("https://api.pexels.com/v1/search");
+        url.searchParams.set("query", pexelsQ);
+        url.searchParams.set("per_page", String(count));
+        url.searchParams.set("orientation", "landscape");
 
-        const res = await fetch(pexelsUrl, {
+        const r = await fetch(url.toString(), {
           headers: { Authorization: pexelsKey },
         });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.photos && data.photos.length > 0) {
-            const images: ImageResult[] = data.photos.map((photo: any) => ({
-              url: photo.src?.medium || photo.src?.original,
-              thumbnail: photo.src?.small || photo.src?.tiny,
-              alt: photo.alt || rawQuery,
-              source: "pexels" as const,
-            }));
-            return new Response(
-              JSON.stringify({ images, source: "pexels" }),
-              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-          }
+        if (r.ok) {
+          const data = await r.json();
+          images = (data.photos ?? []).map((p: any) => ({
+            url: p.src?.large || p.src?.original,
+            thumbnail: p.src?.medium || p.src?.small,
+            alt: p.alt || word,
+            source: "pexels" as const,
+          }));
+        } else {
+          console.error("Pexels error", r.status, await r.text());
         }
-      } catch (e) {
-        console.error("Pexels search failed:", e);
       }
     }
 
-    // ── No results from either API ──
-    return new Response(
-      JSON.stringify({ images: [], source: "none", message: "No images found" }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    console.error("image-search error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ images }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    console.error("image-search fatal", e);
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
