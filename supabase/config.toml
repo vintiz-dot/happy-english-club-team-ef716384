@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.pronounce-viseme]
 verify_jwt = false
+
+[functions.image-generate]
+verify_jwt = false
