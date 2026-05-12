@@ -2610,6 +2610,7 @@ export type Database = {
           student_id: string
           total_points: number | null
           updated_at: string
+          vocabulary_quiz_points: number
         }
         Insert: {
           class_id: string
@@ -2622,6 +2623,7 @@ export type Database = {
           student_id: string
           total_points?: number | null
           updated_at?: string
+          vocabulary_quiz_points?: number
         }
         Update: {
           class_id?: string
@@ -2634,6 +2636,7 @@ export type Database = {
           student_id?: string
           total_points?: number | null
           updated_at?: string
+          vocabulary_quiz_points?: number
         }
         Relationships: [
           {
@@ -3137,6 +3140,36 @@ export type Database = {
         }
         Relationships: []
       }
+      vocab_image_cache: {
+        Row: {
+          counts: Json | null
+          created_at: string
+          expires_at: string
+          hit_count: number
+          images: Json
+          query: string
+          updated_at: string
+        }
+        Insert: {
+          counts?: Json | null
+          created_at?: string
+          expires_at?: string
+          hit_count?: number
+          images: Json
+          query: string
+          updated_at?: string
+        }
+        Update: {
+          counts?: Json | null
+          created_at?: string
+          expires_at?: string
+          hit_count?: number
+          images?: Json
+          query?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       xp_settings: {
         Row: {
           category: string
@@ -3232,6 +3265,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      count_vocab_saves_today: { Args: { p_user_id: string }; Returns: number }
       end_enrollment: {
         Args: { p_class_id: string; p_end_date: string; p_student_id: string }
         Returns: Json

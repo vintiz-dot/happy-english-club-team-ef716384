@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2 } from "lucide-react";
+import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles } from "lucide-react";
 import ProfileSwitcher from "@/components/ProfileSwitcher";
 import { ChangePassword } from "@/components/auth/ChangePassword";
 import NotificationBell from "@/components/NotificationBell";
@@ -11,6 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { StudentNavBar } from "@/components/student/StudentNavBar";
+import { AdminTopBar } from "@/components/AdminTopBar";
+import { ClassroomToolsLauncher } from "@/components/classroom-tools/ClassroomToolsLauncher";
 
 interface LayoutProps {
   children: ReactNode;
@@ -44,7 +46,7 @@ const Layout = ({ children, title }: LayoutProps) => {
         .from("students")
         .select("full_name, avatar_url")
         .eq("linked_user_id", user.id)
-        .single();
+        .maybeSingle();
       if (studentData?.full_name) {
         setUserName(studentData.full_name);
         setAvatarUrl(studentData.avatar_url);
@@ -55,7 +57,7 @@ const Layout = ({ children, title }: LayoutProps) => {
         .from("teachers")
         .select("full_name, avatar_url")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
       if (teacherData?.full_name) {
         setUserName(teacherData.full_name);
         setAvatarUrl(teacherData.avatar_url);
@@ -108,6 +110,8 @@ const Layout = ({ children, title }: LayoutProps) => {
           { icon: ListTodo, label: "Attendance", path: "/teacher/attendance" },
           { icon: NotebookPen, label: "Journal", path: "/teacher/journal" },
           { icon: FileBarChart2, label: "Exam Reports", path: "/teacher/exam-reports" },
+          { icon: Sparkles, label: "Vocabulary Audit", path: "/teacher/vocabulary-audit" },
+          { icon: FolderOpen, label: "Resources", path: "/teacher/resources" },
         ];
       default:
         return [];
@@ -327,19 +331,25 @@ const Layout = ({ children, title }: LayoutProps) => {
           )}
         </header>
 
-        {/* Desktop Header */}
-        <header className="hidden md:flex sticky top-0 z-40 border-b bg-card/95 backdrop-blur shadow-sm px-6 py-4 items-center justify-between">
-          <h1 className="text-xl font-bold">{title || "Dashboard"}</h1>
-            <div className="flex items-center gap-3">
+        {/* Desktop Header — breadcrumbs + ⌘K palette + user controls */}
+        <AdminTopBar
+          title={title}
+          rightSlot={
+            <>
               <ProfileSwitcher />
               <NotificationBell />
               <ChangePassword />
-            </div>
-        </header>
+            </>
+          }
+        />
 
         {/* Main Content */}
         <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">{children}</main>
       </div>
+
+      {/* Floating Classroom Tools — teachers and admins only.
+          Stays mounted across pages so it can be triggered mid-lesson. */}
+      {(role === "teacher" || role === "admin") && <ClassroomToolsLauncher />}
     </div>
   );
 };

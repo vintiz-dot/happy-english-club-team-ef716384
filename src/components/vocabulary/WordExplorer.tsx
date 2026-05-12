@@ -1,12 +1,14 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   BookOpen, Volume2, Loader2, ArrowRightLeft, Save, CheckCircle2,
-  GraduationCap, Languages, Sparkles,
+  GraduationCap, Languages, Sparkles, Image as ImageIcon, AlertTriangle, Pencil,
+  CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -15,8 +17,8 @@ import { getCefrLevel, type CefrLevel } from "@/lib/cefr";
 
 import { SentenceInput } from "./SentenceInput";
 import { WordChip } from "./WordChip";
-import { ImageCarousel } from "./ImageCarousel";
-import { VisualSortingSandbox } from "./VisualSortingSandbox";
+import { ImageCarousel, type ImageItem } from "./ImageCarousel";
+import { ClassPointsPicker, type ClassOption } from "./ClassPointsPicker";
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -49,7 +51,6 @@ interface WordEnrichmentPayload {
   definition_vi?: string;
   synonyms: string[];
   antonyms: string[];
-  /** May be string[] (legacy) or WordForm[] (new). Normalised on read. */
   word_forms: Array<string | WordForm>;
   form_usages?: FormUsage[];
   usages: UsageExample[];
@@ -61,6 +62,11 @@ interface PronunciationPayload {
   syllables: string[];
   duration: number;
   word: string;
+}
+
+interface Props {
+  /** Optional callback so the parent (Vocabulary page) can refresh the Word Bank. */
+  onWordSaved?: (entryId: string) => void;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────
@@ -90,44 +96,98 @@ function normalizeWordForms(forms: Array<string | WordForm>): WordForm[] {
   );
 }
 
+/** Tokenizer + Jaccard match the server-side anti-cheat, so the client can
+ *  warn the student before they hit Save. */
+function tokenize(s: string): Set<string> {
+  return new Set(
+    String(s || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s']/g, " ")
+      .split(/\s+/)
+      .filter((t) => t.length >= 2),
+  );
+}
+function jaccard(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let inter = 0;
+  for (const t of a) if (b.has(t)) inter++;
+  return inter / (a.size + b.size - inter);
+}
+function looksCopied(userText: string, suggestions: string[]): boolean {
+  const ut = tokenize(userText);
+  if (ut.size < 3) return false;
+  const userNorm = userText.trim().toLowerCase().replace(/[^a-z0-9\s]/g, "");
+  for (const s of suggestions) {
+    const sNorm = s.trim().toLowerCase().replace(/[^a-z0-9\s]/g, "");
+    if (userNorm === sNorm) return true;
+    if (jaccard(ut, tokenize(s)) >= 0.85) return true;
+  }
+  return false;
+}
+
+const MAX_EXAMPLES = 4;
+
 // ─── Main Component ─────────────────────────────────────────────────────
 
-export function WordExplorer() {
+export function WordExplorer({ onWordSaved }: Props = {}) {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Sentence parsing state
+  // Sentence parsing
   const [sentence, setSentence] = useState("");
   const [words, setWords] = useState<string[]>([]);
   const [activeWord, setActiveWord] = useState<string | null>(null);
 
-  // Enrichment state
+  // Enrichment
   const [enrichment, setEnrichment] = useState<WordEnrichmentPayload | null>(null);
   const [enrichmentLoading, setEnrichmentLoading] = useState(false);
   const [wordLevels, setWordLevels] = useState<Record<string, string>>({});
 
-  // Pronunciation (syllable-aware) state
+  // Pronunciation
   const [pronunciation, setPronunciation] = useState<PronunciationPayload | null>(null);
   const [pronouncing, setPronouncing] = useState(false);
   const [playingAudio, setPlayingAudio] = useState(false);
-
-  // Per-example sentence playback
   const [playingSentence, setPlayingSentence] = useState<number | null>(null);
 
-  // CEFR target from profile (falls back to A1).
-  const [targetCefr, setTargetCefr] = useState<CefrLevel>("A1");
+  // Student-authored examples + image pick
+  const [studentExamples, setStudentExamples] = useState<string[]>(["", "", "", ""]);
+  const [pickedImage, setPickedImage] = useState<ImageItem | null>(null);
 
-  // Save state
-  const [sandboxPassed, setSandboxPassed] = useState(false);
+  // Save flow
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [classChoice, setClassChoice] = useState<{ open: boolean; classes: ClassOption[] } | null>(null);
 
-  // Hydrate CEFR from profile on mount / when user changes.
+  // CEFR target from profile
+  const [targetCefr, setTargetCefr] = useState<CefrLevel>("A1");
+
+  // Daily cap UI state — counter of words saved today + the limit.
+  const [savesToday, setSavesToday] = useState<number>(0);
+  const [dailyLimit, setDailyLimit] = useState<number>(10);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const c = await getCefrLevel(supabase, user?.id);
       if (!cancelled) setTargetCefr(c);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  // Pull current day's save count via the SECURITY DEFINER RPC. We tolerate
+  // its absence (older DB shape) — the server still enforces the cap.
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      // Supabase generated types haven't been regenerated for this RPC yet —
+      // route through `rpc<…>("…" as never, …)` to bypass the typed name.
+      const { data, error } = await supabase.rpc(
+        "count_vocab_saves_today" as never,
+        { p_user_id: user.id } as never,
+      );
+      if (cancelled) return;
+      if (!error && typeof data === "number") setSavesToday(data);
     })();
     return () => { cancelled = true; };
   }, [user?.id]);
@@ -139,8 +199,9 @@ export function WordExplorer() {
     setActiveWord(null);
     setEnrichment(null);
     setPronunciation(null);
-    setSandboxPassed(false);
     setSaved(false);
+    setStudentExamples(["", "", "", ""]);
+    setPickedImage(null);
     setWordLevels({});
   }, []);
 
@@ -151,8 +212,9 @@ export function WordExplorer() {
     setEnrichment(null);
     setPronunciation(null);
     setEnrichmentLoading(true);
-    setSandboxPassed(false);
     setSaved(false);
+    setStudentExamples(["", "", "", ""]);
+    setPickedImage(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("word-enrichment", {
@@ -169,10 +231,8 @@ export function WordExplorer() {
         setEnrichmentLoading(false);
         return;
       }
-
       const payload = data as WordEnrichmentPayload;
       setEnrichment(payload);
-
       const levelForChip = payload.cefr || payload.level;
       if (levelForChip) {
         setWordLevels((prev) => ({ ...prev, [word.toLowerCase()]: levelForChip }));
@@ -189,7 +249,7 @@ export function WordExplorer() {
     }
   }, [activeWord, sentence, targetCefr, toast]);
 
-  // ── Fetch & play syllable-aware pronunciation ──
+  // ── Natural-pronunciation playback ──
   const playPronunciation = useCallback(async () => {
     if (!enrichment) return;
     setPronouncing(true);
@@ -204,44 +264,73 @@ export function WordExplorer() {
         payload = data as PronunciationPayload;
         setPronunciation(payload);
       }
-
       const audio = new Audio(`data:${payload.mime || "audio/mpeg"};base64,${payload.audioBase64}`);
       setPlayingAudio(true);
       audio.onended = () => setPlayingAudio(false);
       audio.onerror = () => setPlayingAudio(false);
       await audio.play();
     } catch (err: any) {
-      console.error("pronounce-syllables error:", err);
-      // Graceful browser-TTS fallback.
+      console.error("pronounce error:", err);
       speak(enrichment.root_word, 0.7);
       toast({
         title: "Using basic TTS",
-        description: err?.message || "Syllable pronunciation unavailable.",
+        description: err?.message || "Server pronunciation unavailable.",
       });
     } finally {
       setPronouncing(false);
     }
   }, [enrichment, pronunciation, toast]);
 
-  // ── Example-sentence playback (browser TTS only — keeps things simple) ──
   const playExampleSentence = useCallback((text: string, index: number) => {
     setPlayingSentence(index);
     speak(text, 0.85);
-    // SpeechSynthesisUtterance doesn't reliably fire onend across browsers, so use a timeout.
     setTimeout(() => setPlayingSentence(null), Math.max(3000, text.length * 60));
   }, []);
 
-  // ── Save word ──
-  const handleSaveWord = useCallback(async () => {
-    if (!enrichment || !activeWord) return;
+  // ── Anti-cheat client-side preview ──
+  const suggestedExamples = useMemo(() => {
+    if (!enrichment) return [] as string[];
+    const list: string[] = [];
+    for (const u of enrichment.usages || []) {
+      if (u?.english_sentence) list.push(u.english_sentence);
+    }
+    for (const fu of enrichment.form_usages || []) {
+      for (const ex of fu.examples || []) {
+        if (ex?.english_sentence) list.push(ex.english_sentence);
+      }
+    }
+    return list;
+  }, [enrichment]);
+
+  const exampleStatuses = useMemo(() => studentExamples.map((ex) => {
+    const trimmed = ex.trim();
+    if (!trimmed) return "empty";
+    if (looksCopied(trimmed, suggestedExamples)) return "copied";
+    if (tokenize(trimmed).size < 3) return "tooShort";
+    return "ok";
+  }), [studentExamples, suggestedExamples]);
+
+  const hasAtLeastOneValid = exampleStatuses.some((s) => s === "ok");
+
+  // ── Save flow ──
+  const performSave = useCallback(async (classIdOverride?: string) => {
+    if (!enrichment || !activeWord || !user?.id) return;
     setSaving(true);
     try {
-      const { error } = await supabase.functions.invoke("save-word", {
+      const validExamples = studentExamples
+        .map((e) => e.trim())
+        .filter((e, idx) => e && exampleStatuses[idx] === "ok");
+
+      const { data, error } = await supabase.functions.invoke("save-word", {
         body: {
+          user_id: user.id,
           word: activeWord.toLowerCase(),
           root_word: enrichment.root_word,
           payload: enrichment,
-          image_urls: { target: activeWord, antonyms: enrichment.antonyms },
+          user_examples: validExamples,
+          image_url: pickedImage?.url,
+          class_id: classIdOverride,
+          suggested_examples: suggestedExamples,
         },
       });
 
@@ -251,13 +340,64 @@ export function WordExplorer() {
           description: error.message || "Could not save word.",
           variant: "destructive",
         });
-      } else {
-        setSaved(true);
-        toast({
-          title: "✅ Word Saved!",
-          description: `"${enrichment.root_word}" has been saved to your word bank.`,
-        });
+        return;
       }
+
+      if (data?.success === false) {
+        if (data.reason === "missing_class_choice" && Array.isArray(data.classes)) {
+          setClassChoice({ open: true, classes: data.classes });
+          return;
+        }
+        if (data.reason === "daily_limit") {
+          if (typeof data.saves_today === "number") setSavesToday(data.saves_today);
+          if (typeof data.daily_limit === "number") setDailyLimit(data.daily_limit);
+          toast({
+            title: "🌙 Daily word cap reached",
+            description: data.message ||
+              `You've saved your ${data.daily_limit ?? 10} new words for today — come back tomorrow!`,
+            variant: "destructive",
+          });
+          return;
+        }
+        if (data.reason === "no_valid_examples") {
+          toast({
+            title: "Try writing your own sentences",
+            description: data.message ||
+              `Your example needs to use "${enrichment.root_word}" (or one of its forms) and be your own words.`,
+            variant: "destructive",
+          });
+          return;
+        }
+        toast({
+          title: "Save failed",
+          description: data.message || data.reason || "Unknown error.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSaved(true);
+      setClassChoice(null);
+      if (typeof data?.saves_today === "number") setSavesToday(data.saves_today);
+      if (typeof data?.daily_limit === "number") setDailyLimit(data.daily_limit);
+      const pointsText = data?.points_awarded
+        ? ` +${data.points_awarded} pts!`
+        : data?.already_saved
+          ? " (already in your bank)"
+          : "";
+      const remaining = typeof data?.saves_today === "number" && typeof data?.daily_limit === "number"
+        ? Math.max(0, data.daily_limit - data.saves_today)
+        : null;
+      const remainingText = remaining !== null && !data?.already_saved
+        ? remaining === 0
+          ? " That was your last word for today!"
+          : ` ${remaining} more new word${remaining === 1 ? "" : "s"} today.`
+        : "";
+      toast({
+        title: "✅ Word saved!",
+        description: `"${enrichment.root_word}" added to your word bank.${pointsText}${remainingText}`,
+      });
+      if (data?.id) onWordSaved?.(data.id);
     } catch (err: any) {
       toast({
         title: "Save error",
@@ -267,23 +407,62 @@ export function WordExplorer() {
     } finally {
       setSaving(false);
     }
-  }, [enrichment, activeWord, toast]);
+  }, [
+    enrichment, activeWord, user?.id, studentExamples,
+    exampleStatuses, pickedImage, suggestedExamples, toast, onWordSaved,
+  ]);
 
-  const handleSandboxComplete = useCallback((correct: boolean) => {
-    setSandboxPassed(correct);
-  }, []);
+  const handleClassChoice = useCallback((classId: string) => {
+    setClassChoice((prev) => prev ? { ...prev, open: false } : null);
+    performSave(classId);
+  }, [performSave]);
 
   // ── Render ──
   const wordForms = enrichment ? normalizeWordForms(enrichment.word_forms || []) : [];
   const formUsages = enrichment?.form_usages || [];
   const cefrBadgeLevel = enrichment?.cefr || enrichment?.level || "A1";
 
+  const capReached = savesToday >= dailyLimit;
+  const remainingToday = Math.max(0, dailyLimit - savesToday);
+
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
-      {/* ── Sentence Input ── */}
+      {/* Daily-cap indicator — always-on so students can pace themselves. */}
+      <div
+        className={cn(
+          "flex items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 text-sm font-medium shadow-sm",
+          capReached
+            ? "bg-amber-50 border-amber-300 text-amber-900 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-100"
+            : "bg-white/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200",
+        )}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <CalendarClock className="w-4 h-4 shrink-0" />
+          <span className="truncate">
+            {capReached
+              ? `Today's word cap reached (${dailyLimit}/${dailyLimit}) — practice keeps earning points!`
+              : `Today: ${savesToday} / ${dailyLimit} new words saved · ${remainingToday} left`}
+          </span>
+        </div>
+        <div className="flex items-center gap-1" aria-hidden="true">
+          {Array.from({ length: dailyLimit }).map((_, i) => (
+            <span
+              key={i}
+              className={cn(
+                "h-1.5 w-3 rounded-full transition-colors",
+                i < savesToday
+                  ? "bg-violet-500"
+                  : "bg-slate-200 dark:bg-slate-700",
+              )}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Sentence Input */}
       <SentenceInput onSubmit={handleSentenceSubmit} loading={enrichmentLoading} />
 
-      {/* ── Word Chips Row ── */}
+      {/* Word Chips */}
       {words.length > 0 && (
         <div className="animate-in fade-in slide-in-from-top-3 duration-300">
           <div className="flex flex-wrap gap-2 justify-center p-4 rounded-2xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border shadow-sm">
@@ -300,7 +479,7 @@ export function WordExplorer() {
         </div>
       )}
 
-      {/* ── Loading ── */}
+      {/* Loading */}
       {enrichmentLoading && (
         <div className="flex items-center justify-center py-12 animate-in fade-in duration-200">
           <div className="text-center space-y-3">
@@ -312,12 +491,12 @@ export function WordExplorer() {
         </div>
       )}
 
-      {/* ── Enrichment Panel ── */}
+      {/* Enrichment Panel */}
       {enrichment && activeWord && !enrichmentLoading && (
         <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-violet-50/30 dark:from-slate-900 dark:to-violet-950/20 animate-in fade-in slide-in-from-bottom-3 duration-500">
           <CardContent className="p-5 sm:p-6 space-y-5">
 
-            {/* 1. CEFR badge + root word */}
+            {/* CEFR badge + root word */}
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shadow-lg">
                 <BookOpen className="w-6 h-6 text-white" />
@@ -339,7 +518,7 @@ export function WordExplorer() {
               </div>
             </div>
 
-            {/* 2. Definitions (EN large, VI smaller muted) */}
+            {/* Definitions */}
             {(enrichment.definition_en || enrichment.definition_vi) && (
               <div className="rounded-xl bg-white dark:bg-slate-800/50 border p-4 space-y-2">
                 {enrichment.definition_en && (
@@ -356,12 +535,16 @@ export function WordExplorer() {
               </div>
             )}
 
-            {/* 3. Image carousel */}
-            <ImageCarousel query={enrichment.root_word} />
+            {/* Image carousel with picker */}
+            <ImageCarousel
+              query={enrichment.root_word}
+              pickedUrl={pickedImage?.url}
+              onPick={(img) => setPickedImage(img)}
+            />
 
             <Separator />
 
-            {/* 4. Audio button + syllable chips */}
+            {/* Natural pronunciation */}
             <div className="flex flex-col items-center gap-3">
               <Button
                 type="button"
@@ -374,7 +557,7 @@ export function WordExplorer() {
                 ) : (
                   <Volume2 className="w-5 h-5" />
                 )}
-                {playingAudio ? "Playing…" : "Hear by syllable"}
+                {playingAudio ? "Playing…" : "Hear pronunciation"}
               </Button>
               {pronunciation?.syllables?.length ? (
                 <div className="flex flex-wrap items-center justify-center gap-1.5">
@@ -395,7 +578,7 @@ export function WordExplorer() {
               ) : null}
             </div>
 
-            {/* 5. Synonyms & Antonyms */}
+            {/* Synonyms & Antonyms */}
             {(enrichment.synonyms.length > 0 || enrichment.antonyms.length > 0) && (
               <>
                 <Separator />
@@ -442,7 +625,7 @@ export function WordExplorer() {
               </>
             )}
 
-            {/* 6. Word forms + examples */}
+            {/* Word forms + examples */}
             {wordForms.length > 0 && (
               <>
                 <Separator />
@@ -492,7 +675,7 @@ export function WordExplorer() {
               </>
             )}
 
-            {/* 7. Existing 3 root-word usages with Vietnamese */}
+            {/* Root-word usages */}
             {enrichment.usages?.length > 0 && (
               <>
                 <Separator />
@@ -503,8 +686,7 @@ export function WordExplorer() {
                   {enrichment.usages.map((usage, i) => (
                     <div
                       key={i}
-                      className="rounded-xl border bg-white dark:bg-slate-800/50 p-4 space-y-2 animate-in fade-in duration-300"
-                      style={{ animationDelay: `${i * 100}ms` }}
+                      className="rounded-xl border bg-white dark:bg-slate-800/50 p-4 space-y-2"
                     >
                       <div className="flex items-start gap-2">
                         <span className="text-sm font-black text-violet-500 shrink-0 mt-0.5">
@@ -520,7 +702,6 @@ export function WordExplorer() {
                           className="h-7 w-7 shrink-0 rounded-full text-blue-500 hover:text-blue-700 hover:bg-blue-50"
                           onClick={() => playExampleSentence(usage.english_sentence, i)}
                           disabled={playingSentence === i}
-                          aria-label="Play example sentence"
                         >
                           {playingSentence === i ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -546,19 +727,65 @@ export function WordExplorer() {
               </>
             )}
 
-            {/* Visual sorting practice (kept) */}
-            {enrichment.antonyms.length > 0 && (
-              <>
-                <Separator />
-                <VisualSortingSandbox
-                  targetWord={enrichment.root_word}
-                  antonyms={enrichment.antonyms}
-                  onComplete={handleSandboxComplete}
-                />
-              </>
+            <Separator />
+
+            {/* Student examples (anti-cheat) */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Pencil className="w-3.5 h-3.5" /> Your Own Examples
+                </p>
+                <span className="text-[10px] text-muted-foreground">
+                  Write 1–{MAX_EXAMPLES} sentences in your own words
+                </span>
+              </div>
+              {studentExamples.map((ex, i) => {
+                const status = exampleStatuses[i];
+                return (
+                  <div key={i} className="space-y-1">
+                    <Textarea
+                      value={ex}
+                      onChange={(e) => {
+                        const next = [...studentExamples];
+                        next[i] = e.target.value;
+                        setStudentExamples(next);
+                      }}
+                      placeholder={`Example ${i + 1} — your own sentence using "${enrichment.root_word}"`}
+                      rows={2}
+                      className={cn(
+                        "rounded-lg text-sm",
+                        status === "copied" && "border-rose-400 focus-visible:ring-rose-300",
+                        status === "ok" && "border-emerald-400 focus-visible:ring-emerald-300",
+                      )}
+                    />
+                    {status === "copied" && (
+                      <p className="text-xs text-rose-600 flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" />
+                        Looks copied from a suggestion — write it in your own words.
+                      </p>
+                    )}
+                    {status === "tooShort" && ex.trim() && (
+                      <p className="text-[11px] text-muted-foreground">Add a few more words.</p>
+                    )}
+                    {status === "ok" && (
+                      <p className="text-xs text-emerald-600 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Looks great!
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {pickedImage && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5" />
+                Image picked from {pickedImage.source}.
+              </p>
             )}
 
-            {/* 8. Save button */}
+            {/* Save Button */}
             <div className="pt-2">
               {saved ? (
                 <div className="flex items-center justify-center gap-2 py-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl text-emerald-700 dark:text-emerald-300 font-bold">
@@ -567,14 +794,11 @@ export function WordExplorer() {
                 </div>
               ) : (
                 <Button
-                  onClick={handleSaveWord}
-                  disabled={
-                    saving ||
-                    (!sandboxPassed && enrichment.antonyms.length > 0)
-                  }
+                  onClick={() => performSave()}
+                  disabled={saving || !hasAtLeastOneValid || capReached}
                   className={cn(
                     "w-full h-14 text-lg font-bold rounded-xl shadow-lg transition-all",
-                    sandboxPassed || enrichment.antonyms.length === 0
+                    hasAtLeastOneValid && !capReached
                       ? "bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white hover:shadow-xl"
                       : "bg-slate-200 text-slate-500 cursor-not-allowed",
                   )}
@@ -584,9 +808,11 @@ export function WordExplorer() {
                   ) : (
                     <>
                       <Save className="w-5 h-5 mr-2" />
-                      {sandboxPassed || enrichment.antonyms.length === 0
-                        ? "Save to My Word Bank ✨"
-                        : "Complete the quiz above to save 🔒"}
+                      {capReached
+                        ? `Daily cap reached (${dailyLimit}/${dailyLimit}) — try again tomorrow`
+                        : hasAtLeastOneValid
+                          ? "Save to My Word Bank ✨"
+                          : "Write at least one example to save"}
                     </>
                   )}
                 </Button>
@@ -594,6 +820,16 @@ export function WordExplorer() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Multi-class picker */}
+      {classChoice && (
+        <ClassPointsPicker
+          open={classChoice.open}
+          classes={classChoice.classes}
+          onChoose={handleClassChoice}
+          onClose={() => setClassChoice(null)}
+        />
       )}
     </div>
   );

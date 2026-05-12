@@ -2,13 +2,12 @@
  * record-practice Edge Function
  * ===============================
  * Records a single practice answer for a vocabulary word. Awards +20
- * participation_points on a correct answer; logs the activity for the
- * teacher's monthly dashboard either way.
+ * `vocabulary_quiz` points on a correct answer via point_transactions —
+ * the aggregation trigger then rolls this into
+ * student_points.vocabulary_quiz_points and student_points.total_points.
  *
  * Idempotency: practice attempts are append-only (the activity log is a
- * historical record). Points stack up across attempts — i.e. answering
- * 10 cards correctly in a session = 200 points. If you ever need to cap
- * per-day point grants, do it here.
+ * historical record). Points stack up across attempts.
  *
  * Input: {
  *   user_id: string,
@@ -34,6 +33,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const CORRECT_POINTS = 20;
+
 function respond(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -41,41 +42,25 @@ function respond(body: unknown, status = 200) {
   });
 }
 
-function currentMonthIso(): string {
-  const d = new Date();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
-}
-
-async function awardParticipationPoints(
+async function awardVocabularyPoints(
   sb: SupabaseClient,
   studentId: string,
   classId: string,
+  userId: string,
   delta: number,
+  word: string | null,
 ): Promise<void> {
-  const month = currentMonthIso();
-  const { data: existing } = await sb
-    .from("student_points")
-    .select("id, participation_points")
-    .eq("student_id", studentId)
-    .eq("class_id", classId)
-    .eq("month", month)
-    .maybeSingle();
-
-  if (existing) {
-    await sb
-      .from("student_points")
-      .update({
-        participation_points: (existing.participation_points ?? 0) + delta,
-      })
-      .eq("id", existing.id);
-  } else {
-    await sb.from("student_points").insert({
-      student_id: studentId,
-      class_id: classId,
-      month,
-      participation_points: delta,
-    });
-  }
+  const today = new Date().toISOString().slice(0, 10);
+  const { error } = await sb.from("point_transactions").insert({
+    student_id: studentId,
+    class_id: classId,
+    points: delta,
+    type: "vocabulary_quiz",
+    date: today,
+    created_by: userId,
+    notes: word ? `vocab practice: ${word}` : "vocab practice",
+  });
+  if (error) throw error;
 }
 
 async function resolveStudentAndClass(
@@ -151,22 +136,23 @@ Deno.serve(async (req) => {
 
     const studentId = resolved.kind === "ok" ? resolved.studentId : null;
     const chosenClassId = resolved.kind === "ok" ? resolved.classId : null;
+    const cleanWord = typeof word === "string" ? word.trim().toLowerCase() : null;
 
     let pointsAwarded = 0;
     if (correct && studentId && chosenClassId) {
       try {
-        await awardParticipationPoints(sb, studentId, chosenClassId, 20);
-        pointsAwarded = 20;
+        await awardVocabularyPoints(sb, studentId, chosenClassId, user_id, CORRECT_POINTS, cleanWord);
+        pointsAwarded = CORRECT_POINTS;
       } catch (e) {
         console.error("award points failed:", e);
       }
     }
 
-    await sb.from("vocab_activity_log").insert({
+    sb.from("vocab_activity_log").insert({
       user_id,
       student_id: studentId,
       class_id: chosenClassId,
-      word: typeof word === "string" ? word.trim().toLowerCase() : null,
+      word: cleanWord,
       activity_type: correct ? "practice_correct" : "practice_incorrect",
       points_awarded: pointsAwarded,
     }).then(({ error }) => {

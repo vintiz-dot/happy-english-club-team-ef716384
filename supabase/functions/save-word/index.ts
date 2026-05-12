@@ -3,17 +3,27 @@
  * ========================
  * Persists a student's vocabulary entry through the full save-flow:
  *
- *   1. Anti-cheat: rejects any user-supplied example that is a near-copy
- *      of one of the AI's suggested examples (Jaccard similarity on token
- *      bag, >= 0.85 == copy). At least one valid user example is required.
- *   2. Identifies the student record via students.linked_user_id and
+ *   1. Daily cap: rejects new saves once the student has saved
+ *      DAILY_SAVE_LIMIT distinct words in the current UTC day.
+ *   2. Anti-cheat (three layers):
+ *        a) Jaccard token-bag similarity (>= COPY_THRESHOLD) against any
+ *           AI-suggested example or any prior community example for the
+ *           same word — rejected as a copy.
+ *        b) Word-presence check — the target word (or any declared form,
+ *           or a heuristic stem/derivation) must appear in the student's
+ *           sentence in a grammatically reasonable form.
+ *        c) Sense check — at least MIN_TOKENS distinct content tokens are
+ *           required so a single-word "answer" does not pass.
+ *   3. Identifies the student record via students.linked_user_id and
  *      auto-resolves the class — single enrollment is automatic, multiple
  *      enrollments require the caller to pass class_id (frontend prompts).
- *   3. Upserts into student_vocabulary_entries (the personal word bank).
- *   4. Updates the public vocab_cache for community lookup.
- *   5. Awards +10 participation_points to the picked class (idempotent on
- *      re-save of the same word for the same student).
- *   6. Logs to vocab_activity_log for the teacher monthly dashboard.
+ *   4. Upserts into student_vocabulary_entries (the personal word bank).
+ *   5. Updates the public vocab_cache for community lookup.
+ *   6. Awards +10 vocabulary_quiz points via point_transactions (idempotent
+ *      on re-save of the same word for the same student — only the first
+ *      save earns). The aggregation trigger rolls this into
+ *      student_points.vocabulary_quiz_points and total_points.
+ *   7. Logs to vocab_activity_log for the teacher monthly dashboard.
  *
  * Input: {
  *   user_id: string,                  // auth.users.id (passed by frontend)
@@ -29,11 +39,13 @@
  * Output: {
  *   success: boolean,
  *   id?: string,
- *   reason?: "no_valid_examples"|"missing_class_choice"|"unknown_student"|...,
- *   rejected_examples?: number[],     // indices of user_examples that copied
+ *   reason?: "no_valid_examples"|"missing_class_choice"|"unknown_student"|"daily_limit"|...,
+ *   rejected_examples?: Array<{ idx: number; why: "copied"|"missing_word"|"too_short" }>,
  *   classes?: Array<{ id: string, name: string }>,  // when class choice needed
  *   points_awarded?: number,
  *   already_saved?: boolean,
+ *   saves_today?: number,
+ *   daily_limit?: number,
  * }
  */
 
@@ -44,6 +56,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
+
+const DAILY_SAVE_LIMIT = 10;
+const COPY_THRESHOLD = 0.85;
+const MIN_TOKENS = 3;
+const SAVE_POINTS = 10;
 
 // ─── Anti-cheat: token-bag similarity ────────────────────────────────────
 
@@ -64,18 +81,123 @@ function jaccard(a: Set<string>, b: Set<string>): number {
   return inter / (a.size + b.size - inter);
 }
 
+function normalizeForExactMatch(s: string): string {
+  return s.trim().toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ");
+}
+
 function isCopy(userText: string, suggested: string[]): boolean {
   const ut = tokenize(userText);
-  if (ut.size < 3) return false; // too short to judge
+  if (ut.size < MIN_TOKENS) return false; // too short to judge
+  const userNorm = normalizeForExactMatch(userText);
   for (const s of suggested) {
-    const st = tokenize(s);
-    if (st.size === 0) continue;
-    // Exact match (case-insensitive, ignoring punctuation) always rejected.
-    if (userText.trim().toLowerCase().replace(/[^a-z0-9\s]/g, "") ===
-        s.trim().toLowerCase().replace(/[^a-z0-9\s]/g, "")) {
-      return true;
+    if (!s) continue;
+    if (userNorm === normalizeForExactMatch(s)) return true;
+    if (jaccard(ut, tokenize(s)) >= COPY_THRESHOLD) return true;
+  }
+  return false;
+}
+
+// ─── Word-presence check ────────────────────────────────────────────────
+//
+// We accept a sentence if it contains the target word in any reasonable
+// grammatical form. The check is greedy: it tries the explicit forms from
+// the AI payload first (they're the most accurate), then derives common
+// inflections from the root word (verb +s/+ed/+ing, noun +s/+es, adjective
+// +er/+est) and finally falls back to a stem match where any candidate
+// shares the first 4+ chars with a token in the sentence.
+
+function deriveInflections(root: string): string[] {
+  const w = root.toLowerCase();
+  const out = new Set<string>([w]);
+  const endsConsonantY = /[^aeiou]y$/.test(w);
+  const sibilant = /(s|x|z|ch|sh)$/.test(w);
+
+  // Plural / 3rd-person singular
+  out.add(endsConsonantY ? w.slice(0, -1) + "ies" : sibilant ? w + "es" : w + "s");
+
+  // Past tense / past participle
+  if (w.endsWith("e")) out.add(w + "d");
+  else if (endsConsonantY) out.add(w.slice(0, -1) + "ied");
+  else out.add(w + "ed");
+
+  // Gerund / present participle
+  if (w.endsWith("e") && !w.endsWith("ee")) out.add(w.slice(0, -1) + "ing");
+  else out.add(w + "ing");
+
+  // Comparative / superlative for adj-like roots (only short ones)
+  if (w.length <= 6) {
+    if (endsConsonantY) {
+      out.add(w.slice(0, -1) + "ier");
+      out.add(w.slice(0, -1) + "iest");
+    } else if (w.endsWith("e")) {
+      out.add(w + "r");
+      out.add(w + "st");
+    } else {
+      out.add(w + "er");
+      out.add(w + "est");
     }
-    if (jaccard(ut, st) >= 0.85) return true;
+  }
+
+  // Adverb -ly
+  out.add(w + "ly");
+
+  return Array.from(out);
+}
+
+function collectCandidates(
+  word: string,
+  rootWord: string | undefined,
+  payload: any,
+): string[] {
+  const set = new Set<string>();
+  const add = (s: unknown) => {
+    if (typeof s !== "string") return;
+    const t = s.trim().toLowerCase();
+    if (t.length >= 2) set.add(t);
+  };
+
+  add(word);
+  add(rootWord);
+  add(payload?.root_word);
+
+  for (const wf of Array.isArray(payload?.word_forms) ? payload.word_forms : []) {
+    if (typeof wf === "string") add(wf);
+    else if (wf && typeof wf === "object") add(wf.form);
+  }
+  for (const fu of Array.isArray(payload?.form_usages) ? payload.form_usages : []) {
+    add(fu?.form);
+  }
+
+  // Heuristic inflections of the root.
+  const rootSeed = (rootWord || payload?.root_word || word || "").toString();
+  for (const variant of deriveInflections(rootSeed)) add(variant);
+
+  return Array.from(set);
+}
+
+function sentenceHasWord(sentence: string, candidates: string[]): boolean {
+  if (!sentence) return false;
+  const normalized = " " + sentence
+    .toLowerCase()
+    .replace(/[^a-z0-9\s']/g, " ")
+    .replace(/\s+/g, " ")
+    .trim() + " ";
+
+  // Word-boundary match against any explicit candidate.
+  for (const c of candidates) {
+    if (!c) continue;
+    if (normalized.includes(" " + c + " ")) return true;
+  }
+  // Last-resort stem match — any candidate of length >= 4 whose first 4
+  // characters start a token in the sentence. Catches irregulars like
+  // "ran" vs root "run" when the AI provided word_forms.
+  const tokens = normalized.trim().split(/\s+/);
+  for (const c of candidates) {
+    if (!c || c.length < 4) continue;
+    const stem = c.slice(0, 4);
+    for (const t of tokens) {
+      if (t.startsWith(stem)) return true;
+    }
   }
   return false;
 }
@@ -87,12 +209,6 @@ function respond(body: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-}
-
-function currentMonthIso(): string {
-  // student_points.month is typically YYYY-MM-01
-  const d = new Date();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
 }
 
 async function resolveStudentAndClass(
@@ -135,37 +251,49 @@ async function resolveStudentAndClass(
   return { kind: "need_class", classes: activeClasses };
 }
 
-async function awardParticipationPoints(
+/**
+ * Inserts a vocabulary_quiz point_transaction. The existing trigger rolls
+ * this into student_points.vocabulary_quiz_points (and total_points).
+ */
+async function awardVocabularyPoints(
   sb: SupabaseClient,
   studentId: string,
   classId: string,
+  userId: string,
   delta: number,
+  word: string,
 ): Promise<void> {
-  const month = currentMonthIso();
-  // Fetch existing row (or null) — student_points uses (student_id, class_id, month) as natural key.
-  const { data: existing } = await sb
-    .from("student_points")
-    .select("id, participation_points")
-    .eq("student_id", studentId)
-    .eq("class_id", classId)
-    .eq("month", month)
-    .maybeSingle();
+  const today = new Date().toISOString().slice(0, 10);
+  const { error } = await sb.from("point_transactions").insert({
+    student_id: studentId,
+    class_id: classId,
+    points: delta,
+    type: "vocabulary_quiz",
+    date: today,
+    created_by: userId,
+    notes: `vocab save: ${word}`,
+  });
+  if (error) throw error;
+}
 
-  if (existing) {
-    await sb
-      .from("student_points")
-      .update({
-        participation_points: (existing.participation_points ?? 0) + delta,
-      })
-      .eq("id", existing.id);
-  } else {
-    await sb.from("student_points").insert({
-      student_id: studentId,
-      class_id: classId,
-      month,
-      participation_points: delta,
-    });
-  }
+async function countSavesToday(
+  sb: SupabaseClient,
+  userId: string,
+): Promise<number> {
+  // Prefer the SECURITY DEFINER RPC; fall back to a direct count on schema
+  // shapes where the RPC hasn't been migrated yet.
+  const { data, error } = await sb.rpc("count_vocab_saves_today", { p_user_id: userId });
+  if (!error && typeof data === "number") return data;
+
+  const startOfDay = new Date();
+  startOfDay.setUTCHours(0, 0, 0, 0);
+  const { count } = await sb
+    .from("vocab_activity_log")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("activity_type", "save")
+    .gte("created_at", startOfDay.toISOString());
+  return count ?? 0;
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────
@@ -203,6 +331,37 @@ Deno.serve(async (req) => {
       ? user_examples.map((e: any) => String(e || "").trim()).filter(Boolean)
       : [];
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !supabaseKey) {
+      return respond({ success: false, reason: "db_unconfigured" }, 503);
+    }
+    const sb = createClient(supabaseUrl, supabaseKey);
+
+    // ── Detect whether this is a re-save (existing entry) early so the
+    //    daily cap only penalises *new* words, not edits/refinements.
+    const { data: existingEntry } = await sb
+      .from("student_vocabulary_entries")
+      .select("id")
+      .eq("user_id", user_id)
+      .eq("word", cleanWord)
+      .maybeSingle();
+
+    // ── Daily cap (new saves only) ──
+    let savesToday = 0;
+    if (!existingEntry) {
+      savesToday = await countSavesToday(sb, user_id);
+      if (savesToday >= DAILY_SAVE_LIMIT) {
+        return respond({
+          success: false,
+          reason: "daily_limit",
+          saves_today: savesToday,
+          daily_limit: DAILY_SAVE_LIMIT,
+          message: `You've hit today's cap of ${DAILY_SAVE_LIMIT} new words. Come back tomorrow for more — or jump into Practice to keep earning points!`,
+        });
+      }
+    }
+
     // ── Anti-cheat ──
     const suggestions: string[] = Array.isArray(suggested_examples)
       ? suggested_examples.filter((s: any) => typeof s === "string")
@@ -210,33 +369,47 @@ Deno.serve(async (req) => {
         ? (payload as any).usages.map((u: any) => String(u?.english_sentence || ""))
         : [];
 
-    const rejectedExamples: number[] = [];
+    const wordCandidates = collectCandidates(cleanWord, root_word, payload);
+
+    interface Rejection { idx: number; why: "copied" | "missing_word" | "too_short" }
+    const rejected: Rejection[] = [];
     const acceptedExamples: string[] = [];
     examples.forEach((ex, idx) => {
-      if (isCopy(ex, suggestions)) {
-        rejectedExamples.push(idx);
-      } else {
-        acceptedExamples.push(ex);
+      const tokens = tokenize(ex);
+      if (tokens.size < MIN_TOKENS) {
+        rejected.push({ idx, why: "too_short" });
+        return;
       }
+      if (isCopy(ex, suggestions)) {
+        rejected.push({ idx, why: "copied" });
+        return;
+      }
+      if (!sentenceHasWord(ex, wordCandidates)) {
+        rejected.push({ idx, why: "missing_word" });
+        return;
+      }
+      acceptedExamples.push(ex);
     });
 
     if (acceptedExamples.length === 0) {
+      const reasonHints = new Set(rejected.map((r) => r.why));
+      let message = "Please write at least one example sentence in your own words.";
+      if (examples.length > 0) {
+        if (reasonHints.has("missing_word")) {
+          message = `Your sentence needs to use the word "${cleanWord}" (or one of its forms) and make sense.`;
+        } else if (reasonHints.has("copied")) {
+          message = "Your example looks copied from the suggestions. Try writing it in your own words.";
+        } else if (reasonHints.has("too_short")) {
+          message = "Add a few more words so the sentence makes sense.";
+        }
+      }
       return respond({
         success: false,
         reason: "no_valid_examples",
-        rejected_examples: rejectedExamples,
-        message: examples.length === 0
-          ? "Please write at least one example sentence in your own words."
-          : "Your example looks copied from the suggestions. Try writing it in your own words.",
+        rejected_examples: rejected,
+        message,
       });
     }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !supabaseKey) {
-      return respond({ success: false, reason: "db_unconfigured" }, 503);
-    }
-    const sb = createClient(supabaseUrl, supabaseKey);
 
     // ── Resolve student + class ──
     const resolved = await resolveStudentAndClass(sb, user_id, class_id);
@@ -249,7 +422,6 @@ Deno.serve(async (req) => {
       });
     }
     if (resolved.kind === "unknown_student") {
-      // Student record not linked yet — proceed without points, save still works.
       console.warn(`save-word: no student record for user ${user_id}`);
     }
 
@@ -260,23 +432,16 @@ Deno.serve(async (req) => {
     const cefr = (payload as any)?.cefr || null;
     const defEn = (payload as any)?.definition_en || null;
     const defVi = (payload as any)?.definition_vi || null;
-
-    const { data: existingEntry } = await sb
-      .from("student_vocabulary_entries")
-      .select("id")
-      .eq("user_id", user_id)
-      .eq("word", cleanWord)
-      .maybeSingle();
+    const resolvedRoot = root_word || (payload as any)?.root_word || cleanWord;
 
     let entryId: string | null = null;
-    let alreadySaved = false;
+    const alreadySaved = !!existingEntry;
 
     if (existingEntry) {
-      alreadySaved = true;
       const { data: updated, error: updErr } = await sb
         .from("student_vocabulary_entries")
         .update({
-          root_word: root_word || (payload as any)?.root_word || cleanWord,
+          root_word: resolvedRoot,
           cefr,
           definition_en: defEn,
           definition_vi: defVi,
@@ -302,7 +467,7 @@ Deno.serve(async (req) => {
           student_id: studentId,
           class_id: chosenClassId,
           word: cleanWord,
-          root_word: root_word || (payload as any)?.root_word || cleanWord,
+          root_word: resolvedRoot,
           cefr,
           definition_en: defEn,
           definition_vi: defVi,
@@ -320,12 +485,11 @@ Deno.serve(async (req) => {
     }
 
     // ── Refresh vocab_cache (community lookup) ──
-    await sb
-      .from("vocab_cache")
+    sb.from("vocab_cache")
       .upsert(
         {
           word: cleanWord,
-          root_word: root_word || (payload as any)?.root_word || cleanWord,
+          root_word: resolvedRoot,
           payload,
           image_urls: image_url ? { picked: image_url } : null,
         },
@@ -339,15 +503,15 @@ Deno.serve(async (req) => {
     let pointsAwarded = 0;
     if (!alreadySaved && studentId && chosenClassId) {
       try {
-        await awardParticipationPoints(sb, studentId, chosenClassId, 10);
-        pointsAwarded = 10;
+        await awardVocabularyPoints(sb, studentId, chosenClassId, user_id, SAVE_POINTS, cleanWord);
+        pointsAwarded = SAVE_POINTS;
       } catch (e) {
         console.error("award points failed:", e);
       }
     }
 
     // ── Activity log ──
-    await sb.from("vocab_activity_log").insert({
+    sb.from("vocab_activity_log").insert({
       user_id,
       student_id: studentId,
       class_id: chosenClassId,
@@ -358,13 +522,20 @@ Deno.serve(async (req) => {
       if (error) console.warn("activity log:", error.message);
     });
 
+    // Recount AFTER the save so the client can show the right "X / 10 today".
+    const savesTodayAfter = alreadySaved
+      ? savesToday
+      : await countSavesToday(sb, user_id).catch(() => savesToday + 1);
+
     return respond({
       success: true,
       id: entryId,
       points_awarded: pointsAwarded,
       already_saved: alreadySaved,
       class_id: chosenClassId,
-      rejected_examples: rejectedExamples,
+      rejected_examples: rejected,
+      saves_today: savesTodayAfter,
+      daily_limit: DAILY_SAVE_LIMIT,
     });
   } catch (error: any) {
     console.error("save-word error:", error);
