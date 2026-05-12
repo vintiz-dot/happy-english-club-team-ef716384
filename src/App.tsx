@@ -39,6 +39,7 @@ const StudentAssignments = lazy(() => import("./pages/StudentAssignments"));
 const Tuition = lazy(() => import("./pages/Tuition"));
 const TeacherProfile = lazy(() => import("./pages/TeacherProfile"));
 const StudentJournal = lazy(() => import("./pages/StudentJournal"));
+const StudentGames = lazy(() => import("./pages/StudentGames"));
 const TeacherJournal = lazy(() => import("./pages/TeacherJournal"));
 const TeacherExamReports = lazy(() => import("./pages/TeacherExamReports"));
 const TuitionReviewQueue = lazy(() =>
@@ -105,6 +106,7 @@ function AppContent() {
                 <Route path="/student/dashboard" element={<StudentDashboard />} />
                 <Route path="/student/assignments" element={<StudentAssignments />} />
                 <Route path="/student/journal" element={<StudentJournal />} />
+                <Route path="/student/games" element={<StudentGames />} />
 
                 {/* Shared routes */}
                 <Route path="/schedule" element={<Schedule />} />

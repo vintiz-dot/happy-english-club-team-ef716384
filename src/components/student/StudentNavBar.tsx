@@ -3,12 +3,13 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, BookOpen, CalendarDays, MoreHorizontal, NotebookPen, DollarSign, Trophy, Zap, FileText } from "lucide-react";
+import { Home, BookOpen, CalendarDays, MoreHorizontal, NotebookPen, DollarSign, Trophy, Zap, FileText, Gamepad2 } from "lucide-react";
 
 const allNavItems = [
   { id: "dashboard", label: "Dashboard", emoji: "🏠", path: "/student/dashboard", icon: Home, primary: true },
   { id: "homework", label: "Homework", emoji: "📝", path: "/student/assignments", icon: BookOpen, primary: true },
   { id: "schedule", label: "My Classes", emoji: "📅", path: "/student/dashboard?tab=schedule", icon: CalendarDays, primary: true },
+  { id: "games", label: "Games", emoji: "🎮", path: "/student/games", icon: Gamepad2, primary: false },
   { id: "reports", label: "Reports", emoji: "📄", path: "/student/dashboard?tab=reports", icon: FileText, primary: false },
   { id: "journal", label: "Journal", emoji: "📖", path: "/student/journal", icon: NotebookPen, primary: false },
   { id: "tuition", label: "Tuition", emoji: "💰", path: "/tuition", icon: DollarSign, primary: false },
