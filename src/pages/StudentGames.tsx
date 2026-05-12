@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Layout } from "@/components/Layout";
+import Layout from "@/components/Layout";
 import { StudentNavBar } from "@/components/student/StudentNavBar";
 import { Gamepad2, Sparkles } from "lucide-react";
 
