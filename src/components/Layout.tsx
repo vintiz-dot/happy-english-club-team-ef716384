@@ -32,6 +32,9 @@ const Layout = ({ children, title }: LayoutProps) => {
     return saved !== "true"; // collapsed = true means sidebar is closed
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [upgradeBannerDismissed, setUpgradeBannerDismissed] = useState(() => {
+    try { return localStorage.getItem("hec-upgrade-banner") === "dismissed"; } catch { return false; }
+  });
 
   // Persist sidebar state
   useEffect(() => {
