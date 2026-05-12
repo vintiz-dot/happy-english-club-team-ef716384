@@ -1,9 +1,4 @@
-/**
- * useVocabularyStore — localStorage-backed personal word bank.
- * Scoped per-user via a key suffix so different students on the same browser
- * don't see each other's words.
- */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export interface VocabularyWord {
   id: string;
@@ -12,135 +7,101 @@ export interface VocabularyWord {
   meaning: string;
   example: string;
   imageUrl: string;
-  masteryLevel: number; // 0-5
-  createdAt: number;
-  lastReviewedAt: number | null;
-  nextReviewAt: number | null;
+  masteryLevel: number; // 0=new, 1-2=learning, 3-4=familiar, 5=mastered
+  nextReviewDate: string;
+  timesReviewed: number;
   timesCorrect: number;
-  timesWrong: number;
+  createdAt: string;
+  lastReviewedAt: string | null;
 }
 
-export interface NewVocabularyWord {
-  word: string;
-  partOfSpeech: string;
-  meaning: string;
-  example: string;
-  imageUrl: string;
+const STORAGE_KEY = "hec-vocab";
+// Spaced repetition intervals (Leitner system) in days
+const INTERVALS = [0, 1, 3, 7, 14, 30];
+
+function getKey(userId?: string): string {
+  return userId ? STORAGE_KEY + "-" + userId : STORAGE_KEY;
 }
 
-const STORAGE_PREFIX = "hec-vocabulary-v1";
-// Spaced repetition intervals (ms) per mastery level 0..5
-const DAY = 24 * 60 * 60 * 1000;
-const REVIEW_INTERVALS = [0, 1 * DAY, 2 * DAY, 4 * DAY, 7 * DAY, 14 * DAY];
-
-function storageKey(userId: string | undefined): string {
-  return `${STORAGE_PREFIX}:${userId || "anon"}`;
-}
-
-function loadWords(userId: string | undefined): VocabularyWord[] {
-  if (typeof window === "undefined") return [];
+function loadWords(userId?: string): VocabularyWord[] {
   try {
-    const raw = window.localStorage.getItem(storageKey(userId));
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    const raw = localStorage.getItem(getKey(userId));
+    return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 }
 
-function saveWords(userId: string | undefined, words: VocabularyWord[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(storageKey(userId), JSON.stringify(words));
-  } catch {
-    /* quota or serialization issue — silently ignore */
-  }
+function saveWords(words: VocabularyWord[], userId?: string) {
+  localStorage.setItem(getKey(userId), JSON.stringify(words));
 }
 
-function nextReviewTime(masteryLevel: number, from = Date.now()): number {
-  const idx = Math.max(0, Math.min(REVIEW_INTERVALS.length - 1, masteryLevel));
-  return from + REVIEW_INTERVALS[idx];
+function getNextReviewDate(level: number): string {
+  const days = INTERVALS[Math.min(level, INTERVALS.length - 1)];
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString();
 }
 
-export function useVocabularyStore(userId: string | undefined) {
+export function useVocabularyStore(userId?: string) {
   const [words, setWords] = useState<VocabularyWord[]>(() => loadWords(userId));
 
-  // Reload when user changes
-  useEffect(() => {
-    setWords(loadWords(userId));
-  }, [userId]);
+  useEffect(() => { saveWords(words, userId); }, [words, userId]);
+  useEffect(() => { setWords(loadWords(userId)); }, [userId]);
 
-  // Persist on every change
-  useEffect(() => {
-    saveWords(userId, words);
-  }, [userId, words]);
-
-  const addWord = useCallback((w: NewVocabularyWord) => {
-    setWords((prev) => {
-      // De-dupe by lowercase word
-      const exists = prev.some((p) => p.word.trim().toLowerCase() === w.word.trim().toLowerCase());
-      if (exists) return prev;
-      const now = Date.now();
-      const fresh: VocabularyWord = {
-        id: (typeof crypto !== "undefined" && "randomUUID" in crypto)
-          ? crypto.randomUUID()
-          : `w_${now}_${Math.random().toString(36).slice(2, 9)}`,
-        word: w.word.trim(),
-        partOfSpeech: w.partOfSpeech || "other",
-        meaning: w.meaning || "",
-        example: w.example || "",
-        imageUrl: w.imageUrl || "",
-        masteryLevel: 0,
-        createdAt: now,
-        lastReviewedAt: null,
-        nextReviewAt: now,
-        timesCorrect: 0,
-        timesWrong: 0,
-      };
-      return [fresh, ...prev];
-    });
+  const addWord = useCallback((input: {
+    word: string; partOfSpeech: string; meaning: string; example: string; imageUrl: string;
+  }) => {
+    const newWord: VocabularyWord = {
+      ...input,
+      id: crypto.randomUUID(),
+      masteryLevel: 0,
+      nextReviewDate: new Date().toISOString(),
+      timesReviewed: 0,
+      timesCorrect: 0,
+      createdAt: new Date().toISOString(),
+      lastReviewedAt: null,
+    };
+    setWords(prev => [newWord, ...prev]);
+    return newWord;
   }, []);
 
   const deleteWord = useCallback((id: string) => {
-    setWords((prev) => prev.filter((w) => w.id !== id));
+    setWords(prev => prev.filter(w => w.id !== id));
   }, []);
 
   const updateMastery = useCallback((id: string, correct: boolean) => {
-    setWords((prev) =>
-      prev.map((w) => {
-        if (w.id !== id) return w;
-        const newLevel = correct
-          ? Math.min(5, w.masteryLevel + 1)
-          : Math.max(0, w.masteryLevel - 1);
-        const now = Date.now();
-        return {
-          ...w,
-          masteryLevel: newLevel,
-          lastReviewedAt: now,
-          nextReviewAt: nextReviewTime(newLevel, now),
-          timesCorrect: w.timesCorrect + (correct ? 1 : 0),
-          timesWrong: w.timesWrong + (correct ? 0 : 1),
-        };
-      }),
-    );
+    setWords(prev => prev.map(w => {
+      if (w.id !== id) return w;
+      const newLevel = correct
+        ? Math.min(w.masteryLevel + 1, 5)
+        : Math.max(w.masteryLevel - 1, 0);
+      return {
+        ...w,
+        masteryLevel: newLevel,
+        nextReviewDate: getNextReviewDate(newLevel),
+        timesReviewed: w.timesReviewed + 1,
+        timesCorrect: correct ? w.timesCorrect + 1 : w.timesCorrect,
+        lastReviewedAt: new Date().toISOString(),
+      };
+    }));
   }, []);
 
   const getWordsForReview = useCallback((): VocabularyWord[] => {
-    const now = Date.now();
-    return words.filter((w) => (w.nextReviewAt ?? 0) <= now);
+    const now = new Date();
+    return words
+      .filter(w => new Date(w.nextReviewDate) <= now)
+      .sort((a, b) => a.masteryLevel - b.masteryLevel);
   }, [words]);
 
   const getStats = useCallback(() => {
     const total = words.length;
-    const mastered = words.filter((w) => w.masteryLevel >= 5).length;
-    const now = Date.now();
-    const dueForReview = words.filter((w) => (w.nextReviewAt ?? 0) <= now).length;
-    return { total, mastered, dueForReview };
+    const mastered = words.filter(w => w.masteryLevel >= 4).length;
+    const learning = words.filter(w => w.masteryLevel > 0 && w.masteryLevel < 4).length;
+    const newCount = words.filter(w => w.masteryLevel === 0).length;
+    const dueForReview = words.filter(w => new Date(w.nextReviewDate) <= new Date()).length;
+    return { total, mastered, learning, newCount, dueForReview };
   }, [words]);
 
-  return useMemo(
-    () => ({ words, addWord, deleteWord, updateMastery, getWordsForReview, getStats }),
-    [words, addWord, deleteWord, updateMastery, getWordsForReview, getStats],
-  );
+  return { words, addWord, deleteWord, updateMastery, getWordsForReview, getStats };
 }
