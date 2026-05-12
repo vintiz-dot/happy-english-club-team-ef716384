@@ -5,6 +5,11 @@
  * return an interleaved, deduplicated result set. The frontend renders the
  * returned images with strict lazy loading.
  *
+ * Read-through cache: the merged result for each normalized query is
+ * persisted to `vocab_image_cache` for 30 days. On cache hit we skip every
+ * provider call entirely (zero external latency, zero quota burn). The
+ * single-provider diagnostic path bypasses the cache.
+ *
  * Providers, in interleave priority:
  *   1. Pixabay     (kid-friendly stock photos + illustrations)
  *   2. Pexels      (high-quality stock photos)
@@ -16,15 +21,19 @@
  * fan-out; we simply skip that provider. Unsplash errors are logged at info
  * level only, per product requirement.
  *
- * Input:  { query: string, count?: number, provider?: ProviderName }
+ * Input:  { query: string, count?: number, provider?: ProviderName,
+ *           skip_cache?: boolean }
  *         When `provider` is set we short-circuit to just that provider
  *         (legacy "test single provider" path).
  *
  * Output: { images: Array<{url, thumb, thumbnail, alt, source}>,
- *           source: "merged"|ProviderName|"none",
+ *           source: "merged"|ProviderName|"cache"|"none",
  *           counts: Record<ProviderName, number>,
+ *           cached?: boolean,
  *           message?: string }
  */
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -214,6 +223,17 @@ function interleave(buckets: ImageResult[][]): ImageResult[] {
   return out;
 }
 
+function getDbClient(): ReturnType<typeof createClient> | null {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return null;
+  try {
+    return createClient(url, key);
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -229,12 +249,14 @@ Deno.serve(async (req) => {
     const query = String(body.query ?? body.word ?? "").trim();
     const requestedProvider = body.provider as ProviderName | undefined;
     const perProvider = Math.min(Math.max(Number(body.count) || 4, 1), 8);
+    const skipCache = body.skip_cache === true;
 
     if (!query) {
       return respond({ error: "query is required", images: [], source: "none" }, 400);
     }
 
     // Single-provider short-circuit (admin diagnostic only — UI no longer uses it).
+    // Cache is bypassed here so we genuinely test the provider.
     if (requestedProvider) {
       const provider = PROVIDERS.find((p) => p.name === requestedProvider);
       if (!provider) {
@@ -248,6 +270,32 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── Read-through cache lookup ──────────────────────────────────────
+    const cacheKey = query.toLowerCase();
+    const db = getDbClient();
+    if (db && !skipCache) {
+      try {
+        const { data: cached } = await db
+          .from("vocab_image_cache")
+          .select("images, counts, expires_at")
+          .eq("query", cacheKey)
+          .maybeSingle();
+        if (cached && Array.isArray(cached.images) && cached.images.length > 0) {
+          const expired = cached.expires_at && new Date(cached.expires_at as string).getTime() < Date.now();
+          if (!expired) {
+            return respond({
+              images: cached.images,
+              source: "cache",
+              counts: (cached.counts as Record<ProviderName, number>) || {},
+              cached: true,
+            });
+          }
+        }
+      } catch (e) {
+        console.warn("image-search: cache read failed (continuing to providers):", (e as Error)?.message);
+      }
+    }
+
     // Parallel fan-out across all providers.
     const settled = await Promise.allSettled(
       PROVIDERS.map((p) => p.fn(query, perProvider)),
@@ -258,10 +306,28 @@ Deno.serve(async (req) => {
     ) as Record<ProviderName, number>;
     const images = interleave(buckets);
 
+    // Persist non-empty merged results so the next caller skips the fan-out.
+    if (db && images.length > 0) {
+      db.from("vocab_image_cache")
+        .upsert(
+          {
+            query: cacheKey,
+            images,
+            counts,
+            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          },
+          { onConflict: "query" },
+        )
+        .then(({ error }) => {
+          if (error) console.warn("vocab_image_cache upsert:", error.message);
+        });
+    }
+
     return respond({
       images,
       source: images.length ? "merged" : "none",
       counts,
+      cached: false,
       ...(images.length ? {} : { message: "all image providers returned no results" }),
     });
   } catch (error) {
