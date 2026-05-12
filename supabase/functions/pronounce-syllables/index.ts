@@ -1,34 +1,26 @@
 /**
- * pronounce-syllables Edge Function
- * ===================================
- * Given an English word, returns:
- *   - the orthographic syllabification (e.g. "impact" → ["im", "pact"])
- *   - an MP3 (base64) where Azure TTS pronounces the whole word, then each
- *     syllable separately with breaks, then the whole word again.
+ * pronounce-word Edge Function (legacy path: pronounce-syllables)
+ * ================================================================
+ * Returns a single, natural Azure TTS rendering of a word — the previous
+ * syllable-chunked output produced unnatural, robotic pronunciation and is
+ * removed in favour of one clean utterance.
  *
- * Implementation notes (deviation from handoff):
- *   The handoff describes bundling the full CMU Pronouncing Dictionary
- *   (~3MB JSON) and a Hypher fallback for syllabification. Loading a 3MB
- *   dictionary on every cold start of an edge function is not viable, and
- *   `npm:hyphen` / `npm:hypher` packages don't all import cleanly in Deno
- *   without esm shims that bloat cold-start further. So we use an inline
- *   rule-based English syllabifier that:
- *     - counts vowel groups for syllable count
- *     - splits between consonants between vowels (VCCV → VC|CV)
- *     - keeps common digraphs (ch/sh/th/ph/wh/gh/ck) intact
- *     - keeps common initial consonant blends together (bl, br, cl, ...)
- *   This handles 90%+ of common English words. If syllabification fails,
- *   we fall back to [word] as a single syllable.
+ * The function still ships an orthographic syllabification for visual
+ * display (the chip row in WordExplorer) but the audio is one continuous
+ * "say the word, brief pause, repeat slowly for emphasis" track using
+ * Azure Speech Services' neural voice via the REST endpoint.
  *
- * Input:  { word: string, voice?: string }
+ * Endpoint name remains `pronounce-syllables` so existing Lovable
+ * deployments continue to work without re-routing.
+ *
+ * Input:  { word: string, voice?: string, slow?: boolean }
  * Output: { audioBase64: string,
  *           mime: "audio/mpeg",
- *           syllables: string[],
+ *           syllables: string[],     // for display only
  *           duration: number,
  *           word: string }
  *
- * Secrets required:
- *   azure_key — Azure Speech Services subscription key
+ * Secrets required: azure_key
  */
 
 const corsHeaders = {
@@ -40,107 +32,68 @@ const corsHeaders = {
 const AZURE_REGION = "southeastasia";
 const DEFAULT_VOICE = "en-US-AvaMultilingualNeural";
 
-// ─── Syllabifier ─────────────────────────────────────────────────────────
-
+// ─── Lightweight orthographic syllabifier — used only for the visual chip row. ──
 const VOWELS = new Set("aeiouy");
-const DIGRAPHS = new Set([
-  "ch", "sh", "th", "ph", "wh", "gh", "ck", "ng", "qu",
-]);
+const DIGRAPHS = new Set(["ch", "sh", "th", "ph", "wh", "gh", "ck", "ng", "qu"]);
 const ONSET_BLENDS = new Set([
   "bl", "br", "cl", "cr", "dr", "fl", "fr", "gl", "gr", "pl", "pr",
   "sc", "sk", "sl", "sm", "sn", "sp", "st", "sw", "tr", "tw",
   "scr", "spl", "spr", "str", "thr", "shr",
 ]);
 
-/** Count vowel groups in a word — a rough proxy for syllable count. */
 function countSyllableNuclei(word: string): number {
   const w = word.toLowerCase();
   let count = 0;
   let inVowel = false;
   for (let i = 0; i < w.length; i++) {
     const isVowel = VOWELS.has(w[i]);
-    // Silent trailing "e" — don't count if it's the only vowel block at end.
-    if (isVowel && !inVowel) {
-      count++;
-      inVowel = true;
-    } else if (!isVowel) {
-      inVowel = false;
-    }
+    if (isVowel && !inVowel) { count++; inVowel = true; }
+    else if (!isVowel) inVowel = false;
   }
-  // Silent-e adjustment: "cake" → 1 syllable, not 2.
-  if (count > 1 && w.endsWith("e") && !VOWELS.has(w[w.length - 2])) {
-    // Only strip if the e is preceded by a consonant and there's a vowel earlier.
-    count--;
-  }
+  if (count > 1 && w.endsWith("e") && !VOWELS.has(w[w.length - 2])) count--;
   return Math.max(1, count);
 }
 
-/**
- * Split `word` into approximately `targetCount` syllables using simple
- * orthographic rules. Returns at most `targetCount` chunks, always covering
- * the full word.
- */
 function splitOrthographic(word: string, targetCount: number): string[] {
   if (targetCount <= 1 || word.length <= 2) return [word];
   const w = word.toLowerCase();
-  const breaks: number[] = []; // candidate break indices (a break BEFORE index i)
-
+  const breaks: number[] = [];
   for (let i = 1; i < w.length - 1; i++) {
     const prev = w[i - 1];
     const cur = w[i];
     const next = w[i + 1];
-    const prev2 = i >= 2 ? w[i - 2] : "";
+    if (DIGRAPHS.has(prev + cur) || DIGRAPHS.has(cur + next)) continue;
     const isPrevVowel = VOWELS.has(prev);
     const isCurVowel = VOWELS.has(cur);
     const isNextVowel = VOWELS.has(next);
-
-    // Don't split inside common digraphs.
-    if (DIGRAPHS.has(prev + cur)) continue;
-    if (DIGRAPHS.has(cur + next)) continue;
-
     if (isPrevVowel && !isCurVowel && isNextVowel) {
-      // VCV → break before C (open syllable) only if prev letter is part of a vowel cluster
       breaks.push(i);
     } else if (isPrevVowel && !isCurVowel && !isNextVowel && i + 2 < w.length && VOWELS.has(w[i + 2])) {
-      // VCCV → break between consonants, but keep onset blends/digraphs together on the right.
       const rightOnset = cur + next;
-      if (ONSET_BLENDS.has(rightOnset) || DIGRAPHS.has(rightOnset)) {
-        breaks.push(i); // break before the blend
-      } else {
-        breaks.push(i + 1); // break between the consonants
-      }
-    } else if (isPrevVowel && !isCurVowel && !isNextVowel && !VOWELS.has(prev2)) {
-      // VCCC...V — keep simple, break after first consonant
-      if (i + 1 < w.length) breaks.push(i + 1);
+      if (ONSET_BLENDS.has(rightOnset) || DIGRAPHS.has(rightOnset)) breaks.push(i);
+      else breaks.push(i + 1);
     }
   }
-
-  // Deduplicate + sort + cap to (targetCount - 1) breaks.
-  const uniqueBreaks = Array.from(new Set(breaks)).sort((a, b) => a - b);
-  const chosen = uniqueBreaks.slice(0, Math.max(0, targetCount - 1));
-
-  if (chosen.length === 0) return [word];
-
+  const uniqueBreaks = Array.from(new Set(breaks)).sort((a, b) => a - b)
+    .slice(0, Math.max(0, targetCount - 1));
+  if (uniqueBreaks.length === 0) return [word];
   const out: string[] = [];
   let prev = 0;
-  for (const b of chosen) {
+  for (const b of uniqueBreaks) {
     if (b <= prev) continue;
     out.push(word.slice(prev, b));
     prev = b;
   }
   out.push(word.slice(prev));
-  // Drop accidental empty/whitespace pieces and ensure they reconstruct to word.
   const cleaned = out.filter((s) => s.trim().length > 0);
-  if (cleaned.join("") !== word) return [word];
-  return cleaned;
+  return cleaned.join("") === word ? cleaned : [word];
 }
 
 function syllabify(word: string): string[] {
   const trimmed = word.trim();
   if (!trimmed) return [];
-  if (!/^[A-Za-z'-]+$/.test(trimmed)) return [trimmed]; // multi-word or unusual input
-  const n = countSyllableNuclei(trimmed);
-  return splitOrthographic(trimmed, n);
+  if (!/^[A-Za-z'-]+$/.test(trimmed)) return [trimmed];
+  return splitOrthographic(trimmed, countSyllableNuclei(trimmed));
 }
 
 // ─── Azure REST TTS ──────────────────────────────────────────────────────
@@ -154,21 +107,25 @@ function escapeXml(s: string): string {
     .replace(/'/g, "&apos;");
 }
 
-function buildSsml(word: string, syllables: string[], voice: string): string {
-  const safeWord = escapeXml(word);
-  const sylBlocks = syllables
-    .map((s) => `${escapeXml(s)}<break time="400ms"/>`)
-    .join("");
+/**
+ * Build SSML for a clear, kid-friendly single utterance.
+ * - says the word at a slightly slowed rate for clarity
+ * - 500ms pause
+ * - says it again at slightly slower rate for emphasis (helps learners)
+ * No syllable chunking — the neural voice handles natural prosody.
+ */
+function buildSsml(word: string, voice: string, slow: boolean): string {
+  const safe = escapeXml(word);
+  const firstRate = slow ? "-25%" : "-10%";
+  const secondRate = slow ? "-35%" : "-20%";
   return (
-    `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" ` +
-    `xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US">` +
-    `<voice name="${voice}">` +
-    `<prosody rate="-10%">${safeWord}</prosody>` +
-    `<break time="600ms"/>` +
-    `<prosody rate="-25%">${sylBlocks}</prosody>` +
-    `<break time="600ms"/>` +
-    `<prosody rate="-10%">${safeWord}</prosody>` +
-    `</voice></speak>`
+    `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">` +
+      `<voice name="${voice}">` +
+        `<prosody rate="${firstRate}">${safe}</prosody>` +
+        `<break time="500ms"/>` +
+        `<prosody rate="${secondRate}">${safe}</prosody>` +
+      `</voice>` +
+    `</speak>`
   );
 }
 
@@ -185,15 +142,12 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
-// ─── HTTP handler ────────────────────────────────────────────────────────
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-
   try {
-    const { word, voice } = await req.json();
+    const { word, voice, slow } = await req.json();
     if (!word || typeof word !== "string") {
       return new Response(
         JSON.stringify({ error: "word is required" }),
@@ -204,12 +158,6 @@ Deno.serve(async (req) => {
     const cleanWord = word.trim();
     const selectedVoice = (typeof voice === "string" && voice.trim()) || DEFAULT_VOICE;
     const syllables = syllabify(cleanWord);
-    if (syllables.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "could not syllabify word" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
 
     const azureKey = Deno.env.get("azure_key");
     if (!azureKey) {
@@ -219,7 +167,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const ssml = buildSsml(cleanWord, syllables, selectedVoice);
+    const ssml = buildSsml(cleanWord, selectedVoice, !!slow);
     const ttsUrl = `https://${AZURE_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`;
     const ttsRes = await fetch(ttsUrl, {
       method: "POST",
@@ -243,7 +191,6 @@ Deno.serve(async (req) => {
 
     const audioBuffer = await ttsRes.arrayBuffer();
     const audioBase64 = arrayBufferToBase64(audioBuffer);
-    // 48 kbps mp3 → duration ms = bytes * 8 / 48000 * 1000
     const duration = Math.round((audioBuffer.byteLength * 8) / 48000 * 1000);
 
     return new Response(

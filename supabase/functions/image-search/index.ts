@@ -1,21 +1,29 @@
 /**
  * image-search Edge Function
  * ============================
- * Multi-provider image search with a sequential fallback chain. Returns the
- * first provider that yields >= 1 image. Each provider call has a 5s timeout
- * and is wrapped so individual failures don't abort the chain.
+ * Fan-out image search across every configured provider in parallel and
+ * return an interleaved, deduplicated result set. The frontend renders the
+ * returned images with strict lazy loading.
  *
- * Input:  { query: string }
- *         (the legacy `provider` and `count` fields are still accepted for
- *          test-button compatibility but only `provider` short-circuits the
- *          chain to a single provider.)
+ * Providers, in interleave priority:
+ *   1. Pixabay     (kid-friendly stock photos + illustrations)
+ *   2. Pexels      (high-quality stock photos)
+ *   3. Wikimedia   (free, factual reference imagery)
+ *   4. Google CSE  (broad coverage)
+ *   5. Unsplash    (failure-tolerant — silenced)
+ *
+ * Each provider call has a 5s timeout. Individual failures never abort the
+ * fan-out; we simply skip that provider. Unsplash errors are logged at info
+ * level only, per product requirement.
+ *
+ * Input:  { query: string, count?: number, provider?: ProviderName }
+ *         When `provider` is set we short-circuit to just that provider
+ *         (legacy "test single provider" path).
  *
  * Output: { images: Array<{url, thumb, thumbnail, alt, source}>,
- *           source: "pixabay"|"pexels"|"wikimedia"|"google"|"unsplash"|"none",
+ *           source: "merged"|ProviderName|"none",
+ *           counts: Record<ProviderName, number>,
  *           message?: string }
- *
- * Secrets used (set on the Supabase project):
- *   Pixabay_API, Pexels_API, GOOGLE_CSE_API_KEY, GOOGLE_CSE_ID, unsplash_api
  */
 
 const corsHeaders = {
@@ -29,7 +37,7 @@ type ProviderName = "pixabay" | "pexels" | "wikimedia" | "google" | "unsplash";
 interface ImageResult {
   url: string;
   thumb: string;
-  thumbnail: string; // back-compat alias for existing frontend
+  thumbnail: string;
   alt: string;
   source: ProviderName;
 }
@@ -45,20 +53,20 @@ async function safeFetch(
     const res = await fetch(url, { ...init, signal: ctrl.signal });
     if (!res.ok) return null;
     return res;
-  } catch (_e) {
+  } catch {
     return null;
   } finally {
     clearTimeout(timer);
   }
 }
 
-async function fetchPixabay(query: string): Promise<ImageResult[]> {
+async function fetchPixabay(query: string, perPage: number): Promise<ImageResult[]> {
   const key = Deno.env.get("Pixabay_API");
   if (!key) return [];
   const url =
     `https://pixabay.com/api/?key=${encodeURIComponent(key)}` +
     `&q=${encodeURIComponent(query)}` +
-    `&image_type=photo,illustration&safesearch=true&per_page=6&lang=en`;
+    `&image_type=photo,illustration&safesearch=true&per_page=${perPage}&lang=en`;
   const res = await safeFetch(url);
   if (!res) { console.warn("pixabay: failed or timed out"); return []; }
   try {
@@ -74,11 +82,10 @@ async function fetchPixabay(query: string): Promise<ImageResult[]> {
   } catch { return []; }
 }
 
-async function fetchPexels(query: string): Promise<ImageResult[]> {
+async function fetchPexels(query: string, perPage: number): Promise<ImageResult[]> {
   const key = Deno.env.get("Pexels_API");
   if (!key) return [];
-  const url =
-    `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=6`;
+  const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${perPage}`;
   const res = await safeFetch(url, { headers: { Authorization: key } });
   if (!res) { console.warn("pexels: failed or timed out"); return []; }
   try {
@@ -94,11 +101,11 @@ async function fetchPexels(query: string): Promise<ImageResult[]> {
   } catch { return []; }
 }
 
-async function fetchWikimedia(query: string): Promise<ImageResult[]> {
+async function fetchWikimedia(query: string, perPage: number): Promise<ImageResult[]> {
   const url =
     `https://commons.wikimedia.org/w/api.php?action=query&format=json` +
     `&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(query)}` +
-    `&gsrlimit=6&prop=imageinfo&iiprop=url|mime&iiurlwidth=320&origin=*`;
+    `&gsrlimit=${perPage}&prop=imageinfo&iiprop=url|mime&iiurlwidth=320&origin=*`;
   const res = await safeFetch(url);
   if (!res) { console.warn("wikimedia: failed or timed out"); return []; }
   try {
@@ -114,7 +121,7 @@ async function fetchWikimedia(query: string): Promise<ImageResult[]> {
           url: info.url || "",
           thumb: info.thumburl || info.url || "",
           thumbnail: info.thumburl || info.url || "",
-          alt: String(p.title || query).replace(/^File:/, ""),
+          alt: String(p.title || query).replace(/^File:/, "").replace(/\.[a-z]+$/i, ""),
           source: "wikimedia" as const,
         };
       })
@@ -122,13 +129,13 @@ async function fetchWikimedia(query: string): Promise<ImageResult[]> {
   } catch { return []; }
 }
 
-async function fetchGoogleCSE(query: string): Promise<ImageResult[]> {
+async function fetchGoogleCSE(query: string, perPage: number): Promise<ImageResult[]> {
   const key = Deno.env.get("GOOGLE_CSE_API_KEY");
   const cx = Deno.env.get("GOOGLE_CSE_ID");
   if (!key || !cx) return [];
   const url =
     `https://www.googleapis.com/customsearch/v1` +
-    `?q=${encodeURIComponent(query)}&searchType=image&num=6&safe=active` +
+    `?q=${encodeURIComponent(query)}&searchType=image&num=${perPage}&safe=active` +
     `&cx=${encodeURIComponent(cx)}&key=${encodeURIComponent(key)}`;
   const res = await safeFetch(url);
   if (!res) { console.warn("google CSE: failed or timed out"); return []; }
@@ -145,17 +152,15 @@ async function fetchGoogleCSE(query: string): Promise<ImageResult[]> {
   } catch { return []; }
 }
 
-async function fetchUnsplash(query: string): Promise<ImageResult[]> {
-  // Unsplash MUST fail silently per spec — never bubble errors, log as info.
+async function fetchUnsplash(query: string, perPage: number): Promise<ImageResult[]> {
+  // Silenced on any error per spec.
   const key = Deno.env.get("unsplash_api");
   if (!key) return [];
   try {
     const url =
       `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}` +
-      `&per_page=6&content_filter=high`;
-    const res = await safeFetch(url, {
-      headers: { Authorization: `Client-ID ${key}` },
-    });
+      `&per_page=${perPage}&content_filter=high`;
+    const res = await safeFetch(url, { headers: { Authorization: `Client-ID ${key}` } });
     if (!res) { console.info("unsplash: failed or timed out (silenced)"); return []; }
     const data = await res.json();
     const results: any[] = Array.isArray(data.results) ? data.results : [];
@@ -172,9 +177,9 @@ async function fetchUnsplash(query: string): Promise<ImageResult[]> {
   }
 }
 
-const PROVIDER_ORDER: Array<{
+const PROVIDERS: Array<{
   name: ProviderName;
-  fn: (q: string) => Promise<ImageResult[]>;
+  fn: (q: string, n: number) => Promise<ImageResult[]>;
 }> = [
   { name: "pixabay",   fn: fetchPixabay },
   { name: "pexels",    fn: fetchPexels },
@@ -183,11 +188,36 @@ const PROVIDER_ORDER: Array<{
   { name: "unsplash",  fn: fetchUnsplash },
 ];
 
+/**
+ * Round-robin interleave so the carousel doesn't show 6 Pixabay photos
+ * before any Pexels one. Order within each provider's slot is preserved.
+ */
+function interleave(buckets: ImageResult[][]): ImageResult[] {
+  const out: ImageResult[] = [];
+  const seen = new Set<string>();
+  let i = 0;
+  let added = true;
+  while (added) {
+    added = false;
+    for (const bucket of buckets) {
+      const candidate = bucket[i];
+      if (!candidate) continue;
+      // De-dupe by URL.
+      const k = candidate.url;
+      if (seen.has(k)) { added = true; continue; }
+      seen.add(k);
+      out.push(candidate);
+      added = true;
+    }
+    i++;
+  }
+  return out;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-
   const respond = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
       status,
@@ -198,34 +228,42 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const query = String(body.query ?? body.word ?? "").trim();
     const requestedProvider = body.provider as ProviderName | undefined;
+    const perProvider = Math.min(Math.max(Number(body.count) || 4, 1), 8);
 
     if (!query) {
       return respond({ error: "query is required", images: [], source: "none" }, 400);
     }
 
-    // Legacy "test single provider" path used by the Vocabulary page test buttons.
+    // Single-provider short-circuit (admin diagnostic only — UI no longer uses it).
     if (requestedProvider) {
-      const provider = PROVIDER_ORDER.find((p) => p.name === requestedProvider);
+      const provider = PROVIDERS.find((p) => p.name === requestedProvider);
       if (!provider) {
         return respond({ images: [], source: "none", message: `unknown provider: ${requestedProvider}` });
       }
-      const images = await provider.fn(query);
+      const images = await provider.fn(query, perProvider);
       return respond({
         images,
         source: images.length ? provider.name : "none",
-        ...(images.length ? {} : { message: `${provider.name} returned no images` }),
+        counts: { [provider.name]: images.length },
       });
     }
 
-    // Sequential fallback chain — first non-empty wins.
-    for (const { name, fn } of PROVIDER_ORDER) {
-      const images = await fn(query);
-      if (images.length > 0) {
-        return respond({ images, source: name });
-      }
-    }
+    // Parallel fan-out across all providers.
+    const settled = await Promise.allSettled(
+      PROVIDERS.map((p) => p.fn(query, perProvider)),
+    );
+    const buckets = settled.map((r) => (r.status === "fulfilled" ? r.value : []));
+    const counts = Object.fromEntries(
+      PROVIDERS.map((p, idx) => [p.name, buckets[idx].length]),
+    ) as Record<ProviderName, number>;
+    const images = interleave(buckets);
 
-    return respond({ images: [], source: "none", message: "all image providers failed" });
+    return respond({
+      images,
+      source: images.length ? "merged" : "none",
+      counts,
+      ...(images.length ? {} : { message: "all image providers returned no results" }),
+    });
   } catch (error) {
     console.error("image-search unexpected error:", error);
     return respond({ images: [], source: "none", message: "unexpected error" });
