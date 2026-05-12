@@ -65,3 +65,9 @@ verify_jwt = false
 
 [functions.word-enrichment]
 verify_jwt = false
+
+[functions.save-word]
+verify_jwt = false
+
+[functions.record-practice]
+verify_jwt = false

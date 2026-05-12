@@ -2652,6 +2652,87 @@ export type Database = {
           },
         ]
       }
+      student_vocabulary_entries: {
+        Row: {
+          cefr: string | null
+          class_id: string | null
+          created_at: string
+          definition_en: string | null
+          definition_vi: string | null
+          enrichment: Json | null
+          id: string
+          image_url: string | null
+          last_reviewed_at: string | null
+          mastery_level: number
+          next_review_date: string
+          root_word: string
+          student_id: string | null
+          times_correct: number
+          times_reviewed: number
+          updated_at: string
+          user_examples: Json
+          user_id: string
+          word: string
+        }
+        Insert: {
+          cefr?: string | null
+          class_id?: string | null
+          created_at?: string
+          definition_en?: string | null
+          definition_vi?: string | null
+          enrichment?: Json | null
+          id?: string
+          image_url?: string | null
+          last_reviewed_at?: string | null
+          mastery_level?: number
+          next_review_date?: string
+          root_word: string
+          student_id?: string | null
+          times_correct?: number
+          times_reviewed?: number
+          updated_at?: string
+          user_examples?: Json
+          user_id: string
+          word: string
+        }
+        Update: {
+          cefr?: string | null
+          class_id?: string | null
+          created_at?: string
+          definition_en?: string | null
+          definition_vi?: string | null
+          enrichment?: Json | null
+          id?: string
+          image_url?: string | null
+          last_reviewed_at?: string | null
+          mastery_level?: number
+          next_review_date?: string
+          root_word?: string
+          student_id?: string | null
+          times_correct?: number
+          times_reviewed?: number
+          updated_at?: string
+          user_examples?: Json
+          user_id?: string
+          word?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_vocabulary_entries_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_vocabulary_entries_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           avatar_url: string | null
@@ -2980,6 +3061,54 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      vocab_activity_log: {
+        Row: {
+          activity_type: string
+          class_id: string | null
+          created_at: string
+          id: string
+          points_awarded: number
+          student_id: string | null
+          user_id: string
+          word: string | null
+        }
+        Insert: {
+          activity_type: string
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          points_awarded?: number
+          student_id?: string | null
+          user_id: string
+          word?: string | null
+        }
+        Update: {
+          activity_type?: string
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          points_awarded?: number
+          student_id?: string | null
+          user_id?: string
+          word?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vocab_activity_log_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vocab_activity_log_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vocab_cache: {
         Row: {
