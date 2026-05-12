@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { GraduationCap, Sparkles, Lock, Mail } from "lucide-react";
+import { GraduationCap, Sparkles, Lock, Mail, Eye, EyeOff, Rocket, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 type AuthMode = "login" | "signup" | "forgot";
@@ -24,6 +24,7 @@ const Auth = () => {
   const [showBootstrap, setShowBootstrap] = useState(false);
   const [checkingAdmins, setCheckingAdmins] = useState(true);
   const [bootstrapping, setBootstrapping] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -241,16 +242,26 @@ const Auth = () => {
                   <Lock className="h-4 w-4 text-primary" />
                   Password
                 </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="glass border-primary/20 focus:border-primary transition-all duration-300 h-11"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="glass border-primary/20 focus:border-primary transition-all duration-300 h-11 pr-11"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
             )}
 
