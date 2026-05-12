@@ -105,6 +105,7 @@ function AppContent() {
                 <Route path="/student/dashboard" element={<StudentDashboard />} />
                 <Route path="/student/assignments" element={<StudentAssignments />} />
                 <Route path="/student/journal" element={<StudentJournal />} />
+                <Route path="/student/games" element={<StudentGames />} />
 
                 {/* Shared routes */}
                 <Route path="/schedule" element={<Schedule />} />
