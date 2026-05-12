@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { GraduationCap, Sparkles, Lock, Mail } from "lucide-react";
+import { GraduationCap, Sparkles, Lock, Mail, Eye, EyeOff, Rocket, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 type AuthMode = "login" | "signup" | "forgot";
@@ -24,6 +24,7 @@ const Auth = () => {
   const [showBootstrap, setShowBootstrap] = useState(false);
   const [checkingAdmins, setCheckingAdmins] = useState(true);
   const [bootstrapping, setBootstrapping] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -171,7 +172,36 @@ const Auth = () => {
       <div className="absolute top-20 left-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
       <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
       
-      <Card className="glass-premium w-full max-w-md border-0 shadow-2xl relative z-10 overflow-hidden backdrop-blur-xl">
+      <div className="w-full max-w-md relative z-10 space-y-4">
+        {/* Kid-friendly upgrade banner */}
+        <a
+          href="https://user.hanoienglish.vip/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group block relative overflow-hidden rounded-3xl p-[3px] bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 shadow-[0_10px_40px_-12px_rgba(236,72,153,0.6)] hover:shadow-[0_15px_55px_-10px_rgba(236,72,153,0.75)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.99]"
+        >
+          <div className="rounded-[calc(1.5rem-3px)] bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 px-5 py-4 text-white">
+            <div className="flex items-center gap-3">
+              <div className="shrink-0 bg-yellow-300 text-purple-700 rounded-2xl p-2.5 shadow-lg group-hover:rotate-[-8deg] transition-transform">
+                <Rocket className="h-6 w-6" strokeWidth={2.5} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-yellow-200">
+                  <Sparkles className="h-3.5 w-3.5" /> New & Better!
+                </div>
+                <p className="text-base sm:text-lg font-extrabold leading-tight">
+                  Try our brand-new website! 🎉
+                </p>
+                <p className="text-xs sm:text-sm text-white/90 mt-0.5">
+                  Use your <span className="font-bold underline decoration-yellow-300 decoration-2">same username & password</span> to log in.
+                </p>
+              </div>
+              <ArrowRight className="h-5 w-5 shrink-0 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+        </a>
+
+      <Card className="glass-premium w-full border-0 shadow-2xl overflow-hidden backdrop-blur-xl">
         {/* Glossy overlay effect */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none"></div>
         
@@ -241,16 +271,26 @@ const Auth = () => {
                   <Lock className="h-4 w-4 text-primary" />
                   Password
                 </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="glass border-primary/20 focus:border-primary transition-all duration-300 h-11"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="glass border-primary/20 focus:border-primary transition-all duration-300 h-11 pr-11"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -351,6 +391,7 @@ const Auth = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };
