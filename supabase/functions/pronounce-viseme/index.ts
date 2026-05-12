@@ -1,12 +1,12 @@
 /**
  * pronounce-viseme Edge Function
  * ================================
- * Uses the Azure Speech SDK to synthesize speech and return BOTH:
- * - audio (base64, MP3)
- * - a blend-shape animation track (Azure's 55-blendshape "FacialExpression"
- *   output, ~60 fps), aligned to the audio via audioOffset (milliseconds).
- * - visemeId (0-21): Azure's classic 2D viseme ID per phoneme, forwarded
- *   alongside blendShapes so the client can drive a lip-image overlay.
+ * Uses the Azure Cognitive Services Speech SDK (over npm) to synthesize
+ * speech AND collect viseme events (which include both the classic 2D
+ * visemeId and the 55-channel "FacialExpression" blend-shape animation
+ * frames). Visemes are NOT returned by the REST TTS endpoint — they are
+ * only delivered over the SDK's websocket transport, which is why the
+ * previous REST-only implementation always returned an empty array.
  *
  * Input:  { word: string, voice?: string, sentence?: boolean }
  * Output: {
@@ -16,11 +16,9 @@
  *   duration: number,
  *   word: string,
  * }
- *
- * Secrets required (Supabase Dashboard → Project Settings → Edge Functions → Secrets):
- *   AZURE_SPEECH_KEY    — Azure Cognitive Services Speech resource key
- *   AZURE_SPEECH_REGION — e.g. "southeastasia"
  */
+
+import * as sdk from "npm:microsoft-cognitiveservices-speech-sdk@1.40.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,16 +26,23 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// ── Azure config ─────────────────────────────────────────────────────────────
-
 const AZURE_KEY    = Deno.env.get("AZURE_SPEECH_KEY") ?? Deno.env.get("azure_key") ?? "";
 const AZURE_REGION = Deno.env.get("AZURE_SPEECH_REGION") ?? "southeastasia";
 const DEFAULT_VOICE = "en-US-AvaMultilingualNeural";
 
 interface VisemeBatch {
-  audioOffset: number;  // ms from audio start
-  visemeId: number;     // Azure's classic 2D viseme ID (0-21)
+  audioOffset: number;  // ms
+  visemeId: number;
   blendShapes: number[][];
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
 }
 
 Deno.serve(async (req) => {
@@ -49,7 +54,6 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const word: string  = (body.word  || "").trim();
     const voice: string = body.voice  || DEFAULT_VOICE;
-    const sentence      = !!body.sentence;
 
     if (!word) {
       return new Response(
@@ -65,9 +69,33 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── Build SSML ────────────────────────────────────────────────────────────
+    const speechConfig = sdk.SpeechConfig.fromSubscription(AZURE_KEY, AZURE_REGION);
+    speechConfig.speechSynthesisVoiceName = voice;
+    speechConfig.speechSynthesisOutputFormat =
+      sdk.SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3;
 
-    const textToSpeak = sentence ? word : word;
+    // Pass `null` for the audio output so the SDK doesn't try to play audio
+    // server-side; we read the bytes from the result instead.
+    const synthesizer = new sdk.SpeechSynthesizer(speechConfig, null as any);
+
+    const visemes: VisemeBatch[] = [];
+
+    synthesizer.visemeReceived = (_s: unknown, e: any) => {
+      const audioOffsetMs = Number(e.audioOffset) / 10000;
+      const visemeId = Number(e.visemeId) || 0;
+
+      let blendShapes: number[][] = [];
+      if (e.animation) {
+        try {
+          const parsed = JSON.parse(e.animation);
+          blendShapes = parsed.BlendShapes ?? parsed.blendShapes ?? [];
+        } catch (err) {
+          console.error("Failed to parse animation JSON:", err);
+        }
+      }
+
+      visemes.push({ audioOffset: audioOffsetMs, visemeId, blendShapes });
+    };
 
     const ssml = `
 <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"
@@ -75,99 +103,37 @@ Deno.serve(async (req) => {
        xml:lang="en-US">
   <voice name="${voice}">
     <mstts:viseme type="FacialExpression"/>
-    ${textToSpeak}
+    ${word}
   </voice>
 </speak>`.trim();
 
-    // ── Azure TTS REST endpoint ───────────────────────────────────────────────
-
-    // We use the REST API (not the SDK) so we can run in Deno edge runtime.
-    // The response is a multi-part WebVTT-like stream with audio + viseme events
-    // when output format includes viseme. We use OutputFormat websocket-style
-    // by requesting audio-48khz-192kbitrate-mono-mp3 + viseme via REST.
-    //
-    // Azure REST reference:
-    // https://learn.microsoft.com/azure/ai-services/speech-service/rest-text-to-speech
-
-    const ttsUrl = `https://${AZURE_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`;
-
-    const audioRes = await fetch(ttsUrl, {
-      method: "POST",
-      headers: {
-        "Ocp-Apim-Subscription-Key": AZURE_KEY,
-        "Content-Type": "application/ssml+xml",
-        "X-Microsoft-OutputFormat": "audio-48khz-192kbitrate-mono-mp3",
-        "User-Agent": "happy-english-club/1.0",
-      },
-      body: ssml,
+    const result = await new Promise<sdk.SpeechSynthesisResult>((resolve, reject) => {
+      synthesizer.speakSsmlAsync(
+        ssml,
+        (r) => { resolve(r); },
+        (err) => { reject(err); },
+      );
     });
 
-    if (!audioRes.ok) {
-      const errText = await audioRes.text().catch(() => "");
-      console.error("Azure TTS error", audioRes.status, errText);
+    try { synthesizer.close(); } catch { /* noop */ }
+
+    if (result.reason !== sdk.ResultReason.SynthesizingAudioCompleted) {
+      const details = (result as any).errorDetails || "synthesis failed";
+      console.error("Azure SDK synth failed:", details);
       return new Response(
-        JSON.stringify({ error: `Azure TTS failed: ${audioRes.status}` }),
+        JSON.stringify({ error: `Azure synthesis failed: ${details}` }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // ── Collect audio bytes ───────────────────────────────────────────────────
+    const audioBytes = new Uint8Array(result.audioData);
+    const audioBase64 = bytesToBase64(audioBytes);
+    const durationMs =
+      Number(result.audioDuration) > 0
+        ? Number(result.audioDuration) / 10000
+        : (audioBytes.byteLength / (192000 / 8)) * 1000;
 
-    const audioBuffer = await audioRes.arrayBuffer();
-    const audioBase64 = btoa(
-      String.fromCharCode(...new Uint8Array(audioBuffer))
-    );
-
-    // ── Fetch viseme events via the viseme REST endpoint ──────────────────────
-
-    // Azure's REST TTS does not return viseme events in the same response.
-    // We make a second request with output format audio-16khz-32kbitrate-mono-mp3
-    // and ask for viseme via the dedicated viseme endpoint.
-
-    const visemeUrl = `https://${AZURE_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`;
-
-    const visemeRes = await fetch(visemeUrl, {
-      method: "POST",
-      headers: {
-        "Ocp-Apim-Subscription-Key": AZURE_KEY,
-        "Content-Type": "application/ssml+xml",
-        "X-Microsoft-OutputFormat": "viseme",
-        "User-Agent": "happy-english-club/1.0",
-      },
-      body: ssml,
-    });
-
-    const visemes: VisemeBatch[] = [];
-
-    if (visemeRes.ok) {
-      const visemeText = await visemeRes.text();
-
-      // Azure returns newline-delimited JSON objects for viseme output format
-      const lines = visemeText.split("\n").filter(l => l.trim());
-
-      for (const line of lines) {
-        try {
-          const e = JSON.parse(line);
-          const audioOffsetMs = Number(e.audioOffset) / 10000;
-          const visemeId = Number(e.visemeId) || 0;
-
-          if (!e.animation) continue;
-          const parsed = JSON.parse(e.animation);
-          const rows: number[][] = parsed.BlendShapes ?? parsed.blendShapes ?? [];
-
-          if (Array.isArray(rows) && rows.length > 0) {
-            visemes.push({ audioOffset: audioOffsetMs, visemeId, blendShapes: rows });
-          }
-        } catch (err) {
-          console.error("Failed to parse viseme line:", err);
-        }
-      }
-    } else {
-      console.warn("Viseme request failed", visemeRes.status);
-    }
-
-    // Estimate duration from audio buffer size (MP3 ~192kbps)
-    const durationMs = (audioBuffer.byteLength / (192000 / 8)) * 1000;
+    console.log(`Synth ok: ${audioBytes.byteLength} bytes, ${visemes.length} viseme events`);
 
     return new Response(
       JSON.stringify({
@@ -182,7 +148,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("pronounce-viseme error:", error);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: String((error as any)?.message || error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
