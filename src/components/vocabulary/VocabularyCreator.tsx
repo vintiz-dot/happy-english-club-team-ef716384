@@ -65,7 +65,7 @@ export function VocabularyCreator({ onAddWord }: Props) {
   const [pos, setPos] = useState("noun");
   const [meaning, setMeaning] = useState("");
   const [example, setExample] = useState("");
-  const [images, setImages] = useState<{ url: string; alt: string }[]>([]);
+  const [images, setImages] = useState<{ url: string; alt: string; source?: string }[]>([]);
   const [selectedImage, setSelectedImage] = useState("");
   const [fetchingImages, setFetchingImages] = useState(false);
   const [listeningField, setListeningField] = useState<string | null>(null);
@@ -195,7 +195,7 @@ export function VocabularyCreator({ onAddWord }: Props) {
         body: { query: q, count: 12 },
       });
       if (!error && data?.images && data.images.length > 0) {
-        const imgs = data.images.map((img: any) => ({ url: img.thumbnail || img.url, alt: img.alt }));
+        const imgs = data.images.map((img: any) => ({ url: img.thumbnail || img.url, alt: img.alt, source: img.source }));
         setImages(imgs);
         setSelectedImage(imgs[0].url);
       }
