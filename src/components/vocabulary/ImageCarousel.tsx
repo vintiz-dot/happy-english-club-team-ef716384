@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
-interface ImageItem {
+export interface ImageItem {
   url: string;
   thumbnail: string;
   alt: string;
