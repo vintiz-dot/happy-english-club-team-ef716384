@@ -1965,6 +1965,36 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          cefr_level: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          school_class: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          cefr_level?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id: string
+          school_class?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          cefr_level?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          school_class?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       referral_bonuses: {
         Row: {
           cadence: Database["public"]["Enums"]["discount_cadence"]
