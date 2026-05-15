@@ -214,6 +214,9 @@ const Layout = ({ children, title }: LayoutProps) => {
         )}
         {role === "student" && <StudentNavBar />}
         <main className="container mx-auto px-4 py-4 md:py-6 lg:py-8 pb-20 md:pb-8">{children}</main>
+        {role === "student" && user && (
+          <NewSiteMigrationOverlay userId={user.id} onCompleted={() => {}} />
+        )}
       </div>
     );
   }
