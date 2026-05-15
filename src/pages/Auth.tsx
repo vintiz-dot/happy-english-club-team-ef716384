@@ -38,6 +38,19 @@ const Auth = () => {
     }
   }, [user, navigate, location]);
 
+  // Per-route SEO: distinct title + description for the sign-in page
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = "Sign in | Happy English Club";
+    const desc = document.querySelector('meta[name="description"]');
+    const prevDesc = desc?.getAttribute("content") ?? "";
+    desc?.setAttribute("content", "Sign in to Happy English Club to manage classes, attendance, homework, and student progress.");
+    return () => {
+      document.title = prevTitle;
+      desc?.setAttribute("content", prevDesc);
+    };
+  }, []);
+
   const checkForAdmins = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('manage-admin-users', {
