@@ -1,0 +1,14 @@
+# Happy English Club — Education Manager
+
+> Education management platform for Happy English Club: classes, attendance, payments, homework, leaderboards, and student vocabulary practice.
+
+Happy English Club (HEC) is an English-language school. This site is the staff, teacher, family, and student portal — most pages are gated behind authentication and only accessible to enrolled members.
+
+## Pages
+
+- [Home](/): Sign-in landing for students, families, teachers, and admins.
+- [Sign in](/auth): Authentication page for existing accounts.
+
+## Optional
+
+- [New student site](https://user.hanoienglish.vip/): Newer student-facing experience (same credentials).

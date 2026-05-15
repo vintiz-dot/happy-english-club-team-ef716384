@@ -41,6 +41,13 @@ const Layout = ({ children, title }: LayoutProps) => {
     localStorage.setItem(SIDEBAR_KEY, (!sidebarOpen).toString());
   }, [sidebarOpen]);
 
+  // Per-route SEO: keep document.title unique per page (falls back to brand)
+  useEffect(() => {
+    const prev = document.title;
+    document.title = title ? `${title} | Happy English Club` : "Happy English Club — Education Manager";
+    return () => { document.title = prev; };
+  }, [title]);
+
   useEffect(() => {
     const fetchUserInfo = async () => {
       if (!user) return;

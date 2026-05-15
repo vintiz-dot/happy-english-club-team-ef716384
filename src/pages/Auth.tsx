@@ -38,6 +38,19 @@ const Auth = () => {
     }
   }, [user, navigate, location]);
 
+  // Per-route SEO: distinct title + description for the sign-in page
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = "Sign in | Happy English Club";
+    const desc = document.querySelector('meta[name="description"]');
+    const prevDesc = desc?.getAttribute("content") ?? "";
+    desc?.setAttribute("content", "Sign in to Happy English Club to manage classes, attendance, homework, and student progress.");
+    return () => {
+      document.title = prevTitle;
+      desc?.setAttribute("content", prevDesc);
+    };
+  }, []);
+
   const checkForAdmins = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('manage-admin-users', {
@@ -167,7 +180,7 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen premium-bg flex items-center justify-center p-4 relative overflow-hidden">
+    <main className="min-h-screen premium-bg flex items-center justify-center p-4 relative overflow-hidden">
       {/* Animated floating orbs */}
       <div className="absolute top-20 left-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
       <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
@@ -392,7 +405,7 @@ const Auth = () => {
         </CardContent>
       </Card>
       </div>
-    </div>
+    </main>
   );
 };
 
