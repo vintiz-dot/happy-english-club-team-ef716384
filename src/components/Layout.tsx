@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { StudentNavBar } from "@/components/student/StudentNavBar";
 import { AdminTopBar } from "@/components/AdminTopBar";
 import { ClassroomToolsLauncher } from "@/components/classroom-tools/ClassroomToolsLauncher";
+import { NewSiteMigrationOverlay } from "@/components/migration/NewSiteMigrationOverlay";
 
 interface LayoutProps {
   children: ReactNode;
