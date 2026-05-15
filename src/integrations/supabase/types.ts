@@ -2749,8 +2749,10 @@ export type Database = {
           id: string
           is_active: boolean
           linked_user_id: string | null
+          migration_completed_at: string | null
           notes: string | null
           phone: string | null
+          secondary_user_id: string | null
           status_message: string | null
           updated_at: string
           updated_by: string | null
@@ -2767,8 +2769,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           linked_user_id?: string | null
+          migration_completed_at?: string | null
           notes?: string | null
           phone?: string | null
+          secondary_user_id?: string | null
           status_message?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -2785,8 +2789,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           linked_user_id?: string | null
+          migration_completed_at?: string | null
           notes?: string | null
           phone?: string | null
+          secondary_user_id?: string | null
           status_message?: string | null
           updated_at?: string
           updated_by?: string | null
