@@ -1,156 +1,72 @@
-# Optimize `class-leaderboard` for latency
+## Goal
 
-## Note on inventory
+Help students who forgot their password create a brand-new login (e.g. `firstname@english.com` / `1234567`) that is linked to the same student record as their old account. The old account keeps working. Shown only after a student logs in, only once, and only until they create the new account.
 
-The brief mentions 9 queries across `attendance`, `point_transactions`, `homework_submissions`. The actual file does **not** query those tables — it queries 9 times across 6 tables: `teachers`, `classes`, `sessions`, `students`, `enrollments` (×3), `families`, `student_points`. The plan below targets the real file. Confirm if a different revision was intended.
+## User flow (after a student successfully logs in)
 
-## 1. Dependency graph
+1. **Full-page overlay** appears: "Want to switch to our new website?" with a big Yes / "Not now" choice.
+   - "Not now" → dismiss for this session only (will show again on next login, since one-time = "until they create the new account").
+2. **Yes** → next screen: "Do you remember your username (email) and password?"
+   - **Yes, I remember** → close overlay, open `https://user.hanoienglish.vip/` in a new tab. Still not marked as "completed", will show again next login.
+   - **No, I forgot** → continue to step 3.
+3. **Create new account** screen:
+   - Suggested email pre-filled as `{firstname}@english.com` (lowercased, ASCII-safe slug from student's `full_name`).
+   - Student can edit the email; password is fixed at `1234567` (shown, not editable, per request).
+   - "Create my new login" button.
+4. **Backend creates the auth user**, links it to the same student record, marks the migration as completed for this student, and returns the final email.
+5. **Confirmation screen**: shows the new email + password in a large, copyable card with a "📝 Write this down somewhere safe!" warning, a Copy button, and an "Open new website" button that links to `https://user.hanoienglish.vip/`.
 
-| # | Line | Table | Filter | Depends on |
-|---|------|-------|--------|------------|
-| 1 | 56  | `teachers` | `user_id = user.id` | user, classId |
-| 2 | 65  | `classes` | `id = classId AND default_teacher_id = teacher.id` | #1 |
-| 3 | 78  | `sessions` | `class_id = classId AND teacher_id = teacher.id` | #1 |
-| 4 | 93  | `students` | `linked_user_id = user.id` | user |
-| 5 | 102 | `enrollments` | `student_id = student.id AND class_id = classId` | #4 |
-| 6 | 121 | `families` | `primary_user_id = user.id` | user |
-| 7 | 129 | `enrollments` (family) | `class_id = classId AND students.family_id = family.id` | #6 |
-| 8 | 154 | `enrollments` (main) | `class_id = classId AND end_date IS NULL` | classId only |
-| 9 | 179 | `student_points` | `class_id, month, student_id IN (...)` | #8 |
+After confirmation the overlay is dismissed permanently for that student (never shows again on this old account).
 
-Key observation: the three identity lookups (#1, #4, #6) all key off `user.id` and are independent. The main leaderboard fetch (#8) only needs `classId`, so it can run alongside auth instead of after it.
+## Technical design
 
-## 2. Wave plan
+### Database (one migration)
+
+- Add `students.secondary_user_id uuid NULL` — the new auth user that also resolves to this student.
+- Add `students.migration_completed_at timestamptz NULL` — set when the new account is created. Used to suppress the overlay forever after.
+- Update three SECURITY DEFINER helpers so the new user can also see the same student data:
+  - `can_view_student` — accept rows where `s.secondary_user_id = user_id`.
+  - `is_student_enrolled_in_class` — same OR clause.
+  - `can_view_classmate` — same OR clause on the viewer side.
+- Index: `CREATE INDEX students_secondary_user_id_idx ON students(secondary_user_id);`
+
+### Edge function: `student-create-migration-account`
+
+Service-role function (so it can call `auth.admin.createUser`). Steps:
+1. Verify caller is authenticated and the caller's `auth.uid()` matches the student's existing `linked_user_id` (so only the real student can do this for themselves).
+2. Reject if `students.migration_completed_at IS NOT NULL` (idempotent, one-time).
+3. Take the requested email; if it already exists in `auth.users`, append `2`, `3`, … until free (auto-suffix as chosen).
+4. Create the new auth user via admin API with password `1234567` and `email_confirm: true` so they can sign in immediately.
+5. Assign the `student` role in `user_roles` for the new user.
+6. Update the student row: `secondary_user_id = new_user_id`, `migration_completed_at = now()`.
+7. Return `{ email, password: "1234567" }`.
+
+Rate-limit: one successful creation per student (DB enforces via the `migration_completed_at` check).
+
+### Frontend
+
+- New component `src/components/migration/NewSiteMigrationOverlay.tsx` — the full-page multi-step flow (steps: intro → remember? → create → done).
+- Mount it inside `Layout.tsx` (or wherever the student dashboard renders) and show only when:
+  - `role === "student"` AND
+  - the student row has `migration_completed_at IS NULL` AND
+  - not dismissed for this session (`sessionStorage` flag for "Not now" / "Yes I remember").
+- Reuse the existing kid-friendly premium styling (matching the auth-page upgrade banner already in place).
+
+### Out of scope (per user's answers)
+
+- Teachers do not see this flow.
+- We are not changing the existing student auth account, just adding a second one tied to the same student.
+- We are not migrating any data — both accounts read the same student record going forward.
+
+## Files to add / change
 
 ```text
-Wave 1 (parallel, 4 queries):
-  - teachers           (#1)
-  - students           (#4)
-  - families           (#6)
-  - enrollments main   (#8)   ← speculatively prefetch; we always need it on success
-
-Wave 2 (parallel, up to 4 queries — only run the branches whose Wave 1 hit):
-  - classes            (#2)   if teacher found
-  - sessions           (#3)   if teacher found
-  - enrollments student(#5)   if student found
-  - enrollments family (#7)   if family found
-  - student_points     (#9)   uses studentIds from Wave 1's main enrollments
-
-Then: evaluate isAuthorized exactly as today; if false → 403.
-Combine + sort + rank unchanged.
+supabase/migrations/<new>.sql                              (new)
+supabase/functions/student-create-migration-account/      (new)
+src/components/migration/NewSiteMigrationOverlay.tsx      (new)
+src/components/Layout.tsx                                  (mount overlay)
 ```
 
-Notes:
-- Teacher auth originally short-circuited #2 then #3. Running both in parallel is safe — `isAuthorized` becomes `!!classData || (teacherSession?.length > 0)`, identical outcome.
-- `student_points` runs in Wave 2 alongside the secondary auth checks, hiding its latency behind them. It needs only `studentIds` from #8 (Wave 1), not auth success.
-- If `Promise.all` rejects in Wave 1 or 2, the existing `try/catch` returns the same 500. Per-query `error` fields are still inspected and logged identically (e.g. `enrollError` → 500 "Failed to fetch enrollments"; `pointsError` → log only).
-- Speculative prefetch wastes one query when auth fails, but auth failure is the rare path; the optimization targets the success path.
+## Open question
 
-## 3. Proposed diff (sketch)
-
-```ts
-// ----- Wave 1: identity lookups + main enrollments, all in parallel -----
-const [teacherRes, userStudentRes, familyRes, enrollmentsRes] = await Promise.all([
-  adminClient.from("teachers")
-    .select("id").eq("user_id", user.id).eq("is_active", true).maybeSingle(),
-  adminClient.from("students")
-    .select("id, family_id").eq("linked_user_id", user.id).maybeSingle(),
-  adminClient.from("families")
-    .select("id").eq("primary_user_id", user.id).maybeSingle(),
-  adminClient.from("enrollments")
-    .select(`id, student_id, students ( id, full_name, avatar_url )`)
-    .eq("class_id", classId).is("end_date", null),
-]);
-
-const teacher = teacherRes.data;
-const userStudent = userStudentRes.data;
-const family = familyRes.data;
-const { data: enrollments, error: enrollError } = enrollmentsRes;
-
-if (enrollError) {
-  console.error("Error fetching enrollments:", enrollError);
-  return new Response(JSON.stringify({ error: "Failed to fetch enrollments" }),
-    { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-}
-
-const studentIds = enrollments?.map(e => e.student_id) || [];
-
-// ----- Wave 2: secondary auth checks + points, all in parallel -----
-const [classRes, teacherSessionRes, studentEnrollRes, familyEnrollRes, pointsRes] =
-  await Promise.all([
-    teacher
-      ? adminClient.from("classes").select("id")
-          .eq("id", classId).eq("default_teacher_id", teacher.id).maybeSingle()
-      : Promise.resolve({ data: null }),
-    teacher
-      ? adminClient.from("sessions").select("id")
-          .eq("class_id", classId).eq("teacher_id", teacher.id).limit(1)
-      : Promise.resolve({ data: null }),
-    userStudent
-      ? adminClient.from("enrollments").select("id, end_date")
-          .eq("student_id", userStudent.id).eq("class_id", classId).limit(1)
-      : Promise.resolve({ data: null }),
-    family
-      ? adminClient.from("enrollments")
-          .select("id, student_id, end_date, students!inner(family_id)")
-          .eq("class_id", classId).eq("students.family_id", family.id).limit(1)
-      : Promise.resolve({ data: null }),
-    studentIds.length
-      ? adminClient.from("student_points")
-          .select("student_id, participation_points, homework_points, total_points")
-          .eq("class_id", classId).eq("month", month).in("student_id", studentIds)
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-
-// ----- Evaluate authorization (same logic, just no awaits) -----
-let isAuthorized = false;
-let currentStudentId: string | null = null;
-
-if (teacher) {
-  if ((classRes as any).data) isAuthorized = true;
-  if (!isAuthorized && (teacherSessionRes as any).data?.length > 0) isAuthorized = true;
-}
-if (!isAuthorized && userStudent) {
-  currentStudentId = userStudent.id;
-  const enr = (studentEnrollRes as any).data?.[0];
-  if (enr && (!enr.end_date || new Date(enr.end_date) >= new Date())) isAuthorized = true;
-}
-if (!isAuthorized && family) {
-  const enr = (familyEnrollRes as any).data?.[0];
-  if (enr && (!enr.end_date || new Date(enr.end_date) >= new Date())) {
-    isAuthorized = true;
-    currentStudentId = enr.student_id;
-  }
-}
-
-if (!isAuthorized) {
-  return new Response(JSON.stringify({ error: "Not enrolled in this class" }),
-    { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-}
-
-const { data: points, error: pointsError } = pointsRes as any;
-if (pointsError) console.error("Error fetching points:", pointsError);
-
-// ... rest (pointsMap, leaderboard map+sort+rank) is UNCHANGED
-```
-
-Behavioral notes:
-- `.single()` on auth lookups changed to `.maybeSingle()` to avoid throwing on "no rows" (current code relied on the `data` being null silently — `.single()` returns an error in PostgREST when 0 rows; pre-existing behavior is preserved by `.maybeSingle()`).
-- Sort/tie-break/rank math at lines 211–220 is untouched.
-- Response shape `{ leaderboard, currentStudentId }` unchanged.
-- Auth precedence (teacher → student → family) preserved by the if-chain even though queries run in parallel.
-
-## 4. Latency estimate
-
-Assume ~120ms per round-trip from edge runtime to Postgres.
-
-- **Before** (success path, family branch): up to 9 sequential queries → ~1,080ms.
-- **Before** (typical teacher path): 5 sequential queries → ~600ms.
-- **After**: 2 waves regardless of path → **~240ms** (~75–80% reduction on the slowest path).
-
-The unauthorized path costs one extra speculative `enrollments` fetch (~120ms wasted), which is acceptable given it's the rare case.
-
-## Out of scope
-
-- No SQL, RLS, or schema changes.
-- No edge function deployment in this plan — switch to Agent mode to apply.
+Password `1234567` is intentionally weak so kids remember it. The new site (`user.hanoienglish.vip`) presumably accepts it — confirming this is the right shared default before we ship.
