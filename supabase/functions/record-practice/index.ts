@@ -34,6 +34,7 @@ const corsHeaders = {
 };
 
 const CORRECT_POINTS = 20;
+const MAX_POINTS_PER_WORD = 30;
 
 function respond(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -61,6 +62,20 @@ async function awardVocabularyPoints(
     notes: word ? `vocab practice: ${word}` : "vocab practice",
   });
   if (error) throw error;
+}
+
+async function getWordPointsEarned(
+  sb: SupabaseClient,
+  studentId: string,
+  word: string,
+): Promise<number> {
+  const { data } = await sb
+    .from("point_transactions")
+    .select("points")
+    .eq("student_id", studentId)
+    .eq("type", "vocabulary_quiz")
+    .or(`notes.eq.vocab save: ${word},notes.eq.vocab practice: ${word}`);
+  return (data || []).reduce((sum: number, r: any) => sum + (r.points || 0), 0);
 }
 
 async function resolveStudentAndClass(
@@ -139,10 +154,15 @@ Deno.serve(async (req) => {
     const cleanWord = typeof word === "string" ? word.trim().toLowerCase() : null;
 
     let pointsAwarded = 0;
-    if (correct && studentId && chosenClassId) {
+    if (correct && studentId && chosenClassId && cleanWord) {
       try {
-        await awardVocabularyPoints(sb, studentId, chosenClassId, user_id, CORRECT_POINTS, cleanWord);
-        pointsAwarded = CORRECT_POINTS;
+        const alreadyEarned = await getWordPointsEarned(sb, studentId, cleanWord);
+        const budget = Math.max(0, MAX_POINTS_PER_WORD - alreadyEarned);
+        const pointsToAward = Math.min(CORRECT_POINTS, budget);
+        if (pointsToAward > 0) {
+          await awardVocabularyPoints(sb, studentId, chosenClassId, user_id, pointsToAward, cleanWord);
+          pointsAwarded = pointsToAward;
+        }
       } catch (e) {
         console.error("award points failed:", e);
       }

@@ -61,6 +61,7 @@ const DAILY_SAVE_LIMIT = 10;
 const COPY_THRESHOLD = 0.85;
 const MIN_TOKENS = 3;
 const SAVE_POINTS = 10;
+const MAX_POINTS_PER_WORD = 30;
 
 // ─── Anti-cheat: token-bag similarity ────────────────────────────────────
 
@@ -274,6 +275,20 @@ async function awardVocabularyPoints(
     notes: `vocab save: ${word}`,
   });
   if (error) throw error;
+}
+
+async function getWordPointsEarned(
+  sb: SupabaseClient,
+  studentId: string,
+  word: string,
+): Promise<number> {
+  const { data } = await sb
+    .from("point_transactions")
+    .select("points")
+    .eq("student_id", studentId)
+    .eq("type", "vocabulary_quiz")
+    .or(`notes.eq.vocab save: ${word},notes.eq.vocab practice: ${word}`);
+  return (data || []).reduce((sum: number, r: any) => sum + (r.points || 0), 0);
 }
 
 async function countSavesToday(
@@ -503,8 +518,13 @@ Deno.serve(async (req) => {
     let pointsAwarded = 0;
     if (!alreadySaved && studentId && chosenClassId) {
       try {
-        await awardVocabularyPoints(sb, studentId, chosenClassId, user_id, SAVE_POINTS, cleanWord);
-        pointsAwarded = SAVE_POINTS;
+        const alreadyEarned = await getWordPointsEarned(sb, studentId, cleanWord);
+        const budget = Math.max(0, MAX_POINTS_PER_WORD - alreadyEarned);
+        const pointsToAward = Math.min(SAVE_POINTS, budget);
+        if (pointsToAward > 0) {
+          await awardVocabularyPoints(sb, studentId, chosenClassId, user_id, pointsToAward, cleanWord);
+          pointsAwarded = pointsToAward;
+        }
       } catch (e) {
         console.error("award points failed:", e);
       }
