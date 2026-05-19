@@ -14,7 +14,7 @@
  */
 
 import { WorkerLinter } from "harper.js";
-import binary from "harper.js/binary";
+import { binary } from "harper.js/binary";
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
