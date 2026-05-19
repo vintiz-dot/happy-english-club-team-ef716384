@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   BookOpen, Volume2, Loader2, ArrowRightLeft, Save, CheckCircle2,
   GraduationCap, Languages, Sparkles, Image as ImageIcon, AlertTriangle, Pencil,
-  CalendarClock,
+  CalendarClock, PartyPopper, ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { getCefrLevel, type CefrLevel } from "@/lib/cefr";
+import { checkGrammar, type GrammarIssue } from "@/lib/grammarChecker";
 
 import { SentenceInput } from "./SentenceInput";
 import { WordChip } from "./WordChip";
@@ -158,6 +159,15 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
   const [saved, setSaved] = useState(false);
   const [classChoice, setClassChoice] = useState<{ open: boolean; classes: ClassOption[] } | null>(null);
 
+  // Grammar gate state
+  const [grammarChecking, setGrammarChecking] = useState(false);
+  const [grammarIssues, setGrammarIssues] = useState<GrammarIssue[]>([]);
+  const [grammarSummary, setGrammarSummary] = useState("");
+
+  // Duplicate prevention state
+  const [isDuplicate, setIsDuplicate] = useState(false);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+
   // CEFR target from profile
   const [targetCefr, setTargetCefr] = useState<CefrLevel>("A1");
 
@@ -203,6 +213,9 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
     setStudentExamples(["", "", "", ""]);
     setPickedImage(null);
     setWordLevels({});
+    setGrammarIssues([]);
+    setGrammarSummary("");
+    setIsDuplicate(false);
   }, []);
 
   // ── Word click → fetch enrichment ──
@@ -212,6 +225,9 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
     setEnrichment(null);
     setPronunciation(null);
     setEnrichmentLoading(true);
+    setGrammarIssues([]);
+    setGrammarSummary("");
+    setIsDuplicate(false);
     setSaved(false);
     setStudentExamples(["", "", "", ""]);
     setPickedImage(null);
@@ -236,6 +252,24 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
       const levelForChip = payload.cefr || payload.level;
       if (levelForChip) {
         setWordLevels((prev) => ({ ...prev, [word.toLowerCase()]: levelForChip }));
+      }
+
+      // ── Duplicate check ──
+      if (user?.id) {
+        setCheckingDuplicate(true);
+        try {
+          const { data: existing } = await (supabase as any)
+            .from("student_vocabulary_entries")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("word", word.toLowerCase())
+            .maybeSingle();
+          setIsDuplicate(!!existing);
+        } catch {
+          setIsDuplicate(false);
+        } finally {
+          setCheckingDuplicate(false);
+        }
       }
     } catch (err: any) {
       console.error("Enrichment fetch error:", err);
@@ -315,12 +349,59 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
   // ── Save flow ──
   const performSave = useCallback(async (classIdOverride?: string) => {
     if (!enrichment || !activeWord || !user?.id) return;
+
+    // ── Duplicate gate (belt-and-suspenders) ──
+    if (isDuplicate) {
+      toast({
+        title: "🎉 You already have this word!",
+        description: `"${enrichment.root_word}" is already in your Word Bank. Great job learning it!`,
+      });
+      return;
+    }
+
+    // ── Harper grammar gate ──
+    const validExamples = studentExamples
+      .map((e) => e.trim())
+      .filter((e, idx) => e && exampleStatuses[idx] === "ok");
+
+    if (validExamples.length > 0) {
+      setGrammarChecking(true);
+      setGrammarIssues([]);
+      setGrammarSummary("");
+      try {
+        // Check all valid examples through Harper
+        let allIssues: GrammarIssue[] = [];
+        for (const ex of validExamples) {
+          const result = await checkGrammar(ex);
+          if (!result.ok) {
+            // Tag issues with which example they belong to
+            allIssues = [...allIssues, ...result.issues];
+          }
+        }
+        if (allIssues.length > 0) {
+          setGrammarIssues(allIssues);
+          setGrammarSummary(
+            allIssues.length === 1
+              ? "Almost there! Fix 1 small thing in your sentence and you're good to go! 💪"
+              : `Almost there! Fix ${allIssues.length} small things in your sentences and you're good to go! 💪`,
+          );
+          setGrammarChecking(false);
+          toast({
+            title: "✏️ Check your sentences",
+            description: "Fix the highlighted issues, then try saving again!",
+          });
+          return;
+        }
+      } catch {
+        // If Harper fails, allow the save to proceed
+        console.warn("Grammar check skipped");
+      } finally {
+        setGrammarChecking(false);
+      }
+    }
+
     setSaving(true);
     try {
-      const validExamples = studentExamples
-        .map((e) => e.trim())
-        .filter((e, idx) => e && exampleStatuses[idx] === "ok");
-
       const { data, error } = await supabase.functions.invoke("save-word", {
         body: {
           user_id: user.id,
@@ -409,7 +490,7 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
     }
   }, [
     enrichment, activeWord, user?.id, studentExamples,
-    exampleStatuses, pickedImage, suggestedExamples, toast, onWordSaved,
+    exampleStatuses, pickedImage, suggestedExamples, toast, onWordSaved, isDuplicate,
   ]);
 
   const handleClassChoice = useCallback((classId: string) => {
@@ -785,6 +866,57 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
               </p>
             )}
 
+            {/* Grammar Issues */}
+            {grammarIssues.length > 0 && (
+              <div className="rounded-xl border-2 border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-amber-600" />
+                  <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
+                    {grammarSummary}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  {grammarIssues.map((issue, i) => (
+                    <div key={i} className="flex items-start gap-2 text-sm">
+                      <span className="text-amber-500 mt-0.5 shrink-0">⚠️</span>
+                      <div>
+                        <p className="text-amber-900 dark:text-amber-100">
+                          {issue.message}
+                        </p>
+                        {issue.problematicText && (
+                          <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                            Found: <span className="font-mono bg-amber-200/60 dark:bg-amber-900/40 px-1 rounded">"{issue.problematicText}"</span>
+                            {issue.suggestion && (
+                              <span> → Try: <span className="font-mono bg-emerald-200/60 dark:bg-emerald-900/40 px-1 rounded">"{issue.suggestion}"</span></span>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Duplicate Detection Banner */}
+            {isDuplicate && (
+              <div className="rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20 dark:border-emerald-800 p-5 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center">
+                    <PartyPopper className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-emerald-800 dark:text-emerald-200 text-base">
+                      🎉 You already have this word in your Word Bank!
+                    </p>
+                    <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                      Great job! Keep practicing it in the Practice tab to master it.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Save Button */}
             <div className="pt-2">
               {saved ? (
@@ -792,10 +924,15 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
                   <CheckCircle2 className="w-5 h-5" />
                   Word saved to your bank!
                 </div>
+              ) : isDuplicate ? (
+                <div className="flex items-center justify-center gap-2 py-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl text-emerald-700 dark:text-emerald-300 font-bold">
+                  <PartyPopper className="w-5 h-5" />
+                  Already in your Word Bank — go practice it! 🚀
+                </div>
               ) : (
                 <Button
                   onClick={() => performSave()}
-                  disabled={saving || !hasAtLeastOneValid || capReached}
+                  disabled={saving || grammarChecking || !hasAtLeastOneValid || capReached}
                   className={cn(
                     "w-full h-14 text-lg font-bold rounded-xl shadow-lg transition-all",
                     hasAtLeastOneValid && !capReached
@@ -803,8 +940,8 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
                       : "bg-slate-200 text-slate-500 cursor-not-allowed",
                   )}
                 >
-                  {saving ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                  {saving || grammarChecking ? (
+                    <><Loader2 className="w-5 h-5 animate-spin mr-2" />{grammarChecking ? "Checking grammar…" : "Saving…"}</>
                   ) : (
                     <>
                       <Save className="w-5 h-5 mr-2" />
