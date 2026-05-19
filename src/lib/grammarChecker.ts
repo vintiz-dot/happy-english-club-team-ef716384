@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 /**
  * grammarChecker.ts — Reliable grammar gate for Grade 1-4 EAL students.
  *
@@ -22,6 +23,7 @@
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
+// No longer using harper.js
 export interface GrammarIssue {
   /** Human-friendly description of the problem */
   message: string;
@@ -407,79 +409,82 @@ function checkBasicSubjectVerb(sentence: string): GrammarIssue | null {
   return null;
 }
 
-// ─── Harper bonus layer (best-effort) ───────────────────────────────────
+// ─── Sapling AI layer (best-effort) ───────────────────────────────────
 
-let _harperAvailable: boolean | null = null; // null = untested
-let _linter: any = null;
-let _setupPromise: Promise<void> | null = null;
-
-async function tryHarperLint(sentence: string): Promise<GrammarIssue[]> {
-  // If we already know Harper doesn't work, skip
-  if (_harperAvailable === false) return [];
-
+async function trySaplingLint(sentence: string): Promise<GrammarIssue[]> {
   try {
-    if (!_linter) {
-      const { WorkerLinter } = await import("harper.js");
-      const { binary } = await import("harper.js/binary");
-      _linter = new WorkerLinter({ binary });
-      _setupPromise = _linter.setup();
-    }
-    if (_setupPromise) await _setupPromise;
+    const { data, error } = await supabase.functions.invoke('sapling-grammar', {
+      body: { sentence }
+    });
 
-    const lints = await _linter.lint(sentence);
-    _harperAvailable = true;
+    if (error || !data || !data.edits || data.edits.length === 0) return [];
 
-    if (!lints || lints.length === 0) return [];
-
-    return lints.map((lint: any) => {
-      const start = lint.span?.start ?? 0;
-      const end = lint.span?.end ?? sentence.length;
+    return data.edits.map((edit: any) => {
+      // Safely access properties, defaulting to 0 or sentence length if missing
+      const sentenceStart = edit.sentence_start || 0;
+      const editStart = edit.start || 0;
+      const editEnd = edit.end || 0;
+      const start = sentenceStart + editStart;
+      const end = sentenceStart + editEnd;
       return {
-        message: friendlyHarperMessage(lint.message || "Something looks off here"),
+        message: friendlySaplingMessage(edit.general_error_type || "", edit.replacement),
         start,
         end,
         problematicText: sentence.slice(start, end),
-        suggestion: extractSuggestion(lint),
+        suggestion: edit.replacement,
       };
     });
-  } catch {
-    _harperAvailable = false;
-    console.warn("Harper grammar checker unavailable — relying on rule-based checks only");
+  } catch (error) {
+    console.warn("Sapling AI checker unavailable — relying on rule-based checks only", error);
     return [];
   }
 }
 
-function friendlyHarperMessage(raw: string): string {
-  const lower = raw.toLowerCase();
+function friendlySaplingMessage(errorType: string, suggestion?: string): string {
+  const lower = String(errorType).toLowerCase();
   if (lower.includes("spell")) return "Check your spelling here! 📝";
-  if (lower.includes("repeat") || lower.includes("duplicate")) return "You repeated a word! ✂️";
-  if (lower.includes("capital")) return "Start with a capital letter! 🔤";
-  if (lower.includes("article")) return "Check if you need 'a' or 'an' here! 🤔";
-  if (lower.includes("comma") || lower.includes("punctuation")) return "Check your punctuation! ✍️";
-  if (lower.includes("space")) return "Check the spacing! 📏";
-  return `${raw} 🔍`;
-}
-
-function extractSuggestion(lint: any): string | undefined {
-  if (!Array.isArray(lint.suggestions) || lint.suggestions.length === 0) return undefined;
-  const first = lint.suggestions[0];
-  if (typeof first === "string") return first;
-  if (first?.text) return first.text;
-  if (first?.ReplaceWith) {
-    return Array.isArray(first.ReplaceWith)
-      ? first.ReplaceWith.map((c: any) => (typeof c === "string" ? c : c?.char ?? "")).join("")
-      : String(first.ReplaceWith);
-  }
-  return undefined;
+  if (lower.includes("punctuation")) return "Check your punctuation! ✍️";
+  if (lower.includes("grammar")) return "Check your grammar here! 🧩";
+  if (suggestion) return `Did you mean "${suggestion}"? 🤔`;
+  return "Something looks off here 🔍";
 }
 
 // ─── Public API ─────────────────────────────────────────────────────────
 
 /**
+ * Synchronous, instant grammar quality check. Runs ONLY the deterministic
+ * rule-based checks (no async Harper). Safe to call inside `useMemo`.
+ *
+ * Returns `null` if the sentence looks acceptable, or the first issue found.
+ * This is used for real-time feedback under each textarea.
+ */
+export function quickCheck(sentence: string): GrammarIssue | null {
+  const trimmed = sentence.trim();
+  if (trimmed.length < 3) return null; // too short to judge
+
+  const checks = [
+    checkAllSameWord(trimmed),
+    checkGibberish(trimmed),
+    checkMinWordCount(trimmed),
+    checkCapitalization(trimmed),
+    checkEndPunctuation(trimmed),
+    checkRepeatedWords(trimmed),
+    checkHasVerb(trimmed),
+    checkBasicSubjectVerb(trimmed),
+  ];
+
+  for (const issue of checks) {
+    if (issue) return issue;
+  }
+
+  return null;
+}
+
+/**
  * Runs grammar/spelling/structure checks on a student's sentence.
  *
  * Layer 1 (rule-based) ALWAYS runs and catches the most common issues.
- * Layer 2 (Harper Wasm) runs as a bonus — if it fails, Layer 1 still works.
+ * Layer 2 (Sapling API) runs as a bonus — if it fails, Layer 1 still works.
  */
 export async function checkGrammar(sentence: string): Promise<GrammarResult> {
   const trimmed = sentence.trim();
@@ -508,12 +513,12 @@ export async function checkGrammar(sentence: string): Promise<GrammarResult> {
     if (issue) issues.push(issue);
   }
 
-  // ── Layer 2: Harper Wasm bonus (best-effort) ──
+  // ── Layer 2: Sapling AI bonus (best-effort) ──
 
-  // Only run Harper if Layer 1 found no issues — avoids double-flagging
+  // Only run Sapling if Layer 1 found no issues — avoids double-flagging
   if (issues.length === 0) {
-    const harperIssues = await tryHarperLint(trimmed);
-    issues.push(...harperIssues);
+    const saplingIssues = await trySaplingLint(trimmed);
+    issues.push(...saplingIssues);
   }
 
   if (issues.length === 0) {
