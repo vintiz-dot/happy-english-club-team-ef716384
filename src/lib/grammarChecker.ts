@@ -13,7 +13,7 @@
  *   - `ok: false` → list of issues with kid-friendly messages + span info
  */
 
-import { WorkerLinter } from "harper.js";
+import { WorkerLinter, binary } from "harper.js";
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -44,7 +44,7 @@ let _setupPromise: Promise<void> | null = null;
 
 function getLinter(): WorkerLinter {
   if (!_linter) {
-    _linter = new WorkerLinter();
+    _linter = new WorkerLinter({ binary });
     _setupPromise = _linter.setup();
   }
   return _linter;
