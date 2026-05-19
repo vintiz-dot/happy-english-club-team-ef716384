@@ -48,6 +48,7 @@
         "embla-carousel-react": "^8.6.0",
         "framer-motion": "^12.23.26",
         "fuse.js": "^7.3.0",
+        "harper.js": "^2.0.0",
         "html2canvas": "^1.4.1",
         "input-otp": "^1.4.2",
         "jspdf": "^4.1.0",
@@ -677,6 +678,8 @@
     "globals": ["globals@15.15.0", "", {}, "sha512-7ACyT3wmyp3I61S4fG682L0VA2RGD9otkqGJIwNUMF1SWUombIIk+af1unuDYgMm082aHYwD+mzJvv9Iu8dsgg=="],
 
     "graphemer": ["graphemer@1.4.0", "", {}, "sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag=="],
+
+    "harper.js": ["harper.js@2.0.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/harper.js/-/harper.js-2.0.0.tgz", { "dependencies": { "fflate": "^0.8.2" } }, "sha512-2j7Zb1b+W88nHb/qws89oqRa9jCLRY8O2T99v/EZ1z7dBzXvtBQky+2jac0Ji31ddxVlUul8fUxX2DsmapY/LA=="],
 
     "has-flag": ["has-flag@4.0.0", "", {}, "sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ=="],
 
