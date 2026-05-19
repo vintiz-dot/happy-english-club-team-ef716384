@@ -13,7 +13,8 @@
  *   - `ok: false` → list of issues with kid-friendly messages + span info
  */
 
-import { WorkerLinter, binary } from "harper.js";
+import { WorkerLinter } from "harper.js";
+import binary from "harper.js/binary";
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
