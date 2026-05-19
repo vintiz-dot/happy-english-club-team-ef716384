@@ -13,6 +13,7 @@ export interface VocabularyWord {
   timesCorrect: number;
   createdAt: string;
   lastReviewedAt: string | null;
+  cefr?: string;
 }
 
 const STORAGE_KEY = "hec-vocab";
