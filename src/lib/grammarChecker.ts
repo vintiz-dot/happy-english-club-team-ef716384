@@ -420,7 +420,8 @@ async function tryHarperLint(sentence: string): Promise<GrammarIssue[]> {
   try {
     if (!_linter) {
       const { WorkerLinter } = await import("harper.js");
-      _linter = new WorkerLinter();
+      const { binary } = await import("harper.js/binary");
+      _linter = new WorkerLinter({ binary });
       _setupPromise = _linter.setup();
     }
     if (_setupPromise) await _setupPromise;
