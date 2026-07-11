@@ -2878,6 +2878,51 @@ export type Database = {
           },
         ]
       }
+      teacher_flipbooks: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          id: string
+          teacher_id: string
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          teacher_id: string
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          teacher_id?: string
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_flipbooks_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teacher_flipbooks_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teachers: {
         Row: {
           avatar_url: string | null
