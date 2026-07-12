@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, RotateCw, Trash2 } from "lucide-react";
+import { Sparkles, RotateCw, Trash2, Crown } from "lucide-react";
 import { playClick, playChime } from "./audio";
 
 const STORAGE_KEY = "classroom-wheel-entries";
@@ -101,15 +102,29 @@ export function WheelSpinner() {
 
   return (
     <div className="space-y-5">
-      <div className="relative mx-auto w-[260px] h-[260px]">
+      <div className="relative mx-auto w-[280px] h-[280px]">
+        {/* Ambient halo — brightens while spinning */}
+        <div
+          className="absolute inset-[-14px] rounded-full blur-2xl transition-opacity duration-500 pointer-events-none"
+          style={{
+            background:
+              "conic-gradient(from 0deg, rgba(217,70,239,0.35), rgba(59,130,246,0.35), rgba(16,185,129,0.35), rgba(250,204,21,0.35), rgba(217,70,239,0.35))",
+            opacity: spinning ? 0.9 : 0.45,
+          }}
+        />
+        {/* Conic bezel ring */}
+        <div className="absolute inset-[-6px] rounded-full p-[3px] bg-[conic-gradient(from_120deg,#d946ef,#3b82f6,#10b981,#facc15,#d946ef)] shadow-q3 pointer-events-none">
+          <div className="h-full w-full rounded-full bg-card/90 backdrop-blur-sm" />
+        </div>
+
         {/* Pointer */}
-        <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-10">
-          <div className="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[24px] border-t-foreground drop-shadow-md" />
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10">
+          <div className="h-9 w-6 rounded-b-full bg-gradient-to-b from-fuchsia-500 to-purple-600 shadow-[0_4px_12px_-2px_rgba(217,70,239,0.7)] ring-2 ring-white/70 dark:ring-white/30 [clip-path:polygon(0%_0%,100%_0%,50%_100%)]" />
         </div>
 
         <svg
           viewBox="-110 -110 220 220"
-          className="w-full h-full drop-shadow-[0_8px_24px_rgba(0,0,0,0.18)]"
+          className="relative w-full h-full drop-shadow-[0_8px_24px_rgba(0,0,0,0.2)]"
           style={{
             transform: `rotate(${angle}deg)`,
             transition: spinning ? "none" : "transform 0.4s ease-out",
@@ -166,7 +181,16 @@ export function WheelSpinner() {
               );
             })
           )}
-          <circle r="14" fill="white" stroke="hsl(var(--foreground))" strokeWidth="2" />
+          {/* Gradient hub */}
+          <defs>
+            <radialGradient id="wheel-hub" cx="35%" cy="30%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="70%" stopColor="#e2e8f0" />
+              <stop offset="100%" stopColor="#94a3b8" />
+            </radialGradient>
+          </defs>
+          <circle r="16" fill="url(#wheel-hub)" stroke="white" strokeWidth="2.5" />
+          <circle r="5" fill="#d946ef" opacity="0.85" />
         </svg>
       </div>
 
@@ -175,29 +199,36 @@ export function WheelSpinner() {
           onClick={spin}
           disabled={entries.length < 2 || spinning}
           size="lg"
-          className="gap-2 h-12 px-6 bg-gradient-to-br from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600"
+          className="gap-2 h-12 px-10 rounded-2xl text-base font-bold text-white bg-gradient-to-br from-fuchsia-500 via-purple-500 to-indigo-500 hover:from-fuchsia-600 hover:to-indigo-600 shadow-[0_8px_24px_-6px_rgba(217,70,239,0.6)] lift"
         >
-          {spinning ? <RotateCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          {spinning ? <RotateCw className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
           {spinning ? "Spinning…" : "SPIN"}
         </Button>
       </div>
 
       {winner && !spinning && (
-        <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 p-4 text-center space-y-2">
-          <p className="type-micro text-emerald-700 dark:text-emerald-300 font-bold uppercase tracking-wider">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 320, damping: 22 }}
+          className="relative overflow-hidden rounded-2xl bg-aurora hero-sheen p-5 text-center space-y-1.5 text-white shadow-q3"
+        >
+          <div className="nova-grid-light absolute inset-0 pointer-events-none" />
+          <p className="relative type-micro font-bold uppercase tracking-[0.2em] text-white/80 flex items-center justify-center gap-1.5">
+            <Crown className="h-3.5 w-3.5 text-amber-300" />
             Winner
           </p>
-          <p className="type-display text-emerald-700 dark:text-emerald-200">{winner}</p>
+          <p className="relative type-display drop-shadow-md">{winner}</p>
           <Button
             onClick={removeWinner}
             variant="ghost"
             size="sm"
-            className="text-emerald-700 dark:text-emerald-300"
+            className="relative text-white/85 hover:text-white hover:bg-white/15"
           >
             <Trash2 className="h-3.5 w-3.5 mr-1.5" />
             Remove from wheel
           </Button>
-        </div>
+        </motion.div>
       )}
 
       <div className="space-y-1">

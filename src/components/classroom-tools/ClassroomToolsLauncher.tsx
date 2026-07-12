@@ -23,17 +23,19 @@ import { cn } from "@/lib/utils";
 import { useTimer } from "@/contexts/TimerContext";
 import { useNoiseMeter } from "@/contexts/NoiseMeterContext";
 
+// Each tool carries its own gradient identity — the active tab, and any
+// hero styling inside the tool, share the same tone.
 const TOOLS = [
-  { id: "timer", label: "Timer", icon: Timer },
-  { id: "wheel", label: "Spinner", icon: Disc3 },
-  { id: "noise", label: "Noise", icon: Volume2 },
-  { id: "chime", label: "Chime", icon: Bell },
-  { id: "groups", label: "Groups", icon: Users },
-  { id: "dice", label: "Dice", icon: Dices },
-  { id: "traffic", label: "Light", icon: TrafficCone },
-  { id: "random", label: "Pick", icon: Hash },
-  { id: "attendance", label: "Attend", icon: ClipboardCheck },
-  { id: "leaderboard", label: "Board", icon: Trophy },
+  { id: "timer", label: "Timer", icon: Timer, active: "data-[state=active]:from-blue-500 data-[state=active]:to-sky-500" },
+  { id: "wheel", label: "Spinner", icon: Disc3, active: "data-[state=active]:from-fuchsia-500 data-[state=active]:to-purple-600" },
+  { id: "noise", label: "Noise", icon: Volume2, active: "data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600" },
+  { id: "chime", label: "Chime", icon: Bell, active: "data-[state=active]:from-amber-400 data-[state=active]:to-orange-500" },
+  { id: "groups", label: "Groups", icon: Users, active: "data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600" },
+  { id: "dice", label: "Dice", icon: Dices, active: "data-[state=active]:from-rose-500 data-[state=active]:to-red-600" },
+  { id: "traffic", label: "Light", icon: TrafficCone, active: "data-[state=active]:from-lime-500 data-[state=active]:to-green-600" },
+  { id: "random", label: "Pick", icon: Hash, active: "data-[state=active]:from-violet-500 data-[state=active]:to-indigo-600" },
+  { id: "attendance", label: "Attend", icon: ClipboardCheck, active: "data-[state=active]:from-sky-500 data-[state=active]:to-cyan-600" },
+  { id: "leaderboard", label: "Board", icon: Trophy, active: "data-[state=active]:from-yellow-400 data-[state=active]:to-amber-500" },
 ] as const;
 
 type ToolId = (typeof TOOLS)[number]["id"];
@@ -83,16 +85,16 @@ export function ClassroomToolsLauncher() {
         }}
         aria-label={alarming ? "Stop Timer Alarm" : "Open Classroom Tools"}
         className={cn(
-          "fixed bottom-5 right-5 md:bottom-6 md:right-6 z-40 h-14 w-14 rounded-full shadow-q3 lift",
+          "group fixed bottom-5 right-5 md:bottom-6 md:right-6 z-40 h-14 w-14 rounded-full lift",
           alarming
-            ? "bg-gradient-to-br from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white animate-bounce"
-            : "bg-gradient-to-br from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white",
+            ? "bg-gradient-to-br from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white animate-bounce shadow-[0_8px_30px_-6px_rgba(244,63,94,0.7)]"
+            : "bg-gradient-to-br from-blue-500 via-indigo-500 to-sky-500 text-white ring-2 ring-white/25 shadow-[0_8px_30px_-6px_rgba(59,130,246,0.65)] hover:shadow-[0_10px_40px_-6px_rgba(59,130,246,0.85)]",
         )}
       >
         {alarming ? (
           <span className="text-2xl">⏰</span>
         ) : (
-          <Sparkles className="h-6 w-6" />
+          <Sparkles className="h-6 w-6 transition-transform duration-300 group-hover:rotate-[20deg] group-hover:scale-110" />
         )}
 
         {/* Running timer indicator badge */}
@@ -139,16 +141,21 @@ export function ClassroomToolsLauncher() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
           side="right"
-          className="w-full sm:max-w-md p-0 flex flex-col gap-0"
+          className="w-full sm:max-w-md p-0 flex flex-col gap-0 bg-card/85 backdrop-blur-2xl"
         >
-          <SheetHeader className="px-5 py-4 border-b">
-            <SheetTitle className="flex items-center gap-2 type-h2">
-              <Sparkles className="h-4 w-4 text-blue-500" />
+          {/* Aurora hero band with light sweep */}
+          <SheetHeader className="relative overflow-hidden px-5 py-4 bg-aurora hero-sheen text-left">
+            <div className="nova-grid-light absolute inset-0 pointer-events-none" />
+            <SheetTitle className="relative flex items-center gap-2 type-h2 text-white">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
+                <Sparkles className="h-4 w-4 text-white" />
+              </span>
               Classroom Tools
             </SheetTitle>
-            <SheetDescription className="type-micro">
+            <SheetDescription className="relative type-micro text-white/75">
               Lightweight aids you can pull up mid-lesson without losing your place.
             </SheetDescription>
+            <div className="hairline-gradient absolute inset-x-0 bottom-0 h-px" />
           </SheetHeader>
 
           <Tabs
@@ -156,13 +163,19 @@ export function ClassroomToolsLauncher() {
             onValueChange={(v) => setActive(v as ToolId)}
             className="flex-1 flex flex-col min-h-0"
           >
-            <div className="mx-3 mt-3 shrink-0 overflow-x-auto">
-              <TabsList className="inline-flex w-auto min-w-full h-auto gap-1 bg-muted/60 p-1 rounded-xl">
+            <div className="mx-3 mt-3 shrink-0 overflow-x-auto scrollbar-hide">
+              <TabsList className="inline-flex w-auto min-w-full h-auto gap-1 bg-muted/50 p-1 rounded-2xl">
                 {TOOLS.map((t) => (
                   <TabsTrigger
                     key={t.id}
                     value={t.id}
-                    className="flex flex-col gap-0.5 h-auto py-2 px-2 rounded-lg data-[state=active]:shadow-q1 shrink-0"
+                    className={cn(
+                      "flex flex-col gap-0.5 h-auto py-2 px-2.5 rounded-xl shrink-0 transition-all duration-200",
+                      "hover:bg-background/70",
+                      "data-[state=active]:bg-gradient-to-br data-[state=active]:text-white",
+                      "data-[state=active]:shadow-[0_4px_14px_-4px_rgba(59,130,246,0.5)] data-[state=active]:scale-[1.06]",
+                      t.active,
+                    )}
                   >
                     <t.icon className="h-3.5 w-3.5" />
                     <span className="text-[9px] font-semibold">{t.label}</span>

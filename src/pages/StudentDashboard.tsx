@@ -433,9 +433,9 @@ export default function StudentDashboard() {
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="mt-6 space-y-8">
         {/* Hero Section with Mascot */}
-        <motion.div 
+        <motion.div
           variants={itemVariants}
-          className={`glass-lg shadow-2xl rounded-3xl overflow-hidden backdrop-blur-xl ${isMonitor ? 'border-2 ring-1 ring-offset-0' : 'border-0'}`}
+          className={`relative glass-lg shadow-2xl rounded-3xl overflow-hidden backdrop-blur-xl hero-sheen ${isMonitor ? 'border-2 ring-1 ring-offset-0' : 'border-0 border-shine'}`}
           style={isMonitor ? {
             borderColor: 'hsl(var(--monitor-border) / 0.6)',
             boxShadow: '0 0 40px hsl(var(--monitor-glow)), 0 20px 50px rgba(0,0,0,0.1)',
@@ -467,7 +467,7 @@ export default function StudentDashboard() {
                     <span className="text-lg text-muted-foreground">{greeting.text},</span>
                   </motion.div>
 
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-shimmer">
                     {studentProfile.full_name.split(' ')[0]}!
                   </h1>
 
@@ -524,10 +524,9 @@ export default function StudentDashboard() {
                   {levelInfo.currentXp}/{levelInfo.nextLevelXp} XP to Level {levelInfo.level + 1}
                 </span>
               </div>
-              <div className="h-3 bg-muted/50 rounded-full overflow-hidden">
+              <div className="h-3 bg-muted/50 rounded-full overflow-hidden ring-1 ring-border/40">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-primary via-accent to-primary rounded-full"
-                  style={{ backgroundSize: '200% 100%' }}
+                  className="h-full premium-bg rounded-full shadow-[0_0_14px_rgba(59,130,246,0.55)]"
                   initial={{ width: 0 }}
                   animate={{ width: `${levelInfo.progress}%` }}
                   transition={{ duration: 1, delay: 0.8, ease: "easeOut" }}
