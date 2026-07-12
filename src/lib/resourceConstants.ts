@@ -12,7 +12,7 @@ export const BLOOMS_LEVELS = [
 ] as const;
 
 export const PYP_THEMES = [
-  { value: "who_we_are", label: "Who We Are", shortLabel: "Who We Are", icon: "👤", color: "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300" },
+  { value: "who_we_are", label: "Who We Are", icon: "👤", color: "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300" },
   { value: "where_we_are", label: "Where We Are in Place and Time", shortLabel: "Place & Time", icon: "🌍", color: "bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300" },
   { value: "how_we_express", label: "How We Express Ourselves", shortLabel: "Expression", icon: "🎨", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
   { value: "how_world_works", label: "How the World Works", shortLabel: "World Works", icon: "⚙️", color: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300" },

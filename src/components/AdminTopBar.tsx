@@ -142,7 +142,7 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
 
   return (
     <>
-      <header className="hidden md:flex sticky top-0 z-40 border-b bg-card/80 backdrop-blur-md supports-[backdrop-filter]:bg-card/60 px-6 py-3 items-center justify-between gap-4 shadow-q1">
+      <header className="hidden md:flex sticky top-0 z-40 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55 px-6 py-3 items-center justify-between gap-4 shadow-q1">
         <div className="flex items-center gap-4 min-w-0">
           <Breadcrumb>
             <BreadcrumbList>
@@ -193,6 +193,7 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
           </Button>
           {rightSlot}
         </div>
+        <div className="hairline-gradient absolute inset-x-0 bottom-0 h-px" />
       </header>
 
       <CommandDialog open={paletteOpen} onOpenChange={setPaletteOpen}>

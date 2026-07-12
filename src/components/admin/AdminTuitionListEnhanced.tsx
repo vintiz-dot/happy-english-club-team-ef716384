@@ -259,7 +259,7 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
       {/* Summary Cards — sticky compact strip when scrolled */}
       <div className="sticky top-[72px] md:top-[64px] z-30 -mx-4 px-4 sm:mx-0 sm:px-0">
         <div className="surface-2 backdrop-blur-md supports-[backdrop-filter]:bg-card/80 rounded-xl">
-          <TuitionSummaryCards stats={stats!} isLoading={isLoading} />
+          <TuitionSummaryCards stats={stats} isLoading={isLoading} />
         </div>
       </div>
 

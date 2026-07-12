@@ -15,6 +15,8 @@ import { AdminTopBar } from "@/components/AdminTopBar";
 import { ClassroomToolsLauncher } from "@/components/classroom-tools/ClassroomToolsLauncher";
 import { PWAInstallButton } from "./PWAInstallButton";
 import { CommandPalette } from "@/components/CommandPalette";
+import { AmbientBackground } from "@/components/fx/AmbientBackground";
+import { motion } from "framer-motion";
 
 interface LayoutProps {
   children: ReactNode;
@@ -142,14 +144,18 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   if (!showSidebar) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 shadow-sm">
+        <AmbientBackground intensity="bold" />
+        <header className="sticky top-0 z-50 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55 shadow-sm">
           <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 md:gap-3">
-              <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center overflow-hidden">
-                <img src="/favicon.jpg" alt="HEC Logo" className="h-full w-full object-cover" />
+              {/* Conic aurora ring around the brand mark */}
+              <div className="h-9 w-9 md:h-11 md:w-11 rounded-full p-[2px] bg-[conic-gradient(from_140deg,#3b82f6,#22d3ee,#facc15,#3b82f6)] shadow-[0_0_16px_-4px_rgba(59,130,246,0.5)]">
+                <div className="h-full w-full rounded-full overflow-hidden bg-card">
+                  <img src="/favicon.jpg" alt="HEC Logo" className="h-full w-full object-cover" />
+                </div>
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-base md:text-xl font-bold text-foreground">{title || "Education Manager"}</h1>
+                <h1 className="text-base md:text-xl font-bold text-shimmer">{title || "Education Manager"}</h1>
                 <p className="text-xs text-muted-foreground hidden md:block">Happy English Club</p>
               </div>
             </div>
@@ -158,13 +164,15 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
               <ProfileSwitcher />
               <NotificationBell />
               {userName && (
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
-                  <Avatar className="h-7 w-7">
-                    <AvatarImage src={avatarUrl || undefined} alt={userName} />
-                    <AvatarFallback className="text-xs">
-                      {userName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full glass-sm">
+                  <div className="rounded-full p-[1.5px] bg-gradient-to-br from-blue-500 via-cyan-400 to-amber-300">
+                    <Avatar className="h-7 w-7 ring-1 ring-background">
+                      <AvatarImage src={avatarUrl || undefined} alt={userName} />
+                      <AvatarFallback className="text-xs">
+                        {userName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
                   <span className="text-sm font-medium text-foreground">{userName}</span>
                 </div>
               )}
@@ -178,6 +186,8 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
               </Button>
             </div>
           </div>
+          {/* Luxe gradient hairline */}
+          <div className="hairline-gradient absolute inset-x-0 bottom-0 h-px" />
         </header>
         {role === "student" && <StudentNavBar />}
         <main className="container mx-auto px-4 py-4 md:py-6 lg:py-8 pb-20 md:pb-8">{children}</main>
@@ -188,23 +198,26 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   // Admin/Teacher layout with sidebar
   return (
     <div className="min-h-screen bg-background flex w-full">
+      <AmbientBackground intensity="subtle" />
       {/* Global Cmd+K / Ctrl+K command bar */}
       <CommandPalette />
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar — liquid glass command rail */}
       <aside
         className={cn(
-          "hidden md:flex flex-col border-r bg-card transition-all duration-300 sticky top-0 h-screen",
+          "hidden md:flex flex-col border-r border-border/60 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55 transition-all duration-300 sticky top-0 h-screen",
           sidebarOpen ? "w-56" : "w-16"
         )}
       >
         {/* Sidebar Header */}
-        <div className="p-4 border-b flex items-center justify-between">
+        <div className="p-4 border-b border-border/60 flex items-center justify-between">
           {sidebarOpen && (
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center overflow-hidden">
-                <img src="/favicon.jpg" alt="HEC Logo" className="h-full w-full object-cover" />
+              <div className="h-9 w-9 rounded-full p-[2px] bg-[conic-gradient(from_140deg,#3b82f6,#22d3ee,#facc15,#3b82f6)] shadow-[0_0_14px_-4px_rgba(59,130,246,0.5)]">
+                <div className="h-full w-full rounded-full overflow-hidden bg-card">
+                  <img src="/favicon.jpg" alt="HEC Logo" className="h-full w-full object-cover" />
+                </div>
               </div>
-              <span className="font-semibold text-sm">Happy English</span>
+              <span className="font-semibold text-sm text-shimmer">Happy English</span>
             </div>
           )}
           <Button
@@ -230,21 +243,33 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                 : location.pathname === item.path && !location.search;
               
               const buttonContent = (
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
+                <button
+                  type="button"
                   className={cn(
-                    "w-full justify-start gap-3 group",
+                    "relative w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors group focus-premium",
                     !sidebarOpen && "justify-center px-2",
-                    isActive && "bg-blue-600/15 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 hover:bg-blue-600/20"
+                    isActive
+                      ? "text-blue-700 dark:text-blue-300"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                   )}
                   onClick={() => navigate(item.path)}
                 >
-                  <item.icon className={cn(
-                    "h-4 w-4 shrink-0 transition-colors",
-                    !isActive && "group-hover:text-royalGreen dark:group-hover:text-royalGreen-light"
-                  )} />
-                  {sidebarOpen && <span>{item.label}</span>}
-                </Button>
+                  {/* Spring-animated active pill glides between items */}
+                  {isActive && (
+                    <motion.span
+                      layoutId="sidebar-active-pill"
+                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600/15 via-blue-500/10 to-cyan-500/10 ring-1 ring-blue-500/25 shadow-[0_0_18px_-4px_rgba(59,130,246,0.45)]"
+                      transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                    />
+                  )}
+                  <item.icon
+                    className={cn(
+                      "relative z-10 h-4 w-4 shrink-0 transition-transform duration-200",
+                      isActive ? "icon-glow" : "group-hover:scale-110"
+                    )}
+                  />
+                  {sidebarOpen && <span className="relative z-10 truncate">{item.label}</span>}
+                </button>
               );
 
               // Only show tooltip when sidebar is collapsed
@@ -267,15 +292,17 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-2 border-t space-y-2">
+        <div className="p-2 border-t border-border/60 space-y-2">
           {sidebarOpen && userName && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50">
-              <Avatar className="h-7 w-7">
-                <AvatarImage src={avatarUrl || undefined} alt={userName} />
-                <AvatarFallback className="text-xs">
-                  {userName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl glass-sm">
+              <div className="rounded-full p-[1.5px] bg-gradient-to-br from-blue-500 via-cyan-400 to-amber-300 shrink-0">
+                <Avatar className="h-7 w-7 ring-1 ring-background">
+                  <AvatarImage src={avatarUrl || undefined} alt={userName} />
+                  <AvatarFallback className="text-xs">
+                    {userName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
               <span className="text-sm font-medium truncate">{userName}</span>
             </div>
           )}

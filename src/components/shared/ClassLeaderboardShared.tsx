@@ -287,7 +287,7 @@ export function ClassLeaderboardShared({
   const allSelected =
     leaderboard && leaderboard.length > 0 && selectedStudents.size === leaderboard.length;
 
-  const arenaEntries: ArenaEntry[] = (leaderboard || []) as unknown as ArenaEntry[];
+  const arenaEntries: ArenaEntry[] = (leaderboard || []) as ArenaEntry[];
   const pendingByStudent = new Map<string, number>();
   (pendingTransactions as any[]).forEach((t) => {
     pendingByStudent.set(t.student_id, (pendingByStudent.get(t.student_id) || 0) + 1);

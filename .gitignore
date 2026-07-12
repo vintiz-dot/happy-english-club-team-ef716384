@@ -2,6 +2,11 @@
 .claude/
 .lovable/
 
+# Nested Lovable working clone — a separate repo that lives inside this
+# folder for pushing to Lovable. It must NOT be tracked here (it was
+# accidentally committed as a gitlink, which broke CI's submodule clone).
+new/
+
 # ── Secrets — NEVER commit these ─────────────────────────────────────
 # Google Cloud service-account keys (Vision OCR + Custom Search)
 GOOGLE_CREDENTIALS.json

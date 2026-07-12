@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AnimatedNumber } from "@/components/fx/AnimatedNumber";
 
 interface StatTileProps {
   icon: LucideIcon;
@@ -59,7 +60,9 @@ export function StatTile({ icon: Icon, label, value, trend, tone = "violet", cla
           </span>
         )}
       </div>
-      <div className="type-h1 tabular-nums">{value}</div>
+      <div className="type-h1 tabular-nums">
+        {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
+      </div>
       <div className="type-micro text-muted-foreground mt-0.5">{label}</div>
     </button>
   );

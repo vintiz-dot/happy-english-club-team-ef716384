@@ -1047,4 +1047,154 @@ All colors MUST be HSL.
   max-width: 100vw;
 }
 
+/* ====================================================================
+   "Nova" layer — next-generation immersive UI utilities.
+   Additive on top of the Quest/Gemini language: ambient depth, light
+   sweeps, animated gradient text/borders, cursor spotlights, and themed
+   scrollbars. Every utility respects prefers-reduced-motion via the
+   global reduce block above.
+   ==================================================================== */
+
+/* Themed thin scrollbars — instant polish on every scrollable surface */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.45);
+}
+
+/* Animated gradient sweep across text — hero titles, brand marks */
+@keyframes nova-shimmer {
+  0%   { background-position: 130% 0; }
+  100% { background-position: -130% 0; }
+}
+.text-shimmer {
+  background-image: linear-gradient(
+    110deg,
+    hsl(var(--foreground)) 38%,
+    hsl(224 85% 58%) 47%,
+    hsl(188 90% 52%) 53%,
+    hsl(var(--foreground)) 62%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: nova-shimmer 6s ease-in-out infinite;
+}
+
+/* Rotating conic gradient border — signature cards */
+@property --shine-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes nova-border-spin { to { --shine-angle: 360deg; } }
+.border-shine { position: relative; }
+.border-shine::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--shine-angle, 0deg),
+    transparent 0%,
+    hsl(224 85% 60% / 0.65) 12%,
+    hsl(188 92% 55% / 0.75) 22%,
+    transparent 34%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: nova-border-spin 5s linear infinite;
+  pointer-events: none;
+}
+
+/* Diagonal light sweep — apply to relative/overflow-hidden hero surfaces */
+@keyframes nova-sheen {
+  0%, 55% { left: -60%; }
+  85%, 100% { left: 150%; }
+}
+.hero-sheen::after {
+  content: "";
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  width: 34%;
+  left: -60%;
+  background: linear-gradient(
+    105deg,
+    transparent,
+    rgba(255, 255, 255, 0.14) 45%,
+    rgba(255, 255, 255, 0.05) 60%,
+    transparent
+  );
+  transform: skewX(-18deg);
+  animation: nova-sheen 7s var(--ease-in-out-quad) infinite;
+  pointer-events: none;
+}
+
+/* Faint masked blueprint grid for ambient depth (theme-aware) */
+.nova-grid {
+  background-image:
+    linear-gradient(hsl(var(--foreground) / 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--foreground) / 0.028) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 75% 55% at 50% 0%, black 25%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 55% at 50% 0%, black 25%, transparent 75%);
+}
+
+/* White grid variant for gradient hero surfaces */
+.nova-grid-light {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 80% 80% at 70% 20%, black 20%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 70% 20%, black 20%, transparent 75%);
+}
+
+/* Cursor-tracked spotlight — pair with SpotlightCard (sets --mx/--my) */
+.nova-spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    300px circle at var(--mx, 50%) var(--my, 50%),
+    hsl(var(--primary) / 0.09),
+    transparent 65%
+  );
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-out-expo);
+  pointer-events: none;
+  z-index: 1;
+}
+.nova-spotlight:hover::before { opacity: 1; }
+
+/* Glowing icon treatment for active navigation */
+.icon-glow {
+  filter: drop-shadow(0 0 6px hsl(224 85% 60% / 0.55));
+}
+
+/* Gradient hairline — luxe divider under glass headers */
+.hairline-gradient {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(224 85% 58% / 0.45) 30%,
+    hsl(188 90% 52% / 0.45) 70%,
+    transparent
+  );
+}
+
 

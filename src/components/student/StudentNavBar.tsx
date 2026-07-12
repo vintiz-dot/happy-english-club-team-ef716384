@@ -147,9 +147,9 @@ export function StudentNavBar() {
     );
   }
 
-  // Desktop: horizontal top nav
+  // Desktop: horizontal top nav — aurora pill glides between sections
   return (
-    <nav className="sticky top-[57px] md:top-[65px] z-40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b shadow-sm">
+    <nav className="sticky top-[57px] md:top-[65px] z-40 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55 shadow-sm relative">
       <div className="container mx-auto px-4">
         <div className="flex items-center gap-0.5 py-1.5 overflow-x-auto scrollbar-hide">
           {allNavItems.map((item) => {
@@ -159,19 +159,24 @@ export function StudentNavBar() {
                 key={item.id}
                 onClick={() => navigate(item.path)}
                 className={cn(
-                  "px-2 md:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium whitespace-nowrap transition-all duration-200",
-                  "hover:text-primary",
-                  active
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted/80"
+                  "relative px-2.5 md:px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold whitespace-nowrap transition-colors duration-200",
+                  active ? "text-white" : "text-muted-foreground hover:text-foreground hover:bg-muted/70"
                 )}
               >
-                {item.emoji} {item.label}
+                {active && (
+                  <motion.span
+                    layoutId="student-nav-pill"
+                    className="absolute inset-0 rounded-full bg-aurora shadow-[0_4px_16px_-4px_rgba(59,130,246,0.55)]"
+                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                  />
+                )}
+                <span className="relative z-10">{item.emoji} {item.label}</span>
               </button>
             );
           })}
         </div>
       </div>
+      <div className="hairline-gradient absolute inset-x-0 bottom-0 h-px" />
     </nav>
   );
 }

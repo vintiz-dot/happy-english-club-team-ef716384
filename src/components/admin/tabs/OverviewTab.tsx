@@ -5,21 +5,37 @@ import { LeaderboardResetControl } from "@/components/admin/LeaderboardResetCont
 import { PointsResetControl } from "@/components/admin/PointsResetControl";
 import { PageHero } from "@/components/quest/PageHero";
 import { SectionHeader } from "@/components/quest/SectionHeader";
+import { SpotlightCard } from "@/components/fx/SpotlightCard";
 import { motion } from "framer-motion";
 import { Trophy, Star } from "lucide-react";
+import { useMemo } from "react";
 
 const fadeUp = {
   initial: { opacity: 0, y: 12 },
   animate: { opacity: 1, y: 0 },
 };
 
+function useGreeting() {
+  return useMemo(() => {
+    const h = new Date().getHours();
+    const word = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+    const date = new Date().toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+    return { word, date };
+  }, []);
+}
+
 const OverviewTab = () => {
+  const { word, date } = useGreeting();
   return (
     <div className="space-y-8">
       <PageHero
-        eyebrow="Today"
-        title="Admin Dashboard"
-        subtitle="Real-time view of the club — stats, schedule, alerts."
+        eyebrow={date}
+        title={`${word} — Command Center`}
+        subtitle="Real-time view of the club — stats, schedule, alerts. Press Ctrl+K to jump anywhere."
         variant="aurora"
       />
 
@@ -89,7 +105,7 @@ function ControlPanel({ icon: Icon, title, description, tone, delay = 0, childre
       : "bg-blue-500/15 text-blue-600 dark:text-blue-300";
   return (
     <motion.div {...fadeUp} transition={{ duration: 0.3, delay }}>
-      <div className={`surface-2 rounded-2xl p-5 ring-1 ${toneRing} shadow-q1 lift`}>
+      <SpotlightCard className={`surface-2 rounded-2xl p-5 ring-1 ${toneRing} shadow-q1 lift`}>
         <div className="flex items-center gap-3 mb-4">
           <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${toneIcon}`}>
             <Icon className="h-5 w-5" />
@@ -100,7 +116,7 @@ function ControlPanel({ icon: Icon, title, description, tone, delay = 0, childre
           </div>
         </div>
         {children}
-      </div>
+      </SpotlightCard>
     </motion.div>
   );
 }

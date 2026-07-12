@@ -284,14 +284,8 @@ export default function TeacherDashboard() {
 
   return (
     <Layout title="Dashboard">
-      {/* Premium animated background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute top-20 right-20 w-[500px] h-[500px] bg-gradient-to-br from-primary/20 via-accent/15 to-transparent rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 left-20 w-[600px] h-[600px] bg-gradient-to-tr from-secondary/20 via-muted/15 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-accent/10 to-transparent rounded-full blur-3xl" />
-      </div>
-
-      <motion.div 
+      {/* Ambient depth is provided globally by Layout's AmbientBackground */}
+      <motion.div
         className="space-y-8 relative"
         variants={containerVariants}
         initial="hidden"
