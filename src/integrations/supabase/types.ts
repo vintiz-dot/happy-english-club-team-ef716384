@@ -3843,12 +3843,20 @@ export type Database = {
         Args: { student_id_to_view: string; viewer_user_id: string }
         Returns: boolean
       }
+      can_view_enrollment: {
+        Args: { _class_id: string; _student_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_view_family: {
         Args: { family_id: string; user_id: string }
         Returns: boolean
       }
       can_view_student: {
         Args: { student_id: string; user_id: string }
+        Returns: boolean
+      }
+      can_view_student_in_class: {
+        Args: { _student_id: string; _user_id: string }
         Returns: boolean
       }
       check_teacher_availability: {
