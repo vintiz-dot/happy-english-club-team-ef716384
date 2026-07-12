@@ -272,7 +272,7 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
               <span className="text-sm font-semibold text-foreground">Skill Comparison</span>
             </div>
             
-            <div className={`relative h-64 bg-gradient-to-br from-slate-900/80 to-purple-950/60 rounded-lg p-2 overflow-hidden ${hasLeaderSkills ? 'ring-2 ring-yellow-500/50' : ''}`}>
+            <div className={`relative h-64 bg-gradient-to-br from-slate-900/80 to-blue-950/60 rounded-lg p-2 overflow-hidden ${hasLeaderSkills ? 'ring-2 ring-yellow-500/50' : ''}`}>
               {/* Animated glow overlay when student leads */}
               {hasLeaderSkills && (
                 <motion.div
@@ -331,7 +331,7 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
                     strokeWidth={2.5}
                   />
                   
-                  {/* Class Average - vibrant purple dashed */}
+                  {/* Class Average - vibrant blue dashed */}
                   <Radar
                     name="Class Avg"
                     dataKey="classAvg"
@@ -540,7 +540,7 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
               <span className="text-foreground font-medium">= Class Leader</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-0.5 bg-purple-400" />
+              <div className="w-4 h-0.5 bg-blue-400" />
               <span className="text-foreground font-medium">= Class Avg</span>
             </div>
             <div className="flex items-center gap-1.5">

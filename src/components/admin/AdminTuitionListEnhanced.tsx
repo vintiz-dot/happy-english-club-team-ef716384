@@ -1,17 +1,22 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { TuitionSummaryCards } from "@/components/admin/tuition/TuitionSummaryCards";
 import { TuitionToolbar } from "@/components/admin/tuition/TuitionToolbar";
 import { TuitionStudentCard } from "@/components/admin/tuition/TuitionStudentCard";
+import { TuitionStudentTable } from "@/components/admin/tuition/TuitionStudentTable";
 import { dayjs } from "@/lib/date";
 import { getPaymentStatus } from "@/lib/tuitionStatus";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileSearch, CheckSquare, X, CreditCard } from "lucide-react";
+import { FileSearch, CheckSquare, X, CreditCard, LayoutGrid, Rows } from "lucide-react";
 import { useLiveTuitionData } from "@/hooks/useLiveTuitionData";
 import { RecordPaymentDialog } from "@/components/admin/RecordPaymentDialog";
 import { BatchPaymentDialog } from "@/components/admin/BatchPaymentDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
+type Density = "card" | "table";
+const DENSITY_KEY = "admin-tuition-density";
 
 interface AdminTuitionListEnhancedProps {
   month: string;
@@ -26,9 +31,18 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchDialogOpen, setBatchDialogOpen] = useState(false);
+  const [density, setDensity] = useState<Density>(() => {
+    if (typeof window === "undefined") return "card";
+    const saved = localStorage.getItem(DENSITY_KEY) as Density | null;
+    return saved === "table" ? "table" : "card";
+  });
+
+  useEffect(() => {
+    localStorage.setItem(DENSITY_KEY, density);
+  }, [density]);
 
   // Use live tuition data from calculate-tuition edge function
-  const { data: tuitionData, isLoading, refetch, isRefetching } = useLiveTuitionData(month);
+  const { data: tuitionData, isLoading, isError, error, refetch, isRefetching } = useLiveTuitionData(month);
 
   // Calculate summary statistics
   const stats = useMemo(() => {
@@ -39,6 +53,7 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
       carryOutCredit: item.carry_out_credit ?? 0,
       totalAmount: item.total_amount ?? 0,
       monthPayments: item.recorded_payment ?? 0,
+      settledInMonth: item.settled_in_month,
     });
 
     const settledCount = tuitionData.filter((i) => getStatus(i) === 'settled').length;
@@ -75,6 +90,7 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
       carryOutCredit: item.carry_out_credit ?? 0,
       totalAmount: item.total_amount ?? 0,
       monthPayments: item.recorded_payment ?? 0,
+      settledInMonth: item.settled_in_month,
     });
     
     const overpaid = tuitionData.filter((i) => getStatus(i) === 'overpaid').length;
@@ -103,6 +119,7 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
       carryOutCredit: item.carry_out_credit ?? 0,
       totalAmount: item.total_amount ?? 0,
       monthPayments: item.recorded_payment ?? 0,
+      settledInMonth: item.settled_in_month,
     });
 
     let filtered = tuitionData;
@@ -191,24 +208,60 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Tuition Overview</h2>
           <p className="text-muted-foreground">{dayjs(month).format("MMMM YYYY")}</p>
         </div>
-        <Button
-          variant={selectionMode ? "secondary" : "outline"}
-          size="sm"
-          onClick={() => selectionMode ? exitSelectionMode() : setSelectionMode(true)}
-          className="gap-2"
-        >
-          {selectionMode ? <X className="h-4 w-4" /> : <CheckSquare className="h-4 w-4" />}
-          {selectionMode ? "Cancel" : "Select"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <ToggleGroup
+            type="single"
+            size="sm"
+            value={density}
+            onValueChange={(v) => v && setDensity(v as Density)}
+            aria-label="List density"
+            className="hidden md:inline-flex"
+          >
+            <ToggleGroupItem value="card" aria-label="Card view" className="h-9 w-9">
+              <LayoutGrid className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="table" aria-label="Table view" className="h-9 w-9">
+              <Rows className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <Button
+            variant={selectionMode ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => selectionMode ? exitSelectionMode() : setSelectionMode(true)}
+            className="gap-2"
+          >
+            {selectionMode ? <X className="h-4 w-4" /> : <CheckSquare className="h-4 w-4" />}
+            {selectionMode ? "Cancel" : "Select"}
+          </Button>
+        </div>
       </div>
 
-      {/* Summary Cards */}
-      <TuitionSummaryCards stats={stats!} isLoading={isLoading} />
+      {/* Error state — surfaces edge-function failures instead of crashing */}
+      {isError && (
+        <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-semibold text-destructive">Couldn't load tuition</p>
+            <p className="text-sm text-muted-foreground">
+              {(error as any)?.message || "The tuition calculation service returned an error."}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isRefetching}>
+            {isRefetching ? "Retrying…" : "Retry"}
+          </Button>
+        </div>
+      )}
+
+      {/* Summary Cards — sticky compact strip when scrolled */}
+      <div className="sticky top-[72px] md:top-[64px] z-30 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="surface-2 backdrop-blur-md supports-[backdrop-filter]:bg-card/80 rounded-xl">
+          <TuitionSummaryCards stats={stats} isLoading={isLoading} />
+        </div>
+      </div>
 
       {/* Toolbar */}
       <TuitionToolbar
@@ -227,45 +280,6 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
         isRefreshing={isRefetching}
       />
 
-      {/* Selection bar */}
-      <AnimatePresence>
-        {selectionMode && filteredAndSortedData.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="flex items-center justify-between rounded-lg border bg-muted/50 p-3"
-          >
-            <div className="flex items-center gap-3">
-              <Checkbox
-                checked={selectedIds.size === filteredAndSortedData.length && filteredAndSortedData.length > 0}
-                onCheckedChange={toggleSelectAll}
-              />
-              <span className="text-sm font-medium">
-                {selectedIds.size > 0 ? (
-                  <>{selectedIds.size} selected</>
-                ) : (
-                  "Select students"
-                )}
-              </span>
-            </div>
-            {selectedIds.size > 0 && (
-              <Button
-                size="sm"
-                onClick={() => setBatchDialogOpen(true)}
-                className="gap-2"
-              >
-                <CreditCard className="h-4 w-4" />
-                Batch Record Pay
-                <Badge variant="secondary" className="bg-primary-foreground/20 text-primary-foreground">
-                  {selectedIds.size}
-                </Badge>
-              </Button>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Student List */}
       {isLoading ? (
         <div className="space-y-3">
@@ -282,11 +296,21 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
           <FileSearch className="h-12 w-12 text-muted-foreground/50 mb-4" />
           <h3 className="text-lg font-semibold">No students found</h3>
           <p className="text-muted-foreground text-sm max-w-md mt-1">
-            {searchQuery 
+            {searchQuery
               ? `No results for "${searchQuery}". Try a different search term.`
               : "No tuition records match your current filters."}
           </p>
         </motion.div>
+      ) : density === "table" ? (
+        <TuitionStudentTable
+          items={filteredAndSortedData}
+          month={month}
+          onRecordPay={(item) => setPaymentItem(item)}
+          selectionMode={selectionMode}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleAll={toggleSelectAll}
+        />
       ) : (
         <div className="space-y-3">
           {filteredAndSortedData.map((item) => (
@@ -302,6 +326,58 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
           ))}
         </div>
       )}
+
+      {/* Floating bulk-action bar — visible whenever items are selected,
+          regardless of where the user has scrolled. Replaces the legacy
+          inline selection bar. */}
+      <AnimatePresence>
+        {selectionMode && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 26 }}
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-2xl"
+          >
+            <div className="surface-2 shadow-q3 ring-1 ring-border rounded-2xl px-4 py-3 flex items-center gap-3 backdrop-blur-md supports-[backdrop-filter]:bg-card/80">
+              <Checkbox
+                checked={selectedIds.size === filteredAndSortedData.length && filteredAndSortedData.length > 0}
+                onCheckedChange={toggleSelectAll}
+                aria-label="Select all"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="type-body font-semibold leading-tight">
+                  {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select students"}
+                </p>
+                <p className="type-micro text-muted-foreground">
+                  {filteredAndSortedData.length} visible
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={exitSelectionMode}
+                className="gap-1.5"
+              >
+                <X className="h-3.5 w-3.5" />
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setBatchDialogOpen(true)}
+                disabled={selectedIds.size === 0}
+                className="gap-2"
+              >
+                <CreditCard className="h-4 w-4" />
+                Batch Pay
+                <Badge variant="secondary" className="bg-primary-foreground/20 text-primary-foreground">
+                  {selectedIds.size}
+                </Badge>
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Results Count */}
       {!isLoading && filteredAndSortedData.length > 0 && (

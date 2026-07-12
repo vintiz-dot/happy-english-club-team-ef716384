@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,12 +43,12 @@ interface JournalListProps {
 }
 
 export function JournalList({ type, studentId, classId, onEdit, onView }: JournalListProps) {
+  const { user, role } = useAuth();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isOwner, setIsOwner] = useState<Record<string, boolean>>({});
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [isMember, setIsMember] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -57,20 +58,10 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
   const loadEntries = async () => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setLoading(false);
         return;
       }
-
-      // Get user role
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .single();
-      
-      setUserRole(roleData?.role || null);
 
       let query = supabase
         .from("journals" as any)
@@ -149,7 +140,6 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
 
   const handleLeave = async (journalId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { error } = await supabase
@@ -256,7 +246,7 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
                     </Button>
                   ) : (
                     // Only show Leave button for teachers who are members of collaborative journals
-                    userRole === "teacher" && 
+                    role === "teacher" &&
                     isMember[entry.id] && 
                     entry.type === "collab_student_teacher" && (
                       <Button

@@ -8,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type AttendanceStatus = "Present" | "Absent" | "Excused";
+type AttendanceStatus = "Present" | "Absent" | "Excused" | "Late";
 
 interface SessionRow {
   id: string;
@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       supabase
         .from("invoices")
         .select("total_amount, month, recorded_payment, class_breakdown")
-        .lt("month", month)
+        .neq("month", month)
         .eq("student_id", studentId)
         .order("month", { ascending: true }),
       supabase
@@ -150,7 +150,6 @@ Deno.serve(async (req) => {
             .maybeSingle()
         : Promise.resolve({ data: null as any }),
     ]);
-
     const { data: sessions, error: sessErr } = sessionsRes;
     if (sessErr) throw sessErr;
 
@@ -206,9 +205,9 @@ Deno.serve(async (req) => {
       const overrideRate = enrollment?.rate_override_vnd;
       const actualRate = overrideRate ?? defaultRate;
       const className = classNameMap.get(s.class_id) || 'Unknown';
-      // Only bill sessions with explicit Present or Absent attendance
-      const billable = att === "Present" || att === "Absent";
 
+      // Bill Present, Absent, or Late (all attended/charged); Excused is forgiven.
+      const billable = att === "Present" || att === "Absent" || att === "Late";
       if (billable && actualRate > 0) {
         // Calculate expected using default rate
         expectedClassTuition += defaultRate;
@@ -334,6 +333,7 @@ Deno.serve(async (req) => {
           isWinner: sd.winner_student_id === studentId,
           winnerClassId: sd.winner_class_id,
         };
+
         if (sd.status === "assigned" && sd.winner_student_id === studentId && sd.winner_class_id) {
           // Apply discount only to the winner class
           const winnerClassBase = enrollmentBaseAmounts.get(sd.winner_class_id) || 0;
@@ -357,13 +357,16 @@ Deno.serve(async (req) => {
 
     // ---------- Payments and carryovers ----------
     // Prior charges and current month invoice already fetched in Wave 1
-    const priorInvoicesDetailed: any[] = priorInvoicesRes.data ?? [];
+    const otherInvoicesDetailed: any[] = priorInvoicesRes.data ?? [];
+    const priorInvoicesDetailed = otherInvoicesDetailed.filter(inv => inv.month < month);
+    const futureInvoicesDetailed = otherInvoicesDetailed.filter(inv => inv.month > month);
     const priorCharges = priorInvoicesDetailed.reduce((s, r) => s + Number(r.total_amount ?? 0), 0);
     const priorPayments = priorInvoicesDetailed.reduce(
       (s, inv) => s + Number(inv.recorded_payment ?? 0),
       0
     );
     const monthPayments = Number(currentInvoiceRes.data?.recorded_payment ?? 0);
+
     // Build prior balance breakdown for detailed view
     const priorBalanceBreakdown: {
       months: Array<{
@@ -457,13 +460,24 @@ Deno.serve(async (req) => {
     const carryOutDebt = closingBalance > 0 ? closingBalance : 0;
 
     const balanceStatus = carryOutCredit > 0 ? "credit" : carryOutDebt > 0 ? "debt" : "settled";
-
     const balanceMessage =
       balanceStatus === "credit"
         ? `Bạn có số dư thừa ${carryOutCredit.toLocaleString("vi-VN")} ₫ sẽ được chuyển sang tháng sau.`
         : balanceStatus === "debt"
           ? `Bạn còn nợ ${carryOutDebt.toLocaleString("vi-VN")} ₫ cần thanh toán.`
           : "Tháng này đã thanh toán đầy đủ.";
+
+    let settledInMonth: string | null = null;
+    if (carryOutDebt > 0 && futureInvoicesDetailed.length > 0) {
+      let runningBalance = -carryOutDebt;
+      for (const fInv of futureInvoicesDetailed) {
+        runningBalance += Number(fInv.recorded_payment ?? 0) - Number(fInv.total_amount ?? 0);
+        if (runningBalance >= 0) {
+          settledInMonth = fInv.month;
+          break;
+        }
+      }
+    }
 
     // Build per-class breakdown for multi-enrollment students
     // Calculate per-class discounts for net_amount_vnd
@@ -564,7 +578,6 @@ Deno.serve(async (req) => {
 
     let invoiceUpsertOk = true;
     let invoiceErrorMsg = "";
-
     try {
       const { error: invoiceErr1 } = await supabase
         .from("invoices")
@@ -616,6 +629,7 @@ Deno.serve(async (req) => {
         carryInDebt,
         carryOutCredit,
         carryOutDebt,
+        settledInMonth,
         status: balanceStatus, // 'credit' | 'debt' | 'settled'
         message: balanceMessage, // show in UI
       },

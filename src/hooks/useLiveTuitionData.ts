@@ -16,6 +16,7 @@ interface LiveTuitionItem {
   carry_in_credit: number;
   carry_in_debt: number;
   priorBalance: number;
+  settled_in_month: string | null;
   status: string;
   confirmation_status: string;
   students: {
@@ -103,17 +104,30 @@ export function useLiveTuitionData(month: string) {
           .map((s) => s.id)
       );
 
-      // Call bulk endpoint - single call instead of N calls
+      // Call bulk endpoint in batches. calculate-tuition-bulk caps its input
+      // at 200 student ids per request (and can time out on very large
+      // batches), so a roster above that must be chunked — otherwise the
+      // single call returns a non-2xx and the whole tuition tab errors.
       const studentIdsToProcess = studentsWithEnrollments.map((s) => s.id);
-      
-      const { data: bulkData, error: bulkError } = await supabase.functions.invoke(
-        "calculate-tuition-bulk",
-        { body: { studentIds: studentIdsToProcess, month } }
+
+      const BATCH_SIZE = 150;
+      const batches: string[][] = [];
+      for (let i = 0; i < studentIdsToProcess.length; i += BATCH_SIZE) {
+        batches.push(studentIdsToProcess.slice(i, i + BATCH_SIZE));
+      }
+
+      const batchResultArrays = await Promise.all(
+        batches.map((ids) =>
+          supabase.functions
+            .invoke("calculate-tuition-bulk", { body: { studentIds: ids, month } })
+            .then(({ data, error }) => {
+              if (error) throw error;
+              return (data?.results as any[]) || [];
+            })
+        )
       );
 
-      if (bulkError) throw bulkError;
-
-      const bulkResults = bulkData?.results || [];
+      const bulkResults = batchResultArrays.flat();
       const resultMap = new Map<string, any>(bulkResults.map((r: any) => [r.studentId, r]));
 
       // Map to LiveTuitionItem[]
@@ -132,13 +146,14 @@ export function useLiveTuitionData(month: string) {
           total_amount: data.totalAmount ?? 0,
           recorded_payment: data.payments?.monthPayments ?? 0,
           finalPayable: data.totalAmount + (data.carry?.carryInDebt ?? 0) - (data.carry?.carryInCredit ?? 0),
-          balance: data.carry?.carryOutDebt ?? -(data.carry?.carryOutCredit ?? 0),
+          balance: (data.carry?.carryOutDebt || 0) - (data.carry?.carryOutCredit || 0),
           carry_out_credit: data.carry?.carryOutCredit ?? 0,
           carry_out_debt: data.carry?.carryOutDebt ?? 0,
           carry_in_credit: data.carry?.carryInCredit ?? 0,
           carry_in_debt: data.carry?.carryInDebt ?? 0,
           priorBalance: (data.carry?.carryInCredit ?? 0) - (data.carry?.carryInDebt ?? 0),
-          status: data.invoiceStatus || "open",
+          settled_in_month: data.carry?.settledInMonth ?? null,
+          status: data.invoiceStatus || data.carry?.status || "open",
           confirmation_status: data.confirmationStatus || "needs_review",
           students: student,
           classes: studentClasses.get(student.id) || [],

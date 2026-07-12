@@ -3,18 +3,19 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, BookOpen, CalendarDays, MoreHorizontal, NotebookPen, DollarSign, Trophy, Zap, FileText, Gamepad2 } from "lucide-react";
+import { Home, BookOpen, CalendarDays, MoreHorizontal, NotebookPen, DollarSign, Trophy, Zap, FileText, FolderOpen, Sparkles, FileImage } from "lucide-react";
 
 const allNavItems = [
   { id: "dashboard", label: "Dashboard", emoji: "🏠", path: "/student/dashboard", icon: Home, primary: true },
   { id: "homework", label: "Homework", emoji: "📝", path: "/student/assignments", icon: BookOpen, primary: true },
   { id: "schedule", label: "My Classes", emoji: "📅", path: "/student/dashboard?tab=schedule", icon: CalendarDays, primary: true },
-  { id: "games", label: "Games", emoji: "🎮", path: "/student/games", icon: Gamepad2, primary: false },
   { id: "reports", label: "Reports", emoji: "📄", path: "/student/dashboard?tab=reports", icon: FileText, primary: false },
   { id: "journal", label: "Journal", emoji: "📖", path: "/student/journal", icon: NotebookPen, primary: false },
   { id: "tuition", label: "Tuition", emoji: "💰", path: "/tuition", icon: DollarSign, primary: false },
   { id: "achievements", label: "Achievements", emoji: "🏆", path: "/student/dashboard?tab=achievements", icon: Trophy, primary: false },
-  
+  { id: "resources", label: "Resources", emoji: "📚", path: "/student/resources", icon: FolderOpen, primary: false },
+  { id: "vocabulary", label: "Vocabulary", emoji: "✨", path: "/student/vocabulary", icon: Sparkles, primary: false },
+  { id: "mywork", label: "My Work", emoji: "🖼️", path: "/student/my-work", icon: FileImage, primary: false },
 ];
 
 export function StudentNavBar() {
@@ -90,8 +91,8 @@ export function StudentNavBar() {
         </AnimatePresence>
 
         {/* Bottom tab bar */}
-        <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-card/95 backdrop-blur-xl supports-[backdrop-filter]:bg-card/80 border-t shadow-[0_-4px_20px_rgba(0,0,0,0.08)] md:hidden pb-[env(safe-area-inset-bottom)]">
-          <div className="flex items-center justify-around py-1.5 px-1">
+        <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-background/85 backdrop-blur-xl border-t border-border/50 shadow-[0_-8px_32px_-8px_rgba(120,80,200,0.18)] md:hidden pb-[env(safe-area-inset-bottom)]">
+          <div className="relative flex items-center justify-around py-1.5 px-1">
             {primaryItems.map((item) => {
               const active = isActive(item.path, item.id);
               const Icon = item.icon;
@@ -100,20 +101,30 @@ export function StudentNavBar() {
                   key={item.id}
                   onClick={() => navigate(item.path)}
                   className={cn(
-                    "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all min-w-[60px]",
-                    active
-                      ? "text-primary"
-                      : "text-muted-foreground"
+                    "relative flex flex-col items-center gap-0.5 px-3 pt-2 pb-1.5 rounded-2xl transition-all min-w-[64px] tap-44"
                   )}
                 >
-                  <Icon className={cn("h-5 w-5", active && "text-primary")} />
-                  <span className="text-[10px] font-medium">{item.label}</span>
                   {active && (
                     <motion.div
-                      className="absolute -bottom-0.5 w-6 h-0.5 rounded-full bg-primary"
                       layoutId="bottomTabIndicator"
+                      className="absolute inset-x-3 inset-y-0.5 rounded-2xl bg-aurora opacity-15"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
+                  <Icon
+                    className={cn(
+                      "relative h-5 w-5 transition-colors",
+                      active ? "text-blue-600 dark:text-blue-300" : "text-muted-foreground"
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "relative text-[10px] font-semibold transition-colors",
+                      active ? "text-blue-700 dark:text-blue-200" : "text-muted-foreground"
+                    )}
+                  >
+                    {item.label}
+                  </span>
                 </button>
               );
             })}
@@ -121,14 +132,14 @@ export function StudentNavBar() {
             <button
               onClick={() => setMoreOpen(!moreOpen)}
               className={cn(
-                "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all min-w-[60px]",
-                isMoreActive || moreOpen
-                  ? "text-primary"
+                "relative flex flex-col items-center gap-0.5 px-3 pt-2 pb-1.5 rounded-2xl transition-all min-w-[64px] tap-44",
+                (isMoreActive || moreOpen)
+                  ? "text-blue-600 dark:text-blue-300"
                   : "text-muted-foreground"
               )}
             >
               <MoreHorizontal className="h-5 w-5" />
-              <span className="text-[10px] font-medium">More</span>
+              <span className="text-[10px] font-semibold">More</span>
             </button>
           </div>
         </nav>

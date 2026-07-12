@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,11 +18,11 @@ export default function ProfileSwitcher() {
   const [loading, setLoading] = useState(true);
   const hasAutoSelectedRef = useRef(false);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   useEffect(() => {
     async function loadStudents() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           setLoading(false);
           return;
@@ -68,7 +69,7 @@ export default function ProfileSwitcher() {
     }
 
     loadStudents();
-  }, []);
+  }, [user]);
 
   if (loading || students.length === 0) {
     return null;

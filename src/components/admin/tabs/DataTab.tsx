@@ -12,6 +12,7 @@ import { Download, Upload, Search, AlertTriangle, Activity } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminUsersManager } from "@/components/admin/AdminUsersManager";
 import { UsersManager } from "@/components/admin/UsersManager";
+import { PageHero } from "@/components/quest/PageHero";
 
 const DataTab = () => {
   const [loading, setLoading] = useState(false);
@@ -135,10 +136,12 @@ const DataTab = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Data Management</h2>
-        <p className="text-muted-foreground">Export, import, and audit your system data</p>
-      </div>
+      <PageHero
+        eyebrow="System"
+        title="Data Management"
+        subtitle="Export, import, and audit your system data."
+        variant="citrus"
+      />
 
       <Tabs defaultValue="export">
         <TabsList>

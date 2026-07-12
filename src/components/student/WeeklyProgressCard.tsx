@@ -17,63 +17,25 @@ export function WeeklyProgressCard({ studentId, currentStreak }: WeeklyProgressC
   const { data } = useQuery({
     queryKey: ["weekly-progress", studentId, weekStart],
     queryFn: async () => {
-      // Get enrolled class IDs
-      const { data: enrollments } = await supabase
-        .from("enrollments")
-        .select("class_id")
-        .eq("student_id", studentId)
-        .is("end_date", null);
+      // Use RPC to bypass RLS
+      const { data: result, error } = await supabase.rpc("get_student_weekly_stats", {
+        p_student_id: studentId,
+        p_week_start: weekStart,
+        p_week_end: weekEnd,
+      });
 
-      const classIds = enrollments?.map(e => e.class_id) || [];
+      if (error) {
+        console.error("get_student_weekly_stats RPC error:", error);
+        return null;
+      }
 
-      // Parallel queries
-      const [sessionsRes, attendanceRes, homeworksRes, submissionsRes, xpRes] = await Promise.all([
-        // Total sessions this week
-        supabase
-          .from("sessions")
-          .select("id", { count: "exact", head: true })
-          .in("class_id", classIds)
-          .gte("date", weekStart)
-          .lte("date", weekEnd)
-          .in("status", ["Scheduled", "Held"]),
-        // Attended sessions this week
-        supabase
-          .from("attendance")
-          .select("id, session:sessions!inner(date, class_id)", { count: "exact" })
-          .eq("student_id", studentId)
-          .eq("status", "Present")
-          .gte("sessions.date", weekStart)
-          .lte("sessions.date", weekEnd),
-        // Homeworks assigned this week
-        supabase
-          .from("homeworks")
-          .select("id", { count: "exact", head: true })
-          .in("class_id", classIds)
-          .gte("created_at", weekStart),
-        // Submissions this week
-        supabase
-          .from("homework_submissions")
-          .select("id", { count: "exact", head: true })
-          .eq("student_id", studentId)
-          .in("status", ["submitted", "graded"])
-          .gte("submitted_at", weekStart),
-        // XP earned this week
-        supabase
-          .from("point_transactions")
-          .select("points")
-          .eq("student_id", studentId)
-          .gte("date", weekStart)
-          .lte("date", weekEnd),
-      ]);
-
-      const totalXp = xpRes.data?.reduce((sum, p) => sum + (p.points || 0), 0) || 0;
-
+      const r = result as any;
       return {
-        classesAttended: attendanceRes.count || 0,
-        totalClasses: sessionsRes.count || 0,
-        homeworkSubmitted: submissionsRes.count || 0,
-        totalHomework: homeworksRes.count || 0,
-        xpEarned: totalXp,
+        classesAttended: r?.attended_sessions || 0,
+        totalClasses: r?.total_sessions || 0,
+        homeworkSubmitted: r?.submitted_homeworks || 0,
+        totalHomework: r?.total_homeworks || 0,
+        xpEarned: r?.xp_earned || 0,
       };
     },
     enabled: !!studentId,

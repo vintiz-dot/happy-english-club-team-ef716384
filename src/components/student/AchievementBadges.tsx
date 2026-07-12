@@ -58,14 +58,14 @@ const badgeDefinitions: Omit<Badge, "earned" | "earnedAt">[] = [
 const rarityColors = {
   common: "from-zinc-400 to-zinc-500",
   rare: "from-blue-400 to-blue-600",
-  epic: "from-purple-400 to-purple-600",
+  epic: "from-indigo-400 to-blue-600",
   legendary: "from-amber-400 to-amber-600",
 };
 
 const rarityGlow = {
   common: "shadow-zinc-400/20",
   rare: "shadow-blue-400/30",
-  epic: "shadow-purple-400/40",
+  epic: "shadow-indigo-400/40",
   legendary: "shadow-amber-400/50",
 };
 
@@ -169,7 +169,7 @@ export function AchievementBadges({
                         transition={{ duration: 2, repeat: Infinity }}
                       >
                         {badge.rarity === "rare" && <Star className="h-3 w-3 text-blue-400" />}
-                        {badge.rarity === "epic" && <Zap className="h-3 w-3 text-purple-400" />}
+                        {badge.rarity === "epic" && <Zap className="h-3 w-3 text-indigo-400" />}
                         {badge.rarity === "legendary" && <Crown className="h-3 w-3 text-amber-400" />}
                       </motion.div>
                     )}
@@ -182,7 +182,7 @@ export function AchievementBadges({
                     <p className={`text-xs capitalize ${
                       badge.rarity === "common" ? "text-zinc-400" :
                       badge.rarity === "rare" ? "text-blue-400" :
-                      badge.rarity === "epic" ? "text-purple-400" :
+                      badge.rarity === "epic" ? "text-indigo-400" :
                       "text-amber-400"
                     }`}>
                       {badge.rarity}

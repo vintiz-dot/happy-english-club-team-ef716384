@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { getStaffClassIdsForUser } from "@/hooks/useStaffProfile";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { JournalEditor } from "@/components/journal/JournalEditor";
 import { JournalList } from "@/components/journal/JournalList";
@@ -35,13 +36,14 @@ export function TeacherJournalView() {
   const [viewingEntry, setViewingEntry] = useState<JournalEntry | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    loadStudents();
-  }, []);
+    if (user) loadStudents();
+  }, [user]);
 
   const loadStudents = async () => {
-    const userId = (await supabase.auth.getUser()).data.user?.id;
+    const userId = user?.id;
     if (!userId) return;
 
     const classIds = await getStaffClassIdsForUser(userId);

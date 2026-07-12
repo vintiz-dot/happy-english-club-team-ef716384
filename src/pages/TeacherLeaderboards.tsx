@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { dayjs } from "@/lib/date";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import Layout from "@/components/Layout";
@@ -18,12 +19,13 @@ export default function TeacherLeaderboards() {
   const [viewMode, setViewMode] = useState<"standard" | "live">("standard");
   const [remainingTime, setRemainingTime] = useState<string | null>(null);
   const today = dayjs().format("YYYY-MM-DD");
+  const { user } = useAuth();
 
   const { data: activeClasses, isLoading } = useQuery({
-    queryKey: ["teacher-leaderboard-classes"],
+    queryKey: ["teacher-leaderboard-classes", user?.id],
+    enabled: !!user,
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) return [];
 
       // Try teacher first
       const { data: teacher } = await supabase

@@ -90,7 +90,7 @@ export function StudentTuitionReviewCard({
 
   const getFlagBadge = (flag: any) => {
     const colors: Record<string, string> = {
-      has_special_discount: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+      has_special_discount: "bg-blue-500/10 text-blue-500 border-blue-500/20",
       has_referral_bonus: "bg-blue-500/10 text-blue-500 border-blue-500/20",
       sibling_discount_winner: "bg-green-500/10 text-green-500 border-green-500/20",
       rate_override: "bg-amber-500/10 text-amber-500 border-amber-500/20",

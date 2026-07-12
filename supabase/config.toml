@@ -57,6 +57,12 @@ verify_jwt = true
 [functions.pronounce-syllables]
 verify_jwt = false
 
+[functions.record-practice]
+verify_jwt = false
+
+[functions.save-word]
+verify_jwt = false
+
 [functions.pronounce-viseme]
 verify_jwt = false
 
@@ -66,11 +72,14 @@ verify_jwt = false
 [functions.word-enrichment]
 verify_jwt = false
 
-[functions.save-word]
-verify_jwt = false
+[functions.ocr-student-work]
+verify_jwt = true
 
-[functions.record-practice]
-verify_jwt = false
+[functions.ocr-vocab-scan]
+verify_jwt = true
 
-[functions.sapling-grammar]
-verify_jwt = false
+[functions.analyze-transcript]
+verify_jwt = true
+
+[functions.generate-student-report]
+verify_jwt = true

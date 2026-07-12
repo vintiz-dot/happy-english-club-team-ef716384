@@ -10,6 +10,7 @@ import { formatVND } from "@/lib/invoice/formatter";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PaymentDetailsTable } from "./PaymentDetailsTable";
 import { FamilyPaymentActivityLog } from "@/components/admin/FamilyPaymentActivityLog";
+import { PageHero } from "@/components/quest/PageHero";
 
 const ReportsTab = () => {
   const [selectedMonth, setSelectedMonth] = useState(monthKey());
@@ -243,9 +244,16 @@ const ReportsTab = () => {
 
   return (
     <div className="space-y-6">
+      <PageHero
+        eyebrow="Reports"
+        title="Operational Reports"
+        subtitle="Cancelled sessions, excused absences, payments, and class P&L."
+        variant="glacier"
+      />
+
       {/* Month Selector */}
       <div className="flex items-center gap-4">
-        <label className="text-sm font-medium">Select Month:</label>
+        <label className="type-micro font-medium">Select Month:</label>
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
           <SelectTrigger className="w-[200px]">
             <SelectValue />

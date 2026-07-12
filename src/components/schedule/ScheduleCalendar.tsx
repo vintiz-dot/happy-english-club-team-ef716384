@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,9 +11,11 @@ export function ScheduleCalendar({ role }: { role: string }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
+  const { user } = useAuth();
 
   const { data: sessions, isLoading } = useQuery({
-    queryKey: ["sessions", year, month, role],
+    queryKey: ["sessions", year, month, role, user?.id],
+    enabled: role !== "teacher" || !!user,
     queryFn: async () => {
       const startDate = new Date(year, month, 1).toISOString().split('T')[0];
       const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
@@ -31,7 +34,6 @@ export function ScheduleCalendar({ role }: { role: string }) {
 
       // Filter for teachers/TAs
       if (role === "teacher") {
-        const { data: { user } } = await supabase.auth.getUser();
         const { data: teacher } = await supabase
           .from("teachers")
           .select("id")

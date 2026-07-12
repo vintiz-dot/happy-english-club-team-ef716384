@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Nigeria - For Kids</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* --- 1. CORE SETUP --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide-container {
+            background-color: #ffffff;
+            border-radius: 30px; /* Soft, child-friendly rounded corners */
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            height: 720px;
+            width: 1280px;
+            overflow: hidden;
+            position: absolute;
+            padding: 60px;
+        }
+
+        .slide-container.active {
+            display: flex;
+        }
+
+        /* Navigation Buttons */
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 70px;
+            height: 70px;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #334155;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: #ffffff;
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .prev-btn { left: 30px; }
+        .next-btn { right: 30px; }
+
+        /* --- 2. TYPOGRAPHY --- */
+        h1, h2, h3, .number {
+            font-family: 'Comfortaa', cursive;
+            color: #1e293b;
+        }
+
+        p, li, .subtitle {
+            font-family: 'Nunito', sans-serif;
+            color: #334155;
+        }
+
+        h1 {
+            font-size: 80px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .slide-title {
+            font-size: 55px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        h3 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        p {
+            font-size: 32px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            font-size: 40px;
+            font-weight: 600;
+            text-align: center;
+            color: #475569;
+        }
+        
+        strong {
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        /* Special style for the teacher/presenter prompts */
+        em.prompt {
+            color: #ef4444; /* Friendly red for questions/prompts */
+            font-style: normal;
+            font-weight: 800;
+            display: inline-block;
+            background-color: #fee2e2;
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-top: 10px;
+        }
+
+        /* --- 3. LAYOUTS --- */
+        
+        /* Shared Content Area */
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: center;
+            width: 100%;
+        }
+
+        /* Title Layout */
+        .title-layout {
+            align-items: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+        }
+        
+        /* Section Title Layout */
+        .section-title-layout {
+            align-items: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+
+        .section-title-layout h2 {
+            font-size: 80px;
+            margin-bottom: 30px;
+        }
+
+        /* Two Column Layout */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            width: 100%;
+            align-items: center;
+        }
+        
+        .text-content {
+            background-color: rgba(255, 255, 255, 0.6);
+            padding: 40px;
+            border-radius: 30px;
+        }
+
+        /* Image/Video Wrappers */
+        .image-wrapper {
+            border-radius: 30px;
+            overflow: hidden;
+            width: 100%;
+            height: 400px;
+            border: 8px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .video-card {
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            border: 6px solid rgba(255, 255, 255, 0.8);
+            background-color: #000;
+        }
+
+        /* Tiled Layouts */
+        .tiled-content {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- Navigation Buttons -->
+<button class="nav-btn prev-btn" id="prevBtn" aria-label="Previous Slide"><i class="fas fa-chevron-left"></i></button>
+<button class="nav-btn next-btn" id="nextBtn" aria-label="Next Slide"><i class="fas fa-chevron-right"></i></button>
+
+<!-- Slide 1: Title_Slide -->
+<div class="slide-container" id="slide1" style="background-color: #fef08a;">
+    <div class="title-layout">
+        <h1>👋 Let's go to Nigeria! 🇳🇬</h1>
+        <p class="subtitle">A fun trip from Vietnam! ✈️🌍</p>
+    </div>
+</div>
+
+<!-- Slide 2: Two Column (Where is Nigeria) -->
+<div class="slide-container" id="slide2" style="background-color: #bae6fd;">
+    <h2 class="slide-title">✈️ Where is Nigeria?</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="text-content">
+                <p>Nigeria is far away in a place called <strong>Africa</strong>.</p>
+                <p>We need an airplane to get there! Look at how fun it is!</p>
+                <p><em class="prompt">Ask: Put your arms out! Can you fly like an airplane? Zoom zoom!</em></p>
+            </div>
+            <div style="text-align: center;">
+                <iframe class="video-card" width="280" height="498" src="https://www.youtube.com/embed/N-2Tmv81yfE" title="Where is Nigeria Dance" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 3: Section_Title (Weather Connection) -->
+<div class="slide-container" id="slide3" style="background-color: #fef08a;">
+    <div class="section-title-layout">
+        <h2>☀️ It is Hot and Sunny!</h2>
+        <p>Just like here in <strong>Vietnam</strong>, Nigeria is very hot!</p>
+        <p>The sun shines very bright in the sky.</p>
+        <p><em class="prompt">Ask: Put your hands over your eyes! Where is the sun?</em></p>
+    </div>
+</div>
+
+<!-- Slide 4: Videos (Food Connection) -->
+<div class="slide-container" id="slide4" style="background-color: #fecdd3;">
+    <h2 class="slide-title">🍚 Yummy Nigerian Food!</h2>
+    <div class="content-area">
+        <div style="display: flex; gap: 40px; width: 100%; justify-content: center; align-items: center;">
+            <div class="text-content" style="flex: 1;">
+                <p>In Nigeria, they cook very colorful and yummy food!</p>
+                <p>They eat special rice and tasty snacks. Let's watch how they make it!</p>
+                <p><em class="prompt">Ask: Pretend to eat the food! Num num num! What do you like to eat?</em></p>
+            </div>
+            <div style="display: flex; gap: 20px;">
+                <iframe class="video-card" width="225" height="400" src="https://www.youtube.com/embed/MVfFAQQmGxU" title="Nigerian Food 1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                <iframe class="video-card" width="225" height="400" src="https://www.youtube.com/embed/Z5Vl3vyqwg8" title="Nigerian Food 2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 5: Video (Animals) -->
+<div class="slide-container" id="slide5" style="background-color: #bbf7d0;">
+    <h2 class="slide-title">🐘 Look at the Animals!</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="text-content">
+                <p>Africa has so many cool animals!</p>
+                <p>Let's watch this video to see some amazing friends.</p>
+                <p><em class="prompt">Ask: What animals do you see? Can you make an animal sound? Roar!</em></p>
+            </div>
+            <div style="text-align: center;">
+                <iframe class="video-card" width="280" height="498" src="https://www.youtube.com/embed/Hq7tXI7Z3vs" title="African Animals" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 6: Videos (Places) -->
+<div class="slide-container" id="slide6" style="background-color: #bfdbfe;">
+    <h2 class="slide-title">🏙️ Beautiful Places!</h2>
+    <div class="content-area">
+        <p style="text-align: center;">Nigeria has big cities, long bridges, and beautiful nature!</p>
+        <div class="tiled-content" style="margin-top: 20px;">
+            <iframe class="video-card" width="444" height="280" src="https://www.youtube.com/embed/DDfri1n1OL8" title="Nigeria Drone View" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            <iframe class="video-card" width="157" height="280" src="https://www.youtube.com/embed/CkB55fSWEEQ" title="Nigeria Place 1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            <iframe class="video-card" width="157" height="280" src="https://www.youtube.com/embed/nkzP8bd-3b0" title="Nigeria Place 2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <p style="text-align: center; margin-top: 20px;"><em class="prompt">Ask: Look at the big buildings! Can you stretch your arms up tall like a building?</em></p>
+    </div>
+</div>
+
+<!-- Slide 7: Video (Dance) -->
+<div class="slide-container" id="slide7" style="background-color: #e9d5ff;">
+    <h2 class="slide-title">💃🕺 Let's Dance Together!</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="text-content">
+                <p>Kids in Nigeria love to listen to fast music and dance!</p>
+                <p>They have really cool moves and colorful clothes.</p>
+                <p><em class="prompt">Ask: Stand up! Watch the video and try to copy their dance moves!</em></p>
+            </div>
+            <div style="text-align: center;">
+                <iframe class="video-card" width="280" height="498" src="https://www.youtube.com/embed/N-2Tmv81yfE" title="Nigerian Kids Dancing" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 8: Videos (Football) -->
+<div class="slide-container" id="slide8" style="background-color: #d9f99d;">
+    <h2 class="slide-title">⚽ Goal! We Love Football!</h2>
+    <div class="content-area">
+        <div style="display: flex; gap: 40px; width: 100%; justify-content: center; align-items: center;">
+            <div class="text-content" style="flex: 1;">
+                <p>Kids in Vietnam love football, and kids in Nigeria do too!</p>
+                <p>They can run very fast and kick the ball really high!</p>
+                <p><em class="prompt">Ask: Stand up! Can you kick the ball? Kick! Kick! Goal!</em></p>
+            </div>
+            <div style="display: flex; gap: 20px;">
+                <iframe class="video-card" width="225" height="400" src="https://www.youtube.com/embed/JlXrHXf_KiI" title="Football 1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                <iframe class="video-card" width="225" height="400" src="https://www.youtube.com/embed/v4crlQItQfY" title="Football 2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 9: Section_Title (Goodbye) -->
+<div class="slide-container" id="slide9" style="background-color: #fed7aa;">
+    <div class="section-title-layout">
+        <h2>👋 Odabo! (Goodbye!)</h2>
+        <p>In Nigeria, we can say <strong>"Odabo"</strong> to say goodbye!</p>
+        <p><em class="prompt">Ask: Wave your hands and say "Odabo"! See you next time!</em></p>
+    </div>
+</div>
+
+<script>
+    const slides = document.querySelectorAll('.slide-container');
+    let currentSlide = 0;
+
+    function showSlide(index) {
+        // Stop videos in the current slide before hiding
+        const currentIframes = slides[currentSlide].querySelectorAll('iframe');
+        currentIframes.forEach(iframe => {
+            const src = iframe.src;
+            iframe.src = src; // Reload iframe to stop the video
+        });
+
+        slides[currentSlide].classList.remove('active');
+        
+        // Wrap around logic
+        if (index < 0) {
+            currentSlide = slides.length - 1;
+        } else if (index >= slides.length) {
+            currentSlide = 0;
+        } else {
+            currentSlide = index;
+        }
+
+        slides[currentSlide].classList.add('active');
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+        showSlide(currentSlide - 1);
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        showSlide(currentSlide + 1);
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+            showSlide(currentSlide + 1);
+        } else if (e.key === 'ArrowLeft') {
+            showSlide(currentSlide - 1);
+        }
+    });
+
+    // Initialize the first slide
+    slides[0].classList.add('active');
+</script>
+</body>
+</html>

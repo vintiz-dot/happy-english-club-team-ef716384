@@ -4,12 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ProfilePicker() {
   const { studentId, setStudentId } = useStudentProfile();
+  const { user, role } = useAuth();
   const [students, setStudents] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdminOrTeacher, setIsAdminOrTeacher] = useState(false);
   const hasAutoSelectedRef = useRef(false);
   const queryClient = useQueryClient();
 
@@ -17,20 +18,13 @@ export default function ProfilePicker() {
     async function loadStudents() {
       hasAutoSelectedRef.current = false;
       try {
-        const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           setLoading(false);
           return;
         }
 
         // Skip for admin/teacher roles — they don't have student profiles
-        const { data: roles } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id);
-        const roleNames = roles?.map(r => r.role) || [];
-        if (roleNames.includes("admin") || roleNames.includes("teacher")) {
-          setIsAdminOrTeacher(true);
+        if (role === "admin" || role === "teacher") {
           setLoading(false);
           return;
         }
@@ -62,7 +56,7 @@ export default function ProfilePicker() {
         }
 
         setStudents(studentData || []);
-        
+
         // Auto-select logic with ref to prevent multiple runs
         if (studentData && studentData.length === 1 && !hasAutoSelectedRef.current) {
           hasAutoSelectedRef.current = true;
@@ -93,7 +87,6 @@ export default function ProfilePicker() {
       if (event === 'SIGNED_OUT') {
         setStudents(null);
         setLoading(false);
-        setIsAdminOrTeacher(false);
         hasAutoSelectedRef.current = false;
       } else if (event === 'SIGNED_IN') {
         loadStudents();
@@ -103,12 +96,12 @@ export default function ProfilePicker() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [user, role]);
 
   if (loading) return null;
 
   // Skip for admin/teacher users
-  if (isAdminOrTeacher) return null;
+  if (role === "admin" || role === "teacher") return null;
 
   // No linked students — don't block the page; contextual messages handle this
   if (!students || students.length === 0) {

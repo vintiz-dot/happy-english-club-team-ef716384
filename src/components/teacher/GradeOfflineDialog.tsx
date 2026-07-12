@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, GraduationCap } from "lucide-react";
+import { Loader2, GraduationCap, ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQueryClient } from "@tanstack/react-query";
@@ -188,43 +188,72 @@ export function GradeOfflineDialog({ homeworkId, isOpen, onClose, onSuccess }: G
     }
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Grade Offline Submissions</DialogTitle>
-          <DialogDescription>Grade students who submitted their work offline or didn't submit online</DialogDescription>
-        </DialogHeader>
+  const handleClose = () => {
+    setSelectedStudent(null);
+    setGrade("");
+    setPoints("");
+    setFeedback("");
+    onClose();
+  };
 
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : students.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">All students have submitted online!</p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Student Selection */}
-            <div className="space-y-3">
-              <Label>Select Student</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-2">
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-lg max-h-[85vh] overflow-hidden flex flex-col p-0">
+        {/* ---- HEADER ---- */}
+        <div className="px-4 pt-5 pb-3 sm:px-6 border-b shrink-0">
+          <DialogHeader>
+            {selectedStudent ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 shrink-0"
+                  onClick={() => setSelectedStudent(null)}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div className="min-w-0">
+                  <DialogTitle className="text-base truncate">Grade Offline</DialogTitle>
+                  <DialogDescription className="truncate">{selectedStudent.full_name}</DialogDescription>
+                </div>
+              </div>
+            ) : (
+              <>
+                <DialogTitle>Grade Offline Submissions</DialogTitle>
+                <DialogDescription>Grade students who submitted their work offline</DialogDescription>
+              </>
+            )}
+          </DialogHeader>
+        </div>
+
+        {/* ---- SCROLLABLE CONTENT ---- */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : students.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground text-sm">All students have submitted online! 🎉</p>
+            </div>
+          ) : !selectedStudent ? (
+            /* ===== STUDENT PICKER ===== */
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Select Student</Label>
+              <div className="space-y-2">
                 {students.map((student) => (
                   <Card
                     key={student.id}
-                    className={`p-3 cursor-pointer transition-all hover:shadow-md ${
-                      selectedStudent?.id === student.id ? "border-primary bg-primary/5" : "border-muted"
-                    }`}
+                    className="p-3 cursor-pointer transition-all hover:shadow-md active:scale-[0.98] border-muted"
                     onClick={() => setSelectedStudent(student)}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                         <GraduationCap className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{student.full_name}</p>
-                        <Badge variant="outline" className="text-xs">
+                        <p className="font-medium text-sm truncate">{student.full_name}</p>
+                        <Badge variant="outline" className="text-[10px]">
                           No submission
                         </Badge>
                       </div>
@@ -233,61 +262,63 @@ export function GradeOfflineDialog({ homeworkId, isOpen, onClose, onSuccess }: G
                 ))}
               </div>
             </div>
-
-            {/* Grading Form */}
-            {selectedStudent && (
-              <div className="space-y-4 border-t pt-4">
-                <div className="bg-primary/5 p-3 rounded-lg">
-                  <p className="font-medium">Grading: {selectedStudent.full_name}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="grade">Grade *</Label>
-                  <Input
-                    id="grade"
-                    value={grade}
-                    onChange={(e) => setGrade(e.target.value)}
-                    placeholder="e.g., A, B+, 95/100"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="points">Points (-100 to 100)</Label>
-                  <Input
-                    id="points"
-                    type="number"
-                    min="-100"
-                    max="100"
-                    value={points}
-                    onChange={(e) => setPoints(e.target.value)}
-                    placeholder="Optional leaderboard points"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="feedback">Teacher Feedback</Label>
-                  <Textarea
-                    id="feedback"
-                    value={feedback}
-                    onChange={(e) => setFeedback(e.target.value)}
-                    placeholder="Optional feedback for the student..."
-                    rows={4}
-                  />
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <Button onClick={handleSubmitGrade} disabled={submitting} className="flex-1">
-                    {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Submit Grade
-                  </Button>
-                  <Button onClick={() => setSelectedStudent(null)} variant="outline" disabled={submitting}>
-                    Cancel
-                  </Button>
-                </div>
+          ) : (
+            /* ===== GRADING FORM ===== */
+            <div className="space-y-4">
+              <div className="bg-primary/5 p-3 rounded-lg">
+                <p className="font-medium text-sm">Grading: {selectedStudent.full_name}</p>
               </div>
-            )}
-          </div>
-        )}
+
+              <div className="space-y-1.5">
+                <Label htmlFor="offline-grade" className="text-sm">Grade *</Label>
+                <Input
+                  id="offline-grade"
+                  value={grade}
+                  onChange={(e) => setGrade(e.target.value)}
+                  placeholder="e.g., A, B+, 95/100"
+                  className="h-10"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="offline-points" className="text-sm">Points (-100 to 100)</Label>
+                <Input
+                  id="offline-points"
+                  type="number"
+                  inputMode="numeric"
+                  min="-100"
+                  max="100"
+                  value={points}
+                  onChange={(e) => setPoints(e.target.value)}
+                  placeholder="Optional leaderboard points"
+                  className="h-10"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="offline-feedback" className="text-sm">Teacher Feedback</Label>
+                <Textarea
+                  id="offline-feedback"
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder="Optional feedback for the student..."
+                  rows={3}
+                  className="text-sm"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2 pb-1">
+                <Button onClick={handleSubmitGrade} disabled={submitting} className="flex-1 h-11 font-semibold">
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Submit Grade
+                </Button>
+                <Button onClick={() => setSelectedStudent(null)} variant="outline" disabled={submitting} className="h-11">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

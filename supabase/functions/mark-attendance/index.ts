@@ -169,12 +169,16 @@ Deno.serve(async (req) => {
 
             const currentMilestones = Math.floor(newConsecutive / 5);
             if (currentMilestones > bonusesAwarded) {
+              // point_transactions has no `reason` column and its type CHECK
+              // rejects 'focus'; use the valid 'participation' type + `notes`
+              // (date/month fall back to their column defaults). The previous
+              // shape failed silently and never awarded streak bonuses.
               pointInserts.push({
                 student_id: entry.studentId,
                 class_id: classId,
                 points: 50,
-                type: 'focus',
-                reason: `Attendance streak bonus: ${newConsecutive} consecutive classes attended!`,
+                type: 'participation',
+                notes: `Attendance streak bonus: ${newConsecutive} consecutive classes attended!`,
               });
               bonusesAwarded = currentMilestones;
             }

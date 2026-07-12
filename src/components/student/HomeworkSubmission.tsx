@@ -75,12 +75,12 @@ export default function HomeworkSubmission({
   const { data: homework } = useQuery({
     queryKey: ["homework-details", homeworkId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("homeworks")
-        .select("due_date, class_id, title")
-        .eq("id", homeworkId)
-        .single();
-      return data;
+      // Use RPC to avoid RLS 500 error
+      const { data } = await supabase.rpc("get_student_homeworks", {
+        p_student_id: studentId,
+      });
+      const hwList = (data as any)?.homeworks || [];
+      return hwList.find((h: any) => h.id === homeworkId);
     }
   });
 
@@ -113,11 +113,11 @@ export default function HomeworkSubmission({
         fileSize = file.size;
       }
 
-      const { data: homeworkData } = await supabase
-        .from("homeworks")
-        .select("body")
-        .eq("id", homeworkId)
-        .single();
+      const { data: rpcData } = await supabase.rpc("get_student_homeworks", {
+        p_student_id: studentId,
+      });
+      const hwList = (rpcData as any)?.homeworks || [];
+      const homeworkData = hwList.find((h: any) => h.id === homeworkId);
 
       const { error } = await supabase.from("homework_submissions").upsert({
         id: existingSubmission?.id,

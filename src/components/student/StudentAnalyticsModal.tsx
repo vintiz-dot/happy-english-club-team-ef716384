@@ -12,6 +12,7 @@ import { QuestLogTab } from "./analytics/QuestLogTab";
 import { PointHistoryTab } from "./analytics/PointHistoryTab";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { format, parse } from "date-fns";
 
 interface StudentAnalyticsModalProps {
@@ -63,22 +64,22 @@ function getRankBadge(rank: number): React.ReactNode {
 
 export function StudentAnalyticsModal({ open, onOpenChange, student, classId, selectedMonth }: StudentAnalyticsModalProps) {
   const monthLabel = format(parse(selectedMonth, "yyyy-MM", new Date()), "MMMM yyyy");
+  const { user } = useAuth();
   // Fetch the current viewer's student ID to determine if viewing own profile or classmate's
   const { data: viewerStudentId } = useQuery({
-    queryKey: ["viewer-student-id"],
+    queryKey: ["viewer-student-id", user?.id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
-      
+
       const { data } = await supabase
         .from("students")
         .select("id")
         .eq("linked_user_id", user.id)
         .maybeSingle();
-      
+
       return data?.id || null;
     },
-    enabled: open,
+    enabled: open && !!user,
   });
 
   if (!student) return null;
@@ -96,7 +97,7 @@ export function StudentAnalyticsModal({ open, onOpenChange, student, classId, se
               transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
             >
               {/* Header Section - Character Profile */}
-              <div className="relative p-6 pb-8 bg-gradient-to-br from-primary/20 via-background to-purple-500/10 border-b border-border/50">
+              <div className="relative p-6 pb-8 bg-gradient-to-br from-primary/20 via-background to-blue-500/10 border-b border-border/50">
                 {/* Background sparkles */}
                 <div className="absolute inset-0 overflow-hidden">
                   {Array.from({ length: 20 }).map((_, i) => (

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { dayjs } from "@/lib/date";
 import CalendarMonth from "@/components/calendar/CalendarMonth";
 import { Card } from "@/components/ui/card";
@@ -9,11 +10,12 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function TeacherScheduleCalendar() {
   const [month, setMonth] = useState(dayjs().format("YYYY-MM"));
+  const { user } = useAuth();
 
   const { data: sessions } = useQuery({
-    queryKey: ["teacher-schedule-calendar", month],
+    queryKey: ["teacher-schedule-calendar", month, user?.id],
+    enabled: !!user,
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
       const [year, monthNum] = month.split("-");

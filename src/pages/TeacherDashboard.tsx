@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { dayjs } from "@/lib/date";
 import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
@@ -40,13 +41,14 @@ export default function TeacherDashboard() {
   const navigate = useNavigate();
   const currentMonth = dayjs().format("YYYY-MM");
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const { user } = useAuth();
 
   // Single auth + teacher lookup, shared by all queries
   const { data: teacherProfile } = useQuery({
-    queryKey: ["teacher-dashboard-profile"],
+    queryKey: ["teacher-dashboard-profile", user?.id],
+    enabled: !!user,
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) return null;
 
       // Try teacher first
       const { data: teacher } = await supabase
@@ -267,8 +269,8 @@ export default function TeacherDashboard() {
       icon: BookOpen, 
       title: "Journal", 
       description: "Student progress notes",
-      gradient: "from-purple-500/20 to-pink-500/20",
-      iconColor: "text-purple-500"
+      gradient: "from-blue-500/20 to-indigo-500/20",
+      iconColor: "text-blue-500"
     },
     { 
       to: "/teacher/payroll", 
@@ -390,11 +392,11 @@ export default function TeacherDashboard() {
 
           {/* Active Classes */}
           <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <CardContent className="p-5 relative">
               <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/10">
-                  <GraduationCap className="h-5 w-5 text-purple-500" />
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/10">
+                  <GraduationCap className="h-5 w-5 text-blue-500" />
                 </div>
               </div>
               <div className="space-y-1">

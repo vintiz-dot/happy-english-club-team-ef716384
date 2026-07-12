@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,44 +9,26 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function NotificationBell() {
   const { studentId } = useStudentProfile();
+  const { user, role } = useAuth();
   const [open, setOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Determine user role
-  useEffect(() => {
-    const checkRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
-
-      if (roles && roles.length > 0) {
-        setUserRole(roles[0].role);
-      }
-    };
-    checkRole();
-  }, []);
-
   const { data: notifications = [] } = useQuery({
-    queryKey: ["notifications", studentId, userRole],
+    queryKey: ["notifications", studentId, role],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
-      
+
       // For teachers, get notifications related to their classes
-      if (userRole === "teacher") {
+      if (role === "teacher") {
         const { data: teacher } = await supabase
           .from("teachers")
           .select("id")
-          .eq("user_id", user.id)
+          .eq("user_id", user!.id)
           .maybeSingle();
 
         if (!teacher) return [];
@@ -79,7 +61,7 @@ export default function NotificationBell() {
       
       // For students
       if (!studentId) return [];
-      
+
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
@@ -90,7 +72,7 @@ export default function NotificationBell() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!studentId || userRole === "teacher",
+    enabled: !!studentId || role === "teacher",
   });
 
   const unreadCount = notifications.filter((n: any) => !n.is_read).length;
@@ -105,7 +87,7 @@ export default function NotificationBell() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications", studentId, userRole] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", studentId, role] });
     },
   });
 
@@ -151,7 +133,7 @@ export default function NotificationBell() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications", studentId, userRole] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", studentId, role] });
     },
   });
 
@@ -212,11 +194,11 @@ export default function NotificationBell() {
                       <div className="flex items-start gap-3">
                         <div className={`rounded-full p-2 ${
                           isHomework ? 'bg-blue-100 dark:bg-blue-900/30' : 
-                          isJournal ? 'bg-purple-100 dark:bg-purple-900/30' :
+                          isJournal ? 'bg-blue-100 dark:bg-blue-900/30' :
                           'bg-muted'
                         }`}>
                           {isHomework && <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
-                          {isJournal && <Bell className="h-4 w-4 text-purple-600 dark:text-purple-400" />}
+                          {isJournal && <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
                           {!isHomework && !isJournal && <Bell className="h-4 w-4" />}
                         </div>
                         

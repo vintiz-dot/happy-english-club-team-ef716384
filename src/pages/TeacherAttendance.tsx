@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { dayjs } from "@/lib/date";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -12,14 +13,13 @@ export default function TeacherAttendance() {
   const [month, setMonth] = useState(dayjs().format("YYYY-MM"));
   const [selectedSession, setSelectedSession] = useState<any>(null);
   const currentMonth = dayjs().format("YYYY-MM");
+  const { user } = useAuth();
 
   const { data: sessions, isLoading } = useQuery({
-    queryKey: ["teacher-sessions", month],
+    queryKey: ["teacher-sessions", month, user?.id],
+    enabled: !!user,
     queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) return [];
 
       const startDate = `${month}-01`;
       const monthEnd = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0))

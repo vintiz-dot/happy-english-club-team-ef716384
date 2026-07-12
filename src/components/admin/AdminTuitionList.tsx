@@ -217,8 +217,9 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
       carryOutCredit: item.carry_out_credit ?? 0,
       totalAmount: item.total_amount ?? 0,
       monthPayments: item.recorded_payment ?? 0,
+      settledInMonth: item.settled_in_month,
     });
-    return getTuitionStatusBadge(status);
+    return getTuitionStatusBadge(status, item.settled_in_month);
   };
 
   if (isLoading) {

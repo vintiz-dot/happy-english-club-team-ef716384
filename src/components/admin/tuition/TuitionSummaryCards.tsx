@@ -25,7 +25,7 @@ interface TuitionStats {
 }
 
 interface TuitionSummaryCardsProps {
-  stats: TuitionStats;
+  stats: TuitionStats | null;
   isLoading?: boolean;
 }
 
@@ -78,7 +78,9 @@ const StatCard = ({
 );
 
 export function TuitionSummaryCards({ stats, isLoading }: TuitionSummaryCardsProps) {
-  if (isLoading) {
+  // Guard against a null stats object (query still loading, or errored) —
+  // the cards below dereference stats.* and would otherwise crash the tab.
+  if (isLoading || !stats) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
@@ -125,7 +127,7 @@ export function TuitionSummaryCards({ stats, isLoading }: TuitionSummaryCardsPro
           label="Sibling Discounts"
           value={stats.siblingStudents}
           subValue="Active sibling rates"
-          color="bg-violet-500"
+          color="bg-blue-500"
           delay={0.15}
         />
       </div>

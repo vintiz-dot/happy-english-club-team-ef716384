@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { dayjs } from "@/lib/date";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -23,13 +24,14 @@ export default function TeacherPayroll() {
   const [monthStr, setMonthStr] = useState(dayjs().format("YYYY-MM"));
   const [monthDate, setMonthDate] = useState(new Date());
   const currentMonth = dayjs().format("YYYY-MM");
-  
+  const { user } = useAuth();
+
   const month = monthStr;
 
   const { data: payrollData, isLoading } = useQuery({
-    queryKey: ["teacher-payroll", month],
+    queryKey: ["teacher-payroll", month, user?.id],
+    enabled: !!user,
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data: teacher } = await supabase

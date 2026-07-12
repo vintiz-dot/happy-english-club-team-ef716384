@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export type StaffType = "teacher" | "teaching_assistant";
 
@@ -21,10 +22,11 @@ export interface StaffProfile {
  * Returns the profile along with the staff type for conditional logic.
  */
 export function useStaffProfile() {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ["staff-profile"],
+    queryKey: ["staff-profile", user?.id],
     queryFn: async (): Promise<StaffProfile | null> => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
       // Try teacher first
@@ -51,6 +53,7 @@ export function useStaffProfile() {
 
       return null;
     },
+    enabled: !!user,
   });
 }
 

@@ -17,63 +17,26 @@ interface AssignmentsListProps {
 export default function AssignmentsList({ studentId }: AssignmentsListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Reuse the same query key as StudentAssignments for cache sharing
-  const { data: enrollments } = useQuery({
-    queryKey: ["student-enrollments", studentId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("enrollments")
-        .select("class_id")
-        .eq("student_id", studentId)
-        .is("end_date", null);
-      return data || [];
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  });
-
-  const classIds = enrollments?.map(e => e.class_id) || [];
-
   const { data: assignments, isLoading } = useQuery({
-    queryKey: ["student-assignments", studentId, classIds.join(",")],
+    queryKey: ["student-assignments", studentId],
     queryFn: async () => {
-      if (classIds.length === 0) return [];
+      // Use RPC to bypass RLS
+      const { data, error } = await supabase.rpc("get_student_homeworks", {
+        p_student_id: studentId,
+      });
 
-      // Fetch homeworks and submissions in parallel (fixes N+1 query problem)
-      const [homeworksResult, submissionsResult] = await Promise.all([
-        supabase
-          .from("homeworks")
-          .select(`
-            id,
-            title,
-            body,
-            due_date,
-            created_at,
-            class_id,
-            classes(name)
-          `)
-          .in("class_id", classIds)
-          .order("created_at", { ascending: false })
-          .limit(100), // Pagination: limit to 100 most recent
-        supabase
-          .from("homework_submissions")
-          .select("*")
-          .eq("student_id", studentId)
-      ]);
+      if (error) {
+        console.error("AssignmentsList RPC error:", error);
+        return [];
+      }
 
-      const homeworks = homeworksResult.data || [];
-      const submissions = submissionsResult.data || [];
-
-      // Create a map for O(1) lookups instead of N queries
-      const submissionMap = new Map(submissions.map(s => [s.homework_id, s]));
-
-      // Merge homeworks with their submissions
-      return homeworks.map(hw => ({
-        ...hw,
-        submission: submissionMap.get(hw.id) || null
-      }));
+      const result = data as any;
+      const homeworks: any[] = result?.homeworks || [];
+      const submissions: any[] = result?.submissions || [];
+      const submissionMap = new Map(submissions.map((s: any) => [s.homework_id, s]));
+      return homeworks.map((hw: any) => ({ ...hw, submission: submissionMap.get(hw.id) || null }));
     },
-    enabled: classIds.length > 0,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 
   if (isLoading) {

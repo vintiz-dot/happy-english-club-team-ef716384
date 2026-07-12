@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format, isPast, addHours } from "date-fns";
 import { Clock, Users, Award } from "lucide-react";
 import { ParticipationPoints } from "@/components/admin/ParticipationPoints";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Session {
   id: string;
@@ -37,15 +38,17 @@ export function AttendanceMarking() {
   const [loading, setLoading] = useState(false);
   const [showParticipationPoints, setShowParticipationPoints] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    loadTodaySessions();
-  }, []);
+    if (user) loadTodaySessions();
+  }, [user]);
 
   const loadTodaySessions = async () => {
     try {
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      
+      const userId = user?.id;
+      if (!userId) return;
+
       // Try teacher first
       const { data: teacher } = await supabase
         .from("teachers")
@@ -184,12 +187,11 @@ export function AttendanceMarking() {
     try {
       setLoading(true);
 
-      const user = await supabase.auth.getUser();
       const records = Object.entries(attendance).map(([student_id, status]) => ({
         session_id: selectedSession.id,
         student_id,
         status,
-        marked_by: user.data.user?.id,
+        marked_by: user?.id,
       }));
 
       // Upsert attendance records

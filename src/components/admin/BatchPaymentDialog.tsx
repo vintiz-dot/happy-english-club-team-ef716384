@@ -263,6 +263,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
                   carryOutCredit: item.carry_out_credit ?? 0,
                   totalAmount: item.total_amount ?? 0,
                   monthPayments: item.recorded_payment ?? 0,
+                  settledInMonth: item.settled_in_month,
                 });
 
                 return (
@@ -293,7 +294,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
                           <span>Outstanding: <span className={outstanding > 0 ? "text-destructive" : "text-green-600"}>{fmt(outstanding)}</span></span>
                         </div>
                       </div>
-                      {getTuitionStatusBadge(status)}
+                      {getTuitionStatusBadge(status, item.settled_in_month)}
                     </div>
 
                     <div className="flex gap-2">
