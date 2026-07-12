@@ -2,12 +2,232 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Premium system font stack — matches platform-native rendering on every OS,
+   no FOUT, no extra HTTP request. */
+:root {
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable",
+    "Segoe UI", "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-display: var(--font-sans);
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+html, body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+}
+
 /* Long-list scroll perf — let the browser skip offscreen rendering */
 @layer utilities {
   .long-list-item {
     content-visibility: auto;
     contain-intrinsic-size: auto 120px;
   }
+
+  /* Premium focus ring — visible without being harsh. */
+  .focus-premium:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: inherit;
+  }
+
+  /* Subtle lifted-card shadow used across premium surfaces. */
+  .shadow-premium {
+    box-shadow:
+      0 1px 2px 0 rgba(15, 10, 30, 0.04),
+      0 8px 24px -8px rgba(120, 80, 200, 0.18);
+  }
+  .shadow-premium-lg {
+    box-shadow:
+      0 2px 4px 0 rgba(15, 10, 30, 0.05),
+      0 24px 48px -12px rgba(120, 80, 200, 0.22);
+  }
+
+  /* Safe-area padding for fixed bars on devices with notches. */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* ====================================================================
+   "Quest" design language — additive design tokens.
+   Existing colors are unchanged; these add new gradient/surface/motion
+   tokens that the redesigned components consume. Old components keep
+   working untouched.
+   ==================================================================== */
+:root {
+  /* Signature gradient sets — used sparingly for emphasis */
+  --gradient-aurora: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #facc15 100%);
+  --gradient-citrus: linear-gradient(135deg, #f59e0b 0%, #f43f5e 100%);
+  --gradient-glacier: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%);
+  --gradient-mint: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+  --gradient-night: linear-gradient(180deg, #0f172a 0%, #1e3a8a 100%);
+
+  /* Surface tiers — clear depth hierarchy */
+  --surface-1: 250 30% 99%;            /* page background */
+  --surface-2: 0 0% 100%;              /* card */
+  --surface-3: 250 20% 98%;            /* raised panel */
+
+  /* Premium shadow scale */
+  --shadow-1: 0 1px 2px rgba(15, 10, 30, 0.04);
+  --shadow-2: 0 4px 12px -2px rgba(15, 10, 30, 0.06), 0 2px 4px -1px rgba(15, 10, 30, 0.03);
+  --shadow-3: 0 12px 32px -8px rgba(120, 80, 200, 0.18), 0 4px 8px -2px rgba(15, 10, 30, 0.04);
+  --shadow-4: 0 24px 48px -12px rgba(120, 80, 200, 0.28);
+
+  /* Motion */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quad: cubic-bezier(0.45, 0, 0.55, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+}
+
+.dark {
+  --surface-1: 260 35% 7%;
+  --surface-2: 260 30% 11%;
+  --surface-3: 260 25% 14%;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 4px 12px -2px rgba(0, 0, 0, 0.5);
+  --shadow-3: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
+  --shadow-4: 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+}
+
+@layer utilities {
+  /* Surface tiers as classes */
+  .surface-1 { background-color: hsl(var(--surface-1)); }
+  .surface-2 { background-color: hsl(var(--surface-2)); }
+  .surface-3 { background-color: hsl(var(--surface-3)); }
+
+  /* Shadow scale */
+  .shadow-q1 { box-shadow: var(--shadow-1); }
+  .shadow-q2 { box-shadow: var(--shadow-2); }
+  .shadow-q3 { box-shadow: var(--shadow-3); }
+  .shadow-q4 { box-shadow: var(--shadow-4); }
+
+  /* Gradient backgrounds */
+  .bg-aurora  { background-image: var(--gradient-aurora); }
+  .bg-citrus  { background-image: var(--gradient-citrus); }
+  .bg-glacier { background-image: var(--gradient-glacier); }
+  .bg-mint    { background-image: var(--gradient-mint); }
+  .bg-night   { background-image: var(--gradient-night); }
+
+  /* Gradient text */
+  .text-aurora {
+    background-image: var(--gradient-aurora);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Premium type scale */
+  .type-display {
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+  }
+  .type-h1 {
+    font-size: clamp(1.375rem, 4vw, 1.75rem);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    font-weight: 800;
+  }
+  .type-h2 {
+    font-size: 1.125rem;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+  }
+  .type-body  { font-size: 0.9375rem; line-height: 1.5; }
+  .type-micro { font-size: 0.8125rem; line-height: 1.4; }
+
+  /* Premium card hover lift */
+  .lift {
+    transition: transform var(--dur-base) var(--ease-out-expo),
+                box-shadow var(--dur-base) var(--ease-out-expo);
+  }
+  .lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-3); }
+  .lift:active { transform: translateY(0); }
+
+  /* Soft tap target on touch (Apple HIG 44pt) */
+  .tap-44 { min-height: 44px; min-width: 44px; }
+}
+
+/* ====================================================================
+   Arena Leaderboard — visual layer
+   Self-contained styling so the leaderboard can render anywhere.
+   ==================================================================== */
+.arena-bg {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(30, 58, 138, 0.45), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(59, 130, 246, 0.28), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 0% 100%, rgba(59, 130, 246, 0.30), transparent 60%),
+    linear-gradient(180deg, #0b0820 0%, #1a0f3a 50%, #0b0820 100%);
+  isolation: isolate;
+}
+
+/* Animated aurora glow inside .arena-bg */
+.arena-aurora {
+  position: absolute;
+  inset: -25%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(251, 191, 36, 0.18), transparent 35%),
+    radial-gradient(circle at 70% 70%, rgba(30, 58, 138, 0.20), transparent 35%),
+    radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.12), transparent 35%);
+  filter: blur(40px);
+  animation: arena-aurora-spin 28s linear infinite;
+  z-index: 0;
+}
+
+@keyframes arena-aurora-spin {
+  from { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.05); }
+  to   { transform: rotate(360deg) scale(1); }
+}
+
+/* Subtle grid overlay for depth */
+.arena-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 80%);
+  z-index: 0;
+}
+
+/* Slow pulse for the #1 podium ring */
+@keyframes arena-pulse-slow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.6); }
+  50%      { box-shadow: 0 0 0 12px rgba(251, 191, 36, 0); }
+}
+.animate-pulse-slow {
+  animation: arena-pulse-slow 2.4s ease-in-out infinite;
+}
+
+/* Rank rising shimmer */
+@keyframes arena-row-rise-anim {
+  0%   { background-color: rgba(16, 185, 129, 0.18); transform: translateX(-2px); }
+  60%  { background-color: rgba(16, 185, 129, 0.28); transform: translateX(0); }
+  100% { background-color: transparent; }
+}
+.arena-row-rise {
+  animation: arena-row-rise-anim 1.8s ease-out;
+}
+
+/* Rank falling shimmer */
+@keyframes arena-row-fall-anim {
+  0%   { background-color: rgba(244, 63, 94, 0.16); transform: translateX(2px); }
+  60%  { background-color: rgba(244, 63, 94, 0.22); transform: translateX(0); }
+  100% { background-color: transparent; }
+}
+.arena-row-fall {
+  animation: arena-row-fall-anim 1.8s ease-out;
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
@@ -60,9 +280,9 @@ All colors MUST be HSL.
     --popover-glass: 0 0% 100% / 0.7;
 
     /* Vibrant violet primary - playful yet premium */
-    --primary: 265 85% 60%;
+    --primary: 224 64% 33%;
     --primary-foreground: 0 0% 100%;
-    --primary-glass: 265 85% 60% / 0.1;
+    --primary-glass: 224 64% 33% / 0.1;
     
     --secondary: 180 60% 95%;
     --secondary-foreground: 180 50% 25%;
@@ -94,7 +314,7 @@ All colors MUST be HSL.
     --border: 250 25% 88%;
     --border-glass: 0 0% 100% / 0.15;
     --input: 250 20% 94%;
-    --ring: 265 85% 60%;
+    --ring: 224 64% 33%;
 
     --radius: 1.25rem;
 
@@ -105,22 +325,22 @@ All colors MUST be HSL.
 
     --sidebar-background: 250 25% 99%;
     --sidebar-foreground: 250 20% 25%;
-    --sidebar-primary: 265 85% 60%;
+    --sidebar-primary: 224 64% 33%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 180 50% 96%;
     --sidebar-accent-foreground: 180 45% 25%;
     --sidebar-border: 250 20% 90%;
-    --sidebar-ring: 265 85% 60%;
+    --sidebar-ring: 224 64% 33%;
     --sidebar-glass: 250 25% 99% / 0.6;
     
     /* Playful gradient colors - violet to teal spectrum */
-    --gradient-start: 265 85% 60%;
+    --gradient-start: 224 64% 33%;
     --gradient-middle: 220 85% 60%;
     --gradient-end: 175 75% 50%;
     --gradient-accent: 38 95% 55%;
     
     /* Leaderboard fun theme */
-    --leaderboard-bg: 265 45% 20%;
+    --leaderboard-bg: 224 45% 20%;
     --leaderboard-text: 0 0% 100%;
     --leaderboard-glass: 0 0% 100%;
     --leaderboard-glass-border: 0 0% 85%;
@@ -190,83 +410,80 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Premium Kids EduTech - Dark mode with playful depth */
-    --background: 260 35% 8%;
-    --foreground: 250 20% 95%;
+    /* Gemini Dark Aesthetic — deep charcoal, muted accents */
+    --background: 240 10% 7%;
+    --foreground: 220 10% 85%;
 
-    --card: 260 30% 12%;
-    --card-foreground: 250 20% 95%;
-    --card-glass: 260 30% 12% / 0.6;
+    --card: 240 10% 10%;
+    --card-foreground: 220 10% 85%;
+    --card-glass: 240 10% 10% / 0.7;
 
-    --popover: 260 30% 12%;
-    --popover-foreground: 250 20% 95%;
-    --popover-glass: 260 30% 12% / 0.7;
+    --popover: 240 10% 10%;
+    --popover-foreground: 220 10% 85%;
+    --popover-glass: 240 10% 10% / 0.8;
 
-    --primary: 265 85% 65%;
+    --primary: 224 64% 45%;
     --primary-foreground: 0 0% 100%;
-    --primary-glass: 265 85% 65% / 0.15;
+    --primary-glass: 224 64% 45% / 0.12;
 
-    --secondary: 180 40% 15%;
-    --secondary-foreground: 180 50% 90%;
-    --secondary-glass: 180 40% 15% / 0.5;
+    --secondary: 240 8% 14%;
+    --secondary-foreground: 220 10% 80%;
+    --secondary-glass: 240 8% 14% / 0.5;
 
-    --muted: 260 25% 15%;
-    --muted-foreground: 250 15% 60%;
-    --muted-glass: 260 25% 15% / 0.4;
+    --muted: 240 8% 14%;
+    --muted-foreground: 220 10% 50%;
+    --muted-glass: 240 8% 14% / 0.4;
 
-    --accent: 175 70% 50%;
-    --accent-foreground: 0 0% 100%;
-    --accent-glass: 175 70% 50% / 0.12;
+    --accent: 220 10% 18%;
+    --accent-foreground: 220 10% 85%;
+    --accent-glass: 220 10% 18% / 0.12;
 
-    --destructive: 0 80% 60%;
+    --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 100%;
-    --destructive-glass: 0 80% 60% / 0.15;
-    
-    --success: 155 70% 50%;
+    --destructive-glass: 0 60% 50% / 0.12;
+
+    --success: 155 50% 42%;
     --success-foreground: 0 0% 100%;
-    --success-glass: 155 70% 50% / 0.15;
-    
-    --warning: 38 90% 55%;
+    --success-glass: 155 50% 42% / 0.1;
+
+    --warning: 38 70% 50%;
     --warning-foreground: 0 0% 100%;
-    --warning-glass: 38 90% 55% / 0.15;
+    --warning-glass: 38 70% 50% / 0.1;
 
-    --border: 260 25% 22%;
-    --border-glass: 0 0% 100% / 0.1;
-    --input: 260 25% 15%;
-    --ring: 265 85% 65%;
+    --border: 240 8% 18%;
+    --border-glass: 240 8% 22% / 0.5;
+    --input: 240 8% 12%;
+    --ring: 224 50% 40%;
 
-    --shadow-glass: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
-    --shadow-glass-sm: 0 4px 20px 0 rgba(0, 0, 0, 0.35);
-    --shadow-glass-lg: 0 24px 60px 0 rgba(0, 0, 0, 0.6);
+    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    --shadow-glass-sm: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+    --shadow-glass-lg: 0 16px 48px 0 rgba(0, 0, 0, 0.5);
 
-    --sidebar-background: 260 30% 10%;
-    --sidebar-foreground: 250 20% 90%;
-    --sidebar-primary: 265 85% 65%;
+    --sidebar-background: 240 10% 8%;
+    --sidebar-foreground: 220 10% 85%;
+    --sidebar-primary: 224 64% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 180 35% 15%;
-    --sidebar-accent-foreground: 180 45% 90%;
-    --sidebar-border: 260 25% 18%;
-    --sidebar-ring: 265 85% 65%;
-    --sidebar-glass: 260 30% 10% / 0.6;
-    
-    /* Playful gradient colors - dark mode spectrum */
-    --gradient-start: 265 85% 65%;
-    --gradient-middle: 220 80% 60%;
-    --gradient-end: 175 70% 55%;
-    --gradient-accent: 38 90% 55%;
-    
-    /* Leaderboard fun theme - dark */
-    --leaderboard-pink: 265 85% 55%;
+    --sidebar-accent: 240 8% 14%;
+    --sidebar-accent-foreground: 220 10% 80%;
+    --sidebar-border: 240 8% 16%;
+    --sidebar-ring: 224 50% 40%;
+    --sidebar-glass: 240 10% 8% / 0.6;
+
+    --gradient-start: 224 64% 45%;
+    --gradient-middle: 220 50% 55%;
+    --gradient-end: 195 50% 50%;
+    --gradient-accent: 38 70% 50%;
+
+    --leaderboard-pink: 224 60% 55%;
     --leaderboard-text: 0 0% 100%;
 
-    /* Royal Monitor Theme — dark mode */
-    --monitor-gold: 45 100% 58%;
-    --monitor-gold-dark: 38 85% 48%;
-    --monitor-gold-light: 48 100% 72%;
-    --monitor-crown: 35 90% 52%;
-    --monitor-glow: 45 100% 60% / 0.3;
-    --monitor-bg: 260 30% 14%;
-    --monitor-border: 42 75% 50%;
+    --monitor-gold: 45 90% 55%;
+    --monitor-gold-dark: 38 80% 45%;
+    --monitor-gold-light: 48 90% 68%;
+    --monitor-crown: 35 85% 50%;
+    --monitor-glow: 45 90% 55% / 0.25;
+    --monitor-bg: 240 10% 12%;
+    --monitor-border: 42 70% 48%;
   }
 }
 
@@ -284,6 +501,15 @@ All colors MUST be HSL.
     background-attachment: fixed;
     position: relative;
     overflow-x: hidden;
+  }
+
+  /* Gemini dark body — subtle blue vignette at top */
+  .dark body {
+    background-image: radial-gradient(
+      ellipse 80% 50% at 50% 0%,
+      hsla(230, 30%, 14%, 0.5) 0%,
+      transparent 70%
+    );
   }
 
   body::before {
@@ -488,6 +714,158 @@ All colors MUST be HSL.
     );
     background-size: 2000px 100%;
     animation: shimmer 2s linear infinite;
+  }
+}
+
+/* ====================================================================
+   Gemini-style design utilities — iridescent glow, shimmer skeletons
+   ==================================================================== */
+
+/* Iridescent glow pulse for focus/active states */
+@keyframes gemini-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(30, 58, 138, 0.12),
+      0 0 40px rgba(59, 130, 246, 0.06);
+  }
+  50% {
+    box-shadow:
+      0 0 32px rgba(30, 58, 138, 0.22),
+      0 0 64px rgba(6, 182, 212, 0.10);
+  }
+}
+
+/* Gradient shimmer for skeleton loaders */
+@keyframes gemini-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@layer utilities {
+  /* Animated glow ring — apply on containers/cards for active/focus state */
+  .gemini-glow-ring {
+    animation: gemini-glow 3s ease-in-out infinite;
+  }
+
+  /* Content skeleton shimmer block */
+  .gemini-skeleton {
+    background: linear-gradient(
+      90deg,
+      hsla(var(--muted), 0.6) 0%,
+      hsla(var(--primary), 0.08) 40%,
+      hsla(var(--muted), 0.6) 60%,
+      hsla(var(--primary), 0.08) 100%
+    );
+    background-size: 400% 100%;
+    animation: gemini-shimmer 2s ease-in-out infinite;
+    border-radius: 0.75rem;
+  }
+
+  /* Iridescent gradient for primary CTAs */
+  .gemini-gradient {
+    background: linear-gradient(135deg,
+      hsl(224 80% 45%) 0%,
+      hsl(230 80% 58%) 40%,
+      hsl(195 80% 50%) 100%);
+  }
+
+  .gemini-gradient-hover:hover {
+    background: linear-gradient(135deg,
+      hsl(224 80% 45%) 0%,
+      hsl(230 80% 52%) 40%,
+      hsl(195 80% 45%) 100%);
+  }
+
+  /* Soft float animation for empty-state icons */
+  .gemini-float {
+    animation: float-gentle 4s ease-in-out infinite;
+  }
+}
+
+/* ====================================================================
+   Premium Gemini animations — smooth reveals, scale-ins, breathing
+   ==================================================================== */
+
+@keyframes gemini-reveal-kf {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gemini-scale-in-kf {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes gemini-breathe-kf {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.7; }
+}
+
+@layer utilities {
+  /* Smooth entrance reveal — fade up */
+  .gemini-reveal {
+    animation: gemini-reveal-kf 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Orchestrated stagger container — children with gemini-reveal get delays */
+  .gemini-stagger > .gemini-reveal:nth-child(1) { animation-delay: 0ms; }
+  .gemini-stagger > .gemini-reveal:nth-child(2) { animation-delay: 80ms; }
+  .gemini-stagger > .gemini-reveal:nth-child(3) { animation-delay: 160ms; }
+  .gemini-stagger > .gemini-reveal:nth-child(4) { animation-delay: 240ms; }
+  .gemini-stagger > .gemini-reveal:nth-child(5) { animation-delay: 320ms; }
+
+  /* Smooth scale entrance for cards */
+  .gemini-scale-in {
+    animation: gemini-scale-in-kf 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Subtle breathing for active glows */
+  .gemini-breathe {
+    animation: gemini-breathe-kf 3s ease-in-out infinite;
+  }
+
+  /* Morphing & Floating Gemini-style background blobs */
+  .gemini-glow-1 {
+    animation: gemini-glow-blob-1-kf 10s ease-in-out infinite;
+  }
+  .gemini-glow-2 {
+    animation: gemini-glow-blob-2-kf 14s ease-in-out infinite;
+  }
+  .gemini-glow-3 {
+    animation: gemini-glow-blob-3-kf 12s ease-in-out infinite;
+  }
+}
+
+@keyframes gemini-glow-blob-1-kf {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(60px, -20px) scale(1.2);
+  }
+  66% {
+    transform: translate(-40px, 15px) scale(0.85);
+  }
+}
+
+@keyframes gemini-glow-blob-2-kf {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(-70px, 25px) scale(1.25);
+  }
+}
+
+@keyframes gemini-glow-blob-3-kf {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  40% {
+    transform: translate(30px, 30px) scale(1.15);
+  }
+  70% {
+    transform: translate(-30px, -20px) scale(0.9);
   }
 }
 

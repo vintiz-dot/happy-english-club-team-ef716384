@@ -52,7 +52,7 @@ export function canMarkAsHeld(session: SessionWithTime): boolean {
  */
 export function getStatusColorClass(displayStatus: SessionStatus, isPast: boolean): string {
   if (displayStatus === "Canceled") return "bg-red-200 dark:bg-red-900";
-  if (displayStatus === "Holiday") return "bg-purple-200 dark:bg-purple-900";
+  if (displayStatus === "Holiday") return "bg-slate-200 dark:bg-slate-900";
   if (displayStatus === "Held") return "bg-gray-200 dark:bg-gray-700";
   
   // Scheduled

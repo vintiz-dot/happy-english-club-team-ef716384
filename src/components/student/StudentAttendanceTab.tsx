@@ -23,7 +23,7 @@ const getAttendanceColor = (sessionDate: string, sessionStatus: string, attendan
   
   // Past/today dates: check status
   if (sessionStatus === 'Canceled') return 'bg-amber-500';
-  if (sessionStatus === 'Holiday') return 'bg-purple-500';
+  if (sessionStatus === 'Holiday') return 'bg-slate-500';
   
   // For Held or Scheduled sessions in the past, show attendance colors
   if (attendanceStatus === 'Present') return 'bg-green-500';
@@ -158,7 +158,7 @@ export function StudentAttendanceTab({ studentId }: { studentId: string }) {
               <span>Canceled</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-purple-500"></div>
+              <div className="w-4 h-4 rounded-full bg-slate-500"></div>
               <span>Holiday</span>
             </div>
             <div className="flex items-center gap-2">

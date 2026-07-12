@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { Download, Star, Undo } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { dayjs } from "@/lib/date";
 import { HomeworkPdfDownload } from "@/components/homework/HomeworkPdfDownload";
+import { PagedListControls, usePagedList } from "@/components/shared/PagedListControls";
 
 interface HomeworkGradingListProps {
   statusFilter?: string;
@@ -26,13 +28,11 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
   const [feedback, setFeedback] = useState("");
   const [points, setPoints] = useState("");
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: submissions = [], isLoading } = useQuery({
-    queryKey: ["all-homework-submissions"],
+    queryKey: ["all-homework-submissions", user?.id],
     queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       // Try teacher first
@@ -85,6 +85,7 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
 
       return data || [];
     },
+    enabled: !!user,
   });
 
   const gradeMutation = useMutation({
@@ -169,8 +170,6 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
 
       if (!reward) throw new Error("No early bonus to reverse");
 
-      const { data: { user } } = await supabase.auth.getUser();
-
       // Mark as reversed
       await supabase
         .from("early_submission_rewards")
@@ -227,8 +226,6 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
     }
   };
 
-  if (isLoading) return <div className="text-center py-8 text-muted-foreground">Loading submissions...</div>;
-
   const filteredSubmissions = submissions.filter((submission: any) => {
     // Class filter
     if (classFilter && classFilter !== "all") {
@@ -241,6 +238,10 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
     if (statusFilter === "graded") return submission.grade !== null;
     return true;
   });
+
+  const paged = usePagedList(filteredSubmissions);
+
+  if (isLoading) return <div className="text-center py-8 text-muted-foreground">Loading submissions...</div>;
 
   const getStatusBadge = (submission: any) => {
     if (submission.grade !== null) {
@@ -275,7 +276,7 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
   return (
     <>
       <div className="space-y-3 md:space-y-4">
-        {filteredSubmissions.map((submission: any) => {
+        {paged.slice.map((submission: any) => {
           const homework = submission.homeworks;
 
           return (
@@ -364,6 +365,14 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
           );
         })}
       </div>
+
+      <PagedListControls
+        page={paged.page}
+        totalPages={paged.totalPages}
+        total={paged.total}
+        rangeLabel={paged.rangeLabel}
+        onPageChange={paged.setPage}
+      />
 
       {selectedSubmission && (
         <Dialog open={!!selectedSubmission} onOpenChange={() => setSelectedSubmission(null)}>

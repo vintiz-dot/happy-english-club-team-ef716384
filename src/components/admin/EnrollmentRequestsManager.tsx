@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import { Check, X, Inbox, Loader2 } from "lucide-react";
 export function EnrollmentRequestsManager() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ["admin-enrollment-requests"],
@@ -29,8 +31,6 @@ export function EnrollmentRequestsManager() {
       studentId: string;
       classId: string;
     }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-
       // Update request status
       const { error: updateError } = await supabase
         .from("enrollment_requests" as any)

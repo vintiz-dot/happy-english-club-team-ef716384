@@ -129,7 +129,7 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
 
     if (isToday(sessionDate)) return { color: "bg-amber-100 border-amber-300", label: "Today" };
     if (session.status === "Canceled") return { color: "bg-red-100 border-red-300", label: "Canceled" };
-    if (session.status === "Holiday") return { color: "bg-purple-100 border-purple-300", label: "Holiday" };
+    if (session.status === "Holiday") return { color: "bg-slate-100 border-slate-300", label: "Holiday" };
     if (session.status === "Held") return { color: "bg-gray-100 border-gray-300", label: "Held" };
     if (sessionDate > today) return { color: "bg-green-100 border-green-300", label: "Scheduled" };
     return { color: "bg-muted border-muted", label: "Scheduled" };
@@ -372,7 +372,7 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
             <span className="px-3 py-1 rounded bg-amber-100 border border-amber-300">Today</span>
             <span className="px-3 py-1 rounded bg-gray-100 border border-gray-300">Held</span>
             <span className="px-3 py-1 rounded bg-red-100 border border-red-300">Canceled</span>
-            <span className="px-3 py-1 rounded bg-purple-100 border border-purple-300">Holiday</span>
+            <span className="px-3 py-1 rounded bg-slate-100 border border-slate-300">Holiday</span>
           </div>
         </CardContent>
       </Card>

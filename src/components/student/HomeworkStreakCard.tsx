@@ -148,17 +148,17 @@ export default function HomeworkStreakCard({ studentId, assignments }: HomeworkS
 
               {/* Streak stats */}
               <div className="flex items-center gap-3 mt-2">
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground">
                   <Trophy className="h-3 w-3" />
                   <span>Best: {best}</span>
                 </div>
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground">
                   <Zap className="h-3 w-3" />
                   <span>Total on-time: {total}</span>
                 </div>
                 {bonus > 0 && (
                   <motion.div
-                    className="flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400"
+                    className="flex items-center gap-1 text-[11px] sm:text-xs font-bold text-amber-600 dark:text-amber-400"
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
                   >
@@ -172,7 +172,7 @@ export default function HomeworkStreakCard({ studentId, assignments }: HomeworkS
           {/* Next milestone */}
           {current > 0 && current < 10 && (
             <div className="mt-3">
-              <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+              <div className="flex items-center justify-between text-[11px] sm:text-xs text-muted-foreground mb-1">
                 <span>Next milestone</span>
                 <span>
                   {current < 3 ? "3 🔓" : current < 5 ? "5 🔓" : current < 7 ? "7 🔓" : "10 🔓"}

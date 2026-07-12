@@ -45,6 +45,7 @@ export function TuitionStudentCard({
     carryOutCredit: item.carry_out_credit ?? 0,
     totalAmount: item.total_amount ?? 0,
     monthPayments: item.recorded_payment ?? 0,
+    settledInMonth: item.settled_in_month,
   });
 
   const studentName = (item.students as any)?.full_name ?? "—";
@@ -94,9 +95,9 @@ export function TuitionStudentCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-semibold text-sm truncate">{studentName}</span>
-                {getTuitionStatusBadge(status)}
+                {getTuitionStatusBadge(status, item.settled_in_month)}
                 {item.hasDiscount && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5 border-violet-300 text-violet-700">
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5 border-blue-300 text-blue-700">
                     <Percent className="h-2.5 w-2.5" /> Disc
                   </Badge>
                 )}

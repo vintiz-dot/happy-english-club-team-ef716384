@@ -2,7 +2,9 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MonthPicker } from "@/components/MonthPicker";
+import { useEarliestFinanceMonth } from "@/hooks/useEarliestFinanceMonth";
+import { dayjs } from "@/lib/date";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -59,13 +61,7 @@ export function SiblingDiscountCompute() {
   const [familyOverrides, setFamilyOverrides] = useState<Record<string, FamilyOverride>>({});
   const [savingOverride, setSavingOverride] = useState<string | null>(null);
   const { toast } = useToast();
-
-  // Generate list of months (current + next 2)
-  const months = Array.from({ length: 3 }, (_, i) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() + i);
-    return format(date, "yyyy-MM");
-  });
+  const { data: earliestMonth } = useEarliestFinanceMonth();
 
   const handlePreview = async () => {
     try {
@@ -205,21 +201,15 @@ export function SiblingDiscountCompute() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-end gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
             <div className="flex-1 space-y-2">
               <label className="text-sm font-medium">Month</label>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map((month) => (
-                    <SelectItem key={month} value={month}>
-                      {format(new Date(month + "-01"), "MMMM yyyy")}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MonthPicker
+                value={selectedMonth}
+                onChange={setSelectedMonth}
+                minMonth={earliestMonth}
+                maxMonth={dayjs().add(2, "month").format("YYYY-MM")}
+              />
             </div>
             <Button 
               onClick={handlePreview} 

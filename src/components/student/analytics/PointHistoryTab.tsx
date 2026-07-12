@@ -16,7 +16,7 @@ const typeConfig: Record<string, { icon: typeof BookOpen; label: string; color: 
   homework: { icon: BookOpen, label: "Homework", color: "text-blue-500" },
   participation: { icon: Zap, label: "Participation", color: "text-amber-500" },
   reading_theory: { icon: GraduationCap, label: "Reading Theory", color: "text-teal-500" },
-  bonus: { icon: Star, label: "Bonus", color: "text-purple-500" },
+  bonus: { icon: Star, label: "Bonus", color: "text-blue-500" },
   attendance: { icon: Clock, label: "Attendance", color: "text-green-500" },
   manual: { icon: Award, label: "Manual", color: "text-primary" },
 };

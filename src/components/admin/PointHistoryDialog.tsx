@@ -77,7 +77,7 @@ export function PointHistoryDialog({
       case "participation":
         return "bg-green-500/10 text-green-700 dark:text-green-400";
       case "adjustment":
-        return "bg-purple-500/10 text-purple-700 dark:text-purple-400";
+        return "bg-slate-500/10 text-slate-700 dark:text-slate-400";
       default:
         return "bg-gray-500/10 text-gray-700 dark:text-gray-400";
     }

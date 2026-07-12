@@ -1,20 +1,21 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Medal, Award, Flag, Users, X, CheckSquare, BookOpen, Zap, GraduationCap, Banknote, Clock } from "lucide-react";
+import { Trophy, Users, X, CheckSquare, Clock } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { PointHistoryDialog } from "@/components/admin/PointHistoryDialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getAvatarUrl, getRandomAvatarUrl } from "@/lib/avatars";
-import { StudentActionPopover } from "@/components/shared/StudentActionPopover";
 import { BulkPointsDialog } from "@/components/shared/BulkPointsDialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { StudentAnalyticsModal } from "@/components/student/StudentAnalyticsModal";
-import { EconomyActions, LogSpendButton } from "@/components/shared/EconomyActions";
-import { Badge } from "@/components/ui/badge";
+import { EconomyActions } from "@/components/shared/EconomyActions";
+import { ArenaLeaderboard, type ArenaEntry } from "@/components/shared/ArenaLeaderboard";
 
 interface ClassLeaderboardSharedProps {
   classId: string;
@@ -28,10 +29,18 @@ interface SelectedStudent {
   avatarUrl?: string | null;
 }
 
-export function ClassLeaderboardShared({ classId, currentStudentId, canManagePoints = true }: ClassLeaderboardSharedProps) {
+export function ClassLeaderboardShared({
+  classId,
+  currentStudentId,
+  canManagePoints = true,
+}: ClassLeaderboardSharedProps) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
-  const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string } | null>(null);
-  const [selectedStudents, setSelectedStudents] = useState<Map<string, SelectedStudent>>(new Map());
+  const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string } | null>(
+    null
+  );
+  const [selectedStudents, setSelectedStudents] = useState<Map<string, SelectedStudent>>(
+    new Map()
+  );
   const [showBulkDialog, setShowBulkDialog] = useState(false);
   const [analyticsStudent, setAnalyticsStudent] = useState<{
     id: string;
@@ -110,20 +119,19 @@ export function ClassLeaderboardShared({ classId, currentStudentId, canManagePoi
     enabled: isEconomyMode && canManagePoints,
   });
 
-  // Set up realtime subscription for student_points changes
+  // Realtime: refetch when student_points changes for this class
   useEffect(() => {
     const channel = supabase
-      .channel('student-points-changes-shared')
+      .channel("student-points-changes-shared")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'student_points',
-          filter: `class_id=eq.${classId}`
+          event: "*",
+          schema: "public",
+          table: "student_points",
+          filter: `class_id=eq.${classId}`,
         },
-        (payload) => {
-          console.log('Student points changed:', payload);
+        () => {
           queryClient.invalidateQueries({ queryKey: ["class-leaderboard", classId] });
           queryClient.invalidateQueries({ queryKey: ["monthly-leader", classId] });
         }
@@ -138,7 +146,6 @@ export function ClassLeaderboardShared({ classId, currentStudentId, canManagePoi
   const { data: leaderboard, isLoading } = useQuery({
     queryKey: ["class-leaderboard", classId, selectedMonth],
     queryFn: async () => {
-      // First, get all actively enrolled students for this class
       const today = new Date().toISOString().slice(0, 10);
       const { data: enrollments, error: enrollError } = await supabase
         .from("enrollments")
@@ -152,53 +159,43 @@ export function ClassLeaderboardShared({ classId, currentStudentId, canManagePoi
         `)
         .eq("class_id", classId)
         .or(`end_date.is.null,end_date.gte.${today}`);
-
       if (enrollError) throw enrollError;
 
-      // Then, get points data for these students for the selected month
       const { data: points, error: pointsError } = await supabase
         .from("student_points")
         .select("*")
         .eq("class_id", classId)
         .eq("month", selectedMonth);
-
       if (pointsError) throw pointsError;
 
-      // Create a map of student_id to points data
-      const pointsMap = new Map(points?.map(p => [p.student_id, p]) || []);
+      const pointsMap = new Map(points?.map((p) => [p.student_id, p]) || []);
 
-      // Combine enrollments with points (default to 0 for students without points)
-      const combined = enrollments?.map(enrollment => {
-        const studentPoints = pointsMap.get(enrollment.student_id);
-        return {
-          id: studentPoints?.id || `temp-${enrollment.student_id}`,
-          student_id: enrollment.student_id,
-          class_id: classId,
-          month: selectedMonth,
-          homework_points: studentPoints?.homework_points || 0,
-          participation_points: studentPoints?.participation_points || 0,
-          reading_theory_points: studentPoints?.reading_theory_points || 0,
-          total_points: studentPoints?.total_points || 0,
-          students: enrollment.students,
-        };
-      }) || [];
+      const combined =
+        enrollments?.map((enrollment) => {
+          const studentPoints = pointsMap.get(enrollment.student_id);
+          return {
+            id: studentPoints?.id || `temp-${enrollment.student_id}`,
+            student_id: enrollment.student_id,
+            class_id: classId,
+            month: selectedMonth,
+            homework_points: studentPoints?.homework_points || 0,
+            participation_points: studentPoints?.participation_points || 0,
+            reading_theory_points: studentPoints?.reading_theory_points || 0,
+            total_points: studentPoints?.total_points || 0,
+            students: enrollment.students,
+          };
+        }) || [];
 
-      // Sort by total_points descending, then by name for 0-point students
       combined.sort((a, b) => {
-        if (b.total_points !== a.total_points) {
-          return b.total_points - a.total_points;
-        }
-        // Alphabetical sort for students with same points
-        const nameA = a.students?.full_name || '';
-        const nameB = b.students?.full_name || '';
+        if (b.total_points !== a.total_points) return b.total_points - a.total_points;
+        const nameA = a.students?.full_name || "";
+        const nameB = b.students?.full_name || "";
         return nameA.localeCompare(nameB);
       });
 
-      // Assign ranks (with ties)
       if (combined.length > 0) {
         let currentRank = 1;
         let previousPoints = combined[0].total_points;
-        
         return combined.map((entry, index) => {
           if (entry.total_points !== previousPoints) {
             currentRank = index + 1;
@@ -207,17 +204,16 @@ export function ClassLeaderboardShared({ classId, currentStudentId, canManagePoi
           return { ...entry, rank: currentRank };
         });
       }
-      
       return combined;
     },
   });
 
-  // Track rank changes and show notifications
+  // Rank-change toasts (kept from original behaviour)
   useEffect(() => {
     if (!leaderboard || leaderboard.length === 0) return;
 
     const previousLeaderboard = previousLeaderboardRef.current;
-    
+
     if (previousLeaderboard.length > 0) {
       const previousRanks = new Map(
         previousLeaderboard.map((entry: any, index: number) => [entry.student_id, index + 1])
@@ -226,15 +222,17 @@ export function ClassLeaderboardShared({ classId, currentStudentId, canManagePoi
       leaderboard.forEach((entry: any, index: number) => {
         const currentRank = index + 1;
         const previousRank = previousRanks.get(entry.student_id);
-        
+
         if (previousRank && previousRank !== currentRank) {
           const rankChange = previousRank - currentRank;
-          const studentName = entry.students?.full_name || 'A student';
-          
+          const studentName = entry.students?.full_name || "A student";
+
           if (rankChange > 0) {
             toast({
               title: "🎉 Rank Improved!",
-              description: `${studentName} moved up ${rankChange} ${rankChange === 1 ? 'position' : 'positions'} to #${currentRank}`,
+              description: `${studentName} moved up ${rankChange} ${
+                rankChange === 1 ? "position" : "positions"
+              } to #${currentRank}`,
               duration: 5000,
             });
           } else {
@@ -251,28 +249,12 @@ export function ClassLeaderboardShared({ classId, currentStudentId, canManagePoi
     previousLeaderboardRef.current = leaderboard;
   }, [leaderboard, toast]);
 
-  const getRankIcon = (rank: number) => {
-    switch (rank) {
-      case 1:
-        return <Trophy className="h-5 w-5 text-yellow-500" />;
-      case 2:
-        return <Medal className="h-5 w-5 text-gray-400" />;
-      case 3:
-        return <Award className="h-5 w-5 text-amber-700" />;
-      default:
-        return <span className="text-muted-foreground font-semibold">#{rank}</span>;
-    }
-  };
-
   const toggleStudentSelection = (student: SelectedStudent, e?: React.MouseEvent) => {
     e?.stopPropagation();
     setSelectedStudents((prev) => {
       const newMap = new Map(prev);
-      if (newMap.has(student.id)) {
-        newMap.delete(student.id);
-      } else {
-        newMap.set(student.id, student);
-      }
+      if (newMap.has(student.id)) newMap.delete(student.id);
+      else newMap.set(student.id, student);
       return newMap;
     });
   };
@@ -290,328 +272,114 @@ export function ClassLeaderboardShared({ classId, currentStudentId, canManagePoi
     setSelectedStudents(allStudents);
   };
 
-  const clearSelection = () => {
-    setSelectedStudents(new Map());
-  };
-
-  const handleBulkSuccess = () => {
-    clearSelection();
-  };
+  const clearSelection = () => setSelectedStudents(new Map());
+  const handleBulkSuccess = () => clearSelection();
 
   if (isLoading) {
-    return <p className="text-muted-foreground">Loading leaderboard...</p>;
+    return (
+      <div className="rounded-3xl bg-slate-900 p-8 text-center text-white/60 min-h-[300px] flex items-center justify-center">
+        Loading the Arena…
+      </div>
+    );
   }
 
-  const topThree = leaderboard?.slice(0, 3) || [];
-  const restOfList = leaderboard?.slice(3) || [];
   const hasSelection = selectedStudents.size > 0;
-  const allSelected = leaderboard && leaderboard.length > 0 && selectedStudents.size === leaderboard.length;
+  const allSelected =
+    leaderboard && leaderboard.length > 0 && selectedStudents.size === leaderboard.length;
+
+  const arenaEntries: ArenaEntry[] = (leaderboard || []) as ArenaEntry[];
+  const pendingByStudent = new Map<string, number>();
+  (pendingTransactions as any[]).forEach((t) => {
+    pendingByStudent.set(t.student_id, (pendingByStudent.get(t.student_id) || 0) + 1);
+  });
 
   return (
-    <div className="relative bg-leaderboard-bg rounded-3xl p-4 md:p-8 shadow-2xl overflow-hidden min-h-[400px] md:min-h-[600px]">
-      {/* Animated Starfield Background */}
-      <div className="starfield">
-        {Array.from({ length: 50 }).map((_, i) => (
-          <div
-            key={i}
-            className="star"
-            style={{
-              width: `${Math.random() * 3 + 1}px`,
-              height: `${Math.random() * 3 + 1}px`,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              opacity: Math.random() * 0.7 + 0.3,
-              animationDelay: `${Math.random() * 4}s`,
-              animationDuration: `${Math.random() * 3 + 3}s`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Header */}
-      <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-5xl font-black text-leaderboard-text drop-shadow-lg tracking-tight">
-          CLASS RANK
-        </h1>
-        <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto flex-wrap">
-          {canManagePoints && leaderboard && leaderboard.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={allSelected ? clearSelection : selectAll}
-              className="glass-panel border-leaderboard-glassBorder text-white hover:bg-white/20"
-            >
-              <CheckSquare className="h-4 w-4 mr-1" />
-              {allSelected ? "Deselect All" : "Select All"}
-            </Button>
-          )}
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-full md:w-[180px] glass-panel border-leaderboard-glassBorder shadow-lg text-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: 6 }, (_, i) => {
-                const date = new Date();
-                date.setMonth(date.getMonth() - i);
-                const month = date.toISOString().slice(0, 7);
-                return (
-                  <SelectItem key={month} value={month}>
-                    {date.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {leaderboard?.length === 0 ? (
-        <p className="relative z-10 text-leaderboard-text text-center py-12 text-xl">No scores yet for this month</p>
-      ) : (
-        <>
-          {/* Top 3 Podium */}
-          <div className="relative z-10 grid grid-cols-3 gap-2 md:gap-6 mb-6 md:mb-8">
-            {topThree.map((entry: any) => {
-              const isCurrentStudent = currentStudentId && entry.student_id === currentStudentId;
-              const isSelected = selectedStudents.has(entry.student_id);
-              const student: SelectedStudent = {
-                id: entry.student_id,
-                name: entry.students?.full_name,
-                avatarUrl: entry.students?.avatar_url,
-              };
-
-                  const handleOpenAnalytics = () => {
-                    setAnalyticsStudent({
-                      id: entry.student_id,
-                      name: entry.students?.full_name,
-                      avatarUrl: entry.students?.avatar_url,
-                      totalPoints: entry.total_points,
-                      homeworkPoints: entry.homework_points || 0,
-                      participationPoints: entry.participation_points || 0,
-                      readingTheoryPoints: entry.reading_theory_points || 0,
-                      rank: entry.rank,
-                      selectedMonth,
-                    });
-                  };
-
+    <div className="relative arena-bg rounded-3xl shadow-2xl overflow-hidden min-h-[460px]">
+      {/* Sticky controls bar — month picker + bulk selection toggle */}
+      <div className="relative z-20 flex items-center justify-between gap-2 px-3 sm:px-6 pt-4 pb-2">
+        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+          <SelectTrigger className="h-9 w-auto min-w-[140px] sm:min-w-[180px] bg-white/10 border-white/20 text-white text-sm font-semibold backdrop-blur-md hover:bg-white/15">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Array.from({ length: 6 }, (_, i) => {
+              const date = new Date();
+              date.setMonth(date.getMonth() - i);
+              const month = date.toISOString().slice(0, 7);
               return (
-                <motion.div
-                  key={entry.id}
-                  className={`flex flex-col items-center floating-element relative cursor-pointer ${
-                    isCurrentStudent ? 'ring-2 md:ring-4 ring-yellow-300 rounded-xl md:rounded-2xl p-2 md:p-4 bg-white/10' : ''
-                  } ${isSelected && !isCurrentStudent ? 'ring-2 md:ring-4 ring-primary rounded-xl md:rounded-2xl p-2 md:p-4 bg-primary/20' : ''} ${
-                    entry.rank === 1 ? 'podium-glow-gold' : entry.rank === 2 ? 'podium-glow-silver' : 'podium-glow-bronze'
-                  }`}
-                  onClick={handleOpenAnalytics}
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  {/* Checkbox for selection */}
-                  {canManagePoints && (
-                    <div
-                      className="absolute top-0 right-0 md:top-2 md:right-2 z-20"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleStudentSelection(student, e);
-                      }}
-                    >
-                      <Checkbox
-                        checked={isSelected}
-                        className="h-5 w-5 md:h-6 md:w-6 border-2 border-white bg-white/20 data-[state=checked]:bg-primary"
-                      />
-                    </div>
-                  )}
-
-                  <div>
-                    <div className="relative mb-2 md:mb-4">
-                      <Avatar className={`h-16 w-16 md:h-32 md:w-32 border-4 md:border-8 shadow-2xl bg-gradient-to-br from-leaderboard-gradientStart to-leaderboard-gradientEnd p-0.5 md:p-1 ${
-                        isCurrentStudent ? 'border-yellow-300' : entry.rank === 1 ? 'border-yellow-400' : entry.rank === 2 ? 'border-gray-300' : 'border-amber-600'
-                      }`}>
-                        <AvatarImage 
-                          src={getAvatarUrl(entry.students?.avatar_url) || getRandomAvatarUrl(entry.student_id)} 
-                          alt={entry.students?.full_name} 
-                          className="object-cover rounded-full" 
-                        />
-                        <AvatarFallback className="text-lg md:text-3xl font-black rounded-full">
-                          <img src={getRandomAvatarUrl(entry.student_id)} alt="avatar" className="w-full h-full object-cover rounded-full" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="absolute -bottom-1 md:-bottom-2 left-1/2 -translate-x-1/2 glass-panel rounded-full h-6 w-6 md:h-12 md:w-12 flex items-center justify-center shadow-xl border md:border-2 border-leaderboard-glassBorder floating-element">
-                        <span className="scale-75 md:scale-100">{getRankIcon(entry.rank)}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 md:gap-2 justify-center mb-0.5 md:mb-1">
-                      <p className="text-leaderboard-text font-bold text-xs md:text-lg drop-shadow-md text-center line-clamp-2 px-1">
-                        {entry.students?.full_name}
-                      </p>
-                      {isCurrentStudent && (
-                        <Flag className="h-3 w-3 md:h-5 md:w-5 text-yellow-300 fill-yellow-300 drop-shadow-lg flex-shrink-0" />
-                      )}
-                    </div>
-                    <p className="text-leaderboard-text text-xl md:text-4xl font-black drop-shadow-lg">
-                      {entry.total_points}
-                    </p>
-                    <div className="flex items-center gap-2 text-[10px] md:text-xs text-leaderboard-text/70 mt-1">
-                      <span className="flex items-center gap-0.5" title="Homework">
-                        <BookOpen className="h-2.5 w-2.5 md:h-3 md:w-3" /> {entry.homework_points || 0}
-                      </span>
-                      <span className="flex items-center gap-0.5" title="Participation">
-                        <Zap className="h-2.5 w-2.5 md:h-3 md:w-3" /> {entry.participation_points || 0}
-                      </span>
-                      <span className="flex items-center gap-0.5" title="Reading Theory">
-                        <GraduationCap className="h-2.5 w-2.5 md:h-3 md:w-3" /> {entry.reading_theory_points || 0}
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
+                <SelectItem key={month} value={month}>
+                  {date.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                </SelectItem>
               );
             })}
-          </div>
+          </SelectContent>
+        </Select>
+        {canManagePoints && leaderboard && leaderboard.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={allSelected ? clearSelection : selectAll}
+            className="h-9 bg-white/10 border-white/20 text-white hover:bg-white/15"
+          >
+            <CheckSquare className="h-4 w-4 mr-1.5" />
+            <span className="text-xs sm:text-sm">
+              {allSelected ? "Deselect" : "Select All"}
+            </span>
+          </Button>
+        )}
+      </div>
 
-          {/* Ranks 4+ List */}
-          {restOfList.length > 0 && (
-            <div className="relative z-10 glass-panel rounded-xl md:rounded-2xl shadow-xl overflow-hidden">
-              <div className={`grid ${isEconomyMode ? 'grid-cols-[24px_32px_1fr_40px_50px] md:grid-cols-[40px_50px_1fr_80px_70px_60px_60px]' : 'grid-cols-[24px_32px_1fr_40px] md:grid-cols-[40px_50px_1fr_80px_70px]'} gap-2 md:gap-4 px-3 md:px-6 py-2 md:py-4 bg-white/10 border-b-2 border-leaderboard-glassBorder/20 font-bold text-xs md:text-sm text-leaderboard-text`}>
-                <div></div>
-                <div>RANK</div>
-                <div>NAME</div>
-                <div className="hidden md:block text-center">BREAKDOWN</div>
-                <div className="text-right">PTS</div>
-                {isEconomyMode && (
-                  <>
-                    <div className="text-right hidden md:block">CASH</div>
-                    <div className="text-right">💵</div>
-                  </>
-                )}
-              </div>
-              <div className="divide-y divide-leaderboard-glassBorder/20">
-                {restOfList.map((entry: any) => {
-                  const isCurrentStudent = currentStudentId && entry.student_id === currentStudentId;
-                  const isSelected = selectedStudents.has(entry.student_id);
-                  const student: SelectedStudent = {
-                    id: entry.student_id,
-                    name: entry.students?.full_name,
-                    avatarUrl: entry.students?.avatar_url,
-                  };
-                  const studentCash = economyCashData?.get(entry.student_id) || 0;
-                  const studentPending = (pendingTransactions as any[]).filter((t: any) => t.student_id === entry.student_id);
+      <ArenaLeaderboard
+        entries={arenaEntries}
+        classId={classId}
+        currentStudentId={currentStudentId}
+        canManagePoints={canManagePoints}
+        isEconomyMode={isEconomyMode}
+        economyCash={economyCashData}
+        pendingByStudent={pendingByStudent}
+        selectedStudents={selectedStudents}
+        onToggleSelect={(s, e) => toggleStudentSelection(s, e)}
+        onOpenAnalytics={(entry) =>
+          setAnalyticsStudent({
+            id: entry.student_id,
+            name: entry.students?.full_name || "",
+            avatarUrl: entry.students?.avatar_url,
+            totalPoints: entry.total_points,
+            homeworkPoints: entry.homework_points || 0,
+            participationPoints: entry.participation_points || 0,
+            readingTheoryPoints: entry.reading_theory_points || 0,
+            rank: entry.rank,
+            selectedMonth,
+          })
+        }
+      />
 
-                  const handleOpenAnalytics = () => {
-                    setAnalyticsStudent({
-                      id: entry.student_id,
-                      name: entry.students?.full_name,
-                      avatarUrl: entry.students?.avatar_url,
-                      totalPoints: entry.total_points,
-                      homeworkPoints: entry.homework_points || 0,
-                      participationPoints: entry.participation_points || 0,
-                      readingTheoryPoints: entry.reading_theory_points || 0,
-                      rank: entry.rank,
-                      selectedMonth,
-                    });
-                  };
-
-                  return (
-                    <motion.div
-                      key={entry.id}
-                      className={`grid ${isEconomyMode ? 'grid-cols-[24px_32px_1fr_40px_50px] md:grid-cols-[40px_50px_1fr_80px_70px_60px_60px]' : 'grid-cols-[24px_32px_1fr_40px] md:grid-cols-[40px_50px_1fr_80px_70px]'} gap-2 md:gap-4 px-3 md:px-6 py-2 md:py-4 transition-all hover:bg-white/10 cursor-pointer ${
-                        isCurrentStudent ? 'bg-yellow-300/20 ring-2 ring-yellow-300' : ''
-                      } ${isSelected && !isCurrentStudent ? 'bg-primary/20' : ''}`}
-                      onClick={handleOpenAnalytics}
-                      whileHover={{ backgroundColor: "rgba(255,255,255,0.15)" }}
-                    >
-                      <div className="flex items-center" onClick={(e) => { e.stopPropagation(); canManagePoints && toggleStudentSelection(student, e); }}>
-                        {canManagePoints && (
-                          <Checkbox
-                            checked={isSelected}
-                            className="h-4 w-4 md:h-5 md:w-5 border-2 border-white/50 bg-white/20 data-[state=checked]:bg-primary cursor-pointer"
-                          />
-                        )}
-                      </div>
-                      <div className="flex items-center">
-                        <span className="text-leaderboard-text font-bold text-xs md:text-base">#{entry.rank}</span>
-                      </div>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Avatar className={`h-7 w-7 md:h-9 md:w-9 flex-shrink-0 border-2 ${isCurrentStudent ? 'border-yellow-300' : 'border-transparent'} bg-gradient-to-br from-leaderboard-gradientStart to-leaderboard-gradientEnd p-0.5`}>
-                          <AvatarImage src={getAvatarUrl(entry.students?.avatar_url) || getRandomAvatarUrl(entry.student_id)} alt={entry.students?.full_name} className="object-cover rounded-full" />
-                          <AvatarFallback className="text-xs font-semibold rounded-full">
-                            <img src={getRandomAvatarUrl(entry.student_id)} alt="avatar" className="w-full h-full object-cover rounded-full" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex items-center gap-1 min-w-0 flex-1">
-                          <span className="font-semibold text-leaderboard-text text-xs md:text-sm leading-tight line-clamp-2">{entry.students?.full_name}</span>
-                          {isCurrentStudent && (
-                            <Flag className="h-3 w-3 text-yellow-300 fill-yellow-300 flex-shrink-0" />
-                          )}
-                          {isEconomyMode && studentPending.length > 0 && (
-                            <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1">
-                              <Clock className="h-2.5 w-2.5 mr-0.5" />{studentPending.length}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div className="hidden md:flex items-center justify-center gap-1 text-[10px] text-leaderboard-text/70">
-                        <span className="flex items-center gap-0.5" title="Homework">
-                          <BookOpen className="h-2.5 w-2.5" /> {entry.homework_points || 0}
-                        </span>
-                        <span>/</span>
-                        <span className="flex items-center gap-0.5" title="Participation">
-                          <Zap className="h-2.5 w-2.5" /> {entry.participation_points || 0}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-end">
-                        <span className="text-xs md:text-base font-bold text-leaderboard-text">{entry.total_points}</span>
-                      </div>
-                      {isEconomyMode && (
-                        <>
-                          <div className="hidden md:flex items-center justify-end">
-                            <span className="text-xs font-bold text-green-400">{studentCash}</span>
-                          </div>
-                          <div className="flex items-center justify-end gap-1">
-                            <span className="text-xs font-bold text-green-400 md:hidden">{studentCash}</span>
-                            {canManagePoints && studentCash > 0 && (
-                              <LogSpendButton
-                                studentId={entry.student_id}
-                                classId={classId}
-                                studentName={entry.students?.full_name}
-                                cashOnHand={studentCash}
-                              />
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Pending Economy Requests */}
-          {isEconomyMode && canManagePoints && (pendingTransactions as any[]).length > 0 && (
-            <div className="relative z-10 glass-panel rounded-xl md:rounded-2xl shadow-xl p-4 md:p-6">
-              <h3 className="text-leaderboard-text font-bold text-sm mb-3 flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Pending Requests ({(pendingTransactions as any[]).length})
-              </h3>
-              <EconomyActions classId={classId} pendingTransactions={pendingTransactions as any[]} />
-            </div>
-          )}
-        </>
+      {/* Pending economy requests (only when economy mode + manager) */}
+      {isEconomyMode && canManagePoints && (pendingTransactions as any[]).length > 0 && (
+        <div className="relative z-10 mx-3 sm:mx-6 mb-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md p-4">
+          <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Pending Requests ({(pendingTransactions as any[]).length})
+          </h3>
+          <EconomyActions
+            classId={classId}
+            pendingTransactions={pendingTransactions as any[]}
+          />
+        </div>
       )}
 
-      {/* Floating Action Bar for Bulk Actions */}
+      {/* Floating bulk-action bar */}
       {canManagePoints && hasSelection && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 glass-panel border border-leaderboard-glassBorder rounded-full px-4 py-3 flex items-center gap-3 shadow-2xl animate-in slide-in-from-bottom-4">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 border border-white/20 rounded-full px-4 py-3 flex items-center gap-3 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-4">
           <div className="flex items-center gap-2 text-white">
             <Users className="h-4 w-4" />
-            <span className="font-semibold">{selectedStudents.size} selected</span>
+            <span className="font-semibold text-sm">{selectedStudents.size} selected</span>
           </div>
           <div className="w-px h-6 bg-white/30" />
           <Button
             size="sm"
             onClick={() => setShowBulkDialog(true)}
-            className="bg-primary hover:bg-primary/90"
+            className="bg-blue-500 hover:bg-blue-400"
           >
             <Trophy className="h-4 w-4 mr-1" />
             Add Points

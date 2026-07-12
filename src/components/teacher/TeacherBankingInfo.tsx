@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Building2, CreditCard, Save } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TeacherBankingInfoProps {
   teacherId: string;
@@ -32,6 +33,7 @@ export function TeacherBankingInfo({ teacherId }: TeacherBankingInfoProps) {
     branch_name: "",
   });
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     loadBankingInfo();
@@ -80,8 +82,6 @@ export function TeacherBankingInfo({ teacherId }: TeacherBankingInfoProps) {
 
     setSaving(true);
     try {
-      const { data: user } = await supabase.auth.getUser();
-
       const { error } = await supabase
         .from("teacher_banking_info")
         .upsert({
@@ -91,7 +91,7 @@ export function TeacherBankingInfo({ teacherId }: TeacherBankingInfoProps) {
           account_holder_name: bankingInfo.account_holder_name,
           swift_code: bankingInfo.swift_code || null,
           branch_name: bankingInfo.branch_name || null,
-          updated_by: user.user?.id,
+          updated_by: user?.id,
         });
 
       if (error) throw error;

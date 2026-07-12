@@ -1,3 +1,7 @@
+// smart-dictation Edge Function
+// Proxies requests to OpenAI gpt-4o-mini for ESL pronunciation correction.
+// The OPENAI_API_KEY must be set in Supabase Dashboard → Edge Functions → Secrets.
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -18,6 +22,7 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Vietnamese mode — return as-is, no AI needed
     if (targetLanguage !== "en") {
       return new Response(
         JSON.stringify({ correctedText: rawText }),
@@ -25,8 +30,11 @@ Deno.serve(async (req) => {
       );
     }
 
+    // English mode — polish via OpenAI
     const openAiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openAiKey) {
+      console.error("OPENAI_API_KEY is not configured in edge function secrets.");
+      // Graceful fallback — return raw text instead of hard-failing
       return new Response(
         JSON.stringify({ correctedText: rawText, warning: "AI polishing unavailable" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -58,6 +66,7 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const err = await response.text();
       console.error("OpenAI API error:", err);
+      // Graceful fallback
       return new Response(
         JSON.stringify({ correctedText: rawText, warning: "AI polishing failed" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }

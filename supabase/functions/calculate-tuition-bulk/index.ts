@@ -219,18 +219,25 @@ Deno.serve(async (req) => {
     }
     const siblingStateMap = new Map(siblingStates.map(s => [s.family_id, s]));
 
-    // 10. Prior invoices (all months < current) for all students
-    const allPriorInvoices: any[] = await fetchChunked(
+    // 10. Other invoices (all months != current) for all students
+    const allOtherInvoices: any[] = await fetchChunked(
       supabase, "invoices",
       "student_id, total_amount, month, recorded_payment",
       "student_id", studentIds,
-      (q: any) => q.lt("month", month)
+      (q: any) => q.neq("month", month).order("month", { ascending: true })
     );
     const priorInvoicesByStudent = new Map<string, any[]>();
-    for (const inv of allPriorInvoices) {
-      const arr = priorInvoicesByStudent.get(inv.student_id) || [];
-      arr.push(inv);
-      priorInvoicesByStudent.set(inv.student_id, arr);
+    const futureInvoicesByStudent = new Map<string, any[]>();
+    for (const inv of allOtherInvoices) {
+      if (inv.month < month) {
+        const arr = priorInvoicesByStudent.get(inv.student_id) || [];
+        arr.push(inv);
+        priorInvoicesByStudent.set(inv.student_id, arr);
+      } else if (inv.month > month) {
+        const arr = futureInvoicesByStudent.get(inv.student_id) || [];
+        arr.push(inv);
+        futureInvoicesByStudent.set(inv.student_id, arr);
+      }
     }
 
     // 11. Current month invoices
@@ -367,6 +374,21 @@ Deno.serve(async (req) => {
         const carryOutCredit = closingBalance < 0 ? Math.abs(closingBalance) : 0;
         const carryOutDebt = closingBalance > 0 ? closingBalance : 0;
 
+        let settledInMonth: string | null = null;
+        if (carryOutDebt > 0) {
+          const futureInvoices = futureInvoicesByStudent.get(sid) || [];
+          if (futureInvoices.length > 0) {
+            let runningBalance = -carryOutDebt;
+            for (const fInv of futureInvoices) {
+              runningBalance += Number(fInv.recorded_payment ?? 0) - Number(fInv.total_amount ?? 0);
+              if (runningBalance >= 0) {
+                settledInMonth = fInv.month;
+                break;
+              }
+            }
+          }
+        }
+
         // Build class breakdown
         const classBreakdown: any[] = [];
         for (const [classId, classBase] of enrollmentBaseAmounts) {
@@ -385,7 +407,7 @@ Deno.serve(async (req) => {
           totalDiscount,
           totalAmount,
           payments: { priorPayments, monthPayments },
-          carry: { carryInCredit, carryInDebt, carryOutCredit, carryOutDebt },
+          carry: { carryInCredit, carryInDebt, carryOutCredit, carryOutDebt, settledInMonth },
           breakdown: { classes: classBreakdown },
           invoiceId: currentInvoice?.id || null,
           invoiceStatus: currentInvoice?.status || null,

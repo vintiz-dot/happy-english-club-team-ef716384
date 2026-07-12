@@ -22,15 +22,36 @@ interface HomeworkPdfDownloadProps {
   variant?: "icon" | "button" | "pill" | "pill-compact";
 }
 
-// A4 @ 96dpi-ish working units in mm
+// A4 in mm
 const PAGE_W_MM = 210;
 const PAGE_H_MM = 297;
 const MARGIN_MM = 15;
 const PRINTABLE_W_MM = PAGE_W_MM - MARGIN_MM * 2; // 180
 const PRINTABLE_H_MM = PAGE_H_MM - MARGIN_MM * 2; // 267
-const CONTAINER_W_PX = 720; // matches printable width visually; mm conversion = px * (180/720)
-const PX_TO_MM = PRINTABLE_W_MM / CONTAINER_W_PX;
-const BLOCK_GAP_MM = 2;
+const CONTAINER_W_PX = 720;
+// iOS Safari/WebKit caps canvas total area at ~16.7M px and is sensitive to peak memory.
+// Keep peak well under that to leave headroom for slice canvases.
+const MAX_CANVAS_PIXELS_MOBILE = 8_000_000;
+const MAX_CANVAS_PIXELS_DESKTOP = 24_000_000;
+
+function isMobileWebKit(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes("Mac") && "ontouchend" in document);
+  const isAndroid = /Android/i.test(ua);
+  return isIOS || isAndroid;
+}
+
+function pickRenderScale(measuredHpx: number, isMobile: boolean): number {
+  // Start from a conservative scale, then clamp so the rendered canvas
+  // stays under the platform pixel budget.
+  const base = isMobile ? 1.0 : 1.5;
+  const budget = isMobile ? MAX_CANVAS_PIXELS_MOBILE : MAX_CANVAS_PIXELS_DESKTOP;
+  const projected = CONTAINER_W_PX * measuredHpx * base * base;
+  if (projected <= budget) return base;
+  // sqrt scale-down to stay under budget
+  return Math.max(0.6, base * Math.sqrt(budget / projected));
+}
 
 export function HomeworkPdfDownload({ homework, className: classNameProp, teacherName, variant = "button" }: HomeworkPdfDownloadProps) {
   const [generating, setGenerating] = useState(false);
@@ -38,6 +59,7 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
   const generate = async () => {
     setGenerating(true);
     const exportId = newExportId();
+    const t0 = performance.now();
     const log = (level: "info" | "warn" | "error", step: string, data?: any) =>
       logPdfEvent({
         level,
@@ -48,6 +70,8 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
         data,
       });
     log("info", "export.start", { variant, hasBody: !!homework.body, bodyLen: (homework.body || "").length });
+
+    let container: HTMLDivElement | null = null;
     try {
       // Resolve teacher / class name if missing
       let resolvedTeacher = teacherName || "";
@@ -67,22 +91,24 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
 
       const transformedBody = transformLinks(homework.body || "");
 
-      // Build container
-      const container = document.createElement("div");
-      container.style.position = "fixed";
-      container.style.left = "0";
+      // Build an offscreen container with all content.
+      // IMPORTANT: do NOT use opacity:0 or display:none — html2canvas inherits
+      // computed opacity and renders a blank canvas. We park the node far
+      // off-screen instead so it's invisible but fully painted.
+      container = document.createElement("div");
+      container.setAttribute("aria-hidden", "true");
+      container.style.position = "absolute";
+      container.style.left = "-10000px";
       container.style.top = "0";
-      container.style.zIndex = "-1";
-      container.style.opacity = "0";
-      container.style.pointerEvents = "none";
       container.style.width = `${CONTAINER_W_PX}px`;
       container.style.padding = "0";
-      container.style.background = "white";
+      container.style.background = "#ffffff";
       container.style.color = "#1a1a1a";
       container.style.fontFamily = "Helvetica, Arial, sans-serif";
       container.style.boxSizing = "border-box";
       container.style.fontSize = "13px";
       container.style.lineHeight = "1.6";
+      container.style.pointerEvents = "none";
 
       const dueDateStr = homework.due_date
         ? new Date(homework.due_date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
@@ -92,13 +118,13 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
         : "—";
 
       container.innerHTML = `
-        <div data-pdf-block style="text-align: center; padding-bottom: 8px;">
+        <div style="text-align: center; padding-bottom: 8px;">
           <img src="/images/hec_logo.png" crossorigin="anonymous" style="width: 80px; height: auto; margin: 0 auto 8px; display: block;" onerror="this.style.display='none'" />
           <h1 style="font-size: 20px; font-weight: bold; color: #d4a017; margin: 0;">Happy English Club</h1>
           <p style="font-size: 11px; color: #666; margin: 4px 0 0;">Learning, an endless journey to perfection</p>
           <hr style="border: none; border-top: 2px solid #d4a017; margin: 10px 0 0;" />
         </div>
-        <div data-pdf-block style="padding-top: 10px;">
+        <div style="padding-top: 10px;">
           <h2 style="font-size: 18px; font-weight: bold; margin: 0 0 12px; color: #111; word-wrap: break-word; overflow-wrap: anywhere;">${escapeHtml(homework.title)}</h2>
           <table style="width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed;">
             <tr>
@@ -120,14 +146,14 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
           </table>
         </div>
         ${transformedBody ? `
-          <div data-pdf-block style="padding-top: 14px;">
+          <div style="padding-top: 14px;">
             <h3 style="font-size: 14px; font-weight: bold; margin: 0 0 8px; color: #333;">Instructions</h3>
-          </div>
-          <div id="pdf-body-root" class="hw-body" style="font-size: 13px; line-height: 1.7; color: #333;">
-            ${transformedBody}
+            <div class="hw-body" style="font-size: 13px; line-height: 1.7; color: #333;">
+              ${transformedBody}
+            </div>
           </div>
         ` : ""}
-        <div data-pdf-block data-pdf-footer style="margin-top: 18px; padding-top: 10px; border-top: 1px solid #ddd; text-align: center; font-size: 10px; color: #999;">
+        <div style="margin-top: 18px; padding-top: 10px; border-top: 1px solid #ddd; text-align: center; font-size: 10px; color: #999;">
           Happy English Club &bull; Generated on ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
         </div>
         <style>
@@ -151,193 +177,144 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
       const fileName = `${homework.title.replace(/[^a-zA-Z0-9]/g, "_")}_homework.pdf`;
       const pdf = new jsPDF("p", "mm", "a4");
 
-      try {
-        // Wait for fonts
-        if ((document as any).fonts?.ready) {
-          try { await (document as any).fonts.ready; } catch {}
+      // Wait for fonts (cheap when already loaded).
+      if ((document as any).fonts?.ready) {
+        try { await (document as any).fonts.ready; } catch {}
+      }
+
+      // Wait for images, but cap aggressively — 700ms is plenty for cached/local assets.
+      const imgs = Array.from(container.querySelectorAll("img")) as HTMLImageElement[];
+      if (imgs.length > 0) {
+        await Promise.race([
+          Promise.all(
+            imgs.map(
+              (img) =>
+                new Promise<void>((resolve) => {
+                  if (img.complete && img.naturalHeight > 0) return resolve();
+                  img.onload = () => resolve();
+                  img.onerror = () => resolve();
+                })
+            )
+          ),
+          new Promise<void>((resolve) => setTimeout(resolve, 700)),
+        ]);
+      }
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+
+      const t1 = performance.now();
+      const measuredW = container.offsetWidth;
+      const measuredH = container.offsetHeight;
+      const mobile = isMobileWebKit();
+      const renderScale = pickRenderScale(measuredH, mobile);
+      log("info", "render.start", { measuredW, measuredH, mobile, renderScale });
+
+      if (measuredH === 0) {
+        throw new Error(`Container has zero height (w=${measuredW}). Layout did not paint.`);
+      }
+
+      // ONE html2canvas call for the whole document.
+      const canvas = await html2canvas(container, {
+        backgroundColor: "#ffffff",
+        scale: renderScale,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        foreignObjectRendering: false,
+        width: CONTAINER_W_PX,
+        height: measuredH,
+        windowWidth: CONTAINER_W_PX,
+        windowHeight: measuredH,
+      });
+
+      const t2 = performance.now();
+      log("info", "render.done", { canvasW: canvas.width, canvasH: canvas.height, ms: Math.round(t2 - t1) });
+
+      if (canvas.width === 0 || canvas.height === 0) {
+        throw new Error(`Empty canvas (w=${canvas.width}, h=${canvas.height})`);
+      }
+
+      // Slice the single canvas into A4-page-sized strips.
+      // jsPDF v4 accepts an HTMLCanvasElement directly to addImage — this
+      // avoids allocating a giant base64 dataURL in memory (the main mobile
+      // OOM culprit). We yield to the event loop between slices so iOS
+      // Safari can reclaim memory and not freeze the UI.
+      const pxPerMm = canvas.width / PRINTABLE_W_MM;
+      const pageHeightPx = Math.floor(PRINTABLE_H_MM * pxPerMm);
+      const totalHeightPx = canvas.height;
+
+      let offsetPx = 0;
+      let pageIndex = 0;
+      let sliceCanvas: HTMLCanvasElement | null = null;
+      while (offsetPx < totalHeightPx) {
+        const sliceHpx = Math.min(pageHeightPx, totalHeightPx - offsetPx);
+
+        sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceHpx;
+        const ctx = sliceCanvas.getContext("2d");
+        if (!ctx) break;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+        ctx.drawImage(canvas, 0, offsetPx, canvas.width, sliceHpx, 0, 0, canvas.width, sliceHpx);
+
+        const sliceHmm = sliceHpx / pxPerMm;
+
+        if (pageIndex > 0) pdf.addPage();
+        // Pass the canvas element directly. jsPDF will encode internally and
+        // we can drop our reference immediately on next iteration.
+        pdf.addImage(sliceCanvas, "JPEG", MARGIN_MM, MARGIN_MM, PRINTABLE_W_MM, sliceHmm, undefined, "FAST");
+
+        // Free pixel memory before the next iteration.
+        sliceCanvas.width = 0;
+        sliceCanvas.height = 0;
+        sliceCanvas = null;
+
+        offsetPx += sliceHpx;
+        pageIndex += 1;
+
+        // Yield so WebKit can GC between slices on long docs.
+        if (mobile && pageIndex % 2 === 0) {
+          await new Promise((r) => setTimeout(r, 0));
         }
-        // Wait for images
-        const imgs = Array.from(container.querySelectorAll("img")) as HTMLImageElement[];
-        await Promise.all(
-          imgs.map(
-            (img) =>
-              new Promise<void>((resolve) => {
-                if (img.complete && img.naturalHeight > 0) return resolve();
-                img.onload = () => resolve();
-                img.onerror = () => resolve();
-                setTimeout(() => resolve(), 1500);
-              })
-          )
-        );
-        // Layout settle
-        await new Promise((r) => requestAnimationFrame(() => r(null)));
-        await new Promise((r) => setTimeout(r, 50));
+      }
 
-        // Collect blocks: top-level [data-pdf-block] + body chunks
-        const blocks: HTMLElement[] = [];
-        container.querySelectorAll(":scope > [data-pdf-block]").forEach((el) => {
-          if (!el.hasAttribute("data-pdf-footer")) blocks.push(el as HTMLElement);
-        });
+      // Build a Blob and route the save in a way that works on iOS Safari,
+      // where pdf.save() can silently fail if the user gesture has been
+      // consumed by upstream awaits (Supabase fetch, html2canvas, etc.).
+      const blob: Blob = pdf.output("blob");
+      const blobUrl = URL.createObjectURL(blob);
+      const total = Math.round(performance.now() - t0);
+      log("info", "export.saved", { fileName, totalMs: total, pages: pageIndex, sizeBytes: blob.size, mobile });
 
-        const bodyRoot = container.querySelector("#pdf-body-root") as HTMLElement | null;
-        if (bodyRoot) {
-          // Wrap each top-level child as its own block
-          const children = Array.from(bodyRoot.children) as HTMLElement[];
-          if (children.length === 0 && bodyRoot.textContent?.trim()) {
-            blocks.push(bodyRoot);
-          } else {
-            children.forEach((c) => blocks.push(c));
-          }
+      if (mobile) {
+        // iOS Safari is unreliable with synthetic <a download> after long
+        // async chains. Open the PDF in a new tab so the user can use the
+        // system "Save to Files" / share sheet — no gesture loss.
+        const opened = window.open(blobUrl, "_blank");
+        if (!opened) {
+          // Popup blocked — fall back to in-tab navigation, which Safari
+          // also handles via the PDF viewer + share sheet.
+          window.location.href = blobUrl;
         }
-
-        const footer = container.querySelector("[data-pdf-footer]") as HTMLElement | null;
-
-        // Pagination state
-        let cursorY = MARGIN_MM;
-
-        const ensureSpace = (heightMm: number) => {
-          if (cursorY + heightMm > PAGE_H_MM - MARGIN_MM) {
-            pdf.addPage();
-            cursorY = MARGIN_MM;
-          }
-        };
-
-        const renderElementToPdf = async (el: HTMLElement) => {
-          if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) return;
-          try {
-            const canvas = await html2canvas(el, {
-              backgroundColor: "#ffffff",
-              scale: 2,
-              useCORS: true,
-              logging: false,
-              windowWidth: CONTAINER_W_PX,
-            });
-            if (canvas.width === 0 || canvas.height === 0) return;
-
-            const imgWmm = PRINTABLE_W_MM;
-            const imgHmm = (canvas.height * imgWmm) / canvas.width;
-
-            // If single block taller than full page, slice the canvas
-            if (imgHmm > PRINTABLE_H_MM) {
-              const sliceHeightMm = PRINTABLE_H_MM;
-              const totalHmm = imgHmm;
-              let consumedMm = 0;
-              while (consumedMm < totalHmm) {
-                const remainingMm = totalHmm - consumedMm;
-                const thisSliceMm = Math.min(sliceHeightMm, remainingMm);
-                // pixels to slice
-                const sliceCanvas = document.createElement("canvas");
-                const pxPerMm = canvas.width / imgWmm;
-                const sliceHpx = Math.floor(thisSliceMm * pxPerMm);
-                const sliceYpx = Math.floor(consumedMm * pxPerMm);
-                sliceCanvas.width = canvas.width;
-                sliceCanvas.height = sliceHpx;
-                const ctx = sliceCanvas.getContext("2d");
-                if (!ctx) break;
-                ctx.fillStyle = "#ffffff";
-                ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
-                ctx.drawImage(canvas, 0, sliceYpx, canvas.width, sliceHpx, 0, 0, canvas.width, sliceHpx);
-                if (cursorY !== MARGIN_MM) {
-                  pdf.addPage();
-                  cursorY = MARGIN_MM;
-                }
-                pdf.addImage(sliceCanvas.toDataURL("image/jpeg", 0.92), "JPEG", MARGIN_MM, cursorY, imgWmm, thisSliceMm);
-                cursorY += thisSliceMm;
-                consumedMm += thisSliceMm;
-                if (consumedMm < totalHmm) {
-                  pdf.addPage();
-                  cursorY = MARGIN_MM;
-                }
-              }
-              cursorY += BLOCK_GAP_MM;
-              return;
-            }
-
-            ensureSpace(imgHmm);
-            const blockTopY = cursorY;
-            pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", MARGIN_MM, blockTopY, imgWmm, imgHmm);
-
-            // Map links inside this element to PDF coordinates (best-effort, never throws)
-            try {
-              const elRect = el.getBoundingClientRect();
-              const anchors = Array.from(el.querySelectorAll("a")) as HTMLAnchorElement[];
-              if (anchors.length > 0) log("info", "links.found", { count: anchors.length });
-              anchors.forEach((a, idx) => {
-                const href = a.getAttribute("href") || "";
-                try {
-                  if (!href) {
-                    log("warn", "links.skip.no-href", { idx });
-                    return;
-                  }
-                  const r = a.getBoundingClientRect();
-                  if (!r || r.width === 0 || r.height === 0) {
-                    log("warn", "links.skip.zero-rect", { idx, href });
-                    return;
-                  }
-                  const relTop = r.top - elRect.top;
-                  const relLeft = r.left - elRect.left;
-                  if (relTop < 0 || relLeft < 0) {
-                    log("warn", "links.skip.negative-offset", { idx, href, relTop, relLeft });
-                    return;
-                  }
-                  const xMm = MARGIN_MM + relLeft * PX_TO_MM;
-                  const yMm = blockTopY + relTop * PX_TO_MM;
-                  const wMm = Math.min(r.width * PX_TO_MM, imgWmm);
-                  const hMm = r.height * PX_TO_MM;
-                  if (yMm + hMm > PAGE_H_MM - MARGIN_MM) {
-                    log("warn", "links.skip.out-of-page", { idx, href, yMm, hMm });
-                    return;
-                  }
-                  pdf.link(xMm, yMm, wMm, hMm, { url: href });
-                  log("info", "links.mapped", { idx, href, xMm, yMm, wMm, hMm });
-                } catch (linkErr: any) {
-                  log("error", "links.map-error", { idx, href, message: linkErr?.message, stack: linkErr?.stack });
-                }
-              });
-            } catch (outerLinkErr: any) {
-              log("error", "links.outer-error", { message: outerLinkErr?.message });
-            }
-
-            cursorY += imgHmm + BLOCK_GAP_MM;
-          } catch (err) {
-            console.warn("Block render skipped:", err);
-          }
-        };
-
-        for (const block of blocks) {
-          await renderElementToPdf(block);
-        }
-
-        // Footer on last page
-        if (footer) {
-          const footerCanvas = await html2canvas(footer, {
-            backgroundColor: "#ffffff",
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            windowWidth: CONTAINER_W_PX,
-          });
-          const fH = (footerCanvas.height * PRINTABLE_W_MM) / footerCanvas.width;
-          ensureSpace(fH);
-          pdf.addImage(footerCanvas.toDataURL("image/jpeg", 0.92), "JPEG", MARGIN_MM, cursorY, PRINTABLE_W_MM, fH);
-        }
-
-        try {
-          pdf.save(fileName);
-          log("info", "export.saved", { fileName });
-          toast.success("PDF downloaded!");
-        } catch (saveErr: any) {
-          log("error", "export.save-error", { message: saveErr?.message, stack: saveErr?.stack });
-          throw saveErr;
-        }
-      } finally {
-        if (container.parentNode) document.body.removeChild(container);
+        toast.success(`PDF ready (${pageIndex} ${pageIndex === 1 ? "page" : "pages"}) — tap the share icon to save`);
+        // Revoke after a delay so the new tab has time to load.
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+      } else {
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1_000);
+        toast.success(`PDF downloaded (${pageIndex} ${pageIndex === 1 ? "page" : "pages"})`);
       }
     } catch (err: any) {
       console.error("PDF generation error:", err);
       log("error", "export.fatal", { message: err?.message, stack: err?.stack });
       toast.error("Failed to generate PDF — check Teacher Profile → PDF Diagnostics for details");
     } finally {
+      if (container && container.parentNode) document.body.removeChild(container);
       setGenerating(false);
     }
   };

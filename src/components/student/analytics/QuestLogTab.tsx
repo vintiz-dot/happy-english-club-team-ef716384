@@ -88,36 +88,33 @@ export function QuestLogTab({ studentId, classId, selectedMonth, viewerStudentId
   const { data: missions } = useQuery({
     queryKey: ["student-quests", studentId, classId, selectedMonth],
     queryFn: async () => {
-      // Get homework for this class that has due_date in the selected month
-      const { data: homeworks, error: hwError } = await supabase
-        .from("homeworks")
-        .select("id, title, body, due_date, created_at, classes!inner(id, name), homework_files(id, file_name, storage_key)")
-        .eq("class_id", classId)
-        .gte("due_date", monthStartStr)
-        .lte("due_date", monthEndStr)
-        .order("created_at", { ascending: false });
+      // Use RPC to avoid RLS 500 errors
+      const { data, error: rpcError } = await supabase.rpc("get_student_homeworks", {
+        p_student_id: studentId,
+      });
 
-      if (hwError) throw hwError;
+      if (rpcError) throw rpcError;
 
-      // Get submissions for this student
-      const { data: submissions, error: subError } = await supabase
-        .from("homework_submissions")
-        .select("homework_id, status, grade, graded_at, submitted_at")
-        .eq("student_id", studentId);
+      const result = data as any;
+      const allHomeworks: any[] = result?.homeworks || [];
+      const submissions: any[] = result?.submissions || [];
+      const submissionMap = new Map(submissions.map((s: any) => [s.homework_id, s]));
 
-      if (subError) throw subError;
+      // Filter homeworks by class_id and month
+      const startMs = monthStart.getTime();
+      const endMs = monthEnd.getTime();
 
-      // Map submissions by homework_id
-      const submissionMap = new Map(
-        submissions?.map((s) => [s.homework_id, s]) ?? []
-      );
+      const filtered = allHomeworks.filter(hw => {
+        if (hw.class_id !== classId) return false;
+        if (!hw.due_date) return false;
+        const due = new Date(hw.due_date).getTime();
+        return due >= startMs && due <= endMs;
+      });
 
-      return (
-        homeworks?.map((hw) => ({
-          ...hw,
-          submission: submissionMap.get(hw.id) ?? null,
-        })) ?? []
-      );
+      return filtered.map(hw => ({
+        ...hw,
+        submission: submissionMap.get(hw.id) || null,
+      }));
     },
   });
 

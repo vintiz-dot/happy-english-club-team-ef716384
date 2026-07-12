@@ -1,21 +1,34 @@
 /**
  * pronounce-viseme Edge Function
  * ================================
- * Uses the Azure Cognitive Services Speech SDK (over npm) to synthesize
- * speech AND collect viseme events (which include both the classic 2D
- * visemeId and the 55-channel "FacialExpression" blend-shape animation
- * frames). Visemes are NOT returned by the REST TTS endpoint — they are
- * only delivered over the SDK's websocket transport, which is why the
- * previous REST-only implementation always returned an empty array.
+ * Uses the Azure Speech SDK to synthesize speech and return BOTH:
+ *   - audio (base64, MP3)
+ *   - a blend-shape animation track (Azure's 55-blendshape "FacialExpression"
+ *     output, ~60 fps), aligned to the audio via audioOffset (milliseconds).
+ *
+ * Reference: https://learn.microsoft.com/azure/ai-services/speech-service/how-to-speech-synthesis-viseme?tabs=3dblendshapes
  *
  * Input:  { word: string, voice?: string, sentence?: boolean }
  * Output: {
- *   audioBase64: string,
- *   mime: "audio/mpeg",
- *   visemes: { audioOffset: number; visemeId: number; blendShapes: number[][] }[],
- *   duration: number,
- *   word: string,
- * }
+ *           audioBase64: string,
+ *           mime: "audio/mpeg",
+ *           // Each viseme frame batch from Azure carries one or more rows of
+ *           // 55 blend-shape values. We flatten across batches into a single
+ *           // ordered sequence with the absolute time of each row.
+ *           // visemeId (0-21) is Azure's classic 2D viseme — kept alongside
+ *           // the blend-shape data so the client can drive a simple lip-shape
+ *           // image overlay without re-deriving it from blendShapes.
+ *           visemes: { audioOffset: number; visemeId: number; blendShapes: number[][] }[],
+ *           duration: number,
+ *           word: string,
+ *         }
+ *
+ * Secrets required (Supabase Dashboard → Edge Functions → Secrets):
+ *   azure_key — Azure Speech Services subscription key
+ *
+ * Region is fixed to "southeastasia" (matches the rest of the app).
+ *
+ * Package: npm:microsoft-cognitiveservices-speech-sdk@1.40.0
  */
 
 import * as sdk from "npm:microsoft-cognitiveservices-speech-sdk@1.40.0";
@@ -26,23 +39,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const AZURE_KEY    = Deno.env.get("AZURE_SPEECH_KEY") ?? Deno.env.get("azure_key") ?? "";
-const AZURE_REGION = Deno.env.get("AZURE_SPEECH_REGION") ?? "southeastasia";
+const AZURE_REGION = "southeastasia";
 const DEFAULT_VOICE = "en-US-AvaMultilingualNeural";
 
 interface VisemeBatch {
-  audioOffset: number;  // ms
-  visemeId: number;
-  blendShapes: number[][];
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  let binary = "";
-  const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
-  }
-  return btoa(binary);
+  audioOffset: number;     // ms from audio start (absolute time of first row)
+  visemeId: number;        // Azure's classic 2D viseme ID (0-21) for this phoneme
+  blendShapes: number[][]; // each row = 55 floats (Azure's blend-shape order)
 }
 
 Deno.serve(async (req) => {
@@ -51,105 +54,139 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const word: string  = (body.word  || "").trim();
-    const voice: string = body.voice  || DEFAULT_VOICE;
+    const { word, voice, sentence } = await req.json();
 
-    if (!word) {
+    if (!word || typeof word !== "string") {
       return new Response(
         JSON.stringify({ error: "word is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (!AZURE_KEY) {
+    const speechKey = Deno.env.get("azure_key");
+    if (!speechKey) {
+      console.error("azure_key not set in edge function secrets");
       return new Response(
-        JSON.stringify({ error: "Azure Speech key not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Azure Speech not configured", fallback: true }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const speechConfig = sdk.SpeechConfig.fromSubscription(AZURE_KEY, AZURE_REGION);
-    speechConfig.speechSynthesisVoiceName = voice;
-    speechConfig.speechSynthesisOutputFormat =
-      sdk.SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3;
+    const selectedVoice = voice || DEFAULT_VOICE;
+    const rate = sentence ? "-10%" : "-20%";
 
-    // Pass `null` for the audio output so the SDK doesn't try to play audio
-    // server-side; we read the bytes from the result instead.
-    const synthesizer = new sdk.SpeechSynthesizer(speechConfig, null as any);
+    // SSML with mstts:viseme type="FacialExpression" → blend-shape animation track
+    const ssml =
+      `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" ` +
+      `xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US">` +
+      `<voice name="${selectedVoice}">` +
+      `<mstts:viseme type="FacialExpression"/>` +
+      `<prosody rate="${rate}" pitch="+0%">${escapeXml(word.trim())}</prosody>` +
+      `</voice></speak>`;
+
+    const speechConfig = sdk.SpeechConfig.fromSubscription(speechKey, AZURE_REGION);
+    speechConfig.speechSynthesisOutputFormat =
+      sdk.SpeechSynthesisOutputFormat.Audio16Khz64KBitRateMonoMp3;
+    speechConfig.setProperty(
+      sdk.PropertyId.SpeechServiceResponse_RequestSentenceBoundary,
+      "true"
+    );
+
+    // Passing null for AudioConfig keeps the audio in result.audioData rather
+    // than writing to a speaker/file (which is what we want server-side).
+    const synthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
 
     const visemes: VisemeBatch[] = [];
 
-    synthesizer.visemeReceived = (_s: unknown, e: any) => {
+    synthesizer.visemeReceived = (_s, e) => {
+      // When SSML requests FacialExpression, e.animation is a JSON string with
+      // a per-frame blend-shape track. Shape varies slightly across SDK
+      // versions, so we defensively handle the common variants:
+      //   { FrameIndex, BlendShapes: number[][] }
+      //   { BlendShapes: number[][] }
+      //   { blendShapes: number[][] }
+      // The same event also carries e.visemeId — Azure's classic 2D viseme
+      // (0-21) — which we forward to the client for lip-image overlay.
       const audioOffsetMs = Number(e.audioOffset) / 10000;
       const visemeId = Number(e.visemeId) || 0;
-
-      let blendShapes: number[][] = [];
-      if (e.animation) {
-        try {
-          const parsed = JSON.parse(e.animation);
-          blendShapes = parsed.BlendShapes ?? parsed.blendShapes ?? [];
-        } catch (err) {
-          console.error("Failed to parse animation JSON:", err);
+      if (!e.animation) return;
+      try {
+        const parsed = JSON.parse(e.animation);
+        const rows: number[][] =
+          parsed.BlendShapes ?? parsed.blendShapes ?? [];
+        if (Array.isArray(rows) && rows.length > 0) {
+          visemes.push({ audioOffset: audioOffsetMs, visemeId, blendShapes: rows });
         }
+      } catch (err) {
+        console.error("Failed to parse viseme animation payload:", err);
       }
-
-      visemes.push({ audioOffset: audioOffsetMs, visemeId, blendShapes });
     };
 
-    const ssml = `
-<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"
-       xmlns:mstts="http://www.w3.org/2001/mstts"
-       xml:lang="en-US">
-  <voice name="${voice}">
-    <mstts:viseme type="FacialExpression"/>
-    ${word}
-  </voice>
-</speak>`.trim();
+    const result = await new Promise<sdk.SpeechSynthesisResult>(
+      (resolve, reject) => {
+        synthesizer.speakSsmlAsync(
+          ssml,
+          (res) => resolve(res),
+          (err) => reject(err)
+        );
+      }
+    );
 
-    const result = await new Promise<sdk.SpeechSynthesisResult>((resolve, reject) => {
-      synthesizer.speakSsmlAsync(
-        ssml,
-        (r) => { resolve(r); },
-        (err) => { reject(err); },
-      );
-    });
-
-    try { synthesizer.close(); } catch { /* noop */ }
+    synthesizer.close();
 
     if (result.reason !== sdk.ResultReason.SynthesizingAudioCompleted) {
-      const details = (result as any).errorDetails || "synthesis failed";
-      console.error("Azure SDK synth failed:", details);
+      console.error("Synthesis failed:", result.errorDetails, result.reason);
       return new Response(
-        JSON.stringify({ error: `Azure synthesis failed: ${details}` }),
+        JSON.stringify({
+          error: "TTS synthesis failed",
+          details: result.errorDetails,
+        }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const audioBytes = new Uint8Array(result.audioData);
-    const audioBase64 = bytesToBase64(audioBytes);
-    const durationMs =
-      Number(result.audioDuration) > 0
-        ? Number(result.audioDuration) / 10000
-        : (audioBytes.byteLength / (192000 / 8)) * 1000;
-
-    console.log(`Synth ok: ${audioBytes.byteLength} bytes, ${visemes.length} viseme events`);
+    const audioBuffer = result.audioData;
+    const audioBase64 = arrayBufferToBase64(audioBuffer);
+    const durationMs = Math.round((audioBuffer.byteLength * 8) / 64000 * 1000);
 
     return new Response(
       JSON.stringify({
         audioBase64,
         mime: "audio/mpeg",
+        contentType: "audio/mpeg", // back-compat with older callers
         visemes,
         duration: durationMs,
-        word,
+        word: word.trim(),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("pronounce-viseme error:", error);
     return new Response(
-      JSON.stringify({ error: String((error as any)?.message || error) }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
+
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(
+      null,
+      Array.from(bytes.subarray(i, i + chunk))
+    );
+  }
+  return btoa(binary);
+}

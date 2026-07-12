@@ -128,7 +128,7 @@ export function XPSettingsManager() {
     switch (category) {
       case "daily": return "bg-blue-500/20 text-blue-700 border-blue-500/30";
       case "homework": return "bg-green-500/20 text-green-700 border-green-500/30";
-      case "participation": return "bg-purple-500/20 text-purple-700 border-purple-500/30";
+      case "participation": return "bg-blue-500/20 text-blue-700 border-blue-500/30";
       case "streaks": return "bg-orange-500/20 text-orange-700 border-orange-500/30";
       case "achievements": return "bg-yellow-500/20 text-yellow-700 border-yellow-500/30";
       default: return "bg-muted text-muted-foreground";

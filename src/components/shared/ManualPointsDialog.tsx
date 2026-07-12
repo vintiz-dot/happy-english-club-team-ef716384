@@ -2,14 +2,15 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,6 +42,7 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
   const [points, setPoints] = useState("");
   const [notes, setNotes] = useState("");
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   // Fetch enrolled students for the class
   const { data: students, isLoading: studentsLoading } = useQuery({
@@ -216,25 +218,35 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
         {trigger || (
           <Button size="sm" className="gap-2">
             <Trophy className="h-4 w-4" />
             Add Points
           </Button>
         )}
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      </SheetTrigger>
+      {/* Side sheet keeps the leaderboard visible & clickable behind it on
+          desktop; falls back to a bottom sheet on mobile so the keyboard
+          doesn't fight for space at the top. */}
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={
+          isMobile
+            ? "h-[92vh] rounded-t-2xl overflow-y-auto p-5"
+            : "w-[480px] sm:max-w-[480px] overflow-y-auto p-6"
+        }
+      >
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-primary" />
             Manual Point Addition
-          </DialogTitle>
-          <DialogDescription>
+          </SheetTitle>
+          <SheetDescription>
             Award or deduct points for students. Points are tracked for analytics and leaderboards.
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
         <div className="space-y-6 py-4">
           {/* Student Selection */}
@@ -484,7 +496,7 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
             )}
           </Button>
         </div>
-      </DialogContent>
+      </SheetContent>
 
       {/* Reading Theory Score Entry Dialog */}
       <ReadingTheoryScoreEntry
@@ -492,6 +504,6 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
         open={readingTheoryOpen}
         onOpenChange={setReadingTheoryOpen}
       />
-    </Dialog>
+    </Sheet>
   );
 }

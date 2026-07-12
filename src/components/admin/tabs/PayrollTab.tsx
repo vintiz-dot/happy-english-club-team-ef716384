@@ -16,6 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHero } from "@/components/quest/PageHero";
+import { SectionHeader } from "@/components/quest/SectionHeader";
 
 interface StaffPayroll {
   staff: { id: string; full_name: string; hourly_rate_vnd: number };
@@ -210,6 +212,15 @@ export function PayrollTab() {
 
   return (
     <div className="space-y-6">
+      <PageHero
+        eyebrow="People"
+        title="Payroll"
+        subtitle="Earned vs projected pay for teachers and assistants."
+        variant="mint"
+      />
+
+      <SectionHeader title="This Month" subtitle={dayjs(selectedMonth).format("MMMM YYYY")} />
+
       <div className="flex items-center justify-between flex-wrap gap-2">
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
           <SelectTrigger className="w-[200px]">

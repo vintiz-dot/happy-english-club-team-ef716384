@@ -125,7 +125,7 @@ export function TuitionSummaryCards({ stats, isLoading }: TuitionSummaryCardsPro
           label="Sibling Discounts"
           value={stats.siblingStudents}
           subValue="Active sibling rates"
-          color="bg-violet-500"
+          color="bg-blue-500"
           delay={0.15}
         />
       </div>

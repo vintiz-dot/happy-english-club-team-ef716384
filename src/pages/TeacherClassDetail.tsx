@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { monthKey, dayjs } from "@/lib/date";
 import CalendarMonth from "@/components/calendar/CalendarMonth";
 import Layout from "@/components/Layout";
@@ -13,12 +14,14 @@ import { ClassLeaderboardShared } from "@/components/shared/ClassLeaderboardShar
 import { ManualPointsDialog } from "@/components/shared/ManualPointsDialog";
 import { SetMonitorControl } from "@/components/teacher/SetMonitorControl";
 import { ClassEconomySettings } from "@/components/teacher/ClassEconomySettings";
+import { LiveEngagementHUD } from "@/components/teacher/LiveEngagementHUD";
 import { Settings } from "lucide-react";
 
 export default function TeacherClassDetail() {
   const { id } = useParams<{ id: string }>();
   const [month, setMonth] = useState(monthKey());
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Real-time subscription for enrollment changes
   useEffect(() => {
@@ -44,10 +47,10 @@ export default function TeacherClassDetail() {
   }, [id, queryClient]);
 
   const { data: classData, isLoading: classLoading } = useQuery({
-    queryKey: ["teacher-class", id],
+    queryKey: ["teacher-class", id, user?.id],
+    enabled: !!user,
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) return null;
 
       // Try teacher first
       const { data: teacher } = await supabase
@@ -202,6 +205,10 @@ export default function TeacherClassDetail() {
 
   return (
     <Layout title={classData.name}>
+      {/* Real-time engagement telemetry — always visible during class */}
+      <div className="mb-4">
+        <LiveEngagementHUD classId={id!} />
+      </div>
       <Tabs defaultValue="calendar" className="space-y-4">
         <TabsList>
           <TabsTrigger value="calendar">Calendar</TabsTrigger>

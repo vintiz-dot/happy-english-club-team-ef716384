@@ -134,12 +134,12 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, hourlyRate, on
       </div>
 
       {/* Class Teaching Summary Card */}
-      <Card className="overflow-hidden border-purple-200 dark:border-purple-800/50">
-        <CardHeader className="bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 border-b border-purple-100 dark:border-purple-800/30">
+      <Card className="overflow-hidden border-slate-200 dark:border-slate-800/50">
+        <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900/30 dark:to-slate-800/30 border-b border-slate-200 dark:border-slate-800/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/50">
-                <School className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/50">
+                <School className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
                 <CardTitle className="text-lg">Class Teaching Summary</CardTitle>
@@ -147,7 +147,7 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, hourlyRate, on
               </div>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{totalSessions}</p>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalSessions}</p>
               <p className="text-xs text-muted-foreground">across {totalClasses} classes</p>
             </div>
           </div>
@@ -160,7 +160,7 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, hourlyRate, on
                 return (
                   <div
                     key={cls.id}
-                    className="group relative p-4 rounded-xl border bg-card hover:shadow-md transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-700"
+                    className="group relative p-4 rounded-xl border bg-card hover:shadow-md transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-700"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
@@ -169,16 +169,16 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, hourlyRate, on
                           {cls.name}
                         </h4>
                       </div>
-                      <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400">
+                      <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
                         <TrendingUp className="h-3 w-3" />
                         <span className="text-lg font-bold">{cls.total}</span>
                       </div>
                     </div>
                     
                     {/* Progress bar */}
-                    <div className="h-2 rounded-full bg-purple-100 dark:bg-purple-900/30 overflow-hidden mb-2">
+                    <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-900/30 overflow-hidden mb-2">
                       <div 
-                        className="h-full rounded-full bg-gradient-to-r from-purple-500 to-violet-500 transition-all duration-500"
+                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
                         style={{ width: `${heldPercent}%` }}
                       />
                     </div>

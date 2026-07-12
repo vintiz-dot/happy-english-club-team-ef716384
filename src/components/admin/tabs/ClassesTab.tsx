@@ -4,7 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { ClassForm } from "@/components/admin/ClassForm";
-import { Users, Clock } from "lucide-react";
+import { Users, Clock, School } from "lucide-react";
+import { PageHero } from "@/components/quest/PageHero";
+import { SectionHeader } from "@/components/quest/SectionHeader";
+import { EmptyState } from "@/components/quest/EmptyState";
 
 const ClassesTab = () => {
   const queryClient = useQueryClient();
@@ -66,20 +69,36 @@ const ClassesTab = () => {
 
   return (
     <div className="space-y-8">
+      <PageHero
+        eyebrow="Curriculum"
+        title="Classes"
+        subtitle="Active class roster, enrolment counts, and session rates."
+        variant="glacier"
+      />
+
       <ClassForm onSuccess={() => queryClient.invalidateQueries({ queryKey: ["classes"] })} />
-      
+
       <div>
-        <h2 className="text-2xl font-bold mb-4">Active Classes</h2>
+        <SectionHeader
+          title="Active Classes"
+          subtitle={classes && !isLoading ? `${classes.length} class${classes.length === 1 ? "" : "es"}` : undefined}
+        />
         {isLoading ? (
-          <p className="text-muted-foreground">Loading classes...</p>
+          <p className="type-micro text-muted-foreground">Loading classes…</p>
+        ) : !classes || classes.length === 0 ? (
+          <EmptyState
+            icon={School}
+            title="No active classes"
+            description="Create your first class to start scheduling sessions."
+          />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {classes?.map((cls) => (
+            {classes.map((cls) => (
               <Link key={cls.id} to={`/admin/classes/${cls.id}`}>
-                <Card className="hover:border-primary transition-colors cursor-pointer">
+                <Card className="surface-2 shadow-q1 lift hover:border-primary/40 transition-colors cursor-pointer h-full">
                   <CardHeader>
-                    <CardTitle>{cls.name}</CardTitle>
-                    <CardDescription className="flex items-center gap-4 mt-2">
+                    <CardTitle className="type-h2">{cls.name}</CardTitle>
+                    <CardDescription className="flex items-center gap-4 mt-2 type-micro">
                       <span className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
                         {cls.activeEnrollmentCount} students
@@ -91,8 +110,8 @@ const ClassesTab = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      Rate: {cls.session_rate_vnd?.toLocaleString('vi-VN')} ₫/session
+                    <p className="type-body text-muted-foreground tabular-nums">
+                      {cls.session_rate_vnd?.toLocaleString("vi-VN")} ₫ / session
                     </p>
                   </CardContent>
                 </Card>

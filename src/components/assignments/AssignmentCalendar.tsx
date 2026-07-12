@@ -47,49 +47,25 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
     queryKey: ["assignment-calendar", currentMonth, studentId, classId, role],
     queryFn: async () => {
       if (role === "student" && studentId) {
-        // Get student's enrollments
-        const { data: enrollments } = await supabase
-          .from("enrollments")
-          .select("class_id")
-          .eq("student_id", studentId)
-          .is("end_date", null);
+        // Use RPC to bypass RLS
+        const { data, error } = await supabase.rpc("get_student_homeworks", {
+          p_student_id: studentId,
+        });
 
-        const classIds = enrollments?.map(e => e.class_id) || [];
-        if (classIds.length === 0) return [];
+        if (error) {
+          console.error("AssignmentCalendar RPC error:", error);
+          return [];
+        }
 
-        // Get homeworks for those classes
-        const { data: homeworks } = await supabase
-          .from("homeworks")
-          .select(`
-            id,
-            title,
-            body,
-            due_date,
-            created_at,
-            class_id,
-            classes(name, id)
-          `)
-          .in("class_id", classIds)
-          .order("due_date", { ascending: true });
+        const result = data as any;
+        const homeworks: any[] = result?.homeworks || [];
+        const submissions: any[] = result?.submissions || [];
+        const submissionMap = new Map(submissions.map((s: any) => [s.homework_id, s]));
 
-        // Fetch submissions for each homework
-        const homeworksWithSubmissions = await Promise.all(
-          (homeworks || []).map(async (hw) => {
-            const { data: submission } = await supabase
-              .from("homework_submissions")
-              .select("*")
-              .eq("homework_id", hw.id)
-              .eq("student_id", studentId)
-              .maybeSingle();
-
-            return { 
-              ...hw, 
-              homework_submissions: submission ? [submission] : []
-            };
-          })
-        );
-
-        return homeworksWithSubmissions;
+        return homeworks.map((hw: any) => ({
+          ...hw,
+          homework_submissions: submissionMap.has(hw.id) ? [submissionMap.get(hw.id)] : [],
+        }));
       }
       
       return [];
@@ -97,6 +73,20 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
     enabled: (role !== "student" || (!!studentId && isHydrated)),
     staleTime: 0,
   });
+
+  const cells = useMemo(() => buildMonthGrid(currentMonth), [currentMonth]);
+  
+  const assignmentsByDate = useMemo(() => {
+    const map: Record<string, Assignment[]> = {};
+    if (!assignments) return map;
+    
+    for (const assignment of assignments) {
+      if (assignment.due_date) {
+        (map[assignment.due_date] ||= []).push(assignment);
+      }
+    }
+    return map;
+  }, [assignments]);
 
   // Early return for empty state
   if (!isLoading && assignments.length === 0 && studentId && role === "student") {
@@ -112,20 +102,6 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
       </Card>
     );
   }
-
-  const cells = useMemo(() => buildMonthGrid(currentMonth), [currentMonth]);
-  
-  const assignmentsByDate = useMemo(() => {
-    const map: Record<string, Assignment[]> = {};
-    if (!assignments) return map;
-    
-    for (const assignment of assignments) {
-      if (assignment.due_date) {
-        (map[assignment.due_date] ||= []).push(assignment);
-      }
-    }
-    return map;
-  }, [assignments]);
 
   const getAssignmentStatus = (assignment: Assignment) => {
     const submissions = assignment.homework_submissions || [];

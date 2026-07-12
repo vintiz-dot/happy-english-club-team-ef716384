@@ -1,3 +1,25 @@
+# AI tool directories
+.claude/
+.lovable/
+
+# ── Secrets — NEVER commit these ─────────────────────────────────────
+# Google Cloud service-account keys (Vision OCR + Custom Search)
+GOOGLE_CREDENTIALS.json
+customimage.json
+google-creds*.json
+*service-account*.json
+*-credentials.json
+gcp-*.json
+
+# Local env overrides & token files (the committed .env holds ONLY
+# publishable client values — server secrets go in Supabase secrets)
+.env.local
+.env.*.local
+.env.secrets
+*.token
+token.json
+credentials.json
+
 # Logs
 logs
 *.log
@@ -6,7 +28,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+.loveable
 node_modules
 dist
 dist-ssr
@@ -22,3 +44,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.bun-cache

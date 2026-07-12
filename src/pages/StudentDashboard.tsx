@@ -177,40 +177,23 @@ export default function StudentDashboard() {
     queryFn: async () => {
       if (!studentId) return [];
 
-      const { data: enrollments } = await supabase
-        .from("enrollments")
-        .select("class_id")
-        .eq("student_id", studentId)
-        .is("end_date", null);
+      // Use RPC to bypass RLS
+      const { data, error } = await supabase.rpc("get_student_homeworks", {
+        p_student_id: studentId,
+      });
 
-      const classIds = enrollments?.map(e => e.class_id) || [];
+      if (error) {
+        console.error("get_student_homeworks RPC error:", error);
+        return [];
+      }
 
-      // Fetch homeworks and submissions in parallel (fixes N+1 query problem)
-      const [homeworksResult, submissionsResult] = await Promise.all([
-        supabase
-          .from("homeworks")
-          .select(`
-            id,
-            title,
-            due_date,
-            classes(name)
-          `)
-          .in("class_id", classIds)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("homework_submissions")
-          .select("id, homework_id, status")
-          .eq("student_id", studentId)
-      ]);
-
-      const homeworks = homeworksResult.data || [];
-      const submissions = submissionsResult.data || [];
-
-      // Create a map for O(1) lookups instead of N queries
-      const submissionMap = new Map(submissions.map(s => [s.homework_id, s]));
+      const result = data as any;
+      const homeworks: any[] = result?.homeworks || [];
+      const submissions: any[] = result?.submissions || [];
+      const submissionMap = new Map(submissions.map((s: any) => [s.homework_id, s]));
 
       // Filter to pending (no submission or status is "pending")
-      const pending = homeworks.filter(hw => {
+      const pending = homeworks.filter((hw: any) => {
         const submission = submissionMap.get(hw.id);
         return !submission || submission.status === "pending";
       });
@@ -266,12 +249,12 @@ export default function StudentDashboard() {
     queryFn: async () => {
       if (!studentId) return { homeworkCompleted: 0, classesAttended: 0, perfectWeeks: 0 };
 
-      // Count completed homework submissions
-      const { count: homeworkCount } = await supabase
-        .from("homework_submissions")
-        .select("id", { count: "exact", head: true })
-        .eq("student_id", studentId)
-        .eq("status", "graded");
+      // Count completed homework submissions using RPC
+      const { data } = await supabase.rpc("get_student_homeworks", {
+        p_student_id: studentId,
+      });
+      const submissions = (data as any)?.submissions || [];
+      const homeworkCount = submissions.filter((s: any) => s.status === "graded").length;
 
       // Count attended classes
       const { count: attendanceCount } = await supabase
@@ -794,7 +777,7 @@ export default function StudentDashboard() {
                           <span className="text-xl">🎓</span>
                         </div>
                         <div className="space-y-1">
-                          <p className="font-semibold text-foreground">{session.classes.name}</p>
+                          <p className="font-semibold text-foreground">{session.classes?.name || "Class"}</p>
                           <p className="text-sm text-muted-foreground flex items-center gap-2">
                             <Calendar className="h-3.5 w-3.5" />
                             {dayjs(session.date).format("MMM D")} • {session.start_time.slice(0, 5)}

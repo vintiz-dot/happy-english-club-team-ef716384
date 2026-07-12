@@ -20,6 +20,8 @@ import { StudentLinkDialog } from "@/components/admin/StudentLinkDialog";
 import { StudentProfileEdit } from "@/components/student/StudentProfileEdit";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ExamReportsManager } from "@/components/exam-reports/ExamReportsManager";
+import { AIReportDialog } from "@/components/reports/AIReportDialog";
+import { CefrGrowthChart } from "@/components/charts/CefrGrowthChart";
 import { useAuth } from "@/hooks/useAuth";
 
 const StudentDetail = () => {
@@ -120,10 +122,23 @@ const StudentDetail = () => {
               </div>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowLinkDialog(true)}>
-            <Link className="h-4 w-4 mr-2" />
-            {student.linked_user_id ? 'Manage Link' : 'Connect to User'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <AIReportDialog
+              studentId={student.id}
+              studentName={student.full_name}
+              classId={
+                student.enrollments?.[0]?.class
+                  ? (Array.isArray(student.enrollments[0].class)
+                      ? student.enrollments[0].class[0]?.id
+                      : student.enrollments[0].class.id)
+                  : null
+              }
+            />
+            <Button variant="outline" size="sm" onClick={() => setShowLinkDialog(true)}>
+              <Link className="h-4 w-4 mr-2" />
+              {student.linked_user_id ? 'Manage Link' : 'Connect to User'}
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
@@ -139,6 +154,9 @@ const StudentDetail = () => {
 
           <TabsContent value="overview" className="space-y-6">
             <StudentOverviewTab student={student} />
+
+            {/* Language trajectory from transcripts, AI reports & exams */}
+            <CefrGrowthChart studentId={student.id} />
             
             {/* Class Leaderboards - using Admin's ClassLeaderboard for unified rankings */}
             {student.enrollments && student.enrollments.length > 0 && (

@@ -61,6 +61,7 @@ export interface StudentMonthFinanceData {
   carryInDebt: number;
   carryOutCredit: number;
   carryOutDebt: number;
+  settledInMonth: string | null;
   
   // Discount details
   discounts: Array<{
@@ -171,6 +172,7 @@ export function useStudentMonthFinance(
         carryInDebt: data.carry?.carryInDebt ?? 0,
         carryOutCredit: data.carry?.carryOutCredit ?? 0,
         carryOutDebt: data.carry?.carryOutDebt ?? 0,
+        settledInMonth: data.carry?.settledInMonth ?? null,
         
         // Discounts
         discounts: data.discounts ?? [],

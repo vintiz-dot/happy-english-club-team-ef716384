@@ -1,68 +1,98 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { CelebrationOverlay } from "./CelebrationOverlay";
 import { soundManager } from "@/lib/soundManager";
 
 interface GradeCelebrationProps {
   studentId: string;
+  assignments: any[];
 }
 
 interface GradedItem {
+  id: string;
   title: string;
   grade: string;
   className: string;
 }
 
-export function GradeCelebration({ studentId }: GradeCelebrationProps) {
+export function GradeCelebration({ studentId, assignments }: GradeCelebrationProps) {
   const [celebrationItem, setCelebrationItem] = useState<GradedItem | null>(null);
   const [queue, setQueue] = useState<GradedItem[]>([]);
 
-  const { data: newGrades } = useQuery({
-    queryKey: ["new-grades-check", studentId],
-    queryFn: async () => {
-      const lastSeen = localStorage.getItem(`last-seen-grades-${studentId}`) || "2000-01-01T00:00:00Z";
-      
-      const { data } = await supabase
-        .from("homework_submissions")
-        .select(`
-          id,
-          grade,
-          graded_at,
-          homework:homeworks!inner(title, class:classes(name))
-        `)
-        .eq("student_id", studentId)
-        .eq("status", "graded")
-        .gt("graded_at", lastSeen)
-        .order("graded_at", { ascending: false })
-        .limit(5);
-
-      // Update last seen
-      localStorage.setItem(`last-seen-grades-${studentId}`, new Date().toISOString());
-
-      return (data || []).map((s: any) => ({
-        title: s.homework?.title || "Homework",
-        grade: s.grade || "✓",
-        className: s.homework?.class?.name || "Class",
-      }));
-    },
-    enabled: !!studentId,
-    staleTime: Infinity, // Only run once per mount
-    refetchOnWindowFocus: false,
-  });
-
   useEffect(() => {
-    if (newGrades?.length) {
-      // Only show max 2 celebrations to avoid blocking
-      const limited = newGrades.slice(0, 2);
-      setQueue(limited);
-      setCelebrationItem(limited[0]);
+    // Only celebrate things graded in the last 48 hours to avoid
+    // an avalanche of confetti for old grades if localStorage is cleared
+    const cutoffDate = new Date();
+    cutoffDate.setHours(cutoffDate.getHours() - 48);
+
+    // Get locally seen IDs
+    const seenStr = localStorage.getItem(`celebration_seen_${studentId}`) || "[]";
+    let seenIds: string[] = [];
+    try {
+      seenIds = JSON.parse(seenStr);
+    } catch (e) {
+      seenIds = [];
+    }
+    const seenSet = new Set(seenIds);
+
+    const pending = assignments
+      .map(a => a.submission)
+      .filter(sub => {
+        if (!sub) return false;
+        if (sub.status !== "graded") return false;
+        if (seenSet.has(sub.id)) return false;
+        
+        const gradedDate = sub.graded_at ? new Date(sub.graded_at) : null;
+        if (!gradedDate || gradedDate < cutoffDate) return false;
+        
+        return true;
+      })
+      .sort((a, b) => {
+        const timeA = a.graded_at ? new Date(a.graded_at).getTime() : 0;
+        const timeB = b.graded_at ? new Date(b.graded_at).getTime() : 0;
+        return timeB - timeA; // newest first
+      })
+      .slice(0, 5) // max 5 celebrations per session
+      .map(sub => {
+        const hw = assignments.find(a => a.id === sub.homework_id);
+        return {
+          id: sub.id,
+          title: hw?.title || "Homework",
+          grade: sub.grade || "✓",
+          className: hw?.classes?.name || "Class",
+        };
+      });
+
+    if (pending.length > 0 && !celebrationItem && queue.length === 0) {
+      setQueue(pending);
+      setCelebrationItem(pending[0]);
       soundManager.play("success");
     }
-  }, [newGrades]);
+  }, [assignments, studentId]);
+
+  const markSeen = (submissionId: string) => {
+    const seenStr = localStorage.getItem(`celebration_seen_${studentId}`) || "[]";
+    let seenIds: string[] = [];
+    try {
+      seenIds = JSON.parse(seenStr);
+    } catch (e) {
+      seenIds = [];
+    }
+    seenIds.push(submissionId);
+    
+    // Keep localStorage from growing infinitely
+    if (seenIds.length > 50) seenIds = seenIds.slice(seenIds.length - 50);
+    
+    localStorage.setItem(`celebration_seen_${studentId}`, JSON.stringify(seenIds));
+  };
 
   const handleComplete = () => {
+    const current = celebrationItem;
     const remaining = queue.slice(1);
+
+    if (current) {
+      markSeen(current.id);
+    }
+
     setQueue(remaining);
     if (remaining.length > 0) {
       setTimeout(() => {

@@ -81,7 +81,7 @@ const SessionDrawer = ({ session, onClose, onEdit, onRefresh }: SessionDrawerPro
       case 'Scheduled': return 'bg-green-100 text-green-800';
       case 'Held': return 'bg-gray-100 text-gray-800';
       case 'Canceled': return 'bg-red-100 text-red-800';
-      case 'Holiday': return 'bg-purple-100 text-purple-800';
+      case 'Holiday': return 'bg-slate-100 text-slate-800';
       default: return 'bg-muted';
     }
   };

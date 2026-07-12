@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles, Rocket, ArrowRight, Eye } from "lucide-react";
+import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles, BookOpen, ScanText, AudioLines } from "lucide-react";
 import ProfileSwitcher from "@/components/ProfileSwitcher";
 import { ChangePassword } from "@/components/auth/ChangePassword";
 import NotificationBell from "@/components/NotificationBell";
@@ -13,16 +13,18 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { StudentNavBar } from "@/components/student/StudentNavBar";
 import { AdminTopBar } from "@/components/AdminTopBar";
 import { ClassroomToolsLauncher } from "@/components/classroom-tools/ClassroomToolsLauncher";
-import { NewSiteMigrationOverlay } from "@/components/migration/NewSiteMigrationOverlay";
+import { PWAInstallButton } from "./PWAInstallButton";
+import { CommandPalette } from "@/components/CommandPalette";
 
 interface LayoutProps {
   children: ReactNode;
   title?: string;
+  hideNavigation?: boolean;
 }
 
 const SIDEBAR_KEY = "sidebar-collapsed";
 
-const Layout = ({ children, title }: LayoutProps) => {
+const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   const { user, role, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,21 +35,11 @@ const Layout = ({ children, title }: LayoutProps) => {
     return saved !== "true"; // collapsed = true means sidebar is closed
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [upgradeBannerDismissed, setUpgradeBannerDismissed] = useState(() => {
-    try { return localStorage.getItem("hec-upgrade-banner") === "dismissed"; } catch { return false; }
-  });
 
   // Persist sidebar state
   useEffect(() => {
     localStorage.setItem(SIDEBAR_KEY, (!sidebarOpen).toString());
   }, [sidebarOpen]);
-
-  // Per-route SEO: keep document.title unique per page (falls back to brand)
-  useEffect(() => {
-    const prev = document.title;
-    document.title = title ? `${title} | Happy English Club` : "Happy English Club — Education Manager";
-    return () => { document.title = prev; };
-  }, [title]);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -91,6 +83,14 @@ const Layout = ({ children, title }: LayoutProps) => {
     return <>{children}</>;
   }
 
+  if (hideNavigation) {
+    return (
+      <div className="min-h-screen bg-background w-full flex flex-col">
+        <main className="flex-1 overflow-auto">{children}</main>
+      </div>
+    );
+  }
+
   const getNavigationItems = () => {
     switch (role) {
       case "admin":
@@ -110,6 +110,9 @@ const Layout = ({ children, title }: LayoutProps) => {
           { icon: Settings2, label: "Automation", path: "/admin?tab=automation" },
           { icon: HardDrive, label: "Data", path: "/admin?tab=data" },
           { icon: Megaphone, label: "Announcements", path: "/admin?tab=announcements" },
+          { icon: ScanText, label: "Smart Upload", path: "/teacher/smart-upload" },
+          { icon: AudioLines, label: "Transcripts", path: "/teacher/transcripts" },
+          { icon: BookOpen, label: "Flipbooks", path: "/teacher/books" },
         ];
       case "teacher":
         return [
@@ -122,7 +125,10 @@ const Layout = ({ children, title }: LayoutProps) => {
           { icon: NotebookPen, label: "Journal", path: "/teacher/journal" },
           { icon: FileBarChart2, label: "Exam Reports", path: "/teacher/exam-reports" },
           { icon: Sparkles, label: "Vocabulary Audit", path: "/teacher/vocabulary-audit" },
+          { icon: ScanText, label: "Smart Upload", path: "/teacher/smart-upload" },
+          { icon: AudioLines, label: "Transcripts", path: "/teacher/transcripts" },
           { icon: FolderOpen, label: "Resources", path: "/teacher/resources" },
+          { icon: BookOpen, label: "Flipbooks", path: "/teacher/books" },
         ];
       default:
         return [];
@@ -139,8 +145,8 @@ const Layout = ({ children, title }: LayoutProps) => {
         <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 shadow-sm">
           <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 md:gap-3">
-              <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                <GraduationCap className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+              <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center overflow-hidden">
+                <img src="/favicon.jpg" alt="HEC Logo" className="h-full w-full object-cover" />
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-base md:text-xl font-bold text-foreground">{title || "Education Manager"}</h1>
@@ -148,6 +154,7 @@ const Layout = ({ children, title }: LayoutProps) => {
               </div>
             </div>
             <div className="flex items-center gap-2 md:gap-4">
+              <PWAInstallButton variant="outline" />
               <ProfileSwitcher />
               <NotificationBell />
               {userName && (
@@ -172,51 +179,8 @@ const Layout = ({ children, title }: LayoutProps) => {
             </div>
           </div>
         </header>
-        {/* Kid-friendly upgrade banner — subtle but persistent nudge for students */}
-        {role === "student" && !upgradeBannerDismissed && (
-          <div className="relative z-40 overflow-hidden">
-            <a
-              href="https://user.hanoienglish.vip/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-violet-500/90 via-fuchsia-500/90 to-pink-500/90 text-white hover:from-violet-500 hover:via-fuchsia-500 hover:to-pink-500 transition-all"
-            >
-              <div className="shrink-0 flex items-center gap-2">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-300" />
-                </span>
-                <Rocket className="h-4 w-4 shrink-0 group-hover:-rotate-12 transition-transform" />
-              </div>
-              <div className="flex-1 min-w-0 flex items-center gap-2 text-sm">
-                <span className="font-semibold shrink-0">New & Better!</span>
-                <span className="truncate opacity-90 hidden sm:inline">
-                  Try our brand-new website — same username & password works!
-                </span>
-                <span className="truncate opacity-90 sm:hidden">Try the new site!</span>
-                <ArrowRight className="h-3.5 w-3.5 shrink-0 group-hover:translate-x-0.5 transition-transform" />
-              </div>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setUpgradeBannerDismissed(true);
-                  try { localStorage.setItem("hec-upgrade-banner", "dismissed"); } catch {}
-                }}
-                className="shrink-0 p-1.5 rounded-full hover:bg-white/20 transition-colors"
-                aria-label="Dismiss"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </a>
-          </div>
-        )}
         {role === "student" && <StudentNavBar />}
         <main className="container mx-auto px-4 py-4 md:py-6 lg:py-8 pb-20 md:pb-8">{children}</main>
-        {role === "student" && user && (
-          <NewSiteMigrationOverlay userId={user.id} onCompleted={() => {}} />
-        )}
       </div>
     );
   }
@@ -224,6 +188,8 @@ const Layout = ({ children, title }: LayoutProps) => {
   // Admin/Teacher layout with sidebar
   return (
     <div className="min-h-screen bg-background flex w-full">
+      {/* Global Cmd+K / Ctrl+K command bar */}
+      <CommandPalette />
       {/* Desktop Sidebar */}
       <aside
         className={cn(
@@ -235,8 +201,8 @@ const Layout = ({ children, title }: LayoutProps) => {
         <div className="p-4 border-b flex items-center justify-between">
           {sidebarOpen && (
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                <GraduationCap className="h-5 w-5 text-primary" />
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center overflow-hidden">
+                <img src="/favicon.jpg" alt="HEC Logo" className="h-full w-full object-cover" />
               </div>
               <span className="font-semibold text-sm">Happy English</span>
             </div>
@@ -313,6 +279,7 @@ const Layout = ({ children, title }: LayoutProps) => {
               <span className="text-sm font-medium truncate">{userName}</span>
             </div>
           )}
+          <PWAInstallButton className="w-full" sidebarOpen={sidebarOpen} variant="ghost" />
           <Button
             variant="ghost"
             className={cn("w-full justify-start gap-3 text-muted-foreground group", !sidebarOpen && "justify-center px-2")}
@@ -373,6 +340,7 @@ const Layout = ({ children, title }: LayoutProps) => {
                   </Button>
                 );
               })}
+              <PWAInstallButton className="w-full" variant="ghost" />
               <Button
                 variant="ghost"
                 className="w-full justify-start gap-3 text-muted-foreground group"

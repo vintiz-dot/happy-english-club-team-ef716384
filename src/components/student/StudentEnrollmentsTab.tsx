@@ -81,7 +81,7 @@ export function StudentEnrollmentsTab({ studentId }: StudentEnrollmentsTabProps)
               enrollments?.filter(e => !e.end_date).map((enrollment) => (
                 <div key={enrollment.id} className="flex items-center justify-between p-4 border rounded-lg gap-4">
                   <div className="space-y-1 flex-1">
-                    <p className="font-medium">{enrollment.classes.name}</p>
+                    <p className="font-medium">{enrollment.classes?.name || "Class"}</p>
                     <div className="flex gap-2 text-sm text-muted-foreground">
                       <span>Started: {format(new Date(enrollment.start_date), "MMM dd, yyyy")}</span>
                       {enrollment.discount_type && (
@@ -120,7 +120,7 @@ export function StudentEnrollmentsTab({ studentId }: StudentEnrollmentsTabProps)
               {enrollments?.filter(e => e.end_date).map((enrollment) => (
                 <div key={enrollment.id} className="flex items-center justify-between p-4 border rounded-lg opacity-60">
                   <div className="space-y-1">
-                    <p className="font-medium">{enrollment.classes.name}</p>
+                    <p className="font-medium">{enrollment.classes?.name || "Class"}</p>
                     <div className="flex gap-2 text-sm text-muted-foreground">
                       <span>{format(new Date(enrollment.start_date), "MMM dd, yyyy")}</span>
                       <span>→</span>
@@ -145,7 +145,7 @@ export function StudentEnrollmentsTab({ studentId }: StudentEnrollmentsTabProps)
               {pauseWindows.map((pause) => (
                 <div key={pause.id} className="p-4 border rounded-lg">
                   <div className="space-y-1">
-                    <p className="font-medium">{pause.classes.name}</p>
+                    <p className="font-medium">{pause.classes?.name || "Class"}</p>
                     <div className="flex gap-2 text-sm text-muted-foreground">
                       <span>Paused: {format(new Date(pause.from_date), "MMM dd, yyyy")}</span>
                       <span>→</span>

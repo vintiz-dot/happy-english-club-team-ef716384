@@ -23,7 +23,7 @@ INSERT INTO public.avatars (name, image_url, is_premium, display_order) VALUES
   -- Standard avatars (1-15)
   ('Blue Circle', 'https://api.dicebear.com/7.x/shapes/svg?seed=blue1&backgroundColor=3b82f6', false, 1),
   ('Green Square', 'https://api.dicebear.com/7.x/shapes/svg?seed=green1&backgroundColor=22c55e', false, 2),
-  ('Purple Triangle', 'https://api.dicebear.com/7.x/shapes/svg?seed=purple1&backgroundColor=a855f7', false, 3),
+  ('Blue Triangle', 'https://api.dicebear.com/7.x/shapes/svg?seed=blue1&backgroundColor=2563eb', false, 3),
   ('Orange Star', 'https://api.dicebear.com/7.x/shapes/svg?seed=orange1&backgroundColor=f97316', false, 4),
   ('Pink Heart', 'https://api.dicebear.com/7.x/shapes/svg?seed=pink1&backgroundColor=ec4899', false, 5),
   ('Cyan Wave', 'https://api.dicebear.com/7.x/shapes/svg?seed=cyan1&backgroundColor=06b6d4', false, 6),

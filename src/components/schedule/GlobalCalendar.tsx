@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { dayjs } from "@/lib/date";
 import PremiumCalendar, { type CalendarEvent } from "@/components/calendar/PremiumCalendar";
 import SessionDrawer from "@/components/admin/class/SessionDrawer";
@@ -23,9 +24,10 @@ const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCa
   const [showClassSelector, setShowClassSelector] = useState(false);
   const [multipleSessions, setMultipleSessions] = useState<{ date: Date; sessions: any[] } | null>(null);
   const { studentId } = useStudentProfile();
+  const { user } = useAuth();
 
   const { data: rawSessions = [], refetch } = useQuery({
-    queryKey: ["calendar-sessions", role, classId, studentId, month.format("YYYY-MM")],
+    queryKey: ["calendar-sessions", role, classId, studentId, month.format("YYYY-MM"), user?.id],
     queryFn: async () => {
       const startDate = month.startOf("month").format("YYYY-MM-DD");
       const endDate = month.endOf("month").format("YYYY-MM-DD");
@@ -53,8 +55,6 @@ const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCa
       if (classId) {
         query = query.eq("class_id", classId);
       } else if (role === "teacher") {
-        const { data: { user } } = await supabase.auth.getUser();
-        
         // Try teacher first
         const { data: teacher } = await supabase
           .from("teachers")
@@ -91,9 +91,8 @@ const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCa
         }
       } else if (role === "student") {
         let activeStudentId = studentId;
-        
+
         if (!activeStudentId) {
-          const { data: { user } } = await supabase.auth.getUser();
           const { data: student } = await supabase
             .from("students")
             .select("id")

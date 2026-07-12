@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { EditHomeworkDialog } from "./EditHomeworkDialog";
 import { GradeOfflineDialog } from "./GradeOfflineDialog";
 import { HomeworkPdfDownload } from "@/components/homework/HomeworkPdfDownload";
+import { useAuth } from "@/hooks/useAuth";
 
 const ReactQuill = lazy(() => import("react-quill-new"));
 
@@ -38,16 +39,15 @@ interface AssignmentUploadProps {
   classFilter?: string;
 }
 
-// Single query to get teacher/TA data and classes
-async function fetchTeacherData() {
-  const { data: user } = await supabase.auth.getUser();
-  if (!user.user) throw new Error("Not authenticated");
+// Single query to get teacher/TA data and classes — uses cached user from useAuth
+async function fetchTeacherData(userId: string) {
+  if (!userId) throw new Error("Not authenticated");
 
   // Try teacher first
   const { data: teacher } = await supabase
     .from("teachers")
     .select("id")
-    .eq("user_id", user.user.id)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (teacher) {
@@ -79,7 +79,7 @@ async function fetchTeacherData() {
   const { data: ta } = await supabase
     .from("teaching_assistants")
     .select("id")
-    .eq("user_id", user.user.id)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (ta) {
@@ -129,11 +129,13 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
   const [gradingHomeworkId, setGradingHomeworkId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  // Single query for teacher data
+  // Single query for teacher data — scoped to user.id so role switches refresh
   const { data: teacherData, isLoading: teacherLoading, isError: teacherError } = useQuery({
-    queryKey: ["teacher-data"],
-    queryFn: fetchTeacherData,
+    queryKey: ["teacher-data", user?.id],
+    queryFn: () => fetchTeacherData(user!.id),
+    enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
   });
@@ -157,8 +159,6 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
   // Create homework mutation
   const createMutation = useMutation({
     mutationFn: async () => {
-      const { data: user } = await supabase.auth.getUser();
-      
       const { data: homework, error: insertError } = await supabase
         .from("homeworks")
         .insert({
@@ -166,7 +166,7 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
           title: formData.title,
           body: formData.description || null,
           due_date: formData.due_date || null,
-          created_by: user.user?.id,
+          created_by: user?.id,
         })
         .select()
         .single();

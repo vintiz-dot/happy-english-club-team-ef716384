@@ -79,7 +79,8 @@ export default function Tuition() {
     carryOutCredit: tuitionData.carryOutCredit,
     totalAmount: tuitionData.totalAmount,
     monthPayments: tuitionData.monthPayments,
-  })) : null;
+    settledInMonth: tuitionData.settledInMonth,
+  }), tuitionData.settledInMonth) : null;
 
   // Display balance correctly based on debt/credit
   const getBalanceDisplay = () => {

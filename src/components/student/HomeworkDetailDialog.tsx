@@ -58,13 +58,8 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
   const { data: submission } = useQuery({
     queryKey: ["homework-submission", homework.id, studentId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("homework_submissions")
-        .select("*")
-        .eq("homework_id", homework.id)
-        .eq("student_id", studentId)
-        .maybeSingle();
-      return data;
+      // The submission is already fetched via get_student_homeworks and passed down
+      return homework.submission || null;
     },
   });
 
@@ -90,7 +85,7 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
           <span className="text-lg">{config.icon}</span>
           <span className={`font-semibold text-sm ${config.textClass}`}>{config.label}</span>
           {countdown && (
-            <Badge className={`ml-auto text-[10px] ${config.badgeClass}`}>
+            <Badge className={`ml-auto text-[11px] sm:text-xs px-2 py-0.5 ${config.badgeClass}`}>
               {countdown}
             </Badge>
           )}
@@ -106,7 +101,7 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
           <div className="space-y-3 min-w-0">
             <h2 className="text-lg sm:text-xl font-semibold leading-tight break-words [overflow-wrap:anywhere]">{homework.title}</h2>
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground min-w-0">
-              <Badge variant="secondary" className="text-xs break-words max-w-full">{homework.classes.name}</Badge>
+              <Badge variant="secondary" className="text-xs break-words max-w-full">{homework.classes?.name || "Class"}</Badge>
               {homework.created_at && (
                 <span className="flex items-center gap-1 text-xs">
                   <Calendar className="h-3 w-3 shrink-0" />
@@ -163,12 +158,12 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
                       variant="outline"
                       size="sm"
                       onClick={() => downloadFile(file.storage_key, file.file_name)}
-                      className="w-full justify-start text-xs sm:text-sm gap-2"
+                      className="w-full justify-start text-sm gap-2 min-h-[44px] rounded-xl"
                     >
                       <Download className="h-4 w-4 shrink-0" />
                       <span className="truncate flex-1 text-left">{file.file_name}</span>
-                      {sizeKB && <span className="text-[10px] text-muted-foreground shrink-0">{sizeKB} KB</span>}
-                      <Badge variant="outline" className="text-[10px] shrink-0 uppercase">{ext}</Badge>
+                      {sizeKB && <span className="text-[11px] text-muted-foreground shrink-0">{sizeKB} KB</span>}
+                      <Badge variant="outline" className="text-[11px] shrink-0 uppercase px-1.5 py-0">{ext}</Badge>
                     </Button>
                   );
                 })}
@@ -219,8 +214,12 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
       <Sheet open={true} onOpenChange={onClose}>
         <SheetContent
           side="bottom"
-          className="p-0 h-[92vh] max-h-[92vh] overflow-y-auto overflow-x-hidden rounded-t-2xl"
+          className="p-0 h-[92vh] max-h-[92vh] overflow-y-auto overflow-x-hidden rounded-t-2xl pb-safe"
         >
+          {/* Drag handle — visual affordance for the bottom sheet */}
+          <div className="sticky top-0 z-10 flex justify-center pt-2 pb-1 bg-background/95 backdrop-blur-sm">
+            <div className="h-1.5 w-10 rounded-full bg-muted-foreground/30" aria-hidden />
+          </div>
           <SheetHeader className="sr-only">
             <SheetTitle>{homework.title}</SheetTitle>
           </SheetHeader>

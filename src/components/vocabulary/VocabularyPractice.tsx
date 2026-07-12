@@ -80,12 +80,12 @@ function buildOptions(
   correctWord: VocabularyWord,
   allWords: VocabularyWord[],
 ): { text: string; isCorrect: boolean }[] {
-  const correctDef = correctWord.meaning || "No definition available";
+  const correctDef = correctWord.englishMeaning || "No definition available";
 
   // Pull unique definitions from other words
   const otherDefs = allWords
-    .filter((w) => w.id !== correctWord.id && w.meaning && w.meaning !== correctDef)
-    .map((w) => w.meaning);
+    .filter((w) => w.id !== correctWord.id && w.englishMeaning && w.englishMeaning !== correctDef)
+    .map((w) => w.englishMeaning);
 
   // Deduplicate
   const uniqueOtherDefs = [...new Set(otherDefs)];
@@ -349,7 +349,7 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
     if (totalCount === 0) {
       return (
         <div className="text-center py-20 space-y-4">
-          <div className="text-6xl">🧠</div>
+          <div className="text-6xl gemini-float">🧠</div>
           <h3 className="text-xl font-bold">No Words to Practice</h3>
           <p className="text-muted-foreground max-w-md mx-auto">
             Add words to your vocabulary bank first, then come back to practice
@@ -362,7 +362,7 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
     return (
       <div className="max-w-lg mx-auto space-y-6 py-8">
         <div className="text-center space-y-2">
-          <div className="text-5xl mb-4">🎯</div>
+          <div className="text-5xl mb-4 gemini-float">🎯</div>
           <h2 className="text-2xl font-bold text-foreground">
             Multiple Choice Quiz
           </h2>
@@ -375,13 +375,13 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
         <div className="space-y-3">
           {dueCount > 0 && (
             <Card
-              className="border-2 border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-950/20 cursor-pointer hover:shadow-lg transition-all"
+              className="border border-blue-200 dark:border-[hsl(265_30%_18%)] bg-blue-50/40 dark:bg-[hsl(265_20%_11%)] cursor-pointer hover:border-blue-300 dark:hover:border-[hsl(265_30%_24%)] transition-all duration-200 rounded-2xl"
               onClick={() => startSession(wordsForReview)}
             >
               <CardContent className="p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-violet-100 dark:bg-violet-900 flex items-center justify-center">
-                    <Brain className="w-6 h-6 text-violet-600" />
+                  <div className="h-10 w-10 rounded-xl bg-blue-100/60 dark:bg-[hsl(265_30%_16%)] flex items-center justify-center">
+                    <Brain className="w-5 h-5 text-blue-600 dark:text-blue-400/80" />
                   </div>
                   <div>
                     <p className="font-bold text-foreground">
@@ -392,7 +392,7 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
                     </p>
                   </div>
                 </div>
-                <Badge className="bg-violet-600 text-white text-lg px-3">
+                <Badge className="bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 text-sm px-3">
                   {dueCount}
                 </Badge>
               </CardContent>
@@ -400,13 +400,13 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
           )}
 
           <Card
-            className="cursor-pointer hover:shadow-lg transition-all"
+            className="border border-slate-200 dark:border-[hsl(240_8%_16%)] bg-white dark:bg-[hsl(240_8%_10%)] cursor-pointer hover:border-slate-300 dark:hover:border-[hsl(240_8%_22%)] transition-all duration-200 rounded-2xl shadow-sm"
             onClick={() => startSession(words)}
           >
             <CardContent className="p-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-blue-600" />
+                <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-[hsl(220_15%_14%)] flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400/70" />
                 </div>
                 <div>
                   <p className="font-bold text-foreground">
@@ -417,7 +417,7 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
                   </p>
                 </div>
               </div>
-              <Badge variant="secondary" className="text-lg px-3">
+              <Badge variant="secondary" className="text-sm px-3 bg-slate-100 dark:bg-[hsl(240_8%_16%)] text-slate-700 dark:text-foreground/60">
                 {totalCount}
               </Badge>
             </CardContent>
@@ -432,32 +432,32 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
     const total = results.correct + results.wrong;
     const pct = total > 0 ? Math.round((results.correct / total) * 100) : 0;
     return (
-      <div className="max-w-md mx-auto text-center py-12 space-y-6">
+      <div className="max-w-md mx-auto text-center py-16 space-y-6">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 15 }}
-          className="text-7xl"
+          className="text-7xl gemini-float"
         >
           {pct >= 80 ? "🏆" : pct >= 50 ? "💪" : "📚"}
         </motion.div>
         <h2 className="text-2xl font-bold">Session Complete!</h2>
         <div className="flex justify-center gap-8">
           <div className="text-center">
-            <p className="text-3xl font-black text-emerald-600">
+            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400/70">
               {results.correct}
             </p>
             <p className="text-sm text-muted-foreground">Correct</p>
           </div>
           <div className="text-center">
-            <p className="text-3xl font-black text-red-500">
+            <p className="text-3xl font-bold text-red-500 dark:text-red-400/60">
               {results.wrong}
             </p>
             <p className="text-sm text-muted-foreground">To Review</p>
           </div>
           {results.points > 0 && (
             <div className="text-center">
-              <p className="text-3xl font-black text-amber-500 flex items-center justify-center gap-1">
+              <p className="text-3xl font-bold text-amber-600 dark:text-amber-400/70 flex items-center justify-center gap-1">
                 <Award className="w-7 h-7" /> {results.points}
               </p>
               <p className="text-sm text-muted-foreground">Points earned</p>
@@ -476,7 +476,7 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
           <Button
             variant="outline"
             onClick={() => setSession("idle")}
-            className="rounded-xl"
+            className="rounded-xl border-slate-200 dark:border-[hsl(240_8%_18%)] bg-transparent hover:bg-slate-50 dark:hover:bg-[hsl(240_8%_14%)]"
           >
             <RotateCcw className="w-4 h-4 mr-2" /> New Session
           </Button>
@@ -499,7 +499,7 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
 
       {/* Progress */}
       <div className="flex items-center gap-3">
-        <Progress value={progress} className="flex-1 h-2.5 rounded-full" />
+        <Progress value={progress} className="flex-1 h-2 rounded-full" />
         <span className="text-sm text-muted-foreground font-medium whitespace-nowrap">
           {currentIdx + 1} / {deck.length}
         </span>
@@ -514,7 +514,7 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
           exit={{ opacity: 0, x: -50 }}
           transition={{ duration: 0.3 }}
         >
-          <Card className="border-2 border-violet-200 dark:border-violet-800 shadow-xl rounded-3xl overflow-hidden">
+          <Card className="border border-slate-200 dark:border-[hsl(240_8%_16%)] shadow-md dark:shadow-none rounded-2xl overflow-hidden bg-white dark:bg-[hsl(240_8%_10%)]">
             <CardContent className="p-6 sm:p-8 space-y-6">
               {/* Word display */}
               <div className="text-center space-y-3">
@@ -531,7 +531,7 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
                 <p className="text-sm text-muted-foreground font-medium">
                   What does this word mean?
                 </p>
-                <h2 className="text-4xl font-black text-foreground text-center capitalize">
+                <h2 className="text-4xl font-bold tracking-tight text-foreground/90 text-center capitalize">
                   {currentCard.word}
                 </h2>
                 {currentCard.cefr && (
@@ -545,7 +545,7 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-blue-600 gap-1"
+                  className="text-foreground/50 gap-1"
                   onClick={(e) => {
                     e.stopPropagation();
                     speak(currentCard.word, "en-US", 0.65);
@@ -573,21 +573,21 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
                       onClick={() => handleOptionClick(idx)}
                       disabled={isInFeedback}
                       className={cn(
-                        "w-full text-left p-4 rounded-2xl border-2 transition-all duration-200 flex items-start gap-3",
+                        "w-full text-left p-4 rounded-xl border transition-all duration-200 flex items-start gap-3",
                         // Default state
                         !isInFeedback &&
-                          "border-slate-200 dark:border-slate-700 hover:border-violet-400 hover:bg-violet-50/50 dark:hover:bg-violet-950/20 hover:shadow-md cursor-pointer active:scale-[0.98]",
+                          "border-slate-200 dark:border-[hsl(240_8%_18%)] bg-white dark:bg-[hsl(240_8%_10%)] hover:border-slate-300 dark:hover:border-[hsl(240_8%_24%)] hover:bg-slate-50 dark:hover:bg-[hsl(240_8%_13%)] cursor-pointer active:scale-[0.99] shadow-sm",
                         // Correct answer highlight
                         showCorrectHighlight &&
-                          "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 shadow-md shadow-emerald-100 dark:shadow-emerald-900/20",
+                          "border-emerald-500/40 bg-emerald-50/50 dark:bg-[hsl(155_20%_10%)]",
                         // Wrong answer highlight
                         showWrongHighlight &&
-                          "border-red-400 bg-red-50 dark:bg-red-950/30 shadow-md shadow-red-100 dark:shadow-red-900/20",
+                          "border-red-500/40 bg-red-50/50 dark:bg-[hsl(0_20%_10%)]",
                         // Non-selected in feedback mode
                         isInFeedback &&
                           !showCorrectHighlight &&
                           !showWrongHighlight &&
-                          "opacity-50 border-slate-200 dark:border-slate-700",
+                          "opacity-40 border-slate-200 dark:border-[hsl(240_8%_16%)]",
                       )}
                     >
                       {/* Option label (A, B, C, D) */}
@@ -595,10 +595,10 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
                         className={cn(
                           "shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors",
                           showCorrectHighlight
-                            ? "bg-emerald-500 text-white"
+                            ? "bg-emerald-600/60 text-white"
                             : showWrongHighlight
-                              ? "bg-red-500 text-white"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300",
+                              ? "bg-red-600/60 text-white"
+                              : "bg-slate-100 dark:bg-[hsl(240_8%_16%)] text-slate-500 dark:text-foreground/50",
                         )}
                       >
                         {showCorrectHighlight ? (
@@ -612,13 +612,13 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
                       <span
                         className={cn(
                           "text-base font-medium pt-0.5 leading-snug",
-                          showCorrectHighlight &&
-                            "text-emerald-800 dark:text-emerald-200",
-                          showWrongHighlight &&
-                            "text-red-800 dark:text-red-200",
-                          !showCorrectHighlight &&
-                            !showWrongHighlight &&
-                            "text-foreground",
+                           showCorrectHighlight &&
+                             "text-emerald-700 dark:text-emerald-300/80",
+                           showWrongHighlight &&
+                             "text-red-700 dark:text-red-300/80",
+                           !showCorrectHighlight &&
+                             !showWrongHighlight &&
+                             "text-foreground/70",
                         )}
                       >
                         {opt.text}
@@ -639,16 +639,16 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
                     className={cn(
                       "rounded-xl p-4 text-center",
                       wasCorrect
-                        ? "bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800"
-                        : "bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800",
+                        ? "bg-emerald-50/50 border border-emerald-200 dark:bg-[hsl(155_15%_10%)] dark:border-[hsl(155_20%_16%)]"
+                        : "bg-orange-50/50 border border-orange-200 dark:bg-[hsl(25_15%_10%)] dark:border-[hsl(25_20%_16%)]",
                     )}
                   >
                     <p
                       className={cn(
                         "text-lg font-bold",
                         wasCorrect
-                          ? "text-emerald-700 dark:text-emerald-300"
-                          : "text-orange-700 dark:text-orange-300",
+                          ? "text-emerald-700 dark:text-emerald-400/80"
+                          : "text-orange-700 dark:text-orange-400/80",
                       )}
                     >
                       {wasCorrect
@@ -670,7 +670,7 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
                   <Button
                     onClick={advance}
                     disabled={recording}
-                    className="w-full h-12 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white font-bold text-base shadow-lg"
+                    className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white dark:bg-[hsl(265_40%_16%)] dark:hover:bg-[hsl(265_40%_20%)] dark:text-blue-200 dark:border dark:border-[hsl(265_40%_24%)] font-medium text-sm shadow-sm"
                   >
                     {recording ? (
                       <Loader2 className="w-5 h-5 animate-spin mr-2" />

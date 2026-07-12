@@ -17,6 +17,9 @@ import { GradeCelebration } from "@/components/student/GradeCelebration";
 import { getHomeworkStatus, statusConfig, getCountdown, type HomeworkStatus } from "@/lib/homeworkStatus";
 import { motion } from "framer-motion";
 import { HomeworkPdfDownload } from "@/components/homework/HomeworkPdfDownload";
+import { PageHero } from "@/components/quest/PageHero";
+import { EmptyState } from "@/components/quest/EmptyState";
+import { PagedListControls, usePagedList } from "@/components/shared/PagedListControls";
 
 const statusIcons: Record<HomeworkStatus, React.ReactNode> = {
   overdue: <AlertTriangle className="h-4 w-4 text-red-500" />,
@@ -35,7 +38,7 @@ function SubmissionPipeline({ status }: { status: HomeworkStatus }) {
       {steps.map((step, i) => (
         <div key={step} className="flex items-center gap-1">
           <motion.div
-            className={`h-1.5 w-6 rounded-full transition-colors ${i <= activeIdx ? "bg-emerald-500" : "bg-muted"}`}
+            className={`h-1.5 w-7 sm:w-6 rounded-full transition-colors ${i <= activeIdx ? "bg-emerald-500" : "bg-muted"}`}
             initial={{ scaleX: 0 }}
             animate={{ scaleX: 1 }}
             transition={{ delay: i * 0.15, duration: 0.3 }}
@@ -43,7 +46,7 @@ function SubmissionPipeline({ status }: { status: HomeworkStatus }) {
           {i < steps.length - 1 && <div className="h-px w-1 bg-muted" />}
         </div>
       ))}
-      <span className="text-[10px] ml-1 text-muted-foreground">{steps[activeIdx]}</span>
+      <span className="text-[11px] sm:text-xs ml-1 text-muted-foreground font-medium">{steps[activeIdx]}</span>
     </div>
   );
 }
@@ -95,7 +98,7 @@ function AssignmentCard({ assignment, onClick, index = 0 }: { assignment: any; o
                   {assignment.title}
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm mt-0.5 break-words">
-                  {assignment.classes.name}
+                  {assignment.classes?.name || "Class"}
                 </CardDescription>
               </div>
               {status === "graded" && assignment.submission?.grade && (
@@ -114,11 +117,11 @@ function AssignmentCard({ assignment, onClick, index = 0 }: { assignment: any; o
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-              <Badge className={`text-[10px] sm:text-xs ${config.badgeClass}`}>
+              <Badge className={`text-[11px] sm:text-xs px-2 py-0.5 ${config.badgeClass}`}>
                 {config.icon} {config.label}
               </Badge>
               {countdown && (
-                <Badge className={`text-[10px] sm:text-xs ${config.badgeClass} inline-flex items-center gap-1`}>
+                <Badge className={`text-[11px] sm:text-xs px-2 py-0.5 ${config.badgeClass} inline-flex items-center gap-1`}>
                   {isOverdue && (
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-60 animate-ping" style={{ animationDuration: "2.8s" }} />
@@ -129,7 +132,7 @@ function AssignmentCard({ assignment, onClick, index = 0 }: { assignment: any; o
                 </Badge>
               )}
               {assignment.due_date && (
-                <Badge variant="outline" className="text-[10px] sm:text-xs">
+                <Badge variant="outline" className="text-[11px] sm:text-xs px-2 py-0.5">
                   Due {new Date(assignment.due_date).toLocaleDateString()}
                 </Badge>
               )}
@@ -139,7 +142,7 @@ function AssignmentCard({ assignment, onClick, index = 0 }: { assignment: any; o
             <div onClick={(e) => e.stopPropagation()} className="pt-1">
               <HomeworkPdfDownload
                 homework={assignment}
-                className={assignment.classes?.name}
+                className={assignment.classes?.name || ""}
                 variant="pill-compact"
               />
             </div>
@@ -171,47 +174,41 @@ export default function StudentAssignments() {
     if (studentId) recordHomeworkVisit();
   }, [studentId]);
 
-  const { data: enrollments } = useQuery({
-    queryKey: ["student-enrollments", studentId],
+  const { data: assignments = [], isLoading } = useQuery({
+    queryKey: ["student-assignments", studentId],
     queryFn: async () => {
       if (!studentId) return [];
-      const { data } = await supabase
-        .from("enrollments")
-        .select("class_id")
-        .eq("student_id", studentId)
-        .is("end_date", null);
-      return data || [];
+
+      // Use RPC to bypass RLS — the function does its own auth check
+      const { data, error } = await supabase.rpc("get_student_homeworks", {
+        p_student_id: studentId,
+      });
+
+      if (error) {
+        console.error("get_student_homeworks RPC error:", error);
+        return [];
+      }
+
+      const result = data as any;
+      const homeworks: any[] = result?.homeworks || [];
+      const submissions: any[] = result?.submissions || [];
+      const submissionMap = new Map(submissions.map((s: any) => [s.homework_id, s]));
+      return homeworks.map((hw: any) => ({ ...hw, submission: submissionMap.get(hw.id) || null }));
     },
     enabled: !!studentId,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const classIds = enrollments?.map(e => e.class_id) || [];
-
-  const { data: assignments = [], isLoading } = useQuery({
-    queryKey: ["student-assignments", studentId, classIds.join(",")],
-    queryFn: async () => {
-      if (!studentId || classIds.length === 0) return [];
-      const [homeworksResult, submissionsResult] = await Promise.all([
-        supabase
-          .from("homeworks")
-          .select(`*, classes!inner(name), homework_files(*)`)
-          .in("class_id", classIds)
-          .order("created_at", { ascending: false })
-          .limit(100),
-        supabase
-          .from("homework_submissions")
-          .select("*")
-          .eq("student_id", studentId),
-      ]);
-      const homeworks = homeworksResult.data || [];
-      const submissions = submissionsResult.data || [];
-      const submissionMap = new Map(submissions.map(s => [s.homework_id, s]));
-      return homeworks.map(hw => ({ ...hw, submission: submissionMap.get(hw.id) || null }));
-    },
-    enabled: !!studentId && classIds.length > 0,
     staleTime: 2 * 60 * 1000,
   });
+
+  const now = new Date();
+  const upcomingAssignments = assignments.filter((a: any) => !a.due_date || new Date(a.due_date) >= now);
+  const pastAssignments = assignments.filter((a: any) => a.due_date && new Date(a.due_date) < now);
+
+  // Paginate each list independently. Upcoming is usually short; past
+  // grows over the year. Both honour the 20-per-page rule.
+  // CRITICAL: These must be above any conditional returns to avoid React Error #310
+  const upcomingPaged = usePagedList(upcomingAssignments);
+  const pastPaged = usePagedList(pastAssignments);
+  const upcomingSoonPaged = usePagedList(upcomingAssignments);
 
   if (!studentId) {
     return (
@@ -223,23 +220,16 @@ export default function StudentAssignments() {
 
   if (isLoading) return <Layout title="Assignments">Loading...</Layout>;
 
-  const now = new Date();
-  const upcomingAssignments = assignments.filter((a: any) => !a.due_date || new Date(a.due_date) >= now);
-  const pastAssignments = assignments.filter((a: any) => a.due_date && new Date(a.due_date) < now);
-
   return (
     <Layout title="Assignments">
-      {studentId && <GradeCelebration studentId={studentId} />}
+      {studentId && assignments.length > 0 && <GradeCelebration studentId={studentId} assignments={assignments} />}
       <div className="space-y-4 sm:space-y-6 no-x-overflow min-w-0">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="px-1"
-        >
-          <h1 className="text-2xl sm:text-3xl font-bold leading-tight">📚 Assignments</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Track your homework, earn XP, level up!</p>
-        </motion.div>
+        <PageHero
+          eyebrow="Quest log"
+          title="Assignments"
+          subtitle="Track your homework, earn XP, level up."
+          variant="aurora"
+        />
 
         {/* Homework Streak Tracker */}
         {assignments.length > 0 && studentId && (
@@ -247,21 +237,17 @@ export default function StudentAssignments() {
         )}
 
         {assignments.length === 0 ? (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-            <Card>
-              <CardContent className="py-12 text-center">
-                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No assignments yet</p>
-                <p className="text-sm text-muted-foreground mt-1">Your teachers haven&apos;t posted any assignments</p>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <EmptyState
+            icon={FileText}
+            title="No assignments yet"
+            description="Your teachers haven't posted any assignments. Check back soon — new quests appear here."
+          />
         ) : (
           <Tabs defaultValue="list" className="w-full">
-            <TabsList className="w-full grid grid-cols-3 h-auto">
-              <TabsTrigger value="list" className="text-xs sm:text-sm py-3">📋 List</TabsTrigger>
-              <TabsTrigger value="calendar" className="text-xs sm:text-sm py-3">📅 Calendar</TabsTrigger>
-              <TabsTrigger value="upcoming" className="text-xs sm:text-sm py-3">🔜 Upcoming</TabsTrigger>
+            <TabsList className="w-full grid grid-cols-3 h-auto rounded-xl bg-muted/60 p-1">
+              <TabsTrigger value="list" className="text-sm py-2.5 min-h-[44px] rounded-lg font-semibold">📋 List</TabsTrigger>
+              <TabsTrigger value="calendar" className="text-sm py-2.5 min-h-[44px] rounded-lg font-semibold">📅 Calendar</TabsTrigger>
+              <TabsTrigger value="upcoming" className="text-sm py-2.5 min-h-[44px] rounded-lg font-semibold">🔜 Soon</TabsTrigger>
             </TabsList>
 
             <TabsContent value="list" className="space-y-6 mt-4">
@@ -269,19 +255,26 @@ export default function StudentAssignments() {
                 <div className="space-y-3">
                   <h2 className="text-lg font-semibold flex items-center gap-2">🎯 Current & Upcoming</h2>
                   <div className="grid gap-3">
-                    {upcomingAssignments.map((a: any, i: number) => (
+                    {upcomingPaged.slice.map((a: any, i: number) => (
                       <div key={a.id} className="long-list-item">
                         <AssignmentCard assignment={a} index={i} onClick={() => setSelectedHomework(a)} />
                       </div>
                     ))}
                   </div>
+                  <PagedListControls
+                    page={upcomingPaged.page}
+                    totalPages={upcomingPaged.totalPages}
+                    total={upcomingPaged.total}
+                    rangeLabel={upcomingPaged.rangeLabel}
+                    onPageChange={upcomingPaged.setPage}
+                  />
                 </div>
               )}
               {pastAssignments.length > 0 && (
                 <div className="space-y-3">
                   <h2 className="text-lg font-semibold flex items-center gap-2">📁 Past Assignments</h2>
                   <div className="grid gap-3">
-                    {pastAssignments.map((a: any, i: number) => {
+                    {pastPaged.slice.map((a: any, i: number) => {
                       const st = getHomeworkStatus(a);
                       const isOverdueNotSubmitted = st === "overdue";
                       return (
@@ -291,6 +284,13 @@ export default function StudentAssignments() {
                       );
                     })}
                   </div>
+                  <PagedListControls
+                    page={pastPaged.page}
+                    totalPages={pastPaged.totalPages}
+                    total={pastPaged.total}
+                    rangeLabel={pastPaged.rangeLabel}
+                    onPageChange={pastPaged.setPage}
+                  />
                 </div>
               )}
             </TabsContent>
@@ -305,15 +305,24 @@ export default function StudentAssignments() {
               />
             </TabsContent>
 
-            <TabsContent value="upcoming" className="mt-4">
+            <TabsContent value="upcoming" className="mt-4 space-y-4">
               {upcomingAssignments.length === 0 ? (
                 <Card><CardContent className="py-12 text-center"><FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" /><p className="text-muted-foreground">No upcoming assignments</p></CardContent></Card>
               ) : (
-                <div className="grid gap-3">
-                  {upcomingAssignments.map((a: any, i: number) => (
-                    <AssignmentCard key={a.id} assignment={a} index={i} onClick={() => setSelectedHomework(a)} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid gap-3">
+                    {upcomingSoonPaged.slice.map((a: any, i: number) => (
+                      <AssignmentCard key={a.id} assignment={a} index={i} onClick={() => setSelectedHomework(a)} />
+                    ))}
+                  </div>
+                  <PagedListControls
+                    page={upcomingSoonPaged.page}
+                    totalPages={upcomingSoonPaged.totalPages}
+                    total={upcomingSoonPaged.total}
+                    rangeLabel={upcomingSoonPaged.rangeLabel}
+                    onPageChange={upcomingSoonPaged.setPage}
+                  />
+                </>
               )}
             </TabsContent>
           </Tabs>
