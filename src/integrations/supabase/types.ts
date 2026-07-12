@@ -1144,6 +1144,7 @@ export type Database = {
       homework_submissions: {
         Row: {
           assignment_instructions: string | null
+          celebration_seen_at: string | null
           created_at: string
           file_name: string | null
           file_size: number | null
@@ -1161,6 +1162,7 @@ export type Database = {
         }
         Insert: {
           assignment_instructions?: string | null
+          celebration_seen_at?: string | null
           created_at?: string
           file_name?: string | null
           file_size?: number | null
@@ -1178,6 +1180,7 @@ export type Database = {
         }
         Update: {
           assignment_instructions?: string | null
+          celebration_seen_at?: string | null
           created_at?: string
           file_name?: string | null
           file_size?: number | null
@@ -2091,6 +2094,36 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          cefr_level: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          school_class: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          cefr_level?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id: string
+          school_class?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          cefr_level?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          school_class?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       referral_bonuses: {
         Row: {
           cadence: Database["public"]["Enums"]["discount_cadence"]
@@ -2143,6 +2176,96 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      resource_class_access: {
+        Row: {
+          class_id: string
+          id: string
+          resource_id: string
+        }
+        Insert: {
+          class_id: string
+          id?: string
+          resource_id: string
+        }
+        Update: {
+          class_id?: string
+          id?: string
+          resource_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_class_access_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_class_access_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resources: {
+        Row: {
+          blooms_levels: string[] | null
+          created_at: string
+          description: string | null
+          external_url: string | null
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          id: string
+          pyp_themes: string[] | null
+          storage_key: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          uploaded_by: string
+          visibility: string
+          vocab_tags: string[] | null
+        }
+        Insert: {
+          blooms_levels?: string[] | null
+          created_at?: string
+          description?: string | null
+          external_url?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          pyp_themes?: string[] | null
+          storage_key?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          uploaded_by: string
+          visibility?: string
+          vocab_tags?: string[] | null
+        }
+        Update: {
+          blooms_levels?: string[] | null
+          created_at?: string
+          description?: string | null
+          external_url?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          pyp_themes?: string[] | null
+          storage_key?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          uploaded_by?: string
+          visibility?: string
+          vocab_tags?: string[] | null
+        }
+        Relationships: []
       }
       session_participants: {
         Row: {
@@ -2806,6 +2929,7 @@ export type Database = {
           student_id: string
           total_points: number | null
           updated_at: string
+          vocabulary_quiz_points: number
         }
         Insert: {
           class_id: string
@@ -2818,6 +2942,7 @@ export type Database = {
           student_id: string
           total_points?: number | null
           updated_at?: string
+          vocabulary_quiz_points?: number
         }
         Update: {
           class_id?: string
@@ -2830,6 +2955,7 @@ export type Database = {
           student_id?: string
           total_points?: number | null
           updated_at?: string
+          vocabulary_quiz_points?: number
         }
         Relationships: [
           {
@@ -2841,6 +2967,72 @@ export type Database = {
           },
           {
             foreignKeyName: "student_points_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_reports: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          error_message: string | null
+          generated_by: string
+          id: string
+          model: string | null
+          narrative: string | null
+          period_end: string | null
+          period_start: string | null
+          published: boolean
+          report: Json | null
+          source_counts: Json | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          generated_by: string
+          id?: string
+          model?: string | null
+          narrative?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          published?: boolean
+          report?: Json | null
+          source_counts?: Json | null
+          status?: string
+          student_id: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          generated_by?: string
+          id?: string
+          model?: string | null
+          narrative?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          published?: boolean
+          report?: Json | null
+          source_counts?: Json | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_reports_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_reports_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
@@ -2929,6 +3121,87 @@ export type Database = {
           },
         ]
       }
+      student_work: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          class_id: string | null
+          created_at: string
+          detected_student_name: string | null
+          error_message: string | null
+          id: string
+          match_confidence: number | null
+          mime_type: string | null
+          ocr_confidence: number | null
+          ocr_text: string | null
+          original_filename: string | null
+          status: string
+          storage_path: string
+          student_id: string | null
+          teacher_notes: string | null
+          updated_at: string
+          uploaded_by: string
+          workflow: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          class_id?: string | null
+          created_at?: string
+          detected_student_name?: string | null
+          error_message?: string | null
+          id?: string
+          match_confidence?: number | null
+          mime_type?: string | null
+          ocr_confidence?: number | null
+          ocr_text?: string | null
+          original_filename?: string | null
+          status?: string
+          storage_path: string
+          student_id?: string | null
+          teacher_notes?: string | null
+          updated_at?: string
+          uploaded_by: string
+          workflow?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          class_id?: string | null
+          created_at?: string
+          detected_student_name?: string | null
+          error_message?: string | null
+          id?: string
+          match_confidence?: number | null
+          mime_type?: string | null
+          ocr_confidence?: number | null
+          ocr_text?: string | null
+          original_filename?: string | null
+          status?: string
+          storage_path?: string
+          student_id?: string | null
+          teacher_notes?: string | null
+          updated_at?: string
+          uploaded_by?: string
+          workflow?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_work_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_work_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           avatar_url: string | null
@@ -2942,8 +3215,10 @@ export type Database = {
           id: string
           is_active: boolean
           linked_user_id: string | null
+          migration_completed_at: string | null
           notes: string | null
           phone: string | null
+          secondary_user_id: string | null
           status_message: string | null
           updated_at: string
           updated_by: string | null
@@ -2960,8 +3235,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           linked_user_id?: string | null
+          migration_completed_at?: string | null
           notes?: string | null
           phone?: string | null
+          secondary_user_id?: string | null
           status_message?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -2978,8 +3255,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           linked_user_id?: string | null
+          migration_completed_at?: string | null
           notes?: string | null
           phone?: string | null
+          secondary_user_id?: string | null
           status_message?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -3382,6 +3661,111 @@ export type Database = {
         }
         Relationships: []
       }
+      vocab_activity_log: {
+        Row: {
+          activity_type: string
+          class_id: string | null
+          created_at: string
+          id: string
+          points_awarded: number
+          student_id: string | null
+          user_id: string
+          word: string | null
+        }
+        Insert: {
+          activity_type: string
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          points_awarded?: number
+          student_id?: string | null
+          user_id: string
+          word?: string | null
+        }
+        Update: {
+          activity_type?: string
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          points_awarded?: number
+          student_id?: string | null
+          user_id?: string
+          word?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vocab_activity_log_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vocab_activity_log_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vocab_cache: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_urls: Json | null
+          payload: Json
+          root_word: string | null
+          word: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_urls?: Json | null
+          payload: Json
+          root_word?: string | null
+          word: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_urls?: Json | null
+          payload?: Json
+          root_word?: string | null
+          word?: string
+        }
+        Relationships: []
+      }
+      vocab_image_cache: {
+        Row: {
+          counts: Json | null
+          created_at: string
+          expires_at: string
+          hit_count: number
+          images: Json
+          query: string
+          updated_at: string
+        }
+        Insert: {
+          counts?: Json | null
+          created_at?: string
+          expires_at?: string
+          hit_count?: number
+          images: Json
+          query: string
+          updated_at?: string
+        }
+        Update: {
+          counts?: Json | null
+          created_at?: string
+          expires_at?: string
+          hit_count?: number
+          images?: Json
+          query?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       xp_settings: {
         Row: {
           category: string
@@ -3477,8 +3861,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      count_vocab_saves_today: { Args: { p_user_id: string }; Returns: number }
       end_enrollment: {
         Args: { p_class_id: string; p_end_date: string; p_student_id: string }
+        Returns: Json
+      }
+      get_student_homeworks: { Args: { p_student_id: string }; Returns: Json }
+      get_student_weekly_stats: {
+        Args: { p_student_id: string; p_week_end: string; p_week_start: string }
         Returns: Json
       }
       get_user_role: {
