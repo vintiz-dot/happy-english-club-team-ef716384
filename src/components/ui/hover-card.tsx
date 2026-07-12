@@ -16,7 +16,9 @@ const HoverCardContent = React.forwardRef<
     align={align}
     sideOffset={sideOffset}
     className={cn(
-      "z-50 w-64 rounded-xl glass p-4 text-popover-foreground shadow-lg outline-none data-[state=open]:animate-spring-in data-[state=closed]:animate-spring-out data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+      "glass nova-tip z-50 w-64 rounded-2xl p-4 text-popover-foreground shadow-q4 outline-none",
+      "[transform-origin:var(--radix-hover-card-content-transform-origin)]",
+      "data-[state=open]:animate-spring-in data-[state=closed]:animate-spring-out",
       className,
     )}
     {...props}

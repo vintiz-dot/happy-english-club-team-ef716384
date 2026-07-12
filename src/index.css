@@ -1197,4 +1197,39 @@ All colors MUST be HSL.
   );
 }
 
+/* ── Nova tooltip system ─────────────────────────────────────────────
+   Shared identity for tooltips, popovers and hover-cards: an aurora
+   hairline along the top edge plus a soft inner top-light, layered on
+   glass. Applied via .nova-tip on the floating content element. */
+.nova-tip {
+  position: relative;
+}
+.nova-tip::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(224 85% 60% / 0.55) 35%,
+    hsl(188 90% 55% / 0.55) 65%,
+    transparent
+  );
+  pointer-events: none;
+}
+.nova-tip::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.35);
+  pointer-events: none;
+}
+.dark .nova-tip::before {
+  box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.08);
+}
+
 

@@ -9,7 +9,7 @@ import NotificationBell from "@/components/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipProvider, TooltipTrigger, RichTooltipContent } from "@/components/ui/tooltip";
 import { StudentNavBar } from "@/components/student/StudentNavBar";
 import { AdminTopBar } from "@/components/AdminTopBar";
 import { ClassroomToolsLauncher } from "@/components/classroom-tools/ClassroomToolsLauncher";
@@ -282,9 +282,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                   <TooltipTrigger asChild>
                     {buttonContent}
                   </TooltipTrigger>
-                  <TooltipContent side="right" className="font-medium">
-                    {item.label}
-                  </TooltipContent>
+                  <RichTooltipContent side="right" icon={item.icon} title={item.label} />
                 </Tooltip>
               );
             })}
