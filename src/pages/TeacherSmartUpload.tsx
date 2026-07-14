@@ -24,15 +24,75 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ScanText, BookMarked, UploadCloud, Loader2, CheckCircle2, XCircle,
-  Sparkles, User, ImageIcon, AlertTriangle, Eye,
+  Sparkles, User, ImageIcon, AlertTriangle, Eye, Check, ChevronsUpDown,
 } from "lucide-react";
 
 interface ClassOption { id: string; name: string }
 interface StudentOption { id: string; full_name: string }
+
+/**
+ * Searchable student picker for the review queue. A plain <Select> is
+ * unusable at 200+ students and was previously fed an empty list; this
+ * combobox filters by name as you type and always reflects the full roster.
+ */
+function AssignStudentCombobox({
+  students, value, onChange,
+}: {
+  students: StudentOption[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = students.find((s) => s.id === value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="h-8 w-full justify-between text-xs font-normal"
+        >
+          <span className={cn("truncate", !selected && "text-muted-foreground")}>
+            {selected ? selected.full_name : "Assign student…"}
+          </span>
+          <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search students…" className="h-9" />
+          <CommandList>
+            <CommandEmpty>
+              {students.length === 0 ? "Loading roster…" : "No student found."}
+            </CommandEmpty>
+            <CommandGroup>
+              {students.map((s) => (
+                <CommandItem
+                  key={s.id}
+                  value={s.full_name}
+                  onSelect={() => { onChange(s.id); setOpen(false); }}
+                >
+                  <Check className={cn("mr-2 h-3.5 w-3.5", value === s.id ? "opacity-100" : "opacity-0")} />
+                  {s.full_name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 interface UploadJob {
   fileName: string;
@@ -108,6 +168,24 @@ export default function TeacherSmartUpload() {
         .order("created_at", { ascending: false })
         .limit(40);
       return data || [];
+    },
+  });
+
+  // Assignment pool for the review queue. Deliberately NOT tied to the class
+  // picker at the top of the page: a reviewer often has no class selected,
+  // and low-confidence / "general" matches can belong to any student. Loads
+  // the full active roster so the assign combobox always has options.
+  const { data: assignableStudents = [] } = useQuery<StudentOption[]>({
+    queryKey: ["smart-upload-assignable-students"],
+    enabled: reviewQueue.some((w) => w.status === "needs_review"),
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("students")
+        .select("id, full_name")
+        .eq("is_active", true)
+        .order("full_name");
+      return (data || []) as StudentOption[];
     },
   });
 
@@ -434,19 +512,11 @@ export default function TeacherSmartUpload() {
 
                     {w.status === "needs_review" && (
                       <>
-                        <Select
+                        <AssignStudentCombobox
+                          students={assignableStudents}
                           value={reviewStudent[w.id] || w.student_id || ""}
-                          onValueChange={(v) => setReviewStudent((p) => ({ ...p, [w.id]: v }))}
-                        >
-                          <SelectTrigger className="h-8 text-xs">
-                            <SelectValue placeholder="Assign student…" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {students.map((s) => (
-                              <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          onChange={(id) => setReviewStudent((p) => ({ ...p, [w.id]: id }))}
+                        />
                         <Textarea
                           placeholder="Teacher notes for the student (optional)…"
                           className="min-h-[52px] text-xs"
