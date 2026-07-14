@@ -45,7 +45,7 @@ export function useStudentMonthlySnapshot(studentId: string | undefined, month: 
         .is("superseded_at", null)
         .maybeSingle();
       if (error) throw error;
-      return (data as MonthlyFinanceSnapshot) ?? null;
+      return (data as unknown as MonthlyFinanceSnapshot) ?? null;
     },
     enabled: !!studentId,
   });
@@ -67,7 +67,7 @@ export function useStudentSnapshotTimeline(studentId: string | undefined) {
         .is("superseded_at", null)
         .order("month", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as MonthlyFinanceSnapshot[];
+      return (data ?? []) as unknown as MonthlyFinanceSnapshot[];
     },
     enabled: !!studentId,
   });
@@ -88,7 +88,7 @@ export function useMonthSnapshots(month: string) {
         .eq("month", month)
         .is("superseded_at", null);
       if (error) throw error;
-      return (data ?? []) as MonthlyFinanceSnapshot[];
+      return (data ?? []) as unknown as MonthlyFinanceSnapshot[];
     },
   });
 }
@@ -109,7 +109,7 @@ export function useSnapshotVersionHistory(studentId: string | undefined, month: 
         .eq("month", month)
         .order("version", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as MonthlyFinanceSnapshot[];
+      return (data ?? []) as unknown as MonthlyFinanceSnapshot[];
     },
     enabled: !!studentId,
   });
