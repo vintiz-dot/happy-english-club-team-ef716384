@@ -2873,6 +2873,56 @@ export type Database = {
           },
         ]
       }
+      student_learning_profiles: {
+        Row: {
+          cefr_estimate: string | null
+          last_event_at: string | null
+          strengths: Json
+          struggles: Json
+          student_id: string
+          summary: string | null
+          transcripts_analyzed: number
+          updated_at: string
+          version: number
+          vocab_words: number
+          works_analyzed: number
+        }
+        Insert: {
+          cefr_estimate?: string | null
+          last_event_at?: string | null
+          strengths?: Json
+          struggles?: Json
+          student_id: string
+          summary?: string | null
+          transcripts_analyzed?: number
+          updated_at?: string
+          version?: number
+          vocab_words?: number
+          works_analyzed?: number
+        }
+        Update: {
+          cefr_estimate?: string | null
+          last_event_at?: string | null
+          strengths?: Json
+          struggles?: Json
+          student_id?: string
+          summary?: string | null
+          transcripts_analyzed?: number
+          updated_at?: string
+          version?: number
+          vocab_words?: number
+          works_analyzed?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_learning_profiles_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_login_streaks: {
         Row: {
           created_at: string | null
@@ -3123,6 +3173,7 @@ export type Database = {
       }
       student_work: {
         Row: {
+          ai_feedback: string | null
           approved_at: string | null
           approved_by: string | null
           class_id: string | null
@@ -3144,6 +3195,7 @@ export type Database = {
           workflow: string
         }
         Insert: {
+          ai_feedback?: string | null
           approved_at?: string | null
           approved_by?: string | null
           class_id?: string | null
@@ -3165,6 +3217,7 @@ export type Database = {
           workflow?: string
         }
         Update: {
+          ai_feedback?: string | null
           approved_at?: string | null
           approved_by?: string | null
           class_id?: string | null
@@ -3512,6 +3565,7 @@ export type Database = {
           avg_utterance_length: number | null
           cefr_estimate: string | null
           class_id: string
+          contribution: string | null
           created_at: string
           errors_count: number
           highlights: Json | null
@@ -3519,8 +3573,10 @@ export type Database = {
           is_teacher: boolean
           participation_share: number | null
           questions_asked: number
+          recommendation: string | null
           speaker_label: string
           student_id: string | null
+          teacher_feedback: string | null
           transcript_id: string
           utterance_count: number
           vocabulary_richness: number | null
@@ -3530,6 +3586,7 @@ export type Database = {
           avg_utterance_length?: number | null
           cefr_estimate?: string | null
           class_id: string
+          contribution?: string | null
           created_at?: string
           errors_count?: number
           highlights?: Json | null
@@ -3537,8 +3594,10 @@ export type Database = {
           is_teacher?: boolean
           participation_share?: number | null
           questions_asked?: number
+          recommendation?: string | null
           speaker_label: string
           student_id?: string | null
+          teacher_feedback?: string | null
           transcript_id: string
           utterance_count?: number
           vocabulary_richness?: number | null
@@ -3548,6 +3607,7 @@ export type Database = {
           avg_utterance_length?: number | null
           cefr_estimate?: string | null
           class_id?: string
+          contribution?: string | null
           created_at?: string
           errors_count?: number
           highlights?: Json | null
@@ -3555,8 +3615,10 @@ export type Database = {
           is_teacher?: boolean
           participation_share?: number | null
           questions_asked?: number
+          recommendation?: string | null
           speaker_label?: string
           student_id?: string | null
+          teacher_feedback?: string | null
           transcript_id?: string
           utterance_count?: number
           vocabulary_richness?: number | null
