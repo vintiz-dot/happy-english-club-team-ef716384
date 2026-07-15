@@ -23,6 +23,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { fireProfileRefresh } from "../_lib/profile.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -204,6 +205,11 @@ async function llmAnalyze(
             '"cefr_topic": string (e.g. "past simple", "articles", "subject-verb agreement")}] (max 5, most instructive first, ' +
             "ignore casual contractions and normal spoken ellipsis — flag only genuine learner errors), " +
             '"highlights": [string] (up to 2 notable moments: breakthroughs, great vocabulary use), ' +
+            '"contribution": string (1-2 sentences: what this student contributed to THIS lesson — ' +
+            "topics they engaged with, questions they asked, roles they played), " +
+            '"teacher_feedback": string (2-3 warm sentences in a teacher\'s voice, addressed to the ' +
+            "student, grounded in their actual utterances this lesson), " +
+            '"recommendation": string (1 concrete, actionable next step for this student), ' +
             '"evidence": string (1 sentence justifying the CEFR estimate)}]}',
         },
         {
@@ -363,6 +369,9 @@ Deno.serve(async (req) => {
         errors_count: ai?.errors?.length ?? 0,
         cefr_estimate: ai?.cefr_estimate ?? null,
         highlights: ai?.highlights?.length ? ai.highlights : null,
+        contribution: ai?.contribution ? String(ai.contribution).slice(0, 600) : null,
+        teacher_feedback: ai?.teacher_feedback ? String(ai.teacher_feedback).slice(0, 800) : null,
+        recommendation: ai?.recommendation ? String(ai.recommendation).slice(0, 400) : null,
       });
 
       if (!studentId || !ai) continue;
@@ -424,6 +433,13 @@ Deno.serve(async (req) => {
         analyzed_at: new Date().toISOString(),
       })
       .eq("id", transcriptId);
+
+    // Keep every matched student's living profile current (background).
+    fireProfileRefresh(
+      speakers
+        .map((s) => (teacherNames.has(normName(s.label)) ? null : matchStudent(s.label)))
+        .filter((id): id is string => !!id),
+    );
 
     return respond({
       success: true,

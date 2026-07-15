@@ -382,6 +382,27 @@ export default function TeacherTranscripts() {
                             ))}
                           </div>
                         )}
+
+                        {/* AI lesson coaching: contribution, feedback, next step */}
+                        {m.contribution && (
+                          <p className="text-xs text-muted-foreground pt-1">
+                            <span className="font-semibold text-foreground">Contribution:</span> {m.contribution}
+                          </p>
+                        )}
+                        {m.teacher_feedback && (
+                          <div className="rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/5 ring-1 ring-blue-500/20 px-2.5 py-2">
+                            <p className="text-[10px] uppercase tracking-wide font-bold text-blue-600 dark:text-blue-300 flex items-center gap-1">
+                              <Sparkles className="h-3 w-3" />Teacher feedback
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{m.teacher_feedback}</p>
+                          </div>
+                        )}
+                        {m.recommendation && (
+                          <p className="text-xs pt-0.5">
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">Next step:</span>{" "}
+                            <span className="text-muted-foreground">{m.recommendation}</span>
+                          </p>
+                        )}
                       </CardContent>
                     </Card>
                   ))}

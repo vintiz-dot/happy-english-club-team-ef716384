@@ -24,6 +24,7 @@
 
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { visionDocumentOcr, customSearchImages } from "../_lib/google.ts";
+import { fireProfileRefresh } from "../_lib/profile.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -289,6 +290,9 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
       })
       .eq("id", workId);
+
+    // New vocabulary is journey evidence — refresh the living profile.
+    if (entryIds.length > 0) fireProfileRefresh([student.id]);
 
     return respond({
       success: true,

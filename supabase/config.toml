@@ -83,3 +83,9 @@ verify_jwt = true
 
 [functions.generate-student-report]
 verify_jwt = true
+
+[functions.refresh-student-profile]
+verify_jwt = true
+
+[functions.generate-work-feedback]
+verify_jwt = true

@@ -75,6 +75,7 @@ Deno.serve(async (req) => {
       { data: points },
       { data: attendance },
       { data: cefrHistory },
+      { data: liveProfile },
     ] = await Promise.all([
       sb.from("students").select("id, full_name, date_of_birth, notes").eq("id", sid).single(),
       sb.from("transcript_speaker_metrics")
@@ -115,6 +116,10 @@ Deno.serve(async (req) => {
         .eq("student_id", sid)
         .order("assessed_at", { ascending: true })
         .limit(50),
+      sb.from("student_learning_profiles")
+        .select("summary, strengths, struggles, cefr_estimate, version")
+        .eq("student_id", sid)
+        .maybeSingle(),
     ]);
 
     if (!student) return respond({ success: false, error: "student not found" }, 404);
@@ -151,6 +156,8 @@ Deno.serve(async (req) => {
         name: student.full_name,
         date_of_birth: student.date_of_birth,
       },
+      // The continuously-maintained journey summary — the richest signal.
+      living_learning_profile: liveProfile ?? null,
       period: { from: since, to: until },
       attendance: attendanceCounts,
       points_by_type: pointsByType,

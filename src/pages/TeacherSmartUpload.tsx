@@ -281,6 +281,30 @@ export default function TeacherSmartUpload() {
     queryClient.invalidateQueries({ queryKey: ["student-work-review"] });
   };
 
+  // ── AI feedback: image + student journey context → personalized note ──
+  const [feedbackForId, setFeedbackForId] = useState<string | null>(null);
+  const feedbackMutation = useMutation({
+    mutationFn: async (work: any) => {
+      const chosenStudent = reviewStudent[work.id] || work.student_id;
+      if (!chosenStudent) throw new Error("Assign a student first — feedback is personalized to their journey");
+      setFeedbackForId(work.id);
+      const { data, error } = await supabase.functions.invoke("generate-work-feedback", {
+        body: { work_id: work.id, student_id: chosenStudent },
+      });
+      if (error) throw error;
+      if (data?.success === false) throw new Error(data.error || "feedback generation failed");
+      return { workId: work.id, feedback: data.feedback as string, celebrated: data.celebrated as string | null };
+    },
+    onSuccess: ({ workId, feedback, celebrated }) => {
+      setReviewNotes((p) => ({ ...p, [workId]: feedback }));
+      toast.success("AI feedback drafted — edit freely before approving", {
+        description: celebrated ? `Celebrates progress on: ${celebrated}` : undefined,
+      });
+    },
+    onError: (e: any) => toast.error("AI feedback failed", { description: e.message }),
+    onSettled: () => setFeedbackForId(null),
+  });
+
   // ── Review actions ─────────────────────────────────────────────────────
   const reviewMutation = useMutation({
     mutationFn: async ({ work, decision }: { work: any; decision: "approved" | "rejected" }) => {
@@ -293,7 +317,8 @@ export default function TeacherSmartUpload() {
         .update({
           status: decision,
           student_id: chosenStudent,
-          teacher_notes: reviewNotes[work.id] ?? work.teacher_notes,
+          // Falls back to the AI draft shown in the box when untouched.
+          teacher_notes: reviewNotes[work.id] ?? work.teacher_notes ?? work.ai_feedback,
           approved_by: user?.id,
           approved_at: decision === "approved" ? new Date().toISOString() : null,
           updated_at: new Date().toISOString(),
@@ -302,9 +327,19 @@ export default function TeacherSmartUpload() {
       if (error) throw error;
       return decision;
     },
-    onSuccess: (decision) => {
+    onSuccess: (decision, { work }) => {
       toast.success(decision === "approved" ? "Approved — now visible on the student's profile" : "Rejected");
       refetchQueue();
+      // Approved work is new journey evidence — refresh the living profile
+      // in the background (fire-and-forget).
+      if (decision === "approved") {
+        const sid = reviewStudent[work.id] || work.student_id;
+        if (sid) {
+          supabase.functions
+            .invoke("refresh-student-profile", { body: { student_id: sid } })
+            .catch(() => {});
+        }
+      }
     },
     onError: (e: any) => toast.error("Review failed", { description: e.message }),
   });
@@ -517,12 +552,27 @@ export default function TeacherSmartUpload() {
                           value={reviewStudent[w.id] || w.student_id || ""}
                           onChange={(id) => setReviewStudent((p) => ({ ...p, [w.id]: id }))}
                         />
-                        <Textarea
-                          placeholder="Teacher notes for the student (optional)…"
-                          className="min-h-[52px] text-xs"
-                          value={reviewNotes[w.id] ?? ""}
-                          onChange={(e) => setReviewNotes((p) => ({ ...p, [w.id]: e.target.value }))}
-                        />
+                        <div className="relative">
+                          <Textarea
+                            placeholder="Teacher notes for the student — or let AI draft them…"
+                            className="min-h-[64px] text-xs pr-9"
+                            value={reviewNotes[w.id] ?? w.ai_feedback ?? ""}
+                            onChange={(e) => setReviewNotes((p) => ({ ...p, [w.id]: e.target.value }))}
+                          />
+                          <button
+                            type="button"
+                            title="Draft personalized feedback with AI (uses the image + this student's learning journey)"
+                            disabled={feedbackMutation.isPending}
+                            onClick={() => feedbackMutation.mutate(w)}
+                            className="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-lg text-white bg-gradient-to-br from-violet-500 to-indigo-600 shadow-[0_3px_10px_-3px_rgba(139,92,246,0.7)] transition-transform hover:scale-110 active:scale-95 disabled:opacity-50"
+                          >
+                            {feedbackForId === w.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Sparkles className="h-3.5 w-3.5" />
+                            )}
+                          </button>
+                        </div>
                         <div className="flex gap-2">
                           <Button
                             size="sm"

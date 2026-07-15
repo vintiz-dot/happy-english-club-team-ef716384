@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ExamReportsManager } from "@/components/exam-reports/ExamReportsManager";
 import { AIReportDialog } from "@/components/reports/AIReportDialog";
 import { CefrGrowthChart } from "@/components/charts/CefrGrowthChart";
+import { LearningJourneyCard } from "@/components/student/LearningJourneyCard";
 import { useAuth } from "@/hooks/useAuth";
 
 const StudentDetail = () => {
@@ -155,7 +156,8 @@ const StudentDetail = () => {
           <TabsContent value="overview" className="space-y-6">
             <StudentOverviewTab student={student} />
 
-            {/* Language trajectory from transcripts, AI reports & exams */}
+            {/* AI-maintained journey profile + language trajectory */}
+            <LearningJourneyCard studentId={student.id} />
             <CefrGrowthChart studentId={student.id} />
             
             {/* Class Leaderboards - using Admin's ClassLeaderboard for unified rankings */}
