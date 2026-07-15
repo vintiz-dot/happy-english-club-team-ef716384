@@ -397,38 +397,64 @@ export default function TeacherSmartUpload() {
             </TabsTrigger>
           </TabsList>
 
-          {(["general", "vocab"] as const).map((workflow) => (
-            <TabsContent key={workflow} value={workflow}>
-              <label
-                className={`mt-2 flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-3xl p-10 cursor-pointer transition-colors
-                  ${classId ? "hover:border-violet-400 hover:bg-violet-500/5" : "opacity-50 cursor-not-allowed"}`}
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  capture="environment"
-                  className="hidden"
-                  disabled={!classId || (workflow === "vocab" && !studentId)}
-                  onChange={(e) => {
-                    if (e.target.files?.length) runPipeline(e.target.files, workflow);
-                    e.target.value = "";
+          {(["general", "vocab"] as const).map((workflow) => {
+            const disabledReason = !classId
+              ? "Select a class above first"
+              : workflow === "vocab" && !studentId
+                ? "Select a student above first — vocab scans need to know whose word bank to update"
+                : null;
+            const isDisabled = !!disabledReason;
+
+            return (
+              <TabsContent key={workflow} value={workflow}>
+                <label
+                  className={cn(
+                    "mt-2 flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-3xl p-10 transition-colors",
+                    isDisabled
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer hover:border-violet-400 hover:bg-violet-500/5",
+                  )}
+                  onClick={(e) => {
+                    // A disabled <input> silently swallows the click — surface
+                    // *why* instead of leaving the box looking broken.
+                    if (isDisabled) {
+                      e.preventDefault();
+                      toast.error(disabledReason!);
+                    }
                   }}
-                />
-                <UploadCloud className="h-10 w-10 text-violet-500" />
-                <div className="text-center">
-                  <p className="font-semibold">
-                    {workflow === "vocab" ? "Upload handwritten vocabulary pages" : "Upload photos of student work"}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {workflow === "vocab"
-                      ? "Words, meanings & example sentences are extracted, validated, illustrated and saved — points awarded automatically."
-                      : "The student's name is detected on the page and the file is routed to their folder for your approval."}
-                  </p>
-                </div>
-              </label>
-            </TabsContent>
-          ))}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    capture="environment"
+                    className="hidden"
+                    disabled={isDisabled}
+                    onChange={(e) => {
+                      if (e.target.files?.length) runPipeline(e.target.files, workflow);
+                      e.target.value = "";
+                    }}
+                  />
+                  <UploadCloud className={cn("h-10 w-10", isDisabled ? "text-muted-foreground" : "text-violet-500")} />
+                  <div className="text-center">
+                    <p className="font-semibold">
+                      {workflow === "vocab" ? "Upload handwritten vocabulary pages" : "Upload photos of student work"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {workflow === "vocab"
+                        ? "Words, meanings & example sentences are extracted, validated, illustrated and saved — points awarded automatically."
+                        : "The student's name is detected on the page and the file is routed to their folder for your approval."}
+                    </p>
+                    {disabledReason && (
+                      <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mt-2 flex items-center justify-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />{disabledReason}
+                      </p>
+                    )}
+                  </div>
+                </label>
+              </TabsContent>
+            );
+          })}
         </Tabs>
 
         {/* Live pipeline progress */}
