@@ -109,13 +109,16 @@ Deno.serve(async (req) => {
     const { text: ocrText, confidence } = await visionDocumentOcr(btoa(binary));
 
     // ── 2. Roster match ──────────────────────────────────────────────────
+    // enrollments has no `status` column — "currently enrolled" means
+    // end_date is null or still in the future.
     let roster: Array<{ id: string; full_name: string }> = [];
     if (work.class_id) {
+      const today = new Date().toISOString().slice(0, 10);
       const { data } = await sb
         .from("enrollments")
         .select("student_id, students(id, full_name)")
         .eq("class_id", work.class_id)
-        .eq("status", "active");
+        .or(`end_date.is.null,end_date.gte.${today}`);
       roster = (data || [])
         .map((r: any) => r.students)
         .filter((s: any) => s?.id && s?.full_name);

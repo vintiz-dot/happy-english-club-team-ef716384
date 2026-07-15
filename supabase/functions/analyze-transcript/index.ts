@@ -256,11 +256,14 @@ Deno.serve(async (req) => {
     if (trErr || !tr) return respond({ success: false, error: "transcript not found" }, 404);
 
     // ── 1. Roster + teachers (needed both for parsing fallback & matching)
+    // enrollments has no `status` column — "currently enrolled" means
+    // end_date is null or still in the future.
+    const today = new Date().toISOString().slice(0, 10);
     const { data: enrollRows } = await sb
       .from("enrollments")
       .select("students(id, full_name)")
       .eq("class_id", tr.class_id)
-      .eq("status", "active");
+      .or(`end_date.is.null,end_date.gte.${today}`);
     const roster: Array<{ id: string; full_name: string }> = (enrollRows || [])
       .map((r: any) => r.students)
       .filter((s: any) => s?.id);

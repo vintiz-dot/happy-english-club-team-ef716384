@@ -163,6 +163,29 @@ export default function TeacherTranscripts() {
     onError: (e: any) => toast.error("Analysis failed", { description: e.message }),
   });
 
+  // Re-run analysis on an already-stored transcript — no re-paste needed.
+  // Fixes transcripts analyzed before the roster-matching bug fix (a
+  // fabricated enrollments.status filter silently matched zero students).
+  const reanalyzeMutation = useMutation({
+    mutationFn: async (transcriptId: string) => {
+      const { data: result, error } = await supabase.functions.invoke("analyze-transcript", {
+        body: { transcript_id: transcriptId },
+      });
+      if (error) throw error;
+      if (result?.success === false) throw new Error(result.error || "analysis failed");
+      return result;
+    },
+    onSuccess: (result) => {
+      toast.success("Re-analyzed", {
+        description: `${result.matched_students} students matched · ${result.errors_logged} errors logged`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
+      queryClient.invalidateQueries({ queryKey: ["transcript-metrics", selectedId] });
+      queryClient.invalidateQueries({ queryKey: ["transcript-errors", selectedId] });
+    },
+    onError: (e: any) => toast.error("Re-analysis failed", { description: e.message }),
+  });
+
   const selected = transcripts.find((t) => t.id === selectedId);
   const studentMetrics = metrics.filter((m) => !m.is_teacher);
   const maxShare = Math.max(...studentMetrics.map((m) => m.participation_share || 0), 0.0001);
@@ -280,6 +303,24 @@ export default function TeacherTranscripts() {
               </Card>
             ) : (
               <>
+                <div className="flex items-center justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    disabled={reanalyzeMutation.isPending || selected.status === "processing"}
+                    onClick={() => reanalyzeMutation.mutate(selected.id)}
+                    title="Re-run analysis on the stored transcript text — useful after a matching fix or if 0 students matched"
+                  >
+                    {reanalyzeMutation.isPending ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5" />
+                    )}
+                    Re-analyze
+                  </Button>
+                </div>
+
                 {selected.summary && (
                   <Card>
                     <CardHeader className="pb-2">

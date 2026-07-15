@@ -143,11 +143,20 @@ export default function TeacherSmartUpload() {
     queryKey: ["smart-upload-students", classId],
     enabled: !!classId,
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      // enrollments has no `status` column — "currently enrolled" means
+      // end_date is null or still in the future, same pattern used
+      // everywhere else in the app (ClassLeaderboardShared, OverviewStats, …).
+      const today = new Date().toISOString().slice(0, 10);
+      const { data, error } = await (supabase as any)
         .from("enrollments")
         .select("students(id, full_name)")
         .eq("class_id", classId)
-        .eq("status", "active");
+        .or(`end_date.is.null,end_date.gte.${today}`);
+      if (error) {
+        console.error("smart-upload roster fetch failed:", error.message);
+        toast.error("Couldn't load this class's roster", { description: error.message });
+        return [];
+      }
       return ((data || []) as any[])
         .map((r: any) => r.students)
         .filter(Boolean)

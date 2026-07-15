@@ -57,12 +57,14 @@ export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHisto
 
       // `as any`: keeps tsc from exploding on deeply-instantiated builder
       // types inside Promise.all (same pattern as useVocabularyStore).
+      // enrollments has no `status` column — "currently enrolled" means
+      // end_date is null or still in the future.
       const [{ data: enrollRows }, { data: txns }, { data: session }] = (await Promise.all([
         (supabase as any)
           .from("enrollments")
           .select("students(id, full_name)")
           .eq("class_id", classId)
-          .eq("status", "active"),
+          .or(`end_date.is.null,end_date.gte.${today}`),
         (supabase as any)
           .from("point_transactions")
           .select("student_id, points, created_at")
