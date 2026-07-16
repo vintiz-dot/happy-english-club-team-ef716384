@@ -50,6 +50,65 @@ function normName(s: string): string {
 }
 
 /**
+ * Tolerant JSON parse. LLM JSON output can be truncated when it hits the
+ * token cap, which makes a plain JSON.parse throw and 500 the whole
+ * function. This trims back to the last complete object and balances any
+ * still-open brackets so we salvage a valid partial result instead.
+ */
+function safeParseJson(content: string): any {
+  if (!content) return {};
+  try {
+    return JSON.parse(content);
+  } catch {
+    // continue to repair
+  }
+  let s = content.trim();
+  const lastBrace = s.lastIndexOf("}");
+  if (lastBrace === -1) return {};
+  s = s.slice(0, lastBrace + 1);
+
+  // Walk the string (string-literal aware) and close any open [ or {.
+  const stack: string[] = [];
+  let inStr = false;
+  let esc = false;
+  for (const ch of s) {
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === "\\") esc = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') inStr = true;
+    else if (ch === "{" || ch === "[") stack.push(ch);
+    else if (ch === "}" && stack[stack.length - 1] === "{") stack.pop();
+    else if (ch === "]" && stack[stack.length - 1] === "[") stack.pop();
+  }
+  let repaired = s;
+  for (let i = stack.length - 1; i >= 0; i--) repaired += stack[i] === "{" ? "}" : "]";
+  try {
+    return JSON.parse(repaired);
+  } catch {
+    return {};
+  }
+}
+
+/** Split raw text into ≤maxChars chunks on line boundaries. */
+function chunkOnLines(raw: string, maxChars: number): string[] {
+  const lines = raw.replace(/\r/g, "").split("\n");
+  const chunks: string[] = [];
+  let cur = "";
+  for (const line of lines) {
+    if (cur.length + line.length + 1 > maxChars && cur) {
+      chunks.push(cur);
+      cur = "";
+    }
+    cur += (cur ? "\n" : "") + line;
+  }
+  if (cur.trim()) chunks.push(cur);
+  return chunks;
+}
+
+/**
  * Parse VTT/SRT cue text or plain "Speaker: line" transcripts into
  * speaker-attributed utterances. Zoom-style "Name: text" inside cues is
  * also handled.
@@ -104,21 +163,26 @@ function parseTranscript(raw: string): Utterance[] {
  * structural parser finds no usable speaker turns, this LLM pass attributes
  * utterances to roster names based on those call-outs.
  */
-async function llmDiarize(
-  rawText: string,
+// Diarize in bounded windows so the JSON response can never be truncated,
+// no matter how long the recording is. Each ~6k-char chunk is re-emitted as
+// structured turns well within the output cap; chunks run in parallel and
+// their utterances are concatenated in order.
+const DIARIZE_CHUNK_CHARS = 6000;
+const DIARIZE_MAX_CHUNKS = 20; // ~120k chars of transcript
+
+async function diarizeChunk(
+  key: string,
+  chunk: string,
   rosterNames: string[],
   teacherNames: string[],
 ): Promise<Utterance[]> {
-  const key = Deno.env.get("OPENAI_API_KEY");
-  if (!key) throw new Error("OPENAI_API_KEY is not configured");
-
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "gpt-4o-mini",
       temperature: 0.1,
-      max_tokens: 6000,
+      max_tokens: 8000,
       response_format: { type: "json_object" },
       messages: [
         {
@@ -136,17 +200,37 @@ async function llmDiarize(
             "unattributable. Split turns at natural speaker changes; keep the original wording.\n\n" +
             'Return JSON: {"utterances": [{"speaker": string, "text": string}]}',
         },
-        { role: "user", content: rawText.slice(0, 20000) },
+        { role: "user", content: chunk },
       ],
     }),
   });
   if (!res.ok) throw new Error(`OpenAI diarization error (${res.status}): ${await res.text()}`);
   const data = await res.json();
-  const parsed = JSON.parse(data.choices?.[0]?.message?.content || "{}");
+  const parsed = safeParseJson(data.choices?.[0]?.message?.content || "{}");
   const utts: any[] = Array.isArray(parsed.utterances) ? parsed.utterances : [];
   return utts
     .map((u) => ({ speaker: String(u.speaker || "Unknown").trim(), text: String(u.text || "").trim() }))
     .filter((u) => u.text);
+}
+
+async function llmDiarize(
+  rawText: string,
+  rosterNames: string[],
+  teacherNames: string[],
+): Promise<Utterance[]> {
+  const key = Deno.env.get("OPENAI_API_KEY");
+  if (!key) throw new Error("OPENAI_API_KEY is not configured");
+
+  const chunks = chunkOnLines(rawText, DIARIZE_CHUNK_CHARS).slice(0, DIARIZE_MAX_CHUNKS);
+  const perChunk = await Promise.all(
+    chunks.map((c) =>
+      diarizeChunk(key, c, rosterNames, teacherNames).catch((e) => {
+        console.warn("diarize chunk failed (skipped):", (e as Error)?.message);
+        return [] as Utterance[];
+      }),
+    ),
+  );
+  return perChunk.flat();
 }
 
 interface SpeakerStats {
@@ -187,7 +271,7 @@ async function llmAnalyze(
     body: JSON.stringify({
       model: "gpt-4o-mini",
       temperature: 0.2,
-      max_tokens: 3500,
+      max_tokens: 12000,
       response_format: { type: "json_object" },
       messages: [
         {
@@ -226,7 +310,7 @@ async function llmAnalyze(
   });
   if (!res.ok) throw new Error(`OpenAI error (${res.status}): ${await res.text()}`);
   const data = await res.json();
-  return JSON.parse(data.choices?.[0]?.message?.content || "{}");
+  return safeParseJson(data.choices?.[0]?.message?.content || "{}");
 }
 
 Deno.serve(async (req) => {
@@ -330,6 +414,8 @@ Deno.serve(async (req) => {
 
     const llmInput = studentSpeakers
       .filter((s) => s.words >= 5)
+      .sort((a, b) => b.words - a.words)
+      .slice(0, 30) // bound the JSON output even for very large classes
       .map((s) => ({
         name: s.label,
         sample: s.utterances.slice(0, 40).join("\n").slice(0, 2500),
