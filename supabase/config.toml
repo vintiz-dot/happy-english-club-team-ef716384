@@ -89,3 +89,6 @@ verify_jwt = true
 
 [functions.generate-work-feedback]
 verify_jwt = true
+
+[functions.transcribe-lesson-audio]
+verify_jwt = true

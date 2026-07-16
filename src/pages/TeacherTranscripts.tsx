@@ -26,8 +26,14 @@ import { motion } from "framer-motion";
 import {
   AudioLines, Loader2, UploadCloud, Sparkles, MessageSquareText,
   HelpCircle, AlertTriangle, Star, FileText, TrendingUp,
-  Coins, CheckCircle2, XCircle,
+  Coins, CheckCircle2, XCircle, Mic,
 } from "lucide-react";
+
+// Whisper (whisper-1) hard-caps uploads at 25MB. Checked client-side first
+// (small margin for multipart overhead) so a too-large file is rejected
+// instantly instead of after a slow upload; transcribe-lesson-audio
+// re-checks server-side too.
+const AUDIO_MAX_BYTES = 24_500_000;
 
 interface ClassOption { id: string; name: string }
 
@@ -76,6 +82,8 @@ export default function TeacherTranscripts() {
   const [rawText, setRawText] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const audioFileRef = useRef<HTMLInputElement>(null);
+  const [audioProgress, setAudioProgress] = useState<{ stage: "uploading" | "transcribing"; fileName: string } | null>(null);
 
   const { data: classes = [] } = useMyClasses(user?.id);
 
@@ -176,6 +184,67 @@ export default function TeacherTranscripts() {
       queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
     },
     onError: (e: any) => toast.error("Analysis failed", { description: e.message }),
+  });
+
+  // Upload the raw class RECORDING — Whisper transcribes it (with real
+  // timestamps), an LLM maps each timestamped segment to a roster speaker,
+  // and the labeled transcript then runs through the exact same analysis
+  // pipeline as a pasted transcript (transcribe-lesson-audio delegates to
+  // analyze-transcript once diarization is done).
+  const audioUploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user) throw new Error("Not authenticated");
+      if (!classId) throw new Error("Choose a class first");
+      if (file.size > AUDIO_MAX_BYTES) {
+        throw new Error(
+          `This file is ${(file.size / 1_000_000).toFixed(1)}MB — Whisper's limit is 25MB. ` +
+            `Trim the recording or split the lesson into two uploads.`,
+        );
+      }
+
+      setAudioProgress({ stage: "uploading", fileName: file.name });
+      const ext = file.name.split(".").pop() || "mp3";
+      const path = `${classId}/${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("class-recordings")
+        .upload(path, file, { contentType: file.type || "audio/mpeg" });
+      if (upErr) throw upErr;
+
+      const { data: row, error: insErr } = await (supabase as any)
+        .from("class_transcripts")
+        .insert({
+          class_id: classId,
+          uploaded_by: user.id,
+          title: title.trim() || `Lesson ${new Date().toLocaleDateString()}`,
+          source_format: "audio",
+          raw_text: "[Audio uploaded — transcribing…]",
+          audio_storage_path: path,
+          audio_mime_type: file.type || "audio/mpeg",
+          status: "processing",
+        })
+        .select("id")
+        .single();
+      if (insErr) throw insErr;
+
+      setAudioProgress({ stage: "transcribing", fileName: file.name });
+      const { data: result, error: fnErr } = await supabase.functions.invoke("transcribe-lesson-audio", {
+        body: { transcript_id: row.id },
+      });
+      if (fnErr) throw fnErr;
+      if (result?.success === false) throw new Error(result.error || "transcription failed");
+      return { id: row.id, result };
+    },
+    onSuccess: ({ id, result }) => {
+      const mins = result.duration_seconds ? Math.round(result.duration_seconds / 60) : null;
+      toast.success("Recording transcribed & analyzed", {
+        description: `${mins ? `${mins} min · ` : ""}${result.matched_students} students matched · ${result.errors_logged} errors logged · ${result.points_suggested ?? 0} point awards deciphered`,
+      });
+      setTitle("");
+      setSelectedId(id);
+      queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
+    },
+    onError: (e: any) => toast.error("Audio transcription failed", { description: e.message }),
+    onSettled: () => setAudioProgress(null),
   });
 
   // Re-run analysis on an already-stored transcript — no re-paste needed.
@@ -294,7 +363,8 @@ export default function TeacherTranscripts() {
           <div>
             <h1 className="text-2xl font-bold">Transcript Insights</h1>
             <p className="text-sm text-muted-foreground">
-              Upload the lesson transcript — engagement, CEFR signals and error logs are extracted instantly.
+              Upload the lesson transcript — or the raw recording — and engagement, CEFR signals,
+              flagged errors, and point awards are extracted instantly.
             </p>
           </div>
         </div>
@@ -329,7 +399,48 @@ export default function TeacherTranscripts() {
               <Button variant="outline" className="gap-2" onClick={() => fileRef.current?.click()}>
                 <UploadCloud className="h-4 w-4" />.vtt / .txt
               </Button>
+              <input
+                ref={audioFileRef}
+                type="file"
+                accept="audio/*,.m4a,.mp3,.wav,.webm,.mp4,.mpga,.mpeg"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) audioUploadMutation.mutate(f);
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={!classId || audioUploadMutation.isPending}
+                onClick={() => audioFileRef.current?.click()}
+                title={!classId ? "Choose a class first" : "Upload the raw class recording — Whisper transcribes it"}
+              >
+                {audioUploadMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Mic className="h-4 w-4" />
+                )}
+                Upload recording
+              </Button>
             </div>
+
+            {audioProgress && (
+              <div className="flex items-center gap-2 text-xs text-cyan-700 dark:text-cyan-300 rounded-lg bg-cyan-500/10 ring-1 ring-cyan-500/25 px-3 py-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                <span className="truncate">
+                  {audioProgress.stage === "uploading"
+                    ? `Uploading ${audioProgress.fileName}…`
+                    : `Transcribing "${audioProgress.fileName}" with Whisper — long recordings can take a minute or two…`}
+                </span>
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground -mt-1">
+              Recordings up to 25MB (roughly 45–60 min at typical voice-memo quality). Longer lessons:
+              split into two recordings and upload each separately.
+            </p>
+
             <Textarea
               placeholder={'Paste the transcript here…\n\nWorks with raw classroom-recorder transcripts (no speaker labels needed — students are identified from names called out in class), or labeled formats: Zoom/Teams WebVTT, SRT, "Anna: I go to the park yesterday"'}
               value={rawText}
@@ -376,7 +487,9 @@ export default function TeacherTranscripts() {
                     {t.status === "processing" ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500 shrink-0" />
                     ) : t.status === "failed" ? (
-                      <AlertTriangle className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                      <span title={t.error_message || "Analysis failed"}>
+                        <AlertTriangle className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                      </span>
                     ) : (
                       <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40">ready</Badge>
                     )}

@@ -24,6 +24,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { fireProfileRefresh } from "../_lib/profile.ts";
+import { safeParseJson, chunkOnLines } from "../_lib/text.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,65 +48,6 @@ function stripDiacritics(s: string): string {
 
 function normName(s: string): string {
   return stripDiacritics(s).toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
-}
-
-/**
- * Tolerant JSON parse. LLM JSON output can be truncated when it hits the
- * token cap, which makes a plain JSON.parse throw and 500 the whole
- * function. This trims back to the last complete object and balances any
- * still-open brackets so we salvage a valid partial result instead.
- */
-function safeParseJson(content: string): any {
-  if (!content) return {};
-  try {
-    return JSON.parse(content);
-  } catch {
-    // continue to repair
-  }
-  let s = content.trim();
-  const lastBrace = s.lastIndexOf("}");
-  if (lastBrace === -1) return {};
-  s = s.slice(0, lastBrace + 1);
-
-  // Walk the string (string-literal aware) and close any open [ or {.
-  const stack: string[] = [];
-  let inStr = false;
-  let esc = false;
-  for (const ch of s) {
-    if (inStr) {
-      if (esc) esc = false;
-      else if (ch === "\\") esc = true;
-      else if (ch === '"') inStr = false;
-      continue;
-    }
-    if (ch === '"') inStr = true;
-    else if (ch === "{" || ch === "[") stack.push(ch);
-    else if (ch === "}" && stack[stack.length - 1] === "{") stack.pop();
-    else if (ch === "]" && stack[stack.length - 1] === "[") stack.pop();
-  }
-  let repaired = s;
-  for (let i = stack.length - 1; i >= 0; i--) repaired += stack[i] === "{" ? "}" : "]";
-  try {
-    return JSON.parse(repaired);
-  } catch {
-    return {};
-  }
-}
-
-/** Split raw text into ≤maxChars chunks on line boundaries. */
-function chunkOnLines(raw: string, maxChars: number): string[] {
-  const lines = raw.replace(/\r/g, "").split("\n");
-  const chunks: string[] = [];
-  let cur = "";
-  for (const line of lines) {
-    if (cur.length + line.length + 1 > maxChars && cur) {
-      chunks.push(cur);
-      cur = "";
-    }
-    cur += (cur ? "\n" : "") + line;
-  }
-  if (cur.trim()) chunks.push(cur);
-  return chunks;
 }
 
 /**
