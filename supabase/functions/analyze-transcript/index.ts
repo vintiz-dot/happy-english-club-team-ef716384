@@ -313,6 +313,80 @@ async function llmAnalyze(
   return safeParseJson(data.choices?.[0]?.message?.content || "{}");
 }
 
+interface PointAward {
+  student_name: string;
+  points: number;
+  quote: string;
+  reason: string | null;
+}
+
+/**
+ * Decipher point awards the teacher announced in class — "5 stars Kiki!",
+ * "two points for Anna", "minus one Tom". Runs over TEACHER utterances only
+ * (students promising themselves stars don't count), chunked so long
+ * lessons can't truncate the JSON output.
+ */
+async function extractPointAwards(
+  key: string,
+  teacherSpeech: string,
+  rosterNames: string[],
+): Promise<PointAward[]> {
+  const chunks = chunkOnLines(teacherSpeech, 8000).slice(0, 12);
+  const perChunk = await Promise.all(
+    chunks.map(async (chunk) => {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          temperature: 0.1,
+          max_tokens: 3000,
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "system",
+              content:
+                "You extract POINT AWARDS a teacher announces out loud during an English club " +
+                "lesson for Vietnamese school students. The class uses stars/points as rewards; " +
+                "'star' and 'point' mean the same thing. Typical phrasings: \"5 stars Kiki!\", " +
+                "\"two points for Anna\", \"Tom gets a star\", \"minus one point, Sam\", " +
+                "\"I'm taking a star from Lily\".\n\n" +
+                `Known students: ${rosterNames.join(", ") || "(unknown)"}.\n\n` +
+                "Rules:\n" +
+                "- Only ACTUAL awards the teacher grants, addressed to a NAMED student.\n" +
+                "- Skip hypotheticals/promises (\"if you finish, you get 5 stars\"), group awards " +
+                "without names (\"a point for everyone\"), and anything said by students.\n" +
+                "- Deductions are negative points.\n" +
+                "- If the same award is repeated/echoed, include it once.\n\n" +
+                'Return JSON: {"awards": [{"student_name": string (as spoken), ' +
+                '"points": integer (negative for deductions), ' +
+                '"quote": string (the verbatim teacher utterance), ' +
+                '"reason": string|null (short paraphrase of why, if stated)}]}',
+            },
+            { role: "user", content: chunk },
+          ],
+        }),
+      });
+      if (!res.ok) {
+        console.warn(`point-award chunk failed (${res.status}), skipped`);
+        return [] as PointAward[];
+      }
+      const data = await res.json();
+      const parsed = safeParseJson(data.choices?.[0]?.message?.content || "{}");
+      const awards: any[] = Array.isArray(parsed.awards) ? parsed.awards : [];
+      return awards
+        .map((a) => ({
+          student_name: String(a.student_name || "").trim(),
+          points: Math.trunc(Number(a.points) || 0),
+          quote: String(a.quote || "").slice(0, 400),
+          reason: a.reason ? String(a.reason).slice(0, 200) : null,
+        }))
+        .filter((a) => a.student_name && a.points !== 0 && Math.abs(a.points) <= 100);
+    }),
+  );
+  return perChunk.flat();
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   const respond = (body: unknown, status = 200) =>
@@ -513,6 +587,82 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── 6. Decipher teacher-announced point awards ("5 stars Kiki!") ─────
+    // Suggestions only — the teacher applies them from the review UI. Gated
+    // by that day's attendance so absent students can't receive awards.
+    // Best-effort: a failure here must never sink the whole analysis.
+    let pointsSuggested = 0;
+    try {
+      const teacherSpeech = utterances
+        .filter((u) => teacherNames.has(normName(u.speaker)))
+        .map((u) => u.text)
+        .join("\n");
+
+      if (teacherSpeech.trim().length >= 20) {
+        const key = Deno.env.get("OPENAI_API_KEY")!;
+        const awards = await extractPointAwards(key, teacherSpeech, roster.map((s) => s.full_name));
+
+        if (awards.length) {
+          // Attendance for the transcript's date (any session of this class).
+          const { data: daySessions } = await sb
+            .from("sessions")
+            .select("id")
+            .eq("class_id", tr.class_id)
+            .eq("date", tr.transcript_date);
+          const sessionIds = (daySessions ?? []).map((s: any) => s.id);
+
+          const attMap = new Map<string, string>();
+          if (sessionIds.length) {
+            const { data: att } = await sb
+              .from("attendance")
+              .select("student_id, status")
+              .in("session_id", sessionIds);
+            for (const a of att ?? []) {
+              // A student present in ANY session that day counts as present.
+              const prev = attMap.get(a.student_id);
+              if (!prev || a.status === "Present") attMap.set(a.student_id, a.status);
+            }
+          }
+
+          // Re-analysis: refresh pending suggestions, keep applied/dismissed.
+          await sb
+            .from("transcript_point_suggestions")
+            .delete()
+            .eq("transcript_id", transcriptId)
+            .eq("status", "suggested");
+          const { data: settled } = await sb
+            .from("transcript_point_suggestions")
+            .select("student_id, points, quote")
+            .eq("transcript_id", transcriptId);
+          const settledKeys = new Set(
+            (settled ?? []).map((r: any) => `${r.student_id}|${r.points}|${r.quote}`),
+          );
+
+          for (const award of awards) {
+            const studentId = matchStudent(award.student_name);
+            const attendanceStatus = studentId
+              ? attMap.get(studentId) ?? (sessionIds.length ? "unmarked" : "no_session")
+              : "unmarked";
+            if (settledKeys.has(`${studentId}|${award.points}|${award.quote}`)) continue;
+
+            const { error: insErr } = await sb.from("transcript_point_suggestions").insert({
+              transcript_id: transcriptId,
+              class_id: tr.class_id,
+              student_id: studentId,
+              speaker_label: award.student_name,
+              points: award.points,
+              quote: award.quote,
+              reason: award.reason,
+              attendance_status: attendanceStatus,
+            });
+            if (!insErr) pointsSuggested++;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("point-award extraction failed (analysis continues):", (e as Error)?.message);
+    }
+
     await sb
       .from("class_transcripts")
       .update({
@@ -536,6 +686,7 @@ Deno.serve(async (req) => {
       speakers: speakers.length,
       matched_students: matchedCount,
       errors_logged: errorsLogged,
+      points_suggested: pointsSuggested,
       summary: analysis.summary ?? null,
     });
   } catch (error) {

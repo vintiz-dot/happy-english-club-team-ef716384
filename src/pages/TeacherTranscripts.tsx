@@ -26,6 +26,7 @@ import { motion } from "framer-motion";
 import {
   AudioLines, Loader2, UploadCloud, Sparkles, MessageSquareText,
   HelpCircle, AlertTriangle, Star, FileText, TrendingUp,
+  Coins, CheckCircle2, XCircle,
 } from "lucide-react";
 
 interface ClassOption { id: string; name: string }
@@ -121,6 +122,20 @@ export default function TeacherTranscripts() {
     },
   });
 
+  // Teacher-announced awards deciphered from the transcript ("5 stars Kiki!").
+  const { data: pointSuggestions = [] } = useQuery<any[]>({
+    queryKey: ["transcript-point-suggestions", selectedId],
+    enabled: !!selectedId,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("transcript_point_suggestions")
+        .select("*, students(full_name)")
+        .eq("transcript_id", selectedId)
+        .order("created_at", { ascending: true });
+      return data || [];
+    },
+  });
+
   const uploadMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
@@ -153,7 +168,7 @@ export default function TeacherTranscripts() {
     },
     onSuccess: ({ id, result }) => {
       toast.success("Transcript analyzed", {
-        description: `${result.matched_students} students matched · ${result.errors_logged} errors logged to SRS decks`,
+        description: `${result.matched_students} students matched · ${result.errors_logged} errors logged · ${result.points_suggested ?? 0} point awards deciphered`,
       });
       setRawText("");
       setTitle("");
@@ -177,13 +192,92 @@ export default function TeacherTranscripts() {
     },
     onSuccess: (result) => {
       toast.success("Re-analyzed", {
-        description: `${result.matched_students} students matched · ${result.errors_logged} errors logged`,
+        description: `${result.matched_students} students matched · ${result.errors_logged} errors logged · ${result.points_suggested ?? 0} point awards deciphered`,
       });
       queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
       queryClient.invalidateQueries({ queryKey: ["transcript-metrics", selectedId] });
       queryClient.invalidateQueries({ queryKey: ["transcript-errors", selectedId] });
+      queryClient.invalidateQueries({ queryKey: ["transcript-point-suggestions", selectedId] });
     },
     onError: (e: any) => toast.error("Re-analysis failed", { description: e.message }),
+  });
+
+  // Apply a deciphered award: create the real point transaction, then mark
+  // the suggestion applied (with a back-reference for audit).
+  const applySuggestion = async (s: any) => {
+    if (!user) throw new Error("Not authenticated");
+    if (!s.student_id) throw new Error("No matched student — this name wasn't found on the roster");
+    const { data: txn, error: txnErr } = await (supabase as any)
+      .from("point_transactions")
+      .insert({
+        student_id: s.student_id,
+        class_id: s.class_id,
+        points: s.points,
+        type: "participation",
+        date: selected?.transcript_date ?? new Date().toISOString().slice(0, 10),
+        created_by: user.id,
+        notes: `In-class award (from transcript): "${s.quote}"`,
+      })
+      .select("id")
+      .single();
+    if (txnErr) throw txnErr;
+    const { error: updErr } = await (supabase as any)
+      .from("transcript_point_suggestions")
+      .update({
+        status: "applied",
+        applied_by: user.id,
+        applied_at: new Date().toISOString(),
+        point_transaction_ref: txn.id,
+      })
+      .eq("id", s.id);
+    if (updErr) throw updErr;
+  };
+
+  const invalidateSuggestions = () => {
+    queryClient.invalidateQueries({ queryKey: ["transcript-point-suggestions", selectedId] });
+    queryClient.invalidateQueries({ queryKey: ["class-leaderboard"] });
+    queryClient.invalidateQueries({ queryKey: ["student-points"] });
+    queryClient.invalidateQueries({ queryKey: ["point-history"] });
+  };
+
+  const applyMutation = useMutation({
+    mutationFn: applySuggestion,
+    onSuccess: (_d, s: any) => {
+      toast.success(`${s.points > 0 ? "+" : ""}${s.points} points → ${s.students?.full_name || s.speaker_label}`);
+      invalidateSuggestions();
+    },
+    onError: (e: any) => toast.error("Couldn't apply award", { description: e.message }),
+  });
+
+  const dismissMutation = useMutation({
+    mutationFn: async (s: any) => {
+      const { error } = await (supabase as any)
+        .from("transcript_point_suggestions")
+        .update({ status: "dismissed" })
+        .eq("id", s.id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidateSuggestions(),
+    onError: (e: any) => toast.error("Couldn't dismiss", { description: e.message }),
+  });
+
+  const attended = (s: any) => s.attendance_status === "Present" || s.attendance_status === "Late";
+  const eligibleSuggestions = pointSuggestions.filter(
+    (s) => s.status === "suggested" && s.student_id && attended(s),
+  );
+
+  const applyAllMutation = useMutation({
+    mutationFn: async () => {
+      let ok = 0;
+      for (const s of eligibleSuggestions) {
+        try { await applySuggestion(s); ok++; } catch { /* keep going */ }
+      }
+      return ok;
+    },
+    onSuccess: (ok) => {
+      toast.success(`Applied ${ok} award${ok === 1 ? "" : "s"} to present students`);
+      invalidateSuggestions();
+    },
   });
 
   const selected = transcripts.find((t) => t.id === selectedId);
@@ -330,6 +424,119 @@ export default function TeacherTranscripts() {
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm leading-relaxed text-muted-foreground">{selected.summary}</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Deciphered point awards — teacher reviews, then applies */}
+                {pointSuggestions.length > 0 && (
+                  <Card className="border-amber-500/25">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div>
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Coins className="h-4 w-4 text-amber-500" />
+                            Points called out in class
+                            <Badge variant="secondary">
+                              {pointSuggestions.filter((s) => s.status === "suggested").length} pending
+                            </Badge>
+                          </CardTitle>
+                          <CardDescription className="text-xs mt-1">
+                            Awards the teacher announced during the lesson. Only students marked
+                            present that day are eligible — nothing is granted until you apply it.
+                          </CardDescription>
+                        </div>
+                        {eligibleSuggestions.length > 0 && (
+                          <Button
+                            size="sm"
+                            className="gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600"
+                            disabled={applyAllMutation.isPending}
+                            onClick={() => applyAllMutation.mutate()}
+                          >
+                            {applyAllMutation.isPending ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            )}
+                            Apply all present ({eligibleSuggestions.length})
+                          </Button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {pointSuggestions.map((s) => {
+                        const isPending = s.status === "suggested";
+                        const canApply = isPending && s.student_id && s.attendance_status !== "Absent" && s.attendance_status !== "Excused";
+                        return (
+                          <div
+                            key={s.id}
+                            className={`rounded-xl border p-2.5 flex items-start gap-3 ${
+                              s.status === "applied" ? "opacity-70 bg-emerald-500/5 border-emerald-500/25"
+                              : s.status === "dismissed" ? "opacity-45"
+                              : "bg-card"
+                            }`}
+                          >
+                            <span
+                              className={`shrink-0 rounded-lg px-2 py-1 text-sm font-black tabular-nums ${
+                                s.points > 0
+                                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                  : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                              }`}
+                            >
+                              {s.points > 0 ? `+${s.points}` : s.points}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm font-semibold">
+                                  {s.students?.full_name || (
+                                    <span className="text-muted-foreground">“{s.speaker_label}” — not on roster</span>
+                                  )}
+                                </span>
+                                {attended(s) ? (
+                                  <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40">
+                                    {s.attendance_status}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/40 gap-1">
+                                    <AlertTriangle className="h-3 w-3" />
+                                    {s.attendance_status === "no_session" ? "no session that day" : s.attendance_status}
+                                  </Badge>
+                                )}
+                                {s.status === "applied" && (
+                                  <Badge className="text-[10px] bg-emerald-500/15 text-emerald-600 border-emerald-500/30">applied</Badge>
+                                )}
+                                {s.status === "dismissed" && (
+                                  <Badge variant="outline" className="text-[10px]">dismissed</Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground italic mt-0.5 truncate" title={s.quote}>
+                                “{s.quote}”{s.reason ? ` — ${s.reason}` : ""}
+                              </p>
+                            </div>
+                            {isPending && (
+                              <div className="flex gap-1 shrink-0">
+                                <Button
+                                  size="sm"
+                                  className="h-7 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  disabled={!canApply || applyMutation.isPending}
+                                  title={!s.student_id ? "No roster match" : !canApply ? "Student wasn't present" : "Create the point transaction"}
+                                  onClick={() => applyMutation.mutate(s)}
+                                >
+                                  <CheckCircle2 className="h-3 w-3" />Apply
+                                </Button>
+                                <Button
+                                  size="sm" variant="ghost"
+                                  className="h-7 gap-1 text-xs text-muted-foreground"
+                                  disabled={dismissMutation.isPending}
+                                  onClick={() => dismissMutation.mutate(s)}
+                                >
+                                  <XCircle className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </CardContent>
                   </Card>
                 )}
