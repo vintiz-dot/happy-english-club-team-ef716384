@@ -35,6 +35,24 @@ import {
 // re-checks server-side too.
 const AUDIO_MAX_BYTES = 24_500_000;
 
+/**
+ * supabase-js wraps a non-2xx edge-function response in FunctionsHttpError
+ * whose .message is just "Edge Function returned a non-2xx status code" —
+ * the REAL reason is in the unread Response at error.context. Unwrap it so
+ * toasts show what actually went wrong.
+ */
+async function describeFnError(error: any): Promise<string> {
+  try {
+    const body = await error?.context?.json?.();
+    if (body?.error) return String(body.error);
+  } catch { /* body wasn't JSON or already consumed */ }
+  try {
+    const text = await error?.context?.text?.();
+    if (text) return text.slice(0, 300);
+  } catch { /* ignore */ }
+  return error?.message || "Unknown error";
+}
+
 interface ClassOption { id: string; name: string }
 
 function useMyClasses(userId?: string) {
@@ -95,7 +113,7 @@ export default function TeacherTranscripts() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("class_transcripts")
-        .select("id, title, transcript_date, status, summary, error_message, created_at")
+        .select("id, title, transcript_date, status, summary, error_message, source_format, created_at")
         .eq("class_id", classId)
         .order("created_at", { ascending: false })
         .limit(25);
@@ -170,7 +188,7 @@ export default function TeacherTranscripts() {
       const { data: result, error: fnErr } = await supabase.functions.invoke("analyze-transcript", {
         body: { transcript_id: row.id },
       });
-      if (fnErr) throw fnErr;
+      if (fnErr) throw new Error(await describeFnError(fnErr));
       if (result?.success === false) throw new Error(result.error || "analysis failed");
       return { id: row.id, result };
     },
@@ -230,7 +248,7 @@ export default function TeacherTranscripts() {
       const { data: result, error: fnErr } = await supabase.functions.invoke("transcribe-lesson-audio", {
         body: { transcript_id: row.id },
       });
-      if (fnErr) throw fnErr;
+      if (fnErr) throw new Error(await describeFnError(fnErr));
       if (result?.success === false) throw new Error(result.error || "transcription failed");
       return { id: row.id, result };
     },
@@ -255,7 +273,7 @@ export default function TeacherTranscripts() {
       const { data: result, error } = await supabase.functions.invoke("analyze-transcript", {
         body: { transcript_id: transcriptId },
       });
-      if (error) throw error;
+      if (error) throw new Error(await describeFnError(error));
       if (result?.success === false) throw new Error(result.error || "analysis failed");
       return result;
     },
@@ -269,6 +287,37 @@ export default function TeacherTranscripts() {
       queryClient.invalidateQueries({ queryKey: ["transcript-point-suggestions", selectedId] });
     },
     onError: (e: any) => toast.error("Re-analysis failed", { description: e.message }),
+  });
+
+  // Retry transcription for an audio-sourced transcript — the recording is
+  // still in the class-recordings bucket, so a failed (or platform-killed,
+  // stuck-"processing") run can be re-fired without re-uploading anything.
+  const retryTranscriptionMutation = useMutation({
+    mutationFn: async (transcriptId: string) => {
+      await (supabase as any)
+        .from("class_transcripts")
+        .update({ status: "processing", error_message: null })
+        .eq("id", transcriptId);
+      const { data: result, error } = await supabase.functions.invoke("transcribe-lesson-audio", {
+        body: { transcript_id: transcriptId },
+      });
+      if (error) throw new Error(await describeFnError(error));
+      if (result?.success === false) throw new Error(result.error || "transcription failed");
+      return result;
+    },
+    onSuccess: (result) => {
+      toast.success("Recording transcribed & analyzed", {
+        description: `${result.matched_students} students matched · ${result.errors_logged} errors logged · ${result.points_suggested ?? 0} point awards deciphered`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
+      queryClient.invalidateQueries({ queryKey: ["transcript-metrics", selectedId] });
+      queryClient.invalidateQueries({ queryKey: ["transcript-errors", selectedId] });
+      queryClient.invalidateQueries({ queryKey: ["transcript-point-suggestions", selectedId] });
+    },
+    onError: (e: any) => {
+      toast.error("Retry failed", { description: e.message });
+      queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
+    },
   });
 
   // Apply a deciphered award: create the real point transaction, then mark
@@ -510,7 +559,37 @@ export default function TeacherTranscripts() {
               </Card>
             ) : (
               <>
-                <div className="flex items-center justify-end">
+                {/* Full failure reason — no more hunting in a hover tooltip */}
+                {selected.status === "failed" && (
+                  <div className="rounded-xl border border-red-500/40 bg-red-500/5 p-3 space-y-1.5">
+                    <p className="text-sm font-semibold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                      <AlertTriangle className="h-4 w-4 shrink-0" />
+                      {selected.source_format === "audio" ? "Transcription failed" : "Analysis failed"}
+                    </p>
+                    <p className="text-xs text-muted-foreground break-words">
+                      {selected.error_message || "No error detail was recorded — the function may have been cut off by a platform time limit (common for recordings near the 25MB cap). Retrying often succeeds."}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2">
+                  {selected.source_format === "audio" && selected.status !== "analyzed" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-cyan-700 dark:text-cyan-300 border-cyan-500/40"
+                      disabled={retryTranscriptionMutation.isPending}
+                      onClick={() => retryTranscriptionMutation.mutate(selected.id)}
+                      title="Re-run Whisper transcription from the stored recording — no re-upload needed"
+                    >
+                      {retryTranscriptionMutation.isPending ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Mic className="h-3.5 w-3.5" />
+                      )}
+                      Retry transcription
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
