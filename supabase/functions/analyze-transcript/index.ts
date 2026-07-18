@@ -51,6 +51,16 @@ function normName(s: string): string {
 }
 
 /**
+ * "Unknown" is unattributable audio (overlapping chatter, mislabeled mono
+ * segments) — NOT a student. It must never count toward student talk share
+ * or receive analysis/CEFR, or one bucket of mixed voices dominates the
+ * whole engagement dashboard.
+ */
+function isUnknownLabel(label: string): boolean {
+  return normName(label) === "unknown";
+}
+
+/**
  * Parse VTT/SRT cue text or plain "Speaker: line" transcripts into
  * speaker-attributed utterances. Zoom-style "Name: text" inside cues is
  * also handled.
@@ -223,7 +233,13 @@ async function llmAnalyze(
             "club for Vietnamese school students (levels Pre-A1 to B2). For each listed student, " +
             "analyze ONLY their quoted utterances.\n\n" +
             'Return JSON: {"summary": string (4-6 sentence lesson summary: topics covered, overall ' +
-            'class dynamics), "students": [{"name": string (exactly as given), ' +
+            "class dynamics), " +
+            '"materials": [{"name": string (book/handout/game as mentioned in class), ' +
+            '"pages": string|null (page numbers if stated, e.g. "42-45")}] (only materials ' +
+            "EXPLICITLY referenced, e.g. \"open your books to page 42\"; empty array if none), " +
+            '"homework": string|null (homework the teacher assigned, stated concisely; null if ' +
+            "no homework was assigned), " +
+            '"students": [{"name": string (exactly as given), ' +
             '"cefr_estimate": "Pre-A1"|"A1"|"A1+"|"A2"|"A2+"|"B1"|"B1+"|"B2"|null (null if too little speech), ' +
             '"confidence": number 0-1, ' +
             '"errors": [{"error_text": string (verbatim student utterance fragment), ' +
@@ -288,21 +304,25 @@ async function extractPointAwards(
             {
               role: "system",
               content:
-                "You extract POINT AWARDS a teacher announces out loud during an English club " +
-                "lesson for Vietnamese school students. The class uses stars/points as rewards; " +
-                "'star' and 'point' mean the same thing. Typical phrasings: \"5 stars Kiki!\", " +
+                "You extract POINT AWARDS the teacher announces out loud during an English club " +
+                "lesson for Vietnamese school students. You receive a SPEAKER-LABELED transcript, " +
+                "but the labels come from mono-microphone diarization and can be wrong — teacher " +
+                "speech is sometimes labeled 'Unknown' or even a student's name. Judge by CONTENT: " +
+                "an award grant is the teaching voice giving/removing stars or points. " +
+                "'Star' and 'point' mean the same thing. Typical phrasings: \"5 stars Kiki!\", " +
                 "\"two points for Anna\", \"Tom gets a star\", \"minus one point, Sam\", " +
                 "\"I'm taking a star from Lily\".\n\n" +
                 `Known students: ${rosterNames.join(", ") || "(unknown)"}.\n\n` +
                 "Rules:\n" +
-                "- Only ACTUAL awards the teacher grants, addressed to a NAMED student.\n" +
+                "- Only ACTUAL grants addressed to a NAMED student, in the teaching voice.\n" +
                 "- Skip hypotheticals/promises (\"if you finish, you get 5 stars\"), group awards " +
-                "without names (\"a point for everyone\"), and anything said by students.\n" +
+                "without names (\"a point for everyone\"), and students requesting or bragging " +
+                "about stars for themselves (\"I have 5 stars!\", \"give me a star!\").\n" +
                 "- Deductions are negative points.\n" +
                 "- If the same award is repeated/echoed, include it once.\n\n" +
                 'Return JSON: {"awards": [{"student_name": string (as spoken), ' +
                 '"points": integer (negative for deductions), ' +
-                '"quote": string (the verbatim teacher utterance), ' +
+                '"quote": string (the verbatim utterance containing the grant), ' +
                 '"reason": string|null (short paraphrase of why, if stated)}]}',
             },
             { role: "user", content: chunk },
@@ -350,7 +370,7 @@ Deno.serve(async (req) => {
 
     const { data: tr, error: trErr } = await sb
       .from("class_transcripts")
-      .select("id, class_id, raw_text, uploaded_by, transcript_date")
+      .select("id, class_id, raw_text, uploaded_by, transcript_date, title")
       .eq("id", transcriptId)
       .single();
     if (trErr || !tr) return respond({ success: false, error: "transcript not found" }, 404);
@@ -420,13 +440,13 @@ Deno.serve(async (req) => {
 
     const speakers = [...stats.values()];
     const totalStudentWords = speakers
-      .filter((s) => !teacherNames.has(normName(s.label)))
+      .filter((s) => !teacherNames.has(normName(s.label)) && !isUnknownLabel(s.label))
       .reduce((sum, s) => sum + s.words, 0);
 
-    // ── 4. LLM analysis over matched students ────────────────────────────
+    // ── 4. LLM analysis over matched students (Unknown excluded) ─────────
     const studentSpeakers = speakers
       .map((s) => ({ ...s, studentId: matchStudent(s.label), isTeacher: teacherNames.has(normName(s.label)) }))
-      .filter((s) => !s.isTeacher);
+      .filter((s) => !s.isTeacher && !isUnknownLabel(s.label));
 
     const llmInput = studentSpeakers
       .filter((s) => s.words >= 5)
@@ -454,7 +474,8 @@ Deno.serve(async (req) => {
 
     for (const s of speakers) {
       const isTeacher = teacherNames.has(normName(s.label));
-      const studentId = isTeacher ? null : matchStudent(s.label);
+      const isUnknown = isUnknownLabel(s.label);
+      const studentId = isTeacher || isUnknown ? null : matchStudent(s.label);
       if (studentId) matchedCount++;
       const ai = byName.get(normName(s.label));
 
@@ -469,7 +490,7 @@ Deno.serve(async (req) => {
         avg_utterance_length: s.utterances.length ? s.words / s.utterances.length : 0,
         questions_asked: s.questions,
         participation_share:
-          !isTeacher && totalStudentWords > 0 ? s.words / totalStudentWords : null,
+          !isTeacher && !isUnknown && totalStudentWords > 0 ? s.words / totalStudentWords : null,
         vocabulary_richness: s.words > 0 ? s.distinctWords.size / s.words : null,
         errors_count: ai?.errors?.length ?? 0,
         cefr_estimate: ai?.cefr_estimate ?? null,
@@ -535,14 +556,18 @@ Deno.serve(async (req) => {
     // Best-effort: a failure here must never sink the whole analysis.
     let pointsSuggested = 0;
     try {
-      const teacherSpeech = utterances
-        .filter((u) => teacherNames.has(normName(u.speaker)))
-        .map((u) => u.text)
+      // Mine the WHOLE labeled transcript, not just teacher-labeled turns:
+      // on mono room recordings the diarizer sometimes files teacher speech
+      // under Unknown, and filtering by label made those awards invisible.
+      // The extractor judges "is this the teaching voice granting points?"
+      // from content, with the (imperfect) labels as a hint.
+      const labeledTranscript = utterances
+        .map((u) => `${u.speaker}: ${u.text}`)
         .join("\n");
 
-      if (teacherSpeech.trim().length >= 20) {
+      if (labeledTranscript.trim().length >= 20) {
         const key = Deno.env.get("OPENAI_API_KEY")!;
-        const awards = await extractPointAwards(key, teacherSpeech, roster.map((s) => s.full_name));
+        const awards = await extractPointAwards(key, labeledTranscript, roster.map((s) => s.full_name));
 
         if (awards.length) {
           // Attendance for the transcript's date (any session of this class).
@@ -614,6 +639,29 @@ Deno.serve(async (req) => {
         analyzed_at: new Date().toISOString(),
       })
       .eq("id", transcriptId);
+
+    // ── 7. Publish the student-safe lesson overview ──────────────────────
+    // Summary + materials/pages + homework, visible to every enrolled
+    // student (separate table: students must never see raw transcripts or
+    // classmates' error analyses). Best-effort.
+    try {
+      const { error: ovErr } = await sb.from("lesson_overviews").upsert(
+        {
+          transcript_id: transcriptId,
+          class_id: tr.class_id,
+          lesson_date: tr.transcript_date,
+          title: tr.title ?? null,
+          summary: analysis.summary ?? null,
+          materials: Array.isArray(analysis.materials) ? analysis.materials.slice(0, 10) : [],
+          homework: analysis.homework ? String(analysis.homework).slice(0, 1000) : null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "transcript_id" },
+      );
+      if (ovErr) console.warn("lesson_overviews upsert failed:", ovErr.message);
+    } catch (e) {
+      console.warn("lesson overview publish failed (analysis continues):", (e as Error)?.message);
+    }
 
     // Keep every matched student's living profile current (background).
     fireProfileRefresh(

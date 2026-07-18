@@ -27,6 +27,7 @@ import { CelebrationOverlay } from "@/components/student/CelebrationOverlay";
 import { HowToEarnXP } from "@/components/student/HowToEarnXP";
 import { AchievementBadges } from "@/components/student/AchievementBadges";
 import { WeeklyProgressCard } from "@/components/student/WeeklyProgressCard";
+import { LessonOverviewsCard } from "@/components/student/LessonOverviewsCard";
 import { StudentScheduleCalendar } from "@/components/student/StudentScheduleCalendar";
 import { ProfileShareCard } from "@/components/student/ProfileShareCard";
 import { InactiveStudentLanding } from "@/components/student/InactiveStudentLanding";
@@ -546,6 +547,11 @@ export default function StudentDashboard() {
         {/* Weekly Progress Summary */}
         <motion.div variants={itemVariants}>
           <WeeklyProgressCard studentId={studentId} currentStreak={streakData.currentStreak} />
+        </motion.div>
+
+        {/* Recent lessons — summary, materials, homework from class transcripts */}
+        <motion.div variants={itemVariants}>
+          <LessonOverviewsCard studentId={studentId} />
         </motion.div>
 
         {/* Stats Row - Streak & Challenges */}

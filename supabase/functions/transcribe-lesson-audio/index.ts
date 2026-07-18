@@ -72,12 +72,22 @@ async function transcribeWithWhisper(
   audioBytes: Uint8Array,
   mimeType: string,
   fileName: string,
+  rosterNames: string[],
 ): Promise<{ text: string; duration: number; segments: WhisperSegment[] }> {
   const form = new FormData();
   form.append("file", new Blob([audioBytes], { type: mimeType || "audio/mpeg" }), fileName);
   form.append("model", "whisper-1");
   form.append("response_format", "verbose_json");
   form.append("timestamp_granularities[]", "segment");
+  // Whisper's prompt biases recognition toward listed vocabulary — priming
+  // it with the roster makes student names transcribe correctly instead of
+  // as near-homophones, which is what downstream diarization keys on.
+  if (rosterNames.length) {
+    form.append(
+      "prompt",
+      `An English lesson at a Vietnamese English club. Students: ${rosterNames.slice(0, 30).join(", ")}.`,
+    );
+  }
 
   const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method: "POST",
@@ -98,16 +108,24 @@ async function transcribeWithWhisper(
 }
 
 // Batch segments for speaker labeling so the JSON response can never be
-// truncated regardless of recording length; batches run in parallel.
-const SEGMENT_BATCH_SIZE = 60;
-const SEGMENT_BATCH_LIMIT = 25; // ~1500 segments — comfortably above what a
+// truncated regardless of recording length. Batches run SEQUENTIALLY and
+// each one receives the tail of the previous batch's labels — a mono room
+// recorder (e.g. Anker S500) gives no channel separation, so conversational
+// continuity across batch boundaries is the strongest signal there is.
+// The labeler runs on gpt-4o (not mini): diarization precision is what the
+// whole engagement dashboard stands on, and the labeling pass is a small
+// share of the per-lesson cost.
+const SEGMENT_BATCH_SIZE = 80;
+const SEGMENT_BATCH_LIMIT = 20; // ~1600 segments — comfortably above what a
                                  // 25MB (Whisper's own cap) recording can hold
+const CONTEXT_TAIL = 8;          // labeled lines carried into the next batch
 
 async function labelSegmentBatch(
   key: string,
   batch: WhisperSegment[],
   rosterNames: string[],
   teacherNames: string[],
+  prevContext: string,
 ): Promise<Map<number, string>> {
   const listing = batch
     .map((s) => `[${s.id}] (${formatVttTimestamp(s.start).slice(3, 8)}) ${s.text}`)
@@ -119,24 +137,37 @@ async function labelSegmentBatch(
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         temperature: 0.1,
-        max_tokens: 3000,
+        max_tokens: 4000,
         response_format: { type: "json_object" },
         messages: [
           {
             role: "system",
             content:
-              "You attribute timestamped segments from a classroom audio recording to speakers. " +
-              "This is an offline English class for Vietnamese school students: one recorder " +
-              "captured everyone, and the teacher usually calls a student's NAME right before that " +
-              "student speaks (e.g. \"Anna, can you read this?\" → the NEXT segment is Anna's). " +
-              "Students may call out each other's names too. Use question→answer flow as a " +
-              "secondary cue when no name was just called.\n\n" +
+              "You attribute timestamped segments from a MONO classroom recording (one room " +
+              "microphone, no channel separation) to speakers. It is an English lesson for " +
+              "Vietnamese school students.\n\n" +
+              "STRUCTURE OF SUCH RECORDINGS — use this as your prior:\n" +
+              "- The TEACHER typically produces 50-80% of all segments: giving instructions " +
+              "(\"open your books\", \"repeat after me\", \"listen\"), asking the class questions, " +
+              "praising (\"good job!\", \"five stars!\"), correcting, managing behaviour, and " +
+              "calling students BY NAME. When in doubt between Teacher and Unknown for " +
+              "instruction-giving or praising speech, choose Teacher.\n" +
+              "- STUDENTS give shorter responses, usually right after their name is called " +
+              "(\"Anna, can you read?\" → the next segment is Anna's) or as choral/individual " +
+              "answers to a question. A student keeps the floor until the teacher speaks again.\n" +
+              "- Segments are CONSECUTIVE in time; speaker changes are far rarer than segments. " +
+              "Prefer continuing the current speaker unless the content clearly switches voice " +
+              "(question→answer, name call, register change from instruction to response).\n\n" +
               `Known students: ${rosterNames.join(", ") || "(unknown)"}.\n` +
               `Teacher(s): ${teacherNames.join(", ") || "Teacher"}.\n\n` +
-              "For EVERY segment index below, return the most likely speaker: a student name " +
-              'exactly as listed, "Teacher", or "Unknown" only when genuinely unattributable.\n\n' +
+              (prevContext
+                ? `The transcript so far ended like this (already labeled):\n${prevContext}\n\n`
+                : "") +
+              "For EVERY segment index below return the most likely speaker: a student name " +
+              'exactly as listed, "Teacher", or "Unknown" (reserve Unknown for genuinely ' +
+              "unattributable audio like overlapping chatter — NOT for teacher speech).\n\n" +
               'Return JSON: {"labels": [{"index": number, "speaker": string}]}',
           },
           { role: "user", content: listing },
@@ -167,11 +198,19 @@ async function diarizeSegments(
   teacherNames: string[],
 ): Promise<LabeledUtterance[]> {
   const batches = chunkArray(segments, SEGMENT_BATCH_SIZE).slice(0, SEGMENT_BATCH_LIMIT);
-  const batchResults = await Promise.all(
-    batches.map((b) => labelSegmentBatch(key, b, rosterNames, teacherNames)),
-  );
   const labelById = new Map<number, string>();
-  for (const m of batchResults) for (const [id, speaker] of m) labelById.set(id, speaker);
+
+  // Sequential on purpose: each batch is labeled with the tail of the
+  // previous batch as conversational context.
+  let prevContext = "";
+  for (const batch of batches) {
+    const labels = await labelSegmentBatch(key, batch, rosterNames, teacherNames, prevContext);
+    for (const [id, speaker] of labels) labelById.set(id, speaker);
+    prevContext = batch
+      .slice(-CONTEXT_TAIL)
+      .map((s) => `${labelById.get(s.id) || "Unknown"}: ${s.text}`)
+      .join("\n");
+  }
 
   // Merge consecutive same-speaker segments into natural utterances,
   // keeping Whisper's own start (first segment) / end (last segment).
@@ -253,19 +292,8 @@ Deno.serve(async (req) => {
     }
     if (audioBytes.byteLength === 0) return fail("The uploaded audio file is empty", 400);
 
-    // ── 2. Whisper transcription (real timestamps) ────────────────────────
-    const fileName = tr.audio_storage_path.split("/").pop() || "recording.mp3";
-    const { text, duration, segments } = await transcribeWithWhisper(
-      key,
-      audioBytes,
-      tr.audio_mime_type || "audio/mpeg",
-      fileName,
-    );
-    if (!segments.length || !text.trim()) {
-      return fail("Whisper detected no speech in this recording", 400);
-    }
-
-    // ── 3. Diarize: label each timestamped segment against the roster ─────
+    // ── 2. Roster + teachers (fetched BEFORE Whisper so the roster can
+    //       prime name recognition in the transcription itself) ───────────
     const today = new Date().toISOString().slice(0, 10);
     const { data: enrollRows } = await sb
       .from("enrollments")
@@ -285,6 +313,20 @@ Deno.serve(async (req) => {
       ...new Set((teacherRows || []).map((r: any) => r.teachers?.full_name).filter(Boolean) as string[]),
     ];
 
+    // ── 3. Whisper transcription (real timestamps, roster-primed) ─────────
+    const fileName = tr.audio_storage_path.split("/").pop() || "recording.mp3";
+    const { text, duration, segments } = await transcribeWithWhisper(
+      key,
+      audioBytes,
+      tr.audio_mime_type || "audio/mpeg",
+      fileName,
+      rosterNames,
+    );
+    if (!segments.length || !text.trim()) {
+      return fail("Whisper detected no speech in this recording", 400);
+    }
+
+    // ── 4. Diarize: label each timestamped segment against the roster ─────
     const utterances = await diarizeSegments(key, segments, rosterNames, teacherNames);
 
     // ── 4. Persist the labeled, timestamped transcript ─────────────────────

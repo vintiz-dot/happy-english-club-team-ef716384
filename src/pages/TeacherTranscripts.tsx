@@ -26,7 +26,7 @@ import { motion } from "framer-motion";
 import {
   AudioLines, Loader2, UploadCloud, Sparkles, MessageSquareText,
   HelpCircle, AlertTriangle, Star, FileText, TrendingUp,
-  Coins, CheckCircle2, XCircle, Mic,
+  Coins, CheckCircle2, XCircle, Mic, BookOpen, NotebookPen,
 } from "lucide-react";
 
 // Whisper (whisper-1) hard-caps uploads at 25MB. Checked client-side first
@@ -145,6 +145,20 @@ export default function TeacherTranscripts() {
         .eq("source_id", selectedId)
         .order("created_at", { ascending: false });
       return data || [];
+    },
+  });
+
+  // Student-safe lesson overview (summary, materials/pages, homework).
+  const { data: overview } = useQuery<any>({
+    queryKey: ["lesson-overview", selectedId],
+    enabled: !!selectedId,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("lesson_overviews")
+        .select("*")
+        .eq("transcript_id", selectedId)
+        .maybeSingle();
+      return data ?? null;
     },
   });
 
@@ -399,8 +413,14 @@ export default function TeacherTranscripts() {
   });
 
   const selected = transcripts.find((t) => t.id === selectedId);
-  const studentMetrics = metrics.filter((m) => !m.is_teacher);
+  const isUnknownRow = (m: any) => (m.speaker_label || "").trim().toLowerCase() === "unknown";
+  const studentMetrics = metrics.filter((m) => !m.is_teacher && !isUnknownRow(m));
   const maxShare = Math.max(...studentMetrics.map((m) => m.participation_share || 0), 0.0001);
+  // Honest signal about mono-recorder limits: how much audio couldn't be
+  // attributed to a specific person (excluded from all engagement math).
+  const totalTranscriptWords = metrics.reduce((s, m) => s + (m.word_count || 0), 0);
+  const unknownWords = metrics.filter(isUnknownRow).reduce((s, m) => s + (m.word_count || 0), 0);
+  const unknownPct = totalTranscriptWords > 0 ? Math.round((unknownWords / totalTranscriptWords) * 100) : 0;
 
   return (
     <Layout title="Transcript Insights">
@@ -612,10 +632,34 @@ export default function TeacherTranscripts() {
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-blue-500" />Lesson summary
+                        {overview && (
+                          <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40">
+                            shared with students
+                          </Badge>
+                        )}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-2.5">
                       <p className="text-sm leading-relaxed text-muted-foreground">{selected.summary}</p>
+                      {Array.isArray(overview?.materials) && overview.materials.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <BookOpen className="h-3.5 w-3.5 text-blue-500" />
+                          {overview.materials.map((m: any, i: number) => (
+                            <Badge key={i} variant="secondary" className="font-normal text-xs">
+                              {m.name}{m.pages ? ` · p.${m.pages}` : ""}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      {overview?.homework && (
+                        <p className="text-xs flex items-start gap-1.5">
+                          <NotebookPen className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                          <span>
+                            <span className="font-semibold">Homework:</span>{" "}
+                            <span className="text-muted-foreground">{overview.homework}</span>
+                          </span>
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 )}
@@ -779,6 +823,13 @@ export default function TeacherTranscripts() {
                     })}
                     {studentMetrics.length === 0 && (
                       <p className="text-xs text-muted-foreground py-3">No student speech matched in this transcript.</p>
+                    )}
+                    {unknownPct > 0 && (
+                      <p className="text-[11px] text-muted-foreground pt-1 flex items-center gap-1.5">
+                        <HelpCircle className="h-3 w-3 shrink-0" />
+                        {unknownPct}% of the audio couldn't be attributed to a specific speaker
+                        (overlapping voices / mono recorder) and is excluded from these shares.
+                      </p>
                     )}
                   </CardContent>
                 </Card>
