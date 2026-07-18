@@ -6,6 +6,9 @@
 #
 # Excluded on purpose:
 #   .git          each repo keeps its own history/remote
+#   .github       the GitHub Pages deploy workflow belongs ONLY to the
+#                 Cloudflare/Pages repo (happy-class-mate) - syncing it
+#                 would make the Lovable repo attempt Pages deploys too
 #   node_modules  installed per-repo
 #   dist          build output
 #   new           the nested repo itself (never recurse into it)
@@ -31,7 +34,7 @@ if (-not (Test-Path (Join-Path $dst ".git"))) {
 Write-Host "Syncing app code -> $dst" -ForegroundColor Cyan
 
 robocopy $src $dst /E `
-  /XD .git node_modules dist new .claude `
+  /XD .git .github node_modules dist new .claude `
   /XF GOOGLE_CREDENTIALS.json customimage.json `
   /NFL /NDL /NJH | Out-Null
 
