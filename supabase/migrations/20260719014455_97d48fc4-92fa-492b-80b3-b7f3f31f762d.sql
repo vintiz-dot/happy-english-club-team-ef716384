@@ -1,0 +1,10 @@
+GRANT EXECUTE ON FUNCTION public.get_student_homeworks(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, app_role) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_teacher_of_class(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_student_enrolled_in_class(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_journal_member(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_journal_owner(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_view_student(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_view_family(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_linked_student(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_user_role(uuid) TO authenticated;
