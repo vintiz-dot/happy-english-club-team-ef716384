@@ -350,6 +350,9 @@ export type Database = {
         Row: {
           analysis: Json | null
           analyzed_at: string | null
+          audio_duration_seconds: number | null
+          audio_mime_type: string | null
+          audio_storage_path: string | null
           class_id: string
           created_at: string
           error_message: string | null
@@ -366,6 +369,9 @@ export type Database = {
         Insert: {
           analysis?: Json | null
           analyzed_at?: string | null
+          audio_duration_seconds?: number | null
+          audio_mime_type?: string | null
+          audio_storage_path?: string | null
           class_id: string
           created_at?: string
           error_message?: string | null
@@ -382,6 +388,9 @@ export type Database = {
         Update: {
           analysis?: Json | null
           analyzed_at?: string | null
+          audio_duration_seconds?: number | null
+          audio_mime_type?: string | null
+          audio_storage_path?: string | null
           class_id?: string
           created_at?: string
           error_message?: string | null
@@ -3559,6 +3568,79 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      transcript_point_suggestions: {
+        Row: {
+          applied_at: string | null
+          applied_by: string | null
+          attendance_status: string
+          class_id: string
+          created_at: string
+          id: string
+          point_transaction_ref: string | null
+          points: number
+          quote: string
+          reason: string | null
+          speaker_label: string
+          status: string
+          student_id: string | null
+          transcript_id: string
+        }
+        Insert: {
+          applied_at?: string | null
+          applied_by?: string | null
+          attendance_status?: string
+          class_id: string
+          created_at?: string
+          id?: string
+          point_transaction_ref?: string | null
+          points: number
+          quote: string
+          reason?: string | null
+          speaker_label: string
+          status?: string
+          student_id?: string | null
+          transcript_id: string
+        }
+        Update: {
+          applied_at?: string | null
+          applied_by?: string | null
+          attendance_status?: string
+          class_id?: string
+          created_at?: string
+          id?: string
+          point_transaction_ref?: string | null
+          points?: number
+          quote?: string
+          reason?: string | null
+          speaker_label?: string
+          status?: string
+          student_id?: string | null
+          transcript_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcript_point_suggestions_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcript_point_suggestions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcript_point_suggestions_transcript_id_fkey"
+            columns: ["transcript_id"]
+            isOneToOne: false
+            referencedRelation: "class_transcripts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transcript_speaker_metrics: {
         Row: {
