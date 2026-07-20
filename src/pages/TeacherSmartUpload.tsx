@@ -34,7 +34,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ScanText, BookMarked, UploadCloud, Loader2, CheckCircle2, XCircle,
   Sparkles, User, ImageIcon, AlertTriangle, Eye, Check, ChevronsUpDown,
+  Users, Link2, ExternalLink,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface ClassOption { id: string; name: string }
 interface StudentOption { id: string; full_name: string }
@@ -94,6 +96,65 @@ function AssignStudentCombobox({
   );
 }
 
+/** Multi-select roster picker for building a team. */
+function TeamPicker({
+  students, value, onChange, disabled,
+}: {
+  students: StudentOption[];
+  value: string[];
+  onChange: (ids: string[]) => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const toggle = (id: string) =>
+    onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
+  const label =
+    value.length === 0 ? "Pick team members…" : `${value.length} student${value.length === 1 ? "" : "s"} selected`;
+  return (
+    <div className="space-y-1.5">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" role="combobox" disabled={disabled} className="w-full justify-between font-normal">
+            <span className={cn(value.length === 0 && "text-muted-foreground")}>{label}</span>
+            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Search students…" className="h-9" />
+            <CommandList>
+              <CommandEmpty>{students.length === 0 ? "Select a class first" : "No student found."}</CommandEmpty>
+              <CommandGroup>
+                {students.map((s) => (
+                  <CommandItem key={s.id} value={s.full_name} onSelect={() => toggle(s.id)}>
+                    <Check className={cn("mr-2 h-3.5 w-3.5", value.includes(s.id) ? "opacity-100" : "opacity-0")} />
+                    {s.full_name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      {value.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {value.map((id) => {
+            const s = students.find((x) => x.id === id);
+            return (
+              <Badge key={id} variant="secondary" className="gap-1 font-normal">
+                {s?.full_name || "…"}
+                <button type="button" onClick={() => toggle(id)} className="hover:text-destructive">
+                  <XCircle className="h-3 w-3" />
+                </button>
+              </Badge>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface UploadJob {
   fileName: string;
   status: "uploading" | "processing" | "done" | "failed";
@@ -136,6 +197,12 @@ export default function TeacherSmartUpload() {
   const [jobs, setJobs] = useState<UploadJob[]>([]);
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
   const [reviewStudent, setReviewStudent] = useState<Record<string, string>>({});
+  // Student-Work tab: individual (OCR auto-routes) vs team (teacher picks
+  // the whole team). Link uploads work in either mode.
+  const [workMode, setWorkMode] = useState<"individual" | "team">("individual");
+  const [teamIds, setTeamIds] = useState<string[]>([]);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkTitle, setLinkTitle] = useState("");
 
   const { data: classes = [] } = useTeacherClasses(user?.id);
 
@@ -205,6 +272,7 @@ export default function TeacherSmartUpload() {
       const out: Record<string, string> = {};
       await Promise.all(
         reviewQueue.map(async (w) => {
+          if (!w.storage_path) return; // link uploads have no stored file
           const { data } = await supabase.storage
             .from("student-work")
             .createSignedUrl(w.storage_path, 3600);
@@ -289,6 +357,87 @@ export default function TeacherSmartUpload() {
     refetchQueue();
     queryClient.invalidateQueries({ queryKey: ["student-work-review"] });
   };
+
+  // Team photo upload — the team is chosen explicitly, so no name-detection
+  // OCR is needed. Inserts directly to the review queue with every member
+  // attributed; generate-work-feedback / profile refresh use student_id
+  // (the first member) so downstream still works.
+  const runTeamPhoto = async (files: FileList) => {
+    if (!user) return;
+    if (!classId) { toast.error("Choose a class first"); return; }
+    if (teamIds.length < 2) { toast.error("Pick at least two students for a team"); return; }
+
+    for (const file of Array.from(files)) {
+      setJobs((prev) => [...prev, { fileName: file.name, status: "uploading" }]);
+      try {
+        const ext = file.name.split(".").pop() || "jpg";
+        const path = `teams/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("student-work")
+          .upload(path, file, { contentType: file.type || "image/jpeg" });
+        if (upErr) throw upErr;
+
+        const { error: insErr } = await (supabase as any)
+          .from("student_work")
+          .insert({
+            uploaded_by: user.id,
+            class_id: classId,
+            student_id: teamIds[0],
+            member_student_ids: teamIds,
+            is_teamwork: true,
+            workflow: "teamwork",
+            storage_path: path,
+            original_filename: file.name,
+            mime_type: file.type,
+            status: "needs_review",
+          });
+        if (insErr) throw insErr;
+        updateJob(file.name, { status: "done", message: `Team of ${teamIds.length} — ready to review` });
+      } catch (err: any) {
+        console.error("team upload error:", err);
+        updateJob(file.name, { status: "failed", message: err.message });
+        toast.error(`${file.name} failed`, { description: err.message });
+      }
+    }
+    toast.success("Team work uploaded — approve it in the review queue");
+    refetchQueue();
+    queryClient.invalidateQueries({ queryKey: ["student-work-review"] });
+  };
+
+  // Link submission — work that lives at a URL (Doc/Slides/Canva/photo).
+  const submitLinkMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+      if (!classId) throw new Error("Choose a class first");
+      const url = linkUrl.trim();
+      if (!/^https?:\/\/.+/i.test(url)) throw new Error("Enter a valid http(s) link");
+
+      const isTeam = workMode === "team";
+      if (isTeam && teamIds.length < 2) throw new Error("Pick at least two students for a team");
+      const primary = isTeam ? teamIds[0] : (studentId || null);
+
+      const { error } = await (supabase as any).from("student_work").insert({
+        uploaded_by: user.id,
+        class_id: classId,
+        student_id: primary,
+        member_student_ids: isTeam ? teamIds : [],
+        is_teamwork: isTeam,
+        workflow: isTeam ? "teamwork" : "general",
+        external_url: url,
+        original_filename: linkTitle.trim() || url,
+        status: "needs_review",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Link added — approve it in the review queue");
+      setLinkUrl("");
+      setLinkTitle("");
+      refetchQueue();
+      queryClient.invalidateQueries({ queryKey: ["student-work-review"] });
+    },
+    onError: (e: any) => toast.error("Couldn't add link", { description: e.message }),
+  });
 
   // ── AI feedback: image + student journey context → personalized note ──
   const [feedbackForId, setFeedbackForId] = useState<string | null>(null);
@@ -406,30 +555,53 @@ export default function TeacherSmartUpload() {
             </TabsTrigger>
           </TabsList>
 
-          {(["general", "vocab"] as const).map((workflow) => {
-            const disabledReason = !classId
-              ? "Select a class above first"
-              : workflow === "vocab" && !studentId
-                ? "Select a student above first — vocab scans need to know whose word bank to update"
-                : null;
-            const isDisabled = !!disabledReason;
+          {/* ── Student Work: individual (OCR auto-routes) or team ───────── */}
+          <TabsContent value="general" className="space-y-3">
+            {/* Individual / Team mode */}
+            <div className="mt-2 inline-flex rounded-xl bg-muted/60 p-1">
+              <button
+                onClick={() => setWorkMode("individual")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
+                  workMode === "individual" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground",
+                )}
+              >
+                <User className="h-3.5 w-3.5" />Individual
+              </button>
+              <button
+                onClick={() => setWorkMode("team")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
+                  workMode === "team" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground",
+                )}
+              >
+                <Users className="h-3.5 w-3.5" />Team
+              </button>
+            </div>
 
-            return (
-              <TabsContent key={workflow} value={workflow}>
+            {workMode === "team" && (
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground mb-1.5">Team members (2 or more)</p>
+                <TeamPicker students={students} value={teamIds} onChange={setTeamIds} disabled={!classId} />
+              </div>
+            )}
+
+            {(() => {
+              const isTeam = workMode === "team";
+              const disabledReason = !classId
+                ? "Select a class above first"
+                : isTeam && teamIds.length < 2
+                  ? "Pick at least two team members above"
+                  : null;
+              const isDisabled = !!disabledReason;
+              return (
                 <label
                   className={cn(
-                    "mt-2 flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-3xl p-10 transition-colors",
-                    isDisabled
-                      ? "opacity-50 cursor-not-allowed"
-                      : "cursor-pointer hover:border-violet-400 hover:bg-violet-500/5",
+                    "flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-3xl p-10 transition-colors",
+                    isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-violet-400 hover:bg-violet-500/5",
                   )}
                   onClick={(e) => {
-                    // A disabled <input> silently swallows the click — surface
-                    // *why* instead of leaving the box looking broken.
-                    if (isDisabled) {
-                      e.preventDefault();
-                      toast.error(disabledReason!);
-                    }
+                    if (isDisabled) { e.preventDefault(); toast.error(disabledReason!); }
                   }}
                 >
                   <input
@@ -440,18 +612,20 @@ export default function TeacherSmartUpload() {
                     className="hidden"
                     disabled={isDisabled}
                     onChange={(e) => {
-                      if (e.target.files?.length) runPipeline(e.target.files, workflow);
+                      if (e.target.files?.length) {
+                        isTeam ? runTeamPhoto(e.target.files) : runPipeline(e.target.files, "general");
+                      }
                       e.target.value = "";
                     }}
                   />
                   <UploadCloud className={cn("h-10 w-10", isDisabled ? "text-muted-foreground" : "text-violet-500")} />
                   <div className="text-center">
                     <p className="font-semibold">
-                      {workflow === "vocab" ? "Upload handwritten vocabulary pages" : "Upload photos of student work"}
+                      {isTeam ? "Upload the team's work" : "Upload photos of student work"}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {workflow === "vocab"
-                        ? "Words, meanings & example sentences are extracted, validated, illustrated and saved — points awarded automatically."
+                      {isTeam
+                        ? "The photo is attributed to every selected member and appears on each of their profiles once approved."
                         : "The student's name is detected on the page and the file is routed to their folder for your approval."}
                     </p>
                     {disabledReason && (
@@ -461,9 +635,91 @@ export default function TeacherSmartUpload() {
                     )}
                   </div>
                 </label>
-              </TabsContent>
-            );
-          })}
+              );
+            })()}
+
+            {/* Or add a link */}
+            <div className="rounded-2xl border p-3 space-y-2">
+              <p className="text-xs font-semibold flex items-center gap-1.5">
+                <Link2 className="h-3.5 w-3.5 text-violet-500" />
+                …or add a link {workMode === "team" ? "(the team's)" : "(a student's)"} work
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Google Doc/Slides, Canva, a shared photo — anything with a URL.
+                {workMode === "individual" && " Assign the student below or in the review queue."}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  placeholder="Title (optional)"
+                  value={linkTitle}
+                  onChange={(e) => setLinkTitle(e.target.value)}
+                  className="sm:w-48"
+                />
+                <Input
+                  placeholder="https://…"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  className="gap-1.5"
+                  disabled={submitLinkMutation.isPending || !classId || !linkUrl.trim()}
+                  onClick={() => submitLinkMutation.mutate()}
+                >
+                  {submitLinkMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+                  Add link
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* ── Vocab Scan ─────────────────────────────────────────────── */}
+          <TabsContent value="vocab">
+            {(() => {
+              const disabledReason = !classId
+                ? "Select a class above first"
+                : !studentId
+                  ? "Select a student above first — vocab scans need to know whose word bank to update"
+                  : null;
+              const isDisabled = !!disabledReason;
+              return (
+                <label
+                  className={cn(
+                    "mt-2 flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-3xl p-10 transition-colors",
+                    isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-violet-400 hover:bg-violet-500/5",
+                  )}
+                  onClick={(e) => {
+                    if (isDisabled) { e.preventDefault(); toast.error(disabledReason!); }
+                  }}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    capture="environment"
+                    className="hidden"
+                    disabled={isDisabled}
+                    onChange={(e) => {
+                      if (e.target.files?.length) runPipeline(e.target.files, "vocab");
+                      e.target.value = "";
+                    }}
+                  />
+                  <UploadCloud className={cn("h-10 w-10", isDisabled ? "text-muted-foreground" : "text-violet-500")} />
+                  <div className="text-center">
+                    <p className="font-semibold">Upload handwritten vocabulary pages</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Words, meanings &amp; example sentences are extracted, validated, illustrated and saved — points awarded automatically.
+                    </p>
+                    {disabledReason && (
+                      <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mt-2 flex items-center justify-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />{disabledReason}
+                      </p>
+                    )}
+                  </div>
+                </label>
+              );
+            })()}
+          </TabsContent>
         </Tabs>
 
         {/* Live pipeline progress */}
@@ -547,6 +803,17 @@ export default function TeacherSmartUpload() {
                             className="h-20 w-20 object-cover rounded-xl border"
                           />
                         </a>
+                      ) : w.external_url ? (
+                        <a
+                          href={w.external_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="h-20 w-20 rounded-xl border bg-violet-500/5 flex flex-col items-center justify-center gap-1 shrink-0 hover:bg-violet-500/10"
+                          title={w.external_url}
+                        >
+                          <Link2 className="h-6 w-6 text-violet-500" />
+                          <span className="text-[9px] text-violet-600 font-semibold">Open link</span>
+                        </a>
                       ) : (
                         <div className="h-20 w-20 rounded-xl border bg-muted flex items-center justify-center shrink-0">
                           <ImageIcon className="h-6 w-6 text-muted-foreground" />
@@ -555,6 +822,16 @@ export default function TeacherSmartUpload() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge variant="outline" className="text-[10px] uppercase">{w.workflow}</Badge>
+                          {w.is_teamwork && (
+                            <Badge className="bg-cyan-500/15 text-cyan-700 border-cyan-500/30 gap-1 text-[10px]">
+                              <Users className="h-3 w-3" />team of {(w.member_student_ids || []).length}
+                            </Badge>
+                          )}
+                          {w.external_url && (
+                            <Badge className="bg-violet-500/15 text-violet-700 border-violet-500/30 gap-1 text-[10px]">
+                              <Link2 className="h-3 w-3" />link
+                            </Badge>
+                          )}
                           {w.status === "processing" && (
                             <Badge className="bg-violet-500/15 text-violet-600 border-violet-500/30 gap-1">
                               <Loader2 className="h-3 w-3 animate-spin" />OCR running
@@ -582,11 +859,25 @@ export default function TeacherSmartUpload() {
 
                     {w.status === "needs_review" && (
                       <>
-                        <AssignStudentCombobox
-                          students={assignableStudents}
-                          value={reviewStudent[w.id] || w.student_id || ""}
-                          onChange={(id) => setReviewStudent((p) => ({ ...p, [w.id]: id }))}
-                        />
+                        {w.is_teamwork ? (
+                          <div className="flex flex-wrap gap-1 rounded-lg bg-muted/40 px-2.5 py-2">
+                            <span className="text-[11px] font-semibold text-muted-foreground mr-1">Team:</span>
+                            {(w.member_student_ids || []).map((id: string) => {
+                              const s = assignableStudents.find((x) => x.id === id);
+                              return (
+                                <Badge key={id} variant="secondary" className="text-[10px] font-normal">
+                                  {s?.full_name || "…"}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <AssignStudentCombobox
+                            students={assignableStudents}
+                            value={reviewStudent[w.id] || w.student_id || ""}
+                            onChange={(id) => setReviewStudent((p) => ({ ...p, [w.id]: id }))}
+                          />
+                        )}
                         <div className="relative">
                           <Textarea
                             placeholder="Teacher notes for the student — or let AI draft them…"
@@ -594,19 +885,21 @@ export default function TeacherSmartUpload() {
                             value={reviewNotes[w.id] ?? w.ai_feedback ?? ""}
                             onChange={(e) => setReviewNotes((p) => ({ ...p, [w.id]: e.target.value }))}
                           />
-                          <button
-                            type="button"
-                            title="Draft personalized feedback with AI (uses the image + this student's learning journey)"
-                            disabled={feedbackMutation.isPending}
-                            onClick={() => feedbackMutation.mutate(w)}
-                            className="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-lg text-white bg-gradient-to-br from-violet-500 to-indigo-600 shadow-[0_3px_10px_-3px_rgba(139,92,246,0.7)] transition-transform hover:scale-110 active:scale-95 disabled:opacity-50"
-                          >
-                            {feedbackForId === w.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Sparkles className="h-3.5 w-3.5" />
-                            )}
-                          </button>
+                          {w.storage_path && (
+                            <button
+                              type="button"
+                              title="Draft personalized feedback with AI (uses the image + this student's learning journey)"
+                              disabled={feedbackMutation.isPending}
+                              onClick={() => feedbackMutation.mutate(w)}
+                              className="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-lg text-white bg-gradient-to-br from-violet-500 to-indigo-600 shadow-[0_3px_10px_-3px_rgba(139,92,246,0.7)] transition-transform hover:scale-110 active:scale-95 disabled:opacity-50"
+                            >
+                              {feedbackForId === w.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Sparkles className="h-3.5 w-3.5" />
+                              )}
+                            </button>
+                          )}
                         </div>
                         <div className="flex gap-2">
                           <Button
