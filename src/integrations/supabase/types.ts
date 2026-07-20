@@ -1657,6 +1657,60 @@ export type Database = {
           },
         ]
       }
+      lesson_overviews: {
+        Row: {
+          class_id: string
+          created_at: string
+          homework: string | null
+          id: string
+          lesson_date: string
+          materials: Json
+          summary: string | null
+          title: string | null
+          transcript_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          homework?: string | null
+          id?: string
+          lesson_date: string
+          materials?: Json
+          summary?: string | null
+          title?: string | null
+          transcript_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          homework?: string | null
+          id?: string
+          lesson_date?: string
+          materials?: Json
+          summary?: string | null
+          title?: string | null
+          transcript_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_overviews_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_overviews_transcript_id_fkey"
+            columns: ["transcript_id"]
+            isOneToOne: true
+            referencedRelation: "class_transcripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_leaders: {
         Row: {
           class_id: string
@@ -3189,14 +3243,17 @@ export type Database = {
           created_at: string
           detected_student_name: string | null
           error_message: string | null
+          external_url: string | null
           id: string
+          is_teamwork: boolean
           match_confidence: number | null
+          member_student_ids: string[]
           mime_type: string | null
           ocr_confidence: number | null
           ocr_text: string | null
           original_filename: string | null
           status: string
-          storage_path: string
+          storage_path: string | null
           student_id: string | null
           teacher_notes: string | null
           updated_at: string
@@ -3211,14 +3268,17 @@ export type Database = {
           created_at?: string
           detected_student_name?: string | null
           error_message?: string | null
+          external_url?: string | null
           id?: string
+          is_teamwork?: boolean
           match_confidence?: number | null
+          member_student_ids?: string[]
           mime_type?: string | null
           ocr_confidence?: number | null
           ocr_text?: string | null
           original_filename?: string | null
           status?: string
-          storage_path: string
+          storage_path?: string | null
           student_id?: string | null
           teacher_notes?: string | null
           updated_at?: string
@@ -3233,14 +3293,17 @@ export type Database = {
           created_at?: string
           detected_student_name?: string | null
           error_message?: string | null
+          external_url?: string | null
           id?: string
+          is_teamwork?: boolean
           match_confidence?: number | null
+          member_student_ids?: string[]
           mime_type?: string | null
           ocr_confidence?: number | null
           ocr_text?: string | null
           original_filename?: string | null
           status?: string
-          storage_path?: string
+          storage_path?: string | null
           student_id?: string | null
           teacher_notes?: string | null
           updated_at?: string
@@ -4032,6 +4095,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_enrolled_in_class: {
+        Args: { _class_id: string; _user_id: string }
         Returns: boolean
       }
       is_journal_member: {
