@@ -101,7 +101,7 @@ export default function TeacherTranscripts() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const audioFileRef = useRef<HTMLInputElement>(null);
-  const [audioProgress, setAudioProgress] = useState<{ stage: "uploading" | "transcribing"; fileName: string } | null>(null);
+  const [audioProgress, setAudioProgress] = useState<{ stage: "uploading" | "transcribing" | "analyzing"; fileName: string } | null>(null);
 
   const { data: classes = [] } = useMyClasses(user?.id);
 
@@ -258,13 +258,24 @@ export default function TeacherTranscripts() {
         .single();
       if (insErr) throw insErr;
 
+      // Two separate calls on purpose — transcription and analysis each get
+      // their own edge-function time budget (a combined run used to be killed
+      // mid-flight on long lessons and stranded the row in "processing").
       setAudioProgress({ stage: "transcribing", fileName: file.name });
-      const { data: result, error: fnErr } = await supabase.functions.invoke("transcribe-lesson-audio", {
+      const { data: tRes, error: tErr } = await supabase.functions.invoke("transcribe-lesson-audio", {
         body: { transcript_id: row.id },
       });
-      if (fnErr) throw new Error(await describeFnError(fnErr));
-      if (result?.success === false) throw new Error(result.error || "transcription failed");
-      return { id: row.id, result };
+      if (tErr) throw new Error(await describeFnError(tErr));
+      if (tRes?.success === false) throw new Error(tRes.error || "transcription failed");
+
+      setAudioProgress({ stage: "analyzing", fileName: file.name });
+      const { data: aRes, error: aErr } = await supabase.functions.invoke("analyze-transcript", {
+        body: { transcript_id: row.id },
+      });
+      if (aErr) throw new Error(await describeFnError(aErr));
+      if (aRes?.success === false) throw new Error(aRes.error || "analysis failed");
+
+      return { id: row.id, result: { ...aRes, duration_seconds: tRes?.duration_seconds } };
     },
     onSuccess: ({ id, result }) => {
       const mins = result.duration_seconds ? Math.round(result.duration_seconds / 60) : null;
@@ -312,12 +323,19 @@ export default function TeacherTranscripts() {
         .from("class_transcripts")
         .update({ status: "processing", error_message: null })
         .eq("id", transcriptId);
-      const { data: result, error } = await supabase.functions.invoke("transcribe-lesson-audio", {
+      const { data: tRes, error: tErr } = await supabase.functions.invoke("transcribe-lesson-audio", {
         body: { transcript_id: transcriptId },
       });
-      if (error) throw new Error(await describeFnError(error));
-      if (result?.success === false) throw new Error(result.error || "transcription failed");
-      return result;
+      if (tErr) throw new Error(await describeFnError(tErr));
+      if (tRes?.success === false) throw new Error(tRes.error || "transcription failed");
+
+      // Analysis is a separate request (own time budget) — see the function.
+      const { data: aRes, error: aErr } = await supabase.functions.invoke("analyze-transcript", {
+        body: { transcript_id: transcriptId },
+      });
+      if (aErr) throw new Error(await describeFnError(aErr));
+      if (aRes?.success === false) throw new Error(aRes.error || "analysis failed");
+      return aRes;
     },
     onSuccess: (result) => {
       toast.success("Recording transcribed & analyzed", {
@@ -413,6 +431,12 @@ export default function TeacherTranscripts() {
   });
 
   const selected = transcripts.find((t) => t.id === selectedId);
+  // A run killed by the platform time limit never reaches its catch block, so
+  // the row keeps status "processing" forever. Anything still processing after
+  // this long is stalled, not working — surface it so the retry is obvious.
+  const STALLED_AFTER_MS = 10 * 60 * 1000;
+  const isStalled = (t: any) =>
+    t?.status === "processing" && Date.now() - new Date(t.created_at).getTime() > STALLED_AFTER_MS;
   const isUnknownRow = (m: any) => (m.speaker_label || "").trim().toLowerCase() === "unknown";
   const studentMetrics = metrics.filter((m) => !m.is_teacher && !isUnknownRow(m));
   const maxShare = Math.max(...studentMetrics.map((m) => m.participation_share || 0), 0.0001);
@@ -501,7 +525,9 @@ export default function TeacherTranscripts() {
                 <span className="truncate">
                   {audioProgress.stage === "uploading"
                     ? `Uploading ${audioProgress.fileName}…`
-                    : `Transcribing "${audioProgress.fileName}" with Whisper — long recordings can take a minute or two…`}
+                    : audioProgress.stage === "transcribing"
+                      ? `Transcribing "${audioProgress.fileName}" with Whisper — long recordings can take a minute or two…`
+                      : `Analyzing the lesson — engagement, feedback and point awards…`}
                 </span>
               </div>
             )}
@@ -553,7 +579,11 @@ export default function TeacherTranscripts() {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium truncate">{t.title || "Untitled lesson"}</p>
-                    {t.status === "processing" ? (
+                    {isStalled(t) ? (
+                      <span title="This run was cut off — open it and hit Retry">
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                      </span>
+                    ) : t.status === "processing" ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500 shrink-0" />
                     ) : t.status === "failed" ? (
                       <span title={t.error_message || "Analysis failed"}>
@@ -579,6 +609,21 @@ export default function TeacherTranscripts() {
               </Card>
             ) : (
               <>
+                {/* Stalled run — killed before it could record an error */}
+                {isStalled(selected) && (
+                  <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 space-y-1.5">
+                    <p className="text-sm font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                      <AlertTriangle className="h-4 w-4 shrink-0" />This run was cut off
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      It's been processing for over 10 minutes, which means the job hit the
+                      platform's time limit before it could finish or record an error. Your
+                      recording is safe in storage —{" "}
+                      {selected.source_format === "audio" ? "hit Retry transcription" : "hit Re-analyze"} to run it again.
+                    </p>
+                  </div>
+                )}
+
                 {/* Full failure reason — no more hunting in a hover tooltip */}
                 {selected.status === "failed" && (
                   <div className="rounded-xl border border-red-500/40 bg-red-500/5 p-3 space-y-1.5">

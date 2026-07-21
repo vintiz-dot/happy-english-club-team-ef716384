@@ -108,17 +108,28 @@ async function transcribeWithWhisper(
 }
 
 // Batch segments for speaker labeling so the JSON response can never be
-// truncated regardless of recording length. Batches run SEQUENTIALLY and
-// each one receives the tail of the previous batch's labels — a mono room
-// recorder (e.g. Anker S500) gives no channel separation, so conversational
-// continuity across batch boundaries is the strongest signal there is.
+// truncated regardless of recording length.
+//
+// Batches run in BOUNDED-PARALLEL waves. An earlier version chained them
+// sequentially (each batch seeing the previous batch's *labels*), which was
+// more precise in principle but multiplied wall clock by the batch count —
+// a 45-min lesson blew past the edge function's time limit and the run was
+// killed mid-flight, stranding the transcript in "processing" forever.
+//
+// Continuity is preserved a cheaper way: each batch is given the RAW text of
+// the segments immediately preceding it. That context is known upfront, so
+// batches stay independent and parallelisable, while the labeler still sees
+// the name call-out that precedes an answer — the signal that actually
+// matters on a mono room recorder (e.g. Anker S500).
+//
 // The labeler runs on gpt-4o (not mini): diarization precision is what the
-// whole engagement dashboard stands on, and the labeling pass is a small
-// share of the per-lesson cost.
-const SEGMENT_BATCH_SIZE = 80;
-const SEGMENT_BATCH_LIMIT = 20; // ~1600 segments — comfortably above what a
-                                 // 25MB (Whisper's own cap) recording can hold
-const CONTEXT_TAIL = 8;          // labeled lines carried into the next batch
+// whole engagement dashboard stands on, and with parallel waves the wall
+// clock is roughly one batch regardless of lesson length.
+const SEGMENT_BATCH_SIZE = 120;
+const SEGMENT_BATCH_LIMIT = 20; // ~2400 segments — far above what a 25MB
+                                 // (Whisper's own cap) recording can hold
+const CONTEXT_TAIL = 8;          // raw preceding lines given to each batch
+const DIARIZE_CONCURRENCY = 8;   // parallel labeling calls per wave
 
 async function labelSegmentBatch(
   key: string,
@@ -163,7 +174,8 @@ async function labelSegmentBatch(
               `Known students: ${rosterNames.join(", ") || "(unknown)"}.\n` +
               `Teacher(s): ${teacherNames.join(", ") || "Teacher"}.\n\n` +
               (prevContext
-                ? `The transcript so far ended like this (already labeled):\n${prevContext}\n\n`
+                ? `For context, the moments immediately BEFORE this excerpt were:\n${prevContext}\n` +
+                  "(context only — do not label those lines)\n\n"
                 : "") +
               "For EVERY segment index below return the most likely speaker: a student name " +
               'exactly as listed, "Teacher", or "Unknown" (reserve Unknown for genuinely ' +
@@ -200,16 +212,20 @@ async function diarizeSegments(
   const batches = chunkArray(segments, SEGMENT_BATCH_SIZE).slice(0, SEGMENT_BATCH_LIMIT);
   const labelById = new Map<number, string>();
 
-  // Sequential on purpose: each batch is labeled with the tail of the
-  // previous batch as conversational context.
-  let prevContext = "";
-  for (const batch of batches) {
-    const labels = await labelSegmentBatch(key, batch, rosterNames, teacherNames, prevContext);
-    for (const [id, speaker] of labels) labelById.set(id, speaker);
-    prevContext = batch
-      .slice(-CONTEXT_TAIL)
-      .map((s) => `${labelById.get(s.id) || "Unknown"}: ${s.text}`)
-      .join("\n");
+  // Raw lookback context is known upfront, so batches are independent.
+  const jobs = batches.map((batch, i) => ({
+    batch,
+    context: i === 0 ? "" : batches[i - 1].slice(-CONTEXT_TAIL).map((s) => s.text).join("\n"),
+  }));
+
+  // Bounded-parallel waves: fast enough to stay inside the function's time
+  // budget, without firing dozens of gpt-4o calls at once into a rate limit.
+  for (let i = 0; i < jobs.length; i += DIARIZE_CONCURRENCY) {
+    const wave = jobs.slice(i, i + DIARIZE_CONCURRENCY);
+    const results = await Promise.all(
+      wave.map((j) => labelSegmentBatch(key, j.batch, rosterNames, teacherNames, j.context)),
+    );
+    for (const m of results) for (const [id, speaker] of m) labelById.set(id, speaker);
   }
 
   // Merge consecutive same-speaker segments into natural utterances,
@@ -337,21 +353,20 @@ Deno.serve(async (req) => {
       .eq("id", transcriptId);
     if (updErr) return fail(`Failed to save the transcribed text: ${updErr.message}`, 500);
 
-    // ── 5. Delegate to the existing analysis pipeline, unmodified ─────────
-    const analyzeRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/analyze-transcript`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ transcript_id: transcriptId }),
+    // ── 5. Done. Analysis is deliberately a SEPARATE request ─────────────
+    // This function used to call analyze-transcript inline, which meant one
+    // request had to fit Whisper + diarization + the whole analysis chain
+    // inside a single edge-function time budget — long lessons were killed
+    // mid-flight and left stranded in "processing". The caller now invokes
+    // analyze-transcript itself, so each stage gets its own budget.
+    return respond({
+      success: true,
+      transcribed: true,
+      transcript_id: transcriptId,
+      duration_seconds: duration,
+      segments_transcribed: segments.length,
+      speakers_labeled: new Set(utterances.map((u) => u.speaker)).size,
     });
-    const analyzeJson = await analyzeRes.json().catch(() => ({}));
-
-    return respond(
-      { ...analyzeJson, duration_seconds: duration, segments_transcribed: segments.length },
-      analyzeRes.status,
-    );
   } catch (error) {
     console.error("transcribe-lesson-audio error:", error);
     return fail((error as Error).message || "Transcription failed", 500);
