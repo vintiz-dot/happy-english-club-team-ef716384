@@ -72,22 +72,19 @@ async function transcribeWithWhisper(
   audioBytes: Uint8Array,
   mimeType: string,
   fileName: string,
-  rosterNames: string[],
+  recognitionPrompt: string,
 ): Promise<{ text: string; duration: number; segments: WhisperSegment[] }> {
   const form = new FormData();
   form.append("file", new Blob([audioBytes], { type: mimeType || "audio/mpeg" }), fileName);
   form.append("model", "whisper-1");
   form.append("response_format", "verbose_json");
   form.append("timestamp_granularities[]", "segment");
-  // Whisper's prompt biases recognition toward listed vocabulary — priming
-  // it with the roster makes student names transcribe correctly instead of
-  // as near-homophones, which is what downstream diarization keys on.
-  if (rosterNames.length) {
-    form.append(
-      "prompt",
-      `An English lesson at a Vietnamese English club. Students: ${rosterNames.slice(0, 30).join(", ")}.`,
-    );
-  }
+  // Whisper's prompt biases recognition toward the vocabulary it lists —
+  // priming it with the roster, lesson title and the teacher's own lesson
+  // notes makes names and domain terms ("Oxford Discover", target
+  // vocabulary) transcribe correctly instead of as near-homophones, which
+  // is what downstream diarization and analysis key on.
+  if (recognitionPrompt) form.append("prompt", recognitionPrompt);
 
   const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method: "POST",
@@ -283,7 +280,7 @@ Deno.serve(async (req) => {
 
     const { data: tr, error: trErr } = await sb
       .from("class_transcripts")
-      .select("id, class_id, audio_storage_path, audio_mime_type")
+      .select("id, class_id, audio_storage_path, audio_mime_type, title, lesson_context")
       .eq("id", transcriptId)
       .single();
     if (trErr || !tr) return respond({ success: false, error: "transcript not found" }, 404);
@@ -329,14 +326,48 @@ Deno.serve(async (req) => {
       ...new Set((teacherRows || []).map((r: any) => r.teachers?.full_name).filter(Boolean) as string[]),
     ];
 
-    // ── 3. Whisper transcription (real timestamps, roster-primed) ─────────
+    // ── 3. Build the recognition prompt from everything we know about
+    //       this lesson, then transcribe ────────────────────────────────
+    // Whisper's prompt is capped around 224 tokens, so this is assembled
+    // most-valuable-first and truncated: names (what diarization keys on),
+    // then the lesson topic, the teacher's own notes, the resources they
+    // attached, and finally the textbooks this class habitually uses.
+    const [{ data: resourceRows }, { data: recentOverviews }] = await Promise.all([
+      sb.from("lesson_resources").select("caption").eq("transcript_id", transcriptId).limit(10),
+      sb.from("lesson_overviews")
+        .select("materials")
+        .eq("class_id", tr.class_id)
+        .order("lesson_date", { ascending: false })
+        .limit(5),
+    ]);
+    const recentMaterials = [
+      ...new Set(
+        (recentOverviews || [])
+          .flatMap((o: any) => (Array.isArray(o.materials) ? o.materials : []))
+          .map((m: any) => String(m?.name || "").trim())
+          .filter(Boolean),
+      ),
+    ];
+    const promptParts = [
+      "An English lesson at a Vietnamese English club.",
+      rosterNames.length ? `Students: ${rosterNames.slice(0, 30).join(", ")}.` : "",
+      tr.title ? `Topic: ${tr.title}.` : "",
+      tr.lesson_context ? `Lesson notes: ${String(tr.lesson_context).slice(0, 400)}` : "",
+      (resourceRows || []).length
+        ? `Materials: ${(resourceRows || []).map((r: any) => r.caption).filter(Boolean).join(", ")}.`
+        : "",
+      recentMaterials.length ? `Books used: ${recentMaterials.slice(0, 6).join(", ")}.` : "",
+    ].filter(Boolean);
+    // ~4 chars/token; stay under Whisper's prompt ceiling.
+    const recognitionPrompt = promptParts.join(" ").slice(0, 850);
+
     const fileName = tr.audio_storage_path.split("/").pop() || "recording.mp3";
     const { text, duration, segments } = await transcribeWithWhisper(
       key,
       audioBytes,
       tr.audio_mime_type || "audio/mpeg",
       fileName,
-      rosterNames,
+      recognitionPrompt,
     );
     if (!segments.length || !text.trim()) {
       return fail("Whisper detected no speech in this recording", 400);

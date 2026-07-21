@@ -26,7 +26,7 @@ import { motion } from "framer-motion";
 import {
   AudioLines, Loader2, UploadCloud, Sparkles, MessageSquareText,
   HelpCircle, AlertTriangle, Star, FileText, TrendingUp,
-  Coins, CheckCircle2, XCircle, Mic, BookOpen, NotebookPen, Image as ImageIcon,
+  Coins, CheckCircle2, XCircle, Mic, BookOpen, NotebookPen, Image as ImageIcon, Pencil,
 } from "lucide-react";
 
 // Whisper (whisper-1) hard-caps uploads at 25MB. Checked client-side first
@@ -98,6 +98,7 @@ export default function TeacherTranscripts() {
   const [classId, setClassId] = useState("");
   const [title, setTitle] = useState("");
   const [rawText, setRawText] = useState("");
+  const [lessonContext, setLessonContext] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const audioFileRef = useRef<HTMLInputElement>(null);
@@ -211,6 +212,7 @@ export default function TeacherTranscripts() {
           class_id: classId,
           uploaded_by: user.id,
           title: title.trim() || `Lesson ${new Date().toLocaleDateString()}`,
+          lesson_context: lessonContext.trim() || null,
           source_format: format,
           raw_text: text,
           status: "processing",
@@ -269,6 +271,7 @@ export default function TeacherTranscripts() {
           class_id: classId,
           uploaded_by: user.id,
           title: title.trim() || `Lesson ${new Date().toLocaleDateString()}`,
+          lesson_context: lessonContext.trim() || null,
           source_format: "audio",
           raw_text: "[Audio uploaded — transcribing…]",
           audio_storage_path: path,
@@ -371,6 +374,90 @@ export default function TeacherTranscripts() {
       toast.error("Retry failed", { description: e.message });
       queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
     },
+  });
+
+  // ── Correcting the AI's output ────────────────────────────────────────
+  // The analysis is a first draft; the teacher has the final say. Saving
+  // sets edited_by_teacher so a later re-analysis won't overwrite it.
+  const [editingOverview, setEditingOverview] = useState(false);
+  const [ovDraft, setOvDraft] = useState<{ summary: string; homework: string; materials: { name: string; pages: string }[] }>({
+    summary: "", homework: "", materials: [],
+  });
+
+  const startEditOverview = () => {
+    setOvDraft({
+      summary: overview?.summary ?? selected?.summary ?? "",
+      homework: overview?.homework ?? "",
+      materials: Array.isArray(overview?.materials)
+        ? overview.materials.map((m: any) => ({ name: m?.name ?? "", pages: m?.pages ?? "" }))
+        : [],
+    });
+    setEditingOverview(true);
+  };
+
+  const saveOverviewMutation = useMutation({
+    mutationFn: async () => {
+      if (!selected) throw new Error("No lesson selected");
+      const materials = ovDraft.materials
+        .map((m) => ({ name: m.name.trim(), pages: m.pages.trim() || null }))
+        .filter((m) => m.name);
+      const payload = {
+        transcript_id: selected.id,
+        class_id: classId,
+        lesson_date: selected.transcript_date,
+        title: selected.title ?? null,
+        summary: ovDraft.summary.trim() || null,
+        homework: ovDraft.homework.trim() || null,
+        materials,
+        edited_by_teacher: true,
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await (supabase as any)
+        .from("lesson_overviews")
+        .upsert(payload, { onConflict: "transcript_id" });
+      if (error) throw error;
+
+      // Keep the teacher-facing transcript summary in step with the one
+      // students read, so the two never disagree.
+      await (supabase as any)
+        .from("class_transcripts")
+        .update({ summary: ovDraft.summary.trim() || null })
+        .eq("id", selected.id);
+    },
+    onSuccess: () => {
+      toast.success("Lesson updated — students see your version");
+      setEditingOverview(false);
+      queryClient.invalidateQueries({ queryKey: ["lesson-overview", selectedId] });
+      queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
+    },
+    onError: (e: any) => toast.error("Couldn't save", { description: e.message }),
+  });
+
+  // Per-student feedback corrections.
+  const [editingMetricId, setEditingMetricId] = useState<string | null>(null);
+  const [metricDraft, setMetricDraft] = useState<{ contribution: string; teacher_feedback: string; recommendation: string }>({
+    contribution: "", teacher_feedback: "", recommendation: "",
+  });
+
+  const saveMetricMutation = useMutation({
+    mutationFn: async (metricId: string) => {
+      const { error } = await (supabase as any)
+        .from("transcript_speaker_metrics")
+        .update({
+          contribution: metricDraft.contribution.trim() || null,
+          teacher_feedback: metricDraft.teacher_feedback.trim() || null,
+          recommendation: metricDraft.recommendation.trim() || null,
+          edited_by_teacher: true,
+        })
+        .eq("id", metricId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Feedback updated");
+      setEditingMetricId(null);
+      queryClient.invalidateQueries({ queryKey: ["transcript-metrics", selectedId] });
+    },
+    onError: (e: any) => toast.error("Couldn't save feedback", { description: e.message }),
   });
 
   // Upload images of the materials used in this lesson. They're pushed to
@@ -714,6 +801,13 @@ export default function TeacherTranscripts() {
             </p>
 
             <Textarea
+              placeholder={"Lesson plan / notes (optional but recommended)…\n\nTarget vocabulary, book & pages, the activities you ran. This is fed to the transcriber so names and terms come out right, and to the analyzer so it judges the lesson against what you planned."}
+              value={lessonContext}
+              onChange={(e) => setLessonContext(e.target.value)}
+              className="min-h-[72px] text-xs"
+            />
+
+            <Textarea
               placeholder={'Paste the transcript here…\n\nWorks with raw classroom-recorder transcripts (no speaker labels needed — students are identified from names called out in class), or labeled formats: Zoom/Teams WebVTT, SRT, "Anna: I go to the park yesterday"'}
               value={rawText}
               onChange={(e) => setRawText(e.target.value)}
@@ -852,17 +946,103 @@ export default function TeacherTranscripts() {
                 {selected.summary && (
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-blue-500" />Lesson summary
-                        {overview && (
-                          <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40">
-                            shared with students
-                          </Badge>
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
+                          <Sparkles className="h-4 w-4 text-blue-500" />Lesson summary
+                          {overview && (
+                            <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40">
+                              shared with students
+                            </Badge>
+                          )}
+                          {overview?.edited_by_teacher && (
+                            <Badge variant="outline" className="text-[10px] text-violet-600 border-violet-500/40">
+                              your edit
+                            </Badge>
+                          )}
+                        </CardTitle>
+                        {!editingOverview && (
+                          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs shrink-0" onClick={startEditOverview}>
+                            <Pencil className="h-3 w-3" />Edit
+                          </Button>
                         )}
-                      </CardTitle>
+                      </div>
                     </CardHeader>
                     <CardContent className="space-y-2.5">
-                      <p className="text-sm leading-relaxed text-muted-foreground">{selected.summary}</p>
+                      {editingOverview ? (
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">Summary</p>
+                            <Textarea
+                              value={ovDraft.summary}
+                              onChange={(e) => setOvDraft((d) => ({ ...d, summary: e.target.value }))}
+                              className="min-h-[100px] text-sm"
+                            />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">Materials used</p>
+                            <div className="space-y-1.5">
+                              {ovDraft.materials.map((m, i) => (
+                                <div key={i} className="flex gap-1.5">
+                                  <Input
+                                    placeholder="Book / handout"
+                                    value={m.name}
+                                    onChange={(e) => setOvDraft((d) => {
+                                      const next = [...d.materials];
+                                      next[i] = { ...next[i], name: e.target.value };
+                                      return { ...d, materials: next };
+                                    })}
+                                    className="flex-1 h-8 text-xs"
+                                  />
+                                  <Input
+                                    placeholder="Pages"
+                                    value={m.pages}
+                                    onChange={(e) => setOvDraft((d) => {
+                                      const next = [...d.materials];
+                                      next[i] = { ...next[i], pages: e.target.value };
+                                      return { ...d, materials: next };
+                                    })}
+                                    className="w-24 h-8 text-xs"
+                                  />
+                                  <Button
+                                    variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground"
+                                    onClick={() => setOvDraft((d) => ({ ...d, materials: d.materials.filter((_, x) => x !== i) }))}
+                                  >
+                                    <XCircle className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              ))}
+                              <Button
+                                variant="outline" size="sm" className="h-7 text-xs gap-1"
+                                onClick={() => setOvDraft((d) => ({ ...d, materials: [...d.materials, { name: "", pages: "" }] }))}
+                              >
+                                <BookOpen className="h-3 w-3" />Add material
+                              </Button>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">Homework</p>
+                            <Textarea
+                              placeholder="No homework assigned"
+                              value={ovDraft.homework}
+                              onChange={(e) => setOvDraft((d) => ({ ...d, homework: e.target.value }))}
+                              className="min-h-[56px] text-sm"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm" className="gap-1.5"
+                              disabled={saveOverviewMutation.isPending}
+                              onClick={() => saveOverviewMutation.mutate()}
+                            >
+                              {saveOverviewMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                              Save
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setEditingOverview(false)}>Cancel</Button>
+                          </div>
+                        </div>
+                      ) : (
+                      <>
+                      <p className="text-sm leading-relaxed text-muted-foreground">{overview?.summary ?? selected.summary}</p>
 
                       {/* Did the lesson actually cover its title? */}
                       {selected.title_covered !== null && selected.title_covered !== undefined && (
@@ -908,6 +1088,8 @@ export default function TeacherTranscripts() {
                             <span className="text-muted-foreground">{overview.homework}</span>
                           </span>
                         </p>
+                      )}
+                      </>
                       )}
                     </CardContent>
                   </Card>
@@ -1155,13 +1337,34 @@ export default function TeacherTranscripts() {
                   {studentMetrics.map((m) => (
                     <Card key={`card-${m.id}`}>
                       <CardContent className="pt-4 space-y-2">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <p className="font-semibold text-sm truncate">{m.students?.full_name || m.speaker_label}</p>
-                          {m.cefr_estimate && (
-                            <Badge variant="outline" className={CEFR_COLORS[m.cefr_estimate] || ""}>
-                              {m.cefr_estimate}
-                            </Badge>
-                          )}
+                          <div className="flex items-center gap-1 shrink-0">
+                            {m.edited_by_teacher && (
+                              <Badge variant="outline" className="text-[10px] text-violet-600 border-violet-500/40">edited</Badge>
+                            )}
+                            {m.cefr_estimate && (
+                              <Badge variant="outline" className={CEFR_COLORS[m.cefr_estimate] || ""}>
+                                {m.cefr_estimate}
+                              </Badge>
+                            )}
+                            {editingMetricId !== m.id && (
+                              <Button
+                                variant="ghost" size="icon" className="h-6 w-6"
+                                title="Correct this feedback"
+                                onClick={() => {
+                                  setMetricDraft({
+                                    contribution: m.contribution ?? "",
+                                    teacher_feedback: m.teacher_feedback ?? "",
+                                    recommendation: m.recommendation ?? "",
+                                  });
+                                  setEditingMetricId(m.id);
+                                }}
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
 
                         {/* Couldn't be matched to the roster — let the teacher say who it was */}
@@ -1214,6 +1417,48 @@ export default function TeacherTranscripts() {
                         )}
 
                         {/* AI lesson coaching: contribution, feedback, next step */}
+                        {editingMetricId === m.id ? (
+                          <div className="space-y-2">
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Contribution</p>
+                              <Textarea
+                                value={metricDraft.contribution}
+                                onChange={(e) => setMetricDraft((d) => ({ ...d, contribution: e.target.value }))}
+                                className="min-h-[56px] text-xs"
+                              />
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Teacher feedback</p>
+                              <Textarea
+                                value={metricDraft.teacher_feedback}
+                                onChange={(e) => setMetricDraft((d) => ({ ...d, teacher_feedback: e.target.value }))}
+                                className="min-h-[64px] text-xs"
+                              />
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Next step</p>
+                              <Textarea
+                                value={metricDraft.recommendation}
+                                onChange={(e) => setMetricDraft((d) => ({ ...d, recommendation: e.target.value }))}
+                                className="min-h-[44px] text-xs"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm" className="h-7 text-xs gap-1"
+                                disabled={saveMetricMutation.isPending}
+                                onClick={() => saveMetricMutation.mutate(m.id)}
+                              >
+                                {saveMetricMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                                Save
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditingMetricId(null)}>
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                        <>
                         {m.contribution && (
                           <p className="text-xs text-muted-foreground pt-1">
                             <span className="font-semibold text-foreground">Contribution:</span> {m.contribution}
@@ -1232,6 +1477,8 @@ export default function TeacherTranscripts() {
                             <span className="font-semibold text-emerald-600 dark:text-emerald-400">Next step:</span>{" "}
                             <span className="text-muted-foreground">{m.recommendation}</span>
                           </p>
+                        )}
+                        </>
                         )}
                       </CardContent>
                     </Card>

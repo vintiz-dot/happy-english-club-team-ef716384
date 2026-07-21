@@ -214,6 +214,7 @@ async function llmAnalyze(
   perStudent: Array<{ name: string; sample: string }>,
   lessonExcerpt: string,
   lessonTitle: string | null,
+  lessonContext: string | null,
 ): Promise<any> {
   const key = Deno.env.get("OPENAI_API_KEY");
   if (!key) throw new Error("OPENAI_API_KEY is not configured");
@@ -235,7 +236,12 @@ async function llmAnalyze(
             "analyze ONLY their quoted utterances.\n\n" +
             (lessonTitle
               ? `\nThe teacher titled this lesson: "${lessonTitle}". Judge from the transcript ` +
-                "whether that topic was actually taught, and quote the lines that show it.\n\n"
+                "whether that topic was actually taught, and quote the lines that show it.\n"
+              : "\n") +
+            (lessonContext
+              ? `The teacher's plan/notes for this lesson:\n${String(lessonContext).slice(0, 1500)}\n` +
+                "Use this to interpret what was attempted, name materials correctly, and judge " +
+                "coverage against what was actually planned.\n\n"
               : "\n") +
             'Return JSON: {"summary": string (4-6 sentence lesson summary: topics covered, overall ' +
             "class dynamics), " +
@@ -381,7 +387,7 @@ Deno.serve(async (req) => {
 
     const { data: tr, error: trErr } = await sb
       .from("class_transcripts")
-      .select("id, class_id, raw_text, uploaded_by, transcript_date, title")
+      .select("id, class_id, raw_text, uploaded_by, transcript_date, title, lesson_context")
       .eq("id", transcriptId)
       .single();
     if (trErr || !tr) return respond({ success: false, error: "transcript not found" }, 404);
@@ -487,6 +493,7 @@ Deno.serve(async (req) => {
           llmInput,
           utterances.slice(0, 60).map((u) => `${u.speaker}: ${u.text}`).join("\n"),
           tr.title ?? null,
+          tr.lesson_context ?? null,
         )
       : { summary: "No student speech detected in this transcript.", students: [] };
 
@@ -495,7 +502,17 @@ Deno.serve(async (req) => {
     );
 
     // ── 5. Persist everything ────────────────────────────────────────────
-    // Re-analysis: clear previous derived rows for this transcript.
+    // Re-analysis rebuilds the metric rows, so first capture any text a
+    // teacher has corrected — their wording must survive a re-run.
+    const { data: editedRows } = await sb
+      .from("transcript_speaker_metrics")
+      .select("speaker_label, contribution, teacher_feedback, recommendation")
+      .eq("transcript_id", transcriptId)
+      .eq("edited_by_teacher", true);
+    const preserved = new Map<string, any>(
+      (editedRows || []).map((r: any) => [normName(String(r.speaker_label || "")), r]),
+    );
+
     await sb.from("transcript_speaker_metrics").delete().eq("transcript_id", transcriptId);
 
     let errorsLogged = 0;
@@ -507,6 +524,7 @@ Deno.serve(async (req) => {
       const studentId = isTeacher || isUnknown ? null : matchStudent(s.label);
       if (studentId) matchedCount++;
       const ai = byName.get(normName(s.label));
+      const keep = preserved.get(normName(s.label));
 
       await sb.from("transcript_speaker_metrics").insert({
         transcript_id: transcriptId,
@@ -524,9 +542,14 @@ Deno.serve(async (req) => {
         errors_count: ai?.errors?.length ?? 0,
         cefr_estimate: ai?.cefr_estimate ?? null,
         highlights: ai?.highlights?.length ? ai.highlights : null,
-        contribution: ai?.contribution ? String(ai.contribution).slice(0, 600) : null,
-        teacher_feedback: ai?.teacher_feedback ? String(ai.teacher_feedback).slice(0, 800) : null,
-        recommendation: ai?.recommendation ? String(ai.recommendation).slice(0, 400) : null,
+        // Teacher corrections win over a fresh AI pass.
+        contribution:
+          keep?.contribution ?? (ai?.contribution ? String(ai.contribution).slice(0, 600) : null),
+        teacher_feedback:
+          keep?.teacher_feedback ?? (ai?.teacher_feedback ? String(ai.teacher_feedback).slice(0, 800) : null),
+        recommendation:
+          keep?.recommendation ?? (ai?.recommendation ? String(ai.recommendation).slice(0, 400) : null),
+        edited_by_teacher: !!keep,
       });
 
       if (!studentId || !ai) continue;
@@ -684,20 +707,31 @@ Deno.serve(async (req) => {
     // student (separate table: students must never see raw transcripts or
     // classmates' error analyses). Best-effort.
     try {
-      const { error: ovErr } = await sb.from("lesson_overviews").upsert(
-        {
-          transcript_id: transcriptId,
-          class_id: tr.class_id,
-          lesson_date: tr.transcript_date,
-          title: tr.title ?? null,
-          summary: analysis.summary ?? null,
-          materials: Array.isArray(analysis.materials) ? analysis.materials.slice(0, 10) : [],
-          homework: analysis.homework ? String(analysis.homework).slice(0, 1000) : null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "transcript_id" },
-      );
-      if (ovErr) console.warn("lesson_overviews upsert failed:", ovErr.message);
+      // Never overwrite an overview the teacher has corrected by hand.
+      const { data: existingOv } = await sb
+        .from("lesson_overviews")
+        .select("edited_by_teacher")
+        .eq("transcript_id", transcriptId)
+        .maybeSingle();
+
+      if (existingOv?.edited_by_teacher) {
+        console.log("lesson overview was teacher-edited — leaving it untouched");
+      } else {
+        const { error: ovErr } = await sb.from("lesson_overviews").upsert(
+          {
+            transcript_id: transcriptId,
+            class_id: tr.class_id,
+            lesson_date: tr.transcript_date,
+            title: tr.title ?? null,
+            summary: analysis.summary ?? null,
+            materials: Array.isArray(analysis.materials) ? analysis.materials.slice(0, 10) : [],
+            homework: analysis.homework ? String(analysis.homework).slice(0, 1000) : null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "transcript_id" },
+        );
+        if (ovErr) console.warn("lesson_overviews upsert failed:", ovErr.message);
+      }
     } catch (e) {
       console.warn("lesson overview publish failed (analysis continues):", (e as Error)?.message);
     }
