@@ -213,6 +213,7 @@ function computeStats(utterances: Utterance[]): Map<string, SpeakerStats> {
 async function llmAnalyze(
   perStudent: Array<{ name: string; sample: string }>,
   lessonExcerpt: string,
+  lessonTitle: string | null,
 ): Promise<any> {
   const key = Deno.env.get("OPENAI_API_KEY");
   if (!key) throw new Error("OPENAI_API_KEY is not configured");
@@ -232,8 +233,18 @@ async function llmAnalyze(
             "You are an ESL assessment specialist analyzing a class transcript from an English " +
             "club for Vietnamese school students (levels Pre-A1 to B2). For each listed student, " +
             "analyze ONLY their quoted utterances.\n\n" +
+            (lessonTitle
+              ? `\nThe teacher titled this lesson: "${lessonTitle}". Judge from the transcript ` +
+                "whether that topic was actually taught, and quote the lines that show it.\n\n"
+              : "\n") +
             'Return JSON: {"summary": string (4-6 sentence lesson summary: topics covered, overall ' +
             "class dynamics), " +
+            (lessonTitle
+              ? '"title_coverage": {"covered": boolean (was the titled topic genuinely taught?), ' +
+                '"evidence": [string] (up to 3 verbatim transcript lines showing the topic being ' +
+                'taught or practised — empty if not covered), ' +
+                '"note": string (1 sentence: how well it matched, or what was taught instead)}, '
+              : "") +
             '"materials": [{"name": string (book/handout/game as mentioned in class), ' +
             '"pages": string|null (page numbers if stated, e.g. "42-45")}] (only materials ' +
             "EXPLICITLY referenced, e.g. \"open your books to page 42\"; empty array if none), " +
@@ -401,6 +412,17 @@ Deno.serve(async (req) => {
     const teacherNames = new Set(rawTeacherNames.map((n) => normName(n)));
     teacherNames.add("teacher"); // diarization labels the teacher generically
 
+    // Manual speaker→student corrections the teacher made on earlier
+    // transcripts for this class. A recorder that consistently mis-hears a
+    // name ("Kiwi" for "Kiki") then resolves itself from here on.
+    const { data: aliasRows } = await sb
+      .from("class_speaker_aliases")
+      .select("speaker_label, student_id")
+      .eq("class_id", tr.class_id);
+    const aliasMap = new Map<string, string>(
+      (aliasRows || []).map((a: any) => [String(a.speaker_label), String(a.student_id)]),
+    );
+
     // ── 2. Parse into speaker turns ──────────────────────────────────────
     // Structural parse first (Zoom/Teams VTT, SRT, "Name: line"). Offline
     // classes use a room recorder with no labels — when the parse yields
@@ -421,6 +443,9 @@ Deno.serve(async (req) => {
     const matchStudent = (label: string) => {
       const n = normName(label);
       if (!n) return null;
+      // A teacher's past manual correction beats fuzzy name matching.
+      const aliased = aliasMap.get(n);
+      if (aliased) return aliased;
       let best: { id: string; score: number } | null = null;
       for (const s of roster) {
         const rn = normName(s.full_name);
@@ -458,7 +483,11 @@ Deno.serve(async (req) => {
       }));
 
     const analysis = llmInput.length
-      ? await llmAnalyze(llmInput, utterances.slice(0, 60).map((u) => `${u.speaker}: ${u.text}`).join("\n"))
+      ? await llmAnalyze(
+          llmInput,
+          utterances.slice(0, 60).map((u) => `${u.speaker}: ${u.text}`).join("\n"),
+          tr.title ?? null,
+        )
       : { summary: "No student speech detected in this transcript.", students: [] };
 
     const byName = new Map<string, any>(
@@ -636,6 +665,16 @@ Deno.serve(async (req) => {
         status: "analyzed",
         summary: analysis.summary ?? null,
         analysis,
+        title_covered:
+          typeof analysis.title_coverage?.covered === "boolean"
+            ? analysis.title_coverage.covered
+            : null,
+        title_evidence: Array.isArray(analysis.title_coverage?.evidence)
+          ? analysis.title_coverage.evidence.slice(0, 3)
+          : [],
+        title_note: analysis.title_coverage?.note
+          ? String(analysis.title_coverage.note).slice(0, 500)
+          : null,
         analyzed_at: new Date().toISOString(),
       })
       .eq("id", transcriptId);

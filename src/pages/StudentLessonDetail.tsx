@@ -54,7 +54,7 @@ export default function StudentLessonDetail() {
         .maybeSingle();
       if (!overview) return { student, overview: null };
 
-      const [metricsRes, errorsRes, pointsRes, workRes] = await Promise.all([
+      const [metricsRes, errorsRes, pointsRes, workRes, resourcesRes] = await Promise.all([
         overview.transcript_id
           ? (supabase as any)
               .from("transcript_speaker_metrics")
@@ -85,7 +85,23 @@ export default function StudentLessonDetail() {
           .or(`student_id.eq.${student.id},member_student_ids.cs.{${student.id}}`)
           .gte("created_at", `${overview.lesson_date}T00:00:00`)
           .lte("created_at", `${overview.lesson_date}T23:59:59`),
+        overview.transcript_id
+          ? (supabase as any)
+              .from("lesson_resources")
+              .select("id, storage_path, caption")
+              .eq("transcript_id", overview.transcript_id)
+              .order("created_at", { ascending: true })
+          : Promise.resolve({ data: [] }),
       ]);
+
+      // Signed URLs for the resource images the teacher attached.
+      const resources = await Promise.all(
+        (((resourcesRes as any).data as any[]) || []).map(async (r) => {
+          const { data: signed } = await supabase.storage
+            .from("lesson-resources").createSignedUrl(r.storage_path, 3600);
+          return { ...r, url: signed?.signedUrl ?? null };
+        }),
+      );
 
       // Signed URLs for any photo artifacts.
       const workRows = (workRes.data as any[]) || [];
@@ -105,6 +121,7 @@ export default function StudentLessonDetail() {
         errors: (errorsRes.data as any[]) || [],
         points: (pointsRes.data as any[]) || [],
         work,
+        resources,
       };
     },
   });
@@ -177,6 +194,39 @@ export default function StudentLessonDetail() {
                   <span><span className="font-semibold">Homework:</span> <span className="text-muted-foreground">{overview.homework}</span></span>
                 </p>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Resource photos from the lesson */}
+        {(data?.resources?.length ?? 0) > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-pink-500" />What we used in class
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {data!.resources.map((r: any) => (
+                  <a
+                    key={r.id}
+                    href={r.url || "#"}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-xl border overflow-hidden block hover:shadow-md transition-shadow"
+                  >
+                    {r.url ? (
+                      <img src={r.url} alt={r.caption || "lesson resource"} loading="lazy" className="h-28 w-full object-cover" />
+                    ) : (
+                      <div className="h-28 w-full bg-muted" />
+                    )}
+                    {r.caption && (
+                      <p className="text-[11px] text-muted-foreground p-1.5 truncate">{r.caption}</p>
+                    )}
+                  </a>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}

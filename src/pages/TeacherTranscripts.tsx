@@ -26,7 +26,7 @@ import { motion } from "framer-motion";
 import {
   AudioLines, Loader2, UploadCloud, Sparkles, MessageSquareText,
   HelpCircle, AlertTriangle, Star, FileText, TrendingUp,
-  Coins, CheckCircle2, XCircle, Mic, BookOpen, NotebookPen,
+  Coins, CheckCircle2, XCircle, Mic, BookOpen, NotebookPen, Image as ImageIcon,
 } from "lucide-react";
 
 // Whisper (whisper-1) hard-caps uploads at 25MB. Checked client-side first
@@ -113,7 +113,7 @@ export default function TeacherTranscripts() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("class_transcripts")
-        .select("id, title, transcript_date, status, summary, error_message, source_format, created_at")
+        .select("id, title, transcript_date, status, summary, error_message, source_format, created_at, title_covered, title_evidence, title_note, analysis")
         .eq("class_id", classId)
         .order("created_at", { ascending: false })
         .limit(25);
@@ -145,6 +145,27 @@ export default function TeacherTranscripts() {
         .eq("source_id", selectedId)
         .order("created_at", { ascending: false });
       return data || [];
+    },
+  });
+
+  // Images of materials used in the lesson — pushed to enrolled students.
+  const { data: resources = [] } = useQuery<any[]>({
+    queryKey: ["lesson-resources", selectedId],
+    enabled: !!selectedId,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("lesson_resources")
+        .select("*")
+        .eq("transcript_id", selectedId)
+        .order("created_at", { ascending: true });
+      const rows = (data as any[]) || [];
+      return Promise.all(
+        rows.map(async (r) => {
+          const { data: signed } = await supabase.storage
+            .from("lesson-resources").createSignedUrl(r.storage_path, 3600);
+          return { ...r, url: signed?.signedUrl ?? null };
+        }),
+      );
     },
   });
 
@@ -349,6 +370,162 @@ export default function TeacherTranscripts() {
     onError: (e: any) => {
       toast.error("Retry failed", { description: e.message });
       queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
+    },
+  });
+
+  // Upload images of the materials used in this lesson. They're pushed to
+  // every enrolled student inside the lesson content.
+  const [resourceUploading, setResourceUploading] = useState(false);
+  const uploadResources = async (files: FileList) => {
+    if (!user || !selected) return;
+    setResourceUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const ext = file.name.split(".").pop() || "jpg";
+        // Path starts with class_id so the storage policy can map the object
+        // back to its class for enrolled-student reads.
+        const path = `${classId}/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("lesson-resources")
+          .upload(path, file, { contentType: file.type || "image/jpeg" });
+        if (upErr) throw upErr;
+        const { error: insErr } = await (supabase as any).from("lesson_resources").insert({
+          transcript_id: selected.id,
+          class_id: classId,
+          storage_path: path,
+          caption: file.name.replace(/\.[^.]+$/, "").slice(0, 120),
+          uploaded_by: user.id,
+        });
+        if (insErr) throw insErr;
+      }
+      toast.success("Resources added — students can see them in this lesson");
+      queryClient.invalidateQueries({ queryKey: ["lesson-resources", selectedId] });
+    } catch (e: any) {
+      toast.error("Couldn't add resource", { description: e.message });
+    } finally {
+      setResourceUploading(false);
+    }
+  };
+
+  const deleteResourceMutation = useMutation({
+    mutationFn: async (r: any) => {
+      await supabase.storage.from("lesson-resources").remove([r.storage_path]);
+      const { error } = await (supabase as any).from("lesson_resources").delete().eq("id", r.id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["lesson-resources", selectedId] }),
+    onError: (e: any) => toast.error("Couldn't remove", { description: e.message }),
+  });
+
+  // Manually attribute an unmatched speaker to a student. Beyond fixing this
+  // lesson's stats, it backfills the analysis that was skipped for the
+  // unmatched speaker (errors → SRS cards, CEFR point) and remembers the
+  // label for this class so future transcripts resolve it automatically.
+  const assignSpeakerMutation = useMutation({
+    mutationFn: async ({ metric, studentId: sid }: { metric: any; studentId: string }) => {
+      if (!user) throw new Error("Not authenticated");
+
+      const { error: updErr } = await (supabase as any)
+        .from("transcript_speaker_metrics")
+        .update({ student_id: sid })
+        .eq("id", metric.id);
+      if (updErr) throw updErr;
+
+      // Remember the correction for this class (idempotent).
+      const norm = String(metric.speaker_label || "")
+        .normalize("NFD").replace(/[̀-ͯ]/g, "")
+        .toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+      if (norm) {
+        await (supabase as any).from("class_speaker_aliases").upsert(
+          { class_id: classId, speaker_label: norm, student_id: sid, created_by: user.id },
+          { onConflict: "class_id,speaker_label" },
+        );
+      }
+
+      // Backfill what the pipeline skipped because the speaker was unmatched.
+      const ai = (selected?.analysis?.students || []).find(
+        (s: any) => String(s.name || "").trim().toLowerCase() === String(metric.speaker_label || "").trim().toLowerCase(),
+      );
+      let backfilled = 0;
+      if (ai) {
+        for (const err of ai.errors ?? []) {
+          if (!err?.error_text || !err?.corrected_text) continue;
+          const { data: errRow } = await (supabase as any)
+            .from("student_error_log")
+            .insert({
+              student_id: sid,
+              class_id: classId,
+              source: "transcript",
+              source_id: selected.id,
+              error_text: String(err.error_text).slice(0, 500),
+              corrected_text: String(err.corrected_text).slice(0, 500),
+              error_type: ["grammar", "vocabulary", "pronunciation", "spelling", "syntax", "other"].includes(err.error_type)
+                ? err.error_type : "grammar",
+              cefr_topic: err.cefr_topic ? String(err.cefr_topic).slice(0, 80) : null,
+              created_by: user.id,
+            })
+            .select("id").single();
+          if (errRow) {
+            backfilled++;
+            await (supabase as any).from("srs_cards").insert({
+              student_id: sid,
+              source: "error",
+              error_log_id: errRow.id,
+              front: `Fix this sentence:\n"${String(err.error_text).slice(0, 300)}"`,
+              back: String(err.corrected_text).slice(0, 300),
+              hint: err.cefr_topic ? `Topic: ${err.cefr_topic}` : null,
+            });
+          }
+        }
+        const CEFR_SCORE: Record<string, number> = {
+          "Pre-A1": 0, A1: 1, "A1+": 1.5, A2: 2, "A2+": 2.5, B1: 3, "B1+": 3.5, B2: 4, "B2+": 4.5,
+        };
+        if (ai.cefr_estimate && CEFR_SCORE[ai.cefr_estimate] !== undefined) {
+          await (supabase as any).from("cefr_assessments").insert({
+            student_id: sid,
+            class_id: classId,
+            source: "transcript",
+            level: ai.cefr_estimate,
+            level_score: CEFR_SCORE[ai.cefr_estimate],
+            evidence: ai.evidence ? String(ai.evidence).slice(0, 500) : null,
+            assessed_at: selected.transcript_date,
+            source_id: selected.id,
+            created_by: user.id,
+          });
+        }
+      }
+
+      // Refresh that student's living profile with the newly-linked evidence.
+      supabase.functions.invoke("refresh-student-profile", { body: { student_id: sid } }).catch(() => {});
+      return backfilled;
+    },
+    onSuccess: (backfilled) => {
+      toast.success("Speaker assigned", {
+        description: backfilled > 0
+          ? `${backfilled} flagged point${backfilled === 1 ? "" : "s"} added to their record — and I'll remember this name next time`
+          : "I'll remember this name for future transcripts in this class",
+      });
+      queryClient.invalidateQueries({ queryKey: ["transcript-metrics", selectedId] });
+      queryClient.invalidateQueries({ queryKey: ["transcript-errors", selectedId] });
+    },
+    onError: (e: any) => toast.error("Couldn't assign speaker", { description: e.message }),
+  });
+
+  // Roster for manual speaker assignment.
+  const { data: classRoster = [] } = useQuery<any[]>({
+    queryKey: ["transcript-class-roster", classId],
+    enabled: !!classId,
+    queryFn: async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const { data } = await (supabase as any)
+        .from("enrollments")
+        .select("students(id, full_name)")
+        .eq("class_id", classId)
+        .or(`end_date.is.null,end_date.gte.${today}`);
+      return ((data || []) as any[])
+        .map((r) => r.students)
+        .filter(Boolean)
+        .sort((a: any, b: any) => a.full_name.localeCompare(b.full_name));
     },
   });
 
@@ -686,6 +863,33 @@ export default function TeacherTranscripts() {
                     </CardHeader>
                     <CardContent className="space-y-2.5">
                       <p className="text-sm leading-relaxed text-muted-foreground">{selected.summary}</p>
+
+                      {/* Did the lesson actually cover its title? */}
+                      {selected.title_covered !== null && selected.title_covered !== undefined && (
+                        <div className={`rounded-xl px-3 py-2 ring-1 ${
+                          selected.title_covered
+                            ? "bg-emerald-500/5 ring-emerald-500/25"
+                            : "bg-amber-500/5 ring-amber-500/25"
+                        }`}>
+                          <p className={`text-xs font-bold flex items-center gap-1.5 ${
+                            selected.title_covered ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                          }`}>
+                            {selected.title_covered ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
+                            {selected.title_covered ? "Lesson title covered" : "Title not clearly covered"}
+                            {selected.title && <span className="font-normal text-muted-foreground">— "{selected.title}"</span>}
+                          </p>
+                          {selected.title_note && (
+                            <p className="text-xs text-muted-foreground mt-1">{selected.title_note}</p>
+                          )}
+                          {Array.isArray(selected.title_evidence) && selected.title_evidence.length > 0 && (
+                            <ul className="mt-1.5 space-y-0.5">
+                              {selected.title_evidence.map((q: string, i: number) => (
+                                <li key={i} className="text-[11px] text-muted-foreground italic">"{q}"</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      )}
                       {Array.isArray(overview?.materials) && overview.materials.length > 0 && (
                         <div className="flex flex-wrap items-center gap-1.5">
                           <BookOpen className="h-3.5 w-3.5 text-blue-500" />
@@ -708,6 +912,73 @@ export default function TeacherTranscripts() {
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Resource images — pushed into what students see */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div>
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <ImageIcon className="h-4 w-4 text-pink-500" />
+                          Resources used
+                          {resources.length > 0 && <Badge variant="secondary">{resources.length}</Badge>}
+                        </CardTitle>
+                        <CardDescription className="text-xs mt-1">
+                          Photos of the book pages, handouts or board work from this lesson.
+                          Students see these inside the lesson.
+                        </CardDescription>
+                      </div>
+                      <label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          capture="environment"
+                          className="hidden"
+                          disabled={resourceUploading}
+                          onChange={(e) => {
+                            if (e.target.files?.length) uploadResources(e.target.files);
+                            e.target.value = "";
+                          }}
+                        />
+                        <span className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors hover:bg-muted ${resourceUploading ? "opacity-50 pointer-events-none" : ""}`}>
+                          {resourceUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+                          Add photos
+                        </span>
+                      </label>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {resources.length === 0 ? (
+                      <p className="text-xs text-muted-foreground py-2">
+                        No resource photos yet — add the pages or handouts you used and they'll appear on every student's lesson page.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        {resources.map((r) => (
+                          <div key={r.id} className="relative group rounded-xl border overflow-hidden">
+                            {r.url ? (
+                              <a href={r.url} target="_blank" rel="noreferrer">
+                                <img src={r.url} alt={r.caption || "resource"} loading="lazy" className="h-24 w-full object-cover" />
+                              </a>
+                            ) : (
+                              <div className="h-24 w-full bg-muted flex items-center justify-center">
+                                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                            )}
+                            <button
+                              onClick={() => deleteResourceMutation.mutate(r)}
+                              className="absolute top-1 right-1 rounded-md bg-black/60 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Remove"
+                            >
+                              <XCircle className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {/* Deciphered point awards — teacher reviews, then applies */}
                 {pointSuggestions.length > 0 && (
@@ -892,6 +1163,29 @@ export default function TeacherTranscripts() {
                             </Badge>
                           )}
                         </div>
+
+                        {/* Couldn't be matched to the roster — let the teacher say who it was */}
+                        {!m.student_id && (
+                          <div className="rounded-lg bg-amber-500/5 ring-1 ring-amber-500/25 p-2 space-y-1.5">
+                            <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              "{m.speaker_label}" isn't on the roster — who was this?
+                            </p>
+                            <Select
+                              onValueChange={(sid) => assignSpeakerMutation.mutate({ metric: m, studentId: sid })}
+                              disabled={assignSpeakerMutation.isPending}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder="Assign to a student…" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {classRoster.map((s: any) => (
+                                  <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div className="rounded-xl bg-muted/50 p-2">
                             <MessageSquareText className="h-3.5 w-3.5 mx-auto text-blue-500" />
