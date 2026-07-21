@@ -346,6 +346,48 @@ export type Database = {
           },
         ]
       }
+      class_speaker_aliases: {
+        Row: {
+          class_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          speaker_label: string
+          student_id: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          speaker_label: string
+          student_id: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          speaker_label?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_speaker_aliases_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_speaker_aliases_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_transcripts: {
         Row: {
           analysis: Json | null
@@ -357,12 +399,16 @@ export type Database = {
           created_at: string
           error_message: string | null
           id: string
+          lesson_context: string | null
           raw_text: string
           session_id: string | null
           source_format: string
           status: string
           summary: string | null
           title: string | null
+          title_covered: boolean | null
+          title_evidence: Json
+          title_note: string | null
           transcript_date: string
           uploaded_by: string
         }
@@ -376,12 +422,16 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           id?: string
+          lesson_context?: string | null
           raw_text: string
           session_id?: string | null
           source_format?: string
           status?: string
           summary?: string | null
           title?: string | null
+          title_covered?: boolean | null
+          title_evidence?: Json
+          title_note?: string | null
           transcript_date?: string
           uploaded_by: string
         }
@@ -395,12 +445,16 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           id?: string
+          lesson_context?: string | null
           raw_text?: string
           session_id?: string | null
           source_format?: string
           status?: string
           summary?: string | null
           title?: string | null
+          title_covered?: boolean | null
+          title_evidence?: Json
+          title_note?: string | null
           transcript_date?: string
           uploaded_by?: string
         }
@@ -1661,6 +1715,7 @@ export type Database = {
         Row: {
           class_id: string
           created_at: string
+          edited_by_teacher: boolean
           homework: string | null
           id: string
           lesson_date: string
@@ -1673,6 +1728,7 @@ export type Database = {
         Insert: {
           class_id: string
           created_at?: string
+          edited_by_teacher?: boolean
           homework?: string | null
           id?: string
           lesson_date: string
@@ -1685,6 +1741,7 @@ export type Database = {
         Update: {
           class_id?: string
           created_at?: string
+          edited_by_teacher?: boolean
           homework?: string | null
           id?: string
           lesson_date?: string
@@ -1706,6 +1763,51 @@ export type Database = {
             foreignKeyName: "lesson_overviews_transcript_id_fkey"
             columns: ["transcript_id"]
             isOneToOne: true
+            referencedRelation: "class_transcripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_resources: {
+        Row: {
+          caption: string | null
+          class_id: string
+          created_at: string
+          id: string
+          storage_path: string
+          transcript_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          caption?: string | null
+          class_id: string
+          created_at?: string
+          id?: string
+          storage_path: string
+          transcript_id: string
+          uploaded_by: string
+        }
+        Update: {
+          caption?: string | null
+          class_id?: string
+          created_at?: string
+          id?: string
+          storage_path?: string
+          transcript_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_resources_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_resources_transcript_id_fkey"
+            columns: ["transcript_id"]
+            isOneToOne: false
             referencedRelation: "class_transcripts"
             referencedColumns: ["id"]
           },
@@ -3712,6 +3814,7 @@ export type Database = {
           class_id: string
           contribution: string | null
           created_at: string
+          edited_by_teacher: boolean
           errors_count: number
           highlights: Json | null
           id: string
@@ -3733,6 +3836,7 @@ export type Database = {
           class_id: string
           contribution?: string | null
           created_at?: string
+          edited_by_teacher?: boolean
           errors_count?: number
           highlights?: Json | null
           id?: string
@@ -3754,6 +3858,7 @@ export type Database = {
           class_id?: string
           contribution?: string | null
           created_at?: string
+          edited_by_teacher?: boolean
           errors_count?: number
           highlights?: Json | null
           id?: string
