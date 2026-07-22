@@ -27,6 +27,7 @@ import {
   AudioLines, Loader2, UploadCloud, Sparkles, MessageSquareText,
   HelpCircle, AlertTriangle, Star, FileText, TrendingUp,
   Coins, CheckCircle2, XCircle, Mic, BookOpen, NotebookPen, Image as ImageIcon, Pencil,
+  ListChecks, Clock, Lightbulb, ArrowRight, GraduationCap,
 } from "lucide-react";
 
 // Whisper (whisper-1) hard-caps uploads at 25MB. Checked client-side first
@@ -1094,6 +1095,147 @@ export default function TeacherTranscripts() {
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Structured lesson report — grounded, chronological, from the
+                    whole transcript (the shape of a good teacher's notes). */}
+                {(() => {
+                  const lr = selected.analysis?.lesson_report;
+                  if (!lr) return null;
+                  const hasAny =
+                    (lr.objectives?.length ?? 0) +
+                      (lr.chronology?.length ?? 0) +
+                      (lr.engagement?.length ?? 0) +
+                      (lr.misconceptions?.length ?? 0) +
+                      (lr.interventions?.length ?? 0) +
+                      (lr.next_steps?.length ?? 0) >
+                    0 || !!lr.general_understanding;
+                  if (!hasAny) return null;
+                  return (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-indigo-500" />
+                          Lesson report
+                        </CardTitle>
+                        <CardDescription className="text-xs mt-1">
+                          A grounded, chronological account built from the whole transcript — quotes are verbatim.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4 text-sm">
+                        {Array.isArray(lr.objectives) && lr.objectives.length > 0 && (
+                          <section>
+                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
+                              <ListChecks className="h-3.5 w-3.5 text-emerald-500" /> Objectives worked on
+                            </p>
+                            <ul className="space-y-1">
+                              {lr.objectives.map((o: string, i: number) => (
+                                <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
+                                  <span className="text-emerald-500 mt-0.5">•</span>
+                                  <span>{o}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+                        )}
+
+                        {Array.isArray(lr.chronology) && lr.chronology.length > 0 && (
+                          <section>
+                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
+                              <Clock className="h-3.5 w-3.5 text-blue-500" /> How the lesson unfolded
+                            </p>
+                            <ol className="relative space-y-2 border-l border-border/60 pl-4">
+                              {lr.chronology.map((c: any, i: number) => (
+                                <li key={i} className="relative">
+                                  <span className="absolute -left-[21px] top-1 h-2 w-2 rounded-full bg-blue-500/70 ring-2 ring-background" />
+                                  <p className="font-semibold text-foreground/90">{c.phase}</p>
+                                  <p className="text-muted-foreground text-[13px] leading-relaxed">{c.detail}</p>
+                                </li>
+                              ))}
+                            </ol>
+                          </section>
+                        )}
+
+                        {Array.isArray(lr.engagement) && lr.engagement.length > 0 && (
+                          <section>
+                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
+                              <MessageSquareText className="h-3.5 w-3.5 text-violet-500" /> Student moments
+                            </p>
+                            <ul className="space-y-2">
+                              {lr.engagement.map((e: any, i: number) => (
+                                <li key={i} className="rounded-lg bg-muted/40 px-3 py-2 ring-1 ring-border/50">
+                                  <p className="text-[13px] italic text-foreground/90">
+                                    "{e.quote}"
+                                    {e.student && (
+                                      <span className="not-italic font-semibold text-muted-foreground"> — {e.student}</span>
+                                    )}
+                                  </p>
+                                  {e.note && <p className="text-xs text-muted-foreground mt-0.5">{e.note}</p>}
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+                        )}
+
+                        {Array.isArray(lr.misconceptions) && lr.misconceptions.length > 0 && (
+                          <section>
+                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
+                              <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Misconceptions & confusions
+                            </p>
+                            <ul className="space-y-1">
+                              {lr.misconceptions.map((m: string, i: number) => (
+                                <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
+                                  <span className="text-amber-500 mt-0.5">•</span>
+                                  <span>{m}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+                        )}
+
+                        {Array.isArray(lr.interventions) && lr.interventions.length > 0 && (
+                          <section>
+                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
+                              <Lightbulb className="h-3.5 w-3.5 text-yellow-500" /> Teacher feedback & interventions
+                            </p>
+                            <ul className="space-y-1">
+                              {lr.interventions.map((it: string, i: number) => (
+                                <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
+                                  <span className="text-yellow-500 mt-0.5">•</span>
+                                  <span>{it}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+                        )}
+
+                        {lr.general_understanding && (
+                          <section>
+                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
+                              <GraduationCap className="h-3.5 w-3.5 text-teal-500" /> General understanding
+                            </p>
+                            <p className="text-muted-foreground text-[13px] leading-relaxed">{lr.general_understanding}</p>
+                          </section>
+                        )}
+
+                        {Array.isArray(lr.next_steps) && lr.next_steps.length > 0 && (
+                          <section>
+                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
+                              <ArrowRight className="h-3.5 w-3.5 text-pink-500" /> Next steps
+                            </p>
+                            <ul className="space-y-1">
+                              {lr.next_steps.map((n: string, i: number) => (
+                                <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
+                                  <span className="text-pink-500 mt-0.5">→</span>
+                                  <span>{n}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })()}
 
                 {/* Resource images — pushed into what students see */}
                 <Card>

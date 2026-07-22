@@ -25,6 +25,7 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { visionDocumentOcr, customSearchImages } from "../_lib/google.ts";
 import { fireProfileRefresh } from "../_lib/profile.ts";
+import { safeParseJson } from "../_lib/text.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,21 +55,33 @@ async function structureWithLLM(ocrText: string): Promise<ParsedEntry[]> {
     body: JSON.stringify({
       model: "gpt-4o-mini",
       temperature: 0.1,
-      max_tokens: 2000,
+      max_tokens: 3500,
       response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
           content:
             "You extract vocabulary study entries from OCR text of a student's handwritten " +
-            "notebook page. The page lists English words with meanings (English or Vietnamese) " +
-            "and example sentences. OCR noise is common — fix obvious character-level OCR errors " +
-            "but NEVER invent entries that are not on the page.\n\n" +
+            "notebook page. The page lists English words, each usually with a meaning (English " +
+            "or Vietnamese) and sometimes an example sentence. OCR noise is common.\n\n" +
+            "RULES — accuracy over quantity:\n" +
+            "1. NEVER invent. Every word, meaning and example must come from the page. If a word " +
+            "has no meaning or example written, return empty strings for those — do NOT make one up.\n" +
+            "2. Fix only obvious character-level OCR mistakes (rn→m, 0→o, l→i) so the word is a real " +
+            "English word. If OCR text is too garbled to be a real word, drop it.\n" +
+            "3. Ignore anything that is NOT a vocabulary item: page headers, dates, the student's " +
+            "name, unit/lesson titles, numbering ('1.', '2)'), decorations, scores, doodled notes.\n" +
+            "4. One entry per distinct word — deduplicate repeats on the page. Use the lowercase " +
+            "dictionary headword (singular, base form) as `word`, but keep the meaning/example as " +
+            "written.\n" +
+            "5. Keep Vietnamese meanings in Vietnamese — do not translate or 'improve' them.\n" +
+            "6. Judge the example sentence: is_grammatical=false only for a genuine grammar error, " +
+            "and then give the smallest correction that fixes it.\n\n" +
             'Return JSON: {"entries": [{"word": string (lowercase headword), ' +
             '"meaning": string, "example": string (the student\'s sentence, verbatim apart from OCR fixes), ' +
-            '"is_grammatical": boolean (is the example sentence grammatically acceptable?), ' +
+            '"is_grammatical": boolean, ' +
             '"corrected_example": string|null (minimal correction when is_grammatical=false)}]}.\n' +
-            "If a word has no meaning or example on the page, still include it with empty strings.",
+            "Return an empty list rather than padding with uncertain guesses.",
         },
         { role: "user", content: `OCR text:\n\n${ocrText.slice(0, 8000)}` },
       ],
@@ -77,7 +90,7 @@ async function structureWithLLM(ocrText: string): Promise<ParsedEntry[]> {
   if (!res.ok) throw new Error(`OpenAI error (${res.status}): ${await res.text()}`);
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content;
-  const parsed = JSON.parse(content || "{}");
+  const parsed = safeParseJson(content || "{}");
   const entries: any[] = Array.isArray(parsed.entries) ? parsed.entries : [];
   return entries
     .map((e) => ({

@@ -210,11 +210,97 @@ function computeStats(utterances: Utterance[]): Map<string, SpeakerStats> {
   return map;
 }
 
-async function llmAnalyze(
-  perStudent: Array<{ name: string; sample: string }>,
-  lessonExcerpt: string,
+const ANALYSIS_MODEL = "gpt-4o"; // quality matters here; one lesson at a time
+
+/**
+ * Rich, grounded lesson report from the FULL transcript.
+ *
+ * Two things previously wrecked this: the report was built from only the
+ * first 60 utterances (so anything taught later was reported as "not
+ * covered"), and the prompt asked for a vague 4-sentence blurb. This reads
+ * the whole lesson and returns a structured post-lesson report — the shape
+ * of a good teacher's notes — with hard anti-hallucination guardrails.
+ */
+async function llmLessonReport(
+  key: string,
+  fullTranscript: string,
   lessonTitle: string | null,
   lessonContext: string | null,
+  presentStudents: string[],
+  lessonDate: string,
+): Promise<any> {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: ANALYSIS_MODEL,
+      temperature: 0.2,
+      max_tokens: 6000,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            "You write a structured post-lesson report from the transcript of an English lesson " +
+            "at a Vietnamese English club (students Pre-A1 to B2). The transcript is from a single " +
+            "room microphone, so speaker labels may be imperfect and some lines are labeled " +
+            "'Unknown' or 'Teacher' — use the CONTENT to tell teaching from answering.\n\n" +
+            "ABSOLUTE RULES — a good report is worthless if it's not true:\n" +
+            "1. Ground EVERYTHING in the transcript. Never invent activities, quotes, numbers, " +
+            "materials, homework or outcomes. If something isn't in the transcript, leave it out.\n" +
+            "2. Quotes must be VERBATIM from the transcript — copy the words exactly, don't " +
+            "paraphrase into quotation marks. Attribute each to the labeled speaker.\n" +
+            "3. Read the WHOLE transcript before judging anything, especially title coverage — a " +
+            "topic can appear anywhere. Only say a topic was NOT covered if it is genuinely absent.\n" +
+            "4. Be concrete and specific like a real teacher's notes — what actually happened, in " +
+            "order. No generic filler ('students were engaged') without a specific example.\n" +
+            "5. Every list may be empty. An empty, true report beats a padded, invented one.\n\n" +
+            `Lesson date: ${lessonDate}. Students on the roster who spoke: ${presentStudents.join(", ") || "unknown"}.\n` +
+            (lessonTitle ? `The teacher titled this lesson: "${lessonTitle}".\n` : "") +
+            (lessonContext ? `The teacher's plan/notes:\n${String(lessonContext).slice(0, 1500)}\n` : "") +
+            "\nReturn JSON: {" +
+            '"summary": string (3-4 plain sentences a parent could read: what the class actually ' +
+            "did and how it went), " +
+            '"objectives": [string] (learning objectives you can SEE being worked on in the ' +
+            "transcript — not aspirational), " +
+            '"chronology": [{"phase": string (e.g. "Warm-up", "Grammar", "Reading", "Closing"), ' +
+            '"detail": string (what happened in this segment, grounded, 1-3 sentences)}] (in order), ' +
+            '"engagement": [{"student": string (name or label as in transcript), "quote": string ' +
+            '(VERBATIM), "note": string (what this showed — a strength, an attempt, a breakthrough)}] ' +
+            "(the most telling real moments, up to 8), " +
+            '"misconceptions": [string] (a real confusion a student showed AND how the teacher ' +
+            "addressed it, if they did — grounded), " +
+            '"interventions": [string] (specific teacher feedback or instructional adjustments that ' +
+            "actually happened, e.g. a correction, a scaffold, a re-explanation), " +
+            '"general_understanding": string (1-2 sentences: how well the class grasped the material, ' +
+            "with a concrete example), " +
+            '"next_steps": [string] (follow-ups the teacher stated or that clearly follow from what ' +
+            "happened — grounded, not generic), " +
+            '"materials": [{"name": string, "pages": string|null}] (only materials EXPLICITLY ' +
+            "referenced in the transcript), " +
+            '"homework": string|null (homework actually assigned; null if none), ' +
+            '"title_coverage": {"covered": boolean, "evidence": [string] (up to 3 VERBATIM lines ' +
+            'showing the titled topic being taught), "note": string (how well it matched, or what ' +
+            "was taught instead)}}",
+        },
+        { role: "user", content: fullTranscript.slice(0, 45000) },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`OpenAI lesson-report error (${res.status}): ${await res.text()}`);
+  const data = await res.json();
+  return safeParseJson(data.choices?.[0]?.message?.content || "{}");
+}
+
+/**
+ * Per-student assessment. Kept separate from the lesson report so each call
+ * has a focused job and bounded output. Now on gpt-4o and given the full
+ * lesson as context (not a 3k-char slice).
+ */
+async function llmAnalyze(
+  perStudent: Array<{ name: string; sample: string }>,
+  fullTranscript: string,
+  lessonTitle: string | null,
 ): Promise<any> {
   const key = Deno.env.get("OPENAI_API_KEY");
   if (!key) throw new Error("OPENAI_API_KEY is not configured");
@@ -223,7 +309,7 @@ async function llmAnalyze(
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: ANALYSIS_MODEL,
       temperature: 0.2,
       max_tokens: 12000,
       response_format: { type: "json_object" },
@@ -231,54 +317,31 @@ async function llmAnalyze(
         {
           role: "system",
           content:
-            "You are an ESL assessment specialist analyzing a class transcript from an English " +
-            "club for Vietnamese school students (levels Pre-A1 to B2). For each listed student, " +
-            "analyze ONLY their quoted utterances.\n\n" +
-            (lessonTitle
-              ? `\nThe teacher titled this lesson: "${lessonTitle}". Judge from the transcript ` +
-                "whether that topic was actually taught, and quote the lines that show it.\n"
-              : "\n") +
-            (lessonContext
-              ? `The teacher's plan/notes for this lesson:\n${String(lessonContext).slice(0, 1500)}\n` +
-                "Use this to interpret what was attempted, name materials correctly, and judge " +
-                "coverage against what was actually planned.\n\n"
-              : "\n") +
-            'Return JSON: {"summary": string (4-6 sentence lesson summary: topics covered, overall ' +
-            "class dynamics), " +
-            (lessonTitle
-              ? '"title_coverage": {"covered": boolean (was the titled topic genuinely taught?), ' +
-                '"evidence": [string] (up to 3 verbatim transcript lines showing the topic being ' +
-                'taught or practised — empty if not covered), ' +
-                '"note": string (1 sentence: how well it matched, or what was taught instead)}, '
-              : "") +
-            '"materials": [{"name": string (book/handout/game as mentioned in class), ' +
-            '"pages": string|null (page numbers if stated, e.g. "42-45")}] (only materials ' +
-            "EXPLICITLY referenced, e.g. \"open your books to page 42\"; empty array if none), " +
-            '"homework": string|null (homework the teacher assigned, stated concisely; null if ' +
-            "no homework was assigned), " +
-            '"students": [{"name": string (exactly as given), ' +
+            "You are an ESL assessment specialist. For each listed student, assess ONLY their own " +
+            "quoted utterances, using the full lesson as context. Ground everything in the " +
+            "transcript — never invent errors, quotes or achievements. Flag only GENUINE learner " +
+            "errors (ignore casual contractions and normal spoken ellipsis).\n\n" +
+            (lessonTitle ? `Lesson topic: "${lessonTitle}".\n\n` : "") +
+            'Return JSON: {"students": [{"name": string (exactly as given), ' +
             '"cefr_estimate": "Pre-A1"|"A1"|"A1+"|"A2"|"A2+"|"B1"|"B1+"|"B2"|null (null if too little speech), ' +
             '"confidence": number 0-1, ' +
-            '"errors": [{"error_text": string (verbatim student utterance fragment), ' +
-            '"corrected_text": string, "error_type": "grammar"|"vocabulary"|"pronunciation"|"spelling"|"syntax"|"other", ' +
-            '"cefr_topic": string (e.g. "past simple", "articles", "subject-verb agreement")}] (max 5, most instructive first, ' +
-            "ignore casual contractions and normal spoken ellipsis — flag only genuine learner errors), " +
-            '"highlights": [string] (up to 2 notable moments: breakthroughs, great vocabulary use), ' +
-            '"contribution": string (1-2 sentences: what this student contributed to THIS lesson — ' +
-            "topics they engaged with, questions they asked, roles they played), " +
-            '"teacher_feedback": string (2-3 warm sentences in a teacher\'s voice, addressed to the ' +
-            "student, grounded in their actual utterances this lesson), " +
-            '"recommendation": string (1 concrete, actionable next step for this student), ' +
+            '"errors": [{"error_text": string (VERBATIM student fragment), "corrected_text": string, ' +
+            '"error_type": "grammar"|"vocabulary"|"pronunciation"|"spelling"|"syntax"|"other", ' +
+            '"cefr_topic": string}] (max 5, most instructive first), ' +
+            '"highlights": [string] (up to 2 real notable moments), ' +
+            '"contribution": string (1-2 sentences: what this student actually contributed this ' +
+            "lesson — grounded in their utterances), " +
+            '"teacher_feedback": string (2-3 warm sentences to the student, grounded in what they ' +
+            "actually said/did), " +
+            '"recommendation": string (1 concrete next step), ' +
             '"evidence": string (1 sentence justifying the CEFR estimate)}]}',
         },
         {
           role: "user",
           content:
-            `Lesson excerpt (context):\n${lessonExcerpt.slice(0, 3000)}\n\n` +
-            `Per-student utterances:\n` +
-            perStudent
-              .map((s) => `### ${s.name}\n${s.sample}`)
-              .join("\n\n"),
+            `Full lesson transcript (context):\n${fullTranscript.slice(0, 20000)}\n\n` +
+            `Assess these students from their own utterances:\n` +
+            perStudent.map((s) => `### ${s.name}\n${s.sample}`).join("\n\n"),
         },
       ],
     }),
@@ -488,14 +551,66 @@ Deno.serve(async (req) => {
         sample: s.utterances.slice(0, 40).join("\n").slice(0, 2500),
       }));
 
-    const analysis = llmInput.length
-      ? await llmAnalyze(
-          llmInput,
-          utterances.slice(0, 60).map((u) => `${u.speaker}: ${u.text}`).join("\n"),
-          tr.title ?? null,
-          tr.lesson_context ?? null,
-        )
-      : { summary: "No student speech detected in this transcript.", students: [] };
+    // The whole lesson, labeled — this is what both LLM passes read. The old
+    // code fed only the first 60 utterances, so anything taught later was
+    // reported as "not covered". Cap generously; gpt-4o has a 128k context.
+    const fullTranscript = utterances.map((u) => `${u.speaker}: ${u.text}`).join("\n");
+
+    const presentStudents = [
+      ...new Set(
+        studentSpeakers
+          .filter((s) => s.studentId && s.words >= 5)
+          .map((s) => {
+            const match = roster.find((r) => r.id === s.studentId);
+            return match?.full_name || s.label;
+          }),
+      ),
+    ];
+    const lessonDate = tr.transcript_date ? String(tr.transcript_date).slice(0, 10) : "unknown";
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openaiKey) throw new Error("OPENAI_API_KEY is not configured");
+
+    // Lesson report (whole class) and per-student assessment are separate LLM
+    // jobs — each stays focused and its JSON output stays bounded. Run them
+    // together; a failure in one shouldn't sink the other.
+    const [reportRes, perStudentRes] = await Promise.allSettled([
+      llmLessonReport(
+        openaiKey,
+        fullTranscript,
+        tr.title ?? null,
+        tr.lesson_context ?? null,
+        presentStudents,
+        lessonDate,
+      ),
+      llmInput.length
+        ? llmAnalyze(llmInput, fullTranscript, tr.title ?? null)
+        : Promise.resolve({ students: [] }),
+    ]);
+
+    const report = reportRes.status === "fulfilled" ? reportRes.value : {};
+    if (reportRes.status === "rejected") console.error("lesson report failed:", reportRes.reason);
+    const perStudent = perStudentRes.status === "fulfilled" ? perStudentRes.value : { students: [] };
+    if (perStudentRes.status === "rejected") console.error("per-student analysis failed:", perStudentRes.reason);
+
+    // Merge into the single `analysis` object the rest of the handler (and the
+    // persisted JSONB) expects. Lesson-level fields come from the report; the
+    // structured narrative lives under `lesson_report`.
+    const analysis: any = {
+      summary: report.summary || "No lesson summary could be generated.",
+      title_coverage: report.title_coverage ?? null,
+      materials: Array.isArray(report.materials) ? report.materials : [],
+      homework: report.homework ?? null,
+      lesson_report: {
+        objectives: Array.isArray(report.objectives) ? report.objectives : [],
+        chronology: Array.isArray(report.chronology) ? report.chronology : [],
+        engagement: Array.isArray(report.engagement) ? report.engagement : [],
+        misconceptions: Array.isArray(report.misconceptions) ? report.misconceptions : [],
+        interventions: Array.isArray(report.interventions) ? report.interventions : [],
+        general_understanding: report.general_understanding || "",
+        next_steps: Array.isArray(report.next_steps) ? report.next_steps : [],
+      },
+      students: Array.isArray(perStudent.students) ? perStudent.students : [],
+    };
 
     const byName = new Map<string, any>(
       (analysis.students || []).map((s: any) => [normName(String(s.name || "")), s]),

@@ -34,7 +34,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ScanText, BookMarked, UploadCloud, Loader2, CheckCircle2, XCircle,
   Sparkles, User, ImageIcon, AlertTriangle, Eye, Check, ChevronsUpDown,
-  Users, Link2, ExternalLink,
+  Users, Link2, ExternalLink, RotateCw, Coins,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -160,6 +160,10 @@ interface UploadJob {
   status: "uploading" | "processing" | "done" | "failed";
   message?: string;
   vocabResult?: any;
+  workId?: string;
+  studentId?: string;
+  classId?: string;
+  rescanning?: boolean;
 }
 
 function useTeacherClasses(userId?: string) {
@@ -336,6 +340,9 @@ export default function TeacherSmartUpload() {
             status: "done",
             message: `${added.length} word(s) added, +${result.points_awarded} pts`,
             vocabResult: result,
+            workId: row.id,
+            studentId,
+            classId,
           });
           toast.success(`${file.name}: ${added.length} words added to the word bank`, {
             description: `+${result.points_awarded} points awarded automatically`,
@@ -356,6 +363,36 @@ export default function TeacherSmartUpload() {
     }
     refetchQueue();
     queryClient.invalidateQueries({ queryKey: ["student-work-review"] });
+  };
+
+  // Re-run the vocab scan on a page already uploaded — re-reads the photo,
+  // re-extracts, and adds any words the first pass missed (words already in
+  // the bank simply come back as "duplicate"). Handy when a scan looks thin
+  // or the LLM mis-structured a messy page.
+  const rescanVocab = async (job: UploadJob) => {
+    if (!job.workId || !job.studentId) return;
+    updateJob(job.fileName, { rescanning: true, message: "Re-reading the page…" });
+    try {
+      const { data: result, error: fnErr } = await supabase.functions.invoke("ocr-vocab-scan", {
+        body: { work_id: job.workId, student_id: job.studentId, class_id: job.classId ?? null },
+      });
+      if (fnErr) throw fnErr;
+      if (result?.success === false) throw new Error(result.error || "rescan failed");
+      const added = (result.words || []).filter((w: any) => w.status === "added" || w.status === "corrected");
+      updateJob(job.fileName, {
+        rescanning: false,
+        status: "done",
+        message: `Rescanned — ${added.length} new word(s), +${result.points_awarded} pts`,
+        vocabResult: result,
+      });
+      toast.success(`Rescanned ${job.fileName}`, {
+        description: added.length ? `${added.length} new word(s) added` : "No new words found",
+      });
+      refetchQueue();
+    } catch (err: any) {
+      updateJob(job.fileName, { rescanning: false });
+      toast.error("Rescan failed", { description: err.message });
+    }
   };
 
   // Team photo upload — the team is chosen explicitly, so no name-detection
@@ -746,27 +783,94 @@ export default function TeacherSmartUpload() {
                       <span className="text-muted-foreground text-xs truncate">{j.message}</span>
                     </div>
                   ))}
-                  {/* Vocab word chips from the most recent scans */}
-                  {activeJobs.filter((j) => j.vocabResult).map((j, i) => (
-                    <div key={`words-${i}`} className="flex flex-wrap gap-1.5 pt-1">
-                      {(j.vocabResult.words || []).map((w: any, k: number) => (
-                        <Badge
-                          key={k}
-                          variant="outline"
-                          className={
-                            w.status === "added" ? "border-emerald-500/40 text-emerald-600"
-                            : w.status === "corrected" ? "border-amber-500/40 text-amber-600"
-                            : w.status === "duplicate" ? "border-muted text-muted-foreground line-through"
-                            : "border-red-500/40 text-red-500"
-                          }
-                          title={w.status === "corrected" ? `Corrected: ${w.corrected_example}` : w.meaning}
-                        >
-                          {w.word}
-                          {w.images?.length > 0 && <ImageIcon className="h-3 w-3 ml-1" />}
-                        </Badge>
-                      ))}
-                    </div>
-                  ))}
+                  {/* A clear, itemised word list for each vocab scan, with a
+                      Rescan control to re-read a thin or messy page. */}
+                  {activeJobs.filter((j) => j.vocabResult).map((j, i) => {
+                    const words: any[] = j.vocabResult.words || [];
+                    const counts = {
+                      added: words.filter((w) => w.status === "added").length,
+                      corrected: words.filter((w) => w.status === "corrected").length,
+                      duplicate: words.filter((w) => w.status === "duplicate").length,
+                      rejected: words.filter((w) => w.status === "rejected").length,
+                    };
+                    return (
+                      <div key={`words-${i}`} className="rounded-xl border border-border/60 bg-muted/20 p-3 mt-1">
+                        <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
+                          <div className="flex items-center gap-2 text-xs">
+                            <BookMarked className="h-3.5 w-3.5 text-violet-500" />
+                            <span className="font-semibold">{words.length} word{words.length === 1 ? "" : "s"} from “{j.fileName}”</span>
+                            {typeof j.vocabResult.points_awarded === "number" && j.vocabResult.points_awarded > 0 && (
+                              <span className="flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-medium">
+                                <Coins className="h-3 w-3" />+{j.vocabResult.points_awarded}
+                              </span>
+                            )}
+                          </div>
+                          {j.workId && j.studentId && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 gap-1.5 text-xs"
+                              disabled={j.rescanning}
+                              onClick={() => rescanVocab(j)}
+                            >
+                              {j.rescanning
+                                ? <Loader2 className="h-3 w-3 animate-spin" />
+                                : <RotateCw className="h-3 w-3" />}
+                              Rescan
+                            </Button>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5 mb-2 text-[11px]">
+                          {counts.added > 0 && <span className="text-emerald-600 dark:text-emerald-400">{counts.added} added</span>}
+                          {counts.corrected > 0 && <span className="text-amber-600 dark:text-amber-400">{counts.corrected} corrected</span>}
+                          {counts.duplicate > 0 && <span className="text-muted-foreground">{counts.duplicate} already known</span>}
+                          {counts.rejected > 0 && <span className="text-red-500">{counts.rejected} skipped</span>}
+                        </div>
+
+                        {words.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">
+                            No vocabulary was read from this page. Try a clearer, well-lit photo and Rescan.
+                          </p>
+                        ) : (
+                          <ul className="space-y-1.5">
+                            {words.map((w: any, k: number) => (
+                              <li key={k} className="flex items-start gap-2 text-xs">
+                                <span
+                                  className={cn(
+                                    "mt-1 h-1.5 w-1.5 rounded-full shrink-0",
+                                    w.status === "added" ? "bg-emerald-500"
+                                    : w.status === "corrected" ? "bg-amber-500"
+                                    : w.status === "duplicate" ? "bg-muted-foreground/40"
+                                    : "bg-red-500",
+                                  )}
+                                />
+                                <div className="min-w-0">
+                                  <span className={cn(
+                                    "font-semibold",
+                                    w.status === "duplicate" && "text-muted-foreground",
+                                    w.status === "rejected" && "text-red-500 line-through",
+                                  )}>
+                                    {w.word}
+                                  </span>
+                                  {w.meaning && <span className="text-muted-foreground"> — {w.meaning}</span>}
+                                  {w.images?.length > 0 && <ImageIcon className="inline h-3 w-3 ml-1 text-pink-500" />}
+                                  {w.status === "corrected" && w.corrected_example && (
+                                    <span className="block text-[11px] text-amber-600 dark:text-amber-400">
+                                      ✎ {w.corrected_example}
+                                    </span>
+                                  )}
+                                  {w.status === "rejected" && w.reason && (
+                                    <span className="block text-[11px] text-red-500/80">skipped: {w.reason}</span>
+                                  )}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    );
+                  })}
                 </CardContent>
               </Card>
             </motion.div>
