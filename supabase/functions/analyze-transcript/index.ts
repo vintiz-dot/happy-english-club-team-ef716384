@@ -128,10 +128,7 @@ async function diarizeChunk(
   rosterNames: string[],
   teacherNames: string[],
 ): Promise<Utterance[]> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
+  const parsed = await openaiJson(key, {
       model: "gpt-4o-mini",
       temperature: 0.1,
       max_tokens: 8000,
@@ -154,11 +151,7 @@ async function diarizeChunk(
         },
         { role: "user", content: chunk },
       ],
-    }),
-  });
-  if (!res.ok) throw new Error(`OpenAI diarization error (${res.status}): ${await res.text()}`);
-  const data = await res.json();
-  const parsed = safeParseJson(data.choices?.[0]?.message?.content || "{}");
+  }, "diarization", 60_000);
   const utts: any[] = Array.isArray(parsed.utterances) ? parsed.utterances : [];
   return utts
     .map((u) => ({ speaker: String(u.speaker || "Unknown").trim(), text: String(u.text || "").trim() }))
@@ -210,7 +203,51 @@ function computeStats(utterances: Utterance[]): Map<string, SpeakerStats> {
   return map;
 }
 
-const ANALYSIS_MODEL = "gpt-4o"; // quality matters here; one lesson at a time
+// The lesson report is the quality-critical call, so it gets gpt-4o. The
+// per-student pass stays on gpt-4o-mini: it was already good enough there,
+// and running BOTH on gpt-4o pushed this handler past the edge-function
+// wall-clock budget — the function was killed mid-flight and left transcripts
+// stranded in "processing" (the same stall this pipeline hit before).
+const ANALYSIS_MODEL = "gpt-4o";
+const STUDENT_MODEL = "gpt-4o-mini";
+
+/**
+ * One bounded OpenAI JSON call.
+ *
+ * This handler also runs diarization and point mining, so no single LLM call
+ * may consume the whole budget. Each is hard-capped with an AbortController;
+ * on timeout it rejects, Promise.allSettled catches it, and the run still
+ * finishes and persists whatever succeeded instead of hanging forever.
+ */
+async function openaiJson(
+  key: string,
+  body: Record<string, unknown>,
+  label: string,
+  timeoutMs: number,
+): Promise<any> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), timeoutMs);
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: ctl.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`OpenAI ${label} error (${res.status}): ${(await res.text()).slice(0, 300)}`);
+    }
+    const data = await res.json();
+    return safeParseJson(data.choices?.[0]?.message?.content || "{}");
+  } catch (e) {
+    if ((e as Error)?.name === "AbortError") {
+      throw new Error(`OpenAI ${label} timed out after ${Math.round(timeoutMs / 1000)}s`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /**
  * Rich, grounded lesson report from the FULL transcript.
@@ -229,13 +266,10 @@ async function llmLessonReport(
   presentStudents: string[],
   lessonDate: string,
 ): Promise<any> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
+  return await openaiJson(key, {
       model: ANALYSIS_MODEL,
       temperature: 0.2,
-      max_tokens: 6000,
+      max_tokens: 4000,
       response_format: { type: "json_object" },
       messages: [
         {
@@ -283,19 +317,16 @@ async function llmLessonReport(
             'showing the titled topic being taught), "note": string (how well it matched, or what ' +
             "was taught instead)}}",
         },
-        { role: "user", content: fullTranscript.slice(0, 45000) },
+        { role: "user", content: fullTranscript.slice(0, 30000) },
       ],
-    }),
-  });
-  if (!res.ok) throw new Error(`OpenAI lesson-report error (${res.status}): ${await res.text()}`);
-  const data = await res.json();
-  return safeParseJson(data.choices?.[0]?.message?.content || "{}");
+  }, "lesson-report", 90_000);
 }
 
 /**
  * Per-student assessment. Kept separate from the lesson report so each call
- * has a focused job and bounded output. Now on gpt-4o and given the full
- * lesson as context (not a 3k-char slice).
+ * has a focused job and bounded output. Stays on gpt-4o-mini for speed (the
+ * lesson report is the call that needed the upgrade), but is now given the
+ * lesson as real context instead of a 3k-char slice.
  */
 async function llmAnalyze(
   perStudent: Array<{ name: string; sample: string }>,
@@ -305,13 +336,10 @@ async function llmAnalyze(
   const key = Deno.env.get("OPENAI_API_KEY");
   if (!key) throw new Error("OPENAI_API_KEY is not configured");
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: ANALYSIS_MODEL,
+  return await openaiJson(key, {
+      model: STUDENT_MODEL,
       temperature: 0.2,
-      max_tokens: 12000,
+      max_tokens: 8000,
       response_format: { type: "json_object" },
       messages: [
         {
@@ -339,16 +367,12 @@ async function llmAnalyze(
         {
           role: "user",
           content:
-            `Full lesson transcript (context):\n${fullTranscript.slice(0, 20000)}\n\n` +
+            `Full lesson transcript (context):\n${fullTranscript.slice(0, 10000)}\n\n` +
             `Assess these students from their own utterances:\n` +
             perStudent.map((s) => `### ${s.name}\n${s.sample}`).join("\n\n"),
         },
       ],
-    }),
-  });
-  if (!res.ok) throw new Error(`OpenAI error (${res.status}): ${await res.text()}`);
-  const data = await res.json();
-  return safeParseJson(data.choices?.[0]?.message?.content || "{}");
+  }, "per-student", 90_000);
 }
 
 interface PointAward {
@@ -372,10 +396,7 @@ async function extractPointAwards(
   const chunks = chunkOnLines(teacherSpeech, 8000).slice(0, 12);
   const perChunk = await Promise.all(
     chunks.map(async (chunk) => {
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const parsed = await openaiJson(key, {
           model: "gpt-4o-mini",
           temperature: 0.1,
           max_tokens: 3000,
@@ -407,14 +428,10 @@ async function extractPointAwards(
             },
             { role: "user", content: chunk },
           ],
-        }),
+      }, "point-awards", 45_000).catch((e) => {
+        console.warn("point-award chunk failed (skipped):", (e as Error)?.message);
+        return {};
       });
-      if (!res.ok) {
-        console.warn(`point-award chunk failed (${res.status}), skipped`);
-        return [] as PointAward[];
-      }
-      const data = await res.json();
-      const parsed = safeParseJson(data.choices?.[0]?.message?.content || "{}");
       const awards: any[] = Array.isArray(parsed.awards) ? parsed.awards : [];
       return awards
         .map((a) => ({

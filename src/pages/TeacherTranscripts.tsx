@@ -286,19 +286,32 @@ export default function TeacherTranscripts() {
       // Two separate calls on purpose — transcription and analysis each get
       // their own edge-function time budget (a combined run used to be killed
       // mid-flight on long lessons and stranded the row in "processing").
+      // Name the failing STAGE in the error. Both stages used to surface as
+      // "Audio transcription failed", so an analysis failure looked like the
+      // recording had never transcribed at all.
       setAudioProgress({ stage: "transcribing", fileName: file.name });
       const { data: tRes, error: tErr } = await supabase.functions.invoke("transcribe-lesson-audio", {
         body: { transcript_id: row.id },
       });
-      if (tErr) throw new Error(await describeFnError(tErr));
-      if (tRes?.success === false) throw new Error(tRes.error || "transcription failed");
+      if (tErr) throw new Error(`Transcription step: ${await describeFnError(tErr)}`);
+      if (tRes?.success === false) throw new Error(`Transcription step: ${tRes.error || "failed"}`);
 
       setAudioProgress({ stage: "analyzing", fileName: file.name });
       const { data: aRes, error: aErr } = await supabase.functions.invoke("analyze-transcript", {
         body: { transcript_id: row.id },
       });
-      if (aErr) throw new Error(await describeFnError(aErr));
-      if (aRes?.success === false) throw new Error(aRes.error || "analysis failed");
+      if (aErr) {
+        throw new Error(
+          `The recording transcribed fine, but the analysis step failed: ${await describeFnError(aErr)}. ` +
+            `The transcript is saved — use "Re-analyze" to retry just the analysis.`,
+        );
+      }
+      if (aRes?.success === false) {
+        throw new Error(
+          `The recording transcribed fine, but the analysis step failed: ${aRes.error || "unknown error"}. ` +
+            `The transcript is saved — use "Re-analyze" to retry just the analysis.`,
+        );
+      }
 
       return { id: row.id, result: { ...aRes, duration_seconds: tRes?.duration_seconds } };
     },
@@ -311,7 +324,7 @@ export default function TeacherTranscripts() {
       setSelectedId(id);
       queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
     },
-    onError: (e: any) => toast.error("Audio transcription failed", { description: e.message }),
+    onError: (e: any) => toast.error("Lesson audio processing failed", { description: e.message }),
     onSettled: () => setAudioProgress(null),
   });
 
