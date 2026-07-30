@@ -36,6 +36,10 @@ import { DemoDashboard } from "@/components/student/DemoDashboard";
 import { MonitorStatusCard } from "@/components/student/MonitorStatusCard";
 import { useStudentMonitorClasses } from "@/hooks/useClassMonitor";
 import { StudentExamReportsTab } from "@/components/exam-reports/StudentExamReportsTab";
+import { HeroCommandDeck } from "@/components/student/nova/HeroCommandDeck";
+import { NovaStatCard } from "@/components/student/nova/NovaStatCard";
+import { QuickActionDock, type DockAction } from "@/components/student/nova/QuickActionDock";
+import { SectionHeading } from "@/components/student/nova/SectionHeading";
 
 // Animation variants
 const containerVariants = {
@@ -58,6 +62,16 @@ const itemVariants = {
 
 import { calculateLevel, getLevelTitle } from "@/lib/levelUtils";
 import { useAuth } from "@/hooks/useAuth";
+
+// Launcher tiles for the quick-action dock (presentational config).
+const QUICK_ACTIONS: DockAction[] = [
+  { to: "/student/dashboard?tab=schedule", emoji: "📅", title: "My Classes", desc: "Timetable", gradient: "from-blue-500 to-cyan-500" },
+  { to: "/student/assignments", emoji: "📚", title: "Quests", desc: "Homework", gradient: "from-violet-500 to-fuchsia-600" },
+  { to: "/student/lessons", emoji: "✨", title: "Lessons", desc: "What we did", gradient: "from-emerald-500 to-teal-600" },
+  { to: "/student/vocabulary", emoji: "🧠", title: "Vocabulary", desc: "Word bank", gradient: "from-pink-500 to-rose-600" },
+  { to: "/student/defend-level", emoji: "🛡️", title: "My Level", desc: "Defend it", gradient: "from-indigo-500 to-violet-600" },
+  { to: "/tuition", emoji: "💰", title: "Tuition", desc: "Payments", gradient: "from-amber-500 to-orange-600" },
+];
 
 // Time-based greeting with kid-friendly messages
 function getGreeting(): { text: string; emoji: string; subtext: string } {
@@ -433,109 +447,25 @@ export default function StudentDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="mt-6 space-y-8">
-        {/* Hero Section with Mascot */}
-        <motion.div
-          variants={itemVariants}
-          className={`relative glass-lg shadow-2xl rounded-3xl overflow-hidden backdrop-blur-xl hero-sheen ${isMonitor ? 'border-2 ring-1 ring-offset-0' : 'border-0 border-shine'}`}
-          style={isMonitor ? {
-            borderColor: 'hsl(var(--monitor-border) / 0.6)',
-            boxShadow: '0 0 40px hsl(var(--monitor-glow)), 0 20px 50px rgba(0,0,0,0.1)',
-          } : undefined}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 pointer-events-none" />
-          
-          <div className="p-6 md:p-8 relative">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-              {/* Left: Mascot + Greeting */}
-              <div className="flex items-center gap-4 md:gap-6">
-                {/* Mascot */}
-                <MascotCompanion 
-                  studentName={studentProfile.full_name}
-                  streak={streakData.currentStreak}
-                  pendingHomework={pendingHomework?.length || 0}
-                  level={levelInfo.level}
-                />
-
-                {/* Greeting & Name */}
-                <div className="space-y-1">
-                  <motion.div 
-                    className="flex items-center gap-2"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <span className="text-2xl">{greeting.emoji}</span>
-                    <span className="text-lg text-muted-foreground">{greeting.text},</span>
-                  </motion.div>
-
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-shimmer">
-                    {studentProfile.full_name.split(' ')[0]}!
-                  </h1>
-
-                  {/* Status Message */}
-                  {(studentProfile as any).status_message && (
-                    <p className="text-sm italic text-muted-foreground/80">
-                      "{(studentProfile as any).status_message}"
-                    </p>
-                  )}
-
-                  <p className="text-sm text-muted-foreground">{greeting.subtext}</p>
-                </div>
-              </div>
-
-              {/* Center: Level Ring */}
-              <div className="flex justify-center lg:justify-end">
-                <LevelProgressRing
-                  avatarUrl={studentProfile.avatar_url}
-                  name={studentProfile.full_name}
-                  level={levelInfo.level}
-                  currentXp={levelInfo.currentXp}
-                  nextLevelXp={levelInfo.nextLevelXp}
-                  progress={levelInfo.progress}
-                  totalXp={totalPoints || 0}
-                  size="lg"
-                />
-              </div>
-
-              {/* Right: Edit Button */}
-              <Button 
-                onClick={() => setShowEditProfile(true)} 
-                className="glass border-primary/20 hover:border-primary hover:bg-primary/10 transition-all duration-300 shadow-lg hover:shadow-xl self-center lg:self-start"
-                variant="outline"
-                size="sm"
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            </div>
-
-            {/* XP Progress Bar */}
-            <motion.div 
-              className="mt-6 space-y-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-warning" />
-                  <span className="font-medium">{getLevelTitle(levelInfo.level)} — Level {levelInfo.level}</span>
-                </div>
-                <span className="text-muted-foreground">
-                  {levelInfo.currentXp}/{levelInfo.nextLevelXp} XP to Level {levelInfo.level + 1}
-                </span>
-              </div>
-              <div className="h-3 bg-muted/50 rounded-full overflow-hidden ring-1 ring-border/40">
-                <motion.div
-                  className="h-full premium-bg rounded-full shadow-[0_0_14px_rgba(59,130,246,0.55)]"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${levelInfo.progress}%` }}
-                  transition={{ duration: 1, delay: 0.8, ease: "easeOut" }}
-                />
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
+        {/* Hero — cinematic command deck */}
+        <HeroCommandDeck
+          firstName={studentProfile.full_name.split(' ')[0]}
+          fullName={studentProfile.full_name}
+          avatarUrl={studentProfile.avatar_url}
+          statusMessage={(studentProfile as any).status_message}
+          greeting={greeting}
+          levelTitle={getLevelTitle(levelInfo.level)}
+          level={levelInfo.level}
+          currentXp={levelInfo.currentXp}
+          nextLevelXp={levelInfo.nextLevelXp}
+          progress={levelInfo.progress}
+          totalXp={totalPoints || 0}
+          streak={streakData.currentStreak}
+          pendingHomework={pendingHomework?.length || 0}
+          classesThisWeek={upcomingSessions?.length || 0}
+          isMonitor={isMonitor}
+          onEditProfile={() => setShowEditProfile(true)}
+        />
 
         {/* Monitor Status Card */}
         {isMonitor && (
@@ -571,7 +501,7 @@ export default function StudentDashboard() {
         </div>
 
         {/* Achievement Badges */}
-        <motion.div variants={itemVariants} className="glass-lg border-0 shadow-xl rounded-2xl p-6">
+        <motion.div variants={itemVariants} className="holo-card p-6">
           <AchievementBadges
             totalXp={totalPoints || 0}
             homeworkCompleted={achievementData?.homeworkCompleted || 0}
@@ -588,102 +518,46 @@ export default function StudentDashboard() {
           />
         </motion.div>
 
-        {/* Quick Stats Cards */}
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-3">
-          <motion.div 
-            variants={itemVariants}
-            whileHover={{ scale: 1.03, y: -4 }}
-            className="glass-lg border-0 shadow-xl rounded-2xl p-6 backdrop-blur-xl relative overflow-hidden group cursor-pointer"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="relative">
-              <div className="flex items-center gap-3 mb-4">
-                <motion.div 
-                  className="p-3 rounded-xl bg-gradient-to-br from-secondary/30 to-muted/30"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                >
-                  <Rocket className="h-6 w-6 text-secondary-foreground" />
-                </motion.div>
-                <CardDescription className="text-base font-medium">Upcoming Adventures</CardDescription>
-              </div>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4, type: "spring" }}
-              >
-                <CardTitle className="text-5xl font-black bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent mb-2">
-                  {upcomingSessions?.length || 0}
-                </CardTitle>
-              </motion.div>
-              <p className="text-sm text-muted-foreground">Classes this week</p>
-            </div>
-          </motion.div>
-
-          <motion.div 
-            variants={itemVariants}
-            whileHover={{ scale: 1.03, y: -4 }}
-            className="glass-lg border-0 shadow-xl rounded-2xl p-6 backdrop-blur-xl relative overflow-hidden group cursor-pointer"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="relative">
-              <div className="flex items-center gap-3 mb-4">
-                <motion.div 
-                  className="p-3 rounded-xl bg-gradient-to-br from-accent/30 to-secondary/30"
-                  whileHover={{ scale: 1.1, rotate: -5 }}
-                >
-                  <Target className="h-6 w-6 text-accent-foreground" />
-                </motion.div>
-                <CardDescription className="text-base font-medium">Active Quests</CardDescription>
-              </div>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.5, type: "spring" }}
-              >
-                <CardTitle className="text-5xl font-black bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent mb-2">
-                  {pendingHomework?.length || 0}
-                </CardTitle>
-              </motion.div>
-              <p className="text-sm text-muted-foreground">Homework to complete</p>
-            </div>
-          </motion.div>
-
-          <motion.div 
-            variants={itemVariants}
-            whileHover={{ scale: 1.03, y: -4 }}
-            onClick={() => navigate('/tuition')} 
-            className="glass-lg border-0 shadow-xl rounded-2xl p-6 backdrop-blur-xl cursor-pointer relative overflow-hidden group"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-muted/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="relative">
-              <div className="flex items-center gap-3 mb-4">
-                <motion.div 
-                  className="p-3 rounded-xl bg-gradient-to-br from-warning/30 to-accent/30"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                >
-                  <DollarSign className="h-6 w-6 text-warning" />
-                </motion.div>
-                <CardDescription className="text-base font-medium">Balance</CardDescription>
-              </div>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6, type: "spring" }}
-              >
-                <CardTitle className={`text-3xl sm:text-4xl font-black mb-2 ${tuitionData?.carryOutDebt ? 'text-destructive' : tuitionData?.carryOutCredit ? 'text-success' : 'bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent'}`}>
-                  {tuitionData?.carryOutDebt 
-                    ? formatVND(tuitionData.carryOutDebt)
-                    : tuitionData?.carryOutCredit
-                      ? `-${formatVND(tuitionData.carryOutCredit)}`
-                      : formatVND(0)}
-                </CardTitle>
-              </motion.div>
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                {dayjs().format("MMMM")} 
-                <span className="text-xs glass-sm px-2 py-0.5 rounded-full">View →</span>
-              </p>
-            </div>
-          </motion.div>
+        {/* Quick Stats -- Nova tiles */}
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+          <NovaStatCard
+            icon={Rocket}
+            label="Upcoming Adventures"
+            value={upcomingSessions?.length || 0}
+            caption="Classes this week"
+            gradient="from-blue-500 to-cyan-500"
+            delay={0.05}
+          />
+          <NovaStatCard
+            icon={Target}
+            label="Active Quests"
+            value={pendingHomework?.length || 0}
+            caption="Homework to complete"
+            gradient="from-violet-500 to-fuchsia-600"
+            delay={0.12}
+          />
+          <NovaStatCard
+            icon={Wallet}
+            label="Balance"
+            value={
+              tuitionData?.carryOutDebt
+                ? formatVND(tuitionData.carryOutDebt)
+                : tuitionData?.carryOutCredit
+                  ? `-${formatVND(tuitionData.carryOutCredit)}`
+                  : formatVND(0)
+            }
+            caption={`${dayjs().format("MMMM")} - tap to view`}
+            gradient="from-amber-500 to-orange-600"
+            valueClassName={
+              tuitionData?.carryOutDebt
+                ? "text-destructive text-2xl md:text-3xl"
+                : tuitionData?.carryOutCredit
+                  ? "text-emerald-600 dark:text-emerald-400 text-2xl md:text-3xl"
+                  : "text-2xl md:text-3xl"
+            }
+            onClick={() => navigate('/tuition')}
+            delay={0.19}
+          />
         </div>
 
         {/* Quest Board & Sessions */}
@@ -691,7 +565,7 @@ export default function StudentDashboard() {
           {/* Quest Board (Homework) */}
           <motion.div 
             variants={itemVariants}
-            className="glass-lg border-0 shadow-xl rounded-2xl overflow-hidden"
+            className="holo-card overflow-hidden"
           >
             <div className="p-6 relative">
               <div className="flex items-center justify-between mb-6">
@@ -745,7 +619,7 @@ export default function StudentDashboard() {
           {/* Upcoming Sessions */}
           <motion.div 
             variants={itemVariants}
-            className="glass-lg border-0 shadow-xl rounded-2xl overflow-hidden"
+            className="holo-card overflow-hidden"
           >
             <div className="p-6 relative">
               <div className="flex items-center justify-between mb-6">
@@ -816,20 +690,12 @@ export default function StudentDashboard() {
         {/* Class Rankings */}
         {enrolledClasses && enrolledClasses.length > 0 && (
           <motion.div variants={itemVariants} className="space-y-6">
-            <div className="flex items-center gap-4">
-              <motion.div 
-                className="p-3 rounded-xl bg-gradient-to-br from-warning/20 to-warning/10"
-                whileHover={{ scale: 1.1, rotate: 10 }}
-              >
-                <Trophy className="h-8 w-8 text-warning" />
-              </motion.div>
-              <div>
-                <h2 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                  Class Champions
-                </h2>
-                <p className="text-sm text-muted-foreground">Climb the leaderboard and earn XP!</p>
-              </div>
-            </div>
+            <SectionHeading
+              icon={Trophy}
+              title="Class Champions"
+              subtitle="Climb the leaderboard and earn XP!"
+              gradient="from-amber-400 to-orange-600"
+            />
             
             <div className="grid gap-6 md:grid-cols-2">
               {enrolledClasses.map((enrollment: any, index: number) => {
@@ -857,7 +723,7 @@ export default function StudentDashboard() {
                         pointsToCashRate={classEconomy.points_to_cash_rate || 50}
                       />
                     )}
-                    <div className="glass-lg border-0 shadow-xl rounded-2xl overflow-hidden">
+                    <div className="holo-card overflow-hidden">
                       <StudentClassLeaderboard 
                         classId={classData.id} 
                         className={classData.name}
@@ -871,40 +737,9 @@ export default function StudentDashboard() {
           </motion.div>
         )}
 
-        {/* Quick Access Cards */}
-        <motion.div 
-          variants={itemVariants}
-          className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4"
-        >
-          {[
-            { to: "/student/dashboard?tab=schedule", icon: "📅", title: "My Classes", desc: "View your classes", gradient: "from-primary/20 to-primary/5" },
-            { to: "/student/assignments", icon: "📚", title: "Quests", desc: "Complete homework", gradient: "from-accent/20 to-accent/5" },
-            { to: "/student/journal", icon: "📓", title: "Journal", desc: "Write entries", gradient: "from-success/20 to-success/5" },
-            { to: "/tuition", icon: "💰", title: "Tuition", desc: "View payments", gradient: "from-warning/20 to-warning/5" },
-          ].map((item, index) => (
-            <Link key={item.to} to={item.to}>
-              <motion.div 
-                className={`glass-lg border-0 shadow-xl rounded-2xl p-6 cursor-pointer group relative overflow-hidden h-full bg-gradient-to-br ${item.gradient}`}
-                whileHover={{ scale: 1.05, y: -4 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * index }}
-              >
-                <div className="relative">
-                  <motion.div 
-                    className="text-4xl mb-4"
-                    whileHover={{ scale: 1.2, rotate: 10 }}
-                    transition={{ type: "spring", stiffness: 400 }}
-                  >
-                    {item.icon}
-                  </motion.div>
-                  <CardTitle className="text-lg sm:text-xl font-bold mb-1">{item.title}</CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">{item.desc}</CardDescription>
-                </div>
-                <ChevronRight className="absolute bottom-4 right-4 h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-              </motion.div>
-            </Link>
-          ))}
+        {/* Quick action dock */}
+        <motion.div variants={itemVariants}>
+          <QuickActionDock actions={QUICK_ACTIONS} />
         </motion.div>
           </TabsContent>
 

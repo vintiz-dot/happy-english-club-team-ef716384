@@ -4,8 +4,17 @@
  * A context-aware, strictly READ-ONLY helper. All answers are grounded in
  * what the signed-in user is allowed to see: the edge function queries the
  * database with the caller's own JWT, so RLS — not the model — decides what
- * comes back. Conversation history lives only in this component's state;
- * nothing is written to the database.
+ * comes back.
+ *
+ * PERSISTENCE, without giving the assistant a write path: the `chat` edge
+ * function still performs ZERO writes. Saving is a CLIENT action here —
+ * the browser writes the transcript it already holds into chat_conversations
+ * / chat_messages, which are own-row RLS tables (USING *and* WITH CHECK on
+ * user_id = auth.uid(), and user_id defaults to auth.uid() so it can't be
+ * forged). The model never sees these tables and has no tool that touches
+ * them, so no prompt injection can write, edit or read another user's
+ * history. Worst case for a hostile client is writing junk into its own
+ * rows, which the length CHECKs bound.
  */
 import { useRef, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,15 +57,78 @@ const ROLE_SUGGESTIONS: Record<string, string[]> = {
 };
 
 export function AssistantChat({ className }: { className?: string }) {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const conversationId = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
+
+  // Resume the most recent conversation. RLS means this can only ever return
+  // the signed-in user's own rows.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user) { setLoadingHistory(false); return; }
+      try {
+        const { data: convs } = await (supabase as any)
+          .from("chat_conversations")
+          .select("id")
+          .order("updated_at", { ascending: false })
+          .limit(1);
+        const conv = (convs || [])[0];
+        if (!conv || cancelled) { setLoadingHistory(false); return; }
+        conversationId.current = conv.id;
+        const { data: msgs } = await (supabase as any)
+          .from("chat_messages")
+          .select("role, content")
+          .eq("conversation_id", conv.id)
+          .order("created_at", { ascending: true })
+          .limit(100);
+        if (!cancelled && msgs?.length) {
+          setMessages(msgs.map((m: any) => ({ role: m.role, content: m.content })));
+        }
+      } catch {
+        /* persistence is a convenience — never block chatting on it */
+      } finally {
+        if (!cancelled) setLoadingHistory(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  /** Persist one exchange. Best-effort: a failure must not lose the reply. */
+  const persist = async (userMsg: string, assistantMsg: string) => {
+    if (!user) return;
+    try {
+      if (!conversationId.current) {
+        const { data: created } = await (supabase as any)
+          .from("chat_conversations")
+          // user_id is omitted on purpose — the column defaults to
+          // auth.uid(), so the client cannot claim another user.
+          .insert({ title: userMsg.slice(0, 80) })
+          .select("id")
+          .single();
+        if (!created?.id) return;
+        conversationId.current = created.id;
+      }
+      await (supabase as any).from("chat_messages").insert([
+        { conversation_id: conversationId.current, role: "user", content: userMsg.slice(0, 8000) },
+        { conversation_id: conversationId.current, role: "assistant", content: assistantMsg.slice(0, 8000) },
+      ]);
+      await (supabase as any)
+        .from("chat_conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", conversationId.current);
+    } catch {
+      /* silent — the conversation is still on screen */
+    }
+  };
 
   const send = async (text: string) => {
     const content = text.trim();
@@ -78,7 +150,9 @@ export function AssistantChat({ className }: { className?: string }) {
         throw new Error(detail);
       }
       if (data?.success === false) throw new Error(data.error || "The assistant had a problem");
-      setMessages((m) => [...m, { role: "assistant", content: String(data.reply || "") }]);
+      const reply = String(data.reply || "");
+      setMessages((m) => [...m, { role: "assistant", content: reply }]);
+      void persist(content, reply);
     } catch (e: any) {
       setMessages((m) => [
         ...m,
@@ -89,13 +163,25 @@ export function AssistantChat({ className }: { className?: string }) {
     }
   };
 
+  /** Start fresh. The old conversation stays saved and browsable later. */
+  const startNew = () => {
+    conversationId.current = null;
+    setMessages([]);
+  };
+
   const suggestions = ROLE_SUGGESTIONS[role || "student"] || ROLE_SUGGESTIONS.student;
 
   return (
     <div className={cn("flex flex-col min-h-0", className)}>
       {/* Transcript */}
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1">
-        {messages.length === 0 && (
+        {loadingHistory && messages.length === 0 && (
+          <div className="flex items-center justify-center py-10 text-muted-foreground gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-xs">Loading your conversation…</span>
+          </div>
+        )}
+        {!loadingHistory && messages.length === 0 && (
           <div className="py-6 text-center space-y-3">
             <div className="mx-auto h-11 w-11 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-md">
               <Sparkles className="h-6 w-6 text-white" />
@@ -182,7 +268,7 @@ export function AssistantChat({ className }: { className?: string }) {
                 size="icon"
                 variant="ghost"
                 className="h-9 w-9 shrink-0"
-                onClick={() => setMessages([])}
+                onClick={startNew}
                 title="New conversation"
                 disabled={busy}
               >
@@ -193,7 +279,7 @@ export function AssistantChat({ className }: { className?: string }) {
         </div>
         <p className="text-[10px] text-muted-foreground flex items-center gap-1">
           <ShieldCheck className="h-3 w-3 shrink-0" />
-          Read-only · sees only your own records · AI answers can make mistakes
+          Read-only · private to you · sees only your own records · AI can make mistakes
         </p>
       </div>
     </div>

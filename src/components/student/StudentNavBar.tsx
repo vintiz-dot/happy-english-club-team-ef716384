@@ -1,9 +1,9 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, BookOpen, CalendarDays, MoreHorizontal, NotebookPen, DollarSign, Trophy, Zap, FileText, FolderOpen, Sparkles, FileImage, BookOpenCheck, Scale } from "lucide-react";
+import { Home, BookOpen, CalendarDays, MoreHorizontal, NotebookPen, DollarSign, Trophy, Zap, FileText, FolderOpen, Sparkles, FileImage, BookOpenCheck, Scale, ChevronLeft, ChevronRight } from "lucide-react";
 
 const allNavItems = [
   { id: "dashboard", label: "Dashboard", emoji: "🏠", path: "/student/dashboard", icon: Home, primary: true },
@@ -25,6 +25,39 @@ export function StudentNavBar() {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [moreOpen, setMoreOpen] = useState(false);
+
+  // Desktop rail scroll affordances (see the desktop return for why).
+  const railRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef<HTMLButtonElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollState = () => {
+    const el = railRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  };
+
+  const scrollByAmount = (delta: number) =>
+    railRef.current?.scrollBy({ left: delta, behavior: "smooth" });
+
+  useEffect(() => {
+    updateScrollState();
+    const el = railRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(updateScrollState);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isMobile]);
+
+  // Keep the current section visible — otherwise navigating to a late entry
+  // (e.g. "Defend My Level") leaves it clipped off the right edge.
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    const t = setTimeout(updateScrollState, 350);
+    return () => clearTimeout(t);
+  }, [location.pathname, location.search]);
 
   const isActive = (path: string, id: string) => {
     const searchParams = new URLSearchParams(location.search);
@@ -149,19 +182,50 @@ export function StudentNavBar() {
     );
   }
 
-  // Desktop: horizontal top nav — aurora pill glides between sections
+  // Desktop: horizontal rail — aurora pill glides between sections.
+  //
+  // The rail scrolls (12 destinations won't fit narrow viewports), which used
+  // to CROP the last item silently: the scrollbar is hidden, there was no end
+  // padding, and nothing hinted that more existed off-screen. Now: end
+  // padding so the final pill can always fully clear the edge, gradient fade
+  // masks + arrow buttons that appear only when there is actually more to
+  // see, and the active pill scrolls itself into view on navigation.
   return (
     <nav className="sticky top-[57px] md:top-[65px] z-40 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55 shadow-sm relative">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center gap-0.5 py-1.5 overflow-x-auto scrollbar-hide">
+      <div className="container mx-auto px-4 relative">
+        {/* Left fade + arrow */}
+        <AnimatePresence>
+          {canScrollLeft && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute left-4 top-0 bottom-0 z-20 flex items-center pointer-events-none"
+            >
+              <div className="absolute inset-y-0 -left-1 w-16 bg-gradient-to-r from-card via-card/85 to-transparent" />
+              <button
+                onClick={() => scrollByAmount(-220)}
+                className="relative pointer-events-auto h-7 w-7 rounded-full glass-sm flex items-center justify-center text-muted-foreground hover:text-foreground shadow-sm"
+                aria-label="Scroll navigation left"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div
+          ref={railRef}
+          onScroll={updateScrollState}
+          className="flex items-center gap-0.5 py-1.5 overflow-x-auto scrollbar-hide scroll-smooth pr-10"
+        >
           {allNavItems.map((item) => {
             const active = isActive(item.path, item.id);
             return (
               <button
                 key={item.id}
+                ref={active ? activeRef : undefined}
                 onClick={() => navigate(item.path)}
                 className={cn(
-                  "relative px-2.5 md:px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold whitespace-nowrap transition-colors duration-200",
+                  "relative shrink-0 px-2.5 md:px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold whitespace-nowrap transition-colors duration-200",
                   active ? "text-white" : "text-muted-foreground hover:text-foreground hover:bg-muted/70"
                 )}
               >
@@ -177,6 +241,25 @@ export function StudentNavBar() {
             );
           })}
         </div>
+
+        {/* Right fade + arrow */}
+        <AnimatePresence>
+          {canScrollRight && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute right-4 top-0 bottom-0 z-20 flex items-center justify-end pointer-events-none"
+            >
+              <div className="absolute inset-y-0 -right-1 w-16 bg-gradient-to-l from-card via-card/85 to-transparent" />
+              <button
+                onClick={() => scrollByAmount(220)}
+                className="relative pointer-events-auto h-7 w-7 rounded-full glass-sm flex items-center justify-center text-muted-foreground hover:text-foreground shadow-sm"
+                aria-label="Scroll navigation right"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
       <div className="hairline-gradient absolute inset-x-0 bottom-0 h-px" />
     </nav>
