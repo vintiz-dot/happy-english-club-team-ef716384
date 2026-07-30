@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ArrowLeft, Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BulkReportExport } from "@/components/reports/BulkReportExport";
 import { ClassLeaderboardShared } from "@/components/shared/ClassLeaderboardShared";
 import { ManualPointsDialog } from "@/components/shared/ManualPointsDialog";
 import { SetMonitorControl } from "@/components/teacher/SetMonitorControl";
@@ -240,7 +241,7 @@ export default function TeacherClassDetail() {
           <CalendarMonth month={month} events={events} />
         </TabsContent>
 
-        <TabsContent value="roster">
+        <TabsContent value="roster" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Class Roster</CardTitle>
@@ -259,6 +260,10 @@ export default function TeacherClassDetail() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Class is fixed here, so the picker is hidden and the roster
+              loads straight away. */}
+          <BulkReportExport classId={id!} />
         </TabsContent>
 
         <TabsContent value="leaderboard" className="space-y-4">

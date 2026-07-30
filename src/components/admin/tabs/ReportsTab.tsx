@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PaymentDetailsTable } from "./PaymentDetailsTable";
 import { FamilyPaymentActivityLog } from "@/components/admin/FamilyPaymentActivityLog";
 import { PageHero } from "@/components/quest/PageHero";
+import { BulkReportExport } from "@/components/reports/BulkReportExport";
 
 const ReportsTab = () => {
   const [selectedMonth, setSelectedMonth] = useState(monthKey());
@@ -250,6 +251,9 @@ const ReportsTab = () => {
         subtitle="Cancelled sessions, excused absences, payments, and class P&L."
         variant="glacier"
       />
+
+      {/* Student progress reports — pick a class and students, export PDFs. */}
+      <BulkReportExport />
 
       {/* Month Selector */}
       <div className="flex items-center gap-4">

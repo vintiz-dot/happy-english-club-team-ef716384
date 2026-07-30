@@ -21,6 +21,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { authenticateUser } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,6 +51,22 @@ Deno.serve(async (req) => {
 
   let reportId: string | null = null;
   try {
+    // Staff only.
+    //
+    // This function runs on the SERVICE ROLE and compiles a complete language
+    // profile of a child from transcripts, error logs, work samples and
+    // attendance. `verify_jwt` only proves the caller is signed in. The
+    // student_reports RLS insert check passes on `generated_by = auth.uid()`
+    // alone, so without this gate ANY authenticated user could insert a row
+    // naming another child, call this function, and then read the resulting
+    // profile back through that same policy. Identity comes from the JWT.
+    const caller = await authenticateUser(req, sb);
+    if (!caller) return respond({ success: false, error: "Unauthorized" }, 401);
+    if (!(caller.isServiceRole || caller.roles.has("admin") || caller.roles.has("teacher"))) {
+      console.warn(`generate-student-report denied for non-staff user ${caller.userId}`);
+      return respond({ success: false, error: "Forbidden — teachers and admins only" }, 403);
+    }
+
     const body = await req.json().catch(() => ({}));
     reportId = String(body.report_id ?? "").trim() || null;
     if (!reportId) return respond({ success: false, error: "report_id is required" }, 400);
