@@ -8,7 +8,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, Timer, Disc3, Volume2, Bell, Users, Dices, TrafficCone, Hash, ClipboardCheck, Trophy } from "lucide-react";
+import { Sparkles, Timer, Disc3, Volume2, Bell, Users, Dices, TrafficCone, Hash, ClipboardCheck, Trophy, Bot } from "lucide-react";
+import { AssistantChat } from "@/components/chat/AssistantChat";
 import { VisualTimer } from "./VisualTimer";
 import { WheelSpinner } from "./WheelSpinner";
 import { NoiseMeter } from "./NoiseMeter";
@@ -26,6 +27,11 @@ import { useNoiseMeter } from "@/contexts/NoiseMeterContext";
 // Each tool carries its own gradient identity — the active tab, and any
 // hero styling inside the tool, share the same tone.
 const TOOLS = [
+  // The AI assistant lives HERE rather than in its own floating bubble. Both
+  // FABs were pinned to bottom-6/right-6 on desktop, so the assistant sat on
+  // top of this button (z-50 over z-40) and swallowed the taps meant for the
+  // classroom tools. One launcher, staff pick the tool they want.
+  { id: "assistant", label: "Ask AI", icon: Bot, active: "data-[state=active]:from-violet-600 data-[state=active]:to-indigo-600" },
   { id: "timer", label: "Timer", icon: Timer, active: "data-[state=active]:from-blue-500 data-[state=active]:to-sky-500" },
   { id: "wheel", label: "Spinner", icon: Disc3, active: "data-[state=active]:from-fuchsia-500 data-[state=active]:to-purple-600" },
   { id: "noise", label: "Noise", icon: Volume2, active: "data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600" },
@@ -153,7 +159,8 @@ export function ClassroomToolsLauncher() {
               Classroom Tools
             </SheetTitle>
             <SheetDescription className="relative type-micro text-white/75">
-              Lightweight aids you can pull up mid-lesson without losing your place.
+              Lightweight aids — and the AI assistant — you can pull up mid-lesson without losing
+              your place.
             </SheetDescription>
             <div className="hairline-gradient absolute inset-x-0 bottom-0 h-px" />
           </SheetHeader>
@@ -185,6 +192,15 @@ export function ClassroomToolsLauncher() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-4">
+              {/* The assistant manages its own internal scroll, so it gets a
+                  bounded height instead of growing inside this scroller. */}
+              <TabsContent value="assistant" className="m-0 focus-visible:outline-none">
+                {active === "assistant" && (
+                  <div className="h-[calc(100vh-14rem)] min-h-[320px]">
+                    <AssistantChat className="h-full" />
+                  </div>
+                )}
+              </TabsContent>
               {/* Timer is always rendered — state lives in TimerContext
                   so mounting/unmounting is cheap and lossless. */}
               <TabsContent value="timer" className="m-0 focus-visible:outline-none">

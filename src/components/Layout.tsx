@@ -204,8 +204,14 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
       <AmbientBackground intensity="subtle" />
       {/* Global Cmd+K / Ctrl+K command bar */}
       <CommandPalette />
-      {/* Read-only, RLS-scoped assistant */}
-      <AssistantLauncher />
+      {/*
+        No AssistantLauncher here on purpose. For teachers and admins the
+        assistant is the first tab inside ClassroomToolsLauncher (below):
+        both floating buttons were pinned to the same bottom-right corner on
+        desktop, and the assistant's z-50 bubble covered the classroom-tools
+        button. Students and families, who have no tools launcher, still get
+        the standalone bubble in the layout above.
+      */}
       {/* Desktop Sidebar — liquid glass command rail */}
       <aside
         className={cn(

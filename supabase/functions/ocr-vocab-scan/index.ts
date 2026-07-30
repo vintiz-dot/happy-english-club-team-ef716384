@@ -14,6 +14,18 @@
  *      (point_transactions type `vocabulary_quiz`, same shape as save-word),
  *      and vocab_activity_log rows feed the teacher dashboard.
  *
+ * SECURITY — this function runs on the SERVICE ROLE and awards points, so it
+ * must decide for itself who is allowed to call it. `verify_jwt` only proves
+ * the caller is signed in; it says nothing about their role. Without an
+ * explicit check, any logged-in user — including a student — could invoke it
+ * with an arbitrary `student_id` and mint +10 points per word for anybody.
+ * Teachers and admins only, identity from the JWT and never from the body.
+ *
+ * A student with no login account is NOT an error. `student_id` is the owner
+ * of a word; `user_id` is an optional fast path stamped in later if the child
+ * gets an account (see claim_vocab_for_student). Words are never discarded
+ * for want of an auth account — that bug silently threw away whole pages.
+ *
  * Input:  { work_id: string, student_id: string, class_id?: string }
  *         (student is chosen by the teacher at upload — handwriting pages
  *          rarely carry a reliable name)
@@ -26,6 +38,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { visionDocumentOcr, customSearchImages } from "../_lib/google.ts";
 import { fireProfileRefresh } from "../_lib/profile.ts";
 import { safeParseJson } from "../_lib/text.ts";
+import { authenticateUser } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -139,6 +152,16 @@ Deno.serve(async (req) => {
 
   let workId: string | null = null;
   try {
+    // ── Who is calling? Staff only. ──────────────────────────────────────
+    const caller = await authenticateUser(req, sb);
+    if (!caller) return respond({ success: false, error: "Unauthorized" }, 401);
+    const isStaff =
+      caller.isServiceRole || caller.roles.has("admin") || caller.roles.has("teacher");
+    if (!isStaff) {
+      console.warn(`ocr-vocab-scan denied for non-staff user ${caller.userId}`);
+      return respond({ success: false, error: "Forbidden — teachers and admins only" }, 403);
+    }
+
     const body = await req.json().catch(() => ({}));
     workId = String(body.work_id ?? "").trim() || null;
     const studentId = String(body.student_id ?? "").trim();
@@ -179,18 +202,27 @@ Deno.serve(async (req) => {
     const entries = await structureWithLLM(ocrText);
 
     // ── 3. Duplicate check against the personal word bank ────────────────
-    const linkedUserId = student.linked_user_id as string | null;
+    // Match on the STUDENT first — that is the durable owner. Also match on
+    // the linked account, because words the child saved themselves in the app
+    // carry their account id and may predate any student_id stamping.
+    const linkedUserId = (student.linked_user_id as string | null) ?? null;
     let existing = new Set<string>();
-    if (linkedUserId && entries.length) {
-      const { data: rows } = await sb
+    if (entries.length) {
+      const filters = [`student_id.eq.${student.id}`];
+      if (linkedUserId) filters.push(`user_id.eq.${linkedUserId}`);
+      const { data: rows, error: dupErr } = await sb
         .from("student_vocabulary_entries")
         .select("word")
-        .eq("user_id", linkedUserId)
+        .or(filters.join(","))
         .in("word", entries.map((e) => e.word));
+      if (dupErr) console.warn("duplicate check failed (treating all as new):", dupErr.message);
       existing = new Set((rows || []).map((r: any) => String(r.word).toLowerCase()));
     }
 
     // ── 4 + 5. Images, insert, points ────────────────────────────────────
+    // Points are attributed to the teacher who uploaded the page, falling
+    // back to whoever triggered this run (e.g. an admin doing a rescan).
+    const awardedBy = (work.uploaded_by as string | null) || caller.userId || null;
     const results: any[] = [];
     const entryIds: string[] = [];
     let pointsAwarded = 0;
@@ -198,10 +230,6 @@ Deno.serve(async (req) => {
     for (const entry of entries) {
       if (existing.has(entry.word)) {
         results.push({ ...entry, status: "duplicate", images: [] });
-        continue;
-      }
-      if (!linkedUserId) {
-        results.push({ ...entry, status: "rejected", reason: "student_not_linked", images: [] });
         continue;
       }
 
@@ -213,6 +241,8 @@ Deno.serve(async (req) => {
       const { data: inserted, error: insErr } = await sb
         .from("student_vocabulary_entries")
         .insert({
+          // NULL when the child has no login yet — deliberate. student_id is
+          // the owner; claim_vocab_for_student() stamps this in on linking.
           user_id: linkedUserId,
           student_id: student.id,
           class_id: classId,
@@ -240,7 +270,7 @@ Deno.serve(async (req) => {
       }
       entryIds.push(inserted.id);
 
-      await awardVocabPoints(sb, student.id, classId, work.uploaded_by, entry.word);
+      await awardVocabPoints(sb, student.id, classId, awardedBy, entry.word);
       pointsAwarded += POINTS_PER_WORD;
 
       await sb.from("vocab_activity_log").insert({

@@ -38,6 +38,7 @@ const ROLE_SUGGESTIONS: Record<string, string[]> = {
     "Explain this month's invoice",
   ],
   student: [
+    "When is my next class?",
     "Help me review my vocabulary",
     "Explain my last mistakes",
     "How many points do I have?",
@@ -150,6 +151,14 @@ export function AssistantChat({ className }: { className?: string }) {
         throw new Error(detail);
       }
       if (data?.success === false) throw new Error(data.error || "The assistant had a problem");
+
+      // Tool failures are otherwise invisible: the model turns a failed query
+      // into a polite "I don't have that information", so a broken column can
+      // look for weeks like a weak model. Log them where we can see them.
+      if (Array.isArray(data?.tool_errors) && data.tool_errors.length) {
+        console.warn("[HEC assistant] data tools failed:", data.tool_errors);
+      }
+
       const reply = String(data.reply || "");
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
       void persist(content, reply);

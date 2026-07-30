@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Trash2, Link, Edit, UserPlus } from "lucide-react";
+import { Users, Trash2, Link, Edit, UserPlus, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -45,18 +45,29 @@ export function UsersManager() {
   const [isLinkOpen, setIsLinkOpen] = useState(false);
   const [isRoleOpen, setIsRoleOpen] = useState(false);
 
-  const { data: users, isLoading } = useQuery({
+  const { data: users, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
+      if (!session) throw new Error("You are not signed in.");
 
       const response = await supabase.functions.invoke("manage-admin-users", {
         body: { action: "listUsers" },
       });
 
-      if (response.error) throw response.error;
-      return response.data.users;
+      // functions.invoke gives a generic "non-2xx" message; the useful reason
+      // (e.g. "Forbidden: Admin only") is in the response body. Without this,
+      // every failure looked identical to "there are no users".
+      if (response.error) {
+        let detail = response.error.message;
+        try {
+          const body = await (response.error as any).context?.json?.();
+          if (body?.error) detail = body.error;
+        } catch { /* keep the generic message */ }
+        throw new Error(detail);
+      }
+      if (response.data?.error) throw new Error(response.data.error);
+      return (response.data?.users ?? []) as any[];
     },
   });
 
@@ -242,6 +253,11 @@ export function UsersManager() {
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             Registered Users
+            {!isError && users && (
+              <Badge variant="secondary" className="font-normal">
+                {users.length}
+              </Badge>
+            )}
           </CardTitle>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
@@ -287,6 +303,21 @@ export function UsersManager() {
       <CardContent>
         {isLoading ? (
           <p className="text-center py-8 text-muted-foreground">Loading users...</p>
+        ) : isError ? (
+          /* An error used to fall through to "No users found", which made a
+             permissions or server failure look like an empty database. */
+          <div className="py-8 text-center space-y-3">
+            <AlertCircle className="h-8 w-8 mx-auto text-destructive" />
+            <div>
+              <p className="font-semibold text-destructive">Couldn't load users</p>
+              <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto break-words">
+                {(error as Error)?.message || "Unknown error"}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+              {isFetching ? "Retrying…" : "Try again"}
+            </Button>
+          </div>
         ) : users && users.length > 0 ? (
           <Table>
             <TableHeader>
@@ -316,13 +347,16 @@ export function UsersManager() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {user.teacher ? (
-                      <Badge variant="outline">Teacher: {user.teacher.name}</Badge>
-                    ) : user.family ? (
-                      <Badge variant="outline">Family: {user.family.name}</Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
-                    )}
+                    <div className="flex gap-1 flex-wrap">
+                      {user.teacher && <Badge variant="outline">Teacher: {user.teacher.name}</Badge>}
+                      {user.family && <Badge variant="outline">Family: {user.family.name}</Badge>}
+                      {(user.students || []).map((s: any) => (
+                        <Badge key={s.id} variant="outline">Student: {s.name}</Badge>
+                      ))}
+                      {!user.teacher && !user.family && !(user.students || []).length && (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(user.created_at).toLocaleDateString()}

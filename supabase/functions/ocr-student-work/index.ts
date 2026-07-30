@@ -21,6 +21,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { visionDocumentOcr } from "../_lib/google.ts";
+import { authenticateUser } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -83,6 +84,16 @@ Deno.serve(async (req) => {
 
   let workId: string | null = null;
   try {
+    // Staff only. This runs on the service role and routes/relabels student
+    // work, so `verify_jwt` alone is not enough — that only proves the caller
+    // is signed in, not that they are allowed to act on other people's work.
+    const caller = await authenticateUser(req, sb);
+    if (!caller) return respond({ success: false, error: "Unauthorized" }, 401);
+    if (!(caller.isServiceRole || caller.roles.has("admin") || caller.roles.has("teacher"))) {
+      console.warn(`ocr-student-work denied for non-staff user ${caller.userId}`);
+      return respond({ success: false, error: "Forbidden — teachers and admins only" }, 403);
+    }
+
     const body = await req.json().catch(() => ({}));
     workId = String(body.work_id ?? "").trim() || null;
     if (!workId) return respond({ success: false, error: "work_id is required" }, 400);

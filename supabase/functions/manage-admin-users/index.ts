@@ -159,16 +159,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check if requester is admin
-    const { data: roleData, error: roleError } = await supabase
+    // Check if requester is admin.
+    // Fetch all their roles rather than .single()-ing a filtered lookup: a
+    // real failure and "not an admin" then stop looking identical, and a
+    // genuine lookup error can be reported instead of silently reading as 403.
+    const { data: roleRows, error: roleError } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .single();
+      .eq('user_id', user.id);
 
-    if (roleError || !roleData) {
-      console.error('Not admin:', roleError);
+    if (roleError) {
+      console.error('Role lookup failed:', roleError);
+      return new Response(JSON.stringify({ error: `Could not verify your permissions: ${roleError.message}` }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!(roleRows || []).some((r: { role: string }) => r.role === 'admin')) {
+      console.warn(`manage-admin-users denied for ${user.id}; roles=${JSON.stringify((roleRows || []).map((r: { role: string }) => r.role))}`);
       return new Response(JSON.stringify({ error: 'Forbidden: Admin only' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -190,11 +199,26 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'listUsers') {
-      // List all users with their roles and links
+      // List ALL users with their roles and links.
+      //
+      // auth.admin.listUsers() is PAGINATED and defaults to 50 per page. The
+      // previous single unpaged call could never show a full roster — page
+      // through until a short page comes back.
       console.log('Listing all users');
-      
-      const { data: authUsers, error: listError } = await supabase.auth.admin.listUsers();
-      
+
+      const PER_PAGE = 1000;
+      const MAX_PAGES = 50; // 50k users — a hard stop, not an expected limit
+      const allAuthUsers: any[] = [];
+      let listError: { message: string } | null = null;
+
+      for (let page = 1; page <= MAX_PAGES; page++) {
+        const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: PER_PAGE });
+        if (error) { listError = error; break; }
+        const batch = data?.users || [];
+        allAuthUsers.push(...batch);
+        if (batch.length < PER_PAGE) break;
+      }
+
       if (listError) {
         console.error('Error listing users:', listError);
         return new Response(JSON.stringify({ error: listError.message }), {
@@ -226,6 +250,13 @@ Deno.serve(async (req) => {
         .from('families')
         .select('primary_user_id, id, name');
 
+      // Get student links. Several siblings can share one login, so this maps
+      // a user to a LIST of students rather than a single one.
+      const { data: linkedStudents } = await supabase
+        .from('students')
+        .select('id, full_name, linked_user_id')
+        .not('linked_user_id', 'is', null);
+
       const roleMap = new Map();
       userRoles?.forEach(r => {
         if (!roleMap.has(r.user_id)) roleMap.set(r.user_id, []);
@@ -235,18 +266,27 @@ Deno.serve(async (req) => {
       const teacherMap = new Map(teachers?.map(t => [t.user_id, { id: t.id, name: t.full_name }]) || []);
       const familyMap = new Map(families?.map(f => [f.primary_user_id, { id: f.id, name: f.name }]) || []);
 
-      const usersWithRoles = (authUsers.users || []).map(u => ({
+      const studentMap = new Map<string, { id: string; name: string }[]>();
+      (linkedStudents || []).forEach(s => {
+        const list = studentMap.get(s.linked_user_id) || [];
+        list.push({ id: s.id, name: s.full_name });
+        studentMap.set(s.linked_user_id, list);
+      });
+
+      const usersWithRoles = allAuthUsers.map(u => ({
         id: u.id,
         email: u.email || '',
         created_at: u.created_at,
+        last_sign_in_at: u.last_sign_in_at || null,
         roles: roleMap.get(u.id) || [],
         teacher: teacherMap.get(u.id),
-        family: familyMap.get(u.id)
+        family: familyMap.get(u.id),
+        students: studentMap.get(u.id) || []
       }));
 
       console.log(`Listed ${usersWithRoles.length} users`);
 
-      return new Response(JSON.stringify({ users: usersWithRoles }), {
+      return new Response(JSON.stringify({ users: usersWithRoles, total: usersWithRoles.length }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });

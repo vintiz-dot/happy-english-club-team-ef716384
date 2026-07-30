@@ -45,7 +45,16 @@ export function AdminUsersManager() {
         body: { action: "listUsers" },
       });
 
-      if (error) throw error;
+      if (error) {
+        // The real reason lives in the response body; error.message is only
+        // ever the generic "non-2xx status code".
+        let detail = error.message;
+        try {
+          const body = await (error as any).context?.json?.();
+          if (body?.error) detail = body.error;
+        } catch { /* keep the generic message */ }
+        throw new Error(detail);
+      }
       if (data?.error) throw new Error(data.error);
 
       setUsers(data.users || []);

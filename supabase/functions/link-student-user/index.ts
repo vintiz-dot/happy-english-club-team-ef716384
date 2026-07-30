@@ -45,14 +45,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check if user is admin
-    const { data: userRole } = await supabase
+    // Check if user is admin.
+    //
+    // This used to be `.select('role').eq('user_id', user.id).single()` with no
+    // role filter — which THREW for any admin who also holds a second role
+    // (admin + teacher is normal here), locking real staff out of linking
+    // students entirely. Fetch all roles and look for admin among them.
+    const { data: roleRows, error: rolesErr } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
-      .single();
+      .eq('user_id', user.id);
 
-    if (!userRole || userRole.role !== 'admin') {
+    if (rolesErr) {
+      console.error('Role lookup failed:', rolesErr);
+      return new Response(JSON.stringify({ error: 'Could not verify your permissions' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const isAdmin = (roleRows || []).some((r: { role: string }) => r.role === 'admin');
+    if (!isAdmin) {
       return new Response(JSON.stringify({ error: 'Forbidden - Admin only' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -258,14 +271,43 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Ensure user has 'student' role
-    const { data: existingRole } = await supabase
+    // Claim any vocabulary a teacher scanned for this child BEFORE they had
+    // a login. Those rows are owned by student_id with a NULL user_id; now
+    // that an account exists, stamp it on so the word bank is not empty on
+    // first sign-in. Best-effort — a failure here must not undo the link.
+    let vocabClaimed = 0;
+    try {
+      const claimFor: string[] = [validated.studentId];
+      if (student.family_id) {
+        const { data: linkedSiblings } = await supabase
+          .from('students')
+          .select('id')
+          .eq('family_id', student.family_id)
+          .eq('linked_user_id', validated.userId)
+          .neq('id', validated.studentId);
+        for (const s of linkedSiblings || []) claimFor.push(s.id);
+      }
+      for (const sid of claimFor) {
+        const { data: n } = await supabase.rpc('claim_vocab_for_student', {
+          p_student_id: sid,
+          p_user_id: validated.userId,
+        });
+        vocabClaimed += Number(n) || 0;
+      }
+    } catch (e) {
+      console.error('Vocab claim failed (link still succeeded):', e);
+    }
+
+    // Ensure user has 'student' role.
+    // Fetch ALL roles: .maybeSingle() here errored for anyone holding more
+    // than one role, which made this branch think they had none and add a
+    // redundant 'student' row.
+    const { data: targetRoles } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', validated.userId)
-      .maybeSingle();
+      .eq('user_id', validated.userId);
 
-    if (!existingRole) {
+    if (!(targetRoles || []).length) {
       await supabase
         .from('user_roles')
         .insert({ user_id: validated.userId, role: 'student' });
@@ -363,10 +405,11 @@ Deno.serve(async (req) => {
       siblingsLinked = count || 0;
     }
 
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       success: true,
       warning: emailWarning,
-      siblingsLinked
+      siblingsLinked,
+      vocabClaimed
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

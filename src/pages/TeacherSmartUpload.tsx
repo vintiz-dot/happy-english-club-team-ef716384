@@ -39,7 +39,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 interface ClassOption { id: string; name: string }
-interface StudentOption { id: string; full_name: string }
+interface StudentOption { id: string; full_name: string; linked_user_id?: string | null }
 
 /**
  * Searchable student picker for the review queue. A plain <Select> is
@@ -220,7 +220,9 @@ export default function TeacherSmartUpload() {
       const today = new Date().toISOString().slice(0, 10);
       const { data, error } = await (supabase as any)
         .from("enrollments")
-        .select("students(id, full_name)")
+        // linked_user_id tells us whether the child has an app login. Vocab
+        // scans no longer require one, but it is worth showing in the picker.
+        .select("students(id, full_name, linked_user_id)")
         .eq("class_id", classId)
         .or(`end_date.is.null,end_date.gte.${today}`);
       if (error) {
@@ -575,9 +577,24 @@ export default function TeacherSmartUpload() {
               <Select value={studentId} onValueChange={setStudentId} disabled={!classId}>
                 <SelectTrigger><SelectValue placeholder="Auto-detect from the page" /></SelectTrigger>
                 <SelectContent>
-                  {students.map((s) => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+                  {students.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      <span className="flex items-center gap-2">
+                        {s.full_name}
+                        {!s.linked_user_id && (
+                          <span className="text-[10px] text-muted-foreground">no app login yet</span>
+                        )}
+                      </span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              {studentId && !students.find((s) => s.id === studentId)?.linked_user_id && (
+                <p className="text-[11px] text-muted-foreground mt-1.5">
+                  This student has no app account yet — scans are still saved to their name and
+                  will appear in their word bank as soon as an account is linked.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
