@@ -815,6 +815,30 @@ export type Database = {
           },
         ]
       }
+      demo_access: {
+        Row: {
+          enabled: boolean
+          id: boolean
+          password_set_at: string | null
+          password_set_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          id?: boolean
+          password_set_at?: string | null
+          password_set_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: boolean
+          password_set_at?: string | null
+          password_set_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       discount_assignments: {
         Row: {
           created_at: string
