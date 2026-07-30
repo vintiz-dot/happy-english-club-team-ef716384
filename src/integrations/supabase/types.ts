@@ -307,6 +307,130 @@ export type Database = {
           },
         ]
       }
+      cefr_defense_tests: {
+        Row: {
+          claim_id: string
+          class_id: string | null
+          created_at: string
+          created_by: string | null
+          current_stage: number
+          id: string
+          responses: Json
+          result: Json | null
+          stages: Json
+          status: string
+          student_id: string
+          target_level: string
+          updated_at: string
+        }
+        Insert: {
+          claim_id: string
+          class_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_stage?: number
+          id?: string
+          responses?: Json
+          result?: Json | null
+          stages?: Json
+          status?: string
+          student_id: string
+          target_level: string
+          updated_at?: string
+        }
+        Update: {
+          claim_id?: string
+          class_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_stage?: number
+          id?: string
+          responses?: Json
+          result?: Json | null
+          stages?: Json
+          status?: string
+          student_id?: string
+          target_level?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cefr_defense_tests_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "cefr_level_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cefr_defense_tests_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cefr_defense_tests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cefr_level_claims: {
+        Row: {
+          claimed_level: string
+          class_id: string | null
+          created_at: string
+          evidence: Json | null
+          evidence_checked_at: string | null
+          id: string
+          set_by: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          claimed_level: string
+          class_id?: string | null
+          created_at?: string
+          evidence?: Json | null
+          evidence_checked_at?: string | null
+          id?: string
+          set_by: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          claimed_level?: string
+          class_id?: string | null
+          created_at?: string
+          evidence?: Json | null
+          evidence_checked_at?: string | null
+          id?: string
+          set_by?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cefr_level_claims_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cefr_level_claims_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_monitors: {
         Row: {
           assigned_at: string
@@ -400,6 +524,8 @@ export type Database = {
           error_message: string | null
           id: string
           lesson_context: string | null
+          processing_stage: string | null
+          processing_started_at: string | null
           raw_text: string
           session_id: string | null
           source_format: string
@@ -423,6 +549,8 @@ export type Database = {
           error_message?: string | null
           id?: string
           lesson_context?: string | null
+          processing_stage?: string | null
+          processing_started_at?: string | null
           raw_text: string
           session_id?: string | null
           source_format?: string
@@ -446,6 +574,8 @@ export type Database = {
           error_message?: string | null
           id?: string
           lesson_context?: string | null
+          processing_stage?: string | null
+          processing_started_at?: string | null
           raw_text?: string
           session_id?: string | null
           source_format?: string
