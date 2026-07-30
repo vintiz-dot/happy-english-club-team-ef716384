@@ -21,10 +21,17 @@ import { useAuth } from "@/hooks/useAuth";
 
 type UserRole = "admin" | "teacher" | "family" | "student";
 
+// The only demo account permitted in this app. It is a student-role sandbox
+// (own-row RLS + enrolled solely in "Demo Class"), locked behind a password
+// an admin sets in the dashboard. Never add a privileged demo account: this
+// deployment holds real student and family records.
+const DEMO_STUDENT_EMAIL = "student@demo.com";
+
 const Auth = () => {
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [demoPassword, setDemoPassword] = useState("");
   const [role, setRole] = useState<UserRole>("student");
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -85,25 +92,26 @@ const Auth = () => {
     checkForAdmins();
   }, []);
 
-  const handleDemoLogin = async (demoEmail: string, demoPass: string) => {
+  // Demo access is a STUDENT sandbox account only, gated by a password an
+  // admin sets in the dashboard. Nothing is hardcoded here: this app holds
+  // real student and family data, so there is no privileged demo and no
+  // credential in the source. There is also no client-side provisioning —
+  // if the demo is disabled, sign-in simply fails.
+  const handleDemoLogin = async (demoPass: string) => {
+    if (!demoPass) return;
     setLoading(true);
     try {
-      let { error } = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPass });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: DEMO_STUDENT_EMAIL,
+        password: demoPass,
+      });
       if (error) {
-        // Self-heal: (re)provision the demo accounts through the seeding
-        // function (Admin-API based — SQL-seeded users don't survive GoTrue's
-        // invariants), then retry once.
-        toast.info("Setting up the demo for you…");
-        const { data: seedRes, error: seedErr } = await supabase.functions.invoke("seed-demo-accounts", { body: {} });
-        if (seedErr || seedRes?.success === false) {
-          throw new Error(seedRes?.error || seedErr?.message || error.message);
-        }
-        ({ error } = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPass }));
-        if (error) throw error;
+        throw new Error(
+          "That demo password isn't right, or the demo is currently switched off. Please contact us for access.",
+        );
       }
       toast.success("Welcome to the demo!");
-      const state = location.state as { redirectTo?: string } | null;
-      navigate(state?.redirectTo || "/dashboard");
+      navigate("/student/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Demo login failed");
     } finally {
@@ -396,45 +404,32 @@ const Auth = () => {
             )}
           </div>
 
-          {/* Demo Login Section */}
+          {/* Demo access — STUDENT ONLY, and only with the password an admin
+              set. This is a live app holding real student and family data:
+              there is deliberately no admin/teacher/family demo, and no
+              password is published here or anywhere in the source. */}
           <div className="mt-8 pt-6 border-t border-white/10">
-            <p className="text-sm font-semibold text-center mb-4 text-white/80">Try a demo account</p>
-            <div className="grid grid-cols-2 gap-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="h-10 border-white/20 bg-white/5 hover:bg-white/10 text-xs font-semibold"
-                onClick={() => handleDemoLogin('admin@demo.com', 'admin123')}
-                disabled={loading}
+            <p className="text-sm font-semibold text-center text-white/80">Want to look around?</p>
+            <p className="text-[11px] text-center text-muted-foreground mt-1 mb-3">
+              Ask us for the demo password — the demo is a sample student account with fictional data.
+            </p>
+            <div className="space-y-2">
+              <Input
+                type="password"
+                placeholder="Demo password"
+                value={demoPassword}
+                onChange={(e) => setDemoPassword(e.target.value)}
+                className="h-10 bg-white/5 border-white/20"
+                autoComplete="off"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-10 border-white/20 bg-white/5 hover:bg-white/10 text-xs font-semibold"
+                onClick={() => handleDemoLogin(demoPassword)}
+                disabled={loading || demoPassword.length < 4}
               >
-                Admin Demo
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="h-10 border-white/20 bg-white/5 hover:bg-white/10 text-xs font-semibold"
-                onClick={() => handleDemoLogin('teacher@demo.com', 'teacher123')}
-                disabled={loading}
-              >
-                Teacher Demo
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="h-10 border-white/20 bg-white/5 hover:bg-white/10 text-xs font-semibold"
-                onClick={() => handleDemoLogin('student@demo.com', 'student123')}
-                disabled={loading}
-              >
-                Student Demo
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="h-10 border-white/20 bg-white/5 hover:bg-white/10 text-xs font-semibold"
-                onClick={() => handleDemoLogin('family@demo.com', 'family123')}
-                disabled={loading}
-              >
-                Family Demo
+                Enter student demo
               </Button>
             </div>
           </div>

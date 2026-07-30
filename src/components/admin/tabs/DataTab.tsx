@@ -12,6 +12,7 @@ import { Download, Upload, Search, AlertTriangle, Activity } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminUsersManager } from "@/components/admin/AdminUsersManager";
 import { UsersManager } from "@/components/admin/UsersManager";
+import { DemoAccessManager } from "@/components/admin/DemoAccessManager";
 import { PageHero } from "@/components/quest/PageHero";
 
 const DataTab = () => {
@@ -151,6 +152,7 @@ const DataTab = () => {
           <TabsTrigger value="logs">Activity Logs</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="account">Account Management</TabsTrigger>
+          <TabsTrigger value="demo">Demo Access</TabsTrigger>
         </TabsList>
 
         <TabsContent value="export" className="space-y-4">
@@ -346,6 +348,10 @@ const DataTab = () => {
               <AdminUsersManager />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="demo" className="space-y-4">
+          <DemoAccessManager />
         </TabsContent>
       </Tabs>
     </div>
