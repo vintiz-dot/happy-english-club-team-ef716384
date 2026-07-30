@@ -233,8 +233,9 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
         const { data, error } = await supabase.functions.invoke(
           "record-practice",
           {
+            // No user_id: the function takes the student from the verified
+            // JWT, so points can only ever be awarded to the signed-in user.
             body: {
-              user_id: user.id,
               word,
               correct,
               class_id: classIdOverride ?? sessionClassRef.current,

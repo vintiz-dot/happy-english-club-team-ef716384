@@ -48,8 +48,9 @@ verify_jwt = true
 [functions.smart-family-payment]
 verify_jwt = true
 
+# Financial data. JWT verified at the gateway AND admin/teacher checked inside.
 [functions.calculate-tuition-bulk]
-verify_jwt = false
+verify_jwt = true
 
 [functions.smart-dictation]
 verify_jwt = true
@@ -57,11 +58,13 @@ verify_jwt = true
 [functions.pronounce-syllables]
 verify_jwt = false
 
+# Awards points to the CALLER (identity from the JWT), so it must be authenticated.
 [functions.record-practice]
-verify_jwt = false
+verify_jwt = true
 
+# Writes vocabulary rows and awards points to the CALLER (identity from the JWT).
 [functions.save-word]
-verify_jwt = false
+verify_jwt = true
 
 [functions.pronounce-viseme]
 verify_jwt = false

@@ -9,8 +9,11 @@
  * Idempotency: practice attempts are append-only (the activity log is a
  * historical record). Points stack up across attempts.
  *
+ * AUTH: requires a signed-in user (verify_jwt + authenticateUser). Points
+ * are awarded to the CALLER, whose identity comes from the JWT — never from
+ * the body. Passing a `user_id` field has no effect; it is ignored.
+ *
  * Input: {
- *   user_id: string,
  *   word: string,
  *   correct: boolean,
  *   class_id?: string,    // optional override for multi-class students
@@ -26,6 +29,7 @@
  */
 
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { authenticateUser } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -123,11 +127,8 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
   try {
-    const { user_id, word, correct, class_id } = await req.json().catch(() => ({}));
+    const { word, correct, class_id } = await req.json().catch(() => ({}));
 
-    if (!user_id || typeof user_id !== "string") {
-      return respond({ success: false, reason: "missing_user_id" }, 400);
-    }
     if (typeof correct !== "boolean") {
       return respond({ success: false, reason: "missing_correct" }, 400);
     }
@@ -138,6 +139,16 @@ Deno.serve(async (req) => {
       return respond({ success: false, reason: "db_unconfigured" }, 503);
     }
     const sb = createClient(supabaseUrl, supabaseKey);
+
+    // ── Identity comes from the verified JWT, never the request body ────
+    // This was an unauthenticated endpoint that took `user_id` from the
+    // payload and awarded points for it — anyone could inflate any
+    // student's score. body.user_id is now ignored entirely.
+    const caller = await authenticateUser(req, sb);
+    if (!caller || caller.isServiceRole) {
+      return respond({ success: false, reason: "unauthorized" }, 401);
+    }
+    const user_id = caller.userId;
 
     const resolved = await resolveStudentAndClass(sb, user_id, class_id);
     if (resolved.kind === "need_class") {

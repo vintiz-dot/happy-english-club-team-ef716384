@@ -25,8 +25,11 @@
  *      student_points.vocabulary_quiz_points and total_points.
  *   7. Logs to vocab_activity_log for the teacher monthly dashboard.
  *
+ * AUTH: requires a signed-in user (verify_jwt + authenticateUser). The
+ * student is the CALLER — identity is taken from the JWT, never from the
+ * body. Passing a `user_id` field has no effect; it is ignored.
+ *
  * Input: {
- *   user_id: string,                  // auth.users.id (passed by frontend)
  *   word: string,
  *   root_word?: string,
  *   payload: WordEnrichmentPayload,   // full AI payload (cefr, examples, etc.)
@@ -50,6 +53,7 @@
  */
 
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { authenticateUser } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -321,7 +325,6 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const {
-      user_id,
       word,
       root_word,
       payload,
@@ -331,9 +334,6 @@ Deno.serve(async (req) => {
       suggested_examples,
     } = body;
 
-    if (!user_id || typeof user_id !== "string") {
-      return respond({ success: false, reason: "missing_user_id" }, 400);
-    }
     if (!word || typeof word !== "string") {
       return respond({ success: false, reason: "missing_word" }, 400);
     }
@@ -352,6 +352,16 @@ Deno.serve(async (req) => {
       return respond({ success: false, reason: "db_unconfigured" }, 503);
     }
     const sb = createClient(supabaseUrl, supabaseKey);
+
+    // ── Identity comes from the verified JWT, never the request body ────
+    // This used to be an unauthenticated endpoint that took `user_id` from
+    // the payload: anyone could save words and farm points as any student.
+    // body.user_id is now ignored entirely.
+    const caller = await authenticateUser(req, sb);
+    if (!caller || caller.isServiceRole) {
+      return respond({ success: false, reason: "unauthorized" }, 401);
+    }
+    const user_id = caller.userId;
 
     // ── Detect whether this is a re-save (existing entry) early so the
     //    daily cap only penalises *new* words, not edits/refinements.

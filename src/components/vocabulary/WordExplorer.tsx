@@ -406,8 +406,9 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
     setSaving(true);
     try {
       const { data, error } = await supabase.functions.invoke("save-word", {
+        // No user_id: the function takes the student from the verified JWT,
+        // so a save can only ever land on the signed-in user's word bank.
         body: {
-          user_id: user.id,
           word: activeWord.toLowerCase(),
           root_word: enrichment.root_word,
           payload: enrichment,
