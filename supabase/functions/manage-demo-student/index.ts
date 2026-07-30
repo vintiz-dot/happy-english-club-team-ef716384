@@ -116,12 +116,18 @@ Deno.serve(async (req) => {
       const { data: allUsers } = await sb.auth.admin.listUsers({ page: 1, perPage: 1000 });
       for (const u of allUsers?.users || []) {
         if (u.email && FORBIDDEN_DEMO_EMAILS.includes(u.email.toLowerCase())) {
+          // Roles first — that is what RLS resolves through, so it is what
+          // actually removes access. Then lock the credential.
           await sb.from("user_roles").delete().eq("user_id", u.id);
-          await sb.from("users").delete().eq("id", u.id);
           await sb.auth.admin.updateUserById(u.id, {
             password: crypto.randomUUID() + crypto.randomUUID(),
             ban_duration: "876000h", // ~100 years
           });
+          // DOWNGRADE public.users, never delete it: the row is referenced by
+          // real families/students/teachers via primary_user_id /
+          // linked_user_id / user_id and created_by / updated_by. Deleting it
+          // raises a foreign-key error (or would reach into real records).
+          await sb.from("users").update({ role: "student" }).eq("id", u.id);
           console.warn(`revoked forbidden demo account: ${u.email}`);
         }
       }
