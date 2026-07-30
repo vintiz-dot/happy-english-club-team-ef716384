@@ -100,3 +100,8 @@ verify_jwt = true
 # single permitted demo account, a locked-down STUDENT. Never public.
 [functions.manage-demo-student]
 verify_jwt = true
+
+# The assistant. Read-only by construction: all data tools run on the
+# CALLER'S JWT (RLS enforced); service role is used only to resolve identity.
+[functions.chat]
+verify_jwt = true

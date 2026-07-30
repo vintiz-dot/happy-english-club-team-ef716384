@@ -21,6 +21,9 @@ export default function Dashboard() {
       navigate("/teacher/dashboard");
     } else if (role === "student") {
       navigate("/student/dashboard");
+    } else if (role === "family") {
+      // Parents used to fall through to a blank page — they now have a home.
+      navigate("/family/dashboard");
     }
   }, [user, role, loading, navigate]);
 

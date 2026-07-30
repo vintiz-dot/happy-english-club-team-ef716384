@@ -15,6 +15,7 @@ import { AdminTopBar } from "@/components/AdminTopBar";
 import { ClassroomToolsLauncher } from "@/components/classroom-tools/ClassroomToolsLauncher";
 import { PWAInstallButton } from "./PWAInstallButton";
 import { CommandPalette } from "@/components/CommandPalette";
+import { AssistantLauncher } from "@/components/chat/AssistantLauncher";
 import { AmbientBackground } from "@/components/fx/AmbientBackground";
 import { motion } from "framer-motion";
 
@@ -191,6 +192,8 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
         </header>
         {role === "student" && <StudentNavBar />}
         <main className="container mx-auto px-4 py-4 md:py-6 lg:py-8 pb-20 md:pb-8">{children}</main>
+        {/* Read-only, RLS-scoped assistant — available to every signed-in role */}
+        <AssistantLauncher />
       </div>
     );
   }
@@ -201,6 +204,8 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
       <AmbientBackground intensity="subtle" />
       {/* Global Cmd+K / Ctrl+K command bar */}
       <CommandPalette />
+      {/* Read-only, RLS-scoped assistant */}
+      <AssistantLauncher />
       {/* Desktop Sidebar — liquid glass command rail */}
       <aside
         className={cn(
