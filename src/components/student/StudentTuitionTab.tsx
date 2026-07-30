@@ -480,7 +480,15 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
           studentId={settleBillOpen ? studentId : null}
           studentName={studentName}
           month={selectedMonth}
-          balance={tuitionData?.carryOutDebt ?? tuitionData?.carryOutCredit ?? 0}
+          // The modal (and settle-bill fn) use signed balance semantics:
+          // positive = student owes, NEGATIVE = credit. carryOutCredit is
+          // stored positive, so flip it. The old `??` chain also short-
+          // circuited on carryOutDebt === 0 and passed credit as positive.
+          balance={
+            (tuitionData?.carryOutDebt ?? 0) > 0
+              ? (tuitionData?.carryOutDebt ?? 0)
+              : -(tuitionData?.carryOutCredit ?? 0)
+          }
           onClose={() => setSettleBillOpen(false)}
         />
       )}

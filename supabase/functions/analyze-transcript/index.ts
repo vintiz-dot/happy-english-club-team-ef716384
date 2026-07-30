@@ -265,6 +265,7 @@ async function llmLessonReport(
   lessonContext: string | null,
   presentStudents: string[],
   lessonDate: string,
+  classContext: string,
 ): Promise<any> {
   return await openaiJson(key, {
       model: ANALYSIS_MODEL,
@@ -292,6 +293,11 @@ async function llmLessonReport(
             `Lesson date: ${lessonDate}. Students on the roster who spoke: ${presentStudents.join(", ") || "unknown"}.\n` +
             (lessonTitle ? `The teacher titled this lesson: "${lessonTitle}".\n` : "") +
             (lessonContext ? `The teacher's plan/notes:\n${String(lessonContext).slice(0, 1500)}\n` : "") +
+            (classContext
+              ? `\nBACKGROUND — the class and its students (use to interpret who is speaking, pitch ` +
+                `observations to their age/level, and note continuity with recent lessons; it is NOT ` +
+                `transcript evidence — never claim something happened in class because of it):\n${classContext}\n`
+              : "") +
             "\nReturn JSON: {" +
             '"summary": string (3-4 plain sentences a parent could read: what the class actually ' +
             "did and how it went), " +
@@ -332,6 +338,7 @@ async function llmAnalyze(
   perStudent: Array<{ name: string; sample: string }>,
   fullTranscript: string,
   lessonTitle: string | null,
+  classContext: string,
 ): Promise<any> {
   const key = Deno.env.get("OPENAI_API_KEY");
   if (!key) throw new Error("OPENAI_API_KEY is not configured");
@@ -350,6 +357,12 @@ async function llmAnalyze(
             "transcript — never invent errors, quotes or achievements. Flag only GENUINE learner " +
             "errors (ignore casual contractions and normal spoken ellipsis).\n\n" +
             (lessonTitle ? `Lesson topic: "${lessonTitle}".\n\n` : "") +
+            (classContext
+              ? `BACKGROUND on the class and students (ages, working CEFR levels, recent lessons). ` +
+                `Use it to calibrate CEFR estimates (a plausible step from their known level, not a ` +
+                `wild jump), pitch feedback to the student's age, and make recommendations that build ` +
+                `on recent lessons. It is context, NOT evidence of what happened today:\n${classContext}\n\n`
+              : "") +
             'Return JSON: {"students": [{"name": string (exactly as given), ' +
             '"cefr_estimate": "Pre-A1"|"A1"|"A1+"|"A2"|"A2+"|"B1"|"B1+"|"B2"|null (null if too little speech), ' +
             '"confidence": number 0-1, ' +
@@ -446,42 +459,26 @@ async function extractPointAwards(
   return perChunk.flat();
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  const respond = (body: unknown, status = 200) =>
-    new Response(JSON.stringify(body), {
-      status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-
-  const sb = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
-
-  let transcriptId: string | null = null;
-  try {
-    const body = await req.json().catch(() => ({}));
-    transcriptId = String(body.transcript_id ?? "").trim() || null;
-    if (!transcriptId) return respond({ success: false, error: "transcript_id is required" }, 400);
-
-    const { data: tr, error: trErr } = await sb
-      .from("class_transcripts")
-      .select("id, class_id, raw_text, uploaded_by, transcript_date, title, lesson_context")
-      .eq("id", transcriptId)
-      .single();
-    if (trErr || !tr) return respond({ success: false, error: "transcript not found" }, 404);
-
+/**
+ * The full analysis pipeline. Extracted from the request handler so it can
+ * run either synchronously (pasted transcripts — small, fast) or in the
+ * background via EdgeRuntime.waitUntil (`background: true` — how the audio
+ * pipeline chains it), where it isn't racing the synchronous request window.
+ * Throws on failure; the caller decides how to surface it.
+ */
+async function runAnalysis(sb: any, tr: any): Promise<Record<string, unknown>> {
+  const transcriptId = tr.id as string;
+  {
     // ── 1. Roster + teachers (needed both for parsing fallback & matching)
     // enrollments has no `status` column — "currently enrolled" means
     // end_date is null or still in the future.
     const today = new Date().toISOString().slice(0, 10);
     const { data: enrollRows } = await sb
       .from("enrollments")
-      .select("students(id, full_name)")
+      .select("students(id, full_name, date_of_birth)")
       .eq("class_id", tr.class_id)
       .or(`end_date.is.null,end_date.gte.${today}`);
-    const roster: Array<{ id: string; full_name: string }> = (enrollRows || [])
+    const roster: Array<{ id: string; full_name: string; date_of_birth?: string | null }> = (enrollRows || [])
       .map((r: any) => r.students)
       .filter((s: any) => s?.id);
 
@@ -587,6 +584,66 @@ Deno.serve(async (req) => {
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiKey) throw new Error("OPENAI_API_KEY is not configured");
 
+    // ── Class context: who these students ARE ────────────────────────────
+    // The analysis used to see only the transcript, so it read like it was
+    // written by a stranger. Give it the class profile, each student's age
+    // and latest CEFR level, and what the last few lessons covered —
+    // background for interpretation, never treated as transcript evidence.
+    const rosterIds = roster.map((s) => s.id);
+    const [{ data: classRow }, { data: cefrRows }, { data: prevOverviews }] = await Promise.all([
+      sb.from("classes")
+        .select("name, age_range, curriculum, description, class_notes")
+        .eq("id", tr.class_id)
+        .maybeSingle(),
+      rosterIds.length
+        ? sb.from("cefr_assessments")
+            .select("student_id, level, assessed_at")
+            .in("student_id", rosterIds)
+            .order("assessed_at", { ascending: false })
+            .limit(200)
+        : Promise.resolve({ data: [] as any[] }),
+      sb.from("lesson_overviews")
+        .select("lesson_date, title, summary")
+        .eq("class_id", tr.class_id)
+        .neq("transcript_id", transcriptId)
+        .order("lesson_date", { ascending: false })
+        .limit(3),
+    ]);
+    const latestCefr = new Map<string, string>();
+    for (const r of cefrRows || []) {
+      if (!latestCefr.has(r.student_id)) latestCefr.set(r.student_id, String(r.level));
+    }
+    const approxAge = (dob?: string | null) => {
+      if (!dob) return null;
+      const years = Math.floor((Date.now() - new Date(dob).getTime()) / 31_557_600_000);
+      return years > 3 && years < 25 ? years : null;
+    };
+    const studentLines = roster.map((s) => {
+      const bits = [s.full_name];
+      const age = approxAge(s.date_of_birth);
+      if (age) bits.push(`age ${age}`);
+      const lvl = latestCefr.get(s.id);
+      if (lvl) bits.push(`~${lvl}`);
+      return bits.join(", ");
+    });
+    const classContext = [
+      classRow?.name
+        ? `Class: ${classRow.name}${classRow.age_range ? ` (ages ${classRow.age_range})` : ""}.`
+        : "",
+      classRow?.curriculum ? `Curriculum: ${String(classRow.curriculum).slice(0, 200)}.` : "",
+      classRow?.description ? `About the class: ${String(classRow.description).slice(0, 300)}` : "",
+      classRow?.class_notes ? `Teacher's notes on the class: ${String(classRow.class_notes).slice(0, 300)}` : "",
+      studentLines.length ? `Students: ${studentLines.join("; ")}.` : "",
+      (prevOverviews || []).length
+        ? `Recent lessons (for continuity):\n${(prevOverviews || [])
+            .map((o: any) => `- ${o.lesson_date} "${o.title || "Untitled"}": ${String(o.summary || "").slice(0, 200)}`)
+            .join("\n")}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n")
+      .slice(0, 2500);
+
     // Lesson report (whole class) and per-student assessment are separate LLM
     // jobs — each stays focused and its JSON output stays bounded. Run them
     // together; a failure in one shouldn't sink the other.
@@ -598,9 +655,10 @@ Deno.serve(async (req) => {
         tr.lesson_context ?? null,
         presentStudents,
         lessonDate,
+        classContext,
       ),
       llmInput.length
-        ? llmAnalyze(llmInput, fullTranscript, tr.title ?? null)
+        ? llmAnalyze(llmInput, fullTranscript, tr.title ?? null, classContext)
         : Promise.resolve({ students: [] }),
     ]);
 
@@ -831,6 +889,7 @@ Deno.serve(async (req) => {
           ? String(analysis.title_coverage.note).slice(0, 500)
           : null,
         analyzed_at: new Date().toISOString(),
+        processing_stage: "completed",
       })
       .eq("id", transcriptId);
 
@@ -875,7 +934,7 @@ Deno.serve(async (req) => {
         .filter((id): id is string => !!id),
     );
 
-    return respond({
+    return {
       success: true,
       transcript_id: transcriptId,
       speakers: speakers.length,
@@ -883,18 +942,77 @@ Deno.serve(async (req) => {
       errors_logged: errorsLogged,
       points_suggested: pointsSuggested,
       summary: analysis.summary ?? null,
+    };
+  }
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const respond = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+
+  const sb = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+
+  const markFailed = async (transcriptId: string, error: unknown) => {
     console.error("analyze-transcript error:", error);
-    if (transcriptId) {
+    await sb
+      .from("class_transcripts")
+      .update({
+        status: "failed",
+        processing_stage: "failed",
+        error_message: (error as Error).message?.slice(0, 500),
+      })
+      .eq("id", transcriptId);
+  };
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const transcriptId = String(body.transcript_id ?? "").trim() || null;
+    if (!transcriptId) return respond({ success: false, error: "transcript_id is required" }, 400);
+
+    const { data: tr, error: trErr } = await sb
+      .from("class_transcripts")
+      .select("id, class_id, raw_text, uploaded_by, transcript_date, title, lesson_context")
+      .eq("id", transcriptId)
+      .single();
+    if (trErr || !tr) return respond({ success: false, error: "transcript not found" }, 404);
+
+    if (body.background === true) {
+      // Queue-and-return: stamp the run, answer in milliseconds, analyze on
+      // this instance's background budget. The client polls the row.
       await sb
         .from("class_transcripts")
         .update({
-          status: "failed",
-          error_message: (error as Error).message?.slice(0, 500),
+          status: "processing",
+          processing_stage: "analyzing",
+          processing_started_at: new Date().toISOString(),
+          error_message: null,
         })
         .eq("id", transcriptId);
+
+      const work = runAnalysis(sb, tr).catch((e) => markFailed(transcriptId, e));
+      const er = (globalThis as any).EdgeRuntime;
+      if (er?.waitUntil) er.waitUntil(work);
+
+      return respond({ success: true, queued: true, transcript_id: transcriptId });
     }
+
+    // Synchronous mode (pasted transcripts, re-analyze of short lessons).
+    try {
+      const result = await runAnalysis(sb, tr);
+      return respond(result);
+    } catch (error) {
+      await markFailed(transcriptId, error);
+      return respond({ success: false, error: (error as Error).message }, 500);
+    }
+  } catch (error) {
+    console.error("analyze-transcript handler error:", error);
     return respond({ success: false, error: (error as Error).message }, 500);
   }
 });

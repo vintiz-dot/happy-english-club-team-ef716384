@@ -103,7 +103,7 @@ export default function TeacherTranscripts() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const audioFileRef = useRef<HTMLInputElement>(null);
-  const [audioProgress, setAudioProgress] = useState<{ stage: "uploading" | "transcribing" | "analyzing"; fileName: string } | null>(null);
+  const [audioProgress, setAudioProgress] = useState<{ stage: "uploading" | "transcribing" | "diarizing" | "analyzing"; fileName: string } | null>(null);
 
   const { data: classes = [] } = useMyClasses(user?.id);
 
@@ -115,7 +115,7 @@ export default function TeacherTranscripts() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("class_transcripts")
-        .select("id, title, transcript_date, status, summary, error_message, source_format, created_at, title_covered, title_evidence, title_note, analysis")
+        .select("id, title, transcript_date, status, summary, error_message, source_format, created_at, title_covered, title_evidence, title_note, analysis, processing_stage, processing_started_at")
         .eq("class_id", classId)
         .order("created_at", { ascending: false })
         .limit(25);
@@ -199,6 +199,57 @@ export default function TeacherTranscripts() {
     },
   });
 
+  // The transcribe/analyze functions now answer immediately and work in the
+  // BACKGROUND — a long recording used to outlive the synchronous request
+  // window and get killed mid-flight, stranding the row in "processing".
+  // Progress and errors land on the class_transcripts row; this polls it.
+  const POLL_EVERY_MS = 5000;
+  const POLL_TIMEOUT_MS = 30 * 60 * 1000;
+  const pollTranscript = async (
+    id: string,
+    onStage?: (stage: string | null) => void,
+  ): Promise<any> => {
+    const deadline = Date.now() + POLL_TIMEOUT_MS;
+    let lastStage: string | null = null;
+    while (Date.now() < deadline) {
+      const { data: row } = await (supabase as any)
+        .from("class_transcripts")
+        .select("id, status, processing_stage, error_message, summary")
+        .eq("id", id)
+        .maybeSingle();
+      if (row) {
+        if (row.processing_stage !== lastStage) {
+          lastStage = row.processing_stage;
+          onStage?.(lastStage);
+        }
+        if (row.status === "failed") throw new Error(row.error_message || "Processing failed");
+        if (row.status !== "processing") return row;
+      }
+      await new Promise((r) => setTimeout(r, POLL_EVERY_MS));
+    }
+    throw new Error(
+      "Still processing after 30 minutes — the run looks stalled. If the row stays stuck, use Re-analyze.",
+    );
+  };
+
+  // Counts for the success toast (the background run can't return them in
+  // the HTTP response the way the old synchronous call did).
+  const fetchAnalyzedCounts = async (id: string) => {
+    const [{ count: matched }, { count: errs }] = await Promise.all([
+      (supabase as any)
+        .from("transcript_speaker_metrics")
+        .select("id", { count: "exact", head: true })
+        .eq("transcript_id", id)
+        .not("student_id", "is", null),
+      (supabase as any)
+        .from("student_error_log")
+        .select("id", { count: "exact", head: true })
+        .eq("source", "transcript")
+        .eq("source_id", id),
+    ]);
+    return { matched: matched ?? 0, errors: errs ?? 0 };
+  };
+
   const uploadMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
@@ -222,17 +273,19 @@ export default function TeacherTranscripts() {
         .single();
       if (error) throw error;
 
-      // Fire the analysis — the list will live-update to "analyzed".
+      // Queue the analysis and poll — the list live-updates alongside.
       const { data: result, error: fnErr } = await supabase.functions.invoke("analyze-transcript", {
-        body: { transcript_id: row.id },
+        body: { transcript_id: row.id, background: true },
       });
       if (fnErr) throw new Error(await describeFnError(fnErr));
       if (result?.success === false) throw new Error(result.error || "analysis failed");
-      return { id: row.id, result };
+      await pollTranscript(row.id);
+      const counts = await fetchAnalyzedCounts(row.id);
+      return { id: row.id, counts };
     },
-    onSuccess: ({ id, result }) => {
+    onSuccess: ({ id, counts }) => {
       toast.success("Transcript analyzed", {
-        description: `${result.matched_students} students matched · ${result.errors_logged} errors logged · ${result.points_suggested ?? 0} point awards deciphered`,
+        description: `${counts.matched} students matched · ${counts.errors} errors logged`,
       });
       setRawText("");
       setTitle("");
@@ -286,39 +339,27 @@ export default function TeacherTranscripts() {
       // Two separate calls on purpose — transcription and analysis each get
       // their own edge-function time budget (a combined run used to be killed
       // mid-flight on long lessons and stranded the row in "processing").
-      // Name the failing STAGE in the error. Both stages used to surface as
-      // "Audio transcription failed", so an analysis failure looked like the
-      // recording had never transcribed at all.
+      // Queue the pipeline. The function responds in milliseconds and does
+      // Whisper → diarization → analysis in the background — a long
+      // recording no longer races the request window. Poll for progress.
       setAudioProgress({ stage: "transcribing", fileName: file.name });
       const { data: tRes, error: tErr } = await supabase.functions.invoke("transcribe-lesson-audio", {
         body: { transcript_id: row.id },
       });
-      if (tErr) throw new Error(`Transcription step: ${await describeFnError(tErr)}`);
-      if (tRes?.success === false) throw new Error(`Transcription step: ${tRes.error || "failed"}`);
+      if (tErr) throw new Error(await describeFnError(tErr));
+      if (tRes?.success === false) throw new Error(tRes.error || "could not start transcription");
 
-      setAudioProgress({ stage: "analyzing", fileName: file.name });
-      const { data: aRes, error: aErr } = await supabase.functions.invoke("analyze-transcript", {
-        body: { transcript_id: row.id },
+      await pollTranscript(row.id, (stage) => {
+        if (stage === "transcribing" || stage === "diarizing" || stage === "analyzing") {
+          setAudioProgress({ stage, fileName: file.name });
+        }
       });
-      if (aErr) {
-        throw new Error(
-          `The recording transcribed fine, but the analysis step failed: ${await describeFnError(aErr)}. ` +
-            `The transcript is saved — use "Re-analyze" to retry just the analysis.`,
-        );
-      }
-      if (aRes?.success === false) {
-        throw new Error(
-          `The recording transcribed fine, but the analysis step failed: ${aRes.error || "unknown error"}. ` +
-            `The transcript is saved — use "Re-analyze" to retry just the analysis.`,
-        );
-      }
-
-      return { id: row.id, result: { ...aRes, duration_seconds: tRes?.duration_seconds } };
+      const counts = await fetchAnalyzedCounts(row.id);
+      return { id: row.id, counts };
     },
-    onSuccess: ({ id, result }) => {
-      const mins = result.duration_seconds ? Math.round(result.duration_seconds / 60) : null;
+    onSuccess: ({ id, counts }) => {
       toast.success("Recording transcribed & analyzed", {
-        description: `${mins ? `${mins} min · ` : ""}${result.matched_students} students matched · ${result.errors_logged} errors logged · ${result.points_suggested ?? 0} point awards deciphered`,
+        description: `${counts.matched} students matched · ${counts.errors} errors logged`,
       });
       setTitle("");
       setSelectedId(id);
@@ -334,15 +375,16 @@ export default function TeacherTranscripts() {
   const reanalyzeMutation = useMutation({
     mutationFn: async (transcriptId: string) => {
       const { data: result, error } = await supabase.functions.invoke("analyze-transcript", {
-        body: { transcript_id: transcriptId },
+        body: { transcript_id: transcriptId, background: true },
       });
       if (error) throw new Error(await describeFnError(error));
       if (result?.success === false) throw new Error(result.error || "analysis failed");
-      return result;
+      await pollTranscript(transcriptId);
+      return fetchAnalyzedCounts(transcriptId);
     },
-    onSuccess: (result) => {
+    onSuccess: (counts) => {
       toast.success("Re-analyzed", {
-        description: `${result.matched_students} students matched · ${result.errors_logged} errors logged · ${result.points_suggested ?? 0} point awards deciphered`,
+        description: `${counts.matched} students matched · ${counts.errors} errors logged`,
       });
       queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
       queryClient.invalidateQueries({ queryKey: ["transcript-metrics", selectedId] });
@@ -357,27 +399,18 @@ export default function TeacherTranscripts() {
   // stuck-"processing") run can be re-fired without re-uploading anything.
   const retryTranscriptionMutation = useMutation({
     mutationFn: async (transcriptId: string) => {
-      await (supabase as any)
-        .from("class_transcripts")
-        .update({ status: "processing", error_message: null })
-        .eq("id", transcriptId);
+      // The function stamps the run itself; it chains analysis server-side.
       const { data: tRes, error: tErr } = await supabase.functions.invoke("transcribe-lesson-audio", {
         body: { transcript_id: transcriptId },
       });
       if (tErr) throw new Error(await describeFnError(tErr));
       if (tRes?.success === false) throw new Error(tRes.error || "transcription failed");
-
-      // Analysis is a separate request (own time budget) — see the function.
-      const { data: aRes, error: aErr } = await supabase.functions.invoke("analyze-transcript", {
-        body: { transcript_id: transcriptId },
-      });
-      if (aErr) throw new Error(await describeFnError(aErr));
-      if (aRes?.success === false) throw new Error(aRes.error || "analysis failed");
-      return aRes;
+      await pollTranscript(transcriptId);
+      return fetchAnalyzedCounts(transcriptId);
     },
-    onSuccess: (result) => {
+    onSuccess: (counts) => {
       toast.success("Recording transcribed & analyzed", {
-        description: `${result.matched_students} students matched · ${result.errors_logged} errors logged · ${result.points_suggested ?? 0} point awards deciphered`,
+        description: `${counts.matched} students matched · ${counts.errors} errors logged`,
       });
       queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
       queryClient.invalidateQueries({ queryKey: ["transcript-metrics", selectedId] });
@@ -709,12 +742,15 @@ export default function TeacherTranscripts() {
   });
 
   const selected = transcripts.find((t) => t.id === selectedId);
-  // A run killed by the platform time limit never reaches its catch block, so
-  // the row keeps status "processing" forever. Anything still processing after
-  // this long is stalled, not working — surface it so the retry is obvious.
-  const STALLED_AFTER_MS = 10 * 60 * 1000;
+  // A run killed by the platform never reaches its catch block, so the row
+  // keeps status "processing" forever. The pipeline is background now and a
+  // 90-minute recording legitimately takes ~10 minutes end to end, so only
+  // call it stalled well past that. processing_started_at (stamped on every
+  // run/retry) beats created_at, which lies for retried rows.
+  const STALLED_AFTER_MS = 20 * 60 * 1000;
   const isStalled = (t: any) =>
-    t?.status === "processing" && Date.now() - new Date(t.created_at).getTime() > STALLED_AFTER_MS;
+    t?.status === "processing" &&
+    Date.now() - new Date(t.processing_started_at || t.created_at).getTime() > STALLED_AFTER_MS;
   const isUnknownRow = (m: any) => (m.speaker_label || "").trim().toLowerCase() === "unknown";
   const studentMetrics = metrics.filter((m) => !m.is_teacher && !isUnknownRow(m));
   const maxShare = Math.max(...studentMetrics.map((m) => m.participation_share || 0), 0.0001);
@@ -804,8 +840,10 @@ export default function TeacherTranscripts() {
                   {audioProgress.stage === "uploading"
                     ? `Uploading ${audioProgress.fileName}…`
                     : audioProgress.stage === "transcribing"
-                      ? `Transcribing "${audioProgress.fileName}" with Whisper — long recordings can take a minute or two…`
-                      : `Analyzing the lesson — engagement, feedback and point awards…`}
+                      ? `Transcribing "${audioProgress.fileName}" with Whisper — a full lesson can take several minutes. You can leave this page; processing continues on the server.`
+                      : audioProgress.stage === "diarizing"
+                        ? `Identifying who said what — matching voices to your roster…`
+                        : `Analyzing the lesson — engagement, feedback and point awards…`}
                 </span>
               </div>
             )}

@@ -19,15 +19,17 @@
  *   3. Merge consecutive same-speaker segments into utterances and render
  *      a labeled, timestamped WebVTT (`<v Speaker>text</v>` cues with real
  *      HH:MM:SS.mmm timestamps) into class_transcripts.raw_text.
- *   4. Delegate to the existing analyze-transcript function — unmodified —
- *      for everything downstream: stats, error logging, CEFR, point-award
- *      mining, learning-profile refresh. This function's only job is
- *      turning audio into a labeled transcript; analyze-transcript does
- *      not need to know or care where the text came from.
+ *   4. Chain analyze-transcript (background:true) for everything downstream:
+ *      stats, error logging, CEFR, point-award mining, profile refresh.
+ *
+ * The pipeline runs ENTIRELY in the background (EdgeRuntime.waitUntil): the
+ * handler validates, stamps processing_stage='transcribing', and responds
+ * `{queued:true}` in milliseconds. Long recordings used to outlive the
+ * synchronous request window and get killed mid-Whisper. The client polls
+ * class_transcripts (status / processing_stage / error_message) for progress.
  *
  * Input:  { transcript_id: string }
- * Output: analyze-transcript's response, plus
- *         { duration_seconds, segments_transcribed }
+ * Output: { success: true, queued: true, transcript_id }
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
@@ -249,61 +251,49 @@ function toLabeledVtt(utterances: LabeledUtterance[]): string {
   return `WEBVTT\n\n${cues.join("\n\n")}\n`;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  const respond = (body: unknown, status = 200) =>
-    new Response(JSON.stringify(body), {
-      status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-
-  const sb = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
-
-  let transcriptId: string | null = null;
-  const fail = async (message: string, status: number) => {
-    if (transcriptId) {
-      await sb
-        .from("class_transcripts")
-        .update({ status: "failed", error_message: message.slice(0, 500) })
-        .eq("id", transcriptId);
-    }
-    return respond({ success: false, error: message }, status);
+/**
+ * The whole audio pipeline, run AFTER the HTTP response has been returned.
+ *
+ * Whisper on a 60-90 minute recording plus gpt-4o diarization takes several
+ * minutes — longer than a synchronous edge-function request is allowed to
+ * live. Runs stalled and transcripts stranded in "processing" whenever a
+ * teacher uploaded a real lesson instead of a short clip. The handler now
+ * validates, stamps processing_stage, responds immediately, and this runs
+ * under EdgeRuntime.waitUntil with the full background wall-clock budget.
+ * Progress + errors land on the class_transcripts row, which the client
+ * polls.
+ */
+async function runAudioPipeline(sb: any, tr: any, key: string): Promise<void> {
+  const transcriptId = tr.id as string;
+  const setStage = (stage: string) =>
+    sb.from("class_transcripts").update({ processing_stage: stage }).eq("id", transcriptId);
+  const fail = async (message: string) => {
+    console.error("audio pipeline failed:", message);
+    await sb
+      .from("class_transcripts")
+      .update({
+        status: "failed",
+        processing_stage: "failed",
+        error_message: message.slice(0, 500),
+      })
+      .eq("id", transcriptId);
   };
 
   try {
-    const body = await req.json().catch(() => ({}));
-    transcriptId = String(body.transcript_id ?? "").trim() || null;
-    if (!transcriptId) return respond({ success: false, error: "transcript_id is required" }, 400);
-
-    const { data: tr, error: trErr } = await sb
-      .from("class_transcripts")
-      .select("id, class_id, audio_storage_path, audio_mime_type, title, lesson_context")
-      .eq("id", transcriptId)
-      .single();
-    if (trErr || !tr) return respond({ success: false, error: "transcript not found" }, 404);
-    if (!tr.audio_storage_path) return fail("No audio file was attached to this transcript", 400);
-
-    const key = Deno.env.get("OPENAI_API_KEY");
-    if (!key) return fail("OPENAI_API_KEY is not configured", 500);
-
-    // ── 1. Download + size guard ──────────────────────────────────────────
+    // ── 1. Download + size guard ────────────────────────────────────────
     const { data: file, error: dlErr } = await sb.storage
       .from("class-recordings")
       .download(tr.audio_storage_path);
-    if (dlErr || !file) return fail(`Could not download the audio file: ${dlErr?.message}`, 500);
+    if (dlErr || !file) return fail(`Could not download the audio file: ${dlErr?.message}`);
 
     const audioBytes = new Uint8Array(await file.arrayBuffer());
     if (audioBytes.byteLength > WHISPER_MAX_BYTES) {
       return fail(
         `This recording is ${(audioBytes.byteLength / 1_000_000).toFixed(1)}MB, over Whisper's 25MB limit. ` +
           `Trim it or split the lesson into two shorter recordings and upload each separately.`,
-        400,
       );
     }
-    if (audioBytes.byteLength === 0) return fail("The uploaded audio file is empty", 400);
+    if (audioBytes.byteLength === 0) return fail("The uploaded audio file is empty");
 
     // ── 2. Roster + teachers (fetched BEFORE Whisper so the roster can
     //       prime name recognition in the transcription itself) ───────────
@@ -370,36 +360,102 @@ Deno.serve(async (req) => {
       recognitionPrompt,
     );
     if (!segments.length || !text.trim()) {
-      return fail("Whisper detected no speech in this recording", 400);
+      return fail("Whisper detected no speech in this recording");
     }
 
     // ── 4. Diarize: label each timestamped segment against the roster ─────
+    await setStage("diarizing");
     const utterances = await diarizeSegments(key, segments, rosterNames, teacherNames);
 
-    // ── 4. Persist the labeled, timestamped transcript ─────────────────────
+    // ── 5. Persist the labeled, timestamped transcript ─────────────────────
     const vtt = toLabeledVtt(utterances);
     const { error: updErr } = await sb
       .from("class_transcripts")
-      .update({ raw_text: vtt, audio_duration_seconds: duration })
+      .update({ raw_text: vtt, audio_duration_seconds: duration, processing_stage: "analyzing" })
       .eq("id", transcriptId);
-    if (updErr) return fail(`Failed to save the transcribed text: ${updErr.message}`, 500);
+    if (updErr) return fail(`Failed to save the transcribed text: ${updErr.message}`);
 
-    // ── 5. Done. Analysis is deliberately a SEPARATE request ─────────────
-    // This function used to call analyze-transcript inline, which meant one
-    // request had to fit Whisper + diarization + the whole analysis chain
-    // inside a single edge-function time budget — long lessons were killed
-    // mid-flight and left stranded in "processing". The caller now invokes
-    // analyze-transcript itself, so each stage gets its own budget.
-    return respond({
-      success: true,
-      transcribed: true,
-      transcript_id: transcriptId,
-      duration_seconds: duration,
-      segments_transcribed: segments.length,
-      speakers_labeled: new Set(utterances.map((u) => u.speaker)).size,
+    // ── 6. Chain analysis in ITS OWN background instance ─────────────────
+    // analyze-transcript is invoked with background:true — it validates,
+    // responds in milliseconds, and does its work on its own wall-clock
+    // budget. Awaiting only that handshake keeps this instance's remaining
+    // budget out of the equation. Final status (analyzed/failed) is set by
+    // analyze-transcript itself.
+    const url = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const res = await fetch(`${url}/functions/v1/analyze-transcript`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ transcript_id: transcriptId, background: true }),
     });
+    if (!res.ok) {
+      return fail(
+        `Transcribed OK, but handing off to analysis failed (${res.status}). ` +
+          `Use "Re-analyze" on this transcript to run the analysis.`,
+      );
+    }
+    console.log(
+      `audio pipeline: transcribed ${segments.length} segments (${Math.round(duration)}s), analysis queued`,
+    );
+  } catch (error) {
+    await fail((error as Error).message || "Transcription failed");
+  }
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const respond = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  const sb = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const transcriptId = String(body.transcript_id ?? "").trim() || null;
+    if (!transcriptId) return respond({ success: false, error: "transcript_id is required" }, 400);
+
+    const { data: tr, error: trErr } = await sb
+      .from("class_transcripts")
+      .select("id, class_id, audio_storage_path, audio_mime_type, title, lesson_context")
+      .eq("id", transcriptId)
+      .single();
+    if (trErr || !tr) return respond({ success: false, error: "transcript not found" }, 404);
+    if (!tr.audio_storage_path) {
+      await sb
+        .from("class_transcripts")
+        .update({ status: "failed", processing_stage: "failed", error_message: "No audio file attached" })
+        .eq("id", transcriptId);
+      return respond({ success: false, error: "No audio file was attached to this transcript" }, 400);
+    }
+
+    const key = Deno.env.get("OPENAI_API_KEY");
+    if (!key) return respond({ success: false, error: "OPENAI_API_KEY is not configured" }, 500);
+
+    // Stamp the run and answer immediately — the client polls the row.
+    await sb
+      .from("class_transcripts")
+      .update({
+        status: "processing",
+        processing_stage: "transcribing",
+        processing_started_at: new Date().toISOString(),
+        error_message: null,
+      })
+      .eq("id", transcriptId);
+
+    const work = runAudioPipeline(sb, tr, key);
+    const er = (globalThis as any).EdgeRuntime;
+    if (er?.waitUntil) er.waitUntil(work);
+    else work.catch((e) => console.error("audio pipeline (no waitUntil):", e));
+
+    return respond({ success: true, queued: true, transcript_id: transcriptId });
   } catch (error) {
     console.error("transcribe-lesson-audio error:", error);
-    return fail((error as Error).message || "Transcription failed", 500);
+    return respond({ success: false, error: (error as Error).message }, 500);
   }
 });

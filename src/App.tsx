@@ -55,6 +55,7 @@ const TeacherTranscripts = lazy(() => import("./pages/TeacherTranscripts"));
 const StudentMyWork = lazy(() => import("./pages/StudentMyWork"));
 const StudentLessons = lazy(() => import("./pages/StudentLessons"));
 const StudentLessonDetail = lazy(() => import("./pages/StudentLessonDetail"));
+const StudentDefendLevel = lazy(() => import("./pages/StudentDefendLevel"));
 const TuitionReviewQueue = lazy(() =>
   import("./components/admin/TuitionReviewQueue").then((m) => ({ default: m.TuitionReviewQueue }))
 );
@@ -130,6 +131,7 @@ function AppContent() {
                   <Route path="/student/my-work" element={<StudentMyWork />} />
                   <Route path="/student/lessons" element={<StudentLessons />} />
                   <Route path="/student/lessons/:id" element={<StudentLessonDetail />} />
+                  <Route path="/student/defend-level" element={<StudentDefendLevel />} />
 
                   {/* Shared routes */}
                   <Route path="/schedule" element={<Schedule />} />

@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ExamReportsManager } from "@/components/exam-reports/ExamReportsManager";
 import { AIReportDialog } from "@/components/reports/AIReportDialog";
 import { CefrGrowthChart } from "@/components/charts/CefrGrowthChart";
+import { CefrDefensePanel } from "@/components/cefr/CefrDefensePanel";
 import { LearningJourneyCard } from "@/components/student/LearningJourneyCard";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -159,6 +160,14 @@ const StudentDetail = () => {
             {/* AI-maintained journey profile + language trajectory */}
             <LearningJourneyCard studentId={student.id} />
             <CefrGrowthChart studentId={student.id} />
+            <CefrDefensePanel
+              studentId={student.id}
+              classId={(() => {
+                const e = (student.enrollments || [])[0];
+                const c = e?.class ? (Array.isArray(e.class) ? e.class[0] : e.class) : null;
+                return c?.id ?? null;
+              })()}
+            />
             
             {/* Class Leaderboards - using Admin's ClassLeaderboard for unified rankings */}
             {student.enrollments && student.enrollments.length > 0 && (

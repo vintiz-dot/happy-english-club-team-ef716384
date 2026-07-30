@@ -92,3 +92,8 @@ verify_jwt = true
 
 [functions.transcribe-lesson-audio]
 verify_jwt = true
+
+# Public on purpose: the Auth page (unauthenticated by definition) calls this
+# to self-heal the fixed demo accounts. It can only (re)provision those.
+[functions.seed-demo-accounts]
+verify_jwt = false

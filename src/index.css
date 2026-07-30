@@ -1233,3 +1233,31 @@ All colors MUST be HSL.
 }
 
 
+
+/* ── Print: the AI report is the ONLY thing that prints ──────────────────
+   The report lives inside a max-height dialog, so window.print() used to
+   clip it to one viewport and truncate everything below the fold. A
+   print-only portal (#hec-print-report, attached directly under <body>)
+   carries the full report; everything else is hidden. */
+@media print {
+  body > *:not(#hec-print-report) {
+    display: none !important;
+  }
+  #hec-print-report {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #111 !important;
+  }
+  #hec-print-report * {
+    color: #111 !important;
+    overflow: visible !important;
+    max-height: none !important;
+  }
+  #hec-print-report .print-muted { color: #555 !important; }
+  #hec-print-report .print-avoid-break { break-inside: avoid; }
+  @page { margin: 14mm; }
+}

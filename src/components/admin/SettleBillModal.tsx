@@ -65,7 +65,16 @@ export function SettleBillModal({
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Unwrap the function's JSON body — "non-2xx status code" alone is
+        // useless to the admin reading the toast.
+        let detail = error.message;
+        try {
+          const body = await (error as any).context?.json?.();
+          if (body?.error) detail = body.error;
+        } catch { /* keep the generic message */ }
+        throw new Error(detail);
+      }
 
       toast.success("Bill settled successfully");
 

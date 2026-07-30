@@ -88,8 +88,19 @@ const Auth = () => {
   const handleDemoLogin = async (demoEmail: string, demoPass: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPass });
-      if (error) throw error;
+      let { error } = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPass });
+      if (error) {
+        // Self-heal: (re)provision the demo accounts through the seeding
+        // function (Admin-API based — SQL-seeded users don't survive GoTrue's
+        // invariants), then retry once.
+        toast.info("Setting up the demo for you…");
+        const { data: seedRes, error: seedErr } = await supabase.functions.invoke("seed-demo-accounts", { body: {} });
+        if (seedErr || seedRes?.success === false) {
+          throw new Error(seedRes?.error || seedErr?.message || error.message);
+        }
+        ({ error } = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPass }));
+        if (error) throw error;
+      }
       toast.success("Welcome to the demo!");
       const state = location.state as { redirectTo?: string } | null;
       navigate(state?.redirectTo || "/dashboard");
