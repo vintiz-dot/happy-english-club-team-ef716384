@@ -20,6 +20,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 // Lazy-load every route — keeps initial bundle small and speeds up navigation
 const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
+const ClaimAccess = lazy(() => import("./pages/ClaimAccess"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Students = lazy(() => import("./pages/Students"));
 const StudentDetail = lazy(() => import("./pages/StudentDetail"));
@@ -94,6 +95,10 @@ function AppContent() {
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/auth/reset-password" element={<ResetPassword />} />
+                  {/* Public: families arrive here from a printed access card.
+                      Whoever lands here is locked out, so there is no session
+                      to check — the hardening is in redeem-access-code. */}
+                  <Route path="/claim" element={<ClaimAccess />} />
                   <Route path="/dashboard" element={<Dashboard />} />
 
                   {/* Admin-only routes */}

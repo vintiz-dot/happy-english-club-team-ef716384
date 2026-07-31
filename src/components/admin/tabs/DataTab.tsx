@@ -12,6 +12,7 @@ import { Download, Upload, Search, AlertTriangle, Activity } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminUsersManager } from "@/components/admin/AdminUsersManager";
 import { UsersManager } from "@/components/admin/UsersManager";
+import { StudentAccessManager } from "@/components/access/StudentAccessManager";
 import { DemoAccessManager } from "@/components/admin/DemoAccessManager";
 import { PageHero } from "@/components/quest/PageHero";
 
@@ -335,6 +336,9 @@ const DataTab = () => {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4">
+          {/* Front-desk recovery first: it is the thing staff reach for with
+              a parent standing in front of them. */}
+          <StudentAccessManager />
           <UsersManager />
         </TabsContent>
 

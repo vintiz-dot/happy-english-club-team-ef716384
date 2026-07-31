@@ -27,6 +27,20 @@ type UserRole = "admin" | "teacher" | "family" | "student";
 // deployment holds real student and family records.
 const DEMO_STUDENT_EMAIL = "student@demo.com";
 
+/**
+ * True for a school-issued login handle like `hanh@hanh.com`, where the local
+ * part matches the domain label. Those addresses are minted by the front-desk
+ * recovery flow for families with no email; nothing is ever delivered to them
+ * and the school does not own the domain, so password-reset mail must not be
+ * sent. Recovery for these accounts is a new access card from the school.
+ */
+function isSchoolIssuedHandle(email: string): boolean {
+  const m = /^([^@\s]+)@([^@\s.]+)\.com$/i.exec(email.trim());
+  if (!m) return false;
+  // hanh@hanh.com and hanh2@hanh.com both belong to the same generated family.
+  return m[1].toLowerCase().replace(/\d+$/, "") === m[2].toLowerCase();
+}
+
 const Auth = () => {
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [email, setEmail] = useState("");
@@ -130,6 +144,20 @@ const Auth = () => {
         const state = location.state as { redirectTo?: string } | null;
         navigate(state?.redirectTo || "/dashboard");
       } else if (mode === "forgot") {
+        // School-issued handles look like hanh@hanh.com — the local part and
+        // the domain match. Those domains are NOT owned by the school and
+        // have no mailbox, so a reset mail would either vanish or, worse, be
+        // delivered to whoever actually owns that domain. Refuse locally.
+        //
+        // This is a pure string check on what the user typed: it performs no
+        // lookup and so cannot be used to probe which accounts exist.
+        if (isSchoolIssuedHandle(email)) {
+          toast.error("This is a school login", {
+            description:
+              "There's no mailbox for this address, so we can't email you a reset. Ask the school for a new access card.",
+          });
+          return;
+        }
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/auth/reset-password`,
         });

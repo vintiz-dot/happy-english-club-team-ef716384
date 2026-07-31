@@ -105,3 +105,15 @@ verify_jwt = true
 # CALLER'S JWT (RLS enforced); service role is used only to resolve identity.
 [functions.chat]
 verify_jwt = true
+
+# Front-desk account recovery, ADMIN side. JWT verified plus an explicit
+# admin-role check inside. Refuses outright to touch admin/teacher accounts.
+[functions.manage-student-access]
+verify_jwt = true
+
+# Front-desk account recovery, FAMILY side. PUBLIC BY NECESSITY — the person
+# using it is locked out, so there is no JWT to verify. Hardened instead:
+# hashed single-use expiring codes, per-code attempt lock, IP rate limiting,
+# uniform error messages, and a hard refusal on staff accounts.
+[functions.redeem-access-code]
+verify_jwt = false
