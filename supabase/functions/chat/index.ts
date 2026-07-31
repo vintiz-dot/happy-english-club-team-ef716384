@@ -99,12 +99,19 @@ async function openaiChat(key: string, body: Record<string, unknown>): Promise<a
 // `roles` list controls which tools are OFFERED to the model; RLS remains
 // the real gate on what each tool can actually return.
 
+/** Who is asking. Needed by tools whose scoping cannot be expressed in RLS
+ *  alone — see list_my_classes. */
+interface ToolContext {
+  role: string;
+  userId: string;
+}
+
 interface ToolDef {
   name: string;
   description: string;
   parameters: Record<string, unknown>;
   roles: string[];
-  run: (userDb: any, args: any) => Promise<unknown>;
+  run: (userDb: any, args: any, ctx: ToolContext) => Promise<unknown>;
 }
 
 const clampLimit = (n: unknown, max: number, dflt: number) => {
@@ -465,14 +472,79 @@ const TOOLS: ToolDef[] = [
   },
   {
     name: "list_my_classes",
-    description: "Classes visible to this user (id, name). Teachers: your classes.",
+    description:
+      "The classes THIS user is actually connected to, by name: a student's own classes, a " +
+      "parent's children's classes (each with which child is in it), a teacher's classes. Use " +
+      "this for 'what class am I in?', 'which class is my child in?' and to name a class.",
     parameters: { type: "object", properties: {}, required: [] },
     roles: ["family", "student", "teacher", "admin"],
-    run: async (userDb) => {
-      const { data, error } = await userDb
-        .from("classes").select("id, name, age_range").eq("is_active", true).limit(50);
-      if (error) throw new Error(error.message);
-      return data;
+    run: async (userDb, _args, ctx) => {
+      // NOT a plain select on `classes`.
+      //
+      // The "Everyone can view active classes" policy is USING (is_active =
+      // true) — every signed-in user may read EVERY active class. Querying the
+      // table directly therefore returned the school's entire class list with
+      // nothing marking which one was the caller's, so the model could not
+      // name a student's class and (correctly) refused to guess. It also
+      // handed any student or parent the full roster of the school, and the
+      // 50-row cap meant their own class might not even be in the dump.
+      //
+      // Scope has to come from the RELATIONSHIP, not from RLS.
+      if (ctx.role === "admin") {
+        const { data, error } = await userDb
+          .from("classes").select("id, name, age_range")
+          .eq("is_active", true).order("name").limit(200);
+        if (error) throw new Error(error.message);
+        return data;
+      }
+
+      if (ctx.role === "teacher") {
+        const { data: teacher, error: e0 } = await userDb
+          .from("teachers").select("id").eq("user_id", ctx.userId).maybeSingle();
+        if (e0) throw new Error(e0.message);
+        if (!teacher) return [];
+        // A teacher's classes are the ones they have sessions for — the same
+        // derivation the teacher pages use.
+        const { data, error } = await userDb
+          .from("sessions")
+          .select("class_id, classes!inner(id, name, age_range)")
+          .eq("teacher_id", teacher.id)
+          .limit(2000);
+        if (error) throw new Error(error.message);
+        const byId = new Map<string, any>();
+        for (const s of data || []) {
+          const c = Array.isArray((s as any).classes) ? (s as any).classes[0] : (s as any).classes;
+          if (c) byId.set(c.id, c);
+        }
+        return [...byId.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+      }
+
+      // Student / parent: go through the students RLS already limits them to.
+      const { data: studs, error: e1 } = await userDb
+        .from("students").select("id, full_name").limit(60);
+      if (e1) throw new Error(e1.message);
+      if (!studs?.length) return [];
+
+      const { data: enr, error: e2 } = await userDb
+        .from("enrollments")
+        .select("student_id, classes(id, name, age_range)")
+        .in("student_id", studs.map((s: any) => s.id))
+        .limit(200);
+      if (e2) throw new Error(e2.message);
+
+      const nameById = new Map(studs.map((s: any) => [s.id, s.full_name]));
+      const byClass = new Map<string, any>();
+      for (const e of enr || []) {
+        const c = Array.isArray((e as any).classes) ? (e as any).classes[0] : (e as any).classes;
+        if (!c) continue;
+        if (!byClass.has(c.id)) byClass.set(c.id, { ...c, students: [] as string[] });
+        // A parent needs to know WHICH child is in which class.
+        const who = nameById.get((e as any).student_id);
+        if (who && !byClass.get(c.id).students.includes(who)) {
+          byClass.get(c.id).students.push(who);
+        }
+      }
+      return [...byClass.values()];
     },
   },
 ];
@@ -694,7 +766,7 @@ Deno.serve(async (req) => {
         } else {
           try {
             const args = safeParseJson(call.function?.arguments || "{}");
-            const result = await tool.run(userDb, args);
+            const result = await tool.run(userDb, args, { role, userId: caller.userId });
             toolsUsed.push(tool.name);
             const partial = (result as any)?.retrieval_problems;
             if (Array.isArray(partial) && partial.length) {
