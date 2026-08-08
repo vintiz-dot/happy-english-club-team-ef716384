@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.end_enrollment(uuid, uuid, date) TO authenticated;
