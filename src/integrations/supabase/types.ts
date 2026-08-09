@@ -4414,6 +4414,7 @@ export type Database = {
         Args: { p_job: string; p_month: string }
         Returns: boolean
       }
+      can_read_student_work_file: { Args: { _path: string }; Returns: boolean }
       can_view_classmate: {
         Args: { student_id_to_view: string; viewer_user_id: string }
         Returns: boolean
