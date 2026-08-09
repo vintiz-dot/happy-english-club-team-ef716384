@@ -117,7 +117,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         const newTotalPaid = alreadyPaid + enteredAmount;
         const payable = (item as any).finalPayable ?? 0;
         const invoiceId = String((item as any).id ?? "");
-        const isPersistedInvoice = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(invoiceId);
+        const isPersistedInvoice = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(invoiceId);
 
         let newStatus: string;
         if (newTotalPaid >= payable && payable > 0) newStatus = "paid";
