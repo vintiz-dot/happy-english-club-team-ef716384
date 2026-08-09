@@ -116,7 +116,8 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         const alreadyPaid = (item as any).recorded_payment ?? 0;
         const newTotalPaid = alreadyPaid + enteredAmount;
         const payable = (item as any).finalPayable ?? 0;
-        const isPlaceholder = (item as any).id?.startsWith("placeholder-");
+        const invoiceId = String((item as any).id ?? "");
+        const isPersistedInvoice = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(invoiceId);
 
         let newStatus: string;
         if (newTotalPaid >= payable && payable > 0) newStatus = "paid";
@@ -124,7 +125,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         else newStatus = "open";
 
         try {
-          if (isPlaceholder) {
+          if (!isPersistedInvoice) {
             const { error } = await supabase.from("invoices").insert([{
               student_id: item.student_id,
               month,
@@ -148,13 +149,13 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
                 updated_at: new Date().toISOString(),
                 updated_by: user?.id,
               })
-              .eq("id", (item as any).id);
+              .eq("id", invoiceId);
             if (error) throw error;
           }
 
           await supabase.from("audit_log").insert({
             entity: "invoice",
-            entity_id: isPlaceholder ? item.student_id : (item as any).id,
+            entity_id: isPersistedInvoice ? invoiceId : item.student_id,
             action: "quickpay_record_payment",
             actor_user_id: user?.id,
             diff: {

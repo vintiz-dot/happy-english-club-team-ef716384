@@ -138,7 +138,7 @@ export function useLiveTuitionData(month: string) {
         if (!data || data.error) continue;
 
         results.push({
-          id: data.invoiceId || `live-${student.id}`,
+          id: data.invoiceId || `placeholder-${student.id}`,
           student_id: student.id,
           month,
           base_amount: data.baseAmount ?? 0,
