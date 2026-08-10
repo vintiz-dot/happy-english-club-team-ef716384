@@ -83,19 +83,20 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Determine new status
-      let newStatus: string;
+      // Determine new status (must be a valid invoice_status enum value)
+      let newStatus: "draft" | "issued" | "paid" | "partial" | "credit";
       if (newTotalPaid >= payable && payable > 0) {
         newStatus = "paid";
       } else if (newTotalPaid > 0) {
         newStatus = "partial";
       } else {
-        newStatus = "open";
+        newStatus = "issued";
       }
 
       if (isPlaceholder) {
-        // Create invoice since none exists
-        const { error } = await supabase.from("invoices").insert([{
+        // Create invoice since none exists (upsert guards against a row
+        // created concurrently by the tuition calculator)
+        const { error } = await supabase.from("invoices").upsert([{
           student_id: item.student_id,
           month,
           base_amount: item.base_amount || 0,
@@ -103,13 +104,14 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
           total_amount: item.total_amount || 0,
           recorded_payment: newTotalPaid,
           paid_amount: 0,
-          status: newStatus as "draft" | "issued" | "paid" | "partial" | "credit",
+          status: newStatus,
           carry_in_credit: item.carry_in_credit || 0,
           carry_in_debt: item.carry_in_debt || 0,
           created_by: user?.id,
-        }]);
+        }], { onConflict: "student_id,month" });
         if (error) throw error;
       } else {
+
         // Update existing recorded_payment
         const { error } = await supabase
           .from("invoices")
