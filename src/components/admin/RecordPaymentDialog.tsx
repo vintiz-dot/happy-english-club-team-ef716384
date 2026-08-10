@@ -52,7 +52,8 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
     return getTuitionStatusBadge(status, item.settled_in_month);
   }, [item]);
 
-  const isPlaceholder = item?.id?.startsWith("placeholder-");
+  const UUID_RE = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+  const isPlaceholder = !UUID_RE.test(String(item?.id ?? ""));
 
   const handleActionFill = () => {
     if (mode === "payment") {
