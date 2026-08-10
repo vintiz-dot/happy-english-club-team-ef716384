@@ -88,16 +88,16 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
         const alreadyPaid = item.recorded_payment ?? 0;
         const newTotalPaid = alreadyPaid + enteredAmount;
         const payable = item.finalPayable ?? 0;
-        const isPlaceholder = item.id?.startsWith("placeholder-");
+        const isPlaceholder = !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(String(item.id ?? ""));
 
         let newStatus: string;
         if (newTotalPaid >= payable && payable > 0) newStatus = "paid";
         else if (newTotalPaid > 0) newStatus = "partial";
-        else newStatus = "open";
+        else newStatus = "issued";
 
         try {
           if (isPlaceholder) {
-            const { error } = await supabase.from("invoices").insert([{
+            const { error } = await supabase.from("invoices").upsert([{
               student_id: item.student_id,
               month,
               base_amount: item.base_amount || 0,
@@ -109,8 +109,9 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
               carry_in_credit: item.carry_in_credit || 0,
               carry_in_debt: item.carry_in_debt || 0,
               created_by: user?.id,
-            }]);
+            }], { onConflict: "student_id,month" });
             if (error) throw error;
+
           } else {
             const { error } = await supabase
               .from("invoices")

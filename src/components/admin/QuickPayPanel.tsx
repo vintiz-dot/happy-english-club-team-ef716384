@@ -122,11 +122,11 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         let newStatus: string;
         if (newTotalPaid >= payable && payable > 0) newStatus = "paid";
         else if (newTotalPaid > 0) newStatus = "partial";
-        else newStatus = "open";
+        else newStatus = "issued";
 
         try {
           if (!isPersistedInvoice) {
-            const { error } = await supabase.from("invoices").insert([{
+            const { error } = await supabase.from("invoices").upsert([{
               student_id: item.student_id,
               month,
               base_amount: (item as any).base_amount || 0,
@@ -138,8 +138,9 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
               carry_in_credit: (item as any).carry_in_credit || 0,
               carry_in_debt: (item as any).carry_in_debt || 0,
               created_by: user?.id,
-            }]);
+            }], { onConflict: "student_id,month" });
             if (error) throw error;
+
           } else {
             const { error } = await supabase
               .from("invoices")
