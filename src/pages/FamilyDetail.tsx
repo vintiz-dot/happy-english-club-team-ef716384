@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,10 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Link, Mail, Phone, Users } from "lucide-react";
 import { useState } from "react";
 import { FamilyLinkDialog } from "@/components/admin/FamilyLinkDialog";
+import { FamilyMembersManager } from "@/components/admin/FamilyMembersManager";
+import { toast } from "sonner";
 
 const FamilyDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+
 
   const { data: family, isLoading } = useQuery({
     queryKey: ["family-detail", id],
@@ -174,13 +178,34 @@ const FamilyDetail = () => {
                           <p className="text-sm text-muted-foreground">📱 {student.phone}</p>
                         )}
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => window.location.href = `/students/${student.id}`}
-                      >
-                        View Details
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.location.href = `/students/${student.id}`}
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            const { error } = await supabase
+                              .from("students")
+                              .update({ family_id: null })
+                              .eq("id", student.id);
+                            if (error) {
+                              toast.error(error.message);
+                            } else {
+                              toast.success("Student removed from family");
+                              queryClient.invalidateQueries({ queryKey: ["family-detail", id] });
+                              queryClient.invalidateQueries({ queryKey: ["family-candidates"] });
+                            }
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -189,6 +214,12 @@ const FamilyDetail = () => {
               )}
             </CardContent>
           </Card>
+
+          <FamilyMembersManager
+            familyId={family.id}
+            onChanged={() => queryClient.invalidateQueries({ queryKey: ["family-detail", id] })}
+          />
+
         </div>
 
         {showLinkDialog && (
