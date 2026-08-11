@@ -174,13 +174,34 @@ const FamilyDetail = () => {
                           <p className="text-sm text-muted-foreground">📱 {student.phone}</p>
                         )}
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => window.location.href = `/students/${student.id}`}
-                      >
-                        View Details
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.location.href = `/students/${student.id}`}
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            const { error } = await supabase
+                              .from("students")
+                              .update({ family_id: null })
+                              .eq("id", student.id);
+                            if (error) {
+                              toast.error(error.message);
+                            } else {
+                              toast.success("Student removed from family");
+                              queryClient.invalidateQueries({ queryKey: ["family-detail", id] });
+                              queryClient.invalidateQueries({ queryKey: ["family-candidates"] });
+                            }
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -189,6 +210,12 @@ const FamilyDetail = () => {
               )}
             </CardContent>
           </Card>
+
+          <FamilyMembersManager
+            familyId={family.id}
+            onChanged={() => queryClient.invalidateQueries({ queryKey: ["family-detail", id] })}
+          />
+
         </div>
 
         {showLinkDialog && (
