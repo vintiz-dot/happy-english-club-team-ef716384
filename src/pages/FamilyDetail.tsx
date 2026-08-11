@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,10 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Link, Mail, Phone, Users } from "lucide-react";
 import { useState } from "react";
 import { FamilyLinkDialog } from "@/components/admin/FamilyLinkDialog";
+import { FamilyMembersManager } from "@/components/admin/FamilyMembersManager";
+import { toast } from "sonner";
 
 const FamilyDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+
 
   const { data: family, isLoading } = useQuery({
     queryKey: ["family-detail", id],
