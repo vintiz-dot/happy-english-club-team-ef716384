@@ -149,19 +149,23 @@ export function StudentOverviewTab({ student }: { student: any }) {
       )}
 
       {/* Family & Siblings Card */}
-      {familyData && (
+      {(
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
               Family Information
             </CardTitle>
+            <Button variant="outline" size="sm" onClick={() => setIsEditOpen(true)}>
+              {familyData ? "Change family" : "Add to family"}
+            </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">Family</p>
-              <p className="font-medium">{familyData.name}</p>
+              <p className="font-medium">{familyData?.name || "Not in a family yet"}</p>
             </div>
+            
             
             {familyData.students && familyData.students.length > 1 && (
               <div>
