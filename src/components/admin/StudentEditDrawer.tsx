@@ -95,14 +95,23 @@ export function StudentEditDrawer({ student, open, onOpenChange }: any) {
         date_of_birth: formData.date_of_birth ? format(formData.date_of_birth, "yyyy-MM-dd") : null,
       };
 
-      const { error } = await supabase.from("students").update(payload).eq("id", student.id);
+      const { data, error } = await supabase
+        .from("students")
+        .update(payload)
+        .eq("id", student.id)
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("No changes were saved — your account may not have permission to edit this student.");
+      }
     },
     onSuccess: () => {
       toast.success("Student updated successfully");
       queryClient.invalidateQueries({ queryKey: ["student-detail", student.id] });
+      queryClient.invalidateQueries({ queryKey: ["student-family", student.id] });
       queryClient.invalidateQueries({ queryKey: ["students-list"] });
       queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["families-list"] });
       queryClient.invalidateQueries({ queryKey: ["family-detail"] });
       onOpenChange(false);
     },
