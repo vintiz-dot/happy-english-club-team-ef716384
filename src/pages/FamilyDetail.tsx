@@ -41,15 +41,19 @@ const FamilyDetail = () => {
       // If family has primary_user_id, get the user's email
       let linkedUserEmail = null;
       if (data?.primary_user_id) {
-        const response = await supabase.functions.invoke('manage-admin-users', {
-          body: { action: 'listUsers' }
-        });
-        
-        if (!response.error && response.data?.users) {
-          const linkedUser = response.data.users.find((u: any) => u.id === data.primary_user_id);
-          if (linkedUser) {
-            linkedUserEmail = linkedUser.email;
+        try {
+          const response = await supabase.functions.invoke('manage-admin-users', {
+            body: { action: 'listUsers' }
+          });
+
+          if (!response.error && response.data?.users) {
+            const linkedUser = response.data.users.find((u: any) => u.id === data.primary_user_id);
+            if (linkedUser) {
+              linkedUserEmail = linkedUser.email;
+            }
           }
+        } catch (e) {
+          console.warn("Could not resolve linked user email", e);
         }
       }
 
