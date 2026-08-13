@@ -167,7 +167,7 @@ export function StudentOverviewTab({ student }: { student: any }) {
             </div>
             
             
-            {familyData.students && familyData.students.length > 1 && (
+            {familyData?.students && familyData.students.length > 1 && (
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Siblings</p>
                 <div className="flex flex-wrap gap-2">
