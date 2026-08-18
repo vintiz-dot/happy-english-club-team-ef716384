@@ -96,10 +96,10 @@ export function ManualPointAdjustment() {
     }
 
     const pointsValue = Number(points);
-    if (!Number.isFinite(pointsValue) || pointsValue < -100 || pointsValue > 100) {
+    if (!Number.isFinite(pointsValue) || pointsValue < -500 || pointsValue > 500) {
       toast({
         title: "Invalid points",
-        description: "Points must be between -100 and 100",
+        description: "Points must be between -500 and 500",
         variant: "destructive",
       });
       return;
@@ -358,7 +358,7 @@ export function ManualPointAdjustment() {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="points">Points (-100 to 100) *</Label>
+          <Label htmlFor="points">Points (-500 to 500) *</Label>
           <div className="flex gap-2">
             <Button
               type="button"
@@ -404,8 +404,8 @@ export function ManualPointAdjustment() {
           <Input
             id="points"
             type="number"
-            min="-100"
-            max="100"
+            min="-500"
+            max="500"
             value={points}
             onChange={(e) => setPoints(e.target.value)}
             placeholder="Enter custom value"
