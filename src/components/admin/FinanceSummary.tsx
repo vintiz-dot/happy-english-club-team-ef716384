@@ -8,6 +8,8 @@ import {
   TrendingUp,
   TrendingDown,
   Wallet,
+  Receipt,
+  CalendarX,
   Skull,
   CheckCircle,
   Lock,
@@ -179,7 +181,7 @@ export function FinanceSummary() {
         </div>
 
         {/* Secondary: costs + net */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Billed (this month)</CardTitle>
@@ -211,21 +213,39 @@ export function FinanceSummary() {
             </CardContent>
           </Card>
 
+          {/* Operating spend only. Excused loss is deliberately NOT added in:
+              it is revenue never earned, not money paid out, and summing the
+              two produced an "Expenditures" headline that could read in the
+              millions while actual operating spend was zero. Net Profit has
+              always subtracted totalExpenditures alone, so the two figures
+              stay separate here to match. */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Expenditures & Excused</CardTitle>
-              <Wallet className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Expenditures</CardTitle>
+              <Receipt className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {isLoading ? "..." : formatVND((data?.totalExpenditures ?? 0) + (data?.excusedLoss ?? 0))}
+                {isLoading ? "..." : formatVND(data?.totalExpenditures ?? 0)}
               </div>
-              <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
-                <p>Operating: {isLoading ? "..." : formatVND(data?.totalExpenditures ?? 0)}</p>
-                <p className="text-amber-600">
-                  Excused loss: {isLoading ? "..." : formatVND(data?.excusedLoss ?? 0)}
-                </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Operating costs • subtracted from net
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Excused Loss</CardTitle>
+              <CalendarX className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-amber-600">
+                {isLoading ? "..." : formatVND(data?.excusedLoss ?? 0)}
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Revenue forgone to excused absences • not a cost
+              </p>
             </CardContent>
           </Card>
 
