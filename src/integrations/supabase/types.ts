@@ -2023,6 +2023,86 @@ export type Database = {
           },
         ]
       }
+      monthly_finance_snapshots: {
+        Row: {
+          base_amount: number
+          carry_in_credit: number
+          carry_in_debt: number
+          carry_out_credit: number
+          carry_out_debt: number
+          close_reason: string | null
+          closed_at: string
+          closed_by: string | null
+          final_payable: number
+          id: string
+          month: string
+          recorded_payment: number
+          session_count: number
+          source_payload: Json
+          student_id: string
+          supersede_reason: string | null
+          superseded_at: string | null
+          superseded_by: string | null
+          total_amount: number
+          total_discount: number
+          version: number
+        }
+        Insert: {
+          base_amount?: number
+          carry_in_credit?: number
+          carry_in_debt?: number
+          carry_out_credit?: number
+          carry_out_debt?: number
+          close_reason?: string | null
+          closed_at?: string
+          closed_by?: string | null
+          final_payable: number
+          id?: string
+          month: string
+          recorded_payment?: number
+          session_count?: number
+          source_payload: Json
+          student_id: string
+          supersede_reason?: string | null
+          superseded_at?: string | null
+          superseded_by?: string | null
+          total_amount?: number
+          total_discount?: number
+          version?: number
+        }
+        Update: {
+          base_amount?: number
+          carry_in_credit?: number
+          carry_in_debt?: number
+          carry_out_credit?: number
+          carry_out_debt?: number
+          close_reason?: string | null
+          closed_at?: string
+          closed_by?: string | null
+          final_payable?: number
+          id?: string
+          month?: string
+          recorded_payment?: number
+          session_count?: number
+          source_payload?: Json
+          student_id?: string
+          supersede_reason?: string | null
+          superseded_at?: string | null
+          superseded_by?: string | null
+          total_amount?: number
+          total_discount?: number
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_finance_snapshots_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_leaders: {
         Row: {
           class_id: string
