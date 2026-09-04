@@ -3696,6 +3696,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           date_of_birth: string | null
+          deactivated_at: string | null
           email: string | null
           family_id: string | null
           full_name: string
@@ -3717,6 +3718,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           date_of_birth?: string | null
+          deactivated_at?: string | null
           email?: string | null
           family_id?: string | null
           full_name: string
@@ -3738,6 +3740,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           date_of_birth?: string | null
+          deactivated_at?: string | null
           email?: string | null
           family_id?: string | null
           full_name?: string

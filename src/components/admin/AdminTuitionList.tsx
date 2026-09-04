@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchStudentsInMonth } from "@/lib/finance/studentsInMonth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TuitionPageFilters } from "@/components/admin/TuitionPageFilters";
 import { Badge } from "@/components/ui/badge";
@@ -34,13 +35,10 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
         .toISOString()
         .slice(0, 10);
 
-      const { data: allStudents, error: studentsError } = await supabase
-        .from("students")
-        .select("id, full_name, family_id, is_active")
-        .eq("is_active", true);
-
-      if (studentsError) throw studentsError;
-      if (!allStudents || allStudents.length === 0) return [];
+      // Roster as it stood during `month`, so students deactivated since
+      // keep their past tuition rows.
+      const allStudents = await fetchStudentsInMonth(month);
+      if (allStudents.length === 0) return [];
 
       const allStudentIds = allStudents.map((s) => s.id);
 
@@ -65,17 +63,17 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
 
       const studentDiscounts = new Set(discounts?.map((d) => d.student_id) || []);
 
-      const { data: students } = await supabase.from("students").select("id, family_id").eq("is_active", true);
-
+      // Sibling badge reflects the same month-aware roster, so a family
+      // reads as siblings in the months both children were enrolled.
       const familyCounts = new Map<string, number>();
-      students?.forEach((s) => {
+      allStudents.forEach((s) => {
         if (s.family_id) {
           familyCounts.set(s.family_id, (familyCounts.get(s.family_id) || 0) + 1);
         }
       });
 
       const siblingStudents = new Set(
-        students?.filter((s) => s.family_id && (familyCounts.get(s.family_id) || 0) >= 2).map((s) => s.id) || [],
+        allStudents.filter((s) => s.family_id && (familyCounts.get(s.family_id) || 0) >= 2).map((s) => s.id),
       );
 
       const studentClasses = new Map<string, any[]>();

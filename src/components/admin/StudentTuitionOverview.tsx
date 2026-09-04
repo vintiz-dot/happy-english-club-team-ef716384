@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { studentsInMonthOrClause } from "@/lib/finance/studentsInMonth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -41,12 +42,14 @@ export function StudentTuitionOverview() {
   const [sortBy, setSortBy] = useState<"name" | "class" | "balance" | "total">("name");
 
   const { data: students, isLoading: studentsLoading } = useQuery({
-    queryKey: ["students-active"],
+    // Month-scoped: the roster depends on which month is selected, so a
+    // student deactivated later still appears in their earlier months.
+    queryKey: ["students-in-month", selectedMonth],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("students")
         .select("id, full_name, family:families(name)")
-        .eq("is_active", true)
+        .or(studentsInMonthOrClause(selectedMonth))
         .order("full_name");
 
       if (error) throw error;

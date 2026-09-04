@@ -95,6 +95,15 @@ export function TuitionStudentCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-semibold text-sm truncate">{studentName}</span>
+                {(item.students as any)?.is_active === false && (
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] px-1.5 py-0 border-muted-foreground/40 text-muted-foreground"
+                    title="No longer enrolled — shown because they were active during this month"
+                  >
+                    Inactive
+                  </Badge>
+                )}
                 {getTuitionStatusBadge(status, item.settled_in_month)}
                 {item.hasDiscount && (
                   <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5 border-blue-300 text-blue-700">

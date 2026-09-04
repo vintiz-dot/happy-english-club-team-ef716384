@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Lock, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useMonthSnapshots } from "@/hooks/useMonthlyFinanceSnapshots";
+import { fetchBilledStudentIds } from "@/lib/finance/studentsInMonth";
 
 interface CloseMonthDialogProps {
   open: boolean;
@@ -42,32 +43,10 @@ export function CloseMonthDialog({ open, month, onClose }: CloseMonthDialogProps
   const { data: targetStudentIds, isLoading: loadingTargets } = useQuery({
     queryKey: ["close-month-targets", month],
     enabled: open,
-    queryFn: async (): Promise<string[]> => {
-      const monthStart = `${month}-01`;
-      const monthEnd = new Date(
-        Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0),
-      )
-        .toISOString()
-        .slice(0, 10);
-
-      const { data: students } = await supabase
-        .from("students")
-        .select("id, is_active")
-        .eq("is_active", true);
-      const allIds = (students ?? []).map((s) => s.id);
-      if (allIds.length === 0) return [];
-
-      const { data: enrollments } = await supabase
-        .from("enrollments")
-        .select("student_id, classes!inner(id, is_active)")
-        .in("student_id", allIds)
-        .eq("classes.is_active", true)
-        .lte("start_date", monthEnd)
-        .or(`end_date.is.null,end_date.gte.${monthStart}`);
-
-      const enrolled = new Set((enrollments ?? []).map((e: any) => e.student_id));
-      return allIds.filter((id) => enrolled.has(id));
-    },
+    // Month-aware roster: a student deactivated after this month was still
+    // here during it, so they must be snapshotted too. Missing them here is
+    // permanent — the frozen record is what audits read years later.
+    queryFn: () => fetchBilledStudentIds(month),
   });
 
   const totalTargets = targetStudentIds?.length ?? 0;

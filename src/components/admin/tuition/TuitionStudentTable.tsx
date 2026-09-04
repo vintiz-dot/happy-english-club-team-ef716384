@@ -108,6 +108,15 @@ export function TuitionStudentTable({
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-medium truncate">{studentName}</span>
+                          {(item.students as any)?.is_active === false && (
+                            <Badge
+                              variant="outline"
+                              className="h-4 px-1 text-[10px] border-muted-foreground/40 text-muted-foreground"
+                              title="No longer enrolled — shown because they were active during this month"
+                            >
+                              Inactive
+                            </Badge>
+                          )}
                           {item.hasDiscount && (
                             <Badge variant="outline" className="h-4 px-1 gap-0.5 text-[10px] border-blue-300 text-blue-700">
                               <Percent className="h-2.5 w-2.5" />

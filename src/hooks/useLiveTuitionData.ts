@@ -1,5 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  fetchEnrollmentsInMonth,
+  fetchStudentsInMonth,
+  monthBounds,
+} from "@/lib/finance/studentsInMonth";
 
 interface LiveTuitionItem {
   id: string;
@@ -24,6 +29,7 @@ interface LiveTuitionItem {
     full_name: string;
     family_id: string | null;
     avatar_url: string | null;
+    is_active: boolean;
   };
   classes: Array<{ id: string; name: string }>;
   hasDiscount: boolean;
@@ -39,30 +45,18 @@ export function useLiveTuitionData(month: string) {
   return useQuery({
     queryKey: ["admin-tuition-live", month],
     queryFn: async (): Promise<LiveTuitionItem[]> => {
-      const monthStart = `${month}-01`;
-      const monthEnd = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0))
-        .toISOString()
-        .slice(0, 10);
+      const { monthStart, monthEnd } = monthBounds(month);
 
-      // Fetch ALL active students
-      const { data: allStudents, error: studentsError } = await supabase
-        .from("students")
-        .select("id, full_name, family_id, is_active, avatar_url")
-        .eq("is_active", true);
-
-      if (studentsError) throw studentsError;
-      if (!allStudents || allStudents.length === 0) return [];
+      // Everyone who was on the roster during this month. Students
+      // deactivated since are still included for the months they were
+      // here, so past tuition never disappears from the list.
+      const allStudents = await fetchStudentsInMonth(month);
+      if (allStudents.length === 0) return [];
 
       const allStudentIds = allStudents.map((s) => s.id);
 
       // Fetch enrollments for active classes to filter students
-      const { data: enrollments } = await supabase
-        .from("enrollments")
-        .select(`student_id, class_id, classes!inner(id, name, is_active)`)
-        .in("student_id", allStudentIds)
-        .eq("classes.is_active", true)
-        .lte("start_date", monthEnd)
-        .or(`end_date.is.null,end_date.gte.${monthStart}`);
+      const enrollments = await fetchEnrollmentsInMonth(month, allStudentIds);
 
       // Map student to classes
       const studentClasses = new Map<string, any[]>();

@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchBilledStudentIds } from "@/lib/finance/studentsInMonth";
 
 /**
  * Drives the rebuilt Admin Finance Summary widget.
@@ -155,41 +156,25 @@ export function useFinanceOverview(month: string) {
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       const nextMonthStart = format(nextMonth, "yyyy-MM-dd");
 
-      // 1) Active students with enrollments in this month — same filter as
-      //    AdminTuitionListEnhanced uses, so the live aggregation matches
-      //    the per-student card.
-      const { data: students } = await supabase
-        .from("students")
-        .select("id, is_active")
-        .eq("is_active", true);
-      const allIds = (students ?? []).map((s) => s.id);
+      // 1) The billable roster for this month — shared with
+      //    AdminTuitionListEnhanced and CloseMonthDialog, so the live
+      //    aggregation matches the per-student cards and what a close
+      //    would freeze. Month-aware: a student who has since been
+      //    deactivated still counts toward the months they were here for.
+      const enrolledIds = await fetchBilledStudentIds(month);
 
       let liveMetrics = emptyMetrics();
-      if (allIds.length > 0) {
-        const { data: enrollments } = await supabase
-          .from("enrollments")
-          .select("student_id, classes!inner(id, is_active)")
-          .in("student_id", allIds)
-          .eq("classes.is_active", true)
-          .lte("start_date", nextMonthStart)
-          .or(`end_date.is.null,end_date.gte.${monthStart}`);
-
-        const enrolledIds = Array.from(
-          new Set((enrollments ?? []).map((e: any) => e.student_id)),
-        );
-
-        if (enrolledIds.length > 0) {
-          const liveRows: any[] = [];
-          for (const ids of chunk(enrolledIds, BULK_CHUNK)) {
-            const { data, error } = await supabase.functions.invoke(
-              "calculate-tuition-bulk",
-              { body: { studentIds: ids, month } },
-            );
-            if (error) throw error;
-            if (data?.results) liveRows.push(...data.results);
-          }
-          liveMetrics = aggregateLive(liveRows);
+      if (enrolledIds.length > 0) {
+        const liveRows: any[] = [];
+        for (const ids of chunk(enrolledIds, BULK_CHUNK)) {
+          const { data, error } = await supabase.functions.invoke(
+            "calculate-tuition-bulk",
+            { body: { studentIds: ids, month } },
+          );
+          if (error) throw error;
+          if (data?.results) liveRows.push(...data.results);
         }
+        liveMetrics = aggregateLive(liveRows);
       }
 
       // 2) Snapshot rows for this month — drives the "closed" indicator.
