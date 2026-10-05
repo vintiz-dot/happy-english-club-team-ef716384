@@ -12,8 +12,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { PastAttendanceEditor } from "@/components/admin/PastAttendanceEditor";
+import { assertClassNameAvailable } from "@/components/admin/class/ClassAdminActions";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ClassSettings = ({ classId }: { classId: string }) => {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
   const [defaultTeacherId, setDefaultTeacherId] = useState("");
   const [sessionRate, setSessionRate] = useState(0);
   const [defaultStartTime, setDefaultStartTime] = useState("");
@@ -61,6 +65,7 @@ const ClassSettings = ({ classId }: { classId: string }) => {
 
   useEffect(() => {
     if (classData) {
+      setName(classData.name || "");
       setDefaultTeacherId(classData.default_teacher_id || "");
       setSessionRate(classData.session_rate_vnd || 0);
       setDefaultSessionLength(classData.default_session_length_minutes || 90);
@@ -90,7 +95,17 @@ const ClassSettings = ({ classId }: { classId: string }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Validate the name only when it actually changed. Two classes in the
+      // existing data could already share a name, and that must not block an
+      // admin who came here to edit the session rate.
+      const nameChanged = name.trim() !== (classData?.name ?? "");
+      if (nameChanged) {
+        // Throws on a blank name or a clash, before anything is written.
+        await assertClassNameAvailable(classId, name);
+      }
+
       const updateData: any = {
+        ...(nameChanged ? { name: name.trim() } : {}),
         default_teacher_id: defaultTeacherId || null,
         session_rate_vnd: sessionRate,
         default_session_length_minutes: defaultSessionLength,
@@ -113,6 +128,19 @@ const ClassSettings = ({ classId }: { classId: string }) => {
         .eq("id", classId);
 
       if (error) throw error;
+
+      // A rename is the change people ask about months later ("why is this
+      // class called that now?"), so it is recorded.
+      if (nameChanged) {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from("audit_log").insert({
+          entity: "classes",
+          action: "rename",
+          entity_id: classId,
+          actor_user_id: user?.id ?? null,
+          diff: { old_name: classData?.name ?? null, new_name: name.trim() },
+        });
+      }
 
       // Trigger recalculations for affected students and teachers
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -155,6 +183,10 @@ const ClassSettings = ({ classId }: { classId: string }) => {
         }
       }
 
+      // So the page heading and every class list pick up a renamed class.
+      queryClient.invalidateQueries({ queryKey: ["class", classId] });
+      queryClient.invalidateQueries({ queryKey: ["classes"] });
+
       toast.success("Class settings updated and calculations triggered");
     } catch (error: any) {
       console.error("Error updating class:", error);
@@ -178,6 +210,18 @@ const ClassSettings = ({ classId }: { classId: string }) => {
               <CardTitle>Class Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Class Name</Label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Class A1 — Morning"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Shown everywhere: schedules, reports, invoices and the student app.
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label>Default Teacher</Label>
                 <Select value={defaultTeacherId} onValueChange={setDefaultTeacherId}>

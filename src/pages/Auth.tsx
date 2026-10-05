@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
   Flame,
   Star,
   ArrowRight,
+  KeyRound,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -431,6 +432,35 @@ const Auth = () => {
               </>
             )}
           </div>
+
+          {/* Access card redemption.
+              The whole point of the front-desk card is that the family has
+              lost BOTH their password and the email they signed up with — so
+              every other route on this page is closed to them. The card was
+              printed with a web address but nothing here pointed at /claim,
+              which left the holder of a valid code with no way in. In "forgot"
+              mode this is the likeliest answer, so it is stated plainly. */}
+          {mode !== "signup" && (
+            <div className="mt-6 pt-5 border-t border-white/10">
+              <Link
+                to="/claim"
+                className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3 transition-colors hover:bg-white/10"
+              >
+                <KeyRound className="h-5 w-5 shrink-0 text-blue-500 dark:text-blue-300" />
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold">
+                    Have an access code from the school?
+                  </span>
+                  <span className="block text-[11px] text-muted-foreground">
+                    {mode === "forgot"
+                      ? "Forgot your email too? Use the code on your access card instead."
+                      : "Use the code on your card to set a new password."}
+                  </span>
+                </span>
+                <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
+              </Link>
+            </div>
+          )}
 
           {/* Demo access — STUDENT ONLY, and only with the password an admin
               set. This is a live app holding real student and family data:

@@ -8,8 +8,37 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Pencil, Check, X, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Pencil, Check, X, Settings, ChevronRight } from "lucide-react";
 import { ModifyEnrollmentModal } from "../ModifyEnrollmentModal";
+
+/**
+ * The student's name, linked to their profile.
+ *
+ * The roster is the natural place to say "open that child" from, and these
+ * names were previously plain text — the only way through was to leave the
+ * class, go to Students, and search. Falls back to plain text if the embedded
+ * student row is missing, so a broken join cannot produce a link to /students/.
+ */
+const StudentLink = ({ enrollment }: any) => {
+  const studentId = enrollment.students?.id ?? enrollment.student_id;
+  const name = enrollment.students?.full_name;
+
+  if (!studentId || !name) {
+    return <span className="text-muted-foreground">{name || "Unknown student"}</span>;
+  }
+
+  return (
+    <Link
+      to={`/students/${studentId}`}
+      className="group inline-flex items-center gap-1 font-medium hover:text-primary hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+      title={`Open ${name}'s profile`}
+    >
+      {name}
+      <ChevronRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-70" />
+    </Link>
+  );
+};
 
 const EnrollmentRow = ({ enrollment, onUpdate, onModify }: any) => {
   const [editing, setEditing] = useState(false);
@@ -38,8 +67,8 @@ const EnrollmentRow = ({ enrollment, onUpdate, onModify }: any) => {
 
   if (!editing) {
     return (
-      <div className="flex items-center justify-between p-2 border rounded">
-        <span>{enrollment.students?.full_name}</span>
+      <div className="flex items-center justify-between p-2 border rounded hover:bg-muted/40 transition-colors">
+        <StudentLink enrollment={enrollment} />
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
             Since {format(new Date(enrollment.start_date), "MMM dd, yyyy")}
@@ -69,7 +98,7 @@ const EnrollmentRow = ({ enrollment, onUpdate, onModify }: any) => {
 
   return (
     <div className="flex items-center justify-between p-2 border rounded bg-muted/50">
-      <span>{enrollment.students?.full_name}</span>
+      <StudentLink enrollment={enrollment} />
       <div className="flex items-center gap-2">
         <Input
           type="date"

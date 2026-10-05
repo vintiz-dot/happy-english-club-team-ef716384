@@ -4,6 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { ClassForm } from "@/components/admin/ClassForm";
+import {
+  ClassAdminActions,
+  ArchivedClassesSection,
+} from "@/components/admin/class/ClassAdminActions";
 import { Users, Clock, School } from "lucide-react";
 import { PageHero } from "@/components/quest/PageHero";
 import { SectionHeader } from "@/components/quest/SectionHeader";
@@ -94,8 +98,14 @@ const ClassesTab = () => {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {classes.map((cls) => (
-              <Link key={cls.id} to={`/admin/classes/${cls.id}`}>
-                <Card className="surface-2 shadow-q1 lift hover:border-primary/40 transition-colors cursor-pointer h-full">
+              // The card links to the class, so the Rename/Delete buttons sit
+              // OUTSIDE the <Link> — nesting buttons inside an anchor both
+              // breaks the markup and makes every click navigate away.
+              <Card
+                key={cls.id}
+                className="surface-2 shadow-q1 lift hover:border-primary/40 transition-colors h-full flex flex-col"
+              >
+                <Link to={`/admin/classes/${cls.id}`} className="flex-1 cursor-pointer">
                   <CardHeader>
                     <CardTitle className="type-h2">{cls.name}</CardTitle>
                     <CardDescription className="flex items-center gap-4 mt-2 type-micro">
@@ -114,12 +124,17 @@ const ClassesTab = () => {
                       {cls.session_rate_vnd?.toLocaleString("vi-VN")} ₫ / session
                     </p>
                   </CardContent>
-                </Card>
-              </Link>
+                </Link>
+                <CardContent className="pt-0">
+                  <ClassAdminActions classId={cls.id} classLabel={cls.name} />
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
       </div>
+
+      <ArchivedClassesSection />
     </div>
   );
 };

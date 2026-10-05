@@ -12,6 +12,7 @@ import ClassSettings from "@/components/admin/class/ClassSettings";
 import RecurringSessionsManager from "@/components/admin/class/RecurringSessionsManager";
 import { ClassLeaderboard } from "@/components/admin/ClassLeaderboard";
 import { ClassMonitorCard } from "@/components/admin/class/ClassMonitorCard";
+import { ClassAdminActions } from "@/components/admin/class/ClassAdminActions";
 
 const ClassDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,9 +51,21 @@ const ClassDetail = () => {
           </Link>
         </div>
 
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{classData?.name || "Class"}</h1>
-          <p className="text-muted-foreground">Manage class details, enrollments, and homework</p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">{classData?.name || "Class"}</h1>
+            <p className="text-muted-foreground">Manage class details, enrollments, and homework</p>
+          </div>
+          {classData && (
+            <ClassAdminActions
+              classId={classData.id}
+              classLabel={classData.name}
+              stretch={false}
+              // Archiving or deleting leaves nothing to show here.
+              onDeleted={() => navigate("/admin?tab=classes")}
+              onArchived={() => navigate("/admin?tab=classes")}
+            />
+          )}
         </div>
 
         <Tabs value={tab} onValueChange={handleTabChange}>
