@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { DurationVarianceNotice } from "@/components/shared/DurationVarianceNotice";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { dayjs } from "@/lib/date";
@@ -450,6 +451,11 @@ export default function TeacherDashboard() {
               </div>
               <div className="space-y-2">
                 <p className="text-2xl font-bold">{((payrollData?.totalAmountProjected || 0) / 1000).toFixed(0)}K</p>
+                <DurationVarianceNotice
+                  className="mt-1"
+                  count={payrollData?.discrepancyCount || 0}
+                  varianceAmount={payrollData?.varianceAmountProjected}
+                />
                 <p className="text-sm text-muted-foreground mb-2">Projected (VND)</p>
                 <Progress value={progressPercent} className="h-1.5" />
               </div>

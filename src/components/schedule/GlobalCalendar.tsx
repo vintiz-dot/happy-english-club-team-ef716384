@@ -62,7 +62,7 @@ const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCa
           rate_override_vnd,
           class_id,
           teacher_id,
-          classes!inner (id, name),
+          classes!inner (id, name, default_session_length_minutes),
           teachers (id, full_name),
           attendance (student_id, status)
         `)
@@ -207,6 +207,11 @@ const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCa
         enrolled_count: session.attendance?.length || 0,
         notes: session.notes,
         teacher_name: session.teachers?.full_name,
+        // Colour is keyed on the id so a rename keeps the class's colour.
+        class_id: session.class_id,
+        // The expected length, so a session whose times disagree with its
+        // class setting can be flagged wherever it appears.
+        expected_duration_minutes: session.classes?.default_session_length_minutes ?? null,
       })),
     [rawSessions],
   );

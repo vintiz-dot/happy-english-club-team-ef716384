@@ -1,11 +1,15 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus } from "lucide-react";
+import { Plus, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dayjs, nowBangkok } from "@/lib/date";
+import { statusTreatment, type ClassColor } from "@/lib/classColors";
+import { describeVariance } from "@/lib/sessionDuration";
 import {
   STATUS_META,
+  colorKeyFor,
+  eventVariance,
   formatTime,
   getStatusKey,
   type CalendarEvent,
@@ -72,22 +76,38 @@ function useMeasuredHeight<T extends HTMLElement>() {
 
 /* ------------------------------------------------------------------- chip */
 
+type ColorFor = (key: string) => ClassColor;
+
 interface ChipProps {
   event: CalendarEvent;
   onSelect?: (event: CalendarEvent) => void;
   draggable?: boolean;
   compact?: boolean;
+  colorFor: ColorFor;
 }
 
-function EventChip({ event, onSelect, draggable, compact }: ChipProps) {
+function EventChip({ event, onSelect, draggable, compact, colorFor }: ChipProps) {
   const statusKey = getStatusKey(event);
   const meta = STATUS_META[statusKey];
+  // Colour identifies the CLASS; status is applied on top as treatment.
+  const color = colorFor(colorKeyFor(event));
+  const treatment = statusTreatment(statusKey);
+  const variance = eventVariance(event);
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: event.id,
     disabled: !draggable,
     data: { event },
   });
+
+  const label = [
+    event.class_name,
+    formatTime(event.start_time),
+    meta.label,
+    variance ? describeVariance(variance) : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <button
@@ -98,34 +118,45 @@ function EventChip({ event, onSelect, draggable, compact }: ChipProps) {
       onClick={() => onSelect?.(event)}
       // A real button, so sessions are reachable by keyboard. The old cards
       // were motion.divs with onClick and could not be tabbed to at all.
-      aria-label={`${event.class_name}, ${formatTime(event.start_time)}, ${meta.label}`}
+      aria-label={label}
+      title={variance ? describeVariance(variance) : undefined}
       style={{ height: CHIP_H }}
       className={cn(
         "group/chip relative flex w-full items-center gap-1.5 overflow-hidden rounded-[5px] pl-2 pr-1.5 text-left",
         "border transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-        meta.tint,
-        meta.border,
+        color.tint,
+        color.border,
+        treatment.wrapper,
         draggable && "cursor-grab active:cursor-grabbing",
         isDragging && "opacity-40",
       )}
     >
-      {/* The identifying rail: colour without a shouting fill. */}
+      {/* The identifying rail, in the class's own colour. */}
       <span
         aria-hidden
-        className={cn("absolute inset-y-0 left-0 w-[3px] rounded-l-[5px]", meta.rail)}
+        className={cn("absolute inset-y-0 left-0 w-[3px] rounded-l-[5px]", color.rail)}
       />
-      <span className="shrink-0 text-[10px] font-semibold tabular-nums text-muted-foreground">
+      <span className="shrink-0 text-[10px] font-semibold tabular-nums opacity-70">
         {formatTime(event.start_time)}
       </span>
-      <span className={cn("truncate text-[11px] font-medium leading-none", meta.text)}>
+      <span className={cn("truncate text-[11px] font-medium leading-none", color.text, treatment.label)}>
         {event.class_name}
       </span>
-      {!compact && event.enrolled_count ? (
-        <span className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground/70">
-          {event.enrolled_count}
-        </span>
-      ) : null}
+      <span className="ml-auto flex shrink-0 items-center gap-1">
+        {variance && (
+          <AlertTriangle
+            className="h-3 w-3 text-warning"
+            aria-hidden
+          />
+        )}
+        {treatment.showWarning && !variance && (
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warning" />
+        )}
+        {!compact && event.enrolled_count ? (
+          <span className="text-[10px] tabular-nums opacity-60">{event.enrolled_count}</span>
+        ) : null}
+      </span>
     </button>
   );
 }
@@ -141,6 +172,7 @@ interface DayCellProps {
   onAddSession?: (date: Date) => void;
   isAdmin?: boolean;
   dense?: boolean;
+  colorFor: ColorFor;
 }
 
 function DayCell({
@@ -152,6 +184,7 @@ function DayCell({
   onAddSession,
   isAdmin,
   dense,
+  colorFor,
 }: DayCellProps) {
   const dateStr = date.format("YYYY-MM-DD");
   const isToday = date.isSame(nowBangkok(), "day");
@@ -217,6 +250,7 @@ function DayCell({
             onSelect={onSelectEvent}
             draggable={isAdmin}
             compact={dense}
+            colorFor={colorFor}
           />
         ))}
 
@@ -244,6 +278,7 @@ function DayCell({
                       setPeekOpen(false);
                       onSelectEvent?.(e);
                     }}
+                    colorFor={colorFor}
                   />
                 ))}
               </div>
@@ -265,6 +300,7 @@ interface MonthViewProps {
   onAddSession?: (date: Date) => void;
   isAdmin?: boolean;
   isMobile?: boolean;
+  colorFor: ColorFor;
 }
 
 export default function MonthView({
@@ -275,6 +311,7 @@ export default function MonthView({
   onAddSession,
   isAdmin,
   isMobile,
+  colorFor,
 }: MonthViewProps) {
   const cells = useMemo(() => {
     const start = cursor.startOf("month").startOf("isoWeek");
@@ -326,6 +363,7 @@ export default function MonthView({
               onAddSession={onAddSession}
               isAdmin={isAdmin}
               dense={isMobile}
+              colorFor={colorFor}
             />
           );
         })}

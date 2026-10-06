@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dayjs, nowBangkok } from "@/lib/date";
+import { statusTreatment, type ClassColor } from "@/lib/classColors";
+import { describeVariance, formatSignedMinutes } from "@/lib/sessionDuration";
 import {
   STATUS_META,
+  colorKeyFor,
   deriveTimeWindow,
+  eventVariance,
   formatTime,
   getStatusKey,
   layoutDay,
-  toMinutes,
   type CalendarEvent,
 } from "./lib/calendarStatus";
 
@@ -31,17 +35,25 @@ const GUTTER = "3.5rem";
 
 /* ------------------------------------------------------------------ block */
 
+type ColorFor = (key: string) => ClassColor;
+
 function EventBlock({
   positioned,
   onSelect,
   draggable,
+  colorFor,
 }: {
   positioned: ReturnType<typeof layoutDay>[number];
   onSelect?: (event: CalendarEvent) => void;
   draggable?: boolean;
+  colorFor: ColorFor;
 }) {
   const { event, top, height, leftPct, widthPct } = positioned;
-  const meta = STATUS_META[getStatusKey(event)];
+  const statusKey = getStatusKey(event);
+  const meta = STATUS_META[statusKey];
+  const color = colorFor(colorKeyFor(event));
+  const treatment = statusTreatment(statusKey);
+  const variance = eventVariance(event);
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: event.id,
@@ -53,6 +65,15 @@ function EventBlock({
   const showTeacher = height >= 56;
   const showMeta = height >= 44;
 
+  const label = [
+    event.class_name,
+    `${formatTime(event.start_time)} to ${formatTime(event.end_time)}`,
+    meta.label,
+    variance ? describeVariance(variance) : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
   return (
     <button
       ref={setNodeRef}
@@ -60,9 +81,8 @@ function EventBlock({
       {...(draggable ? attributes : {})}
       {...(draggable ? listeners : {})}
       onClick={() => onSelect?.(event)}
-      aria-label={`${event.class_name}, ${formatTime(event.start_time)} to ${formatTime(
-        event.end_time,
-      )}, ${meta.label}`}
+      aria-label={label}
+      title={variance ? describeVariance(variance) : undefined}
       style={{
         top,
         height,
@@ -73,29 +93,43 @@ function EventBlock({
         "absolute overflow-hidden rounded-lg border pl-2 pr-1.5 py-1 text-left",
         "transition-shadow hover:shadow-md",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-        meta.tint,
-        meta.border,
+        color.tint,
+        color.border,
+        treatment.wrapper,
         draggable && "cursor-grab active:cursor-grabbing",
         isDragging && "opacity-40",
       )}
     >
       <span
         aria-hidden
-        className={cn("absolute inset-y-0 left-0 w-[3px] rounded-l-lg", meta.rail)}
+        className={cn("absolute inset-y-0 left-0 w-[3px] rounded-l-lg", color.rail)}
       />
-      <div className={cn("truncate text-[11px] font-semibold leading-tight", meta.text)}>
-        {event.class_name}
+      <div className="flex items-start gap-1">
+        <div
+          className={cn(
+            "min-w-0 flex-1 truncate text-[11px] font-semibold leading-tight",
+            color.text,
+            treatment.label,
+          )}
+        >
+          {event.class_name}
+        </div>
+        {variance && <AlertTriangle className="h-3 w-3 shrink-0 text-warning" aria-hidden />}
       </div>
       {showMeta && (
-        <div className="truncate text-[10px] leading-tight text-muted-foreground tabular-nums">
+        <div
+          className={cn(
+            "truncate text-[10px] leading-tight tabular-nums",
+            variance ? "font-medium text-warning" : "opacity-70",
+          )}
+        >
           {formatTime(event.start_time)}–{formatTime(event.end_time)}
+          {variance ? ` (${formatSignedMinutes(variance.deltaMinutes)})` : ""}
           {event.enrolled_count ? ` · ${event.enrolled_count}` : ""}
         </div>
       )}
       {showTeacher && event.teacher_name && (
-        <div className="truncate text-[10px] leading-tight text-muted-foreground/80">
-          {event.teacher_name}
-        </div>
+        <div className="truncate text-[10px] leading-tight opacity-60">{event.teacher_name}</div>
       )}
     </button>
   );
@@ -126,6 +160,7 @@ interface TimeGridViewProps {
   onOpenDay?: (dateStr: string) => void;
   isAdmin?: boolean;
   isMobile?: boolean;
+  colorFor: ColorFor;
 }
 
 export default function TimeGridView({
@@ -135,6 +170,7 @@ export default function TimeGridView({
   onOpenDay,
   isAdmin,
   isMobile,
+  colorFor,
 }: TimeGridViewProps) {
   const { startMin, endMin } = useMemo(() => deriveTimeWindow(events), [events]);
   const bodyHeight = (endMin - startMin) * PX_PER_MIN;
@@ -271,6 +307,7 @@ export default function TimeGridView({
                     positioned={p}
                     onSelect={onSelectEvent}
                     draggable={isAdmin}
+                    colorFor={colorFor}
                   />
                 ))}
 

@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { AlertTriangle } from "lucide-react";
 import { SessionTASelector } from "@/components/admin/SessionTASelector";
+import { SessionTimeFields } from "@/components/admin/SessionTimeFields";
 
 interface EditSessionModalProps {
   session: any;
@@ -45,6 +46,23 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
       return data;
     },
   });
+
+  // The class's configured length, so an edit that drifts from it is caught
+  // here rather than in next month's payroll.
+  const { data: classRow } = useQuery({
+    queryKey: ["class-length", session.class_id],
+    enabled: !!session.class_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("classes")
+        .select("default_session_length_minutes")
+        .eq("id", session.class_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const expectedMinutes = classRow?.default_session_length_minutes ?? null;
 
   // Load existing session participants (TAs)
   const { data: existingParticipants } = useQuery({
@@ -188,26 +206,14 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
 
           <SessionTASelector selectedTAIds={selectedTAIds} onChange={setSelectedTAIds} />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start-time">Start Time</Label>
-              <Input
-                id="start-time"
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="end-time">End Time</Label>
-              <Input
-                id="end-time"
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-              />
-            </div>
-          </div>
+          <SessionTimeFields
+            startTime={startTime}
+            endTime={endTime}
+            onStartChange={setStartTime}
+            onEndChange={setEndTime}
+            expectedMinutes={expectedMinutes}
+            idPrefix="edit-session"
+          />
 
           <div className="space-y-2">
             <Label htmlFor="notes">Notes (optional)</Label>

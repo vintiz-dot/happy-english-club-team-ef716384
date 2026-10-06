@@ -64,6 +64,9 @@ export interface FinanceOverviewData {
   // Costs (unchanged semantics — sourced from existing functions/tables).
   totalSalaryActual: number;
   totalSalaryProjected: number;
+  /** Sessions whose length disagrees with their class setting. */
+  payrollDiscrepancies: number;
+  payrollVariance: number;
   totalExpenditures: number;
   excusedLoss: number;
 
@@ -229,6 +232,10 @@ export function useFinanceOverview(month: string) {
       );
       const totalSalaryActual = payrollError ? 0 : Number(payrollResult?.grandTotalActual ?? 0);
       const totalSalaryProjected = payrollError ? 0 : Number(payrollResult?.grandTotalProjected ?? 0);
+      // Salary is hours x rate, so a wrong session length propagates into net
+      // profit below. Carried through rather than silently absorbed.
+      const payrollDiscrepancies = payrollError ? 0 : Number(payrollResult?.totalDiscrepancies ?? 0);
+      const payrollVariance = payrollError ? 0 : Number(payrollResult?.grandTotalVariance ?? 0);
 
       const { data: expenditures } = await supabase
         .from("expenditures")
@@ -270,6 +277,8 @@ export function useFinanceOverview(month: string) {
         drift,
         totalSalaryActual,
         totalSalaryProjected,
+        payrollDiscrepancies,
+        payrollVariance,
         totalExpenditures,
         excusedLoss,
         netActual,

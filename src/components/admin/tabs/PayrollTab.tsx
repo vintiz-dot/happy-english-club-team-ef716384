@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/table";
 import { PageHero } from "@/components/quest/PageHero";
 import { SectionHeader } from "@/components/quest/SectionHeader";
+import { durationMinutes, formatMinutes, formatSignedMinutes } from "@/lib/sessionDuration";
+import { AlertTriangle } from "lucide-react";
 
 interface StaffPayroll {
   staff: { id: string; full_name: string; hourly_rate_vnd: number };
@@ -27,6 +29,20 @@ interface StaffPayroll {
   totalEarned: number;
   projectedEarnings: number;
   totalProjected: number;
+  /** The same month costed at the durations the classes are configured for. */
+  expectedProjected: number;
+  /** totalProjected - expectedProjected. Positive = paying over the setting. */
+  varianceAmount: number;
+  varianceMinutes: number;
+  mismatchedSessions: {
+    id: string;
+    date: string;
+    className: string;
+    actualMinutes: number;
+    expectedMinutes: number;
+    deltaMinutes: number;
+    deltaAmount: number;
+  }[];
 }
 
 export function PayrollTab() {
@@ -53,7 +69,7 @@ export function PayrollTab() {
           .order("full_name"),
         supabase
           .from("sessions")
-          .select(`id, date, start_time, end_time, status, teacher_id, classes!inner(name)`)
+          .select(`id, date, start_time, end_time, status, teacher_id, class_id, classes!inner(name, default_session_length_minutes)`)
           .gte("date", monthStart)
           .lt("date", monthEnd)
           .in("status", ["Held", "Scheduled"])
@@ -87,14 +103,44 @@ export function PayrollTab() {
       const sessionsById: Record<string, (typeof allSessions)[0]> = {};
       for (const s of allSessions) sessionsById[s.id] = s;
 
-      const calculateAmount = (sessionsList: typeof allSessions, rate: number) => {
-        return sessionsList.reduce((sum, s) => {
-          const start = dayjs(`${s.date} ${s.start_time}`);
-          const end = dayjs(`${s.date} ${s.end_time}`);
-          const hours = end.diff(start, "hour", true);
-          return sum + Math.round(hours * rate);
+      // Uses the shared duration helper rather than a local dayjs diff, so this
+      // agrees exactly with calculate-payroll. The two had drifted: that
+      // function rolls a non-positive span over midnight, this one produced a
+      // negative figure and silently subtracted it from the teacher's pay.
+      const calculateAmount = (sessionsList: typeof allSessions, rate: number) =>
+        sessionsList.reduce(
+          (sum, s) => sum + Math.round((rate / 60) * (durationMinutes(s.start_time, s.end_time) ?? 0)),
+          0,
+        );
+
+      /** The same sessions costed at each class's configured length. */
+      const calculateExpectedAmount = (sessionsList: typeof allSessions, rate: number) =>
+        sessionsList.reduce((sum, s) => {
+          const configured = (s.classes as any)?.default_session_length_minutes;
+          const minutes =
+            configured && configured > 0 ? configured : (durationMinutes(s.start_time, s.end_time) ?? 0);
+          return sum + Math.round((rate / 60) * minutes);
         }, 0);
-      };
+
+      /** Sessions whose entered length disagrees with their class setting. */
+      const findMismatches = (sessionsList: typeof allSessions, rate: number) =>
+        sessionsList.flatMap((s) => {
+          const configured = (s.classes as any)?.default_session_length_minutes;
+          if (!configured || configured <= 0) return [];
+          const actualMinutes = durationMinutes(s.start_time, s.end_time);
+          if (actualMinutes == null) return [];
+          const deltaMinutes = actualMinutes - configured;
+          if (deltaMinutes === 0) return [];
+          return [{
+            id: s.id,
+            date: s.date,
+            className: (s.classes as any)?.name ?? "Class",
+            actualMinutes,
+            expectedMinutes: configured,
+            deltaMinutes,
+            deltaAmount: Math.round((rate / 60) * deltaMinutes),
+          }];
+        });
 
       const results: StaffPayroll[] = [];
 
@@ -105,6 +151,8 @@ export function PayrollTab() {
         const scheduled = sessions.filter(s => s.status === "Scheduled");
         const totalHeld = calculateAmount(held, teacher.hourly_rate_vnd);
         const totalScheduled = calculateAmount(scheduled, teacher.hourly_rate_vnd);
+        const expectedProjected = calculateExpectedAmount(sessions, teacher.hourly_rate_vnd);
+        const mismatched = findMismatches(sessions, teacher.hourly_rate_vnd);
 
         results.push({
           staff: teacher,
@@ -114,6 +162,10 @@ export function PayrollTab() {
           totalEarned: totalHeld,
           projectedEarnings: totalScheduled,
           totalProjected: totalHeld + totalScheduled,
+          expectedProjected,
+          varianceAmount: totalHeld + totalScheduled - expectedProjected,
+          varianceMinutes: mismatched.reduce((n, m) => n + m.deltaMinutes, 0),
+          mismatchedSessions: mismatched,
         });
       }
 
@@ -130,6 +182,8 @@ export function PayrollTab() {
         const scheduled = taSessions.filter(s => s.status === "Scheduled");
         const totalHeld = calculateAmount(held, ta.hourly_rate_vnd);
         const totalScheduled = calculateAmount(scheduled, ta.hourly_rate_vnd);
+        const expectedProjected = calculateExpectedAmount(taSessions, ta.hourly_rate_vnd);
+        const mismatched = findMismatches(taSessions, ta.hourly_rate_vnd);
 
         results.push({
           staff: ta,
@@ -139,6 +193,10 @@ export function PayrollTab() {
           totalEarned: totalHeld,
           projectedEarnings: totalScheduled,
           totalProjected: totalHeld + totalScheduled,
+          expectedProjected,
+          varianceAmount: totalHeld + totalScheduled - expectedProjected,
+          varianceMinutes: mismatched.reduce((n, m) => n + m.deltaMinutes, 0),
+          mismatchedSessions: mismatched,
         });
       }
 
@@ -174,7 +232,7 @@ export function PayrollTab() {
 
   const exportPayroll = () => {
     const csv = [
-      ["Staff", "Type", "Held Sessions", "Scheduled Sessions", "Earned", "Projected", "Total Projected"].join(","),
+      ["Staff", "Type", "Held Sessions", "Scheduled Sessions", "Earned", "Projected", "Total Projected", "At Class Settings", "Variance", "Mismatched Sessions"].join(","),
       ...(payrollData || []).map((p) => [
         p.staff.full_name,
         p.staffType === "ta" ? "TA" : "Teacher",
@@ -183,11 +241,17 @@ export function PayrollTab() {
         p.totalEarned,
         p.projectedEarnings,
         p.totalProjected,
+        p.expectedProjected,
+        p.varianceAmount,
+        p.mismatchedSessions.length,
       ].join(",")),
       ["", "", "", "",
         (payrollData || []).reduce((sum, p) => sum + p.totalEarned, 0),
         (payrollData || []).reduce((sum, p) => sum + p.projectedEarnings, 0),
         (payrollData || []).reduce((sum, p) => sum + p.totalProjected, 0),
+        (payrollData || []).reduce((sum, p) => sum + p.expectedProjected, 0),
+        (payrollData || []).reduce((sum, p) => sum + p.varianceAmount, 0),
+        (payrollData || []).reduce((sum, p) => sum + p.mismatchedSessions.length, 0),
       ].join(",")
     ].join("\n");
 
@@ -207,6 +271,11 @@ export function PayrollTab() {
 
   const grandTotalEarned = payrollData?.reduce((sum, p) => sum + p.totalEarned, 0) || 0;
   const grandTotalProjected = payrollData?.reduce((sum, p) => sum + p.totalProjected, 0) || 0;
+  const grandTotalExpected = payrollData?.reduce((sum, p) => sum + p.expectedProjected, 0) || 0;
+  const grandVariance = grandTotalProjected - grandTotalExpected;
+  const allMismatches = payrollData?.flatMap((p) =>
+    p.mismatchedSessions.map((m) => ({ ...m, staffName: p.staff.full_name })),
+  ) || [];
 
   if (isLoading) return <div>Loading payroll data...</div>;
 
@@ -244,7 +313,7 @@ export function PayrollTab() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Earned (Held Sessions)</CardDescription>
@@ -257,7 +326,68 @@ export function PayrollTab() {
             <CardTitle className="text-3xl text-primary">{grandTotalProjected.toLocaleString()} ₫</CardTitle>
           </CardHeader>
         </Card>
+        {/* The same month costed at the durations the classes are configured
+            for. When this differs from Projected, the roster and the class
+            settings disagree and one of them is wrong. */}
+        <Card className={grandVariance !== 0 ? "border-warning/60" : undefined}>
+          <CardHeader className="pb-2">
+            <CardDescription className="flex items-center gap-1.5">
+              {grandVariance !== 0 && <AlertTriangle className="h-3.5 w-3.5 text-warning" />}
+              Projected at class settings
+            </CardDescription>
+            <CardTitle className="text-3xl">{grandTotalExpected.toLocaleString()} ₫</CardTitle>
+            {grandVariance !== 0 && (
+              <p className="pt-1 text-xs font-medium text-warning">
+                {grandVariance > 0 ? "+" : "−"}
+                {Math.abs(grandVariance).toLocaleString()} ₫ against the configured lengths
+              </p>
+            )}
+          </CardHeader>
+        </Card>
       </div>
+
+      {allMismatches.length > 0 && (
+        <Card className="border-warning/60 bg-warning/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="h-4 w-4 text-warning" />
+              {allMismatches.length} session{allMismatches.length === 1 ? "" : "s"} do not match their
+              class length
+            </CardTitle>
+            <CardDescription>
+              Pay is hourly, so these sessions change this month's total by{" "}
+              <strong className="text-foreground">
+                {grandVariance > 0 ? "+" : "−"}
+                {Math.abs(grandVariance).toLocaleString()} ₫
+              </strong>
+              . Either the session times or the class setting is wrong.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="max-h-56 space-y-1 overflow-y-auto">
+              {allMismatches.map((m) => (
+                <div
+                  key={m.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-background/70 px-3 py-1.5 text-xs"
+                >
+                  <span className="font-medium">
+                    {dayjs(m.date).format("ddd D MMM")} · {m.className}
+                  </span>
+                  <span className="text-muted-foreground">{m.staffName}</span>
+                  <span className="tabular-nums">
+                    {formatMinutes(m.actualMinutes)} vs {formatMinutes(m.expectedMinutes)} set
+                  </span>
+                  <span className="font-semibold tabular-nums text-warning">
+                    {formatSignedMinutes(m.deltaMinutes)} ·{" "}
+                    {m.deltaAmount > 0 ? "+" : "−"}
+                    {Math.abs(m.deltaAmount).toLocaleString()} ₫
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -278,6 +408,7 @@ export function PayrollTab() {
                   <TableHead className="text-right">Earned</TableHead>
                   <TableHead className="text-right">Projected</TableHead>
                   <TableHead className="text-right">Total Projected</TableHead>
+                  <TableHead className="text-right">vs class settings</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -302,6 +433,20 @@ export function PayrollTab() {
                     <TableCell className="text-right font-semibold">
                       {payroll.totalProjected.toLocaleString()} ₫
                     </TableCell>
+                    <TableCell className="text-right">
+                      {payroll.mismatchedSessions.length === 0 ? (
+                        <span className="text-xs text-muted-foreground">matches</span>
+                      ) : (
+                        <span
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-warning"
+                          title={`${payroll.mismatchedSessions.length} session(s) differ from the configured class length`}
+                        >
+                          <AlertTriangle className="h-3 w-3" />
+                          {payroll.varianceAmount > 0 ? "+" : "−"}
+                          {Math.abs(payroll.varianceAmount).toLocaleString()} ₫
+                        </span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="font-bold bg-muted/50">
@@ -317,6 +462,16 @@ export function PayrollTab() {
                     +{(grandTotalProjected - grandTotalEarned).toLocaleString()} ₫
                   </TableCell>
                   <TableCell className="text-right">{grandTotalProjected.toLocaleString()} ₫</TableCell>
+                  <TableCell className="text-right">
+                    {grandVariance === 0 ? (
+                      <span className="text-xs font-normal text-muted-foreground">matches</span>
+                    ) : (
+                      <span className="text-warning">
+                        {grandVariance > 0 ? "+" : "−"}
+                        {Math.abs(grandVariance).toLocaleString()} ₫
+                      </span>
+                    )}
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>

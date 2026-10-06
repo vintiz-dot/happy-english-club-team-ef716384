@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { SessionTASelector } from "@/components/admin/SessionTASelector";
+import { SessionTimeFields } from "@/components/admin/SessionTimeFields";
+import { addMinutesToTime } from "@/lib/sessionDuration";
 
 interface AddSessionModalProps {
   classId: string;
@@ -54,7 +56,7 @@ const AddSessionModal = ({ classId, date, open, onClose, onSuccess }: AddSession
     queryFn: async () => {
       const { data, error } = await supabase
         .from("classes")
-        .select("default_teacher_id, session_rate_vnd")
+        .select("default_teacher_id, session_rate_vnd, default_session_length_minutes")
         .eq("id", classId)
         .single();
       
@@ -63,6 +65,18 @@ const AddSessionModal = ({ classId, date, open, onClose, onSuccess }: AddSession
     },
     enabled: !!classId,
   });
+
+  const expectedMinutes = classData?.default_session_length_minutes ?? null;
+
+  // Seed the end time from the class length once the class is known, so the
+  // dialog opens already consistent rather than with a hardcoded 19:00.
+  useEffect(() => {
+    if (!expectedMinutes || !startTime) return;
+    const next = addMinutesToTime(startTime, expectedMinutes, false);
+    if (next) setEndTime(next);
+    // Only on load of the class length - afterwards the user is in control.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expectedMinutes]);
 
   // Auto-select default teacher when class data loads
   useEffect(() => {
@@ -126,26 +140,14 @@ const AddSessionModal = ({ classId, date, open, onClose, onSuccess }: AddSession
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start-time">Start Time</Label>
-              <Input
-                id="start-time"
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="end-time">End Time</Label>
-              <Input
-                id="end-time"
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-              />
-            </div>
-          </div>
+          <SessionTimeFields
+            startTime={startTime}
+            endTime={endTime}
+            onStartChange={setStartTime}
+            onEndChange={setEndTime}
+            expectedMinutes={expectedMinutes}
+            idPrefix="add-session"
+          />
 
           <div className="space-y-2">
             <Label htmlFor="teacher">Teacher *</Label>

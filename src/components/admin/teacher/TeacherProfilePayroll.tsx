@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { DurationVarianceNotice } from "@/components/shared/DurationVarianceNotice";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -111,10 +112,15 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, hourlyRate, on
               {(payrollData?.totalAmountProjected || 0).toLocaleString()} ₫
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-2">
             <p className="text-xs text-muted-foreground">
               Based on {payrollData?.sessionsCountProjected || 0} scheduled sessions
             </p>
+            <DurationVarianceNotice
+              variant="block"
+              count={payrollData?.discrepancyCount || 0}
+              varianceAmount={payrollData?.varianceAmountProjected}
+            />
           </CardContent>
         </Card>
 

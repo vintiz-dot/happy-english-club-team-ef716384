@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DurationVarianceNotice } from "@/components/shared/DurationVarianceNotice";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -189,10 +190,21 @@ export default function TeacherPayroll() {
   const projectedEarnings = totalProjected - totalEarned;
   const scheduledSessionsCount = (payrollData?.payrollResult?.sessionsCountProjected || 0) - heldSessionsCount;
 
+  const discrepancyCount = payrollData?.payrollResult?.discrepancyCount || 0;
+  const varianceAmount = payrollData?.payrollResult?.varianceAmountProjected || 0;
+
   return (
     <Layout title="Payroll">
       <div className="space-y-6">
         {payrollData?.teacherId && <TeacherBankingInfo teacherId={payrollData.teacherId} />}
+
+        {/* The teacher sees this too: it is their pay that is affected, and
+            they are usually the first to know which length is correct. */}
+        <DurationVarianceNotice
+          variant="block"
+          count={discrepancyCount}
+          varianceAmount={varianceAmount}
+        />
 
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2">

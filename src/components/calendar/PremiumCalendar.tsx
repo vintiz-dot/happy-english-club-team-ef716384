@@ -12,6 +12,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { buildClassColorMap, getClassColor, type ClassColor } from "@/lib/classColors";
 import {
   CalendarDays,
   CalendarRange,
@@ -35,6 +36,8 @@ import CalendarFilters, {
 } from "./CalendarFilters";
 import {
   STATUS_META,
+  colorKeyFor,
+  eventVariance,
   formatTime,
   getStatusKey,
   isActionable,
@@ -96,6 +99,7 @@ function useUrlFilters(): [CalendarFilterValue, (next: CalendarFilterValue) => v
       teachers: parseList(params.get("tch")),
       statuses: parseList(params.get("st")) as StatusKey[],
       actionableOnly: params.get("todo") === "1",
+      varianceOnly: params.get("len") === "1",
     }),
     [params],
   );
@@ -114,6 +118,8 @@ function useUrlFilters(): [CalendarFilterValue, (next: CalendarFilterValue) => v
       put("st", next.statuses);
       if (next.actionableOnly) p.set("todo", "1");
       else p.delete("todo");
+      if (next.varianceOnly) p.set("len", "1");
+      else p.delete("len");
       setParams(p, { replace: true });
     },
     [params, setParams],
@@ -154,11 +160,11 @@ export default function PremiumCalendar({
   // Filter options come from what is visible, so the lists stay short and
   // never offer a class with nothing in this range.
   const { classOptions, teacherOptions, statusOptions } = useMemo(() => {
-    const classes = new Set<string>();
+    const classes = new Map<string, string>();
     const teachers = new Set<string>();
     const statuses = new Set<StatusKey>();
     for (const e of inRange) {
-      classes.add(e.class_name);
+      if (!classes.has(e.class_name)) classes.set(e.class_name, colorKeyFor(e));
       if (e.teacher_name) teachers.add(e.teacher_name);
       statuses.add(getStatusKey(e));
     }
@@ -171,7 +177,9 @@ export default function PremiumCalendar({
       "holiday",
     ];
     return {
-      classOptions: [...classes].sort((a, b) => a.localeCompare(b)),
+      classOptions: [...classes.entries()]
+        .map(([name, colorKey]) => ({ name, colorKey }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
       teacherOptions: [...teachers].sort((a, b) => a.localeCompare(b)),
       statusOptions: order.filter((s) => statuses.has(s)),
     };
@@ -180,6 +188,7 @@ export default function PremiumCalendar({
   const visible = useMemo(() => {
     return inRange.filter((e) => {
       if (filters.actionableOnly && !isActionable(e)) return false;
+      if (filters.varianceOnly && !eventVariance(e)) return false;
       if (filters.classes.length && !filters.classes.includes(e.class_name)) return false;
       if (filters.teachers.length && !filters.teachers.includes(e.teacher_name || "")) return false;
       if (filters.statuses.length && !filters.statuses.includes(getStatusKey(e))) return false;
@@ -188,6 +197,18 @@ export default function PremiumCalendar({
   }, [inRange, filters]);
 
   const actionableCount = useMemo(() => inRange.filter(isActionable).length, [inRange]);
+
+  // Built across EVERY event, not just the visible range, so a class does not
+  // change colour as you page between weeks.
+  const colorMap = useMemo(
+    () => buildClassColorMap(events.map(colorKeyFor)),
+    [events],
+  );
+  const colorFor = useCallback(
+    (key: string): ClassColor => colorMap.get(key) ?? getClassColor(key),
+    [colorMap],
+  );
+  const varianceCount = useMemo(() => inRange.filter((e) => eventVariance(e)).length, [inRange]);
 
   const days = useMemo(() => {
     if (view === "day") return [cursor];
@@ -359,6 +380,8 @@ export default function PremiumCalendar({
           value={filters}
           onChange={setFilters}
           actionableCount={actionableCount}
+          varianceCount={varianceCount}
+          colorFor={colorFor}
         />
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -397,6 +420,7 @@ export default function PremiumCalendar({
                     onAddSession={onAddSession}
                     isAdmin={isAdmin}
                     isMobile={isMobile}
+                    colorFor={colorFor}
                   />
                 )}
                 {(view === "week" || view === "day") && (
@@ -407,6 +431,7 @@ export default function PremiumCalendar({
                     onOpenDay={openDay}
                     isAdmin={isAdmin}
                     isMobile={isMobile}
+                    colorFor={colorFor}
                   />
                 )}
                 {view === "agenda" && (
@@ -427,8 +452,8 @@ export default function PremiumCalendar({
           <div
             className={cn(
               "pointer-events-none rounded-lg border px-2 py-1 text-[11px] font-semibold shadow-lg",
-              STATUS_META[getStatusKey(dragging)].tint,
-              STATUS_META[getStatusKey(dragging)].border,
+              colorFor(colorKeyFor(dragging)).tint,
+              colorFor(colorKeyFor(dragging)).border,
             )}
           >
             {dragging.class_name} · {formatTime(dragging.start_time)}

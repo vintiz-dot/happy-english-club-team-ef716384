@@ -46,6 +46,13 @@ export function useFinanceSummary(month: string) {
       const totalSalaryActual = payrollError ? 0 : (payrollResult?.grandTotalActual || 0);
       const totalSalaryProjected = payrollError ? 0 : (payrollResult?.grandTotalProjected || 0);
 
+      // Salary feeds net profit below, and salary is hours x rate. If any
+      // session's length disagrees with its class setting, every figure
+      // downstream of this one inherits that error - so carry the flag along
+      // rather than presenting a net number as if it were settled.
+      const payrollDiscrepancies = payrollError ? 0 : (payrollResult?.totalDiscrepancies || 0);
+      const payrollVariance = payrollError ? 0 : (payrollResult?.grandTotalVariance || 0);
+
       const { data: expenditures } = await supabase
         .from("expenditures")
         .select("amount")
@@ -85,6 +92,8 @@ export function useFinanceSummary(month: string) {
         excusedLoss,
         netActual,
         netProjected,
+        payrollDiscrepancies,
+        payrollVariance,
       };
     },
     staleTime: 60000,

@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronDown, AlertTriangle, X } from "lucide-react";
+import { Check, ChevronDown, AlertTriangle, Timer, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { type ClassColor } from "@/lib/classColors";
 import { STATUS_META, type StatusKey } from "./lib/calendarStatus";
 
 export interface CalendarFilterValue {
@@ -10,6 +11,8 @@ export interface CalendarFilterValue {
   teachers: string[];
   statuses: StatusKey[];
   actionableOnly: boolean;
+  /** Only sessions whose length disagrees with their class setting. */
+  varianceOnly: boolean;
 }
 
 export const EMPTY_FILTERS: CalendarFilterValue = {
@@ -17,21 +20,37 @@ export const EMPTY_FILTERS: CalendarFilterValue = {
   teachers: [],
   statuses: [],
   actionableOnly: false,
+  varianceOnly: false,
 };
 
 export const hasActiveFilters = (v: CalendarFilterValue) =>
-  v.classes.length > 0 || v.teachers.length > 0 || v.statuses.length > 0 || v.actionableOnly;
+  v.classes.length > 0 ||
+  v.teachers.length > 0 ||
+  v.statuses.length > 0 ||
+  v.actionableOnly ||
+  v.varianceOnly;
+
+export interface ClassOption {
+  name: string;
+  /** Stable key the colour is derived from (the class id). */
+  colorKey: string;
+}
 
 function MultiSelect({
   label,
   options,
   selected,
   onChange,
+  swatches,
+  colorFor,
 }: {
   label: string;
   options: string[];
   selected: string[];
   onChange: (next: string[]) => void;
+  /** Optional colour key per option, shown as a dot. */
+  swatches?: Record<string, string>;
+  colorFor?: (key: string) => ClassColor;
 }) {
   if (options.length === 0) return null;
 
@@ -70,6 +89,12 @@ function MultiSelect({
                 checked={selected.includes(option)}
                 onCheckedChange={() => toggle(option)}
               />
+              {swatches?.[option] && colorFor && (
+                <span
+                  aria-hidden
+                  className={cn("h-2.5 w-2.5 shrink-0 rounded-full", colorFor(swatches[option]).rail)}
+                />
+              )}
               <span className="truncate">{option}</span>
             </label>
           ))}
@@ -89,12 +114,15 @@ function MultiSelect({
 }
 
 interface CalendarFiltersProps {
-  classes: string[];
+  classes: ClassOption[];
   teachers: string[];
   statuses: StatusKey[];
   value: CalendarFilterValue;
   onChange: (next: CalendarFilterValue) => void;
   actionableCount: number;
+  /** Sessions whose length disagrees with their class setting. */
+  varianceCount: number;
+  colorFor: (key: string) => ClassColor;
 }
 
 export default function CalendarFilters({
@@ -104,7 +132,11 @@ export default function CalendarFilters({
   value,
   onChange,
   actionableCount,
+  varianceCount,
+  colorFor,
 }: CalendarFiltersProps) {
+  const classNames = classes.map((c) => c.name);
+  const classSwatches = Object.fromEntries(classes.map((c) => [c.name, c.colorKey]));
   const toggleStatus = (key: StatusKey) =>
     onChange({
       ...value,
@@ -158,11 +190,36 @@ export default function CalendarFilters({
         )}
       </Button>
 
+      {/* Duration mismatches are a money problem, not a cosmetic one: pay is
+          hourly, so a session running longer than its class is configured for
+          is an overpayment. Surfaced next to attendance for the same reason. */}
+      {varianceCount > 0 && (
+        <Button
+          variant={value.varianceOnly ? "default" : "outline"}
+          size="sm"
+          onClick={() => onChange({ ...value, varianceOnly: !value.varianceOnly })}
+          className={cn("h-8 gap-1.5", !value.varianceOnly && "border-warning/60 text-foreground")}
+        >
+          <Timer className={cn("h-3.5 w-3.5", !value.varianceOnly && "text-warning")} />
+          <span
+            className={cn(
+              "rounded px-1 text-[10px] font-semibold tabular-nums",
+              value.varianceOnly ? "bg-primary-foreground/20" : "bg-warning text-warning-foreground",
+            )}
+          >
+            {varianceCount}
+          </span>
+          wrong length
+        </Button>
+      )}
+
       <MultiSelect
         label="Class"
-        options={classes}
+        options={classNames}
         selected={value.classes}
         onChange={(classes) => onChange({ ...value, classes })}
+        swatches={classSwatches}
+        colorFor={colorFor}
       />
       <MultiSelect
         label="Teacher"

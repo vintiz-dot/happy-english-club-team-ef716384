@@ -19,7 +19,10 @@ type SessionRow = {
   end_time: string | null; // "HH:MM" or "HH:MM:SS"
   status?: string;
   class_id?: string;
-  classes?: { name: string } | { name: string }[] | null;
+  classes?:
+    | { name: string; default_session_length_minutes?: number | null }
+    | { name: string; default_session_length_minutes?: number | null }[]
+    | null;
 };
 
 function monthRange(month: string) {
@@ -40,8 +43,24 @@ function parseMinutes(hhmm: string | null): number | null {
   return hh * 60 + mm;
 }
 
+/**
+ * Totals a teacher's sessions, both as entered and as the classes are
+ * configured.
+ *
+ * WHY BOTH. Pay here is hourly - amount = rate/60 * (end - start) - so the
+ * end time on a session row is a multiplicand in a wage calculation. Until
+ * now nothing compared that against classes.default_session_length_minutes,
+ * which existed but fed no calculation at all. A class set up for 90 minutes
+ * that someone entered as 2 hours quietly pays an extra half hour of that
+ * teacher's rate, every time it runs, and nothing anywhere said so.
+ *
+ * So we return the amount as entered (what will actually be paid), the amount
+ * the class settings imply, and the difference - which is the number an admin
+ * needs in order to decide whether the roster or the class setting is wrong.
+ */
 function computeTotals(sessions: SessionRow[], hourlyRateVnd: number) {
   let totalMinutes = 0;
+  let totalExpectedMinutes = 0;
   const perSession: Array<{
     id: string;
     date: string;
@@ -52,6 +71,9 @@ function computeTotals(sessions: SessionRow[], hourlyRateVnd: number) {
     classes?: { name: string } | null;
     minutes: number;
     amount: number;
+    expectedMinutes: number | null;
+    varianceMinutes: number | null;
+    varianceAmount: number | null;
   }> = [];
 
   for (const s of sessions ?? []) {
@@ -66,11 +88,21 @@ function computeTotals(sessions: SessionRow[], hourlyRateVnd: number) {
     const amount = Math.round((hourlyRateVnd / 60) * minutes);
 
     // Normalize classes to single object (Supabase may return array)
-    const classes = Array.isArray(s.classes) 
+    const classes = Array.isArray(s.classes)
       ? (s.classes[0] || null)
       : s.classes;
 
+    const configured = classes?.default_session_length_minutes ?? null;
+    const expectedMinutes = configured && configured > 0 ? configured : null;
+    const varianceMinutes = expectedMinutes == null ? null : minutes - expectedMinutes;
+    const varianceAmount =
+      varianceMinutes == null ? null : Math.round((hourlyRateVnd / 60) * varianceMinutes);
+
     totalMinutes += minutes;
+    // A session with no configured length contributes its actual time, so the
+    // expected total stays comparable rather than silently under-counting.
+    totalExpectedMinutes += expectedMinutes ?? minutes;
+
     perSession.push({
       id: s.id,
       date: s.date,
@@ -78,16 +110,33 @@ function computeTotals(sessions: SessionRow[], hourlyRateVnd: number) {
       end_time: s.end_time,
       status: s.status,
       class_id: s.class_id,
-      classes,
+      classes: classes ? { name: classes.name } : null,
       minutes,
       amount,
+      expectedMinutes,
+      varianceMinutes,
+      varianceAmount,
     });
   }
 
   const totalHours = +(totalMinutes / 60).toFixed(2);
   const totalAmount = Math.round((hourlyRateVnd / 60) * totalMinutes);
+  const totalExpectedAmount = Math.round((hourlyRateVnd / 60) * totalExpectedMinutes);
+  const discrepancies = perSession.filter((p) => (p.varianceMinutes ?? 0) !== 0);
 
-  return { totalMinutes, totalHours, totalAmount, perSession };
+  return {
+    totalMinutes,
+    totalHours,
+    totalAmount,
+    totalExpectedMinutes,
+    totalExpectedHours: +(totalExpectedMinutes / 60).toFixed(2),
+    totalExpectedAmount,
+    varianceMinutes: totalMinutes - totalExpectedMinutes,
+    varianceAmount: totalAmount - totalExpectedAmount,
+    discrepancyCount: discrepancies.length,
+    discrepancies,
+    perSession,
+  };
 }
 
 Deno.serve(async (req) => {
@@ -186,6 +235,13 @@ Deno.serve(async (req) => {
       totalMinutesProjected: number;
       totalHoursProjected: number;
       totalAmountProjected: number;
+      // What the class settings say this month SHOULD cost, and the gap.
+      totalAmountExpectedProjected: number;
+      totalHoursExpectedProjected: number;
+      varianceMinutesProjected: number;
+      varianceAmountProjected: number;
+      discrepancyCount: number;
+      discrepancies: ReturnType<typeof computeTotals>["discrepancies"];
       sessionDetailsActual: ReturnType<typeof computeTotals>["perSession"];
       sessionDetailsProjected: ReturnType<typeof computeTotals>["perSession"];
       staffType?: string;
@@ -195,7 +251,7 @@ Deno.serve(async (req) => {
       // Actual = Held only
       const { data: held, error: heldErr } = await supabase
         .from("sessions")
-        .select("id, date, start_time, end_time, status, class_id, classes(name)")
+        .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes)")
         .eq("teacher_id", t.id)
         .eq("status", "Held")
         .gte("date", startDate)
@@ -206,7 +262,7 @@ Deno.serve(async (req) => {
       // Projected = Held + Scheduled (exclude Canceled)
       const { data: projected, error: projErr } = await supabase
         .from("sessions")
-        .select("id, date, start_time, end_time, status, class_id, classes(name)")
+        .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes)")
         .eq("teacher_id", t.id)
         .in("status", ["Held", "Scheduled"])
         .gte("date", startDate)
@@ -229,6 +285,12 @@ Deno.serve(async (req) => {
         totalMinutesProjected: future.totalMinutes,
         totalHoursProjected: future.totalHours,
         totalAmountProjected: future.totalAmount,
+        totalAmountExpectedProjected: future.totalExpectedAmount,
+        totalHoursExpectedProjected: future.totalExpectedHours,
+        varianceMinutesProjected: future.varianceMinutes,
+        varianceAmountProjected: future.varianceAmount,
+        discrepancyCount: future.discrepancyCount,
+        discrepancies: future.discrepancies,
         sessionDetailsActual: actual.perSession,
         sessionDetailsProjected: future.perSession,
         staffType: "teacher",
@@ -269,7 +331,7 @@ Deno.serve(async (req) => {
         // Actual = Held sessions
         const { data: held } = await supabase
           .from("sessions")
-          .select("id, date, start_time, end_time, status, class_id, classes(name)")
+          .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes)")
           .in("id", sessionIds)
           .eq("status", "Held")
           .gte("date", startDate)
@@ -278,7 +340,7 @@ Deno.serve(async (req) => {
         // Projected = Held + Scheduled
         const { data: projected } = await supabase
           .from("sessions")
-          .select("id, date, start_time, end_time, status, class_id, classes(name)")
+          .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes)")
           .in("id", sessionIds)
           .in("status", ["Held", "Scheduled"])
           .gte("date", startDate)
@@ -300,6 +362,12 @@ Deno.serve(async (req) => {
             totalMinutesProjected: future.totalMinutes,
             totalHoursProjected: future.totalHours,
             totalAmountProjected: future.totalAmount,
+            totalAmountExpectedProjected: future.totalExpectedAmount,
+            totalHoursExpectedProjected: future.totalExpectedHours,
+            varianceMinutesProjected: future.varianceMinutes,
+            varianceAmountProjected: future.varianceAmount,
+            discrepancyCount: future.discrepancyCount,
+            discrepancies: future.discrepancies,
             sessionDetailsActual: actual.perSession,
             sessionDetailsProjected: future.perSession,
             staffType: "teaching_assistant",
@@ -313,6 +381,11 @@ Deno.serve(async (req) => {
       totalTeachers: results.length,
       grandTotalActual: results.reduce((s, r) => s + r.totalAmountActual, 0),
       grandTotalProjected: results.reduce((s, r) => s + r.totalAmountProjected, 0),
+      // Projected at the durations the classes are configured for, plus the
+      // gap against what the roster as entered will actually pay out.
+      grandTotalExpectedProjected: results.reduce((s, r) => s + r.totalAmountExpectedProjected, 0),
+      grandTotalVariance: results.reduce((s, r) => s + r.varianceAmountProjected, 0),
+      totalDiscrepancies: results.reduce((s, r) => s + r.discrepancyCount, 0),
       payrollData: results,
     };
 

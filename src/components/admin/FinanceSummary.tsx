@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DurationVarianceNotice } from "@/components/shared/DurationVarianceNotice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -210,6 +211,12 @@ export function FinanceSummary() {
               <p className="text-xs text-muted-foreground">
                 Projected: {isLoading ? "..." : formatVND(data?.totalSalaryProjected ?? 0)}
               </p>
+              <p className="mt-1">
+                <DurationVarianceNotice
+                  count={data?.payrollDiscrepancies ?? 0}
+                  varianceAmount={data?.payrollVariance}
+                />
+              </p>
             </CardContent>
           </Card>
 
@@ -264,6 +271,12 @@ export function FinanceSummary() {
               </div>
               <p className="text-xs text-muted-foreground">
                 Projected: {isLoading ? "..." : formatVND(data?.netProjected ?? 0)}
+              </p>
+              <p className="mt-1">
+                <DurationVarianceNotice
+                  count={data?.payrollDiscrepancies ?? 0}
+                  varianceAmount={data?.payrollVariance}
+                />
               </p>
             </CardContent>
           </Card>

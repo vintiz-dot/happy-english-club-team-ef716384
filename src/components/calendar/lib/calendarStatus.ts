@@ -1,5 +1,6 @@
 import { dayjs, nowBangkok } from "@/lib/date";
 import { getSessionDisplayStatus, type SessionStatus } from "@/lib/sessionStatus";
+import { getDurationVariance } from "@/lib/sessionDuration";
 
 export interface CalendarEvent {
   id: string;
@@ -11,7 +12,17 @@ export interface CalendarEvent {
   enrolled_count?: number;
   notes?: string;
   teacher_name?: string;
+  /** Drives the per-class colour; falls back to the name if absent. */
+  class_id?: string;
+  /** classes.default_session_length_minutes — what this session SHOULD run for. */
+  expected_duration_minutes?: number | null;
 }
+
+/** Non-null only when the session's times disagree with its class setting. */
+export const eventVariance = (event: CalendarEvent) =>
+  getDurationVariance(event.start_time, event.end_time, event.expected_duration_minutes);
+
+export const colorKeyFor = (event: CalendarEvent) => event.class_id || event.class_name;
 
 export type StatusKey =
   | "scheduled"
