@@ -293,5 +293,3 @@ export default function TimeGridView({
     </div>
   );
 }
-
-export { SLOT_MIN, toMinutes };

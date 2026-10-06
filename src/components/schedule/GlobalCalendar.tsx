@@ -4,11 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { dayjs, nowBangkok } from "@/lib/date";
 import PremiumCalendar, {
-  getVisibleRange,
   type CalendarEvent,
   type RescheduleRequest,
   type VisibleRange,
 } from "@/components/calendar/PremiumCalendar";
+import { getVisibleRange } from "@/components/calendar/lib/useCalendarView";
 import SessionDrawer from "@/components/admin/class/SessionDrawer";
 import AttendanceDrawer from "@/components/admin/class/AttendanceDrawer";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
