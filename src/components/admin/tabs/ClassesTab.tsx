@@ -12,6 +12,7 @@ import { Users, Clock, School } from "lucide-react";
 import { PageHero } from "@/components/quest/PageHero";
 import { SectionHeader } from "@/components/quest/SectionHeader";
 import { EmptyState } from "@/components/quest/EmptyState";
+import { describePattern, parseWeeklySlots } from "@/lib/classSchedule";
 
 const ClassesTab = () => {
   const queryClient = useQueryClient();
@@ -115,7 +116,11 @@ const ClassesTab = () => {
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
-                        {cls.default_session_length_minutes}min
+                        {/* The lengths this class actually runs. Printing the
+                            single per-class number here stated "90min" for a
+                            class whose Wednesday is two hours. */}
+                        {describePattern(parseWeeklySlots(cls.schedule_template)) ??
+                          `${cls.default_session_length_minutes}min`}
                       </span>
                     </CardDescription>
                   </CardHeader>

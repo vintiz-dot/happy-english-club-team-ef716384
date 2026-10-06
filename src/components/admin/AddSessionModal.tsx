@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { SessionTASelector } from "@/components/admin/SessionTASelector";
 import { SessionTimeFields } from "@/components/admin/SessionTimeFields";
 import { addMinutesToTime } from "@/lib/sessionDuration";
+import { configuredLengths, expectedLengthFor, parseWeeklySlots } from "@/lib/classSchedule";
 
 interface AddSessionModalProps {
   classId: string;
@@ -56,17 +57,31 @@ const AddSessionModal = ({ classId, date, open, onClose, onSuccess }: AddSession
     queryFn: async () => {
       const { data, error } = await supabase
         .from("classes")
-        .select("default_teacher_id, session_rate_vnd, default_session_length_minutes")
+        .select(
+          "default_teacher_id, session_rate_vnd, default_session_length_minutes, schedule_template",
+        )
         .eq("id", classId)
         .single();
-      
+
       if (error) throw error;
       return data;
     },
     enabled: !!classId,
   });
 
-  const expectedMinutes = classData?.default_session_length_minutes ?? null;
+  // The length this class runs ON THIS DAY, taken from its weekly slot. A
+  // class running 2h on Wednesday and 90m on Saturday fills in the right end
+  // time for whichever day this dialog was opened on.
+  const slots = parseWeeklySlots(classData?.schedule_template);
+  const classDefaultMinutes = classData?.default_session_length_minutes ?? null;
+  const expected = expectedLengthFor({
+    date: format(date, "yyyy-MM-dd"),
+    startTime,
+    slots,
+    classDefaultMinutes,
+  });
+  const expectedMinutes = expected.minutes;
+  const acceptedLengths = configuredLengths(slots, classDefaultMinutes);
 
   // Seed the end time from the class length once the class is known, so the
   // dialog opens already consistent rather than with a hardcoded 19:00.
@@ -146,6 +161,16 @@ const AddSessionModal = ({ classId, date, open, onClose, onSuccess }: AddSession
             onStartChange={setStartTime}
             onEndChange={setEndTime}
             expectedMinutes={expectedMinutes}
+            acceptedLengths={acceptedLengths}
+            fromWeeklySlot={expected.source === "slot"}
+            lengthForStart={(start) =>
+              expectedLengthFor({
+                date: format(date, "yyyy-MM-dd"),
+                startTime: start,
+                slots,
+                classDefaultMinutes,
+              }).minutes
+            }
             idPrefix="add-session"
           />
 

@@ -9,6 +9,12 @@ import PremiumCalendar, {
   type VisibleRange,
 } from "@/components/calendar/PremiumCalendar";
 import { getVisibleRange } from "@/components/calendar/lib/useCalendarView";
+import {
+  configuredLengths,
+  expectedLengthFor,
+  parseWeeklySlots,
+  type WeeklySlot,
+} from "@/lib/classSchedule";
 import SessionDrawer from "@/components/admin/class/SessionDrawer";
 import AttendanceDrawer from "@/components/admin/class/AttendanceDrawer";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
@@ -62,7 +68,7 @@ const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCa
           rate_override_vnd,
           class_id,
           teacher_id,
-          classes!inner (id, name, default_session_length_minutes),
+          classes!inner (id, name, default_session_length_minutes, schedule_template),
           teachers (id, full_name),
           attendance (student_id, status)
         `)
@@ -195,9 +201,34 @@ const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCa
 
   /* ---------------------------------------------------------------- view */
 
-  const calendarEvents: CalendarEvent[] = useMemo(
-    () =>
-      rawSessions.map((session: any) => ({
+  const calendarEvents: CalendarEvent[] = useMemo(() => {
+    // Parse each class's weekly pattern once, not once per session.
+    const patterns = new Map<string, WeeklySlot[]>();
+    const slotsFor = (session: any): WeeklySlot[] => {
+      const key = session.class_id;
+      if (!key) return [];
+      let slots = patterns.get(key);
+      if (!slots) {
+        slots = parseWeeklySlots(session.classes?.schedule_template);
+        patterns.set(key, slots);
+      }
+      return slots;
+    };
+
+    return rawSessions.map((session: any) => {
+      const slots = slotsFor(session);
+      const classDefaultMinutes = session.classes?.default_session_length_minutes ?? null;
+      // Expected length comes from the slot for THIS day of week. A class
+      // running 2h on Wednesday and 90m on Saturday is correct on both days,
+      // which a single per-class number could never express.
+      const expected = expectedLengthFor({
+        date: session.date,
+        startTime: session.start_time,
+        slots,
+        classDefaultMinutes,
+      });
+
+      return {
         id: session.id,
         date: session.date,
         start_time: session.start_time,
@@ -209,12 +240,11 @@ const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCa
         teacher_name: session.teachers?.full_name,
         // Colour is keyed on the id so a rename keeps the class's colour.
         class_id: session.class_id,
-        // The expected length, so a session whose times disagree with its
-        // class setting can be flagged wherever it appears.
-        expected_duration_minutes: session.classes?.default_session_length_minutes ?? null,
-      })),
-    [rawSessions],
-  );
+        expected_duration_minutes: expected.minutes,
+        accepted_lengths: configuredLengths(slots, classDefaultMinutes),
+      };
+    });
+  }, [rawSessions]);
 
   const handleSelectEvent = useCallback(
     (event: CalendarEvent) => {

@@ -14,13 +14,32 @@ export interface CalendarEvent {
   teacher_name?: string;
   /** Drives the per-class colour; falls back to the name if absent. */
   class_id?: string;
-  /** classes.default_session_length_minutes — what this session SHOULD run for. */
+  /**
+   * What this session SHOULD run for, resolved from the class's weekly slot
+   * for this day of week (see lib/classSchedule). NOT the per-class default,
+   * which cannot describe a class that runs 2h on Wednesday and 90m on
+   * Saturday — most of them do.
+   */
   expected_duration_minutes?: number | null;
+  /**
+   * Every length this class schedules. A session matching one of these is
+   * never flagged, even on a day whose slot is a different length: a 90m
+   * make-up moved onto the 2h Wednesday is a reschedule, not an error.
+   */
+  accepted_lengths?: number[];
 }
 
-/** Non-null only when the session's times disagree with its class setting. */
-export const eventVariance = (event: CalendarEvent) =>
-  getDurationVariance(event.start_time, event.end_time, event.expected_duration_minutes);
+/** Non-null only when the session runs a length its class never schedules. */
+export const eventVariance = (event: CalendarEvent) => {
+  const variance = getDurationVariance(
+    event.start_time,
+    event.end_time,
+    event.expected_duration_minutes,
+  );
+  if (!variance) return null;
+  if (event.accepted_lengths?.includes(variance.actualMinutes)) return null;
+  return variance;
+};
 
 export const colorKeyFor = (event: CalendarEvent) => event.class_id || event.class_name;
 

@@ -19,6 +19,12 @@ import {
 import { PageHero } from "@/components/quest/PageHero";
 import { SectionHeader } from "@/components/quest/SectionHeader";
 import { durationMinutes, formatMinutes, formatSignedMinutes } from "@/lib/sessionDuration";
+import {
+  checkSessionLength,
+  parseWeeklySlots,
+  payableExpectedMinutes,
+  varianceFromCheck,
+} from "@/lib/classSchedule";
 import { AlertTriangle } from "lucide-react";
 
 interface StaffPayroll {
@@ -29,7 +35,12 @@ interface StaffPayroll {
   totalEarned: number;
   projectedEarnings: number;
   totalProjected: number;
-  /** The same month costed at the durations the classes are configured for. */
+  /**
+   * The same month costed at each day's scheduled length — but only for
+   * sessions running a length their class never schedules. A session running
+   * one of the class's other lengths is costed at what it ran, because it is
+   * a reschedule rather than an error and there is no overpayment to report.
+   */
   expectedProjected: number;
   /** totalProjected - expectedProjected. Positive = paying over the setting. */
   varianceAmount: number;
@@ -69,7 +80,7 @@ export function PayrollTab() {
           .order("full_name"),
         supabase
           .from("sessions")
-          .select(`id, date, start_time, end_time, status, teacher_id, class_id, classes!inner(name, default_session_length_minutes)`)
+          .select(`id, date, start_time, end_time, status, teacher_id, class_id, classes!inner(name, default_session_length_minutes, schedule_template)`)
           .gte("date", monthStart)
           .lt("date", monthEnd)
           .in("status", ["Held", "Scheduled"])
@@ -113,32 +124,51 @@ export function PayrollTab() {
           0,
         );
 
-      /** The same sessions costed at each class's configured length. */
+      /**
+       * Each session judged against the weekly slot it belongs to.
+       *
+       * Parsing the template per class rather than per session: a month of
+       * sessions for one class is dozens of rows off the same JSON.
+       */
+      const slotCache = new Map<string, ReturnType<typeof parseWeeklySlots>>();
+      const checkOf = (s: (typeof allSessions)[number]) => {
+        const classRow = s.classes as any;
+        const key = s.class_id ?? "";
+        let slots = slotCache.get(key);
+        if (!slots) {
+          slots = parseWeeklySlots(classRow?.schedule_template);
+          slotCache.set(key, slots);
+        }
+        return checkSessionLength({
+          date: s.date,
+          startTime: s.start_time,
+          endTime: s.end_time,
+          slots,
+          classDefaultMinutes: classRow?.default_session_length_minutes ?? null,
+        });
+      };
+
+      /** The same sessions costed at the length their day is scheduled for. */
       const calculateExpectedAmount = (sessionsList: typeof allSessions, rate: number) =>
         sessionsList.reduce((sum, s) => {
-          const configured = (s.classes as any)?.default_session_length_minutes;
           const minutes =
-            configured && configured > 0 ? configured : (durationMinutes(s.start_time, s.end_time) ?? 0);
+            payableExpectedMinutes(checkOf(s)) ?? (durationMinutes(s.start_time, s.end_time) ?? 0);
           return sum + Math.round((rate / 60) * minutes);
         }, 0);
 
-      /** Sessions whose entered length disagrees with their class setting. */
+      /** Sessions running a length their class never schedules. */
       const findMismatches = (sessionsList: typeof allSessions, rate: number) =>
         sessionsList.flatMap((s) => {
-          const configured = (s.classes as any)?.default_session_length_minutes;
-          if (!configured || configured <= 0) return [];
-          const actualMinutes = durationMinutes(s.start_time, s.end_time);
-          if (actualMinutes == null) return [];
-          const deltaMinutes = actualMinutes - configured;
-          if (deltaMinutes === 0) return [];
+          const variance = varianceFromCheck(checkOf(s));
+          if (!variance) return [];
           return [{
             id: s.id,
             date: s.date,
             className: (s.classes as any)?.name ?? "Class",
-            actualMinutes,
-            expectedMinutes: configured,
-            deltaMinutes,
-            deltaAmount: Math.round((rate / 60) * deltaMinutes),
+            actualMinutes: variance.actualMinutes,
+            expectedMinutes: variance.expectedMinutes,
+            deltaMinutes: variance.deltaMinutes,
+            deltaAmount: Math.round((rate / 60) * variance.deltaMinutes),
           }];
         });
 
@@ -326,20 +356,21 @@ export function PayrollTab() {
             <CardTitle className="text-3xl text-primary">{grandTotalProjected.toLocaleString()} ₫</CardTitle>
           </CardHeader>
         </Card>
-        {/* The same month costed at the durations the classes are configured
-            for. When this differs from Projected, the roster and the class
-            settings disagree and one of them is wrong. */}
+        {/* The same month with every wrong-length session re-costed at the
+            length its day is scheduled for. When this differs from Projected,
+            a session runs a length its class never holds, and either the
+            times or the weekly schedule is wrong. */}
         <Card className={grandVariance !== 0 ? "border-warning/60" : undefined}>
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-1.5">
               {grandVariance !== 0 && <AlertTriangle className="h-3.5 w-3.5 text-warning" />}
-              Projected at class settings
+              Projected at scheduled lengths
             </CardDescription>
             <CardTitle className="text-3xl">{grandTotalExpected.toLocaleString()} ₫</CardTitle>
             {grandVariance !== 0 && (
               <p className="pt-1 text-xs font-medium text-warning">
                 {grandVariance > 0 ? "+" : "−"}
-                {Math.abs(grandVariance).toLocaleString()} ₫ against the configured lengths
+                {Math.abs(grandVariance).toLocaleString()} ₫ against the scheduled lengths
               </p>
             )}
           </CardHeader>
@@ -408,7 +439,7 @@ export function PayrollTab() {
                   <TableHead className="text-right">Earned</TableHead>
                   <TableHead className="text-right">Projected</TableHead>
                   <TableHead className="text-right">Total Projected</TableHead>
-                  <TableHead className="text-right">vs class settings</TableHead>
+                  <TableHead className="text-right">vs schedule</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

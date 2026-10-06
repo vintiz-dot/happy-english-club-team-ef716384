@@ -12,6 +12,12 @@ const PayrollRequestSchema = z.object({
   teacherId: z.string().uuid("Invalid teacher ID format").optional(),
 });
 
+type ClassRow = {
+  name: string;
+  default_session_length_minutes?: number | null;
+  schedule_template?: unknown;
+};
+
 type SessionRow = {
   id: string;
   date: string; // YYYY-MM-DD
@@ -19,11 +25,149 @@ type SessionRow = {
   end_time: string | null; // "HH:MM" or "HH:MM:SS"
   status?: string;
   class_id?: string;
-  classes?:
-    | { name: string; default_session_length_minutes?: number | null }
-    | { name: string; default_session_length_minutes?: number | null }[]
-    | null;
+  classes?: ClassRow | ClassRow[] | null;
 };
+
+/* --------------------------------------------------------- weekly pattern
+ *
+ * MIRROR OF src/lib/classSchedule.ts. These two must agree: the client flags
+ * the sessions, this function prices them, and if they disagree the admin
+ * sees a warning about one session and a money figure about another.
+ *
+ * Why not the single classes.default_session_length_minutes column: classes
+ * here run different lengths on different days - two hours on Wednesday,
+ * ninety minutes on Saturday, same class. One number cannot describe that,
+ * so comparing every session against one flagged a correct day every week.
+ * schedule_template.weeklySlots already holds each day's own start and end,
+ * and schedule-sessions generates the session rows from exactly those.
+ */
+
+type WeeklySlot = { dayOfWeek: number; startTime: string; endTime: string };
+
+function parseWeeklySlots(template: unknown): WeeklySlot[] {
+  const raw = (template as { weeklySlots?: unknown } | null | undefined)?.weeklySlots;
+  if (!Array.isArray(raw)) return [];
+
+  const out: WeeklySlot[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") continue;
+    const slot = entry as Record<string, unknown>;
+
+    const dayOfWeek = Number(slot.dayOfWeek);
+    if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) continue;
+
+    const startTime = typeof slot.startTime === "string" ? slot.startTime : "";
+    const endTime = typeof slot.endTime === "string" ? slot.endTime : "";
+    if (parseMinutes(startTime) == null || parseMinutes(endTime) == null) continue;
+
+    out.push({ dayOfWeek, startTime, endTime });
+  }
+  return out;
+}
+
+/** Same cross-midnight handling as the session totals below. */
+function spanMinutes(start: string | null, end: string | null): number | null {
+  const s = parseMinutes(start);
+  const e = parseMinutes(end);
+  if (s == null || e == null) return null;
+  let minutes = e - s;
+  if (minutes <= 0) minutes += 24 * 60;
+  return Math.max(0, Math.round(minutes));
+}
+
+/**
+ * A slot whose start equals its end is half-typed, not a 24-hour class - but
+ * the cross-midnight rule that correctly turns 23:30-01:00 into 90 minutes
+ * turns 19:30-19:30 into 1440, which would then be accepted as a legitimate
+ * length for any session of that class.
+ */
+function slotLengthMinutes(slot: WeeklySlot): number | null {
+  const minutes = spanMinutes(slot.startTime, slot.endTime);
+  if (minutes == null || minutes <= 0 || minutes >= 24 * 60) return null;
+  return minutes;
+}
+
+/** Every length this class schedules, ascending. */
+function configuredLengths(slots: WeeklySlot[], classDefault?: number | null): number[] {
+  const lengths = new Set<number>();
+  for (const slot of slots) {
+    const minutes = slotLengthMinutes(slot);
+    if (minutes != null) lengths.add(minutes);
+  }
+  if (lengths.size === 0 && classDefault && classDefault > 0) {
+    lengths.add(Math.round(classDefault));
+  }
+  return [...lengths].sort((a, b) => a - b);
+}
+
+/**
+ * Day of week for a YYYY-MM-DD session date, read as UTC. Session dates are
+ * already Asia/Bangkok calendar dates (schedule-sessions derives them there),
+ * so re-interpreting them in the server's zone could shift the weekday and
+ * match a session to the wrong slot.
+ */
+function dayOfWeekFor(date: string | null | undefined): number | null {
+  if (!date) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  if (Number.isNaN(parsed.getTime())) return null;
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  return parsed.getUTCDay();
+}
+
+/** The length this session's own day is scheduled for. */
+function expectedLengthFor(
+  date: string | null | undefined,
+  startTime: string | null,
+  slots: WeeklySlot[],
+  classDefault?: number | null,
+): number | null {
+  const dayOfWeek = dayOfWeekFor(date);
+  const sameDay = dayOfWeek == null ? [] : slots.filter((s) => s.dayOfWeek === dayOfWeek);
+
+  let matched: WeeklySlot | null = null;
+  if (sameDay.length === 1) {
+    matched = sameDay[0];
+  } else if (sameDay.length > 1) {
+    // Two groups on one day: the nearest start time is this session's slot.
+    const sessionStart = parseMinutes(startTime);
+    if (sessionStart == null) {
+      matched = sameDay[0];
+    } else {
+      let best = sameDay[0];
+      let bestGap = Number.POSITIVE_INFINITY;
+      for (const slot of sameDay) {
+        const slotStart = parseMinutes(slot.startTime);
+        if (slotStart == null) continue;
+        const raw = Math.abs(slotStart - sessionStart);
+        const gap = Math.min(raw, 1440 - raw);
+        if (gap < bestGap) {
+          bestGap = gap;
+          best = slot;
+        }
+      }
+      matched = best;
+    }
+  }
+
+  const slotMinutes = matched ? slotLengthMinutes(matched) : null;
+  if (slotMinutes != null) return slotMinutes;
+  // Off-pattern date - a make-up or a one-off. The per-class number is all
+  // there is to go on.
+  if (classDefault && classDefault > 0) return Math.round(classDefault);
+  return null;
+}
 
 function monthRange(month: string) {
   // month = "YYYY-MM"
@@ -61,6 +205,19 @@ function parseMinutes(hhmm: string | null): number | null {
 function computeTotals(sessions: SessionRow[], hourlyRateVnd: number) {
   let totalMinutes = 0;
   let totalExpectedMinutes = 0;
+
+  // A month of sessions for one class is dozens of rows off the same JSON,
+  // so the template is parsed once per class rather than once per session.
+  const slotCache = new Map<string, WeeklySlot[]>();
+  const slotsForClass = (classId: string | undefined, classes: ClassRow | null) => {
+    const key = classId ?? "";
+    const cached = slotCache.get(key);
+    if (cached) return cached;
+    const parsed = parseWeeklySlots(classes?.schedule_template);
+    slotCache.set(key, parsed);
+    return parsed;
+  };
+
   const perSession: Array<{
     id: string;
     date: string;
@@ -93,15 +250,27 @@ function computeTotals(sessions: SessionRow[], hourlyRateVnd: number) {
       : s.classes;
 
     const configured = classes?.default_session_length_minutes ?? null;
-    const expectedMinutes = configured && configured > 0 ? configured : null;
-    const varianceMinutes = expectedMinutes == null ? null : minutes - expectedMinutes;
+    const slots = slotsForClass(s.class_id, classes);
+    // The length THIS day is scheduled for, not a single number for the
+    // whole class.
+    const expectedMinutes = expectedLengthFor(s.date, s.start_time, slots, configured);
+
+    // A length the class genuinely runs on some other day is a reschedule,
+    // not a data-entry error, so it is not a discrepancy and is priced at
+    // what it actually ran.
+    const runsAConfiguredLength = configuredLengths(slots, configured).includes(minutes);
+    const isMismatch =
+      expectedMinutes != null && minutes !== expectedMinutes && !runsAConfiguredLength;
+
+    const varianceMinutes = isMismatch ? minutes - (expectedMinutes as number) : null;
     const varianceAmount =
       varianceMinutes == null ? null : Math.round((hourlyRateVnd / 60) * varianceMinutes);
 
     totalMinutes += minutes;
-    // A session with no configured length contributes its actual time, so the
-    // expected total stays comparable rather than silently under-counting.
-    totalExpectedMinutes += expectedMinutes ?? minutes;
+    // Only a genuine mismatch moves the projection away from what was
+    // entered; anything else contributes its actual time, so the expected
+    // total stays comparable rather than inventing a difference.
+    totalExpectedMinutes += isMismatch ? (expectedMinutes as number) : minutes;
 
     perSession.push({
       id: s.id,
@@ -251,7 +420,7 @@ Deno.serve(async (req) => {
       // Actual = Held only
       const { data: held, error: heldErr } = await supabase
         .from("sessions")
-        .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes)")
+        .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
         .eq("teacher_id", t.id)
         .eq("status", "Held")
         .gte("date", startDate)
@@ -262,7 +431,7 @@ Deno.serve(async (req) => {
       // Projected = Held + Scheduled (exclude Canceled)
       const { data: projected, error: projErr } = await supabase
         .from("sessions")
-        .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes)")
+        .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
         .eq("teacher_id", t.id)
         .in("status", ["Held", "Scheduled"])
         .gte("date", startDate)
@@ -331,7 +500,7 @@ Deno.serve(async (req) => {
         // Actual = Held sessions
         const { data: held } = await supabase
           .from("sessions")
-          .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes)")
+          .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
           .in("id", sessionIds)
           .eq("status", "Held")
           .gte("date", startDate)
@@ -340,7 +509,7 @@ Deno.serve(async (req) => {
         // Projected = Held + Scheduled
         const { data: projected } = await supabase
           .from("sessions")
-          .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes)")
+          .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
           .in("id", sessionIds)
           .in("status", ["Held", "Scheduled"])
           .gte("date", startDate)

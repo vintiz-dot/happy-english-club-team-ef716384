@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, X } from "lucide-react";
+import { fallbackLengthFromSlots, slotLengthMinutes } from "@/lib/classSchedule";
+import { formatMinutes } from "@/lib/sessionDuration";
 
 interface WeeklySlot {
   dayOfWeek: number;
@@ -83,11 +85,18 @@ export function ClassForm({ onSuccess }: { onSuccess?: () => void }) {
 
     setIsSubmitting(true);
     try {
+      // The weekly slots are the real schedule, but the per-class column is
+      // still the fallback for one-off sessions on days the class does not
+      // normally run. Without this it stays at the column default of 90 even
+      // for a class whose every slot is two hours.
+      const fallbackLength = fallbackLengthFromSlots(weeklySlots);
+
       const { error } = await supabase.from("classes").insert([{
         name,
         default_teacher_id: teacherId,
         session_rate_vnd: sessionRate,
         schedule_template: { weeklySlots } as any,
+        ...(fallbackLength ? { default_session_length_minutes: fallbackLength } : {}),
         description: description || null,
         curriculum: curriculum || null,
         age_range: ageRange || null,
@@ -234,7 +243,20 @@ export function ClassForm({ onSuccess }: { onSuccess?: () => void }) {
                 </div>
 
                 <div className="flex-1">
-                  <Label>End</Label>
+                  <Label className="flex items-center gap-1.5">
+                    End
+                    {/* The length each day runs, stated as you type it. It is
+                        what the session is judged and paid against, and
+                        different days are free to differ. */}
+                    {(() => {
+                      const minutes = slotLengthMinutes(slot);
+                      return minutes ? (
+                        <span className="text-[10px] font-normal tabular-nums text-muted-foreground">
+                          {formatMinutes(minutes)}
+                        </span>
+                      ) : null;
+                    })()}
+                  </Label>
                   <Input
                     type="time"
                     value={slot.endTime}

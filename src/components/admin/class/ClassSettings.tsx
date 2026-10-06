@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { PastAttendanceEditor } from "@/components/admin/PastAttendanceEditor";
 import { assertClassNameAvailable } from "@/components/admin/class/ClassAdminActions";
 import { useQueryClient } from "@tanstack/react-query";
+import { describePattern, parseWeeklySlots } from "@/lib/classSchedule";
 
 const ClassSettings = ({ classId }: { classId: string }) => {
   const queryClient = useQueryClient();
@@ -49,6 +50,9 @@ const ClassSettings = ({ classId }: { classId: string }) => {
       return data;
     },
   });
+
+  // The lengths this class actually runs, read off its weekly slots.
+  const weeklyPattern = describePattern(parseWeeklySlots(classData?.schedule_template));
 
   const { data: teachers } = useQuery({
     queryKey: ["teachers"],
@@ -250,13 +254,21 @@ const ClassSettings = ({ classId }: { classId: string }) => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Default Session Length (minutes)</Label>
+                  <Label>Fallback Session Length (minutes)</Label>
                   <Input
                     type="number"
                     value={defaultSessionLength}
                     onChange={(e) => setDefaultSessionLength(Number(e.target.value) || 90)}
                     placeholder="90"
                   />
+                  {/* This used to be what every session was checked against,
+                      which flagged a correct day every week for any class
+                      running two lengths. The weekly schedule now decides. */}
+                  <p className="text-xs text-muted-foreground">
+                    {weeklyPattern
+                      ? `Each day is checked against its own slot — this class runs ${weeklyPattern}. Used only for a one-off on a day the class doesn't normally run.`
+                      : "Used for sessions on days this class has no weekly slot for. Set the weekly schedule to have each day checked against its own length."}
+                  </p>
                 </div>
 
                 <div className="space-y-2">

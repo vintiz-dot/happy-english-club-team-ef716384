@@ -16,8 +16,29 @@ interface SessionTimeFieldsProps {
   endTime: string;
   onStartChange: (value: string) => void;
   onEndChange: (value: string) => void;
-  /** classes.default_session_length_minutes. Null disables the whole check. */
+  /**
+   * What this class runs on the date being edited, resolved from its weekly
+   * slot for that day (see lib/classSchedule). Null disables the check.
+   */
   expectedMinutes?: number | null;
+  /**
+   * Every length this class schedules. One of these is never an error, even
+   * when it is not this day's usual length — that is a reschedule, not a typo.
+   */
+  acceptedLengths?: number[];
+  /** True when the expected length came from a weekly slot rather than the
+   *  class-wide fallback, so the copy can say which. */
+  fromWeeklySlot?: boolean;
+  /**
+   * The expected length for a start time that has not been committed yet.
+   *
+   * `expectedMinutes` describes the CURRENT start. On a day with a morning
+   * and an evening group the start time is what picks the slot, so filling
+   * the end from the prop would use the group the admin just moved away
+   * from — and because that is still a length the class runs, nothing would
+   * warn about it. Pay is hourly, so the gap is paid.
+   */
+  lengthForStart?: (start: string) => number | null;
   idPrefix?: string;
 }
 
@@ -40,18 +61,29 @@ export function SessionTimeFields({
   onStartChange,
   onEndChange,
   expectedMinutes,
+  acceptedLengths,
+  fromWeeklySlot,
+  lengthForStart,
   idPrefix = "session",
 }: SessionTimeFieldsProps) {
-  const variance = getDurationVariance(startTime, endTime, expectedMinutes);
+  const rawVariance = getDurationVariance(startTime, endTime, expectedMinutes);
+  // A length this class genuinely runs on some other day is a reschedule, not
+  // a mistake. Saying so is more useful than a warning nobody can act on.
+  const otherPattern =
+    rawVariance != null && (acceptedLengths?.includes(rawVariance.actualMinutes) ?? false);
+  const variance = otherPattern ? null : rawVariance;
   const suggestedEnd =
     expectedMinutes && startTime ? addMinutesToTime(startTime, expectedMinutes, false) : null;
 
   const handleStart = (value: string) => {
     onStartChange(value);
-    // Keep the end in step with the class length. Only when we know the
-    // expected length - otherwise leave whatever is there alone.
-    if (expectedMinutes && value) {
-      const next = addMinutesToTime(value, expectedMinutes, false);
+    // Resolve the length against the NEW start, not the prop, which still
+    // describes the slot this start is moving away from.
+    const minutes = (lengthForStart ? lengthForStart(value) : null) ?? expectedMinutes;
+    // Only when we know the expected length - otherwise leave whatever is
+    // there alone.
+    if (minutes && value) {
+      const next = addMinutesToTime(value, minutes, false);
       if (next) onEndChange(next);
     }
   };
@@ -96,8 +128,13 @@ export function SessionTimeFields({
                 {formatSignedMinutes(variance.deltaMinutes)} against the class setting
               </p>
               <p className="mt-0.5 text-muted-foreground">
-                {describeVariance(variance)}. Teacher pay is hourly, so this changes what the
-                session costs.
+                {describeVariance(variance)}
+                {acceptedLengths && acceptedLengths.length > 0
+                  ? ` — and this class only ever runs ${acceptedLengths
+                      .map(formatMinutes)
+                      .join(" or ")}`
+                  : ""}
+                . Teacher pay is hourly, so this changes what the session costs.
               </p>
               {suggestedEnd && (
                 <Button
@@ -113,9 +150,15 @@ export function SessionTimeFields({
               )}
             </div>
           </div>
+        ) : otherPattern && rawVariance ? (
+          <p className="text-xs text-muted-foreground">
+            {formatMinutes(rawVariance.actualMinutes)} — not this day's usual{" "}
+            {formatMinutes(expectedMinutes)}, but a length this class does run. Left alone.
+          </p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Matches the class setting of {formatMinutes(expectedMinutes)}.
+            Matches {fromWeeklySlot ? "this day's schedule" : "the class setting"} of{" "}
+            {formatMinutes(expectedMinutes)}.
           </p>
         )
       ) : null}

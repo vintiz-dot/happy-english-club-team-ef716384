@@ -10,6 +10,7 @@ import { StudentClassLeaderboard } from "./StudentClassLeaderboard";
 import { ProfilePictureUpload } from "./ProfilePictureUpload";
 import { PointsBreakdownChart } from "./PointsBreakdownChart";
 import { Users, BookOpen, User, Clock } from "lucide-react";
+import { describePattern, parseWeeklySlots } from "@/lib/classSchedule";
 
 export function StudentOverviewTab({ student }: { student: any }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -122,10 +123,17 @@ export function StudentOverviewTab({ student }: { student: any }) {
                         Ages {cls.age_range}
                       </Badge>
                     )}
-                    {cls.default_session_length_minutes && (
+                    {/* A class running 2h on Wednesday and 90m on Saturday
+                        would otherwise advertise a single wrong number to
+                        the student. */}
+                    {(describePattern(parseWeeklySlots(cls.schedule_template)) ??
+                      (cls.default_session_length_minutes
+                        ? `${cls.default_session_length_minutes} min`
+                        : null)) && (
                       <Badge variant="secondary" className="text-xs">
                         <Clock className="h-3 w-3 mr-1" />
-                        {cls.default_session_length_minutes} min
+                        {describePattern(parseWeeklySlots(cls.schedule_template)) ??
+                          `${cls.default_session_length_minutes} min`}
                       </Badge>
                     )}
                   </div>

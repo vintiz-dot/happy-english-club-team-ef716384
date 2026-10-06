@@ -10,10 +10,16 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Edit2, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { dayjs } from "@/lib/date";
+import { durationMinutes, formatMinutes } from "@/lib/sessionDuration";
+import { fallbackLengthFromSlots, parseWeeklySlots } from "@/lib/classSchedule";
 
 interface RecurringSessionsManagerProps {
   classId: string;
 }
+
+/** The slots are raw JSON, so a half-typed time must not render as NaN. */
+const slotDuration = (slot: any): number | null =>
+  durationMinutes(slot?.startTime, slot?.endTime) || null;
 
 export default function RecurringSessionsManager({ classId }: RecurringSessionsManagerProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -56,12 +62,19 @@ export default function RecurringSessionsManager({ classId }: RecurringSessionsM
 
   const updateTemplateMutation = useMutation({
     mutationFn: async (newSlots: any[]) => {
+      // These slots ARE the schedule a session's length is judged against, so
+      // different days may legitimately run different lengths. The per-class
+      // column is only the fallback for a one-off on a day the class does not
+      // normally run — kept in step here so it is never silently stale.
+      const fallbackLength = fallbackLengthFromSlots(parseWeeklySlots({ weeklySlots: newSlots }));
+
       const { error } = await supabase
         .from("classes")
         .update({
           schedule_template: {
             weeklySlots: newSlots,
           },
+          ...(fallbackLength ? { default_session_length_minutes: fallbackLength } : {}),
         })
         .eq("id", classId);
 
@@ -170,6 +183,15 @@ export default function RecurringSessionsManager({ classId }: RecurringSessionsM
                         <span className="text-sm">
                           {slot.startTime} - {slot.endTime}
                         </span>
+                        {/* The length this day runs. Shown because it is what
+                            a session on this day is checked and paid against,
+                            and because two days of the same class differing
+                            is normal and used to look like a bug. */}
+                        {slotDuration(slot) && (
+                          <Badge variant="secondary" className="tabular-nums">
+                            {formatMinutes(slotDuration(slot) as number)}
+                          </Badge>
+                        )}
                       </div>
                       {slot.teacherId && teachers && (
                         <p className="text-xs text-muted-foreground">

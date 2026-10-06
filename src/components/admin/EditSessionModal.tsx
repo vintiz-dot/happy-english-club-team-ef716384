@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import { AlertTriangle } from "lucide-react";
 import { SessionTASelector } from "@/components/admin/SessionTASelector";
 import { SessionTimeFields } from "@/components/admin/SessionTimeFields";
+import { configuredLengths, expectedLengthFor, parseWeeklySlots } from "@/lib/classSchedule";
 
 interface EditSessionModalProps {
   session: any;
@@ -47,22 +48,34 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
     },
   });
 
-  // The class's configured length, so an edit that drifts from it is caught
-  // here rather than in next month's payroll.
+  // The class's weekly pattern, so an edit that drifts from it is caught here
+  // rather than in next month's payroll.
   const { data: classRow } = useQuery({
     queryKey: ["class-length", session.class_id],
     enabled: !!session.class_id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("classes")
-        .select("default_session_length_minutes")
+        .select("default_session_length_minutes, schedule_template")
         .eq("id", session.class_id)
         .maybeSingle();
       if (error) throw error;
       return data;
     },
   });
-  const expectedMinutes = classRow?.default_session_length_minutes ?? null;
+
+  // Resolved against this session's own date, so the Wednesday two-hour slot
+  // and the Saturday ninety-minute slot are each judged against themselves.
+  const slots = parseWeeklySlots(classRow?.schedule_template);
+  const classDefaultMinutes = classRow?.default_session_length_minutes ?? null;
+  const expected = expectedLengthFor({
+    date: session.date,
+    startTime,
+    slots,
+    classDefaultMinutes,
+  });
+  const expectedMinutes = expected.minutes;
+  const acceptedLengths = configuredLengths(slots, classDefaultMinutes);
 
   // Load existing session participants (TAs)
   const { data: existingParticipants } = useQuery({
@@ -212,6 +225,16 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
             onStartChange={setStartTime}
             onEndChange={setEndTime}
             expectedMinutes={expectedMinutes}
+            acceptedLengths={acceptedLengths}
+            fromWeeklySlot={expected.source === "slot"}
+            lengthForStart={(start) =>
+              expectedLengthFor({
+                date: session.date,
+                startTime: start,
+                slots,
+                classDefaultMinutes,
+              }).minutes
+            }
             idPrefix="edit-session"
           />
 
