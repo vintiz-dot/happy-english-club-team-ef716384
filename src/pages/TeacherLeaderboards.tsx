@@ -13,7 +13,7 @@ import { LiveAssessmentGrid } from "@/components/teacher/LiveAssessmentGrid";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { coverWindow, isRosteredFor } from "@/lib/teacherAccess";
+import { fetchAccessibleClasses } from "@/lib/teacherAccess";
 
 export default function TeacherLeaderboards() {
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
@@ -25,96 +25,25 @@ export default function TeacherLeaderboards() {
   const { data: activeClasses, isLoading } = useQuery({
     queryKey: ["teacher-leaderboard-classes", user?.id],
     enabled: !!user,
-    queryFn: async () => {
-      if (!user) return [];
-
-      // Try teacher first
-      const { data: teacher } = await supabase
-        .from("teachers")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      let sessionData: any[] = [];
-
-      if (teacher) {
-        // Classes this teacher is on the ROSTER for, which does not expire:
-        // the class names them as its default teacher, or one of its weekly
-        // slots does. schedule-sessions generates every session from
-        // `slot.teacherId || default_teacher_id`, so this is what actually
-        // decides who teaches what.
-        const { data: rostered } = await supabase
-          .from("classes")
-          .select("id, name, default_teacher_id, schedule_template")
-          .eq("is_active", true);
-
-        const rosterClasses = (rostered || []).filter((c: any) =>
-          isRosteredFor(c, teacher.id),
-        );
-
-        // Plus classes they are currently COVERING. Bounded on both sides and
-        // mirroring is_teacher_of_class exactly — a class listed here that the
-        // database disagrees about would render an empty leaderboard.
-        const { data } = await supabase
-          .from("sessions")
-          .select(`class_id, classes!inner(id, name)`)
-          .eq("teacher_id", teacher.id)
-          .neq("status", "Canceled")
-          .gte("date", coverWindow().from)
-          .lte("date", coverWindow().to);
-
-        sessionData = [
-          ...rosterClasses.map((c: any) => ({ class_id: c.id, classes: { id: c.id, name: c.name } })),
-          ...(data || []),
-        ];
-      } else {
-        // Try TA
-        const { data: ta } = await supabase
-          .from("teaching_assistants")
-          .select("id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (!ta) return [];
-
-        // Same window as the teacher branch and as is_teacher_of_class.
-        const { data } = await supabase
-          .from("session_participants")
-          .select(`sessions!inner(class_id, date, status, classes!inner(id, name))`)
-          .eq("teaching_assistant_id", ta.id)
-          .eq("participant_type", "teaching_assistant")
-          .neq("sessions.status", "Canceled")
-          .gte("sessions.date", coverWindow().from)
-          .lte("sessions.date", coverWindow().to);
-
-        sessionData = (data || []).map((sp: any) => ({
-          class_id: sp.sessions?.class_id,
-          classes: sp.sessions?.classes,
-        }));
-      }
-
-      // Get unique classes
-      const classMap = new Map();
-      sessionData.forEach(s => {
-        const classData = Array.isArray(s.classes) ? s.classes[0] : s.classes;
-        if (classData && !classMap.has(classData.id)) {
-          classMap.set(classData.id, classData);
-        }
-      });
-
-      return Array.from(classMap.values());
-    },
+    queryFn: async () => (user ? fetchAccessibleClasses(user.id) : []),
   });
 
   // Query for active sessions (currently running)
   const { data: activeSessions = [] } = useQuery({
-    queryKey: ["active-sessions-today", today],
+    // Scoped to the classes this user may actually open. It used to ask for
+    // every session running anywhere in the school, so Live Assessment lit up
+    // for a colleague's class the moment they started teaching it.
+    queryKey: ["active-sessions-today", today, (activeClasses || []).map((c: any) => c.id).join(",")],
+    enabled: (activeClasses || []).length > 0,
     queryFn: async () => {
+      const classIds = (activeClasses || []).map((c: any) => c.id);
+      if (classIds.length === 0) return [];
       const now = new Date().toTimeString().slice(0, 8);
       const { data } = await supabase
         .from("sessions")
         .select("id, class_id, start_time, end_time")
         .eq("date", today)
+        .in("class_id", classIds)
         .in("status", ["Scheduled", "Held"])
         .lte("start_time", now)
         .gte("end_time", now);
@@ -289,7 +218,7 @@ export default function TeacherLeaderboards() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <ClassLeaderboardShared classId={displayClassId} />
+                  <ClassLeaderboardShared classId={displayClassId} canManagePoints />
                 </CardContent>
               </Card>
             )}

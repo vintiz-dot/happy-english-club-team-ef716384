@@ -700,7 +700,7 @@ export default function TeacherDashboard() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <ClassLeaderboardShared classId={classData.id} />
+                      <ClassLeaderboardShared classId={classData.id} canManagePoints />
                     </CardContent>
                   </Card>
                 ))

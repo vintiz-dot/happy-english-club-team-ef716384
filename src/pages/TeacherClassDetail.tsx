@@ -292,7 +292,7 @@ export default function TeacherClassDetail() {
           <div className="flex justify-end">
             <ManualPointsDialog classId={id!} isAdmin={false} />
           </div>
-          <ClassLeaderboardShared classId={id!} />
+          <ClassLeaderboardShared classId={id!} canManagePoints />
         </TabsContent>
 
         <TabsContent value="materials">

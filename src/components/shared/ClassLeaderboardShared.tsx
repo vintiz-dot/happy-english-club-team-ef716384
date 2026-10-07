@@ -32,7 +32,10 @@ interface SelectedStudent {
 export function ClassLeaderboardShared({
   classId,
   currentStudentId,
-  canManagePoints = true,
+  // Fail closed. This defaulted to true, so any new caller - a parent view, a
+  // read-only report - would have been handed award, deduct and bulk-points
+  // controls by omission. Every caller that should have them now says so.
+  canManagePoints = false,
 }: ClassLeaderboardSharedProps) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string } | null>(

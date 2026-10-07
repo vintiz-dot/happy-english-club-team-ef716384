@@ -76,6 +76,48 @@ Deno.serve(async (req) => {
 
     const { sessionId } = validationResult.data;
 
+    // AUTHORIZATION, PART TWO: is this session actually yours?
+    //
+    // The role check above proves only that the caller is *a* teacher. It
+    // never related sessionId to them, so any teacher could mark attendance
+    // on any session in the school by posting another session's id - and this
+    // runs on the service-role key, so row-level security does not catch it.
+    // That is not a cosmetic write: marking attendance flips the session to
+    // Held, which feeds tuition recalculation and student point bonuses.
+    //
+    // Admins stay unrestricted. Everyone else has to pass the same two-tier
+    // test as the rest of the app - on the roster for the class, or covering
+    // it inside the window - so there is one definition of "your class" and
+    // it lives in the database.
+    const isAdmin = roles?.some((r) => r.role === 'admin') ?? false;
+
+    if (!isAdmin) {
+      const { data: session, error: sessionError } = await supabase
+        .from('sessions')
+        .select('class_id')
+        .eq('id', sessionId)
+        .maybeSingle();
+
+      if (sessionError || !session) {
+        return new Response(JSON.stringify({ error: 'Session not found' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: teachesClass, error: accessError } = await supabase.rpc('is_teacher_of_class', {
+        user_id: user.id,
+        class_id: session.class_id,
+      });
+
+      // Fail closed: an error here must deny, not fall through to the write.
+      if (accessError || teachesClass !== true) {
+        console.warn(`mark-attendance denied: user ${user.id} does not teach class ${session.class_id}`);
+        return new Response(JSON.stringify({ error: 'You do not teach this class' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Normalize to entries array
     let entries: Array<{ studentId: string; status: string; notes?: string }>;
     if (validationResult.data.batch && validationResult.data.batch.length > 0) {

@@ -54,10 +54,15 @@ export function EconomyActions({ classId, pendingTransactions }: EconomyActionsP
           const currentCash = student?.cash_on_hand || 0;
           const newCash = currentCash + tx.cash_impact;
 
-          await supabase
+          // The result was discarded here. If row-level security refused the
+          // write, the transaction was still marked approved and the UI still
+          // reported success - so the student was told their cash had moved
+          // when it had not. Approving money must fail loudly.
+          const { error: cashError } = await supabase
             .from("students")
             .update({ cash_on_hand: Math.max(0, newCash) })
             .eq("id", tx.student_id);
+          if (cashError) throw cashError;
 
           // For withdrawals, also deduct points from student_points
           if (tx.type === "convert_to_cash" && tx.points_impact < 0) {
@@ -72,7 +77,9 @@ export function EconomyActions({ classId, pendingTransactions }: EconomyActionsP
               .single();
 
             if (sp) {
-              await supabase
+              // Same again: a silently refused deduction leaves the student
+              // holding both the cash and the points they spent on it.
+              const { error: pointsError } = await supabase
                 .from("student_points")
                 .update({
                   participation_points: Math.max(0, (sp.participation_points || 0) + tx.points_impact),
@@ -80,6 +87,7 @@ export function EconomyActions({ classId, pendingTransactions }: EconomyActionsP
                 .eq("student_id", tx.student_id)
                 .eq("class_id", classId)
                 .eq("month", currentMonth);
+              if (pointsError) throw pointsError;
             }
           }
 

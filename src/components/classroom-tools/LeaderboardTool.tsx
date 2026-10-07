@@ -13,6 +13,7 @@ import { LiveAssessmentGrid } from "@/components/teacher/LiveAssessmentGrid";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { fetchAccessibleClasses } from "@/lib/teacherAccess";
 
 /**
  * Compact leaderboard + live assessment tool for the Classroom Tools Sheet.
@@ -28,55 +29,7 @@ export function LeaderboardTool() {
   const { data: activeClasses = [], isLoading } = useQuery({
     queryKey: ["leaderboard-tool-classes", user?.id],
     enabled: !!user,
-    queryFn: async () => {
-      if (!user) return [];
-
-      const { data: teacher } = await supabase
-        .from("teachers")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      let sessionData: any[] = [];
-
-      if (teacher) {
-        const { data } = await supabase
-          .from("sessions")
-          .select(`class_id, classes!inner(id, name)`)
-          .eq("teacher_id", teacher.id)
-          .gte("date", dayjs().subtract(3, "month").format("YYYY-MM-DD"));
-        sessionData = data || [];
-      } else {
-        const { data: ta } = await supabase
-          .from("teaching_assistants")
-          .select("id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        if (!ta) return [];
-
-        const { data } = await supabase
-          .from("session_participants")
-          .select(`sessions!inner(class_id, date, classes!inner(id, name))`)
-          .eq("teaching_assistant_id", ta.id)
-          .eq("participant_type", "teaching_assistant")
-          .gte("sessions.date", dayjs().subtract(3, "month").format("YYYY-MM-DD"));
-
-        sessionData = (data || []).map((sp: any) => ({
-          class_id: sp.sessions?.class_id,
-          classes: sp.sessions?.classes,
-        }));
-      }
-
-      const classMap = new Map();
-      sessionData.forEach((s: any) => {
-        const classData = Array.isArray(s.classes) ? s.classes[0] : s.classes;
-        if (classData && !classMap.has(classData.id)) {
-          classMap.set(classData.id, classData);
-        }
-      });
-
-      return Array.from(classMap.values());
-    },
+    queryFn: async () => (user ? fetchAccessibleClasses(user.id) : []),
   });
 
   // Active sessions query
@@ -233,7 +186,7 @@ export function LeaderboardTool() {
               </div>
               <ManualPointsDialog classId={displayClassId} />
             </div>
-            <ClassLeaderboardShared classId={displayClassId} />
+            <ClassLeaderboardShared classId={displayClassId} canManagePoints />
           </div>
         )}
 

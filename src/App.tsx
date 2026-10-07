@@ -115,19 +115,19 @@ function AppContent() {
                   <Route path="/students/:id/tuition" element={<ProtectedRoute allowedRole="admin"><Tuition /></ProtectedRoute>} />
 
                   {/* Teacher routes */}
-                  <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-                  <Route path="/teacher/classes/:id" element={<TeacherClassDetail />} />
-                  <Route path="/teacher/payroll" element={<TeacherPayroll />} />
-                  <Route path="/teacher/attendance" element={<TeacherAttendance />} />
-                  <Route path="/teacher/assignments" element={<TeacherAssignments />} />
-                  <Route path="/teacher/journal" element={<TeacherJournal />} />
-                  <Route path="/teacher/exam-reports" element={<TeacherExamReports />} />
-                  <Route path="/teacher/leaderboards" element={<TeacherLeaderboards />} />
-                  <Route path="/teacher/resources" element={<TeacherResources />} />
-                  <Route path="/teacher/vocabulary-audit" element={<TeacherVocabularyAudit />} />
-                  <Route path="/teacher/books" element={<TeacherBooks />} />
-                  <Route path="/teacher/smart-upload" element={<TeacherSmartUpload />} />
-                  <Route path="/teacher/transcripts" element={<TeacherTranscripts />} />
+                  <Route path="/teacher/dashboard" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherDashboard /></ProtectedRoute>} />
+                  <Route path="/teacher/classes/:id" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherClassDetail /></ProtectedRoute>} />
+                  <Route path="/teacher/payroll" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherPayroll /></ProtectedRoute>} />
+                  <Route path="/teacher/attendance" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherAttendance /></ProtectedRoute>} />
+                  <Route path="/teacher/assignments" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherAssignments /></ProtectedRoute>} />
+                  <Route path="/teacher/journal" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherJournal /></ProtectedRoute>} />
+                  <Route path="/teacher/exam-reports" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherExamReports /></ProtectedRoute>} />
+                  <Route path="/teacher/leaderboards" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLeaderboards /></ProtectedRoute>} />
+                  <Route path="/teacher/resources" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherResources /></ProtectedRoute>} />
+                  <Route path="/teacher/vocabulary-audit" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherVocabularyAudit /></ProtectedRoute>} />
+                  <Route path="/teacher/books" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherBooks /></ProtectedRoute>} />
+                  <Route path="/teacher/smart-upload" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherSmartUpload /></ProtectedRoute>} />
+                  <Route path="/teacher/transcripts" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherTranscripts /></ProtectedRoute>} />
 
                   {/* Student routes */}
                   <Route path="/student/dashboard" element={<StudentDashboard />} />

@@ -4,13 +4,23 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { AppLoader } from "./AppLoader";
 
+type Role = "admin" | "teacher" | "family" | "student";
+
 interface ProtectedRouteProps {
   children: ReactNode;
-  allowedRole: "admin" | "teacher" | "family" | "student";
+  /**
+   * One role, or several. Several is for pages that more than one kind of
+   * user legitimately needs — the teacher area, for instance, which admins
+   * also open for support and which teaching assistants reach holding the
+   * teacher role.
+   */
+  allowedRole: Role | Role[];
 }
 
 export function ProtectedRoute({ children, allowedRole }: ProtectedRouteProps) {
   const { user, role, loading } = useAuth();
+  const allowed = Array.isArray(allowedRole) ? allowedRole : [allowedRole];
+  const isAllowed = !!role && allowed.includes(role as Role);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -27,7 +37,7 @@ export function ProtectedRoute({ children, allowedRole }: ProtectedRouteProps) {
     }
 
     // User logged in but wrong role
-    if (role && role !== allowedRole) {
+    if (role && !isAllowed) {
       toast.error("Access denied. You don't have permission to view this page.");
       
       // Redirect to appropriate dashboard
@@ -41,13 +51,14 @@ export function ProtectedRoute({ children, allowedRole }: ProtectedRouteProps) {
         navigate("/", { replace: true });
       }
     }
-  }, [user, role, loading, allowedRole, navigate, location]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, role, loading, isAllowed, navigate, location]);
 
   if (loading) {
     return <AppLoader message="Verifying access..." />;
   }
 
-  if (!user || role !== allowedRole) {
+  if (!user || !isAllowed) {
     return null;
   }
 

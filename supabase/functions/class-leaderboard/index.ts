@@ -37,6 +37,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    // The cover window. MUST MATCH is_teacher_of_class (see
+    // supabase/migrations/20261007120000_scope_teacher_class_access_in_time.sql)
+    // and src/lib/teacherAccess.ts. Roster membership is permanent; covering a
+    // class is not, and this function previously treated them the same.
+    const COVER_TRAILING_DAYS = 45;
+    const COVER_UPCOMING_DAYS = 60;
+    const asDate = (offsetDays: number) => {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() + offsetDays);
+      return d.toISOString().slice(0, 10);
+    };
+    const coverFrom = asDate(-COVER_TRAILING_DAYS);
+    const coverTo = asDate(COVER_UPCOMING_DAYS);
+
     // Parse request body
     const { classId, month } = await req.json();
     if (!classId || !month) {
@@ -80,13 +94,22 @@ Deno.serve(async (req) => {
     // ----- Wave 2: secondary auth checks + points, all in parallel -----
     const [classRes, teacherSessionRes, studentEnrollRes, familyEnrollRes, pointsRes] =
       await Promise.all([
+        // Roster: permanent. Reads the weekly slots too - a teacher named on
+        // a slot is on the roster even when they are not the class default.
         teacher
-          ? adminClient.from("classes").select("id")
-              .eq("id", classId).eq("default_teacher_id", teacher.id).maybeSingle()
+          ? adminClient.from("classes").select("id, default_teacher_id, schedule_template")
+              .eq("id", classId).maybeSingle()
           : Promise.resolve({ data: null as any }),
+        // Coverage, bounded. This used to be "any session for this class with
+        // my teacher_id, ever", so covering one lesson opened this class's
+        // leaderboard permanently - and the function runs on the service-role
+        // key, so RLS does not catch it. Cancelled sessions no longer count.
+        // Window must match is_teacher_of_class and src/lib/teacherAccess.ts.
         teacher
           ? adminClient.from("sessions").select("id")
-              .eq("class_id", classId).eq("teacher_id", teacher.id).limit(1)
+              .eq("class_id", classId).eq("teacher_id", teacher.id)
+              .neq("status", "Canceled")
+              .gte("date", coverFrom).lte("date", coverTo).limit(1)
           : Promise.resolve({ data: null as any }),
         userStudent
           ? adminClient.from("enrollments").select("id, end_date")
@@ -109,7 +132,15 @@ Deno.serve(async (req) => {
     let currentStudentId: string | null = null;
 
     if (teacher) {
-      if ((classRes as any).data) isAuthorized = true;
+      const cls = (classRes as any).data;
+      const slots = Array.isArray(cls?.schedule_template?.weeklySlots)
+        ? cls.schedule_template.weeklySlots
+        : [];
+      const onRoster =
+        !!cls &&
+        (cls.default_teacher_id === teacher.id ||
+          slots.some((slot: any) => slot?.teacherId === teacher.id));
+      if (onRoster) isAuthorized = true;
       if (!isAuthorized && (teacherSessionRes as any).data && (teacherSessionRes as any).data.length > 0) {
         isAuthorized = true;
       }
