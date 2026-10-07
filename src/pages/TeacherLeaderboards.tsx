@@ -13,6 +13,21 @@ import { LiveAssessmentGrid } from "@/components/teacher/LiveAssessmentGrid";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { parseWeeklySlots } from "@/lib/classSchedule";
+
+/**
+ * How long a covered class stays yours.
+ *
+ * MUST MATCH supabase/migrations/20261007120000_scope_teacher_class_access_in_time.sql.
+ * The database is what actually enforces this; these constants only decide
+ * what the page offers. If the page is more generous than the function, a
+ * teacher picks a class and gets an empty leaderboard with no explanation.
+ *
+ * Covering a lesson used to grant the class permanently — the page forgot
+ * after three months, but the row-level policies never did.
+ */
+const COVER_TRAILING_DAYS = 45;
+const COVER_UPCOMING_DAYS = 60;
 
 export default function TeacherLeaderboards() {
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
@@ -37,12 +52,36 @@ export default function TeacherLeaderboards() {
       let sessionData: any[] = [];
 
       if (teacher) {
+        // Classes this teacher is on the ROSTER for, which does not expire:
+        // the class names them as its default teacher, or one of its weekly
+        // slots does. schedule-sessions generates every session from
+        // `slot.teacherId || default_teacher_id`, so this is what actually
+        // decides who teaches what.
+        const { data: rostered } = await supabase
+          .from("classes")
+          .select("id, name, default_teacher_id, schedule_template")
+          .eq("is_active", true);
+
+        const rosterClasses = (rostered || []).filter((c: any) =>
+          c.default_teacher_id === teacher.id ||
+          parseWeeklySlots(c.schedule_template).some((s) => s.teacherId === teacher.id),
+        );
+
+        // Plus classes they are currently COVERING. Bounded on both sides and
+        // mirroring is_teacher_of_class exactly — a class listed here that the
+        // database disagrees about would render an empty leaderboard.
         const { data } = await supabase
           .from("sessions")
           .select(`class_id, classes!inner(id, name)`)
           .eq("teacher_id", teacher.id)
-          .gte("date", dayjs().subtract(3, "month").format("YYYY-MM-DD"));
-        sessionData = data || [];
+          .neq("status", "Canceled")
+          .gte("date", dayjs().subtract(COVER_TRAILING_DAYS, "day").format("YYYY-MM-DD"))
+          .lte("date", dayjs().add(COVER_UPCOMING_DAYS, "day").format("YYYY-MM-DD"));
+
+        sessionData = [
+          ...rosterClasses.map((c: any) => ({ class_id: c.id, classes: { id: c.id, name: c.name } })),
+          ...(data || []),
+        ];
       } else {
         // Try TA
         const { data: ta } = await supabase
@@ -53,12 +92,15 @@ export default function TeacherLeaderboards() {
 
         if (!ta) return [];
 
+        // Same window as the teacher branch and as is_teacher_of_class.
         const { data } = await supabase
           .from("session_participants")
-          .select(`sessions!inner(class_id, date, classes!inner(id, name))`)
+          .select(`sessions!inner(class_id, date, status, classes!inner(id, name))`)
           .eq("teaching_assistant_id", ta.id)
           .eq("participant_type", "teaching_assistant")
-          .gte("sessions.date", dayjs().subtract(3, "month").format("YYYY-MM-DD"));
+          .neq("sessions.status", "Canceled")
+          .gte("sessions.date", dayjs().subtract(COVER_TRAILING_DAYS, "day").format("YYYY-MM-DD"))
+          .lte("sessions.date", dayjs().add(COVER_UPCOMING_DAYS, "day").format("YYYY-MM-DD"));
 
         sessionData = (data || []).map((sp: any) => ({
           class_id: sp.sessions?.class_id,
