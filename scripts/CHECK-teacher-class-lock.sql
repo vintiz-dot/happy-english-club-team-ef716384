@@ -79,42 +79,87 @@ WHERE cmd IN ('UPDATE', 'ALL')
 ORDER BY polname;
 -- EXPECT: the teacher economy UPDATE policy, using is_teacher_of_class(...).
 
--- 6. THE REAL PROOF, and the only one that exercises the trigger rather than
---    reading the catalog. Safe: it rolls back, so nothing is written even if
---    the guard is missing.
+-- 6. THE REAL PROOF, and the only part that exercises the trigger rather than
+--    reading the catalog. Everything above describes what is installed; only
+--    this says what it DOES.
 --
---    Set a real teacher's auth user id and one of THEIR class ids below. Leave
---    them NULL to skip this block.
+--    Safe on live data: both updates run inside a block that always raises at
+--    the end, so the subtransaction rolls back whichever way the test goes.
+--    Nothing is written even if the guard turns out to be missing.
+--
+--    It picks its own subject. Leave the two ids NULL and it finds a teacher
+--    who actually teaches a class, deliberately skipping anyone who also holds
+--    admin -- an admin-teacher is waved through by design and would look like
+--    a failure. Fill them in to test a specific pair instead.
 DO $$
 DECLARE
-  v_teacher_user_id uuid := NULL;  -- <- a teacher's auth.users.id
-  v_class_id        uuid := NULL;  -- <- a class that teacher teaches
+  v_teacher_user_id uuid    := NULL;  -- optional: a specific teacher's auth.users.id
+  v_class_id        uuid    := NULL;  -- optional: a class that teacher teaches
   v_old_name        text;
   v_blocked         boolean := false;
+  v_economy_ok      boolean := false;
+  v_rows            integer;
 BEGIN
   IF v_teacher_user_id IS NULL OR v_class_id IS NULL THEN
-    RAISE NOTICE 'SKIPPED: fill in v_teacher_user_id and v_class_id to test the trigger for real.';
+    SELECT t.user_id, c.id
+      INTO v_teacher_user_id, v_class_id
+    FROM public.teachers t
+    JOIN public.classes c ON public.is_teacher_of_class(t.user_id, c.id)
+    WHERE t.user_id IS NOT NULL
+      AND NOT public.has_role(t.user_id, 'admin')
+    LIMIT 1;
+  END IF;
+
+  IF v_teacher_user_id IS NULL OR v_class_id IS NULL THEN
+    RAISE NOTICE 'SKIPPED: found no non-admin teacher linked to a class. Fill in the two ids by hand.';
     RETURN;
   END IF;
 
   SELECT name INTO v_old_name FROM public.classes WHERE id = v_class_id;
+  RAISE NOTICE 'Testing as teacher % against class % (%).', v_teacher_user_id, v_class_id, v_old_name;
 
-  -- Impersonate that teacher for the rest of this block.
+  -- Become that teacher. Both settings are transaction-local and die with the
+  -- rollback below.
   PERFORM set_config('request.jwt.claims',
                      json_build_object('sub', v_teacher_user_id, 'role', 'authenticated')::text,
                      true);
   PERFORM set_config('role', 'authenticated', true);
 
+  -- 6a. The thing that must be refused.
   BEGIN
     UPDATE public.classes SET name = v_old_name || ' (tampered)' WHERE id = v_class_id;
+    GET DIAGNOSTICS v_rows = ROW_COUNT;
   EXCEPTION WHEN insufficient_privilege THEN
     v_blocked := true;
   END;
 
   IF v_blocked THEN
-    RAISE NOTICE 'PASS: a teacher renaming their own class was rejected.';
+    RAISE NOTICE 'PASS: renaming their own class was rejected.';
+  ELSIF v_rows = 0 THEN
+    -- No exception AND no rows: RLS filtered the row out before the trigger
+    -- ever ran, so this proves nothing about the trigger either way.
+    RAISE WARNING 'INCONCLUSIVE: the UPDATE matched 0 rows, so RLS blocked it before the trigger. Pick a pair the teacher policy admits.';
   ELSE
     RAISE WARNING 'FAIL: a teacher RENAMED their own class. The guard is not in force.';
+  END IF;
+
+  -- 6b. The thing that must still be allowed. A guard that refuses everything
+  --     passes 6a and quietly breaks the teachers' economy switch, which is
+  --     the whole reason the policy exists.
+  BEGIN
+    UPDATE public.classes
+       SET economy_mode = NOT COALESCE(economy_mode, false)
+     WHERE id = v_class_id;
+    GET DIAGNOSTICS v_rows = ROW_COUNT;
+    v_economy_ok := v_rows > 0;
+  EXCEPTION WHEN insufficient_privilege THEN
+    v_economy_ok := false;
+  END;
+
+  IF v_economy_ok THEN
+    RAISE NOTICE 'PASS: the same teacher can still toggle economy_mode.';
+  ELSE
+    RAISE WARNING 'FAIL: the teacher can no longer change economy_mode. The guard is too tight.';
   END IF;
 
   -- Never commit either outcome.
@@ -123,4 +168,5 @@ EXCEPTION WHEN OTHERS THEN
   IF SQLERRM <> 'rollback: verification only, no changes kept' THEN
     RAISE;
   END IF;
+  RAISE NOTICE 'Rolled back. Nothing was written.';
 END $$;
