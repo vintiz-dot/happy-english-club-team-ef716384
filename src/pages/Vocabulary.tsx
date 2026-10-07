@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { VocabularyIndex } from "@/components/vocabulary/VocabularyIndex";
 import { VocabularyPractice } from "@/components/vocabulary/VocabularyPractice";
 import { WordExplorer } from "@/components/vocabulary/WordExplorer";
