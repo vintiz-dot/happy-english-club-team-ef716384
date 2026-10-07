@@ -8,6 +8,13 @@
       "when": 1791356945771,
       "tag": "0000_scope_teacher_class_access_in_time",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791356961366,
+      "tag": "0001_scope_srs_cards_to_taught_students",
+      "breakpoints": true
     }
   ]
 }
