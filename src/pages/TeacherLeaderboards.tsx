@@ -13,21 +13,7 @@ import { LiveAssessmentGrid } from "@/components/teacher/LiveAssessmentGrid";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { parseWeeklySlots } from "@/lib/classSchedule";
-
-/**
- * How long a covered class stays yours.
- *
- * MUST MATCH supabase/migrations/20261007120000_scope_teacher_class_access_in_time.sql.
- * The database is what actually enforces this; these constants only decide
- * what the page offers. If the page is more generous than the function, a
- * teacher picks a class and gets an empty leaderboard with no explanation.
- *
- * Covering a lesson used to grant the class permanently — the page forgot
- * after three months, but the row-level policies never did.
- */
-const COVER_TRAILING_DAYS = 45;
-const COVER_UPCOMING_DAYS = 60;
+import { coverWindow, isRosteredFor } from "@/lib/teacherAccess";
 
 export default function TeacherLeaderboards() {
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
@@ -63,8 +49,7 @@ export default function TeacherLeaderboards() {
           .eq("is_active", true);
 
         const rosterClasses = (rostered || []).filter((c: any) =>
-          c.default_teacher_id === teacher.id ||
-          parseWeeklySlots(c.schedule_template).some((s) => s.teacherId === teacher.id),
+          isRosteredFor(c, teacher.id),
         );
 
         // Plus classes they are currently COVERING. Bounded on both sides and
@@ -75,8 +60,8 @@ export default function TeacherLeaderboards() {
           .select(`class_id, classes!inner(id, name)`)
           .eq("teacher_id", teacher.id)
           .neq("status", "Canceled")
-          .gte("date", dayjs().subtract(COVER_TRAILING_DAYS, "day").format("YYYY-MM-DD"))
-          .lte("date", dayjs().add(COVER_UPCOMING_DAYS, "day").format("YYYY-MM-DD"));
+          .gte("date", coverWindow().from)
+          .lte("date", coverWindow().to);
 
         sessionData = [
           ...rosterClasses.map((c: any) => ({ class_id: c.id, classes: { id: c.id, name: c.name } })),
@@ -99,8 +84,8 @@ export default function TeacherLeaderboards() {
           .eq("teaching_assistant_id", ta.id)
           .eq("participant_type", "teaching_assistant")
           .neq("sessions.status", "Canceled")
-          .gte("sessions.date", dayjs().subtract(COVER_TRAILING_DAYS, "day").format("YYYY-MM-DD"))
-          .lte("sessions.date", dayjs().add(COVER_UPCOMING_DAYS, "day").format("YYYY-MM-DD"));
+          .gte("sessions.date", coverWindow().from)
+          .lte("sessions.date", coverWindow().to);
 
         sessionData = (data || []).map((sp: any) => ({
           class_id: sp.sessions?.class_id,

@@ -16,6 +16,48 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // AUTHORIZATION. This function had none at all.
+    //
+    // It runs on the service-role key, so it bypasses row-level security
+    // entirely, and with scope "all" it DELETES a month of point_transactions
+    // across the whole school and zeroes student_points. The only gate was
+    // verify_jwt = true, which establishes that the caller is signed in and
+    // nothing more - so any student, parent, teacher or TA could wipe the
+    // leaderboards for everyone.
+    //
+    // Same shape as bulk-cancel-sessions and the admin-* functions: prove the
+    // bearer token, then require the admin role from user_roles. 401 for "who
+    // are you", 403 for "not you".
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return new Response(JSON.stringify({ success: false, error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+
+    if (!roles?.some((r) => r.role === "admin")) {
+      console.warn(`reset-points denied for user ${user.id}: not an admin`);
+      return new Response(JSON.stringify({ success: false, error: "Admin access required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { targetMonth, scope, classId, studentId } = await req.json();
 
     console.log("Reset points request:", { targetMonth, scope, classId, studentId });
@@ -120,6 +162,32 @@ serve(async (req) => {
     }
 
     console.log(`Reset complete: deleted ${deletedCount} transactions, reset ${resetCount} student_points records (skipped ${economyClassIds.length} economy classes)`);
+
+    // This destroys point_transactions rows outright, so once it has run there
+    // is nothing left to say it happened or who asked for it. The deleted rows
+    // carried their own created_by; the deletion carried nothing. Recorded
+    // after the fact deliberately - a failed reset should not leave a log entry
+    // claiming it succeeded. A failure here must not fail the request, since
+    // the data is already gone and reporting an error would invite a retry.
+    try {
+      await supabase.from("audit_log").insert({
+        entity: "student_points",
+        entity_id: scope === "class" ? classId : scope === "student" ? studentId : null,
+        action: "reset_points",
+        actor_user_id: user.id,
+        diff: {
+          month: targetMonth,
+          scope,
+          class_id: classId ?? null,
+          student_id: studentId ?? null,
+          transactions_deleted: deletedCount ?? 0,
+          student_points_reset: resetCount ?? 0,
+          economy_classes_skipped: economyClassIds.length,
+        },
+      });
+    } catch (auditError) {
+      console.error("reset-points succeeded but the audit entry failed:", auditError);
+    }
 
     return new Response(
       JSON.stringify({

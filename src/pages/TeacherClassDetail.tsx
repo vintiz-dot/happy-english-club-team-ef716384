@@ -17,6 +17,7 @@ import { SetMonitorControl } from "@/components/teacher/SetMonitorControl";
 import { ClassEconomySettings } from "@/components/teacher/ClassEconomySettings";
 import { LiveEngagementHUD } from "@/components/teacher/LiveEngagementHUD";
 import { Settings } from "lucide-react";
+import { coverWindow, isRosteredFor } from "@/lib/teacherAccess";
 
 export default function TeacherClassDetail() {
   const { id } = useParams<{ id: string }>();
@@ -61,15 +62,32 @@ export default function TeacherClassDetail() {
         .maybeSingle();
 
       let hasAccess = false;
+      const window = coverWindow();
 
       if (teacher) {
-        const { data: sessions } = await supabase
-          .from("sessions")
-          .select("id")
-          .eq("class_id", id)
-          .eq("teacher_id", teacher.id)
-          .limit(1);
-        hasAccess = !!(sessions && sessions.length > 0);
+        // On the roster: permanent, and true even before any session exists.
+        const { data: cls } = await supabase
+          .from("classes")
+          .select("default_teacher_id, schedule_template")
+          .eq("id", id!)
+          .maybeSingle();
+        hasAccess = !!cls && isRosteredFor(cls, teacher.id);
+
+        if (!hasAccess) {
+          // Otherwise covering it, which lapses. Previously this asked only
+          // "any session ever", so one cover lesson opened this console - the
+          // full class monitor, attendance and point awards - permanently.
+          const { data: sessions } = await supabase
+            .from("sessions")
+            .select("id")
+            .eq("class_id", id)
+            .eq("teacher_id", teacher.id)
+            .neq("status", "Canceled")
+            .gte("date", window.from)
+            .lte("date", window.to)
+            .limit(1);
+          hasAccess = !!(sessions && sessions.length > 0);
+        }
       } else {
         // Try TA
         const { data: ta } = await supabase
@@ -79,12 +97,16 @@ export default function TeacherClassDetail() {
           .maybeSingle();
 
         if (ta) {
+          // Same window as the teacher branch and as is_teacher_of_class.
           const { data: sp } = await supabase
             .from("session_participants")
-            .select("id, sessions!inner(class_id)")
+            .select("id, sessions!inner(class_id, date, status)")
             .eq("teaching_assistant_id", ta.id)
             .eq("participant_type", "teaching_assistant")
             .eq("sessions.class_id", id!)
+            .neq("sessions.status", "Canceled")
+            .gte("sessions.date", window.from)
+            .lte("sessions.date", window.to)
             .limit(1);
           hasAccess = !!(sp && sp.length > 0);
         }

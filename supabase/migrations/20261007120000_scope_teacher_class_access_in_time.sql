@@ -148,6 +148,13 @@ AS $function$
   );
 $function$;
 
+-- Re-applies what 20260711235255 already does. This does NOT lock signed-in
+-- users out: Supabase's default privileges on the public schema grant EXECUTE
+-- to anon, authenticated and service_role EXPLICITLY, so revoking PUBLIC
+-- leaves the authenticated grant standing. (CREATE OR REPLACE above also
+-- preserves the existing ACL rather than resetting it.) Worth stating,
+-- because a plain Postgres instance has no such default privileges and the
+-- same two lines there would revoke the only grant that exists.
 REVOKE EXECUTE ON FUNCTION public.is_teacher_of_class(uuid, uuid) FROM anon, PUBLIC;
 
 COMMENT ON FUNCTION public.is_teacher_of_class(uuid, uuid) IS
