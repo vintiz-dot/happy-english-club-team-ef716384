@@ -30,9 +30,14 @@ import { parseWeeklySlots } from "@/lib/classSchedule";
 
 /**
  * Teaching a lesson is not the end of the work — attendance, points and
- * marking trail it, so cover does not lapse the moment the bell goes.
+ * marking trail it, so cover does not lapse the moment the bell goes. But it
+ * should not outlast the work either: at 45 days, the first value tried here,
+ * a teacher who covered one lesson kept the class in their leaderboard for
+ * six weeks and it read as though the class had been assigned to them.
+ *
+ * Kept in step with 20261007140000_shorten_cover_window_to_seven_days.sql.
  */
-export const COVER_TRAILING_DAYS = 45;
+export const COVER_TRAILING_DAYS = 7;
 
 /**
  * A teacher has to be able to prepare a class they are about to cover, and

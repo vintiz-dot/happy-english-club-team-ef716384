@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     // supabase/migrations/20261007120000_scope_teacher_class_access_in_time.sql)
     // and src/lib/teacherAccess.ts. Roster membership is permanent; covering a
     // class is not, and this function previously treated them the same.
-    const COVER_TRAILING_DAYS = 45;
+    const COVER_TRAILING_DAYS = 7;
     const COVER_UPCOMING_DAYS = 60;
     const asDate = (offsetDays: number) => {
       const d = new Date();
