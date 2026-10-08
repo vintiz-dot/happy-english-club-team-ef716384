@@ -15,6 +15,13 @@
       "when": 1791356961366,
       "tag": "0001_scope_srs_cards_to_taught_students",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791449743924,
+      "tag": "0002_shorten_cover_window_to_seven_days",
+      "breakpoints": true
     }
   ]
 }
