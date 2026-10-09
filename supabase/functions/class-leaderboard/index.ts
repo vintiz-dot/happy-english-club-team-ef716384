@@ -169,14 +169,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: points, error: pointsError } = pointsRes as any;
+    const { data: rawPoints, error: pointsError } = pointsRes as any;
     if (pointsError) {
       console.error("Error fetching points:", pointsError);
     }
 
+    // Typed explicitly: `pointsRes` is `any`, so an untyped `p` in the map
+    // below is implicitly any and the Map's value type collapses to `{}`.
+    interface PointsRow {
+      student_id: string;
+      participation_points?: number | null;
+      homework_points?: number | null;
+      reading_theory_points?: number | null;
+      total_points?: number | null;
+    }
+    const points: PointsRow[] = rawPoints ?? [];
+
     // Create points map
     const pointsMap = new Map(
-      (points || []).map((p) => [p.student_id, p])
+      points.map((p) => [p.student_id, p])
     );
 
     // Combine data and calculate rankings
