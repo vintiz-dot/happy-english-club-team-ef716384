@@ -121,7 +121,7 @@ async function awardVocabPoints(
   sb: SupabaseClient,
   studentId: string,
   classId: string | null,
-  userId: string,
+  userId: string | null,
   word: string,
 ): Promise<void> {
   const today = new Date().toISOString().slice(0, 10);
