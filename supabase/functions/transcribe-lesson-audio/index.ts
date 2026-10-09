@@ -77,7 +77,9 @@ async function transcribeWithWhisper(
   recognitionPrompt: string,
 ): Promise<{ text: string; duration: number; segments: WhisperSegment[] }> {
   const form = new FormData();
-  form.append("file", new Blob([audioBytes], { type: mimeType || "audio/mpeg" }), fileName);
+  // .buffer, not the view: BlobPart wants ArrayBufferView<ArrayBuffer>, and a
+  // Uint8Array<ArrayBufferLike> no longer satisfies it.
+  form.append("file", new Blob([audioBytes.buffer as ArrayBuffer], { type: mimeType || "audio/mpeg" }), fileName);
   form.append("model", "whisper-1");
   form.append("response_format", "verbose_json");
   form.append("timestamp_granularities[]", "segment");

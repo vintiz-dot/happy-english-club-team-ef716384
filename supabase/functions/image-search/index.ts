@@ -33,7 +33,7 @@
  *           message?: string }
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -123,7 +123,7 @@ async function fetchWikimedia(query: string, perPage: number): Promise<ImageResu
     if (!pages || typeof pages !== "object") return [];
     const allowedMime = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
     return Object.values(pages as Record<string, any>)
-      .map((p: any) => {
+      .map((p: any): ImageResult | null => {
         const info = Array.isArray(p.imageinfo) ? p.imageinfo[0] : null;
         if (!info || !allowedMime.has(info.mime)) return null;
         return {
@@ -223,7 +223,10 @@ function interleave(buckets: ImageResult[][]): ImageResult[] {
   return out;
 }
 
-function getDbClient(): ReturnType<typeof createClient> | null {
+// Typed as SupabaseClient, not ReturnType<typeof createClient>: the latter
+// instantiates the generic with its constraint, which turns every table's row
+// type into `never` and breaks the cache read/write below.
+function getDbClient(): SupabaseClient | null {
   const url = Deno.env.get("SUPABASE_URL");
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !key) return null;

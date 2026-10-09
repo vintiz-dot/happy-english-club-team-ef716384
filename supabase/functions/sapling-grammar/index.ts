@@ -1,5 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+
+// Declared here rather than in ../_shared/cors.ts: that folder does not exist
+// in this project (shared helpers live in ../_lib/), so the old import made
+// the whole function un-deployable.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -41,7 +49,7 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Sapling API error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

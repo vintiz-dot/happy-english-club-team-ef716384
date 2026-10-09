@@ -17,7 +17,7 @@
  *   OPENAI_API_KEY — OpenAI API key
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -256,7 +256,8 @@ Deno.serve(async (req) => {
     // ── Check vocab_cache DB first ──
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    let sb: ReturnType<typeof createClient> | null = null;
+    // SupabaseClient, not ReturnType<typeof createClient> — see image-search.
+    let sb: SupabaseClient | null = null;
 
     if (supabaseUrl && supabaseKey) {
       try {
@@ -351,7 +352,7 @@ Deno.serve(async (req) => {
           return { form: String(wf.form || ""), pos: String(wf.pos || "") };
         }
         return { form: "", pos: "" };
-      }).filter((wf) => wf.form);
+      }).filter((wf: WordForm) => wf.form);
     }
 
     const detectedPos = wordForms[0]?.pos?.split(" ")[0] || detectPos(cleanWord, parsed.level);
