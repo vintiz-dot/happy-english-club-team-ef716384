@@ -15,7 +15,8 @@ import { BulkPointsDialog } from "@/components/shared/BulkPointsDialog";
 import { Button } from "@/components/ui/button";
 import { StudentAnalyticsModal } from "@/components/student/StudentAnalyticsModal";
 import { EconomyActions } from "@/components/shared/EconomyActions";
-import { ArenaLeaderboard, type ArenaEntry } from "@/components/shared/ArenaLeaderboard";
+import { PodiumBoard, type BoardEntry } from "@/components/shared/PodiumBoard";
+import { useClassMonitor } from "@/hooks/useClassMonitor";
 
 interface ClassLeaderboardSharedProps {
   classId: string;
@@ -59,6 +60,7 @@ export function ClassLeaderboardShared({
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const previousLeaderboardRef = useRef<any[]>([]);
+  const { data: monitorStudentId } = useClassMonitor(classId);
 
   // Fetch economy settings for this class
   const { data: classEconomy } = useQuery({
@@ -280,8 +282,8 @@ export function ClassLeaderboardShared({
 
   if (isLoading) {
     return (
-      <div className="rounded-3xl bg-slate-900 p-8 text-center text-white/60 min-h-[300px] flex items-center justify-center">
-        Loading the Arena…
+      <div className="studio-surface flex min-h-[300px] items-center justify-center rounded-3xl border border-studio p-8 text-center text-sm text-ink-soft">
+        Counting up this month's points…
       </div>
     );
   }
@@ -290,50 +292,59 @@ export function ClassLeaderboardShared({
   const allSelected =
     leaderboard && leaderboard.length > 0 && selectedStudents.size === leaderboard.length;
 
-  const arenaEntries: ArenaEntry[] = (leaderboard || []) as unknown as ArenaEntry[];
+  const boardEntries: BoardEntry[] = (leaderboard || []) as unknown as BoardEntry[];
   const pendingByStudent = new Map<string, number>();
   (pendingTransactions as any[]).forEach((t) => {
     pendingByStudent.set(t.student_id, (pendingByStudent.get(t.student_id) || 0) + 1);
   });
 
   return (
-    <div className="relative arena-bg rounded-3xl shadow-2xl overflow-hidden min-h-[460px]">
-      {/* Sticky controls bar — month picker + bulk selection toggle */}
-      <div className="relative z-20 flex items-center justify-between gap-2 px-3 sm:px-6 pt-4 pb-2">
-        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="h-9 w-auto min-w-[140px] sm:min-w-[180px] bg-white/10 border-white/20 text-white text-sm font-semibold backdrop-blur-md hover:bg-white/15">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Array.from({ length: 6 }, (_, i) => {
-              const date = new Date();
-              date.setMonth(date.getMonth() - i);
-              const month = date.toISOString().slice(0, 7);
-              return (
-                <SelectItem key={month} value={month}>
-                  {date.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-        {canManagePoints && leaderboard && leaderboard.length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={allSelected ? clearSelection : selectAll}
-            className="h-9 bg-white/10 border-white/20 text-white hover:bg-white/15"
-          >
-            <CheckSquare className="h-4 w-4 mr-1.5" />
-            <span className="text-xs sm:text-sm">
-              {allSelected ? "Deselect" : "Select All"}
-            </span>
-          </Button>
-        )}
+    <div className="studio-surface relative min-h-[460px] overflow-hidden rounded-3xl border border-studio shadow-studio">
+      {/* Controls — month picker + bulk selection toggle */}
+      <div className="relative z-20 flex items-center justify-between gap-2 px-3 pb-2 pt-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2">
+          <Trophy
+            className="h-5 w-5 shrink-0 text-[hsl(var(--studio-butter-ink))]"
+            aria-hidden
+          />
+          <h2 className="studio-title truncate text-xl">Leaderboard</h2>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="h-9 w-auto min-w-[130px] rounded-full border-studio bg-studio-card text-sm font-semibold text-ink focus:ring-0 focus:ring-offset-0 sm:min-w-[170px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 6 }, (_, i) => {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                const month = date.toISOString().slice(0, 7);
+                return (
+                  <SelectItem key={month} value={month}>
+                    {date.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          {canManagePoints && leaderboard && leaderboard.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={allSelected ? clearSelection : selectAll}
+              className="h-9 rounded-full border-studio bg-studio-card text-ink hover:bg-[hsl(var(--studio-ink)/0.06)] hover:text-ink"
+            >
+              <CheckSquare className="mr-1.5 h-4 w-4" />
+              <span className="text-xs sm:text-sm">
+                {allSelected ? "Deselect" : "Select all"}
+              </span>
+            </Button>
+          )}
+        </div>
       </div>
 
-      <ArenaLeaderboard
-        entries={arenaEntries}
+      <PodiumBoard
+        entries={boardEntries}
         classId={classId}
         currentStudentId={currentStudentId}
         canManagePoints={canManagePoints}
@@ -342,6 +353,7 @@ export function ClassLeaderboardShared({
         pendingByStudent={pendingByStudent}
         selectedStudents={selectedStudents}
         onToggleSelect={(s, e) => toggleStudentSelection(s, e)}
+        monitorStudentId={monitorStudentId}
         onOpenAnalytics={(entry) =>
           setAnalyticsStudent({
             id: entry.student_id,
@@ -359,10 +371,10 @@ export function ClassLeaderboardShared({
 
       {/* Pending economy requests (only when economy mode + manager) */}
       {isEconomyMode && canManagePoints && (pendingTransactions as any[]).length > 0 && (
-        <div className="relative z-10 mx-3 sm:mx-6 mb-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md p-4">
-          <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Pending Requests ({(pendingTransactions as any[]).length})
+        <div className="relative z-10 mx-3 mb-4 rounded-2xl border border-studio bg-studio-card p-4 sm:mx-6">
+          <h3 className="studio-title mb-3 flex items-center gap-2 text-base">
+            <Clock className="h-4 w-4" aria-hidden />
+            Pending requests ({(pendingTransactions as any[]).length})
           </h3>
           <EconomyActions
             classId={classId}
@@ -373,27 +385,28 @@ export function ClassLeaderboardShared({
 
       {/* Floating bulk-action bar */}
       {canManagePoints && hasSelection && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 border border-white/20 rounded-full px-4 py-3 flex items-center gap-3 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-4">
-          <div className="flex items-center gap-2 text-white">
-            <Users className="h-4 w-4" />
-            <span className="font-semibold text-sm">{selectedStudents.size} selected</span>
+        <div className="animate-in slide-in-from-bottom-4 fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-[hsl(var(--studio-ink))] px-4 py-3 shadow-studio-lg">
+          <div className="flex items-center gap-2 text-[hsl(var(--studio-card))]">
+            <Users className="h-4 w-4" aria-hidden />
+            <span className="text-sm font-semibold">{selectedStudents.size} selected</span>
           </div>
-          <div className="w-px h-6 bg-white/30" />
+          <div className="h-6 w-px bg-[hsl(var(--studio-card)/0.3)]" />
           <Button
             size="sm"
             onClick={() => setShowBulkDialog(true)}
-            className="bg-blue-500 hover:bg-blue-400"
+            className="rounded-full bg-[hsl(var(--studio-butter))] text-[hsl(var(--studio-butter-ink))] hover:bg-[hsl(var(--studio-butter))] hover:brightness-105"
           >
-            <Trophy className="h-4 w-4 mr-1" />
-            Add Points
+            <Trophy className="mr-1 h-4 w-4" aria-hidden />
+            Add points
           </Button>
           <Button
             size="sm"
             variant="ghost"
             onClick={clearSelection}
-            className="text-white hover:bg-white/20"
+            aria-label="Clear selection"
+            className="rounded-full text-[hsl(var(--studio-card))] hover:bg-[hsl(var(--studio-card)/0.15)] hover:text-[hsl(var(--studio-card))]"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden />
           </Button>
         </div>
       )}

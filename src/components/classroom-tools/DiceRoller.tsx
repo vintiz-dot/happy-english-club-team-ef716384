@@ -1,24 +1,36 @@
 /**
- * DiceRoller — real 3D dice.
+ * Dice — real 3D dice, cut from bone rather than neon.
  *
  * Each die is a CSS cube (preserve-3d, six faces) that framer-motion
- * tumbles through multiple full rotations before landing with the rolled
+ * tumbles through several full rotations before landing with the rolled
  * face front. Opposite faces sum to 7, like physical dice.
+ *
+ * The pips are carved rather than printed: a recessed well, a shadow on
+ * the inside of the top edge and a highlight on the bottom. At the size a
+ * die renders on a projector that difference is the whole illusion, and it
+ * costs two extra SVG circles per pip.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import { Dices } from "lucide-react";
-import { AnimatedNumber } from "@/components/fx/AnimatedNumber";
+import {
+  ActionButton,
+  Segmented,
+  Stage,
+  ToolCard,
+} from "./studio/StudioKit";
+import { ClassScreen, ClassScreenButton } from "./studio/ClassScreen";
+import { CLASS_SCREEN_ACTION } from "./studio/tokens";
+import { useViewport } from "./studio/useViewport";
 import { playClick } from "./audio";
 
 const DOT_POSITIONS: Record<number, [number, number][]> = {
   1: [[50, 50]],
-  2: [[28, 28], [72, 72]],
-  3: [[28, 28], [50, 50], [72, 72]],
-  4: [[28, 28], [72, 28], [28, 72], [72, 72]],
-  5: [[28, 28], [72, 28], [50, 50], [28, 72], [72, 72]],
-  6: [[28, 24], [72, 24], [28, 50], [72, 50], [28, 76], [72, 76]],
+  2: [[30, 30], [70, 70]],
+  3: [[30, 30], [50, 50], [70, 70]],
+  4: [[30, 30], [70, 30], [30, 70], [70, 70]],
+  5: [[30, 30], [70, 30], [50, 50], [30, 70], [70, 70]],
+  6: [[30, 26], [70, 26], [30, 50], [70, 50], [30, 74], [70, 74]],
 };
 
 // Cube layout: front=1, back=6, right=3, left=4, top=5, bottom=2.
@@ -41,35 +53,11 @@ const TARGET_ROTATION: Record<number, { rx: number; ry: number }> = {
   2: { rx: 90, ry: 0 },
 };
 
-const DICE_SKINS = [
-  { face: "linear-gradient(135deg, #3b82f6, #4f46e5)", glow: "rgba(59,130,246,0.45)" },
-  { face: "linear-gradient(135deg, #f43f5e, #db2777)", glow: "rgba(244,63,94,0.45)" },
-  { face: "linear-gradient(135deg, #10b981, #0d9488)", glow: "rgba(16,185,129,0.45)" },
-];
-
-const SIZE = 84; // px
-const HALF = SIZE / 2;
-
-function Face({ value, gradient }: { value: number; gradient: string }) {
-  const dots = DOT_POSITIONS[value];
-  return (
-    <div
-      className="absolute inset-0 rounded-2xl ring-1 ring-white/25"
-      style={{
-        background: gradient,
-        transform: `${FACE_TRANSFORMS[value]} translateZ(${HALF}px)`,
-        backfaceVisibility: "hidden",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -6px 12px rgba(0,0,0,0.18)",
-      }}
-    >
-      <svg viewBox="0 0 100 100" className="w-full h-full">
-        {dots.map(([cx, cy], i) => (
-          <circle key={i} cx={cx} cy={cy} r="9.5" fill="white" opacity="0.95" />
-        ))}
-      </svg>
-    </div>
-  );
-}
+const COUNT_OPTIONS = [
+  { value: "1", label: "One die" },
+  { value: "2", label: "Two dice" },
+  { value: "3", label: "Three" },
+] as const;
 
 interface DieState {
   value: number;
@@ -77,10 +65,103 @@ interface DieState {
   ry: number;
 }
 
+function Face({ value, size }: { value: number; size: number }) {
+  const half = size / 2;
+  const pips = DOT_POSITIONS[value];
+  const r = value === 1 ? 11 : 9;
+  return (
+    <div
+      className="absolute inset-0 rounded-[18%]"
+      style={{
+        transform: `${FACE_TRANSFORMS[value]} translateZ(${half}px)`,
+        backfaceVisibility: "hidden",
+        background:
+          "linear-gradient(160deg, hsl(44 48% 99%) 0%, hsl(42 34% 95%) 55%, hsl(38 24% 89%) 100%)",
+        boxShadow:
+          "inset 0 2px 1px hsl(0 0% 100% / 0.9), inset 0 -3px 6px hsl(34 30% 60% / 0.35), inset 0 0 0 1px hsl(36 24% 82% / 0.9)",
+      }}
+    >
+      <svg viewBox="0 0 100 100" className="h-full w-full">
+        {pips.map(([cx, cy], i) => (
+          <g key={i}>
+            {/* well */}
+            <circle cx={cx} cy={cy} r={r} fill="hsl(10 42% 30%)" />
+            {/* shadow cast by the lip, top-left */}
+            <circle cx={cx - 0.7} cy={cy - 0.9} r={r} fill="hsl(10 48% 21%)" />
+            {/* the pip itself, lifted off the shadow */}
+            <circle cx={cx} cy={cy} r={r - 1.1} fill="hsl(8 46% 34%)" />
+            {/* specular catch, bottom-right of the well */}
+            <circle
+              cx={cx + r * 0.3}
+              cy={cy + r * 0.34}
+              r={r * 0.3}
+              fill="hsl(20 60% 62%)"
+              opacity="0.5"
+            />
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+function Die({ die, size, delay }: { die: DieState; size: number; delay: number }) {
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <motion.div
+        animate={{ rotateX: die.rx, rotateY: die.ry }}
+        transition={{ duration: 1.2, delay, ease: [0.18, 0.86, 0.26, 1] }}
+        style={{ width: size, height: size, transformStyle: "preserve-3d" }}
+      >
+        {[1, 2, 3, 4, 5, 6].map((face) => (
+          <Face key={face} value={face} size={size} />
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+function DiceStage({
+  dice,
+  size,
+  rolling,
+}: {
+  dice: DieState[];
+  size: number;
+  rolling: boolean;
+}) {
+  return (
+    <div
+      className="flex items-end justify-center"
+      style={{ perspective: `${size * 11}px`, gap: size * 0.32 }}
+    >
+      {dice.map((d, i) => (
+        <div key={i} className="flex flex-col items-center">
+          <Die die={d} size={size} delay={i * 0.07} />
+          {/* contact shadow — the die's only tie to the surface it sits on */}
+          <div
+            className="rounded-[50%] transition-all duration-500"
+            style={{
+              width: size * (rolling ? 0.5 : 0.82),
+              height: size * 0.12,
+              marginTop: size * 0.1,
+              background: "hsl(34 30% 30%)",
+              opacity: rolling ? 0.1 : 0.22,
+              filter: `blur(${size * 0.055}px)`,
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function DiceRoller() {
   const [count, setCount] = useState(1);
   const [dice, setDice] = useState<DieState[]>([{ value: 1, rx: 0, ry: 0 }]);
   const [rolling, setRolling] = useState(false);
+  const [projecting, setProjecting] = useState(false);
+  const viewport = useViewport();
 
   const roll = () => {
     if (rolling) return;
@@ -92,8 +173,8 @@ export function DiceRoller() {
         const value = Math.ceil(Math.random() * 6);
         const target = TARGET_ROTATION[value];
         const prevDie = prev[i] ?? { rx: 0, ry: 0 };
-        // 2-4 extra full tumbles on each axis, always moving forward so the
-        // cube visibly spins instead of taking the shortest path back.
+        // 2–4 extra full tumbles on each axis, always forward, so the cube
+        // visibly spins instead of taking the shortest path back.
         const spinsX = (2 + Math.floor(Math.random() * 3)) * 360;
         const spinsY = (2 + Math.floor(Math.random() * 3)) * 360;
         return {
@@ -107,101 +188,71 @@ export function DiceRoller() {
     window.setTimeout(() => {
       setRolling(false);
       playClick();
-    }, 1300);
+    }, 1250);
   };
 
   const setDiceCount = (n: number) => {
     setCount(n);
-    setDice(Array.from({ length: n }, (_, i) => dice[i] ?? { value: 1, rx: 0, ry: 0 }));
+    setDice((prev) =>
+      Array.from({ length: n }, (_, i) => prev[i] ?? { value: 1, rx: 0, ry: 0 }),
+    );
   };
 
-  const total = dice.reduce((a, d) => a + d.value, 0);
+  const total = useMemo(() => dice.reduce((a, d) => a + d.value, 0), [dice]);
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-1">
-        <h3 className="type-h1">Dice Roller</h3>
-        <p className="type-micro text-muted-foreground">
-          Roll 1–3 dice for vocabulary games, sentence building, or math warm-ups.
-        </p>
-      </div>
-
-      {/* Dice count selector */}
-      <div className="flex items-center justify-center gap-2">
-        {[1, 2, 3].map((n) => (
-          <button
-            key={n}
-            onClick={() => setDiceCount(n)}
-            disabled={rolling}
-            className={
-              count === n
-                ? "h-10 w-14 rounded-xl font-bold text-white bg-gradient-to-br from-rose-500 to-red-600 shadow-[0_4px_14px_-4px_rgba(244,63,94,0.6)] scale-105 transition-all"
-                : "h-10 w-14 rounded-xl font-bold bg-muted/60 text-muted-foreground hover:bg-muted transition-all"
-            }
-          >
-            {n}🎲
-          </button>
-        ))}
-      </div>
-
-      {/* 3D dice stage */}
-      <div
-        className="flex items-center justify-center gap-6 py-6"
-        style={{ perspective: "900px" }}
+    <>
+      <ToolCard
+        icon={Dices}
+        tone="clay"
+        title="Dice"
+        description="One die or two, big enough to read from the back row."
+        action={<ClassScreenButton onClick={() => setProjecting(true)} />}
       >
-        {dice.map((d, i) => {
-          const skin = DICE_SKINS[i % DICE_SKINS.length];
-          return (
-            <div key={i} className="relative">
-              {/* floor glow */}
-              <div
-                className="absolute left-1/2 -bottom-4 h-3 w-16 -translate-x-1/2 rounded-full blur-md transition-opacity"
-                style={{ background: skin.glow, opacity: rolling ? 0.25 : 0.6 }}
-              />
-              <motion.div
-                animate={{ rotateX: d.rx, rotateY: d.ry }}
-                transition={{ duration: 1.25, delay: i * 0.08, ease: [0.2, 0.85, 0.3, 1] }}
-                style={{
-                  width: SIZE,
-                  height: SIZE,
-                  transformStyle: "preserve-3d",
-                }}
-              >
-                {[1, 2, 3, 4, 5, 6].map((face) => (
-                  <Face key={face} value={face} gradient={skin.face} />
-                ))}
-              </motion.div>
-            </div>
-          );
-        })}
-      </div>
+        <Stage className="mb-4 min-h-[180px] px-4 py-6">
+          <DiceStage dice={dice} size={92} rolling={rolling} />
+          {count > 1 && !rolling && (
+            <span
+              key={total}
+              className="studio-pop absolute right-3 top-3 rounded-full bg-[hsl(var(--studio-ink))] px-3 py-1 text-xs font-bold tabular-nums text-[hsl(var(--studio-card))]"
+            >
+              {total}
+            </span>
+          )}
+        </Stage>
 
-      {/* Total */}
-      {count > 1 && (
-        <div className="flex justify-center">
-          <div className="rounded-full bg-gradient-to-r from-rose-500/15 to-red-500/10 ring-1 ring-rose-500/25 px-5 py-1.5 text-lg font-black text-rose-600 dark:text-rose-300 tabular-nums">
-            Total: {rolling ? "…" : <AnimatedNumber value={total} duration={500} />}
-          </div>
-        </div>
-      )}
-
-      {/* Roll button */}
-      <div className="flex justify-center">
-        <Button
-          onClick={roll}
+        <Segmented
+          ariaLabel="How many dice"
+          className="mb-3"
+          size="sm"
+          options={COUNT_OPTIONS}
+          value={String(count) as "1" | "2" | "3"}
+          onChange={(v) => setDiceCount(Number(v))}
           disabled={rolling}
-          size="lg"
-          className="gap-2 h-12 px-10 rounded-2xl text-base font-bold text-white bg-gradient-to-br from-rose-500 via-red-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 shadow-[0_8px_24px_-6px_rgba(244,63,94,0.6)] lift"
-        >
-          <Dices className={rolling ? "h-5 w-5 animate-spin" : "h-5 w-5"} />
-          {rolling ? "Rolling…" : "ROLL"}
-        </Button>
-      </div>
+        />
 
-      <div className="rounded-xl bg-muted/40 p-3 type-micro text-muted-foreground">
-        <strong>Ideas:</strong> Roll to pick a question number, decide how many words to write,
-        or use as a math warm-up. Combine with the Spinner for extra fun!
-      </div>
-    </div>
+        <ActionButton onClick={roll} disabled={rolling}>
+          {rolling ? "Rolling…" : "Roll!"}
+        </ActionButton>
+      </ToolCard>
+
+      <ClassScreen open={projecting} onClose={() => setProjecting(false)} title="Dice">
+        <div className="flex flex-col items-center gap-10">
+          <DiceStage
+            dice={dice}
+            size={Math.max(120, Math.min(viewport.h * 0.38, viewport.w / (count + 1.2)))}
+            rolling={rolling}
+          />
+          {count > 1 && (
+            <p className="studio-title text-4xl tabular-nums">
+              {rolling ? "…" : `Total ${total}`}
+            </p>
+          )}
+          <ActionButton onClick={roll} disabled={rolling} className={CLASS_SCREEN_ACTION}>
+            {rolling ? "Rolling…" : "Roll!"}
+          </ActionButton>
+        </div>
+      </ClassScreen>
+    </>
   );
 }

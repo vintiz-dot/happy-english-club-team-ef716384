@@ -1,50 +1,115 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+/**
+ * Classroom tools — one panel, every tool on it.
+ *
+ * This used to be eleven tabs in a 384px drawer. Two problems with that,
+ * both of them things a teacher hit every lesson: you could only see one
+ * tool at a time (the timer disappeared the moment you went to pick a
+ * name), and the tab strip itself was a horizontally scrolling row of
+ * 9px labels, which is not a target you hit while facing a class.
+ *
+ * Now it is a wide sheet with every tool laid out as a card. The jump bar
+ * at the top scrolls to one; nothing hides anything else. The tools that
+ * need data wait until they are nearly on screen (see Deferred) so
+ * opening the panel does not fire eight queries at once.
+ */
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, Timer, Disc3, Volume2, Bell, Users, Dices, TrafficCone, Hash, ClipboardCheck, Trophy, Bot } from "lucide-react";
+  Bell,
+  Bot,
+  ClipboardCheck,
+  CircleDollarSign,
+  Dices,
+  Disc3,
+  HelpCircle,
+  LayoutGrid,
+  Music4,
+  TrafficCone,
+  Timer as TimerIcon,
+  Trophy,
+  Users,
+  Volume2,
+  type LucideIcon,
+} from "lucide-react";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { AssistantChat } from "@/components/chat/AssistantChat";
-import { VisualTimer } from "./VisualTimer";
-import { WheelSpinner } from "./WheelSpinner";
-import { NoiseMeter } from "./NoiseMeter";
-import { FocusChime } from "./FocusChime";
-import { GroupMaker } from "./GroupMaker";
-import { DiceRoller } from "./DiceRoller";
-import { TrafficLight } from "./TrafficLight";
-import { RandomPicker } from "./RandomPicker";
-import { AttendanceTool } from "./AttendanceTool";
-import { LeaderboardTool } from "./LeaderboardTool";
 import { cn } from "@/lib/utils";
 import { useTimer } from "@/contexts/TimerContext";
 import { useNoiseMeter } from "@/contexts/NoiseMeterContext";
 
-// Each tool carries its own gradient identity — the active tab, and any
-// hero styling inside the tool, share the same tone.
-const TOOLS = [
-  // The AI assistant lives HERE rather than in its own floating bubble. Both
-  // FABs were pinned to bottom-6/right-6 on desktop, so the assistant sat on
-  // top of this button (z-50 over z-40) and swallowed the taps meant for the
-  // classroom tools. One launcher, staff pick the tool they want.
-  { id: "assistant", label: "Ask AI", icon: Bot, active: "data-[state=active]:from-violet-600 data-[state=active]:to-indigo-600" },
-  { id: "timer", label: "Timer", icon: Timer, active: "data-[state=active]:from-blue-500 data-[state=active]:to-sky-500" },
-  { id: "wheel", label: "Spinner", icon: Disc3, active: "data-[state=active]:from-fuchsia-500 data-[state=active]:to-purple-600" },
-  { id: "noise", label: "Noise", icon: Volume2, active: "data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600" },
-  { id: "chime", label: "Chime", icon: Bell, active: "data-[state=active]:from-amber-400 data-[state=active]:to-orange-500" },
-  { id: "groups", label: "Groups", icon: Users, active: "data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600" },
-  { id: "dice", label: "Dice", icon: Dices, active: "data-[state=active]:from-rose-500 data-[state=active]:to-red-600" },
-  { id: "traffic", label: "Light", icon: TrafficCone, active: "data-[state=active]:from-lime-500 data-[state=active]:to-green-600" },
-  { id: "random", label: "Pick", icon: Hash, active: "data-[state=active]:from-violet-500 data-[state=active]:to-indigo-600" },
-  { id: "attendance", label: "Attend", icon: ClipboardCheck, active: "data-[state=active]:from-sky-500 data-[state=active]:to-cyan-600" },
-  { id: "leaderboard", label: "Board", icon: Trophy, active: "data-[state=active]:from-yellow-400 data-[state=active]:to-amber-500" },
-] as const;
+import { VisualTimer } from "./VisualTimer";
+import { WheelSpinner } from "./WheelSpinner";
+import { NoiseMeter } from "./NoiseMeter";
+import { FocusChime } from "./FocusChime";
+import { TeamMaker } from "./TeamMaker";
+import { DiceRoller } from "./DiceRoller";
+import { TrafficLight } from "./TrafficLight";
+import { RandomPicker, CoinFlip } from "./RandomPicker";
+import { AttendanceTool } from "./AttendanceTool";
+import { LeaderboardTool } from "./LeaderboardTool";
+import { BackgroundMusic } from "./BackgroundMusic";
+import { Deferred } from "./studio/Deferred";
+import {
+  ToolCard,
+} from "./studio/StudioKit";
 
-type ToolId = (typeof TOOLS)[number]["id"];
+interface ToolEntry {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  /** Data-backed tools wait until they are nearly in view. */
+  defer?: boolean;
+  wide?: boolean;
+  render: () => JSX.Element;
+}
+
+const TOOLS: ToolEntry[] = [
+  { id: "timer", label: "Timer", icon: TimerIcon, render: () => <VisualTimer /> },
+  { id: "dice", label: "Dice", icon: Dices, render: () => <DiceRoller /> },
+  { id: "number", label: "Number", icon: HelpCircle, render: () => <RandomPicker /> },
+  { id: "music", label: "Music", icon: Music4, render: () => <BackgroundMusic /> },
+  { id: "spinner", label: "Spinner", icon: Disc3, render: () => <WheelSpinner /> },
+  { id: "coin", label: "Coin", icon: CircleDollarSign, render: () => <CoinFlip /> },
+  { id: "voice", label: "Voice", icon: TrafficCone, render: () => <TrafficLight /> },
+  { id: "chime", label: "Chime", icon: Bell, render: () => <FocusChime /> },
+  { id: "noise", label: "Noise", icon: Volume2, render: () => <NoiseMeter /> },
+  { id: "teams", label: "Teams", icon: Users, wide: true, defer: true, render: () => <TeamMaker /> },
+  {
+    id: "attendance",
+    label: "Attendance",
+    icon: ClipboardCheck,
+    wide: true,
+    defer: true,
+    render: () => <AttendanceTool />,
+  },
+  {
+    id: "board",
+    label: "Board",
+    icon: Trophy,
+    wide: true,
+    defer: true,
+    render: () => <LeaderboardTool />,
+  },
+  {
+    id: "assistant",
+    label: "Ask AI",
+    icon: Bot,
+    wide: true,
+    defer: true,
+    render: () => (
+      <ToolCard
+        icon={Bot}
+        tone="lilac"
+        title="Ask AI"
+        description="Lesson ideas, quick explanations, anything about your own classes."
+        wide
+      >
+        <div className="h-[420px] overflow-hidden rounded-2xl border border-studio">
+          <AssistantChat className="h-full" />
+        </div>
+      </ToolCard>
+    ),
+  },
+];
 
 function formatCompact(secs: number): string {
   const m = Math.floor(secs / 60);
@@ -52,190 +117,128 @@ function formatCompact(secs: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-/**
- * Floating launcher mounted into the layout for teachers/admins. Stays
- * visible across pages so a teacher can flip between the lesson view and
- * a tool (timer, spinner, etc.) without navigating away.
- *
- * The Timer state is hoisted into TimerContext so it persists even when
- * the Sheet is closed. The NoiseMeter state is hoisted into NoiseMeterContext
- * for the same reason — mic keeps running when the sheet is minimized.
- */
 export function ClassroomToolsLauncher() {
   const [open, setOpen] = useState(false);
-  const [active, setActive] = useState<ToolId>("timer");
   const { running, alarming, remaining, dismiss } = useTimer();
   const { status: noiseStatus, level: noiseLevel } = useNoiseMeter();
   const noiseLive = noiseStatus === "running";
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  // Auto-open the sheet and switch to timer tab when alarm fires
+  const jumpTo = useCallback((id: string) => {
+    const el = scrollRef.current?.querySelector<HTMLElement>(`[data-tool="${id}"]`);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  // A ringing timer opens the panel on the timer, wherever the teacher is.
   useEffect(() => {
-    if (alarming) {
-      setOpen(true);
-      setActive("timer");
-    }
-  }, [alarming]);
+    if (!alarming) return;
+    setOpen(true);
+    const t = window.setTimeout(() => jumpTo("timer"), 260);
+    return () => window.clearTimeout(t);
+  }, [alarming, jumpTo]);
 
   return (
     <>
-      <Button
+      <button
         type="button"
-        size="icon"
         onClick={() => {
-          // If alarming, dismiss immediately on FAB tap as a quick-stop
+          // While ringing, the button is a stop button — the fastest way
+          // to silence it is the thing already under your thumb.
           if (alarming) {
             dismiss();
             return;
           }
           setOpen(true);
         }}
-        aria-label={alarming ? "Stop Timer Alarm" : "Open Classroom Tools"}
+        aria-label={alarming ? "Stop the timer alarm" : "Open classroom tools"}
         className={cn(
-          "group fixed bottom-5 right-5 md:bottom-6 md:right-6 z-40 h-14 w-14 rounded-full lift",
+          "studio-focus fixed bottom-5 right-5 z-40 grid h-14 w-14 place-items-center rounded-full transition-transform md:bottom-6 md:right-6",
+          "hover:scale-105 active:scale-95",
           alarming
-            ? "bg-gradient-to-br from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white animate-bounce shadow-[0_8px_30px_-6px_rgba(244,63,94,0.7)]"
-            : "bg-gradient-to-br from-blue-500 via-indigo-500 to-sky-500 text-white ring-2 ring-white/25 shadow-[0_8px_30px_-6px_rgba(59,130,246,0.65)] hover:shadow-[0_10px_40px_-6px_rgba(59,130,246,0.85)]",
+            ? "animate-bounce bg-[hsl(2_72%_46%)] text-white shadow-[0_10px_30px_-8px_hsl(2_72%_40%/0.7)]"
+            : "bg-[hsl(var(--studio-ink))] text-[hsl(var(--studio-card))] shadow-studio-lg",
         )}
       >
         {alarming ? (
-          <span className="text-2xl">⏰</span>
+          <Bell className="h-6 w-6" aria-hidden />
         ) : (
-          <Sparkles className="h-6 w-6 transition-transform duration-300 group-hover:rotate-[20deg] group-hover:scale-110" />
+          <LayoutGrid className="h-[22px] w-[22px]" strokeWidth={2.2} aria-hidden />
         )}
 
-        {/* Running timer indicator badge */}
         {running && !alarming && (
-          <span
-            className={cn(
-              "absolute -top-1 -right-1 min-w-[2.25rem] px-1.5 py-0.5 rounded-full",
-              "bg-emerald-500 text-white text-[10px] font-bold tabular-nums leading-none",
-              "shadow-lg animate-pulse pointer-events-none",
-            )}
-          >
+          <span className="pointer-events-none absolute -right-1 -top-1 min-w-[2.25rem] rounded-full bg-[hsl(var(--studio-sage))] px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums text-[hsl(var(--studio-sage-ink))] shadow-studio">
             {formatCompact(remaining)}
           </span>
         )}
 
-        {/* Alarming badge */}
-        {alarming && (
-          <span
-            className={cn(
-              "absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full",
-              "bg-white text-rose-600 text-[10px] font-black leading-none",
-              "shadow-lg animate-pulse pointer-events-none",
-            )}
-          >
-            STOP
-          </span>
-        )}
-
-        {/* Noise meter live indicator (bottom-left of FAB) */}
         {noiseLive && !alarming && !running && (
           <span
             className={cn(
-              "absolute -bottom-0.5 -left-0.5 min-w-[1.75rem] px-1 py-0.5 rounded-full",
-              "text-white text-[9px] font-bold tabular-nums leading-none",
-              "shadow-lg pointer-events-none",
-              noiseLevel > 65 ? "bg-rose-500 animate-pulse" : "bg-emerald-500",
+              "pointer-events-none absolute -bottom-0.5 -left-0.5 min-w-[1.75rem] rounded-full px-1 py-0.5 text-[9px] font-bold leading-none tabular-nums shadow-studio",
+              noiseLevel > 65
+                ? "animate-pulse bg-[hsl(var(--studio-clay))] text-[hsl(var(--studio-clay-ink))]"
+                : "bg-[hsl(var(--studio-sage))] text-[hsl(var(--studio-sage-ink))]",
             )}
           >
-            🎤{noiseLevel}
+            {noiseLevel}
           </span>
         )}
-      </Button>
+      </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
           side="right"
-          className="w-full sm:max-w-md p-0 flex flex-col gap-0 bg-card/85 backdrop-blur-2xl"
+          className="studio-surface flex w-full flex-col gap-0 border-l-0 p-0 sm:max-w-[min(100vw-2rem,82rem)]"
         >
-          {/* Aurora hero band with light sweep */}
-          <SheetHeader className="relative overflow-hidden px-5 py-4 bg-aurora hero-sheen text-left">
-            <div className="nova-grid-light absolute inset-0 pointer-events-none" />
-            <SheetTitle className="relative flex items-center gap-2 type-h2 text-white">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
-                <Sparkles className="h-4 w-4 text-white" />
-              </span>
-              Classroom Tools
-            </SheetTitle>
-            <SheetDescription className="relative type-micro text-white/75">
-              Lightweight aids — and the AI assistant — you can pull up mid-lesson without losing
-              your place.
+          <header className="shrink-0 border-b border-studio px-5 pb-3 pt-5 sm:px-7">
+            <SheetTitle className="studio-title text-2xl">Classroom tools</SheetTitle>
+            <SheetDescription className="mt-0.5 text-sm text-ink-soft">
+              Everything on one page — nothing hides anything else.
             </SheetDescription>
-            <div className="hairline-gradient absolute inset-x-0 bottom-0 h-px" />
-          </SheetHeader>
 
-          <Tabs
-            value={active}
-            onValueChange={(v) => setActive(v as ToolId)}
-            className="flex-1 flex flex-col min-h-0"
-          >
-            <div className="mx-3 mt-3 shrink-0 overflow-x-auto scrollbar-hide">
-              <TabsList className="inline-flex w-auto min-w-full h-auto gap-1 bg-muted/50 p-1 rounded-2xl">
-                {TOOLS.map((t) => (
-                  <TabsTrigger
-                    key={t.id}
-                    value={t.id}
-                    className={cn(
-                      "flex flex-col gap-0.5 h-auto py-2 px-2.5 rounded-xl shrink-0 transition-all duration-200",
-                      "hover:bg-background/70",
-                      "data-[state=active]:bg-gradient-to-br data-[state=active]:text-white",
-                      "data-[state=active]:shadow-[0_4px_14px_-4px_rgba(59,130,246,0.5)] data-[state=active]:scale-[1.06]",
-                      t.active,
-                    )}
-                  >
-                    <t.icon className="h-3.5 w-3.5" />
-                    <span className="text-[9px] font-semibold">{t.label}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
+            <nav
+              aria-label="Jump to a tool"
+              className="scrollbar-hide -mx-1 mt-3 flex gap-1 overflow-x-auto px-1 pb-1"
+            >
+              {TOOLS.map((tool) => (
+                <button
+                  key={tool.id}
+                  type="button"
+                  onClick={() => jumpTo(tool.id)}
+                  className="studio-focus inline-flex shrink-0 items-center gap-1.5 rounded-full border border-studio bg-studio-card px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-[hsl(var(--studio-ink))] hover:text-[hsl(var(--studio-card))]"
+                >
+                  <tool.icon className="h-3.5 w-3.5" aria-hidden />
+                  {tool.label}
+                </button>
+              ))}
+            </nav>
+          </header>
 
-            <div className="flex-1 overflow-y-auto px-4 py-4">
-              {/* The assistant manages its own internal scroll, so it gets a
-                  bounded height instead of growing inside this scroller. */}
-              <TabsContent value="assistant" className="m-0 focus-visible:outline-none">
-                {active === "assistant" && (
-                  <div className="h-[calc(100vh-14rem)] min-h-[320px]">
-                    <AssistantChat className="h-full" />
-                  </div>
-                )}
-              </TabsContent>
-              {/* Timer is always rendered — state lives in TimerContext
-                  so mounting/unmounting is cheap and lossless. */}
-              <TabsContent value="timer" className="m-0 focus-visible:outline-none">
-                <VisualTimer />
-              </TabsContent>
-              <TabsContent value="wheel" className="m-0 focus-visible:outline-none">
-                {active === "wheel" && <WheelSpinner />}
-              </TabsContent>
-              {/* NoiseMeter always rendered — state in NoiseMeterContext */}
-              <TabsContent value="noise" className="m-0 focus-visible:outline-none">
-                <NoiseMeter />
-              </TabsContent>
-              <TabsContent value="chime" className="m-0 focus-visible:outline-none">
-                {active === "chime" && <FocusChime />}
-              </TabsContent>
-              <TabsContent value="groups" className="m-0 focus-visible:outline-none">
-                {active === "groups" && <GroupMaker />}
-              </TabsContent>
-              <TabsContent value="dice" className="m-0 focus-visible:outline-none">
-                {active === "dice" && <DiceRoller />}
-              </TabsContent>
-              <TabsContent value="traffic" className="m-0 focus-visible:outline-none">
-                {active === "traffic" && <TrafficLight />}
-              </TabsContent>
-              <TabsContent value="random" className="m-0 focus-visible:outline-none">
-                {active === "random" && <RandomPicker />}
-              </TabsContent>
-              <TabsContent value="attendance" className="m-0 focus-visible:outline-none">
-                {active === "attendance" && <AttendanceTool />}
-              </TabsContent>
-              <TabsContent value="leaderboard" className="m-0 focus-visible:outline-none">
-                {active === "leaderboard" && <LeaderboardTool />}
-              </TabsContent>
+          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7">
+            {/* Three across only from xl. At lg the sheet is barely 1000px, and
+                three columns there squeezed every card title onto two lines
+                and truncated the controls. */}
+            <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {TOOLS.map((tool) => (
+                <div
+                  key={tool.id}
+                  data-tool={tool.id}
+                  className={cn(
+                    "scroll-mt-4",
+                    tool.wide && "md:col-span-2 xl:col-span-3",
+                  )}
+                >
+                  {tool.defer ? (
+                    <Deferred wide={tool.wide} minHeight={tool.wide ? 300 : 260}>
+                      {tool.render()}
+                    </Deferred>
+                  ) : (
+                    tool.render()
+                  )}
+                </div>
+              ))}
             </div>
-          </Tabs>
+          </div>
         </SheetContent>
       </Sheet>
     </>

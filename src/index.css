@@ -156,79 +156,12 @@ html, body {
   .tap-44 { min-height: 44px; min-width: 44px; }
 }
 
-/* ====================================================================
-   Arena Leaderboard — visual layer
-   Self-contained styling so the leaderboard can render anywhere.
-   ==================================================================== */
-.arena-bg {
-  background:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(30, 58, 138, 0.45), transparent 60%),
-    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(59, 130, 246, 0.28), transparent 60%),
-    radial-gradient(ellipse 60% 50% at 0% 100%, rgba(59, 130, 246, 0.30), transparent 60%),
-    linear-gradient(180deg, #0b0820 0%, #1a0f3a 50%, #0b0820 100%);
-  isolation: isolate;
-}
+/* The "Arena" leaderboard styles that used to live here - the dark panel,
+   the spinning aurora, the neon grid and the rank shimmers - went with the
+   component. The board is now the warm paper design further down, under
+   "Studio". `.animate-pulse-slow` went too; nothing used it outside the
+   Arena podium. */
 
-/* Animated aurora glow inside .arena-bg */
-.arena-aurora {
-  position: absolute;
-  inset: -25%;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(251, 191, 36, 0.18), transparent 35%),
-    radial-gradient(circle at 70% 70%, rgba(30, 58, 138, 0.20), transparent 35%),
-    radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.12), transparent 35%);
-  filter: blur(40px);
-  animation: arena-aurora-spin 28s linear infinite;
-  z-index: 0;
-}
-
-@keyframes arena-aurora-spin {
-  from { transform: rotate(0deg) scale(1); }
-  50%  { transform: rotate(180deg) scale(1.05); }
-  to   { transform: rotate(360deg) scale(1); }
-}
-
-/* Subtle grid overlay for depth */
-.arena-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 36px 36px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 80%);
-  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 80%);
-  z-index: 0;
-}
-
-/* Slow pulse for the #1 podium ring */
-@keyframes arena-pulse-slow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.6); }
-  50%      { box-shadow: 0 0 0 12px rgba(251, 191, 36, 0); }
-}
-.animate-pulse-slow {
-  animation: arena-pulse-slow 2.4s ease-in-out infinite;
-}
-
-/* Rank rising shimmer */
-@keyframes arena-row-rise-anim {
-  0%   { background-color: rgba(16, 185, 129, 0.18); transform: translateX(-2px); }
-  60%  { background-color: rgba(16, 185, 129, 0.28); transform: translateX(0); }
-  100% { background-color: transparent; }
-}
-.arena-row-rise {
-  animation: arena-row-rise-anim 1.8s ease-out;
-}
-
-/* Rank falling shimmer */
-@keyframes arena-row-fall-anim {
-  0%   { background-color: rgba(244, 63, 94, 0.16); transform: translateX(2px); }
-  60%  { background-color: rgba(244, 63, 94, 0.22); transform: translateX(0); }
-  100% { background-color: transparent; }
-}
-.arena-row-fall {
-  animation: arena-row-fall-anim 1.8s ease-out;
-}
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
@@ -1371,4 +1304,216 @@ All colors MUST be HSL.
   .aurora-text, .energy-meter::after, .nova-breathe, .holo-card::after { animation: none !important; }
   .holo-card { transition: none; }
   .holo-card:hover { transform: none; }
+}
+
+/* ====================================================================
+   "Studio" — warm paper design language.
+
+   Used by the Classroom Tools panel and the leaderboard. Deliberately
+   its own palette rather than the app's purple/blue theme: these are the
+   surfaces that get projected onto a classroom wall, where a dark neon UI
+   washes out and a warm, high-contrast one does not. Children read it, so
+   the type is larger, the contrast is stronger, and the only saturated
+   colour is the one carrying meaning (a rank, a team, a traffic light).
+
+   Scoped by prefix, so nothing outside these components is affected.
+   ==================================================================== */
+:root {
+  /* Paper */
+  --studio-bg:        48 33% 94%;   /* the wall behind the cards      */
+  --studio-card:      48 50% 97%;   /* a card                         */
+  --studio-stage:     46 28% 92%;   /* inset play area inside a card  */
+  --studio-line:      42 20% 86%;   /* hairline borders               */
+  --studio-ink:       40 14% 11%;   /* headings, primary buttons      */
+  --studio-ink-soft:  38  8% 40%;   /* body copy                      */
+  --studio-ink-faint: 38  8% 56%;   /* captions, disabled             */
+
+  /* Accent tints — muted enough to sit next to each other without
+     shouting, saturated enough for a child to tell them apart. */
+  --studio-sage:   150 26% 80%;
+  --studio-clay:    16 52% 84%;
+  --studio-sky:    205 46% 84%;
+  --studio-butter:  42 72% 82%;
+  --studio-lilac:  268 36% 87%;
+  --studio-rose:   344 50% 88%;
+
+  --studio-sage-ink:   156 42% 22%;
+  --studio-clay-ink:    14 48% 30%;
+  --studio-sky-ink:    208 50% 26%;
+  --studio-butter-ink:  34 62% 26%;
+  --studio-lilac-ink:  268 38% 32%;
+  --studio-rose-ink:   344 46% 32%;
+
+  /* Elevation. Warm-tinted, never grey — grey shadows on cream read dirty. */
+  --studio-shadow-sm: 0 1px 2px hsl(38 30% 20% / 0.05);
+  --studio-shadow:    0 1px 2px hsl(38 30% 20% / 0.05), 0 10px 24px -14px hsl(38 40% 20% / 0.22);
+  --studio-shadow-lg: 0 2px 4px hsl(38 30% 20% / 0.06), 0 28px 56px -24px hsl(38 40% 20% / 0.32);
+
+  /* An editorial serif for display type. System stack on purpose: this app
+     ships no web fonts, and a classroom on a slow connection should not
+     wait for a headline. */
+  --font-studio: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+    Georgia, ui-serif, "Times New Roman", serif;
+}
+
+.dark {
+  --studio-bg:        36 10%  9%;
+  --studio-card:      36  9% 13%;
+  --studio-stage:     36 10% 11%;
+  --studio-line:      38  8% 22%;
+  --studio-ink:       44 30% 93%;
+  --studio-ink-soft:  40 10% 65%;
+  --studio-ink-faint: 40  8% 50%;
+
+  --studio-sage:   156 24% 24%;
+  --studio-clay:    14 32% 26%;
+  --studio-sky:    206 30% 26%;
+  --studio-butter:  38 34% 26%;
+  --studio-lilac:  268 22% 28%;
+  --studio-rose:   344 26% 27%;
+
+  --studio-sage-ink:   152 40% 76%;
+  --studio-clay-ink:    16 54% 78%;
+  --studio-sky-ink:    204 54% 80%;
+  --studio-butter-ink:  42 68% 76%;
+  --studio-lilac-ink:  270 44% 84%;
+  --studio-rose-ink:   344 54% 84%;
+
+  --studio-shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.4);
+  --studio-shadow:    0 1px 2px hsl(0 0% 0% / 0.4), 0 10px 24px -14px hsl(0 0% 0% / 0.6);
+  --studio-shadow-lg: 0 2px 4px hsl(0 0% 0% / 0.5), 0 28px 56px -24px hsl(0 0% 0% / 0.7);
+}
+
+@layer components {
+  /* The wall. A barely-there paper grain keeps a large flat cream area
+     from looking like an unstyled div. */
+  .studio-surface {
+    background-color: hsl(var(--studio-bg));
+    color: hsl(var(--studio-ink));
+    background-image:
+      radial-gradient(hsl(var(--studio-ink) / 0.035) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .studio-card {
+    background-color: hsl(var(--studio-card));
+    border: 1px solid hsl(var(--studio-line));
+    border-radius: 1.5rem;
+    box-shadow: var(--studio-shadow);
+    color: hsl(var(--studio-ink));
+  }
+
+  /* Inset play area — where the die lands, the number appears, the teams
+     are dealt. Dotted so an empty one still reads as "something goes here". */
+  .studio-stage {
+    background-color: hsl(var(--studio-stage));
+    border: 1px solid hsl(var(--studio-line));
+    border-radius: 1.125rem;
+    background-image:
+      radial-gradient(hsl(var(--studio-ink) / 0.11) 1.1px, transparent 1.1px);
+    background-size: 13px 13px;
+    box-shadow: inset 0 1px 3px hsl(38 30% 20% / 0.06);
+  }
+
+  .studio-title {
+    font-family: var(--font-studio);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: hsl(var(--studio-ink));
+  }
+
+  /* Segmented control: cream trough, solid ink thumb. */
+  .studio-segment {
+    background-color: hsl(var(--studio-stage));
+    border: 1px solid hsl(var(--studio-line));
+    border-radius: 9999px;
+    padding: 0.25rem;
+  }
+  .studio-segment-item {
+    border-radius: 9999px;
+    font-weight: 600;
+    color: hsl(var(--studio-ink-soft));
+    transition: color 160ms var(--ease-out-expo), background-color 160ms var(--ease-out-expo);
+  }
+  .studio-segment-item[data-active="true"] {
+    background-color: hsl(var(--studio-ink));
+    color: hsl(var(--studio-card));
+    box-shadow: var(--studio-shadow-sm);
+  }
+  .studio-segment-item:not([data-active="true"]):hover {
+    color: hsl(var(--studio-ink));
+    background-color: hsl(var(--studio-ink) / 0.05);
+  }
+
+  /* The one loud control on a card: a solid ink pill. */
+  .studio-action {
+    background-color: hsl(var(--studio-ink));
+    color: hsl(var(--studio-card));
+    border-radius: 9999px;
+    font-weight: 600;
+    box-shadow: var(--studio-shadow);
+    transition: transform 140ms var(--ease-spring), opacity 140ms linear;
+  }
+  .studio-action:hover:not(:disabled) { transform: translateY(-1px); }
+  .studio-action:active:not(:disabled) { transform: translateY(0) scale(0.985); }
+  .studio-action:disabled { opacity: 0.45; }
+
+  .studio-quiet {
+    background-color: transparent;
+    color: hsl(var(--studio-ink-soft));
+    border: 1px solid hsl(var(--studio-line));
+    border-radius: 9999px;
+    font-weight: 600;
+    transition: background-color 140ms linear, color 140ms linear;
+  }
+  .studio-quiet:hover:not(:disabled) {
+    background-color: hsl(var(--studio-ink) / 0.05);
+    color: hsl(var(--studio-ink));
+  }
+
+  /* Focus is drawn in ink rather than the app's ring colour, which is a
+     purple that does not belong on this palette. */
+  .studio-focus:focus-visible {
+    outline: 2px solid hsl(var(--studio-ink));
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .font-studio { font-family: var(--font-studio); }
+  .text-ink { color: hsl(var(--studio-ink)); }
+  .text-ink-soft { color: hsl(var(--studio-ink-soft)); }
+  .text-ink-faint { color: hsl(var(--studio-ink-faint)); }
+  .border-studio { border-color: hsl(var(--studio-line)); }
+  .bg-studio-card { background-color: hsl(var(--studio-card)); }
+  .bg-studio-stage { background-color: hsl(var(--studio-stage)); }
+  .shadow-studio { box-shadow: var(--studio-shadow); }
+  .shadow-studio-lg { box-shadow: var(--studio-shadow-lg); }
+}
+
+/* A die face lands with a soft settle rather than a hard stop. */
+@keyframes studio-settle {
+  0%   { transform: translateY(-6px) scale(1.04); }
+  60%  { transform: translateY(2px)  scale(0.99); }
+  100% { transform: translateY(0)    scale(1); }
+}
+.studio-settle { animation: studio-settle 420ms var(--ease-spring); }
+
+/* Confetti-free celebration: the winner's card breathes once. */
+@keyframes studio-pop {
+  0%   { transform: scale(0.92); opacity: 0; }
+  70%  { transform: scale(1.03); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.studio-pop { animation: studio-pop 380ms var(--ease-spring) both; }
+
+/* Slow drift for the generative-music visualiser background. */
+@keyframes studio-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(0, -6%, 0) scale(1.08); }
+}
+.studio-drift { animation: studio-drift 14s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-settle, .studio-pop, .studio-drift { animation: none !important; }
 }

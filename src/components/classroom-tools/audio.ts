@@ -19,6 +19,15 @@ function getCtx(): AudioContext | null {
 }
 
 /**
+ * The shared context, for callers that build their own graph — the
+ * generative music engine, mainly. Browsers cap the number of audio
+ * contexts per tab, so nothing in the app may create a second one.
+ */
+export function getAudioContext(): AudioContext | null {
+  return getCtx();
+}
+
+/**
  * Soft two-tone bell — "C5" then "G4" with exponential decay. Resonant
  * but not jarring; tested to be audible in a classroom without being
  * unpleasant when triggered repeatedly.

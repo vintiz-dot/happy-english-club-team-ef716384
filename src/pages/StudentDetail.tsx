@@ -8,7 +8,7 @@ import { StudentTuitionTab } from "@/components/student/StudentTuitionTab";
 import { StudentAttendanceTab } from "@/components/student/StudentAttendanceTab";
 import { StudentDiscountsTab } from "@/components/admin/discount/StudentDiscountsTab";
 import { StudentAccountInfo } from "@/components/student/StudentAccountInfo";
-import { ClassLeaderboard } from "@/components/admin/ClassLeaderboard";
+import { ClassLeaderboardShared } from "@/components/shared/ClassLeaderboardShared";
 import { StudentEnrollmentsTab } from "@/components/student/StudentEnrollmentsTab";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -169,7 +169,7 @@ const StudentDetail = () => {
               })()}
             />
             
-            {/* Class Leaderboards - using Admin's ClassLeaderboard for unified rankings */}
+            {/* Read-only: this is a profile page, not a place to award points. */}
             {student.enrollments && student.enrollments.length > 0 && (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">Class Rankings</h2>
@@ -187,7 +187,7 @@ const StudentDetail = () => {
                   return (
                     <div key={enrollment.id} className="space-y-2">
                       <h3 className="text-lg font-semibold">{classData.name || 'Class'}</h3>
-                      <ClassLeaderboard classId={classData.id} showAddPoints={false} />
+                      <ClassLeaderboardShared classId={classData.id} />
                     </div>
                   );
                 }).filter(Boolean)}

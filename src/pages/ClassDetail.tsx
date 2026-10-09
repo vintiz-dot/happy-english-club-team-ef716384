@@ -10,7 +10,8 @@ import ClassEnrollments from "@/components/admin/class/ClassEnrollments";
 import ClassHomework from "@/components/admin/class/ClassHomework";
 import ClassSettings from "@/components/admin/class/ClassSettings";
 import RecurringSessionsManager from "@/components/admin/class/RecurringSessionsManager";
-import { ClassLeaderboard } from "@/components/admin/ClassLeaderboard";
+import { ClassLeaderboardShared } from "@/components/shared/ClassLeaderboardShared";
+import { ManualPointsDialog } from "@/components/shared/ManualPointsDialog";
 import { ClassMonitorCard } from "@/components/admin/class/ClassMonitorCard";
 import { ClassAdminActions } from "@/components/admin/class/ClassAdminActions";
 
@@ -86,8 +87,15 @@ const ClassDetail = () => {
           <TabsContent value="homework" className="mt-6">
             <ClassHomework classId={id} />
           </TabsContent>
-          <TabsContent value="leaderboard" className="mt-6">
-            <ClassLeaderboard classId={id} />
+          <TabsContent value="leaderboard" className="mt-6 space-y-4">
+            {/* One board for the whole app. The admin-only copy that used
+                to live here read straight from student_points, so a child
+                who had never been awarded anything was simply absent from
+                their own class ranking. */}
+            <div className="flex justify-end">
+              <ManualPointsDialog classId={id} isAdmin />
+            </div>
+            <ClassLeaderboardShared classId={id} canManagePoints />
           </TabsContent>
           <TabsContent value="settings" className="mt-6">
             <div className="grid md:grid-cols-3 gap-6">

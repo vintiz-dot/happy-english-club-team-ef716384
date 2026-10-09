@@ -1,38 +1,49 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+/**
+ * The board, inside the tools panel.
+ *
+ * Two views over the same class: the monthly leaderboard, and — only
+ * while a session is actually running — the live grid for awarding
+ * skills as they happen. The live view switches itself on when it finds
+ * an in-progress session, because that is the moment it is useful and
+ * nobody is going to go looking for a toggle mid-lesson.
+ */
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Trophy, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { dayjs } from "@/lib/date";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Trophy, Zap, BarChart3, Clock } from "lucide-react";
+import { fetchAccessibleClasses } from "@/lib/teacherAccess";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ClassLeaderboardShared } from "@/components/shared/ClassLeaderboardShared";
 import { ManualPointsDialog } from "@/components/shared/ManualPointsDialog";
 import { LiveAssessmentGrid } from "@/components/teacher/LiveAssessmentGrid";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { fetchAccessibleClasses } from "@/lib/teacherAccess";
+import {
+  Segmented,
+  Stage,
+  ToolCard,
+} from "./studio/StudioKit";
 
-/**
- * Compact leaderboard + live assessment tool for the Classroom Tools Sheet.
- * Auto-detects active sessions and offers a live / standard toggle.
- */
 export function LeaderboardTool() {
   const { user } = useAuth();
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"standard" | "live">("standard");
+  const [viewMode, setViewMode] = useState<"board" | "live">("board");
   const [remainingTime, setRemainingTime] = useState<string | null>(null);
   const today = dayjs().format("YYYY-MM-DD");
 
-  const { data: activeClasses = [], isLoading } = useQuery({
+  const { data: classes = [], isLoading } = useQuery({
     queryKey: ["leaderboard-tool-classes", user?.id],
     enabled: !!user,
     queryFn: async () => (user ? fetchAccessibleClasses(user.id) : []),
   });
 
-  // Active sessions query
   const { data: activeSessions = [] } = useQuery({
     queryKey: ["leaderboard-tool-active-sessions", today],
     queryFn: async () => {
@@ -50,21 +61,19 @@ export function LeaderboardTool() {
   });
 
   const activeSessionClass = useMemo(() => {
-    if (!activeClasses.length) return null;
-    return activeSessions.find((s: any) => activeClasses.some((c: any) => c.id === s.class_id));
-  }, [activeSessions, activeClasses]);
+    if (!classes.length) return null;
+    return activeSessions.find((s) => classes.some((c) => c.id === s.class_id));
+  }, [activeSessions, classes]);
 
-  const displayClassId = selectedClassId || activeSessionClass?.class_id || activeClasses[0]?.id;
+  const displayClassId = selectedClassId || activeSessionClass?.class_id || classes[0]?.id;
 
   useEffect(() => {
-    if (activeSessionClass && !selectedClassId) {
-      setViewMode("live");
-    }
+    if (activeSessionClass && !selectedClassId) setViewMode("live");
   }, [activeSessionClass, selectedClassId]);
 
   const activeSessionForClass = useMemo(
-    () => activeSessions.find((s: any) => s.class_id === displayClassId),
-    [activeSessions, displayClassId]
+    () => activeSessions.find((s) => s.class_id === displayClassId),
+    [activeSessions, displayClassId],
   );
 
   const canUseLiveMode = !!activeSessionForClass;
@@ -74,135 +83,116 @@ export function LeaderboardTool() {
       setRemainingTime(null);
       return;
     }
-    const now = new Date();
     const [endH, endM, endS] = activeSessionForClass.end_time.split(":").map(Number);
     const endDate = new Date();
     endDate.setHours(endH, endM, endS || 0, 0);
-    const diffMs = endDate.getTime() - now.getTime();
+    const diffMs = endDate.getTime() - Date.now();
     if (diffMs <= 0) {
       setRemainingTime(null);
       return;
     }
-    const diffMins = Math.ceil(diffMs / 60000);
-    if (diffMins >= 60) {
-      setRemainingTime(`${Math.floor(diffMins / 60)}h ${diffMins % 60}m`);
-    } else {
-      setRemainingTime(`${diffMins} min`);
-    }
+    const mins = Math.ceil(diffMs / 60000);
+    setRemainingTime(mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins} min`);
   }, [activeSessionForClass?.end_time]);
 
   useEffect(() => {
     calculateRemainingTime();
-    const interval = setInterval(calculateRemainingTime, 60000);
-    return () => clearInterval(interval);
+    const id = window.setInterval(calculateRemainingTime, 60000);
+    return () => window.clearInterval(id);
   }, [calculateRemainingTime]);
 
   useEffect(() => {
     if (viewMode === "live" && !canUseLiveMode) {
-      toast.info("Session ended", {
-        description: "Switching to Standard view.",
-      });
-      setViewMode("standard");
+      toast.info("Session ended", { description: "Back to the monthly board." });
+      setViewMode("board");
     }
   }, [viewMode, canUseLiveMode]);
 
-  if (isLoading) {
-    return <div className="text-center text-sm text-muted-foreground py-8">Loading classes...</div>;
-  }
-
-  if (activeClasses.length === 0) {
-    return (
-      <div className="text-center text-sm text-muted-foreground py-8">
-        No classes found. Leaderboards will appear once you teach classes.
-      </div>
-    );
-  }
+  const className = classes.find((c) => c.id === displayClassId)?.name;
 
   return (
-    <div className="space-y-3">
-      {/* Controls */}
-      <div className="flex items-center gap-2">
-        {activeClasses.length > 1 && (
-          <Select value={displayClassId || ""} onValueChange={setSelectedClassId}>
-            <SelectTrigger className="flex-1 h-8 text-xs">
-              <SelectValue placeholder="Select class" />
-            </SelectTrigger>
-            <SelectContent>
-              {activeClasses.map((cls: any) => (
-                <SelectItem key={cls.id} value={cls.id}>
-                  {cls.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+    <ToolCard
+      icon={Trophy}
+      tone="butter"
+      title="Leaderboard"
+      description="This month's points, and live awards while a lesson is running."
+      wide
+      action={displayClassId ? <ManualPointsDialog classId={displayClassId} /> : undefined}
+    >
+      {isLoading || classes.length === 0 ? (
+        <Stage className="min-h-[140px] p-6 text-center">
+          <p className="text-sm text-ink-faint">
+            {isLoading
+              ? "Loading your classes…"
+              : "No classes yet — boards appear once you teach one."}
+          </p>
+        </Stage>
+      ) : (
+        <>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <Select
+              value={displayClassId || ""}
+              onValueChange={(v) => setSelectedClassId(v)}
+            >
+              <SelectTrigger className="h-10 w-auto min-w-[180px] flex-1 rounded-2xl border-studio bg-studio-stage text-sm font-semibold text-ink focus:ring-0 focus:ring-offset-0">
+                <SelectValue placeholder="Pick a class" />
+              </SelectTrigger>
+              <SelectContent>
+                {classes.map((cls) => (
+                  <SelectItem key={cls.id} value={cls.id}>
+                    {cls.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        <div className="flex rounded-lg border border-border overflow-hidden shrink-0">
-          <Button
-            variant={viewMode === "standard" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setViewMode("standard")}
-            className="rounded-none gap-1 h-8 px-2 text-xs"
-          >
-            <BarChart3 className="h-3.5 w-3.5" />
-            Board
-          </Button>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={viewMode === "live" ? "default" : "ghost"}
+            <div className="w-[230px] shrink-0">
+              <Segmented
+                ariaLabel="Board view"
                 size="sm"
-                onClick={() => canUseLiveMode && setViewMode("live")}
-                className="rounded-none gap-1 h-8 px-2 text-xs"
-                disabled={!canUseLiveMode}
-              >
-                <Zap className="h-3.5 w-3.5" />
-                Live
-                {canUseLiveMode && remainingTime && (
-                  <span className="flex items-center gap-0.5 text-[9px] bg-primary/20 text-primary-foreground px-1 py-0.5 rounded-full">
-                    <Clock className="h-2 w-2" />
-                    {remainingTime}
-                  </span>
-                )}
-              </Button>
-            </TooltipTrigger>
-            {!canUseLiveMode && (
-              <TooltipContent>
-                <p>No session in progress</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </div>
-      </div>
-
-      {/* Content */}
-      <ScrollArea className="max-h-[400px]">
-        {displayClassId && viewMode === "standard" && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-sm font-semibold">
-                <Trophy className="h-4 w-4 text-amber-500" />
-                {activeClasses.find((c: any) => c.id === displayClassId)?.name}
-              </div>
-              <ManualPointsDialog classId={displayClassId} />
+                value={viewMode}
+                onChange={(v) => {
+                  if (v === "live" && !canUseLiveMode) return;
+                  setViewMode(v as "board" | "live");
+                }}
+                options={[
+                  { value: "board", label: "Month" },
+                  {
+                    value: "live",
+                    label: canUseLiveMode ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Zap className="h-3 w-3" aria-hidden />
+                        Live{remainingTime ? ` · ${remainingTime}` : ""}
+                      </span>
+                    ) : (
+                      "Live"
+                    ),
+                    srLabel: canUseLiveMode
+                      ? "Live assessment"
+                      : "Live assessment (no session running)",
+                  },
+                ]}
+              />
             </div>
+          </div>
+
+          {displayClassId && viewMode === "board" && (
             <ClassLeaderboardShared classId={displayClassId} canManagePoints />
-          </div>
-        )}
+          )}
 
-        {displayClassId && viewMode === "live" && activeSessionForClass && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-1.5 text-sm font-semibold">
-              <Zap className="h-4 w-4 text-amber-500" />
-              Live — {activeClasses.find((c: any) => c.id === displayClassId)?.name}
+          {displayClassId && viewMode === "live" && activeSessionForClass && (
+            <div className="space-y-2">
+              <p className="text-xs text-ink-soft">
+                {className} — tap a student to award a skill.
+              </p>
+              <LiveAssessmentGrid
+                classId={displayClassId}
+                sessionId={activeSessionForClass.id}
+              />
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              Tap a student to quickly award skills.
-            </p>
-            <LiveAssessmentGrid classId={displayClassId} sessionId={activeSessionForClass.id} />
-          </div>
-        )}
-      </ScrollArea>
-    </div>
+          )}
+        </>
+      )}
+    </ToolCard>
   );
 }

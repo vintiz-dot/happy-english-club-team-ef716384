@@ -1,70 +1,78 @@
+/**
+ * Focus chime — one calm bell to gather attention.
+ *
+ * Deliberately a single enormous target with no confirmation and no
+ * settings: it gets pressed while the teacher is looking at the room,
+ * not at the screen.
+ */
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
+import {
+  Stage,
+  ToolCard,
+} from "./studio/StudioKit";
 import { playChime } from "./audio";
 
 export function FocusChime() {
   const [pulses, setPulses] = useState(0);
 
-  // Reset the visual pulse counter so it doesn't grow unbounded.
+  // Reset so the counter cannot grow unbounded over a long lesson.
   useEffect(() => {
     if (pulses === 0) return;
-    const t = setTimeout(() => setPulses(0), 1200);
-    return () => clearTimeout(t);
+    const t = window.setTimeout(() => setPulses(0), 1400);
+    return () => window.clearTimeout(t);
   }, [pulses]);
 
-  const ring = () => {
-    playChime();
-    setPulses((p) => p + 1);
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h3 className="type-h1">Focus Chime</h3>
-        <p className="type-micro text-muted-foreground max-w-xs mx-auto">
-          Play a calm bell to gather attention. Big tap target, no pop-ups.
-        </p>
-      </div>
-
-      <div className="relative flex items-center justify-center py-6">
-        {/* Concentric pulse rings; key flips on each tap so the animation re-fires. */}
-        <span
-          key={pulses}
-          aria-hidden
-          className={
-            pulses > 0
-              ? "absolute inline-block w-44 h-44 rounded-full border-4 border-amber-400/40 animate-ping"
-              : "hidden"
-          }
-        />
-        <span
-          key={`b-${pulses}`}
-          aria-hidden
-          className={
-            pulses > 0
-              ? "absolute inline-block w-32 h-32 rounded-full border-4 border-amber-400/60 animate-ping"
-              : "hidden"
-          }
-          style={{ animationDelay: "120ms" }}
-        />
-
-        <button
-          type="button"
-          onClick={ring}
-          aria-label="Ring focus chime"
-          className="relative h-36 w-36 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white shadow-q4 active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
-        >
-          <Bell className="h-14 w-14 mx-auto" strokeWidth={2.4} />
-          <span className="absolute inset-x-0 bottom-6 type-h2 font-extrabold tracking-wide">
-            RING
-          </span>
-        </button>
-      </div>
-
-      <div className="rounded-xl bg-muted/40 p-3 type-micro text-center text-muted-foreground">
-        Tip: chime fires when the timer hits zero too — same calm bell, no jump scare.
-      </div>
-    </div>
+    <ToolCard
+      icon={Bell}
+      tone="butter"
+      title="Chime"
+      description="A soft bell for attention — no shouting required."
+    >
+      <Stage className="min-h-[200px] py-6">
+        <div className="relative grid place-items-center">
+          {pulses > 0 && (
+            <>
+              <span
+                key={`a-${pulses}`}
+                aria-hidden
+                className="absolute h-36 w-36 animate-ping rounded-full border-2 border-[hsl(var(--studio-butter-ink)/0.35)]"
+              />
+              <span
+                key={`b-${pulses}`}
+                aria-hidden
+                className="absolute h-28 w-28 animate-ping rounded-full border-2 border-[hsl(var(--studio-butter-ink)/0.5)]"
+                style={{ animationDelay: "140ms" }}
+              />
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              playChime();
+              setPulses((p) => p + 1);
+            }}
+            aria-label="Ring the chime"
+            className="studio-focus relative grid h-32 w-32 place-items-center rounded-full transition-transform active:scale-95"
+            style={{
+              background:
+                "radial-gradient(circle at 36% 28%, hsl(0 0% 100% / 0.6), transparent 52%), linear-gradient(155deg, hsl(var(--studio-butter)), hsl(var(--studio-clay)))",
+              boxShadow:
+                "inset 0 2px 2px hsl(0 0% 100% / 0.6), inset 0 -8px 16px hsl(34 40% 40% / 0.28), 0 14px 28px -14px hsl(34 40% 30% / 0.5)",
+            }}
+          >
+            <Bell
+              className="h-12 w-12 text-[hsl(var(--studio-butter-ink))]"
+              strokeWidth={1.8}
+              aria-hidden
+            />
+          </button>
+        </div>
+      </Stage>
+      <p className="mt-3 text-center text-xs text-ink-faint">
+        The timer rings this same bell when it runs out.
+      </p>
+    </ToolCard>
   );
 }

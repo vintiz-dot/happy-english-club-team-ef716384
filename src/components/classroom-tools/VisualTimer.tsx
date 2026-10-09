@@ -1,16 +1,35 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Play, Pause, RotateCcw, BellOff } from "lucide-react";
+/**
+ * Visual timer.
+ *
+ * All state and tick logic live in TimerContext so the countdown survives
+ * this component unmounting when the panel closes.
+ *
+ * The ring empties anticlockwise and changes colour only in the last
+ * minute. A ring that shifts hue the whole way down trains children to
+ * watch the colour instead of the time; one change, late, is a warning.
+ */
+import { useState } from "react";
+import { BellOff, Pause, Play, RotateCcw, Timer as TimerIcon } from "lucide-react";
 import { useTimer } from "@/contexts/TimerContext";
+import { cn } from "@/lib/utils";
+import {
+  ActionButton,
+  QuietButton,
+  Segmented,
+  Stage,
+  Stepper,
+  ToolCard,
+} from "./studio/StudioKit";
+import { ClassScreen, ClassScreenButton } from "./studio/ClassScreen";
+import { useViewport } from "./studio/useViewport";
 
 const PRESETS = [
-  { label: "1m", seconds: 60 },
-  { label: "3m", seconds: 180 },
-  { label: "5m", seconds: 300 },
-  { label: "10m", seconds: 600 },
-  { label: "15m", seconds: 900 },
-];
+  { value: "60", label: "1m" },
+  { value: "180", label: "3m" },
+  { value: "300", label: "5m" },
+  { value: "600", label: "10m" },
+  { value: "900", label: "15m" },
+] as const;
 
 function formatTime(secs: number): string {
   const m = Math.floor(secs / 60);
@@ -18,11 +37,73 @@ function formatTime(secs: number): string {
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-/**
- * Pure rendering component for the visual timer. All state & tick logic
- * lives in TimerContext so the timer persists even when this component
- * is unmounted (e.g. when the Classroom Tools sheet closes).
- */
+function Dial({
+  progress,
+  remaining,
+  caption,
+  urgent,
+  size,
+}: {
+  progress: number;
+  remaining: number;
+  caption: string;
+  urgent: boolean;
+  size: number;
+}) {
+  const stroke = size * 0.07;
+  const radius = (size - stroke) / 2 - 2;
+  const circumference = 2 * Math.PI * radius;
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        className="-rotate-90"
+        aria-hidden
+      >
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={stroke}
+          stroke="hsl(var(--studio-ink) / 0.09)"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          stroke={urgent ? "hsl(var(--studio-clay-ink))" : "hsl(var(--studio-ink))"}
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - progress)}
+          className="transition-[stroke-dashoffset,stroke] duration-500 ease-linear"
+        />
+      </svg>
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <span
+          className={cn(
+            "studio-title tabular-nums",
+            urgent && "text-[hsl(var(--studio-clay-ink))]",
+          )}
+          style={{ fontSize: size * 0.24, lineHeight: 1 }}
+        >
+          {formatTime(remaining)}
+        </span>
+        <span
+          className="mt-1 font-semibold uppercase tracking-[0.18em] text-ink-faint"
+          style={{ fontSize: Math.max(9, size * 0.055) }}
+        >
+          {caption}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function VisualTimer() {
   const {
     totalSeconds,
@@ -31,154 +112,149 @@ export function VisualTimer() {
     alarming,
     progress,
     isFinished,
-    ringColor,
-    draftMin,
-    draftSec,
     start,
     pause,
     resume,
     reset,
     dismiss,
-    applyDraft,
+    draftMin,
+    draftSec,
     setDraftMin,
     setDraftSec,
+    applyDraft,
   } = useTimer();
+  const [projecting, setProjecting] = useState(false);
+  const [customOpen, setCustomOpen] = useState(false);
+  const viewport = useViewport();
 
-  // SVG ring math.
-  const RADIUS = 86;
-  const CIRC = 2 * Math.PI * RADIUS;
-  const dash = CIRC * progress;
+  const caption = alarming
+    ? "Time's up"
+    : isFinished
+      ? "Finished"
+      : running
+        ? "Running"
+        : "Paused";
+  const urgent = alarming || isFinished || (running && remaining <= 60);
+  const atStart = remaining === totalSeconds;
+
+  const controls = (
+    <div className="flex items-center gap-2">
+      {!running && atStart && (
+        <ActionButton onClick={() => start()}>
+          <Play className="h-4 w-4" aria-hidden /> Start
+        </ActionButton>
+      )}
+      {!running && !atStart && remaining > 0 && (
+        <ActionButton onClick={resume}>
+          <Play className="h-4 w-4" aria-hidden /> Resume
+        </ActionButton>
+      )}
+      {running && (
+        <ActionButton onClick={pause}>
+          <Pause className="h-4 w-4" aria-hidden /> Pause
+        </ActionButton>
+      )}
+      <QuietButton
+        size="lg"
+        onClick={reset}
+        disabled={atStart && !running}
+        aria-label="Reset timer"
+        className="aspect-square px-0"
+      >
+        <RotateCcw className="h-4 w-4" aria-hidden />
+      </QuietButton>
+    </div>
+  );
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col items-center">
-        <div className="relative">
-          <svg width="220" height="220" viewBox="0 0 220 220" className="-rotate-90">
-            <circle
-              cx="110"
-              cy="110"
-              r={RADIUS}
-              className="stroke-muted"
-              strokeWidth="14"
-              fill="none"
+    <>
+      <ToolCard
+        icon={TimerIcon}
+        tone="sky"
+        title="Timer"
+        description="Counts down where the whole room can see it."
+        action={<ClassScreenButton onClick={() => setProjecting(true)} />}
+      >
+        <Stage className="mb-4 min-h-[200px] py-4">
+          <Dial
+            progress={progress}
+            remaining={remaining}
+            caption={caption}
+            urgent={urgent}
+            size={172}
+          />
+        </Stage>
+
+        {alarming ? (
+          <ActionButton onClick={dismiss} className="animate-pulse">
+            <BellOff className="h-4 w-4" aria-hidden /> Stop the alarm
+          </ActionButton>
+        ) : (
+          <>
+            <Segmented
+              ariaLabel="Timer length"
+              className="mb-3"
+              size="sm"
+              options={PRESETS}
+              value={String(totalSeconds)}
+              onChange={(v) => start(Number(v))}
             />
-            <circle
-              cx="110"
-              cy="110"
-              r={RADIUS}
-              className={`${ringColor} transition-[stroke,stroke-dashoffset] duration-500 ${alarming ? "animate-pulse" : ""}`}
-              strokeWidth="14"
-              strokeLinecap="round"
-              fill="none"
-              strokeDasharray={CIRC}
-              strokeDashoffset={CIRC - dash}
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span
-              className={`type-display tabular-nums ${alarming ? "text-rose-600 animate-pulse" : isFinished ? "text-rose-600" : "text-foreground"}`}
+            {controls}
+
+            {/* Any length that is not a preset. Folded away because it is
+                the rare case — five taps on "5m" beats a number pad. */}
+            <button
+              type="button"
+              onClick={() => setCustomOpen((v) => !v)}
+              aria-expanded={customOpen}
+              className="studio-focus mt-3 self-start rounded-full px-1 text-xs font-semibold text-ink-faint underline-offset-4 hover:text-ink hover:underline"
             >
-              {formatTime(remaining)}
-            </span>
-            <span className={`type-micro ${alarming ? "text-rose-500 font-bold animate-pulse" : "text-muted-foreground"}`}>
-              {alarming ? "⏰ Time's up!" : isFinished ? "Time's up!" : running ? "running" : "paused"}
-            </span>
-          </div>
+              {customOpen ? "Hide custom length" : "Custom length…"}
+            </button>
+            {customOpen && (
+              <div className="mt-2 grid grid-cols-[1fr_1fr_auto] items-end gap-2">
+                <Stepper
+                  label="Minutes"
+                  value={Number(draftMin) || 0}
+                  onChange={(v) => setDraftMin(String(v))}
+                  min={0}
+                  max={99}
+                />
+                <Stepper
+                  label="Seconds"
+                  value={Number(draftSec) || 0}
+                  onChange={(v) => setDraftSec(String(v))}
+                  min={0}
+                  max={59}
+                  step={5}
+                />
+                <QuietButton size="lg" onClick={applyDraft}>
+                  Set
+                </QuietButton>
+              </div>
+            )}
+          </>
+        )}
+      </ToolCard>
+
+      <ClassScreen open={projecting} onClose={() => setProjecting(false)} title="Timer">
+        <div className="flex flex-col items-center gap-10">
+          <Dial
+            progress={progress}
+            remaining={remaining}
+            caption={caption}
+            urgent={urgent}
+            size={Math.max(200, Math.min(viewport.w * 0.8, viewport.h * 0.58))}
+          />
+          {alarming ? (
+            <ActionButton onClick={dismiss} className="w-auto animate-pulse px-12 text-lg sm:px-20 sm:text-2xl">
+              <BellOff className="h-5 w-5" aria-hidden /> Stop the alarm
+            </ActionButton>
+          ) : (
+            controls
+          )}
         </div>
-      </div>
-
-      {/* ---- Alarm dismiss button (iPhone-style prominent stop) ---- */}
-      {alarming ? (
-        <div className="flex flex-col items-center gap-3">
-          <Button
-            onClick={dismiss}
-            size="lg"
-            className="gap-3 h-14 px-10 rounded-2xl text-lg font-bold bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white shadow-lg shadow-rose-500/30 animate-pulse"
-          >
-            <BellOff className="h-6 w-6" />
-            Stop Alarm
-          </Button>
-          <p className="text-xs text-muted-foreground animate-pulse">
-            Tap to silence
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="flex items-center justify-center gap-2">
-            {!running && remaining === totalSeconds && (
-              <Button onClick={() => start()} size="lg" className="gap-2 h-12 px-6">
-                <Play className="h-4 w-4" />
-                Start
-              </Button>
-            )}
-            {!running && remaining < totalSeconds && remaining > 0 && (
-              <Button onClick={resume} size="lg" className="gap-2 h-12 px-6">
-                <Play className="h-4 w-4" />
-                Resume
-              </Button>
-            )}
-            {running && (
-              <Button onClick={pause} size="lg" variant="secondary" className="gap-2 h-12 px-6">
-                <Pause className="h-4 w-4" />
-                Pause
-              </Button>
-            )}
-            <Button
-              onClick={reset}
-              size="lg"
-              variant="outline"
-              className="gap-2 h-12 px-4"
-              disabled={remaining === totalSeconds && !running}
-            >
-              <RotateCcw className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-5 gap-2">
-            {PRESETS.map((p) => (
-              <Button
-                key={p.label}
-                variant="outline"
-                size="sm"
-                className="h-10 font-semibold"
-                onClick={() => start(p.seconds)}
-              >
-                {p.label}
-              </Button>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
-            <div className="space-y-1">
-              <Label htmlFor="vt-min" className="type-micro">Minutes</Label>
-              <Input
-                id="vt-min"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={99}
-                value={draftMin}
-                onChange={(e) => setDraftMin(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="vt-sec" className="type-micro">Seconds</Label>
-              <Input
-                id="vt-sec"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={59}
-                value={draftSec}
-                onChange={(e) => setDraftSec(e.target.value)}
-              />
-            </div>
-            <Button onClick={applyDraft} variant="secondary" className="h-10">
-              Set
-            </Button>
-          </div>
-        </>
-      )}
-    </div>
+      </ClassScreen>
+    </>
   );
 }

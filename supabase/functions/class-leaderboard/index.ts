@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
           : Promise.resolve({ data: null as any }),
         studentIds.length
           ? adminClient.from("student_points")
-              .select("student_id, participation_points, homework_points, total_points")
+              .select("student_id, participation_points, homework_points, reading_theory_points, total_points")
               .eq("class_id", classId).eq("month", month).in("student_id", studentIds)
           : Promise.resolve({ data: [] as any[], error: null as any }),
       ]);
@@ -191,6 +191,10 @@ Deno.serve(async (req) => {
           avatar_url: student?.avatar_url || null,
           participation_points: studentPoints?.participation_points || 0,
           homework_points: studentPoints?.homework_points || 0,
+          // Added so the student board can show the same breakdown the
+          // teacher's does. Clients treat it as optional, so an older
+          // deploy of this function degrades to hiding the reading pill.
+          reading_theory_points: studentPoints?.reading_theory_points || 0,
           total_points: studentPoints?.total_points || 0,
           is_current_user: enrollment.student_id === currentStudentId,
         };
