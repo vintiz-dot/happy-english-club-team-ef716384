@@ -28,10 +28,10 @@
  *
  * Region is fixed to "southeastasia" (matches the rest of the app).
  *
- * Package: npm:microsoft-cognitiveservices-speech-sdk@1.40.0
+ * Package: npm:microsoft-cognitiveservices-speech-sdk@1.52.0
  */
 
-import * as sdk from "npm:microsoft-cognitiveservices-speech-sdk@1.40.0";
+import * as sdk from "npm:microsoft-cognitiveservices-speech-sdk@1.52.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

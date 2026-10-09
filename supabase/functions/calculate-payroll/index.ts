@@ -247,7 +247,7 @@ function computeTotals(sessions: SessionRow[], hourlyRateVnd: number) {
     // Normalize classes to single object (Supabase may return array)
     const classes = Array.isArray(s.classes)
       ? (s.classes[0] || null)
-      : s.classes;
+      : (s.classes ?? null);
 
     const configured = classes?.default_session_length_minutes ?? null;
     const slots = slotsForClass(s.class_id, classes);
