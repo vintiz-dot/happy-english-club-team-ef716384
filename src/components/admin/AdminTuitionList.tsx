@@ -102,11 +102,26 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
       return allStudents.map((student) => {
         const invoice = invoiceMap.get(student.id);
         const currentCharges = invoice?.total_amount || 0;
-        const carryInCredit = invoice?.carry_in_credit || 0;
-        const carryInDebt = invoice?.carry_in_debt || 0;
-        const priorBalance = priorBalanceMap.get(student.id) || 0;
-        const finalPayable = currentCharges + carryInDebt - carryInCredit;
         const recordedPayment = invoice?.recorded_payment || 0;
+
+        // Carry-in is DERIVED here rather than read from invoices.carry_in_*.
+        //
+        // Those columns are a snapshot taken the last time calculate-tuition
+        // ran for this student and month, and nothing ever refreshes them:
+        // recording a payment against March does not touch April's row, and
+        // the payment dialogs write the old value straight back. Worse, a
+        // student with no invoice row for this month read as carry 0, so
+        // arrears vanished from this page entirely.
+        //
+        // priorBalance below is the same sum the edge function computes -
+        // payments minus charges across every earlier month - so this page
+        // now agrees with the Finance tab, which calls calculate-tuition-bulk
+        // and gets the figure computed fresh.
+        const priorBalance = priorBalanceMap.get(student.id) || 0;
+        const carryInCredit = priorBalance > 0 ? priorBalance : 0;
+        const carryInDebt = priorBalance < 0 ? -priorBalance : 0;
+
+        const finalPayable = currentCharges + carryInDebt - carryInCredit;
         const carryOutCredit = Math.max(0, recordedPayment - finalPayable);
         const carryOutDebt = Math.max(0, finalPayable - recordedPayment);
 
@@ -127,8 +142,11 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
           finalPayable,
           balance: finalPayable - recordedPayment,
           classes: studentClasses.get(student.id) || [],
-          carry_out_credit: invoice?.carry_out_credit ?? carryOutCredit,
-          carry_out_debt: invoice?.carry_out_debt ?? carryOutDebt,
+          // Computed from the derived carry above, for the same reason: the
+          // stored carry_out_* are as stale as the carry_in_* they came from,
+          // and these drive the status badge and the page's filters.
+          carry_out_credit: carryOutCredit,
+          carry_out_debt: carryOutDebt,
           carry_in_credit: carryInCredit,
           carry_in_debt: carryInDebt,
         };
