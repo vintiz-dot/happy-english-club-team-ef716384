@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { AppLoader } from "./AppLoader";
+import { AdminUnlockGate } from "@/components/admin/AdminUnlockGate";
 
 type Role = "admin" | "teacher" | "family" | "student";
 
@@ -60,6 +61,15 @@ export function ProtectedRoute({ children, allowedRole }: ProtectedRouteProps) {
 
   if (!user || !isAllowed) {
     return null;
+  }
+
+  // The sign-in gate guards the admin area and nothing else. Putting it
+  // here rather than on the Admin page covers every admin-only route -
+  // students, teachers, families, tuition - with one wrapper, and it sits
+  // after the role check so a teacher is never asked to unlock something
+  // they could not reach anyway.
+  if (role === "admin" && allowed.includes("admin") && allowed.length === 1) {
+    return <AdminUnlockGate>{children}</AdminUnlockGate>;
   }
 
   return <>{children}</>;

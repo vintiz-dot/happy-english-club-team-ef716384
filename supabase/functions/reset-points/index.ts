@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireUnlock, UNLOCK_HEADER } from "../_lib/unlock.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-admin-unlock",
 };
 
 serve(async (req) => {
@@ -56,6 +58,29 @@ serve(async (req) => {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // The sign-in gate, enforced rather than drawn. A React gate can be
+    // walked around by calling this endpoint directly; this cannot. It sits
+    // before the body is read, so an unverified caller gets nowhere near
+    // the delete.
+    const unlock = await requireUnlock(supabase, user.id, req.headers.get(UNLOCK_HEADER));
+    if (!unlock.valid) {
+      console.warn(`reset-points denied for user ${user.id}: ${unlock.reason}`);
+      await supabase.from("audit_log").insert({
+        entity: "student_points",
+        action: "reset_blocked_locked",
+        actor_user_id: user.id,
+        diff: { reason: unlock.reason },
+      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Confirm it's you before resetting points.",
+          code: "unlock_required",
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const { targetMonth, scope, classId, studentId } = await req.json();

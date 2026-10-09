@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { unlockHeaders } from "@/lib/adminUnlock";
 import { Loader2, RotateCcw, Calendar } from "lucide-react";
 import { monthKey } from "@/lib/date";
 import { useQuery } from "@tanstack/react-query";
@@ -57,6 +58,10 @@ export function PointsResetControl() {
           classId: resetScope === "class" ? selectedClassId : undefined,
           studentId: resetScope === "student" ? selectedStudentId : undefined,
         },
+        // Proof that this browser passed the sign-in gate. The function
+        // refuses without it, so the gate is enforced here rather than
+        // merely drawn over the page.
+        headers: unlockHeaders(),
       });
 
       if (error) throw error;
