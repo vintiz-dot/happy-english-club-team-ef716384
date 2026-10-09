@@ -3,11 +3,10 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { monthKey, dayjs } from "@/lib/date";
-import CalendarMonth from "@/components/calendar/CalendarMonth";
+import GlobalCalendar from "@/components/schedule/GlobalCalendar";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, ArrowLeft, Mail } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BulkReportExport } from "@/components/reports/BulkReportExport";
@@ -21,7 +20,6 @@ import { coverWindow, isRosteredFor } from "@/lib/teacherAccess";
 
 export default function TeacherClassDetail() {
   const { id } = useParams<{ id: string }>();
-  const [month, setMonth] = useState(monthKey());
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
@@ -125,40 +123,6 @@ export default function TeacherClassDetail() {
     },
   });
 
-  const { data: events = [] } = useQuery({
-    queryKey: ["teacher-class-sessions", id, month],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("sessions")
-        .select(`
-          id,
-          date,
-          start_time,
-          end_time,
-          status,
-          notes,
-          class_id,
-          classes!inner(name)
-        `)
-        .eq("class_id", id)
-        .gte("date", `${month}-01`)
-        .lt("date", dayjs.tz(`${month}-01`).add(1, "month").format("YYYY-MM-DD"))
-        .order("date", { ascending: true });
-
-      if (error) throw error;
-
-      return (data || []).map((s: any) => ({
-        id: s.id,
-        date: s.date,
-        start_time: s.start_time,
-        end_time: s.end_time,
-        class_name: s.classes.name,
-        status: s.status,
-        notes: s.notes,
-      }));
-    },
-    enabled: !!classData,
-  });
 
   const { data: roster = [] } = useQuery({
     queryKey: ["teacher-class-roster", id],
@@ -214,18 +178,6 @@ export default function TeacherClassDetail() {
     );
   }
 
-  const prevMonth = () => {
-    setMonth(dayjs.tz(`${month}-01`).subtract(1, "month").format("YYYY-MM"));
-  };
-
-  const nextMonth = () => {
-    setMonth(dayjs.tz(`${month}-01`).add(1, "month").format("YYYY-MM"));
-  };
-
-  const goToday = () => {
-    setMonth(monthKey());
-  };
-
   return (
     <Layout title={classData.name}>
       {/* Real-time engagement telemetry — always visible during class */}
@@ -245,22 +197,11 @@ export default function TeacherClassDetail() {
         </TabsList>
 
         <TabsContent value="calendar" className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={prevMonth}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <div className="text-lg font-semibold min-w-[200px] text-center">
-              {dayjs.tz(`${month}-01`).format("MMMM YYYY")}
-            </div>
-            <Button variant="outline" size="icon" onClick={nextMonth}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" onClick={goToday} className="ml-2">
-              Today
-            </Button>
-          </div>
-
-          <CalendarMonth month={month} events={events} />
+          {/* The shared calendar carries its own prev/next/Today and view
+              switcher, so the buttons that used to sit here are gone. It also
+              fetches the dates on screen rather than a fixed month, and adds
+              per-class colours and the duration-mismatch flag. */}
+          <GlobalCalendar role="teacher" classId={id!} />
         </TabsContent>
 
         <TabsContent value="roster" className="space-y-4">

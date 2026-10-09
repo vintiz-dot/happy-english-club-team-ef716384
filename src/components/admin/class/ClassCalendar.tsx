@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { format, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
-import CalendarMonth from "@/components/calendar/CalendarMonth";
+import { Plus } from "lucide-react";
+import GlobalCalendar from "@/components/schedule/GlobalCalendar";
 import SessionDetailDrawer from "./SessionDetailDrawer";
 import AddSessionModal from "@/components/admin/AddSessionModal";
 
@@ -13,9 +12,28 @@ interface ClassCalendarProps {
   classId: string;
 }
 
+/**
+ * The class calendar.
+ *
+ * Was a month grid with its own prev/next/Today buttons and its own
+ * month-at-a-time query. It now uses the shared calendar, which brings month,
+ * week, day and list views, per-class colours, the duration-mismatch flag and
+ * drag-to-reschedule, and which fetches the dates actually on screen rather
+ * than always a calendar month. Its own navigation went with it - the
+ * calendar carries that in its header - and so did the local event mapping,
+ * which had no class_id and so could not colour or flag anything.
+ *
+ * The session drawer stays local: this screen opens the full editable detail
+ * drawer, not the attendance one the calendar defaults to.
+ */
 const ClassCalendar = ({ classId }: ClassCalendarProps) => {
-  const [month, setMonth] = useState(new Date());
+  const queryClient = useQueryClient();
   const [selectedSession, setSelectedSession] = useState<any>(null);
+
+  // The calendar owns its own query now, so editing a session has to tell it
+  // to refetch - the old local refetch() went with the local query.
+  const refreshCalendar = () =>
+    queryClient.invalidateQueries({ queryKey: ["calendar-sessions"] });
   const [addSessionDate, setAddSessionDate] = useState<Date | null>(null);
 
   const { data: classData } = useQuery({
@@ -31,120 +49,25 @@ const ClassCalendar = ({ classId }: ClassCalendarProps) => {
     },
   });
 
-  const { data: sessions, refetch } = useQuery({
-    queryKey: ["class-calendar-sessions", classId, format(month, "yyyy-MM")],
-    queryFn: async () => {
-      const startDate = format(startOfMonth(month), "yyyy-MM-dd");
-      const endDate = format(endOfMonth(month), "yyyy-MM-dd");
-
-      const { data, error } = await supabase
-        .from("sessions")
-        .select(`
-          id,
-          date,
-          start_time,
-          end_time,
-          status,
-          notes,
-          teacher_id,
-          rate_override_vnd,
-          teachers (id, full_name),
-          attendance (student_id, status)
-        `)
-        .eq("class_id", classId)
-        .gte("date", startDate)
-        .lte("date", endDate)
-        .order("date");
-
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const { data: enrolledCount } = useQuery({
-    queryKey: ["class-enrolled-count", classId],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("enrollments")
-        .select("*", { count: "exact", head: true })
-        .eq("class_id", classId)
-        .is("end_date", null);
-
-      if (error) throw error;
-      return count || 0;
-    },
-  });
-
-  const calendarEvents = sessions?.map(s => ({
-    id: s.id,
-    date: s.date,
-    start_time: s.start_time,
-    end_time: s.end_time,
-    class_name: classData?.name || "Class",
-    status: s.status,
-    enrolled_count: enrolledCount,
-    notes: s.notes
-  })) || [];
-
-  const handleEventClick = (event: any) => {
-    const session = sessions?.find(s => s.id === event.id);
-    if (session) {
-      setSelectedSession({
-        ...session,
-        teacher: session.teachers
-      });
-    }
-  };
-
-  const handleDayClick = (date: string) => {
-    setAddSessionDate(new Date(date));
-  };
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setMonth(subMonths(month, 1))}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setMonth(new Date())}
-          >
-            Today
-          </Button>
-          <h2 className="text-xl font-semibold min-w-[200px] text-center">
-            {format(month, "MMMM yyyy")}
-          </h2>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setMonth(addMonths(month, 1))}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <Button onClick={() => setAddSessionDate(new Date())} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Session
-        </Button>
-      </div>
-
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle>{classData?.name || "Class"} Calendar</CardTitle>
+          <Button onClick={() => setAddSessionDate(new Date())} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Session
+          </Button>
         </CardHeader>
         <CardContent>
-          <CalendarMonth
-            month={format(month, "yyyy-MM")}
-            events={calendarEvents}
-            onSelectDay={handleDayClick}
-            onSelectEvent={handleEventClick}
+          <GlobalCalendar
+            role="admin"
+            classId={classId}
+            onAddSession={(date) => setAddSessionDate(date)}
+            // SessionDetailDrawer expects the teacher under `teacher`.
+            onSelectSession={(session) =>
+              setSelectedSession({ ...session, teacher: session.teachers })
+            }
           />
         </CardContent>
       </Card>
@@ -154,7 +77,7 @@ const ClassCalendar = ({ classId }: ClassCalendarProps) => {
           session={selectedSession}
           onClose={() => {
             setSelectedSession(null);
-            refetch();
+            refreshCalendar();
           }}
         />
       )}
@@ -166,8 +89,8 @@ const ClassCalendar = ({ classId }: ClassCalendarProps) => {
           open={!!addSessionDate}
           onClose={() => setAddSessionDate(null)}
           onSuccess={() => {
-            refetch();
             setAddSessionDate(null);
+            refreshCalendar();
           }}
         />
       )}

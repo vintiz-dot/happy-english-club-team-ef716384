@@ -23,8 +23,41 @@ import { toast } from "sonner";
 interface GlobalCalendarProps {
   role: "admin" | "teacher" | "student";
   classId?: string;
+  /**
+   * Show one specific teacher's sessions rather than the signed-in user's.
+   * For an admin looking at someone else's profile; ignored for other roles,
+   * since a teacher must not be able to ask for a colleague's schedule.
+   */
+  teacherId?: string;
   onAddSession?: (date: Date) => void;
   onEditSession?: (session: any) => void;
+  /**
+   * Take over what happens when a session is clicked. Without this the
+   * calendar opens its own attendance drawer, which is right nearly
+   * everywhere; a caller with its own drawer passes this instead.
+   */
+  onSelectSession?: (session: CalendarSessionRow) => void;
+}
+
+/** The joined session row this calendar selects, for callers that take it. */
+export interface CalendarSessionRow {
+  id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  notes: string | null;
+  rate_override_vnd: number | null;
+  class_id: string;
+  teacher_id: string | null;
+  classes?: {
+    id: string;
+    name: string;
+    default_session_length_minutes: number | null;
+    schedule_template: unknown;
+  } | null;
+  teachers?: { id: string; full_name: string } | null;
+  attendance?: Array<{ student_id: string; status: string }> | null;
 }
 
 interface SessionSnapshot {
@@ -33,7 +66,14 @@ interface SessionSnapshot {
   end_time: string;
 }
 
-const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCalendarProps) => {
+const GlobalCalendar = ({
+  role,
+  classId,
+  teacherId,
+  onAddSession,
+  onEditSession,
+  onSelectSession,
+}: GlobalCalendarProps) => {
   const queryClient = useQueryClient();
   const [selectedSession, setSelectedSession] = useState<any>(null);
   const { studentId } = useStudentProfile();
@@ -54,7 +94,7 @@ const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCa
   }, []);
 
   const { data: rawSessions = [], isLoading, refetch } = useQuery({
-    queryKey: ["calendar-sessions", role, classId, studentId, range.start, range.end, user?.id],
+    queryKey: ["calendar-sessions", role, classId, teacherId, studentId, range.start, range.end, user?.id],
     queryFn: async () => {
       let query = supabase
         .from("sessions")
@@ -78,7 +118,13 @@ const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCa
 
       if (classId) {
         query = query.eq("class_id", classId);
-      } else if (role === "teacher") {
+      }
+
+      // An admin inspecting one teacher's schedule. Deliberately admin-only:
+      // honouring it for a teacher would let them read a colleague's diary.
+      if (teacherId && role === "admin") {
+        query = query.eq("teacher_id", teacherId);
+      } else if (!classId && role === "teacher") {
         const { data: teacher } = await supabase
           .from("teachers")
           .select("id")
@@ -249,9 +295,13 @@ const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCa
   const handleSelectEvent = useCallback(
     (event: CalendarEvent) => {
       const raw = rawSessions.find((s: any) => s.id === event.id);
-      if (raw) setSelectedSession(raw);
+      if (!raw) return;
+      // A caller with its own drawer takes the raw row and renders it itself;
+      // otherwise the calendar opens the one that suits the role.
+      if (onSelectSession) onSelectSession(raw);
+      else setSelectedSession(raw);
     },
-    [rawSessions],
+    [rawSessions, onSelectSession],
   );
 
   return (
@@ -260,13 +310,13 @@ const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCa
         events={calendarEvents}
         isLoading={isLoading}
         onSelectEvent={handleSelectEvent}
-        onAddSession={role === "admin" ? onAddSession : undefined}
+        onAddSession={onAddSession}
         onReschedule={role === "admin" ? handleReschedule : undefined}
         onRangeChange={handleRangeChange}
         isAdmin={role === "admin"}
       />
 
-      {selectedSession && role !== "student" && (
+      {selectedSession && !onSelectSession && role !== "student" && (
         <AttendanceDrawer
           session={selectedSession}
           onClose={() => {
@@ -276,7 +326,7 @@ const GlobalCalendar = ({ role, classId, onAddSession, onEditSession }: GlobalCa
         />
       )}
 
-      {selectedSession && role === "student" && (
+      {selectedSession && !onSelectSession && role === "student" && (
         <SessionDrawer
           session={selectedSession}
           onClose={() => {
