@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791565020082,
+      "tag": "0000_keep_invoice_carry_balances_correct",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791565031542,
+      "tag": "0001_audit_every_admin_action",
+      "breakpoints": true
+    }
+  ]
+}

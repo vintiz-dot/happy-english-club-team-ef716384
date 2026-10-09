@@ -152,29 +152,41 @@ export type Database = {
         Row: {
           action: string
           actor_user_id: string | null
+          changed_fields: string[] | null
+          client_ip: string | null
           diff: Json | null
           entity: string
           entity_id: string | null
           id: string
           occurred_at: string
+          operation: string | null
+          user_agent: string | null
         }
         Insert: {
           action: string
           actor_user_id?: string | null
+          changed_fields?: string[] | null
+          client_ip?: string | null
           diff?: Json | null
           entity: string
           entity_id?: string | null
           id?: string
           occurred_at?: string
+          operation?: string | null
+          user_agent?: string | null
         }
         Update: {
           action?: string
           actor_user_id?: string | null
+          changed_fields?: string[] | null
+          client_ip?: string | null
           diff?: Json | null
           entity?: string
           entity_id?: string | null
           id?: string
           occurred_at?: string
+          operation?: string | null
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -4600,6 +4612,10 @@ export type Database = {
           p_month: string
           p_student_id: string
         }
+        Returns: undefined
+      }
+      refresh_invoice_carry: {
+        Args: { p_student_id: string }
         Returns: undefined
       }
       revert_invalid_held_sessions: {
