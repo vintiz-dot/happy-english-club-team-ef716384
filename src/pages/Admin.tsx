@@ -6,6 +6,7 @@ import ReportsTab from "@/components/admin/tabs/ReportsTab";
 import AccountInfoTab from "@/components/admin/tabs/AccountInfoTab";
 import AutomationTab from "@/components/admin/tabs/AutomationTab";
 import DataTab from "@/components/admin/tabs/DataTab";
+import ActivityTab from "@/components/admin/tabs/ActivityTab";
 import ClassesTab from "@/components/admin/tabs/ClassesTab";
 import { PayrollTab } from "@/components/admin/tabs/PayrollTab";
 import { AdminJournalViewEnhanced } from "@/components/admin/AdminJournalViewEnhanced";
@@ -40,6 +41,8 @@ const Admin = ({ defaultTab }: { defaultTab?: string } = {}) => {
         return <AutomationTab />;
       case "data":
         return <DataTab />;
+      case "activity":
+        return <ActivityTab />;
       case "announcements":
         return <AnnouncementManager />;
       default:

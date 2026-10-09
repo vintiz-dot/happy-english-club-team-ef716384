@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles, BookOpen, ScanText, AudioLines } from "lucide-react";
+import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles, BookOpen, ScanText, AudioLines, History } from "lucide-react";
 import ProfileSwitcher from "@/components/ProfileSwitcher";
 import { ChangePassword } from "@/components/auth/ChangePassword";
 import NotificationBell from "@/components/NotificationBell";
@@ -111,6 +111,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           { icon: Receipt, label: "Payroll", path: "/admin?tab=payroll" },
           { icon: TrendingUp, label: "Reports", path: "/admin?tab=reports" },
           { icon: Settings2, label: "Automation", path: "/admin?tab=automation" },
+          { icon: History, label: "Activity", path: "/admin?tab=activity" },
           { icon: HardDrive, label: "Data", path: "/admin?tab=data" },
           { icon: Megaphone, label: "Announcements", path: "/admin?tab=announcements" },
           { icon: ScanText, label: "Smart Upload", path: "/teacher/smart-upload" },
