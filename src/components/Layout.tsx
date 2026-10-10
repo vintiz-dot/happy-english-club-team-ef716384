@@ -47,6 +47,11 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   }, [sidebarOpen]);
 
 
+  // Only an admin has a profile screen to go to, so only they get a
+  // button; for everyone else the chip stays a label.
+  const isAdmin = role === "admin";
+  const Component = isAdmin ? "button" : "div";
+
   if (!user) {
     return <>{children}</>;
   }
@@ -131,8 +136,19 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
               <ProfileSwitcher />
               <NotificationBell />
               {userName && (
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full glass-sm">
-
+                <Component
+                  {...(isAdmin
+                    ? {
+                        type: "button" as const,
+                        title: "View your profile",
+                        onClick: () => navigate("/admin?tab=account"),
+                      }
+                    : {})}
+                  className={cn(
+                    "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full glass-sm text-left",
+                    isAdmin && "transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  )}
+                >
                   <div className="rounded-full p-[1.5px] bg-gradient-to-br from-blue-500 via-cyan-400 to-amber-300">
                     <Avatar className="h-7 w-7 ring-1 ring-background">
                       <AvatarImage src={avatarUrl || undefined} alt={userName} />
@@ -147,7 +163,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                       </span>
                     )}
                   </span>
-                </div>
+                </Component>
               )}
               <ChangePassword />
               <Button onClick={signOut} variant="outline" size="sm" className="hidden sm:flex group">
