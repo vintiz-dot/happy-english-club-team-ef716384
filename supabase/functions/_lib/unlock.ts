@@ -89,16 +89,26 @@ export interface IssuedUnlock {
 }
 
 /**
+ * The slice of a backend client these two helpers need: one call,
+ * `from(table)`, returning a builder they await.
+ *
+ * Deliberately loose, and not for want of trying to be precise. The real
+ * client's query builder is thenable rather than a Promise, so a
+ * hand-written structural type naming the chain exactly is never
+ * satisfiable by that client; and asking the checker to resolve the
+ * client's full generic instead recurses through the whole schema and
+ * gives up as "excessively deep". Both helpers below read nothing but
+ * `data` and `error` off an awaited result, which is what this allows.
+ */
+// deno-lint-ignore no-explicit-any
+export type UnlockClient = { from: (table: string) => any };
+
+/**
  * Mint a session and store only its hash. The caller hands the raw token
  * to the browser once and never sees it again.
  */
 export async function issueUnlock(
-  supabase: {
-    from: (t: string) => {
-      insert: (v: unknown) => Promise<{ error: unknown }>;
-    };
-    rpc?: (fn: string) => Promise<unknown>;
-  },
+  supabase: UnlockClient,
   userId: string,
   method: "passkey" | "passcode",
   meta: { userAgent?: string | null; clientIp?: string | null },
@@ -131,17 +141,7 @@ export interface UnlockCheck {
  * cannot positively confirm.
  */
 export async function requireUnlock(
-  supabase: {
-    from: (t: string) => {
-      select: (c: string) => {
-        eq: (c: string, v: string) => {
-          is: (c: string, v: null) => {
-            maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: unknown }>;
-          };
-        };
-      };
-    };
-  },
+  supabase: UnlockClient,
   userId: string,
   token: string | null,
 ): Promise<UnlockCheck> {
