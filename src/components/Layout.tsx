@@ -131,26 +131,8 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
               <ProfileSwitcher />
               <NotificationBell />
               {userName && (
-                <div
-                  className={cn(
-                    "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full glass-sm",
-                    role === "admin" && "cursor-pointer transition-colors hover:bg-accent/60",
-                  )}
-                  role={role === "admin" ? "button" : undefined}
-                  tabIndex={role === "admin" ? 0 : undefined}
-                  title={role === "admin" ? "View your profile" : undefined}
-                  onClick={role === "admin" ? () => navigate("/admin?tab=account") : undefined}
-                  onKeyDown={
-                    role === "admin"
-                      ? (e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            navigate("/admin?tab=account");
-                          }
-                        }
-                      : undefined
-                  }
-                >
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full glass-sm">
+
                   <div className="rounded-full p-[1.5px] bg-gradient-to-br from-blue-500 via-cyan-400 to-amber-300">
                     <Avatar className="h-7 w-7 ring-1 ring-background">
                       <AvatarImage src={avatarUrl || undefined} alt={userName} />

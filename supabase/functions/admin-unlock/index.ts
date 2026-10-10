@@ -134,8 +134,15 @@ Deno.serve(async (req) => {
         purpose,
         expires_at: new Date(Date.now() + CHALLENGE_TTL_MS).toISOString(),
       });
-      // Cheap to do here, and saves scheduling anything.
-      await db.rpc("prune_admin_auth_state").catch(() => {});
+      // Cheap to do here, and saves scheduling anything. Best effort: a
+      // failing prune must not break enrolment, and the RPC builder has no
+      // catch() of its own, so the throw is caught here instead.
+      try {
+        await db.rpc("prune_admin_auth_state");
+      } catch {
+        // ignored on purpose
+      }
+
 
       const { data: keys } = await db
         .from("admin_passkeys")
