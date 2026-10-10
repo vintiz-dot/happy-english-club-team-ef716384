@@ -14,6 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_auth_challenges: {
+        Row: {
+          challenge: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          purpose: string
+          user_id: string
+        }
+        Insert: {
+          challenge: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          purpose: string
+          user_id: string
+        }
+        Update: {
+          challenge?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          purpose?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_passcodes: {
+        Row: {
+          failed_attempts: number
+          locked_until: string | null
+          passcode_hash: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          failed_attempts?: number
+          locked_until?: string | null
+          passcode_hash: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          failed_attempts?: number
+          locked_until?: string | null
+          passcode_hash?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_passkeys: {
+        Row: {
+          created_at: string
+          credential_id: string
+          device_label: string
+          id: string
+          last_used_at: string | null
+          public_key_alg: number
+          public_key_spki: string
+          sign_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credential_id: string
+          device_label: string
+          id?: string
+          last_used_at?: string | null
+          public_key_alg: number
+          public_key_spki: string
+          sign_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credential_id?: string
+          device_label?: string
+          id?: string
+          last_used_at?: string | null
+          public_key_alg?: number
+          public_key_spki?: string
+          sign_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_unlock_sessions: {
+        Row: {
+          client_ip: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          method: string
+          revoked_at: string | null
+          token_hash: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          client_ip?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          method: string
+          revoked_at?: string | null
+          token_hash: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          client_ip?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          method?: string
+          revoked_at?: string | null
+          token_hash?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       announcement_dismissals: {
         Row: {
           announcement_id: string
@@ -4614,6 +4740,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      prune_admin_auth_state: { Args: never; Returns: undefined }
       refresh_invoice_carry: {
         Args: { p_student_id: string }
         Returns: undefined
