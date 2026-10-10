@@ -7,6 +7,7 @@ import {
   ClassAdminActions,
   ArchivedClassesSection,
 } from "@/components/admin/class/ClassAdminActions";
+import { PlaceholderCard } from "@/components/ui/loading";
 
 export function ClassesList() {
   const { data: classes, isLoading } = useQuery({
@@ -26,7 +27,7 @@ export function ClassesList() {
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <PlaceholderCard rows={4} />;
   }
 
   return (

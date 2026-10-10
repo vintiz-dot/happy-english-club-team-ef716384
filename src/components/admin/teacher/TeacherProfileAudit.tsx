@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { PlaceholderCard } from "@/components/ui/loading";
 
 interface TeacherProfileAuditProps {
   teacherId: string;
@@ -53,7 +54,7 @@ export function TeacherProfileAudit({ teacherId }: TeacherProfileAuditProps) {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <p className="text-muted-foreground">Loading...</p>
+          <PlaceholderCard rows={3} />
         ) : !auditLogs || auditLogs.length === 0 ? (
           <p className="text-center py-8 text-muted-foreground">No audit records found</p>
         ) : (

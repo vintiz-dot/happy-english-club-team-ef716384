@@ -19,6 +19,7 @@ import {
   Megaphone, Plus, Trash2, Pencil, Eye, EyeOff, Upload, Calendar, Users, Monitor,
 } from "lucide-react";
 import { format } from "date-fns";
+import { PlaceholderCard } from "@/components/ui/loading";
 
 const DISPLAY_TYPES = [
   { value: "banner", label: "Banner" },
@@ -254,7 +255,7 @@ export const AnnouncementManager = () => {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">Loading…</div>
+        <PlaceholderCard rows={3} />
       ) : announcements.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="py-12 text-center text-muted-foreground">

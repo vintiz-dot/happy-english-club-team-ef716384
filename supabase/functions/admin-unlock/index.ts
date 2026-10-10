@@ -264,7 +264,28 @@ Deno.serve(async (req) => {
           actor_user_id: user.id,
           diff: { method: "passkey", reason: result.reason },
         });
-        return json({ error: "That did not verify. Please try again." }, 401);
+        // Say why. The caller has already proved they hold an admin JWT
+        // for this account, so there is nobody here to withhold it from,
+        // and "that did not verify" is unactionable when the real cause
+        // is a passkey created on a different hostname.
+        const explain: Record<string, string> = {
+          "relying party does not match":
+            `This passkey was not created for ${rpId}. Passkeys are tied to one address — unlock with your passcode, remove the device under Devices, and add it again here.`,
+          "device did not verify the user":
+            "Your device signed in without checking it was you. Windows Hello needs a PIN, face or fingerprint enabled for this to count.",
+          "challenge does not match":
+            "That attempt was stale. Please try again.",
+          "origin does not match":
+            "The page address did not match the one the sign-in started from.",
+        };
+        return json(
+          {
+            error:
+              explain[result.reason ?? ""] ??
+              `That did not verify (${result.reason ?? "unknown"}). Please try again, or use your passcode.`,
+          },
+          401,
+        );
       }
 
       await db

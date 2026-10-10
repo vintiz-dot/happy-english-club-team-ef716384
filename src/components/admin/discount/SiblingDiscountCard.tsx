@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Users, TrendingDown, Check } from "lucide-react";
 import { formatVND } from "@/lib/invoice/formatter";
+import { Loading } from "@/components/ui/loading";
 
 interface SiblingDiscountCardProps {
   studentId: string;
@@ -93,7 +94,7 @@ export function SiblingDiscountCard({ studentId, month }: SiblingDiscountCardPro
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <Loading size="sm" />
         </CardContent>
       </Card>
     );

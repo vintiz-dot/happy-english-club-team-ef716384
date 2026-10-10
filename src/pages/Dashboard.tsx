@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { PageLoading } from "@/components/ui/loading";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -30,9 +31,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
+        <PageLoading />
       </div>
     );
   }

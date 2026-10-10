@@ -1,26 +1,24 @@
-import { GraduationCap, Loader2 } from "lucide-react";
+/**
+ * The full-screen wait: route-level Suspense, the startup guard, and the
+ * access check.
+ *
+ * This is the one people see most often without realising it — every
+ * navigation to a lazily-loaded page passes through here — so it is the
+ * one most worth getting right. The shape comes from the shared loading
+ * language in components/ui/loading.tsx; this file only owns the fact
+ * that it fills the viewport and paints the background, because it can
+ * render before any layout does.
+ */
+import { PageLoading } from "@/components/ui/loading";
 
 interface AppLoaderProps {
   message?: string;
 }
 
-export function AppLoader({ message = "Loading..." }: AppLoaderProps) {
+export function AppLoader({ message = "Loading" }: AppLoaderProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center space-y-6">
-        <div className="flex justify-center">
-          <div className="relative">
-            <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-              <GraduationCap className="h-12 w-12 text-primary" />
-            </div>
-            <Loader2 className="h-8 w-8 animate-spin text-primary absolute -bottom-2 -right-2" />
-          </div>
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold text-foreground">Education Manager</h2>
-          <p className="text-sm text-muted-foreground mt-2">{message}</p>
-        </div>
-      </div>
+    <div className="grid min-h-screen w-full place-items-center bg-background">
+      <PageLoading message={message} />
     </div>
   );
 }

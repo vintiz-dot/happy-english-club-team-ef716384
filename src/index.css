@@ -1517,3 +1517,67 @@ All colors MUST be HSL.
 @media (prefers-reduced-motion: reduce) {
   .studio-settle, .studio-pop, .studio-drift { animation: none !important; }
 }
+
+/* ============================================================
+   Loading language
+   ------------------------------------------------------------
+   One vocabulary for "this is coming", used everywhere from the
+   route-level fallback to a single card. The shapes differ; the
+   motion does not, so waiting feels like one app rather than
+   thirty separately-invented spinners.
+
+   The sweep is a conic gradient on a rotating wrapper rather
+   than a bordered circle: a border-top spinner reads as a
+   browser default, and this does not.
+   ============================================================ */
+
+@keyframes hec-sweep {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes hec-breathe {
+  0%, 100% { transform: scale(1);    opacity: 1;   }
+  50%      { transform: scale(1.07); opacity: 0.88; }
+}
+
+@keyframes hec-rise {
+  0%, 70%, 100% { opacity: 0.2; transform: translateY(0); }
+  35%           { opacity: 1;   transform: translateY(-4px); }
+}
+
+/* A highlight travelling left-to-right across placeholder blocks. */
+@keyframes hec-sheen {
+  0%   { background-position: -160% 0; }
+  100% { background-position:  260% 0; }
+}
+
+@layer utilities {
+  .hec-sweep   { animation: hec-sweep 1.15s linear infinite; }
+  .hec-breathe { animation: hec-breathe 2.4s ease-in-out infinite; }
+  .hec-rise    { animation: hec-rise 1.4s ease-in-out infinite; }
+
+  /* Placeholder block. Shaped like the content it stands in for, so
+     the layout does not jump when the real thing arrives. */
+  .hec-placeholder {
+    background-image: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted)) 38%,
+      hsl(var(--primary) / 0.1) 50%,
+      hsl(var(--muted)) 62%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 260% 100%;
+    animation: hec-sheen 1.9s ease-in-out infinite;
+    border-radius: 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hec-sweep, .hec-breathe, .hec-rise, .hec-placeholder {
+    animation: none !important;
+  }
+  /* Without the travelling highlight the gradient would freeze
+     mid-sweep and look like a rendering fault. Flatten it. */
+  .hec-placeholder { background-image: none; background-color: hsl(var(--muted)); }
+}

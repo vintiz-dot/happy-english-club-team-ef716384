@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { Loading } from "@/components/ui/loading";
 
 interface Props {
   familyId: string;
@@ -65,7 +66,7 @@ export function FamilyMembersManager({ familyId, onChanged }: Props) {
           placeholder="Search student by name..."
         />
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <Loading size="sm" />
         ) : candidates && candidates.length > 0 ? (
           <div className="space-y-2 max-h-72 overflow-y-auto">
             {candidates.map((s: any) => (

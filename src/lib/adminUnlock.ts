@@ -124,6 +124,77 @@ export async function platformAuthenticatorAvailable(): Promise<boolean> {
   }
 }
 
+/* ------------------------------------------------- what actually failed */
+
+/**
+ * WebAuthn reports failures as a DOMException whose `message` is often
+ * empty and whose `name` carries all the meaning. Showing `e.message`
+ * therefore produced a blank or useless error, which is why "Windows
+ * Hello keeps failing" came with nothing to act on.
+ *
+ * This turns the name into something a person can do something about,
+ * and keeps the name itself on the end so a report of a failure is
+ * diagnosable without a screen share.
+ */
+function describeCeremonyError(error: unknown, phase: "enrol" | "unlock"): Error {
+  const e = error as { name?: string; message?: string };
+  const name = e?.name ?? "Error";
+
+  // Not a WebAuthn failure at all - our own fetch or the server talking.
+  if (!(error instanceof DOMException)) {
+    return error instanceof Error ? error : new Error(String(error));
+  }
+
+  const detail = (text: string) => new Error(`${text} (${name})`);
+
+  switch (name) {
+    case "NotAllowedError":
+      // One name, three very different causes, and the browser will not
+      // say which: cancelled, timed out, or the prompt never appeared.
+      return detail(
+        phase === "enrol"
+          ? "Windows Hello did not complete. That usually means the prompt was dismissed or it timed out — try again, and confirm with your face, fingerprint or PIN when the window appears."
+          : "Windows Hello did not complete. Try again, or use your passcode instead.",
+      );
+
+    case "InvalidStateError":
+      // Only happens on create, and only when excludeCredentials matched.
+      return detail(
+        "This device already has a passkey for this account. Use it to unlock, or remove it under Devices and add it again.",
+      );
+
+    case "ConstraintError":
+      return detail(
+        "This PC cannot verify who you are. Set up Windows Hello under Settings → Accounts → Sign-in options — a PIN counts — then try again.",
+      );
+
+    case "NotSupportedError":
+      return detail(
+        "This browser or device does not support the kind of passkey we ask for. Use a passcode instead.",
+      );
+
+    case "SecurityError":
+      // Almost always the page's hostname not matching the RP ID, or the
+      // page not being served over HTTPS.
+      return detail(
+        `Passkeys are not allowed on this address (${location.hostname}). This happens when the site is opened over plain HTTP, or on a domain the passkey was not created for.`,
+      );
+
+    case "AbortError":
+      return detail("That was cancelled.");
+
+    case "UnknownError":
+      // Windows Hello's catch-all. Usually the TPM refusing, and usually
+      // transient, but it is worth saying what to try.
+      return detail(
+        "Windows Hello failed internally. This is usually temporary — try again, and if it keeps happening sign in with your passcode and re-add this device.",
+      );
+
+    default:
+      return detail(e?.message || "The sign-in attempt failed.");
+  }
+}
+
 /* ------------------------------------------------------------- passkeys */
 
 interface OptionsResponse {
@@ -154,37 +225,51 @@ function describeThisDevice(): string {
 export async function enrolPasskey(label?: string): Promise<void> {
   const options = await call<OptionsResponse>({ action: "passkey/options", purpose: "register" });
 
-  const credential = (await navigator.credentials.create({
-    publicKey: {
-      challenge: b64urlToBuffer(options.challenge),
-      rp: { id: options.rpId, name: "Happy English Club" },
-      user: {
-        id: new TextEncoder().encode(options.userId),
-        name: options.userName,
-        displayName: options.userName,
+  let credential: PublicKeyCredential | null;
+  try {
+    credential = (await navigator.credentials.create({
+      publicKey: {
+        challenge: b64urlToBuffer(options.challenge),
+        rp: { id: options.rpId, name: "Happy English Club" },
+        user: {
+          id: new TextEncoder().encode(options.userId),
+          name: options.userName,
+          displayName: options.userName,
+        },
+        // ES256 first, RS256 for the Windows Hello TPMs that prefer RSA.
+        pubKeyCredParams: [
+          { type: "public-key", alg: -7 },
+          { type: "public-key", alg: -257 },
+        ],
+        authenticatorSelection: {
+          // The built-in authenticator, not a roaming key: this is about the
+          // person sitting at this machine.
+          authenticatorAttachment: "platform",
+          userVerification: "required",
+          // Deliberately NOT discoverable. We always know which credentials
+          // to offer, because the person is already signed in and the server
+          // hands us their credential IDs - so a resident key buys nothing.
+          // It costs something, though: discoverable credentials occupy one
+          // of a TPM's small number of slots and are the fragile path on
+          // Windows Hello. Asking for the simpler kind removes a whole class
+          // of enrolment failure.
+          residentKey: "discouraged",
+        },
+        // Nothing is checked, so asking for it only adds a prompt on some
+        // platforms.
+        attestation: "none",
+        // Hello can take a while behind a slow TPM, and a timeout surfaces
+        // as an unexplained NotAllowedError.
+        timeout: 120_000,
+        excludeCredentials: options.credentialIds.map((id) => ({
+          type: "public-key" as const,
+          id: b64urlToBuffer(id),
+        })),
       },
-      // ES256 first, RS256 for the Windows Hello TPMs that prefer RSA.
-      pubKeyCredParams: [
-        { type: "public-key", alg: -7 },
-        { type: "public-key", alg: -257 },
-      ],
-      authenticatorSelection: {
-        // The built-in authenticator, not a roaming key: this is about the
-        // person sitting at this machine.
-        authenticatorAttachment: "platform",
-        userVerification: "required",
-        residentKey: "preferred",
-      },
-      // Nothing is checked, so asking for it only adds a prompt on some
-      // platforms.
-      attestation: "none",
-      timeout: 60_000,
-      excludeCredentials: options.credentialIds.map((id) => ({
-        type: "public-key" as const,
-        id: b64urlToBuffer(id),
-      })),
-    },
-  })) as PublicKeyCredential | null;
+    })) as PublicKeyCredential | null;
+  } catch (e) {
+    throw describeCeremonyError(e, "enrol");
+  }
 
   if (!credential) throw new Error("Enrolment was cancelled.");
 
@@ -214,18 +299,23 @@ export async function unlockWithPasskey(): Promise<void> {
     purpose: "authenticate",
   });
 
-  const credential = (await navigator.credentials.get({
-    publicKey: {
-      challenge: b64urlToBuffer(options.challenge),
-      rpId: options.rpId,
-      userVerification: "required",
-      timeout: 60_000,
-      allowCredentials: options.credentialIds.map((id) => ({
-        type: "public-key" as const,
-        id: b64urlToBuffer(id),
-      })),
-    },
-  })) as PublicKeyCredential | null;
+  let credential: PublicKeyCredential | null;
+  try {
+    credential = (await navigator.credentials.get({
+      publicKey: {
+        challenge: b64urlToBuffer(options.challenge),
+        rpId: options.rpId,
+        userVerification: "required",
+        timeout: 120_000,
+        allowCredentials: options.credentialIds.map((id) => ({
+          type: "public-key" as const,
+          id: b64urlToBuffer(id),
+        })),
+      },
+    })) as PublicKeyCredential | null;
+  } catch (e) {
+    throw describeCeremonyError(e, "unlock");
+  }
 
   if (!credential) throw new Error("Sign-in was cancelled.");
   const response = credential.response as AuthenticatorAssertionResponse;

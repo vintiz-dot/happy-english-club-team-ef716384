@@ -18,6 +18,7 @@ import { getHomeworkStatus, statusConfig, getCountdown, type HomeworkStatus } fr
 import { motion } from "framer-motion";
 import { HomeworkPdfDownload } from "@/components/homework/HomeworkPdfDownload";
 import { PageHero } from "@/components/quest/PageHero";
+import { PlaceholderCard } from "@/components/ui/loading";
 import { EmptyState } from "@/components/quest/EmptyState";
 import { PagedListControls, usePagedList } from "@/components/shared/PagedListControls";
 
@@ -218,7 +219,24 @@ export default function StudentAssignments() {
     );
   }
 
-  if (isLoading) return <Layout title="Assignments">Loading...</Layout>;
+  // The hero needs no data, so it appears at once and only the list below
+  // is a placeholder. Holding the whole page back behind a spinner made a
+  // fast query feel slow.
+  if (isLoading) {
+    return (
+      <Layout title="Assignments">
+        <div className="space-y-4 sm:space-y-6 no-x-overflow min-w-0">
+          <PageHero
+            eyebrow="Quest log"
+            title="Assignments"
+            subtitle="Track your homework, earn XP, level up."
+            variant="aurora"
+          />
+          <PlaceholderCard rows={4} />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Assignments">

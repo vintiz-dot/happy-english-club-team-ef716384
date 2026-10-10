@@ -11,6 +11,7 @@ import { Navigate } from "react-router-dom";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import { PageHero } from "@/components/quest/PageHero";
 import { SectionHeader } from "@/components/quest/SectionHeader";
+import { PageLoading } from "@/components/ui/loading";
 
 const Index = () => {
   const { user, role, loading } = useAuth();
@@ -26,9 +27,7 @@ const Index = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
+        <PageLoading />
       </div>
     );
   }

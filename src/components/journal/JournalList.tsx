@@ -18,6 +18,7 @@ import {
 import { format } from "date-fns";
 import { Pencil, Trash2, Eye, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { PlaceholderCard } from "@/components/ui/loading";
 
 type JournalType = "personal" | "student" | "class" | "collab_student_teacher";
 
@@ -172,7 +173,7 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
   );
 
   if (loading) {
-    return <div className="text-center p-4">Loading...</div>;
+    return <PlaceholderCard rows={3} />;
   }
 
   return (

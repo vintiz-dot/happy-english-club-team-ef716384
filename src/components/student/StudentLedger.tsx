@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowDownToLine, ArrowUpFromLine, ShoppingBag, Clock, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
+import { Loading } from "@/components/ui/loading";
 
 interface StudentLedgerProps {
   open: boolean;
@@ -51,7 +52,7 @@ export function StudentLedger({ open, onOpenChange, studentId, classId }: Studen
 
         <ScrollArea className="max-h-[60vh]">
           {isLoading ? (
-            <p className="text-center py-8 text-muted-foreground">Loading...</p>
+            <Loading size="sm" />
           ) : transactions.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">No transactions yet</p>
           ) : (

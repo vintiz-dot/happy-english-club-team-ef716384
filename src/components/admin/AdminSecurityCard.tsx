@@ -11,7 +11,7 @@
  */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fingerprint, KeyRound, Loader2, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { AlertTriangle, Fingerprint, KeyRound, Loader2, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ import {
   setPasscode,
   type UnlockStatus,
 } from "@/lib/adminUnlock";
+import { Loading } from "@/components/ui/loading";
 
 export function AdminSecurityCard() {
   const queryClient = useQueryClient();
@@ -96,7 +97,7 @@ export function AdminSecurityCard() {
 
       <CardContent className="space-y-5">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <Loading size="sm" />
         ) : (
           <>
             {/* ------------------------------------------------- devices */}
@@ -162,6 +163,48 @@ export function AdminSecurityCard() {
                   ))}
                 </ul>
               )}
+              {/* When enrolment fails, this is what makes the failure
+                  reportable: the three facts that decide whether a passkey
+                  can work on this machine at all. */}
+              <details className="rounded-lg border bg-muted/30 text-sm">
+                <summary className="cursor-pointer select-none p-3 text-xs font-medium text-muted-foreground">
+                  Why is this device not working?
+                </summary>
+                <dl className="space-y-1.5 border-t p-3 text-xs">
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Built-in biometrics</dt>
+                    <dd className="font-medium">
+                      {canUseBiometrics === undefined
+                        ? "checking…"
+                        : canUseBiometrics
+                          ? "available"
+                          : "not available on this browser"}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Passkeys bound to</dt>
+                    <dd className="font-mono font-medium">{status?.rpId ?? "—"}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Secure connection</dt>
+                    <dd className="font-medium">
+                      {typeof window !== "undefined" && window.isSecureContext ? "yes" : "no — passkeys need HTTPS"}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="border-t p-3 text-xs text-muted-foreground">
+                  A passkey only works on the address it was created for. If you
+                  reach this app on more than one address, add this device once
+                  on each — or use the passcode, which works everywhere.
+                  {!canUseBiometrics && (
+                    <>
+                      {" "}
+                      On Windows, Hello must be set up under Settings → Accounts →
+                      Sign-in options before a passkey can be created.
+                    </>
+                  )}
+                </p>
+              </details>
             </section>
 
             {/* ------------------------------------------------ passcode */}
@@ -179,11 +222,25 @@ export function AdminSecurityCard() {
                 </Button>
               </div>
 
-              <p className="text-sm text-muted-foreground">
-                {status?.hasPasscode
-                  ? "Set. Used when biometrics are unavailable or fail."
-                  : "Not set. Without one, a device that cannot do biometrics has no way in."}
-              </p>
+              {status?.hasPasscode ? (
+                <p className="text-sm text-muted-foreground">
+                  Set. Used when biometrics are unavailable or fail.
+                </p>
+              ) : passkeys.length > 0 ? (
+                <p className="flex items-start gap-2 rounded-lg border border-amber-400/40 bg-amber-50 p-3 text-sm dark:bg-amber-950/30">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+                  <span>
+                    <strong>Set a passcode.</strong> Your only way in is the device
+                    above. If Windows Hello stops working, or that machine is
+                    replaced, getting back in means deleting the passkey from the
+                    database by hand.
+                  </span>
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Not set. Without one, a device that cannot do biometrics has no way in.
+                </p>
+              )}
 
               {showPasscodeForm && (
                 <form

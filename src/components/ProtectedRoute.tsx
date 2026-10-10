@@ -56,7 +56,7 @@ export function ProtectedRoute({ children, allowedRole }: ProtectedRouteProps) {
   }, [user, role, loading, isAllowed, navigate, location]);
 
   if (loading) {
-    return <AppLoader message="Verifying access..." />;
+    return <AppLoader message="Verifying access" />;
   }
 
   if (!user || !isAllowed) {

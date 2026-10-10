@@ -14,6 +14,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { PlaceholderCard } from "@/components/ui/loading";
 
 interface ExamReportsManagerProps {
   /** Pass when used inside a single class context (limits to that class). */
@@ -123,7 +124,7 @@ export function ExamReportsManager({
       )}
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <PlaceholderCard rows={3} />
       ) : filtered.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">

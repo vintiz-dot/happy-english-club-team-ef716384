@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/table";
 import { EditDiscountModal } from "./discount/EditDiscountModal";
 import { dayjs } from "@/lib/date";
+import { PlaceholderCard } from "@/components/ui/loading";
 
 interface FamilyDiscount {
   id: string;
@@ -270,7 +271,7 @@ export function DiscountManager() {
   });
 
   const renderFamilyDiscounts = () => {
-    if (loadingFamily) return <p className="text-muted-foreground">Loading...</p>;
+    if (loadingFamily) return <PlaceholderCard rows={2} />;
     if (!familyDiscounts || familyDiscounts.length === 0) {
       return (
         <div className="text-center py-8">
@@ -319,7 +320,7 @@ export function DiscountManager() {
     table: string,
     emptyMessage: string
   ) => {
-    if (loading) return <p className="text-muted-foreground">Loading...</p>;
+    if (loading) return <PlaceholderCard rows={2} />;
     if (!assignments || assignments.length === 0) {
       return (
         <div className="text-center py-8">

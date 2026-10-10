@@ -68,7 +68,7 @@ export function StartupGuard({ children }: StartupGuardProps) {
   }, [navigate]);
 
   if (isChecking) {
-    return <AppLoader message="Initializing..." />;
+    return <AppLoader message="Initializing" />;
   }
 
   return <>{children}</>;

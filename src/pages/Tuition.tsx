@@ -14,6 +14,7 @@ import { getPaymentStatus, getTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { SmartFamilyPaymentModal } from "@/components/admin/SmartFamilyPaymentModal";
 import { Button } from "@/components/ui/button";
 import { Wallet } from "lucide-react";
+import { PageLoading } from "@/components/ui/loading";
 
 export default function Tuition() {
   const { role } = useAuth();
@@ -70,7 +71,11 @@ export default function Tuition() {
   }
 
   if (isLoading) {
-    return <Layout title="Tuition">Loading...</Layout>;
+    return (
+      <Layout title="Tuition">
+        <PageLoading message="Loading tuition" />
+      </Layout>
+    );
   }
 
   // Calculate status using shared utility

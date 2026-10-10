@@ -17,6 +17,7 @@ import { ClassEconomySettings } from "@/components/teacher/ClassEconomySettings"
 import { LiveEngagementHUD } from "@/components/teacher/LiveEngagementHUD";
 import { Settings } from "lucide-react";
 import { coverWindow, isRosteredFor } from "@/lib/teacherAccess";
+import { PageLoading } from "@/components/ui/loading";
 
 export default function TeacherClassDetail() {
   const { id } = useParams<{ id: string }>();
@@ -146,7 +147,11 @@ export default function TeacherClassDetail() {
   });
 
   if (classLoading) {
-    return <Layout title="Loading...">Loading...</Layout>;
+    return (
+      <Layout title="Class">
+        <PageLoading message="Loading class" />
+      </Layout>
+    );
   }
 
   if (!classData) {

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import TeacherPayrollCalendar from "@/components/teacher/TeacherPayrollCalendar";
 import { TeacherBankingInfo } from "@/components/teacher/TeacherBankingInfo";
+import { PageLoading } from "@/components/ui/loading";
 
 export default function TeacherPayroll() {
   const queryClient = useQueryClient();
@@ -177,7 +178,11 @@ export default function TeacherPayroll() {
   };
 
   if (isLoading) {
-    return <Layout title="Payroll">Loading...</Layout>;
+    return (
+      <Layout title="Payroll">
+        <PageLoading message="Loading payroll" />
+      </Layout>
+    );
   }
 
   const hourlyRate = payrollData?.hourlyRate || 200000;

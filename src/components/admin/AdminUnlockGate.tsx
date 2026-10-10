@@ -155,10 +155,19 @@ export function AdminUnlockGate({ children }: { children: ReactNode }) {
               {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Fingerprint className="h-5 w-5" aria-hidden />}
               Use Face ID, Touch ID or Hello
             </Button>
-            {status?.hasPasscode && (
+            {status?.hasPasscode ? (
               <Button variant="ghost" className="w-full" onClick={() => { setMode("passcode"); setError(null); }}>
                 Enter passcode instead
               </Button>
+            ) : (
+              // No fallback exists, so if the device is broken this screen is
+              // a dead end. Say what the way out is rather than leaving them
+              // pressing a button that will not work.
+              <p className="text-center text-xs text-muted-foreground">
+                No passcode is set on this account. If this device will not
+                verify, the passkey has to be cleared from the database before
+                you can get back in.
+              </p>
             )}
           </div>
         )}

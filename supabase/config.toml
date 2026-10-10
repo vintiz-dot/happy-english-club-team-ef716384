@@ -117,3 +117,15 @@ verify_jwt = true
 # uniform error messages, and a hard refusal on staff accounts.
 [functions.redeem-access-code]
 verify_jwt = false
+
+# The admin sign-in gate. JWT verified at the gateway, then an explicit
+# admin-role check inside before any passkey or passcode state is touched.
+# Stated here rather than left to the deploy-time default: everything in
+# this file is explicit, and this one guards the hashes.
+[functions.admin-unlock]
+verify_jwt = true
+
+# The audit trail reader. Service role inside, so the JWT check is the
+# only thing standing between a signed-in user and every recorded change.
+[functions.admin-activity-logs]
+verify_jwt = true

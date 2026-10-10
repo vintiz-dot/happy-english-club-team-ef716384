@@ -14,6 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PlaceholderCard } from "@/components/ui/loading";
 
 export function ExpendituresManager({ selectedMonth }: { selectedMonth: string }) {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -208,7 +209,7 @@ export function ExpendituresManager({ selectedMonth }: { selectedMonth: string }
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div>Loading...</div>
+          <PlaceholderCard rows={4} />
         ) : expenditures && expenditures.length > 0 ? (
           <Table>
             <TableHeader>

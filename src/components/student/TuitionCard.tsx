@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DollarSign, TrendingDown, Award, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { InvoiceDownloadButton } from "@/components/invoice/InvoiceDownloadButton";
+import { Loading } from "@/components/ui/loading";
 
 interface TuitionData {
   baseAmount: number;
@@ -80,7 +81,7 @@ export function TuitionCard({ studentId }: { studentId: string }) {
           <CardTitle>Tuition</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-center py-8">Loading...</p>
+          <Loading size="sm" />
         </CardContent>
       </Card>
     );

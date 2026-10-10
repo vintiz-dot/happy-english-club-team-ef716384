@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StudentProfileContext } from "@/contexts/StudentProfileContext";
+import { Loading } from "@/components/ui/loading";
 
 type Assignment = {
   id: string;
@@ -234,7 +235,7 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
 
         {/* Calendar Grid */}
         {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">Loading...</div>
+          <Loading message="Loading calendar" />
         ) : (
           <>
             <div className="grid grid-cols-7 gap-1 text-xs text-muted-foreground font-medium">

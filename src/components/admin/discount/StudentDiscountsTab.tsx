@@ -28,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PlaceholderCard } from "@/components/ui/loading";
 
 interface StudentDiscountsTabProps {
   studentId: string;
@@ -173,7 +174,7 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
         </CardHeader>
         <CardContent>
           {isLoadingEnrollments ? (
-            <p className="text-muted-foreground">Loading...</p>
+            <PlaceholderCard rows={3} />
           ) : !enrollments || enrollments.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">No enrollments found</p>
@@ -285,7 +286,7 @@ export function StudentDiscountsTab({ studentId }: StudentDiscountsTabProps) {
         </CardHeader>
         <CardContent>
         {isLoading ? (
-          <p className="text-muted-foreground">Loading...</p>
+          <PlaceholderCard rows={3} />
         ) : !assignments || assignments.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground">No special discounts assigned yet</p>

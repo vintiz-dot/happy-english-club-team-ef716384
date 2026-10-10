@@ -7,6 +7,7 @@ import { ClassesList } from "@/components/admin/ClassesList";
 import { EnrollmentManager } from "@/components/admin/EnrollmentManager";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShieldAlert } from "lucide-react";
+import { PageLoading } from "@/components/ui/loading";
 
 const Classes = () => {
   const queryClient = useQueryClient();
@@ -15,9 +16,7 @@ const Classes = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
+        <PageLoading message="Loading classes" />
       </Layout>
     );
   }

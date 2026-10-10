@@ -8,6 +8,7 @@ import { ChangePassword } from "@/components/auth/ChangePassword";
 import NotificationBell from "@/components/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useIdentity, initialsOf } from "@/hooks/useIdentity";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipProvider, TooltipTrigger, RichTooltipContent } from "@/components/ui/tooltip";
 import { StudentNavBar } from "@/components/student/StudentNavBar";
@@ -31,8 +32,9 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   const { user, role, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [userName, setUserName] = useState<string>("");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const { data: identity } = useIdentity();
+  const userName = identity?.name ?? "";
+  const avatarUrl = identity?.avatarUrl ?? null;
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_KEY);
     return saved !== "true"; // collapsed = true means sidebar is closed
@@ -44,43 +46,6 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
     localStorage.setItem(SIDEBAR_KEY, (!sidebarOpen).toString());
   }, [sidebarOpen]);
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      if (!user) return;
-
-      const { data: studentData } = await supabase
-        .from("students")
-        .select("full_name, avatar_url")
-        .eq("linked_user_id", user.id)
-        .maybeSingle();
-      if (studentData?.full_name) {
-        setUserName(studentData.full_name);
-        setAvatarUrl(studentData.avatar_url);
-        return;
-      }
-
-      const { data: teacherData } = await supabase
-        .from("teachers")
-        .select("full_name, avatar_url")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (teacherData?.full_name) {
-        setUserName(teacherData.full_name);
-        setAvatarUrl(teacherData.avatar_url);
-        return;
-      }
-
-      const { data: familyData } = await supabase
-        .from("families")
-        .select("name")
-        .eq("primary_user_id", user.id)
-        .single();
-      if (familyData?.name) {
-        setUserName(familyData.name);
-      }
-    };
-    fetchUserInfo();
-  }, [user]);
 
   if (!user) {
     return <>{children}</>;
@@ -166,16 +131,40 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
               <ProfileSwitcher />
               <NotificationBell />
               {userName && (
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full glass-sm">
+                <div
+                  className={cn(
+                    "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full glass-sm",
+                    role === "admin" && "cursor-pointer transition-colors hover:bg-accent/60",
+                  )}
+                  role={role === "admin" ? "button" : undefined}
+                  tabIndex={role === "admin" ? 0 : undefined}
+                  title={role === "admin" ? "View your profile" : undefined}
+                  onClick={role === "admin" ? () => navigate("/admin?tab=account") : undefined}
+                  onKeyDown={
+                    role === "admin"
+                      ? (e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            navigate("/admin?tab=account");
+                          }
+                        }
+                      : undefined
+                  }
+                >
                   <div className="rounded-full p-[1.5px] bg-gradient-to-br from-blue-500 via-cyan-400 to-amber-300">
                     <Avatar className="h-7 w-7 ring-1 ring-background">
                       <AvatarImage src={avatarUrl || undefined} alt={userName} />
-                      <AvatarFallback className="text-xs">
-                        {userName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
-                      </AvatarFallback>
+                      <AvatarFallback className="text-xs">{initialsOf(userName)}</AvatarFallback>
                     </Avatar>
                   </div>
-                  <span className="text-sm font-medium text-foreground">{userName}</span>
+                  <span className="flex flex-col leading-tight">
+                    <span className="text-sm font-medium text-foreground">{userName}</span>
+                    {role && (
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        {role}
+                      </span>
+                    )}
+                  </span>
                 </div>
               )}
               <ChangePassword />
@@ -308,9 +297,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
               <div className="rounded-full p-[1.5px] bg-gradient-to-br from-blue-500 via-cyan-400 to-amber-300 shrink-0">
                 <Avatar className="h-7 w-7 ring-1 ring-background">
                   <AvatarImage src={avatarUrl || undefined} alt={userName} />
-                  <AvatarFallback className="text-xs">
-                    {userName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-xs">{initialsOf(userName)}</AvatarFallback>
                 </Avatar>
               </div>
               <span className="text-sm font-medium truncate">{userName}</span>
