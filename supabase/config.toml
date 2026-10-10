@@ -129,3 +129,10 @@ verify_jwt = true
 # only thing standing between a signed-in user and every recorded change.
 [functions.admin-activity-logs]
 verify_jwt = true
+
+# Per-student financial audit for the Reports screen. Service role inside
+# (it resolves actor ids to names, which needs auth.users), admin-role
+# checked before anything is read. Read-only: it never calls
+# calculate-tuition, which would write the invoice it is reporting on.
+[functions.student-audit]
+verify_jwt = true

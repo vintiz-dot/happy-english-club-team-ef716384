@@ -14,10 +14,13 @@ import { TrendingUp, TrendingDown, Compass, ListChecks } from "lucide-react";
 export const SKILLS = ["speaking", "listening", "reading", "writing", "grammar", "vocabulary"] as const;
 
 /** The school letterhead — visible on screen, on paper and in exported PDFs. */
-export function BrandHeader({ studentName, periodStart, periodEnd }: {
+export function BrandHeader({ studentName, periodStart, periodEnd, title = "Progress Report" }: {
   studentName: string;
   periodStart?: string | null;
   periodEnd?: string | null;
+  /** What this document is. The letterhead is shared with the financial
+      statement, which is emphatically not a progress report. */
+  title?: string;
 }) {
   return (
     <div className="flex items-center gap-3 border-b pb-3 print-avoid-break">
@@ -33,7 +36,7 @@ export function BrandHeader({ studentName, periodStart, periodEnd }: {
         </p>
       </div>
       <div className="text-right">
-        <p className="text-sm font-bold leading-tight">Progress Report</p>
+        <p className="text-sm font-bold leading-tight">{title}</p>
         <p className="text-[11px] text-muted-foreground print-muted">
           {studentName}
           {periodStart && periodEnd ? ` · ${periodStart} → ${periodEnd}` : ""}
