@@ -47,7 +47,7 @@ function equalBytes(a: Uint8Array, b: Uint8Array): boolean {
 }
 
 async function sha256(data: Uint8Array): Promise<Uint8Array> {
-  return new Uint8Array(await crypto.subtle.digest("SHA-256", data));
+  return new Uint8Array(await crypto.subtle.digest("SHA-256", data as unknown as BufferSource));
 }
 
 /* ------------------------------------------------------- authenticatorData
