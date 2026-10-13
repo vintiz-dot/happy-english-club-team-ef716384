@@ -54,6 +54,7 @@ export function ClassLeaderboardShared({
     homeworkPoints: number;
     participationPoints: number;
     readingTheoryPoints: number;
+    vocabularyQuizPoints: number;
     rank: number;
     selectedMonth: string;
   } | null>(null);
