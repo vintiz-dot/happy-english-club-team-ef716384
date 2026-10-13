@@ -27,8 +27,18 @@ function asStyle(value: unknown): BoardStyle {
   return BOARD_STYLES.includes(value as BoardStyle) ? (value as BoardStyle) : DEFAULT_BOARD_STYLE;
 }
 
+export interface ClassBoardInfo {
+  style: BoardStyle;
+  /**
+   * The class's own name. Every board wants it in its heading slot, and
+   * one of them was being handed the literal word "Leaderboard" instead,
+   * so its header read "LEADERBOARD Leaderboard".
+   */
+  name: string;
+}
+
 export function useClassBoardStyle(classId: string | undefined) {
-  return useQuery<BoardStyle>({
+  return useQuery<ClassBoardInfo>({
     queryKey: ["class-board-style", classId],
     enabled: !!classId,
     // The style changes about once a term. Holding it avoids a query on
@@ -41,7 +51,8 @@ export function useClassBoardStyle(classId: string | undefined) {
         .eq("id", classId!)
         .maybeSingle();
       if (error) throw error;
-      return asStyle((data as { leaderboard_style?: unknown } | null)?.leaderboard_style);
+      const row = data as { leaderboard_style?: unknown; name?: string } | null;
+      return { style: asStyle(row?.leaderboard_style), name: row?.name ?? "" };
     },
   });
 }

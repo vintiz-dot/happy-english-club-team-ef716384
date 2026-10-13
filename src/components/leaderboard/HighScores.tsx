@@ -4,7 +4,7 @@
  * A 1920x1080 display board drawn to look like the front of an arcade
  * machine: a flat blue stage behind a dot screen, a grid floor, a marquee
  * of blinking bulbs under the podium, and one rule holding it together —
- * every surface is outlined in the same ink (#110D33) and sits on a hard
+ * every surface is outlined in the same ink (#14102B) and sits on a hard
  * offset shadow in that ink, with no blur and no gradient anywhere except
  * the avatar level rings. The scale transform is applied by BoardFrame,
  * so everything here is true-size pixels.
@@ -19,7 +19,7 @@
  *    instead of 24px, a 12px gap) — the 68px title, the 104px header,
  *    the 380/440/380 podium columns, the 170px strip and the 470px rail
  *    are all untouched. Vocabulary took the remaining arcade green,
- *    #3DF2A0, as its colour; it is the one palette member not already
+ *    #2FE0AE, as its colour; it is the one palette member not already
  *    carrying a category.
  *
  *  - The category icons come from BOARD_CATEGORIES (lucide, stroked)
@@ -67,18 +67,18 @@ import {
 
 /* ------------------------------------------------------------- palette */
 
-const INK = "#110D33";
-const STAGE = "#2430C9";
+const INK = "#14102B";
+const STAGE = "#2349C7";
 const WHITE = "#FFFFFF";
 const YELLOW = "#FFE14D";
 const GOLD = "#FFC21A";
-const MAGENTA = "#FF3D8B";
-const CYAN = "#3DD9FF";
-const GREEN = "#3DF2A0";
+const MAGENTA = "#F2437F";
+const CYAN = "#35D6E0";
+const GREEN = "#2FE0AE";
 const ORANGE = "#FF8C42";
-const SILVER = "#DCE3F2";
-const TRACK_DARK = "#1B1550";
-const TRACK_LIGHT = "#E8EBF7";
+const SILVER = "#C3D3EE";
+const TRACK_DARK = "#1A1548";
+const TRACK_LIGHT = "#E7ECF8";
 const NICK_INK = "#4A4670";
 const ROW_IDLE = "#F2F4FF";
 

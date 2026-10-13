@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Users, X, CheckSquare, Clock } from "lucide-react";
+import { Trophy, Users, X, CheckSquare, Clock, Monitor } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import {
   Select,
@@ -15,7 +15,10 @@ import { BulkPointsDialog } from "@/components/shared/BulkPointsDialog";
 import { Button } from "@/components/ui/button";
 import { StudentAnalyticsModal } from "@/components/student/StudentAnalyticsModal";
 import { EconomyActions } from "@/components/shared/EconomyActions";
-import { PodiumBoard, type BoardEntry } from "@/components/shared/PodiumBoard";
+import { type BoardEntry } from "@/components/shared/PodiumBoard";
+import { StyledClassBoard } from "@/components/leaderboard/StyledClassBoard";
+import { useClassBoardStyle } from "@/components/leaderboard/useClassBoardStyle";
+import { isDisplayBoard } from "@/components/leaderboard/types";
 import { useClassMonitor } from "@/hooks/useClassMonitor";
 
 interface ClassLeaderboardSharedProps {
@@ -28,6 +31,13 @@ interface SelectedStudent {
   id: string;
   name: string;
   avatarUrl?: string | null;
+}
+
+/** "2026-10" -> "October 2026", for the display board's header. */
+function monthLabelOf(ym: string): string {
+  const [y, m] = ym.split("-").map(Number);
+  if (!y || !m) return ym;
+  return new Date(y, m - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
 }
 
 export function ClassLeaderboardShared({
@@ -61,6 +71,17 @@ export function ClassLeaderboardShared({
   const { toast } = useToast();
   const previousLeaderboardRef = useRef<any[]>([]);
   const { data: monitorStudentId } = useClassMonitor(classId);
+
+  // The class's chosen board shows here too, so a teacher sees what the
+  // children see without leaving the page. The display boards are
+  // read-only by design, though, and this screen is also where points get
+  // awarded — so when there is something to manage the teacher can drop
+  // back to the classic board, which has the selection and bulk controls.
+  const { data: classBoardInfo } = useClassBoardStyle(classId);
+  const [showClassicBoard, setShowClassicBoard] = useState(false);
+  const styleIsDisplay = isDisplayBoard(classBoardInfo?.style ?? "podium");
+  const canSwapBoard = styleIsDisplay && canManagePoints;
+  const boardPeriodLabel = monthLabelOf(selectedMonth);
 
   // Fetch economy settings for this class
   const { data: classEconomy } = useQuery({
@@ -311,6 +332,35 @@ export function ClassLeaderboardShared({
           <h2 className="studio-title truncate text-xl">Leaderboard</h2>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {/* Only offered when there is actually a swap to make: the class
+              uses a display board AND this person can award points. */}
+          {canSwapBoard && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => {
+                setShowClassicBoard((v) => {
+                  if (v) setSelectedStudents(new Map());
+                  return !v;
+                });
+              }}
+              title={
+                showClassicBoard
+                  ? "Show the board your class sees"
+                  : "Switch to the board with the awarding controls"
+              }
+            >
+              {showClassicBoard ? (
+                <Monitor className="h-3.5 w-3.5" aria-hidden />
+              ) : (
+                <CheckSquare className="h-3.5 w-3.5" aria-hidden />
+              )}
+              <span className="hidden sm:inline">
+                {showClassicBoard ? "Class view" : "Award points"}
+              </span>
+            </Button>
+          )}
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="h-9 w-auto min-w-[130px] rounded-full border-studio bg-studio-card text-sm font-semibold text-ink focus:ring-0 focus:ring-offset-0 sm:min-w-[170px]">
               <SelectValue />
@@ -344,8 +394,10 @@ export function ClassLeaderboardShared({
         </div>
       </div>
 
-      <PodiumBoard
+      <StyledClassBoard
         entries={boardEntries}
+        periodLabel={boardPeriodLabel}
+        forceClassic={showClassicBoard}
         classId={classId}
         currentStudentId={currentStudentId}
         canManagePoints={canManagePoints}

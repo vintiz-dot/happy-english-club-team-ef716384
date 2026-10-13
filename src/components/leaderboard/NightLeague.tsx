@@ -60,19 +60,19 @@ import {
 
 /* ------------------------------------------------------------- palette */
 
-const BASE = "#070A12";
+const BASE = "#0B0A14";
 const INK = "#EEF2F8";
 const SOFT = "#C9D0DC";
 const MUTED = "#9AA3B5";
 const DIM = "#8A93A6";
 
-const ACCENT = "#C6FF3D";
-const ACCENT_SOFT = "rgba(198,255,61,0.08)";
-const ACCENT_LINE = "rgba(198,255,61,0.45)";
-const ACCENT_GLOW = "rgba(198,255,61,0.45)";
-const ACCENT_ROW = "rgba(198,255,61,0.1)";
-const GRID_LINE = "rgba(198,255,61,0.18)";
-const FLOOR_GLOW = "rgba(198,255,61,0.16)";
+const ACCENT = "#25DCCB";
+const ACCENT_SOFT = "rgba(37,220,203,0.08)";
+const ACCENT_LINE = "rgba(37,220,203,0.45)";
+const ACCENT_GLOW = "rgba(37,220,203,0.45)";
+const ACCENT_ROW = "rgba(37,220,203,0.1)";
+const GRID_LINE = "rgba(37,220,203,0.18)";
+const FLOOR_GLOW = "rgba(37,220,203,0.16)";
 
 const PANEL_BG = "rgba(255,255,255,0.045)";
 const PANEL_LINE = "rgba(255,255,255,0.1)";
@@ -120,7 +120,7 @@ function hexA(hex: string, a: number): string {
   let h = String(hex || "").replace("#", "");
   if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
   const n = parseInt(h, 16);
-  if (h.length !== 6 || Number.isNaN(n)) return `rgba(198,255,61,${a})`;
+  if (h.length !== 6 || Number.isNaN(n)) return `rgba(37,220,203,${a})`;
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 }
 
@@ -682,7 +682,7 @@ export function NightLeague({
           border: "none",
           borderRadius: 11,
           background: on ? ACCENT : "rgba(255,255,255,0)",
-          color: on ? "#0A0D06" : SOFT,
+          color: on ? "#04231F" : SOFT,
           display: "flex",
           alignItems: "center",
           gap: 10,

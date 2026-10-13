@@ -71,7 +71,7 @@ export function StyledClassBoard({
   canReadLedger = true,
   ...board
 }: StyledClassBoardProps) {
-  const { data: style } = useClassBoardStyle(board.classId);
+  const { data: info } = useClassBoardStyle(board.classId);
   const isMobile = useIsMobile();
 
   const [activeCategory, setActiveCategory] = useState<BoardCategory["key"] | null>(null);
@@ -88,7 +88,7 @@ export function StyledClassBoard({
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }, []);
 
-  const chosen = style ?? "podium";
+  const chosen = info?.style ?? "podium";
   const View = VIEWS[chosen];
 
   // Anything that is not a display board, cannot be read at this size, or
@@ -104,7 +104,8 @@ export function StyledClassBoard({
           // A changing key restarts the entrance animation, which is what
           // the Reveal button is for.
           key={revealKey}
-          title="Leaderboard"
+          // The class's own name: what every board wants in its heading.
+          title={info?.name || "Leaderboard"}
           periodLabel={periodLabel}
           rows={rows}
           extras={extras}

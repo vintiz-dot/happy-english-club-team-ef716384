@@ -47,7 +47,8 @@ export function BoardStylePicker({
   ageRange?: string | null;
   canEdit?: boolean;
 }) {
-  const { data: current, isLoading } = useClassBoardStyle(classId);
+  const { data: info, isLoading } = useClassBoardStyle(classId);
+  const current = info?.style;
   const invalidate = useInvalidateBoardStyle();
   const [saving, setSaving] = useState<BoardStyle | null>(null);
 

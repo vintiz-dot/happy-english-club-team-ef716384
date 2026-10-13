@@ -21,7 +21,7 @@
  *    210x102 horizontal cell fits the name at full size. The panel's own
  *    geometry (flex-1, 36px radius, 22/24 padding) is unchanged.
  *  - Category icons are hand-drawn in the source's language (pastel fill,
- *    1.6px #2A2140 outline) rather than taken from BOARD_CATEGORIES.icon.
+ *    1.6px #201D30 outline) rather than taken from BOARD_CATEGORIES.icon.
  *    The lucide icons are thin single-weight strokes; at 40px beside these
  *    they read as a different board. The fourth glyph, an "Aa" card for
  *    Vocabulary, is new — a sparkle would have been confused with the star
@@ -57,19 +57,19 @@ import { BOARD_CATEGORIES, type BoardCategory, type BoardRow, type BoardViewProp
 const BODY_FONT = "'Andika', 'Trebuchet MS', system-ui, sans-serif";
 const DISPLAY_FONT = "'Baloo 2', 'Trebuchet MS', sans-serif";
 
-const INK = "#2A2140";
-const SKY = "#BDE6FB";
-const MUTED = "#5B4F78";
-const RING_FILL = "#FF9F1C";
+const INK = "#201D30";
+const SKY = "#C7E8F6";
+const MUTED = "#4B4566";
+const RING_FILL = "#F5A623";
 const PODIUM_TRACK = "rgba(255,255,255,0.92)";
-const PANEL_TRACK = "#EEF1F6";
-const GRASS_INK = "#1B4D28";
+const PANEL_TRACK = "#EDF1F8";
+const GRASS_INK = "#14543A";
 
 /** Step 1 is the tallest and gold. The source's exact three. */
 const STEP: Record<number, { h: number; face: string; lip: string; num: string }> = {
-  1: { h: 250, face: "#FFC83D", lip: "#D99A00", num: "#8A5A00" },
-  2: { h: 190, face: "#C3D6F2", lip: "#8EA6CC", num: "#3F5683" },
-  3: { h: 140, face: "#FFAD7A", lip: "#DD7A45", num: "#8A3D12" },
+  1: { h: 250, face: "#FFC83D", lip: "#D68F06", num: "#7A5200" },
+  2: { h: 190, face: "#C3D3EE", lip: "#8FA5CE", num: "#39508A" },
+  3: { h: 140, face: "#FF9D6E", lip: "#D9703C", num: "#8A3D12" },
 };
 
 /** Soft background per category, for the Champions cells. */
@@ -350,7 +350,7 @@ function Decor() {
           width: 340,
           height: 340,
           borderRadius: "50%",
-          background: "#FFE07A",
+          background: "#FFE08A",
           boxShadow: "0 0 0 34px rgba(255,224,122,0.4), 0 0 0 78px rgba(255,224,122,0.18)",
         }}
       />
@@ -406,7 +406,7 @@ function Decor() {
       />
       <Star
         size={30}
-        fill="#FFF6C9"
+        fill="#FFF4D2"
         stroke="none"
         strokeWidth={0}
         style={{ ...twinkle, left: 930, top: 64, animation: "sb-twinkle 2.7s ease-in-out -0.6s infinite" }}
@@ -420,7 +420,7 @@ function Decor() {
           width: 1500,
           height: 760,
           borderRadius: "50%",
-          background: "#74C455",
+          background: "#4FB783",
         }}
       />
       <div
@@ -431,7 +431,7 @@ function Decor() {
           width: 2600,
           height: 700,
           borderRadius: "50%",
-          background: "#8BD46A",
+          background: "#6ECB9C",
         }}
       />
     </div>
@@ -440,7 +440,7 @@ function Decor() {
 
 /** Deterministic, so the same reveal looks the same twice. */
 function Confetti() {
-  const colors = ["#FFC83D", "#E0457B", "#3FA9F5", "#36C28A", "#7C5CE0", "#FF8A3D"];
+  const colors = ["#FFC83D", "#F2437F", "#2A52BE", "#1DC9BB", "#6D5BD0", "#FF9D6E"];
   const pieces = Array.from({ length: 46 }, (_, j) => {
     const a = (j * 37 + 11) % 100;
     const b = (j * 53 + 7) % 100;
@@ -559,9 +559,9 @@ function Crown({ motion }: { motion: boolean }) {
         strokeLinejoin="round"
       />
       <path d="M4.6 13.8h14.8" fill="none" stroke={INK} strokeWidth={1.1} strokeLinecap="round" />
-      <circle cx="12" cy="2.4" r="1.5" fill="#E0457B" stroke={INK} strokeWidth={0.9} />
-      <circle cx="2.2" cy="5.6" r="1.25" fill="#3FA9F5" stroke={INK} strokeWidth={0.9} />
-      <circle cx="21.8" cy="5.6" r="1.25" fill="#3FA9F5" stroke={INK} strokeWidth={0.9} />
+      <circle cx="12" cy="2.4" r="1.5" fill="#F2437F" stroke={INK} strokeWidth={0.9} />
+      <circle cx="2.2" cy="5.6" r="1.25" fill="#2A52BE" stroke={INK} strokeWidth={0.9} />
+      <circle cx="21.8" cy="5.6" r="1.25" fill="#2A52BE" stroke={INK} strokeWidth={0.9} />
     </svg>
   );
 }
@@ -761,8 +761,8 @@ function PodiumSlot({ row, place, motion }: { row?: BoardRow; place: 1 | 2 | 3; 
               right: m.tieRight,
               padding: "4px 20px 6px",
               borderRadius: 999,
-              background: "#E0457B",
-              boxShadow: "0 5px 0 #A3284F",
+              background: "#F2437F",
+              boxShadow: "0 5px 0 #A82753",
               color: "#FFFFFF",
               fontFamily: DISPLAY_FONT,
               fontWeight: 800,
@@ -890,7 +890,7 @@ function Waiting({ size, big }: { size: number; big: boolean }) {
           boxSizing: "border-box",
           borderRadius: "50%",
           border: "5px dashed #DFE4EF",
-          background: "#F7F9FC",
+          background: "#F7F8FC",
         }}
       />
       <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -952,7 +952,7 @@ export function StarBoard({
     padding: 0,
     borderRadius: 28,
     background: on ? "#FFC83D" : "#FFFFFF",
-    boxShadow: `0 8px 0 ${on ? "#D99A00" : "rgba(42,33,64,0.16)"}`,
+    boxShadow: `0 8px 0 ${on ? "#D68F06" : "rgba(42,33,64,0.16)"}`,
     transform: `translateY(${on ? -4 : 0}px)`,
     display: "flex",
     flexDirection: "column",
@@ -1021,7 +1021,7 @@ export function StarBoard({
                 height: 76,
                 flexShrink: 0,
                 borderRadius: "50%",
-                background: "#FFF1C2",
+                background: "#FFF2CC",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1093,7 +1093,7 @@ export function StarBoard({
                 height: 100,
                 padding: "0 34px 0 20px",
                 borderRadius: 28,
-                background: "#178A57",
+                background: "#198653",
                 boxShadow: "0 8px 0 #0D5B38",
                 color: "#FFFFFF",
                 display: "flex",
@@ -1304,7 +1304,7 @@ export function StarBoard({
                                   width: `${podiumMin > 0 ? clampPct((s.points / podiumMin) * 100) : 0}%`,
                                   height: "100%",
                                   borderRadius: 999,
-                                  background: "#36C28A",
+                                  background: "#1DC9BB",
                                 }}
                               />
                             </div>
@@ -1325,7 +1325,7 @@ export function StarBoard({
                               width: "fit-content",
                               padding: "5px 16px",
                               borderRadius: 999,
-                              background: "#FFF1C2",
+                              background: "#FFF2CC",
                               color: "#6B4300",
                               fontSize: 20,
                               fontWeight: 700,
@@ -1347,11 +1347,11 @@ export function StarBoard({
               style={{ width: 480, flexShrink: 0, display: "flex", flexDirection: "column", gap: 20 }}
             >
               <section style={{ ...PANEL, height: 300, flexShrink: 0, padding: "24px 28px", gap: 12 }}>
-                <PanelHead tint="#DDF5E6" ink="#178A57" title="Big Climber">
+                <PanelHead tint="#E4F6EC" ink="#198653" title="Big Climber">
                   <svg width={30} height={30} viewBox="0 0 24 24" aria-hidden="true">
                     <path
                       d="m8 3 4 8 5-5 5 15H2L8 3z"
-                      fill="#9BE3B9"
+                      fill="#8FD9B4"
                       stroke="currentColor"
                       strokeWidth={2}
                       strokeLinejoin="round"
@@ -1391,7 +1391,7 @@ export function StarBoard({
                           fontWeight: 800,
                           fontSize: 66,
                           lineHeight: 1,
-                          color: "#178A57",
+                          color: "#198653",
                         }}
                       >
                         <svg width={46} height={46} viewBox="0 0 24 24" aria-hidden="true">
@@ -1493,7 +1493,7 @@ export function StarBoard({
                               height: 24,
                               flexShrink: 0,
                               borderRadius: "50%",
-                              background: i < streak.days ? "#7C5CE0" : "#ECE8F7",
+                              background: i < streak.days ? "#6D5BD0" : "#ECE8F7",
                             }}
                           />
                         ))}
