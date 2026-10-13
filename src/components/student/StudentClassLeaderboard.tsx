@@ -76,6 +76,7 @@ export function StudentClassLeaderboard({
     homeworkPoints: number;
     participationPoints: number;
     readingTheoryPoints: number;
+    vocabularyQuizPoints: number;
     rank: number;
   } | null>(null);
 
