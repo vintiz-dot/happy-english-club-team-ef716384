@@ -813,6 +813,7 @@ export type Database = {
           economy_mode: boolean
           id: string
           is_active: boolean
+          leaderboard_style: string
           max_students: number | null
           name: string
           points_to_cash_rate: number
@@ -837,6 +838,7 @@ export type Database = {
           economy_mode?: boolean
           id?: string
           is_active?: boolean
+          leaderboard_style?: string
           max_students?: number | null
           name: string
           points_to_cash_rate?: number
@@ -861,6 +863,7 @@ export type Database = {
           economy_mode?: boolean
           id?: string
           is_active?: boolean
+          leaderboard_style?: string
           max_students?: number | null
           name?: string
           points_to_cash_rate?: number
