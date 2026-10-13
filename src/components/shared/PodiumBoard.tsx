@@ -26,7 +26,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getAvatarUrl, getRandomAvatarUrl } from "@/lib/avatars";
-import { BookOpen, Flame, Sparkles, Star, Trophy, Zap } from "lucide-react";
+import { BookOpen, Flame, Sparkles, SpellCheck, Star, Trophy, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogSpendButton } from "@/components/shared/EconomyActions";
 
@@ -38,6 +38,13 @@ export interface BoardEntry {
   homework_points: number;
   participation_points: number;
   reading_theory_points: number;
+  /**
+   * The fourth bucket. student_points has had it all along and
+   * total_points is GENERATED across all four, so leaving it out of this
+   * type is why the pills below never added up to the number beside them.
+   * Optional because older callers may not select it; treated as 0.
+   */
+  vocabulary_quiz_points?: number;
   students?: { full_name?: string; avatar_url?: string | null } | null;
 }
 
@@ -422,6 +429,11 @@ function BoardRow({
           {entry.reading_theory_points > 0 && (
             <span className="inline-flex items-center gap-1" title="Reading">
               <Flame className="h-3 w-3" aria-hidden /> {entry.reading_theory_points}
+            </span>
+          )}
+          {(entry.vocabulary_quiz_points ?? 0) > 0 && (
+            <span className="inline-flex items-center gap-1" title="Vocabulary">
+              <SpellCheck className="h-3 w-3" aria-hidden /> {entry.vocabulary_quiz_points}
             </span>
           )}
           {isEconomyMode && (

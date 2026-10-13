@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sword, BookOpen, TrendingUp, Sparkles, Zap, History, GraduationCap } from "lucide-react";
+import { BookOpen, GraduationCap, History, Sparkles, SpellCheck, Sword, TrendingUp, X, Zap } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,6 +26,7 @@ interface StudentAnalyticsModalProps {
     homeworkPoints?: number;
     participationPoints?: number;
     readingTheoryPoints?: number;
+    vocabularyQuizPoints?: number;
     rank: number;
   } | null;
   classId: string;
@@ -221,6 +222,11 @@ export function StudentAnalyticsModal({ open, onOpenChange, student, classId, se
                       <GraduationCap className="h-4 w-4 text-teal-500" />
                       <span className="font-semibold text-sm">{student.readingTheoryPoints || 0}</span>
                       <span className="text-muted-foreground text-xs">RT</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-violet-500/10 rounded-full px-3 py-1.5">
+                      <SpellCheck className="h-4 w-4 text-violet-500" />
+                      <span className="font-semibold text-sm">{student.vocabularyQuizPoints || 0}</span>
+                      <span className="text-muted-foreground text-xs">Vocab</span>
                     </div>
                   </motion.div>
                 </div>

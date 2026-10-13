@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
           : Promise.resolve({ data: null as any }),
         studentIds.length
           ? adminClient.from("student_points")
-              .select("student_id, participation_points, homework_points, reading_theory_points, total_points")
+              .select("student_id, participation_points, homework_points, reading_theory_points, vocabulary_quiz_points, total_points")
               .eq("class_id", classId).eq("month", month).in("student_id", studentIds)
           : Promise.resolve({ data: [] as any[], error: null as any }),
       ]);
@@ -181,6 +181,7 @@ Deno.serve(async (req) => {
       participation_points?: number | null;
       homework_points?: number | null;
       reading_theory_points?: number | null;
+      vocabulary_quiz_points?: number | null;
       total_points?: number | null;
     }
     const points: PointsRow[] = rawPoints ?? [];
@@ -206,6 +207,12 @@ Deno.serve(async (req) => {
           // teacher's does. Clients treat it as optional, so an older
           // deploy of this function degrades to hiding the reading pill.
           reading_theory_points: studentPoints?.reading_theory_points || 0,
+          // The fourth bucket. total_points is GENERATED across all four,
+          // so omitting this made the breakdown short of the total it sat
+          // beside — by exactly whatever the student had earned from
+          // vocabulary practice, which save-word, record-practice and
+          // ocr-vocab-scan all write.
+          vocabulary_quiz_points: studentPoints?.vocabulary_quiz_points || 0,
           total_points: studentPoints?.total_points || 0,
           is_current_user: enrollment.student_id === currentStudentId,
         };
