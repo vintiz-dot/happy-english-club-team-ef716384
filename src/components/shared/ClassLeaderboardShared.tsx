@@ -186,6 +186,7 @@ export function ClassLeaderboardShared({
             homework_points: studentPoints?.homework_points || 0,
             participation_points: studentPoints?.participation_points || 0,
             reading_theory_points: studentPoints?.reading_theory_points || 0,
+            vocabulary_quiz_points: studentPoints?.vocabulary_quiz_points || 0,
             total_points: studentPoints?.total_points || 0,
             students: enrollment.students,
           };
@@ -363,6 +364,7 @@ export function ClassLeaderboardShared({
             homeworkPoints: entry.homework_points || 0,
             participationPoints: entry.participation_points || 0,
             readingTheoryPoints: entry.reading_theory_points || 0,
+            vocabularyQuizPoints: entry.vocabulary_quiz_points || 0,
             rank: entry.rank,
             selectedMonth,
           })

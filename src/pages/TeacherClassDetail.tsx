@@ -14,6 +14,7 @@ import { ClassLeaderboardShared } from "@/components/shared/ClassLeaderboardShar
 import { ManualPointsDialog } from "@/components/shared/ManualPointsDialog";
 import { SetMonitorControl } from "@/components/teacher/SetMonitorControl";
 import { ClassEconomySettings } from "@/components/teacher/ClassEconomySettings";
+import { ClassBoardSettings } from "@/components/leaderboard/ClassBoardSettings";
 import { LiveEngagementHUD } from "@/components/teacher/LiveEngagementHUD";
 import { Settings } from "lucide-react";
 import { coverWindow, isRosteredFor } from "@/lib/teacherAccess";
@@ -258,6 +259,9 @@ export default function TeacherClassDetail() {
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
+          {/* Reachable only once the roster/cover access check above has
+              passed, so a teacher never sees another class's settings. */}
+          <ClassBoardSettings classId={id!} />
           <ClassEconomySettings classId={id!} />
         </TabsContent>
       </Tabs>

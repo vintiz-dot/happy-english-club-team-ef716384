@@ -9,6 +9,7 @@ import ClassCalendar from "@/components/admin/class/ClassCalendarEnhanced";
 import ClassEnrollments from "@/components/admin/class/ClassEnrollments";
 import ClassHomework from "@/components/admin/class/ClassHomework";
 import ClassSettings from "@/components/admin/class/ClassSettings";
+import { ClassBoardSettings } from "@/components/leaderboard/ClassBoardSettings";
 import RecurringSessionsManager from "@/components/admin/class/RecurringSessionsManager";
 import { ClassLeaderboardShared } from "@/components/shared/ClassLeaderboardShared";
 import { ManualPointsDialog } from "@/components/shared/ManualPointsDialog";
@@ -100,6 +101,7 @@ const ClassDetail = () => {
           <TabsContent value="settings" className="mt-6">
             <div className="grid md:grid-cols-3 gap-6">
               <div className="md:col-span-2 space-y-6">
+                <ClassBoardSettings classId={id} />
                 <ClassSettings classId={id} />
                 <RecurringSessionsManager classId={id} />
               </div>

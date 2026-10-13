@@ -24,7 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StudentAnalyticsModal } from "@/components/student/StudentAnalyticsModal";
-import { PodiumBoard, type BoardEntry } from "@/components/shared/PodiumBoard";
+import { type BoardEntry } from "@/components/shared/PodiumBoard";
+import { StyledClassBoard } from "@/components/leaderboard/StyledClassBoard";
 import { useClassMonitor } from "@/hooks/useClassMonitor";
 
 interface StudentClassLeaderboardProps {
@@ -41,6 +42,8 @@ interface EdgeEntry {
   homework_points: number;
   /** Added later than the rest of the payload; absent on older deploys. */
   reading_theory_points?: number;
+  /** Likewise. Until class-leaderboard is redeployed this stays undefined. */
+  vocabulary_quiz_points?: number;
   total_points: number;
   is_current_user: boolean;
   rank: number;
@@ -51,6 +54,13 @@ const EMPTY_SELECTION = new Map<
   { id: string; name: string; avatarUrl?: string | null }
 >();
 const EMPTY_PENDING = new Map<string, number>();
+
+/** "2026-10" -> "October 2026", for the board header. */
+function monthLabel(ym: string): string {
+  const [y, m] = ym.split("-").map(Number);
+  if (!y || !m) return ym;
+  return new Date(y, m - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
+}
 
 export function StudentClassLeaderboard({
   classId,
@@ -100,6 +110,7 @@ export function StudentClassLeaderboard({
         homework_points: e.homework_points,
         participation_points: e.participation_points,
         reading_theory_points: e.reading_theory_points ?? 0,
+        vocabulary_quiz_points: e.vocabulary_quiz_points ?? 0,
         students: { full_name: e.student_name, avatar_url: e.avatar_url },
       })),
     [data, classId],
@@ -147,9 +158,11 @@ export function StudentClassLeaderboard({
           This board could not be loaded right now.
         </div>
       ) : (
-        <PodiumBoard
+        <StyledClassBoard
           entries={entries}
           classId={classId}
+          periodLabel={monthLabel(selectedMonth)}
+          canReadLedger={false}
           currentStudentId={viewerStudentId}
           canManagePoints={false}
           isEconomyMode={false}
@@ -167,6 +180,7 @@ export function StudentClassLeaderboard({
               homeworkPoints: entry.homework_points,
               participationPoints: entry.participation_points,
               readingTheoryPoints: entry.reading_theory_points,
+              vocabularyQuizPoints: entry.vocabulary_quiz_points ?? 0,
               rank: entry.rank,
             })
           }

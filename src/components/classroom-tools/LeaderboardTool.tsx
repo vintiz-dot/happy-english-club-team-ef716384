@@ -22,6 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClassLeaderboardShared } from "@/components/shared/ClassLeaderboardShared";
+import { ClassScreen, ClassScreenButton } from "./studio/ClassScreen";
+import { ProjectedBoard } from "@/components/leaderboard/ProjectedBoard";
 import { ManualPointsDialog } from "@/components/shared/ManualPointsDialog";
 import { LiveAssessmentGrid } from "@/components/teacher/LiveAssessmentGrid";
 import { toast } from "sonner";
@@ -35,6 +37,7 @@ export function LeaderboardTool() {
   const { user } = useAuth();
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"board" | "live">("board");
+  const [projecting, setProjecting] = useState(false);
   const [remainingTime, setRemainingTime] = useState<string | null>(null);
   const today = dayjs().format("YYYY-MM-DD");
 
@@ -117,7 +120,16 @@ export function LeaderboardTool() {
       title="Leaderboard"
       description="This month's points, and live awards while a lesson is running."
       wide
-      action={displayClassId ? <ManualPointsDialog classId={displayClassId} /> : undefined}
+      action={
+        displayClassId ? (
+          <span className="flex items-center gap-1.5">
+            {/* The class's chosen board, on the wall. This is what the three
+                display styles were drawn for. */}
+            <ClassScreenButton onClick={() => setProjecting(true)} />
+            <ManualPointsDialog classId={displayClassId} />
+          </span>
+        ) : undefined
+      }
     >
       {isLoading || classes.length === 0 ? (
         <Stage className="min-h-[140px] p-6 text-center">
@@ -192,6 +204,16 @@ export function LeaderboardTool() {
             </div>
           )}
         </>
+      )}
+
+      {displayClassId && (
+        <ClassScreen
+          open={projecting}
+          onClose={() => setProjecting(false)}
+          title={className || "Leaderboard"}
+        >
+          <ProjectedBoard classId={displayClassId} />
+        </ClassScreen>
       )}
     </ToolCard>
   );
