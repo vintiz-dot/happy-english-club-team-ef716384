@@ -202,7 +202,9 @@ function parseMinutes(hhmm: string | null): number | null {
  * the class settings imply, and the difference - which is the number an admin
  * needs in order to decide whether the roster or the class setting is wrong.
  */
-function computeTotals(sessions: SessionRow[], hourlyRateVnd: number) {
+function computeTotals(sessions: SessionRow[], hourlyRateVnd: number, payType: string = "hourly") {
+  const perSessionPay = payType === "per_session";
+  let sessionCount = 0;
   let totalMinutes = 0;
   let totalExpectedMinutes = 0;
 
@@ -242,7 +244,8 @@ function computeTotals(sessions: SessionRow[], hourlyRateVnd: number) {
     if (minutes <= 0) minutes += 24 * 60; // handle cross-midnight just in case
 
     minutes = Math.max(0, Math.round(minutes));
-    const amount = Math.round((hourlyRateVnd / 60) * minutes);
+    const amount = perSessionPay ? hourlyRateVnd : Math.round((hourlyRateVnd / 60) * minutes);
+    sessionCount++;
 
     // Normalize classes to single object (Supabase may return array)
     const classes = Array.isArray(s.classes)
@@ -264,7 +267,7 @@ function computeTotals(sessions: SessionRow[], hourlyRateVnd: number) {
 
     const varianceMinutes = isMismatch ? minutes - (expectedMinutes as number) : null;
     const varianceAmount =
-      varianceMinutes == null ? null : Math.round((hourlyRateVnd / 60) * varianceMinutes);
+      varianceMinutes == null ? null : perSessionPay ? 0 : Math.round((hourlyRateVnd / 60) * varianceMinutes);
 
     totalMinutes += minutes;
     // Only a genuine mismatch moves the projection away from what was
@@ -289,8 +292,8 @@ function computeTotals(sessions: SessionRow[], hourlyRateVnd: number) {
   }
 
   const totalHours = +(totalMinutes / 60).toFixed(2);
-  const totalAmount = Math.round((hourlyRateVnd / 60) * totalMinutes);
-  const totalExpectedAmount = Math.round((hourlyRateVnd / 60) * totalExpectedMinutes);
+  const totalAmount = perSessionPay ? hourlyRateVnd * sessionCount : Math.round((hourlyRateVnd / 60) * totalMinutes);
+  const totalExpectedAmount = perSessionPay ? totalAmount : Math.round((hourlyRateVnd / 60) * totalExpectedMinutes);
   const discrepancies = perSession.filter((p) => (p.varianceMinutes ?? 0) !== 0);
 
   return {
@@ -370,7 +373,7 @@ Deno.serve(async (req) => {
     const { startDate, nextMonthStart } = monthRange(month);
 
     // Teachers — scope non-admin teachers to their own data only
-    let tq = supabase.from("teachers").select("id, full_name, hourly_rate_vnd, user_id").eq("is_active", true);
+    let tq = supabase.from("teachers").select("id, full_name, hourly_rate_vnd, pay_type, user_id").eq("is_active", true);
 
     if (isTeacher && !isAdmin) {
       const { data: ownTeacher } = await supabase
@@ -439,13 +442,14 @@ Deno.serve(async (req) => {
 
       if (projErr) throw projErr;
 
-      const actual = computeTotals(held ?? [], t.hourly_rate_vnd);
-      const future = computeTotals(projected ?? [], t.hourly_rate_vnd);
+      const actual = computeTotals(held ?? [], t.hourly_rate_vnd, t.pay_type);
+      const future = computeTotals(projected ?? [], t.hourly_rate_vnd, t.pay_type);
 
       results.push({
         teacherId: t.id,
         teacherName: t.full_name,
         hourlyRate: t.hourly_rate_vnd,
+        payType: t.pay_type ?? "hourly",
         sessionsCountActual: held?.length ?? 0,
         sessionsCountProjected: projected?.length ?? 0,
         totalMinutesActual: actual.totalMinutes,

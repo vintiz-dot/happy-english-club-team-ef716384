@@ -39,6 +39,7 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
+  const [payType, setPayType] = useState<"hourly" | "per_session">("hourly");
   const [bio, setBio] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -51,6 +52,7 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
       setEmail(teacher.email || "");
       setPhone(teacher.phone || "");
       setHourlyRate(teacher.hourly_rate_vnd?.toString() || "");
+      setPayType(teacher.pay_type === "per_session" ? "per_session" : "hourly");
       setBio(teacher.bio || "");
       setIsActive(teacher.is_active ?? true);
     }
@@ -68,6 +70,7 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
           email,
           phone,
           hourly_rate_vnd: parseInt(hourlyRate),
+          pay_type: payType,
           bio,
           is_active: isActive,
         })
@@ -152,7 +155,15 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
           </div>
 
           <div>
-            <Label htmlFor="hourlyRate">Hourly Rate (VND)</Label>
+            <Label>Pay Type</Label>
+            <div className="flex gap-2 mt-1 mb-3">
+              {([["hourly", "Per hour"], ["per_session", "Per session"]] as const).map(([v, l]) => (
+                <Button key={v} type="button" size="sm" variant={payType === v ? "default" : "outline"} onClick={() => setPayType(v)}>
+                  {l}
+                </Button>
+              ))}
+            </div>
+            <Label htmlFor="hourlyRate">{payType === "per_session" ? "Rate per Session (VND)" : "Hourly Rate (VND)"}</Label>
             <Input
               id="hourlyRate"
               type="number"
