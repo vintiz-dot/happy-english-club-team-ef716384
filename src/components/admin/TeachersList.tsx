@@ -12,6 +12,7 @@ export function TeachersList() {
       const { data, error } = await supabase
         .from("teachers")
         .select("*")
+        .eq("is_active", true)
         .order("full_name");
       if (error) throw error;
       return data;
