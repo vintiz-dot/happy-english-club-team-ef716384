@@ -44,6 +44,7 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
   const [isActive, setIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (teacher) {
@@ -185,34 +186,38 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="w-full" disabled={isDeleting}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                {isDeleting ? "Deleting..." : "Delete Teacher"}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete {teacher?.full_name}?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This permanently removes the teacher. Teachers who have lessons or classes on record
-                  can't be deleted — set them to inactive instead so payroll history stays intact.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDelete}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button
+            variant="destructive"
+            className="w-full"
+            disabled={isDeleting}
+            onClick={() => setConfirmOpen(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            {isDeleting ? "Deleting..." : "Delete Teacher"}
+          </Button>
         </div>
       </SheetContent>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent className="z-[100]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {teacher?.full_name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the teacher. Teachers who have lessons or classes on record
+              can't be deleted — set them to inactive instead so payroll history stays intact.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }
