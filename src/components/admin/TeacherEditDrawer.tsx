@@ -12,9 +12,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Save } from "lucide-react";
+import { Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface TeacherEditDrawerProps {
   teacher: any;
@@ -23,6 +35,7 @@ interface TeacherEditDrawerProps {
 
 export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -30,6 +43,7 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
   const [bio, setBio] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (teacher) {
@@ -68,6 +82,35 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
       toast.error(error.message || "Failed to update teacher");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!teacher?.id) return;
+    setIsDeleting(true);
+    try {
+      const { data, error } = await supabase
+        .from("teachers")
+        .delete()
+        .eq("id", teacher.id)
+        .select("id");
+      if (error) {
+        if (error.code === "23503") {
+          throw new Error(
+            "This teacher has lessons or classes on record, so they can't be deleted. Set them to inactive instead."
+          );
+        }
+        throw error;
+      }
+      if (!data || data.length === 0) throw new Error("You don't have permission to delete this teacher.");
+      toast.success("Teacher deleted");
+      queryClient.invalidateQueries({ queryKey: ["teachers"] });
+      onClose();
+      navigate("/teachers");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete teacher");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -141,6 +184,33 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
             <Save className="h-4 w-4 mr-2" />
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="w-full" disabled={isDeleting}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                {isDeleting ? "Deleting..." : "Delete Teacher"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete {teacher?.full_name}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This permanently removes the teacher. Teachers who have lessons or classes on record
+                  can't be deleted — set them to inactive instead so payroll history stays intact.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </SheetContent>
     </Sheet>
