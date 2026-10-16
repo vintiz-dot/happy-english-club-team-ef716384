@@ -76,13 +76,20 @@ export function sessionPayVnd(staff: StaffPayRate | null | undefined, minutes: n
  * Takes the lengths rather than the session rows so it works against both
  * the client's `durationMinutes` and the edge function's `parseMinutes`
  * without this module having to know about either.
+ *
+ * WHERE THE ROUNDING GOES, and why it is defined here rather than left to
+ * each caller. A month is summed from the per-session amounts, so the rows
+ * on a payroll table always add up to the total printed under them.
+ *
+ * The two copies of this calculation used to disagree about that, by a few
+ * VND a month: calculate-payroll rounded once at the end
+ * (round(rate/60 * totalMinutes)) while PayrollTab rounded each session and
+ * summed. Tiny, but it meant the admin screen and the figure actually paid
+ * were different numbers, and an admin adding up the visible rows got
+ * neither. Rounding per session is the half that can be checked by hand.
  */
 export function totalPayVnd(staff: StaffPayRate | null | undefined, minutesPerSession: number[]): number {
-  if (payRateTypeOf(staff) === "per_session") {
-    return Math.round(staff?.per_session_rate_vnd ?? 0) * minutesPerSession.length;
-  }
-  const totalMinutes = minutesPerSession.reduce((n, m) => n + Math.max(0, m), 0);
-  return Math.round(((staff?.hourly_rate_vnd ?? 0) / 60) * totalMinutes);
+  return minutesPerSession.reduce((sum, minutes) => sum + sessionPayVnd(staff, minutes), 0);
 }
 
 /**

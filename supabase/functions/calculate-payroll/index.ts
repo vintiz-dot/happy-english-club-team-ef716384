@@ -304,9 +304,12 @@ function computeTotals(sessions: SessionRow[], rate: StaffPayRate) {
   }
 
   const totalHours = +(totalMinutes / 60).toFixed(2);
-  // Summed from the per-session amounts rather than from totalMinutes, so a
-  // per-session member of staff is paid once per session and an hourly one
-  // gets the same figure as before.
+  // Summed from the per-session amounts rather than from totalMinutes, so
+  // a per-session member of staff is paid once per session and the rows an
+  // admin can see always add up to this total. For hourly staff that moves
+  // the figure by a few VND a month against the old round-once-at-the-end
+  // form - see the rounding note in _lib/pay-rate.ts, which is also where
+  // the admin screen and this function stopped disagreeing.
   const totalAmount = perSession.reduce((n, p) => n + p.amount, 0);
   // What the class settings imply. For per-session staff the length does not
   // move the money, so this equals totalAmount by construction.
