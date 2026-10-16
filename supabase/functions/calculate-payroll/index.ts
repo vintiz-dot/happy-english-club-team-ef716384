@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import {
   describeQuantity,
+  effectiveRateVnd,
   payRateTypeOf,
   sessionPayVnd,
   totalPayVnd,
@@ -477,7 +478,7 @@ Deno.serve(async (req) => {
       results.push({
         teacherId: t.id,
         teacherName: t.full_name,
-        hourlyRate: t.hourly_rate_vnd,
+        hourlyRate: effectiveRateVnd(t),
         payRateType: payRateTypeOf(t),
         perSessionRate: t.per_session_rate_vnd ?? 0,
         quantityLabel: describeQuantity(t, {
@@ -560,7 +561,7 @@ Deno.serve(async (req) => {
           results.push({
             teacherId: ta.id,
             teacherName: `${ta.full_name} (TA)`,
-            hourlyRate: ta.hourly_rate_vnd,
+            hourlyRate: effectiveRateVnd(ta),
             payRateType: payRateTypeOf(ta),
             perSessionRate: ta.per_session_rate_vnd ?? 0,
             quantityLabel: describeQuantity(ta, {

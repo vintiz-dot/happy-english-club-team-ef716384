@@ -7,11 +7,15 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { DollarSign, Download, FileText } from "lucide-react";
 import { format } from "date-fns";
+import type { PayRateType } from "@/lib/payRate";
 
 interface PayrollData {
   teacherId: string;
   teacherName: string;
+  /** The rate in force, in the unit payRateType names - not always hourly. */
   hourlyRate: number;
+  payRateType?: PayRateType;
+  quantityLabel?: string;
   totalHours: number;
   totalMinutes: number;
   totalAmount: number;
@@ -62,9 +66,10 @@ export function PayrollManager() {
       return;
     }
 
-    const headers = ["Teacher Name", "Hourly Rate (VND)", "Total Hours", "Sessions", "Total Amount (VND)"];
+    const headers = ["Teacher Name", "Paid", "Rate (VND)", "Total Hours", "Sessions", "Total Amount (VND)"];
     const rows = payrollData.map(p => [
       p.teacherName,
+      p.payRateType === "per_session" ? "Per session" : "Per hour",
       (p.hourlyRate || 0).toString(),
       (p.totalHours || 0).toFixed(2),
       (p.sessionsCount || 0).toString(),
@@ -148,7 +153,10 @@ export function PayrollManager() {
                       {(teacher.totalHours || 0).toFixed(2)} hours ({teacher.totalMinutes || 0} minutes) • {teacher.sessionsCount || 0} sessions
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Rate: {(teacher.hourlyRate || 0).toLocaleString('vi-VN')} ₫/hour
+                      {/* Not a hardcoded "/hour": a per-session teacher's
+                          hourly column is 0, so this read "0 ₫/hour". */}
+                      Rate: {(teacher.hourlyRate || 0).toLocaleString('vi-VN')} ₫/
+                      {teacher.payRateType === "per_session" ? "session" : "hour"}
                     </p>
                   </div>
                   <p className="text-lg font-semibold text-primary">
