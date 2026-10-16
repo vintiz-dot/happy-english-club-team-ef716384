@@ -15,6 +15,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchAccessibleClasses } from "@/lib/teacherAccess";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -166,35 +167,48 @@ interface UploadJob {
   rescanning?: boolean;
 }
 
-function useTeacherClasses(userId?: string) {
+/**
+ * The classes this person may upload work for.
+ *
+ * WHAT WAS WRONG. The old query asked `teachers` for a row and, if there
+ * wasn't one, fell through to "every active class" under a comment saying
+ * "Admins see every active class". A teaching assistant has no `teachers`
+ * row - they live in `teaching_assistants` - so every TA fell into the
+ * admin branch and the class picker offered them the whole school. From
+ * there they could upload a child's work, and read the roster, for classes
+ * they have never assisted.
+ *
+ * It was also wrong for teachers, in the quieter way fetchAccessibleClasses
+ * was written to fix: "has ever had one session row for this class" grants
+ * a class permanently for covering a single lesson, counts cancelled
+ * sessions, keeps archived classes, and misses a class whose sessions have
+ * not been generated yet - so a teacher could be missing their own new
+ * class while holding one they covered once in March.
+ *
+ * Now it defers to fetchAccessibleClasses, which is the rule the database
+ * enforces (is_teacher_of_class / the TA participant check), so the picker
+ * cannot offer a class whose data RLS will then refuse to serve. The admin
+ * branch is explicit, keyed off the role rather than off the absence of a
+ * staff row.
+ */
+function useUploadClasses(userId?: string, role?: string | null) {
   return useQuery<ClassOption[]>({
-    queryKey: ["smart-upload-classes", userId],
-    enabled: !!userId,
+    queryKey: ["smart-upload-classes", userId, role],
+    enabled: !!userId && !!role,
     queryFn: async () => {
-      const { data: teacher } = await supabase
-        .from("teachers").select("id").eq("user_id", userId!).maybeSingle();
-      if (teacher) {
+      if (role === "admin") {
         const { data } = await supabase
-          .from("sessions")
-          .select("class_id, classes!inner(id, name)")
-          .eq("teacher_id", teacher.id);
-        const map = new Map<string, ClassOption>();
-        data?.forEach((s: any) => {
-          const c = Array.isArray(s.classes) ? s.classes[0] : s.classes;
-          if (c) map.set(c.id, c);
-        });
-        return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+          .from("classes").select("id, name").eq("is_active", true).order("name");
+        return data || [];
       }
-      // Admins see every active class.
-      const { data } = await supabase
-        .from("classes").select("id, name").eq("is_active", true).order("name");
-      return data || [];
+      const classes = await fetchAccessibleClasses(userId!);
+      return classes.sort((a, b) => a.name.localeCompare(b.name));
     },
   });
 }
 
 export default function TeacherSmartUpload() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const queryClient = useQueryClient();
   const [classId, setClassId] = useState<string>("");
   const [studentId, setStudentId] = useState<string>("");
@@ -208,7 +222,7 @@ export default function TeacherSmartUpload() {
   const [linkUrl, setLinkUrl] = useState("");
   const [linkTitle, setLinkTitle] = useState("");
 
-  const { data: classes = [] } = useTeacherClasses(user?.id);
+  const { data: classes = [], isLoading: classesLoading } = useUploadClasses(user?.id, role);
 
   const { data: students = [] } = useQuery<StudentOption[]>({
     queryKey: ["smart-upload-students", classId],
@@ -255,8 +269,12 @@ export default function TeacherSmartUpload() {
 
   // Assignment pool for the review queue. Deliberately NOT tied to the class
   // picker at the top of the page: a reviewer often has no class selected,
-  // and low-confidence / "general" matches can belong to any student. Loads
-  // the full active roster so the assign combobox always has options.
+  // and low-confidence / "general" matches can belong to any student.
+  //
+  // This asks for every active student, which is safe but reads alarmingly:
+  // students RLS answers through can_view_student_in_class, so a teacher or
+  // TA gets back only the children in the classes they actually hold, and
+  // an admin gets everyone. The breadth here is a request, not a grant.
   const { data: assignableStudents = [] } = useQuery<StudentOption[]>({
     queryKey: ["smart-upload-assignable-students"],
     enabled: reviewQueue.some((w) => w.status === "needs_review"),
@@ -563,12 +581,30 @@ export default function TeacherSmartUpload() {
           <CardContent className="pt-6 flex flex-col md:flex-row gap-3">
             <div className="flex-1">
               <p className="text-xs font-semibold text-muted-foreground mb-1.5">Class</p>
-              <Select value={classId} onValueChange={(v) => { setClassId(v); setStudentId(""); }}>
-                <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
+              <Select
+                value={classId}
+                onValueChange={(v) => { setClassId(v); setStudentId(""); }}
+                disabled={classesLoading || classes.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={classesLoading ? "Loading your classes" : "Select class"}
+                  />
+                </SelectTrigger>
                 <SelectContent>
                   {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {/* An empty picker used to be impossible here, because
+                  everyone fell through to every active class. Now that it
+                  is scoped it can legitimately be empty, and an unexplained
+                  dead dropdown reads as a broken page. */}
+              {!classesLoading && classes.length === 0 && (
+                <p className="text-[11px] text-muted-foreground mt-1.5">
+                  You are not assigned to any classes at the moment, so there is nothing to
+                  upload against. Ask an admin to put you on a class.
+                </p>
+              )}
             </div>
             <div className="flex-1">
               <p className="text-xs font-semibold text-muted-foreground mb-1.5">

@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
+import { PayRateFields } from "@/components/admin/staff/PayRateFields";
+import { payRateError, type PayRateType } from "@/lib/payRate";
 
 export function TeacherForm({ onSuccess }: { onSuccess?: () => void }) {
   const { toast } = useToast();
@@ -14,6 +16,7 @@ export function TeacherForm({ onSuccess }: { onSuccess?: () => void }) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [hourlyRate, setHourlyRate] = useState("200000");
+  const [payRateType, setPayRateType] = useState<PayRateType>("hourly");
   const [bio, setBio] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -29,6 +32,12 @@ export function TeacherForm({ onSuccess }: { onSuccess?: () => void }) {
       return;
     }
 
+    const rateError = payRateError(payRateType, hourlyRate);
+    if (rateError) {
+      toast({ title: "Check the pay rate", description: rateError, variant: "destructive" });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-teacher', {
@@ -37,6 +46,7 @@ export function TeacherForm({ onSuccess }: { onSuccess?: () => void }) {
           email,
           phone,
           hourlyRate,
+          payRateType,
           bio
         }
       });
@@ -109,16 +119,15 @@ export function TeacherForm({ onSuccess }: { onSuccess?: () => void }) {
               />
             </div>
 
-            <div>
-              <Label htmlFor="rate">Hourly Rate (VND)</Label>
-              <Input
-                id="rate"
-                type="number"
-                value={hourlyRate}
-                onChange={(e) => setHourlyRate(e.target.value)}
-              />
-            </div>
           </div>
+
+          <PayRateFields
+            idPrefix="new-teacher-pay"
+            payRateType={payRateType}
+            onPayRateTypeChange={setPayRateType}
+            rate={hourlyRate}
+            onRateChange={setHourlyRate}
+          />
 
           <div>
             <Label htmlFor="bio">Bio</Label>

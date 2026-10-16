@@ -1,6 +1,14 @@
 // supabase/functions/calculate-payroll/index.ts
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import {
+  describeQuantity,
+  payRateTypeOf,
+  sessionPayVnd,
+  totalPayVnd,
+  varianceCostVnd,
+  type StaffPayRate,
+} from "../_lib/pay-rate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -201,10 +209,14 @@ function parseMinutes(hhmm: string | null): number | null {
  * So we return the amount as entered (what will actually be paid), the amount
  * the class settings imply, and the difference - which is the number an admin
  * needs in order to decide whether the roster or the class setting is wrong.
+ *
+ * FOR PER-SESSION STAFF none of that comparison has a price. A lesson that
+ * runs long costs the same as one that runs short, so the expected totals
+ * equal the actual totals and every varianceAmount is 0. The length
+ * mismatch is still reported - it is a real scheduling problem - but it is
+ * not reported as money, because for these staff it is not money.
  */
-function computeTotals(sessions: SessionRow[], hourlyRateVnd: number, payType: string = "hourly") {
-  const perSessionPay = payType === "per_session";
-  let sessionCount = 0;
+function computeTotals(sessions: SessionRow[], rate: StaffPayRate) {
   let totalMinutes = 0;
   let totalExpectedMinutes = 0;
 
@@ -244,8 +256,7 @@ function computeTotals(sessions: SessionRow[], hourlyRateVnd: number, payType: s
     if (minutes <= 0) minutes += 24 * 60; // handle cross-midnight just in case
 
     minutes = Math.max(0, Math.round(minutes));
-    const amount = perSessionPay ? hourlyRateVnd : Math.round((hourlyRateVnd / 60) * minutes);
-    sessionCount++;
+    const amount = sessionPayVnd(rate, minutes);
 
     // Normalize classes to single object (Supabase may return array)
     const classes = Array.isArray(s.classes)
@@ -267,7 +278,7 @@ function computeTotals(sessions: SessionRow[], hourlyRateVnd: number, payType: s
 
     const varianceMinutes = isMismatch ? minutes - (expectedMinutes as number) : null;
     const varianceAmount =
-      varianceMinutes == null ? null : perSessionPay ? 0 : Math.round((hourlyRateVnd / 60) * varianceMinutes);
+      varianceMinutes == null ? null : varianceCostVnd(rate, varianceMinutes);
 
     totalMinutes += minutes;
     // Only a genuine mismatch moves the projection away from what was
@@ -292,8 +303,18 @@ function computeTotals(sessions: SessionRow[], hourlyRateVnd: number, payType: s
   }
 
   const totalHours = +(totalMinutes / 60).toFixed(2);
-  const totalAmount = perSessionPay ? hourlyRateVnd * sessionCount : Math.round((hourlyRateVnd / 60) * totalMinutes);
-  const totalExpectedAmount = perSessionPay ? totalAmount : Math.round((hourlyRateVnd / 60) * totalExpectedMinutes);
+  // Summed from the per-session amounts rather than from totalMinutes, so a
+  // per-session member of staff is paid once per session and an hourly one
+  // gets the same figure as before.
+  const totalAmount = perSession.reduce((n, p) => n + p.amount, 0);
+  // What the class settings imply. For per-session staff the length does not
+  // move the money, so this equals totalAmount by construction.
+  const totalExpectedAmount = totalPayVnd(
+    rate,
+    perSession.map((p) =>
+      p.varianceMinutes == null ? p.minutes : (p.expectedMinutes as number),
+    ),
+  );
   const discrepancies = perSession.filter((p) => (p.varianceMinutes ?? 0) !== 0);
 
   return {
@@ -373,7 +394,10 @@ Deno.serve(async (req) => {
     const { startDate, nextMonthStart } = monthRange(month);
 
     // Teachers — scope non-admin teachers to their own data only
-    let tq = supabase.from("teachers").select("id, full_name, hourly_rate_vnd, pay_type, user_id").eq("is_active", true);
+    let tq = supabase
+      .from("teachers")
+      .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, user_id")
+      .eq("is_active", true);
 
     if (isTeacher && !isAdmin) {
       const { data: ownTeacher } = await supabase
@@ -398,7 +422,12 @@ Deno.serve(async (req) => {
     const results: Array<{
       teacherId: string;
       teacherName: string;
+      /** The rate in force, in the unit `payRateType` names. */
       hourlyRate: number;
+      payRateType: "hourly" | "per_session";
+      perSessionRate: number;
+      /** "12.5 h" or "9 sessions" - whichever the pay basis makes true. */
+      quantityLabel: string;
       sessionsCountActual: number;
       sessionsCountProjected: number;
       totalMinutesActual: number;
@@ -442,14 +471,19 @@ Deno.serve(async (req) => {
 
       if (projErr) throw projErr;
 
-      const actual = computeTotals(held ?? [], t.hourly_rate_vnd, t.pay_type);
-      const future = computeTotals(projected ?? [], t.hourly_rate_vnd, t.pay_type);
+      const actual = computeTotals(held ?? [], t);
+      const future = computeTotals(projected ?? [], t);
 
       results.push({
         teacherId: t.id,
         teacherName: t.full_name,
         hourlyRate: t.hourly_rate_vnd,
-        payType: t.pay_type ?? "hourly",
+        payRateType: payRateTypeOf(t),
+        perSessionRate: t.per_session_rate_vnd ?? 0,
+        quantityLabel: describeQuantity(t, {
+          sessions: held?.length ?? 0,
+          minutes: actual.totalMinutes,
+        }),
         sessionsCountActual: held?.length ?? 0,
         sessionsCountProjected: projected?.length ?? 0,
         totalMinutesActual: actual.totalMinutes,
@@ -487,7 +521,7 @@ Deno.serve(async (req) => {
     if (isAdmin) {
       const { data: assistants } = await supabase
         .from("teaching_assistants")
-        .select("id, full_name, hourly_rate_vnd")
+        .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd")
         .eq("is_active", true);
 
       for (const ta of assistants ?? []) {
@@ -519,14 +553,20 @@ Deno.serve(async (req) => {
           .gte("date", startDate)
           .lt("date", nextMonthStart);
 
-        const actual = computeTotals(held ?? [], ta.hourly_rate_vnd);
-        const future = computeTotals(projected ?? [], ta.hourly_rate_vnd);
+        const actual = computeTotals(held ?? [], ta);
+        const future = computeTotals(projected ?? [], ta);
 
         if (actual.totalMinutes > 0 || future.totalMinutes > 0) {
           results.push({
             teacherId: ta.id,
             teacherName: `${ta.full_name} (TA)`,
             hourlyRate: ta.hourly_rate_vnd,
+            payRateType: payRateTypeOf(ta),
+            perSessionRate: ta.per_session_rate_vnd ?? 0,
+            quantityLabel: describeQuantity(ta, {
+              sessions: held?.length ?? 0,
+              minutes: actual.totalMinutes,
+            }),
             sessionsCountActual: held?.length ?? 0,
             sessionsCountProjected: projected?.length ?? 0,
             totalMinutesActual: actual.totalMinutes,

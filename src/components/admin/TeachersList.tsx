@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { describeRate } from "@/lib/payRate";
 
 export function TeachersList() {
   const { data: teachers, isLoading } = useQuery({
@@ -52,7 +53,7 @@ export function TeachersList() {
                       <p className="text-sm text-muted-foreground">📱 {teacher.phone}</p>
                     )}
                     <p className="text-sm font-medium text-primary">
-                      {(teacher.hourly_rate_vnd || 0).toLocaleString()} VND/hour
+                      {describeRate(teacher)}
                     </p>
                   </div>
                 </div>

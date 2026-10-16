@@ -14,15 +14,19 @@ import {
 import { TeacherBankingInfo } from "@/components/teacher/TeacherBankingInfo";
 import { School, TrendingUp } from "lucide-react";
 import { MonthPicker } from "@/components/MonthPicker";
+import { payRateTypeOf, sessionPayVnd, type StaffPayRate } from "@/lib/payRate";
+import { durationMinutes } from "@/lib/sessionDuration";
 
 interface TeacherProfilePayrollProps {
   teacherId: string;
   selectedMonth: string;
-  hourlyRate: number;
+  /** The teacher's whole pay rate, so a per-session teacher is not costed
+      as though their fee scaled with the clock. */
+  payRate: StaffPayRate;
   onMonthChange?: (month: string) => void;
 }
 
-export function TeacherProfilePayroll({ teacherId, selectedMonth, hourlyRate, onMonthChange }: TeacherProfilePayrollProps) {
+export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMonthChange }: TeacherProfilePayrollProps) {
   const { data: payrollData } = useQuery({
     queryKey: ["teacher-payroll-detail", teacherId, selectedMonth],
     queryFn: async () => {
@@ -82,11 +86,24 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, hourlyRate, on
   });
 
   const calculateSessionAmount = (session: any) => {
-    const [startHour, startMin] = session.start_time.split(":").map(Number);
-    const [endHour, endMin] = session.end_time.split(":").map(Number);
-    const durationMinutes = (endHour * 60 + endMin) - (startHour * 60 + startMin);
-    const hours = durationMinutes / 60;
-    return Math.round(hours * (session.rate_override_vnd || hourlyRate));
+    const minutes = durationMinutes(session.start_time, session.end_time) ?? 0;
+    const override = session.rate_override_vnd;
+    if (!override) return sessionPayVnd(payRate, minutes);
+    // sessions.rate_override_vnd is read inconsistently across the app -
+    // as an hourly rate here, as a flat session cost in
+    // ClassCalendarEnhanced - and calculate-payroll, which produces the
+    // figure actually paid, ignores it entirely. Not settling that here.
+    // The override is applied in whatever unit the teacher is paid in,
+    // which keeps this screen unchanged for hourly teachers and is the
+    // only reading that makes sense for per-session ones.
+    return sessionPayVnd(
+      {
+        pay_rate_type: payRateTypeOf(payRate),
+        hourly_rate_vnd: override,
+        per_session_rate_vnd: override,
+      },
+      minutes,
+    );
   };
 
   const totalClasses = classBreakdown?.length || 0;

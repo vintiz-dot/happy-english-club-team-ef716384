@@ -1,5 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0'
 
+/** What a teacher is paid when the form leaves the rate blank. */
+const DEFAULT_TEACHER_RATE = 200000;
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -51,7 +54,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { fullName, email, phone, hourlyRate, bio } = await req.json();
+    const { fullName, email, phone, hourlyRate, payRateType, bio } = await req.json();
 
     if (!fullName || !email) {
       return new Response(
@@ -93,6 +96,12 @@ Deno.serve(async (req) => {
       // Continue anyway as the user was created
     }
 
+    // `payRateType` is optional so an older client that only sends
+    // hourlyRate keeps working exactly as before. Anything other than
+    // "per_session" means hourly, matching payRateTypeOf.
+    const basis = payRateType === "per_session" ? "per_session" : "hourly";
+    const amount = parseInt(hourlyRate) || DEFAULT_TEACHER_RATE;
+
     // Create teacher record
     const { error: teacherError } = await supabaseAdmin
       .from('teachers')
@@ -101,7 +110,9 @@ Deno.serve(async (req) => {
         full_name: fullName,
         email,
         phone: phone || null,
-        hourly_rate_vnd: parseInt(hourlyRate) || 200000,
+        pay_rate_type: basis,
+        hourly_rate_vnd: basis === "hourly" ? amount : 0,
+        per_session_rate_vnd: basis === "per_session" ? amount : 0,
         bio: bio || null,
       });
 

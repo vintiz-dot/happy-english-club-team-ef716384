@@ -20,8 +20,17 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Save, Mail, Phone, DollarSign, GraduationCap, Calendar, Clock, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { TAClassAssignment } from "./TAClassAssignment";
-import { dayjs } from "@/lib/date";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PayRateFields } from "@/components/admin/staff/PayRateFields";
+import {
+  describeQuantity,
+  describeRate,
+  payRateError,
+  payRateTypeOf,
+  totalPayVnd,
+  type PayRateType,
+} from "@/lib/payRate";
+import { durationMinutes } from "@/lib/sessionDuration";
 
 interface TAProfileDrawerProps {
   ta: any;
@@ -33,7 +42,8 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [hourlyRate, setHourlyRate] = useState("");
+  const [payRateType, setPayRateType] = useState<PayRateType>("hourly");
+  const [rate, setRate] = useState("");
   const [bio, setBio] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,7 +54,11 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
       setFullName(ta.full_name || "");
       setEmail(ta.email || "");
       setPhone(ta.phone || "");
-      setHourlyRate(ta.hourly_rate_vnd?.toString() || "");
+      const type = payRateTypeOf(ta);
+      setPayRateType(type);
+      setRate(
+        (type === "per_session" ? ta.per_session_rate_vnd : ta.hourly_rate_vnd)?.toString() || "",
+      );
       setBio(ta.bio || "");
       setIsActive(ta.is_active ?? true);
     }
@@ -72,33 +86,45 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
 
       const sessions = participants || [];
       const held = sessions.filter((p: any) => p.sessions?.status === "Held");
-      const totalHours = held.reduce((sum: number, p: any) => {
-        if (!p.sessions?.start_time || !p.sessions?.end_time) return sum;
-        const start = dayjs(`2000-01-01 ${p.sessions.start_time}`);
-        const end = dayjs(`2000-01-01 ${p.sessions.end_time}`);
-        return sum + end.diff(start, "hour", true);
-      }, 0);
+      // durationMinutes rather than a dayjs diff: the diff goes negative on
+      // a session that crosses midnight and silently subtracts it from the
+      // TA's earnings. PayrollTab had the same bug and was fixed the same
+      // way; this copy was missed.
+      const minutes = held.map(
+        (p: any) => durationMinutes(p.sessions?.start_time, p.sessions?.end_time) ?? 0,
+      );
+      const totalMinutes = minutes.reduce((n: number, m: number) => n + m, 0);
 
       return {
         totalSessions: sessions.length,
         heldSessions: held.length,
-        totalHours,
-        totalEarnings: totalHours * (ta.hourly_rate_vnd || 0),
+        totalHours: totalMinutes / 60,
+        totalEarnings: totalPayVnd(ta, minutes),
       };
     },
   });
 
+  const rateError = payRateError(payRateType, rate);
+
   const handleSave = async () => {
     if (!ta?.id) return;
+    if (rateError) {
+      toast.error(rateError);
+      return;
+    }
     setIsSaving(true);
     try {
+      // The rate not in force is zeroed, so no screen can show a stale one.
+      const amount = Math.round(Number(rate));
       const { error } = await supabase
         .from("teaching_assistants")
         .update({
           full_name: fullName,
           email,
           phone,
-          hourly_rate_vnd: parseInt(hourlyRate) || 0,
+          pay_rate_type: payRateType,
+          hourly_rate_vnd: payRateType === "hourly" ? amount : 0,
+          per_session_rate_vnd: payRateType === "per_session" ? amount : 0,
           bio,
           is_active: isActive,
           updated_at: new Date().toISOString(),
@@ -145,7 +171,7 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
               <SheetDescription className="flex flex-col gap-0.5">
                 {ta.email && <span className="flex items-center gap-1.5"><Mail className="h-3 w-3" />{ta.email}</span>}
                 {ta.phone && <span className="flex items-center gap-1.5"><Phone className="h-3 w-3" />{ta.phone}</span>}
-                <span className="flex items-center gap-1.5"><DollarSign className="h-3 w-3" />{(ta.hourly_rate_vnd || 0).toLocaleString()} VND/hour</span>
+                <span className="flex items-center gap-1.5"><DollarSign className="h-3 w-3" />{describeRate(ta)}</span>
               </SheetDescription>
             </div>
           </div>
@@ -214,9 +240,17 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
                   <CardHeader className="pb-2">
                     <CardDescription className="flex items-center gap-1.5 text-xs">
                       <Clock className="h-3.5 w-3.5" />
-                      Hours Worked
+                      {/* Hours are what an hourly TA is paid on; for a
+                          per-session TA they are a fact that does not drive
+                          the money, so the count of lessons leads instead. */}
+                      {payRateTypeOf(ta) === "per_session" ? "Lessons Paid" : "Hours Worked"}
                     </CardDescription>
-                    <CardTitle className="text-2xl">{taStats?.totalHours?.toFixed(1) || 0}</CardTitle>
+                    <CardTitle className="text-2xl">
+                      {describeQuantity(ta, {
+                        sessions: taStats?.heldSessions ?? 0,
+                        minutes: (taStats?.totalHours ?? 0) * 60,
+                      })}
+                    </CardTitle>
                   </CardHeader>
                 </Card>
                 <Card>
@@ -245,10 +279,13 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
                 <Label htmlFor="ta-phone">Phone</Label>
                 <Input id="ta-phone" value={phone} onChange={e => setPhone(e.target.value)} />
               </div>
-              <div>
-                <Label htmlFor="ta-rate">Hourly Rate (VND)</Label>
-                <Input id="ta-rate" type="number" value={hourlyRate} onChange={e => setHourlyRate(e.target.value)} />
-              </div>
+              <PayRateFields
+                idPrefix="ta-pay"
+                payRateType={payRateType}
+                onPayRateTypeChange={setPayRateType}
+                rate={rate}
+                onRateChange={setRate}
+              />
               <div>
                 <Label htmlFor="ta-bio">Bio</Label>
                 <Textarea id="ta-bio" value={bio} onChange={e => setBio(e.target.value)} rows={3} />
@@ -257,7 +294,7 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
                 <Label htmlFor="ta-active">Active Status</Label>
                 <Switch id="ta-active" checked={isActive} onCheckedChange={setIsActive} />
               </div>
-              <Button onClick={handleSave} disabled={isSaving} className="w-full">
+              <Button onClick={handleSave} disabled={isSaving || !!rateError} className="w-full">
                 <Save className="h-4 w-4 mr-2" />
                 {isSaving ? "Saving..." : "Save Changes"}
               </Button>

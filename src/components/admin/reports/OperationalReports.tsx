@@ -13,6 +13,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FileText, XCircle, TrendingDown, UserX, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { sessionPayVnd } from "@/lib/payRate";
+import { durationMinutes } from "@/lib/sessionDuration";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -48,7 +50,7 @@ const OperationalReports = () => {
 
       const { data: cancelledSessions, error } = await supabase
         .from("sessions")
-        .select(`id, date, start_time, end_time, class_id, classes(id, name, session_rate_vnd), teachers(id, hourly_rate_vnd)`)
+        .select(`id, date, start_time, end_time, class_id, classes(id, name, session_rate_vnd), teachers(id, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd)`)
         .eq("status", "Canceled")
         .gte("date", monthStart)
         .lt("date", monthEnd);
@@ -66,9 +68,10 @@ const OperationalReports = () => {
       let totalLostPayroll = 0;
 
       for (const session of cancelledSessions) {
-        const [startHr, startMin] = session.start_time.split(':').map(Number);
-        const [endHr, endMin] = session.end_time.split(':').map(Number);
-        const hours = ((endHr * 60 + endMin) - (startHr * 60 + startMin)) / 60;
+        // durationMinutes, not a hand-rolled subtraction: the inline version
+        // goes negative across midnight and would turn saved payroll into a
+        // charge.
+        const minutes = durationMinutes(session.start_time, session.end_time) ?? 0;
 
         const studentCount = (allEnrollments || []).filter(e =>
           e.class_id === session.class_id &&
@@ -77,10 +80,11 @@ const OperationalReports = () => {
         ).length;
 
         const sessionRate = (session.classes as any)?.session_rate_vnd || 0;
-        const teacherHourlyRate = (session.teachers as any)?.hourly_rate_vnd || 0;
 
         totalLostTuition += sessionRate * studentCount;
-        totalLostPayroll += teacherHourlyRate * hours;
+        // A cancelled lesson saves a per-session teacher's whole fee, not a
+        // pro-rated slice of an hourly rate they are not on.
+        totalLostPayroll += sessionPayVnd(session.teachers as any, minutes);
       }
 
       return {
@@ -137,7 +141,7 @@ const OperationalReports = () => {
         supabase.from("classes").select("id, name, session_rate_vnd").eq("is_active", true),
         supabase
           .from("sessions")
-          .select("id, class_id, teacher_id, start_time, end_time, rate_override_vnd, status, teachers(hourly_rate_vnd)")
+          .select("id, class_id, teacher_id, start_time, end_time, rate_override_vnd, status, teachers(hourly_rate_vnd, pay_rate_type, per_session_rate_vnd)")
           .in("status", ["Scheduled", "Held"])
           .gte("date", monthStart)
           .lt("date", monthEnd),
@@ -196,11 +200,8 @@ const OperationalReports = () => {
 
         let payroll = 0;
         for (const session of classSessions) {
-          const [startHr, startMin] = session.start_time.split(':').map(Number);
-          const [endHr, endMin] = session.end_time.split(':').map(Number);
-          const hours = ((endHr * 60 + endMin) - (startHr * 60 + startMin)) / 60;
-          const rate = (session.teachers as any)?.hourly_rate_vnd || 0;
-          payroll += hours * rate;
+          const minutes = durationMinutes(session.start_time, session.end_time) ?? 0;
+          payroll += sessionPayVnd(session.teachers as any, minutes);
         }
 
         const discounts = grossTuition - netTuition;

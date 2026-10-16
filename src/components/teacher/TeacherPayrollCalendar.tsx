@@ -5,6 +5,8 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isTod
 import { toZonedTime } from "date-fns-tz";
 import { dayjs } from "@/lib/date";
 import ClassSelector from "@/components/schedule/ClassSelector";
+import { sessionPayVnd, type StaffPayRate } from "@/lib/payRate";
+import { durationMinutes } from "@/lib/sessionDuration";
 
 const TIMEZONE = "Asia/Bangkok";
 
@@ -19,14 +21,16 @@ interface Session {
 
 interface TeacherPayrollCalendarProps {
   sessions: Session[];
-  hourlyRate: number;
+  /** The whole pay rate, not a bare number: a per-session teacher's daily
+      figure is a flat fee and does not scale with the hours shown. */
+  payRate: StaffPayRate;
   month: Date;
   onMonthChange: (date: Date) => void;
 }
 
 export default function TeacherPayrollCalendar({
   sessions,
-  hourlyRate,
+  payRate,
   month,
 }: TeacherPayrollCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -39,12 +43,8 @@ export default function TeacherPayrollCalendar({
     end: endOfMonth(month),
   });
 
-  const calculateSessionAmount = (session: Session) => {
-    const startTime = dayjs(`${session.date} ${session.start_time}`);
-    const endTime = dayjs(`${session.date} ${session.end_time}`);
-    const hours = endTime.diff(startTime, "hour", true);
-    return Math.round(hours * hourlyRate);
-  };
+  const calculateSessionAmount = (session: Session) =>
+    sessionPayVnd(payRate, durationMinutes(session.start_time, session.end_time) ?? 0);
 
   const getSessionsForDate = (date: Date) => {
     return sessions.filter((s) =>

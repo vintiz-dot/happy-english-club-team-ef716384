@@ -13,6 +13,8 @@ export interface StaffProfile {
   bio: string | null;
   avatar_url: string | null;
   hourly_rate_vnd: number;
+  pay_rate_type: string;
+  per_session_rate_vnd: number;
   is_active: boolean;
   staffType: StaffType;
 }

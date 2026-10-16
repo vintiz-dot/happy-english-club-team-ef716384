@@ -8,6 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
+import { PayRateFields } from "@/components/admin/staff/PayRateFields";
+import { payRateError, type PayRateType } from "@/lib/payRate";
 
 export function TeachingAssistantForm({ onSuccess }: { onSuccess?: () => void }) {
   const { toast } = useToast();
@@ -15,6 +17,7 @@ export function TeachingAssistantForm({ onSuccess }: { onSuccess?: () => void })
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [hourlyRate, setHourlyRate] = useState("150000");
+  const [payRateType, setPayRateType] = useState<PayRateType>("hourly");
   const [bio, setBio] = useState("");
   const [createAccount, setCreateAccount] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,10 +35,16 @@ export function TeachingAssistantForm({ onSuccess }: { onSuccess?: () => void })
       return;
     }
 
+    const rateError = payRateError(payRateType, hourlyRate);
+    if (rateError) {
+      toast({ title: "Check the pay rate", description: rateError, variant: "destructive" });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-teaching-assistant', {
-        body: { fullName, email, phone, hourlyRate, bio, createAccount }
+        body: { fullName, email, phone, hourlyRate, payRateType, bio, createAccount }
       });
 
       if (error) throw error;
@@ -84,11 +93,15 @@ export function TeachingAssistantForm({ onSuccess }: { onSuccess?: () => void })
               <Label htmlFor="ta-phone">Phone</Label>
               <Input id="ta-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0901234567" />
             </div>
-            <div>
-              <Label htmlFor="ta-rate">Hourly Rate (VND)</Label>
-              <Input id="ta-rate" type="number" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} />
-            </div>
           </div>
+
+          <PayRateFields
+            idPrefix="new-ta-pay"
+            payRateType={payRateType}
+            onPayRateTypeChange={setPayRateType}
+            rate={hourlyRate}
+            onRateChange={setHourlyRate}
+          />
 
           <div>
             <Label htmlFor="ta-bio">Bio</Label>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { GraduationCap, ToggleLeft, ToggleRight } from "lucide-react";
 import { toast } from "sonner";
 import { TAProfileDrawer } from "./ta/TAProfileDrawer";
+import { describeRate } from "@/lib/payRate";
 
 export function TeachingAssistantsList() {
   const queryClient = useQueryClient();
@@ -77,7 +78,7 @@ export function TeachingAssistantsList() {
                     {ta.email && <p className="text-sm text-muted-foreground">{ta.email}</p>}
                     {ta.phone && <p className="text-sm text-muted-foreground">📱 {ta.phone}</p>}
                     <p className="text-sm font-medium text-primary">
-                      {(ta.hourly_rate_vnd || 0).toLocaleString()} VND/hour
+                      {describeRate(ta)}
                     </p>
                     {ta.bio && <p className="text-xs text-muted-foreground line-clamp-1">{ta.bio}</p>}
                   </div>

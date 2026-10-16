@@ -3,12 +3,17 @@
  * what the class is supposed to be?"
  *
  * WHY THIS MATTERS FINANCIALLY
- * Teacher pay is hourly: calculate-payroll computes
+ * For staff paid by the hour - see src/lib/payRate.ts for the two bases -
+ * calculate-payroll computes
  *   amount = hourly_rate_vnd / 60 * (end_time - start_time)
  * per session. So the end time on a session row is not cosmetic, it is the
  * multiplicand in a wage calculation. A class configured for 90 minutes that
  * is mistakenly entered as 2 hours silently overpays by half an hour of that
  * teacher's rate, every single time that session runs.
+ *
+ * For staff paid per session it costs nothing, and the payroll screens say
+ * so rather than printing a confident zero. The length is still worth
+ * flagging for them: it means the timetable and the room disagree.
  *
  * Until now `classes.default_session_length_minutes` was display-only — shown
  * on a card, never compared against anything. This module makes it the
@@ -100,11 +105,6 @@ export function formatSignedMinutes(total: number): string {
   const rounded = Math.round(total);
   if (rounded === 0) return "0m";
   return `${rounded > 0 ? "+" : "−"}${formatMinutes(rounded)}`;
-}
-
-/** What a duration difference is worth at a given hourly rate, in VND. */
-export function varianceCostVnd(deltaMinutes: number, hourlyRateVnd: number): number {
-  return Math.round((hourlyRateVnd / 60) * deltaMinutes);
 }
 
 /** One-line explanation, used in tooltips, badges and payroll rows. */

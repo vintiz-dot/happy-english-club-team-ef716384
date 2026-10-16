@@ -20,6 +20,14 @@ import {
 import TeacherPayrollCalendar from "@/components/teacher/TeacherPayrollCalendar";
 import { TeacherBankingInfo } from "@/components/teacher/TeacherBankingInfo";
 import { PageLoading } from "@/components/ui/loading";
+import {
+  describeQuantity,
+  effectiveRateVnd,
+  rateUnit,
+  totalPayVnd,
+  type StaffPayRate,
+} from "@/lib/payRate";
+import { durationMinutes } from "@/lib/sessionDuration";
 
 export default function TeacherPayroll() {
   const queryClient = useQueryClient();
@@ -38,7 +46,7 @@ export default function TeacherPayroll() {
 
       const { data: teacher } = await supabase
         .from("teachers")
-        .select("id, hourly_rate_vnd")
+        .select("id, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -54,7 +62,7 @@ export default function TeacherPayroll() {
 
       return {
         payrollResult: teacherPayroll,
-        hourlyRate: teacher.hourly_rate_vnd,
+        payRate: teacher as StaffPayRate,
         teacherId: teacher.id,
       };
     },
@@ -79,18 +87,22 @@ export default function TeacherPayroll() {
 
       if (error) throw error;
 
-      let totalLostMinutes = 0;
-      for (const session of cancelledSessions || []) {
-        const [startHr, startMin] = session.start_time.split(':').map(Number);
-        const [endHr, endMin] = session.end_time.split(':').map(Number);
-        totalLostMinutes += (endHr * 60 + endMin) - (startHr * 60 + startMin);
-      }
+      // durationMinutes rather than a hand-rolled subtraction, which went
+      // negative on a session crossing midnight.
+      const minutes = (cancelledSessions || []).map(
+        (s) => durationMinutes(s.start_time, s.end_time) ?? 0,
+      );
+      const totalLostMinutes = minutes.reduce((n, m) => n + m, 0);
 
-      const hourlyRate = payrollData?.hourlyRate || 0;
       return {
         totalLostHours: totalLostMinutes / 60,
-        totalLostAmount: (totalLostMinutes / 60) * hourlyRate,
-        sessionCount: cancelledSessions?.length || 0
+        // A cancelled lesson costs a per-session teacher their whole fee.
+        totalLostAmount: totalPayVnd(payrollData?.payRate, minutes),
+        sessionCount: cancelledSessions?.length || 0,
+        quantityLabel: describeQuantity(payrollData?.payRate, {
+          sessions: cancelledSessions?.length || 0,
+          minutes: totalLostMinutes,
+        }),
       };
     },
   });
@@ -143,13 +155,13 @@ export default function TeacherPayroll() {
 
   const exportPayroll = () => {
     const sessions = payrollData?.payrollResult?.sessionDetailsProjected || [];
-    const hourlyRate = payrollData?.hourlyRate || 200000;
+    const payRate = payrollData?.payRate;
     const totalEarned = payrollData?.payrollResult?.totalAmountActual || 0;
     const totalProjected = payrollData?.payrollResult?.totalAmountProjected || 0;
     const projectedEarnings = totalProjected - totalEarned;
     
     const csv = [
-      ["Date", "Class", "Start Time", "End Time", "Status", "Duration (hrs)", "Rate", "Amount"].join(","),
+      ["Date", "Class", "Start Time", "End Time", "Status", "Duration (hrs)", "Paid", "Rate", "Amount"].join(","),
       ...sessions.map((s: any) => {
         const hours = (s.minutes / 60).toFixed(2);
         return [
@@ -159,13 +171,14 @@ export default function TeacherPayroll() {
           s.end_time,
           s.status,
           hours,
-          hourlyRate,
+          rateUnit(payRate) === "session" ? "Per session" : "Per hour",
+          effectiveRateVnd(payRate),
           s.amount
         ].join(",");
       }),
-      ["", "", "", "", "", "", "Held Total", totalEarned].join(","),
-      ["", "", "", "", "", "", "Projected", projectedEarnings].join(","),
-      ["", "", "", "", "", "", "Total Projected", totalProjected].join(",")
+      ["", "", "", "", "", "", "", "Held Total", totalEarned].join(","),
+      ["", "", "", "", "", "", "", "Projected", projectedEarnings].join(","),
+      ["", "", "", "", "", "", "", "Total Projected", totalProjected].join(",")
     ].join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
@@ -185,7 +198,7 @@ export default function TeacherPayroll() {
     );
   }
 
-  const hourlyRate = payrollData?.hourlyRate || 200000;
+  const payRate = payrollData?.payRate;
 
   // Use edge function data directly
   const heldSessionsCount = payrollData?.payrollResult?.sessionsCountActual || 0;
@@ -285,14 +298,14 @@ export default function TeacherPayroll() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-xs text-muted-foreground">
-                  {lostIncome?.sessionCount || 0} cancelled ({(lostIncome?.totalLostHours || 0).toFixed(1)} hrs)
+                  {lostIncome?.sessionCount || 0} cancelled ({lostIncome?.quantityLabel ?? "0 h"})
                 </CardContent>
               </Card>
             </div>
 
             <TeacherPayrollCalendar
               sessions={payrollData?.payrollResult?.sessionDetailsProjected || []}
-              hourlyRate={hourlyRate}
+              payRate={payRate ?? {}}
               month={monthDate}
               onMonthChange={handleMonthChange}
             />

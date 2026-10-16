@@ -36,6 +36,7 @@ import { ClassLeaderboardShared } from "@/components/shared/ClassLeaderboardShar
 import { ManualPointsDialog } from "@/components/shared/ManualPointsDialog";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
+import { effectiveRateVnd, rateUnit } from "@/lib/payRate";
 
 export default function TeacherDashboard() {
   const queryClient = useQueryClient();
@@ -345,8 +346,10 @@ export default function TeacherDashboard() {
 
                     <div className="flex items-center gap-2 text-lg font-semibold">
                       <DollarSign className="h-5 w-5 text-primary" />
-                      <span>{(teacherProfile.hourly_rate_vnd || 0).toLocaleString()} ₫</span>
-                      <span className="text-sm font-normal text-muted-foreground">/hour</span>
+                      <span>{effectiveRateVnd(teacherProfile).toLocaleString()} ₫</span>
+                      <span className="text-sm font-normal text-muted-foreground">
+                        /{rateUnit(teacherProfile)}
+                      </span>
                     </div>
                   </div>
                   

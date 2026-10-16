@@ -21,6 +21,7 @@ import { TeacherEditDrawer } from "@/components/admin/TeacherEditDrawer";
 import { TeacherLinkDialog } from "@/components/admin/TeacherLinkDialog";
 import { TeacherProfileEdit } from "@/components/teacher/TeacherProfileEdit";
 import { PdfExportLogCard } from "@/components/teacher/PdfExportLogCard";
+import { describeRate } from "@/lib/payRate";
 
 const TeacherProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -127,7 +128,7 @@ const TeacherProfile = () => {
                     )}
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4" />
-                      <span>{(teacher.hourly_rate_vnd || 0).toLocaleString()} VND/hour</span>
+                      <span>{describeRate(teacher)}</span>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
@@ -175,7 +176,7 @@ const TeacherProfile = () => {
           </TabsContent>
 
           <TabsContent value="payroll">
-            <TeacherProfilePayroll teacherId={teacher.id} selectedMonth={selectedMonth} hourlyRate={teacher.hourly_rate_vnd} onMonthChange={setSelectedMonth} />
+            <TeacherProfilePayroll teacherId={teacher.id} selectedMonth={selectedMonth} payRate={teacher} onMonthChange={setSelectedMonth} />
           </TabsContent>
 
           <TabsContent value="profile">

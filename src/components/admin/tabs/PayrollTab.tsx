@@ -26,9 +26,23 @@ import {
   varianceFromCheck,
 } from "@/lib/classSchedule";
 import { AlertTriangle } from "lucide-react";
+import {
+  describeRate,
+  lengthAffectsPay,
+  payRateTypeOf,
+  totalPayVnd,
+  varianceCostVnd,
+  type StaffPayRate,
+} from "@/lib/payRate";
 
 interface StaffPayroll {
-  staff: { id: string; full_name: string; hourly_rate_vnd: number };
+  staff: {
+    id: string;
+    full_name: string;
+    hourly_rate_vnd: number;
+    pay_rate_type?: string | null;
+    per_session_rate_vnd?: number | null;
+  };
   staffType: "teacher" | "ta";
   heldSessions: number;
   scheduledSessions: number;
@@ -42,7 +56,11 @@ interface StaffPayroll {
    * a reschedule rather than an error and there is no overpayment to report.
    */
   expectedProjected: number;
-  /** totalProjected - expectedProjected. Positive = paying over the setting. */
+  /**
+   * totalProjected - expectedProjected. Positive = paying over the setting.
+   * Always 0 for per-session staff: a long lesson costs them nothing extra,
+   * so there is no overpayment to report even when the length is wrong.
+   */
   varianceAmount: number;
   varianceMinutes: number;
   mismatchedSessions: {
@@ -70,12 +88,12 @@ export function PayrollTab() {
       const [teachersRes, tasRes, sessionsRes, participantsRes] = await Promise.all([
         supabase
           .from("teachers")
-          .select("id, full_name, hourly_rate_vnd, is_active")
+          .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active")
           .eq("is_active", true)
           .order("full_name"),
         supabase
           .from("teaching_assistants")
-          .select("id, full_name, hourly_rate_vnd, is_active")
+          .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active")
           .eq("is_active", true)
           .order("full_name"),
         supabase
@@ -118,10 +136,10 @@ export function PayrollTab() {
       // agrees exactly with calculate-payroll. The two had drifted: that
       // function rolls a non-positive span over midnight, this one produced a
       // negative figure and silently subtracted it from the teacher's pay.
-      const calculateAmount = (sessionsList: typeof allSessions, rate: number) =>
-        sessionsList.reduce(
-          (sum, s) => sum + Math.round((rate / 60) * (durationMinutes(s.start_time, s.end_time) ?? 0)),
-          0,
+      const calculateAmount = (sessionsList: typeof allSessions, staff: StaffPayRate) =>
+        totalPayVnd(
+          staff,
+          sessionsList.map((s) => durationMinutes(s.start_time, s.end_time) ?? 0),
         );
 
       /**
@@ -148,16 +166,30 @@ export function PayrollTab() {
         });
       };
 
-      /** The same sessions costed at the length their day is scheduled for. */
-      const calculateExpectedAmount = (sessionsList: typeof allSessions, rate: number) =>
-        sessionsList.reduce((sum, s) => {
-          const minutes =
-            payableExpectedMinutes(checkOf(s)) ?? (durationMinutes(s.start_time, s.end_time) ?? 0);
-          return sum + Math.round((rate / 60) * minutes);
-        }, 0);
+      /**
+       * The same sessions costed at the length their day is scheduled for.
+       * For per-session staff this comes out equal to calculateAmount, which
+       * is correct rather than a coincidence: their pay does not depend on
+       * the length, so re-costing at a different length changes nothing.
+       */
+      const calculateExpectedAmount = (sessionsList: typeof allSessions, staff: StaffPayRate) =>
+        totalPayVnd(
+          staff,
+          sessionsList.map(
+            (s) => payableExpectedMinutes(checkOf(s)) ?? (durationMinutes(s.start_time, s.end_time) ?? 0),
+          ),
+        );
 
-      /** Sessions running a length their class never schedules. */
-      const findMismatches = (sessionsList: typeof allSessions, rate: number) =>
+      /**
+       * Sessions running a length their class never schedules.
+       *
+       * Still listed for per-session staff - a lesson running 30 minutes
+       * over is a real scheduling problem whoever is teaching it - but
+       * deltaAmount comes back 0, because for them it is not a money
+       * problem and the screens read deltaAmount to decide whether to show
+       * a cost at all.
+       */
+      const findMismatches = (sessionsList: typeof allSessions, staff: StaffPayRate) =>
         sessionsList.flatMap((s) => {
           const variance = varianceFromCheck(checkOf(s));
           if (!variance) return [];
@@ -168,7 +200,7 @@ export function PayrollTab() {
             actualMinutes: variance.actualMinutes,
             expectedMinutes: variance.expectedMinutes,
             deltaMinutes: variance.deltaMinutes,
-            deltaAmount: Math.round((rate / 60) * variance.deltaMinutes),
+            deltaAmount: varianceCostVnd(staff, variance.deltaMinutes),
           }];
         });
 
@@ -179,10 +211,10 @@ export function PayrollTab() {
         const sessions = sessionsByTeacher[teacher.id] || [];
         const held = sessions.filter(s => s.status === "Held");
         const scheduled = sessions.filter(s => s.status === "Scheduled");
-        const totalHeld = calculateAmount(held, teacher.hourly_rate_vnd);
-        const totalScheduled = calculateAmount(scheduled, teacher.hourly_rate_vnd);
-        const expectedProjected = calculateExpectedAmount(sessions, teacher.hourly_rate_vnd);
-        const mismatched = findMismatches(sessions, teacher.hourly_rate_vnd);
+        const totalHeld = calculateAmount(held, teacher);
+        const totalScheduled = calculateAmount(scheduled, teacher);
+        const expectedProjected = calculateExpectedAmount(sessions, teacher);
+        const mismatched = findMismatches(sessions, teacher);
 
         results.push({
           staff: teacher,
@@ -210,10 +242,10 @@ export function PayrollTab() {
 
         const held = taSessions.filter(s => s.status === "Held");
         const scheduled = taSessions.filter(s => s.status === "Scheduled");
-        const totalHeld = calculateAmount(held, ta.hourly_rate_vnd);
-        const totalScheduled = calculateAmount(scheduled, ta.hourly_rate_vnd);
-        const expectedProjected = calculateExpectedAmount(taSessions, ta.hourly_rate_vnd);
-        const mismatched = findMismatches(taSessions, ta.hourly_rate_vnd);
+        const totalHeld = calculateAmount(held, ta);
+        const totalScheduled = calculateAmount(scheduled, ta);
+        const expectedProjected = calculateExpectedAmount(taSessions, ta);
+        const mismatched = findMismatches(taSessions, ta);
 
         results.push({
           staff: ta,
@@ -262,10 +294,14 @@ export function PayrollTab() {
 
   const exportPayroll = () => {
     const csv = [
-      ["Staff", "Type", "Held Sessions", "Scheduled Sessions", "Earned", "Projected", "Total Projected", "At Class Settings", "Variance", "Mismatched Sessions"].join(","),
+      ["Staff", "Type", "Paid", "Rate (VND)", "Held Sessions", "Scheduled Sessions", "Earned", "Projected", "Total Projected", "At Class Settings", "Variance", "Mismatched Sessions"].join(","),
       ...(payrollData || []).map((p) => [
         p.staff.full_name,
         p.staffType === "ta" ? "TA" : "Teacher",
+        payRateTypeOf(p.staff) === "per_session" ? "Per session" : "Per hour",
+        payRateTypeOf(p.staff) === "per_session"
+          ? p.staff.per_session_rate_vnd ?? 0
+          : p.staff.hourly_rate_vnd,
         p.heldSessions,
         p.scheduledSessions,
         p.totalEarned,
@@ -275,7 +311,7 @@ export function PayrollTab() {
         p.varianceAmount,
         p.mismatchedSessions.length,
       ].join(",")),
-      ["", "", "", "",
+      ["", "", "", "", "", "",
         (payrollData || []).reduce((sum, p) => sum + p.totalEarned, 0),
         (payrollData || []).reduce((sum, p) => sum + p.projectedEarnings, 0),
         (payrollData || []).reduce((sum, p) => sum + p.totalProjected, 0),
@@ -304,8 +340,15 @@ export function PayrollTab() {
   const grandTotalExpected = payrollData?.reduce((sum, p) => sum + p.expectedProjected, 0) || 0;
   const grandVariance = grandTotalProjected - grandTotalExpected;
   const allMismatches = payrollData?.flatMap((p) =>
-    p.mismatchedSessions.map((m) => ({ ...m, staffName: p.staff.full_name })),
+    p.mismatchedSessions.map((m) => ({
+      ...m,
+      staffName: p.staff.full_name,
+      // Whether this particular mismatch costs anything depends on how the
+      // person teaching it is paid, not on the session.
+      costsMoney: lengthAffectsPay(p.staff),
+    })),
   ) || [];
+  const freeMismatches = allMismatches.filter((m) => !m.costsMoney).length;
 
   if (isLoading) return <div>Loading payroll data...</div>;
 
@@ -386,12 +429,24 @@ export function PayrollTab() {
               class length
             </CardTitle>
             <CardDescription>
-              Pay is hourly, so these sessions change this month's total by{" "}
-              <strong className="text-foreground">
-                {grandVariance > 0 ? "+" : "−"}
-                {Math.abs(grandVariance).toLocaleString()} ₫
-              </strong>
-              . Either the session times or the class setting is wrong.
+              {grandVariance !== 0 ? (
+                <>
+                  For staff paid by the hour these change this month's total by{" "}
+                  <strong className="text-foreground">
+                    {grandVariance > 0 ? "+" : "−"}
+                    {Math.abs(grandVariance).toLocaleString()} ₫
+                  </strong>
+                  .{" "}
+                </>
+              ) : null}
+              {freeMismatches > 0 && (
+                <>
+                  {freeMismatches === allMismatches.length ? "These" : `${freeMismatches} of these`}{" "}
+                  cost nothing extra — that staff member is paid per session — but the
+                  times still disagree with the schedule.{" "}
+                </>
+              )}
+              Either the session times or the class setting is wrong.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -409,9 +464,19 @@ export function PayrollTab() {
                     {formatMinutes(m.actualMinutes)} vs {formatMinutes(m.expectedMinutes)} set
                   </span>
                   <span className="font-semibold tabular-nums text-warning">
-                    {formatSignedMinutes(m.deltaMinutes)} ·{" "}
-                    {m.deltaAmount > 0 ? "+" : "−"}
-                    {Math.abs(m.deltaAmount).toLocaleString()} ₫
+                    {formatSignedMinutes(m.deltaMinutes)}
+                    {/* No money shown for per-session staff: "+0 ₫" would
+                        read as a rounding artefact rather than as "the
+                        length does not change what this costs". */}
+                    {m.costsMoney ? (
+                      <>
+                        {" · "}
+                        {m.deltaAmount > 0 ? "+" : "−"}
+                        {Math.abs(m.deltaAmount).toLocaleString()} ₫
+                      </>
+                    ) : (
+                      <span className="font-normal text-muted-foreground"> · no cost</span>
+                    )}
                   </span>
                 </div>
               ))}
@@ -434,6 +499,7 @@ export function PayrollTab() {
                 <TableRow>
                   <TableHead>Staff</TableHead>
                   <TableHead>Type</TableHead>
+                  <TableHead>Rate</TableHead>
                   <TableHead className="text-center">Held</TableHead>
                   <TableHead className="text-center">Scheduled</TableHead>
                   <TableHead className="text-right">Earned</TableHead>
@@ -451,6 +517,9 @@ export function PayrollTab() {
                         {payroll.staffType === "ta" ? "TA" : "Teacher"}
                       </Badge>
                     </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
+                      {describeRate(payroll.staff)}
+                    </TableCell>
                     <TableCell className="text-center">
                       <Badge variant="default">{payroll.heldSessions}</Badge>
                     </TableCell>
@@ -467,6 +536,14 @@ export function PayrollTab() {
                     <TableCell className="text-right">
                       {payroll.mismatchedSessions.length === 0 ? (
                         <span className="text-xs text-muted-foreground">matches</span>
+                      ) : !lengthAffectsPay(payroll.staff) ? (
+                        <span
+                          className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                          title={`${payroll.mismatchedSessions.length} session(s) differ from the configured class length, but this person is paid per session so the pay is unaffected`}
+                        >
+                          <AlertTriangle className="h-3 w-3" />
+                          {payroll.mismatchedSessions.length} off-length
+                        </span>
                       ) : (
                         <span
                           className="inline-flex items-center gap-1 text-xs font-semibold text-warning"
@@ -481,7 +558,7 @@ export function PayrollTab() {
                   </TableRow>
                 ))}
                 <TableRow className="font-bold bg-muted/50">
-                  <TableCell colSpan={2}>Total</TableCell>
+                  <TableCell colSpan={3}>Total</TableCell>
                   <TableCell className="text-center">
                     {payrollData.reduce((sum, p) => sum + p.heldSessions, 0)}
                   </TableCell>
