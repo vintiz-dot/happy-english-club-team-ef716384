@@ -4114,8 +4114,7 @@ export type Database = {
           hourly_rate_vnd: number
           id: string
           is_active: boolean
-          pay_rate_type: string
-          per_session_rate_vnd: number
+          pay_type: string
           phone: string | null
           updated_at: string
           updated_by: string | null
@@ -4131,8 +4130,7 @@ export type Database = {
           hourly_rate_vnd?: number
           id?: string
           is_active?: boolean
-          pay_rate_type?: string
-          per_session_rate_vnd?: number
+          pay_type?: string
           phone?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -4148,8 +4146,7 @@ export type Database = {
           hourly_rate_vnd?: number
           id?: string
           is_active?: boolean
-          pay_rate_type?: string
-          per_session_rate_vnd?: number
+          pay_type?: string
           phone?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -4190,8 +4187,6 @@ export type Database = {
           hourly_rate_vnd: number
           id: string
           is_active: boolean
-          pay_rate_type: string
-          per_session_rate_vnd: number
           phone: string | null
           updated_at: string
           updated_by: string | null
@@ -4207,8 +4202,6 @@ export type Database = {
           hourly_rate_vnd?: number
           id?: string
           is_active?: boolean
-          pay_rate_type?: string
-          per_session_rate_vnd?: number
           phone?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -4224,8 +4217,6 @@ export type Database = {
           hourly_rate_vnd?: number
           id?: string
           is_active?: boolean
-          pay_rate_type?: string
-          per_session_rate_vnd?: number
           phone?: string | null
           updated_at?: string
           updated_by?: string | null
