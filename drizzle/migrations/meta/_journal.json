@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792213638985,
+      "tag": "0000_restrict_cache_and_gamification_reads",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792213642160,
+      "tag": "0001_staff_pay_rate_basis",
+      "breakpoints": true
+    }
+  ]
+}
