@@ -21,12 +21,14 @@ import { Save, Mail, Phone, DollarSign, GraduationCap, Calendar, Clock, CheckCir
 import { toast } from "sonner";
 import { TAClassAssignment } from "./TAClassAssignment";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PayRateHistory } from "@/components/admin/staff/PayRateHistory";
+import { PayRateFields } from "@/components/admin/staff/PayRateFields";
 import {
   describeQuantity,
   describeRate,
+  payRateError,
   payRateTypeOf,
   totalPayVnd,
+  type PayRateType,
 } from "@/lib/payRate";
 import { durationMinutes } from "@/lib/sessionDuration";
 
@@ -40,6 +42,8 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [payRateType, setPayRateType] = useState<PayRateType>("hourly");
+  const [rate, setRate] = useState("");
   const [bio, setBio] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -50,6 +54,11 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
       setFullName(ta.full_name || "");
       setEmail(ta.email || "");
       setPhone(ta.phone || "");
+      const type = payRateTypeOf(ta);
+      setPayRateType(type);
+      setRate(
+        (type === "per_session" ? ta.per_session_rate_vnd : ta.hourly_rate_vnd)?.toString() || "",
+      );
       setBio(ta.bio || "");
       setIsActive(ta.is_active ?? true);
     }
@@ -95,20 +104,27 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
     },
   });
 
+  const rateError = payRateError(payRateType, rate);
+
   const handleSave = async () => {
     if (!ta?.id) return;
+    if (rateError) {
+      toast.error(rateError);
+      return;
+    }
     setIsSaving(true);
     try {
-      // The rate is not written here. PayRateHistory records it against a
-      // date and syncs these columns itself, so saving them from this form
-      // too would undo a future-dated change the moment someone edited a
-      // phone number.
+      // The rate not in force is zeroed, so no screen can show a stale one.
+      const amount = Math.round(Number(rate));
       const { error } = await supabase
         .from("teaching_assistants")
         .update({
           full_name: fullName,
           email,
           phone,
+          pay_rate_type: payRateType,
+          hourly_rate_vnd: payRateType === "hourly" ? amount : 0,
+          per_session_rate_vnd: payRateType === "per_session" ? amount : 0,
           bio,
           is_active: isActive,
           updated_at: new Date().toISOString(),
@@ -263,10 +279,12 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
                 <Label htmlFor="ta-phone">Phone</Label>
                 <Input id="ta-phone" value={phone} onChange={e => setPhone(e.target.value)} />
               </div>
-              <PayRateHistory
-                staffId={ta.id}
-                staffType="assistant"
-                staff={ta}
+              <PayRateFields
+                idPrefix="ta-pay"
+                payRateType={payRateType}
+                onPayRateTypeChange={setPayRateType}
+                rate={rate}
+                onRateChange={setRate}
               />
               <div>
                 <Label htmlFor="ta-bio">Bio</Label>
@@ -276,7 +294,7 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
                 <Label htmlFor="ta-active">Active Status</Label>
                 <Switch id="ta-active" checked={isActive} onCheckedChange={setIsActive} />
               </div>
-              <Button onClick={handleSave} disabled={isSaving} className="w-full">
+              <Button onClick={handleSave} disabled={isSaving || !!rateError} className="w-full">
                 <Save className="h-4 w-4 mr-2" />
                 {isSaving ? "Saving..." : "Save Changes"}
               </Button>
