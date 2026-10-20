@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHero } from "@/components/quest/PageHero";
+import { PayrollMonthLock } from "@/components/admin/payroll/PayrollMonthLock";
 import { SectionHeader } from "@/components/quest/SectionHeader";
 import { durationMinutes, formatMinutes, formatSignedMinutes } from "@/lib/sessionDuration";
 import {
@@ -313,13 +314,22 @@ export function PayrollTab() {
         category: p.staffType === "ta" ? "TA Payroll" : "Teacher Payroll",
         memo: `${p.staff.full_name} – ${selectedMonth}`,
         date: lastDayOfMonth,
+        // What this row is, so booking it twice updates it instead of
+        // charging the school twice. source_kind + source_key carry a
+        // unique constraint (20261021092000); hand-entered expenditures
+        // leave both NULL and stay freely repeatable, because a UNIQUE
+        // constraint treats NULLs as distinct.
+        source_kind: "payroll",
+        source_key: `${selectedMonth}:${p.staffType === "ta" ? "assistant" : "teacher"}:${p.staff.id}`,
       }));
 
-      const { error } = await supabase.from("expenditures").insert(rows);
+      const { error } = await supabase
+        .from("expenditures")
+        .upsert(rows, { onConflict: "source_kind,source_key", ignoreDuplicates: false });
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Payroll added to expenditures");
+      toast.success("Payroll booked to expenditures");
       queryClient.invalidateQueries({ queryKey: ["expenditures"] });
       queryClient.invalidateQueries({ queryKey: ["finance-summary"] });
     },
@@ -420,6 +430,16 @@ export function PayrollTab() {
           </Button>
         </div>
       </div>
+
+      <PayrollMonthLock
+        month={selectedMonth}
+        live={(payrollData ?? []).map((p) => ({
+          id: p.staff.id,
+          staffType: p.staffType,
+          name: p.staff.full_name,
+          totalEarned: p.totalEarned,
+        }))}
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>

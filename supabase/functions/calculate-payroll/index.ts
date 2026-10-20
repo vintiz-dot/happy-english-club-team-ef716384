@@ -523,6 +523,46 @@ Deno.serve(async (req) => {
     if (payRateErr) throw payRateErr;
     const ratesByStaff = indexPayRates(payRateRows as PayRateRecord[] | null);
 
+    // IS THIS MONTH CLOSED. A closed month reports what it was closed at,
+    // not what it would cost if recomputed now. Sessions and attendance in
+    // a closed month stay editable - correcting attendance after the fact
+    // is normal work - so the recomputed figure is kept alongside as
+    // liveTotalAmountActual and the difference is shown as a variance the
+    // admin can carry into a later month, rather than silently restating
+    // what was paid.
+    const { data: period } = await supabase
+      .from("payroll_periods")
+      .select("month, status, locked_at")
+      .eq("month", month)
+      .maybeSingle();
+    const periodLocked = period?.status === "locked";
+
+    const { data: lockedLines } = periodLocked
+      ? await supabase
+          .from("payroll_lines")
+          .select("teacher_id, assistant_id, pay_rate_type, hourly_rate_vnd, per_session_rate_vnd, sessions_count, total_minutes, total_amount_vnd")
+          .eq("month", month)
+      : { data: null };
+    const linesByStaff = new Map<string, NonNullable<typeof lockedLines>[number]>();
+    for (const l of lockedLines ?? []) {
+      const id = l.teacher_id ?? l.assistant_id;
+      if (id) linesByStaff.set(id, l);
+    }
+
+    // Corrections to earlier closed months, paid in this one.
+    const { data: adjustmentRows } = await supabase
+      .from("payroll_adjustments")
+      .select("teacher_id, assistant_id, amount_vnd, reason, origin_month")
+      .eq("month", month);
+    const adjustmentsByStaff = new Map<string, NonNullable<typeof adjustmentRows>>();
+    for (const a of adjustmentRows ?? []) {
+      const id = a.teacher_id ?? a.assistant_id;
+      if (!id) continue;
+      const list = adjustmentsByStaff.get(id);
+      if (list) list.push(a);
+      else adjustmentsByStaff.set(id, [a]);
+    }
+
     // The last day of the month being reported. What the screen prints as
     // "their rate" for a finished month is the rate they were on at the end
     // of it - not today's. Where a rate changed mid-month the per-session
@@ -555,6 +595,11 @@ Deno.serve(async (req) => {
       perSessionRate: number;
       /** The rate moved part-way through this month; `hourlyRate` is the later one. */
       rateChangedInMonth: boolean;
+      /** Set only on a closed month: what the figures would be if recomputed now. */
+      liveTotalAmountActual?: number;
+      /** Corrections to earlier closed months, falling due in this one. */
+      adjustmentVnd?: number;
+      adjustments?: Array<{ amountVnd: number; reason: string; originMonth: string }>;
       /** "12.5 h" or "9 sessions" - whichever the pay basis makes true. */
       quantityLabel: string;
       sessionsCountActual: number;
@@ -640,8 +685,15 @@ Deno.serve(async (req) => {
         staffType: "teacher",
       });
 
-      // Upsert monthly summary for actuals (schema-safe)
-      const { error: upErr } = await supabase.from("payroll_summaries").upsert(
+      // Upsert monthly summary for actuals (schema-safe).
+      //
+      // Skipped once the month is closed. payroll_summaries is rewritten
+      // on every call, and this function is invoked by useFinanceSummary
+      // and useFinanceOverview as part of a READ - so without this guard,
+      // opening the finance dashboard would try to restate a closed month,
+      // the trigger from 20261021093000 would refuse it, and the throw
+      // would take the whole dashboard down.
+      const { error: upErr } = periodLocked ? { error: null } : await supabase.from("payroll_summaries").upsert(
         {
           teacher_id: t.id,
           month,
@@ -732,8 +784,42 @@ Deno.serve(async (req) => {
       }
     }
 
+    // What a closed month reports, and what a correction adds to an open
+    // one. Done here rather than inside the two staff loops because it is
+    // the same rule for teachers and assistants and should read that way.
+    for (const r of results) {
+      const line = linesByStaff.get(r.teacherId);
+      if (periodLocked && line) {
+        r.liveTotalAmountActual = r.totalAmountActual;
+        r.totalAmountActual = line.total_amount_vnd;
+        r.sessionsCountActual = line.sessions_count;
+        r.totalMinutesActual = line.total_minutes;
+        r.totalHoursActual = +(line.total_minutes / 60).toFixed(2);
+        r.payRateType = line.pay_rate_type as "hourly" | "per_session";
+        r.hourlyRate = line.pay_rate_type === "hourly"
+          ? line.hourly_rate_vnd
+          : line.per_session_rate_vnd;
+        r.perSessionRate = line.per_session_rate_vnd;
+      }
+      const adj = adjustmentsByStaff.get(r.teacherId) ?? [];
+      if (adj.length > 0) {
+        r.adjustmentVnd = adj.reduce((n, a) => n + a.amount_vnd, 0);
+        r.adjustments = adj.map((a) => ({
+          amountVnd: a.amount_vnd,
+          reason: a.reason,
+          originMonth: a.origin_month,
+        }));
+      }
+    }
+
     const body = {
       month,
+      locked: periodLocked,
+      lockedAt: period?.locked_at ?? null,
+      // Corrections to earlier closed months that fall due in this one.
+      // Kept out of grandTotalActual, which answers "what did this month's
+      // work cost"; this answers "what goes out this month".
+      grandTotalAdjustments: results.reduce((s, r) => s + (r.adjustmentVnd ?? 0), 0),
       totalTeachers: results.length,
       grandTotalActual: results.reduce((s, r) => s + r.totalAmountActual, 0),
       grandTotalProjected: results.reduce((s, r) => s + r.totalAmountProjected, 0),

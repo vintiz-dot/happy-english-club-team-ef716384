@@ -224,3 +224,9 @@ verify_jwt = true
 
 [functions.student-create-migration-account]
 verify_jwt = true
+
+# Closing a payroll month writes payroll_lines and books the cost. Admin
+# only, and it refuses an internal service-role call on purpose: locked_by
+# has to name a person.
+[functions.close-payroll-month]
+verify_jwt = true
