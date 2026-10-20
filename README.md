@@ -36,6 +36,29 @@ npm i
 npm run dev
 ```
 
+### Reproducible installs (CI)
+
+```sh
+npm ci --ignore-scripts
+```
+
+`--ignore-scripts` is needed, and it is safe. `drizzle-kit` still depends
+on the deprecated `@esbuild-kit/*` packages — even at 1.0.0-rc — and the
+esbuild they pull in has a postinstall that fails on Windows under
+`npm ci`, because it tries to run the platform binary before npm has
+finished placing it. Skipping it costs nothing: esbuild's binary ships
+inside its own `@esbuild/<platform>` package, and that postinstall only
+verifies it. Verified after a `--ignore-scripts` install: esbuild, vite,
+tsc and drizzle-kit all run, and `npm run build` produces a working
+bundle.
+
+Plain `npm i` does not need the flag.
+
+`drizzle-kit` and `drizzle-orm` are pinned to exact versions rather than
+ranges. drizzle-kit generates migration SQL, so two installs resolving
+different minors could produce different output for the same schema; the
+pins match what `bun.lock` already resolves, so npm and bun agree.
+
 **Edit a file directly in GitHub**
 
 - Navigate to the desired file(s).
