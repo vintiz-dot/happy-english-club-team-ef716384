@@ -3414,6 +3414,60 @@ export type Database = {
           },
         ]
       }
+      staff_pay_rates: {
+        Row: {
+          assistant_id: string | null
+          created_at: string
+          created_by: string | null
+          effective_from: string
+          hourly_rate_vnd: number
+          id: string
+          note: string | null
+          pay_rate_type: string
+          per_session_rate_vnd: number
+          teacher_id: string | null
+        }
+        Insert: {
+          assistant_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          effective_from: string
+          hourly_rate_vnd?: number
+          id?: string
+          note?: string | null
+          pay_rate_type?: string
+          per_session_rate_vnd?: number
+          teacher_id?: string | null
+        }
+        Update: {
+          assistant_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          hourly_rate_vnd?: number
+          id?: string
+          note?: string | null
+          pay_rate_type?: string
+          per_session_rate_vnd?: number
+          teacher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_pay_rates_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "teaching_assistants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_pay_rates_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_access_codes: {
         Row: {
           attempts: number
@@ -4721,6 +4775,10 @@ export type Database = {
         Args: { p_job: string; p_month: string }
         Returns: boolean
       }
+      assistant_rate_on: {
+        Args: { p_assistant_id: string; p_date: string }
+        Returns: Json
+      }
       can_read_student_work_file: { Args: { _path: string }; Returns: boolean }
       can_view_classmate: {
         Args: { student_id_to_view: string; viewer_user_id: string }
@@ -4837,6 +4895,10 @@ export type Database = {
       }
       revert_invalid_held_sessions: {
         Args: { p_month: string; p_now: string; p_today: string }
+        Returns: Json
+      }
+      teacher_rate_on: {
+        Args: { p_date: string; p_teacher_id: string }
         Returns: Json
       }
     }
