@@ -19,29 +19,8 @@
     {
       "idx": 2,
       "version": "7",
-      "when": 1792457806907,
+      "when": 1792489250490,
       "tag": "0002_absorb_pay_type_column",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1792486210097,
-      "tag": "0003_class_schedule_versions",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1792486210102,
-      "tag": "0004_archive_staff_not_delete",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1792488748759,
-      "tag": "0005_grant_access_predicates_to_service_role",
       "breakpoints": true
     }
   ]

@@ -7,29 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const NEW_PASSWORD = "1234567";
 const MAX_SUFFIX = 50;
-
-/**
- * A fresh password per migrated account.
- *
- * This was the constant "1234567" for every child the migration touched,
- * and the email beside it is a slug of their first name on a known domain
- * - so anyone who knew a child's first name knew their login. The password
- * is still returned to the caller below, which is correct: this runs when
- * a student migrates their own account and they have to be told the new
- * credentials. What was wrong was that it was the same one every time.
- *
- * Ambiguous characters (0/O, 1/l/I) are left out because a child reads
- * this off a screen and types it on a phone.
- */
-function freshPassword(): string {
-  const alphabet = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const bytes = new Uint8Array(14);
-  crypto.getRandomValues(bytes);
-  // Modulo bias across 56 symbols is negligible at this length and this is
-  // a one-time credential the child is expected to change.
-  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
-}
 
 function slugifyEmailLocalPart(input: string): string {
   // Take first word/name, strip diacritics, keep [a-z0-9]
@@ -128,15 +107,12 @@ Deno.serve(async (req) => {
 
     let finalEmail = `${baseLocal}@${domain}`;
     let newUserId: string | null = null;
-    // One password for this account, generated once so the value returned
-    // below is the value that was actually set.
-    const newPassword = freshPassword();
 
     for (let i = 0; i <= MAX_SUFFIX; i++) {
       const candidate = i === 0 ? `${baseLocal}@${domain}` : `${baseLocal}${i + 1}@${domain}`;
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
         email: candidate,
-        password: newPassword,
+        password: NEW_PASSWORD,
         email_confirm: true,
         user_metadata: {
           role: "student",
@@ -214,7 +190,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ email: finalEmail, password: newPassword }),
+      JSON.stringify({ email: finalEmail, password: NEW_PASSWORD }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

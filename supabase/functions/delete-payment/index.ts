@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
       }
 
       // Group by month
-      const monthsForStudent = new Set<string>(ledgerEntries.map(e => e.month));
+      const monthsForStudent = new Set(ledgerEntries.map(e => e.month));
       monthsForStudent.forEach(m => affectedMonths.add(m));
 
       // Find invoices that were paid by this payment (via ledger entries)

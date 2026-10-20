@@ -20,7 +20,6 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { callerHoldsStudent, requireRole } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,22 +46,6 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const studentId = String(body.student_id ?? "").trim();
     if (!studentId) return respond({ success: false, error: "student_id is required" }, 400);
-
-    // Staff only, and only for a child they actually teach. This read and
-    // OVERWROTE any student's AI learning profile from an id in the body,
-    // on the service role, with no check on the caller at all.
-    //
-    // Scoped as well as role-checked on purpose: "is a teacher" would
-    // still let every teacher in the school rewrite every child's profile.
-    // callerHoldsStudent mirrors the predicate the students table's own
-    // SELECT policy uses, so this grants no more than reading the row
-    // directly would. Internal callers (_lib/profile.ts) pass as service
-    // role; admins pass without the lookup.
-    const gate = await requireRole(req, sb, ["admin", "teacher"], corsHeaders);
-    if (gate instanceof Response) return gate;
-    if (!(await callerHoldsStudent(sb, gate, studentId))) {
-      return respond({ success: false, error: "You do not teach this student." }, 403);
-    }
 
     const { data: student } = await sb
       .from("students")

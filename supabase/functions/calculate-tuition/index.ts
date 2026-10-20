@@ -2,7 +2,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
-import { requireRole } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,12 +62,6 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-
-    // Admins only. This ran on the service role and never looked at who
-    // was calling, so any signed-in account could act on any child's data.
-    // Service-to-service calls still pass - see requireRole.
-    const gate = await requireRole(req, supabase, ["admin"], corsHeaders);
-    if (gate instanceof Response) return gate;
 
     // Validate input
     const InputSchema = z.object({

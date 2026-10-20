@@ -25,7 +25,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { fireProfileRefresh } from "../_lib/profile.ts";
 import { safeParseJson, chunkOnLines } from "../_lib/text.ts";
-import { callerHoldsClass, requireRole } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -983,17 +982,6 @@ Deno.serve(async (req) => {
       .eq("id", transcriptId)
       .single();
     if (trErr || !tr) return respond({ success: false, error: "transcript not found" }, 404);
-
-    // Staff only, and only for a class they hold. This ran a full AI pass
-    // over any classroom recording - children's voices - and performed a
-    // dozen service-role writes off the back of it, from a transcript_id
-    // in the body with no check on the caller. transcribe-lesson-audio
-    // calls it internally and passes as service role.
-    const gate = await requireRole(req, sb, ["admin", "teacher"], corsHeaders);
-    if (gate instanceof Response) return gate;
-    if (!(await callerHoldsClass(sb, gate, tr.class_id))) {
-      return respond({ success: false, error: "That transcript belongs to a class you do not hold." }, 403);
-    }
 
     if (body.background === true) {
       // Queue-and-return: stamp the run, answer in milliseconds, analyze on

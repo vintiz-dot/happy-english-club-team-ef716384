@@ -664,47 +664,6 @@ export type Database = {
           },
         ]
       }
-      class_schedule_versions: {
-        Row: {
-          class_id: string
-          created_at: string
-          created_by: string | null
-          default_session_length_minutes: number | null
-          effective_from: string
-          id: string
-          note: string | null
-          weekly_slots: Json
-        }
-        Insert: {
-          class_id: string
-          created_at?: string
-          created_by?: string | null
-          default_session_length_minutes?: number | null
-          effective_from: string
-          id?: string
-          note?: string | null
-          weekly_slots?: Json
-        }
-        Update: {
-          class_id?: string
-          created_at?: string
-          created_by?: string | null
-          default_session_length_minutes?: number | null
-          effective_from?: string
-          id?: string
-          note?: string | null
-          weekly_slots?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "class_schedule_versions_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       class_speaker_aliases: {
         Row: {
           class_id: string
@@ -4146,8 +4105,6 @@ export type Database = {
       }
       teachers: {
         Row: {
-          archived_at: string | null
-          archived_by: string | null
           avatar_url: string | null
           bio: string | null
           created_at: string
@@ -4158,7 +4115,6 @@ export type Database = {
           id: string
           is_active: boolean
           pay_rate_type: string
-          pay_type: string
           per_session_rate_vnd: number
           phone: string | null
           updated_at: string
@@ -4166,8 +4122,6 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          archived_at?: string | null
-          archived_by?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -4178,7 +4132,6 @@ export type Database = {
           id?: string
           is_active?: boolean
           pay_rate_type?: string
-          pay_type?: string
           per_session_rate_vnd?: number
           phone?: string | null
           updated_at?: string
@@ -4186,8 +4139,6 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          archived_at?: string | null
-          archived_by?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -4198,7 +4149,6 @@ export type Database = {
           id?: string
           is_active?: boolean
           pay_rate_type?: string
-          pay_type?: string
           per_session_rate_vnd?: number
           phone?: string | null
           updated_at?: string
@@ -4231,8 +4181,6 @@ export type Database = {
       }
       teaching_assistants: {
         Row: {
-          archived_at: string | null
-          archived_by: string | null
           avatar_url: string | null
           bio: string | null
           created_at: string
@@ -4250,8 +4198,6 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          archived_at?: string | null
-          archived_by?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -4269,8 +4215,6 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          archived_at?: string | null
-          archived_by?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -4707,10 +4651,6 @@ export type Database = {
         Returns: boolean
       }
       can_read_student_work_file: { Args: { _path: string }; Returns: boolean }
-      class_slots_on: {
-        Args: { p_class_id: string; p_date: string }
-        Returns: Json
-      }
       can_view_classmate: {
         Args: { student_id_to_view: string; viewer_user_id: string }
         Returns: boolean

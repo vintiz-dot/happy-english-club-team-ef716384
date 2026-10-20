@@ -19,14 +19,6 @@ interface WeeklySlot {
   teacherId?: string;
 }
 
-/** A template slot this run did not turn into a session, and why. */
-interface SkippedSlot {
-  class: string;
-  date: string;
-  time: string;
-  reason: string;
-}
-
 interface ExpectedSession {
   classId: string;
   className: string;
@@ -72,38 +64,6 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // WHO IS CALLING. Until now this function checked only that an
-    // Authorization header EXISTED - it never decoded it - while running
-    // on the service role. Any signed-in account, including a student's or
-    // a parent's, could POST here and rewrite the whole school's timetable:
-    // create sessions, delete future ones, and (see the date floor below)
-    // cause their own family to be billed again for lessons that had
-    // already happened. The header was a doorbell, not a lock.
-    const caller = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: userError } = await caller.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Role is read with the service-role client, not the caller's: a user
-    // cannot read another user's roles, and reading their own through
-    // their own client would still be a claim they influence.
-    const { data: callerRoles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id);
-    if (!(callerRoles ?? []).some((r: { role: string }) => r.role === 'admin')) {
-      return new Response(JSON.stringify({ error: 'Admins only' }), {
-        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -154,15 +114,6 @@ Deno.serve(async (req) => {
 
       const { data: classes, error: classError } = await classQuery;
 
-      // Who must no longer be scheduled. Read once rather than per slot.
-      const { data: archivedTeachers } = await supabase
-        .from('teachers')
-        .select('id')
-        .eq('is_active', false);
-      const archivedTeacherIds = new Set<string>(
-        (archivedTeachers ?? []).map((t: { id: string }) => t.id),
-      );
-
       if (classError) throw classError;
 
       // Step 3: Build expected sessions
@@ -189,9 +140,7 @@ Deno.serve(async (req) => {
         expected,
         existingSessions || [],
         targetMonth,
-        reconciliationMode,
-        archivedTeacherIds,
-        user.id,
+        reconciliationMode
       );
 
       // Step 6: Call calculate-payroll and calculate-tuition
@@ -366,23 +315,12 @@ async function reconcileSessions(
   expected: ExpectedSession[],
   existing: any[],
   month: string,
-  mode: string,
-  /** Teachers who have been archived. Their slots are not scheduled. */
-  archivedTeacherIds: Set<string>,
-  // The admin who asked for this. Passed in because the only client in
-  // scope here is the service-role one, and asking IT who the user is -
-  // which is what this function used to do - returns null, so every
-  // schedule change was audited to nobody.
-  actorUserId: string,
+  mode: string
 ) {
   const created: any[] = [];
   const updated: any[] = [];
   const removed: any[] = [];
   const skippedConflicts: any[] = [];
-  /** Template slots in the past that this run deliberately did not create. */
-  const backfillSkipped: SkippedSlot[] = [];
-  /** Inserts the database refused. Previously thrown away silently. */
-  const createFailed: SkippedSlot[] = [];
   const attention = {
     noTeacherExpected: [] as ExpectedSession[],
     noTeacherExisting: [] as any[],
@@ -415,53 +353,6 @@ async function reconcileSessions(
     const existingSession = existingMap.get(exp.key);
     
     if (!existingSession) {
-      // ── THE DATE FLOOR ────────────────────────────────────────────────
-      //
-      // Never invent a session in the past. There was no lower bound here,
-      // and the match key is `class_id|date|start_time`, so moving a class
-      // from 17:30 to 18:00 made every ALREADY-TAUGHT session in the month
-      // miss its key - and this branch inserted a second, brand-new copy
-      // of each one at the new time, sitting beside the Held original.
-      //
-      // That is not a cosmetic duplicate. trg_attendance_after_session_ins
-      // (20251012065759) seeds an attendance row for every active
-      // enrolment the moment a session row appears, and calculate-tuition
-      // bills from attendance. So a timetable correction quietly billed
-      // every family in the class a second time for lessons that happened
-      // once. Nothing on any screen said so.
-      //
-      // A genuinely missing past session is a real thing, but it is a
-      // human judgement - AddSessionModal writes those with is_manual, and
-      // the removal loop below deliberately leaves manual rows alone.
-      // Backfilling them automatically from a template that has since
-      // changed is exactly the operation that cannot be trusted.
-      // An archived teacher must stop being scheduled. weeklySlots[].teacherId
-      // is jsonb, not a foreign key, so archiving someone leaves their id
-      // sitting in every class template they were on, and this generator
-      // would happily keep minting future lessons for them. The matching
-      // guard on the UPDATE branch below covers the other half: sessions
-      // that already exist.
-      if (exp.teacherId && archivedTeacherIds.has(exp.teacherId)) {
-        attention.noTeacherExpected.push(exp);
-        backfillSkipped.push({
-          class: exp.className,
-          date: exp.date,
-          time: `${exp.startTime}-${exp.endTime}`,
-          reason: 'The teacher on this timetable slot is archived; reassign the slot',
-        });
-        continue;
-      }
-
-      if (exp.date < today) {
-        backfillSkipped.push({
-          class: exp.className,
-          date: exp.date,
-          time: `${exp.startTime}-${exp.endTime}`,
-          reason: 'In the past; add it by hand if it really happened',
-        });
-        continue;
-      }
-
       // Skip if no teacher
       if (!exp.teacherId) {
         attention.noTeacherExpected.push(exp);
@@ -502,40 +393,17 @@ async function reconcileSessions(
         .select()
         .single();
 
-      if (error) {
-        // The error used to be discarded, so a class whose slot named a
-        // deleted teacher failed every insert and the run still reported
-        // success with nothing created - session generation for that class
-        // stopped dead and the admin was told it was fine.
-        console.error('session insert failed', exp.classId, exp.date, error.message);
-        createFailed.push({
-          class: exp.className,
-          date: exp.date,
-          time: `${exp.startTime}-${exp.endTime}`,
-          reason: error.message,
-        });
-      } else if (newSession) {
+      if (!error && newSession) {
         created.push(newSession);
       }
     } else {
-      // Update teacher on future Scheduled non-manual sessions if template
-      // changed.
-      //
-      // THE ARCHIVED CHECK IS THE POINT OF THIS CONDITION, not a detail.
-      // Archiving a teacher does not touch weeklySlots[].teacherId - it is
-      // jsonb, not a foreign key - so the template keeps naming them. An
-      // admin who archives someone and then transfers their remaining
-      // lessons to a colleague would have had every one of those sessions
-      // stamped straight back to the archived teacher the next time this
-      // ran, silently undoing the handover. The slot itself still needs
-      // reassigning, which is what backfillSkipped reports.
+      // Update teacher on future Scheduled non-manual sessions if template changed
       if (
         existingSession.date >= today &&
         existingSession.status === 'Scheduled' &&
         !existingSession.is_manual &&
         existingSession.teacher_id !== exp.teacherId &&
-        exp.teacherId && // Only update if template has a teacher
-        !archivedTeacherIds.has(exp.teacherId)
+        exp.teacherId // Only update if template has a teacher
       ) {
         const { error } = await supabase
           .from('sessions')
@@ -559,13 +427,15 @@ async function reconcileSessions(
         !existingSession.is_manual &&
         (existingSession.start_time !== exp.startTime || existingSession.end_time !== exp.endTime)
       ) {
+        const { data: { user } } = await supabase.auth.getUser();
+        
         // Update time while preserving Held status
         const { error: updateError } = await supabase
           .from('sessions')
           .update({ 
             start_time: exp.startTime,
             end_time: exp.endTime,
-            updated_by: actorUserId,
+            updated_by: user?.id,
           })
           .eq('id', existingSession.id);
 
@@ -575,7 +445,7 @@ async function reconcileSessions(
             entity: 'sessions',
             action: 'update',
             entity_id: existingSession.id,
-            actor_user_id: actorUserId,
+            actor_user_id: user?.id,
             diff: {
               old_start_time: existingSession.start_time,
               old_end_time: existingSession.end_time,
@@ -629,7 +499,7 @@ async function reconcileSessions(
     }
   }
 
-  return { created, updated, removed, skippedConflicts, backfillSkipped, createFailed, attention };
+  return { created, updated, removed, skippedConflicts, attention };
 }
 
 async function checkTeacherConflict(

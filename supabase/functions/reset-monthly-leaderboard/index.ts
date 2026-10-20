@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { requireRole } from '../_lib/auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,12 +14,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Admins only. This archives and zeroes every student's points for a
-    // month, from a month name supplied in the body. Anyone signed in
-    // could wipe the current leaderboard.
-    const gate = await requireRole(req, supabase, ["admin"], corsHeaders);
-    if (gate instanceof Response) return gate;
 
     const { targetMonth } = await req.json().catch(() => ({}));
     

@@ -12,9 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Save, Archive, ArchiveRestore } from "lucide-react";
+import { Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +36,7 @@ interface TeacherEditDrawerProps {
 
 export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -104,50 +106,30 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
     }
   };
 
-  const isArchived = teacher?.is_active === false;
-
-  /**
-   * Archive, not delete.
-   *
-   * The button here used to issue a hard DELETE, caught SQLSTATE 23503 and
-   * told the admin "this teacher has lessons on record". That guard covered
-   * two of the six foreign keys pointing at `teachers`; the other four are
-   * ON DELETE CASCADE and raise nothing, so a teacher who had only ever
-   * co-taught was erased along with their payroll history, their bank
-   * details and every record that they were in the room.
-   *
-   * Archiving keeps all of it. `is_active = false` is enough on its own -
-   * sync_staff_archived_at (20261020091000) stamps archived_at from the
-   * trigger, so there is no second field for a call site to forget.
-   *
-   * The database refuses a hard delete for anyone with history now
-   * (block_delete_of_staff_with_history), so this is no longer the only
-   * thing standing between an admin and a destroyed payroll record - but
-   * the right action is still the one on the screen.
-   */
-  const handleArchive = async () => {
+  const handleDelete = async () => {
     if (!teacher?.id) return;
     setIsDeleting(true);
     try {
       const { data, error } = await supabase
         .from("teachers")
-        .update({ is_active: !isArchived })
+        .delete()
         .eq("id", teacher.id)
         .select("id");
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        throw new Error("You don't have permission to change this teacher.");
+      if (error) {
+        if (error.code === "23503") {
+          throw new Error(
+            "This teacher has lessons or classes on record, so they can't be deleted. Set them to inactive instead."
+          );
+        }
+        throw error;
       }
-      toast.success(
-        isArchived
-          ? `${teacher.full_name} is back on the staff list`
-          : `${teacher.full_name} archived — their records and past payroll are kept`,
-      );
+      if (!data || data.length === 0) throw new Error("You don't have permission to delete this teacher.");
+      toast.success("Teacher deleted");
       queryClient.invalidateQueries({ queryKey: ["teachers"] });
-      setConfirmOpen(false);
       onClose();
+      navigate("/teachers");
     } catch (error: any) {
-      toast.error(error.message || "Failed to archive teacher");
+      toast.error(error.message || "Failed to delete teacher");
     } finally {
       setIsDeleting(false);
     }
@@ -223,21 +205,13 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
           </Button>
 
           <Button
-            variant={isArchived ? "outline" : "destructive"}
+            variant="destructive"
             className="w-full"
             disabled={isDeleting}
             onClick={() => setConfirmOpen(true)}
           >
-            {isArchived ? (
-              <ArchiveRestore className="h-4 w-4 mr-2" />
-            ) : (
-              <Archive className="h-4 w-4 mr-2" />
-            )}
-            {isDeleting
-              ? "Working..."
-              : isArchived
-                ? "Restore Teacher"
-                : "Archive Teacher"}
+            <Trash2 className="h-4 w-4 mr-2" />
+            {isDeleting ? "Deleting..." : "Delete Teacher"}
           </Button>
         </div>
       </SheetContent>
@@ -245,35 +219,19 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent className="z-[100]">
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {isArchived ? `Restore ${teacher?.full_name}?` : `Archive ${teacher?.full_name}?`}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Delete {teacher?.full_name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              {isArchived ? (
-                <>
-                  They go back on the staff list and can be assigned to classes again. Their
-                  access to class data is restored too.
-                </>
-              ) : (
-                <>
-                  Nothing is deleted. Their lessons, payroll history and bank details stay exactly
-                  as they are, and they still appear by name on lessons they already taught — so
-                  the month they leave is still paid correctly.
-                  <br />
-                  <br />
-                  They come off the staff list, lose access to class data, and stop being offered
-                  for new sessions. You can restore them at any time from the Archived tab.
-                </>
-              )}
+              This permanently removes the teacher. Teachers who have lessons or classes on record
+              can't be deleted — set them to inactive instead so payroll history stays intact.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleArchive}
-              className={isArchived ? undefined : "bg-destructive text-destructive-foreground hover:bg-destructive/90"}
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isArchived ? "Restore" : "Archive"}
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
