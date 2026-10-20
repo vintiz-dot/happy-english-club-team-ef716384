@@ -437,9 +437,10 @@ async function reconcileSessions(
       // changed is exactly the operation that cannot be trusted.
       // An archived teacher must stop being scheduled. weeklySlots[].teacherId
       // is jsonb, not a foreign key, so archiving someone leaves their id
-      // sitting in every class template they were on and this generator
-      // would happily keep minting future lessons for them - and re-stamp
-      // them back onto sessions an admin had already transferred away.
+      // sitting in every class template they were on, and this generator
+      // would happily keep minting future lessons for them. The matching
+      // guard on the UPDATE branch below covers the other half: sessions
+      // that already exist.
       if (exp.teacherId && archivedTeacherIds.has(exp.teacherId)) {
         attention.noTeacherExpected.push(exp);
         backfillSkipped.push({
@@ -517,13 +518,24 @@ async function reconcileSessions(
         created.push(newSession);
       }
     } else {
-      // Update teacher on future Scheduled non-manual sessions if template changed
+      // Update teacher on future Scheduled non-manual sessions if template
+      // changed.
+      //
+      // THE ARCHIVED CHECK IS THE POINT OF THIS CONDITION, not a detail.
+      // Archiving a teacher does not touch weeklySlots[].teacherId - it is
+      // jsonb, not a foreign key - so the template keeps naming them. An
+      // admin who archives someone and then transfers their remaining
+      // lessons to a colleague would have had every one of those sessions
+      // stamped straight back to the archived teacher the next time this
+      // ran, silently undoing the handover. The slot itself still needs
+      // reassigning, which is what backfillSkipped reports.
       if (
         existingSession.date >= today &&
         existingSession.status === 'Scheduled' &&
         !existingSession.is_manual &&
         existingSession.teacher_id !== exp.teacherId &&
-        exp.teacherId // Only update if template has a teacher
+        exp.teacherId && // Only update if template has a teacher
+        !archivedTeacherIds.has(exp.teacherId)
       ) {
         const { error } = await supabase
           .from('sessions')
