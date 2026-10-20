@@ -6,10 +6,15 @@ import {
   effectiveRateVnd,
   payRateTypeOf,
   sessionPayVnd,
-  totalPayVnd,
   varianceCostVnd,
   type StaffPayRate,
 } from "../_lib/pay-rate.ts";
+import {
+  indexPayRates,
+  rateOnDate,
+  recordOnDate,
+  type PayRateRecord,
+} from "../_lib/pay-history.ts";
 import { requireRole } from "../_lib/auth.ts";
 
 const corsHeaders = {
@@ -261,7 +266,11 @@ function parseMinutes(hhmm: string | null): number | null {
  */
 function computeTotals(
   sessions: SessionRow[],
-  rate: StaffPayRate,
+  // The member of staff's own row. Used only where no rate record covers a
+  // session's date - someone hired since the backfill. Same fallback as
+  // public.teacher_rate_on, and the reason it is not an empty rate is that
+  // an empty rate pays them nothing.
+  fallbackRate: StaffPayRate,
   // Timetable history, newest first per class. A session is judged against
   // the schedule in force ON ITS OWN DATE: judging it against the class's
   // CURRENT template, which is what this did, turned every lesson already
@@ -270,6 +279,14 @@ function computeTotals(
   // they happened. Empty map = no history known, and every lookup falls
   // back to the class row exactly as before.
   versionsByClass: Map<string, ScheduleVersionRow[]> = new Map(),
+  // Pay history for this one person, newest first. A session is priced at
+  // the rate in force ON ITS OWN DATE. Pricing a whole month at the rate
+  // the staff row happens to hold today - which is what this did - meant a
+  // raise silently re-priced every month that person had ever worked, the
+  // payroll_summaries row for each one being overwritten by the same run.
+  // Empty list = no history known, and every lookup falls back to the staff
+  // row exactly as before.
+  ratesDesc: PayRateRecord[] = [],
 ) {
   let totalMinutes = 0;
   let totalExpectedMinutes = 0;
@@ -296,6 +313,8 @@ function computeTotals(
 
   const perSession: Array<{
     id: string;
+    /** Priced at this session's own date's rate, like `amount`. */
+    expectedAmount: number;
     date: string;
     start_time: string | null;
     end_time: string | null;
@@ -318,6 +337,7 @@ function computeTotals(
     if (minutes <= 0) minutes += 24 * 60; // handle cross-midnight just in case
 
     minutes = Math.max(0, Math.round(minutes));
+    const rate = rateOnDate(ratesDesc, s.date, fallbackRate);
     const amount = sessionPayVnd(rate, minutes);
 
     // Normalize classes to single object (Supabase may return array)
@@ -347,8 +367,16 @@ function computeTotals(
     // total stays comparable rather than inventing a difference.
     totalExpectedMinutes += isMismatch ? (expectedMinutes as number) : minutes;
 
+    // Priced here rather than summed from minutes at the end, because the
+    // rate is no longer one number for the month.
+    const expectedAmount = sessionPayVnd(
+      rate,
+      varianceMinutes == null ? minutes : (expectedMinutes as number),
+    );
+
     perSession.push({
       id: s.id,
+      expectedAmount,
       date: s.date,
       start_time: s.start_time,
       end_time: s.end_time,
@@ -373,12 +401,11 @@ function computeTotals(
   const totalAmount = perSession.reduce((n, p) => n + p.amount, 0);
   // What the class settings imply. For per-session staff the length does not
   // move the money, so this equals totalAmount by construction.
-  const totalExpectedAmount = totalPayVnd(
-    rate,
-    perSession.map((p) =>
-      p.varianceMinutes == null ? p.minutes : (p.expectedMinutes as number),
-    ),
-  );
+  // Summed from the per-session figures for the same reason totalAmount is:
+  // each one was priced at the rate in force on its own date, so there is no
+  // single rate left to hand to totalPayVnd. Rounding is unchanged - both
+  // forms round once per session and then add.
+  const totalExpectedAmount = perSession.reduce((n, p) => n + p.expectedAmount, 0);
   const discrepancies = perSession.filter((p) => (p.varianceMinutes ?? 0) !== 0);
 
   return {
@@ -482,6 +509,43 @@ Deno.serve(async (req) => {
       .select("class_id, effective_from, weekly_slots, default_session_length_minutes");
     const versionsByClass = indexScheduleVersions(scheduleVersions as ScheduleVersionRow[] | null);
 
+    // Pay history for everyone, read once for the same reason. A rate is a
+    // fact about a period of work, so a session is priced at the rate in
+    // force on its own date - not at whatever the staff row holds when the
+    // report is opened.
+    //
+    // Hard failure rather than a fallback. Falling back to the staff row
+    // would price a finished month at today's rate and report it as the
+    // answer, which is precisely the bug staff_pay_rates exists to remove.
+    const { data: payRateRows, error: payRateErr } = await supabase
+      .from("staff_pay_rates")
+      .select("teacher_id, assistant_id, effective_from, pay_rate_type, hourly_rate_vnd, per_session_rate_vnd");
+    if (payRateErr) throw payRateErr;
+    const ratesByStaff = indexPayRates(payRateRows as PayRateRecord[] | null);
+
+    // The last day of the month being reported. What the screen prints as
+    // "their rate" for a finished month is the rate they were on at the end
+    // of it - not today's. Where a rate changed mid-month the per-session
+    // figures are each correct and this header number is the later of the
+    // two, which is why rateChangedInMonth is reported alongside it.
+    const monthEnd = new Date(Date.UTC(
+      Number(month.slice(0, 4)),
+      Number(month.slice(5, 7)),
+      0,
+    )).toISOString().slice(0, 10);
+
+    /** The rate to PRINT for a month, and whether it moved during it. */
+    const headlineRate = (staffId: string, row: StaffPayRate) => {
+      const records = ratesByStaff.get(staffId) ?? [];
+      const atEnd = rateOnDate(records, monthEnd, row);
+      const atStart = recordOnDate(records, `${month}-01`);
+      const endRecord = recordOnDate(records, monthEnd);
+      return {
+        rate: atEnd,
+        changedInMonth: (atStart?.effective_from ?? null) !== (endRecord?.effective_from ?? null),
+      };
+    };
+
     const results: Array<{
       teacherId: string;
       teacherName: string;
@@ -489,6 +553,8 @@ Deno.serve(async (req) => {
       hourlyRate: number;
       payRateType: "hourly" | "per_session";
       perSessionRate: number;
+      /** The rate moved part-way through this month; `hourlyRate` is the later one. */
+      rateChangedInMonth: boolean;
       /** "12.5 h" or "9 sessions" - whichever the pay basis makes true. */
       quantityLabel: string;
       sessionsCountActual: number;
@@ -534,8 +600,10 @@ Deno.serve(async (req) => {
 
       if (projErr) throw projErr;
 
-      const actual = computeTotals(held ?? [], t, versionsByClass);
-      const future = computeTotals(projected ?? [], t, versionsByClass);
+      const teacherRates = ratesByStaff.get(t.id) ?? [];
+      const actual = computeTotals(held ?? [], t, versionsByClass, teacherRates);
+      const future = computeTotals(projected ?? [], t, versionsByClass, teacherRates);
+      const headline = headlineRate(t.id, t);
 
       // An archived teacher with nothing on the books this month is noise;
       // one with sessions is owed money. This is the filter that replaces
@@ -545,10 +613,11 @@ Deno.serve(async (req) => {
       results.push({
         teacherId: t.id,
         teacherName: t.is_active === false ? `${t.full_name} (archived)` : t.full_name,
-        hourlyRate: effectiveRateVnd(t),
-        payRateType: payRateTypeOf(t),
-        perSessionRate: t.per_session_rate_vnd ?? 0,
-        quantityLabel: describeQuantity(t, {
+        hourlyRate: effectiveRateVnd(headline.rate),
+        payRateType: payRateTypeOf(headline.rate),
+        perSessionRate: headline.rate.per_session_rate_vnd,
+        rateChangedInMonth: headline.changedInMonth,
+        quantityLabel: describeQuantity(headline.rate, {
           sessions: held?.length ?? 0,
           minutes: actual.totalMinutes,
         }),
@@ -622,8 +691,10 @@ Deno.serve(async (req) => {
           .gte("date", startDate)
           .lt("date", nextMonthStart);
 
-        const actual = computeTotals(held ?? [], ta, versionsByClass);
-        const future = computeTotals(projected ?? [], ta, versionsByClass);
+        const taRates = ratesByStaff.get(ta.id) ?? [];
+        const actual = computeTotals(held ?? [], ta, versionsByClass, taRates);
+        const future = computeTotals(projected ?? [], ta, versionsByClass, taRates);
+        const headline = headlineRate(ta.id, ta);
 
         if (actual.totalMinutes > 0 || future.totalMinutes > 0) {
           results.push({
@@ -631,10 +702,11 @@ Deno.serve(async (req) => {
             teacherName: ta.is_active === false
               ? `${ta.full_name} (TA, archived)`
               : `${ta.full_name} (TA)`,
-            hourlyRate: effectiveRateVnd(ta),
-            payRateType: payRateTypeOf(ta),
-            perSessionRate: ta.per_session_rate_vnd ?? 0,
-            quantityLabel: describeQuantity(ta, {
+            hourlyRate: effectiveRateVnd(headline.rate),
+            payRateType: payRateTypeOf(headline.rate),
+            perSessionRate: headline.rate.per_session_rate_vnd,
+            rateChangedInMonth: headline.changedInMonth,
+            quantityLabel: describeQuantity(headline.rate, {
               sessions: held?.length ?? 0,
               minutes: actual.totalMinutes,
             }),

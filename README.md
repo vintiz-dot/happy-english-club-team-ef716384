@@ -39,25 +39,27 @@ npm run dev
 ### Reproducible installs (CI)
 
 ```sh
-npm ci --ignore-scripts
+npm ci
 ```
 
-`--ignore-scripts` is needed, and it is safe. `drizzle-kit` still depends
-on the deprecated `@esbuild-kit/*` packages — even at 1.0.0-rc — and the
-esbuild they pull in has a postinstall that fails on Windows under
-`npm ci`, because it tries to run the platform binary before npm has
-finished placing it. Skipping it costs nothing: esbuild's binary ships
-inside its own `@esbuild/<platform>` package, and that postinstall only
-verifies it. Verified after a `--ignore-scripts` install: esbuild, vite,
-tsc and drizzle-kit all run, and `npm run build` produces a working
-bundle.
+That is what `.github/workflows/deploy-pages.yml` runs on every push to
+`main`, on ubuntu-latest, and it works there. **On Windows add
+`--ignore-scripts`**: one of the transitive esbuild packages has a
+postinstall that fails with a `spawnSync` error on a cache path under
+`npm ci`. Skipping it costs nothing - esbuild's binary ships inside its
+own `@esbuild/<platform>` package and that script only verifies it.
+Checked by installing into an empty directory holding just the two
+manifests: vite, tsc and esbuild all run and `npm run build` produces a
+working bundle.
 
-Plain `npm i` does not need the flag.
+**Keep `package.json` and `package-lock.json` in step.** `npm ci` refuses
+outright when they disagree - it does not resolve - so the build step is
+never reached and the deploy fails at about 25 seconds. This has broken
+the live site twice, in both directions: once when drizzle was added to
+`package.json` with only `bun.lock` updated, and once when it was removed
+from `package.json` with the lockfile left alone. If you change
+dependencies with bun, run `npm install --package-lock-only` as well.
 
-`drizzle-kit` and `drizzle-orm` are pinned to exact versions rather than
-ranges. drizzle-kit generates migration SQL, so two installs resolving
-different minors could produce different output for the same schema; the
-pins match what `bun.lock` already resolves, so npm and bun agree.
 
 **Edit a file directly in GitHub**
 
