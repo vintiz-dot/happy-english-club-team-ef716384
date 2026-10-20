@@ -71,16 +71,26 @@ function chunk<T>(arr: T[], size: number): T[][] {
  * Did the nightly timer ask for this run?
  *
  * The timer has no person behind it - no session, no role to read - so it
- * presents a shared secret instead. Compared character by character rather
+ * presents a shared token instead. Compared character by character rather
  * with === so the check takes the same time whatever the caller guessed:
  * a plain compare returns as soon as it hits the first wrong character,
  * which leaks the secret one character at a time to anyone quick enough to
  * measure it.
  */
-function runnerSecretMatches(req: Request): boolean {
-  const expected = Deno.env.get('SCHEDULE_RUNNER_SECRET');
+async function runnerSecretMatches(req: Request, supabase: any): Promise<boolean> {
   const presented = req.headers.get('x-schedule-runner-secret');
-  if (!expected || !presented) return false;
+  if (!presented) return false;
+  // The token lives in a table only the server-side code can reach -
+  // row-level security is on with no policies, so no signed-in account can
+  // read it. That lets the nightly job present it without anyone having to
+  // copy it somewhere, and lets it be replaced without touching the schedule.
+  const { data, error } = await supabase
+    .from('schedule_runner')
+    .select('token')
+    .eq('id', 1)
+    .maybeSingle();
+  if (error || !data?.token) return false;
+  const expected: string = data.token;
   if (presented.length !== expected.length) return false;
   let diff = 0;
   for (let i = 0; i < expected.length; i++) {
@@ -161,7 +171,7 @@ Deno.serve(async (req) => {
     // the human one - it can only bring the future into line with the
     // templates, never rewrite a held lesson - and it is recorded as having
     // been done by nobody, because it was.
-    const isTimerRun = runnerSecretMatches(req);
+    const isTimerRun = await runnerSecretMatches(req, supabase);
     let actorUserId: string | null = null;
     if (!isTimerRun) {
       const gate = await requireRole(req, supabase, ['admin'], corsHeaders);
