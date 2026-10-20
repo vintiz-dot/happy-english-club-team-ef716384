@@ -2904,6 +2904,24 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_runner: {
+        Row: {
+          id: number
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       session_participants: {
         Row: {
           created_at: string

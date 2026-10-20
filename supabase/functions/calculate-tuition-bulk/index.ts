@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { requireRole } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,35 +63,12 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Auth check
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsErr } = await supabase.auth.getUser(token);
-    if (claimsErr || !claims?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Role check: only admin or teacher can access financial data
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", claims.user.id);
-    const isAuthorized = roleData?.some((r: any) => ["admin", "teacher"].includes(r.role));
-    if (!isAuthorized) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Auth + role: only admin or teacher may see financial data. An
+    // internal call holding the service-role key also passes - the schedule
+    // generator makes one after every rebuild to keep invoices in step with
+    // the timetable, and it has no person behind it.
+    const gate = await requireRole(req, supabase, ["admin", "teacher"], corsHeaders);
+    if (gate instanceof Response) return gate;
 
     const InputSchema = z.object({
       studentIds: z.array(z.string().uuid()).min(1).max(200),

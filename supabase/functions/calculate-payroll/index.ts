@@ -10,6 +10,7 @@ import {
   varianceCostVnd,
   type StaffPayRate,
 } from "../_lib/pay-rate.ts";
+import { requireRole } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -405,39 +406,19 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Authentication
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Authentication required" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // WHO IS CALLING. requireRole decodes the token rather than trusting
+    // that one arrived, and lets an internal call holding the service-role
+    // key through. That is what the schedule generator runs on after every
+    // rebuild: `auth.getUser` has no user for a service key, so this
+    // function answered 401 to the generator and payroll was never
+    // refreshed by a timetable change - the failure was logged and thrown
+    // away by the caller, so nothing ever showed it.
+    const gate = await requireRole(req, supabase, ["admin", "teacher"], corsHeaders);
+    if (gate instanceof Response) return gate;
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid authentication" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Authorization (admin or teacher)
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
-
-    const isAdmin = roles?.some(r => r.role === "admin");
-    const isTeacher = roles?.some(r => r.role === "teacher");
-
-    if (!isAdmin && !isTeacher) {
-      return new Response(JSON.stringify({ error: "Admin or teacher access required" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const isAdmin = gate.isServiceRole || gate.roles.has("admin");
+    const isTeacher = gate.roles.has("teacher");
+    const userId = gate.userId;
 
     // Input validation
     const requestBody = await req.json();
@@ -477,7 +458,7 @@ Deno.serve(async (req) => {
       const { data: ownTeacher } = await supabase
         .from("teachers")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .single();
       if (!ownTeacher) {
         return new Response(JSON.stringify({ error: "Teacher profile not found" }), {
