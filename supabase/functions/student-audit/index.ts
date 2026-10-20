@@ -146,7 +146,9 @@ Deno.serve(async (req) => {
 
     const invoices = invoicesRes.data ?? [];
     const snapshots = snapshotsRes.data ?? [];
-    const snapshotByMonth = new Map(snapshots.map((s) => [s.month, s]));
+    const snapshotByMonth = new Map<string, (typeof snapshots)[number]>(
+      snapshots.map((s) => [s.month, s]),
+    );
 
     /* ------------------------------------------- attendance, per month */
 
@@ -372,7 +374,9 @@ Deno.serve(async (req) => {
         .from("profiles")
         .select("id, display_name")
         .in("id", ids);
-      const nameById = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
+      const nameById = new Map<string, string | null>(
+        (profiles ?? []).map((p) => [p.id, p.display_name]),
+      );
 
       await Promise.all(
         ids.map(async (id) => {

@@ -192,7 +192,18 @@ Deno.serve(async (req) => {
             .eq('class_id', classId)
             .in('student_id', presentEntries.map(e => e.studentId));
 
-          const streakMap = new Map((streaks || []).map(s => [s.student_id, s]));
+          // Shape named here rather than left as `any`: the three fields
+          // below drive a points award, so a typo in one of them would
+          // silently hand out the wrong bonus rather than failing.
+          type StreakRow = {
+            student_id: string;
+            consecutive_days: number | null;
+            last_attendance_date: string | null;
+            bonuses_awarded: number | null;
+          };
+          const streakMap = new Map<string, StreakRow>(
+            ((streaks || []) as StreakRow[]).map(s => [s.student_id, s]),
+          );
           const upserts: any[] = [];
           const pointInserts: any[] = [];
 

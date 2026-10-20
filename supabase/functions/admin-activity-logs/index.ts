@@ -116,7 +116,9 @@ Deno.serve(async (req) => {
         .from("profiles")
         .select("id, display_name")
         .in("id", actorIds);
-      const nameById = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
+      const nameById = new Map<string, string | null>(
+        (profiles ?? []).map((p) => [p.id, p.display_name]),
+      );
 
       // auth.users is not reachable through PostgREST, so emails come from
       // the admin API, one call per id. Bounded by the page size.
