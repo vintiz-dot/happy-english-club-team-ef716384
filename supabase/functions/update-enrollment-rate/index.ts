@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { authenticateUser } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,17 +27,29 @@ Deno.serve(async (req) => {
     const body = InputSchema.parse(await req.json());
     const { enrollmentId, rateOverrideVnd, reason, studentId, month } = body;
 
-    // Get user info from JWT
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("No authorization header");
+    // WHO IS CALLING, AND MAY THEY. This function ran on the service role
+    // and authenticated the caller but never checked their role, so any
+    // signed-in account - a student's, a parent's - could set ANY
+    // enrolment's tuition rate to anything, for any child, and the audit
+    // row would faithfully record them doing it.
+    //
+    // authenticateUser is the shared helper (_lib/auth.ts); it reads roles
+    // with the service-role client rather than trusting a claim, and it
+    // handles the internal service-to-service case.
+    const caller = await authenticateUser(req, supabase);
+    if (!caller) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !user) {
-      throw new Error("Unauthorized");
+    if (!caller.isServiceRole && !caller.roles.has("admin")) {
+      return new Response(JSON.stringify({ error: "Admins only" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
+    const user = { id: caller.userId };
 
     // Update enrollment rate override
     const { data: enrollment, error: updateError } = await supabase

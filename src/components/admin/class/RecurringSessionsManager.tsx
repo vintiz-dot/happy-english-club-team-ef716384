@@ -12,6 +12,12 @@ import { toast } from "sonner";
 import { dayjs } from "@/lib/date";
 import { durationMinutes, formatMinutes } from "@/lib/sessionDuration";
 import { fallbackLengthFromSlots, parseWeeklySlots } from "@/lib/classSchedule";
+import {
+  indexScheduleVersions,
+  pendingVersions,
+  versionEndsOn,
+  type ScheduleVersion,
+} from "@/lib/scheduleHistory";
 
 interface RecurringSessionsManagerProps {
   classId: string;
@@ -23,6 +29,22 @@ const slotDuration = (slot: any): number | null =>
 
 export default function RecurringSessionsManager({ classId }: RecurringSessionsManagerProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  // Today, captured once per render rather than read at each comparison, so
+  // a long-lived page does not start disagreeing with itself across midnight.
+  const [today] = useState(() => dayjs().format("YYYY-MM-DD"));
+  /**
+   * When the edits being made should start applying.
+   *
+   * Defaults to today, which reproduces the old behaviour exactly: the
+   * change takes effect now. Setting it forward is the feature - the class
+   * keeps running its current pattern until that date, and only then moves.
+   *
+   * It is deliberately NOT possible to set this to a past date. Backdating
+   * a timetable would re-describe lessons that have already been taught and
+   * paid, which is the thing schedule history exists to prevent.
+   */
+  const [effectiveFrom, setEffectiveFrom] = useState(() => dayjs().format("YYYY-MM-DD"));
+  const [changeNote, setChangeNote] = useState("");
   const [newSession, setNewSession] = useState({
     dayOfWeek: "",
     startTime: "",
@@ -57,6 +79,23 @@ export default function RecurringSessionsManager({ classId }: RecurringSessionsM
     },
   });
 
+  const { data: versions } = useQuery({
+    queryKey: ["class-schedule-versions", classId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("class_schedule_versions")
+        .select("id, class_id, effective_from, weekly_slots, default_session_length_minutes, note, created_at")
+        .eq("class_id", classId)
+        .order("effective_from", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as ScheduleVersion[];
+    },
+  });
+
+  const sortedVersions = (indexScheduleVersions(versions).get(classId) ?? []);
+  const upcoming = pendingVersions(sortedVersions, today);
+  const past = sortedVersions.filter((v) => v.effective_from <= today);
+
   const scheduleTemplate = classData?.schedule_template as any;
   const weeklySlots = scheduleTemplate?.weeklySlots || [];
 
@@ -68,21 +107,49 @@ export default function RecurringSessionsManager({ classId }: RecurringSessionsM
       // normally run — kept in step here so it is never silently stale.
       const fallbackLength = fallbackLengthFromSlots(parseWeeklySlots({ weeklySlots: newSlots }));
 
-      const { error } = await supabase
-        .from("classes")
-        .update({
-          schedule_template: {
-            weeklySlots: newSlots,
+      // 1. Record the change as a version. Upsert on (class_id,
+      //    effective_from): editing several slots for the same start date is
+      //    one timetable change, not one per slot, and the unique constraint
+      //    says so.
+      const { error: versionError } = await supabase
+        .from("class_schedule_versions")
+        .upsert(
+          {
+            class_id: classId,
+            effective_from: effectiveFrom,
+            weekly_slots: newSlots,
+            default_session_length_minutes: fallbackLength ?? null,
+            note: changeNote.trim() || null,
           },
-          ...(fallbackLength ? { default_session_length_minutes: fallbackLength } : {}),
-        })
-        .eq("id", classId);
+          { onConflict: "class_id,effective_from" },
+        );
+      if (versionError) throw versionError;
 
-      if (error) throw error;
+      // 2. classes.schedule_template mirrors the version in force NOW, and
+      //    about twenty screens read it to answer "when does this class
+      //    meet?". A change dated in the future must not move it yet, or
+      //    the catalogue would advertise a timetable the class is not on.
+      //    is_teacher_of_class reads class_slots_on rather than this column
+      //    precisely so access still flips on the right date by itself.
+      if (effectiveFrom <= today) {
+        const { error } = await supabase
+          .from("classes")
+          .update({
+            schedule_template: { weeklySlots: newSlots },
+            ...(fallbackLength ? { default_session_length_minutes: fallbackLength } : {}),
+          })
+          .eq("id", classId);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("Recurring sessions updated");
+      toast.success(
+        effectiveFrom <= today
+          ? "Recurring sessions updated"
+          : `Saved — this takes effect on ${dayjs(effectiveFrom).format("D MMM YYYY")}`,
+      );
       queryClient.invalidateQueries({ queryKey: ["class-recurring", classId] });
+      queryClient.invalidateQueries({ queryKey: ["class-schedule-versions", classId] });
       setEditingIndex(null);
     },
     onError: (error: any) => {
@@ -129,6 +196,77 @@ export default function RecurringSessionsManager({ classId }: RecurringSessionsM
         <CardTitle>Recurring Sessions</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* When the edits below start applying. Previous schedules are kept
+            as history rather than overwritten, so lessons already taught
+            keep being judged against the timetable they actually ran on. */}
+        <div className="rounded-lg border bg-muted/30 p-3 space-y-3">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[180px]">
+              <Label htmlFor="effective-from" className="text-xs font-semibold">
+                Changes take effect from
+              </Label>
+              <Input
+                id="effective-from"
+                type="date"
+                value={effectiveFrom}
+                min={today}
+                onChange={(e) => setEffectiveFrom(e.target.value || today)}
+              />
+            </div>
+            <div className="flex-[2] min-w-[200px]">
+              <Label htmlFor="change-note" className="text-xs font-semibold">
+                Why <span className="font-normal text-muted-foreground">(optional)</span>
+              </Label>
+              <Input
+                id="change-note"
+                placeholder="Moves to Tuesday for the new term"
+                value={changeNote}
+                onChange={(e) => setChangeNote(e.target.value)}
+              />
+            </div>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            {effectiveFrom <= today ? (
+              <>
+                Applies straight away. Lessons already taught keep the schedule they ran on —
+                nothing in the past is rewritten.
+              </>
+            ) : (
+              <>
+                The class keeps its current pattern until{" "}
+                <strong className="text-foreground">
+                  {dayjs(effectiveFrom).format("D MMM YYYY")}
+                </strong>
+                , then moves. Sessions before that date are left alone.
+              </>
+            )}
+            {" "}You cannot set a date in the past: that would re-describe lessons that have
+            already happened and been paid.
+          </p>
+        </div>
+
+        {upcoming.length > 0 && (
+          <div className="rounded-lg border border-primary/40 bg-primary/5 p-3">
+            <p className="text-xs font-semibold">Scheduled change{upcoming.length === 1 ? "" : "s"}</p>
+            <ul className="mt-1.5 space-y-1">
+              {upcoming.map((v) => (
+                <li key={v.effective_from} className="text-xs text-muted-foreground">
+                  <strong className="text-foreground">
+                    {dayjs(v.effective_from).format("D MMM YYYY")}
+                  </strong>
+                  {" — "}
+                  {(Array.isArray(v.weekly_slots) ? v.weekly_slots.length : 0)} slot
+                  {(Array.isArray(v.weekly_slots) ? v.weekly_slots.length : 0) === 1 ? "" : "s"}
+                  {v.note ? ` · ${v.note}` : ""}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              Not showing below yet — the list underneath is the timetable running today.
+            </p>
+          </div>
+        )}
+
         <div className="space-y-3">
           {weeklySlots.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">No recurring sessions configured</p>
@@ -277,6 +415,41 @@ export default function RecurringSessionsManager({ classId }: RecurringSessionsM
             Add Session
           </Button>
         </Card>
+
+        {/* The point of the whole change: previous schedules are kept, not
+            overwritten. Showing them is also the only way an admin can tell
+            that a flagged "wrong length" session was correct at the time. */}
+        {past.length > 1 && (
+          <div className="rounded-lg border p-3">
+            <p className="text-xs font-semibold">Schedule history</p>
+            <ul className="mt-2 space-y-1.5">
+              {past.map((v, i) => {
+                const endsOn = versionEndsOn(sortedVersions, v);
+                const slotCount = Array.isArray(v.weekly_slots) ? v.weekly_slots.length : 0;
+                return (
+                  <li key={v.effective_from} className="text-xs">
+                    <span className="font-medium">
+                      {v.effective_from === "1900-01-01"
+                        ? "Until "
+                        : dayjs(v.effective_from).format("D MMM YYYY") + " – "}
+                      {endsOn ? dayjs(endsOn).format("D MMM YYYY") : "now"}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {" · "}
+                      {slotCount} slot{slotCount === 1 ? "" : "s"}
+                      {v.note ? ` · ${v.note}` : ""}
+                      {i === 0 ? " · in force" : ""}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              Payroll judges each lesson against the schedule in force on its own date, so a
+              change here never makes finished months look wrong.
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

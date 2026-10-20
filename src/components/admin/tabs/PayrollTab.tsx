@@ -25,6 +25,7 @@ import {
   payableExpectedMinutes,
   varianceFromCheck,
 } from "@/lib/classSchedule";
+import { indexScheduleVersions, scheduleOnDate, type ScheduleVersion } from "@/lib/scheduleHistory";
 import { AlertTriangle } from "lucide-react";
 import {
   describeRate,
@@ -42,6 +43,7 @@ interface StaffPayroll {
     hourly_rate_vnd: number;
     pay_rate_type?: string | null;
     per_session_rate_vnd?: number | null;
+    is_active?: boolean;
   };
   staffType: "teacher" | "ta";
   heldSessions: number;
@@ -85,16 +87,21 @@ export function PayrollTab() {
       const monthEnd = dayjs(monthStart).add(1, "month").format("YYYY-MM-DD");
 
       // Fetch teachers, TAs, sessions, and session_participants in parallel
-      const [teachersRes, tasRes, sessionsRes, participantsRes] = await Promise.all([
+      const [teachersRes, tasRes, sessionsRes, participantsRes, versionsRes] = await Promise.all([
+        // Deliberately NOT filtered by is_active. Archiving a teacher must
+        // not erase the lessons they already taught this month — with the
+        // filter on the query, archiving someone on the 20th silently
+        // dropped their first nineteen days out of this screen and out of
+        // the CSV. is_active is their status today; this screen is about a
+        // month that has already happened. Inactive staff with no sessions
+        // are dropped below instead, which is what the filter was for.
         supabase
           .from("teachers")
           .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active")
-          .eq("is_active", true)
           .order("full_name"),
         supabase
           .from("teaching_assistants")
           .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active")
-          .eq("is_active", true)
           .order("full_name"),
         supabase
           .from("sessions")
@@ -107,12 +114,21 @@ export function PayrollTab() {
           .from("session_participants")
           .select("session_id, teaching_assistant_id")
           .eq("participant_type", "teaching_assistant"),
+        // Every class's timetable history, in one read. Fetched whole rather
+        // than filtered to the month: a session in July is judged against
+        // the version in force in July, which may have started years before.
+        supabase
+          .from("class_schedule_versions")
+          .select("class_id, effective_from, weekly_slots, default_session_length_minutes"),
       ]);
 
       const teachers = teachersRes.data || [];
       const tas = tasRes.data || [];
       const allSessions = sessionsRes.data || [];
       const participants = participantsRes.data || [];
+      const versionsByClass = indexScheduleVersions(
+        (versionsRes.data ?? []) as unknown as ScheduleVersion[],
+      );
 
       // Group sessions by teacher_id
       const sessionsByTeacher: Record<string, typeof allSessions> = {};
@@ -143,18 +159,32 @@ export function PayrollTab() {
         );
 
       /**
-       * Each session judged against the weekly slot it belongs to.
+       * Each session judged against the weekly slot it belongs to — ON THE
+       * DATE IT RAN, not against whatever the class is set to today.
        *
-       * Parsing the template per class rather than per session: a month of
-       * sessions for one class is dozens of rows off the same JSON.
+       * This used to read classes.schedule_template, the current timetable.
+       * So the day after an admin moved a class from 90 minutes to 120,
+       * every ninety-minute lesson already taught turned into a "mismatch":
+       * the discrepancy count jumped, the variance column filled with money
+       * nobody had overpaid, and "projected at scheduled lengths" re-priced
+       * finished months at a length that was never scheduled when they
+       * happened. An admin "fixing" those flagged sessions would then have
+       * overpaid for real.
+       *
+       * Cached per (class, version) rather than per class: a month can now
+       * legitimately span a timetable change, so one entry per class is no
+       * longer enough, and one per session would re-parse the same JSON
+       * dozens of times.
        */
       const slotCache = new Map<string, ReturnType<typeof parseWeeklySlots>>();
       const checkOf = (s: (typeof allSessions)[number]) => {
         const classRow = s.classes as any;
-        const key = s.class_id ?? "";
+        const classId = s.class_id ?? "";
+        const resolved = scheduleOnDate(versionsByClass.get(classId), s.date, classRow);
+        const key = `${classId}|${resolved.version?.effective_from ?? "current"}`;
         let slots = slotCache.get(key);
         if (!slots) {
-          slots = parseWeeklySlots(classRow?.schedule_template);
+          slots = resolved.slots;
           slotCache.set(key, slots);
         }
         return checkSessionLength({
@@ -162,7 +192,8 @@ export function PayrollTab() {
           startTime: s.start_time,
           endTime: s.end_time,
           slots,
-          classDefaultMinutes: classRow?.default_session_length_minutes ?? null,
+          classDefaultMinutes:
+            resolved.defaultMinutes ?? classRow?.default_session_length_minutes ?? null,
         });
       };
 
@@ -209,6 +240,9 @@ export function PayrollTab() {
       // Teachers
       for (const teacher of teachers) {
         const sessions = sessionsByTeacher[teacher.id] || [];
+        // Archived and nothing on the books this month: nothing to pay, and
+        // nothing to show. Archived WITH sessions still appears, flagged.
+        if (teacher.is_active === false && sessions.length === 0) continue;
         const held = sessions.filter(s => s.status === "Held");
         const scheduled = sessions.filter(s => s.status === "Scheduled");
         const totalHeld = calculateAmount(held, teacher);
@@ -294,10 +328,11 @@ export function PayrollTab() {
 
   const exportPayroll = () => {
     const csv = [
-      ["Staff", "Type", "Paid", "Rate (VND)", "Held Sessions", "Scheduled Sessions", "Earned", "Projected", "Total Projected", "At Class Settings", "Variance", "Mismatched Sessions"].join(","),
+      ["Staff", "Type", "Status", "Paid", "Rate (VND)", "Held Sessions", "Scheduled Sessions", "Earned", "Projected", "Total Projected", "At Class Settings", "Variance", "Mismatched Sessions"].join(","),
       ...(payrollData || []).map((p) => [
         p.staff.full_name,
         p.staffType === "ta" ? "TA" : "Teacher",
+        p.staff.is_active === false ? "Archived" : "Active",
         payRateTypeOf(p.staff) === "per_session" ? "Per session" : "Per hour",
         payRateTypeOf(p.staff) === "per_session"
           ? p.staff.per_session_rate_vnd ?? 0
@@ -311,7 +346,7 @@ export function PayrollTab() {
         p.varianceAmount,
         p.mismatchedSessions.length,
       ].join(",")),
-      ["", "", "", "", "", "",
+      ["", "", "", "", "", "", "",
         (payrollData || []).reduce((sum, p) => sum + p.totalEarned, 0),
         (payrollData || []).reduce((sum, p) => sum + p.projectedEarnings, 0),
         (payrollData || []).reduce((sum, p) => sum + p.totalProjected, 0),
@@ -511,7 +546,14 @@ export function PayrollTab() {
               <TableBody>
                 {payrollData.map((payroll) => (
                   <TableRow key={`${payroll.staffType}-${payroll.staff.id}`}>
-                    <TableCell className="font-medium">{payroll.staff.full_name}</TableCell>
+                    <TableCell className="font-medium">
+                      {payroll.staff.full_name}
+                      {payroll.staff.is_active === false && (
+                        <Badge variant="outline" className="ml-2 text-[10px] font-normal">
+                          Archived
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={payroll.staffType === "ta" ? "secondary" : "default"}>
                         {payroll.staffType === "ta" ? "TA" : "Teacher"}

@@ -27,6 +27,47 @@ type ClassRow = {
   schedule_template?: unknown;
 };
 
+/** A row of public.class_schedule_versions. Mirrors src/lib/scheduleHistory.ts. */
+type ScheduleVersionRow = {
+  class_id: string;
+  effective_from: string;   // YYYY-MM-DD, inclusive
+  weekly_slots: unknown;
+  default_session_length_minutes: number | null;
+};
+
+/**
+ * The version in force on a date, from a list sorted newest first.
+ *
+ * String comparison, not Date parsing: both sides are YYYY-MM-DD, which
+ * sorts correctly as text, and parsing would drag a timezone into a
+ * question that has none.
+ */
+function versionOnDate(
+  sortedDesc: ScheduleVersionRow[] | undefined,
+  date?: string | null,
+): ScheduleVersionRow | null {
+  if (!date || !sortedDesc?.length) return null;
+  const day = date.slice(0, 10);
+  for (const v of sortedDesc) {
+    if (v.effective_from <= day) return v;
+  }
+  return null;
+}
+
+function indexScheduleVersions(rows: ScheduleVersionRow[] | null | undefined) {
+  const byClass = new Map<string, ScheduleVersionRow[]>();
+  for (const row of rows ?? []) {
+    if (!row?.class_id) continue;
+    const list = byClass.get(row.class_id);
+    if (list) list.push(row);
+    else byClass.set(row.class_id, [row]);
+  }
+  for (const list of byClass.values()) {
+    list.sort((a, b) => (a.effective_from < b.effective_from ? 1 : a.effective_from > b.effective_from ? -1 : 0));
+  }
+  return byClass;
+}
+
 type SessionRow = {
   id: string;
   date: string; // YYYY-MM-DD
@@ -217,20 +258,39 @@ function parseMinutes(hhmm: string | null): number | null {
  * mismatch is still reported - it is a real scheduling problem - but it is
  * not reported as money, because for these staff it is not money.
  */
-function computeTotals(sessions: SessionRow[], rate: StaffPayRate) {
+function computeTotals(
+  sessions: SessionRow[],
+  rate: StaffPayRate,
+  // Timetable history, newest first per class. A session is judged against
+  // the schedule in force ON ITS OWN DATE: judging it against the class's
+  // CURRENT template, which is what this did, turned every lesson already
+  // taught into a "mismatch" the moment an admin changed the timetable, and
+  // re-priced finished months at a length that was never scheduled when
+  // they happened. Empty map = no history known, and every lookup falls
+  // back to the class row exactly as before.
+  versionsByClass: Map<string, ScheduleVersionRow[]> = new Map(),
+) {
   let totalMinutes = 0;
   let totalExpectedMinutes = 0;
 
-  // A month of sessions for one class is dozens of rows off the same JSON,
-  // so the template is parsed once per class rather than once per session.
+  // Cached per (class, version): a month can legitimately span a timetable
+  // change now, so one entry per class is no longer enough, and one per
+  // session would re-parse the same JSON dozens of times.
   const slotCache = new Map<string, WeeklySlot[]>();
-  const slotsForClass = (classId: string | undefined, classes: ClassRow | null) => {
-    const key = classId ?? "";
+  const scheduleFor = (classId: string | undefined, classes: ClassRow | null, date: string) => {
+    const id = classId ?? "";
+    const version = versionOnDate(versionsByClass.get(id), date);
+    const key = `${id}|${version?.effective_from ?? "current"}`;
     const cached = slotCache.get(key);
-    if (cached) return cached;
-    const parsed = parseWeeklySlots(classes?.schedule_template);
-    slotCache.set(key, parsed);
-    return parsed;
+    const slots = cached ?? parseWeeklySlots(
+      version ? { weeklySlots: version.weekly_slots } : classes?.schedule_template,
+    );
+    if (!cached) slotCache.set(key, slots);
+    return {
+      slots,
+      defaultMinutes:
+        version?.default_session_length_minutes ?? classes?.default_session_length_minutes ?? null,
+    };
   };
 
   const perSession: Array<{
@@ -264,8 +324,7 @@ function computeTotals(sessions: SessionRow[], rate: StaffPayRate) {
       ? (s.classes[0] || null)
       : (s.classes ?? null);
 
-    const configured = classes?.default_session_length_minutes ?? null;
-    const slots = slotsForClass(s.class_id, classes);
+    const { slots, defaultMinutes: configured } = scheduleFor(s.class_id, classes, s.date);
     // The length THIS day is scheduled for, not a single number for the
     // whole class.
     const expectedMinutes = expectedLengthFor(s.date, s.start_time, slots, configured);
@@ -397,11 +456,22 @@ Deno.serve(async (req) => {
     const { month, teacherId } = validationResult.data;
     const { startDate, nextMonthStart } = monthRange(month);
 
-    // Teachers — scope non-admin teachers to their own data only
+    // Teachers — scope non-admin teachers to their own data only.
+    //
+    // NOT filtered by is_active, deliberately. Archiving or deactivating a
+    // teacher must not erase work they have already done: the filter used
+    // to be `.eq("is_active", true)`, so archiving someone on the 20th
+    // silently dropped the first nineteen days of their month out of the
+    // payroll run and out of the CSV, and nothing said so. is_active is
+    // their status TODAY; the question here is what they are owed for a
+    // month that has already happened.
+    //
+    // Inactive staff with no sessions in the month are dropped further
+    // down instead, which keeps the screen uncluttered — the thing the
+    // is_active filter was actually added for.
     let tq = supabase
       .from("teachers")
-      .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, user_id")
-      .eq("is_active", true);
+      .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active, user_id");
 
     if (isTeacher && !isAdmin) {
       const { data: ownTeacher } = await supabase
@@ -422,6 +492,14 @@ Deno.serve(async (req) => {
 
     const { data: teachers, error: teachersError } = await tq;
     if (teachersError) throw teachersError;
+
+    // Timetable history for every class, read once. A session is priced
+    // against the schedule in force on its own date, so a class that
+    // changed pattern mid-year is still judged correctly for both halves.
+    const { data: scheduleVersions } = await supabase
+      .from("class_schedule_versions")
+      .select("class_id, effective_from, weekly_slots, default_session_length_minutes");
+    const versionsByClass = indexScheduleVersions(scheduleVersions as ScheduleVersionRow[] | null);
 
     const results: Array<{
       teacherId: string;
@@ -475,12 +553,17 @@ Deno.serve(async (req) => {
 
       if (projErr) throw projErr;
 
-      const actual = computeTotals(held ?? [], t);
-      const future = computeTotals(projected ?? [], t);
+      const actual = computeTotals(held ?? [], t, versionsByClass);
+      const future = computeTotals(projected ?? [], t, versionsByClass);
+
+      // An archived teacher with nothing on the books this month is noise;
+      // one with sessions is owed money. This is the filter that replaces
+      // the blanket .eq("is_active", true) on the query.
+      if (t.is_active === false && (projected?.length ?? 0) === 0) continue;
 
       results.push({
         teacherId: t.id,
-        teacherName: t.full_name,
+        teacherName: t.is_active === false ? `${t.full_name} (archived)` : t.full_name,
         hourlyRate: effectiveRateVnd(t),
         payRateType: payRateTypeOf(t),
         perSessionRate: t.per_session_rate_vnd ?? 0,
@@ -525,8 +608,9 @@ Deno.serve(async (req) => {
     if (isAdmin) {
       const { data: assistants } = await supabase
         .from("teaching_assistants")
-        .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd")
-        .eq("is_active", true);
+        // Same reasoning as the teachers query above: an archived TA is
+        // still owed for the lessons they assisted before they left.
+        .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active");
 
       for (const ta of assistants ?? []) {
         // Get sessions where this TA is a participant
@@ -557,13 +641,15 @@ Deno.serve(async (req) => {
           .gte("date", startDate)
           .lt("date", nextMonthStart);
 
-        const actual = computeTotals(held ?? [], ta);
-        const future = computeTotals(projected ?? [], ta);
+        const actual = computeTotals(held ?? [], ta, versionsByClass);
+        const future = computeTotals(projected ?? [], ta, versionsByClass);
 
         if (actual.totalMinutes > 0 || future.totalMinutes > 0) {
           results.push({
             teacherId: ta.id,
-            teacherName: `${ta.full_name} (TA)`,
+            teacherName: ta.is_active === false
+              ? `${ta.full_name} (TA, archived)`
+              : `${ta.full_name} (TA)`,
             hourlyRate: effectiveRateVnd(ta),
             payRateType: payRateTypeOf(ta),
             perSessionRate: ta.per_session_rate_vnd ?? 0,
