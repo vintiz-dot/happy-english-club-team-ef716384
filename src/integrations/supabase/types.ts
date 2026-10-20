@@ -4783,6 +4783,10 @@ export type Database = {
         Args: { p_job: string; p_month: string }
         Returns: boolean
       }
+      assistant_rate_on: {
+        Args: { p_assistant_id: string; p_date: string }
+        Returns: Json
+      }
       can_read_student_work_file: { Args: { _path: string }; Returns: boolean }
       can_view_classmate: {
         Args: { student_id_to_view: string; viewer_user_id: string }
@@ -4899,6 +4903,10 @@ export type Database = {
       }
       revert_invalid_held_sessions: {
         Args: { p_month: string; p_now: string; p_today: string }
+        Returns: Json
+      }
+      teacher_rate_on: {
+        Args: { p_date: string; p_teacher_id: string }
         Returns: Json
       }
     }
