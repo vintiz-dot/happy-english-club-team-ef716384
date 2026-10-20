@@ -4115,7 +4115,6 @@ export type Database = {
           id: string
           is_active: boolean
           pay_rate_type: string
-          pay_type: string
           per_session_rate_vnd: number
           phone: string | null
           updated_at: string
@@ -4133,7 +4132,6 @@ export type Database = {
           id?: string
           is_active?: boolean
           pay_rate_type?: string
-          pay_type?: string
           per_session_rate_vnd?: number
           phone?: string | null
           updated_at?: string
@@ -4151,7 +4149,6 @@ export type Database = {
           id?: string
           is_active?: boolean
           pay_rate_type?: string
-          pay_type?: string
           per_session_rate_vnd?: number
           phone?: string | null
           updated_at?: string

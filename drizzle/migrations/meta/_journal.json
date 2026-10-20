@@ -15,6 +15,13 @@
       "when": 1792213642160,
       "tag": "0001_staff_pay_rate_basis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792489250490,
+      "tag": "0002_absorb_pay_type_column",
+      "breakpoints": true
     }
   ]
 }
