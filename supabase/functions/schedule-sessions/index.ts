@@ -1,10 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { indexVersions, slotsOnDate, type ScheduleVersionRow } from '../_lib/schedule-history.ts';
+import { requireRole } from '../_lib/auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-schedule-runner-secret',
 };
 
 const InputSchema = z.object({
@@ -59,6 +60,80 @@ function normalizeTime(t: string): string {
   return /^\d{2}:\d{2}$/.test(t) ? `${t}:00` : t;
 }
 
+/** Split a list into Supabase-sized pieces for .in() filters. */
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+/**
+ * Did the nightly timer ask for this run?
+ *
+ * The timer has no person behind it - no session, no role to read - so it
+ * presents a shared secret instead. Compared character by character rather
+ * with === so the check takes the same time whatever the caller guessed:
+ * a plain compare returns as soon as it hits the first wrong character,
+ * which leaks the secret one character at a time to anyone quick enough to
+ * measure it.
+ */
+function runnerSecretMatches(req: Request): boolean {
+  const expected = Deno.env.get('SCHEDULE_RUNNER_SECRET');
+  const presented = req.headers.get('x-schedule-runner-secret');
+  if (!expected || !presented) return false;
+  if (presented.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) {
+    diff |= expected.charCodeAt(i) ^ presented.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+/**
+ * The students whose money this rebuild could have moved: enrolled in one of
+ * the classes just rebuilt, with an enrolment overlapping `month`, and still
+ * on the roster during it. Mirrors src/lib/finance/studentsInMonth.ts, the
+ * same predicate the finance screens use, so the refresh covers exactly the
+ * students those screens would show - and nobody else.
+ */
+async function tuitionRosterForMonth(
+  supabase: any,
+  classIds: string[],
+  month: string,
+): Promise<string[]> {
+  if (classIds.length === 0) return [];
+
+  const monthStart = `${month}-01`;
+  const year = Number(month.slice(0, 4));
+  const monthNumber = Number(month.slice(5, 7));
+  // Day 0 of the following month is the last day of this one.
+  const monthEnd = new Date(Date.UTC(year, monthNumber, 0)).toISOString().slice(0, 10);
+
+  const { data: enrollments, error: enrollmentError } = await supabase
+    .from('enrollments')
+    .select('student_id')
+    .in('class_id', classIds)
+    .lte('start_date', monthEnd)
+    .or(`end_date.is.null,end_date.gte.${monthStart}`);
+  if (enrollmentError) throw enrollmentError;
+
+  const enrolled = [
+    ...new Set((enrollments ?? []).map((e: { student_id: string }) => e.student_id)),
+  ];
+
+  const roster = new Set<string>();
+  for (const ids of chunk(enrolled, 200)) {
+    const { data: students, error: studentsError } = await supabase
+      .from('students')
+      .select('id')
+      .in('id', ids)
+      .or(`is_active.eq.true,deactivated_at.gte.${monthStart}`);
+    if (studentsError) throw studentsError;
+    (students ?? []).forEach((s: { id: string }) => roster.add(s.id));
+  }
+  return [...roster];
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -69,44 +144,29 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // WHO IS CALLING. Until now this function checked only that an
-    // Authorization header EXISTED - it never decoded it - while running
-    // on the service role. Any signed-in account, including a student's or
-    // a parent's, could POST here and rewrite the whole school's timetable:
-    // create sessions, delete future ones, and (see the date floor below)
-    // cause their own family to be billed again for lessons that had
-    // already happened. The header was a doorbell, not a lock.
-    const caller = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: userError } = await caller.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Role is read with the service-role client, not the caller's: a user
-    // cannot read another user's roles, and reading their own through
-    // their own client would still be a claim they influence.
-    const { data: callerRoles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id);
-    if (!(callerRoles ?? []).some((r: { role: string }) => r.role === 'admin')) {
-      return new Response(JSON.stringify({ error: 'Admins only' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // WHO IS CALLING. Two ways in, and both are checked properly.
+    //
+    // A person: an admin's own verified session. Until now this function
+    // checked only that an Authorization header EXISTED - it never decoded
+    // it - while running on the service role. Any signed-in account,
+    // including a student's or a parent's, could POST here and rewrite the
+    // whole school's timetable: create sessions, delete future ones, and
+    // (see the date floor below) cause their own family to be billed again
+    // for lessons that had already happened. The header was a doorbell, not
+    // a lock. requireRole decodes it now, and reads the role with the
+    // service-role client so a caller cannot vouch for themselves.
+    //
+    // The nightly timer: it has no session to show, so it presents the
+    // shared runner secret instead. That path is deliberately narrower than
+    // the human one - it can only bring the future into line with the
+    // templates, never rewrite a held lesson - and it is recorded as having
+    // been done by nobody, because it was.
+    const isTimerRun = runnerSecretMatches(req);
+    let actorUserId: string | null = null;
+    if (!isTimerRun) {
+      const gate = await requireRole(req, supabase, ['admin'], corsHeaders);
+      if (gate instanceof Response) return gate;
+      actorUserId = gate.isServiceRole ? null : gate.userId;
     }
 
     // Validate input
@@ -121,7 +181,9 @@ Deno.serve(async (req) => {
       return `${bkk.getFullYear()}-${String(bkk.getMonth() + 1).padStart(2, '0')}`;
     })();
 
-    const reconciliationMode = mode || 'future-only'; // Default to future-only
+    // The timer never touches a lesson that is Held or being taught: it
+    // only keeps the future in step with the templates.
+    const reconciliationMode = isTimerRun ? 'future-only' : mode || 'future-only';
 
     console.log(`Starting schedule generation for ${targetMonth}`);
 
@@ -210,7 +272,7 @@ Deno.serve(async (req) => {
         targetMonth,
         reconciliationMode,
         archivedTeacherIds,
-        user.id,
+        actorUserId,
       );
 
       // Step 6: Call calculate-payroll and calculate-tuition
@@ -397,11 +459,12 @@ async function reconcileSessions(
   mode: string,
   /** Teachers who have been archived. Their slots are not scheduled. */
   archivedTeacherIds: Set<string>,
-  // The admin who asked for this. Passed in because the only client in
-  // scope here is the service-role one, and asking IT who the user is -
-  // which is what this function used to do - returns null, so every
-  // schedule change was audited to nobody.
-  actorUserId: string,
+  // The admin who asked for this, or null when no person did: a service-role
+  // call or the nightly timer. Passed in because the only client in scope
+  // here is the service-role one, and asking IT who the user is - which is
+  // what this function used to do - returns null, so every schedule change
+  // was audited to nobody.
+  actorUserId: string | null,
 ) {
   const created: any[] = [];
   const updated: any[] = [];
