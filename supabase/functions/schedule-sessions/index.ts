@@ -275,27 +275,52 @@ Deno.serve(async (req) => {
         actorUserId,
       );
 
-      // Step 6: Call calculate-payroll and calculate-tuition
-      console.log('Calling calculate-payroll and calculate-tuition...');
-      
+      // Step 6: Refresh the money this timetable drives.
+      //
+      // Both of these calls used to fail every single time, and nothing
+      // said so. Payroll only accepted a real signed-in person's token and
+      // was handed the service-role key (401); tuition had started
+      // demanding a specific student while the generator sent only a month
+      // (400). Both errors were logged and thrown away, so a rebuild
+      // reported success while the payroll and invoice figures behind it
+      // stayed stale. They now report what happened, in the response.
+      const refresh: { payroll: string; tuition: string } = { payroll: 'ok', tuition: 'ok' };
+
       try {
         const { error: payrollError } = await supabase.functions.invoke('calculate-payroll', {
-          body: { month: targetMonth }
+          body: { month: targetMonth },
         });
         if (payrollError) {
           console.error('Payroll calculation error:', payrollError);
+          refresh.payroll = payrollError.message || 'Payroll refresh failed';
         }
-
-        const { error: tuitionError } = await supabase.functions.invoke('calculate-tuition', {
-          body: { month: targetMonth }
-        });
-        if (tuitionError) {
-          console.error('Tuition calculation error:', tuitionError);
-        }
-      } catch (calcError: any) {
-        console.error('Error calling post-reconciliation functions:', calcError);
-        // Don't fail the whole operation if these fail
+      } catch (payrollError: any) {
+        console.error('Payroll calculation error:', payrollError);
+        refresh.payroll = payrollError?.message || 'Payroll refresh failed';
       }
+
+      try {
+        const roster = await tuitionRosterForMonth(
+          supabase,
+          (classes || []).map((c: { id: string }) => c.id),
+          targetMonth,
+        );
+        for (const ids of chunk(roster, 200)) {
+          const { error: tuitionError } = await supabase.functions.invoke('calculate-tuition-bulk', {
+            body: { studentIds: ids, month: targetMonth },
+          });
+          if (tuitionError) {
+            console.error('Tuition calculation error:', tuitionError);
+            refresh.tuition = tuitionError.message || 'Tuition refresh failed';
+            break;
+          }
+        }
+        refresh.tuition = refresh.tuition === 'ok' ? `ok (${roster.length} students)` : refresh.tuition;
+      } catch (tuitionError: any) {
+        console.error('Tuition calculation error:', tuitionError);
+        refresh.tuition = tuitionError?.message || 'Tuition refresh failed';
+      }
+
 
       // Step 7: Generate per-teacher report
       const report = await generateTeacherReport(supabase, targetMonth);
@@ -304,6 +329,7 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({
         success: true,
+        refresh,
         month: targetMonth,
         normalized: normalized.length,
         created: result.created.length,
