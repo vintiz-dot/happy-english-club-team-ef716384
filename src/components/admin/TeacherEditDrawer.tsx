@@ -25,8 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { PayRateFields } from "@/components/admin/staff/PayRateFields";
-import { payRateError, payRateTypeOf, type PayRateType } from "@/lib/payRate";
+import { PayRateHistory } from "@/components/admin/staff/PayRateHistory";
 
 interface TeacherEditDrawerProps {
   teacher: any;
@@ -38,8 +37,6 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [payRateType, setPayRateType] = useState<PayRateType>("hourly");
-  const [rate, setRate] = useState("");
   const [bio, setBio] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -51,25 +48,13 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
       setFullName(teacher.full_name || "");
       setEmail(teacher.email || "");
       setPhone(teacher.phone || "");
-      const type = payRateTypeOf(teacher);
-      setPayRateType(type);
-      setRate(
-        (type === "per_session" ? teacher.per_session_rate_vnd : teacher.hourly_rate_vnd)
-          ?.toString() || "",
-      );
       setBio(teacher.bio || "");
       setIsActive(teacher.is_active ?? true);
     }
   }, [teacher]);
 
-  const rateError = payRateError(payRateType, rate);
-
   const handleSave = async () => {
     if (!teacher?.id) return;
-    if (rateError) {
-      toast.error(rateError);
-      return;
-    }
 
     setIsSaving(true);
     try {
@@ -77,16 +62,12 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
       // in force set to 0. Leaving the old number behind would mean a
       // teacher switched to per-session still carries an hourly rate that
       // every payroll screen would be free to display.
-      const amount = Math.round(Number(rate));
       const { error } = await supabase
         .from("teachers")
         .update({
           full_name: fullName,
           email,
           phone,
-          pay_rate_type: payRateType,
-          hourly_rate_vnd: payRateType === "hourly" ? amount : 0,
-          per_session_rate_vnd: payRateType === "per_session" ? amount : 0,
           bio,
           is_active: isActive,
         })
@@ -190,12 +171,10 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
             />
           </div>
 
-          <PayRateFields
-            idPrefix="teacher-pay"
-            payRateType={payRateType}
-            onPayRateTypeChange={setPayRateType}
-            rate={rate}
-            onRateChange={setRate}
+          <PayRateHistory
+            staffId={teacher.id}
+            staffType="teacher"
+            staff={teacher}
           />
 
           <div>
@@ -217,7 +196,7 @@ export function TeacherEditDrawer({ teacher, onClose }: TeacherEditDrawerProps) 
             />
           </div>
 
-          <Button onClick={handleSave} disabled={isSaving || !!rateError} className="w-full">
+          <Button onClick={handleSave} disabled={isSaving} className="w-full">
             <Save className="h-4 w-4 mr-2" />
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>

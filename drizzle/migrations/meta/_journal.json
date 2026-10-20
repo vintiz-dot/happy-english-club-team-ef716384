@@ -43,6 +43,20 @@
       "when": 1792488748759,
       "tag": "0005_grant_access_predicates_to_service_role",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792576800000,
+      "tag": "0006_staff_pay_rate_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792576800001,
+      "tag": "0007_grant_schedule_versions_to_service_role",
+      "breakpoints": true
     }
   ]
 }
