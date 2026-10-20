@@ -43,6 +43,13 @@
       "when": 1792488748759,
       "tag": "0005_grant_access_predicates_to_service_role",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792524914223,
+      "tag": "0006_migration",
+      "breakpoints": true
     }
   ]
 }
