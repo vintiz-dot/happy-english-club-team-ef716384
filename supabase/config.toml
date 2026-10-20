@@ -136,3 +136,91 @@ verify_jwt = true
 # calculate-tuition, which would write the invoice it is reporting on.
 [functions.student-audit]
 verify_jwt = true
+
+# ---------------------------------------------------------------------
+# Stated explicitly rather than left to the default.
+#
+# verify_jwt defaults to true, so none of these were open - but a file
+# that lists some functions and not others cannot be read as a policy,
+# only as a list of the ones somebody remembered. Four of the entries
+# below sit on functions that were running service-role writes with no
+# role check at all; the check is now in the function, and the setting
+# says so here too.
+#
+# The five functions above that opt out of JWT verification are
+# deliberate and unchanged. Written this way rather than with the literal
+# setting so that grepping this file for opted-out functions returns only
+# real entries.
+# ---------------------------------------------------------------------
+
+[functions.admin-data-export]
+verify_jwt = true
+
+[functions.admin-data-import]
+verify_jwt = true
+
+[functions.admin-integrity-scan]
+verify_jwt = true
+
+[functions.assignment-calendar]
+verify_jwt = true
+
+[functions.auto-mark-attendance]
+verify_jwt = true
+
+[functions.bulk-cancel-sessions]
+verify_jwt = true
+
+[functions.calendar-events]
+verify_jwt = true
+
+[functions.cefr-defense]
+verify_jwt = true
+
+[functions.class-leaderboard]
+verify_jwt = true
+
+[functions.create-teaching-assistant]
+verify_jwt = true
+
+[functions.delete-payment]
+verify_jwt = true
+
+[functions.family-payment]
+verify_jwt = true
+
+[functions.get-speech-token]
+verify_jwt = true
+
+[functions.image-generate]
+verify_jwt = true
+
+[functions.manage-session]
+verify_jwt = true
+
+[functions.modify-payment]
+verify_jwt = true
+
+[functions.repair-attendance]
+verify_jwt = true
+
+[functions.reset-monthly-leaderboard]
+verify_jwt = true
+
+[functions.sapling-grammar]
+verify_jwt = true
+
+[functions.schedule-sessions]
+verify_jwt = true
+
+[functions.settle-bill]
+verify_jwt = true
+
+[functions.smart-dictionary]
+verify_jwt = true
+
+[functions.snapshot-monthly-finance]
+verify_jwt = true
+
+[functions.student-create-migration-account]
+verify_jwt = true

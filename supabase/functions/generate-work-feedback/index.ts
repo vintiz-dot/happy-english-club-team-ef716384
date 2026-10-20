@@ -16,6 +16,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { callerHoldsClass, requireRole } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,12 +53,33 @@ Deno.serve(async (req) => {
     const workId = String(body.work_id ?? "").trim();
     if (!workId) return respond({ success: false, error: "work_id is required" }, 400);
 
+    // class_id and uploaded_by added to the select so the caller can be
+    // scoped against the same two clauses student_work's RLS uses.
     const { data: work } = await sb
       .from("student_work")
-      .select("id, student_id, storage_path, mime_type, ocr_text, workflow")
+      .select("id, student_id, class_id, uploaded_by, storage_path, mime_type, ocr_text, workflow")
       .eq("id", workId)
       .single();
     if (!work) return respond({ success: false, error: "work row not found" }, 404);
+
+    // Staff only, and only for work that is theirs. This downloaded any
+    // child's scanned work from storage, sent it to OpenAI and overwrote
+    // the stored feedback, all from a work_id in the body with no check on
+    // who asked.
+    //
+    // BOTH clauses, because student_work's RLS has both:
+    //   uploaded_by = auth.uid() OR (class_id IS NOT NULL AND is_teacher_of_class(...))
+    // class_id is nullable - it is ON DELETE SET NULL, and the smart-upload
+    // review queue holds work that has not been assigned to a class yet -
+    // so checking the class alone would lock a teacher out of feedback on
+    // a scan they uploaded themselves. The aim is to match the policy, not
+    // to be stricter than it.
+    const gate = await requireRole(req, sb, ["admin", "teacher"], corsHeaders);
+    if (gate instanceof Response) return gate;
+    const ownUpload = !!gate.userId && work.uploaded_by === gate.userId;
+    if (!ownUpload && !(await callerHoldsClass(sb, gate, work.class_id))) {
+      return respond({ success: false, error: "This work belongs to a class you do not hold." }, 403);
+    }
 
     const studentId = String(body.student_id ?? "").trim() || work.student_id;
     if (!studentId) {

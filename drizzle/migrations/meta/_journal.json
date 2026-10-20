@@ -36,6 +36,13 @@
       "when": 1792486210102,
       "tag": "0004_archive_staff_not_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792488748759,
+      "tag": "0005_grant_access_predicates_to_service_role",
+      "breakpoints": true
     }
   ]
 }

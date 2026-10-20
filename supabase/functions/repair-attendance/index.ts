@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { requireRole } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +15,12 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Admins only. This wrote attendance rows for any student in any class
+    // on the service role, with no check on who asked - and attendance is
+    // what calculate-tuition bills from, so it moves money.
+    const gate = await requireRole(req, supabase, ["admin"], corsHeaders);
+    if (gate instanceof Response) return gate;
 
     const InputSchema = z.object({
       studentId: z.string().uuid(),
