@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { indexVersions, slotsOnDate, type ScheduleVersionRow } from '../_lib/schedule-history.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -165,8 +166,26 @@ Deno.serve(async (req) => {
 
       if (classError) throw classError;
 
+      // The timetable each class was on, change by change. Without this the
+      // generator reads classes.schedule_template, which is only ever "what
+      // is this class on TODAY" - so a change an admin dated for next term
+      // would never be generated, and a month that straddles the change
+      // date would come out entirely on one side of it. Loaded for the
+      // classes in scope in one query rather than resolved per date through
+      // public.class_slots_on, which would be a round trip per class per day.
+      let versionQuery = supabase
+        .from('class_schedule_versions')
+        .select('class_id, effective_from, weekly_slots');
+      if (classId) versionQuery = versionQuery.eq('class_id', classId);
+      const { data: versionRows, error: versionError } = await versionQuery;
+      // Hard failure, not a fallback. Carrying on with the current template
+      // would silently generate the wrong timetable for every class with a
+      // pending change, and report success.
+      if (versionError) throw versionError;
+      const versionsByClass = indexVersions<ScheduleVersionRow>(versionRows ?? []);
+
       // Step 3: Build expected sessions
-      const expected = buildExpectedSessions(classes || [], targetMonth);
+      const expected = buildExpectedSessions(classes || [], targetMonth, versionsByClass);
       console.log(`Expected ${expected.length} sessions from templates`);
 
       // Step 4: Load existing sessions
@@ -307,7 +326,12 @@ async function normalizeFutureHeld(supabase: any, month: string): Promise<string
   return ids;
 }
 
-function buildExpectedSessions(classes: any[], month: string): ExpectedSession[] {
+function buildExpectedSessions(
+  classes: any[],
+  month: string,
+  /** class_id -> its versions, newest first. See _lib/schedule-history.ts. */
+  versionsByClass: Map<string, ScheduleVersionRow[]>,
+): ExpectedSession[] {
   const expected: ExpectedSession[] = [];
   const [year, monthNum] = month.split('-').map(Number);
   
@@ -334,8 +358,12 @@ function buildExpectedSessions(classes: any[], month: string): ExpectedSession[]
     const dayOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(weekday);
     
     for (const cls of classes) {
-      const template = cls.schedule_template || { weeklySlots: [] };
-      const slots: WeeklySlot[] = template.weeklySlots || [];
+      // The slots in force on THIS date, not the ones in force today.
+      const slots = slotsOnDate<WeeklySlot>(
+        versionsByClass.get(cls.id),
+        dateStr,
+        (cls.schedule_template || {}).weeklySlots,
+      );
       
       for (const slot of slots) {
         if (slot.dayOfWeek === dayOfWeek) {
