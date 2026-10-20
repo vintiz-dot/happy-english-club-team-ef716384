@@ -4704,10 +4704,6 @@ export type Database = {
         Returns: boolean
       }
       can_read_student_work_file: { Args: { _path: string }; Returns: boolean }
-      class_slots_on: {
-        Args: { p_class_id: string; p_date: string }
-        Returns: Json
-      }
       can_view_classmate: {
         Args: { student_id_to_view: string; viewer_user_id: string }
         Returns: boolean
@@ -4737,6 +4733,10 @@ export type Database = {
           p_teacher_id: string
         }
         Returns: boolean
+      }
+      class_slots_on: {
+        Args: { p_class_id: string; p_date: string }
+        Returns: Json
       }
       count_vocab_saves_today: { Args: { p_user_id: string }; Returns: number }
       end_enrollment: {
