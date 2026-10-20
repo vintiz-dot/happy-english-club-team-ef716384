@@ -23,12 +23,27 @@
 --
 -- An explicit grant costs nothing and turns that into a non-event.
 
-GRANT EXECUTE ON FUNCTION public.is_teacher_of_class(uuid, uuid) TO service_role;
-GRANT EXECUTE ON FUNCTION public.can_view_student_in_class(uuid, uuid) TO service_role;
-
--- Restated for the same reason: these are the roles that should hold it,
--- and anon should not. Idempotent, and harmless if already true.
-REVOKE EXECUTE ON FUNCTION public.is_teacher_of_class(uuid, uuid) FROM anon, PUBLIC;
-REVOKE EXECUTE ON FUNCTION public.can_view_student_in_class(uuid, uuid) FROM anon, PUBLIC;
-GRANT EXECUTE ON FUNCTION public.is_teacher_of_class(uuid, uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.can_view_student_in_class(uuid, uuid) TO authenticated;
+-- Guarded per function rather than written as eight bare statements. A
+-- GRANT on a function that does not exist is a hard error, which would
+-- abort the whole run partway and leave the migrations before this one
+-- applied and this one not. Both predicates exist in this database
+-- (20260712024156 and 20261007120000 create them), so the guard should
+-- never fire - it is here so that pasting this file somewhere it does not
+-- hold produces a NOTICE instead of a half-applied schema.
+DO $do$
+DECLARE
+  fn text;
+BEGIN
+  FOREACH fn IN ARRAY ARRAY[
+    'public.is_teacher_of_class(uuid, uuid)',
+    'public.can_view_student_in_class(uuid, uuid)'
+  ] LOOP
+    IF to_regprocedure(fn) IS NULL THEN
+      RAISE NOTICE 'skipping %, function not present', fn;
+      CONTINUE;
+    END IF;
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION %s FROM anon, PUBLIC', fn);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO authenticated, service_role', fn);
+  END LOOP;
+END
+$do$;

@@ -273,7 +273,12 @@ CREATE POLICY "Authenticated users can view teachers"
   TO authenticated
   USING (auth.uid() IS NOT NULL);
 
+-- Both names dropped: this policy is RENAMED (it was "...active TAs",
+-- and it is no longer about active ones), so dropping only the old name
+-- leaves the new one in place and the CREATE fails on a second run. The
+-- teachers policy above keeps its name, so one DROP is enough there.
 DROP POLICY IF EXISTS "Authenticated users can view active TAs" ON public.teaching_assistants;
+DROP POLICY IF EXISTS "Authenticated users can view TAs" ON public.teaching_assistants;
 CREATE POLICY "Authenticated users can view TAs"
   ON public.teaching_assistants FOR SELECT
   TO authenticated

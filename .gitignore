@@ -50,3 +50,9 @@ dist-ssr
 *.sln
 *.sw?
 .bun-cache
+
+# One-off SQL handed to the user to paste into Lovable. Generated from the
+# files in supabase/migrations, so it is a copy, not a source - committing
+# it would put the same migration in the tree twice and invite someone to
+# edit the wrong one.
+MIGRATIONS-TO-PASTE.sql
