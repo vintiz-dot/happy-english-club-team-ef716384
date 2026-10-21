@@ -1,0 +1,2 @@
+- [ ] Verify and fix historical-rate payroll correction calculations.
+- [ ] Protect closed payroll expenditure bookings and verify regressions without committing financial changes.
