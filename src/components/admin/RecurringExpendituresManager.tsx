@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -44,6 +44,8 @@ interface RecurringExpenditure {
   start_month: string;
   end_month: string | null;
   is_active: boolean;
+  /** Whether this standing cost is spread across the classes that ran. */
+  allocate_to_classes: boolean;
   created_at: string;
 }
 
@@ -51,6 +53,17 @@ interface RecurringExpendituresManagerProps {
   /** Currently-selected month in YYYY-MM, used for "Apply for this month". */
   selectedMonth: string;
 }
+
+/**
+ * recurring_applications and recurring_expenditures are reached untyped.
+ *
+ * src/integrations/supabase/types.ts is regenerated from the live
+ * database by the other agent working on this repo, so a regeneration
+ * that lands before these migrations do would delete the table types and
+ * break the build. One declared hatch, rather than a cast at each call.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const untyped = supabase as any;
 
 const fmtVND = (n: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
@@ -70,9 +83,10 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
     start_month: dayjs().format("YYYY-MM"),
     end_month: "",
     is_active: true,
+    allocate_to_classes: true,
   });
 
-  const { data: templates = [], isLoading } = useQuery<RecurringExpenditure[]>({
+  const { data: templates = [], isLoading, isSuccess: templatesLoaded } = useQuery<RecurringExpenditure[]>({
     queryKey: ["recurring-expenditures"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -84,21 +98,65 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
     },
   });
 
-  // Already-applied template IDs for this month
-  const { data: appliedThisMonth = new Set<string>() } = useQuery({
+  // Which templates this month has already had.
+  //
+  // From recurring_applications, which records the act, rather than from
+  // the presence of an expenditure row - because the row is not proof.
+  // Deleting the booked cost (the landlord waived it) or correcting its
+  // date (the invoice was really dated last month) both remove it from a
+  // ledger-based check, and the automatic booking below would then put it
+  // straight back and silently undo the admin.
+  //
+  // The second query covers rows booked by the older code path, which
+  // left no marker. Without it the first automatic run after this ships
+  // would book every one of them a second time.
+  //
+  // Errors are thrown, not swallowed. This set is the only thing standing
+  // between a template and a double booking, and a query that fails
+  // quietly returns an empty set - which reads as "nothing applied yet".
+  const { data: appliedThisMonth = new Set<string>(), isSuccess: appliedLoaded } = useQuery({
     queryKey: ["recurring-applied-this-month", selectedMonth],
     queryFn: async () => {
       const start = `${selectedMonth}-01`;
       const next = dayjs(start).add(1, "month").format("YYYY-MM-DD");
-      const { data } = await (supabase as any)
-        .from("expenditures")
-        .select("source_template_id")
-        .gte("date", start)
-        .lt("date", next)
-        .not("source_template_id", "is", null);
+      const [marks, legacy] = await Promise.all([
+        untyped
+          .from("recurring_applications")
+          .select("template_id")
+          .eq("month", selectedMonth),
+        untyped
+          .from("expenditures")
+          .select("source_template_id")
+          .gte("date", start)
+          .lt("date", next)
+          .not("source_template_id", "is", null),
+      ]);
+      if (marks.error) throw marks.error;
+      if (legacy.error) throw legacy.error;
       const set = new Set<string>();
-      (data || []).forEach((d: any) => d.source_template_id && set.add(d.source_template_id));
+      for (const d of (marks.data ?? []) as Array<{ template_id: string | null }>) {
+        if (d.template_id) set.add(d.template_id);
+      }
+      for (const d of (legacy.data ?? []) as Array<{ source_template_id: string | null }>) {
+        if (d.source_template_id) set.add(d.source_template_id);
+      }
       return set;
+    },
+  });
+
+  // A closed payroll month has been paid and reported. Booking a new cost
+  // into it would move a net profit that has already been signed off, so
+  // the automatic path stops at the lock and says so.
+  const { data: monthLocked = false, isSuccess: lockLoaded } = useQuery({
+    queryKey: ["payroll-period-status", selectedMonth],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("payroll_periods")
+        .select("status")
+        .eq("month", selectedMonth)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.status === "locked";
     },
   });
 
@@ -111,6 +169,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
       start_month: dayjs().format("YYYY-MM"),
       end_month: "",
       is_active: true,
+      allocate_to_classes: true,
     });
     setEditing(null);
   };
@@ -130,6 +189,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
       start_month: t.start_month.slice(0, 7),
       end_month: t.end_month ? t.end_month.slice(0, 7) : "",
       is_active: t.is_active,
+      allocate_to_classes: t.allocate_to_classes !== false,
     });
     setDrawerOpen(true);
   };
@@ -139,6 +199,15 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
       const amount = parseInt(form.amount);
       if (!amount || amount <= 0) throw new Error("Enter a valid amount");
       if (!form.category.trim()) throw new Error("Enter a category");
+      // "Teacher Payroll" and "TA Payroll" are how the finance summary
+      // recognises wages it has already counted under Teacher Salary, so
+      // a template with either name would be subtracted from net profit
+      // nowhere at all. Staff pay belongs in the Payroll tab regardless.
+      if (/^(teacher|ta) payroll$/i.test(form.category.trim())) {
+        throw new Error(
+          `"${form.category.trim()}" is reserved for staff wages, which the Payroll tab books. Use a different category.`,
+        );
+      }
       const payload: any = {
         amount,
         category: form.category.trim(),
@@ -147,6 +216,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
         start_month: `${form.start_month}-01`,
         end_month: form.end_month ? `${form.end_month}-01` : null,
         is_active: form.is_active,
+        allocate_to_classes: form.allocate_to_classes,
       };
       if (editing) {
         const { error } = await supabase
@@ -164,6 +234,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
     onSuccess: () => {
       toast.success(editing ? "Template updated" : "Recurring template created");
       queryClient.invalidateQueries({ queryKey: ["recurring-expenditures"] });
+      queryClient.invalidateQueries({ queryKey: ["class-finance"] });
       setDrawerOpen(false);
       resetForm();
     },
@@ -182,7 +253,15 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
       toast.success("Template deleted");
       queryClient.invalidateQueries({ queryKey: ["recurring-expenditures"] });
     },
-    onError: (e: any) => toast.error(e.message || "Failed to delete"),
+    onError: (e: any) =>
+      toast.error(
+        // The foreign key is ON DELETE RESTRICT on purpose: deleting a
+        // template would otherwise detach every cost it ever booked and
+        // erase it from the class split while leaving it in the ledger.
+        /foreign key|violates/i.test(e?.message ?? "")
+          ? "This template has costs booked against it. Switch it off, or give it an end month, instead of deleting it."
+          : e.message || "Failed to delete",
+      ),
   });
 
   // Templates that are active for the selected month and not yet applied
@@ -199,10 +278,15 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
   );
 
   const applyMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ automatic }: { automatic: boolean }) => {
       if (dueThisMonth.length === 0) throw new Error("No recurring expenses pending for this month");
       const monthStart = dayjs(monthStartIso);
       const lastDayOfMonth = monthStart.endOf("month").date();
+      if (monthLocked) {
+        throw new Error(
+          `${dayjs(monthStartIso).format("MMMM YYYY")} is closed. Reopen it, or book the cost in an open month.`,
+        );
+      }
       const rows = dueThisMonth.map((t) => {
         const day = Math.min(t.day_of_month, lastDayOfMonth);
         return {
@@ -211,11 +295,36 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
           memo: t.memo,
           date: monthStart.date(day).format("YYYY-MM-DD"),
           source_template_id: t.id,
+          // What this row is, so the database itself refuses a second
+          // booking. Before this the only guard was the client-side
+          // applied set, and two tabs - or one stale cache - booked the
+          // rent twice. source_kind + source_key carry a unique
+          // constraint (20261021092000).
+          source_kind: "recurring",
+          source_key: `${selectedMonth}:${t.id}`,
           created_by: user?.id,
         };
       });
-      const { error } = await (supabase as any).from("expenditures").insert(rows);
+      const { error } = await (supabase as any)
+        .from("expenditures")
+        .upsert(rows, { onConflict: "source_kind,source_key", ignoreDuplicates: false });
       if (error) throw error;
+
+      // The record that this month has been dealt with, so deleting or
+      // re-dating the cost afterwards is respected rather than undone.
+      const { error: markError } = await untyped
+        .from("recurring_applications")
+        .upsert(
+          dueThisMonth.map((x) => ({
+            template_id: x.id,
+            month: selectedMonth,
+            applied_by: user?.id ?? null,
+            automatic,
+          })),
+          { onConflict: "template_id,month", ignoreDuplicates: true },
+        );
+      if (markError) throw markError;
+
       return rows.length;
     },
     onSuccess: (count) => {
@@ -226,9 +335,43 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
       queryClient.invalidateQueries({ queryKey: ["recurring-applied-this-month", selectedMonth] });
       queryClient.invalidateQueries({ queryKey: ["finance-summary"] });
       queryClient.invalidateQueries({ queryKey: ["finance-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["class-finance"] });
     },
     onError: (e: any) => toast.error(e.message || "Failed to apply recurring expenses"),
   });
+
+  // "I want something that goes in immediately."
+  //
+  // Saving a template books the current month straight away, and every
+  // month after does the same the first time the page is opened in it.
+  // There is no scheduler in this project to do it at midnight on the
+  // 1st, and the write is idempotent at the database level, so opening
+  // the page is a safe thing to hang it on.
+  //
+  // ONLY THE CURRENT MONTH. A past month may be closed and reported, and
+  // a future one has not been incurred yet; both stay on the button, so
+  // browsing the history never books anything.
+  const autoApplied = useRef<string | null>(null);
+  const isCurrentMonth = selectedMonth === dayjs().format("YYYY-MM");
+  const applyNow = applyMutation.mutate;
+  const applyPending = applyMutation.isPending;
+  // EVERY question has to be answered before anything is written. Both
+  // the applied set and the lock fall back to a permissive default -
+  // an empty Set, and false - which are exactly the values that say "go
+  // ahead". While either query is in flight, or after it has failed,
+  // those defaults would book a cost that is already booked, or book one
+  // into a month that has been closed and paid.
+  const ready = templatesLoaded && appliedLoaded && lockLoaded;
+  useEffect(() => {
+    if (!ready || !isCurrentMonth || monthLocked || applyPending) return;
+    if (dueThisMonth.length === 0) return;
+    // One attempt per set of pending templates. A failure must surface as
+    // a toast, not become a loop that retries on every render.
+    const attempt = `${selectedMonth}:${dueThisMonth.map((x) => x.id).sort().join(",")}`;
+    if (autoApplied.current === attempt) return;
+    autoApplied.current = attempt;
+    applyNow({ automatic: true });
+  }, [ready, isCurrentMonth, monthLocked, applyPending, dueThisMonth, selectedMonth, applyNow]);
 
   const FormBody = (
     <div className="space-y-4">
@@ -237,9 +380,18 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
         <Input
           value={form.category}
           onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-          placeholder="e.g. Rent, Internet, Salary"
+          placeholder="e.g. Rent, Electricity, Internet"
           className="h-11"
         />
+        {/* Staff pay is already charged to each class from its sessions.
+            A shared template for the same money would charge it twice. */}
+        {form.allocate_to_classes && /salary|payroll|wage/i.test(form.category) && (
+          <p className="mt-1 text-xs text-amber-600">
+            This looks like staff pay, which the Payroll tab already charges to each class from its
+            sessions. Sharing it again would charge it twice — turn off “Share across classes” unless
+            this is someone the payroll does not cover.
+          </p>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -310,6 +462,19 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
           onCheckedChange={(v) => setForm((f) => ({ ...f, is_active: v }))}
         />
       </div>
+      <div className="flex items-center justify-between gap-3 rounded-xl border p-3">
+        <div>
+          <Label className="text-sm">Share across classes</Label>
+          <p className="text-xs text-muted-foreground">
+            Split over the classes that ran, by how many sessions each one held, and charged against their
+            profit in the class report. Turn it off for a cost that belongs to one class, or to none.
+          </p>
+        </div>
+        <Switch
+          checked={form.allocate_to_classes}
+          onCheckedChange={(v) => setForm((f) => ({ ...f, allocate_to_classes: v }))}
+        />
+      </div>
       <div className="flex gap-2 pt-2">
         <Button
           onClick={() => saveMutation.mutate()}
@@ -341,7 +506,8 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
               Recurring Expenditures
             </CardTitle>
             <CardDescription>
-              Templates auto-apply to any month with one click. No more re-typing rent, internet, salaries.
+              Define a standing cost once. It is booked automatically each month, and shared across the
+              classes that ran so the class report shows what a class really costs.
             </CardDescription>
           </div>
           <Button onClick={openNew} className="gap-2">
@@ -383,7 +549,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
           </div>
           {dueThisMonth.length > 0 && (
             <Button
-              onClick={() => applyMutation.mutate()}
+              onClick={() => applyMutation.mutate({ automatic: false })}
               disabled={applyMutation.isPending}
               className="gap-2 bg-amber-500 hover:bg-amber-400 text-white shrink-0"
             >
@@ -408,7 +574,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
           <div className="text-center py-10 text-muted-foreground">
             <Repeat className="h-10 w-10 mx-auto mb-2 opacity-30" />
             <p className="text-sm">No recurring templates yet.</p>
-            <p className="text-xs mt-1">Create one to auto-apply rent, internet, salaries every month.</p>
+            <p className="text-xs mt-1">Create one for rent, electricity or internet and it books itself every month.</p>
           </div>
         ) : (
           <div className="rounded-2xl border divide-y">
@@ -430,6 +596,9 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
                       <span className="font-semibold text-sm sm:text-[15px] truncate">{t.category}</span>
                       {!t.is_active && (
                         <Badge variant="outline" className="text-[10px] h-5">Inactive</Badge>
+                      )}
+                      {t.allocate_to_classes === false && (
+                        <Badge variant="outline" className="text-[10px] h-5">Not shared with classes</Badge>
                       )}
                       {applied && (
                         <Badge className="bg-emerald-500 text-white text-[10px] h-5">

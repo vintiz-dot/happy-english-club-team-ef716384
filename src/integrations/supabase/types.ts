@@ -1425,6 +1425,44 @@ export type Database = {
           },
         ]
       }
+      class_overhead_allocations: {
+        Row: {
+          class_id: string
+          class_name: string
+          frozen_at: string
+          month: string
+          pool_vnd: number
+          sessions_count: number
+          share_vnd: number
+        }
+        Insert: {
+          class_id: string
+          class_name: string
+          frozen_at?: string
+          month: string
+          pool_vnd: number
+          sessions_count: number
+          share_vnd: number
+        }
+        Update: {
+          class_id?: string
+          class_name?: string
+          frozen_at?: string
+          month?: string
+          pool_vnd?: number
+          sessions_count?: number
+          share_vnd?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_overhead_allocations_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenditures: {
         Row: {
           amount: number
@@ -3139,6 +3177,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recurring_expenditures: {
+        Row: {
+          allocate_to_classes: boolean
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          day_of_month: number
+          end_month: string | null
+          id: string
+          is_active: boolean
+          memo: string | null
+          start_month: string
+          updated_at: string
+        }
+        Insert: {
+          allocate_to_classes?: boolean
+          amount: number
+          category: string
+          created_at?: string
+          created_by?: string | null
+          day_of_month?: number
+          end_month?: string | null
+          id?: string
+          is_active?: boolean
+          memo?: string | null
+          start_month?: string
+          updated_at?: string
+        }
+        Update: {
+          allocate_to_classes?: boolean
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          day_of_month?: number
+          end_month?: string | null
+          id?: string
+          is_active?: boolean
+          memo?: string | null
+          start_month?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       sessions: {
         Row: {
@@ -4946,6 +5029,18 @@ export type Database = {
         Returns: Json
       }
       can_read_student_work_file: { Args: { _path: string }; Returns: boolean }
+      class_overhead_for_month: {
+        Args: { p_month: string }
+        Returns: {
+          class_id: string
+          class_name: string
+          sessions_count: number
+          share_vnd: number
+          pool_vnd: number
+          frozen: boolean
+        }[]
+      }
+      class_overhead_pool: { Args: { p_month: string }; Returns: number }
       can_view_classmate: {
         Args: { student_id_to_view: string; viewer_user_id: string }
         Returns: boolean

@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sessionPayVnd } from "@/lib/payRate";
 import { durationMinutes } from "@/lib/sessionDuration";
+import { splitPayrollByClass } from "@/lib/finance/classPayroll";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -128,7 +129,24 @@ const OperationalReports = () => {
     },
   });
 
-  // Class finance - BULK queries instead of per-class waterfall
+  // Class finance - BULK queries instead of per-class waterfall.
+  //
+  // WHAT A CLASS COSTS, as of 21 Oct 2026. Two things were missing and
+  // both of them flattered every class:
+  //
+  //   Teaching assistants. Pay was priced here from the session's teacher
+  //   alone, so a class with a TA in every lesson showed none of that
+  //   cost - while the Payroll tab paid it and the expenditure booking
+  //   charged the school for it. Pay now comes from calculate-payroll,
+  //   which covers both and prices each session at the rate that applied
+  //   on its own date (staff_pay_rates), rather than at whatever the
+  //   teacher row happens to say when the report is opened.
+  //
+  //   Rent, electricity and the rest. A class also consumes the standing
+  //   costs of the school. Those are split across the classes that ran,
+  //   by session count, in SQL - see 20261021097000. The arithmetic is
+  //   not repeated here: the same split has to be reproducible when the
+  //   month is closed, and two copies would become two answers.
   const { data: classFinance } = useQuery({
     queryKey: ["class-finance", selectedMonth],
     queryFn: async () => {
@@ -137,8 +155,12 @@ const OperationalReports = () => {
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       const monthEnd = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-01`;
 
-      const [classesRes, sessionsRes, enrollmentsRes, invoicesRes] = await Promise.all([
-        supabase.from("classes").select("id, name, session_rate_vnd").eq("is_active", true),
+      const [classesRes, sessionsRes, enrollmentsRes, invoicesRes, payrollRes, overheadRes, poolRes, periodRes] = await Promise.all([
+        // No is_active filter. A class archived since the month ran
+        // still held its lessons and still used the room; dropping it
+        // would hand its share of the rent to the classes still open.
+        // Dormant active classes are filtered out further down instead.
+        supabase.from("classes").select("id, name, session_rate_vnd, is_active"),
         supabase
           .from("sessions")
           .select("id, class_id, teacher_id, start_time, end_time, rate_override_vnd, status, teachers(hourly_rate_vnd, pay_rate_type, per_session_rate_vnd)")
@@ -154,12 +176,47 @@ const OperationalReports = () => {
           .from("invoices")
           .select("class_breakdown, student_id")
           .eq("month", selectedMonth),
+        supabase.functions.invoke("calculate-payroll", { body: { month: selectedMonth } }),
+        // Cast on purpose: src/integrations/supabase/types.ts is
+        // regenerated from the live database by the other agent working
+        // on this repo, and a regeneration that lands before the
+        // migration does would drop these two names and break the build.
+        supabase.rpc("class_overhead_for_month" as never, { p_month: selectedMonth } as never),
+        supabase.rpc("class_overhead_pool" as never, { p_month: selectedMonth } as never),
+        supabase.from("payroll_periods").select("status").eq("month", selectedMonth).maybeSingle(),
       ]);
 
       const classes = classesRes.data || [];
       const sessions = sessionsRes.data || [];
       const enrollments = enrollmentsRes.data || [];
       const invoices = invoicesRes.data || [];
+      const locked = (periodRes.data as { status?: string } | null)?.status === "locked";
+
+      // Pay, per class, from the function that owns pricing. If it cannot
+      // be reached the report still renders - from the old per-session
+      // estimate - and says so, rather than showing a confident wrong
+      // number or an empty page.
+      const payrollRows = (payrollRes as { data?: { payrollData?: unknown[] } }).data?.payrollData;
+      const payrollEstimated = !!payrollRes.error || !Array.isArray(payrollRows);
+      const paySplit = payrollEstimated
+        ? null
+        : splitPayrollByClass(payrollRows as Parameters<typeof splitPayrollByClass>[0], { locked });
+
+      // Standing costs, split in SQL. Unavailable until 20261021097000 is
+      // applied, which is a state worth naming rather than showing as a
+      // row of zeros that reads as "there is no rent".
+      const overheadRows = (overheadRes.data ?? []) as Array<{
+        class_id: string;
+        share_vnd: number | string;
+        sessions_count: number;
+        frozen: boolean;
+      }>;
+      const overheadUnavailable = !!overheadRes.error;
+      const overheadByClass = new Map<string, number>(
+        overheadRows.map((r) => [r.class_id, Number(r.share_vnd ?? 0)]),
+      );
+      const overheadFrozen = overheadRows.some((r) => r.frozen);
+      const overheadPool = Number(poolRes.error ? 0 : (poolRes.data ?? 0));
 
       const sessionsByClass: Record<string, typeof sessions> = {};
       for (const s of sessions) {
@@ -179,7 +236,7 @@ const OperationalReports = () => {
         invoicesByStudent[inv.student_id].push(inv);
       }
 
-      return classes.map((cls) => {
+      const rows = classes.map((cls) => {
         const classSessions = sessionsByClass[cls.id] || [];
         const classEnrollments = enrollmentsByClass[cls.id] || new Set();
         const studentCount = classEnrollments.size;
@@ -198,51 +255,87 @@ const OperationalReports = () => {
           }
         }
 
-        let payroll = 0;
-        for (const session of classSessions) {
-          const minutes = durationMinutes(session.start_time, session.end_time) ?? 0;
-          payroll += sessionPayVnd(session.teachers as any, minutes);
+        let payroll: number;
+        if (paySplit) {
+          payroll = paySplit.byClass.get(cls.id) ?? 0;
+        } else {
+          payroll = 0;
+          for (const session of classSessions) {
+            const minutes = durationMinutes(session.start_time, session.end_time) ?? 0;
+            payroll += sessionPayVnd(session.teachers as any, minutes);
+          }
         }
 
+        const overhead = overheadByClass.get(cls.id) ?? 0;
         const discounts = grossTuition - netTuition;
-        const net = netTuition - payroll;
+        const net = netTuition - payroll - overhead;
 
         return {
           id: cls.id,
           name: cls.name,
+          isActive: cls.is_active !== false,
           sessionCount: classSessions.length,
           studentCount,
           grossTuition: Math.round(grossTuition),
           discounts: Math.round(discounts),
           tuition: Math.round(netTuition),
           payroll: Math.round(payroll),
+          overhead: Math.round(overhead),
           net: Math.round(net),
         };
-      });
+      })
+        // An archived class appears only for the months it actually ran.
+        // An active one appears even when it ran nothing, as before.
+        .filter((row) => row.isActive || row.sessionCount > 0);
+
+      return {
+        rows,
+        locked,
+        payrollEstimated,
+        overheadUnavailable,
+        overheadFrozen,
+        overheadPool,
+        overheadAllocated: [...overheadByClass.values()].reduce((n, v) => n + v, 0),
+        unattributedPayroll: paySplit?.unattributed ?? 0,
+      };
     },
   });
 
-  const totalGrossTuition = classFinance?.reduce((sum, c) => sum + c.grossTuition, 0) || 0;
-  const totalDiscounts = classFinance?.reduce((sum, c) => sum + c.discounts, 0) || 0;
-  const totalTuition = classFinance?.reduce((sum, c) => sum + c.tuition, 0) || 0;
-  const totalPayroll = classFinance?.reduce((sum, c) => sum + c.payroll, 0) || 0;
-  const totalNet = classFinance?.reduce((sum, c) => sum + c.net, 0) || 0;
+  const classRows = classFinance?.rows ?? [];
+  const totalGrossTuition = classRows.reduce((sum, c) => sum + c.grossTuition, 0);
+  const totalDiscounts = classRows.reduce((sum, c) => sum + c.discounts, 0);
+  const totalTuition = classRows.reduce((sum, c) => sum + c.tuition, 0);
+  const totalPayroll = classRows.reduce((sum, c) => sum + c.payroll, 0);
+  const totalOverhead = classRows.reduce((sum, c) => sum + c.overhead, 0);
+  const totalNet = classRows.reduce((sum, c) => sum + c.net, 0);
+  // Standing costs that belong to the month but are not in the column
+  // above. Measured against the DISPLAYED total, not against the full
+  // RPC result: a share belonging to a class the table filtered out would
+  // otherwise count as allocated and disappear with no warning. Named
+  // rather than dropped, so the Expenditures page and this table never
+  // differ without saying why.
+  const unallocatedOverhead = Math.max(0, (classFinance?.overheadPool ?? 0) - totalOverhead);
 
   const exportClassFinanceCSV = () => {
-    if (!classFinance || classFinance.length === 0) return;
+    if (classRows.length === 0) return;
     const csv = [
-      ["Class", "Sessions", "Students", "Gross Tuition", "Discounts", "Net Tuition", "Payroll", "Profit"].join(","),
-      ...classFinance.map(c => [
+      ["Class", "Status", "Sessions", "Students", "Gross Tuition", "Discounts", "Net Tuition", "Payroll", "Overhead", "Profit"].join(","),
+      ...classRows.map(c => [
         `"${c.name}"`,
+        c.isActive ? "Active" : "Archived",
         c.sessionCount,
         c.studentCount,
         c.grossTuition,
         c.discounts,
         c.tuition,
         c.payroll,
+        c.overhead,
         c.net,
       ].join(",")),
-      ["TOTAL", "-", "-", totalGrossTuition, totalDiscounts, totalTuition, totalPayroll, totalNet].join(","),
+      ["TOTAL", "-", "-", "-", totalGrossTuition, totalDiscounts, totalTuition, totalPayroll, totalOverhead, totalNet].join(","),
+      ...(unallocatedOverhead > 0
+        ? [["UNALLOCATED OVERHEAD", "-", "-", "-", "", "", "", "", unallocatedOverhead, ""].join(",")]
+        : []),
     ].join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
@@ -382,9 +475,44 @@ const OperationalReports = () => {
               </CardTitle>
               <CardDescription>
                 Financial breakdown by class for {getMonthOptions().find(o => o.value === selectedMonth)?.label}
+                {classFinance?.overheadFrozen
+                  ? " \u00b7 overhead frozen at what this month was closed at"
+                  : ""}
               </CardDescription>
+              {classFinance?.overheadUnavailable && (
+                <p className="text-xs text-amber-600 mt-1">
+                  Standing costs are not included: the class-overhead migration has not been applied yet.
+                </p>
+              )}
+              {classFinance?.payrollEstimated && (
+                <p className="text-xs text-amber-600 mt-1">
+                  Payroll could not be loaded, so these figures are estimated from teacher rates and leave
+                  out teaching assistants.
+                </p>
+              )}
+              {(classFinance?.unattributedPayroll ?? 0) !== 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatVND(classFinance?.unattributedPayroll ?? 0)} of pay belongs to no class and is not
+                  in the rows below.
+                </p>
+              )}
+              {unallocatedOverhead > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatVND(unallocatedOverhead)} of standing costs is not in the Overhead column — either no
+                  class ran this month, or it belongs to a class not listed above.
+                </p>
+              )}
+              {/* The bottom line here is structurally higher than the
+                  Finance Summary's net, and saying so beats letting
+                  someone discover it by subtraction. */}
+              <p className="text-xs text-muted-foreground mt-1">
+                Overhead covers recurring costs marked “share across classes”. One-off spend is not shared,
+                so this TOTAL is higher than Net Profit on the Finance tab by whatever else was spent.
+                {!classFinance?.locked &&
+                  " An open month prices every scheduled session; the Finance tab's actual figure counts only lessons already held."}
+              </p>
             </div>
-            <Button onClick={exportClassFinanceCSV} variant="outline" size="sm" disabled={!classFinance?.length}>
+            <Button onClick={exportClassFinanceCSV} variant="outline" size="sm" disabled={!classRows.length}>
               <Download className="h-4 w-4 mr-2" />
               Export CSV
             </Button>
@@ -401,13 +529,19 @@ const OperationalReports = () => {
                 <TableHead className="text-right">Discounts</TableHead>
                 <TableHead className="text-right">Net Tuition</TableHead>
                 <TableHead className="text-right">Payroll</TableHead>
+                <TableHead className="text-right">Overhead</TableHead>
                 <TableHead className="text-right">Profit</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {classFinance?.map((cls) => (
+              {classRows.map((cls) => (
                 <TableRow key={cls.id}>
-                  <TableCell className="font-medium">{cls.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {cls.name}
+                    {!cls.isActive && (
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">archived</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">{cls.sessionCount}</TableCell>
                   <TableCell className="text-right">{cls.studentCount}</TableCell>
                   <TableCell className="text-right">{formatVND(cls.grossTuition)}</TableCell>
@@ -416,11 +550,18 @@ const OperationalReports = () => {
                   </TableCell>
                   <TableCell className="text-right font-medium">{formatVND(cls.tuition)}</TableCell>
                   <TableCell className="text-right">{formatVND(cls.payroll)}</TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {cls.overhead > 0 ? formatVND(cls.overhead) : '-'}
+                  </TableCell>
                   <TableCell className={`text-right font-semibold ${cls.net >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
                     {formatVND(cls.net)}
                   </TableCell>
                 </TableRow>
               ))}
+              {/* Nine cells, matching the nine headers. Count them when
+                  adding a column: an extra one here shifts every total
+                  under the wrong heading and the rows above still look
+                  right, so it reads as the totals contradicting them. */}
               <TableRow className="bg-muted/50 font-bold">
                 <TableCell>TOTAL</TableCell>
                 <TableCell className="text-right">-</TableCell>
@@ -431,6 +572,9 @@ const OperationalReports = () => {
                 </TableCell>
                 <TableCell className="text-right">{formatVND(totalTuition)}</TableCell>
                 <TableCell className="text-right">{formatVND(totalPayroll)}</TableCell>
+                <TableCell className="text-right text-muted-foreground">
+                  {totalOverhead > 0 ? formatVND(totalOverhead) : '-'}
+                </TableCell>
                 <TableCell className={`text-right ${totalNet >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
                   {formatVND(totalNet)}
                 </TableCell>
