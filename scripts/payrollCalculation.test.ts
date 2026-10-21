@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { indexPayRates, type PayRateRecord } from "./payHistory";
-import { canBookPayroll, datedPayrollTotal } from "./payrollCalculation";
+import { indexPayRates, type PayRateRecord } from "../src/lib/payHistory";
+import { canBookPayroll, datedPayrollTotal } from "../src/lib/payrollCalculation";
 
 const rates = (type: "hourly" | "per_session", old: number, current: number) =>
   indexPayRates([
