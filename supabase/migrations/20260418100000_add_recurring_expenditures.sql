@@ -1,3 +1,8 @@
+-- NOTE (21 Oct 2026): this file never reached production. The table was
+-- created there by 20261021095000_recurring_expenditures_in_production,
+-- which repeats everything below under guards and adds the grants that
+-- 20260712023825 would have given it had it existed at the time. Change
+-- both files, or neither.
 -- Recurring expenditure templates: rent, internet, salaries, etc.
 -- Admin defines a template once; the UI auto-applies it to any month
 -- that hasn't been generated yet (idempotent via source_template_id +

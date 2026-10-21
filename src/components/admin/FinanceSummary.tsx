@@ -211,6 +211,11 @@ export function FinanceSummary() {
               <p className="text-xs text-muted-foreground">
                 Projected: {isLoading ? "..." : formatVND(data?.totalSalaryProjected ?? 0)}
               </p>
+              {data?.payrollUnavailable && (
+                <p className="mt-1 text-xs text-amber-600">
+                  Payroll could not be calculated. Showing what was booked to expenditures.
+                </p>
+              )}
               <p className="mt-1">
                 <DurationVarianceNotice
                   count={data?.payrollDiscrepancies ?? 0}
@@ -220,12 +225,19 @@ export function FinanceSummary() {
             </CardContent>
           </Card>
 
-          {/* Operating spend only. Excused loss is deliberately NOT added in:
-              it is revenue never earned, not money paid out, and summing the
-              two produced an "Expenditures" headline that could read in the
-              millions while actual operating spend was zero. Net Profit has
-              always subtracted totalExpenditures alone, so the two figures
-              stay separate here to match. */}
+          {/* The headline is operating spend, which is what Net Profit
+              subtracts on top of salary - not the whole ledger. Booking the
+              payroll to expenditures puts the wage bill in the ledger as
+              well as on the Teacher Salary card, and for a while net
+              subtracted both, so pressing the button made the month look
+              44M worse. The payroll in the ledger is called out underneath
+              instead, so the two cards still add up to the Expenditures
+              page total.
+
+              Excused loss is deliberately NOT added in either: it is
+              revenue never earned, not money paid out, and summing the two
+              produced a headline that could read in the millions while
+              actual spend was zero. */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Expenditures</CardTitle>
@@ -233,11 +245,17 @@ export function FinanceSummary() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {isLoading ? "..." : formatVND(data?.totalExpenditures ?? 0)}
+                {isLoading ? "..." : formatVND(data?.operatingExpenditures ?? 0)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Operating costs • subtracted from net
               </p>
+              {(data?.payrollExpenditures ?? 0) > 0 && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  + {formatVND(data?.payrollExpenditures ?? 0)} payroll booked here, counted once
+                  under Teacher Salary
+                </p>
+              )}
             </CardContent>
           </Card>
 

@@ -332,6 +332,7 @@ export function PayrollTab() {
       toast.success("Payroll booked to expenditures");
       queryClient.invalidateQueries({ queryKey: ["expenditures"] });
       queryClient.invalidateQueries({ queryKey: ["finance-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["finance-overview"] });
     },
     onError: (e: any) => toast.error(e.message),
   });

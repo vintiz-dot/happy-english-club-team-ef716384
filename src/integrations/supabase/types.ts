@@ -1436,6 +1436,7 @@ export type Database = {
           memo: string | null
           source_kind: string | null
           source_key: string | null
+          source_template_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1448,6 +1449,7 @@ export type Database = {
           memo?: string | null
           source_kind?: string | null
           source_key?: string | null
+          source_template_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1460,6 +1462,7 @@ export type Database = {
           memo?: string | null
           source_kind?: string | null
           source_key?: string | null
+          source_template_id?: string | null
           updated_at?: string
         }
         Relationships: []

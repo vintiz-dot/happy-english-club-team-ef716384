@@ -225,6 +225,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
       queryClient.invalidateQueries({ queryKey: ["expenditures"] });
       queryClient.invalidateQueries({ queryKey: ["recurring-applied-this-month", selectedMonth] });
       queryClient.invalidateQueries({ queryKey: ["finance-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["finance-overview"] });
     },
     onError: (e: any) => toast.error(e.message || "Failed to apply recurring expenses"),
   });

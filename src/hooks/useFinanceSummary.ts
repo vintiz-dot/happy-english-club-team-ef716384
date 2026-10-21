@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { useEffect } from "react";
+import { salaryForNet, splitExpenditures } from "@/lib/finance/expenditureSplit";
 
 export interface FinanceSummaryData {
   grossTuition: number;
@@ -12,6 +13,8 @@ export interface FinanceSummaryData {
   totalSalaryActual: number;
   totalSalaryProjected: number;
   totalExpenditures: number;
+  payrollExpenditures: number;
+  operatingExpenditures: number;
   excusedLoss: number;
   netActual: number;
   netProjected: number;
@@ -55,11 +58,11 @@ export function useFinanceSummary(month: string) {
 
       const { data: expenditures } = await supabase
         .from("expenditures")
-        .select("amount")
+        .select("amount, category, source_kind")
         .gte("date", startDate)
         .lt("date", endDate);
 
-      const totalExpenditures = (expenditures || []).reduce((sum, e) => sum + (e.amount || 0), 0);
+      const spend = splitExpenditures(expenditures || []);
 
       const { data: excused } = await supabase
         .from("attendance")
@@ -77,8 +80,14 @@ export function useFinanceSummary(month: string) {
         return sum + (a.sessions?.classes?.session_rate_vnd || 0);
       }, 0);
 
-      const netActual = totalTuition - totalSalaryActual - totalExpenditures;
-      const netProjected = totalTuition - totalSalaryProjected - totalExpenditures;
+      // Payroll booked into expenditures is the salary line in a second
+      // place, so net subtracts the salary plus the REST of the ledger.
+      // See @/lib/finance/expenditureSplit.
+      const payrollFailed = !!payrollError;
+      const netActual =
+        totalTuition - salaryForNet(spend, totalSalaryActual, payrollFailed) - spend.operating;
+      const netProjected =
+        totalTuition - salaryForNet(spend, totalSalaryProjected, payrollFailed) - spend.operating;
 
       return {
         grossTuition,
@@ -88,7 +97,9 @@ export function useFinanceSummary(month: string) {
         collectionRate,
         totalSalaryActual,
         totalSalaryProjected,
-        totalExpenditures,
+        totalExpenditures: spend.total,
+        payrollExpenditures: spend.payroll,
+        operatingExpenditures: spend.operating,
         excusedLoss,
         netActual,
         netProjected,

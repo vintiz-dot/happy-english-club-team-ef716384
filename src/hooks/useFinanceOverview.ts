@@ -3,6 +3,7 @@ import { useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchBilledStudentIds } from "@/lib/finance/studentsInMonth";
+import { salaryForNet, splitExpenditures } from "@/lib/finance/expenditureSplit";
 
 /**
  * Drives the rebuilt Admin Finance Summary widget.
@@ -67,7 +68,14 @@ export interface FinanceOverviewData {
   /** Sessions whose length disagrees with their class setting. */
   payrollDiscrepancies: number;
   payrollVariance: number;
+  /** calculate-payroll did not answer, so there is no salary figure. */
+  payrollUnavailable: boolean;
+  /** Everything in the ledger this month, payroll included. */
   totalExpenditures: number;
+  /** The part of the ledger that is payroll, already counted as salary. */
+  payrollExpenditures: number;
+  /** totalExpenditures - payrollExpenditures. What net subtracts on top of salary. */
+  operatingExpenditures: number;
   excusedLoss: number;
 
   // Net profit computed from billed revenue (accrual). Keeps parity with
@@ -237,15 +245,14 @@ export function useFinanceOverview(month: string) {
       const payrollDiscrepancies = payrollError ? 0 : Number(payrollResult?.totalDiscrepancies ?? 0);
       const payrollVariance = payrollError ? 0 : Number(payrollResult?.grandTotalVariance ?? 0);
 
+      // category and source_kind come back so the payroll rows can be told
+      // apart from the rest - see expenditureSplit for why that matters.
       const { data: expenditures } = await supabase
         .from("expenditures")
-        .select("amount")
+        .select("amount, category, source_kind")
         .gte("date", monthStart)
         .lt("date", nextMonthStart);
-      const totalExpenditures = (expenditures ?? []).reduce(
-        (s, e: any) => s + Number(e.amount ?? 0),
-        0,
-      );
+      const spend = splitExpenditures(expenditures ?? []);
 
       const { data: excused } = await supabase
         .from("attendance")
@@ -263,10 +270,21 @@ export function useFinanceOverview(month: string) {
         0,
       );
 
-      // Net = displayed (canonical) revenue − salary − expenditures.
+      // Net = displayed (canonical) revenue − salary − everything else.
+      //
+      // "Everything else" and not the whole ledger: once the payroll is
+      // booked to expenditures it appears in both terms, and subtracting
+      // both charged the month twice for one wage bill.
       const displayed = isClosed && snapshotMetrics ? snapshotMetrics : liveMetrics;
-      const netActual = displayed.totalTuitionThisMonth - totalSalaryActual - totalExpenditures;
-      const netProjected = displayed.totalTuitionThisMonth - totalSalaryProjected - totalExpenditures;
+      const payrollFailed = !!payrollError;
+      const netActual =
+        displayed.totalTuitionThisMonth
+        - salaryForNet(spend, totalSalaryActual, payrollFailed)
+        - spend.operating;
+      const netProjected =
+        displayed.totalTuitionThisMonth
+        - salaryForNet(spend, totalSalaryProjected, payrollFailed)
+        - spend.operating;
 
       return {
         month,
@@ -279,7 +297,10 @@ export function useFinanceOverview(month: string) {
         totalSalaryProjected,
         payrollDiscrepancies,
         payrollVariance,
-        totalExpenditures,
+        payrollUnavailable: payrollFailed,
+        totalExpenditures: spend.total,
+        payrollExpenditures: spend.payroll,
+        operatingExpenditures: spend.operating,
         excusedLoss,
         netActual,
         netProjected,

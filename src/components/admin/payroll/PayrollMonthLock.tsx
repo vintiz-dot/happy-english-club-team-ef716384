@@ -122,7 +122,7 @@ export function PayrollMonthLock({ month, live }: PayrollMonthLockProps) {
   }, [locked, lines, carried, live]);
 
   const invalidate = () => {
-    for (const k of ["payroll-period", "payroll-lines", "payroll-adjustments-from", "admin-payroll", "expenditures", "finance-summary"]) {
+    for (const k of ["payroll-period", "payroll-lines", "payroll-adjustments-from", "admin-payroll", "expenditures", "finance-summary", "finance-overview"]) {
       queryClient.invalidateQueries({ queryKey: [k] });
     }
   };
