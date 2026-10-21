@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792548491997,
+      "tag": "0000_payroll_lines_full_unique_indexes",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1434,8 +1434,8 @@ export type Database = {
           date: string
           id: string
           memo: string | null
-          source_kind: string | null
           source_key: string | null
+          source_kind: string | null
           source_template_id: string | null
           updated_at: string
         }
@@ -1447,8 +1447,8 @@ export type Database = {
           date?: string
           id?: string
           memo?: string | null
-          source_kind?: string | null
           source_key?: string | null
+          source_kind?: string | null
           source_template_id?: string | null
           updated_at?: string
         }
@@ -1460,8 +1460,8 @@ export type Database = {
           date?: string
           id?: string
           memo?: string | null
-          source_kind?: string | null
           source_key?: string | null
+          source_kind?: string | null
           source_template_id?: string | null
           updated_at?: string
         }
@@ -2656,7 +2656,22 @@ export type Database = {
           reason?: string
           teacher_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payroll_adjustments_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "teaching_assistants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_adjustments_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payroll_lines: {
         Row: {
@@ -2706,11 +2721,25 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "payroll_lines_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "teaching_assistants"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "payroll_lines_month_fkey"
             columns: ["month"]
             isOneToOne: false
             referencedRelation: "payroll_periods"
             referencedColumns: ["month"]
+          },
+          {
+            foreignKeyName: "payroll_lines_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -5006,10 +5035,6 @@ export type Database = {
         Returns: Json
       }
       normalize_session_statuses: { Args: { p_month: string }; Returns: Json }
-      payroll_month_is_locked: {
-        Args: { p_month: string }
-        Returns: boolean
-      }
       pause_enrollment: {
         Args: {
           p_class_id: string
@@ -5020,6 +5045,7 @@ export type Database = {
         }
         Returns: Json
       }
+      payroll_month_is_locked: { Args: { p_month: string }; Returns: boolean }
       post_sibling_retro_credit: {
         Args: {
           p_amount: number
