@@ -32,10 +32,11 @@ import {
   describeRate,
   lengthAffectsPay,
   payRateTypeOf,
-  totalPayVnd,
   varianceCostVnd,
   type StaffPayRate,
 } from "@/lib/payRate";
+import { indexPayRates, rateOnDate } from "@/lib/payHistory";
+import { canBookPayroll, datedPayrollTotal } from "@/lib/payrollCalculation";
 
 interface StaffPayroll {
   staff: {
@@ -81,6 +82,18 @@ export function PayrollTab() {
   const [selectedMonth, setSelectedMonth] = useState(dayjs().format("YYYY-MM"));
   const queryClient = useQueryClient();
 
+  const { data: period, isSuccess: periodLoaded } = useQuery({
+    queryKey: ["payroll-period", selectedMonth],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("payroll_periods")
+        .select("month, status, locked_at, locked_by, reopened_at, reopen_reason")
+        .eq("month", selectedMonth).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const bookingAllowed = canBookPayroll(period?.status, periodLoaded);
+
   const { data: payrollData, isLoading } = useQuery({
     queryKey: ["admin-payroll", selectedMonth],
     queryFn: async () => {
@@ -88,7 +101,7 @@ export function PayrollTab() {
       const monthEnd = dayjs(monthStart).add(1, "month").format("YYYY-MM-DD");
 
       // Fetch teachers, TAs, sessions, and session_participants in parallel
-      const [teachersRes, tasRes, sessionsRes, participantsRes, versionsRes] = await Promise.all([
+      const [teachersRes, tasRes, sessionsRes, participantsRes, versionsRes, ratesRes] = await Promise.all([
         // Deliberately NOT filtered by is_active. Archiving a teacher must
         // not erase the lessons they already taught this month — with the
         // filter on the query, archiving someone on the 20th silently
@@ -121,7 +134,15 @@ export function PayrollTab() {
         supabase
           .from("class_schedule_versions")
           .select("class_id, effective_from, weekly_slots, default_session_length_minutes"),
+        supabase.from("staff_pay_rates")
+          .select("teacher_id, assistant_id, effective_from, pay_rate_type, hourly_rate_vnd, per_session_rate_vnd"),
       ]);
+
+      // Never turn a failed history/roster read into invented correction amounts.
+      for (const result of [teachersRes, tasRes, sessionsRes, participantsRes, versionsRes, ratesRes]) {
+        if (result.error) throw result.error;
+      }
+      const ratesByStaff = indexPayRates(ratesRes.data);
 
       const teachers = teachersRes.data || [];
       const tas = tasRes.data || [];
@@ -153,10 +174,11 @@ export function PayrollTab() {
       // agrees exactly with calculate-payroll. The two had drifted: that
       // function rolls a non-positive span over midnight, this one produced a
       // negative figure and silently subtracted it from the teacher's pay.
-      const calculateAmount = (sessionsList: typeof allSessions, staff: StaffPayRate) =>
-        totalPayVnd(
+      const calculateAmount = (sessionsList: typeof allSessions, staff: StaffPayRate & { id: string }) =>
+        datedPayrollTotal(
+          sessionsList.map((s) => ({ date: s.date, minutes: durationMinutes(s.start_time, s.end_time) ?? 0 })),
+          ratesByStaff.get(staff.id) ?? [],
           staff,
-          sessionsList.map((s) => durationMinutes(s.start_time, s.end_time) ?? 0),
         );
 
       /**
@@ -204,12 +226,14 @@ export function PayrollTab() {
        * is correct rather than a coincidence: their pay does not depend on
        * the length, so re-costing at a different length changes nothing.
        */
-      const calculateExpectedAmount = (sessionsList: typeof allSessions, staff: StaffPayRate) =>
-        totalPayVnd(
+      const calculateExpectedAmount = (sessionsList: typeof allSessions, staff: StaffPayRate & { id: string }) =>
+        datedPayrollTotal(
+          sessionsList.map((s) => ({
+            date: s.date,
+            minutes: payableExpectedMinutes(checkOf(s)) ?? (durationMinutes(s.start_time, s.end_time) ?? 0),
+          })),
+          ratesByStaff.get(staff.id) ?? [],
           staff,
-          sessionsList.map(
-            (s) => payableExpectedMinutes(checkOf(s)) ?? (durationMinutes(s.start_time, s.end_time) ?? 0),
-          ),
         );
 
       /**
@@ -221,7 +245,7 @@ export function PayrollTab() {
        * problem and the screens read deltaAmount to decide whether to show
        * a cost at all.
        */
-      const findMismatches = (sessionsList: typeof allSessions, staff: StaffPayRate) =>
+      const findMismatches = (sessionsList: typeof allSessions, staff: StaffPayRate & { id: string }) =>
         sessionsList.flatMap((s) => {
           const variance = varianceFromCheck(checkOf(s));
           if (!variance) return [];
@@ -232,7 +256,7 @@ export function PayrollTab() {
             actualMinutes: variance.actualMinutes,
             expectedMinutes: variance.expectedMinutes,
             deltaMinutes: variance.deltaMinutes,
-            deltaAmount: varianceCostVnd(staff, variance.deltaMinutes),
+            deltaAmount: varianceCostVnd(rateOnDate(ratesByStaff.get(staff.id), s.date, staff), variance.deltaMinutes),
           }];
         });
 
@@ -303,6 +327,13 @@ export function PayrollTab() {
 
   const addToExpendituresMutation = useMutation({
     mutationFn: async () => {
+      // Re-read on click: another admin may have closed the month since render.
+      const { data: currentPeriod, error: periodError } = await supabase.from("payroll_periods")
+        .select("status").eq("month", selectedMonth).maybeSingle();
+      if (periodError) throw periodError;
+      if (!canBookPayroll(currentPeriod?.status, true)) {
+        throw new Error("Payroll is closed. Reopen the month before changing its expenditures.");
+      }
       if (!payrollData) return;
       const items = payrollData.filter(p => p.totalEarned > 0);
       if (items.length === 0) throw new Error("No earned payroll to record");
@@ -421,7 +452,7 @@ export function PayrollTab() {
           </SelectContent>
         </Select>
         <div className="flex gap-2">
-          <Button onClick={() => addToExpendituresMutation.mutate()} variant="outline" size="sm" disabled={addToExpendituresMutation.isPending || !payrollData?.some(p => p.totalEarned > 0)}>
+          <Button onClick={() => addToExpendituresMutation.mutate()} variant="outline" size="sm" disabled={!bookingAllowed || addToExpendituresMutation.isPending || !payrollData?.some(p => p.totalEarned > 0)}>
             <Receipt className="h-4 w-4 mr-2" />
             Add to Expenditures
           </Button>
