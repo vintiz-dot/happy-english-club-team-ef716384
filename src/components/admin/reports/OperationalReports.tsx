@@ -10,15 +10,16 @@
  * run every time somebody opens Reports to check one student.
  */
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, XCircle, TrendingDown, UserX, Download } from "lucide-react";
+import { FileText, XCircle, TrendingDown, UserX, Download, ChevronRight, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sessionPayVnd } from "@/lib/payRate";
 import { durationMinutes } from "@/lib/sessionDuration";
 import { splitPayrollByClass } from "@/lib/finance/classPayroll";
+import { breakEven, describeGap } from "@/lib/finance/breakEven";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { monthKey } from "@/lib/date";
 import { formatVND } from "@/lib/invoice/formatter";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -26,8 +27,33 @@ import { PaymentDetailsTable } from "@/components/admin/tabs/PaymentDetailsTable
 import { FamilyPaymentActivityLog } from "@/components/admin/FamilyPaymentActivityLog";
 import { BulkReportExport } from "@/components/reports/BulkReportExport";
 
+/** One cost's contribution to one class, from class_overhead_breakdown. */
+interface OverheadLine {
+  class_id: string;
+  category: string;
+  memo: string | null;
+  allocation_mode: string;
+  cost_vnd: number | string;
+  share_vnd: number | string;
+}
+
+/** Why this cost landed here, in the words the admin chose it with. */
+function describeAim(mode: string, cost: number, share: number): string {
+  if (mode === "class") return "charged to this class";
+  if (mode === "staff") return `follows the staff member${share < cost ? " · shared with their other classes" : ""}`;
+  return share < cost ? "shared across the classes that ran" : "shared — this was the only class that ran";
+}
+
 const OperationalReports = () => {
   const [selectedMonth, setSelectedMonth] = useState(monthKey());
+  const [openRows, setOpenRows] = useState<Set<string>>(new Set());
+  const toggleRow = (id: string) =>
+    setOpenRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const getMonthOptions = () => {
     const options = [];
@@ -155,7 +181,7 @@ const OperationalReports = () => {
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       const monthEnd = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-01`;
 
-      const [classesRes, sessionsRes, enrollmentsRes, invoicesRes, payrollRes, overheadRes, poolRes, periodRes] = await Promise.all([
+      const [classesRes, sessionsRes, enrollmentsRes, invoicesRes, payrollRes, overheadRes, poolRes, breakdownRes, periodRes] = await Promise.all([
         // No is_active filter. A class archived since the month ran
         // still held its lessons and still used the room; dropping it
         // would hand its share of the rent to the classes still open.
@@ -183,6 +209,7 @@ const OperationalReports = () => {
         // migration does would drop these two names and break the build.
         supabase.rpc("class_overhead_for_month" as never, { p_month: selectedMonth } as never),
         supabase.rpc("class_overhead_pool" as never, { p_month: selectedMonth } as never),
+        supabase.rpc("class_overhead_breakdown" as never, { p_month: selectedMonth } as never),
         supabase.from("payroll_periods").select("status").eq("month", selectedMonth).maybeSingle(),
       ]);
 
@@ -217,6 +244,18 @@ const OperationalReports = () => {
       );
       const overheadFrozen = overheadRows.some((r) => r.frozen);
       const overheadPool = Number(poolRes.error ? 0 : (poolRes.data ?? 0));
+
+      // What each class's overhead is made of, so the column can be
+      // opened up rather than taken on trust.
+      const breakdownByClass = new Map<string, OverheadLine[]>();
+      for (const line of (breakdownRes.data ?? []) as OverheadLine[]) {
+        const list = breakdownByClass.get(line.class_id);
+        if (list) list.push(line);
+        else breakdownByClass.set(line.class_id, [line]);
+      }
+      for (const list of breakdownByClass.values()) {
+        list.sort((a, b) => Number(b.share_vnd) - Number(a.share_vnd));
+      }
 
       const sessionsByClass: Record<string, typeof sessions> = {};
       for (const s of sessions) {
@@ -297,6 +336,7 @@ const OperationalReports = () => {
         overheadPool,
         overheadAllocated: [...overheadByClass.values()].reduce((n, v) => n + v, 0),
         unattributedPayroll: paySplit?.unattributed ?? 0,
+        breakdownByClass,
       };
     },
   });
@@ -319,7 +359,7 @@ const OperationalReports = () => {
   const exportClassFinanceCSV = () => {
     if (classRows.length === 0) return;
     const csv = [
-      ["Class", "Status", "Sessions", "Students", "Gross Tuition", "Discounts", "Net Tuition", "Payroll", "Overhead", "Profit"].join(","),
+      ["Class", "Status", "Sessions", "Students", "Gross Tuition", "Discounts", "Net Tuition", "Payroll", "Overhead", "Profit", "Break-even students"].join(","),
       ...classRows.map(c => [
         `"${c.name}"`,
         c.isActive ? "Active" : "Archived",
@@ -331,10 +371,11 @@ const OperationalReports = () => {
         c.payroll,
         c.overhead,
         c.net,
+        breakEven(c).students ?? "",
       ].join(",")),
-      ["TOTAL", "-", "-", "-", totalGrossTuition, totalDiscounts, totalTuition, totalPayroll, totalOverhead, totalNet].join(","),
+      ["TOTAL", "-", "-", "-", totalGrossTuition, totalDiscounts, totalTuition, totalPayroll, totalOverhead, totalNet, ""].join(","),
       ...(unallocatedOverhead > 0
-        ? [["UNALLOCATED OVERHEAD", "-", "-", "-", "", "", "", "", unallocatedOverhead, ""].join(",")]
+        ? [["UNALLOCATED OVERHEAD", "-", "-", "-", "", "", "", "", unallocatedOverhead, "", ""].join(",")]
         : []),
     ].join("\n");
 
@@ -506,7 +547,8 @@ const OperationalReports = () => {
                   Finance Summary's net, and saying so beats letting
                   someone discover it by subtraction. */}
               <p className="text-xs text-muted-foreground mt-1">
-                Overhead covers recurring costs marked “share across classes”. One-off spend is not shared,
+                Click a class to see what its overhead is made of and what it needs to break even. Overhead
+                covers costs aimed at a class; unaimed spend is not shared,
                 so this TOTAL is higher than Net Profit on the Finance tab by whatever else was spent.
                 {!classFinance?.locked &&
                   " An open month prices every scheduled session; the Finance tab's actual figure counts only lessons already held."}
@@ -531,13 +573,29 @@ const OperationalReports = () => {
                 <TableHead className="text-right">Payroll</TableHead>
                 <TableHead className="text-right">Overhead</TableHead>
                 <TableHead className="text-right">Profit</TableHead>
+                <TableHead className="text-right">Break-even</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {classRows.map((cls) => (
-                <TableRow key={cls.id}>
+              {classRows.map((cls) => {
+                const be = breakEven(cls);
+                const open = openRows.has(cls.id);
+                const lines = classFinance?.breakdownByClass.get(cls.id) ?? [];
+                return (
+                <Fragment key={cls.id}>
+                <TableRow
+                  className="cursor-pointer"
+                  onClick={() => toggleRow(cls.id)}
+                >
                   <TableCell className="font-medium">
-                    {cls.name}
+                    <span className="inline-flex items-center gap-1">
+                      {open ? (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      )}
+                      {cls.name}
+                    </span>
                     {!cls.isActive && (
                       <span className="ml-2 text-xs font-normal text-muted-foreground">archived</span>
                     )}
@@ -556,8 +614,93 @@ const OperationalReports = () => {
                   <TableCell className={`text-right font-semibold ${cls.net >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
                     {formatVND(cls.net)}
                   </TableCell>
+                  <TableCell className="text-right">
+                    {be.students === null ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      <span className="tabular-nums">
+                        {be.students}
+                        <span className={`ml-1 text-xs ${(be.gap ?? 0) > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {(be.gap ?? 0) > 0 ? `(+${be.gap})` : (be.gap ?? 0) < 0 ? `(${be.gap})` : '(=)'}
+                        </span>
+                      </span>
+                    )}
+                  </TableCell>
                 </TableRow>
-              ))}
+
+                {open && (
+                  <TableRow key={`${cls.id}-detail`} className="bg-muted/30 hover:bg-muted/30">
+                    <TableCell colSpan={10} className="py-3">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <p className="text-xs font-semibold mb-1.5">
+                            Overhead — what the {formatVND(cls.overhead)} is made of
+                          </p>
+                          {lines.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">
+                              No shared costs reached this class this month.
+                            </p>
+                          ) : (
+                            <ul className="space-y-1">
+                              {lines.map((l) => (
+                                <li key={`${l.class_id}-${l.category}-${l.cost_vnd}`} className="text-xs flex justify-between gap-3">
+                                  <span>
+                                    <span className="font-medium">{l.category}</span>
+                                    {l.memo ? <span className="text-muted-foreground"> · {l.memo}</span> : null}
+                                    <span className="text-muted-foreground">
+                                      {" "}· {describeAim(l.allocation_mode, Number(l.cost_vnd), Number(l.share_vnd))}
+                                    </span>
+                                  </span>
+                                  <span className="tabular-nums whitespace-nowrap">
+                                    {formatVND(Number(l.share_vnd))}
+                                    {Number(l.share_vnd) < Number(l.cost_vnd) && (
+                                      <span className="text-muted-foreground"> of {formatVND(Number(l.cost_vnd))}</span>
+                                    )}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold mb-1.5">Break-even</p>
+                          {be.students === null ? (
+                            <p className="text-xs text-muted-foreground">
+                              No students billed this month, so there is nothing to work out what one is worth.
+                            </p>
+                          ) : (
+                            <div className="text-xs space-y-1">
+                              <p>
+                                One student here is worth{" "}
+                                <span className="font-medium tabular-nums">{formatVND(Math.round(be.revenuePerStudent))}</span>
+                                <span className="text-muted-foreground">
+                                  {" "}— this class's own net tuition over its {cls.studentCount} student
+                                  {cls.studentCount === 1 ? "" : "s"}, discounts included.
+                                </span>
+                              </p>
+                              <p>
+                                It costs <span className="font-medium tabular-nums">{formatVND(be.cost)}</span>
+                                <span className="text-muted-foreground">
+                                  {" "}— {formatVND(cls.payroll)} of pay and {formatVND(cls.overhead)} of overhead.
+                                </span>
+                              </p>
+                              <p className={(be.gap ?? 0) > 0 ? "text-destructive font-medium" : "font-medium"}>
+                                Needs {be.students} student{be.students === 1 ? "" : "s"} · {describeGap(be)}
+                              </p>
+                              <p className="text-muted-foreground">
+                                An estimate at today's prices. It assumes one more student costs nothing extra to
+                                teach, which stops being true once the room is full.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+                </Fragment>
+                );
+              })}
               {/* Nine cells, matching the nine headers. Count them when
                   adding a column: an extra one here shifts every total
                   under the wrong heading and the rows above still look
@@ -578,6 +721,7 @@ const OperationalReports = () => {
                 <TableCell className={`text-right ${totalNet >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
                   {formatVND(totalNet)}
                 </TableCell>
+                <TableCell className="text-right">-</TableCell>
               </TableRow>
             </TableBody>
           </Table>

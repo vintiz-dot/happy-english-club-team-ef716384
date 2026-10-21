@@ -1465,6 +1465,10 @@ export type Database = {
       }
       expenditures: {
         Row: {
+          allocation_assistant_id: string | null
+          allocation_class_id: string | null
+          allocation_mode: string
+          allocation_teacher_id: string | null
           amount: number
           category: string
           created_at: string
@@ -1478,6 +1482,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allocation_assistant_id?: string | null
+          allocation_class_id?: string | null
+          allocation_mode?: string
+          allocation_teacher_id?: string | null
           amount: number
           category: string
           created_at?: string
@@ -1491,6 +1499,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allocation_assistant_id?: string | null
+          allocation_class_id?: string | null
+          allocation_mode?: string
+          allocation_teacher_id?: string | null
           amount?: number
           category?: string
           created_at?: string
@@ -3180,7 +3192,10 @@ export type Database = {
       }
       recurring_expenditures: {
         Row: {
-          allocate_to_classes: boolean
+          allocation_assistant_id: string | null
+          allocation_class_id: string | null
+          allocation_mode: string
+          allocation_teacher_id: string | null
           amount: number
           category: string
           created_at: string
@@ -3194,7 +3209,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          allocate_to_classes?: boolean
+          allocation_assistant_id?: string | null
+          allocation_class_id?: string | null
+          allocation_mode?: string
+          allocation_teacher_id?: string | null
           amount: number
           category: string
           created_at?: string
@@ -3208,7 +3226,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          allocate_to_classes?: boolean
+          allocation_assistant_id?: string | null
+          allocation_class_id?: string | null
+          allocation_mode?: string
+          allocation_teacher_id?: string | null
           amount?: number
           category?: string
           created_at?: string

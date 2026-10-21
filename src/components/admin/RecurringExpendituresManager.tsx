@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ALLOCATION_MODES, describeAllocation, staffKey, splitStaffKey } from "@/lib/finance/allocationTarget";
 import {
   Sheet,
   SheetContent,
@@ -44,8 +46,11 @@ interface RecurringExpenditure {
   start_month: string;
   end_month: string | null;
   is_active: boolean;
-  /** Whether this standing cost is spread across the classes that ran. */
-  allocate_to_classes: boolean;
+  /** none | all | class | staff - see @/lib/finance/allocationTarget. */
+  allocation_mode: string;
+  allocation_class_id: string | null;
+  allocation_teacher_id: string | null;
+  allocation_assistant_id: string | null;
   created_at: string;
 }
 
@@ -83,7 +88,9 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
     start_month: dayjs().format("YYYY-MM"),
     end_month: "",
     is_active: true,
-    allocate_to_classes: true,
+    allocation_mode: "all",
+    allocation_class_id: "",
+    allocation_staff: "",
   });
 
   const { data: templates = [], isLoading, isSuccess: templatesLoaded } = useQuery<RecurringExpenditure[]>({
@@ -160,6 +167,39 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
     },
   });
 
+  // Only loaded when the drawer is open: these are three more queries on
+  // a page that already runs several, and most visits never open it.
+  const { data: targets } = useQuery({
+    queryKey: ["allocation-targets"],
+    enabled: drawerOpen,
+    queryFn: async () => {
+      const [classes, teachers, assistants] = await Promise.all([
+        supabase.from("classes").select("id, name, is_active").order("name"),
+        supabase.from("teachers").select("id, full_name, is_active").order("full_name"),
+        supabase.from("teaching_assistants").select("id, full_name, is_active").order("full_name"),
+      ]);
+      if (classes.error) throw classes.error;
+      if (teachers.error) throw teachers.error;
+      if (assistants.error) throw assistants.error;
+      return {
+        classes: classes.data ?? [],
+        staff: [
+          ...(teachers.data ?? []).map((x) => ({ key: staffKey(x.id, null), name: x.full_name, kind: "Teacher", active: x.is_active !== false })),
+          ...(assistants.data ?? []).map((x) => ({ key: staffKey(null, x.id), name: x.full_name, kind: "Assistant", active: x.is_active !== false })),
+        ],
+      };
+    },
+  });
+
+  // The four columns the database wants, from the three the form holds.
+  const staffIds = splitStaffKey(form.allocation_staff);
+  const allocationPayload = {
+    allocation_mode: form.allocation_mode,
+    allocation_class_id: form.allocation_mode === "class" ? (form.allocation_class_id || null) : null,
+    allocation_teacher_id: form.allocation_mode === "staff" ? staffIds.teacherId : null,
+    allocation_assistant_id: form.allocation_mode === "staff" ? staffIds.assistantId : null,
+  };
+
   const resetForm = () => {
     setForm({
       amount: "",
@@ -169,7 +209,9 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
       start_month: dayjs().format("YYYY-MM"),
       end_month: "",
       is_active: true,
-      allocate_to_classes: true,
+      allocation_mode: "all",
+      allocation_class_id: "",
+      allocation_staff: "",
     });
     setEditing(null);
   };
@@ -189,7 +231,9 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
       start_month: t.start_month.slice(0, 7),
       end_month: t.end_month ? t.end_month.slice(0, 7) : "",
       is_active: t.is_active,
-      allocate_to_classes: t.allocate_to_classes !== false,
+      allocation_mode: t.allocation_mode ?? "none",
+      allocation_class_id: t.allocation_class_id ?? "",
+      allocation_staff: staffKey(t.allocation_teacher_id, t.allocation_assistant_id),
     });
     setDrawerOpen(true);
   };
@@ -198,6 +242,12 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
     mutationFn: async () => {
       const amount = parseInt(form.amount);
       if (!amount || amount <= 0) throw new Error("Enter a valid amount");
+      if (form.allocation_mode === "class" && !form.allocation_class_id) {
+        throw new Error("Choose which class carries this cost.");
+      }
+      if (form.allocation_mode === "staff" && !form.allocation_staff) {
+        throw new Error("Choose whose classes carry this cost.");
+      }
       if (!form.category.trim()) throw new Error("Enter a category");
       // "Teacher Payroll" and "TA Payroll" are how the finance summary
       // recognises wages it has already counted under Teacher Salary, so
@@ -216,7 +266,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
         start_month: `${form.start_month}-01`,
         end_month: form.end_month ? `${form.end_month}-01` : null,
         is_active: form.is_active,
-        allocate_to_classes: form.allocate_to_classes,
+        ...allocationPayload,
       };
       if (editing) {
         const { error } = await supabase
@@ -302,6 +352,13 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
           // constraint (20261021092000).
           source_kind: "recurring",
           source_key: `${selectedMonth}:${t.id}`,
+          // Copied onto the row, not left to be joined back to the
+          // template: the cost is the record, and changing the template
+          // later must not restate a month that is already booked.
+          allocation_mode: t.allocation_mode ?? "none",
+          allocation_class_id: t.allocation_class_id ?? null,
+          allocation_teacher_id: t.allocation_teacher_id ?? null,
+          allocation_assistant_id: t.allocation_assistant_id ?? null,
           created_by: user?.id,
         };
       });
@@ -385,11 +442,11 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
         />
         {/* Staff pay is already charged to each class from its sessions.
             A shared template for the same money would charge it twice. */}
-        {form.allocate_to_classes && /salary|payroll|wage/i.test(form.category) && (
+        {form.allocation_mode !== "none" && /salary|payroll|wage/i.test(form.category) && (
           <p className="mt-1 text-xs text-amber-600">
             This looks like staff pay, which the Payroll tab already charges to each class from its
-            sessions. Sharing it again would charge it twice — turn off “Share across classes” unless
-            this is someone the payroll does not cover.
+            sessions. Charging it again here would charge it twice — set “Who pays for this?” to school-wide
+            unless this is someone the payroll does not cover.
           </p>
         )}
       </div>
@@ -462,18 +519,54 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
           onCheckedChange={(v) => setForm((f) => ({ ...f, is_active: v }))}
         />
       </div>
-      <div className="flex items-center justify-between gap-3 rounded-xl border p-3">
-        <div>
-          <Label className="text-sm">Share across classes</Label>
-          <p className="text-xs text-muted-foreground">
-            Split over the classes that ran, by how many sessions each one held, and charged against their
-            profit in the class report. Turn it off for a cost that belongs to one class, or to none.
-          </p>
-        </div>
-        <Switch
-          checked={form.allocate_to_classes}
-          onCheckedChange={(v) => setForm((f) => ({ ...f, allocate_to_classes: v }))}
-        />
+      <div className="space-y-2 rounded-xl border p-3">
+        <Label className="text-sm">Who pays for this?</Label>
+        <Select
+          value={form.allocation_mode}
+          onValueChange={(v) => setForm((f) => ({ ...f, allocation_mode: v }))}
+        >
+          <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {ALLOCATION_MODES.map((m) => (
+              <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          {ALLOCATION_MODES.find((m) => m.value === form.allocation_mode)?.hint}
+        </p>
+
+        {form.allocation_mode === "class" && (
+          <Select
+            value={form.allocation_class_id}
+            onValueChange={(v) => setForm((f) => ({ ...f, allocation_class_id: v }))}
+          >
+            <SelectTrigger className="h-11"><SelectValue placeholder="Choose a class" /></SelectTrigger>
+            <SelectContent>
+              {(targets?.classes ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}{c.is_active === false ? " (archived)" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        {form.allocation_mode === "staff" && (
+          <Select
+            value={form.allocation_staff}
+            onValueChange={(v) => setForm((f) => ({ ...f, allocation_staff: v }))}
+          >
+            <SelectTrigger className="h-11"><SelectValue placeholder="Choose a teacher or assistant" /></SelectTrigger>
+            <SelectContent>
+              {(targets?.staff ?? []).map((x) => (
+                <SelectItem key={x.key} value={x.key}>
+                  {x.name} · {x.kind}{x.active ? "" : " (archived)"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
       <div className="flex gap-2 pt-2">
         <Button
@@ -597,9 +690,9 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
                       {!t.is_active && (
                         <Badge variant="outline" className="text-[10px] h-5">Inactive</Badge>
                       )}
-                      {t.allocate_to_classes === false && (
-                        <Badge variant="outline" className="text-[10px] h-5">Not shared with classes</Badge>
-                      )}
+                      <Badge variant="outline" className="text-[10px] h-5">
+                        {describeAllocation(t.allocation_mode)}
+                      </Badge>
                       {applied && (
                         <Badge className="bg-emerald-500 text-white text-[10px] h-5">
                           <CheckCircle2 className="h-3 w-3 mr-0.5" />

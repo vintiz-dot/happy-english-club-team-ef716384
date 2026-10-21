@@ -15,6 +15,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlaceholderCard } from "@/components/ui/loading";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ALLOCATION_MODES, describeAllocation, staffKey, splitStaffKey } from "@/lib/finance/allocationTarget";
 
 export function ExpendituresManager({ selectedMonth }: { selectedMonth: string }) {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -23,8 +25,37 @@ export function ExpendituresManager({ selectedMonth }: { selectedMonth: string }
   const [category, setCategory] = useState("");
   const [memo, setMemo] = useState("");
   const [date, setDate] = useState<Date>(new Date());
+  // Who carries this cost in the class report. A one-off could not reach
+  // a class at all before - only recurring templates could - so a repair
+  // to one room, or a course fee for one assistant, was always billed to
+  // the school and that class kept looking cheaper than it was.
+  const [allocationMode, setAllocationMode] = useState("none");
+  const [allocationClassId, setAllocationClassId] = useState("");
+  const [allocationStaff, setAllocationStaff] = useState("");
 
   const queryClient = useQueryClient();
+
+  const { data: targets } = useQuery({
+    queryKey: ["allocation-targets"],
+    enabled: dialogOpen,
+    queryFn: async () => {
+      const [classes, teachers, assistants] = await Promise.all([
+        supabase.from("classes").select("id, name, is_active").order("name"),
+        supabase.from("teachers").select("id, full_name, is_active").order("full_name"),
+        supabase.from("teaching_assistants").select("id, full_name, is_active").order("full_name"),
+      ]);
+      if (classes.error) throw classes.error;
+      if (teachers.error) throw teachers.error;
+      if (assistants.error) throw assistants.error;
+      return {
+        classes: classes.data ?? [],
+        staff: [
+          ...(teachers.data ?? []).map((x) => ({ key: staffKey(x.id, null), name: x.full_name, kind: "Teacher", active: x.is_active !== false })),
+          ...(assistants.data ?? []).map((x) => ({ key: staffKey(null, x.id), name: x.full_name, kind: "Assistant", active: x.is_active !== false })),
+        ],
+      };
+    },
+  });
 
   const { data: expenditures, isLoading } = useQuery({
     queryKey: ["expenditures", selectedMonth],
@@ -65,6 +96,8 @@ export function ExpendituresManager({ selectedMonth }: { selectedMonth: string }
       toast.success(editingId ? "Expenditure updated" : "Expenditure created");
       queryClient.invalidateQueries({ queryKey: ["expenditures"] });
       queryClient.invalidateQueries({ queryKey: ["finance-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["finance-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["class-finance"] });
       handleCloseDialog();
     },
     onError: (error: any) => {
@@ -99,12 +132,25 @@ export function ExpendituresManager({ selectedMonth }: { selectedMonth: string }
       toast.error("Please enter a category");
       return;
     }
+    if (allocationMode === "class" && !allocationClassId) {
+      toast.error("Choose which class carries this cost");
+      return;
+    }
+    if (allocationMode === "staff" && !allocationStaff) {
+      toast.error("Choose whose classes carry this cost");
+      return;
+    }
 
+    const staff = splitStaffKey(allocationStaff);
     saveMutation.mutate({
       amount: Math.round(parseFloat(amount)),
       category: category.trim(),
       memo: memo.trim() || null,
       date: format(date, "yyyy-MM-dd"),
+      allocation_mode: allocationMode,
+      allocation_class_id: allocationMode === "class" ? allocationClassId || null : null,
+      allocation_teacher_id: allocationMode === "staff" ? staff.teacherId : null,
+      allocation_assistant_id: allocationMode === "staff" ? staff.assistantId : null,
     });
   };
 
@@ -114,6 +160,9 @@ export function ExpendituresManager({ selectedMonth }: { selectedMonth: string }
     setCategory(exp.category);
     setMemo(exp.memo || "");
     setDate(new Date(exp.date));
+    setAllocationMode(exp.allocation_mode ?? "none");
+    setAllocationClassId(exp.allocation_class_id ?? "");
+    setAllocationStaff(staffKey(exp.allocation_teacher_id, exp.allocation_assistant_id));
     setDialogOpen(true);
   };
 
@@ -124,6 +173,9 @@ export function ExpendituresManager({ selectedMonth }: { selectedMonth: string }
     setCategory("");
     setMemo("");
     setDate(new Date());
+    setAllocationMode("none");
+    setAllocationClassId("");
+    setAllocationStaff("");
   };
 
   const formatVND = (amount: number) => {
@@ -165,6 +217,44 @@ export function ExpendituresManager({ selectedMonth }: { selectedMonth: string }
                   onChange={(e) => setCategory(e.target.value)}
                   placeholder="e.g., Supplies, Utilities, etc."
                 />
+              </div>
+              <div className="space-y-2 rounded-lg border p-3">
+                <Label>Who pays for this?</Label>
+                <Select value={allocationMode} onValueChange={setAllocationMode}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ALLOCATION_MODES.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {ALLOCATION_MODES.find((m) => m.value === allocationMode)?.hint}
+                </p>
+                {allocationMode === "class" && (
+                  <Select value={allocationClassId} onValueChange={setAllocationClassId}>
+                    <SelectTrigger><SelectValue placeholder="Choose a class" /></SelectTrigger>
+                    <SelectContent>
+                      {(targets?.classes ?? []).map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}{c.is_active === false ? " (archived)" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {allocationMode === "staff" && (
+                  <Select value={allocationStaff} onValueChange={setAllocationStaff}>
+                    <SelectTrigger><SelectValue placeholder="Choose a teacher or assistant" /></SelectTrigger>
+                    <SelectContent>
+                      {(targets?.staff ?? []).map((x) => (
+                        <SelectItem key={x.key} value={x.key}>
+                          {x.name} · {x.kind}{x.active ? "" : " (archived)"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div>
                 <Label>Memo (optional)</Label>
@@ -225,7 +315,14 @@ export function ExpendituresManager({ selectedMonth }: { selectedMonth: string }
               {expenditures.map((exp) => (
                 <TableRow key={exp.id}>
                   <TableCell>{format(new Date(exp.date), "MMM d, yyyy")}</TableCell>
-                  <TableCell>{exp.category}</TableCell>
+                  <TableCell>
+                    {exp.category}
+                    {exp.allocation_mode && exp.allocation_mode !== "none" && (
+                      <span className="block text-xs text-muted-foreground">
+                        {describeAllocation(exp.allocation_mode)}
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{exp.memo || "—"}</TableCell>
                   <TableCell className="text-right font-medium">
                     {formatVND(exp.amount)}
