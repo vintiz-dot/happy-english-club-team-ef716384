@@ -8,6 +8,13 @@
       "when": 1792548491997,
       "tag": "0000_payroll_lines_full_unique_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792596621583,
+      "tag": "0001_protect_closed_payroll_expenditures",
+      "breakpoints": true
     }
   ]
 }

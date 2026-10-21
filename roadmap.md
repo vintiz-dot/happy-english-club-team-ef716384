@@ -1,0 +1,3 @@
+- [x] Verify and fix historical-rate payroll correction calculations (six regression tests pass).
+- [x] Protect closed payroll expenditure bookings (database rollback tests pass; no real financial changes).
+- Full signed-in page check blocked by the existing admin passcode gate; not bypassed.

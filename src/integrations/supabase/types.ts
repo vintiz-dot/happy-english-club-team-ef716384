@@ -664,6 +664,91 @@ export type Database = {
           },
         ]
       }
+      class_overhead_allocations: {
+        Row: {
+          class_id: string
+          class_name: string
+          frozen_at: string
+          month: string
+          pool_vnd: number
+          sessions_count: number
+          share_vnd: number
+        }
+        Insert: {
+          class_id: string
+          class_name: string
+          frozen_at?: string
+          month: string
+          pool_vnd: number
+          sessions_count: number
+          share_vnd: number
+        }
+        Update: {
+          class_id?: string
+          class_name?: string
+          frozen_at?: string
+          month?: string
+          pool_vnd?: number
+          sessions_count?: number
+          share_vnd?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_overhead_allocations_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_overhead_lines: {
+        Row: {
+          allocation_mode: string
+          category: string
+          class_id: string
+          class_name: string
+          cost_vnd: number
+          expenditure_id: string
+          frozen_at: string
+          memo: string | null
+          month: string
+          share_vnd: number
+        }
+        Insert: {
+          allocation_mode: string
+          category: string
+          class_id: string
+          class_name: string
+          cost_vnd: number
+          expenditure_id: string
+          frozen_at?: string
+          memo?: string | null
+          month: string
+          share_vnd: number
+        }
+        Update: {
+          allocation_mode?: string
+          category?: string
+          class_id?: string
+          class_name?: string
+          cost_vnd?: number
+          expenditure_id?: string
+          frozen_at?: string
+          memo?: string | null
+          month?: string
+          share_vnd?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_overhead_lines_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_schedule_versions: {
         Row: {
           class_id: string
@@ -1425,44 +1510,6 @@ export type Database = {
           },
         ]
       }
-      class_overhead_allocations: {
-        Row: {
-          class_id: string
-          class_name: string
-          frozen_at: string
-          month: string
-          pool_vnd: number
-          sessions_count: number
-          share_vnd: number
-        }
-        Insert: {
-          class_id: string
-          class_name: string
-          frozen_at?: string
-          month: string
-          pool_vnd: number
-          sessions_count: number
-          share_vnd: number
-        }
-        Update: {
-          class_id?: string
-          class_name?: string
-          frozen_at?: string
-          month?: string
-          pool_vnd?: number
-          sessions_count?: number
-          share_vnd?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "class_overhead_allocations_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       expenditures: {
         Row: {
           allocation_assistant_id: string | null
@@ -1515,7 +1562,36 @@ export type Database = {
           source_template_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expenditures_allocation_assistant_id_fkey"
+            columns: ["allocation_assistant_id"]
+            isOneToOne: false
+            referencedRelation: "teaching_assistants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenditures_allocation_class_id_fkey"
+            columns: ["allocation_class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenditures_allocation_teacher_id_fkey"
+            columns: ["allocation_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenditures_source_template_id_fkey"
+            columns: ["source_template_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_expenditures"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       families: {
         Row: {
@@ -2977,6 +3053,114 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_applications: {
+        Row: {
+          applied_at: string
+          applied_by: string | null
+          automatic: boolean
+          month: string
+          template_id: string
+        }
+        Insert: {
+          applied_at?: string
+          applied_by?: string | null
+          automatic?: boolean
+          month: string
+          template_id: string
+        }
+        Update: {
+          applied_at?: string
+          applied_by?: string | null
+          automatic?: boolean
+          month?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_applications_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_expenditures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_expenditures: {
+        Row: {
+          allocation_assistant_id: string | null
+          allocation_class_id: string | null
+          allocation_mode: string
+          allocation_teacher_id: string | null
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          day_of_month: number
+          end_month: string | null
+          id: string
+          is_active: boolean
+          memo: string | null
+          start_month: string
+          updated_at: string
+        }
+        Insert: {
+          allocation_assistant_id?: string | null
+          allocation_class_id?: string | null
+          allocation_mode?: string
+          allocation_teacher_id?: string | null
+          amount: number
+          category: string
+          created_at?: string
+          created_by?: string | null
+          day_of_month?: number
+          end_month?: string | null
+          id?: string
+          is_active?: boolean
+          memo?: string | null
+          start_month?: string
+          updated_at?: string
+        }
+        Update: {
+          allocation_assistant_id?: string | null
+          allocation_class_id?: string | null
+          allocation_mode?: string
+          allocation_teacher_id?: string | null
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          day_of_month?: number
+          end_month?: string | null
+          id?: string
+          is_active?: boolean
+          memo?: string | null
+          start_month?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_expenditures_allocation_assistant_id_fkey"
+            columns: ["allocation_assistant_id"]
+            isOneToOne: false
+            referencedRelation: "teaching_assistants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_expenditures_allocation_class_id_fkey"
+            columns: ["allocation_class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_expenditures_allocation_teacher_id_fkey"
+            columns: ["allocation_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_bonuses: {
         Row: {
           cadence: Database["public"]["Enums"]["discount_cadence"]
@@ -3189,60 +3373,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      recurring_expenditures: {
-        Row: {
-          allocation_assistant_id: string | null
-          allocation_class_id: string | null
-          allocation_mode: string
-          allocation_teacher_id: string | null
-          amount: number
-          category: string
-          created_at: string
-          created_by: string | null
-          day_of_month: number
-          end_month: string | null
-          id: string
-          is_active: boolean
-          memo: string | null
-          start_month: string
-          updated_at: string
-        }
-        Insert: {
-          allocation_assistant_id?: string | null
-          allocation_class_id?: string | null
-          allocation_mode?: string
-          allocation_teacher_id?: string | null
-          amount: number
-          category: string
-          created_at?: string
-          created_by?: string | null
-          day_of_month?: number
-          end_month?: string | null
-          id?: string
-          is_active?: boolean
-          memo?: string | null
-          start_month?: string
-          updated_at?: string
-        }
-        Update: {
-          allocation_assistant_id?: string | null
-          allocation_class_id?: string | null
-          allocation_mode?: string
-          allocation_teacher_id?: string | null
-          amount?: number
-          category?: string
-          created_at?: string
-          created_by?: string | null
-          day_of_month?: number
-          end_month?: string | null
-          id?: string
-          is_active?: boolean
-          memo?: string | null
-          start_month?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       sessions: {
         Row: {
@@ -5050,18 +5180,6 @@ export type Database = {
         Returns: Json
       }
       can_read_student_work_file: { Args: { _path: string }; Returns: boolean }
-      class_overhead_for_month: {
-        Args: { p_month: string }
-        Returns: {
-          class_id: string
-          class_name: string
-          sessions_count: number
-          share_vnd: number
-          pool_vnd: number
-          frozen: boolean
-        }[]
-      }
-      class_overhead_pool: { Args: { p_month: string }; Returns: number }
       can_view_classmate: {
         Args: { student_id_to_view: string; viewer_user_id: string }
         Returns: boolean
@@ -5092,6 +5210,58 @@ export type Database = {
         }
         Returns: boolean
       }
+      class_overhead_breakdown: {
+        Args: { p_month: string }
+        Returns: {
+          allocation_mode: string
+          category: string
+          class_id: string
+          class_name: string
+          cost_vnd: number
+          expenditure_id: string
+          frozen: boolean
+          memo: string
+          share_vnd: number
+        }[]
+      }
+      class_overhead_compute: {
+        Args: { p_month: string }
+        Returns: {
+          class_id: string
+          class_name: string
+          pool_vnd: number
+          sessions_count: number
+          share_vnd: number
+        }[]
+      }
+      class_overhead_compute_lines: {
+        Args: { p_month: string }
+        Returns: {
+          allocation_mode: string
+          category: string
+          class_id: string
+          class_name: string
+          cost_vnd: number
+          expenditure_id: string
+          memo: string
+          pool_vnd: number
+          sessions_count: number
+          share_vnd: number
+        }[]
+      }
+      class_overhead_for_month: {
+        Args: { p_month: string }
+        Returns: {
+          class_id: string
+          class_name: string
+          frozen: boolean
+          pool_vnd: number
+          sessions_count: number
+          share_vnd: number
+        }[]
+      }
+      class_overhead_pool: { Args: { p_month: string }; Returns: number }
+      class_overhead_reader: { Args: never; Returns: boolean }
       class_slots_on: {
         Args: { p_class_id: string; p_date: string }
         Returns: Json
