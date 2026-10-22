@@ -37,6 +37,12 @@ import {
 } from "@/lib/payRate";
 import { indexPayRates, rateOnDate } from "@/lib/payHistory";
 import { canBookPayroll, datedPayrollTotal } from "@/lib/payrollCalculation";
+import {
+  ASSISTANT_PARTICIPANT_TYPE,
+  PROJECTED_SESSION_STATUSES,
+  payableSessionIdsByAssistant,
+  splitByStatus,
+} from "@/lib/payrollSessions";
 
 interface StaffPayroll {
   staff: {
@@ -141,17 +147,17 @@ export function PayrollTab() {
           .select(`id, date, start_time, end_time, status, teacher_id, class_id, classes!inner(name, default_session_length_minutes, schedule_template)`)
           .gte("date", monthStart)
           .lt("date", monthEnd)
-          .in("status", ["Held", "Scheduled"])
+          .in("status", [...PROJECTED_SESSION_STATUSES])
           .order("date", { ascending: true }),
-        // .neq("attended", false) matches calculate-payroll's assistant
-        // query exactly (20261022090000). Without it this screen pays for
-        // lessons the edge function skips, and PayrollMonthLock then reads
-        // the gap as drift and offers to carry it into the next month -
-        // paying the assistant for lessons they did not work.
+        // Narrowed in the query for the bandwidth, and filtered again by
+        // participationIsPayable below. The rule itself lives in
+        // @/lib/payrollSessions, which calculate-payroll reads from its
+        // own mirror of the same file - so the two cannot disagree about
+        // which lessons an assistant is paid for.
         supabase
           .from("session_participants")
-          .select("session_id, teaching_assistant_id")
-          .eq("participant_type", "teaching_assistant")
+          .select("session_id, teaching_assistant_id, participant_type, attended")
+          .eq("participant_type", ASSISTANT_PARTICIPANT_TYPE)
           .neq("attended", false),
         // Every class's timetable history, in one read. Fetched whole rather
         // than filtered to the month: a session in July is judged against
@@ -184,12 +190,10 @@ export function PayrollTab() {
         sessionsByTeacher[s.teacher_id].push(s);
       }
 
-      // Group session IDs by TA
-      const sessionIdsByTA: Record<string, string[]> = {};
-      for (const p of participants) {
-        if (!sessionIdsByTA[p.teaching_assistant_id]) sessionIdsByTA[p.teaching_assistant_id] = [];
-        sessionIdsByTA[p.teaching_assistant_id].push(p.session_id);
-      }
+      // Which lessons each assistant is paid for. Shared rule, shared
+      // de-duplication: a lesson carrying two roster rows for the same
+      // assistant must not pay them twice.
+      const sessionIdsByTA = payableSessionIdsByAssistant(participants);
 
       // Map sessions by id for quick lookup
       const sessionsById: Record<string, (typeof allSessions)[0]> = {};
@@ -308,8 +312,7 @@ export function PayrollTab() {
         // Archived and nothing on the books this month: nothing to pay, and
         // nothing to show. Archived WITH sessions still appears, flagged.
         if (teacher.is_active === false && sessions.length === 0) continue;
-        const held = sessions.filter(s => s.status === "Held");
-        const scheduled = sessions.filter(s => s.status === "Scheduled");
+        const { actual: held, pending: scheduled } = splitByStatus(sessions);
         const totalHeld = calculateAmount(held, teacher);
         const totalScheduled = calculateAmount(scheduled, teacher);
         const expectedProjected = calculateExpectedAmount(sessions, teacher);
@@ -334,15 +337,14 @@ export function PayrollTab() {
 
       // Teaching Assistants
       for (const ta of tas) {
-        const taSessionIds = sessionIdsByTA[ta.id] || [];
+        const taSessionIds = sessionIdsByTA.get(ta.id) ?? [];
         const taSessions = taSessionIds
           .map(id => sessionsById[id])
           .filter(Boolean);
         
         if (taSessions.length === 0) continue;
 
-        const held = taSessions.filter(s => s.status === "Held");
-        const scheduled = taSessions.filter(s => s.status === "Scheduled");
+        const { actual: held, pending: scheduled } = splitByStatus(taSessions);
         const totalHeld = calculateAmount(held, ta);
         const totalScheduled = calculateAmount(scheduled, ta);
         const expectedProjected = calculateExpectedAmount(taSessions, ta);

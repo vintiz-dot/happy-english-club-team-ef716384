@@ -16,6 +16,12 @@ import {
   type PayRateRecord,
 } from "../_lib/pay-history.ts";
 import { requireRole } from "../_lib/auth.ts";
+import {
+  ACTUAL_SESSION_STATUSES,
+  ASSISTANT_PARTICIPANT_TYPE,
+  PROJECTED_SESSION_STATUSES,
+  participationIsPayable,
+} from "../_lib/payroll-sessions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -623,23 +629,25 @@ Deno.serve(async (req) => {
     }> = [];
 
     for (const t of teachers ?? []) {
-      // Actual = Held only
+      // Actual and projected are defined in ../_lib/payroll-sessions.ts,
+      // which is a byte-identical copy of src/lib/payrollSessions.ts. The
+      // admin Payroll screen reads the original. Neither file may answer
+      // "which lessons count" on its own.
       const { data: held, error: heldErr } = await supabase
         .from("sessions")
         .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
         .eq("teacher_id", t.id)
-        .eq("status", "Held")
+        .in("status", [...ACTUAL_SESSION_STATUSES])
         .gte("date", startDate)
         .lt("date", nextMonthStart);
 
       if (heldErr) throw heldErr;
 
-      // Projected = Held + Scheduled (exclude Canceled)
       const { data: projected, error: projErr } = await supabase
         .from("sessions")
         .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
         .eq("teacher_id", t.id)
-        .in("status", ["Held", "Scheduled"])
+        .in("status", [...PROJECTED_SESSION_STATUSES])
         .gte("date", startDate)
         .lt("date", nextMonthStart);
 
@@ -715,38 +723,35 @@ Deno.serve(async (req) => {
         .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active");
 
       for (const ta of assistants ?? []) {
-        // Lessons this TA is on, minus the ones they missed.
-        //
-        // attended is false when they were rostered and did not work it
-        // (20261022090000). The roster row stays - so the record of who
-        // was meant to be there survives, and re-saving the session's
-        // assistants cannot quietly undo the absence - but an unworked
-        // lesson is not pay.
+        // Lessons this TA is on, minus the ones they missed. The rule is
+        // participationIsPayable in ../_lib/payroll-sessions.ts; the query
+        // narrows on the same terms for bandwidth and the predicate
+        // decides, so this and the admin screen cannot disagree.
         const { data: participations } = await supabase
           .from("session_participants")
-          .select("session_id")
+          .select("session_id, teaching_assistant_id, participant_type, attended")
           .eq("teaching_assistant_id", ta.id)
-          .eq("participant_type", "teaching_assistant")
+          .eq("participant_type", ASSISTANT_PARTICIPANT_TYPE)
           .neq("attended", false);
 
-        const sessionIds = (participations || []).map(p => p.session_id);
+        const sessionIds = (participations || [])
+          .filter(participationIsPayable)
+          .map(p => p.session_id);
         if (sessionIds.length === 0) continue;
 
-        // Actual = Held sessions
         const { data: held } = await supabase
           .from("sessions")
           .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
           .in("id", sessionIds)
-          .eq("status", "Held")
+          .in("status", [...ACTUAL_SESSION_STATUSES])
           .gte("date", startDate)
           .lt("date", nextMonthStart);
 
-        // Projected = Held + Scheduled
         const { data: projected } = await supabase
           .from("sessions")
           .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
           .in("id", sessionIds)
-          .in("status", ["Held", "Scheduled"])
+          .in("status", [...PROJECTED_SESSION_STATUSES])
           .gte("date", startDate)
           .lt("date", nextMonthStart);
 

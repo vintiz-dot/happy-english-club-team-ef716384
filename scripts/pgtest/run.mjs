@@ -42,6 +42,11 @@ const migrations = resolve(here, "..", "..", "supabase", "migrations");
 const m = (name) => join(migrations, name);
 
 const SUITES = [
+  // Not a database test: it asserts that the modules duplicated between
+  // src/ and supabase/functions/_lib/ are still identical. Listed first
+  // because a drifted mirror makes everything below it meaningless.
+  { name: "shared-module mirrors", file: "mirrors.test.mjs", migrations: [] },
+  { name: "payroll session rules", file: "payroll-sessions.test.mjs", migrations: [] },
   {
     name: "pay-rate history",
     file: "payhist.mjs",
