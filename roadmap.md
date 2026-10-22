@@ -1,3 +1,4 @@
 - [x] Verify and fix historical-rate payroll correction calculations (six regression tests pass).
 - [x] Protect closed payroll expenditure bookings (database rollback tests pass; no real financial changes).
+- [x] Apply uploaded assistant-absence and closed-payroll safeguards, then redeploy calculate-payroll and close-payroll-month (253 regression assertions pass; unauthorized calls rejected).
 - Full signed-in page check blocked by the existing admin passcode gate; not bypassed.

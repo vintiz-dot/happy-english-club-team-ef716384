@@ -5309,6 +5309,10 @@ export type Database = {
         Args: { _student_id: string; _user_id: string }
         Returns: boolean
       }
+      is_payroll_expenditure: {
+        Args: { p_category: string; p_source_kind: string }
+        Returns: boolean
+      }
       is_student_enrolled_in_class: {
         Args: { class_id_check: string; user_id: string }
         Returns: boolean
