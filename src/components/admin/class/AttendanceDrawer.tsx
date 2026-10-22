@@ -205,13 +205,40 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("session_participants")
-        .select("teaching_assistant_id, teaching_assistants(full_name)")
+        .select("id, teaching_assistant_id, attended, teaching_assistants(full_name)")
         .eq("session_id", session.id)
         .eq("participant_type", "teaching_assistant");
       if (error) throw error;
       return data || [];
     },
     enabled: !!session?.id,
+  });
+
+  // Was the assistant actually here?
+  //
+  // The roster row stays either way - removing them from the session
+  // instead would erase the fact that they were meant to be here, and
+  // re-saving the session's assistants would put them back. Marking the
+  // absence is what stops calculate-payroll paying for the lesson, so
+  // this is a change to somebody's wages and is audited as one.
+  const taPresenceMutation = useMutation({
+    mutationFn: async ({ id, attended }: { id: string; attended: boolean }) => {
+      const { error } = await supabase
+        .from("session_participants")
+        .update({ attended })
+        .eq("id", id);
+      if (error) throw error;
+      return attended;
+    },
+    onSuccess: (attended) => {
+      toast.success(attended ? "Marked present — this lesson is paid" : "Marked absent — this lesson is not paid");
+      queryClient.invalidateQueries({ queryKey: ["session-tas", session?.id] });
+      queryClient.invalidateQueries({ queryKey: ["admin-payroll"] });
+      queryClient.invalidateQueries({ queryKey: ["class-finance"] });
+      queryClient.invalidateQueries({ queryKey: ["finance-overview"] });
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Could not change that"),
   });
 
   return (
@@ -244,15 +271,32 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
                 </Button>
               )}
             </div>
-            {/* Show assigned TAs */}
+            {/* Assigned TAs, and whether each one actually worked it */}
             {sessionTAs && sessionTAs.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
-                <span className="text-xs text-muted-foreground mr-1">TAs:</span>
-                {sessionTAs.map((p: any) => (
-                  <Badge key={p.teaching_assistant_id} variant="outline" className="text-xs">
-                    {p.teaching_assistants?.full_name || "Unknown"}
-                  </Badge>
-                ))}
+              <div className="mt-2 space-y-1">
+                <span className="text-xs text-muted-foreground">Teaching assistants</span>
+                {sessionTAs.map((p: any) => {
+                  const here = p.attended !== false;
+                  return (
+                    <div key={p.id ?? p.teaching_assistant_id} className="flex items-center justify-between gap-2">
+                      <span className={`text-xs ${here ? "" : "text-muted-foreground line-through"}`}>
+                        {p.teaching_assistants?.full_name || "Unknown"}
+                      </span>
+                      <Button
+                        variant={here ? "outline" : "secondary"}
+                        size="sm"
+                        className="h-6 px-2 text-[11px]"
+                        disabled={taPresenceMutation.isPending}
+                        onClick={() => taPresenceMutation.mutate({ id: p.id, attended: !here })}
+                      >
+                        {here ? "Present · mark absent" : "Absent · not paid"}
+                      </Button>
+                    </div>
+                  );
+                })}
+                <p className="text-[11px] text-muted-foreground">
+                  An absent assistant stays on the lesson but is not paid for it.
+                </p>
               </div>
             )}
             {swappingTeacher && (

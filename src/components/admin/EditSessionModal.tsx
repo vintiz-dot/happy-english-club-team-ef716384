@@ -132,11 +132,25 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
 
       if (error) throw error;
 
-      // Update session participants (TAs)
-      await supabase.from("session_participants")
+      // Update session participants (TAs).
+      //
+      // A diff, not delete-everything-and-reinsert. Those rows now carry
+      // `attended` (20261022090000): an assistant marked absent for this
+      // lesson is on the roster but not paid for it, and wiping the row
+      // would put the payment back silently, just because somebody
+      // opened this dialog and saved an unrelated change.
+      //
+      // So only the assistants actually removed are deleted, and the
+      // ones still selected are upserted with ignoreDuplicates - which
+      // leaves an existing row, and its absence, exactly as it was.
+      const removal = supabase.from("session_participants")
         .delete()
         .eq("session_id", session.id)
         .eq("participant_type", "teaching_assistant");
+      const { error: removeError } = selectedTAIds.length > 0
+        ? await removal.not("teaching_assistant_id", "in", `(${selectedTAIds.join(",")})`)
+        : await removal;
+      if (removeError) throw removeError;
 
       if (selectedTAIds.length > 0) {
         const participants = selectedTAIds.map(taId => ({
@@ -145,7 +159,13 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
           teaching_assistant_id: taId,
           created_by: user?.id,
         }));
-        await supabase.from("session_participants").insert(participants);
+        const { error: addError } = await supabase
+          .from("session_participants")
+          .upsert(participants, {
+            onConflict: "session_id,teaching_assistant_id",
+            ignoreDuplicates: true,
+          });
+        if (addError) throw addError;
       }
 
       // Audit log

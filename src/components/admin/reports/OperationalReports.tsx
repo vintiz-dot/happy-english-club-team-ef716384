@@ -337,6 +337,7 @@ const OperationalReports = () => {
         overheadAllocated: [...overheadByClass.values()].reduce((n, v) => n + v, 0),
         unattributedPayroll: paySplit?.unattributed ?? 0,
         breakdownByClass,
+        staffByClass: paySplit?.staffByClass ?? new Map(),
       };
     },
   });
@@ -581,6 +582,7 @@ const OperationalReports = () => {
                 const be = breakEven(cls);
                 const open = openRows.has(cls.id);
                 const lines = classFinance?.breakdownByClass.get(cls.id) ?? [];
+                const staff = classFinance?.staffByClass.get(cls.id) ?? [];
                 return (
                 <Fragment key={cls.id}>
                 <TableRow
@@ -631,7 +633,38 @@ const OperationalReports = () => {
                 {open && (
                   <TableRow key={`${cls.id}-detail`} className="bg-muted/30 hover:bg-muted/30">
                     <TableCell colSpan={10} className="py-3">
-                      <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <div>
+                          <p className="text-xs font-semibold mb-1.5">
+                            Pay — what the {formatVND(cls.payroll)} is made of
+                          </p>
+                          {staff.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">
+                              {classFinance?.payrollEstimated
+                                ? "Payroll could not be loaded, so there is nobody to list."
+                                : "Nobody was paid for this class this month."}
+                            </p>
+                          ) : (
+                            <ul className="space-y-1">
+                              {staff.map((person) => (
+                                <li key={person.id} className="text-xs flex justify-between gap-3">
+                                  <span>
+                                    <span className="font-medium">{person.name}</span>
+                                    <span className="text-muted-foreground">
+                                      {" "}· {person.isAssistant ? "assistant" : "teacher"}
+                                    </span>
+                                  </span>
+                                  <span className="tabular-nums whitespace-nowrap">{formatVND(person.amount)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            {classFinance?.locked
+                              ? "What this class was paid when the month was closed."
+                              : "Every session on the calendar that was not cancelled, priced at the rate that applied on its date. An assistant marked absent for a lesson is not in here."}
+                          </p>
+                        </div>
                         <div>
                           <p className="text-xs font-semibold mb-1.5">
                             Overhead — what the {formatVND(cls.overhead)} is made of

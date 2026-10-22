@@ -57,9 +57,26 @@ export interface PayrollStaffRow {
   sessionDetailsProjected?: PayrollSessionDetail[] | null;
 }
 
+/** One person's pay inside one class. */
+export interface ClassStaffPay {
+  id: string;
+  name: string;
+  isAssistant: boolean;
+  amount: number;
+}
+
 export interface ClassPayrollSplit {
   /** class_id -> whole dong. Sums, with `unattributed`, to `total`. */
   byClass: Map<string, number>;
+  /**
+   * class_id -> who that money went to, largest first.
+   *
+   * The Payroll column is one number covering a teacher and however many
+   * assistants, and "my assistant's pay is in there somewhere" is not
+   * something an owner can check. These sum exactly to byClass, because
+   * they are apportioned to it rather than rounded on their own.
+   */
+  staffByClass: Map<string, ClassStaffPay[]>;
   /** Pay that belongs to no class: a session with no class_id, or a locked
    *  total with no per-session detail to spread it along. */
   unattributed: number;
@@ -107,6 +124,9 @@ export function splitPayrollByClass(
   opts: { locked: boolean },
 ): ClassPayrollSplit {
   const weights = new Map<string, number>();
+  // class_id -> staff_id -> their weight inside that class.
+  const perStaff = new Map<string, Map<string, number>>();
+  const who = new Map<string, { name: string; isAssistant: boolean }>();
   let unattributed = 0;
   let total = 0;
 
@@ -127,6 +147,14 @@ export function splitPayrollByClass(
       continue;
     }
 
+    const staffId = r.teacherId ?? "";
+    if (staffId) {
+      who.set(staffId, {
+        name: r.teacherName ?? "Unknown",
+        isAssistant: r.staffType === "teaching_assistant",
+      });
+    }
+
     const factor = target / shape;
     for (const d of details) {
       const amount = num(d.amount) * factor;
@@ -135,15 +163,38 @@ export function splitPayrollByClass(
         continue;
       }
       weights.set(d.class_id, (weights.get(d.class_id) ?? 0) + amount);
+      if (!staffId) continue;
+      const inClass = perStaff.get(d.class_id) ?? new Map<string, number>();
+      inClass.set(staffId, (inClass.get(staffId) ?? 0) + amount);
+      perStaff.set(d.class_id, inClass);
     }
   }
 
   const attributable = [...weights.values()].reduce((n, v) => n + v, 0);
   const byClass = apportion(weights, attributable);
+
+  // Apportioned to the class's own rounded figure, so the people listed
+  // add up to the number in the column rather than to within a dong of it.
+  const staffByClass = new Map<string, ClassStaffPay[]>();
+  for (const [classId, inClass] of perStaff) {
+    const rounded = apportion(inClass, byClass.get(classId) ?? 0);
+    staffByClass.set(
+      classId,
+      [...rounded.entries()]
+        .map(([id, amount]) => ({
+          id,
+          name: who.get(id)?.name ?? "Unknown",
+          isAssistant: who.get(id)?.isAssistant ?? false,
+          amount,
+        }))
+        .sort((a, b) => b.amount - a.amount || a.name.localeCompare(b.name)),
+    );
+  }
   const wholeTotal = Math.round(total);
   const allocated = [...byClass.values()].reduce((n, v) => n + v, 0);
   return {
     byClass,
+    staffByClass,
     // Derived rather than rounded on its own, so byClass + unattributed is
     // exactly total and the table's columns reconcile without a stray dong.
     unattributed: wholeTotal - allocated,

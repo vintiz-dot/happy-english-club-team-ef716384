@@ -3324,6 +3324,8 @@ export type Database = {
       }
       session_participants: {
         Row: {
+          absence_note: string | null
+          attended: boolean
           created_at: string
           created_by: string | null
           id: string
@@ -3333,6 +3335,8 @@ export type Database = {
           teaching_assistant_id: string | null
         }
         Insert: {
+          absence_note?: string | null
+          attended?: boolean
           created_at?: string
           created_by?: string | null
           id?: string
@@ -3342,6 +3346,8 @@ export type Database = {
           teaching_assistant_id?: string | null
         }
         Update: {
+          absence_note?: string | null
+          attended?: boolean
           created_at?: string
           created_by?: string | null
           id?: string

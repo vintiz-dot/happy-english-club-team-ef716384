@@ -715,12 +715,19 @@ Deno.serve(async (req) => {
         .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active");
 
       for (const ta of assistants ?? []) {
-        // Get sessions where this TA is a participant
+        // Lessons this TA is on, minus the ones they missed.
+        //
+        // attended is false when they were rostered and did not work it
+        // (20261022090000). The roster row stays - so the record of who
+        // was meant to be there survives, and re-saving the session's
+        // assistants cannot quietly undo the absence - but an unworked
+        // lesson is not pay.
         const { data: participations } = await supabase
           .from("session_participants")
           .select("session_id")
           .eq("teaching_assistant_id", ta.id)
-          .eq("participant_type", "teaching_assistant");
+          .eq("participant_type", "teaching_assistant")
+          .neq("attended", false);
 
         const sessionIds = (participations || []).map(p => p.session_id);
         if (sessionIds.length === 0) continue;
