@@ -277,5 +277,98 @@ console.log("=== RLS: pay is not a colleague's business ===");
   await db.exec(`RESET ROLE`);
 }
 
+console.log("=== the wage bill of a closed month ===");
+{
+  // 20261022091000, ported from the Lovable agent's drizzle-only
+  // migration. Payroll locking froze payroll_lines and the summaries but
+  // left the expenditure rows that hold the actual wage bill editable,
+  // so a stale tab could still rewrite what a closed month paid out.
+  await db.query(`INSERT INTO public.payroll_periods (month, status) VALUES ('2026-11','open')`);
+
+  const book = (month, amount, key) => db.query(
+    `INSERT INTO public.expenditures (amount, category, memo, date, source_kind, source_key)
+     VALUES ($1, 'Teacher Payroll', 'Mai', ($2 || '-28')::date, 'payroll', $3)
+     ON CONFLICT (source_kind, source_key) DO UPDATE SET amount = EXCLUDED.amount
+     RETURNING id`, [amount, month, key]);
+
+  const opened = await refused(
+    `INSERT INTO public.expenditures (amount, category, date, source_kind, source_key)
+     VALUES (4000000, 'Teacher Payroll', '2026-11-30', 'payroll', '2026-11:teacher:mai')`);
+  ok("the wage bill can be booked while the month is open", opened === null, opened ?? "");
+  const row = (await db.query(`SELECT id FROM public.expenditures WHERE source_key = '2026-11:teacher:mai'`)).rows[0].id;
+
+  await db.query(`UPDATE public.payroll_periods SET status='locked', locked_at=now() WHERE month='2026-11'`);
+
+  const edited = await refused(`UPDATE public.expenditures SET amount = 9000000 WHERE id = $1`, [row]);
+  ok("once closed, its amount cannot be changed", !!edited, edited ?? "it was allowed");
+  ok("  and the message says what to do", /Reopen the month/.test(edited ?? ""), edited ?? "");
+  const removed = await refused(`DELETE FROM public.expenditures WHERE id = $1`, [row]);
+  ok("  nor can it be deleted", !!removed);
+  const added = await refused(
+    `INSERT INTO public.expenditures (amount, category, date, source_kind, source_key)
+     VALUES (1, 'TA Payroll', '2026-11-30', 'payroll', '2026-11:assistant:linh')`);
+  ok("  nor a new one added to that month", !!added);
+
+  // The escape an attacker, or a careless edit, would reach for.
+  const smuggled = await refused(
+    `UPDATE public.expenditures SET source_kind = NULL, source_key = NULL, date = '2026-12-01' WHERE id = $1`, [row]);
+  ok("blanking the source and moving the date out of the month is refused too",
+     !!smuggled, smuggled ?? "it was allowed");
+  ok("  so the amount is still what the month was closed at",
+     // numeric comes back as a string from pglite, as it does from PostgREST
+     Number((await db.query(`SELECT amount FROM public.expenditures WHERE id = $1`, [row])).rows[0].amount) === 4000000);
+
+  const handEntered = await refused(
+    `INSERT INTO public.expenditures (amount, category, date) VALUES (50000, 'Taxi', '2026-11-04')`);
+  ok("an ordinary hand-entered cost in the same closed month is untouched by this",
+     handEntered === null, handEntered ?? "");
+
+  // The wage bill booked before source_kind existed carries NULL there,
+  // so the guard has to recognise it by the category the payroll button
+  // wrote - otherwise the months already on the books, which are the
+  // ones most likely to be closed first, are the ones left open.
+  const legacyInsert = await refused(
+    `INSERT INTO public.expenditures (amount, category, memo, date)
+     VALUES (4200000, 'Teacher Payroll', 'Mai - 2026-11', '2026-11-30')`);
+  ok("a payroll row with no source_kind is recognised by its category",
+     !!legacyInsert, legacyInsert ?? "it was allowed");
+
+  // And one that already exists from before, edited after the close.
+  await db.query(`UPDATE public.payroll_periods SET status='open' WHERE month='2026-11'`);
+  const old = (await db.query(
+    `INSERT INTO public.expenditures (amount, category, memo, date)
+     VALUES (4200000, 'TA Payroll', 'Linh - 2026-11', '2026-11-30') RETURNING id`)).rows[0].id;
+  await db.query(`UPDATE public.payroll_periods SET status='locked', locked_at=now() WHERE month='2026-11'`);
+  const legacyEdit = await refused(`UPDATE public.expenditures SET amount = 1 WHERE id = $1`, [old]);
+  ok("  so a wage row booked before source_kind existed is frozen too",
+     !!legacyEdit, legacyEdit ?? "it was allowed");
+  ok("  and its amount is intact",
+     Number((await db.query(`SELECT amount FROM public.expenditures WHERE id = $1`, [old])).rows[0].amount) === 4200000);
+
+  await db.query(`UPDATE public.payroll_periods SET status='open', reopened_at=now() WHERE month='2026-11'`);
+  const afterReopen = await refused(`UPDATE public.expenditures SET amount = 4500000 WHERE id = $1`, [row]);
+  ok("reopening the month makes it editable again", afterReopen === null, afterReopen ?? "");
+}
+
+console.log("=== closing a month still works with the guard in place ===");
+{
+  // The order close-payroll-month actually uses: lines, then the
+  // expenditures, then the lock. If the guard fired on the booking the
+  // close would fail outright, which is the failure mode worth proving
+  // against rather than reasoning about.
+  await db.query(`INSERT INTO public.payroll_periods (month, status) VALUES ('2026-10','open')`);
+  const line = await refused(
+    `INSERT INTO public.payroll_lines (month, teacher_id, staff_name, pay_rate_type, hourly_rate_vnd, sessions_count, total_minutes, total_amount_vnd)
+     VALUES ('2026-10', $1, 'Mai', 'hourly', 200000, 10, 900, 3000000)`, [MAI]);
+  ok("lines go in while the period is open", line === null, line ?? "");
+  const booked = await refused(
+    `INSERT INTO public.expenditures (amount, category, date, source_kind, source_key)
+     VALUES (3000000, 'Teacher Payroll', '2026-10-31', 'payroll', '2026-10:teacher:mai2')`);
+  ok("the wage bill goes in while the period is open", booked === null, booked ?? "");
+  const lock = await refused(`UPDATE public.payroll_periods SET status='locked', locked_at=now() WHERE month='2026-10'`);
+  ok("and the lock goes on last, without the guard refusing the close", lock === null, lock ?? "");
+  ok("  leaving the month locked", (await db.query(`SELECT public.payroll_month_is_locked('2026-10') l`)).rows[0].l === true);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

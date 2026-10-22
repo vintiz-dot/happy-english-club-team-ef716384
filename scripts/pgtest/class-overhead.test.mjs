@@ -532,11 +532,21 @@ console.log("=== a closed month is not booked into ===");
   ok("  while a hand-entered correction is still allowed, as it always was",
      handEntered === null, handEntered ?? "");
 
+  // The wage bill has its own guard (20261022091000), scoped to
+  // source_kind = 'payroll'. close-payroll-month books it while the
+  // period is still OPEN, so closing a month is unaffected - but
+  // booking it INTO a month already closed is refused, by the other
+  // trigger and with its own message.
   const wages = await refused(db,
     `INSERT INTO public.expenditures (amount, category, date, source_kind, source_key)
      VALUES (5000000, 'Teacher Payroll', '2026-08-31', 'payroll', '2026-08:teacher:x')`);
-  ok("  and so is the wage bill, which is booked before the lock goes on",
-     wages === null, wages ?? "");
+  ok("  and the wage bill is refused too, by the trigger that guards it",
+     !!wages && /Reopen the month before changing its expenditures/.test(wages),
+     wages ?? "it was allowed");
+  ok("  so the two triggers cover different costs without overlapping",
+     /standing cost cannot be booked/.test(booked ?? "") &&
+     /changing its expenditures/.test(wages ?? ""),
+     "recurring and payroll each refuse with their own wording");
 
   // Moving an open month's standing cost into the closed one, and out again.
   const intoClosed = await refused(db,

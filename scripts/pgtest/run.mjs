@@ -57,6 +57,7 @@ const SUITES = [
       "20261021092000_expenditure_source_key.sql",
       "20261021093000_payroll_month_locking.sql",
       "20261021096000_fix_payroll_lines_upsert_target.sql",
+      "20261022091000_protect_closed_payroll_expenditures.sql",
     ],
   },
   {
@@ -80,6 +81,7 @@ const SUITES = [
       "20261021097000_class_overhead_allocation.sql",
       "20261021098000_targeted_expenditure_allocation.sql",
       "20261021099000_class_overhead_breakdown.sql",
+      "20261022091000_protect_closed_payroll_expenditures.sql",
     ],
   },
 ];
