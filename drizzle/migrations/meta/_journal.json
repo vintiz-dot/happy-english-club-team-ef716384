@@ -15,6 +15,13 @@
       "when": 1792596621583,
       "tag": "0001_protect_closed_payroll_expenditures",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792654288793,
+      "tag": "0002_assistant_absence_on_a_session",
+      "breakpoints": true
     }
   ]
 }
