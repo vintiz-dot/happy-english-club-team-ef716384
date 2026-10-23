@@ -129,6 +129,62 @@ export function payRateTypeLabel(type: PayRateType): string {
 }
 
 /**
+ * How somebody was paid across a whole MONTH, which is not always one
+ * thing.
+ *
+ * Pay is effective-dated, so a person can be hourly for the first week of
+ * a month and per-session for the rest. "mixed" is that month. It is a
+ * real answer rather than a failure to decide: each session is priced
+ * correctly at its own date's rate, and it is only the one-line summary
+ * that cannot be stated as a single basis.
+ *
+ * The distinction matters because the staff row knows only TODAY's basis.
+ * A September report opened in October would otherwise describe September
+ * using a basis that started in October.
+ */
+export type PayBasisInMonth = PayRateType | "mixed";
+
+/** "Per hour" / "Per session" / "Mixed". The one place these are composed. */
+export function payBasisLabel(basis: PayBasisInMonth): string {
+  return basis === "mixed" ? "Mixed" : payRateTypeLabel(basis);
+}
+
+/**
+ * The basis a month adds up to, from the rate each of its sessions was
+ * actually priced at.
+ *
+ * Takes resolved rates rather than sessions so this module still imports
+ * nothing - turning a date into a rate is payHistory's job. A month with
+ * no sessions falls back to the staff row, which is then the only thing
+ * there is to go on and costs nothing either way.
+ */
+export function payBasisOf(
+  ratesInOrder: ReadonlyArray<StaffPayRate | null | undefined>,
+  fallback?: StaffPayRate | null,
+): PayBasisInMonth {
+  const seen = new Set<PayRateType>();
+  for (const rate of ratesInOrder) seen.add(payRateTypeOf(rate));
+  if (seen.size > 1) return "mixed";
+  return [...seen][0] ?? payRateTypeOf(fallback);
+}
+
+/**
+ * Whether a wrong-length lesson is a MONEY problem for this person in
+ * this month.
+ *
+ * True if any session in it was priced on a basis where length matters.
+ * Read off the dated rates and not the staff row, because somebody hourly
+ * in September can be per-session today - and the screen would otherwise
+ * price a real September overpayment while telling the reader, from the
+ * current basis, that length costs them nothing.
+ */
+export function lengthCostsMoneyFor(
+  ratesInOrder: ReadonlyArray<StaffPayRate | null | undefined>,
+): boolean {
+  return ratesInOrder.some(lengthAffectsPay);
+}
+
+/**
  * The quantity a payroll row should show next to the money.
  *
  * Hours for hourly staff, a session count for per-session staff. Showing

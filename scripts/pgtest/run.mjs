@@ -46,7 +46,16 @@ const SUITES = [
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.
   { name: "shared-module mirrors", file: "mirrors.test.mjs", migrations: [] },
+  // Nor is this one: it runs the repo's TypeScript over supabase/functions
+  // with the remote imports stubbed. There is no Deno here and the
+  // functions are deployed by hand, so without it a symbol used but not
+  // imported reaches production before anything complains.
+  { name: "edge functions typecheck", file: "edge-functions.test.mjs", migrations: [] },
   { name: "payroll session rules", file: "payroll-sessions.test.mjs", migrations: [] },
+  // Also not a database test: the admin Payroll screen reads
+  // calculate-payroll instead of recomputing the month, and this is the
+  // mapping that stands between the two.
+  { name: "payroll screen rows", file: "payroll-rows.test.mjs", migrations: [] },
   {
     name: "pay-rate history",
     file: "payhist.mjs",

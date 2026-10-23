@@ -19,90 +19,39 @@ import {
 import { PageHero } from "@/components/quest/PageHero";
 import { PayrollMonthLock } from "@/components/admin/payroll/PayrollMonthLock";
 import { SectionHeader } from "@/components/quest/SectionHeader";
-import { durationMinutes, formatMinutes, formatSignedMinutes } from "@/lib/sessionDuration";
-import {
-  checkSessionLength,
-  parseWeeklySlots,
-  payableExpectedMinutes,
-  varianceFromCheck,
-} from "@/lib/classSchedule";
-import { indexScheduleVersions, scheduleOnDate, type ScheduleVersion } from "@/lib/scheduleHistory";
+import { formatMinutes, formatSignedMinutes } from "@/lib/sessionDuration";
 import { AlertTriangle } from "lucide-react";
-import {
-  describeRate,
-  lengthAffectsPay,
-  payRateTypeOf,
-  varianceCostVnd,
-  type StaffPayRate,
-} from "@/lib/payRate";
-import { indexPayRates, rateOnDate } from "@/lib/payHistory";
-import { canBookPayroll, datedPayrollTotal } from "@/lib/payrollCalculation";
-import {
-  ASSISTANT_PARTICIPANT_TYPE,
-  PROJECTED_SESSION_STATUSES,
-  payableSessionIdsByAssistant,
-  splitByStatus,
-} from "@/lib/payrollSessions";
+import { describeRate, effectiveRateVnd } from "@/lib/payRate";
+import { canBookPayroll } from "@/lib/payrollCalculation";
+import { payrollRows } from "@/lib/payrollRows";
 
-interface StaffPayroll {
-  staff: {
-    id: string;
-    full_name: string;
-    hourly_rate_vnd: number;
-    pay_rate_type?: string | null;
-    per_session_rate_vnd?: number | null;
-    is_active?: boolean;
-  };
-  staffType: "teacher" | "ta";
-  heldSessions: number;
-  scheduledSessions: number;
-  totalEarned: number;
-  projectedEarnings: number;
-  totalProjected: number;
-  /**
-   * The same month costed at each day's scheduled length — but only for
-   * sessions running a length their class never schedules. A session running
-   * one of the class's other lengths is costed at what it ran, because it is
-   * a reschedule rather than an error and there is no overpayment to report.
-   */
-  expectedProjected: number;
-  /**
-   * totalProjected - expectedProjected. Positive = paying over the setting.
-   * Always 0 for per-session staff: a long lesson costs them nothing extra,
-   * so there is no overpayment to report even when the length is wrong.
-   */
-  varianceAmount: number;
-  /**
-   * Whether an over-long lesson costs this person money IN THE MONTH
-   * being viewed.
-   *
-   * Not lengthAffectsPay(staff): that reads the basis on the staff row,
-   * which is today's. Since pay became effective-dated, somebody hourly
-   * in September can be per-session now - and the screen would then
-   * price a real September overpayment at the September rate while
-   * telling the reader, from the current basis, that length costs them
-   * nothing. The two halves of the same card contradicted each other.
-   */
-  lengthCostsMoney: boolean;
-  /**
-   * How this person was paid IN the month: "Per hour", "Per session", or
-   * "Mixed" when the basis changed partway through it. The staff row only
-   * knows today's basis, which is a different question once pay is
-   * effective-dated.
-   */
-  payBasisInMonth: string;
-  varianceMinutes: number;
-  mismatchedSessions: {
-    id: string;
-    date: string;
-    className: string;
-    actualMinutes: number;
-    expectedMinutes: number;
-    deltaMinutes: number;
-    deltaAmount: number;
-  }[];
-}
-
+/**
+ * WHERE THE NUMBERS COME FROM.
+ *
+ * calculate-payroll, and nowhere else. This screen used to recompute the
+ * entire month itself - resolving rates per session, judging each session
+ * against the timetable in force on its date, totalling it - alongside
+ * the edge function doing the same thing from the same tables. They
+ * drifted three times, and each time this copy was the one that was wrong
+ * in the direction of overpaying: a duration that went negative across
+ * midnight, a month priced at today's rate after pay became
+ * effective-dated, and assistants paid for lessons they were marked
+ * absent for.
+ *
+ * None of that was a hard bug to make. It was the same bug each time -
+ * two implementations of one rule, one of them updated. So the second
+ * implementation is gone. @/lib/payrollRows renames the function's answer
+ * into the rows below and does arithmetic on figures it has already
+ * decided; it prices nothing.
+ *
+ * ONE THING THIS SCREEN STILL NEEDS DIFFERENTLY. For a closed month the
+ * function reports what the month was CLOSED at, which is right for the
+ * dashboard. PayrollMonthLock, directly below, compares what this screen
+ * shows against those same stored lines to find corrections worth
+ * carrying into the next month - so it needs the figures as they
+ * recompute now. payrollRows takes those from the function's `live`
+ * block, which is why the lock panel keeps working.
+ */
 export function PayrollTab() {
   const [selectedMonth, setSelectedMonth] = useState(dayjs().format("YYYY-MM"));
   const queryClient = useQueryClient();
@@ -119,255 +68,17 @@ export function PayrollTab() {
   });
   const bookingAllowed = canBookPayroll(period?.status, periodLoaded);
 
-  const { data: payrollData, isLoading } = useQuery({
+  const { data: payrollData, isLoading, error: payrollError } = useQuery({
     queryKey: ["admin-payroll", selectedMonth],
     queryFn: async () => {
-      const monthStart = `${selectedMonth}-01`;
-      const monthEnd = dayjs(monthStart).add(1, "month").format("YYYY-MM-DD");
-
-      // Fetch teachers, TAs, sessions, and session_participants in parallel
-      const [teachersRes, tasRes, sessionsRes, participantsRes, versionsRes, ratesRes] = await Promise.all([
-        // Deliberately NOT filtered by is_active. Archiving a teacher must
-        // not erase the lessons they already taught this month — with the
-        // filter on the query, archiving someone on the 20th silently
-        // dropped their first nineteen days out of this screen and out of
-        // the CSV. is_active is their status today; this screen is about a
-        // month that has already happened. Inactive staff with no sessions
-        // are dropped below instead, which is what the filter was for.
-        supabase
-          .from("teachers")
-          .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active")
-          .order("full_name"),
-        supabase
-          .from("teaching_assistants")
-          .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active")
-          .order("full_name"),
-        supabase
-          .from("sessions")
-          .select(`id, date, start_time, end_time, status, teacher_id, class_id, classes!inner(name, default_session_length_minutes, schedule_template)`)
-          .gte("date", monthStart)
-          .lt("date", monthEnd)
-          .in("status", [...PROJECTED_SESSION_STATUSES])
-          .order("date", { ascending: true }),
-        // Narrowed in the query for the bandwidth, and filtered again by
-        // participationIsPayable below. The rule itself lives in
-        // @/lib/payrollSessions, which calculate-payroll reads from its
-        // own mirror of the same file - so the two cannot disagree about
-        // which lessons an assistant is paid for.
-        supabase
-          .from("session_participants")
-          .select("session_id, teaching_assistant_id, participant_type, attended")
-          .eq("participant_type", ASSISTANT_PARTICIPANT_TYPE)
-          .neq("attended", false),
-        // Every class's timetable history, in one read. Fetched whole rather
-        // than filtered to the month: a session in July is judged against
-        // the version in force in July, which may have started years before.
-        supabase
-          .from("class_schedule_versions")
-          .select("class_id, effective_from, weekly_slots, default_session_length_minutes"),
-        supabase.from("staff_pay_rates")
-          .select("teacher_id, assistant_id, effective_from, pay_rate_type, hourly_rate_vnd, per_session_rate_vnd"),
-      ]);
-
-      // Never turn a failed history/roster read into invented correction amounts.
-      for (const result of [teachersRes, tasRes, sessionsRes, participantsRes, versionsRes, ratesRes]) {
-        if (result.error) throw result.error;
-      }
-      const ratesByStaff = indexPayRates(ratesRes.data);
-
-      const teachers = teachersRes.data || [];
-      const tas = tasRes.data || [];
-      const allSessions = sessionsRes.data || [];
-      const participants = participantsRes.data || [];
-      const versionsByClass = indexScheduleVersions(
-        (versionsRes.data ?? []) as unknown as ScheduleVersion[],
-      );
-
-      // Group sessions by teacher_id
-      const sessionsByTeacher: Record<string, typeof allSessions> = {};
-      for (const s of allSessions) {
-        if (!sessionsByTeacher[s.teacher_id]) sessionsByTeacher[s.teacher_id] = [];
-        sessionsByTeacher[s.teacher_id].push(s);
-      }
-
-      // Which lessons each assistant is paid for. Shared rule, shared
-      // de-duplication: a lesson carrying two roster rows for the same
-      // assistant must not pay them twice.
-      const sessionIdsByTA = payableSessionIdsByAssistant(participants);
-
-      // Map sessions by id for quick lookup
-      const sessionsById: Record<string, (typeof allSessions)[0]> = {};
-      for (const s of allSessions) sessionsById[s.id] = s;
-
-      // Uses the shared duration helper rather than a local dayjs diff, so this
-      // agrees exactly with calculate-payroll. The two had drifted: that
-      // function rolls a non-positive span over midnight, this one produced a
-      // negative figure and silently subtracted it from the teacher's pay.
-      const calculateAmount = (sessionsList: typeof allSessions, staff: StaffPayRate & { id: string }) =>
-        datedPayrollTotal(
-          sessionsList.map((s) => ({ date: s.date, minutes: durationMinutes(s.start_time, s.end_time) ?? 0 })),
-          ratesByStaff.get(staff.id) ?? [],
-          staff,
-        );
-
-      /**
-       * Each session judged against the weekly slot it belongs to — ON THE
-       * DATE IT RAN, not against whatever the class is set to today.
-       *
-       * This used to read classes.schedule_template, the current timetable.
-       * So the day after an admin moved a class from 90 minutes to 120,
-       * every ninety-minute lesson already taught turned into a "mismatch":
-       * the discrepancy count jumped, the variance column filled with money
-       * nobody had overpaid, and "projected at scheduled lengths" re-priced
-       * finished months at a length that was never scheduled when they
-       * happened. An admin "fixing" those flagged sessions would then have
-       * overpaid for real.
-       *
-       * Cached per (class, version) rather than per class: a month can now
-       * legitimately span a timetable change, so one entry per class is no
-       * longer enough, and one per session would re-parse the same JSON
-       * dozens of times.
-       */
-      const slotCache = new Map<string, ReturnType<typeof parseWeeklySlots>>();
-      const checkOf = (s: (typeof allSessions)[number]) => {
-        const classRow = s.classes as any;
-        const classId = s.class_id ?? "";
-        const resolved = scheduleOnDate(versionsByClass.get(classId), s.date, classRow);
-        const key = `${classId}|${resolved.version?.effective_from ?? "current"}`;
-        let slots = slotCache.get(key);
-        if (!slots) {
-          slots = resolved.slots;
-          slotCache.set(key, slots);
-        }
-        return checkSessionLength({
-          date: s.date,
-          startTime: s.start_time,
-          endTime: s.end_time,
-          slots,
-          classDefaultMinutes:
-            resolved.defaultMinutes ?? classRow?.default_session_length_minutes ?? null,
-        });
-      };
-
-      /**
-       * The same sessions costed at the length their day is scheduled for.
-       * For per-session staff this comes out equal to calculateAmount, which
-       * is correct rather than a coincidence: their pay does not depend on
-       * the length, so re-costing at a different length changes nothing.
-       */
-      const calculateExpectedAmount = (sessionsList: typeof allSessions, staff: StaffPayRate & { id: string }) =>
-        datedPayrollTotal(
-          sessionsList.map((s) => ({
-            date: s.date,
-            minutes: payableExpectedMinutes(checkOf(s)) ?? (durationMinutes(s.start_time, s.end_time) ?? 0),
-          })),
-          ratesByStaff.get(staff.id) ?? [],
-          staff,
-        );
-
-      /**
-       * Sessions running a length their class never schedules.
-       *
-       * Still listed for per-session staff - a lesson running 30 minutes
-       * over is a real scheduling problem whoever is teaching it - but
-       * deltaAmount comes back 0, because for them it is not a money
-       * problem and the screens read deltaAmount to decide whether to show
-       * a cost at all.
-       */
-      // True when any session in the month was priced on a basis where
-      // length matters. Per-session staff are unaffected by length, so a
-      // month entirely on that basis costs nothing for a long lesson.
-      const lengthCostsMoneyIn = (sessionsList: typeof allSessions, staff: StaffPayRate & { id: string }) =>
-        sessionsList.some((s) => lengthAffectsPay(rateOnDate(ratesByStaff.get(staff.id), s.date, staff)));
-
-      const payBasisIn = (sessionsList: typeof allSessions, staff: StaffPayRate & { id: string }) => {
-        const bases = new Set(
-          sessionsList.map((s) => payRateTypeOf(rateOnDate(ratesByStaff.get(staff.id), s.date, staff))),
-        );
-        if (bases.size > 1) return "Mixed";
-        const only = [...bases][0] ?? payRateTypeOf(staff);
-        return only === "per_session" ? "Per session" : "Per hour";
-      };
-
-      const findMismatches = (sessionsList: typeof allSessions, staff: StaffPayRate & { id: string }) =>
-        sessionsList.flatMap((s) => {
-          const variance = varianceFromCheck(checkOf(s));
-          if (!variance) return [];
-          return [{
-            id: s.id,
-            date: s.date,
-            className: (s.classes as any)?.name ?? "Class",
-            actualMinutes: variance.actualMinutes,
-            expectedMinutes: variance.expectedMinutes,
-            deltaMinutes: variance.deltaMinutes,
-            deltaAmount: varianceCostVnd(rateOnDate(ratesByStaff.get(staff.id), s.date, staff), variance.deltaMinutes),
-          }];
-        });
-
-      const results: StaffPayroll[] = [];
-
-      // Teachers
-      for (const teacher of teachers) {
-        const sessions = sessionsByTeacher[teacher.id] || [];
-        // Archived and nothing on the books this month: nothing to pay, and
-        // nothing to show. Archived WITH sessions still appears, flagged.
-        if (teacher.is_active === false && sessions.length === 0) continue;
-        const { actual: held, pending: scheduled } = splitByStatus(sessions);
-        const totalHeld = calculateAmount(held, teacher);
-        const totalScheduled = calculateAmount(scheduled, teacher);
-        const expectedProjected = calculateExpectedAmount(sessions, teacher);
-        const mismatched = findMismatches(sessions, teacher);
-
-        results.push({
-          staff: teacher,
-          staffType: "teacher",
-          heldSessions: held.length,
-          scheduledSessions: scheduled.length,
-          totalEarned: totalHeld,
-          projectedEarnings: totalScheduled,
-          totalProjected: totalHeld + totalScheduled,
-          expectedProjected,
-          varianceAmount: totalHeld + totalScheduled - expectedProjected,
-          lengthCostsMoney: lengthCostsMoneyIn(sessions, teacher),
-          payBasisInMonth: payBasisIn(sessions, teacher),
-          varianceMinutes: mismatched.reduce((n, m) => n + m.deltaMinutes, 0),
-          mismatchedSessions: mismatched,
-        });
-      }
-
-      // Teaching Assistants
-      for (const ta of tas) {
-        const taSessionIds = sessionIdsByTA.get(ta.id) ?? [];
-        const taSessions = taSessionIds
-          .map(id => sessionsById[id])
-          .filter(Boolean);
-        
-        if (taSessions.length === 0) continue;
-
-        const { actual: held, pending: scheduled } = splitByStatus(taSessions);
-        const totalHeld = calculateAmount(held, ta);
-        const totalScheduled = calculateAmount(scheduled, ta);
-        const expectedProjected = calculateExpectedAmount(taSessions, ta);
-        const mismatched = findMismatches(taSessions, ta);
-
-        results.push({
-          staff: ta,
-          staffType: "ta",
-          heldSessions: held.length,
-          scheduledSessions: scheduled.length,
-          totalEarned: totalHeld,
-          projectedEarnings: totalScheduled,
-          totalProjected: totalHeld + totalScheduled,
-          expectedProjected,
-          varianceAmount: totalHeld + totalScheduled - expectedProjected,
-          lengthCostsMoney: lengthCostsMoneyIn(taSessions, ta),
-          payBasisInMonth: payBasisIn(taSessions, ta),
-          varianceMinutes: mismatched.reduce((n, m) => n + m.deltaMinutes, 0),
-          mismatchedSessions: mismatched,
-        });
-      }
-
-      return results;
+      const { data, error } = await supabase.functions.invoke("calculate-payroll", {
+        body: { month: selectedMonth },
+      });
+      if (error) throw error;
+      // A 200 carrying an error field: the function answered, and what it
+      // answered was that it could not work the month out.
+      if (data?.error) throw new Error(data.error);
+      return payrollRows(data?.payrollData);
     },
   });
 
@@ -424,9 +135,7 @@ export function PayrollTab() {
         // The basis that applied in this month, not the one on the staff
         // row today - the money in the columns beside it is dated.
         p.payBasisInMonth,
-        payRateTypeOf(p.staff) === "per_session"
-          ? p.staff.per_session_rate_vnd ?? 0
-          : p.staff.hourly_rate_vnd,
+        effectiveRateVnd(p.staff),
         p.heldSessions,
         p.scheduledSessions,
         p.totalEarned,
@@ -476,6 +185,26 @@ export function PayrollTab() {
   const freeMismatches = allMismatches.filter((m) => !m.costsMoney).length;
 
   if (isLoading) return <div>Loading payroll data...</div>;
+
+  // Every figure on this screen now comes from one call, so a failed call
+  // has to say so. Rendering the empty state instead would tell an admin
+  // that nobody worked this month.
+  if (payrollError) {
+    return (
+      <Card className="border-destructive/60">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            Payroll could not be calculated
+          </CardTitle>
+          <CardDescription>
+            {payrollError instanceof Error ? payrollError.message : "The payroll service did not answer."}
+            {" "}No figures are shown rather than figures that might be wrong.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">

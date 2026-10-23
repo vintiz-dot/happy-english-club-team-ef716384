@@ -1,14 +1,11 @@
 /**
  * Which lessons does this person get paid for?
  *
- * Pay is worked out twice in this project, from the same tables, by
- * different code: calculate-payroll, which is the authority and feeds
- * close-payroll-month, payroll_lines and the per-class figures; and the
- * admin Payroll screen, which recomputes the whole month client-side for
- * its table, its CSV and the live totals it hands to PayrollMonthLock.
- *
- * They have drifted three times, each because one was changed and the
- * other was not:
+ * Pay USED to be worked out twice in this project, from the same tables,
+ * by different code: calculate-payroll, which is the authority, and the
+ * admin Payroll screen, which recomputed the whole month client-side.
+ * They drifted three times, each because one was changed and the other
+ * was not:
  *
  *   a hand-rolled duration went negative across midnight while the
  *   function rolled it over - fixed by sharing payRate.ts;
@@ -18,22 +15,25 @@
  *
  *   the screen paid assistants for lessons they were marked absent for,
  *   because the attendance filter added to the function never reached
- *   the screen's own query.
+ *   the screen's own query - fixed by this module.
  *
- * The first two were fixed by moving the arithmetic into one place. This
- * module does the same for the remaining half - WHICH lessons count, and
- * for whom - so that the question has one answer rather than two that
- * happen to agree.
- *
- * WHY IT MATTERS MORE THAN A WRONG NUMBER ON A SCREEN. PayrollMonthLock
+ * WHY IT MATTERED MORE THAN A WRONG NUMBER ON A SCREEN. PayrollMonthLock
  * compares the screen's figure against the stored payroll_lines and
  * reads the difference as drift, then offers to carry it into the next
- * open month as an adjustment. A screen that overstates pay therefore
- * offers to pay somebody for work they did not do.
+ * open month as an adjustment. A screen that overstated pay therefore
+ * offered to pay somebody for work they had not done.
  *
- * The edge-function copy lives at supabase/functions/_lib/payroll-sessions.ts
- * and must stay identical - Deno cannot import from src/. Nothing here
- * imports anything, which is what makes that copy possible.
+ * NOTHING IN src/ IMPORTS THIS ANY MORE, AND THAT IS THE GOAL STATE.
+ * The screen stopped computing pay altogether: it reads the function and
+ * reshapes the answer in src/lib/payrollRows.ts. The live caller of this
+ * rule is the Deno copy at supabase/functions/_lib/payroll-sessions.ts,
+ * which must stay identical to this file because Deno cannot import from
+ * src/, and scripts/pgtest/mirrors.test.mjs fails when it does not.
+ *
+ * This copy is kept rather than deleted so that the next thing in the
+ * browser that needs to know which lessons count imports it instead of
+ * writing the rule out again. That is how the drift started every time.
+ * Nothing here imports anything, which is what makes the copy possible.
  */
 
 /** A lesson that happened. What someone is actually owed for. */

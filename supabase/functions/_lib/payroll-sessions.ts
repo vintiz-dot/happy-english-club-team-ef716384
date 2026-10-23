@@ -1,19 +1,20 @@
 /**
- * THIS IS THE DENO COPY. The original is src/lib/payrollSessions.ts;
- * everything below this header is byte-identical to it. Deno cannot
- * import from src/, so the duplication is the price of having
- * calculate-payroll and the admin Payroll screen agree on which lessons
- * a person is paid for. Change one, copy it to the other - and
- * scripts/pgtest/mirrors.test.mjs fails the build if you do not.
+ * THIS IS THE DENO COPY, and currently the only one with a caller. The
+ * original is src/lib/payrollSessions.ts; everything below this header
+ * is byte-identical to it. Deno cannot import from src/, so the
+ * duplication is the price of sharing the rule at all. Change one, copy
+ * it to the other - scripts/pgtest/mirrors.test.mjs fails if you do not.
  *
  * Which lessons does this person get paid for?
  *
- * Pay is worked out twice in this project, from the same tables, by
- * different code. The two have drifted three times, most recently when
- * the attendance filter added to calculate-payroll never reached the
- * screen's own query and it went on paying assistants for lessons they
- * had missed. This module is the single answer to the question, so that
- * it cannot happen a fourth time.
+ * Pay used to be worked out twice, from the same tables, by different
+ * code: this function and the admin Payroll screen. They drifted three
+ * times, most recently when the attendance filter added here never
+ * reached the screen's own query and it went on paying assistants for
+ * lessons they had missed. The screen now reads this function instead of
+ * recomputing, so this module is the only place the question is
+ * answered - and the src copy stands ready for whatever in the browser
+ * needs it next, rather than that code restating the rule.
  */
 
 /** A lesson that happened. What someone is actually owed for. */

@@ -1,10 +1,17 @@
-// Deno cannot import from src/, so the modules that both the browser and
-// the edge functions need exist twice. That duplication is deliberate and
-// it is also how things drift: payroll has disagreed with itself three
-// times, each because one copy changed and the other did not.
+// Deno cannot import from src/, so the modules the browser and the edge
+// functions both work from exist twice. That duplication is deliberate
+// and it is also how things drift: payroll has disagreed with itself
+// three times, each because one copy changed and the other did not.
 //
 // This fails the moment a pair stops matching. It is the only thing that
 // makes "shared" mean shared.
+//
+// One pair has no src-side importer today - payrollSessions, since the
+// admin Payroll screen stopped recomputing the month and started reading
+// calculate-payroll. It stays mirrored on purpose: an orphaned copy that
+// is still checked is cheap, and the alternative is the next browser
+// caller writing the rule out again, which is how all three drifts
+// began.
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";

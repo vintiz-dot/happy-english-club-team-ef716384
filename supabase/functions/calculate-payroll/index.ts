@@ -4,9 +4,12 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import {
   describeQuantity,
   effectiveRateVnd,
+  lengthCostsMoneyFor,
+  payBasisOf,
   payRateTypeOf,
   sessionPayVnd,
   varianceCostVnd,
+  type PayBasisInMonth,
   type StaffPayRate,
 } from "../_lib/pay-rate.ts";
 import {
@@ -296,6 +299,12 @@ function computeTotals(
 ) {
   let totalMinutes = 0;
   let totalExpectedMinutes = 0;
+  // The rate each session was actually priced at, in session order. Two
+  // facts the admin screen needs come out of this and nothing else: which
+  // basis the month was paid on, and whether an over-long lesson costs
+  // anybody anything. Both are questions about the MONTH, and the staff
+  // row can only answer about today.
+  const ratesUsed: StaffPayRate[] = [];
 
   // Cached per (class, version): a month can legitimately span a timetable
   // change now, so one entry per class is no longer enough, and one per
@@ -344,6 +353,7 @@ function computeTotals(
 
     minutes = Math.max(0, Math.round(minutes));
     const rate = rateOnDate(ratesDesc, s.date, fallbackRate);
+    ratesUsed.push(rate);
     const amount = sessionPayVnd(rate, minutes);
 
     // Normalize classes to single object (Supabase may return array)
@@ -415,6 +425,12 @@ function computeTotals(
   const discrepancies = perSession.filter((p) => (p.varianceMinutes ?? 0) !== 0);
 
   return {
+    // Both are statements about the MONTH, derived from the rate each
+    // session was actually priced at. Defined in _lib/pay-rate.ts so they
+    // can be tested without Deno, and so the screen reading them shares
+    // the vocabulary rather than reinventing it.
+    payBasisInMonth: payBasisOf(ratesUsed, fallbackRate),
+    lengthCostsMoney: lengthCostsMoneyFor(ratesUsed),
     totalMinutes,
     totalHours,
     totalAmount,
@@ -483,9 +499,14 @@ Deno.serve(async (req) => {
     // Inactive staff with no sessions in the month are dropped further
     // down instead, which keeps the screen uncluttered — the thing the
     // is_active filter was actually added for.
+    // Ordered so a caller that just prints the list gets the same order
+    // every time. The admin screen sorts again for itself rather than
+    // trusting this, because it has to work against a deploy that predates
+    // the ordering, but an unordered payroll table is a bug waiting.
     let tq = supabase
       .from("teachers")
-      .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active, user_id");
+      .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active, user_id")
+      .order("full_name");
 
     if (isTeacher && !isAdmin) {
       const { data: ownTeacher } = await supabase
@@ -594,7 +615,23 @@ Deno.serve(async (req) => {
 
     const results: Array<{
       teacherId: string;
+      /** Decorated for display: "(TA)", "(archived)". Stored on payroll_lines. */
       teacherName: string;
+      /**
+       * The same person, undecorated. The admin screen renders the suffixes
+       * as badges instead, and a name is not a field to parse: somebody
+       * really can be called Nguyen (TA).
+       */
+      staffName: string;
+      /** Their status TODAY. The figures beside it are about the month. */
+      isActive: boolean;
+      /**
+       * The basis this MONTH was paid on - "mixed" when it moved partway
+       * through. Not the basis on the staff row, which is only today's.
+       */
+      payBasisInMonth: PayBasisInMonth;
+      /** Whether an over-long lesson costs this person money in this month. */
+      lengthCostsMoney: boolean;
       /** The rate in force, in the unit `payRateType` names. */
       hourlyRate: number;
       payRateType: "hourly" | "per_session";
@@ -603,6 +640,27 @@ Deno.serve(async (req) => {
       rateChangedInMonth: boolean;
       /** Set only on a closed month: what the figures would be if recomputed now. */
       liveTotalAmountActual?: number;
+      /**
+       * Set only on a closed month: everything above that the freeze
+       * replaced, as it recomputes RIGHT NOW.
+       *
+       * The admin Payroll screen needs these rather than the frozen ones.
+       * PayrollMonthLock compares what the screen shows against the stored
+       * payroll_lines and reads any difference as drift it can carry into
+       * the next month - so a screen fed the frozen figures would compare
+       * them against themselves, find nothing, and quietly stop reporting
+       * corrections. liveTotalAmountActual is the same number as
+       * live.totalAmountActual, kept because it was the published name.
+       */
+      live?: {
+        totalAmountActual: number;
+        sessionsCountActual: number;
+        totalMinutesActual: number;
+        totalHoursActual: number;
+        payRateType: "hourly" | "per_session";
+        hourlyRate: number;
+        perSessionRate: number;
+      };
       /** Corrections to earlier closed months, falling due in this one. */
       adjustmentVnd?: number;
       adjustments?: Array<{ amountVnd: number; reason: string; originMonth: string }>;
@@ -666,6 +724,12 @@ Deno.serve(async (req) => {
       results.push({
         teacherId: t.id,
         teacherName: t.is_active === false ? `${t.full_name} (archived)` : t.full_name,
+        staffName: t.full_name,
+        isActive: t.is_active !== false,
+        // Both read off the PROJECTED set, so they describe the same
+        // sessions the variance columns beside them do.
+        payBasisInMonth: future.payBasisInMonth,
+        lengthCostsMoney: future.lengthCostsMoney,
         hourlyRate: effectiveRateVnd(headline.rate),
         payRateType: payRateTypeOf(headline.rate),
         perSessionRate: headline.rate.per_session_rate_vnd,
@@ -720,7 +784,8 @@ Deno.serve(async (req) => {
         .from("teaching_assistants")
         // Same reasoning as the teachers query above: an archived TA is
         // still owed for the lessons they assisted before they left.
-        .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active");
+        .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active")
+        .order("full_name");
 
       for (const ta of assistants ?? []) {
         // Lessons this TA is on, minus the ones they missed. The rule is
@@ -766,6 +831,10 @@ Deno.serve(async (req) => {
             teacherName: ta.is_active === false
               ? `${ta.full_name} (TA, archived)`
               : `${ta.full_name} (TA)`,
+            staffName: ta.full_name,
+            isActive: ta.is_active !== false,
+            payBasisInMonth: future.payBasisInMonth,
+            lengthCostsMoney: future.lengthCostsMoney,
             hourlyRate: effectiveRateVnd(headline.rate),
             payRateType: payRateTypeOf(headline.rate),
             perSessionRate: headline.rate.per_session_rate_vnd,
@@ -802,6 +871,16 @@ Deno.serve(async (req) => {
     for (const r of results) {
       const line = linesByStaff.get(r.teacherId);
       if (periodLocked && line) {
+        // Everything the freeze is about to overwrite, kept as it stands.
+        r.live = {
+          totalAmountActual: r.totalAmountActual,
+          sessionsCountActual: r.sessionsCountActual,
+          totalMinutesActual: r.totalMinutesActual,
+          totalHoursActual: r.totalHoursActual,
+          payRateType: r.payRateType,
+          hourlyRate: r.hourlyRate,
+          perSessionRate: r.perSessionRate,
+        };
         r.liveTotalAmountActual = r.totalAmountActual;
         r.totalAmountActual = line.total_amount_vnd;
         r.sessionsCountActual = line.sessions_count;
