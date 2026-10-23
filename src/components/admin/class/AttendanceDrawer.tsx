@@ -271,34 +271,6 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
                 </Button>
               )}
             </div>
-            {/* Assigned TAs, and whether each one actually worked it */}
-            {sessionTAs && sessionTAs.length > 0 && (
-              <div className="mt-2 space-y-1">
-                <span className="text-xs text-muted-foreground">Teaching assistants</span>
-                {sessionTAs.map((p: any) => {
-                  const here = p.attended !== false;
-                  return (
-                    <div key={p.id ?? p.teaching_assistant_id} className="flex items-center justify-between gap-2">
-                      <span className={`text-xs ${here ? "" : "text-muted-foreground line-through"}`}>
-                        {p.teaching_assistants?.full_name || "Unknown"}
-                      </span>
-                      <Button
-                        variant={here ? "outline" : "secondary"}
-                        size="sm"
-                        className="h-6 px-2 text-[11px]"
-                        disabled={taPresenceMutation.isPending}
-                        onClick={() => taPresenceMutation.mutate({ id: p.id, attended: !here })}
-                      >
-                        {here ? "Present · mark absent" : "Absent · not paid"}
-                      </Button>
-                    </div>
-                  );
-                })}
-                <p className="text-[11px] text-muted-foreground">
-                  An absent assistant stays on the lesson but is not paid for it.
-                </p>
-              </div>
-            )}
             {swappingTeacher && (
               <div className="mt-2 flex gap-2">
                 <Select
@@ -326,6 +298,45 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
                 </Button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Who assisted this lesson, and whether they were here.
+            Its own panel rather than a few lines inside the Swap Teacher
+            box, where it was invisible: this is the only control in the
+            app that stops an assistant being paid for a lesson, and
+            nobody could find it. */}
+        {role === "admin" && sessionTAs && sessionTAs.length > 0 && (
+          <div className="mt-4 rounded-lg border p-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Teaching assistants</span>
+            </div>
+            <div className="mt-2 space-y-1.5">
+              {sessionTAs.map((p: any) => {
+                const here = p.attended !== false;
+                return (
+                  <div key={p.id ?? p.teaching_assistant_id} className="flex items-center justify-between gap-2">
+                    <span className={`text-sm ${here ? "" : "text-muted-foreground line-through"}`}>
+                      {p.teaching_assistants?.full_name || "Unknown"}
+                    </span>
+                    <Button
+                      variant={here ? "outline" : "secondary"}
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      disabled={taPresenceMutation.isPending}
+                      onClick={() => taPresenceMutation.mutate({ id: p.id, attended: !here })}
+                    >
+                      {here ? "Present · mark absent" : "Absent · not paid"}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              An absent assistant stays on the lesson — the record of who was meant
+              to be here survives — but is not paid for it.
+            </p>
           </div>
         )}
 

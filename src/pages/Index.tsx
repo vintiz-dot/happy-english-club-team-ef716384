@@ -2,6 +2,7 @@ import Layout from "@/components/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { TuitionCard } from "@/components/student/TuitionCard";
 import { ScheduleCalendar } from "@/components/schedule/ScheduleCalendar";
+import GlobalCalendar from "@/components/schedule/GlobalCalendar";
 import { AttendanceMarking } from "@/components/teacher/AttendanceMarking";
 import { AssignmentUpload } from "@/components/teacher/AssignmentUpload";
 import AssignmentsList from "@/components/student/AssignmentsList";
@@ -60,9 +61,23 @@ const Index = () => {
               <AttendanceMarking />
               <AssignmentUpload />
             </div>
+            {/* The same calendar the Schedule page and the teacher
+                dashboard use - week, day and list views, per-class
+                colours, the duration-mismatch flag, and the attendance
+                drawer on a click.
+
+                Assistants hold the teacher role and land here too, and
+                GlobalCalendar resolves teacher-or-assistant itself: a TA
+                gets the lessons they are rostered on, through
+                session_participants. The month grid this replaces also
+                had that branch, but it FAILED OPEN - a teacher-role user
+                with neither a teachers nor a teaching_assistants row
+                dropped through both lookups and the query ran unfiltered,
+                returning every session in the school. GlobalCalendar
+                returns nothing instead, which is the right way round. */}
             <div>
               <SectionHeader title="Teaching schedule" />
-              <ScheduleCalendar role={role} />
+              <GlobalCalendar role="teacher" />
             </div>
           </div>
         )}
