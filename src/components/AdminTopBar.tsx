@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronRight, Command, Plus, Search } from "lucide-react";
+import { ChevronRight, Command, Plus, Search, Plug} from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -216,6 +216,7 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
             <PaletteItem icon={TrendingUp} label="Reports" onSelect={() => go("/admin?tab=reports")} />
             <PaletteItem icon={Settings2} label="Automation" onSelect={() => go("/admin?tab=automation")} />
             <PaletteItem icon={HardDrive} label="Data" onSelect={() => go("/admin?tab=data")} />
+            <PaletteItem icon={Plug} label="Stars Sync" onSelect={() => go("/admin?tab=stars-sync")} />
             <PaletteItem icon={Megaphone} label="Announcements" onSelect={() => go("/admin?tab=announcements")} />
           </CommandGroup>
 

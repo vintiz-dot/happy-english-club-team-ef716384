@@ -3874,6 +3874,239 @@ export type Database = {
           },
         ]
       }
+      stars_class_map: {
+        Row: {
+          class_id: string
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          stars_class_id: string
+          teacher_id: string | null
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          stars_class_id: string
+          teacher_id?: string | null
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          stars_class_id?: string
+          teacher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stars_class_map_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: true
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stars_class_map_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stars_homework_map: {
+        Row: {
+          created_at: string
+          homework_id: string
+          stars_homework_ref: string
+        }
+        Insert: {
+          created_at?: string
+          homework_id: string
+          stars_homework_ref: string
+        }
+        Update: {
+          created_at?: string
+          homework_id?: string
+          stars_homework_ref?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stars_homework_map_homework_id_fkey"
+            columns: ["homework_id"]
+            isOneToOne: true
+            referencedRelation: "homeworks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stars_student_map: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          stars_student_id: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          stars_student_id: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          stars_student_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stars_student_map_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stars_sync_conflicts: {
+        Row: {
+          detected_at: string
+          event_id: string
+          id: string
+          ours: Json
+          resolution: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          session_id: string | null
+          student_id: string | null
+          theirs: Json
+        }
+        Insert: {
+          detected_at?: string
+          event_id: string
+          id?: string
+          ours: Json
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_id?: string | null
+          student_id?: string | null
+          theirs: Json
+        }
+        Update: {
+          detected_at?: string
+          event_id?: string
+          id?: string
+          ours?: Json
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_id?: string | null
+          student_id?: string | null
+          theirs?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stars_sync_conflicts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "stars_sync_events"
+            referencedColumns: ["event_id"]
+          },
+        ]
+      }
+      stars_sync_connection: {
+        Row: {
+          default_teacher_id: string | null
+          enabled: boolean
+          endpoint_label: string | null
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          default_teacher_id?: string | null
+          enabled?: boolean
+          endpoint_label?: string | null
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          default_teacher_id?: string | null
+          enabled?: boolean
+          endpoint_label?: string | null
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stars_sync_connection_default_teacher_id_fkey"
+            columns: ["default_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stars_sync_cursor: {
+        Row: {
+          id: boolean
+          last_error: string | null
+          last_run_at: string | null
+          last_seq: number
+        }
+        Insert: {
+          id?: boolean
+          last_error?: string | null
+          last_run_at?: string | null
+          last_seq?: number
+        }
+        Update: {
+          id?: boolean
+          last_error?: string | null
+          last_run_at?: string | null
+          last_seq?: number
+        }
+        Relationships: []
+      }
+      stars_sync_events: {
+        Row: {
+          applied_ref: Json | null
+          event_id: string
+          kind: string
+          outcome: string
+          outcome_note: string | null
+          raw: Json
+          received_at: string
+          seq: number
+        }
+        Insert: {
+          applied_ref?: Json | null
+          event_id: string
+          kind: string
+          outcome: string
+          outcome_note?: string | null
+          raw: Json
+          received_at?: string
+          seq: number
+        }
+        Update: {
+          applied_ref?: Json | null
+          event_id?: string
+          kind?: string
+          outcome?: string
+          outcome_note?: string | null
+          raw?: Json
+          received_at?: string
+          seq?: number
+        }
+        Relationships: []
+      }
       student_access_codes: {
         Row: {
           attempts: number
@@ -5361,6 +5594,30 @@ export type Database = {
         Returns: undefined
       }
       prune_admin_auth_state: { Args: never; Returns: undefined }
+      stars_sync_effective_teacher: {
+        Args: { p_stars_class: string }
+        Returns: string
+      }
+      stars_sync_readiness: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          stars_class_id: string
+          class_id: string
+          class_name: string
+          teacher_id: string | null
+          teacher_name: string | null
+          teacher_is_default: boolean
+          teacher_is_active: boolean
+          teacher_has_login: boolean
+          sessions_total: number
+          sessions_with_teacher: number
+          map_enabled: boolean
+          can_sync_points: boolean
+          can_sync_attendance: boolean
+          status: string
+          detail: string
+        }[]
+      }
       recompute_student_points: {
         Args: { p_student: string; p_class: string; p_month: string }
         Returns: undefined

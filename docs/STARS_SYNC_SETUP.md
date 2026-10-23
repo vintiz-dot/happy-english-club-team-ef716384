@@ -3,9 +3,14 @@
 Who does what, in order. `STARS_SYNC_SPEC.md` says what to build; this
 says how it gets switched on once it is built.
 
-**Nothing in Part B exists yet.** Steps 3 onward describe a connection
-that has not been written. Steps 0–2 you can start today, and step 1 is
-worth doing on its own whatever happens to the sync.
+**The admin screen exists: Admin → Stars Sync.** Its configuration half
+is built — the switch, the teacher, the class and child mappings, and
+the readiness check. The engine that reads the Stars feed and applies
+events is not, because the Stars app has nothing to read yet.
+
+So steps 0, 1, 2 and 4 you can do today. Step 3 waits on the Stars
+developer. Mapping is the slow part and it keeps: finish it now and the
+day the endpoint lands there is nothing left to do but switch on.
 
 Three roles appear below:
 
@@ -153,17 +158,28 @@ Database → Extensions. Nothing in this project uses them yet.
 
 ## Step 4 — Switch it on, one piece at a time
 
-Once the migration and the function are deployed, this part is yours, in
-the admin area under **Stars sync**. Do it in this order.
+In the admin area under **Stars Sync**, once
+`20261023100000_stars_sync_foundation.sql` has been applied. Steps 1 to
+3 work today; 4 to 7 need the feed. Do it in this order.
 
 1. **Leave the connection off.** It ships off.
 2. **Pick the teacher** from step 2. The panel warns you if they are not
    rostered on all three classes — if it does, fix the roster, do not
    proceed.
-3. **Map one class and one student.** Stars classes and students appear
-   in the list as soon as the feed has mentioned them, so you may need
-   one run before anything shows. An unmapped child syncs nothing at all
-   — that is deliberate, not a fault.
+3. **Map one class and one child**, using the ids the Stars app uses.
+   Each mapped class shows whether it will actually work:
+
+   | | |
+   |---|---|
+   | **Ready** | the teacher is the class default and is on its lessons |
+   | **Half working** | one of the two holds. The row says which, and what will stop |
+   | **Paused** | switched off for that class alone |
+   | **Blocked** | no teacher, archived, or no login — nothing will sync |
+
+   Fix anything that is not Ready before going further. "Half working"
+   is the dangerous one: it syncs for weeks and then stops.
+
+   An unmapped child syncs nothing at all — deliberate, not a fault.
 4. **Run it once by hand** and read the events list. Every event says
    what became of it: applied, skipped, conflict, rejected.
 5. **Check that one child by eye.** Their register, their points, their

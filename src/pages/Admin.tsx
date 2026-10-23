@@ -13,6 +13,7 @@ import { AdminJournalViewEnhanced } from "@/components/admin/AdminJournalViewEnh
 import { AssignmentsOverview } from "@/components/admin/AssignmentsOverview";
 import { AnnouncementManager } from "@/components/admin/AnnouncementManager";
 import ExamReportsTab from "@/components/admin/tabs/ExamReportsTab";
+import StarsSyncTab from "@/components/admin/tabs/StarsSyncTab";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Admin = ({ defaultTab }: { defaultTab?: string } = {}) => {
@@ -45,6 +46,8 @@ const Admin = ({ defaultTab }: { defaultTab?: string } = {}) => {
         return <ActivityTab />;
       case "announcements":
         return <AnnouncementManager />;
+      case "stars-sync":
+        return <StarsSyncTab />;
       default:
         return <OverviewTab />;
     }

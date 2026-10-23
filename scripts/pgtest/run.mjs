@@ -75,6 +75,11 @@ const SUITES = [
     ],
   },
   {
+    name: "stars sync",
+    file: "stars-sync.test.mjs",
+    migrations: ["20261023100000_stars_sync_foundation.sql"],
+  },
+  {
     name: "homework grading",
     file: "homework-grading.test.mjs",
     migrations: ["20261023090000_homework_grading_integrity.sql"],

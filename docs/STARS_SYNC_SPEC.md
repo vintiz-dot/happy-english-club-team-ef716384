@@ -577,7 +577,22 @@ Ten minutes, not one. The feed is append-only and the cursor makes a
 late run cost nothing, so there is no reason to hammer another school's
 server.
 
-## B6. The admin screen
+## B6. The admin screen — BUILT
+
+`src/components/admin/tabs/StarsSyncTab.tsx`, at `/admin?tab=stars-sync`,
+on `20261023100000_stars_sync_foundation.sql`. Admin only, and
+generalised past this spec: any Stars class maps to any HEC class, each
+with its own teacher or the connection default.
+
+What is built: the connection switch, the default teacher, class and
+child mappings, and `stars_sync_readiness()` — which reports per class
+whether registers and points will each actually sync, and says in words
+what will break if not. The activity panels exist and are honest about
+being empty.
+
+What is not: everything that reads the feed or applies an event. The
+list below is the original brief, kept because the remaining items are
+still the brief.
 
 A **Stars sync** panel in the admin area. Admin only.
 
