@@ -11,6 +11,10 @@ owners:
 Build Part A first. Part B cannot be tested without it, and the contract
 in Part A is what both sides must agree on.
 
+**For the admin turning it on rather than building it, see
+[STARS_SYNC_SETUP.md](STARS_SYNC_SETUP.md)** — who does what, in order,
+and how to tell it is working.
+
 ---
 
 ## What this does
@@ -625,6 +629,9 @@ with the real migration. It must cover:
   the real policies, not a description of them.
 
 ## B8. Rollout
+
+The admin's version of this, with the dashboard steps and what to check,
+is [STARS_SYNC_SETUP.md](STARS_SYNC_SETUP.md). In short:
 
 1. Apply the migration. Leave `enabled = false`.
 2. Map **one** class and **one** student.

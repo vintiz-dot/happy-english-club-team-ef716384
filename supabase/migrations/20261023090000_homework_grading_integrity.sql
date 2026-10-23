@@ -318,3 +318,22 @@ END $$;
 NOTIFY pgrst, 'reload schema';
 
 COMMIT;
+
+-- ---------------------------------------------------------------- 7
+-- What changed, as a result set.
+--
+-- The notices above are the record, but the Supabase SQL editor does not
+-- reliably show NOTICE output - and the one number worth reading here is
+-- how many children's totals moved. A SELECT it will always print.
+
+SELECT
+  (SELECT count(*) FROM public.point_transactions
+    WHERE type = 'homework' AND homework_id IS NOT NULL)        AS homework_awards_now,
+  (SELECT count(*) FROM public.point_transactions
+    WHERE type = 'early_submission')                            AS early_bonus_rows,
+  (SELECT count(*) FROM public.student_points)                  AS rollup_rows_rebuilt,
+  (SELECT count(*) FROM pg_policy
+    WHERE polrelid = 'public.homework_submissions'::regclass
+      AND polname = 'hw_sub_teacher_all')                       AS teacher_can_grade,
+  (SELECT count(*) FROM pg_proc
+    WHERE proname = 'award_homework_points')                    AS award_function_exists;
