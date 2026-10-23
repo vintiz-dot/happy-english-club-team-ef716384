@@ -135,27 +135,17 @@ export function GradeOfflineDialog({ homeworkId, isOpen, onClose, onSuccess }: G
       const pointsValue = Number(points);
       if (Number.isFinite(pointsValue) && pointsValue >= -100 && pointsValue <= 100) {
 
-        // Get homework details for class_id and due_date
-        const { data: homeworkData } = await supabase
-          .from("homeworks")
-          .select("class_id, due_date, title")
-          .eq("id", homeworkId)
-          .single();
-
-        // Use homework due_date for month attribution, not grading date
-        const effectiveDate = homeworkData?.due_date || new Date().toISOString().slice(0, 10);
-        const month = effectiveDate.slice(0, 7);
-
-        // Insert point transaction - the trigger will update student_points automatically
-        const { error: pointsError } = await supabase.from("point_transactions").insert({
-          student_id: selectedStudent.id,
-          class_id: homeworkData?.class_id,
-          month: month,
-          type: "homework",
-          points: pointsValue,
-          homework_id: homeworkId,
-          homework_title: homeworkData?.title,
-          date: effectiveDate,
+        // One award per child per homework, through the one function
+        // that knows that (20261023090000). This used to be a blind
+        // insert, here and in two other components, so correcting a
+        // grade from 6 to 8 left the child holding both. The function
+        // also resolves the class and the due-date month, which all
+        // three copies were doing for themselves.
+        const { error: pointsError } = await supabase.rpc("award_homework_points", {
+          p_student: selectedStudent.id,
+          p_homework: homeworkId,
+          p_points: pointsValue,
+          p_grade: grade,
         });
 
         if (pointsError) throw pointsError;

@@ -110,35 +110,19 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
 
       if (error) throw error;
 
-      // Create point transaction for homework (trigger will update student_points automatically)
+      // One award per child per homework, through the one function that
+      // knows that (20261023090000). This used to be a blind insert, here
+      // and in two other components, so correcting a grade from 6 to 8
+      // left the child holding both.
       if (points !== undefined && points !== null) {
-        const pointsValue = parseInt(points);
-        
-        const { data: homework } = await supabase
-          .from("homeworks")
-          .select("class_id, title, due_date")
-          .eq("id", submission.homework_id)
-          .single();
+        const { error: pointsError } = await supabase.rpc("award_homework_points", {
+          p_student: submission.student_id,
+          p_homework: submission.homework_id,
+          p_points: parseInt(points),
+          p_grade: grade,
+        });
 
-        if (homework) {
-          // Use homework due_date for month attribution, fallback to today if no due_date
-          const effectiveDate = homework.due_date || new Date().toISOString().split('T')[0];
-          const month = effectiveDate.slice(0, 7);
-          
-          const { error: pointsError } = await supabase.from("point_transactions").insert({
-            student_id: submission.student_id,
-            class_id: homework.class_id,
-            homework_id: submission.homework_id,
-            homework_title: homework.title,
-            points: pointsValue,
-            type: 'homework',
-            date: effectiveDate,
-            month,
-            notes: `Homework graded: ${grade}`,
-          });
-          
-          if (pointsError) throw pointsError;
-        }
+        if (pointsError) throw pointsError;
       }
     },
     onSuccess: () => {
@@ -192,7 +176,9 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
           homework_title: reward.homeworks?.title,
           points: -5,
           type: "early_submission",
-          reason: "Early submission bonus reversed (empty submission)",
+          // `notes`, not `reason` - point_transactions has no reason column,
+          // so this insert was rejected every time it ran.
+          notes: "Early submission bonus reversed (empty submission)",
           date: effectiveDate,
           month
         });

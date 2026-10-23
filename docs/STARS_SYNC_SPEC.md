@@ -202,31 +202,36 @@ secret. Projects switched to asymmetric signing keys cannot do this.
 Check whether `SUPABASE_JWT_SECRET` is available under API settings. If
 it is not, use the fallback in B2 and say so in the PR.
 
-### (b) Can a teacher write `homework_submissions` at all?
+### (b) Teacher grading — settled, but confirm the migration is applied
 
-The migration tree contains **three student policies on
-`homework_submissions` and no teacher or admin policy**, yet
-`src/components/teacher/GradeOfflineDialog.tsx` upserts into it from a
-teacher's browser. Either a policy was applied by hand outside the tree —
-likely, since migrations here are applied by hand — or teacher grading is
-relying on something that is not in this repo.
+This was open: the tree held three student policies on
+`homework_submissions` and no teacher policy, while
+`GradeOfflineDialog.tsx` wrote to it from a teacher's browser.
 
-Grade sync writes that table **as a teacher**. If no teacher policy
-exists, every grade silently fails. Run this before building the grade
-path:
+`20261023090000_homework_grading_integrity.sql` declares
+`hw_sub_teacher_all` (and `hw_sub_admin_all`) explicitly, so the tree is
+now the truth and a teacher can grade. **Confirm it has been applied**
+before building the grade path:
 
 ```sql
-select polname, polcmd, pg_get_expr(polqual, polrelid) as using_expr
-from pg_policy
-where polrelid = 'public.homework_submissions'::regclass;
+select polname from pg_policy
+where polrelid = 'public.homework_submissions'::regclass
+  and polname = 'hw_sub_teacher_all';
 ```
 
-If there is no teacher policy, stop and raise it. Adding one is a change
-to the app's permission model and is not part of this work.
+The same migration adds `award_homework_points(student, homework, points,
+grade)` — `SECURITY INVOKER`, so the caller's policies still apply. **The
+sync awards homework points through it and never inserts into
+`point_transactions` directly.** It replaces an award rather than adding
+one, which is what stops a re-grade paying twice.
 
-### (c) Which teacher is rostered on all three classes?
+### (c) The teacher — settled
 
-This decides whether the sync keeps working. See B2.
+Stars, Stars 2 and Sanrio Grade 6 all belong to **one teacher**, so the
+single-row `stars_sync_connection` below is right and no per-class
+variant is needed. Confirm that teacher is the class roster's
+`default_teacher_id` and the assigned teacher on the session rows — see
+B2 for why each matters.
 
 ## B1. The tables
 
@@ -402,13 +407,15 @@ cover teacher and points and homework stop syncing 45 days after their
 last session in each class — silently, one class at a time, in the
 middle of a term.
 
-**If the three classes do not share one teacher**, this needs settling
-before anything is built. Either put one teacher on the roster of all
-three, or run three connections with a teacher each — which means
-`stars_sync_connection` gains a `class_id` and becomes one row per class.
-Do not pick an admin to dodge the problem: an admin account would hand
-the sync the whole school, which is exactly what this design exists to
-prevent.
+**All three classes belong to one teacher**, so one connection row is
+enough. Two things still have to be true of that person, and they are
+different things: they must be the class roster's `default_teacher_id`
+(or named on a weekly slot) for points and homework, **and** the teacher
+assigned to the session rows for registers. Check both before enabling.
+
+Do not pick an admin to dodge a permission problem: an admin account
+would hand the sync the whole school, which is exactly what this design
+exists to prevent.
 
 ### Attribution
 
@@ -464,10 +471,11 @@ In `seq` order. For every event, in this order:
 
 ### Points, and the rollup you must not touch
 
-Insert into `point_transactions` only. **Never write `student_points`.**
-It is a rollup maintained by `trigger_update_points_from_transaction`,
-which recomputes the month from `point_transactions` on insert. Writing
-it directly fights the trigger and corrupts the totals.
+Insert into `point_transactions` only — or, for homework points, call
+`award_homework_points`. **Never write `student_points`.** It is a rollup
+maintained by `trigger_update_points_from_transaction`, which recomputes
+the month from `point_transactions`. Writing it directly fights the
+trigger and corrupts the totals.
 
 **Cap the blast radius.** Reject any single event over 50 points in
 absolute value; stop the run if one student would gain more than 200 in
@@ -482,7 +490,9 @@ must not be able to award a child four thousand points overnight.
 - `grade` → look up `stars_homework_ref`; not found →
   `skipped_no_homework` (it will apply on a later run once the homework
   arrives). Found → upsert `homework_submissions` for that student with
-  `grade`, `teacher_feedback`, `status`, `graded_at`.
+  `grade`, `teacher_feedback`, `status`, `graded_at`, and award any
+  points through `award_homework_points` — never by inserting a
+  `point_transactions` row.
 - A grade whose student is unmapped is `skipped_unmapped` like any other.
 
 ### Retractions
@@ -501,18 +511,16 @@ records:
 Mark the original event `retracted` and record the reversal as its own
 event row.
 
-**Why points are compensated and not deleted.** The rollup trigger is
-`AFTER INSERT OR UPDATE` — **there is no DELETE branch**. Deleting a
-`point_transactions` row therefore leaves `student_points` holding the
-deleted points for ever, and `student_points` is what the class
-leaderboard, the student dashboard, the family dashboard and the chat
-function read. A compensating entry sidesteps the gap entirely and
-leaves a better audit trail: "5 points removed" is a fact worth keeping,
-not a row that should vanish.
+**Why points are compensated and not deleted.** The rollup trigger used
+to be `AFTER INSERT OR UPDATE` with no DELETE branch, so a deleted
+transaction left `student_points` overstated for ever —
+`20261023090000` fixed that, and deletes now give the points back.
 
-*(This same gap is a live bug in `PointHistoryDialog.tsx`, which deletes
-transactions and tells the admin "The leaderboard has been updated".
-Out of scope here — but do not copy that pattern.)*
+Compensate anyway. "5 points removed on the 14th" is a fact worth
+keeping, and an append-only points history is far easier to explain to a
+parent than a row that quietly vanished. The homework award is the one
+exception: `award_homework_points` replaces, because two awards for one
+homework is not history, it is a double payment.
 
 **Never delete:** a student, a class, a session, an enrolment, a teacher,
 an assistant, or a user. The sync has no reason to and, running as a
@@ -633,9 +641,6 @@ The first run should be watched by a person.
 
 ## Still to settle
 
-- **Which teacher is on the roster for Stars, Stars 2 and Sanrio
-  Grade 6?** If it is not one person, B2 changes shape — see the note
-  there.
 - Does Stars record anything for a lesson HEC has no session for? If
   that is routine rather than exceptional, `skipped_no_session` will be
   the common outcome and the real problem is session generation, not the

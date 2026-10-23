@@ -5181,6 +5181,15 @@ export type Database = {
         Args: { p_job: string; p_month: string }
         Returns: boolean
       }
+      award_homework_points: {
+        Args: {
+          p_student: string
+          p_homework: string
+          p_points: number
+          p_grade?: string | null
+        }
+        Returns: string
+      }
       assistant_rate_on: {
         Args: { p_assistant_id: string; p_date: string }
         Returns: Json
@@ -5352,6 +5361,10 @@ export type Database = {
         Returns: undefined
       }
       prune_admin_auth_state: { Args: never; Returns: undefined }
+      recompute_student_points: {
+        Args: { p_student: string; p_class: string; p_month: string }
+        Returns: undefined
+      }
       refresh_invoice_carry: {
         Args: { p_student_id: string }
         Returns: undefined

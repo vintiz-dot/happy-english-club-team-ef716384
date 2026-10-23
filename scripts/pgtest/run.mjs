@@ -75,6 +75,11 @@ const SUITES = [
     ],
   },
   {
+    name: "homework grading",
+    file: "homework-grading.test.mjs",
+    migrations: ["20261023090000_homework_grading_integrity.sql"],
+  },
+  {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
     migrations: ["20261022090000_assistant_absence_on_a_session.sql"],

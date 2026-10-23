@@ -159,7 +159,9 @@ export default function HomeworkSubmission({
               homework_title: homework.title,
               points: 5,
               type: "early_submission",
-              reason: "Early submission bonus",
+              // `notes`, not `reason` - point_transactions has no reason column,
+              // so this insert was rejected every time it ran.
+              notes: "Early submission bonus",
               date: effectiveDate,
               month
             })

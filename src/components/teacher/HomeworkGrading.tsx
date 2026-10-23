@@ -143,22 +143,16 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
         (await supabase.from("homework_submissions").select("student_id").eq("id", finalSubmissionId).single()).data
           ?.student_id;
 
-      // Create point transaction for homework (trigger will update student_points automatically)
-      // Use homework due_date for month attribution, not grading date
+      // One award per child per homework, through the one function that
+      // knows that (20261023090000). This used to be a blind insert, here
+      // and in two other components, so correcting a grade from 6 to 8
+      // left the child holding both.
       if (points !== undefined && points !== null && homework?.classes?.id) {
-        const effectiveDate = homework.due_date || new Date().toISOString().split('T')[0];
-        const month = effectiveDate.slice(0, 7);
-
-        const { error: pointsError } = await supabase.from("point_transactions").insert({
-          student_id: targetStudentId,
-          class_id: homework.classes.id,
-          homework_id: homeworkId,
-          homework_title: homework.title,
-          points: points,
-          type: 'homework',
-          date: effectiveDate,
-          month,
-          notes: `Homework graded: ${grade}`,
+        const { error: pointsError } = await supabase.rpc("award_homework_points", {
+          p_student: targetStudentId,
+          p_homework: homeworkId,
+          p_points: points,
+          p_grade: grade,
         });
 
         if (pointsError) throw pointsError;
@@ -208,7 +202,10 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
       const effectiveDate = reward.homeworks?.due_date || dayjs().format("YYYY-MM-DD");
       const month = effectiveDate.slice(0, 7);
 
-      await supabase
+      // `notes`, not `reason` - point_transactions has no reason column,
+      // so this insert was rejected every time and the toast below
+      // announced a reversal that never happened.
+      const { error: reverseError } = await supabase
         .from("point_transactions")
         .insert({
           student_id: studentId,
@@ -217,10 +214,11 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
           homework_title: reward.homeworks?.title,
           points: -5,
           type: "early_submission",
-          reason: "Early submission bonus reversed (empty submission)",
+          notes: "Early submission bonus reversed (empty submission)",
           date: effectiveDate,
           month
         });
+      if (reverseError) throw reverseError;
     },
     onSuccess: () => {
       toast.success("Early submission bonus reversed (-5 XP)");
