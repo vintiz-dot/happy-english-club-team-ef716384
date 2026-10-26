@@ -4016,6 +4016,20 @@ export type Database = {
             referencedRelation: "stars_sync_events"
             referencedColumns: ["event_id"]
           },
+          {
+            foreignKeyName: "stars_sync_conflicts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stars_sync_conflicts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
         ]
       }
       stars_sync_connection: {
@@ -5414,18 +5428,18 @@ export type Database = {
         Args: { p_job: string; p_month: string }
         Returns: boolean
       }
-      award_homework_points: {
-        Args: {
-          p_student: string
-          p_homework: string
-          p_points: number
-          p_grade?: string | null
-        }
-        Returns: string
-      }
       assistant_rate_on: {
         Args: { p_assistant_id: string; p_date: string }
         Returns: Json
+      }
+      award_homework_points: {
+        Args: {
+          p_grade?: string
+          p_homework: string
+          p_points: number
+          p_student: string
+        }
+        Returns: string
       }
       can_read_student_work_file: { Args: { _path: string }; Returns: boolean }
       can_view_classmate: {
@@ -5594,32 +5608,8 @@ export type Database = {
         Returns: undefined
       }
       prune_admin_auth_state: { Args: never; Returns: undefined }
-      stars_sync_effective_teacher: {
-        Args: { p_stars_class: string }
-        Returns: string
-      }
-      stars_sync_readiness: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          stars_class_id: string
-          class_id: string
-          class_name: string
-          teacher_id: string | null
-          teacher_name: string | null
-          teacher_is_default: boolean
-          teacher_is_active: boolean
-          teacher_has_login: boolean
-          sessions_total: number
-          sessions_with_teacher: number
-          map_enabled: boolean
-          can_sync_points: boolean
-          can_sync_attendance: boolean
-          status: string
-          detail: string
-        }[]
-      }
       recompute_student_points: {
-        Args: { p_student: string; p_class: string; p_month: string }
+        Args: { p_class: string; p_month: string; p_student: string }
         Returns: undefined
       }
       refresh_invoice_carry: {
@@ -5629,6 +5619,30 @@ export type Database = {
       revert_invalid_held_sessions: {
         Args: { p_month: string; p_now: string; p_today: string }
         Returns: Json
+      }
+      stars_sync_effective_teacher: {
+        Args: { p_stars_class: string }
+        Returns: string
+      }
+      stars_sync_readiness: {
+        Args: never
+        Returns: {
+          can_sync_attendance: boolean
+          can_sync_points: boolean
+          class_id: string
+          class_name: string
+          detail: string
+          map_enabled: boolean
+          sessions_total: number
+          sessions_with_teacher: number
+          stars_class_id: string
+          status: string
+          teacher_has_login: boolean
+          teacher_id: string
+          teacher_is_active: boolean
+          teacher_is_default: boolean
+          teacher_name: string
+        }[]
       }
       teacher_rate_on: {
         Args: { p_date: string; p_teacher_id: string }
