@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, TrendingDown, Check } from "lucide-react";
 import { formatVND } from "@/lib/invoice/formatter";
 import { Loading } from "@/components/ui/loading";
+import { siblingDiscountView } from "@/lib/siblingDiscountView";
 
 interface SiblingDiscountCardProps {
   studentId: string;
@@ -25,39 +26,8 @@ export function SiblingDiscountCard({ studentId, month }: SiblingDiscountCardPro
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   })();
 
-  const { data: student } = useQuery({
-    queryKey: ["student-basic", studentId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("students")
-        .select("family_id")
-        .eq("id", studentId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: siblingState, isLoading } = useQuery({
-    queryKey: ["sibling-discount-state", student?.family_id, currentMonth],
-    queryFn: async () => {
-      if (!student?.family_id) return null;
-
-      const { data, error } = await supabase
-        .from("sibling_discount_state")
-        .select("*")
-        .eq("family_id", student.family_id)
-        .eq("month", currentMonth)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!student?.family_id,
-  });
-
   // Get class breakdown directly from the calculate-tuition edge function
-  const { data: classBreakdown, isLoading: enrollmentsLoading } = useQuery({
+  const { data: tuition, isLoading, isError } = useQuery({
     queryKey: ["student-class-breakdown", studentId, currentMonth],
     queryFn: async () => {
       const { data: tuitionData, error: tuitionError } = await supabase.functions.invoke('calculate-tuition', {
@@ -69,22 +39,13 @@ export function SiblingDiscountCard({ studentId, month }: SiblingDiscountCardPro
         throw tuitionError;
       }
 
-      // Use the new breakdown.classes array directly
-      if (!tuitionData?.breakdown?.classes || tuitionData.breakdown.classes.length === 0) {
-        return [];
-      }
-
-      return tuitionData.breakdown.classes.map((cls: any) => ({
-        classId: cls.class_id,
-        className: cls.class_name,
-        sessionsCount: cls.sessions_count,
-        totalAmount: cls.amount_vnd,
-      }));
+      if (tuitionData?.error) throw new Error(tuitionData.error);
+      return siblingDiscountView(tuitionData);
     },
     enabled: !!studentId,
   });
 
-  if (isLoading || enrollmentsLoading) {
+  if (isLoading) {
     return (
       <Card>
         <CardHeader>
@@ -100,14 +61,18 @@ export function SiblingDiscountCard({ studentId, month }: SiblingDiscountCardPro
     );
   }
 
+  if (isError) return <Card><CardHeader><CardTitle>Sibling Discount</CardTitle>
+    <CardDescription>Unable to load the family discount. Please try again.</CardDescription></CardHeader></Card>;
+
+  const siblingState = tuition?.state;
+  const classBreakdown = tuition?.classes;
+
   // Determine if this student is the discount winner
-  const isWinner = siblingState?.status === 'assigned' && siblingState.winner_student_id === studentId;
-  const discountPercent = siblingState?.sibling_percent || 0;
+  const isWinner = siblingState?.status === 'assigned' && siblingState.isWinner;
+  const discountPercent = siblingState?.percent || 0;
   
   // Find the highest tuition class to apply discount (winner class)
-  const winnerClass = classBreakdown && classBreakdown.length > 0
-    ? classBreakdown.reduce((max, current) => current.totalAmount > max.totalAmount ? current : max)
-    : null;
+  const winnerClass = classBreakdown?.find(cls => cls.classId === siblingState?.winnerClassId) ?? null;
 
   // No sibling discount scenario
   if (!siblingState || siblingState.status === 'none') {
@@ -119,7 +84,7 @@ export function SiblingDiscountCard({ studentId, month }: SiblingDiscountCardPro
             <CardTitle>Sibling Discount</CardTitle>
           </div>
           <CardDescription>
-            Not eligible (requires ≥2 students in family)
+            {siblingState?.reason || 'No family discount assigned for this month'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -147,9 +112,7 @@ export function SiblingDiscountCard({ studentId, month }: SiblingDiscountCardPro
 
   // Calculate grand totals
   const grandTotal = classBreakdown?.reduce((sum, e) => sum + e.totalAmount, 0) || 0;
-  const totalDiscount = isWinner && winnerClass
-    ? Math.round(winnerClass.totalAmount * (discountPercent / 100))
-    : 0;
+  const totalDiscount = isWinner ? tuition?.discountAmount ?? 0 : 0;
   const grandFinalPayable = grandTotal - totalDiscount;
 
   return (
@@ -189,9 +152,7 @@ export function SiblingDiscountCard({ studentId, month }: SiblingDiscountCardPro
             
             {classBreakdown.map(enrollment => {
               const isWinnerClass = isWinner && winnerClass?.classId === enrollment.classId;
-              const discountAmount = isWinnerClass 
-                ? Math.round(enrollment.totalAmount * (discountPercent / 100))
-                : 0;
+              const discountAmount = isWinnerClass ? totalDiscount : 0;
               const finalAmount = enrollment.totalAmount - discountAmount;
 
               return (

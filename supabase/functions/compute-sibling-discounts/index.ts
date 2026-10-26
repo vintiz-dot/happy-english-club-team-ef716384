@@ -2,18 +2,19 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0'
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { acquireLock, releaseLock, ymNowBangkok } from '../_lib/lock.ts'
 import { tieHash } from '../_lib/hash.ts'
+import { requireRole } from '../_lib/auth.ts'
 
 // Helper to get actual tuition per student per class using calculate-tuition
 async function getActualTuitionPerStudent(supabase: any, studentId: string, month: string) {
   try {
     // Call calculate-tuition edge function to get actual tuition
     const { data, error } = await supabase.functions.invoke('calculate-tuition', {
-      body: { studentId, month }
+      body: { studentId, month, siblingPreview: true }
     });
     
     if (error) {
       console.error(`Error calculating tuition for student ${studentId}:`, error);
-      return null;
+      throw error;
     }
     
     // Extract class breakdown from the response
@@ -27,17 +28,18 @@ async function getActualTuitionPerStudent(supabase: any, studentId: string, mont
     };
   } catch (err) {
     console.error(`Exception calculating tuition for student ${studentId}:`, err);
-    return null;
+    throw err;
   }
 }
 
 // Get highest-tuition class per student based on actual tuition calculation
 async function getHighestClassPerStudent(supabase: any, familyId: string, month: string) {
-  const { data: students } = await supabase
+  const { data: students, error } = await supabase
     .from('students')
     .select('id, full_name')
     .eq('family_id', familyId)
     .eq('is_active', true);
+  if (error) throw error;
   
   if (!students || students.length === 0) {
     return [];
@@ -115,6 +117,7 @@ const corsHeaders = {
 const SiblingDiscountRequestSchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format").optional(),
   dryRun: z.boolean().optional().default(false),
+  familyIds: z.array(z.string().uuid()).min(1).max(200).optional(),
 });
 
 Deno.serve(async (req) => {
@@ -127,36 +130,8 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Authentication required' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Authorization (admin only)
-    const { data: roles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id);
-
-    if (!roles?.some(r => r.role === 'admin')) {
-      return new Response(JSON.stringify({ error: 'Admin access required' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const gate = await requireRole(req, supabase, ['admin'], corsHeaders);
+    if (gate instanceof Response) return gate;
 
     // Input validation
     const body = await req.json().catch(() => ({}))
@@ -194,10 +169,13 @@ Deno.serve(async (req) => {
 
     try {
       // Get all active families
-      const { data: families, error: familiesError } = await supabase
+      let familiesQuery = supabase
         .from('families')
         .select('id, name, sibling_percent_override')
         .eq('is_active', true)
+      const familyIds = validationResult.data.familyIds;
+      if (familyIds) familiesQuery = familiesQuery.in('id', familyIds);
+      const { data: families, error: familiesError } = await familiesQuery;
 
       if (familiesError) throw familiesError
 
@@ -218,18 +196,20 @@ Deno.serve(async (req) => {
         if (!students || students.length < 2) {
           // Less than 2 students - no sibling discount possible
           if (!dryRun) {
-            await supabase
+            const { error: writeError } = await supabase
               .from('sibling_discount_state')
               .upsert({
                 family_id: family.id,
                 month,
                 status: 'none',
                 winner_student_id: null,
-                sibling_percent: family.sibling_percent_override || 5,
+                sibling_percent: family.sibling_percent_override ?? 5,
+                winner_class_id: null,
                 projected_base_snapshot: null,
                 reason: `Family has ${students?.length || 0} student(s), need ≥2`,
                 computed_at: new Date().toISOString()
               })
+            if (writeError) throw writeError;
           }
           
           results.push({ 
@@ -266,18 +246,20 @@ Deno.serve(async (req) => {
           // Threshold not met
           const percent = family.sibling_percent_override ?? 5
           if (!dryRun) {
-            await supabase
+            const { error: writeError } = await supabase
               .from('sibling_discount_state')
               .upsert({
                 family_id: family.id,
                 month,
                 status: 'pending',
                 winner_student_id: null,
+                winner_class_id: null,
                 sibling_percent: percent,
                 projected_base_snapshot: null,
                 reason: `Only ${positives.length} student(s) with positive tuition, need ≥2`,
                 computed_at: new Date().toISOString()
               })
+            if (writeError) throw writeError;
           }
 
           results.push({ 
@@ -321,7 +303,7 @@ Deno.serve(async (req) => {
 
           wasPending = existingState?.status === 'pending'
 
-          await supabase
+          const { error: writeError } = await supabase
             .from('sibling_discount_state')
             .upsert({
               family_id: family.id,
@@ -334,6 +316,7 @@ Deno.serve(async (req) => {
               reason: `Winner: ${winner.class_name} - lowest highest-tuition (${winner.projected_base.toLocaleString('vi-VN')} ₫)`,
               computed_at: new Date().toISOString()
             })
+          if (writeError) throw writeError;
         }
 
         const discountAmount = Math.round(winner.projected_base * (percent / 100))
