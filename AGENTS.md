@@ -18,6 +18,7 @@
 - There is no Deno on these machines and the functions deploy by hand, so `scripts/pgtest/edge-functions.test.mjs` type-checks `supabase/functions` with the repo TypeScript and the remote imports stubbed. It catches a symbol used but not imported, which is otherwise found by the Supabase deploy. It cannot check what the remote packages declare.
 
 # Shared modules
+- Cancelled-session attendance is guarded in the database with a parent-row lock; both tuition readers share the fail-closed session eligibility helper, cancellation functions refresh canonical invoices, and confirmation refreshes before approval to prevent stale charges.
 - Tuition readers resolve missing/pending sibling assignments through the family-scoped calculator; its internal tuition preview skips resolution and invoice writes to prevent recursive calls and dry-run mutations. Discount cards render the returned winner class and amount rather than pricing them again.
 - Deno cannot import from `src/`, so these pairs exist twice on purpose: payRate/pay-rate, payHistory/pay-history, payrollSessions/payroll-sessions. Change one and copy it to the other; `scripts/pgtest/run.mjs` fails if a pair drifts, and names the first line that differs.
 - Those shared modules import nothing. That is what makes copying them possible, and the mirror test asserts it.

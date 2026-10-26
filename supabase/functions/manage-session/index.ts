@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
+import { refreshCancelledTuition } from '../_lib/refresh-cancelled-tuition.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -100,6 +101,7 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
 
+      if (status === 'Canceled' && oldSession) await refreshCancelledTuition(supabase, [oldSession]);
       await supabase.from('audit_log').insert({
         action: 'session_update',
         entity: 'sessions',
@@ -116,7 +118,7 @@ Deno.serve(async (req) => {
 
     if (action === 'cancel') {
       const { id, reason } = data;
-      const { data: session } = await supabase.from('sessions').select('status, date').eq('id', id).single();
+      const { data: session } = await supabase.from('sessions').select('id, status, date').eq('id', id).single();
       
       // Regular cancel blocks past Held sessions
       const now = new Date();
@@ -138,6 +140,7 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
 
+      if (session) await refreshCancelledTuition(supabase, [session]);
       await supabase.from('audit_log').insert({
         action: 'session_cancel',
         entity: 'sessions',
@@ -166,6 +169,7 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
 
+      if (oldSession) await refreshCancelledTuition(supabase, [oldSession]);
       await supabase.from('audit_log').insert({
         action: 'session_force_cancel',
         entity: 'sessions',
@@ -210,6 +214,7 @@ Deno.serve(async (req) => {
 
       const { error } = await supabase.from('sessions').update(updates).eq('id', id);
       if (error) throw error;
+      if (status === 'Canceled' && oldSession) await refreshCancelledTuition(supabase, [oldSession]);
 
       await supabase.from('audit_log').insert({
         action: 'session_status_change',
@@ -288,6 +293,7 @@ Deno.serve(async (req) => {
           if (error) throw error;
         }
 
+        await refreshCancelledTuition(supabase, sessionsToProcess);
         await supabase.from('audit_log').insert({
           action: 'session_bulk_cancel',
           entity: 'sessions',

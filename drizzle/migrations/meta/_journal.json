@@ -29,6 +29,13 @@
       "when": 1792654309859,
       "tag": "0003_protect_closed_payroll_expenditures_legacy",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792981999586,
+      "tag": "0004_cancelled_lesson_guard",
+      "breakpoints": true
     }
   ]
 }

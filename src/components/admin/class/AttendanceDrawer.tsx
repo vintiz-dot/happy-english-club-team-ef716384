@@ -67,7 +67,7 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
           return {
             id: enrollment.student_id,
             full_name: enrollment.students.full_name,
-            status: attendanceRecord?.status || "Present",
+            status: session.status === 'Canceled' ? 'Excused' : attendanceRecord?.status || "Present",
           };
         })
       );
@@ -102,6 +102,7 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
 
   const saveAllMutation = useMutation({
     mutationFn: async (entries: Record<string, string>) => {
+      if (session.status === 'Canceled') throw new Error('Cancelled lessons must remain Excused');
       const batch = Object.entries(entries).map(([studentId, status]) => ({
         studentId,
         status,
@@ -159,6 +160,7 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
   };
 
   const toggleAttendance = (studentId: string) => {
+    if (session.status === 'Canceled') return;
     const statuses = ["Present", "Absent", "Excused"];
     const currentIndex = statuses.indexOf(attendance[studentId] || "Present");
     const nextIndex = (currentIndex + 1) % statuses.length;
@@ -194,7 +196,7 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
   // Prevent marking future sessions as Held
   const isFutureSession = now.isBefore(fiveMinutesAfterStart);
   
-  const canEdit = role === "admin" || (role === "teacher" && canMarkAttendance);
+  const canEdit = session.status !== 'Canceled' && (role === "admin" || (role === "teacher" && canMarkAttendance));
 
   const currentTeacherName = session.teachers?.full_name || session.teacher?.full_name || 
     teachers?.find(t => t.id === session.teacher_id)?.full_name || "No teacher";
@@ -354,7 +356,7 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
 
         {!canEdit && (
           <div className="my-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground">
-            {role === "teacher" 
+            {session.status === 'Canceled' ? 'Cancelled — all students are Excused. No tuition charge.' : role === "teacher" 
               ? isFutureSession
                 ? "⚠️ Attendance can be marked 5 minutes after session starts (prevents invalid 'Held' status)"
                 : "Editing window closed (24 hours after session end)"

@@ -36,6 +36,18 @@ Deno.serve(async (req) => {
     // is left null rather than attributed to somebody who did not do it.
     const confirmedBy = gate.userId || null;
 
+    // Never confirm a saved bill without rechecking current cancellations.
+    const { data: invoices, error: invoiceReadError } = await supabase
+      .from('invoices').select('id, student_id, month').in('id', invoiceIds);
+    if (invoiceReadError) throw invoiceReadError;
+    if (invoices?.length !== new Set(invoiceIds).size) throw new Error('Invoice not found');
+    for (const invoice of invoices ?? []) {
+      const { data: refreshed, error: refreshError } = await supabase.functions.invoke('calculate-tuition', {
+        body: { studentId: invoice.student_id, month: invoice.month },
+      });
+      if (refreshError || refreshed?.error) throw new Error('Tuition must be refreshed before confirmation');
+    }
+
     // Update invoices
     const { data, error } = await supabase
       .from("invoices")
