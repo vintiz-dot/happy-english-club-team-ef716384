@@ -91,6 +91,19 @@ Deno.serve(async (req) => {
     // it lives in the database.
     const isAdmin = roles?.some((r) => r.role === 'admin') ?? false;
 
+    const { data: currentSession, error: currentSessionError } = await supabase
+      .from('sessions').select('status').eq('id', sessionId).maybeSingle();
+    if (currentSessionError || !currentSession) {
+      return new Response(JSON.stringify({ error: 'Session not found' }), {
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (currentSession.status === 'Canceled') {
+      return new Response(JSON.stringify({ error: 'Cancelled lessons cannot be marked. All students are Excused and uncharged.' }), {
+        status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (!isAdmin) {
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
@@ -148,6 +161,11 @@ Deno.serve(async (req) => {
       .upsert(upsertRows, { onConflict: 'session_id,student_id' });
 
     if (attendanceError) {
+      if (attendanceError.code === '23514') {
+        return new Response(JSON.stringify({ error: 'Attendance was not saved: cancelled lessons must remain Excused.' }), {
+          status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       throw new Error(`Failed to mark attendance: ${attendanceError.message}`);
     }
 

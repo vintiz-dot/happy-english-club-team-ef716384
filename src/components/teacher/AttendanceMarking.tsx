@@ -171,6 +171,7 @@ export function AttendanceMarking() {
   };
 
   const toggleAttendance = (studentId: string) => {
+    if (selectedSession?.status === 'Canceled') return;
     const statuses: Array<'Present' | 'Absent' | 'Excused'> = ['Present', 'Absent', 'Excused'];
     const currentIndex = statuses.indexOf(attendance[studentId]);
     const nextIndex = (currentIndex + 1) % statuses.length;
@@ -182,7 +183,7 @@ export function AttendanceMarking() {
   };
 
   const saveAttendance = async () => {
-    if (!selectedSession) return;
+    if (!selectedSession || selectedSession.status === 'Canceled') return;
 
     try {
       setLoading(true);
@@ -214,7 +215,8 @@ export function AttendanceMarking() {
         await supabase
           .from("sessions")
           .update({ status: 'Held' })
-          .eq("id", selectedSession.id);
+          .eq("id", selectedSession.id)
+          .eq("status", "Scheduled");
       }
 
       toast({
@@ -236,6 +238,7 @@ export function AttendanceMarking() {
   };
 
   const canMarkAttendance = (session: Session) => {
+    if (session.status === 'Canceled') return false;
     // Must wait until 5 minutes AFTER session end time per build spec
     const sessionEndTime = new Date(`${session.date}T${session.end_time}`);
     const fiveMinutesAfterEnd = new Date(sessionEndTime.getTime() + 5 * 60000);

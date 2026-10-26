@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { refreshCancelledTuition } from '../_lib/refresh-cancelled-tuition.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -129,6 +130,7 @@ Deno.serve(async (req) => {
       .in('id', ids);
 
     if (updateError) throw updateError;
+    await refreshCancelledTuition(supabase, sessionsToCancel);
 
     // Write audit log
     await supabase.from('audit_log').insert({

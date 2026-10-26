@@ -4,6 +4,7 @@ import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
 import { requireRole } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
+import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -216,7 +217,7 @@ Deno.serve(async (req) => {
       const className = classNameMap.get(s.class_id) || 'Unknown';
 
       // Bill Present, Absent, or Late (all attended/charged); Excused is forgiven.
-      const billable = att === "Present" || att === "Absent" || att === "Late";
+      const billable = isBillableTuitionSession(s.status, att);
       if (billable && actualRate > 0) {
         // Calculate expected using default rate
         expectedClassTuition += defaultRate;
@@ -616,6 +617,7 @@ Deno.serve(async (req) => {
       );
       if (invoiceErr2) {
         console.error("Invoice upsert failed (both attempts):", invoiceErrorMsg, invoiceErr2.message);
+        throw new Error('Unable to refresh tuition invoice');
       }
     }
 
