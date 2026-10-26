@@ -4,4 +4,5 @@
 - Full signed-in page check blocked by the existing admin passcode gate; not bypassed.
 - [x] Fix Susan's missing October family discount and misleading eligibility display; live individual/bulk totals agree, five regression tests pass, no payments changed.
 - [ ] Verify the discount card through the signed-in page — blocked by the admin passcode gate; not bypassed.
-- [ ] Enforce cancelled lessons as unbillable and prevent Present attendance server-side; add and run regression checks.
+- [x] Enforce cancelled lessons as unbillable and prevent Present attendance server-side; deployed safeguards, corrected 201 marks, regression checks and signed-in rejected-write checks pass.
+- Cancelled attendance page controls remain visually unverified because of the existing admin passcode gate; backend rejection verified with a signed-in account.

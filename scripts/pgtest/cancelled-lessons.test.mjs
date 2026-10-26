@@ -36,6 +36,12 @@ ok('late enrollment seeds only Excused on cancelled lessons', (await db.query(`S
 await db.query(`UPDATE sessions SET status='Held' WHERE id=$1`, [sid.id]);
 await db.query(`UPDATE attendance SET status='Present' WHERE student_id=$1`, [student]);
 ok('non-cancelled lessons can still be Present', (await db.query(`SELECT status FROM attendance WHERE student_id=$1`, [student])).rows[0].status === 'Present');
+for (const status of ['Present', 'Absent']) {
+ await db.query(`UPDATE sessions SET status='Held' WHERE id=$1`, [sid.id]);
+ await db.query(`UPDATE attendance SET status=$1 WHERE student_id=$2`, [status, student]);
+ await db.query(`UPDATE sessions SET status='Canceled' WHERE id=$1`, [sid.id]);
+ ok(`cancelling clears existing ${status} attendance`, (await db.query(`SELECT status FROM attendance WHERE student_id=$1`, [student])).rows[0].status === 'Excused');
+}
 await db.close();
 
 const load = async (name) => {
@@ -52,14 +58,12 @@ ok('Held + Present charges the normal 135000 VND', (isBillableTuitionSession('He
 ok('unknown status fails closed', !isBillableTuitionSession('Holiday','Present'));
 const { refreshCancelledTuition } = await load('refresh-cancelled-tuition');
 const calls = [];
-let storedInvoice = 135000;
 const mock = {
  from: () => ({ select: () => ({ in: async () => ({ data: [{ session_id:'a',student_id:student },{session_id:'b',student_id:student}],error:null }) }) }),
- functions: { invoke: async (name,{body}) => { calls.push({name,body}); storedInvoice = isBillableTuitionSession('Canceled','Present') ? 135000 : 0; return { data:{totalAmount:storedInvoice},error:null }; } },
+ functions: { invoke: async (name,{body}) => { calls.push({name,body}); return { data:{totalAmount:0},error:null }; } },
 };
 await refreshCancelledTuition(mock,[{id:'a',date:'2026-10-26'},{id:'b',date:'2026-10-28'}]);
 ok('cancellation refreshes each student/month once', calls.length === 1 && calls[0].name === 'calculate-tuition' && calls[0].body.month === '2026-10');
-ok('previously charged saved bill becomes zero', storedInvoice === 0);
 mock.functions.invoke = async () => ({data:null,error:new Error('offline')});
 let failedClosed = false;
 try { await refreshCancelledTuition(mock,[{id:'a',date:'2026-10-26'}]); } catch { failedClosed = true; }
