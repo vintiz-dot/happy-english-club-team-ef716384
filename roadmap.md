@@ -2,4 +2,5 @@
 - [x] Protect closed payroll expenditure bookings (database rollback tests pass; no real financial changes).
 - [x] Apply uploaded assistant-absence and closed-payroll safeguards, then redeploy calculate-payroll and close-payroll-month (253 regression assertions pass; unauthorized calls rejected).
 - Full signed-in page check blocked by the existing admin passcode gate; not bypassed.
-- [ ] Investigate and fix Susan's family discount mismatch; verify the actual discount and student view without modifying payments.
+- [x] Fix Susan's missing October family discount and misleading eligibility display; live individual/bulk totals agree, five regression tests pass, no payments changed.
+- [ ] Verify the discount card through the signed-in page — blocked by the admin passcode gate; not bypassed.
