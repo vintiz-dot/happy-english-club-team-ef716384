@@ -30,6 +30,7 @@ interface TuitionData {
     status: string;
     percent: number;
     isWinner?: boolean;
+    reason?: string;
   };
 }
 
