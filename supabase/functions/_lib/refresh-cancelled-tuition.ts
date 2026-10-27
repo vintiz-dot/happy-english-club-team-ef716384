@@ -13,6 +13,6 @@ export async function refreshCancelledTuition(supabase: any, sessions: Array<{ i
   for (const key of keys) {
     const [studentId, month] = key.split(':');
     const { data, error: refreshError } = await supabase.functions.invoke('calculate-tuition', { body: { studentId, month } });
-    if (refreshError || data?.error) throw new Error('Lesson cancelled, but tuition refresh failed. Retry before collecting payment.');
+    if (refreshError || data?.error || data?.siblingUnresolved) throw new Error('Lesson cancelled, but tuition refresh failed. Retry before collecting payment.');
   }
 }

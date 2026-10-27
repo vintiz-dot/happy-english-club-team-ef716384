@@ -586,9 +586,13 @@ Deno.serve(async (req) => {
       updated_at: new Date().toISOString(),
     };
 
+    // Never save a bill while the family discount is still being decided:
+    // that would overwrite the stored invoice without the discount.
+    const siblingUnresolved = siblingState?.status === "unresolved";
+    const writeInvoice = !siblingPreview && !siblingUnresolved;
     let invoiceUpsertOk = true;
     let invoiceErrorMsg = "";
-    if (!siblingPreview) try {
+    if (writeInvoice) try {
       const { error: invoiceErr1 } = await supabase
         .from("invoices")
         .upsert(invoicePayloadExtended, { onConflict: "student_id,month" });
@@ -601,7 +605,7 @@ Deno.serve(async (req) => {
       invoiceErrorMsg = e?.message ?? String(e);
     }
 
-    if (!siblingPreview && !invoiceUpsertOk) {
+    if (writeInvoice && !invoiceUpsertOk) {
       // fallback minimal upsert (existing schema in your earlier code)
       const { error: invoiceErr2 } = await supabase.from("invoices").upsert(
         {
@@ -645,6 +649,8 @@ Deno.serve(async (req) => {
         message: balanceMessage, // show in UI
       },
       siblingState,
+      siblingUnresolved,
+      invoiceSaved: writeInvoice,
       breakdown: {
         classes: classBreakdown
       },
