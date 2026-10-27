@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
+import { afterAttendanceMarked } from '../_lib/attendance-effects.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -183,101 +184,15 @@ Deno.serve(async (req) => {
       .eq('id', sessionId)
       .single();
 
-    // Post-processing: tuition recalc for Absent/Excused, streak for Present — run in parallel
-    const postOps: Promise<void>[] = [];
-
-    const needsRecalc = entries.filter(e => e.status === 'Absent' || e.status === 'Excused');
-    if (needsRecalc.length > 0 && sessionData) {
-      const month = sessionData.date.substring(0, 7);
-      for (const entry of needsRecalc) {
-        postOps.push(
-          supabase.functions.invoke('calculate-tuition', { body: { studentId: entry.studentId, month } })
-            .then(({ error }) => { if (error) console.error('Tuition recalc error:', error); })
-        );
-      }
-    }
-
-    const presentEntries = entries.filter(e => e.status === 'Present');
-    if (presentEntries.length > 0 && sessionData?.class_id) {
-      const classId = sessionData.class_id;
-      const today = new Date().toISOString().split('T')[0];
-
-      postOps.push((async () => {
-        try {
-          const { data: streaks } = await supabase
-            .from('student_attendance_streaks')
-            .select('*')
-            .eq('class_id', classId)
-            .in('student_id', presentEntries.map(e => e.studentId));
-
-          // Shape named here rather than left as `any`: the three fields
-          // below drive a points award, so a typo in one of them would
-          // silently hand out the wrong bonus rather than failing.
-          type StreakRow = {
-            student_id: string;
-            consecutive_days: number | null;
-            last_attendance_date: string | null;
-            bonuses_awarded: number | null;
-          };
-          const streakMap = new Map<string, StreakRow>(
-            ((streaks || []) as StreakRow[]).map(s => [s.student_id, s]),
-          );
-          const upserts: any[] = [];
-          const pointInserts: any[] = [];
-
-          for (const entry of presentEntries) {
-            const existing = streakMap.get(entry.studentId);
-            let newConsecutive = 1;
-            let bonusesAwarded = existing?.bonuses_awarded || 0;
-
-            if (existing) {
-              if (existing.last_attendance_date !== today) {
-                newConsecutive = (existing.consecutive_days || 0) + 1;
-              } else {
-                newConsecutive = existing.consecutive_days || 1;
-              }
-            }
-
-            const currentMilestones = Math.floor(newConsecutive / 5);
-            if (currentMilestones > bonusesAwarded) {
-              // point_transactions has no `reason` column and its type CHECK
-              // rejects 'focus'; use the valid 'participation' type + `notes`
-              // (date/month fall back to their column defaults). The previous
-              // shape failed silently and never awarded streak bonuses.
-              pointInserts.push({
-                student_id: entry.studentId,
-                class_id: classId,
-                points: 50,
-                type: 'participation',
-                notes: `Attendance streak bonus: ${newConsecutive} consecutive classes attended!`,
-              });
-              bonusesAwarded = currentMilestones;
-            }
-
-            upserts.push({
-              student_id: entry.studentId,
-              class_id: classId,
-              consecutive_days: newConsecutive,
-              last_attendance_date: today,
-              bonuses_awarded: bonusesAwarded,
-              updated_at: now,
-            });
-          }
-
-          if (upserts.length > 0) {
-            await supabase.from('student_attendance_streaks').upsert(upserts, { onConflict: 'student_id,class_id' });
-          }
-          if (pointInserts.length > 0) {
-            await supabase.from('point_transactions').insert(pointInserts);
-          }
-        } catch (err) {
-          console.error('Streak tracking error:', err);
-        }
-      })());
-    }
-
-    // Wait for all post-processing
-    await Promise.all(postOps);
+    // Tuition for Absent/Excused, streaks for Present. Lives in
+    // _lib/attendance-effects.ts so the Stars sync runs the same code when
+    // a register is marked from Pixel Pal - one definition of what a mark
+    // does, not two that drift.
+    await afterAttendanceMarked(supabase, {
+      classId: sessionData?.class_id,
+      date: sessionData?.date,
+      entries,
+    });
 
     console.log(`Attendance marked for ${entries.length} students`);
 

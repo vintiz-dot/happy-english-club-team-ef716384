@@ -3971,6 +3971,45 @@ export type Database = {
           },
         ]
       }
+      stars_sync_attendance_state: {
+        Row: {
+          event_id: string
+          session_id: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          event_id: string
+          session_id: string
+          status: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          event_id?: string
+          session_id?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stars_sync_attendance_state_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stars_sync_attendance_state_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stars_sync_conflicts: {
         Row: {
           detected_at: string
@@ -4038,6 +4077,9 @@ export type Database = {
           enabled: boolean
           endpoint_label: string | null
           id: boolean
+          max_points_per_day: number
+          max_points_per_event: number
+          sync_from: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -4046,6 +4088,9 @@ export type Database = {
           enabled?: boolean
           endpoint_label?: string | null
           id?: boolean
+          max_points_per_day?: number
+          max_points_per_event?: number
+          sync_from?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -4054,6 +4099,9 @@ export type Database = {
           enabled?: boolean
           endpoint_label?: string | null
           id?: boolean
+          max_points_per_day?: number
+          max_points_per_event?: number
+          sync_from?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -4072,52 +4120,76 @@ export type Database = {
           id: boolean
           last_error: string | null
           last_run_at: string | null
+          last_run_by: string | null
           last_seq: number
+          last_summary: Json | null
+          locked_until: string | null
         }
         Insert: {
           id?: boolean
           last_error?: string | null
           last_run_at?: string | null
+          last_run_by?: string | null
           last_seq?: number
+          last_summary?: Json | null
+          locked_until?: string | null
         }
         Update: {
           id?: boolean
           last_error?: string | null
           last_run_at?: string | null
+          last_run_by?: string | null
           last_seq?: number
+          last_summary?: Json | null
+          locked_until?: string | null
         }
         Relationships: []
       }
       stars_sync_events: {
         Row: {
           applied_ref: Json | null
+          attempts: number
           event_id: string
           kind: string
+          lesson_date: string | null
           outcome: string
           outcome_note: string | null
+          processed_at: string
           raw: Json
           received_at: string
           seq: number
+          stars_class_id: string | null
+          stars_student_id: string | null
         }
         Insert: {
           applied_ref?: Json | null
+          attempts?: number
           event_id: string
           kind: string
+          lesson_date?: string | null
           outcome: string
           outcome_note?: string | null
+          processed_at?: string
           raw: Json
           received_at?: string
           seq: number
+          stars_class_id?: string | null
+          stars_student_id?: string | null
         }
         Update: {
           applied_ref?: Json | null
+          attempts?: number
           event_id?: string
           kind?: string
+          lesson_date?: string | null
           outcome?: string
           outcome_note?: string | null
+          processed_at?: string
           raw?: Json
           received_at?: string
           seq?: number
+          stars_class_id?: string | null
+          stars_student_id?: string | null
         }
         Relationships: []
       }
@@ -5625,24 +5697,30 @@ export type Database = {
         Returns: string
       }
       stars_sync_readiness: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
-          can_sync_attendance: boolean
-          can_sync_points: boolean
+          stars_class_id: string
           class_id: string
           class_name: string
-          detail: string
-          map_enabled: boolean
-          sessions_total: number
-          sessions_with_teacher: number
-          stars_class_id: string
-          status: string
-          teacher_has_login: boolean
-          teacher_id: string
+          teacher_id: string | null
+          teacher_name: string | null
           teacher_is_active: boolean
-          teacher_is_default: boolean
-          teacher_name: string
+          teacher_has_login: boolean
+          teacher_has_role: boolean
+          map_enabled: boolean
+          can_sync: boolean
+          via_roster: boolean
+          status: string
+          detail: string
         }[]
+      }
+      stars_sync_resolve_conflict: {
+        Args: { p_conflict_id: string; p_resolution: string }
+        Returns: undefined
+      }
+      stars_sync_status: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       teacher_rate_on: {
         Args: { p_date: string; p_teacher_id: string }

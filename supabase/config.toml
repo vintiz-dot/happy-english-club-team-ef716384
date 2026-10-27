@@ -230,3 +230,10 @@ verify_jwt = true
 # has to name a person.
 [functions.close-payroll-month]
 verify_jwt = true
+
+# The Stars sync. Gateway JWT check ON, like everything else. The database
+# scheduler gets through with the project's public anon key and proves who
+# it is with a token only the database holds; an admin's "Run now" uses
+# their own session. See supabase/functions/stars-sync/index.ts.
+[functions.stars-sync]
+verify_jwt = true

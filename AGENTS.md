@@ -25,3 +25,9 @@
 - Those shared modules import nothing. That is what makes copying them possible, and the mirror test asserts it.
 - `payrollSessions` currently has no importer in `src/` - the live caller is the Deno copy. It is kept mirrored so that the next browser code needing to know which lessons count imports it instead of restating the statuses, the participant type or the attendance rule.
 - `datedPayrollTotal` in `src/lib/payrollCalculation.ts` also has no production caller now. It is correct and tested; it is not a licence to price payroll in the browser again.
+
+# Stars / Pixel Pal sync
+- One-way: Pixel Pal's feed -> HEC. Every decision about a child's record lives in `stars_sync__apply_event` (`supabase/migrations/20261027100000_stars_sync_engine.sql`), one transaction per page. The edge function `stars-sync` only fetches, calls it, and runs after-effects. Do not move decisions into TypeScript.
+- What a register mark does besides the row - tuition recalc for Absent/Excused, streaks for Present - is defined once, in `supabase/functions/_lib/attendance-effects.ts`. `mark-attendance` and `stars-sync` both call it. The Scheduled->Held flip that pays the teacher is in both the SQL engine and mark-attendance; change one, change the other.
+- The sync acts as a chosen teacher and asks `is_teacher_of_class` before every write, exactly as mark-attendance does. It must never overwrite a mark a person made: seeded placeholders (`marked_by IS NULL`) and rows it wrote itself (`stars_sync_attendance_state`, compared by value) are the only rows it may change. Anything else is a conflict for an admin.
+- Run `node scripts/pgtest/run.mjs`; `stars-sync-engine.test.mjs` drives the real migrations in order and asserts what children's registers and points end up as.

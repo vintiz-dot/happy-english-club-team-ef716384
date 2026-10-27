@@ -1,5 +1,34 @@
 # Stars → HEC sync: build specification
 
+> **AS BUILT, 27 Oct 2026.** Part B is implemented: migration
+> `20261027100000_stars_sync_engine.sql`, edge function `stars-sync`, and
+> the Admin → Stars Sync page. To switch it on, follow
+> [STARS_SYNC_SETUP.md](STARS_SYNC_SETUP.md). Where the build departs from
+> the brief below, the build is right, for these reasons:
+>
+> - **Permission is `is_teacher_of_class`, not row-level-security
+>   impersonation.** HEC's own `mark-attendance` runs on the service key and
+>   asks that function; the sync asks the same function for the chosen
+>   teacher. No JWT secret is needed, and there is one definition of "your
+>   class". The cover window is **7 days**, not 45 - it was shortened in
+>   `20261007140000`.
+> - **A synced mark does what an HEC mark does**: Held flip (pays the
+>   teacher), tuition, streaks - the last two through
+>   `_lib/attendance-effects.ts`, shared with `mark-attendance`.
+> - **A teacher's mark is never overwritten** - but HEC seeds placeholder
+>   rows (`marked_by IS NULL`), so "a row exists" is not "a person marked
+>   it". Placeholders and the sync's own unchanged writes may be updated;
+>   anything else is a conflict.
+> - **Retractions restore** the previous value instead of deleting, so a
+>   register is never left blank between a withdrawal and its replacement.
+> - **Waiting records are retried**, not lost: unmatched, unenrolled, no
+>   lesson yet, teacher not permitted, unsupported kind.
+> - **The admin chooses a start date**, so history already typed in by hand
+>   is not added twice.
+> - **The scheduler keeps the gateway's JWT check on**: it presents the
+>   project's public anon key plus a database-generated token the function
+>   verifies.
+
 Two halves, because the two apps have different owners:
 
 - **Part A** was the brief for Pixel Pal, the other app. **It has been

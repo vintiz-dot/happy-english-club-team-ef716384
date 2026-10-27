@@ -1,262 +1,148 @@
-# Setting up the Stars connection — admin runbook
+# Setting up the Pixel Pal sync — admin runbook
 
-Who does what, in order. `STARS_SYNC_SPEC.md` says what to build; this
-says how it gets switched on once it is built.
+The other app is **Pixel Pal**. "Stars" is one of its classes. This page is
+the order of switching it on; `STARS_SYNC_SPEC.md` is the design.
 
-The other app is **Pixel Pal**. "Stars" is one of its classes.
+## What it does, in one paragraph
 
-**Where things stand, 27 Oct 2026:**
+Every five minutes HEC reads what teachers recorded in Pixel Pal — register
+marks and points — and records them in HEC **as the teacher you choose**,
+only in classes that teacher teaches in HEC. A synced mark does everything
+a mark made in HEC does: the lesson becomes *Held* (which is what pays the
+teacher), tuition is recalculated, streaks move. It never overwrites a mark
+somebody made in HEC — it raises those for you to settle. Nothing it cannot
+place is thrown away: it waits, and applies once you fix whatever stopped
+it.
+
+## Already done
 
 | | |
 |---|---|
-| Pixel Pal's `export-events` endpoint | **done** — live, and refuses a wrong secret |
-| Admin → Stars Sync, configuration half | **done** — switch, teacher, mappings, readiness |
-| The fetch and the apply path | **not built** |
-| Pixel Pal's class numbers | **not supplied** — see step 0 |
-| Which student number is which child | **not supplied** |
+| Pixel Pal's export endpoint | live, refuses a wrong secret |
+| `20261023090000`, `20261023100000`, `20261027090000` | applied |
+| Class numbers and the list of children | received |
 
-Three roles appear below:
+---
 
-| | |
+## Step 1 — Apply the engine migration
+
+Paste `supabase/migrations/20261027100000_stars_sync_engine.sql` into the
+SQL editor and run it. It ends by printing one row:
+
+| column | should be |
 |---|---|
-| **You** | the HEC admin, with the Supabase dashboard and the admin area |
-| **Pixel Pal dev** | whoever maintains the other app |
-| **Builder** | whoever implements the fetch and apply path |
+| `engine_installed` | **1** |
+| `old_delete_trigger_left` | **0** |
+| `cron_available` | `true` |
+| `http_available` | `true` |
 
----
+If `cron_available` or `http_available` is `false`: enable **pg_cron** and
+**pg_net** under Database → Extensions, then paste the migration again — it
+is safe to re-run. Without them the sync still works, but only when you
+press **Run now**.
 
-## Step 0 — What is still owed by Pixel Pal
+It also removes an old points trigger that was quietly doing the wrong
+thing on deletes (see the migration's section 1). No totals change.
 
-The endpoint and a secret have been handed over. Two things have not:
+## Step 2 — Rotate the secret, then set it
 
-1. **The two class numbers.** They are shown in Pixel Pal under
-   **Settings → Plan → "Send class records to another app"**, and the
-   note arrived with them left blank. Nothing can be mapped without
-   them.
-2. **Which student number is which child.** This is personal data about
-   children. Ask for it privately, and type it straight into the
-   mapping screen — it does not belong in a chat, a spreadsheet left in
-   a shared folder, or this repository.
+The secret Pixel Pal sent arrived in the same message as the address, so
+treat it as spent: ask for a new one. Their endpoint accepts the old and new
+for about an hour.
 
-Also settle **Stars 2**. Three classes were named at the start; Pixel
-Pal offers Stars and Sanrio. A class nobody asks about simply never
-syncs, and nothing says so.
+Set it in the project's **edge function secrets** as `STARPASSCODE`
+(`starpasscode` also works). Nowhere else — not in a file, not in a chat.
 
-### Handling the secret
+## Step 3 — Deploy
 
-The URL alone is harmless. The secret alone is harmless. **Together
-they are read access to another school's pupil records**, so they travel
-separately and never through anything public — not a group chat, not a
-shared document, not an email with several people on it.
+Two functions need deploying through Lovable:
 
-**If the two ever arrive together — in one message, one document, one
-screenshot — treat that secret as spent.** Ask for a new one before
-connecting anything. Pixel Pal accepts the old and the new for about an
-hour, so rotating costs nothing.
+- **`stars-sync`** — new.
+- **`mark-attendance`** — its tuition and streak code moved into a shared
+  module the sync also uses. Behaviour is unchanged; the old deployed copy
+  keeps working until this one replaces it.
 
-The secret goes in **one place**: Supabase → Edge Functions → Secrets,
-as `STARS_SYNC_SECRET`. Never in a migration, a source file, a comment
-or a commit.
+## Step 4 — Set it up, in Admin → Stars Sync
 
-**Do not accept their service-role key or database password if offered.**
-It would give this app total read and write over everything they own,
-for ever. The shared secret is all that is needed.
+The page lists what is still missing at the top. In order:
 
----
+1. **Sync lessons from** — the first lesson date to import. Nothing earlier
+   comes across, ever. **If anybody has typed Pixel Pal's points into HEC
+   by hand, start the day after they last did** — otherwise those points are
+   added twice.
+2. **Acts as** — your teacher.
+3. **Map the classes:**
 
-## Step 1 — Apply the homework fix (do this one now)
-
-This is already written and tested, and is independent of the sync. It
-repairs four live faults in grading — see the commit, or the top of the
-migration file.
-
-**It changes real children's point totals**, so:
-
-### 1a. Look first
-
-Run this on its own in the Supabase SQL editor. It only reads.
-
-```sql
-select
-  (select coalesce(sum(n - 1), 0) from (
-     select count(*) as n from point_transactions
-     where type = 'homework' and homework_id is not null
-     group by student_id, homework_id having count(*) > 1) d)   as duplicate_awards,
-  (select count(*) from point_transactions
-    where type = 'early_submission')                            as early_bonus_rows;
-```
-
-- **`duplicate_awards`** — how many extra homework awards are standing.
-  Every one is a child credited twice for one homework because somebody
-  corrected a grade. The migration keeps the newest and drops the rest,
-  so this many awards disappear and those children's homework points go
-  down. **That is the correction, not a loss.**
-- **`early_bonus_rows`** — should be **0**. If it is not, somebody
-  widened the type constraint by hand, those bonuses have been invisible
-  to the leaderboard until now, and the migration will start counting
-  them. Totals go **up** for those children. If this number is not zero,
-  read it out before continuing, because parents may ask.
-
-### 1b. Apply it
-
-Paste `supabase/migrations/20261023090000_homework_grading_integrity.sql`
-into the SQL editor and run it.
-
-**Pick a quiet moment.** It rebuilds `student_points` for every month in
-the database, and a teacher grading while it runs could have their award
-counted into the rebuild or not, depending on timing. Before class, or
-after.
-
-It ends by printing a row:
-
-| column | what it should say |
-|---|---|
-| `teacher_can_grade` | **1** — teachers can grade, and it is now written down |
-| `award_function_exists` | **1** — the single award path exists |
-| `early_bonus_rows` | whatever 1a said |
-| `homework_awards_now` | one per child per homework, no duplicates left |
-| `rollup_rows_rebuilt` | every month recomputed |
-
-If `teacher_can_grade` or `award_function_exists` is 0, it did not apply
-— stop and say so.
-
-### 1c. Check one child
-
-Open a class leaderboard, pick a child whose homework was re-graded at
-some point, and confirm their total looks right. Then grade a homework,
-change the grade, and confirm the points **replace** rather than add.
-
-### 1d. Then deploy the app
-
-The three grading screens now call `award_homework_points`. Until the
-migration is applied **and** the app is deployed, grading will fail —
-the function will not exist. Apply first, deploy second, in that order.
-
----
-
-## Step 2 — Decide the teacher
-
-The sync will act as one teacher, and can do exactly what that teacher
-can do in HEC. Stars, Stars 2 and Sanrio Grade 6 belong to one teacher,
-so one is enough.
-
-Two different things must be true of them, and they fail differently:
-
-| | Needed for | If it is not true |
-|---|---|---|
-| Named as the class's **default teacher** (or on a weekly slot) | points, homework, grades | these stop syncing 45 days after their last lesson in that class — quietly |
-| The teacher **on the session rows** | attendance | registers never sync at all |
-
-Check both for all three classes before anyone builds anything. The
-first is the dangerous one: it works for six weeks and then stops, in
-the middle of a term, one class at a time.
-
-**Do not pick an admin.** An admin account would give the sync the whole
-school — finance, payroll, families, every class. The entire design
-exists to prevent that.
-
----
-
-## Step 3 — Builder implements Part B
-
-Hand `STARS_SYNC_SPEC.md` Part B to the builder, with the Stars endpoint
-URL. They will need from you, in the Supabase dashboard:
-
-| Secret | What it is |
-|---|---|
-| `STARS_EXPORT_URL` | the URL from step 0 |
-| `STARS_SYNC_SECRET` | the secret from step 0 |
-| `SUPABASE_JWT_SECRET` | already in your project, under Settings → API |
-
-Set these under **Edge Functions → Secrets**. They are never in the
-repository, and nobody needs to paste them into a chat.
-
-They will also ask you to enable **`pg_cron`** and **`pg_net`** under
-Database → Extensions. Nothing in this project uses them yet.
-
----
-
-## Step 4 — Switch it on, one piece at a time
-
-In the admin area under **Stars Sync**, once
-`20261023100000_stars_sync_foundation.sql` has been applied. Steps 1 to
-3 work today; 4 to 7 need the feed. Do it in this order.
-
-1. **Leave the connection off.** It ships off.
-2. **Pick the teacher** from step 2. The panel warns you if they are not
-   rostered on all three classes — if it does, fix the roster, do not
-   proceed.
-3. **Map one class and one child**, using the ids the Stars app uses.
-   Each mapped class shows whether it will actually work:
-
-   | | |
+   | Pixel Pal number | HEC class |
    |---|---|
-   | **Ready** | the teacher is the class default and is on its lessons |
-   | **Half working** | one of the two holds. The row says which, and what will stop |
-   | **Paused** | switched off for that class alone |
-   | **Blocked** | no teacher, archived, or no login — nothing will sync |
+   | 19 | Stars |
+   | 22 | Stars 2 |
+   | 12 | Sanrio Grade 6 |
 
-   Fix anything that is not Ready before going further. "Half working"
-   is the dangerous one: it syncs for weeks and then stops.
+   Each row then says whether it will work. **Ready** means the teacher is
+   on that class's roster. **Works for now** means they are only covering
+   it — that stops 7 days after their last lesson there. Fix anything that
+   is not Ready.
+4. **Match the children.** Paste the JSON Pixel Pal gave you into *Match
+   from Pixel Pal's list*. Each child is offered only the children enrolled
+   in that HEC class. Check every nickname — a wrong match moves one child's
+   marks and points onto another. The list itself is not saved; only the
+   matches are.
 
-   An unmapped child syncs nothing at all — deliberate, not a fault.
-4. **Run it once by hand** and read the events list. Every event says
-   what became of it: applied, skipped, conflict, rejected.
-5. **Check that one child by eye.** Their register, their points, their
-   grades, against the Stars app. This is the only step that proves the
-   mapping is right rather than merely accepted.
-6. **Map the rest**, then **turn the connection on**.
-7. **Enable the schedule** last.
+## Step 5 — One supervised run
 
-Never do 6 and 7 on the day you do 1 to 5. The first real run should be
-watched.
+Leave **Schedule** off and press **Run now**. Then:
+
+- Read **Records → Needs attention.** Every record says what became of it.
+- Pick one child and compare their register and points with Pixel Pal.
+
+Running it by hand once is also what lets the schedule start: the function
+records its own address on that first run, and the schedule cannot call it
+before then.
+
+## Step 6 — Turn the schedule on
+
+Flip **Schedule**. From now on it runs every five minutes.
 
 ---
 
 ## Running it
 
-**Normal.** Every ten minutes it reads whatever is new and applies it.
-Nothing to do.
+**"Nothing has appeared for a child."** Records → Needs attention, and
+read the note. The usual ones:
 
-**"Nothing has appeared for Minh."** Stars sync → recent events, filter
-to that child. It will say which: `skipped_unmapped` (map them),
-`skipped_no_session` (HEC has no lesson that day — generate the session
-or fix the date), `outside_edit_window` (the mark came more than 24
-hours after the lesson; enter it yourself, you are allowed to and the
-sync is not), `conflict` (see below).
+| It says | Do |
+|---|---|
+| Waiting: not matched | match the child, or map the class |
+| Waiting: not enrolled | the child is not enrolled in that HEC class on that date |
+| Waiting: no lesson | HEC has no lesson that day — generate it |
+| Waiting: teacher | the teacher does not teach that class in HEC (the Classes table says why) |
+| Refused: 24 hours | the mark came more than a day after the lesson; a teacher could not change it in HEC either. Enter it yourself. |
+| Refused: over the limit | an award above your limits. Raise them if it was meant, and enter it yourself. |
 
-**A conflict.** Both apps hold a different answer for the same thing.
-HEC keeps what it has and shows you both. *Keep ours* dismisses it;
-*Take theirs* writes the Stars value as you, audited as an admin action.
-The sync never decides this on its own.
+Waiting records are retried every run and apply as soon as the cause is
+fixed — up to 60 days after the lesson.
 
-**Turning it off.** The switch in the Stars sync panel, which takes
-effect on the next run. It stops immediately and nothing is lost — the
-feed is a cursor, so turning it back on picks up where it stopped. Use
-it if figures look wrong, if the Stars app is being rebuilt, or over a
-holiday.
+**To settle.** HEC and Pixel Pal disagree about a child's mark, and HEC kept
+its own. *Keep HEC's* closes it. *Use Pixel Pal's* marks it through HEC's
+normal register, as you.
 
-**If the teacher leaves.** The connection stops by itself: the sync
-checks they are still active and still hold the role. Pick a new teacher
-who meets both conditions in step 2, and it resumes.
+**Turning it off.** The Schedule switch. Nothing is lost: Pixel Pal keeps
+its records and they arrive when it is back on.
 
-**Rotating the secret.** Ask the Stars dev to set a new one and accept
-both for an hour. Change `STARS_SYNC_SECRET` in your dashboard within
-that hour. No code change.
+**If the teacher leaves.** Their records stop, and wait. Choose another
+teacher who is on the classes' roster, and they apply.
 
----
+**Rotating the secret again.** Pixel Pal sets a new one and accepts both for
+an hour; change `STARPASSCODE` within that hour. No code change.
 
 ## What the sync can never do
 
-Worth knowing, because it bounds what can go wrong. It acts as a
-teacher, so the database refuses the rest whatever the code says:
+It checks HEC's own rule — does this teacher teach this class — before
+every write, and the database itself refuses the rest:
 
-- It cannot touch money — tuition, payments, invoices, payroll,
-  expenditures.
-- It cannot see or change families, staff, or user accounts.
-- It cannot create or delete a student, a class, a session or an
-  enrolment. **Sessions are what teachers are paid for**, so a sync that
-  made one would be writing somebody's wages.
-- It cannot reach any class except the three you mapped.
-- It cannot overwrite something a teacher recorded in HEC. That becomes
-  a conflict for you.
+- nothing about money: tuition settings, payments, invoices, payroll;
+- nothing about families, staff or accounts;
+- it never creates or deletes a student, class, lesson or enrolment;
+- it never touches a class you have not mapped;
+- it never overwrites a mark somebody made in HEC.

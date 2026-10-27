@@ -1,52 +1,36 @@
 /**
- * Stars sync — the admin's control panel for mirroring another app's
- * registers, points and homework into HEC.
+ * Stars Sync - mirrors registers and points from Pixel Pal into HEC.
  *
- * WHAT THIS PAGE CAN AND CANNOT DO TODAY. Everything here is
- * configuration: which Stars class is which HEC class, who the sync acts
- * as, which children are matched, and the switch that stops it. The
- * engine that reads the Stars feed and applies events does not exist
- * yet - the Stars app's export endpoint has not been built. So the
- * activity panels below are honest about being empty rather than
- * pretending.
+ * Every decision about a child's record is made in the database
+ * (stars_sync_apply_page, 20261027100000); the edge function stars-sync
+ * fetches Pixel Pal's feed and calls it, every five minutes or when an
+ * admin presses "Run now". This page is where an admin sets it up, sees
+ * what it did, and settles what it would not do on its own.
  *
- * That order is deliberate and not a half-measure: mapping is the slow
- * part, it needs a person who knows the children, and it can be finished
- * long before the feed exists. The day the endpoint lands, this is
- * already done.
+ * THE ORDER ON THE PAGE IS THE ORDER OF SETTING IT UP. Start date and
+ * teacher, then classes, then children, then one supervised run, then
+ * the switch. Each section says what is still missing before the next
+ * one can matter.
  *
- * WHY READINESS IS THE LOUDEST THING ON THE PAGE. The sync acts as a
- * real teacher and inherits exactly their permissions, so "will this
- * work" is a question about that person. Two different row policies
- * decide it and they fail in opposite directions, quietly:
+ * PIXEL PAL'S LIST OF CHILDREN IS NEVER STORED. The paste helper reads it
+ * into this page's memory to make matching 22 nicknames practical - each
+ * one offered only the children enrolled in that class - and saves only
+ * the pairs of ids. Names stay in Pixel Pal, where they came from.
  *
- *   registers  need the teacher to be on the SESSION rows
- *   points,    need them on the class ROSTER - as default teacher, or a
- *   homework,  weekly slot. A cover teacher works for 45 days after
- *   grades     their last lesson and then stops, mid-term.
- *
- * A half-ready class looks fine for weeks. So the readiness column says
- * which half works, in words, before anything is switched on.
- *
- * See docs/STARS_SYNC_SPEC.md and docs/STARS_SYNC_SETUP.md.
+ * See docs/STARS_SYNC_SETUP.md.
  */
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -56,13 +40,33 @@ import { SectionHeader } from "@/components/quest/SectionHeader";
 import { toast } from "sonner";
 import { dayjs } from "@/lib/date";
 import {
-  AlertTriangle, CheckCircle2, Link2, Loader2, PauseCircle,
-  Plug, Trash2, Users,
+  AlertTriangle, CheckCircle2, ClipboardPaste, Clock, Link2, Loader2,
+  PauseCircle, Play, Trash2, Users,
 } from "lucide-react";
 
-/** The sentinel a Select uses for "no teacher of its own". Radix Select
- *  refuses an empty string as an item value. */
-const USE_DEFAULT = "__default__";
+/** A Select item cannot have an empty value; this stands for "none". */
+const NONE = "__none__";
+
+const PENDING = [
+  "skipped_unmapped", "skipped_no_session", "skipped_no_homework", "skipped_disabled",
+  "skipped_not_permitted", "skipped_not_enrolled", "skipped_unsupported",
+];
+
+const OUTCOME_LABEL: Record<string, string> = {
+  applied: "Applied",
+  conflict: "Conflict",
+  retracted: "Withdrawn",
+  rejected: "Refused",
+  duplicate: "Duplicate",
+  skipped_unmapped: "Waiting: not matched",
+  skipped_no_session: "Waiting: no lesson",
+  skipped_no_homework: "Waiting: no homework",
+  skipped_disabled: "Waiting: paused",
+  skipped_not_permitted: "Waiting: teacher",
+  skipped_not_enrolled: "Waiting: not enrolled",
+  skipped_unsupported: "Waiting: not supported yet",
+  skipped_before_start: "Before start date",
+};
 
 type ReadinessStatus = "ready" | "partial" | "paused" | "blocked";
 
@@ -72,74 +76,109 @@ interface Readiness {
   class_name: string;
   teacher_id: string | null;
   teacher_name: string | null;
-  teacher_is_default: boolean;
-  teacher_is_active: boolean;
-  teacher_has_login: boolean;
-  sessions_total: number;
-  sessions_with_teacher: number;
+  can_sync: boolean;
+  via_roster: boolean;
   map_enabled: boolean;
-  can_sync_points: boolean;
-  can_sync_attendance: boolean;
   status: ReadinessStatus;
   detail: string;
 }
 
-const STATUS_STYLE: Record<ReadinessStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+interface SyncStatus {
+  schedule_installed: boolean;
+  http_installed: boolean;
+  function_known: boolean;
+  running: boolean;
+  pending: number;
+  open_conflicts: number;
+}
+
+interface RunSummary {
+  counts?: Record<string, number>;
+  pages?: number;
+  warnings?: string[];
+}
+
+const STATUS_BADGE: Record<ReadinessStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   ready: { label: "Ready", variant: "default" },
-  partial: { label: "Half working", variant: "outline" },
+  partial: { label: "Works for now", variant: "outline" },
   paused: { label: "Paused", variant: "secondary" },
   blocked: { label: "Blocked", variant: "destructive" },
 };
 
-function StatusBadge({ status }: { status: ReadinessStatus }) {
-  const s = STATUS_STYLE[status] ?? STATUS_STYLE.blocked;
-  return (
-    <Badge variant={s.variant} className="whitespace-nowrap">
-      {status === "ready" && <CheckCircle2 className="mr-1 h-3 w-3" />}
-      {status === "partial" && <AlertTriangle className="mr-1 h-3 w-3" />}
-      {status === "paused" && <PauseCircle className="mr-1 h-3 w-3" />}
-      {status === "blocked" && <AlertTriangle className="mr-1 h-3 w-3" />}
-      {s.label}
-    </Badge>
-  );
+function describeCounts(counts: Record<string, number> | undefined): string {
+  if (!counts) return "nothing to do";
+  const parts = Object.entries(counts)
+    .filter(([k, n]) => n > 0 && k !== "already_done")
+    .map(([k, n]) => `${n} ${(OUTCOME_LABEL[k] ?? k).toLowerCase()}`);
+  return parts.length ? parts.join(", ") : "nothing new";
+}
+
+/** A function error's own message, where the response carried one. */
+async function functionErrorMessage(error: unknown): Promise<string> {
+  const ctx = (error as { context?: { json?: () => Promise<unknown> } })?.context;
+  try {
+    const body = (await ctx?.json?.()) as { error?: string; message?: string } | undefined;
+    if (body?.error) return body.error;
+    if (body?.message) return body.message;
+  } catch {
+    // fall through to the generic message
+  }
+  return error instanceof Error ? error.message : "The sync could not be run.";
 }
 
 export default function StarsSyncTab() {
   const queryClient = useQueryClient();
-
-  // Everything this page writes invalidates most of what it reads, so
-  // the keys are refreshed together rather than one at a time.
   const refresh = () => {
-    for (const k of ["stars-connection", "stars-class-map", "stars-student-map",
-                     "stars-readiness", "stars-events", "stars-conflicts"]) {
+    for (const k of ["stars-connection", "stars-cursor", "stars-status", "stars-class-map",
+                     "stars-student-map", "stars-readiness", "stars-events", "stars-conflicts",
+                     "stars-enrolled"]) {
       queryClient.invalidateQueries({ queryKey: [k] });
     }
   };
+  const fail = (e: unknown, fallback: string) => toast.error(e instanceof Error ? e.message : fallback);
 
-  const fail = (e: unknown, fallback: string) =>
-    toast.error(e instanceof Error ? e.message : fallback);
-
-  /* ------------------------------------------------------ the data */
+  /* --------------------------------------------------------- reads */
 
   const connection = useQuery({
     queryKey: ["stars-connection"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stars_sync_connection")
-        .select("id, enabled, default_teacher_id, endpoint_label, updated_at")
+        .select("enabled, default_teacher_id, sync_from, max_points_per_event, max_points_per_day")
         .maybeSingle();
       if (error) throw error;
       return data;
     },
   });
 
+  const cursor = useQuery({
+    queryKey: ["stars-cursor"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stars_sync_cursor")
+        .select("last_seq, last_run_at, last_error, last_summary, last_run_by")
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 60_000,
+  });
+
+  const status = useQuery({
+    queryKey: ["stars-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("stars_sync_status");
+      if (error) throw error;
+      return data as unknown as SyncStatus;
+    },
+    refetchInterval: 60_000,
+  });
+
   const teachers = useQuery({
     queryKey: ["stars-teachers"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("teachers")
-        .select("id, full_name, is_active, user_id")
-        .order("full_name");
+        .from("teachers").select("id, full_name, is_active, user_id").order("full_name");
       if (error) throw error;
       return data ?? [];
     },
@@ -149,9 +188,7 @@ export default function StarsSyncTab() {
     queryKey: ["stars-classes"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("classes")
-        .select("id, name, default_teacher_id, is_active")
-        .order("name");
+        .from("classes").select("id, name, is_active").order("name");
       if (error) throw error;
       return data ?? [];
     },
@@ -160,10 +197,7 @@ export default function StarsSyncTab() {
   const students = useQuery({
     queryKey: ["stars-students"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("students")
-        .select("id, full_name")
-        .order("full_name");
+      const { data, error } = await supabase.from("students").select("id, full_name").order("full_name");
       if (error) throw error;
       return data ?? [];
     },
@@ -173,8 +207,7 @@ export default function StarsSyncTab() {
     queryKey: ["stars-class-map"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("stars_class_map")
-        .select("stars_class_id, class_id, teacher_id, enabled, created_at");
+        .from("stars_class_map").select("stars_class_id, class_id, teacher_id, enabled");
       if (error) throw error;
       return data ?? [];
     },
@@ -184,9 +217,7 @@ export default function StarsSyncTab() {
     queryKey: ["stars-student-map"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("stars_student_map")
-        .select("stars_student_id, student_id, created_at")
-        .order("stars_student_id");
+        .from("stars_student_map").select("stars_student_id, student_id, created_at");
       if (error) throw error;
       return data ?? [];
     },
@@ -201,17 +232,34 @@ export default function StarsSyncTab() {
     },
   });
 
+  // Children enrolled now in each mapped class: what the matcher offers.
+  const mappedClassIds = useMemo(() => (classMap.data ?? []).map((m) => m.class_id), [classMap.data]);
+  const enrolled = useQuery({
+    queryKey: ["stars-enrolled", mappedClassIds],
+    enabled: mappedClassIds.length > 0,
+    queryFn: async () => {
+      const today = dayjs().format("YYYY-MM-DD");
+      const { data, error } = await supabase
+        .from("enrollments")
+        .select("student_id, class_id, start_date, end_date")
+        .in("class_id", mappedClassIds);
+      if (error) throw error;
+      return (data ?? []).filter((e) => e.start_date <= today && (!e.end_date || e.end_date >= today));
+    },
+  });
+
   const events = useQuery({
     queryKey: ["stars-events"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stars_sync_events")
-        .select("event_id, seq, kind, outcome, outcome_note, received_at")
-        .order("received_at", { ascending: false })
-        .limit(50);
+        .select("event_id, seq, kind, outcome, outcome_note, lesson_date, stars_class_id, stars_student_id, processed_at, attempts")
+        .order("processed_at", { ascending: false })
+        .limit(200);
       if (error) throw error;
       return data ?? [];
     },
+    refetchInterval: 60_000,
   });
 
   const conflicts = useQuery({
@@ -219,19 +267,21 @@ export default function StarsSyncTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stars_sync_conflicts")
-        .select("id, event_id, ours, theirs, detected_at")
+        .select("id, event_id, session_id, student_id, ours, theirs, detected_at, students(full_name), sessions(date, classes(name))")
         .is("resolved_at", null)
-        .order("detected_at", { ascending: false })
-        .limit(50);
+        .order("detected_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
   });
 
-  /* --------------------------------------------------- the writing */
+  /* -------------------------------------------------------- writes */
 
   const saveConnection = useMutation({
-    mutationFn: async (patch: { enabled?: boolean; default_teacher_id?: string | null }) => {
+    mutationFn: async (patch: {
+      enabled?: boolean; default_teacher_id?: string | null; sync_from?: string | null;
+      max_points_per_event?: number; max_points_per_day?: number;
+    }) => {
       const { error } = await supabase
         .from("stars_sync_connection")
         .update({ ...patch, updated_at: new Date().toISOString() })
@@ -242,22 +292,34 @@ export default function StarsSyncTab() {
     onSuccess: (patch) => {
       if (patch.enabled !== undefined) {
         toast.success(patch.enabled
-          ? "Connection on — the next run will read the Stars feed"
-          : "Connection off — nothing will be read or written");
+          ? "Schedule on — Pixel Pal is read every five minutes"
+          : "Schedule off — nothing is read until it is turned back on");
       } else {
         toast.success("Saved");
       }
       refresh();
     },
-    onError: (e) => fail(e, "Could not change the connection"),
+    onError: (e) => fail(e, "Could not save"),
+  });
+
+  const runNow = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("stars-sync", { body: {} });
+      if (error) throw new Error(await functionErrorMessage(error));
+      return data as { status?: string; message?: string; counts?: Record<string, number> };
+    },
+    onSuccess: (data) => {
+      if (data?.status === "busy") toast.info(data.message ?? "A sync is already running.");
+      else toast.success(`Sync finished: ${describeCounts(data?.counts)}.`);
+      refresh();
+    },
+    onError: (e) => { fail(e, "The sync could not be run"); refresh(); },
   });
 
   const addClass = useMutation({
     mutationFn: async (v: { starsId: string; classId: string; teacherId: string | null }) => {
       const { error } = await supabase.from("stars_class_map").insert({
-        stars_class_id: v.starsId.trim(),
-        class_id: v.classId,
-        teacher_id: v.teacherId,
+        stars_class_id: v.starsId.trim(), class_id: v.classId, teacher_id: v.teacherId,
       });
       if (error) throw error;
     },
@@ -267,148 +329,185 @@ export default function StarsSyncTab() {
 
   const updateClass = useMutation({
     mutationFn: async (v: { starsId: string; patch: { teacher_id?: string | null; enabled?: boolean } }) => {
-      const { error } = await supabase
-        .from("stars_class_map").update(v.patch).eq("stars_class_id", v.starsId);
+      const { error } = await supabase.from("stars_class_map").update(v.patch).eq("stars_class_id", v.starsId);
       if (error) throw error;
     },
-    onSuccess: () => { refresh(); },
+    onSuccess: refresh,
     onError: (e) => fail(e, "Could not update that class"),
   });
 
   const removeClass = useMutation({
     mutationFn: async (starsId: string) => {
-      const { error } = await supabase
-        .from("stars_class_map").delete().eq("stars_class_id", starsId);
+      const { error } = await supabase.from("stars_class_map").delete().eq("stars_class_id", starsId);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Class unmapped"); refresh(); },
     onError: (e) => fail(e, "Could not unmap that class"),
   });
 
-  const addStudent = useMutation({
-    mutationFn: async (v: { starsId: string; studentId: string }) => {
-      const { error } = await supabase.from("stars_student_map").insert({
-        stars_student_id: v.starsId.trim(),
-        student_id: v.studentId,
-      });
+  const addStudents = useMutation({
+    mutationFn: async (pairs: { stars_student_id: string; student_id: string }[]) => {
+      const { error } = await supabase.from("stars_student_map").insert(pairs);
       if (error) throw error;
+      return pairs.length;
     },
-    onSuccess: () => { toast.success("Student matched"); refresh(); },
-    onError: (e) => fail(e, "Could not match that student"),
+    onSuccess: (n) => { toast.success(`${n} ${n === 1 ? "child" : "children"} matched`); refresh(); },
+    onError: (e) => fail(e, "Could not save the matches"),
   });
 
   const removeStudent = useMutation({
     mutationFn: async (starsId: string) => {
-      const { error } = await supabase
-        .from("stars_student_map").delete().eq("stars_student_id", starsId);
+      const { error } = await supabase.from("stars_student_map").delete().eq("stars_student_id", starsId);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Student unmatched"); refresh(); },
-    onError: (e) => fail(e, "Could not unmatch that student"),
+    onSuccess: () => { toast.success("Child unmatched"); refresh(); },
+    onError: (e) => fail(e, "Could not unmatch that child"),
   });
 
-  /* ------------------------------------------------------- the form */
+  const resolve = useMutation({
+    mutationFn: async (v: { conflictId: string; resolution: "kept_ours" | "took_theirs";
+                            sessionId?: string; studentId?: string; status?: string }) => {
+      if (v.resolution === "took_theirs") {
+        // Through HEC's own marking path, as this admin: the register, the
+        // Held flip, tuition and streaks, exactly as if marked here.
+        const { error } = await supabase.functions.invoke("mark-attendance", {
+          body: { sessionId: v.sessionId, studentId: v.studentId, status: v.status },
+        });
+        if (error) throw new Error(await functionErrorMessage(error));
+      }
+      const { error } = await supabase.rpc("stars_sync_resolve_conflict", {
+        p_conflict_id: v.conflictId, p_resolution: v.resolution,
+      });
+      if (error) throw error;
+      return v.resolution;
+    },
+    onSuccess: (r) => {
+      toast.success(r === "took_theirs" ? "Pixel Pal's mark applied" : "HEC's mark kept");
+      refresh();
+    },
+    onError: (e) => fail(e, "Could not settle that conflict"),
+  });
+
+  /* ------------------------------------------------------ local state */
 
   const [newClassStarsId, setNewClassStarsId] = useState("");
   const [newClassId, setNewClassId] = useState("");
-  const [newClassTeacher, setNewClassTeacher] = useState(USE_DEFAULT);
-  const [newStudentStarsId, setNewStudentStarsId] = useState("");
-  const [newStudentId, setNewStudentId] = useState("");
+  const [newClassTeacher, setNewClassTeacher] = useState(NONE);
+  const [singleStarsId, setSingleStarsId] = useState("");
+  const [singleChildId, setSingleChildId] = useState("");
+  const [pasted, setPasted] = useState("");
+  const [picks, setPicks] = useState<Record<string, string>>({});
   const [confirmUnmapClass, setConfirmUnmapClass] = useState<Readiness | null>(null);
-  const [confirmUnmapStudent, setConfirmUnmapStudent] = useState<string | null>(null);
-
-  const mappedClassIds = useMemo(
-    () => new Set((classMap.data ?? []).map((m) => m.class_id)),
-    [classMap.data],
-  );
-  const mappedStudentIds = useMemo(
-    () => new Set((studentMap.data ?? []).map((m) => m.student_id)),
-    [studentMap.data],
-  );
-  const usedStarsClassIds = useMemo(
-    () => new Set((classMap.data ?? []).map((m) => m.stars_class_id)),
-    [classMap.data],
-  );
-  const usedStarsStudentIds = useMemo(
-    () => new Set((studentMap.data ?? []).map((m) => m.stars_student_id)),
-    [studentMap.data],
-  );
+  const [confirmUnmatch, setConfirmUnmatch] = useState<string | null>(null);
+  const [confirmSwitchOn, setConfirmSwitchOn] = useState(false);
+  const [eventFilter, setEventFilter] = useState<"attention" | "all">("attention");
 
   const teacherName = (id: string | null | undefined) =>
     (teachers.data ?? []).find((t) => t.id === id)?.full_name ?? "—";
   const studentName = (id: string) =>
-    (students.data ?? []).find((s) => s.id === id)?.full_name ?? "Unknown student";
+    (students.data ?? []).find((s) => s.id === id)?.full_name ?? "Unknown child";
 
-  // A teacher the sync could actually act as. Someone with no login
-  // cannot be impersonated at all, and an archived one is refused by the
-  // readiness check - both are offered but labelled, because hiding them
-  // turns "why isn't she in the list" into a support question.
-  const selectableTeachers = teachers.data ?? [];
+  const matchedStudentIds = useMemo(() => new Set((studentMap.data ?? []).map((m) => m.student_id)), [studentMap.data]);
+  const matchedStarsIds = useMemo(() => new Map((studentMap.data ?? []).map((m) => [m.stars_student_id, m.student_id])), [studentMap.data]);
+  const mappedHecClassIds = useMemo(() => new Set(mappedClassIds), [mappedClassIds]);
+  const usedStarsClassIds = useMemo(() => new Set((classMap.data ?? []).map((m) => m.stars_class_id)), [classMap.data]);
+  const hecClassForStars = useMemo(
+    () => new Map((classMap.data ?? []).map((m) => [m.stars_class_id, m.class_id])),
+    [classMap.data],
+  );
+  const enrolledIn = useMemo(() => {
+    const byClass = new Map<string, Set<string>>();
+    for (const e of enrolled.data ?? []) {
+      const set = byClass.get(e.class_id) ?? new Set<string>();
+      set.add(e.student_id);
+      byClass.set(e.class_id, set);
+    }
+    return byClass;
+  }, [enrolled.data]);
 
-  const connectionOn = connection.data?.enabled === true;
+  // Pixel Pal's list, parsed in memory only.
+  const pastedRows = useMemo(() => {
+    if (!pasted.trim()) return { rows: [] as { id: string; name: string; starsClass: string | null }[], error: null as string | null };
+    try {
+      const parsed = JSON.parse(pasted) as {
+        students?: Record<string, unknown>; student_classes?: Record<string, unknown>;
+      };
+      if (!parsed?.students || typeof parsed.students !== "object") {
+        return { rows: [], error: "That list has no \"students\" section." };
+      }
+      const rows = Object.entries(parsed.students)
+        .filter(([, name]) => typeof name === "string")
+        .map(([id, name]) => ({
+          id: id.trim(),
+          name: name as string,
+          starsClass: typeof parsed.student_classes?.[id] === "string" ? (parsed.student_classes[id] as string) : null,
+        }))
+        .sort((a, b) => (a.starsClass ?? "").localeCompare(b.starsClass ?? "") || a.name.localeCompare(b.name));
+      return { rows, error: null };
+    } catch {
+      return { rows: [], error: "That is not the JSON Pixel Pal gave you. Paste the whole thing, from { to }." };
+    }
+  }, [pasted]);
+
+  const pickedChildIds = useMemo(() => new Set(Object.values(picks).filter((v) => v && v !== NONE)), [picks]);
+  const pendingPairs = useMemo(
+    () => Object.entries(picks)
+      .filter(([starsId, childId]) => childId && childId !== NONE && !matchedStarsIds.has(starsId))
+      .map(([stars_student_id, student_id]) => ({ stars_student_id, student_id })),
+    [picks, matchedStarsIds],
+  );
+
+  const conn = connection.data;
   const rows = readiness.data ?? [];
-  const blocked = rows.filter((r) => r.status === "blocked").length;
-  const partial = rows.filter((r) => r.status === "partial").length;
+  const notReady = rows.filter((r) => r.status === "blocked" || r.status === "partial").length;
+  const schedOn = conn?.enabled === true;
+  const st = status.data;
+  const lastSummary = (cursor.data?.last_summary ?? null) as RunSummary | null;
 
-  const canAddClass =
-    newClassStarsId.trim().length > 0 &&
-    !usedStarsClassIds.has(newClassStarsId.trim()) &&
-    newClassId.length > 0 &&
-    !addClass.isPending;
+  const attentionEvents = (events.data ?? []).filter(
+    (e) => e.outcome === "rejected" || PENDING.includes(e.outcome),
+  );
+  const shownEvents = eventFilter === "attention" ? attentionEvents : (events.data ?? []);
 
-  const canAddStudent =
-    newStudentStarsId.trim().length > 0 &&
-    !usedStarsStudentIds.has(newStudentStarsId.trim()) &&
-    newStudentId.length > 0 &&
-    !addStudent.isPending;
+  // What still stands between now and a working sync, in order.
+  const missing: string[] = [];
+  if (!conn?.sync_from) missing.push("Choose the date to sync lessons from.");
+  if (!conn?.default_teacher_id && rows.every((r) => !r.teacher_id)) missing.push("Choose the teacher the sync acts as.");
+  if (rows.length === 0) missing.push("Map at least one Pixel Pal class.");
+  if ((studentMap.data ?? []).length === 0) missing.push("Match the children.");
+  if (st && !st.function_known) missing.push("Run it once by hand — the schedule cannot start until somebody has.");
+  if (st && (!st.schedule_installed || !st.http_installed)) {
+    missing.push("The automatic schedule is not installed (pg_cron / pg_net). \"Run now\" works without it; see the setup guide.");
+  }
 
-  const loading = connection.isLoading || classMap.isLoading || readiness.isLoading;
-  const loadError = connection.error || classMap.error || readiness.error
-    || studentMap.error || teachers.error || classes.error;
-
+  const loadError = connection.error || cursor.error || classMap.error || readiness.error || studentMap.error;
   if (loadError) {
     return (
       <Card className="border-destructive/60">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <AlertTriangle className="h-4 w-4 text-destructive" />
-            Stars sync could not be loaded
+            Stars Sync could not be loaded
           </CardTitle>
           <CardDescription>
             {loadError instanceof Error ? loadError.message : "Something went wrong."}
-            {" "}If this says a table is missing from the schema cache, the migration
-            (20261023100000) has not been applied yet.
+            {" "}If a table is reported missing from the schema cache, migration 20261027100000 has not been applied yet.
           </CardDescription>
         </CardHeader>
       </Card>
     );
   }
 
+  const loading = connection.isLoading || classMap.isLoading || readiness.isLoading;
+
   return (
     <div className="space-y-6">
       <PageHero
         eyebrow="Integrations"
-        title="Stars sync"
-        subtitle="Mirror registers, points and homework from the Stars app into HEC."
+        title="Stars Sync"
+        subtitle="Registers and points recorded in Pixel Pal, applied to HEC as your teacher."
         variant="glacier"
       />
-
-      {/* The engine does not exist yet. Say so once, at the top, rather
-          than leaving an admin to wonder why nothing ever arrives. */}
-      <Card className="border-amber-500/50 bg-amber-500/5">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Plug className="h-4 w-4 text-amber-600" />
-            Not connected yet
-          </CardTitle>
-          <CardDescription>
-            The Stars app's export endpoint has not been built, so nothing is being
-            read and the activity below will stay empty. Everything on this page is
-            set-up you can finish now — matching children is the slow part, and it
-            keeps. See <span className="font-medium">docs/STARS_SYNC_SETUP.md</span>.
-          </CardDescription>
-        </CardHeader>
-      </Card>
 
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -416,95 +515,177 @@ export default function StarsSyncTab() {
         </div>
       ) : (
         <>
-          {/* ------------------------------------------- connection */}
-          <SectionHeader title="Connection" subtitle="The master switch, and who the sync acts as." />
+          {/* --------------------------------------------- state of play */}
           <Card>
             <CardContent className="space-y-4 pt-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <Label htmlFor="stars-enabled" className="text-sm font-medium">
-                    {connectionOn ? "On" : "Off"}
-                  </Label>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={schedOn ? "default" : "secondary"}>{schedOn ? "Schedule on" : "Schedule off"}</Badge>
+                    {st?.running && <Badge variant="outline"><Loader2 className="mr-1 h-3 w-3 animate-spin" />Running</Badge>}
+                    {(st?.open_conflicts ?? 0) > 0 && <Badge variant="destructive">{st?.open_conflicts} to settle</Badge>}
+                    {(st?.pending ?? 0) > 0 && <Badge variant="outline">{st?.pending} waiting</Badge>}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    {connectionOn
-                      ? "Each run reads whatever is new and applies it. Turning this off stops everything immediately; nothing is lost, because the feed is a cursor."
-                      : "Nothing is read and nothing is written. Turn this on only after you have checked one class and one child by eye."}
+                    {cursor.data?.last_run_at
+                      ? <>Last run {dayjs(cursor.data.last_run_at).format("D MMM, HH:mm")}
+                          {cursor.data.last_run_by ? ` (${cursor.data.last_run_by})` : ""}: {cursor.data.last_error ? "failed" : describeCounts(lastSummary?.counts)}.</>
+                      : "Never run."}
                   </p>
+                  {cursor.data?.last_error && (
+                    <p className="text-xs font-medium text-destructive">{cursor.data.last_error}</p>
+                  )}
+                  {(lastSummary?.warnings ?? []).length > 0 && (
+                    <p className="text-xs text-warning">{lastSummary?.warnings?.join(" ")}</p>
+                  )}
                 </div>
-                <Switch
-                  id="stars-enabled"
-                  checked={connectionOn}
-                  disabled={saveConnection.isPending}
-                  onCheckedChange={(enabled) => saveConnection.mutate({ enabled })}
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={() => runNow.mutate()}
+                    disabled={runNow.isPending || !conn?.sync_from || st?.running}
+                    variant="outline"
+                  >
+                    {runNow.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                    Run now
+                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="stars-schedule" className="text-sm">Schedule</Label>
+                    <Switch
+                      id="stars-schedule"
+                      checked={schedOn}
+                      disabled={saveConnection.isPending}
+                      onCheckedChange={(on) => (on ? setConfirmSwitchOn(true) : saveConnection.mutate({ enabled: false }))}
+                    />
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                "Run now" runs once, even with the schedule off — that is how the first,
+                supervised run happens. The schedule then repeats it every five minutes.
+                Turning it off loses nothing: records wait in Pixel Pal and arrive when it is back on.
+              </p>
+              {missing.length > 0 && (
+                <div className="rounded-md border border-warning/50 bg-warning/5 p-3 text-xs">
+                  <p className="mb-1 font-medium">Still to do</p>
+                  <ol className="list-decimal space-y-0.5 pl-4">
+                    {missing.map((m) => <li key={m}>{m}</li>)}
+                  </ol>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* --------------------------------------------------- setup */}
+          <SectionHeader title="Setup" subtitle="Where to start, who the sync acts as, and its limits." />
+          <Card>
+            <CardContent className="grid gap-5 pt-6 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="stars-from" className="text-sm">Sync lessons from</Label>
+                <Input
+                  id="stars-from"
+                  type="date"
+                  className="w-full sm:w-[220px]"
+                  value={conn?.sync_from ?? ""}
+                  onChange={(e) => e.target.value && saveConnection.mutate({ sync_from: e.target.value })}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Nothing for a lesson before this date is imported. If anybody has been typing
+                  Pixel Pal's points into HEC by hand, start after the last day they did —
+                  otherwise those points are added twice.
+                </p>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="stars-default-teacher" className="text-sm">Default teacher</Label>
+                <Label htmlFor="stars-teacher" className="text-sm">Acts as</Label>
                 <Select
-                  value={connection.data?.default_teacher_id ?? USE_DEFAULT}
-                  onValueChange={(v) =>
-                    saveConnection.mutate({ default_teacher_id: v === USE_DEFAULT ? null : v })}
+                  value={conn?.default_teacher_id ?? NONE}
+                  onValueChange={(v) => saveConnection.mutate({ default_teacher_id: v === NONE ? null : v })}
                 >
-                  <SelectTrigger id="stars-default-teacher" className="w-full sm:w-[320px]">
+                  <SelectTrigger id="stars-teacher" className="w-full sm:w-[280px]">
                     <SelectValue placeholder="Choose a teacher" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={USE_DEFAULT}>None</SelectItem>
-                    {selectableTeachers.map((t) => (
+                    <SelectItem value={NONE}>Nobody</SelectItem>
+                    {(teachers.data ?? []).map((t) => (
                       <SelectItem key={t.id} value={t.id}>
-                        {t.full_name}
-                        {t.is_active === false ? " (archived)" : ""}
-                        {!t.user_id ? " — no login" : ""}
+                        {t.full_name}{t.is_active === false ? " (archived)" : ""}{!t.user_id ? " — no login" : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Used by any class below that does not name its own. The sync can do
-                  exactly what this person can do in HEC and nothing more — it cannot
-                  reach money, families, staff or any class you have not mapped.
+                  Marks and points are recorded as this teacher, and only where they teach in
+                  HEC. Nothing reaches money, families, staff or a class you have not mapped.
+                  A class below can name its own teacher instead.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="stars-cap-award" className="text-sm">Largest single award</Label>
+                <Input
+                  id="stars-cap-award"
+                  type="number"
+                  min={1}
+                  max={1000}
+                  className="w-[140px]"
+                  defaultValue={conn?.max_points_per_event ?? 100}
+                  key={`award-${conn?.max_points_per_event}`}
+                  onBlur={(e) => {
+                    const n = Number(e.target.value);
+                    if (Number.isInteger(n) && n >= 1 && n <= 1000 && n !== conn?.max_points_per_event) {
+                      saveConnection.mutate({ max_points_per_event: n });
+                    }
+                  }}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="stars-cap-day" className="text-sm">Most points one child can gain from Pixel Pal in a day</Label>
+                <Input
+                  id="stars-cap-day"
+                  type="number"
+                  min={1}
+                  max={5000}
+                  className="w-[140px]"
+                  defaultValue={conn?.max_points_per_day ?? 300}
+                  key={`day-${conn?.max_points_per_day}`}
+                  onBlur={(e) => {
+                    const n = Number(e.target.value);
+                    if (Number.isInteger(n) && n >= 1 && n <= 5000 && n !== conn?.max_points_per_day) {
+                      saveConnection.mutate({ max_points_per_day: n });
+                    }
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  A safety limit, not a judgement: a fault in another app must not be able to
+                  award a child thousands of points. Awards over it are refused and listed below.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* ---------------------------------------------- classes */}
-          <SectionHeader
-            title="Classes"
-            subtitle="Any Stars class to any HEC class, each with its own teacher if you want."
-          />
-
-          {(blocked > 0 || partial > 0) && (
+          {/* ------------------------------------------------- classes */}
+          <SectionHeader title="Classes" subtitle="Any Pixel Pal class to any HEC class." />
+          {notReady > 0 && (
             <Card className="border-warning/60 bg-warning/5">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <AlertTriangle className="h-4 w-4 text-warning" />
-                  {blocked > 0 && `${blocked} class${blocked === 1 ? "" : "es"} blocked`}
-                  {blocked > 0 && partial > 0 && " · "}
-                  {partial > 0 && `${partial} only half working`}
+                  {notReady} class{notReady === 1 ? "" : "es"} will not sync as things stand
                 </CardTitle>
-                <CardDescription>
-                  A half-working class syncs some of its records and not others, and
-                  looks healthy until a term's marks are missing. Fix these before
-                  turning the connection on.
-                </CardDescription>
+                <CardDescription>Each row says why. Records for these classes wait until it is fixed.</CardDescription>
               </CardHeader>
             </Card>
           )}
-
           <Card>
             <CardContent className="pt-6">
               {rows.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  No classes mapped yet. Add the first one below.
-                </p>
+                <p className="py-6 text-center text-sm text-muted-foreground">No classes mapped yet.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Stars class</TableHead>
+                        <TableHead>Pixel Pal</TableHead>
                         <TableHead>HEC class</TableHead>
                         <TableHead>Acts as</TableHead>
                         <TableHead className="text-center">On</TableHead>
@@ -513,76 +694,54 @@ export default function StarsSyncTab() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {rows.map((r) => (
-                        <TableRow key={r.stars_class_id}>
-                          <TableCell className="font-mono text-xs">{r.stars_class_id}</TableCell>
-                          <TableCell className="font-medium">{r.class_name}</TableCell>
-                          <TableCell>
-                            <Select
-                              value={
-                                (classMap.data ?? []).find(
-                                  (m) => m.stars_class_id === r.stars_class_id,
-                                )?.teacher_id ?? USE_DEFAULT
-                              }
-                              onValueChange={(v) =>
-                                updateClass.mutate({
-                                  starsId: r.stars_class_id,
-                                  patch: { teacher_id: v === USE_DEFAULT ? null : v },
-                                })}
-                            >
-                              <SelectTrigger className="h-8 w-[190px] text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value={USE_DEFAULT}>
-                                  Default ({teacherName(connection.data?.default_teacher_id)})
-                                </SelectItem>
-                                {selectableTeachers.map((t) => (
-                                  <SelectItem key={t.id} value={t.id}>
-                                    {t.full_name}
-                                    {t.is_active === false ? " (archived)" : ""}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Switch
-                              aria-label={`Sync ${r.class_name}`}
-                              checked={r.map_enabled}
-                              disabled={updateClass.isPending}
-                              onCheckedChange={(enabled) =>
-                                updateClass.mutate({
-                                  starsId: r.stars_class_id,
-                                  patch: { enabled },
-                                })}
-                            />
-                          </TableCell>
-                          <TableCell className="max-w-md">
-                            <div className="flex flex-col gap-1">
-                              <StatusBadge status={r.status} />
-                              <span className="text-xs text-muted-foreground">{r.detail}</span>
-                              {r.status !== "blocked" && (
-                                <span className="text-[11px] text-muted-foreground">
-                                  Registers {r.can_sync_attendance ? "✓" : "✗"} ·
-                                  {" "}Points, homework &amp; grades {r.can_sync_points ? "✓" : "✗"}
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              aria-label={`Unmap ${r.class_name}`}
-                              onClick={() => setConfirmUnmapClass(r)}
-                            >
-                              <Trash2 className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {rows.map((r) => {
+                        const own = (classMap.data ?? []).find((m) => m.stars_class_id === r.stars_class_id)?.teacher_id;
+                        const badge = STATUS_BADGE[r.status] ?? STATUS_BADGE.blocked;
+                        return (
+                          <TableRow key={r.stars_class_id}>
+                            <TableCell className="font-mono text-xs">{r.stars_class_id}</TableCell>
+                            <TableCell className="font-medium">{r.class_name}</TableCell>
+                            <TableCell>
+                              <Select
+                                value={own ?? NONE}
+                                onValueChange={(v) => updateClass.mutate({
+                                  starsId: r.stars_class_id, patch: { teacher_id: v === NONE ? null : v } })}
+                              >
+                                <SelectTrigger className="h-8 w-[180px] text-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value={NONE}>Default ({teacherName(conn?.default_teacher_id)})</SelectItem>
+                                  {(teachers.data ?? []).map((t) => (
+                                    <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Switch
+                                aria-label={`Sync ${r.class_name}`}
+                                checked={r.map_enabled}
+                                disabled={updateClass.isPending}
+                                onCheckedChange={(enabled) => updateClass.mutate({ starsId: r.stars_class_id, patch: { enabled } })}
+                              />
+                            </TableCell>
+                            <TableCell className="max-w-md">
+                              <Badge variant={badge.variant} className="mb-1 whitespace-nowrap">
+                                {r.status === "ready" && <CheckCircle2 className="mr-1 h-3 w-3" />}
+                                {r.status === "paused" && <PauseCircle className="mr-1 h-3 w-3" />}
+                                {(r.status === "partial" || r.status === "blocked") && <AlertTriangle className="mr-1 h-3 w-3" />}
+                                {badge.label}
+                              </Badge>
+                              <p className="text-xs text-muted-foreground">{r.detail}</p>
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="icon" className="h-8 w-8"
+                                aria-label={`Unmap ${r.class_name}`} onClick={() => setConfirmUnmapClass(r)}>
+                                <Trash2 className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
@@ -590,26 +749,18 @@ export default function StarsSyncTab() {
 
               <div className="mt-6 grid gap-3 border-t pt-5 sm:grid-cols-[1fr_1fr_1fr_auto]">
                 <div className="space-y-1.5">
-                  <Label htmlFor="new-stars-class" className="text-xs">Stars class id</Label>
-                  <Input
-                    id="new-stars-class"
-                    value={newClassStarsId}
-                    placeholder="as the Stars app calls it"
-                    onChange={(e) => setNewClassStarsId(e.target.value)}
-                  />
+                  <Label htmlFor="new-stars-class" className="text-xs">Pixel Pal class number</Label>
+                  <Input id="new-stars-class" value={newClassStarsId} placeholder="e.g. 19"
+                    onChange={(e) => setNewClassStarsId(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="new-hec-class" className="text-xs">HEC class</Label>
                   <Select value={newClassId} onValueChange={setNewClassId}>
                     <SelectTrigger id="new-hec-class"><SelectValue placeholder="Choose" /></SelectTrigger>
                     <SelectContent>
-                      {(classes.data ?? [])
-                        .filter((c) => !mappedClassIds.has(c.id))
-                        .map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name}{c.is_active === false ? " (archived)" : ""}
-                          </SelectItem>
-                        ))}
+                      {(classes.data ?? []).filter((c) => !mappedHecClassIds.has(c.id)).map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}{c.is_active === false ? " (archived)" : ""}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -618,273 +769,319 @@ export default function StarsSyncTab() {
                   <Select value={newClassTeacher} onValueChange={setNewClassTeacher}>
                     <SelectTrigger id="new-class-teacher"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={USE_DEFAULT}>
-                        Default ({teacherName(connection.data?.default_teacher_id)})
-                      </SelectItem>
-                      {selectableTeachers.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
-                      ))}
+                      <SelectItem value={NONE}>Default ({teacherName(conn?.default_teacher_id)})</SelectItem>
+                      {(teachers.data ?? []).map((t) => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="flex items-end">
                   <Button
                     className="w-full sm:w-auto"
-                    disabled={!canAddClass}
-                    onClick={() => {
-                      addClass.mutate(
-                        {
-                          starsId: newClassStarsId,
-                          classId: newClassId,
-                          teacherId: newClassTeacher === USE_DEFAULT ? null : newClassTeacher,
-                        },
-                        {
-                          onSuccess: () => {
-                            setNewClassStarsId("");
-                            setNewClassId("");
-                            setNewClassTeacher(USE_DEFAULT);
-                          },
-                        },
-                      );
-                    }}
+                    disabled={!newClassStarsId.trim() || usedStarsClassIds.has(newClassStarsId.trim()) || !newClassId || addClass.isPending}
+                    onClick={() => addClass.mutate(
+                      { starsId: newClassStarsId, classId: newClassId, teacherId: newClassTeacher === NONE ? null : newClassTeacher },
+                      { onSuccess: () => { setNewClassStarsId(""); setNewClassId(""); setNewClassTeacher(NONE); } },
+                    )}
                   >
-                    <Link2 className="mr-2 h-4 w-4" />
-                    Map
+                    <Link2 className="mr-2 h-4 w-4" /> Map
                   </Button>
                 </div>
               </div>
-              {newClassStarsId.trim().length > 0 && usedStarsClassIds.has(newClassStarsId.trim()) && (
-                <p className="mt-2 text-xs text-destructive">
-                  That Stars class is already mapped.
-                </p>
+              {usedStarsClassIds.has(newClassStarsId.trim()) && (
+                <p className="mt-2 text-xs text-destructive">That Pixel Pal class is already mapped.</p>
               )}
             </CardContent>
           </Card>
 
-          {/* --------------------------------------------- students */}
-          <SectionHeader
-            title="Children"
-            subtitle="Nothing syncs for a child who is not matched here. That is deliberate."
-          />
+          {/* ------------------------------------------------ children */}
+          <SectionHeader title="Children" subtitle="Nothing syncs for a child who is not matched. That is deliberate." />
           <Card>
-            <CardContent className="pt-6">
-              {(studentMap.data ?? []).length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  No children matched yet. A Stars record for an unmatched child is
-                  skipped and listed, never guessed at.
-                </p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Stars id</TableHead>
-                        <TableHead>Child in HEC</TableHead>
-                        <TableHead>Matched</TableHead>
-                        <TableHead className="w-10" />
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {(studentMap.data ?? []).map((m) => (
-                        <TableRow key={m.stars_student_id}>
-                          <TableCell className="font-mono text-xs">{m.stars_student_id}</TableCell>
-                          <TableCell className="font-medium">{studentName(m.student_id)}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {m.created_at ? dayjs(m.created_at).format("D MMM YYYY") : "—"}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              aria-label={`Unmatch ${studentName(m.student_id)}`}
-                              onClick={() => setConfirmUnmapStudent(m.stars_student_id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          </TableCell>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ClipboardPaste className="h-4 w-4" /> Match from Pixel Pal's list
+              </CardTitle>
+              <CardDescription>
+                Paste the list Pixel Pal gave you. Each child is offered only the children
+                enrolled in the HEC class their Pixel Pal class is mapped to, so a nickname
+                cannot be matched to a child in another class. The list is not saved — only
+                the matches are.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                value={pasted}
+                onChange={(e) => { setPasted(e.target.value); setPicks({}); }}
+                placeholder='{ "classes": { … }, "students": { … }, "student_classes": { … } }'
+                className="min-h-[90px] font-mono text-xs"
+              />
+              {pastedRows.error && <p className="text-xs text-destructive">{pastedRows.error}</p>}
+              {pastedRows.rows.length > 0 && (
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Pixel Pal</TableHead>
+                          <TableHead>Name in Pixel Pal</TableHead>
+                          <TableHead>Class</TableHead>
+                          <TableHead>Child in HEC</TableHead>
                         </TableRow>
-                      ))}
+                      </TableHeader>
+                      <TableBody>
+                        {pastedRows.rows.map((r) => {
+                          const already = matchedStarsIds.get(r.id);
+                          const hecClass = r.starsClass ? hecClassForStars.get(r.starsClass) : undefined;
+                          const pool = hecClass ? [...(enrolledIn.get(hecClass) ?? [])] : [];
+                          const choice = picks[r.id] ?? NONE;
+                          return (
+                            <TableRow key={r.id}>
+                              <TableCell className="font-mono text-xs">{r.id}</TableCell>
+                              <TableCell>{r.name}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{r.starsClass ?? "—"}</TableCell>
+                              <TableCell>
+                                {already ? (
+                                  <span className="text-xs"><CheckCircle2 className="mr-1 inline h-3 w-3 text-success" />{studentName(already)}</span>
+                                ) : !hecClass ? (
+                                  <span className="text-xs text-muted-foreground">Map class {r.starsClass ?? "?"} first</span>
+                                ) : (
+                                  <Select value={choice} onValueChange={(v) => setPicks((p) => ({ ...p, [r.id]: v }))}>
+                                    <SelectTrigger className="h-8 w-[220px] text-xs"><SelectValue placeholder="Choose" /></SelectTrigger>
+                                    <SelectContent className="max-h-72">
+                                      <SelectItem value={NONE}>Not yet</SelectItem>
+                                      {pool
+                                        .filter((sid) => !matchedStudentIds.has(sid) && (!pickedChildIds.has(sid) || choice === sid))
+                                        .map((sid) => ({ sid, name: studentName(sid) }))
+                                        .sort((a, b) => a.name.localeCompare(b.name))
+                                        .map(({ sid, name }) => <SelectItem key={sid} value={sid}>{name}</SelectItem>)}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs text-muted-foreground">
+                      Check every nickname. A wrong match moves one child's marks and points onto another.
+                    </p>
+                    <Button
+                      disabled={pendingPairs.length === 0 || addStudents.isPending}
+                      onClick={() => addStudents.mutate(pendingPairs, { onSuccess: () => setPicks({}) })}
+                    >
+                      <Users className="mr-2 h-4 w-4" /> Save {pendingPairs.length} match{pendingPairs.length === 1 ? "" : "es"}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Matched ({(studentMap.data ?? []).length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(studentMap.data ?? []).length === 0 ? (
+                <p className="py-4 text-sm text-muted-foreground">No children matched yet.</p>
+              ) : (
+                <div className="max-h-80 overflow-y-auto">
+                  <Table>
+                    <TableBody>
+                      {[...(studentMap.data ?? [])]
+                        .sort((a, b) => studentName(a.student_id).localeCompare(studentName(b.student_id)))
+                        .map((m) => (
+                          <TableRow key={m.stars_student_id}>
+                            <TableCell className="w-24 font-mono text-xs">{m.stars_student_id}</TableCell>
+                            <TableCell className="font-medium">{studentName(m.student_id)}</TableCell>
+                            <TableCell className="w-10">
+                              <Button variant="ghost" size="icon" className="h-8 w-8"
+                                aria-label={`Unmatch ${studentName(m.student_id)}`}
+                                onClick={() => setConfirmUnmatch(m.stars_student_id)}>
+                                <Trash2 className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                     </TableBody>
                   </Table>
                 </div>
               )}
-
-              <div className="mt-6 grid gap-3 border-t pt-5 sm:grid-cols-[1fr_1fr_auto]">
-                <div className="space-y-1.5">
-                  <Label htmlFor="new-stars-student" className="text-xs">Stars student id</Label>
-                  <Input
-                    id="new-stars-student"
-                    value={newStudentStarsId}
-                    placeholder="as the Stars app calls them"
-                    onChange={(e) => setNewStudentStarsId(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="new-hec-student" className="text-xs">Child in HEC</Label>
-                  <Select value={newStudentId} onValueChange={setNewStudentId}>
-                    <SelectTrigger id="new-hec-student"><SelectValue placeholder="Choose" /></SelectTrigger>
-                    <SelectContent className="max-h-72">
-                      {(students.data ?? [])
-                        .filter((s) => !mappedStudentIds.has(s.id))
-                        .map((s) => (
-                          <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    className="w-full sm:w-auto"
-                    disabled={!canAddStudent}
-                    onClick={() => {
-                      addStudent.mutate(
-                        { starsId: newStudentStarsId, studentId: newStudentId },
-                        {
-                          onSuccess: () => {
-                            setNewStudentStarsId("");
-                            setNewStudentId("");
-                          },
-                        },
-                      );
-                    }}
-                  >
-                    <Users className="mr-2 h-4 w-4" />
-                    Match
-                  </Button>
-                </div>
+              <div className="mt-4 grid gap-3 border-t pt-4 sm:grid-cols-[1fr_1fr_auto]">
+                <Input value={singleStarsId} placeholder="Pixel Pal number" aria-label="Pixel Pal student number"
+                  onChange={(e) => setSingleStarsId(e.target.value)} />
+                <Select value={singleChildId} onValueChange={setSingleChildId}>
+                  <SelectTrigger aria-label="Child in HEC"><SelectValue placeholder="Child in HEC" /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {(students.data ?? []).filter((s) => !matchedStudentIds.has(s.id)).map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  disabled={!singleStarsId.trim() || matchedStarsIds.has(singleStarsId.trim()) || !singleChildId || addStudents.isPending}
+                  onClick={() => addStudents.mutate(
+                    [{ stars_student_id: singleStarsId.trim(), student_id: singleChildId }],
+                    { onSuccess: () => { setSingleStarsId(""); setSingleChildId(""); } },
+                  )}
+                >
+                  Match one
+                </Button>
               </div>
-              {newStudentStarsId.trim().length > 0 && usedStarsStudentIds.has(newStudentStarsId.trim()) && (
-                <p className="mt-2 text-xs text-destructive">
-                  That Stars id is already matched to a child.
-                </p>
+            </CardContent>
+          </Card>
+
+          {/* ----------------------------------------------- conflicts */}
+          <SectionHeader title="To settle" subtitle="Both apps hold a different mark. HEC kept its own; you decide." />
+          <Card>
+            <CardContent className="pt-6">
+              {(conflicts.data ?? []).length === 0 ? (
+                <p className="py-4 text-sm text-muted-foreground">Nothing to settle.</p>
+              ) : (
+                <div className="space-y-2">
+                  {(conflicts.data ?? []).map((c) => {
+                    const ours = (c.ours ?? {}) as { status?: string };
+                    const theirs = (c.theirs ?? {}) as { status?: string };
+                    const child = (c.students as { full_name?: string } | null)?.full_name ?? "A child";
+                    const lessonInfo = c.sessions as { date?: string; classes?: { name?: string } | null } | null;
+                    return (
+                      <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
+                        <div className="text-sm">
+                          <span className="font-medium">{child}</span>
+                          <span className="text-muted-foreground">
+                            {" "}· {lessonInfo?.classes?.name ?? "lesson"} {lessonInfo?.date ? dayjs(lessonInfo.date).format("D MMM") : ""}
+                          </span>
+                          <p className="text-xs">
+                            HEC has <strong>{ours.status ?? "?"}</strong>, Pixel Pal says <strong>{theirs.status ?? "?"}</strong>.
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" disabled={resolve.isPending}
+                            onClick={() => resolve.mutate({ conflictId: c.id, resolution: "kept_ours" })}>
+                            Keep HEC's
+                          </Button>
+                          <Button size="sm" disabled={resolve.isPending || !c.session_id || !c.student_id || !theirs.status}
+                            onClick={() => resolve.mutate({
+                              conflictId: c.id, resolution: "took_theirs",
+                              sessionId: c.session_id ?? undefined, studentId: c.student_id ?? undefined, status: theirs.status,
+                            })}>
+                            Use Pixel Pal's
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </CardContent>
           </Card>
 
-          {/* --------------------------------------------- activity */}
-          <SectionHeader title="Activity" subtitle="What arrived, and what became of it." />
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Recent events</CardTitle>
-                <CardDescription>
-                  Every record the Stars app sends, and whether it was applied,
-                  skipped or refused.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {(events.data ?? []).length === 0 ? (
-                  <p className="py-4 text-sm text-muted-foreground">
-                    Nothing yet — the feed has never been read.
-                  </p>
-                ) : (
-                  <div className="max-h-80 space-y-1 overflow-y-auto">
-                    {(events.data ?? []).map((e) => (
-                      <div key={e.event_id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-1.5 text-xs">
-                        <span className="font-medium">{e.kind}</span>
-                        <Badge variant={e.outcome === "applied" ? "default" : "secondary"}>
-                          {e.outcome}
+          {/* ------------------------------------------------ records */}
+          <SectionHeader title="Records" subtitle="Everything Pixel Pal sent, and what became of it." />
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+              <CardDescription>
+                {eventFilter === "attention"
+                  ? `${attentionEvents.length} waiting or refused. Waiting records are retried every run.`
+                  : "The latest 200."}
+              </CardDescription>
+              <Select value={eventFilter} onValueChange={(v) => setEventFilter(v as "attention" | "all")}>
+                <SelectTrigger className="h-8 w-[180px] text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="attention">Needs attention</SelectItem>
+                  <SelectItem value="all">Everything</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardHeader>
+            <CardContent>
+              {shownEvents.length === 0 ? (
+                <p className="py-4 text-sm text-muted-foreground">
+                  {(events.data ?? []).length === 0 ? "Nothing yet — Pixel Pal has not been read." : "Nothing needs attention."}
+                </p>
+              ) : (
+                <div className="max-h-[28rem] space-y-1 overflow-y-auto">
+                  {shownEvents.map((e) => (
+                    <div key={e.event_id} className="rounded-md bg-muted/40 px-3 py-2 text-xs">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant={e.outcome === "applied" ? "default" : e.outcome === "rejected" || e.outcome === "conflict" ? "destructive" : "secondary"}>
+                          {OUTCOME_LABEL[e.outcome] ?? e.outcome}
                         </Badge>
-                        <span className="text-muted-foreground">
-                          {dayjs(e.received_at).format("D MMM HH:mm")}
+                        <span className="font-medium">{e.kind}</span>
+                        {e.lesson_date && <span className="text-muted-foreground">lesson {dayjs(e.lesson_date).format("D MMM")}</span>}
+                        {e.stars_class_id && <span className="text-muted-foreground">class {e.stars_class_id}</span>}
+                        {e.stars_student_id && <span className="text-muted-foreground">child {e.stars_student_id}</span>}
+                        <span className="ml-auto flex items-center gap-1 text-muted-foreground">
+                          <Clock className="h-3 w-3" />{dayjs(e.processed_at).format("D MMM HH:mm")}
+                          {e.attempts > 1 ? ` · tried ${e.attempts}×` : ""}
                         </span>
-                        {e.outcome_note && (
-                          <span className="w-full text-muted-foreground">{e.outcome_note}</span>
-                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Conflicts</CardTitle>
-                <CardDescription>
-                  Both apps hold a different answer. HEC keeps what it has — a
-                  teacher's correction is never undone by the sync.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {(conflicts.data ?? []).length === 0 ? (
-                  <p className="py-4 text-sm text-muted-foreground">
-                    None. Nothing has been read yet.
-                  </p>
-                ) : (
-                  <div className="max-h-80 space-y-2 overflow-y-auto">
-                    {(conflicts.data ?? []).map((c) => (
-                      <div key={c.id} className="rounded-md border p-2 text-xs">
-                        <div className="text-muted-foreground">
-                          {dayjs(c.detected_at).format("D MMM HH:mm")}
-                        </div>
-                        <div className="mt-1 grid grid-cols-2 gap-2">
-                          <div><span className="font-medium">Ours:</span> {JSON.stringify(c.ours)}</div>
-                          <div><span className="font-medium">Theirs:</span> {JSON.stringify(c.theirs)}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                      {e.outcome_note && <p className="mt-1 text-muted-foreground">{e.outcome_note}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </>
       )}
 
-      {/* ------------------------------------------- confirmations */}
-      <AlertDialog
-        open={confirmUnmapClass !== null}
-        onOpenChange={(open) => !open && setConfirmUnmapClass(null)}
-      >
+      {/* ------------------------------------------------ confirmations */}
+      <AlertDialog open={confirmSwitchOn} onOpenChange={setConfirmSwitchOn}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Unmap {confirmUnmapClass?.class_name}?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Turn the schedule on?</AlertDialogTitle>
             <AlertDialogDescription>
-              Records already in HEC stay exactly as they are — this only stops
-              future Stars records for this class from arriving. To pause it
-              temporarily, use the On switch instead.
+              Pixel Pal will be read every five minutes and its registers and points applied
+              to HEC as {teacherName(conn?.default_teacher_id)}. Before this, run it once by
+              hand and check one child's register and points against Pixel Pal.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (confirmUnmapClass) removeClass.mutate(confirmUnmapClass.stars_class_id);
-                setConfirmUnmapClass(null);
-              }}
-            >
-              Unmap
+            <AlertDialogCancel>Not yet</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { saveConnection.mutate({ enabled: true }); setConfirmSwitchOn(false); }}>
+              Turn on
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog
-        open={confirmUnmapStudent !== null}
-        onOpenChange={(open) => !open && setConfirmUnmapStudent(null)}
-      >
+      <AlertDialog open={confirmUnmapClass !== null} onOpenChange={(o) => !o && setConfirmUnmapClass(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Unmatch this child?</AlertDialogTitle>
+            <AlertDialogTitle>Unmap {confirmUnmapClass?.class_name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Their records in HEC stay as they are. New Stars records for them will
-              be skipped and listed as unmatched until you match them again.
+              Records already in HEC stay as they are. New records for this class will wait,
+              unmatched, until it is mapped again. To pause it instead, use its On switch.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (confirmUnmapStudent) removeStudent.mutate(confirmUnmapStudent);
-                setConfirmUnmapStudent(null);
-              }}
-            >
-              Unmatch
-            </AlertDialogAction>
+            <AlertDialogAction onClick={() => {
+              if (confirmUnmapClass) removeClass.mutate(confirmUnmapClass.stars_class_id);
+              setConfirmUnmapClass(null);
+            }}>Unmap</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmUnmatch !== null} onOpenChange={(o) => !o && setConfirmUnmatch(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unmatch this child?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Their records in HEC stay as they are. New Pixel Pal records for them will wait
+              until they are matched again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (confirmUnmatch) removeStudent.mutate(confirmUnmatch);
+              setConfirmUnmatch(null);
+            }}>Unmatch</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

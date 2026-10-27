@@ -85,6 +85,19 @@ const SUITES = [
     migrations: ["20261023100000_stars_sync_foundation.sql"],
   },
   {
+    name: "stars sync engine",
+    file: "stars-sync-engine.test.mjs",
+    migrations: [
+      "20261023090000_homework_grading_integrity.sql",
+      "20261023100000_stars_sync_foundation.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261027100000_stars_sync_engine.sql",
+    ],
+  },
+  // Not a database test: the edge function's own decisions, and the
+  // after-effects of a mark that mark-attendance and the sync share.
+  { name: "stars sync core", file: "stars-sync-core.test.mjs", migrations: [] },
+  {
     name: "homework grading",
     file: "homework-grading.test.mjs",
     migrations: ["20261023090000_homework_grading_integrity.sql"],
