@@ -3,44 +3,64 @@
 Who does what, in order. `STARS_SYNC_SPEC.md` says what to build; this
 says how it gets switched on once it is built.
 
-**The admin screen exists: Admin → Stars Sync.** Its configuration half
-is built — the switch, the teacher, the class and child mappings, and
-the readiness check. The engine that reads the Stars feed and applies
-events is not, because the Stars app has nothing to read yet.
+The other app is **Pixel Pal**. "Stars" is one of its classes.
 
-So steps 0, 1, 2 and 4 you can do today. Step 3 waits on the Stars
-developer. Mapping is the slow part and it keeps: finish it now and the
-day the endpoint lands there is nothing left to do but switch on.
+**Where things stand, 27 Oct 2026:**
+
+| | |
+|---|---|
+| Pixel Pal's `export-events` endpoint | **done** — live, and refuses a wrong secret |
+| Admin → Stars Sync, configuration half | **done** — switch, teacher, mappings, readiness |
+| The fetch and the apply path | **not built** |
+| Pixel Pal's class numbers | **not supplied** — see step 0 |
+| Which student number is which child | **not supplied** |
 
 Three roles appear below:
 
 | | |
 |---|---|
 | **You** | the HEC admin, with the Supabase dashboard and the admin area |
-| **Stars dev** | whoever maintains the Stars app |
-| **Builder** | whoever implements Part B — Claude, Lovable, or a person |
+| **Pixel Pal dev** | whoever maintains the other app |
+| **Builder** | whoever implements the fetch and apply path |
 
 ---
 
-## Step 0 — Send Part A to the Stars dev
+## Step 0 — What is still owed by Pixel Pal
 
-Send them `STARS_SYNC_SPEC.md`, Part A. Nothing else can start until
-they have built the `export-events` endpoint: there is no feed to read.
+The endpoint and a secret have been handed over. Two things have not:
 
-Ask them for two things when it is ready:
+1. **The two class numbers.** They are shown in Pixel Pal under
+   **Settings → Plan → "Send class records to another app"**, and the
+   note arrived with them left blank. Nothing can be mapped without
+   them.
+2. **Which student number is which child.** This is personal data about
+   children. Ask for it privately, and type it straight into the
+   mapping screen — it does not belong in a chat, a spreadsheet left in
+   a shared folder, or this repository.
 
-1. **The endpoint URL** — `https://<their-project>.supabase.co/functions/v1/export-events`
-2. **A shared secret** they generate
+Also settle **Stars 2**. Three classes were named at the start; Pixel
+Pal offers Stars and Sanrio. A class nobody asks about simply never
+syncs, and nothing says so.
 
-**Ask for these in two separate messages, and not in anything public** —
-not a group chat, not a shared doc, not an email thread with other
-people on it. The URL on its own is harmless. The secret on its own is
-harmless. Together they are read access to their pupils' records.
+### Handling the secret
+
+The URL alone is harmless. The secret alone is harmless. **Together
+they are read access to another school's pupil records**, so they travel
+separately and never through anything public — not a group chat, not a
+shared document, not an email with several people on it.
+
+**If the two ever arrive together — in one message, one document, one
+screenshot — treat that secret as spent.** Ask for a new one before
+connecting anything. Pixel Pal accepts the old and the new for about an
+hour, so rotating costs nothing.
+
+The secret goes in **one place**: Supabase → Edge Functions → Secrets,
+as `STARS_SYNC_SECRET`. Never in a migration, a source file, a comment
+or a commit.
 
 **Do not accept their service-role key or database password if offered.**
-Part A says why: it would give this app total read and write over
-everything they own, for ever. If they offer it, point them back at the
-spec.
+It would give this app total read and write over everything they own,
+for ever. The shared secret is all that is needed.
 
 ---
 

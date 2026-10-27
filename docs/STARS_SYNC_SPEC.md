@@ -1,15 +1,15 @@
 # Stars → HEC sync: build specification
 
-A prompt for Claude. Two halves, because the two apps have different
-owners:
+Two halves, because the two apps have different owners:
 
-- **Part A** goes to whoever maintains the Stars app. It asks for one
-  small read-only endpoint and **no database credentials of any kind**.
-- **Part B** is built in this repo (`happy-english-club-team`). It is the
-  consumer.
+- **Part A** was the brief for Pixel Pal, the other app. **It has been
+  delivered** — the section below is now the contract as built, verified
+  live on 27 Oct 2026.
+- **Part B** is built in this repo (`happy-english-club-team`). Its
+  configuration half is done (`20261023100000`, Admin → Stars Sync); the
+  fetch and the apply path are not.
 
-Build Part A first. Part B cannot be tested without it, and the contract
-in Part A is what both sides must agree on.
+Part A is done, so Part B can now be built against something real.
 
 **For the admin turning it on rather than building it, see
 [STARS_SYNC_SETUP.md](STARS_SYNC_SETUP.md)** — who does what, in order,
@@ -19,14 +19,24 @@ and how to tell it is working.
 
 ## What this does
 
-The Stars app records attendance, points and homework for three classes
-that HEC also holds:
+Pixel Pal records attendance and points for classes that HEC also
+holds. The numbers come from Pixel Pal: **Settings → Plan → "Send class
+records to another app"**.
 
-| In Stars | In HEC |
-|---|---|
-| (their id) | **Stars** |
-| (their id) | **Stars 2** |
-| (their id) | **Sanrio Grade 6** |
+| Pixel Pal class number | In HEC | |
+|---|---|---|
+| *not yet supplied* | **Stars** | |
+| *not yet supplied* | **Sanrio Grade 6** | |
+| — | **Stars 2** | **not offered by Pixel Pal** |
+
+**Stars 2 is missing.** Three classes were named when this started;
+Pixel Pal's note lists two. Either it is not in Pixel Pal, or it was
+left out. Settle that before mapping, because a class nobody asks about
+simply never syncs and nothing says so.
+
+The list of which student number is which child comes separately and
+privately. It is personal data about children: it belongs in the mapping
+screen, not in a chat, a document or this repository.
 
 HEC is the school's system of record for registers, points, grades and
 reports. A teacher should mark a lesson once, in whichever app they are
@@ -60,130 +70,103 @@ never trusted.
 
 ---
 
-# PART A — for the Stars app's developer
+# PART A — DELIVERED. The contract as Pixel Pal actually built it
 
-You are adding **one read-only endpoint** to the Stars app so another
-school system can mirror what teachers record there. You are not giving
-anybody access to your database.
+The other app is called **Pixel Pal**. "Stars" is one of its classes, not
+the app. Everything below is what its developer delivered on 27 Oct 2026,
+verified live: the endpoint answers, and refuses both a missing and a
+wrong secret with 401.
 
-## What NOT to do
+This replaces the brief that used to be here. **Build Part B against
+this, not against what the brief asked for** — they are close but not
+identical, and the differences are listed at the end.
 
-Do not share your Supabase service-role key, your database password, or
-a direct Postgres connection. The service-role key bypasses every row
-policy you have; handing it over gives the other app total read *and
-write* over every table you own, for ever. Nothing below needs it.
-
-## 1. An outbox table
-
-```sql
-create table if not exists public.export_events (
-  seq          bigserial primary key,
-  event_id     uuid not null default gen_random_uuid() unique,
-  occurred_at  timestamptz not null default now(),
-  kind         text not null check (kind in (
-                 'attendance', 'points', 'homework', 'grade', 'retraction')),
-  class_ref    text not null,
-  student_ref  text,                 -- null for class-wide homework
-  lesson_date  date not null,
-  payload      jsonb not null
-);
-
-create index on public.export_events (seq);
+```
+GET https://jncqapcrqrtkqpdmfgma.supabase.co/functions/v1/export-events
+    ?since=<cursor>&limit=<n>
+Header: x-sync-secret: <the secret, held in Supabase secrets>
 ```
 
-`seq` is the cursor: the consumer asks for everything after a number it
-already has. **Do not paginate on `occurred_at`** — two rows written in
-the same millisecond tie, and the consumer then either re-reads them for
-ever or loses one. A bigserial cannot tie.
+- `since` starts at 0; `limit` defaults to 500, maximum 1000.
+- Answers `{ "events": [...], "next_cursor": <number> }`, **oldest
+  first**. Keep `next_cursor`, send it as `since` next time.
+- Nothing new: an empty list and the same cursor back.
+- No API key and no login beyond the secret. Wrong or missing → 401.
+- Read only. POST, PATCH and the rest → 405.
 
-`event_id` is the idempotency key. The consumer stores it and refuses to
-apply the same event twice, so a retried run is harmless. **Never reuse
-one.** A correction is a new event, never an edit to an old one.
+**The secret never enters this repository.** Not in a migration, not in
+a comment, not in a test fixture. It lives in Supabase secrets as
+`STARS_SYNC_SECRET`, set from the dashboard. If you are reading a secret
+in a source file, something has gone wrong.
 
-`class_ref` and `student_ref` are whatever stable identifiers your app
-already has. They must be **stable for the life of the student** — the
-mapping on the other side is keyed on them, and changing one silently
-detaches a child from their records. If your app has no stable student
-identifier, add one before anything else here.
+## An event
 
-## 2. Fill it where teachers record things
-
-A trigger on your existing tables is usually easier to get right than
-editing every write path, and it cannot be forgotten by the next
-feature. **Emit on deletes too** — see `retraction`.
-
-These field names are the contract:
+| field | |
+|---|---|
+| `seq` | the order; the cursor counts these |
+| `event_id` | uuid — store it, never apply the same one twice |
+| `occurred_at` | when it was recorded in Pixel Pal |
+| `kind` | `attendance` \| `points` \| `retraction` |
+| `class_ref` | Pixel Pal's permanent class number, **as text** |
+| `student_ref` | Pixel Pal's permanent student number, **as text** |
+| `lesson_date` | YYYY-MM-DD |
+| `payload` | below |
 
 ```jsonc
-// kind: "attendance"
-{ "status": "Present" | "Absent" | "Excused" | "Late",
-  "note": "optional string" }
+// attendance — TWO statuses only
+{ "status": "Present" | "Absent" }
 
-// kind: "points"
-{ "points": 5,                      // integer, may be negative
-  "category": "participation" | "homework" | "reading_theory"
-             | "vocabulary_quiz" | "adjustment",
-  "reason": "optional string" }
+// points
+{ "points": 5,            // negative for a deduction
+  "category": "homework" | "reading_theory" | "vocabulary_quiz"
+            | "adjustment" | "participation",
+  "reason": "free text from the teacher" }
 
-// kind: "homework"  — the assignment itself. student_ref is null.
-{ "homework_ref": "your stable id for this assignment",
-  "title": "Unit 4 workbook p.22",
-  "body": "optional instructions",
-  "due_date": "2026-11-02" }        // optional, YYYY-MM-DD
-
-// kind: "grade"  — one student's result for a homework already sent
-{ "homework_ref": "the same id as the homework event",
-  "grade": "A" | "8/10" | whatever string your app uses,
-  "feedback": "optional string",
-  "status": "graded" | "submitted" | "missing",
-  "graded_at": "2026-11-03T09:00:00Z" }
-
-// kind: "retraction"  — undo one earlier event
-{ "retracts_event_id": "the uuid of the event being undone",
-  "reason": "optional string" }
+// retraction
+{ "retracts_event_id": "<an earlier event_id>",
+  "reason": "changed" | "removed" }
 ```
 
-A `grade` must come **after** the `homework` event it refers to. If a
-grade arrives first the consumer holds it as `skipped_no_homework`; emit
-the homework and the grade will apply on a later run.
+Pixel Pal derives `category` from what the teacher typed: *homework* →
+`homework`, *reading* → `reading_theory`, *vocabulary* or *quiz* →
+`vocabulary_quiz`, **any deduction** → `adjustment`, anything else →
+`participation`. So a negative award always arrives as `adjustment`.
+All five map straight onto `point_transactions.type`.
 
-A `retraction` names the `event_id` it undoes and nothing else. Do not
-try to describe the deletion — the consumer already knows what that
-event did and will reverse exactly that. A retraction of a retraction is
-not supported; emit a fresh event instead.
+## Where this differs from the brief, and what to do about it
 
-## 3. The endpoint
+| Brief | Delivered | Consequence for Part B |
+|---|---|---|
+| 5 kinds | 3 — **no `homework`, no `grade`** | Pixel Pal has no homework yet; they will come later. Build the three, and make an unknown `kind` a `rejected` event rather than a crash, so their arrival is visible instead of fatal. |
+| `Present`/`Absent`/`Excused`/`Late` | `Present`/`Absent` | Accept the two. Keep the other two in the validator: HEC already has them and a later Pixel Pal version may send them. |
+| attendance `{status, note}` | `{status}` only | No note to carry. |
+| `student_ref` nullable | always present | Only mattered for class-wide homework, which does not exist yet. |
 
-```
-GET /functions/v1/export-events?since=<seq>&limit=<n>
-Header: x-sync-secret: <shared secret>
-```
+Everything else — the cursor, `next_cursor`, the limits, the 401, the
+read-only verbs, `event_id` idempotency — is as asked.
 
-- `since` defaults to 0, `limit` to 500, capped at 1000.
-- Returns `{ "events": [...], "next_cursor": <highest seq returned> }`,
-  ordered by `seq` ascending.
-- Returns `[]` and the unchanged cursor when there is nothing new.
+## The one hazard in their design
 
-Requirements:
+> *"A register mark that is changed arrives as a retraction followed by
+> a new attendance event."*
 
-- **Compare the secret in constant time.** A plain `===` on a string
-  leaks its length and, over enough requests, its contents. Use
-  `crypto.subtle.timingSafeEqual` over the encoded bytes, after checking
-  the lengths match.
-- The secret lives in your Supabase secrets, never in the repository.
-- Set `verify_jwt = false` — the shared secret is the authentication —
-  and make the secret check the first thing the handler does, before
-  reading the query or the body.
-- **GET only. This endpoint never writes.** No POST, no PATCH.
-- Return only the five kinds above. Not names, not contact details, not
-  parent information, nothing about staff.
-- Log the cursor and the row count, never the payloads.
+Correct and clean, but it means **a changed register is two events**,
+and the window between them is a register with nothing in it. If the
+retraction applies and the replacement is then refused — outside the
+24-hour edit window, say — the child is left with **no mark at all**,
+which is worse than either value.
 
-## 4. What to hand over
+So, for Part B:
 
-The function URL, and the shared secret sent separately from it and not
-over anything public. Nothing else. Rotate by setting a new secret and
-saying so; the endpoint can accept two for the hour it takes.
+- **Apply a whole page in one transaction.** A retraction and its
+  replacement are then all-or-nothing within a page.
+- A pair split across two pages is still possible, and the next run
+  repairs it within ten minutes. Advance the cursor only at the end of a
+  page that committed.
+- A retraction that clears a mark whose replacement was refused must
+  appear under **needs attention** on the admin screen, not only in the
+  log. A blank register is the kind of thing nobody notices until
+  reports go out.
 
 ---
 
