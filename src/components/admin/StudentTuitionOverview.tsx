@@ -292,6 +292,11 @@ export function StudentTuitionOverview() {
                           Pending
                         </Badge>
                       )}
+                      {tuition?.siblingState?.status === "unresolved" && (
+                        <Badge variant="outline" title={tuition.siblingState.reason}>
+                          Discount still calculating — refresh
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       {tuition && (
