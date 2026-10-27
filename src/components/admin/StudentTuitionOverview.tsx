@@ -30,6 +30,7 @@ interface TuitionData {
     status: string;
     percent: number;
     isWinner?: boolean;
+    reason?: string;
   };
 }
 
@@ -290,6 +291,11 @@ export function StudentTuitionOverview() {
                       {tuition?.siblingState?.status === "pending" && (
                         <Badge variant="outline" className="text-yellow-600 border-yellow-600">
                           Pending
+                        </Badge>
+                      )}
+                      {tuition?.siblingState?.status === "unresolved" && (
+                        <Badge variant="outline" title={tuition.siblingState.reason}>
+                          Discount still calculating — refresh
                         </Badge>
                       )}
                     </TableCell>

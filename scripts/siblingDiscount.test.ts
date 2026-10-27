@@ -36,6 +36,33 @@ describe('family discount regression', () => {
     const { sb } = client([], false);
     await expect(resolveSiblingStates(sb, ['susan-family'], '2026-10')).rejects.toThrow('Family discount calculation failed');
   });
+  test('lock still busy after waiting: family is unresolved, never treated as no discount', async () => {
+    let calls = 0;
+    const sb = {
+      from: () => ({ select: () => ({ in: () => ({ eq: async () => ({ data: [] }) }) }) }),
+      functions: { invoke: async () => { calls++; return { data: { success: false, reason: 'Job already running for this month' } }; } },
+    };
+    const realTimeout = globalThis.setTimeout;
+    (globalThis as any).setTimeout = (fn: any) => realTimeout(fn, 0);
+    try {
+      const states = await resolveSiblingStates(sb, ['susan-family'], '2026-10');
+      expect(states).toHaveLength(1);
+      expect(states[0].family_id).toBe('susan-family');
+      expect(states[0].status).toBe('unresolved');
+      expect(calls).toBe(4);
+    } finally { (globalThis as any).setTimeout = realTimeout; }
+  });
+  test('a family resolved by the other request while waiting is returned as assigned', async () => {
+    let states: any[] = [];
+    const sb = {
+      from: () => ({ select: () => ({ in: () => ({ eq: async () => ({ data: states }) }) }) }),
+      functions: { invoke: async () => { states = [assigned]; return { data: { success: false, reason: 'Job already running for this month' } }; } },
+    };
+    const realTimeout = globalThis.setTimeout;
+    (globalThis as any).setTimeout = (fn: any) => realTimeout(fn, 0);
+    try { expect(await resolveSiblingStates(sb, ['susan-family'], '2026-10')).toEqual([assigned]); }
+    finally { (globalThis as any).setTimeout = realTimeout; }
+  });
   test('5% family discount on 1,890,000 is the returned 94,500, not a new winner selection', () => {
     const view = siblingDiscountView({ siblingState: { status: 'assigned', isWinner: true, percent: 5, winnerClassId: 'venus' },
       discounts: [{ isSiblingWinner: true, amount: 94500 }],

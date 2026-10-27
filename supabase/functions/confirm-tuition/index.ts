@@ -46,6 +46,7 @@ Deno.serve(async (req) => {
         body: { studentId: invoice.student_id, month: invoice.month },
       });
       if (refreshError || refreshed?.error) throw new Error('Tuition must be refreshed before confirmation');
+      if (refreshed?.siblingUnresolved) throw new Error('Family discount is still being calculated. Try confirming again in a moment.');
     }
 
     // Update invoices

@@ -31,7 +31,18 @@ export async function resolveSiblingStates(supabase: any, familyIds: string[], m
     const now = await load();
     if (missing.every(id => now.some((s: any) => s.family_id === id && s.status !== 'pending'))) return now;
   }
-  // Still busy: return whatever is stored (as before this resolver existed);
-  // a missing row is never treated as ineligible, and the next call resolves it.
-  return load();
+  // Still busy after waiting. Do NOT return the stored rows as if they were
+  // final: a missing/pending row would bill the family with no discount.
+  // Mark those families 'unresolved' so callers show the figures but never
+  // persist them (calculate-tuition skips the invoice write).
+  const final = await load();
+  const resolved = (id: string) => final.some((s: any) => s.family_id === id && s.status !== 'pending');
+  const unresolved = missing.filter(id => !resolved(id));
+  return [
+    ...final.filter((s: any) => !unresolved.includes(s.family_id)),
+    ...unresolved.map(id => ({
+      family_id: id, status: 'unresolved', winner_student_id: null, winner_class_id: null,
+      sibling_percent: 0, reason: 'Family discount is still being calculated. Refresh in a moment.',
+    })),
+  ];
 }
