@@ -4193,6 +4193,30 @@ export type Database = {
         }
         Relationships: []
       }
+      stars_sync_secrets: {
+        Row: {
+          cron_token: string
+          function_key: string | null
+          function_url: string | null
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          cron_token?: string
+          function_key?: string | null
+          function_url?: string | null
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          cron_token?: string
+          function_key?: string | null
+          function_url?: string | null
+          id?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       student_access_codes: {
         Row: {
           attempts: number
@@ -5692,35 +5716,74 @@ export type Database = {
         Args: { p_month: string; p_now: string; p_today: string }
         Returns: Json
       }
+      stars_sync__apply_event: {
+        Args: { p_event: Json; p_now: string }
+        Returns: Json
+      }
+      stars_sync__event_id: { Args: { p_event: Json }; Returns: string }
+      stars_sync__record: {
+        Args: {
+          p_event: Json
+          p_note: string
+          p_now: string
+          p_outcome: string
+          p_ref: Json
+        }
+        Returns: undefined
+      }
+      stars_sync__run_one: {
+        Args: { p_event: Json; p_now: string }
+        Returns: Json
+      }
+      stars_sync__tally: {
+        Args: { p_counts: Json; p_outcome: string }
+        Returns: Json
+      }
+      stars_sync__today: { Args: { p_now: string }; Returns: string }
+      stars_sync_apply_page: {
+        Args: { p_events: Json; p_next_cursor: number; p_now?: string }
+        Returns: Json
+      }
       stars_sync_effective_teacher: {
         Args: { p_stars_class: string }
         Returns: string
       }
+      stars_sync_finish_run: {
+        Args: { p_by: string; p_error: string; p_summary: Json }
+        Returns: undefined
+      }
+      stars_sync_is_pending: { Args: { p_outcome: string }; Returns: boolean }
       stars_sync_readiness: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
-          stars_class_id: string
+          can_sync: boolean
           class_id: string
           class_name: string
-          teacher_id: string | null
-          teacher_name: string | null
-          teacher_is_active: boolean
+          detail: string
+          map_enabled: boolean
+          stars_class_id: string
+          status: string
           teacher_has_login: boolean
           teacher_has_role: boolean
-          map_enabled: boolean
-          can_sync: boolean
+          teacher_id: string
+          teacher_is_active: boolean
+          teacher_name: string
           via_roster: boolean
-          status: string
-          detail: string
         }[]
       }
       stars_sync_resolve_conflict: {
         Args: { p_conflict_id: string; p_resolution: string }
         Returns: undefined
       }
-      stars_sync_status: {
-        Args: Record<PropertyKey, never>
+      stars_sync_retry_pending: {
+        Args: { p_limit?: number; p_now?: string }
         Returns: Json
+      }
+      stars_sync_status: { Args: never; Returns: Json }
+      stars_sync_tick: { Args: never; Returns: number }
+      stars_sync_try_lock: {
+        Args: { p_ttl_seconds?: number }
+        Returns: boolean
       }
       teacher_rate_on: {
         Args: { p_date: string; p_teacher_id: string }
