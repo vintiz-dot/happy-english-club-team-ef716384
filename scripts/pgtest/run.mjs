@@ -42,7 +42,11 @@ const migrations = resolve(here, "..", "..", "supabase", "migrations");
 const m = (name) => join(migrations, name);
 
 const SUITES = [
-  { name: 'cancelled lesson safeguards', file: 'cancelled-lessons.test.mjs', migrations: [] , guard: true },
+  {
+    name: "cancelled lessons",
+    file: "cancelled-lessons.test.mjs",
+    migrations: ["20261027090000_cancelled_lesson_attendance_guard.sql"],
+  },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.
@@ -115,7 +119,7 @@ const run = (suite) =>
   new Promise((done) => {
     const child = spawn(
       process.execPath,
-      [join(here, suite.file), ...(suite.guard ? [resolve(here, '../../drizzle/migrations/0004_cancelled_lesson_guard.sql')] : suite.migrations.map(m))],
+      [join(here, suite.file), ...suite.migrations.map(m)],
       { stdio: ["ignore", "pipe", "pipe"] },
     );
     let out = "";

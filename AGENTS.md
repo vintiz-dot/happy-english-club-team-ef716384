@@ -5,6 +5,7 @@
 
 # Database migrations
 - Migrations under `supabase/migrations/` are the authoritative tree: the owner applies them by pasting into the Supabase SQL editor. A DB change that exists only under `drizzle/migrations/` has not reached that tree.
+- So port every new `drizzle/migrations/*.sql` into `supabase/migrations/` as soon as it appears, and point its test at the ported copy. Twice now a guard has been written, tested and committed while being inert: 20261022091000 and 20261027090000. A test that reads its SQL out of `drizzle/` is the tell.
 - A new table needs `GRANT SELECT, INSERT, UPDATE, DELETE ... TO authenticated` and `GRANT ALL ... TO service_role` explicitly, because 20260712023825 revoked the defaults on public. Without them PostgREST reports the table as missing from the schema cache, not as forbidden.
 - A PARTIAL unique index cannot serve as an `ON CONFLICT` target; PostgREST upserts against one fail with 42P10 at plan time. Use a plain UNIQUE index - NULLs are distinct in one anyway.
 - Run the migration regression tests with `node scripts/pgtest/run.mjs` before changing anything under payroll, expenditures or class overhead. They execute the real migration files against an in-process Postgres.
