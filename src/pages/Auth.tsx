@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import { oauthReturnPath } from "@/lib/oauth-return-path";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,11 +57,13 @@ const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const nextParam = new URLSearchParams(location.search).get("next");
+  const oauthNext = nextParam ? oauthReturnPath(nextParam) : null;
+  const afterAuth = () => oauthNext ?? (location.state as { redirectTo?: string } | null)?.redirectTo ?? "/dashboard";
 
   useEffect(() => {
     if (user) {
-      const state = location.state as { redirectTo?: string } | null;
-      navigate(state?.redirectTo || "/dashboard", { replace: true });
+      navigate(afterAuth(), { replace: true });
     }
   }, [user, navigate, location]);
 
@@ -142,8 +145,7 @@ const Auth = () => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Welcome back!");
-        const state = location.state as { redirectTo?: string } | null;
-        navigate(state?.redirectTo || "/dashboard");
+        navigate(afterAuth());
       } else if (mode === "forgot") {
         // School-issued handles look like hanh@hanh.com — the local part and
         // the domain match. Those domains are NOT owned by the school and
@@ -166,7 +168,7 @@ const Auth = () => {
         toast.success("Reset email sent! Check your inbox.");
         setMode("login");
       } else {
-        const redirectUrl = `${window.location.origin}/`;
+        const redirectUrl = oauthNext ? new URL(oauthNext, window.location.origin).href : `${window.location.origin}/`;
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -174,8 +176,7 @@ const Auth = () => {
         });
         if (error) throw error;
         toast.success("Account created!");
-        const state = location.state as { redirectTo?: string } | null;
-        navigate(state?.redirectTo || "/dashboard");
+        navigate(afterAuth());
       }
     } catch (error: any) {
       toast.error(error.message || "Authentication failed");
