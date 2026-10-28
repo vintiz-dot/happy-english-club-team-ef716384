@@ -237,3 +237,6 @@ verify_jwt = true
 # their own session. See supabase/functions/stars-sync/index.ts.
 [functions.stars-sync]
 verify_jwt = true
+
+[functions.explain-family-tuition]
+verify_jwt = false
