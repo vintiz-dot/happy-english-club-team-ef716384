@@ -32,13 +32,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { requireRole } from "../_lib/auth.ts";
 import { checkRateLimit, getClientIP, rateLimitResponse } from "../_lib/rate-limit.ts";
-import { afterAttendanceMarked } from "../_lib/attendance-effects.ts";
+import { advanceStreaks } from "../_lib/attendance-effects.ts";
 import {
   FeedError,
   PIXEL_PAL_EXPORT_URL,
   addCounts,
   parseFeedPage,
-  planEffects,
+  planDrain,
   resolveFeedSecret,
   secretsMatch,
 } from "../_lib/stars-sync-core.ts";
@@ -58,6 +58,10 @@ const FETCH_TIMEOUT_MS = 20_000;
 // that a run which died holding it does not stop the sync for long.
 const LOCK_SECONDS = 600;
 const RETRY_BATCH = 200;
+// calculate-tuition allows 30 calls a minute from one address. A run takes
+// at most this many; the rest wait in the queue for the next run.
+const TUITION_PER_RUN = 20;
+const EFFECTS_READ = 200;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -138,20 +142,51 @@ Deno.serve(async (req) => {
   let failure: string | null = null;
   let upstream = false;
 
-  const runEffects = async (effects: unknown) => {
-    const plan = planEffects(effects);
-    for (const group of plan.attendance) {
-      try {
-        await afterAttendanceMarked(supabase, group);
-      } catch (_e) {
-        warnings.push("Streaks or tuition could not be updated for one lesson.");
+  // The after-effects of marks - tuition and streaks - are queued in
+  // stars_sync_effects in the same transaction as each mark, so a run that
+  // dies after a page commits loses nothing. This works through the queue,
+  // deleting a row only once its work has succeeded; anything refused
+  // stays for the next run, with the attempt counted and the reason kept.
+  const drainEffects = async () => {
+    const { data: rows, error } = await supabase
+      .from("stars_sync_effects")
+      .select("id, kind, student_id, class_id, session_id, lesson_date, month, attempts")
+      .order("attempts", { ascending: true })
+      .order("id", { ascending: true })
+      .limit(EFFECTS_READ);
+    if (error) {
+      warnings.push("The after-effects queue could not be read; tuition and streaks will catch up on a later run.");
+      return;
+    }
+    const plan = planDrain(rows, TUITION_PER_RUN);
+
+    for (const batch of plan.streaks) {
+      const ok = await advanceStreaks(supabase, {
+        classId: batch.classId,
+        entries: batch.studentIds.map((studentId) => ({ studentId, status: "Present" })),
+      });
+      if (ok) {
+        await supabase.from("stars_sync_effects").delete().in("id", batch.ids);
+      } else {
+        await supabase.rpc("stars_sync_effect_failed", { p_ids: batch.ids, p_error: "streak update failed" });
+        warnings.push("Streaks could not be updated for one lesson; it will be retried.");
       }
     }
-    for (const t of plan.tuition) {
-      const { error } = await supabase.functions.invoke("calculate-tuition", {
-        body: { studentId: t.studentId, month: t.month },
+
+    for (const job of plan.tuition) {
+      const { error: invokeError } = await supabase.functions.invoke("calculate-tuition", {
+        body: { studentId: job.studentId, month: job.month },
       });
-      if (error) warnings.push("Tuition could not be recalculated for one child.");
+      if (invokeError) {
+        await supabase.rpc("stars_sync_effect_failed", {
+          p_ids: [job.id],
+          p_error: invokeError instanceof Error ? invokeError.message : "tuition recalculation failed",
+        });
+        warnings.push("Tuition recalculation was refused; the rest are queued for the next run.");
+        // Most likely the rate limit. Pressing on would only be refused too.
+        break;
+      }
+      await supabase.from("stars_sync_effects").delete().eq("id", job.id);
     }
   };
 
@@ -167,7 +202,6 @@ Deno.serve(async (req) => {
     const retried = await supabase.rpc("stars_sync_retry_pending", { p_limit: RETRY_BATCH });
     if (retried.error) throw new Error(`Retrying waiting records failed: ${retried.error.message}`);
     addCounts(counts, retried.data?.counts);
-    await runEffects(retried.data?.effects);
 
     const { data: cur, error: curError } = await supabase
       .from("stars_sync_cursor").select("last_seq").eq("id", true).maybeSingle();
@@ -214,7 +248,6 @@ Deno.serve(async (req) => {
       pages += 1;
       addCounts(counts, applied.data?.counts);
       cursor = Number(applied.data?.cursor ?? page.nextCursor);
-      await runEffects(applied.data?.effects);
 
       if (page.events.length < PAGE_SIZE) break;
     }
@@ -222,6 +255,14 @@ Deno.serve(async (req) => {
     failure = e instanceof FeedError
       ? e.message
       : e instanceof Error ? e.message : "The sync failed.";
+  }
+
+  // Run whether or not the fetch worked: the queue holds work for marks
+  // already committed, and Pixel Pal being down is no reason to delay it.
+  try {
+    await drainEffects();
+  } catch (_e) {
+    warnings.push("The after-effects queue could not be worked through; it will be retried.");
   }
 
   const summary = { counts, pages, cursor, warnings, ms: Date.now() - started };

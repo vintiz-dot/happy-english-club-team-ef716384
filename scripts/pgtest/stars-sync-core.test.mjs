@@ -71,33 +71,32 @@ console.log("=== reading Pixel Pal's answer ===");
   catch (e) { ok("an error never repeats the payload, which is about children", !/Apple/.test(e.message), e.message); }
 }
 
-console.log("=== which after-effects a page needs ===");
+console.log("=== draining the after-effects queue ===");
 {
-  const A = (session, student, status) => ({ type: "attendance", session_id: session, student_id: student,
-                                              class_id: "C", date: "2026-10-27", status });
-  const R = (session, student) => ({ type: "restore", session_id: session, student_id: student, month: "2026-10" });
+  const S = (id, session, student, attempts = 0) => ({ id, kind: "streak", student_id: student, class_id: "C",
+                                                       session_id: session, lesson_date: "2026-10-27", attempts });
+  const T = (id, student, month = "2026-10", attempts = 0) => ({ id, kind: "tuition", student_id: student, month, attempts });
 
-  const plan = core.planEffects([A("s1", "apple", "Present"), A("s1", "johnny", "Absent")]);
-  eq("one lesson is one call, with both children", plan.attendance.length, 1);
-  eq("  carrying their marks", plan.attendance[0].entries.map((e) => e.status).sort(), ["Absent", "Present"]);
+  const plan = core.planDrain([S(1, "s1", "apple"), S(2, "s1", "johnny"), S(3, "s2", "minh"), T(4, "apple")], 20);
+  eq("streaks are grouped one call per lesson", plan.streaks.length, 2);
+  eq("  carrying the queue rows they settle", plan.streaks[0].ids, [1, 2]);
+  eq("  and the children", plan.streaks[0].studentIds, ["apple", "johnny"]);
+  eq("tuition is planned per child-month", plan.tuition, [{ id: 4, studentId: "apple", month: "2026-10" }]);
 
-  const flip = core.planEffects([A("s1", "apple", "Present"), R("s1", "apple"), A("s1", "apple", "Absent")]);
-  eq("a mark, its withdrawal and a replacement: only where the child ended up counts",
-     flip.attendance[0].entries, [{ studentId: "apple", status: "Absent" }]);
-  ok("  so no streak is credited for the Present that was replaced",
-     !flip.attendance.some((g) => g.entries.some((e) => e.status === "Present")));
-  eq("  but the withdrawal's tuition recalculation is kept", flip.tuition, [{ studentId: "apple", month: "2026-10" }]);
+  const many = Array.from({ length: 30 }, (_, i) => T(100 + i, `kid${i}`));
+  eq("at most the per-run limit of tuition jobs - calculate-tuition allows 30 a minute",
+     core.planDrain(many, 20).tuition.length, 20);
+  eq("  the rest are left for the next run, oldest first", core.planDrain(many, 20).tuition[0].id, 100);
 
-  const gone = core.planEffects([A("s1", "apple", "Present"), R("s1", "apple")]);
-  eq("a mark then withdrawn: no attendance effect", gone.attendance.length, 0);
-  eq("  only the tuition recalculation", gone.tuition.length, 1);
+  const stuck = core.planDrain([T(1, "stuck", "2026-10", 5), T(2, "fresh"), T(3, "fresh2")], 2);
+  eq("a job that keeps failing goes behind fresh ones, so it cannot starve them",
+     stuck.tuition.map((j) => j.studentId), ["fresh", "fresh2"]);
 
-  const twice = core.planEffects([R("s1", "apple"), R("s2", "apple")]);
-  eq("two withdrawals in one month recalculate that month once", twice.tuition.length, 1);
-
-  eq("nothing in, nothing out", core.planEffects(null), { attendance: [], tuition: [] });
-  eq("rubbish is ignored rather than crashing",
-     core.planEffects([null, 7, { type: "other" }, { type: "attendance" }]), { attendance: [], tuition: [] });
+  eq("nothing queued, nothing to do", core.planDrain(null, 20), { streaks: [], tuition: [] });
+  eq("malformed rows are skipped, not guessed at",
+     core.planDrain([{ id: 1, kind: "streak", student_id: "a" }, { id: 2, kind: "tuition", student_id: "b", month: "Oct" },
+                     null, { id: "x", kind: "tuition" }], 20),
+     { streaks: [], tuition: [] });
 }
 {
   const into = { applied: 2 };
@@ -171,6 +170,43 @@ const today = new Date().toISOString().split("T")[0];
     await fx.afterAttendanceMarked(sb, { classId: "C", date: "2026-10-27", entries: [{ studentId: "apple", status: "Present" }] });
   } catch { threw = true; }
   ok("a failure in streaks never fails the mark that triggered it", !threw);
+}
+
+console.log("=== the two halves, separately - what the drain relies on ===");
+{
+  const sb = fakeClient();
+  sb.functions.invoke = async (name, { body }) =>
+    ({ data: null, error: body.studentId === "johnny" ? new Error("429 rate limited") : null });
+  const failed = await fx.recalcTuition(sb, { date: "2026-10-27", entries: [
+    { studentId: "apple", status: "Absent" }, { studentId: "johnny", status: "Excused" }, { studentId: "minh", status: "Present" }] });
+  eq("recalcTuition reports how many calls were refused", failed, 1);
+}
+{
+  const sb = fakeClient();
+  eq("advanceStreaks reports success", await fx.advanceStreaks(sb, { classId: "C", entries: [{ studentId: "apple", status: "Present" }] }), true);
+  const bad = fakeClient();
+  const realFrom = bad.from;
+  bad.from = (table) => {
+    const b = realFrom(table);
+    b.upsert = async () => ({ error: new Error("write failed") });
+    return b;
+  };
+  eq("  and failure, when a write is refused - so the drain keeps the job",
+     await fx.advanceStreaks(bad, { classId: "C", entries: [{ studentId: "apple", status: "Present" }] }), false);
+}
+{
+  // The bug this fixes in mark-attendance's own path: a failed read used
+  // to carry on with no streaks, and write every child back to 1.
+  const sb = fakeClient();
+  const realFrom = sb.from;
+  sb.from = (table) => {
+    const b = realFrom(table);
+    b.in = async () => ({ data: null, error: new Error("read failed") });
+    return b;
+  };
+  const ok2 = await fx.advanceStreaks(sb, { classId: "C", entries: [{ studentId: "apple", status: "Present" }] });
+  eq("a failed streak read stops, rather than resetting everyone's streak to 1",
+     [ok2, sb.calls.upserts.length], [false, 0]);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

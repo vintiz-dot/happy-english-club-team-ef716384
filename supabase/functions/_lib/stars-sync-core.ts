@@ -7,7 +7,7 @@
  * database, in stars_sync_apply_page, where they run in one transaction.
  * What is here is everything around that: reading Pixel Pal's answer
  * without trusting it, comparing a secret without leaking it, and
- * working out which after-effects a page of marks actually needs.
+ * deciding how much of the after-effects queue to drain in one run.
  */
 
 /** Pixel Pal's export endpoint. A constant, not a setting: the request
@@ -82,71 +82,70 @@ export function parseFeedPage(body: unknown, since: number): FeedPage {
   return { events: events as Record<string, unknown>[], nextCursor: next_cursor };
 }
 
-/** One after-effect the database asked for, as stars_sync_apply_page returns it. */
-export interface SyncEffect {
-  type: "attendance" | "restore";
-  session_id: string;
+/** One row of stars_sync_effects, as the drain reads it. */
+export interface QueuedEffect {
+  id: number;
+  /** Times it has been tried and failed. Failing jobs go to the back. */
+  attempts?: number | null;
+  kind: "tuition" | "streak";
   student_id: string;
-  class_id?: string;
-  date?: string;
-  status?: string;
-  month?: string;
+  class_id?: string | null;
+  session_id?: string | null;
+  lesson_date?: string | null;
+  month?: string | null;
 }
 
-export interface AttendanceGroup {
+export interface StreakBatch {
+  /** Queue rows this batch settles, deleted only if it succeeds. */
+  ids: number[];
   classId: string;
-  date: string;
-  entries: { studentId: string; status: string }[];
+  studentIds: string[];
 }
 
-export interface EffectPlan {
-  /** One call of afterAttendanceMarked per lesson, final marks only. */
-  attendance: AttendanceGroup[];
-  /** Tuition to recalculate for marks that were withdrawn. */
-  tuition: { studentId: string; month: string }[];
+export interface DrainPlan {
+  /** One advanceStreaks call per lesson. */
+  streaks: StreakBatch[];
+  /** Tuition recalculations, oldest first, at most `tuitionLimit`. */
+  tuition: { id: number; studentId: string; month: string }[];
 }
 
 /**
- * What to do after a page commits.
+ * What one run takes off the after-effects queue.
  *
- * The LAST effect for each child on each lesson wins. A page can carry a
- * mark, its withdrawal and a replacement for the same child, and running
- * the streak for a "Present" that was replaced by "Absent" two records
- * later would credit a child for a lesson they missed. HEC's own screen
- * cannot express that sequence in one save; a page of Pixel Pal records
- * can, so the page is reduced to where each child ended up.
+ * The queue is written in the same transaction as each mark
+ * (20261028090000), so nothing in it can be lost; this only decides how
+ * much to do now. Tuition is bounded because calculate-tuition allows 30
+ * calls a minute - whatever is not done stays queued for the next run,
+ * five minutes later. Jobs that have failed before go behind ones that
+ * have not, so a job that can never succeed cannot starve the rest.
+ * Malformed rows are skipped rather than guessed at.
  */
-export function planEffects(raw: unknown): EffectPlan {
-  const effects = Array.isArray(raw) ? (raw as SyncEffect[]) : [];
-  const last = new Map<string, SyncEffect>();
-  for (const e of effects) {
-    if (!e || (e.type !== "attendance" && e.type !== "restore")) continue;
-    if (typeof e.session_id !== "string" || typeof e.student_id !== "string") continue;
-    const key = `${e.session_id}|${e.student_id}`;
-    last.delete(key); // re-insert so iteration order follows the last write
-    last.set(key, e);
-  }
-
-  const lessons = new Map<string, AttendanceGroup>();
-  for (const e of last.values()) {
-    if (e.type !== "attendance" || !e.class_id || !e.date || !e.status) continue;
-    const group = lessons.get(e.session_id) ?? { classId: e.class_id, date: e.date, entries: [] };
-    group.entries.push({ studentId: e.student_id, status: e.status });
-    lessons.set(e.session_id, group);
-  }
-
-  // Every withdrawal changed a register, so its tuition is recalculated
-  // even when a later mark in the page supersedes it: afterAttendanceMarked
-  // only recalculates for Absent or Excused, and a withdrawn Absent
-  // replaced by Present changes the bill too. Recalculating is idempotent;
-  // skipping one is not.
-  const tuition = new Map<string, { studentId: string; month: string }>();
-  for (const e of effects) {
-    if (e?.type === "restore" && typeof e.student_id === "string" && typeof e.month === "string") {
-      tuition.set(`${e.student_id}|${e.month}`, { studentId: e.student_id, month: e.month });
+export function planDrain(raw: unknown, tuitionLimit: number): DrainPlan {
+  const rows = Array.isArray(raw) ? (raw as QueuedEffect[]) : [];
+  const lessons = new Map<string, StreakBatch>();
+  const tuition: DrainPlan["tuition"] = [];
+  const order = (r: QueuedEffect) => [Number(r?.attempts ?? 0), Number(r?.id)];
+  const sorted = [...rows].sort((a, b) => {
+    const [aa, ai] = order(a);
+    const [ba, bi] = order(b);
+    return aa - ba || ai - bi;
+  });
+  for (const r of sorted) {
+    if (!r || typeof r.student_id !== "string" || !Number.isFinite(Number(r.id))) continue;
+    if (r.kind === "streak") {
+      if (typeof r.session_id !== "string" || typeof r.class_id !== "string") continue;
+      const batch = lessons.get(r.session_id) ?? { ids: [], classId: r.class_id, studentIds: [] };
+      batch.ids.push(Number(r.id));
+      batch.studentIds.push(r.student_id);
+      lessons.set(r.session_id, batch);
+    } else if (r.kind === "tuition") {
+      if (typeof r.month !== "string" || !/^\d{4}-\d{2}$/.test(r.month)) continue;
+      if (tuition.length < Math.max(0, tuitionLimit)) {
+        tuition.push({ id: Number(r.id), studentId: r.student_id, month: r.month });
+      }
     }
   }
-  return { attendance: [...lessons.values()], tuition: [...tuition.values()] };
+  return { streaks: [...lessons.values()], tuition };
 }
 
 /** Adds one tally of outcomes into another. */

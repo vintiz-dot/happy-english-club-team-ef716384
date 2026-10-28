@@ -7,6 +7,7 @@ import { StudentProfileProvider } from "./contexts/StudentProfileContext";
 import { TimerProvider } from "./contexts/TimerContext";
 import { NoiseMeterProvider } from "./contexts/NoiseMeterContext";
 import ProfilePicker from "./components/ProfilePicker";
+import OAuthConsent from "./pages/OAuthConsent";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { StartupGuard } from "./components/StartupGuard";
@@ -94,6 +95,7 @@ function AppContent() {
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
+                  <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                   <Route path="/auth/reset-password" element={<ResetPassword />} />
                   {/* Public: families arrive here from a printed access card.
                       Whoever lands here is locked out, so there is no session

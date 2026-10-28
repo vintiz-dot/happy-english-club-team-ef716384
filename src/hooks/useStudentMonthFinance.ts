@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { siblingRetryDelayMs } from "@/lib/siblingRetry";
 
 /**
  * Shared finance data selector - single source of truth
@@ -196,6 +197,9 @@ export function useStudentMonthFinance(
       return normalized;
     },
     enabled: options?.enabled !== false && !!studentId,
+    // Family discount still being worked out elsewhere: ask again by itself.
+    refetchInterval: (query) =>
+      siblingRetryDelayMs(query.state.data?.siblingState?.status, Math.max(0, query.state.dataUpdateCount - 1)),
   });
 }
 

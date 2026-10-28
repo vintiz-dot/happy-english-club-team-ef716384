@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { studentsInMonthOrClause } from "@/lib/finance/studentsInMonth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Award, Loader2, ArrowUpDown } from "lucide-react";
 import { InvoiceDownloadButton } from "@/components/invoice/InvoiceDownloadButton";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { siblingRetryDelayMs } from "@/lib/siblingRetry";
 import { useNavigate } from "react-router-dom";
 
 interface TuitionData {
@@ -120,6 +121,36 @@ export function StudentTuitionOverview() {
     },
     enabled: !!students?.length,
   });
+
+  // Students whose family discount was still being worked out are asked
+  // again on their own, one by one, so the admin never has to refresh.
+  const queryClient = useQueryClient();
+  const [retryAttempt, setRetryAttempt] = useState(0);
+  const unresolvedIds = useMemo(
+    () => (tuitionData ?? []).filter((t) => t.siblingState?.status === "unresolved").map((t) => t.studentId),
+    [tuitionData],
+  );
+  useEffect(() => setRetryAttempt(0), [selectedMonth]);
+  useEffect(() => {
+    const delay = siblingRetryDelayMs(unresolvedIds.length ? "unresolved" : null, retryAttempt);
+    if (delay === false) return;
+    const key = ["all-student-tuition", selectedMonth, students];
+    const timer = setTimeout(async () => {
+      const fresh = await Promise.all(
+        unresolvedIds.map(async (studentId) => {
+          const { data, error } = await supabase.functions.invoke("calculate-tuition", {
+            body: { studentId, month: selectedMonth },
+          });
+          return error || !data ? null : (data as TuitionData);
+        }),
+      );
+      queryClient.setQueryData<TuitionData[]>(key, (prev) =>
+        (prev ?? []).map((row) => fresh.find((f) => f?.studentId === row.studentId) ?? row),
+      );
+      setRetryAttempt((n) => n + 1);
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [unresolvedIds, retryAttempt, selectedMonth, students, queryClient]);
 
   const formatVND = (amount: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -295,7 +326,7 @@ export function StudentTuitionOverview() {
                       )}
                       {tuition?.siblingState?.status === "unresolved" && (
                         <Badge variant="outline" title={tuition.siblingState.reason}>
-                          Discount still calculating — refresh
+                          Family discount calculating — updating automatically
                         </Badge>
                       )}
                     </TableCell>

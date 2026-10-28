@@ -56,6 +56,9 @@ const SUITES = [
   // functions are deployed by hand, so without it a symbol used but not
   // imported reaches production before anything complains.
   { name: "edge functions typecheck", file: "edge-functions.test.mjs", migrations: [] },
+  // The app's own types. `tsc --noEmit` at the root checks nothing - see
+  // the file - so this is the type check, not that.
+  { name: "app typecheck", file: "app-typecheck.test.mjs", migrations: [] },
   // Nor this: the assistant's chat function, run against a stand-in for
   // PostgREST that knows the real schema, and a scripted model. It checks
   // what the model is told about who is asking, and that every tool's
@@ -97,6 +100,7 @@ const SUITES = [
       "20261023100000_stars_sync_foundation.sql",
       "20261027090000_cancelled_lesson_attendance_guard.sql",
       "20261027100000_stars_sync_engine.sql",
+      "20261028090000_stars_sync_review_fixes.sql",
     ],
   },
   // Not a database test: the edge function's own decisions, and the

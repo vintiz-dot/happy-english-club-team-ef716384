@@ -90,6 +90,8 @@ interface SyncStatus {
   running: boolean;
   pending: number;
   open_conflicts: number;
+  effects_queued?: number;
+  effects_failing?: number;
 }
 
 interface RunSummary {
@@ -264,6 +266,10 @@ export default function StarsSyncTab() {
 
   const conflicts = useQuery({
     queryKey: ["stars-conflicts"],
+    // A conflict can be settled under the admin's feet - by the sync,
+    // when Pixel Pal withdraws its mark, or by another admin. The settle
+    // call refuses a stale one anyway; this keeps the list honest too.
+    refetchInterval: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stars_sync_conflicts")
@@ -364,17 +370,14 @@ export default function StarsSyncTab() {
     onError: (e) => fail(e, "Could not unmatch that child"),
   });
 
+  // One call, one transaction. It refuses - with nothing written - if the
+  // conflict was settled meanwhile, if Pixel Pal withdrew its mark, or if
+  // the register no longer shows what it showed when the conflict was
+  // raised. It used to call mark-attendance first and check afterwards,
+  // in a second request, which could overwrite a teacher's mark with a
+  // value nobody wanted any more.
   const resolve = useMutation({
-    mutationFn: async (v: { conflictId: string; resolution: "kept_ours" | "took_theirs";
-                            sessionId?: string; studentId?: string; status?: string }) => {
-      if (v.resolution === "took_theirs") {
-        // Through HEC's own marking path, as this admin: the register, the
-        // Held flip, tuition and streaks, exactly as if marked here.
-        const { error } = await supabase.functions.invoke("mark-attendance", {
-          body: { sessionId: v.sessionId, studentId: v.studentId, status: v.status },
-        });
-        if (error) throw new Error(await functionErrorMessage(error));
-      }
+    mutationFn: async (v: { conflictId: string; resolution: "kept_ours" | "took_theirs" }) => {
       const { error } = await supabase.rpc("stars_sync_resolve_conflict", {
         p_conflict_id: v.conflictId, p_resolution: v.resolution,
       });
@@ -385,7 +388,7 @@ export default function StarsSyncTab() {
       toast.success(r === "took_theirs" ? "Pixel Pal's mark applied" : "HEC's mark kept");
       refresh();
     },
-    onError: (e) => fail(e, "Could not settle that conflict"),
+    onError: (e) => { fail(e, "Could not settle that conflict"); refresh(); },
   });
 
   /* ------------------------------------------------------ local state */
@@ -400,6 +403,12 @@ export default function StarsSyncTab() {
   const [confirmUnmapClass, setConfirmUnmapClass] = useState<Readiness | null>(null);
   const [confirmUnmatch, setConfirmUnmatch] = useState<string | null>(null);
   const [confirmSwitchOn, setConfirmSwitchOn] = useState(false);
+  // The start date is typed into a draft and saved deliberately. Saving on
+  // every change stored half-typed dates - a browser reports "0002-10-20"
+  // after the first digit of the year - and the field then snapped back
+  // and lost the rest of what was typed.
+  const [fromDraft, setFromDraft] = useState<string | null>(null);
+  const [confirmEarlier, setConfirmEarlier] = useState<string | null>(null);
   const [eventFilter, setEventFilter] = useState<"attention" | "all">("attention");
 
   const teacherName = (id: string | null | undefined) =>
@@ -458,6 +467,11 @@ export default function StarsSyncTab() {
   );
 
   const conn = connection.data;
+  const fromValid = (() => {
+    if (!fromDraft || !/^\d{4}-\d{2}-\d{2}$/.test(fromDraft)) return false;
+    const d = dayjs(fromDraft);
+    return d.isValid() && d.year() >= 2024 && !d.isAfter(dayjs().add(1, "year"));
+  })();
   const rows = readiness.data ?? [];
   const notReady = rows.filter((r) => r.status === "blocked" || r.status === "partial").length;
   const schedOn = conn?.enabled === true;
@@ -525,6 +539,11 @@ export default function StarsSyncTab() {
                     {st?.running && <Badge variant="outline"><Loader2 className="mr-1 h-3 w-3 animate-spin" />Running</Badge>}
                     {(st?.open_conflicts ?? 0) > 0 && <Badge variant="destructive">{st?.open_conflicts} to settle</Badge>}
                     {(st?.pending ?? 0) > 0 && <Badge variant="outline">{st?.pending} waiting</Badge>}
+                    {(st?.effects_failing ?? 0) > 0 && (
+                      <Badge variant="outline" title="Tuition or streak updates that were refused and will be retried">
+                        {st?.effects_failing} follow-up{st?.effects_failing === 1 ? "" : "s"} retrying
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {cursor.data?.last_run_at
@@ -581,13 +600,34 @@ export default function StarsSyncTab() {
             <CardContent className="grid gap-5 pt-6 md:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="stars-from" className="text-sm">Sync lessons from</Label>
-                <Input
-                  id="stars-from"
-                  type="date"
-                  className="w-full sm:w-[220px]"
-                  value={conn?.sync_from ?? ""}
-                  onChange={(e) => e.target.value && saveConnection.mutate({ sync_from: e.target.value })}
-                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    id="stars-from"
+                    type="date"
+                    className="w-full sm:w-[200px]"
+                    min="2024-01-01"
+                    max={dayjs().add(1, "year").format("YYYY-MM-DD")}
+                    value={fromDraft ?? conn?.sync_from ?? ""}
+                    onChange={(e) => setFromDraft(e.target.value)}
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!fromValid || fromDraft === (conn?.sync_from ?? "") || saveConnection.isPending}
+                    onClick={() => {
+                      if (!fromDraft) return;
+                      // Moving the start EARLIER imports history, which is
+                      // where hand-typed points get counted twice.
+                      if (conn?.sync_from && fromDraft < conn.sync_from) setConfirmEarlier(fromDraft);
+                      else saveConnection.mutate({ sync_from: fromDraft }, { onSuccess: () => setFromDraft(null) });
+                    }}
+                  >
+                    Save date
+                  </Button>
+                </div>
+                {fromDraft !== null && !fromValid && (
+                  <p className="text-xs text-destructive">Choose a full date between 2024 and a year from now.</p>
+                )}
                 <p className="text-xs text-muted-foreground">
                   Nothing for a lesson before this date is imported. If anybody has been typing
                   Pixel Pal's points into HEC by hand, start after the last day they did —
@@ -964,10 +1004,7 @@ export default function StarsSyncTab() {
                             Keep HEC's
                           </Button>
                           <Button size="sm" disabled={resolve.isPending || !c.session_id || !c.student_id || !theirs.status}
-                            onClick={() => resolve.mutate({
-                              conflictId: c.id, resolution: "took_theirs",
-                              sessionId: c.session_id ?? undefined, studentId: c.student_id ?? undefined, status: theirs.status,
-                            })}>
+                            onClick={() => resolve.mutate({ conflictId: c.id, resolution: "took_theirs" })}>
                             Use Pixel Pal's
                           </Button>
                         </div>
@@ -1044,6 +1081,26 @@ export default function StarsSyncTab() {
             <AlertDialogAction onClick={() => { saveConnection.mutate({ enabled: true }); setConfirmSwitchOn(false); }}>
               Turn on
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmEarlier !== null} onOpenChange={(o) => !o && setConfirmEarlier(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Start earlier, on {confirmEarlier ? dayjs(confirmEarlier).format("D MMM YYYY") : ""}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Records for lessons from then until {conn?.sync_from ? dayjs(conn.sync_from).format("D MMM") : "the old start"} that
+              Pixel Pal still holds will be imported on the next run. If any of those points were
+              already typed into HEC by hand, they will be counted twice.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep the current date</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (confirmEarlier) saveConnection.mutate({ sync_from: confirmEarlier }, { onSuccess: () => setFromDraft(null) });
+              setConfirmEarlier(null);
+            }}>Start earlier</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
