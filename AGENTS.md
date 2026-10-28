@@ -18,6 +18,12 @@
 - Run `node scripts/pgtest/run.mjs` after touching any of it; `payroll-rows.test.mjs` covers the mapping, including the closed-month case and the not-yet-redeployed one.
 - There is no Deno on these machines and the functions deploy by hand, so `scripts/pgtest/edge-functions.test.mjs` type-checks `supabase/functions` with the repo TypeScript and the remote imports stubbed. It catches a symbol used but not imported, which is otherwise found by the Supabase deploy. It cannot check what the remote packages declare.
 
+# The in-app assistant (`supabase/functions/chat`)
+- It answers as the person signed in. Who they are - name, every role, their teacher/TA record and classes, a parent's children, the child a shared login has selected, today's date in Hanoi, the page they are on - is worked out on the server from the JWT and written into the prompt by `_lib/chat-context.ts`. Never take identity from the conversation, and keep the scope rule per role: telling an admin "you can only discuss your own records" is the bug this replaced.
+- Every tool reads through the caller's own client, so RLS stays the boundary. `studentFor` / `classFor` also hold parents, students and teachers to their own children, records and classes, because RLS is wider than that for leaderboards and the shared calendar. No writes, no rpc, no service role for data.
+- Money: report `recorded_payment` (paid in that month) and the trigger-maintained `carry_*` balances. `invoices.paid_amount` is cumulative across months and reads as overpayment.
+- A new tool goes into the "every tool" scenario of `scripts/pgtest/chat-assistant.test.mjs`. Its stand-in for PostgREST takes the real columns and foreign keys from `src/integrations/supabase/types.ts`, so a dead column fails there instead of in a parent's chat. The panel sends `context` (page, selected child); a function that predates it ignores it, so the two can ship in either order.
+
 # Shared modules
 - Cancelled-session attendance is guarded in the database with a parent-row lock; both tuition readers share the fail-closed session eligibility helper, cancellation functions refresh canonical invoices, and confirmation refreshes before approval to prevent stale charges.
 - Tuition readers resolve missing/pending sibling assignments through the family-scoped calculator; its internal tuition preview skips resolution and invoice writes to prevent recursive calls and dry-run mutations. Discount cards render the returned winner class and amount rather than pricing them again.

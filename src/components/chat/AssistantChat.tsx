@@ -15,10 +15,19 @@
  * them, so no prompt injection can write, edit or read another user's
  * history. Worst case for a hostile client is writing junk into its own
  * rows, which the length CHECKs bound.
+ *
+ * CONTEXT. Each turn also sends the page the user is on and the child the
+ * profile switcher has selected. Both are hints the function checks, not
+ * claims it trusts: a page's record is only named if the user can read it,
+ * and a selected child only counts if it is one of the user's own. Without
+ * them "how is this student doing?" had no answer, and a login shared by
+ * siblings was answered as whichever child's name sorted first.
  */
 import { useRef, useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -45,20 +54,52 @@ const ROLE_SUGGESTIONS: Record<string, string[]> = {
     "What did we do in class?",
   ],
   teacher: [
+    "What are my lessons today?",
+    "Who was absent this week?",
     "Who has gone quiet in my classes?",
-    "Summarise the last lesson",
+    "Summarise my last lesson",
     "Draft parent feedback for a student",
-    "Which students need attention?",
   ],
+  // Each of these is one the assistant has a tool for. The old admin list
+  // asked for things it could not look up, so the first impression was a
+  // refusal.
   admin: [
-    "Who has gone quiet recently?",
-    "Explain a student's invoice",
-    "Summarise recent lessons",
+    "What's on the schedule today?",
+    "Who still owes tuition this month?",
+    "Give me a school overview",
+    "Who was absent today?",
+    "Which classes does each teacher have?",
   ],
+};
+
+/** What the panel says it can do, per role — "your own records" is wrong for staff. */
+const ROLE_COPY: Record<string, { intro: string; placeholder: string; scope: string }> = {
+  admin: {
+    intro: "Ask me about any student, class, lesson or tuition balance in the school. I can read everything, but I can't change anything.",
+    placeholder: "Ask about a student, class, schedule or balance…",
+    scope: "sees the whole school",
+  },
+  teacher: {
+    intro: "Ask me about your lessons, classes, attendance and students. I can only see your own classes — and I can't change anything.",
+    placeholder: "Ask about your classes and students…",
+    scope: "sees only your classes",
+  },
+  family: {
+    intro: "Ask me about your children's progress, lessons, homework or invoices. I can only see your own family — and I can't change anything.",
+    placeholder: "Ask about your child's learning…",
+    scope: "sees only your family's records",
+  },
+  student: {
+    intro: "Ask me about progress, lessons, homework or points. I can only see what you can see — and I can't change anything.",
+    placeholder: "Ask me anything about your learning…",
+    scope: "sees only your own records",
+  },
 };
 
 export function AssistantChat({ className }: { className?: string }) {
   const { user, role } = useAuth();
+  const location = useLocation();
+  const { studentId: selectedStudentId } = useStudentProfile();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -140,7 +181,14 @@ export function AssistantChat({ className }: { className?: string }) {
     setBusy(true);
     try {
       const { data, error } = await supabase.functions.invoke("chat", {
-        body: { messages: next },
+        body: {
+          messages: next,
+          context: {
+            path: location.pathname,
+            search: location.search,
+            selected_student_id: selectedStudentId ?? null,
+          },
+        },
       });
       if (error) {
         let detail = error.message;
@@ -179,6 +227,7 @@ export function AssistantChat({ className }: { className?: string }) {
   };
 
   const suggestions = ROLE_SUGGESTIONS[role || "student"] || ROLE_SUGGESTIONS.student;
+  const copy = ROLE_COPY[role || "student"] || ROLE_COPY.student;
 
   return (
     <div className={cn("flex flex-col min-h-0", className)}>
@@ -196,10 +245,7 @@ export function AssistantChat({ className }: { className?: string }) {
               <Sparkles className="h-6 w-6 text-white" />
             </div>
             <p className="text-sm font-semibold">Hi! I'm the HEC assistant.</p>
-            <p className="text-xs text-muted-foreground max-w-[280px] mx-auto">
-              Ask me about progress, lessons, homework or points. I can only see what you can see —
-              and I can't change anything.
-            </p>
+            <p className="text-xs text-muted-foreground max-w-[280px] mx-auto">{copy.intro}</p>
             <div className="flex flex-wrap gap-1.5 justify-center pt-1">
               {suggestions.map((s) => (
                 <button
@@ -257,7 +303,7 @@ export function AssistantChat({ className }: { className?: string }) {
                 send(input);
               }
             }}
-            placeholder="Ask me anything about your learning…"
+            placeholder={copy.placeholder}
             className="min-h-[44px] max-h-32 resize-none text-sm"
             rows={1}
             disabled={busy}
@@ -288,7 +334,7 @@ export function AssistantChat({ className }: { className?: string }) {
         </div>
         <p className="text-[10px] text-muted-foreground flex items-center gap-1">
           <ShieldCheck className="h-3 w-3 shrink-0" />
-          Read-only · private to you · sees only your own records · AI can make mistakes
+          Read-only · private to you · {copy.scope} · AI can make mistakes
         </p>
       </div>
     </div>

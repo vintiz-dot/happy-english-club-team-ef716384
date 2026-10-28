@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { AssistantChat } from "@/components/chat/AssistantChat";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { useTimer } from "@/contexts/TimerContext";
 import { useNoiseMeter } from "@/contexts/NoiseMeterContext";
@@ -95,21 +96,31 @@ const TOOLS: ToolEntry[] = [
     icon: Bot,
     wide: true,
     defer: true,
-    render: () => (
-      <ToolCard
-        icon={Bot}
-        tone="lilac"
-        title="Ask AI"
-        description="Lesson ideas, quick explanations, anything about your own classes."
-        wide
-      >
-        <div className="h-[420px] overflow-hidden rounded-2xl border border-studio">
-          <AssistantChat className="h-full" />
-        </div>
-      </ToolCard>
-    ),
+    render: () => <AssistantTool />,
   },
 ];
+
+/** Admins open the assistant from here too, and it answers for the whole school. */
+function AssistantTool() {
+  const { role } = useAuth();
+  return (
+    <ToolCard
+      icon={Bot}
+      tone="lilac"
+      title="Ask AI"
+      description={
+        role === "admin"
+          ? "Any student, class, lesson or tuition balance in the school."
+          : "Lesson ideas, quick explanations, anything about your own classes."
+      }
+      wide
+    >
+      <div className="h-[420px] overflow-hidden rounded-2xl border border-studio">
+        <AssistantChat className="h-full" />
+      </div>
+    </ToolCard>
+  );
+}
 
 function formatCompact(secs: number): string {
   const m = Math.floor(secs / 60);

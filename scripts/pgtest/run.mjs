@@ -56,6 +56,11 @@ const SUITES = [
   // functions are deployed by hand, so without it a symbol used but not
   // imported reaches production before anything complains.
   { name: "edge functions typecheck", file: "edge-functions.test.mjs", migrations: [] },
+  // Nor this: the assistant's chat function, run against a stand-in for
+  // PostgREST that knows the real schema, and a scripted model. It checks
+  // what the model is told about who is asking, and that every tool's
+  // query names columns and relationships that exist.
+  { name: "chat assistant", file: "chat-assistant.test.mjs", migrations: [] },
   { name: "payroll session rules", file: "payroll-sessions.test.mjs", migrations: [] },
   // Also not a database test: the admin Payroll screen reads
   // calculate-payroll instead of recomputing the month, and this is the

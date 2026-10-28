@@ -17,6 +17,8 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 
 export interface CallerIdentity {
   userId: string;
+  /** The login's email, from the verified token. Null for service calls. */
+  email?: string | null;
   roles: Set<string>;
   /** True when the caller presented the service-role key (internal
    *  function-to-function call), not an end-user session. */
@@ -51,6 +53,7 @@ export async function authenticateUser(
 
   return {
     userId: data.user.id,
+    email: data.user.email ?? null,
     roles: new Set((roleRows || []).map((r: any) => String(r.role))),
     isServiceRole: false,
   };
