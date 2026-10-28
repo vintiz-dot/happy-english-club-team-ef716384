@@ -56,6 +56,9 @@ const SUITES = [
   // functions are deployed by hand, so without it a symbol used but not
   // imported reaches production before anything complains.
   { name: "edge functions typecheck", file: "edge-functions.test.mjs", migrations: [] },
+  // The app's own types. `tsc --noEmit` at the root checks nothing - see
+  // the file - so this is the type check, not that.
+  { name: "app typecheck", file: "app-typecheck.test.mjs", migrations: [] },
   { name: "payroll session rules", file: "payroll-sessions.test.mjs", migrations: [] },
   // Also not a database test: the admin Payroll screen reads
   // calculate-payroll instead of recomputing the month, and this is the
@@ -92,6 +95,7 @@ const SUITES = [
       "20261023100000_stars_sync_foundation.sql",
       "20261027090000_cancelled_lesson_attendance_guard.sql",
       "20261027100000_stars_sync_engine.sql",
+      "20261028090000_stars_sync_review_fixes.sql",
     ],
   },
   // Not a database test: the edge function's own decisions, and the

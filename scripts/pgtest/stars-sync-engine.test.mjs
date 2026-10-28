@@ -206,6 +206,10 @@ const retry = async (now = NOW) => {
 const outcome = async (seq) => (await one(`SELECT outcome, outcome_note FROM public.stars_sync_events WHERE event_id=$1`, [id(seq)])) ?? {};
 const mark = async (student, session = STARS_TODAY) =>
   await one(`SELECT status, marked_by, notes FROM public.attendance WHERE session_id=$1 AND student_id=$2`, [session, student]);
+const queued = async (key) => (await one(
+  `SELECT count(*)::int n FROM public.stars_sync_effects WHERE dedupe_key = $1`, [key])).n;
+const tuitionKey = (student, month = "2026-10") => `tuition:${student}:${month}`;
+const streakKey = (session, student) => `streak:${session}:${student}`;
 const pts = async (student, cls = STARS) => await one(
   `SELECT participation_points p, homework_points h, total_points t FROM public.student_points
     WHERE student_id=$1 AND class_id=$2 AND month='2026-10'`, [student, cls]);
@@ -234,14 +238,15 @@ console.log("=== a register mark ===");
   eq("the lesson is now Held, which is what pays the teacher",
      (await one(`SELECT status::text s FROM public.sessions WHERE id=$1`, [STARS_TODAY])).s, "Held");
   eq("the outcome", (await outcome(1)).outcome, "applied");
-  ok("the edge function is handed the after-effects", r.effects.length === 1 && r.effects[0].status === "Absent"
-     && r.effects[0].type === "attendance", JSON.stringify(r.effects));
+  eq("the after-effects are queued with the mark, not handed back", r.effects.length, 0);
+  eq("  Absent queues a tuition recalculation for her month", await queued(tuitionKey(APPLE)), 1);
+  eq("  and no streak", await queued(streakKey(STARS_TODAY, APPLE)), 0);
   eq("the cursor moved", (await one(`SELECT last_seq::int n FROM public.stars_sync_cursor`)).n, 1);
 }
 {
   const r = await page([ev(1, "attendance", { status: "Absent" })]);
   eq("replaying the same record does nothing", r.counts.already_done, 1);
-  eq("  and has no after-effects", r.effects.length, 0);
+  eq("  and queues nothing twice", (await one(`SELECT count(*)::int n FROM public.stars_sync_effects`)).n, 1);
 }
 
 console.log("=== a teacher's own mark is never overwritten ===");
@@ -277,8 +282,7 @@ console.log("=== a changed register: retraction, then the new mark ===");
   const r = await page([ev(8, "retraction", { retracts_event_id: id(7), reason: "removed" })]);
   eq("removed in Pixel Pal: the register goes back to HEC's placeholder", (await mark(JOHNNY)).status, "Present");
   eq("  which is a placeholder again, not a mark", (await mark(JOHNNY)).marked_by, null);
-  ok("  and tuition is recalculated for him", r.effects.some((e) => e.type === "restore" && e.student_id === JOHNNY),
-     JSON.stringify(r.effects));
+  eq("  and his tuition is queued for recalculation", await queued(tuitionKey(JOHNNY)), 1);
   eq("the sync no longer claims the row",
      (await one(`SELECT count(*)::int n FROM public.stars_sync_attendance_state WHERE student_id=$1`, [JOHNNY])).n, 0);
 }
@@ -469,30 +473,216 @@ console.log("=== a page is all or nothing ===");
 }
 
 console.log("=== conflicts, settled by an admin ===");
+const asUser = async (uid, fn) => {
+  await db.exec(`SET ROLE authenticated`);
+  await db.query(`SELECT set_config('test.uid', $1, false)`, [uid]);
+  try { return await fn(); } finally { await db.exec(`RESET ROLE`); }
+};
+const settle = (uid, conflictId, how) => asUser(uid, async () => {
+  try { await db.query(`SELECT public.stars_sync_resolve_conflict($1,$2)`, [conflictId, how]); return null; }
+  catch (e) { return e.message; }
+});
 {
   const c = await one(`SELECT id FROM public.stars_sync_conflicts WHERE event_id=$1`, [id(2)]);
-  await db.exec(`SET ROLE authenticated`);
-  await db.query(`SELECT set_config('test.uid', $1, false)`, [U.mai]);
-  let err = null;
-  try { await db.query(`SELECT public.stars_sync_resolve_conflict($1,'kept_ours')`, [c.id]); } catch (e) { err = e.message; }
-  ok("a teacher cannot settle one", err !== null, err ?? "it was allowed");
+  ok("a teacher cannot settle one", (await settle(U.mai, c.id, "kept_ours")) !== null);
 
-  await db.query(`SELECT set_config('test.uid', $1, false)`, [U.admin]);
-  err = null;
-  try { await db.query(`SELECT public.stars_sync_resolve_conflict($1,'took_theirs')`, [c.id]); } catch (e) { err = e.message; }
-  ok("'take theirs' is refused until the register really shows theirs", /does not show/.test(err ?? ""), err ?? "it was recorded");
-  await db.exec(`RESET ROLE`);
+  // Minh's register has moved on since conflict 2 was raised - the sync
+  // adopted Present and then wrote Late. Taking Pixel Pal's old Absent now
+  // would overwrite a register that is no longer what the admin was shown.
+  const before = await mark(MINH);
+  const err = await settle(U.admin, c.id, "took_theirs");
+  ok("'Use Pixel Pal's' is refused when the register changed since the conflict was raised",
+     /register has changed/.test(err ?? ""), err ?? "it went through");
+  ok("  and nothing was written", JSON.stringify(await mark(MINH)) === JSON.stringify(before));
+  eq("  the conflict stays open for the admin to look at again",
+     (await one(`SELECT resolved_at FROM public.stars_sync_conflicts WHERE id=$1`, [c.id])).resolved_at, null);
+  eq("'Keep HEC's' closes it", await settle(U.admin, c.id, "kept_ours"), null);
+  ok("  and a second admin settling it again is refused", /already been settled/.test(await settle(U.admin, c.id, "took_theirs") ?? ""));
+}
+{
+  // A clean conflict: a teacher marked Gia Hung Absent in HEC; Pixel Pal
+  // says Present.
+  const kid = await child("Gia Hung", STARS);
+  await db.query(`INSERT INTO public.stars_student_map VALUES ('148',$1)`, [kid]);
+  await db.query(`INSERT INTO public.attendance (session_id,student_id,status,marked_by) VALUES ($1,$2,'Absent',$3)`,
+    [STARS_TODAY, kid, U.linh]);
+  await page([ev(80, "attendance", { status: "Present" }, { student_ref: "148" })]);
+  const c = await one(`SELECT id FROM public.stars_sync_conflicts WHERE event_id=$1`, [id(80)]);
+  eq("'Use Pixel Pal's' on a current conflict goes through", await settle(U.admin, c.id, "took_theirs"), null);
+  const m = await mark(kid);
+  eq("  the register shows Pixel Pal's mark", m.status, "Present");
+  eq("  recorded as the admin who chose it", m.marked_by, U.admin);
+  eq("  the record counts as applied", (await outcome(80)).outcome, "applied");
+  eq("  a Present queues the streak step HEC would have taken", await queued(streakKey(STARS_TODAY, kid)), 1);
+  await page([ev(81, "retraction", { retracts_event_id: id(80), reason: "removed" })]);
+  eq("  and a later withdrawal leaves the admin's mark alone", (await mark(kid)).status, "Present");
+}
+{
+  // Pixel Pal withdraws its mark while the admin is looking at the conflict.
+  const kid = await child("Elina", STARS);
+  await db.query(`INSERT INTO public.stars_student_map VALUES ('149',$1)`, [kid]);
+  await db.query(`INSERT INTO public.attendance (session_id,student_id,status,marked_by) VALUES ($1,$2,'Absent',$3)`,
+    [STARS_TODAY, kid, U.linh]);
+  await page([ev(82, "attendance", { status: "Present" }, { student_ref: "149" })]);
+  const c = await one(`SELECT id FROM public.stars_sync_conflicts WHERE event_id=$1`, [id(82)]);
+  await page([ev(83, "retraction", { retracts_event_id: id(82), reason: "changed" })]);
+  const err = await settle(U.admin, c.id, "took_theirs");
+  ok("'Use Pixel Pal's' after Pixel Pal withdrew is refused - the bug the review found",
+     /already been settled/.test(err ?? ""), err ?? "it went through");
+  eq("  and the teacher's Absent stands", (await mark(kid)).status, "Absent");
+}
 
-  // What the admin screen does first: mark it through the normal path.
-  await db.query(`UPDATE public.attendance SET status='Absent', marked_by=$1 WHERE session_id=$2 AND student_id=$3`,
-    [U.admin, STARS_TODAY, MINH]);
-  await db.exec(`SET ROLE authenticated`);
-  await db.query(`SELECT public.stars_sync_resolve_conflict($1,'took_theirs')`, [c.id]);
+{
+  // The same teacher changes their own mark after the conflict was raised:
+  // same name on the row, different status. Only the status comparison
+  // catches this - the test above changed both, and so proved neither.
+  const kid = await child("Anna", STARS);
+  await db.query(`INSERT INTO public.stars_student_map VALUES ('152',$1)`, [kid]);
+  await db.query(`INSERT INTO public.attendance (session_id,student_id,status,marked_by) VALUES ($1,$2,'Absent',$3)`,
+    [STARS_TODAY, kid, U.linh]);
+  await page([ev(84, "attendance", { status: "Present" }, { student_ref: "152" })]);
+  const c = await one(`SELECT id FROM public.stars_sync_conflicts WHERE event_id=$1`, [id(84)]);
+  await db.query(`UPDATE public.attendance SET status='Late' WHERE session_id=$1 AND student_id=$2`, [STARS_TODAY, kid]);
+  const err = await settle(U.admin, c.id, "took_theirs");
+  ok("'Use Pixel Pal's' is refused when the same teacher changed their mark since",
+     /register has changed/.test(err ?? ""), err ?? "it went through");
+  eq("  and the teacher's correction stands", (await mark(kid)).status, "Late");
+}
+
+console.log("=== review fixes ===");
+{
+  // (7) An admin's repair writes marked_by NULL with a chosen status. It
+  // is a decision, not a placeholder.
+  const kid = await child("Tuan Huy", STARS);
+  await db.query(`INSERT INTO public.stars_student_map VALUES ('13',$1)`, [kid]);
+  await db.query(`INSERT INTO public.attendance (session_id,student_id,status,marked_by) VALUES ($1,$2,'Excused',NULL)`,
+    [STARS_TODAY, kid]);
+  await page([ev(90, "attendance", { status: "Absent" }, { student_ref: "13" })]);
+  eq("an admin's Excused repair is not overwritten", (await mark(kid)).status, "Excused");
+  eq("  it is a conflict for an admin", (await outcome(90)).outcome, "conflict");
+}
+{
+  // (3) An award deleted in HEC, then withdrawn in Pixel Pal.
+  const kid = await child("Thai Minh", STARS);
+  await db.query(`INSERT INTO public.stars_student_map VALUES ('94',$1)`, [kid]);
+  await page([ev(91, "points", { points: 10, category: "participation", reason: "x" }, { student_ref: "94" })]);
+  eq("awarded", (await pts(kid)).p, 10);
+  await db.query(`DELETE FROM public.point_transactions WHERE student_id=$1`, [kid]);
+  eq("  an admin deletes it in HEC", (await pts(kid)).p, 0);
+  await page([ev(92, "retraction", { retracts_event_id: id(91), reason: "removed" })]);
+  eq("withdrawing it then takes nothing - the child is not docked points they no longer have", (await pts(kid)).p, 0);
+  eq("  no compensating entry was posted",
+     (await one(`SELECT count(*)::int n FROM public.point_transactions WHERE student_id=$1`, [kid])).n, 0);
+
+  await page([ev(93, "points", { points: 10, category: "participation", reason: "x" }, { student_ref: "94" })]);
+  await db.query(`UPDATE public.point_transactions SET points=4 WHERE student_id=$1`, [kid]);
+  await page([ev(94, "retraction", { retracts_event_id: id(93), reason: "removed" })]);
+  eq("an award edited in HEC is left as HEC has it", (await pts(kid)).p, 4);
+}
+{
+  // (4) A withdrawal with no usable date still withdraws.
+  await page([ev(95, "points", { points: 7, category: "participation", reason: "x" }, { student_ref: "777" })]);
+  eq("a record for an unmatched child waits", (await outcome(95)).outcome, "skipped_unmapped");
+  await page([ev(96, "retraction", { retracts_event_id: id(95), reason: "removed" }, { lesson_date: null })]);
+  eq("a withdrawal with no lesson date still withdraws it", (await outcome(95)).outcome, "retracted");
+  const kid = await child("Strawberry Two", STARS);
+  await db.query(`INSERT INTO public.stars_student_map VALUES ('777',$1)`, [kid]);
+  await retry();
+  ok("  and matching the child later never applies it", (await pts(kid)) == null);
+}
+
+// A fresh class for the time-dependent cases, so nothing above interferes.
+const ROCKETS = await klass("Rockets", mai);
+await db.query(`INSERT INTO public.stars_class_map (stars_class_id, class_id) VALUES ('50',$1)`, [ROCKETS]);
+const R1 = await child("Rocket one", ROCKETS);
+const R2 = await child("Rocket two", ROCKETS);
+await db.query(`INSERT INTO public.stars_student_map VALUES ('501',$1),('502',$2)`, [R1, R2]);
+const sessionStatus = async (sid) => (await one(`SELECT status::text s FROM public.sessions WHERE id=$1`, [sid])).s;
+{
+  // (5) The sync marks a Scheduled lesson, then every mark is withdrawn.
+  const lessonId = await lesson(ROCKETS, TODAY, "Scheduled");
+  await page([ev(100, "attendance", { status: "Present" }, { class_ref: "50", student_ref: "501" }),
+              ev(101, "attendance", { status: "Absent" }, { class_ref: "50", student_ref: "502" })]);
+  eq("the sync's marks make the lesson Held", await sessionStatus(lessonId), "Held");
+  await page([ev(102, "retraction", { retracts_event_id: id(100), reason: "removed" })]);
+  eq("  withdrawing one of two marks leaves it Held", await sessionStatus(lessonId), "Held");
+  await page([ev(103, "retraction", { retracts_event_id: id(101), reason: "removed" })]);
+  eq("  withdrawing the last one puts it back to Scheduled - so nobody is paid for it", await sessionStatus(lessonId), "Scheduled");
+  eq("  and takes the queued streak back out", await queued(streakKey(lessonId, R1)), 0);
+}
+{
+  // ...unless somebody else has marked it.
+  const lessonId = await lesson(ROCKETS, "2026-10-26", "Scheduled");
+  await page([ev(104, "attendance", { status: "Present" }, { class_ref: "50", student_ref: "501", lesson_date: "2026-10-26" })],
+    undefined, "2026-10-26T03:00:00Z");
+  await db.query(`INSERT INTO public.attendance (session_id,student_id,status,marked_by) VALUES ($1,$2,'Absent',$3)`,
+    [lessonId, R2, U.linh]);
+  await page([ev(105, "retraction", { retracts_event_id: id(104), reason: "removed" })], undefined, "2026-10-26T04:00:00Z");
+  eq("a lesson a teacher also marked stays Held", await sessionStatus(lessonId), "Held");
+}
+{
+  // (6) A mark made in time but waiting on set-up is judged by when it was
+  // made, not when the set-up was fixed.
+  const lessonId = await lesson(ROCKETS, "2026-10-24", "Held");
+  await page([ev(106, "attendance", { status: "Absent" },
+                 { class_ref: "50", student_ref: "503", lesson_date: "2026-10-24", occurred_at: "2026-10-24T03:30:00Z" })],
+    undefined, "2026-10-24T04:00:00Z");
+  eq("a mark for a child not yet matched waits", (await outcome(106)).outcome, "skipped_unmapped");
+  const kid = await child("Rocket three", ROCKETS);
+  await db.query(`INSERT INTO public.stars_student_map VALUES ('503',$1)`, [kid]);
+  await retry("2026-10-27T03:00:00Z");
+  eq("  matched three days later, it applies - it was made inside the window", (await outcome(106)).outcome, "applied");
+  eq("  on that lesson", (await mark(kid, lessonId)).status, "Absent");
+}
+{
+  const lessonId = await lesson(ROCKETS, "2026-10-23", "Held");
+  await page([ev(107, "attendance", { status: "Absent" },
+                 { class_ref: "50", student_ref: "501", lesson_date: "2026-10-23", occurred_at: "2026-10-25T09:00:00Z" })]);
+  eq("a mark Pixel Pal says was made two days after the lesson is refused", (await outcome(107)).outcome, "rejected");
+  await page([ev(108, "attendance", { status: "Absent" },
+                 { class_ref: "50", student_ref: "502", lesson_date: "2026-10-23", occurred_at: "1970-01-01T00:00:00Z" })]);
+  eq("  and an implausible occurred_at is ignored, not trusted", (await outcome(108)).outcome, "rejected");
+  void lessonId;
+}
+{
+  // The first run after choosing a start date: history arrives all at
+  // once, days late. Without judging by when it was made, every register
+  // after the start date would have been refused.
+  const lessonId = await lesson(ROCKETS, "2026-10-20", "Held");
+  await page([ev(109, "attendance", { status: "Present" },
+                 { class_ref: "50", student_ref: "502", lesson_date: "2026-10-20", occurred_at: "2026-10-20T03:20:00Z" })]);
+  eq("history imported a week late still applies when it was made on time", (await outcome(109)).outcome, "applied");
+  eq("  on its lesson", (await mark(R2, lessonId)).status, "Present");
+}
+{
+  // (8) One recalculation per child per month, however many marks.
+  await page([ev(110, "attendance", { status: "Absent" }, { class_ref: "50", student_ref: "501", lesson_date: "2026-10-20",
+                                                              occurred_at: "2026-10-20T03:20:00Z" })]);
+  eq("a second Absent in the same month does not queue a second recalculation",
+     (await one(`SELECT count(*)::int n FROM public.stars_sync_effects WHERE dedupe_key LIKE $1`, [`tuition:${R1}:%`])).n, 1);
+  await db.exec(`SET ROLE service_role`);
+  const firstId = (await one(`SELECT id FROM public.stars_sync_effects ORDER BY id LIMIT 1`)).id;
+  await db.query(`SELECT public.stars_sync_effect_failed(ARRAY[$1]::bigint[], 'rate limited')`, [firstId]);
   await db.exec(`RESET ROLE`);
-  eq("then it is recorded", (await one(`SELECT resolution FROM public.stars_sync_conflicts WHERE id=$1`, [c.id])).resolution, "took_theirs");
-  eq("  and the record counts as applied", (await outcome(2)).outcome, "applied");
-  await page([ev(73, "retraction", { retracts_event_id: id(2), reason: "removed" })]);
-  eq("  so a later withdrawal leaves the admin's mark alone", (await mark(MINH)).status, "Absent");
+  const failed = await one(`SELECT attempts, last_error FROM public.stars_sync_effects WHERE id=$1`, [firstId]);
+  ok("a refused job stays queued, counted, with its reason", failed.attempts === 1 && failed.last_error === "rate limited",
+     JSON.stringify(failed));
+  await asUser(U.admin, async () => {
+    const st = (await one(`SELECT public.stars_sync_status() AS s`)).s;
+    ok("  and the admin page can see it", st.effects_failing >= 1 && st.effects_queued >= 1, JSON.stringify(st));
+  });
+}
+{
+  const blocked = await asUser(U.admin, async () => {
+    try { await db.query(`SELECT public.stars_sync_effect_failed(ARRAY[1]::bigint[], 'x')`); return null; }
+    catch (e) { return e.message; }
+  });
+  ok("nobody in a browser can tamper with the queue", /permission denied/.test(blocked ?? ""), blocked ?? "it ran");
+  const helpers = await asUser(U.admin, async () => {
+    try { await db.query(`SELECT public.stars_sync_is_pending('applied')`); return null; }
+    catch (e) { return e.message; }
+  });
+  ok("the engine's helpers are no longer callable by signed-in users", /permission denied/.test(helpers ?? ""), helpers ?? "it ran");
 }
 
 console.log("=== the admin's view ===");

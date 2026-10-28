@@ -19,30 +19,33 @@ it.
 | | |
 |---|---|
 | Pixel Pal's export endpoint | live, refuses a wrong secret |
-| `20261023090000`, `20261023100000`, `20261027090000` | applied |
+| `20261023090000`, `20261023100000`, `20261027090000`, `20261027100000` | applied |
 | Class numbers and the list of children | received |
 
 ---
 
-## Step 1 — Apply the engine migration
+## Step 1 — Apply the review fixes
 
-Paste `supabase/migrations/20261027100000_stars_sync_engine.sql` into the
-SQL editor and run it. It ends by printing one row:
+The engine (`20261027100000`) is applied. A review of it found eight
+defects, all fixed in `supabase/migrations/20261028090000_stars_sync_review_fixes.sql`
+— the file's header lists them. Two of them matter before the first run:
+without the fix, the first run would refuse every historical mark as "more
+than 24 hours late", and *Use Pixel Pal's* on a conflict could overwrite a
+teacher's mark after Pixel Pal had already withdrawn its own.
+
+Paste it into the SQL editor and run it. It ends by printing one row:
 
 | column | should be |
 |---|---|
-| `engine_installed` | **1** |
-| `old_delete_trigger_left` | **0** |
-| `cron_available` | `true` |
-| `http_available` | `true` |
+| `effects_queue` | `true` |
+| `held_flips` | `true` |
+| `window_fix` | `true` |
 
-If `cron_available` or `http_available` is `false`: enable **pg_cron** and
-**pg_net** under Database → Extensions, then paste the migration again — it
-is safe to re-run. Without them the sync still works, but only when you
-press **Run now**.
+It is safe to re-run.
 
-It also removes an old points trigger that was quietly doing the wrong
-thing on deletes (see the migration's section 1). No totals change.
+If you have **already pressed Run now** before applying this, open Records
+and look for *Refused: 24 hours* on marks that were made on time. The fix
+does not revisit records already refused; tell me and they can be re-queued.
 
 ## Step 2 — Rotate the secret, then set it
 
@@ -53,21 +56,33 @@ for about an hour.
 Set it in the project's **edge function secrets** as `STARPASSCODE`
 (`starpasscode` also works). Nowhere else — not in a file, not in a chat.
 
-## Step 3 — Deploy
+## Step 3 — Deploy, after Step 1
 
-Two functions need deploying through Lovable:
+Publish in Lovable so these two functions are redeployed:
 
-- **`stars-sync`** — new.
-- **`mark-attendance`** — its tuition and streak code moved into a shared
-  module the sync also uses. Behaviour is unchanged; the old deployed copy
-  keeps working until this one replaces it.
+- **`stars-sync`** — it now drains a queue of follow-ups (tuition
+  recalculation, streaks) that the database fills in the same transaction
+  as each mark, so a follow-up can no longer be lost or dropped by
+  calculate-tuition's 30-a-minute limit. The queue only exists once Step 1
+  is applied: deploy this first and it has nowhere to read from.
+- **`mark-attendance`** — its tuition and streak code lives in a shared
+  module the sync also uses. One fix: a failed streak read used to reset
+  every child's streak to 1; it now leaves them alone.
+
+The admin page itself goes out with the normal site build.
+
+**Until Steps 1 and 3 are both done, do not press Run now and do not settle
+conflicts.** The page, the database and the function each changed how
+*Use Pixel Pal's* works, and a mix of old and new would mark the register
+without closing the conflict.
 
 ## Step 4 — Set it up, in Admin → Stars Sync
 
 The page lists what is still missing at the top. In order:
 
-1. **Sync lessons from** — the first lesson date to import. Nothing earlier
-   comes across, ever. **If anybody has typed Pixel Pal's points into HEC
+1. **Sync lessons from** — the first lesson date to import, then **Save
+   date**. Nothing earlier comes across, ever. Moving it earlier asks you to
+   confirm. **If anybody has typed Pixel Pal's points into HEC
    by hand, start the day after they last did** — otherwise those points are
    added twice.
 2. **Acts as** — your teacher.
@@ -95,6 +110,10 @@ Leave **Schedule** off and press **Run now**. Then:
 
 - Read **Records → Needs attention.** Every record says what became of it.
 - Pick one child and compare their register and points with Pixel Pal.
+- The status line may say **N follow-ups retrying**. That is tuition and
+  streak work queued behind the marks; each run does up to 20 tuition
+  recalculations and the rest wait for the next. It should fall to zero
+  within a few runs. If it does not, the failing ones carry their error.
 
 Running it by hand once is also what lets the schedule start: the function
 records its own address on that first run, and the schedule cannot call it
@@ -124,8 +143,10 @@ Waiting records are retried every run and apply as soon as the cause is
 fixed — up to 60 days after the lesson.
 
 **To settle.** HEC and Pixel Pal disagree about a child's mark, and HEC kept
-its own. *Keep HEC's* closes it. *Use Pixel Pal's* marks it through HEC's
-normal register, as you.
+its own. *Keep HEC's* closes it. *Use Pixel Pal's* marks the register as
+you — in one step, and only if nothing has moved since the conflict was
+raised: if a teacher has changed the mark since, or Pixel Pal has withdrawn
+its own, it refuses and says so. The list refreshes every 30 seconds.
 
 **Turning it off.** The Schedule switch. Nothing is lost: Pixel Pal keeps
 its records and they arrive when it is back on.
@@ -145,4 +166,7 @@ every write, and the database itself refuses the rest:
 - nothing about families, staff or accounts;
 - it never creates or deletes a student, class, lesson or enrolment;
 - it never touches a class you have not mapped;
-- it never overwrites a mark somebody made in HEC.
+- it never overwrites a mark somebody made in HEC — including a status an
+  admin set through attendance repair;
+- if Pixel Pal withdraws every mark it made on a lesson, and nobody else has
+  marked it, the lesson goes back to *Scheduled* — unpaid, as it was.
