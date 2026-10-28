@@ -1,6 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Users, X, CheckSquare, Clock, Monitor } from "lucide-react";
+import { Trophy, Users, X, CheckSquare, Clock, Monitor, ExternalLink } from "lucide-react";
+import { openClassBoardWindow } from "@/pages/ClassBoardWindow";
+import { BoardErrorBoundary } from "@/components/leaderboard/BoardErrorBoundary";
 import { useState, useEffect, useRef } from "react";
 import {
   Select,
@@ -362,6 +364,18 @@ export function ClassLeaderboardShared({
               </span>
             </Button>
           )}
+          {canSwapBoard && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => openClassBoardWindow(classId)}
+              title="Open the class view in its own window for the extended screen"
+            >
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              <span className="hidden sm:inline">New window</span>
+            </Button>
+          )}
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="h-9 w-auto min-w-[130px] rounded-full border-studio bg-studio-card text-sm font-semibold text-ink focus:ring-0 focus:ring-offset-0 sm:min-w-[170px]">
               <SelectValue />
@@ -395,6 +409,7 @@ export function ClassLeaderboardShared({
         </div>
       </div>
 
+      <BoardErrorBoundary key={String(showClassicBoard)}>
       <StyledClassBoard
         entries={boardEntries}
         periodLabel={boardPeriodLabel}
@@ -423,6 +438,7 @@ export function ClassLeaderboardShared({
           })
         }
       />
+      </BoardErrorBoundary>
 
       {/* Pending economy requests (only when economy mode + manager) */}
       {isEconomyMode && canManagePoints && (pendingTransactions as any[]).length > 0 && (

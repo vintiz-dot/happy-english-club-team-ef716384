@@ -34,6 +34,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 const ClassDetail = lazy(() => import("./pages/ClassDetail"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const TeacherClassDetail = lazy(() => import("./pages/TeacherClassDetail"));
+const ClassBoardWindow = lazy(() => import("./pages/ClassBoardWindow"));
 const TeacherPayroll = lazy(() => import("./pages/TeacherPayroll"));
 const TeacherAttendance = lazy(() => import("./pages/TeacherAttendance"));
 const TeacherAssignments = lazy(() => import("./pages/TeacherAssignments"));
@@ -118,6 +119,7 @@ function AppContent() {
 
                   {/* Teacher routes */}
                   <Route path="/teacher/dashboard" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherDashboard /></ProtectedRoute>} />
+                  <Route path="/board-window/:classId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><ClassBoardWindow /></ProtectedRoute>} />
                   <Route path="/teacher/classes/:id" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherClassDetail /></ProtectedRoute>} />
                   <Route path="/teacher/payroll" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherPayroll /></ProtectedRoute>} />
                   <Route path="/teacher/attendance" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherAttendance /></ProtectedRoute>} />
