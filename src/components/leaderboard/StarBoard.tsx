@@ -931,7 +931,7 @@ export function StarBoard({
   const second = rows[1];
   const third = rows[2];
   const rest = rows.slice(3);
-  const restShown = rest.slice(0, REST_CARDS);
+  const restShown = rest;
   const restHidden = rest.length - restShown.length;
 
   /** Third place's score is the bar every climber is measured against. */
