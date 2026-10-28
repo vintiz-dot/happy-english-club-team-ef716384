@@ -94,7 +94,6 @@ const BEAT: Record<number, { step: number; countAt: number }> = {
 const COUNT_MS = 858;
 
 /** Only two of the drawn 500px cards fit the strip; the rest are counted. */
-const REST_CARDS = 2;
 
 /* ------------------------------------------------------------- small maths */
 
