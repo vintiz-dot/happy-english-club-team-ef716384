@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { buildEnrolledMonths, defaultMonth, type MonthOption } from "@/lib/enrolledMonths";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,11 +15,43 @@ import { useAuth } from "@/hooks/useAuth";
 import { getPaymentStatus, getTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { PriorBalanceBreakdown } from "./PriorBalanceBreakdown";
 
+const CURRENT_MONTH = (() => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+})();
+
 export function StudentTuitionTab({ studentId }: { studentId: string }) {
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const [selectedMonth, setSelectedMonth] = useState(CURRENT_MONTH);
+  const [userPicked, setUserPicked] = useState(false);
+
+  const { data: monthOptions } = useQuery({
+    queryKey: ["student-enrolled-months", studentId],
+    queryFn: async (): Promise<MonthOption[]> => {
+      const [enr, inv, att] = await Promise.all([
+        supabase.from("enrollments").select("start_date, end_date, classes(name)").eq("student_id", studentId),
+        supabase.from("invoices").select("month").eq("student_id", studentId),
+        supabase.from("attendance").select("sessions(date, classes(name))").eq("student_id", studentId).limit(5000),
+      ]);
+      const one = (x: any) => (Array.isArray(x) ? x[0] : x);
+      const spans = (enr.data ?? []).map((e: any) => ({
+        start_date: e.start_date, end_date: e.end_date, className: one(e.classes)?.name ?? null,
+      }));
+      const extra = [
+        ...(inv.data ?? []).filter((i: any) => i.month).map((i: any) => ({ month: i.month as string })),
+        ...(att.data ?? []).map((a: any) => one(a.sessions)).filter((s: any) => s?.date)
+          .map((s: any) => ({ month: s.date as string, className: one(s.classes)?.name ?? null })),
+      ];
+      return buildEnrolledMonths(spans, extra, CURRENT_MONTH);
+    },
   });
+
+  useEffect(() => {
+    if (!userPicked && monthOptions?.length) setSelectedMonth(defaultMonth(monthOptions, CURRENT_MONTH));
+  }, [monthOptions, userPicked]);
+
+  const pickerOptions: MonthOption[] = monthOptions?.length
+    ? monthOptions
+    : getMonthOptions().map((o) => ({ ...o, classes: [] }));
   
   const [settleBillOpen, setSettleBillOpen] = useState(false);
   const [studentName, setStudentName] = useState("");
@@ -137,14 +170,17 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
             <DollarSign className="h-5 w-5" />
             <h2 className="text-2xl font-bold">Tuition Overview</h2>
           </div>
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[200px]">
+          <Select value={selectedMonth} onValueChange={(v) => { setUserPicked(true); setSelectedMonth(v); }}>
+            <SelectTrigger className="w-[280px]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              {getMonthOptions().map(({ value, label }) => (
+            <SelectContent className="max-h-80">
+              {pickerOptions.map(({ value, label, classes }) => (
                 <SelectItem key={value} value={value}>
                   {label}
+                  {classes.length > 0 && (
+                    <span className="text-muted-foreground"> · {classes.join(", ")}</span>
+                  )}
                 </SelectItem>
               ))}
             </SelectContent>
