@@ -207,6 +207,7 @@ export function ClassroomToolsLauncher() {
           onFocusOutside={keepOpenForClassScreen}
           className="studio-surface flex w-full flex-col gap-0 border-l-0 p-0 sm:max-w-[min(100vw-2rem,82rem)]"
         >
+          <ClassScreenContainerContext.Provider value={panelEl}>
           <header className="shrink-0 border-b border-studio px-5 pb-3 pt-5 sm:px-7">
             <SheetTitle className="studio-title text-2xl">Classroom tools</SheetTitle>
             <SheetDescription className="mt-0.5 text-sm text-ink-soft">
@@ -256,6 +257,7 @@ export function ClassroomToolsLauncher() {
               ))}
             </div>
           </div>
+          </ClassScreenContainerContext.Provider>
         </SheetContent>
       </Sheet>
     </>
