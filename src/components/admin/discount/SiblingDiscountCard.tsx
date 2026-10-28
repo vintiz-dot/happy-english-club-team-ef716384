@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { siblingRetryDelayMs } from "@/lib/siblingRetry";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +44,8 @@ export function SiblingDiscountCard({ studentId, month }: SiblingDiscountCardPro
       return siblingDiscountView(tuitionData);
     },
     enabled: !!studentId,
+    refetchInterval: (query) =>
+      siblingRetryDelayMs(query.state.data?.state?.status, Math.max(0, query.state.dataUpdateCount - 1)),
   });
 
   if (isLoading) {
