@@ -36,9 +36,16 @@ export const ClassScreenContainerContext = createContext<HTMLElement | null>(nul
 export const CLASS_SCREEN_ATTR = "data-class-screen";
 
 /** For Radix onInteractOutside/onFocusOutside: ignore events from a class screen. */
-export function keepOpenForClassScreen(e: { target: EventTarget | null; preventDefault: () => void }) {
-  const t = e.target as Element | null;
-  if (t && typeof t.closest === "function" && t.closest(`[${CLASS_SCREEN_ATTR}]`)) e.preventDefault();
+export function keepOpenForClassScreen(e: {
+  target: EventTarget | null;
+  preventDefault: () => void;
+  detail?: { originalEvent?: Event };
+}) {
+  const inScreen = (x: EventTarget | null | undefined) => {
+    const t = x as Element | null | undefined;
+    return !!t && typeof t.closest === "function" && !!t.closest(`[${CLASS_SCREEN_ATTR}]`);
+  };
+  if (inScreen(e.target) || inScreen(e.detail?.originalEvent?.target) || document.fullscreenElement?.hasAttribute(CLASS_SCREEN_ATTR)) e.preventDefault();
 }
 
 export function ClassScreenButton({
@@ -73,6 +80,9 @@ export function ClassScreen({
   const [mounted, setMounted] = useState(false);
   const container = useContext(ClassScreenContainerContext);
 
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => setMounted(true), []);
 
   // Ask for real fullscreen once the overlay exists. A rejection is fine —
@@ -95,10 +105,10 @@ export function ClassScreen({
   useEffect(() => {
     if (!open) return;
     const onFsChange = () => {
-      if (!document.fullscreenElement) onClose();
+      if (!document.fullscreenElement) onCloseRef.current();
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("fullscreenchange", onFsChange);
     window.addEventListener("keydown", onKey);
@@ -106,7 +116,7 @@ export function ClassScreen({
       document.removeEventListener("fullscreenchange", onFsChange);
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, onClose]);
+  }, [open]);
 
   const close = useCallback(() => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
