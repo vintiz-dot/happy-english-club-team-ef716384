@@ -43,6 +43,28 @@
 --     transaction as the mark - so they cannot be lost - and the edge
 --     function drains the queue a bounded amount per run, keeping anything
 --     refused for the next one.
+--
+-- A second review of the above, before it was applied, found more:
+--
+--  9. Pixel Pal sends a changed mark as a withdrawal plus a new record, so
+--     one record per child per lesson stands at a time. A newer record
+--     now replaces the older one outright: it inherits what HEC had before
+--     the sync first wrote that register, withdrawing it restores that,
+--     and withdrawing a record a newer one already replaced changes
+--     nothing. Before, withdrawing the older record of a pair could revert
+--     a lesson to unpaid while the newer still stood, or leave a mark on
+--     the register that no record supported. A record older than the one
+--     a register already reflects no longer overwrites it.
+-- 10. An open conflict is dismissed when a newer Pixel Pal record for the
+--     same child and lesson arrives, and "Use Pixel Pal's" refuses if one
+--     has - it would have written a value Pixel Pal no longer holds.
+-- 11. A follow-up requested while the same one was being worked on was
+--     absorbed by it and then deleted with it, so the change behind it was
+--     never recalculated. Each request now bumps a generation, and the
+--     drain deletes a job only at the generation it worked on.
+-- 12. Records the engine already running in production refused under the
+--     rules fixed in 4 and 6 are reopened, and conflicts a newer record
+--     replaced are dismissed - see the end of this file.
 
 BEGIN;
 
@@ -74,6 +96,10 @@ CREATE TABLE IF NOT EXISTS public.stars_sync_effects (
     (kind = 'tuition' AND month ~ '^[0-9]{4}-[0-9]{2}$')
     OR (kind = 'streak' AND class_id IS NOT NULL AND session_id IS NOT NULL))
 );
+-- (11) Bumped by every request for the same job. The drain deletes a job
+-- only at the generation it read, so a request that lands while the job
+-- is being worked on keeps it queued for another pass.
+ALTER TABLE public.stars_sync_effects ADD COLUMN IF NOT EXISTS generation integer NOT NULL DEFAULT 0;
 
 -- ---------------------------------------------------------------- 5
 -- Lessons the sync itself turned from Scheduled to Held.
@@ -117,7 +143,7 @@ BEGIN
   IF p_status = 'Present' THEN
     INSERT INTO public.stars_sync_effects (kind, dedupe_key, student_id, class_id, session_id, lesson_date)
     VALUES ('streak', v_streak_key, p_student, p_class, p_session, p_date)
-    ON CONFLICT (dedupe_key) DO NOTHING;
+    ON CONFLICT (dedupe_key) DO UPDATE SET generation = public.stars_sync_effects.generation + 1;
   ELSE
     DELETE FROM public.stars_sync_effects WHERE dedupe_key = v_streak_key;
   END IF;
@@ -135,7 +161,44 @@ SET search_path = public
 AS $$
   INSERT INTO public.stars_sync_effects (kind, dedupe_key, student_id, month)
   VALUES ('tuition', 'tuition:' || p_student || ':' || p_month, p_student, p_month)
-  ON CONFLICT (dedupe_key) DO NOTHING;
+  ON CONFLICT (dedupe_key) DO UPDATE SET generation = public.stars_sync_effects.generation + 1;
+$$;
+
+-- (11) Jobs that worked, removed - each only if nobody asked for it again
+-- while it ran. Returns how many went.
+CREATE OR REPLACE FUNCTION public.stars_sync_effects_done(p_ids bigint[], p_generations integer[])
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE v_n integer;
+BEGIN
+  DELETE FROM public.stars_sync_effects e
+   USING unnest(p_ids, p_generations) AS d(id, generation)
+   WHERE e.id = d.id AND e.generation = d.generation;
+  GET DIAGNOSTICS v_n = ROW_COUNT;
+  RETURN v_n;
+END $$;
+
+-- (9, 10) Has Pixel Pal sent a newer record for the same child and lesson
+-- than this one - one it has not withdrawn? Then this one no longer says
+-- what Pixel Pal holds.
+CREATE OR REPLACE FUNCTION public.stars_sync__newer_mark_exists(p_event public.stars_sync_events)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.stars_sync_events n
+     WHERE n.kind = 'attendance'
+       AND n.stars_class_id = p_event.stars_class_id
+       AND n.stars_student_id = p_event.stars_student_id
+       AND n.lesson_date = p_event.lesson_date
+       AND n.seq > p_event.seq
+       AND n.outcome NOT IN ('retracted', 'duplicate'));
 $$;
 
 -- A queued job that was tried and refused: counted, with the reason, and
@@ -203,6 +266,8 @@ DECLARE
   v_date        date;
   v_today       date := public.stars_sync__today(p_now);
   v_made_at     timestamptz;
+  -- Pixel Pal's order, as stars_sync__record stores it.
+  v_seq         bigint := CASE WHEN (p_event ->> 'seq') ~ '^[0-9]{1,18}$' THEN (p_event ->> 'seq')::bigint ELSE 0 END;
 
   v_outcome     text;
   v_note        text;
@@ -463,7 +528,7 @@ BEGIN
       END IF;
       IF v_made_at > v_end + interval '24 hours' THEN
         v_outcome := 'rejected';
-        v_note := 'This would change a register more than 24 hours after the lesson ended. A teacher could not do that in HEC either; an admin can.';
+        v_note := 'This withdrawal was made more than 24 hours after the lesson ended, so the register was left. A teacher could not change it in HEC either; an admin can.';
         EXIT decide;
       END IF;
 
@@ -471,6 +536,24 @@ BEGIN
       SELECT * INTO v_row FROM public.attendance
        WHERE session_id = v_session.id AND student_id = v_student_id FOR UPDATE;
       v_has_row := FOUND;
+      SELECT * INTO v_state FROM public.stars_sync_attendance_state
+       WHERE session_id = v_session.id AND student_id = v_student_id;
+      v_has_state := FOUND;
+
+      -- (9) A newer Pixel Pal record for this child and lesson replaced this
+      -- one, so the register shows that record, not this. Withdrawing the
+      -- replaced one changes nothing.
+      IF v_has_state AND v_state.event_id IS DISTINCT FROM v_target_id THEN
+        UPDATE public.stars_sync_events
+           SET outcome = 'retracted',
+               outcome_note = 'Withdrawn in Pixel Pal; a newer Pixel Pal record had already replaced it, so the register was left.',
+               processed_at = p_now
+         WHERE event_id = v_target_id;
+        v_outcome := 'applied';
+        v_note := 'A newer Pixel Pal record had already replaced this one; nothing in HEC changed.';
+        v_ref := jsonb_build_object('withdrew', v_target_id);
+        EXIT decide;
+      END IF;
 
       IF NOT v_has_row OR v_row.status IS DISTINCT FROM (v_tref ->> 'wrote') THEN
         DELETE FROM public.stars_sync_attendance_state
@@ -616,6 +699,40 @@ BEGIN
        WHERE session_id = v_session.id AND student_id = v_student_id;
       v_has_state := FOUND;
 
+      -- (9) Records for one child and lesson take effect in Pixel Pal's
+      -- order. One older than the record this register already reflects -
+      -- a waiting record that applied late - changes nothing.
+      IF v_has_state AND EXISTS (SELECT 1 FROM public.stars_sync_events e
+                                  WHERE e.event_id = v_state.event_id AND e.seq > v_seq) THEN
+        v_outcome := 'duplicate';
+        v_note := 'A newer Pixel Pal record for this child and lesson has already applied.';
+        EXIT decide;
+      END IF;
+      -- (10) And this record replaces any older one still waiting for an
+      -- admin to settle it.
+      UPDATE public.stars_sync_conflicts k
+         SET resolved_at = p_now, resolution = 'dismissed'
+       WHERE k.session_id = v_session.id AND k.student_id = v_student_id
+         AND k.resolved_at IS NULL
+         AND EXISTS (SELECT 1 FROM public.stars_sync_events e
+                      WHERE e.event_id = k.event_id AND e.seq < v_seq);
+
+      -- (9) What HEC had before the sync first wrote this register. When
+      -- this record replaces the sync's own earlier write, it inherits that
+      -- record's "before", so withdrawing it later restores HEC's value -
+      -- not a value of the sync's that nobody stands by any more.
+      IF v_has_state AND v_has_row AND v_row.marked_by IS NOT NULL AND v_state.status = v_row.status THEN
+        SELECT e.applied_ref -> 'prev' INTO v_prev
+          FROM public.stars_sync_events e
+         WHERE e.event_id = v_state.event_id AND e.applied_ref ? 'prev';
+      END IF;
+      IF v_prev IS NULL THEN
+        v_prev := CASE WHEN v_has_row
+          THEN jsonb_build_object('existed', true, 'status', v_row.status, 'marked_by', v_row.marked_by,
+                                  'marked_at', v_row.marked_at, 'notes', v_row.notes)
+          ELSE jsonb_build_object('existed', false) END;
+      END IF;
+
       -- (7) A seeded placeholder is Present with nobody's name on it.
       -- Anything else is a decision somebody made - a teacher's mark, or an
       -- admin's repair - unless the sync wrote it and it is unchanged.
@@ -651,18 +768,9 @@ BEGIN
         v_note := format('Already %s.', v_status);
         v_ref := jsonb_build_object('table', 'attendance', 'session_id', v_session.id,
                                     'student_id', v_student_id, 'class_id', v_map.class_id,
-                                    'wrote', v_status,
-                                    'prev', jsonb_build_object('existed', true, 'status', v_row.status,
-                                                               'marked_by', v_row.marked_by,
-                                                               'marked_at', v_row.marked_at,
-                                                               'notes', v_row.notes));
+                                    'wrote', v_status, 'prev', v_prev);
         EXIT decide;
       END IF;
-
-      v_prev := CASE WHEN v_has_row
-        THEN jsonb_build_object('existed', true, 'status', v_row.status, 'marked_by', v_row.marked_by,
-                                'marked_at', v_row.marked_at, 'notes', v_row.notes)
-        ELSE jsonb_build_object('existed', false) END;
 
       INSERT INTO public.attendance (session_id, student_id, status, notes, marked_by, marked_at)
       VALUES (v_session.id, v_student_id, v_status, 'Pixel Pal', v_teacher.user_id, p_now)
@@ -810,6 +918,10 @@ BEGIN
     IF NOT FOUND OR v_event.outcome <> 'conflict' THEN
       RAISE EXCEPTION 'Pixel Pal no longer stands by this mark. Nothing was changed.';
     END IF;
+    -- (10) Settles conflicts raised before a newer record could dismiss them.
+    IF public.stars_sync__newer_mark_exists(v_event) THEN
+      RAISE EXCEPTION 'Pixel Pal has sent a newer mark for this child and lesson since. Nothing was changed.';
+    END IF;
     v_theirs := v.theirs ->> 'status';
 
     SELECT * INTO v_sess FROM public.sessions WHERE id = v.session_id FOR UPDATE;
@@ -893,6 +1005,7 @@ BEGIN
     'public.stars_sync__queue_tuition(uuid, text)',
     'public.stars_sync__made_at(jsonb, timestamp with time zone)',
     'public.stars_sync__apply_event(jsonb, timestamp with time zone)',
+    'public.stars_sync__newer_mark_exists(public.stars_sync_events)',
     -- helpers from 20261027100000 that were left executable by PUBLIC
     'public.stars_sync__today(timestamp with time zone)',
     'public.stars_sync__tally(jsonb, text)',
@@ -903,12 +1016,54 @@ BEGIN
 
   EXECUTE 'REVOKE ALL ON FUNCTION public.stars_sync_effect_failed(bigint[], text) FROM PUBLIC, anon, authenticated';
   EXECUTE 'GRANT EXECUTE ON FUNCTION public.stars_sync_effect_failed(bigint[], text) TO service_role';
+  EXECUTE 'REVOKE ALL ON FUNCTION public.stars_sync_effects_done(bigint[], integer[]) FROM PUBLIC, anon, authenticated';
+  EXECUTE 'GRANT EXECUTE ON FUNCTION public.stars_sync_effects_done(bigint[], integer[]) TO service_role';
   EXECUTE 'REVOKE ALL ON FUNCTION public.stars_sync_resolve_conflict(uuid, text) FROM PUBLIC, anon';
   EXECUTE 'GRANT EXECUTE ON FUNCTION public.stars_sync_resolve_conflict(uuid, text) TO authenticated';
   EXECUTE 'REVOKE ALL ON FUNCTION public.stars_sync_status() FROM PUBLIC, anon';
   EXECUTE 'GRANT EXECUTE ON FUNCTION public.stars_sync_status() TO authenticated';
 END
 $do$;
+
+-- ---------------------------------------------------------------- 12
+-- What the engine already running in production decided under the rules
+-- above. Each statement is a no-op if it never ran, and on a re-paste.
+--
+-- Reopening means a pending outcome: the next run's retry judges the
+-- record again with the code above, and refuses again whatever is still
+-- refused. Nothing here writes a register or a point itself.
+
+-- (6) Marks refused as late, judged when they were processed rather than
+-- when they were made - every historical mark on a first run. Matched on
+-- the old engine's exact words, which the code above no longer uses, so a
+-- second paste does not reopen what the fixed engine has refused since.
+UPDATE public.stars_sync_events
+   SET outcome = 'skipped_not_permitted',
+       outcome_note = 'Reopened by 20261028090000: to be judged again by when it was made.'
+ WHERE outcome = 'rejected'
+   AND outcome_note IN (
+     'This arrived more than 24 hours after the lesson ended. A teacher could not change it in HEC either; an admin can.',
+     'This would change a register more than 24 hours after the lesson ended. A teacher could not do that in HEC either; an admin can.');
+
+-- (4) Withdrawals refused on their own lesson date before they could
+-- withdraw anything. Left as they were, their target could still apply.
+UPDATE public.stars_sync_events
+   SET outcome = 'skipped_not_permitted',
+       outcome_note = 'Reopened by 20261028090000: a withdrawal no longer depends on its own date.'
+ WHERE kind = 'retraction'
+   AND (outcome = 'skipped_before_start'
+        OR (outcome = 'rejected'
+            AND (outcome_note = 'The lesson date is missing or is not a date.'
+                 OR outcome_note LIKE 'The lesson date % is in the future.'
+                 OR outcome_note LIKE 'The lesson (%) is more than 60 days old.')));
+
+-- (10) Conflicts a newer record for the same child and lesson replaced.
+UPDATE public.stars_sync_conflicts k
+   SET resolved_at = now(), resolution = 'dismissed'
+  FROM public.stars_sync_events e
+ WHERE k.event_id = e.event_id
+   AND k.resolved_at IS NULL
+   AND public.stars_sync__newer_mark_exists(e);
 
 NOTIFY pgrst, 'reload schema';
 
@@ -917,4 +1072,9 @@ COMMIT;
 SELECT
   to_regclass('public.stars_sync_effects') IS NOT NULL        AS effects_queue,
   to_regclass('public.stars_sync_held_flips') IS NOT NULL     AS held_flips,
-  to_regprocedure('public.stars_sync__made_at(jsonb,timestamp with time zone)') IS NOT NULL AS window_fix;
+  to_regprocedure('public.stars_sync__made_at(jsonb,timestamp with time zone)') IS NOT NULL AS window_fix,
+  to_regprocedure('public.stars_sync_effects_done(bigint[],integer[])') IS NOT NULL AS second_review,
+  -- Anything above zero means the engine ran before this was applied:
+  -- these records are judged again on the next run.
+  (SELECT count(*) FROM public.stars_sync_events
+    WHERE outcome_note LIKE 'Reopened by 20261028090000%')    AS reopened;

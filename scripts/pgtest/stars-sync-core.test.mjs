@@ -81,7 +81,7 @@ console.log("=== draining the after-effects queue ===");
   eq("streaks are grouped one call per lesson", plan.streaks.length, 2);
   eq("  carrying the queue rows they settle", plan.streaks[0].ids, [1, 2]);
   eq("  and the children", plan.streaks[0].studentIds, ["apple", "johnny"]);
-  eq("tuition is planned per child-month", plan.tuition, [{ id: 4, studentId: "apple", month: "2026-10" }]);
+  eq("tuition is planned per child-month", plan.tuition, [{ id: 4, generation: 0, studentId: "apple", month: "2026-10" }]);
 
   const many = Array.from({ length: 30 }, (_, i) => T(100 + i, `kid${i}`));
   eq("at most the per-run limit of tuition jobs - calculate-tuition allows 30 a minute",
@@ -207,6 +207,69 @@ console.log("=== the two halves, separately - what the drain relies on ===");
   const ok2 = await fx.advanceStreaks(sb, { classId: "C", entries: [{ studentId: "apple", status: "Present" }] });
   eq("a failed streak read stops, rather than resetting everyone's streak to 1",
      [ok2, sb.calls.upserts.length], [false, 0]);
+}
+
+console.log("=== second review: streaks count lessons, bonuses are not lost ===");
+// Remembers what it is written, so each step reads the one before it - as
+// the drain does when it works through a child's backlog.
+const streakStore = () => {
+  const rows = new Map();
+  const sb = {
+    rows, bonuses: [], refuseBonus: false,
+    from: (table) => {
+      const b = {
+        select: () => b, eq: () => b,
+        in: async (_col, ids) => ({ data: [...rows.values()].filter((r) => ids.includes(r.student_id)), error: null }),
+        upsert: async (list) => { for (const r of list) rows.set(r.student_id, { ...r }); return { error: null }; },
+        insert: async (list) => {
+          if (sb.refuseBonus) return { error: new Error("insert refused") };
+          sb.bonuses.push(...list);
+          return { error: null };
+        },
+      };
+      return b;
+    },
+  };
+  return sb;
+};
+const present = [{ studentId: "apple", status: "Present" }];
+{
+  const sb = streakStore();
+  for (const d of ["2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-24"]) {
+    await fx.advanceStreaks(sb, { classId: "C", lessonDate: d, entries: present });
+  }
+  const r = sb.rows.get("apple");
+  eq("a backlog of five lessons drained in one run is five steps, not one",
+     [r.consecutive_days, r.last_attendance_date], [5, "2026-10-24"]);
+  eq("  and earns the fifth-lesson bonus", sb.bonuses.length, 1);
+  await fx.advanceStreaks(sb, { classId: "C", lessonDate: "2026-10-24", entries: present });
+  eq("working the same lesson again is not another step", sb.rows.get("apple").consecutive_days, 5);
+  eq("  nor another bonus", sb.bonuses.length, 1);
+  await fx.advanceStreaks(sb, { classId: "C", lessonDate: "2026-10-19", entries: present });
+  eq("an earlier lesson worked late still counts",
+     sb.rows.get("apple").consecutive_days, 6);
+  eq("  without moving the latest lesson back", sb.rows.get("apple").last_attendance_date, "2026-10-24");
+}
+{
+  const sb = streakStore();
+  sb.rows.set("apple", { student_id: "apple", consecutive_days: 4, last_attendance_date: "2026-10-23", bonuses_awarded: 0 });
+  sb.refuseBonus = true;
+  const first = await fx.advanceStreaks(sb, { classId: "C", lessonDate: "2026-10-24", entries: present });
+  eq("a refused bonus fails the job, so the drain keeps it", first, false);
+  eq("  the streak still moves to 5", sb.rows.get("apple").consecutive_days, 5);
+  eq("  but is not marked as having paid the bonus", sb.rows.get("apple").bonuses_awarded, 0);
+  sb.refuseBonus = false;
+  const again = await fx.advanceStreaks(sb, { classId: "C", lessonDate: "2026-10-24", entries: present });
+  eq("the retry pays it", [again, sb.bonuses.length, sb.rows.get("apple").bonuses_awarded], [true, 1, 1]);
+  eq("  without stepping the streak twice", sb.rows.get("apple").consecutive_days, 5);
+}
+{
+  const S = (id, session, date, generation = 0) => ({ id, kind: "streak", student_id: "k" + id, class_id: "C",
+                                                       session_id: session, lesson_date: date, attempts: 0, generation });
+  const plan = core.planDrain([S(1, "late", "2026-10-24", 2), S(2, "early", "2026-10-20"), S(3, "mid", "2026-10-22")], 20);
+  eq("streak steps are worked in lesson order, whatever order they were queued in",
+     plan.streaks.map((b) => b.lessonDate), ["2026-10-20", "2026-10-22", "2026-10-24"]);
+  eq("  each carrying the generation it read", plan.streaks[2].generations, [2]);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -87,6 +87,8 @@ export interface QueuedEffect {
   id: number;
   /** Times it has been tried and failed. Failing jobs go to the back. */
   attempts?: number | null;
+  /** Bumped by each request for the same job; the drain deletes at the one it read. */
+  generation?: number | null;
   kind: "tuition" | "streak";
   student_id: string;
   class_id?: string | null;
@@ -98,15 +100,19 @@ export interface QueuedEffect {
 export interface StreakBatch {
   /** Queue rows this batch settles, deleted only if it succeeds. */
   ids: number[];
+  /** Each row's generation, in the same order as ids. */
+  generations: number[];
   classId: string;
+  /** The lesson, so a streak counts lessons rather than the days the queue was drained. */
+  lessonDate: string | null;
   studentIds: string[];
 }
 
 export interface DrainPlan {
-  /** One advanceStreaks call per lesson. */
+  /** One advanceStreaks call per lesson, earliest lesson first. */
   streaks: StreakBatch[];
   /** Tuition recalculations, oldest first, at most `tuitionLimit`. */
-  tuition: { id: number; studentId: string; month: string }[];
+  tuition: { id: number; generation: number; studentId: string; month: string }[];
 }
 
 /**
@@ -118,6 +124,8 @@ export interface DrainPlan {
  * calls a minute - whatever is not done stays queued for the next run,
  * five minutes later. Jobs that have failed before go behind ones that
  * have not, so a job that can never succeed cannot starve the rest.
+ * Streak steps run in lesson order - each reads what the last one wrote,
+ * so a child's backlog has to be worked through as it happened.
  * Malformed rows are skipped rather than guessed at.
  */
 export function planDrain(raw: unknown, tuitionLimit: number): DrainPlan {
@@ -134,19 +142,32 @@ export function planDrain(raw: unknown, tuitionLimit: number): DrainPlan {
     if (!r || typeof r.student_id !== "string" || !Number.isFinite(Number(r.id))) continue;
     if (r.kind === "streak") {
       if (typeof r.session_id !== "string" || typeof r.class_id !== "string") continue;
-      const batch = lessons.get(r.session_id) ?? { ids: [], classId: r.class_id, studentIds: [] };
+      const lessonDate = typeof r.lesson_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.lesson_date)
+        ? r.lesson_date
+        : null;
+      const batch = lessons.get(r.session_id) ??
+        { ids: [], generations: [], classId: r.class_id, lessonDate, studentIds: [] };
       batch.ids.push(Number(r.id));
+      batch.generations.push(generationOf(r));
       batch.studentIds.push(r.student_id);
       lessons.set(r.session_id, batch);
     } else if (r.kind === "tuition") {
       if (typeof r.month !== "string" || !/^\d{4}-\d{2}$/.test(r.month)) continue;
       if (tuition.length < Math.max(0, tuitionLimit)) {
-        tuition.push({ id: Number(r.id), studentId: r.student_id, month: r.month });
+        tuition.push({ id: Number(r.id), generation: generationOf(r), studentId: r.student_id, month: r.month });
       }
     }
   }
-  return { streaks: [...lessons.values()], tuition };
+  // Undated lessons last; ties keep queue order.
+  const streaks = [...lessons.values()].sort((a, b) =>
+    (a.lessonDate ?? "9999-99-99").localeCompare(b.lessonDate ?? "9999-99-99") || a.ids[0] - b.ids[0]);
+  return { streaks, tuition };
 }
+
+const generationOf = (r: QueuedEffect) => {
+  const g = Number(r.generation ?? 0);
+  return Number.isInteger(g) ? g : 0;
+};
 
 /** Adds one tally of outcomes into another. */
 export function addCounts(into: Record<string, number>, more: unknown): Record<string, number> {

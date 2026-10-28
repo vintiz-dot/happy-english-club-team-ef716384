@@ -238,5 +238,7 @@ verify_jwt = true
 [functions.stars-sync]
 verify_jwt = true
 
+# Admin-only (requireRole inside). Kept behind the gateway's JWT check as
+# well, like every function here: the owner's rule for this live app.
 [functions.explain-family-tuition]
-verify_jwt = false
+verify_jwt = true

@@ -103,6 +103,19 @@ const SUITES = [
       "20261028090000_stars_sync_review_fixes.sql",
     ],
   },
+  // The same migrations, but the old engine runs first and the fix is
+  // pasted over what it decided - as it will be in production.
+  {
+    name: "stars sync upgrade",
+    file: "stars-sync-upgrade.test.mjs",
+    migrations: [
+      "20261023090000_homework_grading_integrity.sql",
+      "20261023100000_stars_sync_foundation.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261027100000_stars_sync_engine.sql",
+      "20261028090000_stars_sync_review_fixes.sql",
+    ],
+  },
   // Not a database test: the edge function's own decisions, and the
   // after-effects of a mark that mark-attendance and the sync share.
   { name: "stars sync core", file: "stars-sync-core.test.mjs", migrations: [] },

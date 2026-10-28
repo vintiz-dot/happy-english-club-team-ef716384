@@ -26,12 +26,16 @@ it.
 
 ## Step 1 — Apply the review fixes
 
-The engine (`20261027100000`) is applied. A review of it found eight
+The engine (`20261027100000`) is applied. Two reviews of it found twelve
 defects, all fixed in `supabase/migrations/20261028090000_stars_sync_review_fixes.sql`
 — the file's header lists them. Two of them matter before the first run:
 without the fix, the first run would refuse every historical mark as "more
 than 24 hours late", and *Use Pixel Pal's* on a conflict could overwrite a
 teacher's mark after Pixel Pal had already withdrawn its own.
+
+Until it is applied, the Stars Sync page says so at the top and keeps
+**Run now**, the **Schedule** switch (turning it on) and *Use Pixel Pal's*
+disabled.
 
 Paste it into the SQL editor and run it. It ends by printing one row:
 
@@ -40,12 +44,16 @@ Paste it into the SQL editor and run it. It ends by printing one row:
 | `effects_queue` | `true` |
 | `held_flips` | `true` |
 | `window_fix` | `true` |
+| `second_review` | `true` |
+| `reopened` | a number — see below |
+
+`reopened` is how many records the sync had already refused under the rules
+this fixes — marks judged "late" because they were processed late, and
+withdrawals refused on their own date. **0 means the sync never ran before
+this**, which is what is expected. Above 0, those records are judged again
+on the next run; the ones that really were late are refused again.
 
 It is safe to re-run.
-
-If you have **already pressed Run now** before applying this, open Records
-and look for *Refused: 24 hours* on marks that were made on time. The fix
-does not revisit records already refused; tell me and they can be re-queued.
 
 ## Step 2 — Rotate the secret, then set it
 
@@ -71,10 +79,12 @@ Publish in Lovable so these two functions are redeployed:
 
 The admin page itself goes out with the normal site build.
 
-**Until Steps 1 and 3 are both done, do not press Run now and do not settle
-conflicts.** The page, the database and the function each changed how
-*Use Pixel Pal's* works, and a mix of old and new would mark the register
-without closing the conflict.
+The order is enforced rather than left to you: the new function refuses
+to run until Step 1 is applied ("Apply migration 20261028090000 first.
+Nothing was synced."), and the page will not start a run before then.
+If an older copy of the function is still deployed when Step 1 lands, it
+keeps syncing; its follow-ups wait in the queue and are worked through —
+in lesson order — once the new function is deployed.
 
 ## Step 4 — Set it up, in Admin → Stars Sync
 
@@ -146,7 +156,9 @@ fixed — up to 60 days after the lesson.
 its own. *Keep HEC's* closes it. *Use Pixel Pal's* marks the register as
 you — in one step, and only if nothing has moved since the conflict was
 raised: if a teacher has changed the mark since, or Pixel Pal has withdrawn
-its own, it refuses and says so. The list refreshes every 30 seconds.
+its own or sent a newer one, it refuses and says so. A newer Pixel Pal
+record for the same child and lesson closes the older conflict by itself.
+The list refreshes every 30 seconds.
 
 **Turning it off.** The Schedule switch. Nothing is lost: Pixel Pal keeps
 its records and they arrive when it is back on.

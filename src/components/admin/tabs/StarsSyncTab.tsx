@@ -483,8 +483,19 @@ export default function StarsSyncTab() {
   );
   const shownEvents = eventFilter === "attention" ? attentionEvents : (events.data ?? []);
 
+  // This page ships with the code; the database migration is pasted by
+  // hand. Until 20261028090000 is applied, stars_sync_status() has no
+  // effects_queued, and a run would use the engine that migration fixes -
+  // the one that refuses every historical mark as late. Nothing starts a
+  // run from here until it is applied. Unknown (status not loaded) counts
+  // as not applied.
+  const fixesApplied = st?.effects_queued !== undefined;
+
   // What still stands between now and a working sync, in order.
   const missing: string[] = [];
+  if (st && !fixesApplied) {
+    missing.push("Apply supabase/migrations/20261028090000_stars_sync_review_fixes.sql in the SQL editor. Until then the sync cannot be run from here.");
+  }
   if (!conn?.sync_from) missing.push("Choose the date to sync lessons from.");
   if (!conn?.default_teacher_id && rows.every((r) => !r.teacher_id)) missing.push("Choose the teacher the sync acts as.");
   if (rows.length === 0) missing.push("Map at least one Pixel Pal class.");
@@ -561,7 +572,7 @@ export default function StarsSyncTab() {
                 <div className="flex items-center gap-3">
                   <Button
                     onClick={() => runNow.mutate()}
-                    disabled={runNow.isPending || !conn?.sync_from || st?.running}
+                    disabled={runNow.isPending || !conn?.sync_from || st?.running || !fixesApplied}
                     variant="outline"
                   >
                     {runNow.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
@@ -572,7 +583,8 @@ export default function StarsSyncTab() {
                     <Switch
                       id="stars-schedule"
                       checked={schedOn}
-                      disabled={saveConnection.isPending}
+                      // Off is always allowed; on waits for the migration.
+                      disabled={saveConnection.isPending || (!schedOn && !fixesApplied)}
                       onCheckedChange={(on) => (on ? setConfirmSwitchOn(true) : saveConnection.mutate({ enabled: false }))}
                     />
                   </div>
@@ -1003,7 +1015,10 @@ export default function StarsSyncTab() {
                             onClick={() => resolve.mutate({ conflictId: c.id, resolution: "kept_ours" })}>
                             Keep HEC's
                           </Button>
-                          <Button size="sm" disabled={resolve.isPending || !c.session_id || !c.student_id || !theirs.status}
+                          {/* Before 20261028090000 the database's resolve only records the
+                              choice - the old page wrote the mark itself first - so taking
+                              Pixel Pal's would close the conflict and write nothing. */}
+                          <Button size="sm" disabled={resolve.isPending || !c.session_id || !c.student_id || !theirs.status || !fixesApplied}
                             onClick={() => resolve.mutate({ conflictId: c.id, resolution: "took_theirs" })}>
                             Use Pixel Pal's
                           </Button>

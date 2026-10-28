@@ -33,6 +33,14 @@ export interface AttendanceEffectsInput {
   /** The lesson's date, YYYY-MM-DD. Tuition is per month; without it, skipped. */
   date: string | null | undefined;
   entries: MarkedEntry[];
+  /**
+   * The lesson a streak step is for, YYYY-MM-DD. mark-attendance leaves it
+   * out and the step is dated today, as it always was: a teacher marks the
+   * register on the day. The sync passes it, because it drains marks for
+   * past lessons - a backlog of five lessons is five steps, not one, and
+   * working the same lesson twice is one.
+   */
+  lessonDate?: string | null;
 }
 
 /** Recalculates tuition for each Absent or Excused child. Returns how many calls failed. */
@@ -59,13 +67,13 @@ export async function recalcTuition(
 /** Advances streaks for each Present child. Returns false if any write failed. */
 export async function advanceStreaks(
   supabase: SupabaseClient,
-  { classId, entries }: Pick<AttendanceEffectsInput, "classId" | "entries">,
+  { classId, entries, lessonDate }: Pick<AttendanceEffectsInput, "classId" | "entries" | "lessonDate">,
 ): Promise<boolean> {
   const presentEntries = entries.filter(e => e.status === 'Present');
   if (presentEntries.length === 0 || !classId) return true;
 
   const now = new Date().toISOString();
-  const today = now.split('T')[0];
+  const today = lessonDate && /^\d{4}-\d{2}-\d{2}$/.test(lessonDate) ? lessonDate : now.split('T')[0];
 
   try {
     const { data: streaks, error: readError } = await supabase
@@ -98,6 +106,10 @@ export async function advanceStreaks(
       bonuses_awarded: number;
       updated_at: string;
     }[] = [];
+    // What bonuses_awarded was before this call, for a child given a
+    // bonus here: if the bonus cannot be written, the streak keeps the old
+    // count, so the next call awards it rather than skipping it for good.
+    const awardedBefore = new Map<string, number>();
     const pointInserts: {
       student_id: string;
       class_id: string;
@@ -118,6 +130,11 @@ export async function advanceStreaks(
           newConsecutive = existing.consecutive_days || 1;
         }
       }
+      // A past lesson worked after a later one still counts, but does not
+      // move the latest attendance date backwards.
+      const lastDate = existing?.last_attendance_date && existing.last_attendance_date > today
+        ? existing.last_attendance_date
+        : today;
 
       const currentMilestones = Math.floor(newConsecutive / 5);
       if (currentMilestones > bonusesAwarded) {
@@ -132,6 +149,7 @@ export async function advanceStreaks(
           type: 'participation',
           notes: `Attendance streak bonus: ${newConsecutive} consecutive classes attended!`,
         });
+        awardedBefore.set(entry.studentId, bonusesAwarded);
         bonusesAwarded = currentMilestones;
       }
 
@@ -139,20 +157,29 @@ export async function advanceStreaks(
         student_id: entry.studentId,
         class_id: classId,
         consecutive_days: newConsecutive,
-        last_attendance_date: today,
+        last_attendance_date: lastDate,
         bonuses_awarded: bonusesAwarded,
         updated_at: now,
       });
     }
 
+    // The bonus first, then the streak that records it as given. The other
+    // way round, a refused bonus was marked as awarded and never paid.
     let ok = true;
+    if (pointInserts.length > 0) {
+      const { error } = await supabase.from('point_transactions').insert(pointInserts);
+      if (error) {
+        ok = false;
+        console.error('Streak bonus error:', error);
+        for (const u of upserts) {
+          const before = awardedBefore.get(u.student_id);
+          if (before !== undefined) u.bonuses_awarded = before;
+        }
+      }
+    }
     if (upserts.length > 0) {
       const { error } = await supabase.from('student_attendance_streaks').upsert(upserts, { onConflict: 'student_id,class_id' });
       if (error) { ok = false; console.error('Streak tracking error:', error); }
-    }
-    if (pointInserts.length > 0) {
-      const { error } = await supabase.from('point_transactions').insert(pointInserts);
-      if (error) { ok = false; console.error('Streak bonus error:', error); }
     }
     return ok;
   } catch (err) {

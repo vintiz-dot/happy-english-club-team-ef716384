@@ -486,18 +486,17 @@ const settle = (uid, conflictId, how) => asUser(uid, async () => {
   const c = await one(`SELECT id FROM public.stars_sync_conflicts WHERE event_id=$1`, [id(2)]);
   ok("a teacher cannot settle one", (await settle(U.mai, c.id, "kept_ours")) !== null);
 
-  // Minh's register has moved on since conflict 2 was raised - the sync
-  // adopted Present and then wrote Late. Taking Pixel Pal's old Absent now
-  // would overwrite a register that is no longer what the admin was shown.
+  // Since conflict 2 was raised, Pixel Pal sent two newer records for
+  // Minh's lesson - Present, then Late. Its old Absent is no longer what it
+  // holds, so (10) the newer record dismissed the conflict, and taking the
+  // old value now is refused.
   const before = await mark(MINH);
+  const k = await one(`SELECT resolved_at, resolution FROM public.stars_sync_conflicts WHERE id=$1`, [c.id]);
+  ok("a newer Pixel Pal record for the same child and lesson dismissed the conflict",
+     k.resolved_at !== null && k.resolution === "dismissed", JSON.stringify(k));
   const err = await settle(U.admin, c.id, "took_theirs");
-  ok("'Use Pixel Pal's' is refused when the register changed since the conflict was raised",
-     /register has changed/.test(err ?? ""), err ?? "it went through");
+  ok("  'Use Pixel Pal's' on it is refused", /already been settled/.test(err ?? ""), err ?? "it went through");
   ok("  and nothing was written", JSON.stringify(await mark(MINH)) === JSON.stringify(before));
-  eq("  the conflict stays open for the admin to look at again",
-     (await one(`SELECT resolved_at FROM public.stars_sync_conflicts WHERE id=$1`, [c.id])).resolved_at, null);
-  eq("'Keep HEC's' closes it", await settle(U.admin, c.id, "kept_ours"), null);
-  ok("  and a second admin settling it again is refused", /already been settled/.test(await settle(U.admin, c.id, "took_theirs") ?? ""));
 }
 {
   // A clean conflict: a teacher marked Gia Hung Absent in HEC; Pixel Pal
@@ -547,6 +546,10 @@ const settle = (uid, conflictId, how) => asUser(uid, async () => {
   ok("'Use Pixel Pal's' is refused when the same teacher changed their mark since",
      /register has changed/.test(err ?? ""), err ?? "it went through");
   eq("  and the teacher's correction stands", (await mark(kid)).status, "Late");
+  eq("  the conflict stays open for the admin to look at again",
+     (await one(`SELECT resolved_at FROM public.stars_sync_conflicts WHERE id=$1`, [c.id])).resolved_at, null);
+  eq("'Keep HEC's' closes it", await settle(U.admin, c.id, "kept_ours"), null);
+  ok("  and a second admin settling it again is refused", /already been settled/.test(await settle(U.admin, c.id, "took_theirs") ?? ""));
 }
 
 console.log("=== review fixes ===");
@@ -704,6 +707,121 @@ console.log("=== the admin's view ===");
   try { await db.query(`SELECT * FROM public.stars_sync_readiness()`); } catch (e) { err = e.message; }
   ok("a teacher cannot read it", err !== null, err ?? "it was allowed");
   await db.query(`SELECT set_config('test.uid', '', false)`);
+}
+
+console.log("=== second review: one record per child per lesson ===");
+const flipped = async (sid) => (await one(`SELECT count(*)::int n FROM public.stars_sync_held_flips WHERE session_id=$1`, [sid])).n;
+{
+  // (9) Pixel Pal sends a changed mark as a withdrawal plus a new record.
+  // Here they arrive the other way round: the new record first.
+  const L = await lesson(ROCKETS, "2026-10-21", "Scheduled");
+  const at = { class_ref: "50", student_ref: "501", lesson_date: "2026-10-21", occurred_at: "2026-10-21T03:00:00Z" };
+  const now = "2026-10-21T03:30:00Z";
+  await page([ev(200, "attendance", { status: "Present" }, at)], undefined, now);
+  await page([ev(201, "attendance", { status: "Absent" }, at)], undefined, now);
+  eq("a newer record replaces the sync's own earlier one", (await mark(R1, L)).status, "Absent");
+  await page([ev(202, "retraction", { retracts_event_id: id(200), reason: "changed" })], undefined, now);
+  eq("  withdrawing the replaced record changes nothing", (await mark(R1, L))?.status, "Absent");
+  eq("  and records it as withdrawn", (await outcome(200)).outcome, "retracted");
+  eq("  the lesson stays Held - the newer record still stands", await sessionStatus(L), "Held");
+  await page([ev(203, "attendance", { status: "Present" }, at)], undefined, now);
+  eq("  the sync still owns the register: the next record applies, it is not a conflict",
+     (await outcome(203)).outcome, "applied");
+}
+{
+  // (9) Both records of a pair withdrawn, older first. Before, the second
+  // withdrawal put back the FIRST record's value - a Present by the sync's
+  // teacher that no record stood behind - and the lesson stayed Held.
+  const L = await lesson(ROCKETS, "2026-10-22", "Scheduled");
+  const at = { class_ref: "50", student_ref: "501", lesson_date: "2026-10-22", occurred_at: "2026-10-22T03:00:00Z" };
+  const now = "2026-10-22T03:30:00Z";
+  await page([ev(210, "attendance", { status: "Present" }, at)], undefined, now);
+  await page([ev(211, "attendance", { status: "Absent" }, at)], undefined, now);
+  await page([ev(212, "retraction", { retracts_event_id: id(210), reason: "removed" })], undefined, now);
+  await page([ev(213, "retraction", { retracts_event_id: id(211), reason: "removed" })], undefined, now);
+  eq("withdrawing both leaves the register as it was before the sync - empty", await mark(R1, L), undefined);
+  eq("  and the lesson unpaid again", await sessionStatus(L), "Scheduled");
+  eq("  with nothing left recorded as the sync's flip", await flipped(L), 0);
+}
+{
+  // (9) A repeat of the same mark, then both withdrawn, on a seeded
+  // placeholder. Before, withdrawing the first reverted the lesson to
+  // Scheduled while the repeat still stood.
+  const L = await lesson(ROCKETS, "2026-10-19", "Scheduled");
+  await db.query(`INSERT INTO public.attendance (session_id,student_id,status,marked_by) VALUES ($1,$2,'Present',NULL)`, [L, R1]);
+  const at = { class_ref: "50", student_ref: "501", lesson_date: "2026-10-19", occurred_at: "2026-10-19T03:00:00Z" };
+  const now = "2026-10-19T03:30:00Z";
+  await page([ev(220, "attendance", { status: "Present" }, at)], undefined, now);
+  await page([ev(221, "attendance", { status: "Present" }, at)], undefined, now);
+  eq("a repeat of the same mark is recognised", (await outcome(221)).outcome_note, "Already Present.");
+  await page([ev(222, "retraction", { retracts_event_id: id(220), reason: "removed" })], undefined, now);
+  eq("  withdrawing the first while the repeat stands keeps the lesson Held", await sessionStatus(L), "Held");
+  eq("  and the mark", (await mark(R1, L)).marked_by, U.mai);
+  await page([ev(223, "retraction", { retracts_event_id: id(221), reason: "removed" })], undefined, now);
+  const m = await mark(R1, L);
+  ok("  withdrawing the repeat restores HEC's placeholder, not the sync's own write",
+     m.status === "Present" && m.marked_by === null, JSON.stringify(m));
+  eq("  and the lesson is unpaid again", await sessionStatus(L), "Scheduled");
+}
+{
+  // (9) A record that waited applies after a newer one for the same child
+  // and lesson has: it is older than what the register shows.
+  const L = await lesson(ROCKETS, "2026-10-18", "Scheduled");
+  const at = { class_ref: "50", student_ref: "502", lesson_date: "2026-10-18" };
+  await page([ev(230, "attendance", { status: "Absent" }, { ...at, occurred_at: "2026-10-18T01:30:00Z" })],
+    undefined, "2026-10-18T01:40:00Z");
+  eq("a mark sent before the lesson started waits", (await outcome(230)).outcome, "skipped_not_permitted");
+  await page([ev(231, "attendance", { status: "Present" }, { ...at, occurred_at: "2026-10-18T02:30:00Z" })],
+    undefined, "2026-10-18T02:40:00Z");
+  await retry();
+  eq("  once a newer one has applied, the older does not overwrite it", (await outcome(230)).outcome, "duplicate");
+  eq("  the register keeps the newer mark", (await mark(R2, L)).status, "Present");
+}
+{
+  // (10) A conflict a newer record replaced, where nothing dismissed it -
+  // as the engine before this one left them. "Use Pixel Pal's" refuses.
+  const kid = await child("Rocket four", ROCKETS);
+  await db.query(`INSERT INTO public.stars_student_map VALUES ('504',$1)`, [kid]);
+  const L = await lesson(ROCKETS, "2026-10-17", "Held");
+  await db.query(`INSERT INTO public.attendance (session_id,student_id,status,marked_by) VALUES ($1,$2,'Absent',$3)`,
+    [L, kid, U.linh]);
+  const at = { class_ref: "50", student_ref: "504", lesson_date: "2026-10-17", occurred_at: "2026-10-17T03:00:00Z" };
+  await page([ev(240, "attendance", { status: "Present" }, at)], undefined, "2026-10-17T03:30:00Z");
+  // Refused on its status before it reaches the lesson, so it dismisses
+  // nothing - but Pixel Pal has still moved on from Present.
+  await page([ev(241, "attendance", { status: "Sick" }, at)], undefined, "2026-10-17T03:31:00Z");
+  const c = await one(`SELECT id, resolved_at FROM public.stars_sync_conflicts WHERE event_id=$1`, [id(240)]);
+  eq("a conflict stays open when the newer record was refused before reaching the register", c.resolved_at, null);
+  const err = await settle(U.admin, c.id, "took_theirs");
+  ok("  'Use Pixel Pal's' on it is refused: Pixel Pal has sent a newer mark", /newer mark/.test(err ?? ""), err ?? "it went through");
+  eq("  the teacher's mark stands", (await mark(kid, L)).status, "Absent");
+}
+
+console.log("=== second review: a follow-up asked for while it runs ===");
+{
+  // (11) The drain reads a job, works on it; meanwhile the same job is
+  // asked for again. Deleting by id alone dropped the second request.
+  const key = tuitionKey(R1, "2026-11");
+  await db.query(`SELECT public.stars_sync__queue_tuition($1, '2026-11')`, [R1]);
+  const job = await one(`SELECT id, generation FROM public.stars_sync_effects WHERE dedupe_key=$1`, [key]);
+  eq("a new job starts at generation 0", job.generation, 0);
+  await db.query(`SELECT public.stars_sync__queue_tuition($1, '2026-11')`, [R1]);
+  eq("  asked for again, it is still one job", await queued(key), 1);
+  await db.exec(`SET ROLE service_role`);
+  const stale = (await one(`SELECT public.stars_sync_effects_done(ARRAY[$1]::bigint[], ARRAY[0]) AS n`, [job.id])).n;
+  await db.exec(`RESET ROLE`);
+  eq("  finishing the run that read generation 0 does not remove it", stale, 0);
+  eq("  so the second request is worked next run", await queued(key), 1);
+  await db.exec(`SET ROLE service_role`);
+  const fresh = (await one(`SELECT public.stars_sync_effects_done(ARRAY[$1]::bigint[], ARRAY[1]) AS n`, [job.id])).n;
+  await db.exec(`RESET ROLE`);
+  eq("  and finishing that one does", fresh, 1);
+  eq("  leaving nothing queued", await queued(key), 0);
+  const err = await asUser(U.admin, async () => {
+    try { await db.query(`SELECT public.stars_sync_effects_done(ARRAY[1]::bigint[], ARRAY[0])`); return null; }
+    catch (e) { return e.message; }
+  });
+  ok("  nobody signed in can clear the queue - not even an admin", /permission denied/.test(err ?? ""), err ?? "it ran");
 }
 
 console.log("=== the schedule and the lock ===");

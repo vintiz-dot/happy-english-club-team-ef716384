@@ -124,6 +124,15 @@ Deno.serve(async (req) => {
   if (!conn.sync_from) {
     return json({ error: "Choose the date to sync from on the Stars Sync page first." }, 409);
   }
+  // This version queues tuition and streak follow-ups in the database
+  // (20261028090000). Against a database without the queue, the marks
+  // would apply and their follow-ups be dropped, so it does not run.
+  const { error: queueError } = await supabase.from("stars_sync_effects").select("id").limit(1);
+  if (queueError) {
+    return json({
+      error: "Apply migration 20261028090000_stars_sync_review_fixes.sql first. Nothing was synced.",
+    }, 500);
+  }
 
   const secret = resolveFeedSecret((name) => Deno.env.get(name));
 
@@ -150,7 +159,7 @@ Deno.serve(async (req) => {
   const drainEffects = async () => {
     const { data: rows, error } = await supabase
       .from("stars_sync_effects")
-      .select("id, kind, student_id, class_id, session_id, lesson_date, month, attempts")
+      .select("id, kind, student_id, class_id, session_id, lesson_date, month, attempts, generation")
       .order("attempts", { ascending: true })
       .order("id", { ascending: true })
       .limit(EFFECTS_READ);
@@ -160,13 +169,26 @@ Deno.serve(async (req) => {
     }
     const plan = planDrain(rows, TUITION_PER_RUN);
 
+    // A job asked for again while it ran keeps its row, at a newer
+    // generation, and is worked again next run.
+    const done = async (ids: number[], generations: number[]) => {
+      const { error: doneError } = await supabase.rpc("stars_sync_effects_done", {
+        p_ids: ids,
+        p_generations: generations,
+      });
+      if (doneError) {
+        warnings.push("A finished follow-up could not be cleared from the queue; it will be checked again.");
+      }
+    };
+
     for (const batch of plan.streaks) {
       const ok = await advanceStreaks(supabase, {
         classId: batch.classId,
+        lessonDate: batch.lessonDate,
         entries: batch.studentIds.map((studentId) => ({ studentId, status: "Present" })),
       });
       if (ok) {
-        await supabase.from("stars_sync_effects").delete().in("id", batch.ids);
+        await done(batch.ids, batch.generations);
       } else {
         await supabase.rpc("stars_sync_effect_failed", { p_ids: batch.ids, p_error: "streak update failed" });
         warnings.push("Streaks could not be updated for one lesson; it will be retried.");
@@ -186,7 +208,7 @@ Deno.serve(async (req) => {
         // Most likely the rate limit. Pressing on would only be refused too.
         break;
       }
-      await supabase.from("stars_sync_effects").delete().eq("id", job.id);
+      await done([job.id], [job.generation]);
     }
   };
 
