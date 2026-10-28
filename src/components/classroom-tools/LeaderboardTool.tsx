@@ -1,3 +1,7 @@
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
+import { openClassBoardWindow } from "@/pages/ClassBoardWindow";
+import { BoardErrorBoundary } from "@/components/leaderboard/BoardErrorBoundary";
 /**
  * The board, inside the tools panel.
  *
@@ -126,6 +130,10 @@ export function LeaderboardTool() {
             {/* The class's chosen board, on the wall. This is what the three
                 display styles were drawn for. */}
             <ClassScreenButton onClick={() => setProjecting(true)} />
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => openClassBoardWindow(displayClassId)} title="Open the board in its own window for the extended screen">
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              <span className="hidden sm:inline">New window</span>
+            </Button>
             <ManualPointsDialog classId={displayClassId} />
           </span>
         ) : undefined
@@ -212,7 +220,9 @@ export function LeaderboardTool() {
           onClose={() => setProjecting(false)}
           title={className || "Leaderboard"}
         >
-          <ProjectedBoard classId={displayClassId} />
+          <BoardErrorBoundary>
+            <ProjectedBoard classId={displayClassId} />
+          </BoardErrorBoundary>
         </ClassScreen>
       )}
     </ToolCard>
