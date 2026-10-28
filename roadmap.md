@@ -5,4 +5,5 @@
 - [x] Fix Susan's missing October family discount and misleading eligibility display; live individual/bulk totals agree, five regression tests pass, no payments changed.
 - [ ] Verify the discount card through the signed-in page — blocked by the admin passcode gate; not bypassed.
 - [x] Enforce cancelled lessons as unbillable and prevent Present attendance server-side; deployed safeguards, corrected 201 marks, regression checks and signed-in rejected-write checks pass.
-- Cancelled attendance page controls remain visually unverified because of the existing admin passcode gate; backend rejection verified with a signed-in account.
+- Cancelled attendance page controls remain visually unverified because of the existing admin passcode gate; backend rejection verified with a signed-in account.- [x] Auto-retry tuition while the family discount is calculating (3 tests).
+- [x] AI family tuition explanation on the student Tuition tab (live call verified).

@@ -39,3 +39,7 @@
 # Checking a change
 - `tsc --noEmit` at the root loads ZERO files: tsconfig.json is a solution file. The app check is `tsc --noEmit -p tsconfig.app.json`, and `scripts/pgtest/run.mjs` runs it (`app-typecheck.test.mjs`), asserting it loaded the source before believing a clean result.
 - Lovable keeps `bun.lock` only. When it adds a dependency, run `npm install` so `package-lock.json` agrees - an out-of-sync lockfile fails `npm ci`.
+
+# Tuition screens and AI explanations
+- Screens that read calculate-tuition retry on their own while `siblingState.status === "unresolved"`, using `src/lib/siblingRetry.ts` (bounded backoff); the overview retries only the unresolved students, so retries don't re-contend the month lock for everyone.
+- `explain-family-tuition` (admin-only) words figures fetched from calculate-tuition as the calling admin; the model never prices anything and refuses (409) while the family discount is unresolved.

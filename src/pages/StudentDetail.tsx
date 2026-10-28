@@ -5,6 +5,7 @@ import Layout from "@/components/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentOverviewTab } from "@/components/student/StudentOverviewTab";
 import { StudentTuitionTab } from "@/components/student/StudentTuitionTab";
+import { FamilyTuitionExplainer } from "@/components/admin/FamilyTuitionExplainer";
 import { StudentAttendanceTab } from "@/components/student/StudentAttendanceTab";
 import { StudentDiscountsTab } from "@/components/admin/discount/StudentDiscountsTab";
 import { StudentAccountInfo } from "@/components/student/StudentAccountInfo";
@@ -201,6 +202,7 @@ const StudentDetail = () => {
 
           <TabsContent value="tuition" className="space-y-6">
             <StudentTuitionTab studentId={student.id} />
+            <FamilyTuitionExplainer studentId={student.id} />
           </TabsContent>
 
           <TabsContent value="attendance" className="space-y-6">
