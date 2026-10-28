@@ -326,7 +326,7 @@ export function StudentTuitionOverview() {
                       )}
                       {tuition?.siblingState?.status === "unresolved" && (
                         <Badge variant="outline" title={tuition.siblingState.reason}>
-                          Discount still calculating — refresh
+                          Family discount calculating — updating automatically
                         </Badge>
                       )}
                     </TableCell>
