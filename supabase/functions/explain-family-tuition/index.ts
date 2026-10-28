@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
       base_vnd: data.baseAmount,
       discounts: (data.discounts ?? []).map((d: any) => ({ name: d.name, amount_vnd: d.amount, family_discount: !!d.isSiblingWinner })),
       total_payable_vnd: data.totalAmount,
-      paid_vnd: data.payments?.cumulativePaidAmount ?? 0,
+      paid_this_month_vnd: data.payments?.monthPayments ?? 0,
       balance: data.carry ? { status: data.carry.status, credit_vnd: data.carry.carryOutCredit, owed_vnd: data.carry.carryOutDebt, carried_in_owed_vnd: data.carry.carryInDebt, carried_in_credit_vnd: data.carry.carryInCredit } : null,
     });
   }
