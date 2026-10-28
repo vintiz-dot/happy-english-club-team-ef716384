@@ -274,7 +274,7 @@ async function rosterOf(userDb: any, classIds: string[], today: SchoolDay): Prom
       const s = one(e.students);
       if (!s) continue; // RLS kept the student back
       const entry = byStudent.get(e.student_id) ??
-        { id: e.student_id, name: s.full_name, active: s.is_active !== false, classes: [] };
+        { id: e.student_id, name: s.full_name, active: s.is_active !== false, classes: [] as string[] };
       const cls = one(e.classes)?.name;
       if (cls && !entry.classes.includes(cls)) entry.classes.push(cls);
       byStudent.set(e.student_id, entry);

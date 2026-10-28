@@ -144,8 +144,8 @@ Deno.serve(async (req) => {
         .order("month", { ascending: true }),
     ]);
 
-    const invoices = invoicesRes.data ?? [];
-    const snapshots = snapshotsRes.data ?? [];
+    const invoices = (invoicesRes.data ?? []) as any[];
+    const snapshots = (snapshotsRes.data ?? []) as any[];
     const snapshotByMonth = new Map<string, (typeof snapshots)[number]>(
       snapshots.map((s) => [s.month, s]),
     );
