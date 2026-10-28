@@ -55,7 +55,10 @@ interface SheetContentProps
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
   ({ side = "right", className, children, container, ...props }, ref) => {
-    const portalContainer = container ?? (document.fullscreenElement as HTMLElement) ?? undefined;
+    const fs = typeof document !== "undefined" ? (document.fullscreenElement as HTMLElement | null) : null;
+    // Never re-parent into a class screen: it lives inside this sheet, and
+    // moving the sheet into it remounts the screen and drops fullscreen.
+    const portalContainer = container ?? (fs && !fs.closest("[data-class-screen]") ? fs : undefined);
     return (
       <SheetPrimitive.Portal container={portalContainer}>
         <SheetOverlay />
