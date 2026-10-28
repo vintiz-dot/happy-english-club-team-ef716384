@@ -860,7 +860,7 @@ export function HighScores({
     : "All points";
 
   const rest = rows.slice(3);
-  const shownRest = rest.slice(0, 2);
+  const shownRest = rest;
   const hiddenRest = rest.length - shownRest.length;
   const showConfetti = motion && run.n > 0 && !fast;
 

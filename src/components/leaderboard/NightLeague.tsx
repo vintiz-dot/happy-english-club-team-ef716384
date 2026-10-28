@@ -254,7 +254,7 @@ export function NightLeague({
   const litBars = streak ? Math.max(0, Math.min(10, streak.days)) : 0;
 
   const rest = rows.slice(3);
-  const visibleRest = rest.slice(0, 2);
+  const visibleRest = rest;
   const hiddenRest = rest.length - visibleRest.length;
 
   /* --------------------------------------------------- shared fragments */
