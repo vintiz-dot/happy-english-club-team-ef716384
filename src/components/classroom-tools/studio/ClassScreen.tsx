@@ -10,11 +10,36 @@
  * Safari refuses it on anything that is not a <video>). Either way the
  * same overlay renders, so the feature never silently does nothing.
  */
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { Minimize2, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QuietButton } from "./StudioKit";
+
+/**
+ * Where class screens mount. Inside the Classroom tools panel this is the
+ * panel itself: a screen portalled to <body> sits outside the panel's
+ * modal, so every click or focus inside it counted as "outside" and closed
+ * the panel (and the screen with it). Mounting inside keeps it interactive.
+ */
+export const ClassScreenContainerContext = createContext<HTMLElement | null>(null);
+
+/** Marker so modals can recognise a class screen as their own content. */
+export const CLASS_SCREEN_ATTR = "data-class-screen";
+
+/** For Radix onInteractOutside/onFocusOutside: ignore events from a class screen. */
+export function keepOpenForClassScreen(e: { target: EventTarget | null; preventDefault: () => void }) {
+  const t = e.target as Element | null;
+  if (t && typeof t.closest === "function" && t.closest(`[${CLASS_SCREEN_ATTR}]`)) e.preventDefault();
+}
 
 export function ClassScreenButton({
   label = "Class screen",
@@ -46,6 +71,7 @@ export function ClassScreen({
 }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
+  const container = useContext(ClassScreenContainerContext);
 
   useEffect(() => setMounted(true), []);
 
@@ -95,8 +121,10 @@ export function ClassScreen({
       role="dialog"
       aria-modal="true"
       aria-label={title}
+      {...{ [CLASS_SCREEN_ATTR]: "" }}
+      onPointerDown={(e) => e.stopPropagation()}
       className={cn(
-        "studio-surface fixed inset-0 z-[120] flex flex-col",
+        "studio-surface pointer-events-auto fixed inset-0 z-[120] flex flex-col",
         "animate-in fade-in duration-200",
       )}
     >
@@ -111,6 +139,6 @@ export function ClassScreen({
         {children}
       </div>
     </div>,
-    document.body,
+    container ?? document.body,
   );
 }

@@ -49,6 +49,7 @@ import { AttendanceTool } from "./AttendanceTool";
 import { LeaderboardTool } from "./LeaderboardTool";
 import { BackgroundMusic } from "./BackgroundMusic";
 import { Deferred } from "./studio/Deferred";
+import { ClassScreenContainerContext, keepOpenForClassScreen } from "./studio/ClassScreen";
 import {
   ToolCard,
 } from "./studio/StudioKit";
@@ -134,6 +135,7 @@ export function ClassroomToolsLauncher() {
   const { status: noiseStatus, level: noiseLevel } = useNoiseMeter();
   const noiseLive = noiseStatus === "running";
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [panelEl, setPanelEl] = useState<HTMLDivElement | null>(null);
 
   const jumpTo = useCallback((id: string) => {
     const el = scrollRef.current?.querySelector<HTMLElement>(`[data-tool="${id}"]`);
@@ -198,7 +200,11 @@ export function ClassroomToolsLauncher() {
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
+          ref={setPanelEl}
           side="right"
+          onInteractOutside={keepOpenForClassScreen}
+          onPointerDownOutside={keepOpenForClassScreen}
+          onFocusOutside={keepOpenForClassScreen}
           className="studio-surface flex w-full flex-col gap-0 border-l-0 p-0 sm:max-w-[min(100vw-2rem,82rem)]"
         >
           <header className="shrink-0 border-b border-studio px-5 pb-3 pt-5 sm:px-7">
