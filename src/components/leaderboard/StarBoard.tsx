@@ -45,12 +45,32 @@
  *    430px the title pill still stops ~8px short of the crown's column, so a
  *    long class name can never collide with it. The source hardcoded a short
  *    title and so never had to decide this.
- *  - Only the two overflow cards that fit at the drawn 500x140 are rendered;
- *    any remaining students are counted in the strip's label column rather
- *    than clipped mid-card at the edge of the canvas.
+ *  - The strip pages instead of clipping. Only two of the drawn 500x140 cards
+ *    fit its 1074px track, and a nine-child class has six children below the
+ *    podium, so the strip shows two at a time and moves on every few seconds
+ *    while the label column says which slice of how many the room is seeing.
+ *    With motion off it holds the first page and still says what is not there.
  */
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { BOARD_CATEGORIES, type BoardCategory, type BoardRow, type BoardViewProps } from "./types";
+import { fitCount } from "./restPaging";
+import { useRestPaging } from "./useRestPaging";
+
+/* ------------------------------------------------- the strip's arithmetic
+ * Every number here is the same number the layout below draws with, so the
+ * page count can never drift away from the pixels a card is actually given:
+ * 1920 board - 2x56 padding - 40 rail gap - 480 rail - 190 label - 24 gap
+ * leaves a 1074px track, which is two 500px cards and nothing more. */
+const BOARD_W = 1920;
+const PAD_X = 56;
+const RAIL_GAP = 40;
+const RAIL_W = 480;
+const LABEL_W = 190;
+const LABEL_GAP = 24;
+const CARD_W = 500;
+const CARD_GAP = 20;
+const STRIP_H = 170;
+const REST_PER_PAGE = fitCount(BOARD_W - PAD_X * 2 - RAIL_GAP - RAIL_W - LABEL_W - LABEL_GAP, CARD_W, CARD_GAP);
 
 /* ------------------------------------------------------------- the palette */
 
@@ -930,8 +950,9 @@ export function StarBoard({
   const second = rows[1];
   const third = rows[2];
   const rest = rows.slice(3);
-  const restShown = rest;
-  const restHidden = rest.length - restShown.length;
+  /** Only two cards fit the strip, so a bigger class is shown a page at a time. */
+  const restPage = useRestPaging(rest.length, REST_PER_PAGE, motion);
+  const restShown = rest.slice(restPage.from, restPage.to);
 
   /** Third place's score is the bar every climber is measured against. */
   const podiumMin = third ? third.points : 0;
@@ -967,7 +988,7 @@ export function StarBoard({
       className={motion ? "sb-board" : "sb-board sb-still"}
       style={{
         position: "relative",
-        width: 1920,
+        width: BOARD_W,
         height: 1080,
         overflow: "hidden",
         boxSizing: "border-box",
@@ -985,7 +1006,7 @@ export function StarBoard({
           zIndex: 1,
           height: "100%",
           boxSizing: "border-box",
-          padding: "36px 56px",
+          padding: `36px ${PAD_X}px`,
           display: "flex",
           flexDirection: "column",
           gap: 24,
@@ -1156,7 +1177,7 @@ export function StarBoard({
             </div>
           </div>
         ) : (
-          <div style={{ flex: 1, minHeight: 0, display: "flex", gap: 40 }}>
+          <div style={{ flex: 1, minHeight: 0, display: "flex", gap: RAIL_GAP }}>
             <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 20 }}>
               {/* ------------------------------- podium: 2nd, 1st, 3rd */}
               <section
@@ -1179,11 +1200,11 @@ export function StarBoard({
               {/* ------------------------------- everyone else, 170px */}
               <section
                 aria-label="Everyone else"
-                style={{ height: 170, flexShrink: 0, display: "flex", alignItems: "center", gap: 24 }}
+                style={{ height: STRIP_H, flexShrink: 0, display: "flex", alignItems: "center", gap: LABEL_GAP }}
               >
                 <div
                   style={{
-                    width: 190,
+                    width: LABEL_W,
                     flexShrink: 0,
                     display: "flex",
                     flexDirection: "column",
@@ -1195,7 +1216,7 @@ export function StarBoard({
                     Climbing up!
                   </h2>
                   <span style={{ fontSize: 21, fontWeight: 700 }}>Everyone else</span>
-                  {restHidden > 0 && (
+                  {restPage.label && (
                     <span
                       style={{
                         marginTop: 2,
@@ -1208,16 +1229,16 @@ export function StarBoard({
                         whiteSpace: "nowrap",
                       }}
                     >
-                      and {restHidden} more
+                      {restPage.label}
                     </span>
                   )}
                 </div>
-                <div style={{ flex: 1, minWidth: 0, display: "flex", gap: 20, overflow: "hidden" }}>
+                <div style={{ flex: 1, minWidth: 0, display: "flex", gap: CARD_GAP, overflow: "hidden" }}>
                   {restShown.map((s) => (
                     <div
                       key={s.studentId}
                       style={{
-                        width: 500,
+                        width: CARD_W,
                         height: 140,
                         flexShrink: 0,
                         boxSizing: "border-box",
@@ -1343,7 +1364,7 @@ export function StarBoard({
             {/* --------------------------------------- right rail, 480px */}
             <aside
               aria-label="Spotlights"
-              style={{ width: 480, flexShrink: 0, display: "flex", flexDirection: "column", gap: 20 }}
+              style={{ width: RAIL_W, flexShrink: 0, display: "flex", flexDirection: "column", gap: 20 }}
             >
               <section style={{ ...PANEL, height: 300, flexShrink: 0, padding: "24px 28px", gap: 12 }}>
                 <PanelHead tint="#E4F6EC" ink="#198653" title="Big Climber">
