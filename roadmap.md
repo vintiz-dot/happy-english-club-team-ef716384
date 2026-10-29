@@ -7,3 +7,4 @@
 - [x] Enforce cancelled lessons as unbillable and prevent Present attendance server-side; deployed safeguards, corrected 201 marks, regression checks and signed-in rejected-write checks pass.
 - Cancelled attendance page controls remain visually unverified because of the existing admin passcode gate; backend rejection verified with a signed-in account.- [x] Auto-retry tuition while the family discount is calculating (3 tests).
 - [x] AI family tuition explanation on the student Tuition tab (live call verified).
+- [x] Stop the Star Board, High Scores and Night League strips silently cutting off the students below the podium: shared paging (restPaging.ts + useRestPaging) sized from each board's own pixels, 5 regression tests, live check on Jupiter's board reached all four non-podium children across two pages.

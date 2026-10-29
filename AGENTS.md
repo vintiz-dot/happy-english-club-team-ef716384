@@ -52,3 +52,6 @@
 # Tuition screens and AI explanations
 - Screens that read calculate-tuition retry on their own while `siblingState.status === "unresolved"`, using `src/lib/siblingRetry.ts` (bounded backoff); the overview retries only the unresolved students, so retries don't re-contend the month lock for everyone.
 - `explain-family-tuition` (admin-only) words figures fetched from calculate-tuition as the calling admin; the model never prices anything and refuses (409) while the family discount is unresolved.
+
+# Class display boards
+- The fixed-canvas boards (Star Board, High Scores, Night League) page the students below the podium through `useRestPaging` rather than letting the one-row strip clip them, and each board derives its page size from the pixels its own strip draws with (`restPaging.ts`); a new board passes its real card/row metrics in instead of trusting a constant.
