@@ -46,9 +46,11 @@
  *    them), because an unlabelled white block reads as a rendering bug
  *    rather than as a free space.
  *
- *  - The strip is 170px and its cards are 518px, exactly as drawn, which
- *    means two of them fit. Rather than silently dropping the rest, the
- *    "NEXT UP" label carries a "+N MORE" chip.
+ *  - The strip is 170px and its cards are 518px, exactly as drawn, which means
+ *    two of them fit. A class of six already has three children below the
+ *    podium, so the strip pages: two cards at a time, moving on every few
+ *    seconds, with the "NEXT UP" label carrying the slice it is showing
+ *    ("3–4 of 3"). Nothing is dropped without the board saying so.
  *
  * Reduced motion is honoured twice: `motion === false` drops every
  * animation string and freezes the tally on its final number, and a
@@ -64,6 +66,24 @@ import {
   type BoardRow,
   type BoardViewProps,
 } from "./types";
+import { fitCount } from "./restPaging";
+import { useRestPaging } from "./useRestPaging";
+
+/* ------------------------------------------------- the strip's arithmetic
+ * Every number here is the same number the layout below draws with, so the
+ * page count can never drift away from the pixels a card is actually given:
+ * 1920 board - 2x56 padding - 40 rail gap - 470 rail - 200 label - 26 gap
+ * leaves a 1072px track, which is two 518px cards and nothing more. */
+const BOARD_W = 1920;
+const PAD_X = 56;
+const RAIL_GAP = 40;
+const RAIL_W = 470;
+const LABEL_W = 200;
+const LABEL_GAP = 26;
+const CARD_W = 518;
+const CARD_GAP = 26;
+const STRIP_H = 170;
+const REST_PER_PAGE = fitCount(BOARD_W - PAD_X * 2 - RAIL_GAP - RAIL_W - LABEL_W - LABEL_GAP, CARD_W, CARD_GAP);
 
 /* ------------------------------------------------------------- palette */
 
@@ -860,8 +880,9 @@ export function HighScores({
     : "All points";
 
   const rest = rows.slice(3);
-  const shownRest = rest;
-  const hiddenRest = rest.length - shownRest.length;
+  /** Two cards fit the strip, so a bigger class is shown a page at a time. */
+  const restPage = useRestPaging(rest.length, REST_PER_PAGE, motion);
+  const shownRest = rest.slice(restPage.from, restPage.to);
   const showConfetti = motion && run.n > 0 && !fast;
 
   const pick = (key: BoardCategory["key"] | null) => {
@@ -1117,7 +1138,7 @@ export function HighScores({
         className={`hs-board${motion ? "" : " hs-still"}`}
         style={{
           position: "relative",
-          width: 1920,
+          width: BOARD_W,
           height: 1080,
           overflow: "hidden",
           background: STAGE,
@@ -1134,7 +1155,7 @@ export function HighScores({
             zIndex: 1,
             height: "100%",
             boxSizing: "border-box",
-            padding: "36px 56px",
+            padding: `36px ${PAD_X}px`,
             display: "flex",
             flexDirection: "column",
             gap: 24,
@@ -1180,7 +1201,7 @@ export function HighScores({
       className={`hs-board${motion ? "" : " hs-still"}`}
       style={{
         position: "relative",
-        width: 1920,
+        width: BOARD_W,
         height: 1080,
         overflow: "hidden",
         background: STAGE,
@@ -1198,7 +1219,7 @@ export function HighScores({
           zIndex: 1,
           height: "100%",
           boxSizing: "border-box",
-          padding: "36px 56px",
+          padding: `36px ${PAD_X}px`,
           display: "flex",
           flexDirection: "column",
           gap: 24,
@@ -1206,7 +1227,7 @@ export function HighScores({
       >
         {header}
 
-        <div key={run.n} style={{ flex: 1, minHeight: 0, display: "flex", gap: 40 }}>
+        <div key={run.n} style={{ flex: 1, minHeight: 0, display: "flex", gap: RAIL_GAP }}>
           <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 20 }}>
             <section aria-label="Podium" style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
               <div
@@ -1296,9 +1317,9 @@ export function HighScores({
 
             <section
               aria-label="Everyone else"
-              style={{ height: 170, flexShrink: 0, display: "flex", alignItems: "center", gap: 26 }}
+              style={{ height: STRIP_H, flexShrink: 0, display: "flex", alignItems: "center", gap: LABEL_GAP }}
             >
-              <div style={{ width: 200, flexShrink: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ width: LABEL_W, flexShrink: 0, display: "flex", flexDirection: "column", gap: 8 }}>
                 <h2
                   style={{
                     margin: 0,
@@ -1313,7 +1334,7 @@ export function HighScores({
                   NEXT UP
                 </h2>
                 <span style={{ fontSize: 20, fontWeight: 700, color: WHITE }}>Everyone else</span>
-                {hiddenRest > 0 && (
+                {restPage.label && (
                   <span
                     style={{
                       width: "fit-content",
@@ -1329,16 +1350,16 @@ export function HighScores({
                       whiteSpace: "nowrap",
                     }}
                   >
-                    +{hiddenRest} MORE
+                    {restPage.label}
                   </span>
                 )}
               </div>
 
-              <div style={{ flex: 1, minWidth: 0, display: "flex", gap: 26, overflow: "hidden" }}>
+              <div style={{ flex: 1, minWidth: 0, display: "flex", gap: CARD_GAP, overflow: "hidden" }}>
                 {shownRest.length === 0 && (
                   <div
                     style={{
-                      width: 518,
+                      width: CARD_W,
                       height: 136,
                       flexShrink: 0,
                       boxSizing: "border-box",
@@ -1370,7 +1391,7 @@ export function HighScores({
                     <div
                       key={row.studentId}
                       style={{
-                        width: 518,
+                        width: CARD_W,
                         height: 136,
                         flexShrink: 0,
                         boxSizing: "border-box",
@@ -1509,7 +1530,7 @@ export function HighScores({
 
           <aside
             aria-label="Spotlights"
-            style={{ width: 470, flexShrink: 0, display: "flex", flexDirection: "column", gap: 20 }}
+            style={{ width: RAIL_W, flexShrink: 0, display: "flex", flexDirection: "column", gap: 20 }}
           >
             {/* Biggest jump this week */}
             <section
