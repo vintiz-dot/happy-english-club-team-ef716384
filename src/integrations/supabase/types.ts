@@ -4145,6 +4145,73 @@ export type Database = {
         }
         Relationships: []
       }
+      stars_sync_effects: {
+        Row: {
+          attempts: number
+          class_id: string | null
+          dedupe_key: string
+          generation: number
+          id: number
+          kind: string
+          last_error: string | null
+          lesson_date: string | null
+          month: string | null
+          queued_at: string
+          session_id: string | null
+          student_id: string
+        }
+        Insert: {
+          attempts?: number
+          class_id?: string | null
+          dedupe_key: string
+          generation?: number
+          id?: number
+          kind: string
+          last_error?: string | null
+          lesson_date?: string | null
+          month?: string | null
+          queued_at?: string
+          session_id?: string | null
+          student_id: string
+        }
+        Update: {
+          attempts?: number
+          class_id?: string | null
+          dedupe_key?: string
+          generation?: number
+          id?: number
+          kind?: string
+          last_error?: string | null
+          lesson_date?: string | null
+          month?: string | null
+          queued_at?: string
+          session_id?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stars_sync_effects_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stars_sync_effects_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stars_sync_effects_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stars_sync_events: {
         Row: {
           applied_ref: Json | null
@@ -4192,6 +4259,32 @@ export type Database = {
           stars_student_id?: string | null
         }
         Relationships: []
+      }
+      stars_sync_held_flips: {
+        Row: {
+          event_id: string
+          flipped_at: string
+          session_id: string
+        }
+        Insert: {
+          event_id: string
+          flipped_at?: string
+          session_id: string
+        }
+        Update: {
+          event_id?: string
+          flipped_at?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stars_sync_held_flips_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stars_sync_secrets: {
         Row: {
@@ -5721,6 +5814,30 @@ export type Database = {
         Returns: Json
       }
       stars_sync__event_id: { Args: { p_event: Json }; Returns: string }
+      stars_sync__made_at: {
+        Args: { p_event: Json; p_received: string }
+        Returns: string
+      }
+      stars_sync__newer_mark_exists: {
+        Args: {
+          p_event: Database["public"]["Tables"]["stars_sync_events"]["Row"]
+        }
+        Returns: boolean
+      }
+      stars_sync__queue_mark_effects: {
+        Args: {
+          p_class: string
+          p_date: string
+          p_session: string
+          p_status: string
+          p_student: string
+        }
+        Returns: undefined
+      }
+      stars_sync__queue_tuition: {
+        Args: { p_month: string; p_student: string }
+        Returns: undefined
+      }
       stars_sync__record: {
         Args: {
           p_event: Json
@@ -5744,9 +5861,17 @@ export type Database = {
         Args: { p_events: Json; p_next_cursor: number; p_now?: string }
         Returns: Json
       }
+      stars_sync_effect_failed: {
+        Args: { p_error: string; p_ids: number[] }
+        Returns: undefined
+      }
       stars_sync_effective_teacher: {
         Args: { p_stars_class: string }
         Returns: string
+      }
+      stars_sync_effects_done: {
+        Args: { p_generations: number[]; p_ids: number[] }
+        Returns: number
       }
       stars_sync_finish_run: {
         Args: { p_by: string; p_error: string; p_summary: Json }

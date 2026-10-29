@@ -41,9 +41,11 @@
  *    Anything else ("All points") is shown exactly as given, because an
  *    invented deadline on a real school board is a lie.
  *
- *  - The overflow strip is 170px, which fits its header plus two 60px rows.
- *    When more students sit below the podium, the count goes in the PLAYER
- *    column header rather than the table silently clipping them.
+ *  - The overflow strip is 170px, which fits its header plus two 60px rows,
+ *    and a seven-child class has four children below the podium. So the table
+ *    pages: two rows at a time, moving on every few seconds, with the slice it
+ *    is showing ("3–4 of 4") in the PLAYER column header. Nothing is clipped
+ *    without the board saying which children are off-screen.
  *
  *  - Short category names (Book / Bolt / Flame / Words) label the tabs and
  *    the table columns, where space is tight and an icon sits beside them;
@@ -57,6 +59,19 @@ import {
   type BoardRow,
   type BoardViewProps,
 } from "./types";
+import { rowCount } from "./restPaging";
+import { useRestPaging } from "./useRestPaging";
+
+/* ------------------------------------------------- the strip's arithmetic
+ * The standings strip is 170px: a 28px header (14px type at 1.4 leading) and
+ * 60px rows with 8px between them, so two rows fit — and a seven-child class
+ * has four children below the podium. Derived from the same numbers the table
+ * draws with, so the page count can never drift away from the layout. */
+const STANDINGS_H = 170;
+const ROW_H = 60;
+const ROW_GAP = 8;
+const HEAD_H = 28;
+const ROWS_PER_PAGE = rowCount(STANDINGS_H, ROW_H, ROW_GAP, HEAD_H);
 
 /* ------------------------------------------------------------- palette */
 
@@ -254,8 +269,9 @@ export function NightLeague({
   const litBars = streak ? Math.max(0, Math.min(10, streak.days)) : 0;
 
   const rest = rows.slice(3);
-  const visibleRest = rest;
-  const hiddenRest = rest.length - visibleRest.length;
+  /** Two rows fit the strip, so a bigger class is shown a page at a time. */
+  const restPage = useRestPaging(rest.length, ROWS_PER_PAGE, motion);
+  const visibleRest = rest.slice(restPage.from, restPage.to);
 
   /* --------------------------------------------------- shared fragments */
 
@@ -712,7 +728,7 @@ export function NightLeague({
     textAlign: "left",
   };
   const TD: CSSProperties = {
-    height: 60,
+    height: ROW_H,
     boxSizing: "border-box",
     padding: 0,
     background: PANEL_BG,
@@ -1077,10 +1093,10 @@ export function NightLeague({
                   {renderSlot(rows[2], "small", "R", 3)}
                 </section>
 
-                <section aria-label="Standings" style={{ height: 170, flexShrink: 0, overflow: "hidden" }}>
+                <section aria-label="Standings" style={{ height: STANDINGS_H, flexShrink: 0, overflow: "hidden" }}>
                   <table
                     aria-label="Students below the podium"
-                    style={{ width: "100%", marginTop: -8, borderCollapse: "separate", borderSpacing: "0 8px", tableLayout: "fixed" }}
+                    style={{ width: "100%", marginTop: -ROW_GAP, borderCollapse: "separate", borderSpacing: `0 ${ROW_GAP}px`, tableLayout: "fixed" }}
                   >
                     <colgroup>
                       <col style={{ width: 76 }} />
@@ -1099,7 +1115,7 @@ export function NightLeague({
                         <th scope="col" style={TH}>Move</th>
                         <th scope="col" style={TH}>
                           Player
-                          {hiddenRest > 0 ? <span style={{ color: "rgba(138,147,166,0.72)" }}>{` · +${hiddenRest} more`}</span> : null}
+                          {restPage.label ? <span style={{ color: "rgba(138,147,166,0.72)" }}>{` · ${restPage.label}`}</span> : null}
                         </th>
                         <th scope="col" style={TH}>Lv</th>
                         {BOARD_CATEGORIES.map((cat) => (
