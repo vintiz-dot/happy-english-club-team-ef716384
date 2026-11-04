@@ -3920,17 +3920,23 @@ export type Database = {
         Row: {
           created_at: string
           homework_id: string
+          seq: number
           stars_homework_ref: string
+          wrote: Json | null
         }
         Insert: {
           created_at?: string
           homework_id: string
+          seq?: number
           stars_homework_ref: string
+          wrote?: Json | null
         }
         Update: {
           created_at?: string
           homework_id?: string
+          seq?: number
           stars_homework_ref?: string
+          wrote?: Json | null
         }
         Relationships: [
           {
@@ -4259,6 +4265,54 @@ export type Database = {
           stars_student_id?: string | null
         }
         Relationships: []
+      }
+      stars_sync_grade_state: {
+        Row: {
+          event_id: string
+          grade: string
+          homework_id: string
+          points: number | null
+          prev: Json
+          seq: number
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          event_id: string
+          grade: string
+          homework_id: string
+          points?: number | null
+          prev: Json
+          seq: number
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          event_id?: string
+          grade?: string
+          homework_id?: string
+          points?: number | null
+          prev?: Json
+          seq?: number
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stars_sync_grade_state_homework_id_fkey"
+            columns: ["homework_id"]
+            isOneToOne: false
+            referencedRelation: "homeworks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stars_sync_grade_state_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stars_sync_held_flips: {
         Row: {
@@ -5809,9 +5863,32 @@ export type Database = {
         Args: { p_month: string; p_now: string; p_today: string }
         Returns: Json
       }
+      stars_sync__acting_teacher: {
+        Args: {
+          p_class_name: string
+          p_default_teacher: string
+          p_map: Database["public"]["Tables"]["stars_class_map"]["Row"]
+        }
+        Returns: Record<string, unknown>
+      }
       stars_sync__apply_event: {
         Args: { p_event: Json; p_now: string }
         Returns: Json
+      }
+      stars_sync__apply_homework_event: {
+        Args: { p_event: Json; p_now: string }
+        Returns: Json
+      }
+      stars_sync__award_grade: {
+        Args: {
+          p_date: string
+          p_grade: string
+          p_homework: string
+          p_points: number
+          p_student: string
+          p_teacher: string
+        }
+        Returns: string
       }
       stars_sync__event_id: { Args: { p_event: Json }; Returns: string }
       stars_sync__made_at: {
