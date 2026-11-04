@@ -7,19 +7,20 @@
  * admin presses "Run now". This page is where an admin sets it up, sees
  * what it did, and settles what it would not do on its own.
  *
- * THE ORDER ON THE PAGE IS THE ORDER OF SETTING IT UP. Start date and
- * teacher, then classes, then children, then one supervised run, then
- * the switch. Each section says what is still missing before the next
- * one can matter.
+ * THE PAGE IS IN FOUR PARTS. Records and Tools are where an admin spends
+ * their time once it is running - see StarsRecordsCenter and StarsTools in
+ * ../stars. To settle is the conflicts. Setup keeps the order of setting
+ * it up: start date and teacher, then classes, then children, then one
+ * supervised run, then the switch.
  *
- * PIXEL PAL'S LIST OF CHILDREN IS NEVER STORED. The paste helper reads it
- * into this page's memory to make matching 22 nicknames practical - each
- * one offered only the children enrolled in that class - and saves only
- * the pairs of ids. Names stay in Pixel Pal, where they came from.
+ * PIXEL PAL'S LIST OF CHILDREN IS NEVER STORED. It reaches this page's
+ * memory live from the stars-roster function, or from a paste, and only the
+ * pairs of ids an admin confirms are saved. Names stay in Pixel Pal, where
+ * they came from.
  *
  * See docs/STARS_SYNC_SETUP.md.
  */
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -39,18 +41,34 @@ import { PageHero } from "@/components/quest/PageHero";
 import { SectionHeader } from "@/components/quest/SectionHeader";
 import { toast } from "sonner";
 import { dayjs } from "@/lib/date";
+import { parsePastedRoster } from "@/lib/starsRoster";
+import { toRecords, type RecordContext, type RecordsView, type StarsRecord } from "@/lib/starsRecords";
+import { StarsRecordsCenter, type RecordsFocus } from "@/components/admin/stars/StarsRecordsCenter";
+import { StarsTools } from "@/components/admin/stars/StarsTools";
+import { mergeRosters, useBeforeStartCount, useLiveRoster, useStarsRecords } from "@/components/admin/stars/useStarsData";
 import {
-  AlertTriangle, CheckCircle2, ClipboardPaste, Clock, Link2, Loader2,
-  PauseCircle, Play, Trash2, Users,
+  AlertTriangle, CheckCircle2, ClipboardPaste, Link2, ListChecks, Loader2,
+  PauseCircle, Play, Scale, Settings2, Trash2, Users, Wrench,
 } from "lucide-react";
 
 /** A Select item cannot have an empty value; this stands for "none". */
 const NONE = "__none__";
 
-const PENDING = [
-  "skipped_unmapped", "skipped_no_session", "skipped_no_homework", "skipped_disabled",
-  "skipped_not_permitted", "skipped_not_enrolled", "skipped_unsupported",
-];
+const SECTIONS = ["records", "tools", "settle", "setup"] as const;
+type Section = (typeof SECTIONS)[number];
+
+// Remembered here rather than in the address: the sidebar marks the page
+// it is on by comparing the whole query string with "?tab=stars-sync".
+const SECTION_KEY = "hec.stars.section.v1";
+
+function readSection(): Section | null {
+  try {
+    const stored = localStorage.getItem(SECTION_KEY);
+    return SECTIONS.includes(stored as Section) ? (stored as Section) : null;
+  } catch {
+    return null;
+  }
+}
 
 const OUTCOME_LABEL: Record<string, string> = {
   applied: "Applied",
@@ -92,6 +110,8 @@ interface SyncStatus {
   open_conflicts: number;
   effects_queued?: number;
   effects_failing?: number;
+  /** Only there once 20261104090000 is applied. */
+  homework_engine?: boolean;
 }
 
 interface RunSummary {
@@ -132,7 +152,8 @@ export default function StarsSyncTab() {
   const queryClient = useQueryClient();
   const refresh = () => {
     for (const k of ["stars-connection", "stars-cursor", "stars-status", "stars-class-map",
-                     "stars-student-map", "stars-readiness", "stars-events", "stars-conflicts",
+                     "stars-student-map", "stars-readiness", "stars-records",
+                     "stars-records-before-start", "stars-link-evidence", "stars-conflicts",
                      "stars-enrolled"]) {
       queryClient.invalidateQueries({ queryKey: [k] });
     }
@@ -250,19 +271,10 @@ export default function StarsSyncTab() {
     },
   });
 
-  const events = useQuery({
-    queryKey: ["stars-events"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("stars_sync_events")
-        .select("event_id, seq, kind, outcome, outcome_note, lesson_date, stars_class_id, stars_student_id, processed_at, attempts")
-        .order("processed_at", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      return data ?? [];
-    },
-    refetchInterval: 60_000,
-  });
+  const [includeBeforeStart, setIncludeBeforeStart] = useState(false);
+  const recordsQuery = useStarsRecords(includeBeforeStart);
+  const beforeStart = useBeforeStartCount();
+  const liveRoster = useLiveRoster();
 
   const conflicts = useQuery({
     queryKey: ["stars-conflicts"],
@@ -409,7 +421,12 @@ export default function StarsSyncTab() {
   // and lost the rest of what was typed.
   const [fromDraft, setFromDraft] = useState<string | null>(null);
   const [confirmEarlier, setConfirmEarlier] = useState<string | null>(null);
-  const [eventFilter, setEventFilter] = useState<"attention" | "all">("attention");
+  const [chosenSection, setChosenSection] = useState<Section | null>(readSection);
+  const [recordsFocus, setRecordsFocus] = useState<RecordsFocus | null>(null);
+  const [toolFocus, setToolFocus] = useState<{ child: string | null; cls: string | null }>({ child: null, cls: null });
+  // Kept mounted once opened, so moving between parts of the page does not
+  // lose a half-built view or the list of links just made.
+  const [opened, setOpened] = useState<Set<Section>>(new Set());
 
   const teacherName = (id: string | null | undefined) =>
     (teachers.data ?? []).find((t) => t.id === id)?.full_name ?? "—";
@@ -435,28 +452,72 @@ export default function StarsSyncTab() {
   }, [enrolled.data]);
 
   // Pixel Pal's list, parsed in memory only.
+  const pastedRoster = useMemo(() => parsePastedRoster(pasted), [pasted]);
   const pastedRows = useMemo(() => {
-    if (!pasted.trim()) return { rows: [] as { id: string; name: string; starsClass: string | null }[], error: null as string | null };
+    const roster = pastedRoster.roster;
+    if (!roster) return [] as { id: string; name: string; starsClass: string | null }[];
+    return [...roster.students.entries()]
+      .map(([id, name]) => ({ id, name, starsClass: roster.studentClasses.get(id)?.[0] ?? null }))
+      .sort((a, b) => (a.starsClass ?? "").localeCompare(b.starsClass ?? "") || a.name.localeCompare(b.name));
+  }, [pastedRoster]);
+
+  // Pixel Pal's names, wherever they came from, for showing a child who is
+  // not linked by name rather than by number.
+  const roster = useMemo(
+    () => mergeRosters(liveRoster.data?.roster, pastedRoster.roster),
+    [liveRoster.data?.roster, pastedRoster.roster],
+  );
+
+  const recordContext = useMemo<RecordContext>(() => {
+    const classNames = new Map((classes.data ?? []).map((c) => [c.id, c.name]));
+    const childNames = new Map((students.data ?? []).map((s) => [s.id, s.full_name]));
+    return {
+      classes: new Map((classMap.data ?? []).map((m) => [m.stars_class_id, classNames.get(m.class_id) ?? "A class"])),
+      children: new Map((studentMap.data ?? []).map((m) => [
+        m.stars_student_id,
+        { studentId: m.student_id, name: childNames.get(m.student_id) ?? "Unknown child" },
+      ])),
+      pixelPalChildren: roster.students,
+      pixelPalClasses: roster.classes,
+    };
+  }, [classes.data, students.data, classMap.data, studentMap.data, roster]);
+
+  const records = useMemo<StarsRecord[]>(
+    () => toRecords(recordsQuery.data?.rows ?? [], recordContext),
+    [recordsQuery.data?.rows, recordContext],
+  );
+  const unlinkedChildren = useMemo(
+    () => new Set(records.filter((r) => r.why === "child_unlinked").map((r) => r.childRef)).size,
+    [records],
+  );
+
+  const goSection = useCallback((next: Section) => {
+    setChosenSection(next);
     try {
-      const parsed = JSON.parse(pasted) as {
-        students?: Record<string, unknown>; student_classes?: Record<string, unknown>;
-      };
-      if (!parsed?.students || typeof parsed.students !== "object") {
-        return { rows: [], error: "That list has no \"students\" section." };
-      }
-      const rows = Object.entries(parsed.students)
-        .filter(([, name]) => typeof name === "string")
-        .map(([id, name]) => ({
-          id: id.trim(),
-          name: name as string,
-          starsClass: typeof parsed.student_classes?.[id] === "string" ? (parsed.student_classes[id] as string) : null,
-        }))
-        .sort((a, b) => (a.starsClass ?? "").localeCompare(b.starsClass ?? "") || a.name.localeCompare(b.name));
-      return { rows, error: null };
+      localStorage.setItem(SECTION_KEY, next);
     } catch {
-      return { rows: [], error: "That is not the JSON Pixel Pal gave you. Paste the whole thing, from { to }." };
+      // Without storage it opens on Records next time; nothing else changes.
     }
-  }, [pasted]);
+  }, []);
+
+  const fixFromRecords = useCallback((
+    fix: NonNullable<StarsRecord["fix"]>,
+    target: { childRef?: string | null; classRef?: string | null },
+  ) => {
+    if (fix === "link_child" || fix === "link_class") {
+      setToolFocus({ child: fix === "link_child" ? target.childRef ?? null : null, cls: fix === "link_class" ? target.classRef ?? null : null });
+      goSection("tools");
+    } else {
+      goSection(fix === "settle" ? "settle" : "setup");
+    }
+  }, [goSection]);
+
+  const showRecords = useCallback((filters: Partial<RecordsView>) => {
+    setRecordsFocus({ nonce: Date.now(), filters });
+    goSection("records");
+  }, [goSection]);
+
+  const clearToolFocus = useCallback(() => setToolFocus({ child: null, cls: null }), []);
 
   const pickedChildIds = useMemo(() => new Set(Object.values(picks).filter((v) => v && v !== NONE)), [picks]);
   const pendingPairs = useMemo(
@@ -477,11 +538,6 @@ export default function StarsSyncTab() {
   const schedOn = conn?.enabled === true;
   const st = status.data;
   const lastSummary = (cursor.data?.last_summary ?? null) as RunSummary | null;
-
-  const attentionEvents = (events.data ?? []).filter(
-    (e) => e.outcome === "rejected" || PENDING.includes(e.outcome),
-  );
-  const shownEvents = eventFilter === "attention" ? attentionEvents : (events.data ?? []);
 
   // This page ships with the code; the database migration is pasted by
   // hand. Until 20261028090000 is applied, stars_sync_status() has no
@@ -525,12 +581,16 @@ export default function StarsSyncTab() {
 
   const loading = connection.isLoading || classMap.isLoading || readiness.isLoading;
 
+  // Until a class is mapped the only useful part of this page is Setup.
+  const section: Section = chosenSection ?? (rows.length === 0 ? "setup" : "records");
+  if (!loading && !opened.has(section)) setOpened(new Set(opened).add(section));
+
   return (
     <div className="space-y-6">
       <PageHero
         eyebrow="Integrations"
         title="Stars Sync"
-        subtitle="Registers and points recorded in Pixel Pal, applied to HEC as your teacher."
+        subtitle="What is recorded in Pixel Pal, applied to HEC as your teacher."
         variant="glacier"
       />
 
@@ -606,6 +666,120 @@ export default function StarsSyncTab() {
             </CardContent>
           </Card>
 
+          <Tabs value={section} onValueChange={(value) => goSection(value as Section)} className="space-y-6">
+            <div className="overflow-x-auto">
+              <TabsList className="h-auto">
+                <TabsTrigger value="records" className="gap-1.5">
+                  <ListChecks className="h-4 w-4" /> Records
+                  {(st?.pending ?? 0) > 0 && <Badge variant="outline" className="ml-0.5 px-1.5 py-0 text-[11px]">{st?.pending}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="tools" className="gap-1.5">
+                  <Wrench className="h-4 w-4" /> Tools
+                  {unlinkedChildren > 0 && <Badge variant="destructive" className="ml-0.5 px-1.5 py-0 text-[11px]">{unlinkedChildren}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="settle" className="gap-1.5">
+                  <Scale className="h-4 w-4" /> To settle
+                  {(st?.open_conflicts ?? 0) > 0 && <Badge variant="destructive" className="ml-0.5 px-1.5 py-0 text-[11px]">{st?.open_conflicts}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="setup" className="gap-1.5">
+                  <Settings2 className="h-4 w-4" /> Setup
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="records" forceMount className="mt-0 data-[state=inactive]:hidden">
+              {opened.has("records") && (
+                <StarsRecordsCenter
+                  records={records}
+                  loading={recordsQuery.isLoading}
+                  fetching={recordsQuery.isFetching}
+                  error={recordsQuery.error instanceof Error ? recordsQuery.error.message : recordsQuery.error ? "Something went wrong." : null}
+                  truncated={recordsQuery.data?.truncated ?? false}
+                  loadedAt={recordsQuery.data?.loadedAt ?? null}
+                  includeBeforeStart={includeBeforeStart}
+                  onIncludeBeforeStart={setIncludeBeforeStart}
+                  beforeStartCount={beforeStart.data ?? null}
+                  onRefresh={() => { void recordsQuery.refetch(); }}
+                  onFix={fixFromRecords}
+                  focus={recordsFocus}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="tools" forceMount className="mt-0 data-[state=inactive]:hidden">
+              {opened.has("tools") && (
+                <StarsTools
+                  records={records}
+                  roster={roster}
+                  rosterState={liveRoster.isLoading ? "loading" : liveRoster.data?.state ?? "unavailable"}
+                  rosterFetchedAt={liveRoster.data?.fetchedAt ?? null}
+                  pasted={pasted}
+                  onPaste={(text) => { setPasted(text); setPicks({}); }}
+                  pasteError={pastedRoster.error}
+                  pastedCount={pastedRoster.roster?.students.size ?? 0}
+                  classMap={classMap.data ?? []}
+                  studentMap={studentMap.data ?? []}
+                  classes={classes.data ?? []}
+                  homeworkEngine={st?.homework_engine === true}
+                  focusChild={toolFocus.child}
+                  focusClass={toolFocus.cls}
+                  onFocusHandled={clearToolFocus}
+                  onShowRecords={showRecords}
+                  onRunNow={() => runNow.mutate()}
+                  running={runNow.isPending || st?.running === true}
+                  canRun={Boolean(conn?.sync_from) && fixesApplied}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="settle" className="mt-0">
+          {/* ----------------------------------------------- conflicts */}
+          <SectionHeader title="To settle" subtitle="Both apps hold a different mark or grade. HEC kept its own; you decide." />
+          <Card>
+            <CardContent className="pt-6">
+              {(conflicts.data ?? []).length === 0 ? (
+                <p className="py-4 text-sm text-muted-foreground">Nothing to settle.</p>
+              ) : (
+                <div className="space-y-2">
+                  {(conflicts.data ?? []).map((c) => {
+                    const ours = (c.ours ?? {}) as { status?: string };
+                    const theirs = (c.theirs ?? {}) as { status?: string; grade?: string; homework_title?: string };
+                    const child = (c.students as { full_name?: string } | null)?.full_name ?? "A child";
+                    const lessonInfo = c.sessions as { date?: string; classes?: { name?: string } | null } | null;
+                    return (
+                      <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
+                        <div className="text-sm">
+                          <span className="font-medium">{child}</span>
+                          <span className="text-muted-foreground">
+                            {" "}· {theirs.homework_title ?? lessonInfo?.classes?.name ?? "lesson"} {lessonInfo?.date ? dayjs(lessonInfo.date).format("D MMM") : ""}
+                          </span>
+                          <p className="text-xs">
+                            HEC has <strong>{ours.status ?? "?"}</strong>, Pixel Pal says <strong>{theirs.status ?? "?"}</strong>.
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" disabled={resolve.isPending}
+                            onClick={() => resolve.mutate({ conflictId: c.id, resolution: "kept_ours" })}>
+                            Keep HEC's
+                          </Button>
+                          {/* Before 20261028090000 the database's resolve only records the
+                              choice - the old page wrote the mark itself first - so taking
+                              Pixel Pal's would close the conflict and write nothing. */}
+                          <Button size="sm" disabled={resolve.isPending || (!c.session_id && !theirs.grade) || !c.student_id || !theirs.status || !fixesApplied}
+                            onClick={() => resolve.mutate({ conflictId: c.id, resolution: "took_theirs" })}>
+                            Use Pixel Pal's
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+            </TabsContent>
+
+            <TabsContent value="setup" className="mt-0 space-y-6">
           {/* --------------------------------------------------- setup */}
           <SectionHeader title="Setup" subtitle="Where to start, who the sync acts as, and its limits." />
           <Card>
@@ -866,8 +1040,8 @@ export default function StarsSyncTab() {
                 placeholder='{ "classes": { … }, "students": { … }, "student_classes": { … } }'
                 className="min-h-[90px] font-mono text-xs"
               />
-              {pastedRows.error && <p className="text-xs text-destructive">{pastedRows.error}</p>}
-              {pastedRows.rows.length > 0 && (
+              {pastedRoster.error && <p className="text-xs text-destructive">{pastedRoster.error}</p>}
+              {pastedRows.length > 0 && (
                 <>
                   <div className="overflow-x-auto">
                     <Table>
@@ -880,7 +1054,7 @@ export default function StarsSyncTab() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {pastedRows.rows.map((r) => {
+                        {pastedRows.map((r) => {
                           const already = matchedStarsIds.get(r.id);
                           const hecClass = r.starsClass ? hecClassForStars.get(r.starsClass) : undefined;
                           const pool = hecClass ? [...(enrolledIn.get(hecClass) ?? [])] : [];
@@ -986,97 +1160,8 @@ export default function StarsSyncTab() {
             </CardContent>
           </Card>
 
-          {/* ----------------------------------------------- conflicts */}
-          <SectionHeader title="To settle" subtitle="Both apps hold a different mark. HEC kept its own; you decide." />
-          <Card>
-            <CardContent className="pt-6">
-              {(conflicts.data ?? []).length === 0 ? (
-                <p className="py-4 text-sm text-muted-foreground">Nothing to settle.</p>
-              ) : (
-                <div className="space-y-2">
-                  {(conflicts.data ?? []).map((c) => {
-                    const ours = (c.ours ?? {}) as { status?: string };
-                    const theirs = (c.theirs ?? {}) as { status?: string };
-                    const child = (c.students as { full_name?: string } | null)?.full_name ?? "A child";
-                    const lessonInfo = c.sessions as { date?: string; classes?: { name?: string } | null } | null;
-                    return (
-                      <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
-                        <div className="text-sm">
-                          <span className="font-medium">{child}</span>
-                          <span className="text-muted-foreground">
-                            {" "}· {lessonInfo?.classes?.name ?? "lesson"} {lessonInfo?.date ? dayjs(lessonInfo.date).format("D MMM") : ""}
-                          </span>
-                          <p className="text-xs">
-                            HEC has <strong>{ours.status ?? "?"}</strong>, Pixel Pal says <strong>{theirs.status ?? "?"}</strong>.
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" disabled={resolve.isPending}
-                            onClick={() => resolve.mutate({ conflictId: c.id, resolution: "kept_ours" })}>
-                            Keep HEC's
-                          </Button>
-                          {/* Before 20261028090000 the database's resolve only records the
-                              choice - the old page wrote the mark itself first - so taking
-                              Pixel Pal's would close the conflict and write nothing. */}
-                          <Button size="sm" disabled={resolve.isPending || !c.session_id || !c.student_id || !theirs.status || !fixesApplied}
-                            onClick={() => resolve.mutate({ conflictId: c.id, resolution: "took_theirs" })}>
-                            Use Pixel Pal's
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* ------------------------------------------------ records */}
-          <SectionHeader title="Records" subtitle="Everything Pixel Pal sent, and what became of it." />
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-              <CardDescription>
-                {eventFilter === "attention"
-                  ? `${attentionEvents.length} waiting or refused. Waiting records are retried every run.`
-                  : "The latest 200."}
-              </CardDescription>
-              <Select value={eventFilter} onValueChange={(v) => setEventFilter(v as "attention" | "all")}>
-                <SelectTrigger className="h-8 w-[180px] text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="attention">Needs attention</SelectItem>
-                  <SelectItem value="all">Everything</SelectItem>
-                </SelectContent>
-              </Select>
-            </CardHeader>
-            <CardContent>
-              {shownEvents.length === 0 ? (
-                <p className="py-4 text-sm text-muted-foreground">
-                  {(events.data ?? []).length === 0 ? "Nothing yet — Pixel Pal has not been read." : "Nothing needs attention."}
-                </p>
-              ) : (
-                <div className="max-h-[28rem] space-y-1 overflow-y-auto">
-                  {shownEvents.map((e) => (
-                    <div key={e.event_id} className="rounded-md bg-muted/40 px-3 py-2 text-xs">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={e.outcome === "applied" ? "default" : e.outcome === "rejected" || e.outcome === "conflict" ? "destructive" : "secondary"}>
-                          {OUTCOME_LABEL[e.outcome] ?? e.outcome}
-                        </Badge>
-                        <span className="font-medium">{e.kind}</span>
-                        {e.lesson_date && <span className="text-muted-foreground">lesson {dayjs(e.lesson_date).format("D MMM")}</span>}
-                        {e.stars_class_id && <span className="text-muted-foreground">class {e.stars_class_id}</span>}
-                        {e.stars_student_id && <span className="text-muted-foreground">child {e.stars_student_id}</span>}
-                        <span className="ml-auto flex items-center gap-1 text-muted-foreground">
-                          <Clock className="h-3 w-3" />{dayjs(e.processed_at).format("D MMM HH:mm")}
-                          {e.attempts > 1 ? ` · tried ${e.attempts}×` : ""}
-                        </span>
-                      </div>
-                      {e.outcome_note && <p className="mt-1 text-muted-foreground">{e.outcome_note}</p>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            </TabsContent>
+          </Tabs>
         </>
       )}
 

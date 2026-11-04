@@ -16,6 +16,11 @@
 export const PIXEL_PAL_EXPORT_URL =
   "https://jncqapcrqrtkqpdmfgma.supabase.co/functions/v1/export-events";
 
+/** Pixel Pal's list of its classes and children: same host, same secret.
+ *  A constant for the same reason as the one above. */
+export const PIXEL_PAL_ROSTER_URL =
+  "https://jncqapcrqrtkqpdmfgma.supabase.co/functions/v1/export-roster";
+
 /** The names the shared secret may be stored under. The owner set it as
  *  "starpasscode"; secret stores differ on whether they keep case. */
 export const FEED_SECRET_NAMES = ["STARPASSCODE", "starpasscode"] as const;
@@ -80,6 +85,68 @@ export function parseFeedPage(body: unknown, since: number): FeedPage {
     throw new FeedError("Pixel Pal's answer contained something that is not a record.");
   }
   return { events: events as Record<string, unknown>[], nextCursor: next_cursor };
+}
+
+export interface Roster {
+  classes: Record<string, string>;
+  students: Record<string, string>;
+  student_classes: Record<string, string[]>;
+  inactive_students: string[];
+}
+
+/** Far more children than a school has. A blast radius, like the point caps. */
+const MAX_ROSTER_ENTRIES = 5000;
+const MAX_ROSTER_REF = 64;
+const MAX_ROSTER_NAME = 200;
+
+const rosterRef = (value: unknown): string | null => {
+  const text = typeof value === "number" && Number.isFinite(value) ? String(value) : value;
+  if (typeof text !== "string") return null;
+  const trimmed = text.trim();
+  return trimmed && trimmed.length <= MAX_ROSTER_REF ? trimmed : null;
+};
+
+function rosterNames(value: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!value || typeof value !== "object" || Array.isArray(value)) return out;
+  for (const [key, name] of Object.entries(value as Record<string, unknown>).slice(0, MAX_ROSTER_ENTRIES)) {
+    const ref = rosterRef(key);
+    if (ref && typeof name === "string" && name.trim()) out[ref] = name.trim().slice(0, MAX_ROSTER_NAME);
+  }
+  return out;
+}
+
+/**
+ * Pixel Pal's list of children, checked before it goes any further. Only
+ * short strings under short keys get through, whatever else it sends. Throws
+ * FeedError, whose message never echoes the payload.
+ */
+export function parseRoster(body: unknown): Roster {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new FeedError("Pixel Pal's roster was not the expected shape.");
+  }
+  const { classes, students, student_classes, inactive_students } = body as Record<string, unknown>;
+  const names = rosterNames(students);
+  if (Object.keys(names).length === 0) {
+    throw new FeedError("Pixel Pal's roster has no children in it.");
+  }
+  const memberships: Record<string, string[]> = {};
+  if (student_classes && typeof student_classes === "object" && !Array.isArray(student_classes)) {
+    for (const [key, raw] of Object.entries(student_classes as Record<string, unknown>).slice(0, MAX_ROSTER_ENTRIES)) {
+      const ref = rosterRef(key);
+      if (!ref) continue;
+      const list = (Array.isArray(raw) ? raw : [raw]).map(rosterRef).filter((c): c is string => c !== null);
+      if (list.length > 0) memberships[ref] = list.slice(0, 20);
+    }
+  }
+  return {
+    classes: rosterNames(classes),
+    students: names,
+    student_classes: memberships,
+    inactive_students: Array.isArray(inactive_students)
+      ? inactive_students.slice(0, MAX_ROSTER_ENTRIES).map(rosterRef).filter((c): c is string => c !== null)
+      : [],
+  };
 }
 
 /** One row of stars_sync_effects, as the drain reads it. */

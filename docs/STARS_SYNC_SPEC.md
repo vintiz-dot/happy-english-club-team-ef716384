@@ -29,6 +29,23 @@
 >   project's public anon key plus a database-generated token the function
 >   verifies.
 
+> **Homework and names, 4 Nov 2026.** Migration `20261104090000` and the
+> `stars-roster` function are HEC's half of homework, grades and children's
+> names; Pixel Pal's half is the prompt in
+> [PIXEL_PAL_NEXT_STEPS.md](PIXEL_PAL_NEXT_STEPS.md). Section "Homework, grades
+> and names" below is the contract. Where B3 below differs from it, the contract
+> is right, for these reasons:
+>
+> - **A changed homework is a new record with the same `homework_ref`,** not a
+>   withdrawal and a replacement: withdrawing would have to delete a homework
+>   children may have grades on.
+> - **A withdrawn homework that has work on it is kept,** with a note. Deleting
+>   it would take children's grades and points with it.
+> - **A homework due on or after the start date comes across even if it was set
+>   before it.** It is current work, and its grades will need it.
+> - **Homework HEC already has by hand is linked, not duplicated,** when the
+>   class, title and due date all match.
+
 Two halves, because the two apps have different owners:
 
 - **Part A** was the brief for Pixel Pal, the other app. **It has been
@@ -196,6 +213,47 @@ So, for Part B:
   appear under **needs attention** on the admin screen, not only in the
   log. A blank register is the kind of thing nobody notices until
   reports go out.
+
+---
+
+## Homework, grades and names
+
+Two more kinds in `export-events`, and one new endpoint. HEC takes them from
+migration `20261104090000` on; the exact wording given to Pixel Pal is in
+[PIXEL_PAL_NEXT_STEPS.md](PIXEL_PAL_NEXT_STEPS.md).
+
+```jsonc
+// homework: class-wide, so student_ref is null. lesson_date is the day it was set.
+{ "homework_ref": "5521",        // permanent id, as text. Required.
+  "title": "Unit 4 workbook",    // required
+  "body": "Instructions",        // or null
+  "due_date": "2026-11-11" }     // or null
+
+// grade: one child. lesson_date is the day it was graded.
+{ "homework_ref": "5521",        // required
+  "grade": "8/10",               // required, as the teacher wrote it
+  "points": 5,                   // or null. Goes through award_homework_points.
+  "feedback": "Nice work" }      // or null
+```
+
+```
+GET https://jncqapcrqrtkqpdmfgma.supabase.co/functions/v1/export-roster
+Header: x-sync-secret: <the same secret>
+
+{ "classes": { "19": "Stars" },
+  "students": { "121": "Bin" },
+  "student_classes": { "121": ["19"] },
+  "inactive_students": ["88"] }
+```
+
+**The one hazard: paying twice.** Points that go with a grade travel on the grade.
+If Pixel Pal also sent them as a `points` record, HEC could not tell, and the child
+would have both. The same goes for backfilled grades whose awards already went out.
+
+**Names go through the roster and nowhere else.** `stars_sync_events.raw` keeps
+every record for good, and it should not be holding children's names. The roster
+is fetched on demand by `stars-roster`, handed to the admin who asked, and kept
+only in that page's memory.
 
 ---
 

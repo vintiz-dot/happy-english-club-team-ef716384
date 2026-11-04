@@ -272,5 +272,28 @@ const present = [{ studentId: "apple", status: "Present" }];
   eq("  each carrying the generation it read", plan.streaks[2].generations, [2]);
 }
 
+console.log("=== Pixel Pal's list of children ===");
+{
+  ok("the address is Pixel Pal's, over https, on the same host as the feed",
+     core.PIXEL_PAL_ROSTER_URL === "https://jncqapcrqrtkqpdmfgma.supabase.co/functions/v1/export-roster");
+  throwsWith("not an object", () => core.parseRoster([]), /not the expected shape/);
+  throwsWith("no children", () => core.parseRoster({ classes: { 19: "Stars" } }), /no children/);
+  const roster = core.parseRoster({
+    classes: { 19: "Stars", 22: 5 },
+    students: { 121: "  Bin  ", 122: "", 123: 7, ["x".repeat(100)]: "Too long a key" },
+    student_classes: { 121: 19, 124: ["19", "22"], 125: null },
+    inactive_students: [122, "126", { a: 1 }],
+    somethingElse: "a phone number",
+  });
+  eq("numbers become text, and spaces go", roster.students, { 121: "Bin" });
+  eq("a class name that is not text is dropped", roster.classes, { 19: "Stars" });
+  eq("one class becomes a list, and a list stays one", roster.student_classes, { 121: ["19"], 124: ["19", "22"] });
+  eq("archived children are read, and rubbish dropped", roster.inactive_students, ["122", "126"]);
+  ok("nothing it was not asked for gets through", !JSON.stringify(roster).includes("phone"));
+  eq("a very long name is cut", core.parseRoster({ students: { 1: "n".repeat(500) } }).students["1"].length, 200);
+  const many = Object.fromEntries(Array.from({ length: 6000 }, (_, i) => [String(i), "x"]));
+  eq("a list far longer than any school is capped", Object.keys(core.parseRoster({ students: many }).students).length, 5000);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

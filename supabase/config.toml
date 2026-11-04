@@ -238,6 +238,11 @@ verify_jwt = true
 [functions.stars-sync]
 verify_jwt = true
 
+# Admin-only (requireRole inside). Asks Pixel Pal for its list of children
+# and hands it straight back to the admin; nothing is stored.
+[functions.stars-roster]
+verify_jwt = true
+
 # Admin-only (requireRole inside). Kept behind the gateway's JWT check as
 # well, like every function here: the owner's rule for this live app.
 [functions.explain-family-tuition]

@@ -6,7 +6,8 @@ the order of switching it on; `STARS_SYNC_SPEC.md` is the design.
 ## What it does, in one paragraph
 
 Every five minutes HEC reads what teachers recorded in Pixel Pal — register
-marks and points — and records them in HEC **as the teacher you choose**,
+marks, points and, once Pixel Pal sends them, homework and grades — and records
+them in HEC **as the teacher you choose**,
 only in classes that teacher teaches in HEC. A synced mark does everything
 a mark made in HEC does: the lesson becomes *Held* (which is what pays the
 teacher), tuition is recalculated, streaks move. It never overwrites a mark
@@ -137,6 +138,25 @@ Flip **Schedule**. From now on it runs every five minutes.
 
 ## Running it
 
+The page has four parts. **Records** is everything Pixel Pal has sent: quick
+views, filters, grouping, your choice of columns, and views you can save, led by
+what is holding the most records up. **Tools** is where you link children and
+classes. **To settle** is where the apps disagree. **Setup** is everything above.
+
+**"Child 121 is not linked."** Tools → Find and link children. It works out who
+each Pixel Pal child most probably is, from their name, class, enrolment dates,
+days they come, and how their register and points line up with HEC's, and asks
+you one question at a time: *Is Bin from Pixel Pal Nguyễn Gia Bình on HEC?* Each
+answer rules that child out for the others, so the questions get easier as you
+go. Nothing links until you say yes. A wrong link moves one child's marks and
+points onto another, so check the reasons, and undo straight away if you mis-click:
+undo stops anything further reaching that child, but what a run has already applied
+stays.
+
+It works best with names. They come straight from Pixel Pal once it has
+`export-roster`; until then, paste the list Pixel Pal gave you. Either way they stay
+in that page and are never saved in HEC.
+
 **"Nothing has appeared for a child."** Records → Needs attention, and
 read the note. The usual ones:
 
@@ -148,6 +168,11 @@ read the note. The usual ones:
 | Waiting: teacher | the teacher does not teach that class in HEC (the Classes table says why) |
 | Refused: 24 hours | the mark came more than a day after the lesson; a teacher could not change it in HEC either. Enter it yourself. |
 | Refused: over the limit | an award above your limits. Raise them if it was meant, and enter it yourself. |
+| Waiting: not supported yet | a kind of record HEC does not take. For homework and grades, apply migration `20261104090000`. |
+| Waiting: no homework | a grade whose homework has not arrived yet. It applies when it does. |
+
+**"Homework is not showing."** Tools → Homework check says what has arrived. What
+each app still needs is in [PIXEL_PAL_NEXT_STEPS.md](PIXEL_PAL_NEXT_STEPS.md).
 
 Waiting records are retried every run and apply as soon as the cause is
 fixed — up to 60 days after the lesson.

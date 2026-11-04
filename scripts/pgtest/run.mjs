@@ -116,9 +116,27 @@ const SUITES = [
       "20261028090000_stars_sync_review_fixes.sql",
     ],
   },
+  // Homework and grades. The engine as production has it runs first, then
+  // this is pasted over what it decided.
+  {
+    name: "stars sync homework",
+    file: "stars-sync-homework.test.mjs",
+    migrations: [
+      "20261023090000_homework_grading_integrity.sql",
+      "20261023100000_stars_sync_foundation.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261027100000_stars_sync_engine.sql",
+      "20261028090000_stars_sync_review_fixes.sql",
+      "20261104090000_stars_sync_homework.sql",
+    ],
+  },
   // Not a database test: the edge function's own decisions, and the
   // after-effects of a mark that mark-attendance and the sync share.
   { name: "stars sync core", file: "stars-sync-core.test.mjs", migrations: [] },
+  // Nor these: the admin screens' reasoning, without the screens. Who a
+  // Pixel Pal child probably is, and how the record log is read and sliced.
+  { name: "stars link tool", file: "stars-link.test.mjs", migrations: [] },
+  { name: "stars records", file: "stars-records.test.mjs", migrations: [] },
   {
     name: "homework grading",
     file: "homework-grading.test.mjs",
