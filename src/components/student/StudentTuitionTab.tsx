@@ -14,6 +14,8 @@ import { SettleBillModal } from "@/components/admin/SettleBillModal";
 import { useAuth } from "@/hooks/useAuth";
 import { getPaymentStatus, getTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { PriorBalanceBreakdown } from "./PriorBalanceBreakdown";
+import { BillFreezePanel, useBillFreeze } from "./BillFreezePanel";
+import { Lock } from "lucide-react";
 
 const CURRENT_MONTH = (() => {
   const now = new Date();
@@ -74,6 +76,8 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
 
   // Fetch invoice data - same as PDF download
   const { data: tuitionData, isLoading } = useStudentMonthFinance(studentId, selectedMonth);
+  const { data: freezeBills = [] } = useBillFreeze(studentId);
+  const lockedMonths = new Set(freezeBills.filter((b) => b.tuition_frozen).map((b) => b.month.slice(0, 7)));
 
   // Real-time sync - invalidate on changes
   useEffect(() => {
@@ -177,6 +181,7 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
             <SelectContent className="max-h-80">
               {pickerOptions.map(({ value, label, classes }) => (
                 <SelectItem key={value} value={value}>
+                  {lockedMonths.has(value) && <Lock className="inline h-3 w-3 mr-1" aria-label="Locked" />}
                   {label}
                   {classes.length > 0 && (
                     <span className="text-muted-foreground"> · {classes.join(", ")}</span>
@@ -193,6 +198,9 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
       <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
         <div className="flex items-center gap-2">
           {statusBadge}
+          {lockedMonths.has(selectedMonth) && (
+            <Badge className="gap-1"><Lock className="h-3 w-3" /> Bill locked</Badge>
+          )}
           {tuitionData.totalDiscount > 0 && (
             <Badge variant="outline">Discount Applied</Badge>
           )}
@@ -508,6 +516,10 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {role === "admin" && (
+        <BillFreezePanel studentId={studentId} canEdit={role === "admin"} />
       )}
 
       {/* Settle Bill Modal */}
