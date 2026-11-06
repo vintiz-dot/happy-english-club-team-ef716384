@@ -5705,6 +5705,14 @@ export type Database = {
         Args: { _student_id: string; _user_id: string }
         Returns: boolean
       }
+      change_enrollment_days: {
+        Args: {
+          p_allowed_days: number[]
+          p_effective_date: string
+          p_enrollment_id: string
+        }
+        Returns: Json
+      }
       check_teacher_availability: {
         Args: {
           p_date: string

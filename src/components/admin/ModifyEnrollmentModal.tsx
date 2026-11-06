@@ -71,6 +71,7 @@ export function ModifyEnrollmentModal({
   // Settings state
   const [allowedDays, setAllowedDays] = useState<number[]>([]);
   const [rateOverride, setRateOverride] = useState<string>("");
+  const [daysFrom, setDaysFrom] = useState(format(new Date(), "yyyy-MM-dd"));
 
   // Fetch current enrollment details
   const { data: enrollmentDetails } = useQuery({
@@ -261,19 +262,30 @@ export function ModifyEnrollmentModal({
       const isAllDays = sortedAllowed.length === sortedClassDays.length &&
         sortedAllowed.every((d, i) => d === sortedClassDays[i]);
 
+      const oldDays = [...(enrollmentDetails?.allowed_days || classDays)].sort((a, b) => a - b);
+      const daysChanged = oldDays.join(",") !== sortedAllowed.join(",");
+
       const { error } = await supabase
         .from("enrollments")
         .update({
-          allowed_days: isAllDays ? null : allowedDays,
           rate_override_vnd: rateOverride ? parseInt(rateOverride) : null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", enrollment.id);
-
       if (error) throw error;
 
+      // Weekdays are date-aware: lessons before `daysFrom` keep the old days.
+      if (daysChanged) {
+        const { error: daysError } = await supabase.rpc("change_enrollment_days", {
+          p_enrollment_id: enrollment.id,
+          p_allowed_days: isAllDays ? [] : sortedAllowed,
+          p_effective_date: daysFrom,
+        });
+        if (daysError) throw daysError;
+      }
+
       // Trigger tuition recalculation for current month
-      const currentMonth = format(new Date(), "yyyy-MM");
+      const currentMonth = daysChanged ? daysFrom.slice(0, 7) : format(new Date(), "yyyy-MM");
       await supabase.functions.invoke("calculate-tuition", {
         body: {
           studentId: enrollment.student_id,
@@ -329,8 +341,8 @@ export function ModifyEnrollmentModal({
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Past Held sessions are never modified.</strong> Only future attendance and
-            financials are adjusted.
+            <strong>Every change needs a date.</strong> Lessons before it keep their marks and
+            enrollment; only lessons from that date on change.
           </AlertDescription>
         </Alert>
 
@@ -379,7 +391,7 @@ export function ModifyEnrollmentModal({
                 onChange={(e) => setTransferDate(e.target.value)}
               />
               <p className="text-sm text-muted-foreground">
-                Old class ends day before. New class starts on this date.
+                First lesson in the new class. The old class ends the day before; its past marks are kept.
               </p>
             </div>
 
@@ -436,14 +448,14 @@ export function ModifyEnrollmentModal({
 
           <TabsContent value="end" className="space-y-4">
             <div className="space-y-2">
-              <Label>End Date *</Label>
+              <Label>Last day in this class *</Label>
               <Input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />
               <p className="text-sm text-muted-foreground">
-                Attendance rows for sessions after this date will be deleted.
+                Marks up to this day are kept. After it, only automatic placeholder marks are removed; marks a teacher made stay.
               </p>
             </div>
 
@@ -486,6 +498,14 @@ export function ModifyEnrollmentModal({
             </div>
 
             <div className="space-y-2">
+              <Label>Days change from *</Label>
+              <Input type="date" value={daysFrom} onChange={(e) => setDaysFrom(e.target.value)} />
+              <p className="text-sm text-muted-foreground">
+                Lessons before this date keep the old days. Only lessons from this date on follow the new days.
+              </p>
+            </div>
+
+            <div className="space-y-2">
               <Label>Custom Session Rate (VND)</Label>
               <Input
                 type="number"
@@ -503,7 +523,7 @@ export function ModifyEnrollmentModal({
 
             <Button
               onClick={handleConfirm}
-              disabled={allowedDays.length === 0 || isPending}
+              disabled={allowedDays.length === 0 || !daysFrom || isPending}
               className="w-full"
             >
               {isPending ? "Saving..." : "Save Settings"}
