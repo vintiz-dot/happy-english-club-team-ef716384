@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
         .order("month", { ascending: true }),
       supabase
         .from("invoices")
-        .select("recorded_payment")
+        .select("recorded_payment, tuition_frozen, base_amount, discount_amount, total_amount")
         .eq("student_id", studentId)
         .eq("month", month)
         .maybeSingle(),
@@ -363,7 +363,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    const totalAmount = Math.max(0, baseAmount - totalDiscount);
+    let totalAmount = Math.max(0, baseAmount - totalDiscount);
+    // A frozen bill keeps its saved figures whatever the enrollment says now.
+    const frozenInvoice: any = currentInvoiceRes.data;
+    const tuitionFrozen = frozenInvoice?.tuition_frozen === true;
+    if (tuitionFrozen) {
+      baseAmount = Number(frozenInvoice.base_amount ?? 0);
+      totalDiscount = Number(frozenInvoice.discount_amount ?? 0);
+      totalAmount = Number(frozenInvoice.total_amount ?? 0);
+    }
 
     // ---------- Payments and carryovers ----------
     // Prior charges and current month invoice already fetched in Wave 1
@@ -651,6 +659,7 @@ Deno.serve(async (req) => {
       siblingState,
       siblingUnresolved,
       invoiceSaved: writeInvoice,
+      tuitionFrozen,
       breakdown: {
         classes: classBreakdown
       },

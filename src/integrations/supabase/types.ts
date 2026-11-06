@@ -1874,6 +1874,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           discount_amount: number
+          frozen_reason: string | null
           id: string
           month: string
           number: string | null
@@ -1884,6 +1885,7 @@ export type Database = {
           status: Database["public"]["Enums"]["invoice_status"]
           student_id: string
           total_amount: number
+          tuition_frozen: boolean
           updated_at: string
           updated_by: string | null
         }
@@ -1901,6 +1903,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           discount_amount?: number
+          frozen_reason?: string | null
           id?: string
           month: string
           number?: string | null
@@ -1911,6 +1914,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["invoice_status"]
           student_id: string
           total_amount?: number
+          tuition_frozen?: boolean
           updated_at?: string
           updated_by?: string | null
         }
@@ -1928,6 +1932,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           discount_amount?: number
+          frozen_reason?: string | null
           id?: string
           month?: string
           number?: string | null
@@ -1938,6 +1943,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["invoice_status"]
           student_id?: string
           total_amount?: number
+          tuition_frozen?: boolean
           updated_at?: string
           updated_by?: string | null
         }

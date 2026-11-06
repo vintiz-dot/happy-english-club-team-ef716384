@@ -51,3 +51,6 @@
 
 # Nested rules
 - Subdirectories carry their own `AGENTS.md` for the files there: read `supabase/AGENTS.md` before database, migration or edge-function work, and `src/components/leaderboard/AGENTS.md` before class-board changes.
+
+# Frozen bills
+- `invoices.tuition_frozen` locks a bill's charged figures (base, discount, total, class breakdown): a trigger keeps them on every update, and calculate-tuition / calculate-tuition-bulk report the saved figures instead of repricing. Used when enrollment history is corrected but what was billed must stand; only an admin explicitly setting it false unfreezes.

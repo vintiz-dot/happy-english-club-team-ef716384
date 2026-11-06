@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
     // 11. Current month invoices
     const currentInvoices: any[] = await fetchChunked(
       supabase, "invoices",
-      "student_id, id, recorded_payment, confirmation_status, status",
+      "student_id, id, recorded_payment, confirmation_status, status, tuition_frozen, base_amount, discount_amount, total_amount",
       "student_id", studentIds,
       (q: any) => q.eq("month", month)
     );
@@ -333,7 +333,14 @@ Deno.serve(async (req) => {
           }
         }
 
-        const totalAmount = Math.max(0, baseAmount - totalDiscount);
+        let totalAmount = Math.max(0, baseAmount - totalDiscount);
+        // A frozen bill keeps its saved figures whatever the enrollment says now.
+        const frozenInv = currentInvoiceMap.get(sid);
+        if (frozenInv?.tuition_frozen) {
+          baseAmount = Number(frozenInv.base_amount ?? 0);
+          totalDiscount = Number(frozenInv.discount_amount ?? 0);
+          totalAmount = Number(frozenInv.total_amount ?? 0);
+        }
 
         // Payments / carry
         const priorInvoices = priorInvoicesByStudent.get(sid) || [];
