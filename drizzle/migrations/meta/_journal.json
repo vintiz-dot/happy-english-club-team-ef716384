@@ -43,6 +43,13 @@
       "when": 1793936330304,
       "tag": "0005_attendance_enrollment_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793953281711,
+      "tag": "0006_attendance_guard_no_auto_changes",
+      "breakpoints": true
     }
   ]
 }
