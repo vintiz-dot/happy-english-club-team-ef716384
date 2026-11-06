@@ -33,14 +33,25 @@ Deno.serve(async (req) => {
     const { studentId, classId, startDate, endDate, defaultStatus } = InputSchema.parse(await req.json());
 
     // Verify enrollment exists for date range
-    const { data: enrollment } = await supabase
+    const { data: enrollments } = await supabase
       .from("enrollments")
-      .select("*")
+      .select("start_date, end_date, allowed_days")
       .eq("student_id", studentId)
-      .eq("class_id", classId)
-      .single();
+      .eq("class_id", classId);
 
-    if (!enrollment) {
+    // Hard rule (mirrored by the attendance_enrollment_guard trigger): only
+    // lessons inside an enrollment window AND on an enrolled weekday may be
+    // anything other than Excused.
+    const coversDate = (date: string) => {
+      const dow = new Date(`${date}T00:00:00Z`).getUTCDay();
+      return (enrollments ?? []).some((e: any) =>
+        e.start_date <= date &&
+        (e.end_date == null || e.end_date >= date) &&
+        (!e.allowed_days || e.allowed_days.length === 0 || e.allowed_days.includes(dow))
+      );
+    };
+
+    if (!enrollments || enrollments.length === 0) {
       return new Response(
         JSON.stringify({ error: "No enrollment found for this student in this class" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -85,7 +96,7 @@ Deno.serve(async (req) => {
     const attendanceRecords = missingSessions.map(s => ({
       session_id: s.id,
       student_id: studentId,
-      status: defaultStatus,
+      status: coversDate(s.date) ? defaultStatus : "Excused",
       marked_by: null,
       notes: `Auto-repaired on ${new Date().toISOString().slice(0, 10)}`,
     }));

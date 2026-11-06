@@ -36,6 +36,13 @@
       "when": 1792981999586,
       "tag": "0004_cancelled_lesson_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793936330304,
+      "tag": "0005_attendance_enrollment_guard",
+      "breakpoints": true
     }
   ]
 }

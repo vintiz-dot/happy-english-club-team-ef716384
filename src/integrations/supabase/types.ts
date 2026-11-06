@@ -5987,6 +5987,10 @@ export type Database = {
         Args: { p_ttl_seconds?: number }
         Returns: boolean
       }
+      student_enrolled_on: {
+        Args: { p_class: string; p_date: string; p_student: string }
+        Returns: boolean
+      }
       teacher_rate_on: {
         Args: { p_date: string; p_teacher_id: string }
         Returns: Json
