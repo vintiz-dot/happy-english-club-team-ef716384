@@ -9,5 +9,6 @@
 - [x] AI family tuition explanation on the student Tuition tab (live call verified).
 - [x] Stop the Star Board, High Scores and Night League strips silently cutting off the students below the podium: shared paging (restPaging.ts + useRestPaging) sized from each board's own pixels, 5 regression tests, live check on Jupiter's board reached all four non-podium children across two pages.
 - [x] Fix duplicated enrollment discounts and bulk lesson counting in both tuition readers; 22 handler regression cases pass, both functions deployed, no live records recalculated or modified.
-- [ ] Require an explicit tuition month across all payment recording workflows.
-- [ ] Review and safely move July 2026 recorded payments to August, leaving July zero without duplicate receipts.
+- [x] Require explicit tuition-month confirmation across individual, batch, Quick Pay, family, and settlement/correction workflows; family-payment uses the chosen invoice month separately from receipt date. Three confirmation tests and six handler checks pass; family-payment deployed.
+- [ ] Verify the new payment prompts while signed in — session could not be minted for the requester; needs preview sign-in. No real payment submitted for testing.
+- [ ] Move July 2026 recorded payments to August, leaving July zero — paused for Victor's individual review because 34 of the 37 students already have August payments; no records changed.

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 
 interface SettleBillModalProps {
   studentId: string | null;
@@ -37,9 +38,11 @@ export function SettleBillModal({
   const [approverName, setApproverName] = useState("");
 
   const queryClient = useQueryClient();
+  const tuitionMonth = useTuitionMonthConfirmation(month, !!studentId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!tuitionMonth.confirmed) { toast.error("Confirm the tuition month before settling this bill"); return; }
 
     if (!studentId || !reason.trim()) {
       toast.error("Please provide a reason");
@@ -105,6 +108,7 @@ export function SettleBillModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {tuitionMonth.field}
           <div className="rounded-lg border p-4 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Current Balance:</span>

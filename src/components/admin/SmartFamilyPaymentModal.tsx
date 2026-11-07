@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatVND } from "@/lib/invoice/formatter";
 import { monthKey } from "@/lib/date";
+import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 
 interface SmartFamilyPaymentModalProps {
   open: boolean;
@@ -74,6 +75,7 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
   });
 
   const queryClient = useQueryClient();
+  const tuitionMonth = useTuitionMonthConfirmation(formData.month, open);
 
   // Load families with multiple students
   useEffect(() => {
@@ -221,6 +223,7 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!tuitionMonth.confirmed) { toast.error("Confirm the tuition month before recording a payment"); return; }
 
     if (!selectedFamilyId) {
       toast.error("Please select a family");
@@ -333,7 +336,7 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
 
           {/* Month Selection */}
           <div className="space-y-2">
-            <Label>Month</Label>
+            <Label>Tuition month</Label>
             <Input
               type="month"
               value={formData.month}
@@ -342,6 +345,7 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
           </div>
 
           {/* Sibling Balances */}
+          {tuitionMonth.field}
           {selectedFamilyId && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">

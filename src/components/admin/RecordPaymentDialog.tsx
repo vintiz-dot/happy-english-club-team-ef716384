@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getPaymentStatus, getTuitionStatusBadge } from "@/lib/tuitionStatus";
+import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 
 interface RecordPaymentDialogProps {
   open: boolean;
@@ -22,6 +23,7 @@ interface RecordPaymentDialogProps {
 }
 
 export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: RecordPaymentDialogProps) => {
+  const tuitionMonth = useTuitionMonthConfirmation(month, open);
   const [mode, setMode] = useState<"payment" | "correction">("payment");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -64,6 +66,7 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
   };
 
   const handleSave = async () => {
+    if (!tuitionMonth.confirmed) { toast.error("Confirm the tuition month before recording a payment"); return; }
     if (enteredAmount <= 0 || isNaN(enteredAmount)) {
       toast.error("Please enter a valid positive amount");
       return;
@@ -208,6 +211,7 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
 
         {item && (
           <div className="space-y-4">
+            {tuitionMonth.field}
             <Tabs value={mode} onValueChange={(v) => setMode(v as any)} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="payment">Record Payment</TabsTrigger>
