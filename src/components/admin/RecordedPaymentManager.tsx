@@ -13,6 +13,7 @@ import { DollarSign, Edit2, Save, X, Undo2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/ui/loading";
+import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 
 interface Invoice {
   id: string;
@@ -43,6 +44,8 @@ export function RecordedPaymentManager() {
   const [editingInvoice, setEditingInvoice] = useState<EditingInvoice | null>(null);
   const [reversingInvoice, setReversingInvoice] = useState<{ id: string; currentValue: number } | null>(null);
   const [reversalReason, setReversalReason] = useState("");
+  const editMonth = useTuitionMonthConfirmation(selectedMonth, !!editingInvoice);
+  const reverseMonth = useTuitionMonthConfirmation(selectedMonth, !!reversingInvoice);
 
   useEffect(() => {
     loadInvoices();
@@ -83,6 +86,7 @@ export function RecordedPaymentManager() {
 
   const handleSaveEdit = async () => {
     if (!editingInvoice) return;
+    if (!editMonth.confirmed) { toast.error("Confirm the tuition month before changing a payment"); return; }
 
     if (!editingInvoice.reason.trim()) {
       toast.error("Please provide a reason for this change");
@@ -142,6 +146,7 @@ export function RecordedPaymentManager() {
   };
 
   const handleReversePayment = async () => {
+    if (!reverseMonth.confirmed) { toast.error("Confirm the tuition month before reversing a payment"); return; }
     if (!reversingInvoice || !reversalReason.trim()) {
       toast.error("Please provide a reason for this reversal");
       return;
@@ -291,6 +296,7 @@ export function RecordedPaymentManager() {
                         <TableCell className="text-right">
                           {isEditing ? (
                             <div className="space-y-2">
+                              {editMonth.field}
                               <Input
                                 type="number"
                                 value={editingInvoice.newValue}
@@ -391,6 +397,7 @@ export function RecordedPaymentManager() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2 py-4">
+            {reverseMonth.field}
             <Label>Reason for reversal (required)</Label>
             <Textarea
               value={reversalReason}

@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { getPaymentStatus, getTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/lib/avatars";
+import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 
 interface BatchPaymentDialogProps {
   open: boolean;
@@ -30,6 +31,7 @@ interface StudentPaymentEntry {
 }
 
 export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: BatchPaymentDialogProps) => {
+  const tuitionMonth = useTuitionMonthConfirmation(month, open);
   const [entries, setEntries] = useState<Record<string, string>>({});
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [method, setMethod] = useState("Cash");
@@ -68,6 +70,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
   }, [entries, items]);
 
   const handleSave = async () => {
+    if (!tuitionMonth.confirmed) { toast.error("Confirm the tuition month before recording payments"); return; }
     if (validEntries.length === 0) {
       toast.error("Enter at least one payment amount");
       return;
@@ -210,6 +213,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden flex flex-col gap-3 min-h-0">
+          {tuitionMonth.field}
           {/* Global controls - collapsible row */}
           <div className="shrink-0 grid grid-cols-2 gap-3">
             <div className="space-y-1">

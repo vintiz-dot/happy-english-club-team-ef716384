@@ -52,6 +52,7 @@ interface FamilyPaymentEntry {
 }
 
 type Step = "select" | "configure" | "processing" | "results";
+import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 
 interface ProcessingResult {
   familyId: string;
@@ -81,6 +82,7 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
   });
 
   // Per-family amount overrides (familyId -> amount string)
+  const tuitionMonth = useTuitionMonthConfirmation(sharedSettings.month, open);
   const [familyAmounts, setFamilyAmounts] = useState<Map<string, string>>(new Map());
 
   const queryClient = useQueryClient();
@@ -251,6 +253,7 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
 
   // Process all payments
   const processAllPayments = async () => {
+    if (!tuitionMonth.confirmed) { toast.error("Confirm the tuition month before recording payments"); return; }
     setProcessing(true);
     setStep("processing");
     setProcessingProgress(0);
@@ -395,9 +398,10 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
               {/* Shared settings */}
               <div className="space-y-3 pt-2">
                 <Label className="text-sm font-semibold">Payment Settings</Label>
+                {tuitionMonth.field}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Month</Label>
+                    <Label className="text-xs">Tuition month</Label>
                     <Input
                       type="month"
                       value={sharedSettings.month}

@@ -54,6 +54,7 @@ Deno.serve(async (req) => {
     }
 
     const FamilyPaymentSchema = z.object({
+      month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
       familyId: z.string().uuid(),
       selectedStudentIds: z.array(z.string().uuid()).min(1),
       amount: z.number().int().positive().max(100000000),
@@ -71,6 +72,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const {
+      month,
       familyId,
       selectedStudentIds,
       amount,
@@ -90,6 +92,7 @@ Deno.serve(async (req) => {
       .from('invoices')
       .select('*, students(full_name)')
       .in('student_id', selectedStudentIds)
+      .eq('month', month)
       .neq('status', 'paid')
       .order('month', { ascending: true });
 
@@ -120,7 +123,7 @@ Deno.serve(async (req) => {
       // Pro-rata by balance
       const studentBalances = new Map<string, number>();
       for (const inv of invoices || []) {
-        const owed = inv.total_amount - inv.paid_amount;
+        const owed = Math.max(0, inv.total_amount - (inv.recorded_payment || 0));
         studentBalances.set(
           inv.student_id,
           (studentBalances.get(inv.student_id) || 0) + owed
@@ -155,7 +158,7 @@ Deno.serve(async (req) => {
       for (const inv of sortedInvoices) {
         if (remainingAmount <= 0) break;
         
-        const owed = inv.total_amount - inv.paid_amount;
+        const owed = Math.max(0, inv.total_amount - (inv.recorded_payment || 0));
         const appliedAmount = Math.min(owed, remainingAmount);
         
         let existingAlloc = allocations.find(a => a.studentId === inv.student_id);
@@ -173,7 +176,6 @@ Deno.serve(async (req) => {
     // Create parent payment
     const parentPaymentId = crypto.randomUUID();
     const parentTxId = crypto.randomUUID();
-    const month = occurredAt.slice(0, 7);
 
     await supabase.from('payments').insert({
       id: parentPaymentId,
@@ -249,14 +251,14 @@ Deno.serve(async (req) => {
       for (const inv of allocation.invoices) {
         if (studentRemaining <= 0) break;
         
-        const owed = inv.total_amount - inv.paid_amount;
+        const owed = Math.max(0, inv.total_amount - (inv.recorded_payment || 0));
         const applied = Math.min(studentRemaining, owed);
-        const newPaid = inv.paid_amount + applied;
+        const newPaid = (inv.recorded_payment || 0) + applied;
         
         await supabase
           .from('invoices')
           .update({
-            paid_amount: newPaid,
+            recorded_payment: newPaid,
             status: newPaid >= inv.total_amount ? 'paid' : 'partial'
           })
           .eq('id', inv.id);

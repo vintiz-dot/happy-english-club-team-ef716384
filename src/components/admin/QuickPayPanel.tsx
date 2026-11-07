@@ -22,6 +22,7 @@ import {
   Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 
 interface QuickPayPanelProps {
   month: string;
@@ -39,6 +40,7 @@ interface QuickPayPanelProps {
  *   5. Hit "Record N payments" — one batched mutation runs the full set.
  */
 export function QuickPayPanel({ month }: QuickPayPanelProps) {
+  const tuitionMonth = useTuitionMonthConfirmation(month);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: tuitionData, isLoading, refetch } = useLiveTuitionData(month);
@@ -98,6 +100,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
   const selectAll = () => setSkipped(new Set());
 
   const handleRecord = async () => {
+    if (!tuitionMonth.confirmed) { toast.error("Confirm the tuition month before recording payments"); return; }
     if (selectedRows.length === 0) {
       toast.error("Select at least one student");
       return;
@@ -213,6 +216,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
       }
 
       setOverrides({});
+      tuitionMonth.reset();
       // Soft reset: leave checkmarks visible briefly so admin sees what landed
       setTimeout(() => {
         setCompletedIds(new Set());
@@ -272,6 +276,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
       </CardHeader>
 
       <CardContent className="space-y-4 pt-5">
+        {tuitionMonth.field}
         {/* Top controls */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="space-y-1">

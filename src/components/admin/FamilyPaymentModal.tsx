@@ -13,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Users, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 
 interface FamilyPaymentModalProps {
   open: boolean;
@@ -47,6 +48,7 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   
   const [formData, setFormData] = useState({
+    month: "",
     amount: "",
     method: "Bank Transfer",
     occurredAt: new Date().toISOString().slice(0, 10),
@@ -59,6 +61,7 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
   const [manualAllocations, setManualAllocations] = useState<Record<string, string>>({});
 
   const queryClient = useQueryClient();
+  const tuitionMonth = useTuitionMonthConfirmation(formData.month, open);
 
   useEffect(() => {
     if (open) {
@@ -70,7 +73,7 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
     if (selectedStudent) {
       loadFamilyData();
     }
-  }, [selectedStudent]);
+  }, [selectedStudent, formData.month]);
 
   const loadStudents = async () => {
     const { data } = await supabase
@@ -90,6 +93,7 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
   };
 
   const loadFamilyData = async () => {
+    if (!formData.month) { setInvoices([]); return; }
     if (!selectedStudent?.family_id) {
       setSiblings([]);
       return;
@@ -125,7 +129,7 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
     // Load balances using calculate-tuition (more accurate than invoice status)
     const siblingIds = siblingsData?.map(s => s.id) || [];
     if (siblingIds.length > 0) {
-      const currentMonth = new Date().toISOString().slice(0, 7);
+      const currentMonth = formData.month;
       const balances: Invoice[] = [];
       
       for (const sid of siblingIds) {
@@ -180,6 +184,7 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!tuitionMonth.confirmed) { toast.error("Confirm the tuition month before recording a payment"); return; }
 
     if (!selectedStudent || selectedSiblings.size === 0) {
       toast.error("Please select students");
@@ -208,6 +213,7 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
     setLoading(true);
     try {
       const payload: any = {
+        month: formData.month,
         familyId: selectedStudent.family_id,
         selectedStudentIds: Array.from(selectedSiblings),
         amount: parseInt(formData.amount),
@@ -253,6 +259,7 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
     setSelectedSiblings(new Set());
     setInvoices([]);
     setFormData({
+      month: "",
       amount: "",
       method: "Bank Transfer",
       occurredAt: new Date().toISOString().slice(0, 10),
@@ -280,6 +287,12 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="family-tuition-month">Tuition month *</Label>
+            <Input id="family-tuition-month" type="month" required value={formData.month}
+              onChange={e => setFormData(prev => ({ ...prev, month: e.target.value }))} />
+          </div>
+          {tuitionMonth.field}
           {/* Step 1: Select Student */}
           <div className="space-y-3">
             <Label>Select Any Family Member</Label>

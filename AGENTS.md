@@ -56,3 +56,6 @@
 
 # Frozen bills
 - `invoices.tuition_frozen` locks a bill's charged figures (base, discount, total, class breakdown): a trigger keeps them on every update, and calculate-tuition / calculate-tuition-bulk report the saved figures instead of repricing. Used when enrollment history is corrected but what was billed must stand; only an admin explicitly setting it false unfreezes.
+
+# Payment month
+- Payment forms share `useTuitionMonthConfirmation`: explicitly confirm the target invoice month separately from receipt date, resetting on reopen/month changes; `family-payment` requires and filters by that month, using monthly `recorded_payment` rather than cumulative `paid_amount`.

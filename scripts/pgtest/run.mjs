@@ -42,6 +42,7 @@ const migrations = resolve(here, "..", "..", "supabase", "migrations");
 const m = (name) => join(migrations, name);
 
 const SUITES = [
+  { name: "family payment month", file: "family-payment-month.test.mjs", migrations: [] },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
   {
     name: "cancelled lessons",
