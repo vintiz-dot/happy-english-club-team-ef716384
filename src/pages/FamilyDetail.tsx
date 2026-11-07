@@ -17,6 +17,30 @@ const FamilyDetail = () => {
   const queryClient = useQueryClient();
   const [showLinkDialog, setShowLinkDialog] = useState(false);
 
+  // Children whose sibling discount is on hold, and until when. Its own
+  // query, not part of the family one: before the column exists (the
+  // migration is pasted by hand) this fails quietly instead of taking the
+  // whole page down.
+  const { data: siblingHolds } = useQuery({
+    queryKey: ["family-sibling-holds", id],
+    enabled: !!id,
+    retry: false,
+    queryFn: async (): Promise<Record<string, string>> => {
+      const { data, error } = await (supabase as any)
+        .from("students")
+        .select("id, sibling_discount_from")
+        .eq("family_id", id)
+        .not("sibling_discount_from", "is", null);
+      if (error) return {};
+      const thisMonth = new Date().toISOString().slice(0, 7);
+      return Object.fromEntries(
+        (data ?? [])
+          .filter((s: any) => String(s.sibling_discount_from).slice(0, 7) > thisMonth)
+          .map((s: any) => [s.id, s.sibling_discount_from]),
+      );
+    },
+  });
+
 
   const { data: family, isLoading } = useQuery({
     queryKey: ["family-detail", id],
@@ -174,6 +198,14 @@ const FamilyDetail = () => {
                           <Badge variant={student.is_active ? "default" : "secondary"}>
                             {student.is_active ? "Active" : "Inactive"}
                           </Badge>
+                          {siblingHolds?.[student.id] && (
+                            <Badge variant="outline" className="border-violet-300 text-violet-700 dark:text-violet-300">
+                              Sibling discount from{" "}
+                              {new Date(`${siblingHolds[student.id]}T00:00:00Z`).toLocaleDateString("en-GB", {
+                                day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
+                              })}
+                            </Badge>
+                          )}
                         </div>
                         {student.email && (
                           <p className="text-sm text-muted-foreground">✉️ {student.email}</p>

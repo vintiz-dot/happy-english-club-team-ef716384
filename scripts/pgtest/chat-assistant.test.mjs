@@ -136,6 +136,83 @@ console.log("=== the prompt ===");
 }
 
 // ════════════════════════════════════════════════════════════════════════
+// Reading an admin's instruction: _lib/chat-plan.ts.
+
+const planOut = await build({
+  entryPoints: [resolve(repo, "supabase/functions/_lib/chat-plan.ts")],
+  bundle: true, format: "esm", platform: "neutral", write: false, logLevel: "silent",
+});
+const planPath = resolve(tmpdir(), `chatPlan.${process.pid}.mjs`);
+writeFileSync(planPath, planOut.outputFiles[0].text);
+const cp = await import(pathToFileURL(planPath).href);
+
+console.log("=== dates and months as admins type them ===");
+{
+  eq("month first, when the day is over 12", cp.readDate("02/18/2021"), { date: "2021-02-18" });
+  eq("day first, the Vietnamese way", cp.readDate("18/02/2021"), { date: "2021-02-18" });
+  eq("02/03 could be either, so it is asked about", cp.readDate("02/03/2021"), { ambiguous: ["2021-03-02", "2021-02-03"] });
+  eq("unless both readings are the same day", cp.readDate("05/05/2021"), { date: "2021-05-05" });
+  eq("no 30th of February", cp.readDate("2021-02-30"), { invalid: true });
+  eq("in words", [cp.readDate("18 Feb 2021"), cp.readDate("February 18, 2021"), cp.readDate("ngày 18 tháng 2 năm 2021")],
+     [{ date: "2021-02-18" }, { date: "2021-02-18" }, { date: "2021-02-18" }]);
+  const nov = cc.schoolToday(new Date("2026-11-07T03:00:00Z"));
+  eq("a month by name is this year's", [cp.readMonth("October", nov), cp.readMonth("Oct 2026", nov), cp.readMonth("10/2026", nov), cp.readMonth("tháng 10", nov)],
+     ["2026-10", "2026-10", "2026-10", "2026-10"]);
+}
+
+console.log("=== percentages and amounts in the admin's own words ===");
+{
+  eq("both percentages in the example are seen", cp.percentsIn("add a three months 30 percent discount ... till the end of the 3 months 20% discount"), [30, 20]);
+  eq("amounts however they are written", ["123,000", "123.000", "123000", "123k", "500 nghìn", "1tr2", "1.2tr", "2 triệu"].map((t) => cp.amountsIn(t).sort((a, b) => b - a)[0]),
+     [123000, 123000, 123000, 123000, 500000, 1200000, 1200000, 2000000]);
+}
+
+console.log("=== turning it into a plan ===");
+{
+  const nov = cc.schoolToday(new Date("2026-11-07T03:00:00Z"));
+  const look = {
+    students: [{ id: "s-lan", name: "Lan Cherry", active: true }, { id: "s-mai", name: "Mai Anh", active: true }],
+    classes: [{ id: "c-s1", name: "Stars 1" }, { id: "c-s2", name: "Stars 2" }, { id: "c-s2a", name: "Stars 2A" }],
+    families: [{ id: "f-cherry", name: "Cherry" }, { id: "f-plum", name: "Plum" }],
+  };
+  const example = "create a student as mai thao, dob 02/18/2021 enrol her in stars 2, add a three months 30 percent discount and also add her to the cherry family, but don't turn on sibling discount till the end of the 3 months 20% discount";
+  const args = {
+    student_name: "mai thao", new_student: true, date_of_birth: "02/18/2021", class_name: "stars 2",
+    discount_percent: 30, discount_months: 3, family_name: "cherry family", sibling_discount_hold: "until_discount_ends",
+  };
+  const asked = cp.draftPlan(args, look, nov, [example]);
+  eq("your example: 30 percent, then 20%, is asked about rather than guessed", asked.questions, ["You mentioned 30% and 20%. Which discount do you mean?"]);
+  eq("and nothing is planned yet", asked.plan, null);
+
+  const settled = cp.draftPlan(args, look, nov, [example, "30%"]);
+  eq("once the admin says 30%, the plan", settled.plan, {
+    version: 1,
+    student: { new: { full_name: "mai thao", date_of_birth: "2021-02-18" } },
+    enrol: { class_id: "c-s2", start_date: "2026-11-07" },
+    discount: { percent: 30, first_month: "2026-11", months: 3 },
+    family: { family_id: "f-cherry" },
+    sibling_hold: { from: "2027-02-01" },
+  });
+  ok("a bare \"30\" settles it too", cp.draftPlan(args, look, nov, [example, "30"]).plan !== null);
+
+  const q = (a, texts = [example, "30%"]) => cp.draftPlan({ ...args, ...a }, look, nov, texts).questions;
+  eq("a date of birth that reads two ways", q({ date_of_birth: "02/03/2021" }), ["Is the date of birth 2 Mar 2021 or 3 Feb 2021?"]);
+  eq("a class that matches several", q({ class_name: "stars" }), ["Which class do you mean: Stars 1, Stars 2, Stars 2A?"]);
+  eq("a family that does not exist", q({ family_name: "banana" }), ["I couldn't find a family called \"banana\"."]);
+  eq("a new child with an existing child's name", q({ student_name: "Lan Cherry" }),
+     ["There is already a student called Lan Cherry. Is Lan Cherry a different child?"]);
+  ok("which the admin can confirm", cp.draftPlan({ ...args, student_name: "Lan Cherry", different_child_confirmed: true }, look, nov, [example, "30%"]).plan?.student?.allow_same_name === true);
+
+  const pay = { student_name: "lan cherry", new_student: false, payment_amount: 123000 };
+  eq("a payment without its month", cp.draftPlan(pay, look, nov, ["record tuition for lan cherry 123,000"]).questions, ["Which month is this payment for?"]);
+  eq("with it", cp.draftPlan({ ...pay, payment_month: "2026-10" }, look, nov, ["record tuition for lan cherry 123,000 for october"]).plan, {
+    version: 1, student: { id: "s-lan" }, payment: { amount: 123000, month: "2026-10", method: "Cash", paid_on: "2026-11-07" },
+  });
+  eq("an amount the admin never typed", cp.draftPlan({ ...pay, payment_amount: 132000, payment_month: "2026-10" }, look, nov, ["record tuition for lan cherry 123,000 for october"]).questions,
+     ["I read 132.000 ₫, but I can't see that amount in your message. How much was paid?"]);
+}
+
+// ════════════════════════════════════════════════════════════════════════
 // A stand-in for PostgREST that knows the real schema.
 
 function loadSchema() {
@@ -215,7 +292,11 @@ function passes(value, op, v) {
 }
 
 function makeDb(data) {
-  const db = { data, log: [], writes: [] };
+  const db = {
+    data, log: [], writes: [], rpcCalls: [],
+    // Stands in for the real ai_plan_check, which ai-actions.test.mjs runs.
+    preview: (plan) => ({ data: { ok: true, summary: [`checked: ${Object.keys(plan ?? {}).sort().join(",")}`], warnings: [] }, error: null }),
+  };
 
   const rolesOf = (uid) => new Set(data.user_roles.filter((r) => r.user_id === uid).map((r) => r.role));
   // A sketch of the real policies, wide where the real ones are wide:
@@ -372,7 +453,15 @@ function makeDb(data) {
         },
       },
       from: (table) => new Query(who, table),
-      rpc: (name) => { db.writes.push(`rpc ${name}`); return Promise.resolve({ data: null, error: { message: "rpc is not allowed" } }); },
+      // The chat function's one rpc is ai_action_preview, which Postgres
+      // will not let write. Anything else - ai_action_apply above all - is
+      // a violation.
+      rpc: (name, params) => {
+        db.rpcCalls.push({ name, params, service });
+        if (name === "ai_action_preview" && !service) return Promise.resolve(db.preview(params?.p_plan));
+        db.writes.push(`rpc ${name}`);
+        return Promise.resolve({ data: null, error: { message: "rpc is not allowed" } });
+      },
     };
   };
   return db;
@@ -433,14 +522,14 @@ const call = (...tools) => () => ({
 });
 const answer = (text = "Here you go.") => () => ({ role: "assistant", content: text });
 
-async function ask(token, steps, { question = "Hello", context } = {}) {
+async function ask(token, steps, { question = "Hello", context, history = [] } = {}) {
   script = [...steps];
   modelCalls = [];
   db.log = [];
   const res = await handler(new Request("http://localhost/functions/v1/chat", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ messages: [{ role: "user", content: question }], ...(context ? { context } : {}) }),
+    body: JSON.stringify({ messages: [...history, { role: "user", content: question }], ...(context ? { context } : {}) }),
   }));
   const json = await res.json();
   const last = modelCalls[modelCalls.length - 1];
@@ -802,6 +891,56 @@ console.log("=== no role at all ===");
   eq("before the model is asked anything", modelCalls.length, 0);
   const bad = await ask("tok-forged", [answer()]);
   eq("an unknown token is unauthorized", bad.status, 401);
+}
+
+console.log("=== an admin setting something up ===");
+{
+  db = makeDb(school());
+  const example = "create a student as mai thao, dob 02/18/2021 enrol her in sunflower, add a three months 30 percent discount and also add her to the nguyen family, but don't turn on sibling discount till the end of the 3 months 20% discount";
+  const args = {
+    student_name: "mai thao", new_student: true, date_of_birth: "02/18/2021", class_name: "sunflower",
+    discount_percent: 30, discount_months: 3, family_name: "nguyen family", sibling_discount_hold: "until_discount_ends",
+  };
+  const first = await ask("tok-admin", [call(["propose_changes", args]), answer("You mentioned 30% and 20%. Which discount do you mean?")], { question: example });
+  ok("an admin is offered propose_changes", first.offered.includes("propose_changes"));
+  eq("the 30% / 20% mix comes back as a question", first.result("propose_changes")?.ask_the_admin, ["You mentioned 30% and 20%. Which discount do you mean?"]);
+  ok("and no card", first.json.proposal === undefined);
+  eq("the database is not even asked yet", db.rpcCalls.length, 0);
+
+  const second = await ask("tok-admin", [call(["propose_changes", args])], {
+    question: "30%",
+    history: [{ role: "user", content: example }, { role: "assistant", content: "You mentioned 30% and 20%. Which discount do you mean?" }],
+  });
+  const p = second.json.proposal;
+  ok("answered, it becomes a card", p && typeof p.proposal_id === "string" && /^[0-9a-f-]{36}$/.test(p.proposal_id), JSON.stringify(second.json));
+  eq("checked by the database, through the admin's own client", db.rpcCalls.map((c) => [c.name, c.service]), [["ai_action_preview", false]]);
+  eq("worded by the database, not the model", p?.summary, ["checked: discount,enrol,family,sibling_hold,student,version"]);
+  eq("for the real class and family", [p?.plan?.enrol?.class_id, p?.plan?.family?.family_id], [C.sunflower, F.nguyen]);
+  eq("with the discount and the hold in whole bills", [p?.plan?.discount, p?.plan?.sibling_hold],
+     [{ percent: 30, first_month: today.month, months: 3 }, { from: `${cp.addMonths(today.month, 3)}-01` }]);
+  ok("the admin's words travel with it, for the log", p?.instruction?.includes("mai thao") && p?.instruction?.endsWith("30%"));
+  eq("the turn ends at the card: one model call, a fixed reply", [modelCalls.length, second.json.reply],
+     [1, "Here's what I understood. Check each line, then press Confirm."]);
+  noWrites("setting up");
+
+  db = makeDb(school());
+  db.preview = () => ({ data: { ok: false, problems: ["Sunflower is already full."] }, error: null });
+  const refused = await ask("tok-admin", [call(["propose_changes", args]), answer()], { question: "30%", history: [{ role: "user", content: example }] });
+  eq("what the database refuses goes back to the admin as a question", refused.result("propose_changes")?.ask_the_admin, ["Sunflower is already full."]);
+  ok("with no card", refused.json.proposal === undefined);
+
+  db = makeDb(school());
+  db.preview = () => ({ data: null, error: { code: "PGRST202", message: "Could not find the function public.ai_action_preview(p_plan)" } });
+  const off = await ask("tok-admin", [call(["propose_changes", args]), answer()], { question: "30%", history: [{ role: "user", content: example }] });
+  ok("before the migration is pasted it says so plainly", /not switched on yet/.test(off.result("propose_changes")?.not_available ?? ""));
+  ok("and that is not reported as a broken tool", !off.json.tool_errors);
+
+  const teacher = await ask("tok-lan", [answer()]);
+  const parent = await ask("tok-parent", [answer()]);
+  ok("teachers and parents are not offered it", !teacher.offered.includes("propose_changes") && !parent.offered.includes("propose_changes"));
+  const sneaky = await ask("tok-parent", [call(["propose_changes", args]), answer()]);
+  eq("and calling it anyway gets nothing", sneaky.json.tool_errors?.[0]?.error, "tool not available for this role");
+  noWrites("not for others");
 }
 
 console.log("=== every tool, against the real schema ===");

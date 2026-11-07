@@ -1,11 +1,17 @@
+import { siblingHolds } from './sibling-hold.ts'
+
 // Get per-class tuition breakdown for a family
 export async function projectedByFamilyPerClass(supabase: any, familyId: string, ym: string) {
-  const { data: students } = await supabase
+  const { data: familyStudents } = await supabase
     .from('students')
     .select('id')
     .eq('family_id', familyId)
     .eq('is_active', true);
-  
+
+  // A child on a sibling-discount hold does not count until it ends.
+  const held = await siblingHolds(supabase, [familyId], ym);
+  const students = (familyStudents ?? []).filter((s: any) => !held.has(s.id));
+
   if (!students || students.length === 0) {
     return [];
   }

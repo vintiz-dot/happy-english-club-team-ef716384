@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles, BookOpen, ScanText, AudioLines, History, Plug} from "lucide-react";
+import { GraduationCap, LogOut, UserCog, BookOpenCheck, CalendarDays, TrendingUp, PiggyBank, LayoutGrid, FileText, ListTodo, NotebookPen, Trophy, Menu, X, ChevronLeft, ChevronRight, Building2, Receipt, Settings2, HardDrive, UsersRound, School, Megaphone, FileBarChart2, FolderOpen, Sparkles, BookOpen, ScanText, AudioLines, History, Plug, Bot} from "lucide-react";
 import ProfileSwitcher from "@/components/ProfileSwitcher";
 import { ChangePassword } from "@/components/auth/ChangePassword";
 import NotificationBell from "@/components/NotificationBell";
@@ -18,6 +18,7 @@ import { PWAInstallButton } from "./PWAInstallButton";
 import { CommandPalette } from "@/components/CommandPalette";
 import { AssistantLauncher } from "@/components/chat/AssistantLauncher";
 import { AmbientBackground } from "@/components/fx/AmbientBackground";
+import { AiActionBanner } from "@/components/admin/AiActionBanner";
 import { motion } from "framer-motion";
 
 interface LayoutProps {
@@ -82,6 +83,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           { icon: TrendingUp, label: "Reports", path: "/admin?tab=reports" },
           { icon: Settings2, label: "Automation", path: "/admin?tab=automation" },
           { icon: History, label: "Activity", path: "/admin?tab=activity" },
+          { icon: Bot, label: "AI actions", path: "/admin?tab=ai-actions" },
           { icon: HardDrive, label: "Data", path: "/admin?tab=data" },
           { icon: Plug, label: "Stars Sync", path: "/admin?tab=stars-sync" },
           { icon: Megaphone, label: "Announcements", path: "/admin?tab=announcements" },
@@ -389,7 +391,11 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
         />
 
         {/* Main Content */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">{children}</main>
+        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
+          {/* What the assistant set up, until the admin says it looks right or undoes it */}
+          <AiActionBanner />
+          {children}
+        </main>
       </div>
 
       {/* Floating Classroom Tools — teachers and admins only.

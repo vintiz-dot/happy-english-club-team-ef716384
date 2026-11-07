@@ -6,12 +6,19 @@
  * SECURITY MODEL — read this before touching anything:
  *
  *   1. READ-ONLY BY CONSTRUCTION. This function performs ZERO database
- *      writes. No insert/update/upsert/delete/rpc appears anywhere in it.
- *      The client carries the conversation and sends it with each turn;
- *      saving history is a CLIENT action against own-row RLS tables that the
- *      model has no tool for and never sees. If you are adding a write to
- *      this file, stop: that is a different feature with a different review
- *      bar.
+ *      writes. No insert/update/upsert/delete appears anywhere in it, and
+ *      its one rpc is ai_action_preview, which is STABLE: Postgres itself
+ *      refuses to let it write. The client carries the conversation and
+ *      sends it with each turn; saving history is a CLIENT action against
+ *      own-row RLS tables that the model has no tool for and never sees. If
+ *      you are adding a write to this file, stop: that is a different
+ *      feature with a different review bar.
+ *
+ *      Changes an admin asks for leave here as a PROPOSAL - a plan the
+ *      database has checked, worded for a card. Nothing happens unless the
+ *      admin presses Confirm on it, and then the browser sends it to
+ *      ai_action_apply, which checks it again and does all of it or none
+ *      (supabase/migrations/20261107090000). The model never reaches that.
  *
  *   2. THE SECURITY BOUNDARY IS POSTGRES RLS, NOT THE PROMPT. Every data
  *      tool runs on a client bound to the CALLER'S OWN JWT (anon key +
@@ -52,7 +59,7 @@
  *
  * Input:  { messages: [{role:'user'|'assistant', content}],
  *           context?: { path?, search?, selected_student_id? } }
- * Output: { success, reply, tools_used: [names], tool_errors? }
+ * Output: { success, reply, tools_used: [names], tool_errors?, proposal? }
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
@@ -76,6 +83,7 @@ import {
   type PersonRef,
   type SchoolDay,
 } from "../_lib/chat-context.ts";
+import { draftPlan, PAYMENT_METHODS } from "../_lib/chat-plan.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -153,6 +161,19 @@ interface ToolContext {
   staffClasses: () => Promise<PersonRef[]>;
   /** The students enrolled now in those classes. Fetched at most once. */
   staffStudentIds: () => Promise<Set<string>>;
+  /** Everything the user typed in this conversation, oldest first. */
+  userTexts: string[];
+  /** Hands a checked plan to the browser as a card to confirm. */
+  propose: (p: Proposal) => void;
+}
+
+/** A plan the database has checked, for the admin to confirm or not. */
+interface Proposal {
+  proposal_id: string;
+  instruction: string;
+  plan: Record<string, unknown>;
+  summary: string[];
+  warnings: string[];
 }
 
 interface ToolDef {
@@ -1363,6 +1384,88 @@ const TOOLS: ToolDef[] = [
       return [...byClass.values()];
     },
   },
+  {
+    name: "propose_changes",
+    description:
+      "Set up changes an admin asked for, for ONE student, as a card the admin checks and confirms. " +
+      "It can: create a student, enrol in a class, add a percentage discount for some months, add " +
+      "to a family, hold the family sibling discount, record a tuition payment. Pass every value " +
+      "EXACTLY as the admin typed it - dates as typed, names as typed - and leave out anything they " +
+      "did not ask for. Nothing changes until the admin presses Confirm. If it returns questions, " +
+      "ask them and call again with the answers.",
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        student_name: { type: "string", description: "the student's name as typed" },
+        new_student: { type: "boolean", description: "true to create a new student" },
+        different_child_confirmed: {
+          type: "boolean",
+          description: "true only after the admin said a new student who shares a name with an existing one is a different child",
+        },
+        date_of_birth: { type: "string", description: "as typed, e.g. 02/18/2021" },
+        class_name: { type: "string", description: "the class to enrol in" },
+        start_date: { type: "string", description: "enrolment start as typed; leave out for today" },
+        discount_percent: { type: "number" },
+        discount_months: { type: "number", description: "how many monthly bills it covers" },
+        discount_first_month: {
+          type: "string",
+          description: "YYYY-MM, only if the admin named the first month; otherwise left out",
+        },
+        family_name: { type: "string" },
+        sibling_discount_hold: {
+          type: "string",
+          description: "'until_discount_ends', 'lift', or the date it should start counting, as typed",
+        },
+        payment_amount: { type: "number", description: "in dong, as typed" },
+        payment_month: { type: "string", description: "YYYY-MM the payment is for; leave out if the admin did not say" },
+        payment_method: { type: "string", enum: PAYMENT_METHODS },
+        payment_date: { type: "string", description: "as typed; leave out for today" },
+        payment_note: { type: "string" },
+      },
+      required: ["student_name", "new_student"],
+    },
+    roles: ["admin"],
+    run: async (userDb, args, ctx) => {
+      const [students, classes, families] = await Promise.all([
+        userDb.from("students").select("id, full_name, is_active").order("full_name").limit(1000),
+        args?.class_name
+          ? userDb.from("classes").select("id, name").eq("is_active", true).order("name").limit(500)
+          : Promise.resolve({ data: [], error: null }),
+        args?.family_name
+          ? userDb.from("families").select("id, name").eq("is_active", true).order("name").limit(1000)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+      for (const r of [students, classes, families]) if (r.error) throw new Error(r.error.message);
+
+      const draft = draftPlan(args, {
+        students: (students.data ?? []).map((s: any) => ({ id: s.id, name: s.full_name, active: s.is_active !== false })),
+        classes: (classes.data ?? []).map((c: any) => ({ id: c.id, name: c.name })),
+        families: (families.data ?? []).map((f: any) => ({ id: f.id, name: f.name })),
+      }, ctx.today, ctx.userTexts);
+      if (!draft.plan) return { status: "needs_answer", ask_the_admin: draft.questions };
+
+      // The database words the card and has the last say on what is allowed.
+      const { data: check, error } = await userDb.rpc("ai_action_preview", { p_plan: draft.plan });
+      if (error) {
+        if (error.code === "PGRST202" || /ai_action_preview/.test(String(error.message))) {
+          throw new Refusal("Setting things up from the chat is not switched on yet: its database change has not been applied.");
+        }
+        throw new Error(error.message);
+      }
+      if (!check?.ok) {
+        return { status: "needs_answer", ask_the_admin: check?.problems ?? ["The database refused this plan."] };
+      }
+      ctx.propose({
+        proposal_id: crypto.randomUUID(),
+        instruction: ctx.userTexts.slice(-3).join(" / ").slice(0, 2000),
+        plan: draft.plan,
+        summary: check.summary ?? [],
+        warnings: check.warnings ?? [],
+      });
+      return { status: "ready" };
+    },
+  },
 ];
 
 // ── Who is asking ──────────────────────────────────────────────────────────
@@ -1555,6 +1658,8 @@ Deno.serve(async (req) => {
     const staffStudentIds = () =>
       (rosterOnce ??= staffClasses().then(async (cs) => new Set((await rosterOf(userDb, cs.map((c) => c.id), today)).keys())));
 
+    const userTexts: string[] = [];
+    let proposal: Proposal | null = null;
     const ctx: ToolContext = {
       role,
       userId: caller.userId,
@@ -1563,6 +1668,8 @@ Deno.serve(async (req) => {
       ownStudentIds: ownStudents.map((s) => s.id),
       staffClasses,
       staffStudentIds,
+      userTexts,
+      propose: (p) => { proposal = p; },
     };
 
     // The name the app's header shows them, so the assistant and the screen
@@ -1586,6 +1693,7 @@ Deno.serve(async (req) => {
     if (!history.length || history[history.length - 1].role !== "user") {
       return respond({ success: false, error: "messages must end with a user message" }, 400);
     }
+    userTexts.push(...history.filter((m) => m.role === "user").map((m) => m.content));
 
     const availableTools = TOOLS.filter((t) => t.roles.includes(role));
     const toolSchemas = availableTools.map((t) => ({
@@ -1676,6 +1784,13 @@ Deno.serve(async (req) => {
           content: resultText,
         });
       }
+
+      // A checked plan ends the turn. The card says what will happen, in
+      // the database's words; the model does not get to restate it.
+      if (proposal) {
+        reply = "Here's what I understood. Check each line, then press Confirm.";
+        break;
+      }
     }
 
     if (!reply) {
@@ -1686,6 +1801,7 @@ Deno.serve(async (req) => {
       reply,
       tools_used: [...new Set(toolsUsed)],
       ...(toolErrors.length ? { tool_errors: toolErrors } : {}),
+      ...(proposal ? { proposal } : {}),
     });
   } catch (error) {
     console.error("chat error:", error);

@@ -24,10 +24,13 @@
  * siblings was answered as whichever child's name sorted first.
  */
 import { useRef, useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
+import { applyProposal, type AiProposal } from "@/lib/aiActions";
+import { ProposalCard } from "./ProposalCard";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -66,17 +69,17 @@ const ROLE_SUGGESTIONS: Record<string, string[]> = {
   admin: [
     "What's on the schedule today?",
     "Who still owes tuition this month?",
-    "Give me a school overview",
     "Who was absent today?",
-    "Which classes does each teacher have?",
+    "Set up a new student",
+    "Record a tuition payment",
   ],
 };
 
 /** What the panel says it can do, per role — "your own records" is wrong for staff. */
 const ROLE_COPY: Record<string, { intro: string; placeholder: string; scope: string }> = {
   admin: {
-    intro: "Ask me about any student, class, lesson or tuition balance in the school. I can read everything, but I can't change anything.",
-    placeholder: "Ask about a student, class, schedule or balance…",
+    intro: "Ask me about any student, class, lesson or tuition balance, or ask me to set something up, like a new student or a tuition payment. Nothing changes until you confirm it.",
+    placeholder: "Ask, or tell me what to set up…",
     scope: "sees the whole school",
   },
   teacher: {
@@ -104,12 +107,19 @@ export function AssistantChat({ className }: { className?: string }) {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  // An admin's set-up plan waiting for Confirm. Never saved: reload the
+  // page and it is gone, which is the safe way for it to go.
+  const [proposal, setProposal] = useState<AiProposal | null>(null);
+  const [applying, setApplying] = useState(false);
   const conversationId = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, busy]);
+  }, [messages, busy, proposal]);
 
   // Resume the most recent conversation. RLS means this can only ever return
   // the signed-in user's own rows.
@@ -178,6 +188,7 @@ export function AssistantChat({ className }: { className?: string }) {
     const next: ChatMessage[] = [...messages, { role: "user", content }];
     setMessages(next);
     setInput("");
+    setProposal(null);
     setBusy(true);
     try {
       const { data, error } = await supabase.functions.invoke("chat", {
@@ -209,6 +220,7 @@ export function AssistantChat({ className }: { className?: string }) {
 
       const reply = String(data.reply || "");
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
+      if (data?.proposal && Array.isArray(data.proposal.summary)) setProposal(data.proposal as AiProposal);
       void persist(content, reply);
     } catch (e: any) {
       setMessages((m) => [
@@ -224,6 +236,45 @@ export function AssistantChat({ className }: { className?: string }) {
   const startNew = () => {
     conversationId.current = null;
     setMessages([]);
+    setProposal(null);
+  };
+
+  /** Confirm: the database checks the plan again and does all of it or none. */
+  const confirmProposal = async () => {
+    if (!proposal || applying) return;
+    setApplying(true);
+    try {
+      const result = await applyProposal(proposal);
+      const reply = result.ok
+        ? `Done:\n${(result.summary ?? []).map((l) => `• ${l}`).join("\n")}\n\nI'm opening the student's page. You can undo all of this in one click.`
+        : `I couldn't do that, so nothing was changed:\n${(result.problems ?? []).map((p) => `• ${p}`).join("\n")}`;
+      setMessages((m) => [...m, { role: "user", content: "Confirm" }, { role: "assistant", content: reply }]);
+      void persist("Confirm", reply);
+      setProposal(null);
+      if (result.ok) {
+        // Every screen showing this student, family or bill is now stale.
+        await queryClient.invalidateQueries();
+        if (result.open_path) navigate(result.open_path);
+      }
+    } catch (e: any) {
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", content: `Sorry, that didn't go through and nothing was changed: ${e.message || "unknown error"}.` },
+      ]);
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const changeProposal = () => {
+    setProposal(null);
+    setMessages((m) => [...m, { role: "assistant", content: "What should I change?" }]);
+    inputRef.current?.focus();
+  };
+
+  const cancelProposal = () => {
+    setProposal(null);
+    setMessages((m) => [...m, { role: "assistant", content: "Cancelled. Nothing was changed." }]);
   };
 
   const suggestions = ROLE_SUGGESTIONS[role || "student"] || ROLE_SUGGESTIONS.student;
@@ -282,6 +333,16 @@ export function AssistantChat({ className }: { className?: string }) {
           ))}
         </AnimatePresence>
 
+        {proposal && (
+          <ProposalCard
+            proposal={proposal}
+            busy={applying}
+            onConfirm={confirmProposal}
+            onChange={changeProposal}
+            onCancel={cancelProposal}
+          />
+        )}
+
         {busy && (
           <div className="flex justify-start">
             <div className="rounded-2xl rounded-bl-md bg-muted/60 ring-1 ring-border/50 px-3.5 py-2.5">
@@ -295,6 +356,7 @@ export function AssistantChat({ className }: { className?: string }) {
       <div className="pt-3 space-y-1.5">
         <div className="flex gap-2 items-end">
           <Textarea
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -334,7 +396,7 @@ export function AssistantChat({ className }: { className?: string }) {
         </div>
         <p className="text-[10px] text-muted-foreground flex items-center gap-1">
           <ShieldCheck className="h-3 w-3 shrink-0" />
-          Read-only · private to you · {copy.scope} · AI can make mistakes
+          {role === "admin" ? "Changes only when you confirm" : "Read-only"} · private to you · {copy.scope} · AI can make mistakes
         </p>
       </div>
     </div>

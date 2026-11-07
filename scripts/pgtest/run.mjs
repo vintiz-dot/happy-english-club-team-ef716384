@@ -65,6 +65,13 @@ const SUITES = [
   // what the model is told about who is asking, and that every tool's
   // query names columns and relationships that exist.
   { name: "chat assistant", file: "chat-assistant.test.mjs", migrations: [] },
+  // What the assistant may set up for an admin, and undo: only through
+  // these functions, all of it or none, refused once people depend on it.
+  {
+    name: "AI admin actions",
+    file: "ai-actions.test.mjs",
+    migrations: ["20261107090000_ai_assisted_admin_actions.sql"],
+  },
   { name: "payroll session rules", file: "payroll-sessions.test.mjs", migrations: [] },
   // Also not a database test: the admin Payroll screen reads
   // calculate-payroll instead of recomputing the month, and this is the

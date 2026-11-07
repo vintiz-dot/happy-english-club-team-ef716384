@@ -3,6 +3,7 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { acquireLock, releaseLock, ymNowBangkok } from '../_lib/lock.ts'
 import { tieHash } from '../_lib/hash.ts'
 import { requireRole } from '../_lib/auth.ts'
+import { siblingHolds } from '../_lib/sibling-hold.ts'
 
 // Helper to get actual tuition per student per class using calculate-tuition
 async function getActualTuitionPerStudent(supabase: any, studentId: string, month: string) {
@@ -34,13 +35,16 @@ async function getActualTuitionPerStudent(supabase: any, studentId: string, mont
 
 // Get highest-tuition class per student based on actual tuition calculation
 async function getHighestClassPerStudent(supabase: any, familyId: string, month: string) {
-  const { data: students, error } = await supabase
+  const { data: familyStudents, error } = await supabase
     .from('students')
     .select('id, full_name')
     .eq('family_id', familyId)
     .eq('is_active', true);
   if (error) throw error;
-  
+  // A child on a sibling-discount hold does not count until it ends.
+  const held = await siblingHolds(supabase, [familyId], month);
+  const students = (familyStudents ?? []).filter((s: any) => !held.has(s.id));
+
   if (!students || students.length === 0) {
     return [];
   }
@@ -185,13 +189,17 @@ Deno.serve(async (req) => {
         console.log(`Processing family ${family.id}`)
 
         // Get all active students in family
-        const { data: students, error: studentsError } = await supabase
+        const { data: familyStudents, error: studentsError } = await supabase
           .from('students')
           .select('id, full_name')
           .eq('family_id', family.id)
           .eq('is_active', true)
 
         if (studentsError) throw studentsError
+        // A child on a sibling-discount hold does not count until it ends,
+        // so a family of two with one on hold has no sibling discount yet.
+        const held = await siblingHolds(supabase, [family.id], month)
+        const students = (familyStudents ?? []).filter((s: any) => !held.has(s.id))
 
         if (!students || students.length < 2) {
           // Less than 2 students - no sibling discount possible
