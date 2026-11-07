@@ -1,5 +1,5 @@
 /**
- * chat Edge Function — the HEC assistant.
+ * chat Edge Function — the HEC assistant. jhih
  * ========================================
  * A context-aware helper for parents, students, teachers and admins.
  *
@@ -176,7 +176,7 @@ const clampLimit = (n: unknown, max: number, dflt: number) => {
 };
 
 /** An embedded row, which postgrest-js can return as an object or a one-item array. */
-const one = (v: any) => (Array.isArray(v) ? v[0] ?? null : v ?? null);
+const one = (v: any) => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
 const vnd = (v: unknown) => Math.round(Number(v) || 0);
 const hhmm = (t: unknown) => (typeof t === "string" ? t.slice(0, 5) : null);
 const toPerson = (s: any): PersonRef => ({ id: s.id, name: s.full_name });
@@ -212,11 +212,7 @@ async function fetchStaffClasses(userDb: any, staff: StaffRecord, today: SchoolD
 
   if (staff.kind === "teacher") {
     const [rostered, covering] = await Promise.all([
-      userDb
-        .from("classes")
-        .select("id, name, default_teacher_id, schedule_template")
-        .eq("is_active", true)
-        .limit(500),
+      userDb.from("classes").select("id, name, default_teacher_id, schedule_template").eq("is_active", true).limit(500),
       userDb
         .from("sessions")
         .select("class_id, classes!inner(id, name, is_active)")
@@ -273,8 +269,12 @@ async function rosterOf(userDb: any, classIds: string[], today: SchoolDay): Prom
     for (const e of data ?? []) {
       const s = one(e.students);
       if (!s) continue; // RLS kept the student back
-      const entry = byStudent.get(e.student_id) ??
-        { id: e.student_id, name: s.full_name, active: s.is_active !== false, classes: [] as string[] };
+      const entry = byStudent.get(e.student_id) ?? {
+        id: e.student_id,
+        name: s.full_name,
+        active: s.is_active !== false,
+        classes: [] as string[],
+      };
       const cls = one(e.classes)?.name;
       if (cls && !entry.classes.includes(cls)) entry.classes.push(cls);
       byStudent.set(e.student_id, entry);
@@ -314,11 +314,15 @@ async function classesOf(userDb: any, studentIds: string[], today: SchoolDay): P
  * teachers read every student in the school.
  */
 async function studentFor(args: any, ctx: ToolContext): Promise<string> {
-  const sid = String(args?.student_id ?? "").trim().toLowerCase();
+  const sid = String(args?.student_id ?? "")
+    .trim()
+    .toLowerCase();
   if (!isUuid(sid)) throw new Refusal("No valid student_id was given — look the student up with find_students first.");
   if ((ctx.role === "family" || ctx.role === "student") && !ctx.ownStudentIds.includes(sid)) {
     throw new Refusal(
-      ctx.role === "family" ? "That student is not one of this parent's children." : "That is not this student's own record.",
+      ctx.role === "family"
+        ? "That student is not one of this parent's children."
+        : "That is not this student's own record.",
     );
   }
   if (ctx.role === "teacher" && !(await ctx.staffStudentIds()).has(sid)) {
@@ -329,7 +333,9 @@ async function studentFor(args: any, ctx: ToolContext): Promise<string> {
 
 /** The class a tool was asked about, if this caller may ask about it. */
 async function classFor(args: any, ctx: ToolContext): Promise<string> {
-  const cid = String(args?.class_id ?? "").trim().toLowerCase();
+  const cid = String(args?.class_id ?? "")
+    .trim()
+    .toLowerCase();
   if (!isUuid(cid)) throw new Refusal("No valid class_id was given — look the class up with get_class_details first.");
   if (ctx.role === "teacher" && !(await ctx.staffClasses()).some((c) => c.id === cid)) {
     throw new Refusal("That class is not one of this teacher's classes.");
@@ -364,7 +370,9 @@ const TOOLS: ToolDef[] = [
     },
     roles: ["family", "student", "teacher", "admin"],
     run: async (userDb, args, ctx) => {
-      const wanted = String(args.name ?? "").trim().slice(0, 80);
+      const wanted = String(args.name ?? "")
+        .trim()
+        .slice(0, 80);
       let pool: ReturnType<typeof studentShape>[];
 
       if (ctx.role === "admin") {
@@ -382,10 +390,15 @@ const TOOLS: ToolDef[] = [
         if (error) throw new Error(error.message);
         pool = (data ?? []).map(studentShape);
       } else if (ctx.role === "teacher") {
-        const roster = await rosterOf(userDb, (await ctx.staffClasses()).map((c) => c.id), ctx.today);
+        const roster = await rosterOf(
+          userDb,
+          (await ctx.staffClasses()).map((c) => c.id),
+          ctx.today,
+        );
         pool = [...roster.values()].map((s) => ({ ...s, family: null }));
       } else {
-        if (!ctx.ownStudentIds.length) return { total: 0, students: [], note: "No students are linked to this account yet." };
+        if (!ctx.ownStudentIds.length)
+          return { total: 0, students: [], note: "No students are linked to this account yet." };
         const { data, error } = await userDb
           .from("students")
           .select("id, full_name, is_active, families(name)")
@@ -398,14 +411,25 @@ const TOOLS: ToolDef[] = [
       const shown = matches.slice(0, 25);
       const unclassed = shown.filter((s) => s.classes === null);
       if (unclassed.length) {
-        const classes = await classesOf(userDb, unclassed.map((s) => s.id), ctx.today);
+        const classes = await classesOf(
+          userDb,
+          unclassed.map((s) => s.id),
+          ctx.today,
+        );
         for (const s of unclassed) s.classes = classes.get(s.id) ?? [];
       }
 
-      const where = { admin: "in the school", teacher: "in this teacher's classes", family: "among this parent's children", student: "on this account" }[ctx.role];
+      const where = {
+        admin: "in the school",
+        teacher: "in this teacher's classes",
+        family: "among this parent's children",
+        student: "on this account",
+      }[ctx.role];
       const notes: string[] = [];
       if (matches.length > shown.length) {
-        notes.push(`${matches.length} students match; showing the first ${shown.length}. Search by name to narrow it down.`);
+        notes.push(
+          `${matches.length} students match; showing the first ${shown.length}. Search by name to narrow it down.`,
+        );
       }
       if (wanted && !matches.length) notes.push(`No student matching "${wanted}" was found ${where}.`);
       return {
@@ -439,30 +463,44 @@ const TOOLS: ToolDef[] = [
       const since = shiftDate(ctx.today.date, -60);
 
       const [profile, points, cefr, student, vocab, attend, enr] = await Promise.all([
-        userDb.from("student_learning_profiles")
+        userDb
+          .from("student_learning_profiles")
           .select("summary, strengths, struggles, cefr_estimate, vocab_words, transcripts_analyzed, updated_at")
-          .eq("student_id", sid).maybeSingle(),
+          .eq("student_id", sid)
+          .maybeSingle(),
         // NOT maybeSingle(): student_points is UNIQUE(student_id, class_id,
         // month), so a student has one row PER CLASS PER MONTH. maybeSingle()
         // errored on the second row and the error was being discarded, which
         // silently reported "no points" for every multi-class student.
-        userDb.from("student_points")
-          .select("total_points, vocabulary_quiz_points, homework_points, participation_points, reading_theory_points, month")
+        userDb
+          .from("student_points")
+          .select(
+            "total_points, vocabulary_quiz_points, homework_points, participation_points, reading_theory_points, month",
+          )
           .eq("student_id", sid),
-        userDb.from("cefr_assessments")
-          .select("level, source, assessed_at").eq("student_id", sid)
-          .order("assessed_at", { ascending: false }).limit(5),
+        userDb
+          .from("cefr_assessments")
+          .select("level, source, assessed_at")
+          .eq("student_id", sid)
+          .order("assessed_at", { ascending: false })
+          .limit(5),
         userDb.from("students").select("full_name, date_of_birth").eq("id", sid).maybeSingle(),
-        userDb.from("student_vocabulary_entries")
-          .select("id", { count: "exact", head: true }).eq("student_id", sid),
+        userDb.from("student_vocabulary_entries").select("id", { count: "exact", head: true }).eq("student_id", sid),
         // attendance carries no date of its own — it hangs off the session.
-        userDb.from("attendance")
+        userDb
+          .from("attendance")
           .select("status, sessions!inner(date)")
-          .eq("student_id", sid).gte("sessions.date", since).limit(200),
+          .eq("student_id", sid)
+          .gte("sessions.date", since)
+          .limit(200),
         // Current classes only: a student who moved class is not still in
         // the old one.
-        userDb.from("enrollments")
-          .select("class_id, classes(name)").eq("student_id", sid).or(stillEnrolled(ctx.today)).limit(10),
+        userDb
+          .from("enrollments")
+          .select("class_id, classes(name)")
+          .eq("student_id", sid)
+          .or(stillEnrolled(ctx.today))
+          .limit(10),
       ]);
 
       const rows: any[] = points.data ?? [];
@@ -532,7 +570,10 @@ const TOOLS: ToolDef[] = [
         const studentIds = args.student_id ? [await studentFor(args, ctx)] : ctx.ownStudentIds;
         if (!studentIds.length) return [];
         const { data: enr, error: e1 } = await userDb
-          .from("enrollments").select("class_id").in("student_id", studentIds).limit(20);
+          .from("enrollments")
+          .select("class_id")
+          .in("student_id", studentIds)
+          .limit(20);
         if (e1) throw new Error(e1.message);
         classIds = [...new Set<string>((enr || []).map((r: any) => r.class_id))];
       } else if (ctx.role === "teacher") {
@@ -620,7 +661,11 @@ const TOOLS: ToolDef[] = [
       // Current classes only, or a student who changed class is told about
       // the old class's lessons as if they were still theirs.
       const { data: enr, error: e1 } = await userDb
-        .from("enrollments").select("class_id").eq("student_id", sid).or(stillEnrolled(ctx.today)).limit(10);
+        .from("enrollments")
+        .select("class_id")
+        .eq("student_id", sid)
+        .or(stillEnrolled(ctx.today))
+        .limit(10);
       if (e1) throw new Error(e1.message);
       const classIds = [...new Set((enr || []).map((r: any) => r.class_id))].filter(Boolean);
       if (!classIds.length) return { today, upcoming: [], note: "This student has no class enrolments." };
@@ -827,7 +872,9 @@ const TOOLS: ToolDef[] = [
           .limit(1000),
         userDb
           .from("invoices")
-          .select("student_id, total_amount, recorded_payment, carry_out_debt, carry_out_credit, students(full_name, is_active, families(name))")
+          .select(
+            "student_id, total_amount, recorded_payment, carry_out_debt, carry_out_credit, students(full_name, is_active, families(name))",
+          )
           .eq("month", month)
           .limit(1000),
       ]);
@@ -855,7 +902,10 @@ const TOOLS: ToolDef[] = [
       const unbilled = (roster.data ?? []).filter((s: any) => !rows.has(s.id));
       const lastBill = new Map<string, any>();
       // 40 students x 24 months of bills stays under the API's 1000-row page.
-      for (const ids of chunk(unbilled.map((s: any) => s.id), 40)) {
+      for (const ids of chunk(
+        unbilled.map((s: any) => s.id),
+        40,
+      )) {
         const { data, error } = await userDb
           .from("invoices")
           .select("student_id, month, carry_out_debt, carry_out_credit")
@@ -1031,7 +1081,10 @@ const TOOLS: ToolDef[] = [
 
       const marks = new Map<string, Record<string, string[]>>();
       if (withMarks && rows.length) {
-        for (const ids of chunk(rows.map((r) => r.id), 100)) {
+        for (const ids of chunk(
+          rows.map((r) => r.id),
+          100,
+        )) {
           const { data: att, error: e2 } = await userDb
             .from("attendance")
             .select("session_id, status, students(full_name)")
@@ -1087,14 +1140,21 @@ const TOOLS: ToolDef[] = [
     run: async (userDb, args, ctx) => {
       let candidates: PersonRef[];
       if (ctx.role === "admin") {
-        const { data, error } = await userDb.from("classes").select("id, name").eq("is_active", true).order("name").limit(500);
+        const { data, error } = await userDb
+          .from("classes")
+          .select("id, name")
+          .eq("is_active", true)
+          .order("name")
+          .limit(500);
         if (error) throw new Error(error.message);
         candidates = (data ?? []).map((c: any) => ({ id: c.id, name: c.name }));
       } else {
         candidates = await ctx.staffClasses();
       }
 
-      const wanted = String(args.name ?? "").trim().slice(0, 80);
+      const wanted = String(args.name ?? "")
+        .trim()
+        .slice(0, 80);
       let picked: PersonRef[];
       if (args.class_id) {
         const cid = await classFor(args, ctx);
@@ -1111,9 +1171,10 @@ const TOOLS: ToolDef[] = [
       if (!picked.length) {
         return {
           classes: [],
-          note: ctx.role === "teacher"
-            ? `"${wanted}" is not one of this teacher's classes.`
-            : `No active class matching "${wanted}" was found.`,
+          note:
+            ctx.role === "teacher"
+              ? `"${wanted}" is not one of this teacher's classes.`
+              : `No active class matching "${wanted}" was found.`,
           classes_available: candidates.map((c) => c.name),
         };
       }
@@ -1179,7 +1240,9 @@ const TOOLS: ToolDef[] = [
       }
       return {
         classes: details,
-        ...(picked.length > 3 ? { note: `${picked.length} classes match; these are the closest 3. Ask which one they mean if unsure.` } : {}),
+        ...(picked.length > 3
+          ? { note: `${picked.length} classes match; these are the closest 3. Ask which one they mean if unsure.` }
+          : {}),
       };
     },
   },
@@ -1203,7 +1266,11 @@ const TOOLS: ToolDef[] = [
       const to = shiftDate(ctx.today.date, 30);
       const [teachers, assistants, classes, lessons, assisting] = await Promise.all([
         userDb.from("teachers").select("id, full_name, email, phone, is_active").order("full_name").limit(300),
-        userDb.from("teaching_assistants").select("id, full_name, email, phone, is_active").order("full_name").limit(300),
+        userDb
+          .from("teaching_assistants")
+          .select("id, full_name, email, phone, is_active")
+          .order("full_name")
+          .limit(300),
         userDb.from("classes").select("name, default_teacher_id, schedule_template").eq("is_active", true).limit(500),
         userDb
           .from("sessions")
@@ -1221,7 +1288,8 @@ const TOOLS: ToolDef[] = [
           .lte("sessions.date", to)
           .limit(1000),
       ]);
-      for (const r of [teachers, assistants, classes, lessons, assisting]) if (r.error) throw new Error(r.error.message);
+      for (const r of [teachers, assistants, classes, lessons, assisting])
+        if (r.error) throw new Error(r.error.message);
 
       // Teacher and TA ids are both UUIDs, so one map serves both.
       const teaches = new Map<string, Set<string>>();
@@ -1243,7 +1311,9 @@ const TOOLS: ToolDef[] = [
         ...(teachers.data ?? []).map((t: any) => ({ ...t, kind: "teacher" })),
         ...(assistants.data ?? []).map((t: any) => ({ ...t, kind: "teaching assistant" })),
       ].filter((t) => args.include_archived || t.is_active !== false);
-      const wanted = String(args.name ?? "").trim().slice(0, 80);
+      const wanted = String(args.name ?? "")
+        .trim()
+        .slice(0, 80);
       const shown = matchByName(staff, wanted, (t) => t.full_name);
       return {
         count: shown.length,
@@ -1273,7 +1343,9 @@ const TOOLS: ToolDef[] = [
     run: async (userDb, args, ctx) => {
       const { data, error } = await userDb
         .from("transcript_speaker_metrics")
-        .select("speaker_label, student_id, word_count, participation_share, questions_asked, cefr_estimate, created_at")
+        .select(
+          "speaker_label, student_id, word_count, participation_share, questions_asked, cefr_estimate, created_at",
+        )
         .eq("class_id", await classFor(args, ctx))
         .order("created_at", { ascending: false })
         .limit(clampLimit(args.limit, 80, 40));
@@ -1305,8 +1377,11 @@ const TOOLS: ToolDef[] = [
         const teacherOf = new Map<string, string | null>();
         if (ctx.role === "admin") {
           const { data, error } = await userDb
-            .from("classes").select("id, name, teachers(full_name)")
-            .eq("is_active", true).order("name").limit(500);
+            .from("classes")
+            .select("id, name, teachers(full_name)")
+            .eq("is_active", true)
+            .order("name")
+            .limit(500);
           if (error) throw new Error(error.message);
           classes = (data ?? []).map((c: any) => ({ id: c.id, name: c.name }));
           for (const c of data ?? []) teacherOf.set(c.id, one(c.teachers)?.full_name ?? null);
@@ -1314,9 +1389,16 @@ const TOOLS: ToolDef[] = [
           classes = await ctx.staffClasses();
         }
         const enrolled = new Map<string, number>();
-        for (const ids of chunk(classes.map((c) => c.id), 100)) {
+        for (const ids of chunk(
+          classes.map((c) => c.id),
+          100,
+        )) {
           const { data, error } = await userDb
-            .from("enrollments").select("class_id").in("class_id", ids).or(stillEnrolled(ctx.today)).limit(1000);
+            .from("enrollments")
+            .select("class_id")
+            .in("class_id", ids)
+            .or(stillEnrolled(ctx.today))
+            .limit(1000);
           if (error) throw new Error(error.message);
           for (const e of data ?? []) enrolled.set(e.class_id, (enrolled.get(e.class_id) ?? 0) + 1);
         }
@@ -1401,7 +1483,10 @@ async function resolveIdentity(userDb: any, userId: string): Promise<Identity> {
     const { data } = await userDb
       .from("students")
       .select("id, full_name")
-      .in("family_id", familyRows.map((f) => f.id))
+      .in(
+        "family_id",
+        familyRows.map((f) => f.id),
+      )
       .eq("is_active", true)
       .order("full_name")
       .limit(20);
@@ -1475,19 +1560,13 @@ Deno.serve(async (req) => {
 
   try {
     // Service client ONLY for identity resolution (reads).
-    const adminDb = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const adminDb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const caller = await authenticateUser(req, adminDb);
     if (!caller || caller.isServiceRole) {
       return respond({ success: false, error: "Unauthorized" }, 401);
     }
     if (overDailyCap(caller.userId)) {
-      return respond(
-        { success: false, error: "Daily assistant limit reached — try again tomorrow." },
-        429,
-      );
+      return respond({ success: false, error: "Daily assistant limit reached — try again tomorrow." }, 429);
     }
 
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
@@ -1508,12 +1587,15 @@ Deno.serve(async (req) => {
 
     // Effective role for tool selection (highest privilege wins the label;
     // RLS still decides row-by-row).
-    let role: AssistantRole | null =
-      caller.roles.has("admin") ? "admin"
-      : caller.roles.has("teacher") ? "teacher"
-      : caller.roles.has("family") ? "family"
-      : caller.roles.has("student") ? "student"
-      : null;
+    let role: AssistantRole | null = caller.roles.has("admin")
+      ? "admin"
+      : caller.roles.has("teacher")
+        ? "teacher"
+        : caller.roles.has("family")
+          ? "family"
+          : caller.roles.has("student")
+            ? "student"
+            : null;
 
     // Some older accounts hold no user_roles row at all. Rather than defaulting
     // an unknown account into a role, prove who they are from rows RLS already
@@ -1553,7 +1635,18 @@ Deno.serve(async (req) => {
       (classesOnce ??= who.staff ? fetchStaffClasses(userDb, who.staff, today) : Promise.resolve([]));
     let rosterOnce: Promise<Set<string>> | null = null;
     const staffStudentIds = () =>
-      (rosterOnce ??= staffClasses().then(async (cs) => new Set((await rosterOf(userDb, cs.map((c) => c.id), today)).keys())));
+      (rosterOnce ??= staffClasses().then(
+        async (cs) =>
+          new Set(
+            (
+              await rosterOf(
+                userDb,
+                cs.map((c) => c.id),
+                today,
+              )
+            ).keys(),
+          ),
+      ));
 
     const ctx: ToolContext = {
       role,
@@ -1567,9 +1660,8 @@ Deno.serve(async (req) => {
 
     // The name the app's header shows them, so the assistant and the screen
     // agree — except that a student is the child the app has selected.
-    const studentName = role === "student"
-      ? (selected ?? (ownStudents.length === 1 ? ownStudents[0] : null))?.name ?? null
-      : null;
+    const studentName =
+      role === "student" ? ((selected ?? (ownStudents.length === 1 ? ownStudents[0] : null))?.name ?? null) : null;
     const name = studentName ?? who.profileName ?? who.staff?.name ?? who.family?.name ?? nameFromEmail(caller.email);
 
     const [classes, page] = await Promise.all([
