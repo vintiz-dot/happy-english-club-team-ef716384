@@ -11,3 +11,4 @@
 
 # Enrollment changes are dated
 - Ending, transferring or changing a student's weekdays always takes an effective date and never rewrites the past: `change_enrollment_days` ends the current enrollment the day before and starts a new one with the new days, and `end_enrollment` / `modify_enrollment_transfer` remove only automatic placeholder marks (`marked_by IS NULL`) after the date. Editing `allowed_days` in place is what put a student's whole history outside their enrollment.
+- Both tuition readers use `enrollment-discounts.ts` over each dated enrollment's own billable base, grouping identical class discount terms once; a weekday split preserves a discount rather than creating another. Bulk session collection deduplicates class IDs so the split cannot duplicate lessons.

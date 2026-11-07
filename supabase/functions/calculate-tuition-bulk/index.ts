@@ -3,6 +3,7 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { requireRole } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
+import { enrollmentDiscounts } from "../_lib/enrollment-discounts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -237,9 +238,9 @@ Deno.serve(async (req) => {
           : null;
 
         const enrollments = enrollmentsByStudent.get(sid) || [];
-        const activeClassIds = enrollments
+        const activeClassIds = [...new Set<string>(enrollments
           .filter((e: any) => !e.end_date || e.end_date >= startDate)
-          .map((e: any) => e.class_id);
+          .map((e: any) => e.class_id))];
 
         // Sessions for this student's classes
         const studentSessions: any[] = [];
@@ -251,6 +252,7 @@ Deno.serve(async (req) => {
         // Calculate tuition
         let baseAmount = 0;
         const enrollmentBaseAmounts = new Map<string, number>();
+        const datedEnrollmentBases = new Map<any, number>();
         const rateAdjustmentSavings = new Map<string, number>();
 
         for (const s of studentSessions) {
@@ -274,6 +276,7 @@ Deno.serve(async (req) => {
           if (billable && actualRate > 0) {
             baseAmount += defaultRate;
             enrollmentBaseAmounts.set(s.class_id, (enrollmentBaseAmounts.get(s.class_id) || 0) + defaultRate);
+            datedEnrollmentBases.set(enrollment, (datedEnrollmentBases.get(enrollment) || 0) + defaultRate);
 
             if (overrideRate && overrideRate < defaultRate) {
               const savings = defaultRate - overrideRate;
@@ -291,16 +294,8 @@ Deno.serve(async (req) => {
         }
 
         // Enrollment-level discounts
-        for (const e of enrollments) {
-          if (!e.discount_type || !e.discount_value) continue;
-          if (e.discount_cadence === "monthly" || e.discount_cadence === "once") {
-            const enrollmentBase = enrollmentBaseAmounts.get(e.class_id) || 0;
-            if (enrollmentBase === 0) continue;
-            const amt = e.discount_type === "percent"
-              ? Math.round(enrollmentBase * (e.discount_value / 100))
-              : Math.round(e.discount_value);
-            if (amt > 0) totalDiscount += amt;
-          }
+        for (const discount of enrollmentDiscounts(datedEnrollmentBases)) {
+          totalDiscount += discount.amount;
         }
 
         // Student-level discounts
