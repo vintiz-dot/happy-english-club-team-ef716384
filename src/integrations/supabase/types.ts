@@ -140,6 +140,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_actions: {
+        Row: {
+          created_at: string
+          created_by: string
+          effects: Json
+          id: string
+          instruction: string
+          plan: Json
+          proposal_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          student_id: string | null
+          summary: Json
+          undone_at: string | null
+          undone_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          effects: Json
+          id?: string
+          instruction: string
+          plan: Json
+          proposal_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id?: string | null
+          summary: Json
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          effects?: Json
+          id?: string
+          instruction?: string
+          plan?: Json
+          proposal_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id?: string | null
+          summary?: Json
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Relationships: []
+      }
       announcement_dismissals: {
         Row: {
           announcement_id: string
@@ -4944,6 +4995,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           secondary_user_id: string | null
+          sibling_discount_from: string | null
           status_message: string | null
           updated_at: string
           updated_by: string | null
@@ -4966,6 +5018,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           secondary_user_id?: string | null
+          sibling_discount_from?: string | null
           status_message?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -4988,6 +5041,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           secondary_user_id?: string | null
+          sibling_discount_from?: string | null
           status_message?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -5666,6 +5720,47 @@ export type Database = {
         Args: { p_class: string; p_from: string; p_to: string }
         Returns: undefined
       }
+      ai_action_apply: {
+        Args: { p_instruction: string; p_plan: Json; p_proposal_id: string }
+        Returns: Json
+      }
+      ai_action_mark_reviewed: {
+        Args: { p_action_id: string }
+        Returns: undefined
+      }
+      ai_action_preview: { Args: { p_plan: Json }; Returns: Json }
+      ai_action_undo: { Args: { p_action_id: string }; Returns: Json }
+      ai_actions_list: {
+        Args: { p_limit?: number }
+        Returns: {
+          created_at: string
+          created_by_me: boolean
+          created_by_name: string
+          id: string
+          instruction: string
+          nudges: Json
+          reviewed_at: string
+          status: string
+          student_exists: boolean
+          student_id: string
+          summary: Json
+          undone_at: string
+          undone_by_name: string
+        }[]
+      }
+      ai_date_label: { Args: { p: string }; Returns: string }
+      ai_month_closed: { Args: { p_month: string }; Returns: boolean }
+      ai_month_label: { Args: { p: string }; Returns: string }
+      ai_plan_check: { Args: { p_plan: Json }; Returns: Json }
+      ai_student_activity: { Args: { p_student: string }; Returns: string[] }
+      ai_try_date: { Args: { p: string }; Returns: string }
+      ai_try_uuid: { Args: { p: string }; Returns: string }
+      ai_unknown_keys: {
+        Args: { allowed: string[]; p: Json }
+        Returns: string[]
+      }
+      ai_vnd: { Args: { p: number }; Returns: string }
+      ai_whole: { Args: { hi: number; lo: number; p: Json }; Returns: number }
       archive_and_reset_monthly_leaderboard: {
         Args: { target_month: string }
         Returns: {
