@@ -13,6 +13,7 @@ import { Download, Undo, ArrowLeft } from "lucide-react";
 import { dayjs } from "@/lib/date";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { useAuth } from "@/hooks/useAuth";
+import { VideoReviewPanel } from "@/components/video-homework/VideoReviewPanel";
 
 const GRADE_PRESETS = [
   { label: "⭐ Superstar", value: "Superstar", minPoints: 90, maxPoints: 100 },
@@ -408,6 +409,16 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                 ))
               )}
             </div>
+          ) : (homework as any)?.submission_type === "video" ? (
+            /* ===== VIDEO HOMEWORK: the AI draft, edited and approved ===== */
+            <VideoReviewPanel
+              homeworkId={homeworkId}
+              studentId={selectedSubmission?.student?.id}
+              onDone={() => {
+                setView("list");
+                setSelectedSubmission(null);
+              }}
+            />
           ) : (
             /* ===== GRADING FORM VIEW ===== */
             <div className="space-y-4">

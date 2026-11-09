@@ -151,6 +151,17 @@ const SUITES = [
     file: "homework-grading.test.mjs",
     migrations: ["20261023090000_homework_grading_integrity.sql"],
   },
+  // Video homework: families never see the AI draft, classmates never see
+  // a score, a child cannot approve their own, and re-approving replaces.
+  { name: "video homework rules", file: "video-homework-rules.test.mjs", migrations: [] },
+  {
+    name: "video homework",
+    file: "video-homework.test.mjs",
+    migrations: [
+      "20261023090000_homework_grading_integrity.sql",
+      "20261109090000_video_homework.sql",
+    ],
+  },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",

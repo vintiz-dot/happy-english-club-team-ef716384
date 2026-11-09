@@ -29,6 +29,7 @@ const MIRRORED = [
   ["src/lib/payRate.ts", "supabase/functions/_lib/pay-rate.ts"],
   ["src/lib/payHistory.ts", "supabase/functions/_lib/pay-history.ts"],
   ["src/lib/payrollSessions.ts", "supabase/functions/_lib/payroll-sessions.ts"],
+  ["src/lib/videoHomework.ts", "supabase/functions/_lib/video-homework.ts"],
 ];
 
 /**

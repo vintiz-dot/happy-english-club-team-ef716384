@@ -59,3 +59,10 @@
 
 # Payment month
 - Payment forms share `useTuitionMonthConfirmation`: explicitly confirm the target invoice month separately from receipt date, resetting on reopen/month changes; `family-payment` requires and filters by that month, using monthly `recorded_payment` rather than cumulative `paid_amount`.
+
+# Video homework
+- `homeworks.submission_type = 'video'` switches a homework to the in-app recorder (`src/components/video-homework/`). Schema, policies and the approval RPC are `supabase/migrations/20261109090000_video_homework.sql`; `scripts/pgtest/video-homework.test.mjs` runs it.
+- Measure, then judge: `analyze-video-submission` transcribes the separate audio track (OpenAI), lets Gemini describe the video (optional), reads the Azure pronunciation summary the browser measured while recording (optional), and asks Claude (`_lib/claude-json.ts`) to score each rubric criterion with quoted evidence. The 0-100 score is `weightedScore` in `videoHomework.ts` / `_lib/video-homework.ts` (a mirrored pair), never the model's number.
+- Nothing reaches a family before a teacher approves. `video_analyses` has no family policy; families read the approved report through `get_video_homework_for_student`, which returns only the `final_*` fields. Keep it that way: do not add a family SELECT policy to `video_analyses`.
+- Classmates see videos, never scores: the wall is `get_class_video_wall` and the storage policy lets a classmate read only an approved, shared video and its frames, not the audio track.
+- `approve_video_feedback` writes the grade, points (`award_homework_points`), error log + SRS cards, a `speaking` skill score and a CEFR point in one transaction, and replaces what an earlier approval wrote. Add any new side effect there, with a case in the test.

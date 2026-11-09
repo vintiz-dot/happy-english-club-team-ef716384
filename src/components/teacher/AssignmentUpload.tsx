@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Eye, Calendar, FileText, Edit, Users, Loader2 } from "lucide-react";
+import { Upload, Eye, Calendar, FileText, Edit, Users, Loader2, Video, ListChecks } from "lucide-react";
 import "react-quill-new/dist/quill.snow.css";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,8 @@ import { EditHomeworkDialog } from "./EditHomeworkDialog";
 import { GradeOfflineDialog } from "./GradeOfflineDialog";
 import { HomeworkPdfDownload } from "@/components/homework/HomeworkPdfDownload";
 import { useAuth } from "@/hooks/useAuth";
+import { VideoRubricEditor } from "@/components/video-homework/VideoRubricEditor";
+import { HomeworkVideosDialog } from "@/components/video-homework/VideoReviewQueue";
 
 const ReactQuill = lazy(() => import("react-quill-new"));
 
@@ -33,6 +35,8 @@ interface Homework {
   class_id: string;
   classes: { name: string } | null;
   homework_files: Array<{ file_name: string; storage_key: string }>;
+  /** Present once 20261109090000 is applied. */
+  submission_type?: string;
 }
 
 interface AssignmentUploadProps {
@@ -108,7 +112,7 @@ async function fetchHomeworks(classIds: string[]) {
 
   const { data, error } = await supabase
     .from("homeworks")
-    .select("id, title, body, due_date, created_at, class_id, classes(name), homework_files(file_name, storage_key)")
+    .select("*, classes(name), homework_files(file_name, storage_key)")
     .in("class_id", classIds)
     .order("created_at", { ascending: false });
 
@@ -122,11 +126,15 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
     title: "",
     description: "",
     due_date: "",
+    submission_type: "standard",
+    video_minutes: "5",
   });
   const [file, setFile] = useState<File | null>(null);
   const [formKey, setFormKey] = useState(0);
   const [editingHomeworkId, setEditingHomeworkId] = useState<string | null>(null);
   const [gradingHomeworkId, setGradingHomeworkId] = useState<string | null>(null);
+  const [rubricHomeworkId, setRubricHomeworkId] = useState<string | null>(null);
+  const [videosHomeworkId, setVideosHomeworkId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -167,7 +175,12 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
           body: formData.description || null,
           due_date: formData.due_date || null,
           created_by: user?.id,
-        })
+          // Only sent for a video homework, so written homework keeps
+          // working on a database without the video migration.
+          ...(formData.submission_type === "video"
+            ? { submission_type: "video", video_max_seconds: Number(formData.video_minutes) * 60 }
+            : {}),
+        } as any)
         .select()
         .single();
 
@@ -197,13 +210,19 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
 
       return homework;
     },
-    onSuccess: () => {
+    onSuccess: (homework: any) => {
       toast({ title: "Success", description: "Assignment uploaded successfully" });
+      if (homework?.submission_type === "video") {
+        // Draft the rubric straight away; the teacher checks it in the editor.
+        supabase.functions.invoke("video-rubric", { body: { homework_id: homework.id } })
+          .then(() => queryClient.invalidateQueries({ queryKey: ["video-rubric", homework.id] }));
+        setRubricHomeworkId(homework.id);
+      }
       queryClient.invalidateQueries({ queryKey: ["teacher-homeworks"] });
       queryClient.invalidateQueries({ queryKey: ["teacher-assignments"] });
       queryClient.invalidateQueries({ queryKey: ["class-homeworks"] });
       // Reset form completely
-      setFormData({ class_id: "", title: "", description: "", due_date: "" });
+      setFormData({ class_id: "", title: "", description: "", due_date: "", submission_type: "standard", video_minutes: "5" });
       setFile(null);
       setFormKey(prev => prev + 1);
     },
@@ -284,6 +303,43 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select
+                  value={formData.submission_type}
+                  onValueChange={(value) => setFormData({ ...formData, submission_type: value })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard">📝 Written / file</SelectItem>
+                    <SelectItem value="video">🎥 Video (recorded in the app)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {formData.submission_type === "video" && (
+                <div className="space-y-2">
+                  <Label>Longest video</Label>
+                  <Select
+                    value={formData.video_minutes}
+                    onValueChange={(value) => setFormData({ ...formData, video_minutes: value })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["1", "2", "3", "4", "5"].map((m) => (
+                        <SelectItem key={m} value={m}>{m === "1" ? "1 minute" : `${m} minutes`}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+            {formData.submission_type === "video" && (
+              <p className="text-xs text-muted-foreground -mt-1">
+                Students record in the app. The AI drafts a rubric from your instructions and a report for each video; you approve before families see anything.
+              </p>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="title">Title *</Label>
@@ -391,6 +447,11 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
                         <Badge variant="secondary" className="text-xs max-w-full truncate">
                           {hw.classes?.name || "Unknown Class"}
                         </Badge>
+                        {hw.submission_type === "video" && (
+                          <Badge className="text-xs flex items-center gap-1 bg-rose-600">
+                            <Video className="h-3 w-3" /> Video
+                          </Badge>
+                        )}
                         {hw.due_date && (
                           <Badge variant="outline" className="text-xs flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
@@ -447,6 +508,28 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
                         <Users className="h-4 w-4 mr-2" />
                         Grade
                       </Button>
+                      {hw.submission_type === "video" && (
+                        <>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => setVideosHomeworkId(hw.id)}
+                            className="min-h-[44px] sm:flex-1"
+                          >
+                            <Video className="h-4 w-4 mr-2" />
+                            Review videos
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setRubricHomeworkId(hw.id)}
+                            className="min-h-[44px] sm:flex-1"
+                          >
+                            <ListChecks className="h-4 w-4 mr-2" />
+                            Rubric
+                          </Button>
+                        </>
+                      )}
                       <div className="col-span-2 sm:col-auto">
                         <HomeworkPdfDownload
                           homework={hw}
@@ -472,6 +555,9 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
           queryClient.invalidateQueries({ queryKey: ["teacher-assignments"] });
         }}
       />
+
+      <VideoRubricEditor homeworkId={rubricHomeworkId} onClose={() => setRubricHomeworkId(null)} />
+      <HomeworkVideosDialog homeworkId={videosHomeworkId} onClose={() => setVideosHomeworkId(null)} />
 
       <GradeOfflineDialog
         homeworkId={gradingHomeworkId}

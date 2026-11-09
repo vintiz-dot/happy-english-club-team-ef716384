@@ -56,6 +56,7 @@ const TeacherBooks = lazy(() => import("./pages/TeacherBooks"));
 const TeacherSmartUpload = lazy(() => import("./pages/TeacherSmartUpload"));
 const TeacherTranscripts = lazy(() => import("./pages/TeacherTranscripts"));
 const StudentMyWork = lazy(() => import("./pages/StudentMyWork"));
+const StudentVideos = lazy(() => import("./pages/StudentVideos"));
 const StudentLessons = lazy(() => import("./pages/StudentLessons"));
 const StudentLessonDetail = lazy(() => import("./pages/StudentLessonDetail"));
 const StudentDefendLevel = lazy(() => import("./pages/StudentDefendLevel"));
@@ -139,6 +140,7 @@ function AppContent() {
                   <Route path="/student/journal" element={<StudentJournal />} />
                   <Route path="/student/resources" element={<StudentResources />} />
                   <Route path="/student/my-work" element={<StudentMyWork />} />
+                  <Route path="/student/videos" element={<StudentVideos />} />
                   <Route path="/student/lessons" element={<StudentLessons />} />
                   <Route path="/student/lessons/:id" element={<StudentLessonDetail />} />
                   <Route path="/student/defend-level" element={<StudentDefendLevel />} />

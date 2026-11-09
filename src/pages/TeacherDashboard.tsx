@@ -37,6 +37,7 @@ import { ManualPointsDialog } from "@/components/shared/ManualPointsDialog";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { effectiveRateVnd, rateUnit } from "@/lib/payRate";
+import { VideoReviewQueue } from "@/components/video-homework/VideoReviewQueue";
 
 export default function TeacherDashboard() {
   const queryClient = useQueryClient();
@@ -368,6 +369,11 @@ export default function TeacherDashboard() {
             </Card>
           </motion.div>
         )}
+
+        {/* Video homework waiting for review (renders nothing when empty) */}
+        <motion.div variants={itemVariants}>
+          <VideoReviewQueue />
+        </motion.div>
 
         {/* Stats Grid */}
         <motion.div variants={itemVariants} className="grid gap-4 grid-cols-2 lg:grid-cols-5">

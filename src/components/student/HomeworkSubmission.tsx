@@ -13,6 +13,7 @@ import { dayjs } from "@/lib/date";
 import { soundManager } from "@/lib/soundManager";
 import { motion, AnimatePresence } from "framer-motion";
 import { SubmitCheckmark } from "./SubmitCheckmark";
+import VideoHomeworkSubmission, { useVideoHomework } from "@/components/video-homework/VideoHomeworkSubmission";
 
 const ReactQuill = lazy(() => import("react-quill-new"));
 
@@ -23,7 +24,19 @@ interface HomeworkSubmissionProps {
   onSuccess?: () => void;
 }
 
-export default function HomeworkSubmission({
+export default function HomeworkSubmission(props: HomeworkSubmissionProps) {
+  // A video homework has its own flow (record, send, teacher-approved report).
+  // Until the video migration is applied the lookup fails and this falls
+  // through to the written form, exactly as before.
+  const { data: video, isLoading } = useVideoHomework(props.homeworkId, props.studentId);
+  if (isLoading) return null;
+  if (video?.submission_type === "video") {
+    return <VideoHomeworkSubmission homeworkId={props.homeworkId} studentId={props.studentId} onSuccess={props.onSuccess} />;
+  }
+  return <WrittenHomeworkSubmission {...props} />;
+}
+
+function WrittenHomeworkSubmission({
   homeworkId,
   studentId,
   existingSubmission,
