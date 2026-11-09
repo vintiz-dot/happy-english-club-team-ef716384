@@ -1,5 +1,5 @@
 /**
- * chat Edge Function — the HEC assistant. jhih
+ * chat Edge Function — the HEC assistant.
  * ========================================
  * A context-aware helper for parents, students, teachers and admins.
  *
@@ -1483,7 +1483,8 @@ const TOOLS: ToolDef[] = [
         new_student: { type: "boolean", description: "true to create a new student" },
         different_child_confirmed: {
           type: "boolean",
-          description: "true only after the admin said a new student who shares a name with an existing one is a different child",
+          description:
+            "true only after the admin said a new student who shares a name with an existing one is a different child",
         },
         date_of_birth: { type: "string", description: "as typed, e.g. 02/18/2021" },
         class_name: { type: "string", description: "the class to enrol in" },
@@ -1500,7 +1501,10 @@ const TOOLS: ToolDef[] = [
           description: "'until_discount_ends', 'lift', or the date it should start counting, as typed",
         },
         payment_amount: { type: "number", description: "in dong, as typed" },
-        payment_month: { type: "string", description: "YYYY-MM the payment is for; leave out if the admin did not say" },
+        payment_month: {
+          type: "string",
+          description: "YYYY-MM the payment is for; leave out if the admin did not say",
+        },
         payment_method: { type: "string", enum: PAYMENT_METHODS },
         payment_date: { type: "string", description: "as typed; leave out for today" },
         payment_note: { type: "string" },
@@ -1520,18 +1524,29 @@ const TOOLS: ToolDef[] = [
       ]);
       for (const r of [students, classes, families]) if (r.error) throw new Error(r.error.message);
 
-      const draft = draftPlan(args, {
-        students: (students.data ?? []).map((s: any) => ({ id: s.id, name: s.full_name, active: s.is_active !== false })),
-        classes: (classes.data ?? []).map((c: any) => ({ id: c.id, name: c.name })),
-        families: (families.data ?? []).map((f: any) => ({ id: f.id, name: f.name })),
-      }, ctx.today, ctx.userTexts);
+      const draft = draftPlan(
+        args,
+        {
+          students: (students.data ?? []).map((s: any) => ({
+            id: s.id,
+            name: s.full_name,
+            active: s.is_active !== false,
+          })),
+          classes: (classes.data ?? []).map((c: any) => ({ id: c.id, name: c.name })),
+          families: (families.data ?? []).map((f: any) => ({ id: f.id, name: f.name })),
+        },
+        ctx.today,
+        ctx.userTexts,
+      );
       if (!draft.plan) return { status: "needs_answer", ask_the_admin: draft.questions };
 
       // The database words the card and has the last say on what is allowed.
       const { data: check, error } = await userDb.rpc("ai_action_preview", { p_plan: draft.plan });
       if (error) {
         if (error.code === "PGRST202" || /ai_action_preview/.test(String(error.message))) {
-          throw new Refusal("Setting things up from the chat is not switched on yet: its database change has not been applied.");
+          throw new Refusal(
+            "Setting things up from the chat is not switched on yet: its database change has not been applied.",
+          );
         }
         throw new Error(error.message);
       }
@@ -1762,7 +1777,9 @@ Deno.serve(async (req) => {
       staffClasses,
       staffStudentIds,
       userTexts,
-      propose: (p) => { proposal = p; },
+      propose: (p) => {
+        proposal = p;
+      },
     };
 
     // The name the app's header shows them, so the assistant and the screen
