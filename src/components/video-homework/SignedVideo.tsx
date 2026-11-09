@@ -40,5 +40,30 @@ export const SignedVideo = forwardRef<HTMLVideoElement, Props>(function SignedVi
       </div>
     );
   }
-  return <video ref={ref} src={src ?? undefined} poster={poster} controls playsInline preload="metadata" {...rest} />;
+  return (
+    <video
+      ref={ref}
+      src={src ?? undefined}
+      poster={poster}
+      controls
+      playsInline
+      preload="metadata"
+      {...rest}
+      onLoadedMetadata={(e) => {
+        // Browser recordings (WebM, fragmented MP4) often carry no total
+        // length, so the bar is wrong and seeking to evidence fails. Asking
+        // for a far-off time makes the browser find the real end.
+        const el = e.currentTarget;
+        if (!Number.isFinite(el.duration)) {
+          const back = () => {
+            el.removeEventListener("durationchange", back);
+            el.currentTime = 0;
+          };
+          el.addEventListener("durationchange", back);
+          el.currentTime = 1e9;
+        }
+        rest.onLoadedMetadata?.(e);
+      }}
+    />
+  );
 });

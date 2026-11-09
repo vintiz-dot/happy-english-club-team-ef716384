@@ -140,8 +140,12 @@ export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, bus
       }
     }
 
-    vr.start(1000);
-    audioRecRef.current?.start(1000);
+    // No timeslice. With one (start(1000)) an iPhone writes a fragmented MP4
+    // whose header carries no total length, and a teacher's desktop browser
+    // then plays only the first 1-second fragment. One blob at stop() is a
+    // normal file with its length in it.
+    vr.start();
+    audioRecRef.current?.start();
     startedAt.current = Date.now();
     setElapsed(0);
     setPhase("recording");

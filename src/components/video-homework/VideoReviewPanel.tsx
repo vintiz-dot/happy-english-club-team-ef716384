@@ -143,7 +143,12 @@ export function VideoReviewPanel({
       toast.success("Started a new draft");
       invalidate();
     },
-    onError: (e: any) => toast.error(e?.message || "Could not start the analysis"),
+    onError: (e: any) =>
+      toast.error(
+        e?.name === "FunctionsFetchError" || /failed to send/i.test(String(e?.message))
+          ? "The AI service is not reachable - it may not be switched on yet. You can grade this video yourself."
+          : e?.message || "Could not start the analysis",
+      ),
   });
 
   const approve = useMutation({
@@ -205,7 +210,12 @@ export function VideoReviewPanel({
     return <p className="text-sm text-muted-foreground py-4">This child has not sent a video yet.</p>;
   }
 
-  const working = v.status === "processing" || (v.status === "uploaded" && !a);
+  // "uploaded" means the browser asked for a draft; if nothing has picked it
+  // up a minute and a half later, the request never arrived. Say so rather
+  // than spin for ever.
+  const stalled =
+    v.status === "uploaded" && !a && Date.now() - new Date(v.updated_at ?? v.submitted_at).getTime() > 90_000;
+  const working = v.status === "processing" || (v.status === "uploaded" && !a && !stalled);
   const pron = v.pronunciation;
 
   return (
@@ -231,6 +241,23 @@ export function VideoReviewPanel({
           )}
         </div>
       )}
+
+      {stalled && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-400/50 bg-amber-50 dark:bg-amber-950/30 p-3 text-sm">
+          <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+          <span className="flex-1">The AI draft has not started. You can grade it yourself below, or try again.</span>
+          <Button size="sm" variant="outline" onClick={() => rerun.mutate()} disabled={rerun.isPending}>
+            {rerun.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Start now"}
+          </Button>
+        </div>
+      )}
+
+      {v.duration_seconds != null ? (
+        <p className="text-xs text-muted-foreground">
+          Recorded length {formatTimestamp(Number(v.duration_seconds))}
+          {v.video_mime ? ` · ${v.video_mime}` : ""}
+        </p>
+      ) : null}
 
       {v.status === "failed" && (
         <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
