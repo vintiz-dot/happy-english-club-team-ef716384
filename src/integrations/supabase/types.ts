@@ -325,6 +325,33 @@ export type Database = {
           },
         ]
       }
+      attendance_restore_2026_07: {
+        Row: {
+          attendance_id: string
+          old_status: string
+          old_updated_at: string
+          restored_at: string
+          session_id: string
+          student_id: string
+        }
+        Insert: {
+          attendance_id: string
+          old_status: string
+          old_updated_at: string
+          restored_at?: string
+          session_id: string
+          student_id: string
+        }
+        Update: {
+          attendance_id?: string
+          old_status?: string
+          old_updated_at?: string
+          restored_at?: string
+          session_id?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -1862,7 +1889,9 @@ export type Database = {
           created_by: string | null
           due_date: string | null
           id: string
+          submission_type: string
           title: string
+          video_max_seconds: number
         }
         Insert: {
           body?: string | null
@@ -1871,7 +1900,9 @@ export type Database = {
           created_by?: string | null
           due_date?: string | null
           id?: string
+          submission_type?: string
           title: string
+          video_max_seconds?: number
         }
         Update: {
           body?: string | null
@@ -1880,7 +1911,9 @@ export type Database = {
           created_by?: string | null
           due_date?: string | null
           id?: string
+          submission_type?: string
           title?: string
+          video_max_seconds?: number
         }
         Relationships: [
           {
@@ -1891,6 +1924,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      invoice_restore_2026_07: {
+        Row: {
+          invoice_id: string
+          old_base: number | null
+          old_breakdown: Json | null
+          old_discount: number | null
+          old_frozen: boolean
+          old_total: number | null
+          restored_at: string
+        }
+        Insert: {
+          invoice_id: string
+          old_base?: number | null
+          old_breakdown?: Json | null
+          old_discount?: number | null
+          old_frozen: boolean
+          old_total?: number | null
+          restored_at?: string
+        }
+        Update: {
+          invoice_id?: string
+          old_base?: number | null
+          old_breakdown?: Json | null
+          old_discount?: number | null
+          old_frozen?: boolean
+          old_total?: number | null
+          restored_at?: string
+        }
+        Relationships: []
       }
       invoice_sequences: {
         Row: {
@@ -5553,6 +5616,306 @@ export type Database = {
         }
         Relationships: []
       }
+      video_analyses: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          cefr_assessment_id: string | null
+          cefr_estimate: string | null
+          confidence: number | null
+          created_at: string
+          criteria_scores: Json
+          feedback_parent: string | null
+          feedback_student: string | null
+          final_feedback_parent: string | null
+          final_feedback_student: string | null
+          final_gaps: Json | null
+          final_grade: string | null
+          final_score: number | null
+          focus_points: Json
+          gaps: Json
+          models: Json | null
+          overall_score: number | null
+          skill_assessment_id: string | null
+          strengths: Json
+          suggested_grade: string | null
+          teacher_attention: string | null
+          transcript: string | null
+          transcript_segments: Json | null
+          updated_at: string
+          video_submission_id: string
+          visual_notes: Json | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          cefr_assessment_id?: string | null
+          cefr_estimate?: string | null
+          confidence?: number | null
+          created_at?: string
+          criteria_scores?: Json
+          feedback_parent?: string | null
+          feedback_student?: string | null
+          final_feedback_parent?: string | null
+          final_feedback_student?: string | null
+          final_gaps?: Json | null
+          final_grade?: string | null
+          final_score?: number | null
+          focus_points?: Json
+          gaps?: Json
+          models?: Json | null
+          overall_score?: number | null
+          skill_assessment_id?: string | null
+          strengths?: Json
+          suggested_grade?: string | null
+          teacher_attention?: string | null
+          transcript?: string | null
+          transcript_segments?: Json | null
+          updated_at?: string
+          video_submission_id: string
+          visual_notes?: Json | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          cefr_assessment_id?: string | null
+          cefr_estimate?: string | null
+          confidence?: number | null
+          created_at?: string
+          criteria_scores?: Json
+          feedback_parent?: string | null
+          feedback_student?: string | null
+          final_feedback_parent?: string | null
+          final_feedback_student?: string | null
+          final_gaps?: Json | null
+          final_grade?: string | null
+          final_score?: number | null
+          focus_points?: Json
+          gaps?: Json
+          models?: Json | null
+          overall_score?: number | null
+          skill_assessment_id?: string | null
+          strengths?: Json
+          suggested_grade?: string | null
+          teacher_attention?: string | null
+          transcript?: string | null
+          transcript_segments?: Json | null
+          updated_at?: string
+          video_submission_id?: string
+          visual_notes?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_analyses_video_submission_id_fkey"
+            columns: ["video_submission_id"]
+            isOneToOne: true
+            referencedRelation: "video_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_homework_rubrics: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          criteria: Json
+          generated_by_ai: boolean
+          grade_band: string | null
+          homework_id: string
+          kid_summary: string | null
+          status: string
+          target_grammar: string[]
+          target_vocabulary: string[]
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          criteria?: Json
+          generated_by_ai?: boolean
+          grade_band?: string | null
+          homework_id: string
+          kid_summary?: string | null
+          status?: string
+          target_grammar?: string[]
+          target_vocabulary?: string[]
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          criteria?: Json
+          generated_by_ai?: boolean
+          grade_band?: string | null
+          homework_id?: string
+          kid_summary?: string | null
+          status?: string
+          target_grammar?: string[]
+          target_vocabulary?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_homework_rubrics_homework_id_fkey"
+            columns: ["homework_id"]
+            isOneToOne: true
+            referencedRelation: "homeworks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          reactor_student_id: string
+          video_submission_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          reactor_student_id: string
+          video_submission_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          reactor_student_id?: string
+          video_submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_reactions_reactor_student_id_fkey"
+            columns: ["reactor_student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_reactions_video_submission_id_fkey"
+            columns: ["video_submission_id"]
+            isOneToOne: false
+            referencedRelation: "video_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_submissions: {
+        Row: {
+          attempt: number
+          audio_mime: string | null
+          audio_path: string | null
+          class_id: string
+          created_at: string
+          duration_seconds: number | null
+          error: string | null
+          frame_paths: string[]
+          homework_id: string
+          homework_submission_id: string | null
+          id: string
+          processed_at: string | null
+          processing_stage: string | null
+          pronunciation: Json | null
+          share_with_class: boolean
+          size_bytes: number | null
+          status: string
+          student_id: string
+          submitted_at: string
+          submitted_by: string | null
+          teacher_note: string | null
+          updated_at: string
+          video_mime: string | null
+          video_path: string
+        }
+        Insert: {
+          attempt?: number
+          audio_mime?: string | null
+          audio_path?: string | null
+          class_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          error?: string | null
+          frame_paths?: string[]
+          homework_id: string
+          homework_submission_id?: string | null
+          id?: string
+          processed_at?: string | null
+          processing_stage?: string | null
+          pronunciation?: Json | null
+          share_with_class?: boolean
+          size_bytes?: number | null
+          status?: string
+          student_id: string
+          submitted_at?: string
+          submitted_by?: string | null
+          teacher_note?: string | null
+          updated_at?: string
+          video_mime?: string | null
+          video_path: string
+        }
+        Update: {
+          attempt?: number
+          audio_mime?: string | null
+          audio_path?: string | null
+          class_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          error?: string | null
+          frame_paths?: string[]
+          homework_id?: string
+          homework_submission_id?: string | null
+          id?: string
+          processed_at?: string | null
+          processing_stage?: string | null
+          pronunciation?: Json | null
+          share_with_class?: boolean
+          size_bytes?: number | null
+          status?: string
+          student_id?: string
+          submitted_at?: string
+          submitted_by?: string | null
+          teacher_note?: string | null
+          updated_at?: string
+          video_mime?: string | null
+          video_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_submissions_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_submissions_homework_id_fkey"
+            columns: ["homework_id"]
+            isOneToOne: false
+            referencedRelation: "homeworks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_submissions_homework_submission_id_fkey"
+            columns: ["homework_submission_id"]
+            isOneToOne: false
+            referencedRelation: "homework_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_submissions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vocab_activity_log: {
         Row: {
           activity_type: string
@@ -5761,6 +6124,18 @@ export type Database = {
       }
       ai_vnd: { Args: { p: number }; Returns: string }
       ai_whole: { Args: { hi: number; lo: number; p: Json }; Returns: number }
+      approve_video_feedback: {
+        Args: {
+          p_award_points?: boolean
+          p_feedback_parent?: string
+          p_feedback_student: string
+          p_gaps?: Json
+          p_grade: string
+          p_score: number
+          p_video_submission: string
+        }
+        Returns: Json
+      }
       archive_and_reset_monthly_leaderboard: {
         Args: { target_month: string }
         Returns: {
@@ -5786,6 +6161,8 @@ export type Database = {
         Returns: string
       }
       can_read_student_work_file: { Args: { _path: string }; Returns: boolean }
+      can_upload_homework_video: { Args: { p_name: string }; Returns: boolean }
+      can_view_class_video_wall: { Args: { p_class: string }; Returns: boolean }
       can_view_classmate: {
         Args: { student_id_to_view: string; viewer_user_id: string }
         Returns: boolean
@@ -5798,6 +6175,7 @@ export type Database = {
         Args: { family_id: string; user_id: string }
         Returns: boolean
       }
+      can_view_homework_video: { Args: { p_name: string }; Returns: boolean }
       can_view_student: {
         Args: { student_id: string; user_id: string }
         Returns: boolean
@@ -5885,6 +6263,10 @@ export type Database = {
         Args: { p_class_id: string; p_end_date: string; p_student_id: string }
         Returns: Json
       }
+      get_class_video_wall: {
+        Args: { p_class: string; p_viewer_student?: string }
+        Returns: Json
+      }
       get_student_homeworks: { Args: { p_student_id: string }; Returns: Json }
       get_student_weekly_stats: {
         Args: { p_student_id: string; p_week_end: string; p_week_start: string }
@@ -5894,12 +6276,21 @@ export type Database = {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_video_homework_for_student: {
+        Args: { p_homework: string; p_student: string }
+        Returns: Json
+      }
+      get_video_progress: { Args: { p_student: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      homework_video_path_ids: {
+        Args: { p_name: string }
+        Returns: Record<string, unknown>
       }
       is_enrolled_in_class: {
         Args: { _class_id: string; _user_id: string }
@@ -5966,6 +6357,10 @@ export type Database = {
       }
       refresh_invoice_carry: {
         Args: { p_student_id: string }
+        Returns: undefined
+      }
+      return_video_for_rerecord: {
+        Args: { p_note: string; p_video_submission: string }
         Returns: undefined
       }
       revert_invalid_held_sessions: {
@@ -6104,6 +6499,11 @@ export type Database = {
         Args: { p_date: string; p_teacher_id: string }
         Returns: Json
       }
+      toggle_video_heart: {
+        Args: { p_student: string; p_video: string }
+        Returns: boolean
+      }
+      video_staff_for_class: { Args: { p_class: string }; Returns: boolean }
     }
     Enums: {
       account_code: "AR" | "REVENUE" | "DISCOUNT" | "CASH" | "BANK" | "CREDIT"
