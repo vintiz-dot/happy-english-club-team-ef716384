@@ -6,6 +6,7 @@ import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import { supabase } from "@/integrations/supabase/client";
 import { logPdfEvent, newExportId } from "@/lib/pdfExportLog";
+import { cleanRichHtml } from "@/lib/richText";
 
 interface HomeworkPdfDownloadProps {
   homework: {
@@ -19,7 +20,7 @@ interface HomeworkPdfDownloadProps {
   };
   className?: string;
   teacherName?: string;
-  variant?: "icon" | "button" | "pill" | "pill-compact";
+  variant?: "icon" | "button" | "pill" | "pill-compact" | "chunky";
 }
 
 // A4 in mm
@@ -89,7 +90,7 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
         }
       }
 
-      const transformedBody = transformLinks(homework.body || "");
+      const transformedBody = transformLinks(cleanRichHtml(homework.body || ""));
 
       // Build an offscreen container with all content.
       // IMPORTANT: do NOT use opacity:0 or display:none — html2canvas inherits
@@ -158,13 +159,13 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
         </div>
         <style>
           .hw-body { word-wrap: break-word; overflow-wrap: anywhere; }
-          .hw-body * { max-width: 100% !important; overflow-wrap: anywhere !important; word-break: break-word !important; box-sizing: border-box; }
+          .hw-body * { max-width: 100% !important; overflow-wrap: break-word !important; word-break: normal !important; box-sizing: border-box; }
           .hw-body a { color: #2563eb !important; text-decoration: underline !important; font-weight: 600 !important; }
           .hw-body img { max-width: 100% !important; height: auto !important; display: block; margin: 8px 0; }
           .hw-body p { margin: 0 0 10px !important; }
           .hw-body h1, .hw-body h2, .hw-body h3, .hw-body h4 { margin: 12px 0 8px !important; line-height: 1.3 !important; }
           .hw-body ul, .hw-body ol { padding-left: 22px !important; margin: 0 0 10px !important; }
-          .hw-body li { margin-bottom: 4px !important; }
+          .hw-body li { margin-bottom: 4px !important; } .hw-body li[data-list="bullet"] { list-style-type: disc; } .hw-body .ql-indent-1 { margin-left: 1.5em; } .hw-body .ql-indent-2 { margin-left: 3em; } .hw-body .ql-indent-3 { margin-left: 4.5em; } .hw-body .ql-align-center { text-align: center; } .hw-body .ql-align-right { text-align: right; }
           .hw-body blockquote { border-left: 3px solid #d4a017; padding-left: 10px; margin: 8px 0; color: #555; }
           .hw-body pre, .hw-body code { white-space: pre-wrap !important; background: #f5f5f5; padding: 6px; border-radius: 4px; font-family: monospace; font-size: 12px; }
           .hw-body table { width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; margin: 8px 0 !important; }
@@ -324,6 +325,22 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
       <Button variant="ghost" size="icon" onClick={generate} disabled={generating} title="Download as PDF">
         {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
       </Button>
+    );
+  }
+
+  if (variant === "chunky") {
+    // Sits beside a student card's main button: same height, quieter colour.
+    return (
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); generate(); }}
+        disabled={generating}
+        aria-label="Download as PDF"
+        className="flex h-12 min-w-[3rem] items-center justify-center gap-1.5 rounded-2xl border-2 border-b-4 border-border bg-card px-3 text-sm font-extrabold text-foreground active:translate-y-[2px] active:border-b-2 transition-[transform] duration-100 disabled:opacity-60"
+      >
+        {generating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
+        <span>PDF</span>
+      </button>
     );
   }
 

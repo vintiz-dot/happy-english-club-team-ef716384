@@ -1,174 +1,79 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { sanitizeHtml } from "@/lib/sanitize";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import Layout from "@/components/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { FileText, Star, CheckCircle2, Clock, Send, AlertTriangle, Download } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { FileText, ChevronDown } from "lucide-react";
 import HomeworkDetailDialog from "@/components/student/HomeworkDetailDialog";
 import HomeworkStreakCard from "@/components/student/HomeworkStreakCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssignmentCalendar } from "@/components/assignments/AssignmentCalendar";
 import { useLoginChallenge } from "@/hooks/useLoginChallenge";
 import { GradeCelebration } from "@/components/student/GradeCelebration";
-import { getHomeworkStatus, statusConfig, getCountdown, type HomeworkStatus } from "@/lib/homeworkStatus";
-import { motion } from "framer-motion";
-import { HomeworkPdfDownload } from "@/components/homework/HomeworkPdfDownload";
+import { getHomeworkStatus } from "@/lib/homeworkStatus";
+import { dayjs } from "@/lib/date";
 import { PageHero } from "@/components/quest/PageHero";
 import { PlaceholderCard } from "@/components/ui/loading";
 import { EmptyState } from "@/components/quest/EmptyState";
 import { PagedListControls, usePagedList } from "@/components/shared/PagedListControls";
+import { HomeworkCard } from "@/components/student/homework/HomeworkCard";
+import { cn } from "@/lib/utils";
 
-const statusIcons: Record<HomeworkStatus, React.ReactNode> = {
-  overdue: <AlertTriangle className="h-4 w-4 text-red-500" />,
-  "due-today": <Clock className="h-4 w-4 text-amber-500" />,
-  "due-soon": <Clock className="h-4 w-4 text-amber-400" />,
-  submitted: <Send className="h-4 w-4 text-sky-500" />,
-  graded: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
-  upcoming: <FileText className="h-4 w-4 text-muted-foreground" />,
-};
+/** Late homework older than this folds away, so a long-ago miss doesn't bury this week's work. */
+const OLD_MISS_DAYS = 30;
 
-function SubmissionPipeline({ status }: { status: HomeworkStatus }) {
-  const steps = ["To Do", "Submitted", "Graded"];
-  const activeIdx = status === "graded" ? 2 : status === "submitted" ? 1 : 0;
+const dueTime = (a: any) => (a.due_date ? dayjs(a.due_date).valueOf() : Number.POSITIVE_INFINITY);
+
+function Section({ emoji, title, count, children }: { emoji: string; title: string; count?: number; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-1 mt-1">
-      {steps.map((step, i) => (
-        <div key={step} className="flex items-center gap-1">
-          <motion.div
-            className={`h-1.5 w-7 sm:w-6 rounded-full transition-colors ${i <= activeIdx ? "bg-emerald-500" : "bg-muted"}`}
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ delay: i * 0.15, duration: 0.3 }}
-          />
-          {i < steps.length - 1 && <div className="h-px w-1 bg-muted" />}
-        </div>
-      ))}
-      <span className="text-[11px] sm:text-xs ml-1 text-muted-foreground font-medium">{steps[activeIdx]}</span>
-    </div>
+    <section className="space-y-3">
+      <h2 className="flex items-center gap-2 px-1 text-lg font-black tracking-tight">
+        <span aria-hidden>{emoji}</span>
+        {title}
+        {count !== undefined && (
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-extrabold text-muted-foreground">{count}</span>
+        )}
+      </h2>
+      {children}
+    </section>
   );
 }
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.97 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      delay: i * 0.06,
-      duration: 0.4,
-      ease: "easeOut" as const,
-    },
-  }),
-};
-
-function AssignmentCard({ assignment, onClick, index = 0 }: { assignment: any; onClick: () => void; index?: number }) {
-  const status = getHomeworkStatus(assignment);
-  const config = statusConfig[status];
-  const countdown = getCountdown(assignment.due_date);
-  const isOverdue = status === "overdue";
-
+function PagedCards({ paged, onOpen }: { paged: ReturnType<typeof usePagedList<any>>; onOpen: (a: any) => void }) {
   return (
-    <motion.div
-      custom={index}
-      variants={cardVariants}
-      initial="hidden"
-      animate="visible"
-      whileHover={{ scale: 1.015, y: -2 }}
-      whileTap={{ scale: 0.98 }}
-    >
-      <Card
-        className={`cursor-pointer hover:shadow-md transition-shadow duration-200 min-w-0 overflow-hidden ${config.cardClass} ${config.borderColor} ${isOverdue ? "ring-1 ring-red-500/30 shadow-[0_0_0_1px_hsl(0_84%_60%/0.15)]" : ""}`}
-        onClick={onClick}
-      >
-        <CardHeader className="p-3 sm:p-5 min-w-0 overflow-hidden">
-          <div className="space-y-2 min-w-0">
-            <div className="flex items-start gap-2 min-w-0">
-              <span className="mt-0.5 shrink-0 relative">
-                {statusIcons[status]}
-                {isOverdue && (
-                  <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden />
-                )}
-              </span>
-              <div className="flex-1 min-w-0 overflow-hidden">
-                <CardTitle className="text-base sm:text-lg leading-tight break-words [overflow-wrap:anywhere]">
-                  {assignment.title}
-                </CardTitle>
-                <CardDescription className="text-xs sm:text-sm mt-0.5 break-words">
-                  {assignment.classes?.name || "Class"}
-                </CardDescription>
-              </div>
-              {status === "graded" && assignment.submission?.grade && (
-                <motion.div
-                  className="shrink-0 flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/40 rounded-xl px-3 py-1.5"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300, delay: 0.3 }}
-                >
-                  <Star className="h-4 w-4 text-emerald-500 fill-emerald-500" />
-                  <span className="font-bold text-base text-emerald-700 dark:text-emerald-400">
-                    {assignment.submission.grade}
-                  </span>
-                </motion.div>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-              <Badge className={`text-[11px] sm:text-xs px-2 py-0.5 ${config.badgeClass}`}>
-                {config.icon} {config.label}
-              </Badge>
-              {countdown && (
-                <Badge className={`text-[11px] sm:text-xs px-2 py-0.5 ${config.badgeClass} inline-flex items-center gap-1`}>
-                  {isOverdue && (
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-60 animate-ping" style={{ animationDuration: "2.8s" }} />
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
-                    </span>
-                  )}
-                  {countdown}
-                </Badge>
-              )}
-              {assignment.due_date && (
-                <Badge variant="outline" className="text-[11px] sm:text-xs px-2 py-0.5">
-                  Due {new Date(assignment.due_date).toLocaleDateString()}
-                </Badge>
-              )}
-            </div>
-
-            {/* Prominent PDF download — its own row so it never gets pushed off-screen */}
-            <div onClick={(e) => e.stopPropagation()} className="pt-1">
-              <HomeworkPdfDownload
-                homework={assignment}
-                className={assignment.classes?.name || ""}
-                variant="pill-compact"
-              />
-            </div>
-
-            {(status === "submitted" || status === "graded") && (
-              <SubmissionPipeline status={status} />
-            )}
+    <>
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+        {paged.slice.map((a: any, i: number) => (
+          <div key={a.id} className="long-list-item min-w-0">
+            <HomeworkCard homework={a} index={i} onOpen={() => onOpen(a)} />
           </div>
-        </CardHeader>
-        {assignment.body && status !== "graded" && (
-          <CardContent className="px-3 pb-3 sm:px-5 sm:pb-4 pt-0 min-w-0 overflow-hidden">
-            <div
-              className="text-sm prose prose-sm rich-content max-w-none w-full min-w-0 line-clamp-2 break-words [overflow-wrap:anywhere] overflow-hidden [&_*]:max-w-full [&_img]:max-w-full [&_img]:h-auto"
-              dangerouslySetInnerHTML={{ __html: sanitizeHtml(assignment.body) }}
-            />
-          </CardContent>
-        )}
-      </Card>
-    </motion.div>
+        ))}
+      </div>
+      <PagedListControls
+        page={paged.page}
+        totalPages={paged.totalPages}
+        total={paged.total}
+        rangeLabel={paged.rangeLabel}
+        onPageChange={paged.setPage}
+      />
+    </>
+  );
+}
+
+function Stat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="min-w-0 rounded-2xl bg-white/15 px-3 py-2 text-center ring-1 ring-white/20 backdrop-blur-sm">
+      <p className="text-2xl font-black leading-none tabular-nums">{value}</p>
+      <p className="mt-1 truncate text-[0.7rem] font-bold uppercase tracking-wide text-white/80">{label}</p>
+    </div>
   );
 }
 
 export default function StudentAssignments() {
   const { studentId } = useStudentProfile();
   const [selectedHomework, setSelectedHomework] = useState<any>(null);
+  const [showOldMisses, setShowOldMisses] = useState(false);
   const { recordHomeworkVisit } = useLoginChallenge(studentId);
 
   useEffect(() => {
@@ -200,120 +105,170 @@ export default function StudentAssignments() {
     staleTime: 2 * 60 * 1000,
   });
 
-  const now = new Date();
-  const upcomingAssignments = assignments.filter((a: any) => !a.due_date || new Date(a.due_date) >= now);
-  const pastAssignments = assignments.filter((a: any) => a.due_date && new Date(a.due_date) < now);
+  // Group by what the student has to DO, not by date: anything not yet sent
+  // is "to do" (late first), anything sent or marked is "done".
+  const groups = useMemo(() => {
+    const oldCutoff = dayjs().startOf("day").subtract(OLD_MISS_DAYS, "day").valueOf();
+    const late: any[] = [];
+    const oldMisses: any[] = [];
+    const next: any[] = [];
+    const done: any[] = [];
+    for (const a of assignments as any[]) {
+      const st = getHomeworkStatus(a);
+      if (st === "submitted" || st === "graded") done.push(a);
+      else if (st === "overdue") (dueTime(a) < oldCutoff ? oldMisses : late).push(a);
+      else next.push(a);
+    }
+    late.sort((a, b) => dueTime(b) - dueTime(a));
+    oldMisses.sort((a, b) => dueTime(b) - dueTime(a));
+    next.sort((a, b) => dueTime(a) - dueTime(b));
+    done.sort((a, b) => {
+      const ta = a.submission?.graded_at || a.submission?.submitted_at || a.due_date || "";
+      const tb = b.submission?.graded_at || b.submission?.submitted_at || b.due_date || "";
+      return tb.localeCompare(ta);
+    });
+    return { late, oldMisses, next, done };
+  }, [assignments]);
 
-  // Paginate each list independently. Upcoming is usually short; past
-  // grows over the year. Both honour the 20-per-page rule.
-  // CRITICAL: These must be above any conditional returns to avoid React Error #310
-  const upcomingPaged = usePagedList(upcomingAssignments);
-  const pastPaged = usePagedList(pastAssignments);
-  const upcomingSoonPaged = usePagedList(upcomingAssignments);
+  const todoCount = groups.late.length + groups.next.length;
+
+  // CRITICAL: hooks above any conditional return (React Error #310)
+  const latePaged = usePagedList(groups.late);
+  const nextPaged = usePagedList(groups.next);
+  const oldPaged = usePagedList(groups.oldMisses);
+  const donePaged = usePagedList(groups.done);
 
   if (!studentId) {
     return (
-      <Layout title="Assignments">
+      <Layout title="Homework">
         <Card><CardContent className="py-12 text-center"><p className="text-muted-foreground">Please select a student profile</p></CardContent></Card>
       </Layout>
     );
   }
 
-  // The hero needs no data, so it appears at once and only the list below
-  // is a placeholder. Holding the whole page back behind a spinner made a
-  // fast query feel slow.
+  const hero = (
+    <PageHero
+      eyebrow="My homework"
+      title={todoCount === 0 && !isLoading ? "All done! 🎉" : "Let's do this! 💪"}
+      subtitle={
+        isLoading
+          ? "Finding your homework…"
+          : todoCount === 0
+            ? "You have nothing to do right now. Great job!"
+            : `You have ${todoCount} ${todoCount === 1 ? "thing" : "things"} to do.`
+      }
+      variant="aurora"
+    >
+      {!isLoading && assignments.length > 0 && (
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <Stat value={todoCount} label="To do" />
+          <Stat value={groups.late.length} label="Late" />
+          <Stat value={groups.done.length} label="Done" />
+        </div>
+      )}
+    </PageHero>
+  );
+
   if (isLoading) {
     return (
-      <Layout title="Assignments">
-        <div className="space-y-4 sm:space-y-6 no-x-overflow min-w-0">
-          <PageHero
-            eyebrow="Quest log"
-            title="Assignments"
-            subtitle="Track your homework, earn XP, level up."
-            variant="aurora"
-          />
+      <Layout title="Homework">
+        <div className="space-y-4 sm:space-y-6 min-w-0">
+          {hero}
           <PlaceholderCard rows={4} />
         </div>
       </Layout>
     );
   }
 
-  return (
-    <Layout title="Assignments">
-      {studentId && assignments.length > 0 && <GradeCelebration studentId={studentId} assignments={assignments} />}
-      <div className="space-y-4 sm:space-y-6 no-x-overflow min-w-0">
-        <PageHero
-          eyebrow="Quest log"
-          title="Assignments"
-          subtitle="Track your homework, earn XP, level up."
-          variant="aurora"
-        />
+  const open = (a: any) => setSelectedHomework(a);
 
-        {/* Homework Streak Tracker */}
-        {assignments.length > 0 && studentId && (
-          <HomeworkStreakCard studentId={studentId} assignments={assignments} />
-        )}
+  return (
+    <Layout title="Homework">
+      {studentId && assignments.length > 0 && <GradeCelebration studentId={studentId} assignments={assignments} />}
+      <div className="mx-auto max-w-5xl space-y-5 sm:space-y-6 min-w-0">
+        {hero}
 
         {assignments.length === 0 ? (
           <EmptyState
             icon={FileText}
-            title="No assignments yet"
-            description="Your teachers haven't posted any assignments. Check back soon — new quests appear here."
+            title="No homework yet"
+            description="Your teachers haven't set any homework. Check back soon!"
           />
         ) : (
-          <Tabs defaultValue="list" className="w-full">
-            <TabsList className="w-full grid grid-cols-3 h-auto rounded-xl bg-muted/60 p-1">
-              <TabsTrigger value="list" className="text-sm py-2.5 min-h-[44px] rounded-lg font-semibold">📋 List</TabsTrigger>
-              <TabsTrigger value="calendar" className="text-sm py-2.5 min-h-[44px] rounded-lg font-semibold">📅 Calendar</TabsTrigger>
-              <TabsTrigger value="upcoming" className="text-sm py-2.5 min-h-[44px] rounded-lg font-semibold">🔜 Soon</TabsTrigger>
+          <Tabs defaultValue={todoCount > 0 ? "todo" : "done"} className="w-full">
+            <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-2xl bg-muted/70 p-1.5">
+              {[
+                { v: "todo", label: "To do", n: todoCount },
+                { v: "done", label: "Done", n: groups.done.length },
+                { v: "calendar", label: "Calendar" },
+              ].map((t) => (
+                <TabsTrigger
+                  key={t.v}
+                  value={t.v}
+                  className="min-h-[44px] gap-1.5 rounded-xl px-1 text-[0.9375rem] font-extrabold data-[state=active]:shadow-[0_2px_0_0_hsl(var(--border))]"
+                >
+                  {t.label}
+                  {t.n !== undefined && t.n > 0 && (
+                    <span className="rounded-full bg-primary px-1.5 py-px text-[0.7rem] font-black leading-4 text-primary-foreground">
+                      {t.n}
+                    </span>
+                  )}
+                </TabsTrigger>
+              ))}
             </TabsList>
 
-            <TabsContent value="list" className="space-y-6 mt-4">
-              {upcomingAssignments.length > 0 && (
-                <div className="space-y-3">
-                  <h2 className="text-lg font-semibold flex items-center gap-2">🎯 Current & Upcoming</h2>
-                  <div className="grid gap-3">
-                    {upcomingPaged.slice.map((a: any, i: number) => (
-                      <div key={a.id} className="long-list-item">
-                        <AssignmentCard assignment={a} index={i} onClick={() => setSelectedHomework(a)} />
-                      </div>
-                    ))}
-                  </div>
-                  <PagedListControls
-                    page={upcomingPaged.page}
-                    totalPages={upcomingPaged.totalPages}
-                    total={upcomingPaged.total}
-                    rangeLabel={upcomingPaged.rangeLabel}
-                    onPageChange={upcomingPaged.setPage}
-                  />
+            <TabsContent value="todo" className="mt-5 space-y-7">
+              {todoCount === 0 && (
+                <div className="rounded-3xl border-2 border-b-[5px] border-emerald-200 bg-emerald-50 p-6 text-center dark:border-emerald-500/40 dark:bg-emerald-500/10">
+                  <p className="text-5xl" aria-hidden>🏆</p>
+                  <p className="mt-2 text-xl font-black">Nothing to do!</p>
+                  <p className="mt-1 text-[0.9375rem] text-muted-foreground">You've sent all your homework. Amazing!</p>
                 </div>
               )}
-              {pastAssignments.length > 0 && (
-                <div className="space-y-3">
-                  <h2 className="text-lg font-semibold flex items-center gap-2">📁 Past Assignments</h2>
-                  <div className="grid gap-3">
-                    {pastPaged.slice.map((a: any, i: number) => {
-                      const st = getHomeworkStatus(a);
-                      const isOverdueNotSubmitted = st === "overdue";
-                      return (
-                        <div key={a.id} className={`long-list-item ${isOverdueNotSubmitted ? "" : "opacity-60 hover:opacity-90 transition-opacity"}`}>
-                          <AssignmentCard assignment={a} index={i} onClick={() => setSelectedHomework(a)} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <PagedListControls
-                    page={pastPaged.page}
-                    totalPages={pastPaged.totalPages}
-                    total={pastPaged.total}
-                    rangeLabel={pastPaged.rangeLabel}
-                    onPageChange={pastPaged.setPage}
-                  />
-                </div>
+              {groups.late.length > 0 && (
+                <Section emoji="⏰" title="Late — do these first" count={groups.late.length}>
+                  <PagedCards paged={latePaged} onOpen={open} />
+                </Section>
+              )}
+              {groups.next.length > 0 && (
+                <Section emoji="🎯" title="Coming up" count={groups.next.length}>
+                  <PagedCards paged={nextPaged} onOpen={open} />
+                </Section>
+              )}
+              {groups.oldMisses.length > 0 && (
+                <section className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowOldMisses((v) => !v)}
+                    aria-expanded={showOldMisses}
+                    className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-border px-4 py-3 text-left"
+                  >
+                    <span className="min-w-0 text-[0.9375rem] font-extrabold">
+                      📦 Older homework you missed
+                      <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-extrabold text-muted-foreground">
+                        {groups.oldMisses.length}
+                      </span>
+                    </span>
+                    <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform", showOldMisses && "rotate-180")} />
+                  </button>
+                  {showOldMisses && <PagedCards paged={oldPaged} onOpen={open} />}
+                </section>
               )}
             </TabsContent>
 
-            <TabsContent value="calendar" className="mt-4">
+            <TabsContent value="done" className="mt-5 space-y-4">
+              {groups.done.length === 0 ? (
+                <div className="rounded-3xl border-2 border-dashed border-border p-8 text-center">
+                  <p className="text-4xl" aria-hidden>📬</p>
+                  <p className="mt-2 text-lg font-black">Nothing sent yet</p>
+                  <p className="mt-1 text-[0.9375rem] text-muted-foreground">Homework you send will appear here.</p>
+                </div>
+              ) : (
+                <PagedCards paged={donePaged} onOpen={open} />
+              )}
+            </TabsContent>
+
+            <TabsContent value="calendar" className="mt-5">
               <AssignmentCalendar
                 role="student"
                 onSelectAssignment={(assignment) => {
@@ -322,28 +277,11 @@ export default function StudentAssignments() {
                 }}
               />
             </TabsContent>
-
-            <TabsContent value="upcoming" className="mt-4 space-y-4">
-              {upcomingAssignments.length === 0 ? (
-                <Card><CardContent className="py-12 text-center"><FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" /><p className="text-muted-foreground">No upcoming assignments</p></CardContent></Card>
-              ) : (
-                <>
-                  <div className="grid gap-3">
-                    {upcomingSoonPaged.slice.map((a: any, i: number) => (
-                      <AssignmentCard key={a.id} assignment={a} index={i} onClick={() => setSelectedHomework(a)} />
-                    ))}
-                  </div>
-                  <PagedListControls
-                    page={upcomingSoonPaged.page}
-                    totalPages={upcomingSoonPaged.totalPages}
-                    total={upcomingSoonPaged.total}
-                    rangeLabel={upcomingSoonPaged.rangeLabel}
-                    onPageChange={upcomingSoonPaged.setPage}
-                  />
-                </>
-              )}
-            </TabsContent>
           </Tabs>
+        )}
+
+        {assignments.length > 0 && studentId && (
+          <HomeworkStreakCard studentId={studentId} assignments={assignments} />
         )}
       </div>
 

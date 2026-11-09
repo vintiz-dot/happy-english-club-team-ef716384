@@ -22,7 +22,8 @@ import { MascotCompanion } from "@/components/student/MascotCompanion";
 import { DailyStreakCard } from "@/components/student/DailyStreakCard";
 import { DailyChallengesCard } from "@/components/student/DailyChallengesCard";
 import { LevelProgressRing } from "@/components/student/LevelProgressRing";
-import { QuestCard } from "@/components/student/QuestCard";
+import { HomeworkCard } from "@/components/student/homework/HomeworkCard";
+import HomeworkDetailDialog from "@/components/student/HomeworkDetailDialog";
 import { CelebrationOverlay } from "@/components/student/CelebrationOverlay";
 import { HowToEarnXP } from "@/components/student/HowToEarnXP";
 import { AchievementBadges } from "@/components/student/AchievementBadges";
@@ -90,6 +91,7 @@ export default function StudentDashboard() {
   const currentMonth = dayjs().format("YYYY-MM");
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [openHomework, setOpenHomework] = useState<any>(null);
   const [featuredBadgeId, setFeaturedBadgeId] = useState<string | null>(() => {
     try { return localStorage.getItem("featured_badge_id"); } catch { return null; }
   });
@@ -446,7 +448,7 @@ export default function StudentDashboard() {
         {/* Tab Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Dashboard Tab */}
-          <TabsContent value="dashboard" className="mt-6 space-y-8">
+          <TabsContent value="dashboard" className="mt-2 sm:mt-6 space-y-5 sm:space-y-8">
         {/* Hero — cinematic command deck */}
         <HeroCommandDeck
           firstName={studentProfile.full_name.split(' ')[0]}
@@ -485,7 +487,7 @@ export default function StudentDashboard() {
         </motion.div>
 
         {/* Stats Row - Streak & Challenges */}
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
           <motion.div variants={itemVariants}>
             <DailyStreakCard
               currentStreak={streakData.currentStreak}
@@ -501,7 +503,7 @@ export default function StudentDashboard() {
         </div>
 
         {/* Achievement Badges */}
-        <motion.div variants={itemVariants} className="holo-card p-6">
+        <motion.div variants={itemVariants} className="holo-card p-4 sm:p-6">
           <AchievementBadges
             totalXp={totalPoints || 0}
             homeworkCompleted={achievementData?.homeworkCompleted || 0}
@@ -518,8 +520,9 @@ export default function StudentDashboard() {
           />
         </motion.div>
 
-        {/* Quick Stats -- Nova tiles */}
+        {/* Quick Stats -- Nova tiles. On a phone the hero already shows classes and open quests, so only Balance is new. */}
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+          <div className="hidden sm:block [&>*]:h-full">
           <NovaStatCard
             icon={Rocket}
             label="Upcoming Adventures"
@@ -528,6 +531,8 @@ export default function StudentDashboard() {
             gradient="from-blue-500 to-cyan-500"
             delay={0.05}
           />
+          </div>
+          <div className="hidden sm:block [&>*]:h-full">
           <NovaStatCard
             icon={Target}
             label="Active Quests"
@@ -536,6 +541,7 @@ export default function StudentDashboard() {
             gradient="from-violet-500 to-fuchsia-600"
             delay={0.12}
           />
+          </div>
           <NovaStatCard
             icon={Wallet}
             label="Balance"
@@ -567,21 +573,17 @@ export default function StudentDashboard() {
             variants={itemVariants}
             className="holo-card overflow-hidden"
           >
-            <div className="p-6 relative">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <motion.div 
-                    className="p-3 rounded-xl bg-gradient-to-br from-accent/20 to-accent/10"
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <span className="text-2xl">📋</span>
-                  </motion.div>
-                  <CardTitle className="text-xl font-bold">Quest Board</CardTitle>
+            <div className="p-4 sm:p-6 relative">
+              <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-accent/20 to-accent/10 shrink-0">
+                    <span className="text-2xl">📝</span>
+                  </div>
+                  <CardTitle className="text-lg sm:text-xl font-black truncate">My Homework</CardTitle>
                 </div>
-                <Link to="/student/assignments">
-                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                    View All <ChevronRight className="h-4 w-4 ml-1" />
+                <Link to="/student/assignments" className="shrink-0">
+                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground font-bold">
+                    See all <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                 </Link>
               </div>
@@ -589,17 +591,7 @@ export default function StudentDashboard() {
               {pendingHomework && pendingHomework.length > 0 ? (
                 <div className="space-y-3">
                   {pendingHomework.slice(0, 3).map((hw: any, index: number) => (
-                    <QuestCard
-                      key={hw.id}
-                      id={hw.id}
-                      title={hw.title}
-                      className={hw.classes?.name || 'Class'}
-                      dueDate={hw.due_date}
-                      xpReward={20}
-                      type="homework"
-                      status={hw.due_date && dayjs(hw.due_date).isBefore(dayjs()) ? "overdue" : "pending"}
-                      onClick={() => navigate('/student/assignments')}
-                    />
+                    <HomeworkCard key={hw.id} homework={hw} index={index} compact onOpen={() => setOpenHomework(hw)} />
                   ))}
                 </div>
               ) : (
@@ -621,19 +613,15 @@ export default function StudentDashboard() {
             variants={itemVariants}
             className="holo-card overflow-hidden"
           >
-            <div className="p-6 relative">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <motion.div 
-                    className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10"
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.5 }}
-                  >
+            <div className="p-4 sm:p-6 relative">
+              <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shrink-0">
                     <span className="text-2xl">🚀</span>
-                  </motion.div>
-                  <CardTitle className="text-xl font-bold">Upcoming Adventures</CardTitle>
+                  </div>
+                  <CardTitle className="text-lg sm:text-xl font-black truncate">Next classes</CardTitle>
                 </div>
-                <Link to="/student/dashboard?tab=schedule">
+                <Link to="/student/dashboard?tab=schedule" className="shrink-0">
                   <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
                     Schedule <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
@@ -645,25 +633,24 @@ export default function StudentDashboard() {
                   {upcomingSessions.map((session: any, index: number) => (
                     <motion.div 
                       key={session.id} 
-                      className="glass p-4 rounded-xl flex justify-between items-center hover:shadow-lg transition-all duration-300"
+                      className="glass p-3 sm:p-4 rounded-2xl flex justify-between items-center gap-3 hover:shadow-lg transition-all duration-300"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      whileHover={{ x: 4 }}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
                           <span className="text-xl">🎓</span>
                         </div>
-                        <div className="space-y-1">
-                          <p className="font-semibold text-foreground">{session.classes?.name || "Class"}</p>
+                        <div className="space-y-1 min-w-0">
+                          <p className="font-bold text-foreground truncate">{session.classes?.name || "Class"}</p>
                           <p className="text-sm text-muted-foreground flex items-center gap-2">
                             <Calendar className="h-3.5 w-3.5" />
                             {dayjs(session.date).format("MMM D")} • {session.start_time.slice(0, 5)}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 shrink-0">
                         {dayjs(session.date).isSame(dayjs(), 'day') && (
                           <Badge className="bg-success text-success-foreground">Today!</Badge>
                         )}
@@ -697,7 +684,7 @@ export default function StudentDashboard() {
               gradient="from-amber-400 to-orange-600"
             />
             
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
               {enrolledClasses.map((enrollment: any, index: number) => {
                 const classData = enrollment.classes;
                 
@@ -830,6 +817,10 @@ export default function StudentDashboard() {
           </TabsContent>
         </Tabs>
       </motion.div>
+
+      {openHomework && studentId && (
+        <HomeworkDetailDialog homework={openHomework} studentId={studentId} onClose={() => setOpenHomework(null)} />
+      )}
 
       {/* Edit Profile Dialog */}
       <Dialog open={showEditProfile} onOpenChange={setShowEditProfile}>

@@ -32,7 +32,7 @@ export function DailyStreakCard({
 
   return (
     <motion.div
-      className="glass-lg rounded-3xl p-6 relative overflow-hidden"
+      className="glass-lg rounded-3xl p-4 sm:p-6 relative overflow-hidden min-w-0"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.02, y: -2 }}
@@ -133,7 +133,7 @@ export function DailyStreakCard({
         </div>
 
         {/* Week Calendar */}
-        <div className="flex justify-between gap-1">
+        <div className="grid grid-cols-7 gap-1">
           {weekDays.map((day, index) => {
             const isToday = index === mondayOffset;
             const isActive = weekActivity[index];
@@ -141,7 +141,7 @@ export function DailyStreakCard({
             return (
               <motion.div
                 key={index}
-                className={`flex-1 flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
+                className={`min-w-0 flex flex-col items-center gap-1 py-2 sm:p-2 rounded-xl transition-all ${
                   isToday ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''
                 }`}
                 initial={{ opacity: 0, y: 10 }}
@@ -152,7 +152,7 @@ export function DailyStreakCard({
                   {day}
                 </span>
                 <motion.div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
                     isActive 
                       ? 'bg-gradient-to-br from-warning to-warning/70 shadow-lg' 
                       : 'bg-muted/50'

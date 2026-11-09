@@ -2,13 +2,12 @@ import { useState, lazy, Suspense } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Upload, FileText, Heart } from "lucide-react";
 import "react-quill-new/dist/quill.snow.css";
 import { format } from "date-fns";
-import { sanitizeHtml } from "@/lib/sanitize";
+import { RichText } from "@/components/homework/RichText";
 import { dayjs } from "@/lib/date";
 import { soundManager } from "@/lib/soundManager";
 import { motion, AnimatePresence } from "framer-motion";
@@ -243,6 +242,9 @@ function WrittenHomeworkSubmission({
     URL.revokeObjectURL(url);
   };
 
+  const isGraded = existingSubmission?.status === "graded";
+  const isSent = existingSubmission?.status === "submitted";
+
   return (
     <>
       <SubmitCheckmark
@@ -253,174 +255,180 @@ function WrittenHomeworkSubmission({
         }}
       />
       <motion.div
-        className="space-y-4 p-4 border rounded-lg"
+        className="space-y-4 min-w-0"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div>
-          <Label htmlFor="submission-text">Your Response</Label>
-          <Suspense fallback={<div className="h-32 border rounded-md flex items-center justify-center text-muted-foreground">Loading editor...</div>}>
-            <ReactQuill
-              theme="snow"
-              value={submissionText}
-              onChange={setSubmissionText}
-              placeholder="Write your answer here..."
-              readOnly={existingSubmission?.status === "graded"}
-              modules={{
-                toolbar: [
-                  [{ header: [1, 2, 3, false] }],
-                  ["bold", "italic", "underline", "strike"],
-                  [{ color: [] }, { background: [] }],
-                  [{ list: "ordered" }, { list: "bullet" }],
-                  ["link"],
-                  ["clean"],
-                ],
-              }}
-            />
-          </Suspense>
-        </div>
-
-        <div>
-          <Label htmlFor="submission-file">Attach File (max 5MB)</Label>
-          <Input
-            id="submission-file"
-            type="file"
-            onChange={handleFileChange}
-            disabled={existingSubmission?.status === "graded"}
-          />
-          {file && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Selected: {file.name} ({(file.size / 1024).toFixed(1)} KB)
-            </p>
-          )}
-        </div>
-
-        {existingSubmission?.file_name && (
-          <Button variant="outline" size="sm" onClick={downloadFile}>
-            <FileText className="h-4 w-4 mr-2" />
-            {existingSubmission.file_name}
-          </Button>
-        )}
-
-        {existingSubmission?.status === "graded" && (
-          <motion.div
-            className="rounded-xl overflow-hidden border border-emerald-500/30"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-          >
-            {/* Gradient header */}
-            <div className="bg-gradient-to-r from-emerald-500/20 to-sky-500/10 px-4 py-3 flex items-center justify-between">
-              <span className="font-semibold text-sm flex items-center gap-1.5">✅ Graded</span>
-              {existingSubmission.graded_at && (
-                <span className="text-[10px] text-muted-foreground">
-                  {format(new Date(existingSubmission.graded_at), "MMM d, yyyy")}
+        {isGraded ? (
+          <div className="space-y-4">
+            {/* Result */}
+            <div className="flex items-center gap-4 rounded-3xl border-2 border-b-[5px] border-emerald-300 bg-emerald-50 p-4 dark:border-emerald-500/50 dark:bg-emerald-500/10">
+              <motion.div
+                className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full bg-white text-emerald-700 shadow-[0_4px_0_0_theme(colors.emerald.300)] dark:bg-emerald-950 dark:text-emerald-300"
+                initial={{ scale: 0, rotate: -20 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 220, delay: 0.15 }}
+              >
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider">Grade</span>
+                <span className="max-w-[4.5rem] truncate text-2xl font-black leading-tight">
+                  {existingSubmission.grade || "✓"}
                 </span>
-              )}
+              </motion.div>
+              <div className="min-w-0">
+                <p className="text-lg font-black leading-snug">🌟 Well done!</p>
+                <p className="text-sm font-semibold text-muted-foreground">
+                  {existingSubmission.graded_at
+                    ? `Marked ${format(new Date(existingSubmission.graded_at), "d MMM")}`
+                    : "Your teacher marked this"}
+                </p>
+              </div>
             </div>
 
-            <div className="p-4 space-y-4">
-              {existingSubmission.grade && (
-                <div className="flex justify-center py-2">
-                  <motion.div
-                    className="relative w-20 h-20 flex items-center justify-center"
-                    initial={{ scale: 0, rotate: -90 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-                  >
-                    <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
-                      <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" className="text-emerald-500/20" strokeWidth="4" />
-                      <motion.circle
-                        cx="40" cy="40" r="36" fill="none" stroke="currentColor" className="text-emerald-500" strokeWidth="4"
-                        strokeDasharray="226"
-                        initial={{ strokeDashoffset: 226 }}
-                        animate={{ strokeDashoffset: 0 }}
-                        transition={{ duration: 1.2, ease: "easeOut", delay: 0.5 }}
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{existingSubmission.grade}</span>
-                  </motion.div>
+            {/* Teacher's words, as a chat bubble */}
+            {existingSubmission.teacher_feedback && (
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xl" aria-hidden>
+                  👩‍🏫
                 </div>
-              )}
-
-              <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
-                {existingSubmission.submitted_at && (
-                  <span>📤 Submitted {format(new Date(existingSubmission.submitted_at), "MMM d")}</span>
-                )}
-                {existingSubmission.submitted_at && existingSubmission.graded_at && <span>→</span>}
-                {existingSubmission.graded_at && (
-                  <span>📝 Graded {format(new Date(existingSubmission.graded_at), "MMM d")}</span>
-                )}
-              </div>
-
-              {existingSubmission.assignment_instructions && (
-                <div className="border-t pt-3">
-                  <p className="text-sm font-semibold mb-2">Assignment Instructions:</p>
-                  <div
-                    className="prose prose-sm max-w-none [&_p]:text-muted-foreground [&_strong]:text-foreground [&_em]:text-foreground [&_ul]:text-muted-foreground [&_ol]:text-muted-foreground [&_li]:text-muted-foreground"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(existingSubmission.assignment_instructions) }}
-                  />
-                </div>
-              )}
-
-              {existingSubmission.submission_text && (
-                <div className="border-t pt-3">
-                  <p className="text-sm font-semibold mb-2">Your Submission:</p>
-                  <div
-                    className="prose prose-sm max-w-none [&_p]:text-foreground [&_strong]:text-foreground [&_em]:text-foreground [&_ul]:text-foreground [&_ol]:text-foreground [&_li]:text-foreground"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(existingSubmission.submission_text) }}
-                  />
-                </div>
-              )}
-
-              {existingSubmission.teacher_feedback && (
-                <div className="relative border-t pt-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm">👩‍🏫</div>
-                    <p className="text-sm font-semibold">Teacher Feedback</p>
-                  </div>
-                  <div className="relative bg-primary/5 border border-primary/15 rounded-xl p-4 ml-10">
-                    <div className="absolute -left-2 top-4 w-0 h-0 border-t-[6px] border-t-transparent border-r-[8px] border-r-primary/15 border-b-[6px] border-b-transparent" />
-                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 text-xs font-extrabold uppercase tracking-wide text-muted-foreground">Your teacher says</p>
+                  <div className="rounded-3xl rounded-tl-md border-2 border-primary/20 bg-primary/5 px-4 py-3">
+                    <p className="whitespace-pre-wrap break-words text-[1.0625rem] leading-relaxed text-foreground">
                       {existingSubmission.teacher_feedback}
                     </p>
                   </div>
-                  {!existingReaction && !thanked && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-3 ml-10 gap-1.5 text-xs border-primary/20 hover:bg-primary/10 hover:text-primary"
+                  {!existingReaction && !thanked ? (
+                    <button
+                      type="button"
+                      className="mt-3 inline-flex h-11 items-center gap-2 rounded-2xl border-2 border-b-4 border-pink-300 bg-pink-50 px-4 text-sm font-extrabold text-pink-700 transition-[transform] duration-100 active:translate-y-[2px] active:border-b-2 disabled:opacity-60 dark:border-pink-500/50 dark:bg-pink-500/10 dark:text-pink-200"
                       onClick={() => thankMutation.mutate()}
                       disabled={thankMutation.isPending}
                     >
-                      <Heart className="h-3.5 w-3.5" />
+                      <Heart className="h-4 w-4" />
                       Thank you, Teacher!
-                    </Button>
-                  )}
-                  {(existingReaction || thanked) && (
-                    <p className="mt-2 ml-10 text-xs text-muted-foreground flex items-center gap-1">
-                      <Heart className="h-3 w-3 fill-primary text-primary" /> You thanked your teacher
+                    </button>
+                  ) : (
+                    <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+                      <Heart className="h-4 w-4 fill-pink-500 text-pink-500" /> You said thank you
                     </p>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* What the student sent */}
+            {(existingSubmission.submission_text || existingSubmission.file_name) && (
+              <div className="rounded-3xl border-2 border-border bg-card p-4">
+                <p className="mb-2 text-xs font-extrabold uppercase tracking-wide text-muted-foreground">What you sent</p>
+                {existingSubmission.submission_text && (
+                  <RichText html={existingSubmission.submission_text} size="sm" />
+                )}
+                {existingSubmission.file_name && (
+                  <button
+                    type="button"
+                    onClick={downloadFile}
+                    className="mt-3 inline-flex max-w-full items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm font-bold"
+                  >
+                    <FileText className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{existingSubmission.file_name}</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {isSent && (
+              <div className="rounded-2xl bg-sky-50 px-4 py-3 text-[0.9375rem] font-semibold text-sky-800 dark:bg-sky-500/10 dark:text-sky-200">
+                📬 Sent! Your teacher will mark it soon. You can still change it and send again.
+              </div>
+            )}
+
+            <div className="hw-answer-editor min-w-0">
+              <Label htmlFor="submission-text" className="sr-only">Your answer</Label>
+              <Suspense fallback={<div className="flex h-40 items-center justify-center rounded-3xl border-2 text-muted-foreground">Getting the answer box ready…</div>}>
+                <ReactQuill
+                  theme="snow"
+                  value={submissionText}
+                  onChange={setSubmissionText}
+                  placeholder="Write your answer here…"
+                  modules={{
+                    toolbar: [
+                      ["bold", "italic", "underline"],
+                      [{ list: "ordered" }, { list: "bullet" }],
+                      ["clean"],
+                    ],
+                  }}
+                />
+              </Suspense>
+            </div>
+
+            {/* Photo or file */}
+            <div className="space-y-2">
+              <input
+                id={`submission-file-${homeworkId}`}
+                type="file"
+                className="sr-only"
+                onChange={handleFileChange}
+              />
+              {file ? (
+                <div className="flex items-center gap-3 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-3 dark:border-emerald-500/50 dark:bg-emerald-500/10">
+                  <span className="text-2xl" aria-hidden>📎</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[0.9375rem] font-bold">{file.name}</span>
+                    <span className="block text-xs font-semibold text-muted-foreground">{(file.size / 1024).toFixed(0)} KB · ready to send</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFile(null)}
+                    className="shrink-0 rounded-full px-3 py-2 text-sm font-bold text-muted-foreground hover:bg-background"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <label
+                  htmlFor={`submission-file-${homeworkId}`}
+                  className="flex min-h-[3.5rem] cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 px-4 py-3 text-center text-[0.9375rem] font-extrabold text-primary transition hover:bg-primary/10"
+                >
+                  <Upload className="h-5 w-5 shrink-0" />
+                  Add a photo or file
+                  <span className="font-semibold text-muted-foreground">(up to 5 MB)</span>
+                </label>
+              )}
+              {existingSubmission?.file_name && !file && (
+                <button
+                  type="button"
+                  onClick={downloadFile}
+                  className="inline-flex max-w-full items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm font-bold"
+                >
+                  <FileText className="h-4 w-4 shrink-0" />
+                  <span className="truncate">Sent before: {existingSubmission.file_name}</span>
+                </button>
               )}
             </div>
-          </motion.div>
-        )}
 
-        {existingSubmission?.status !== "graded" && (
-          <motion.div whileTap={{ scale: 0.97 }}>
-            <Button
+            <button
+              type="button"
               onClick={() => uploadMutation.mutate()}
               disabled={uploadMutation.isPending || (!submissionText && !file)}
-              className="w-full sm:w-auto"
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 text-lg font-black tracking-wide text-white shadow-[0_5px_0_0_theme(colors.emerald.700)] transition-[transform,box-shadow] duration-100 active:translate-y-[4px] active:shadow-[0_1px_0_0_theme(colors.emerald.700)] disabled:bg-muted disabled:text-muted-foreground disabled:shadow-[0_5px_0_0_hsl(var(--border))] disabled:active:translate-y-0"
             >
-              <Upload className="h-4 w-4 mr-2" />
-              {uploadMutation.isPending ? "Submitting..." : "Submit Homework"}
-            </Button>
-          </motion.div>
+              {uploadMutation.isPending ? (
+                "Sending…"
+              ) : (
+                <>
+                  {isSent ? "Send again" : "Send to my teacher"} <span aria-hidden>🚀</span>
+                </>
+              )}
+            </button>
+            {!submissionText && !file && (
+              <p className="-mt-1 text-center text-sm font-semibold text-muted-foreground">
+                Write your answer or add a photo, then tap send.
+              </p>
+            )}
+          </>
         )}
       </motion.div>
     </>

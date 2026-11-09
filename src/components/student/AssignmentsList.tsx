@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { sanitizeHtml } from "@/lib/sanitize";
+import { RichText } from "@/components/homework/RichText";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -91,12 +91,12 @@ export default function AssignmentsList({ studentId }: AssignmentsListProps) {
           >
             <Card className={cardClass}>
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="space-y-1 flex-1">
-                  <CardTitle className="text-lg">{assignment.title}</CardTitle>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between min-w-0">
+                <div className="space-y-1 flex-1 min-w-0">
+                  <CardTitle className="text-lg leading-snug break-words">{assignment.title}</CardTitle>
                   <CardDescription>{(assignment.classes as any)?.name}</CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                   {assignment.submission?.status === "graded" && assignment.submission.grade && (
                     <Badge variant="default" className="bg-emerald-600">
                       {assignment.submission.grade}
@@ -122,10 +122,7 @@ export default function AssignmentsList({ studentId }: AssignmentsListProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               {assignment.body && (
-                <div 
-                  className="text-sm text-muted-foreground prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(assignment.body) }}
-                />
+                <RichText html={assignment.body} size="sm" />
               )}
               
               <CollapsibleTrigger asChild>

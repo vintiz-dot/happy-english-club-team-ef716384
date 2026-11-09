@@ -954,11 +954,14 @@ All colors MUST be HSL.
   margin-left: 1px;
 }
 
-/* Harden rich content containers against overflow from long URLs / unbroken strings */
+/* Harden rich content containers against overflow from long URLs / unbroken strings.
+   `break-word`, NOT `anywhere`: both break a word too long for the line, but
+   `anywhere` also lets the box shrink to one character wide, which is how
+   homework instructions ended up one letter per line on phones. */
 .rich-content,
 .prose {
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 .rich-content *,
 .prose * {
@@ -973,6 +976,111 @@ All colors MUST be HSL.
 .prose img {
   height: auto;
 }
+
+/* ====================================================================
+   Homework reading text (.hw-rich) — rendered by <RichText>, fed by
+   cleanRichHtml(), which has already removed pasted layout styles.
+   Built for young readers on a phone: 17px, roomy lines, real bullets,
+   words wrap at spaces and only a word too long for the line is split.
+   ==================================================================== */
+.hw-rich {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: hsl(var(--foreground));
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: manual;
+  white-space: normal;
+  min-width: 0;
+  max-width: 100%;
+}
+.hw-rich.hw-rich-sm { font-size: 0.9375rem; line-height: 1.6; }
+.hw-rich > * + * { margin-top: 0.75em; }
+.hw-rich p, .hw-rich div { margin: 0; }
+.hw-rich p:empty, .hw-rich p:has(> br:only-child) { margin-top: 0.35em; }
+.hw-rich h1, .hw-rich h2, .hw-rich h3, .hw-rich h4, .hw-rich h5, .hw-rich h6 {
+  font-weight: 800;
+  line-height: 1.3;
+  margin-top: 1.1em;
+  letter-spacing: -0.01em;
+}
+.hw-rich h1 { font-size: 1.3em; }
+.hw-rich h2 { font-size: 1.18em; }
+.hw-rich h3, .hw-rich h4, .hw-rich h5, .hw-rich h6 { font-size: 1.05em; }
+.hw-rich > :first-child { margin-top: 0; }
+.hw-rich strong, .hw-rich b { font-weight: 750; }
+.hw-rich ul, .hw-rich ol { padding-left: 1.5em; margin: 0; }
+.hw-rich ul { list-style: disc; }
+.hw-rich ol { list-style: decimal; }
+.hw-rich li { padding-left: 0.2em; margin-top: 0.35em; }
+.hw-rich li::marker { color: hsl(var(--primary)); font-weight: 800; }
+.hw-rich li[data-list="bullet"] { list-style-type: disc; }
+.hw-rich li[data-list="ordered"] { list-style-type: decimal; }
+.hw-rich li[data-list="checked"] { list-style-type: "✅  "; }
+.hw-rich li[data-list="unchecked"] { list-style-type: "⬜  "; }
+.hw-rich .ql-indent-1 { margin-left: 0.75em; }
+.hw-rich .ql-indent-2 { margin-left: 1.5em; }
+.hw-rich .ql-indent-3 { margin-left: 2.25em; }
+@media (min-width: 640px) {
+  .hw-rich .ql-indent-1 { margin-left: 1.5em; }
+  .hw-rich .ql-indent-2 { margin-left: 3em; }
+  .hw-rich .ql-indent-3 { margin-left: 4.5em; }
+}
+.hw-rich .ql-align-center { text-align: center; }
+.hw-rich .ql-align-right { text-align: right; }
+.hw-rich .ql-align-justify { text-align: left; }
+.hw-rich blockquote {
+  border-left: 4px solid hsl(var(--primary) / 0.5);
+  background: hsl(var(--primary) / 0.06);
+  border-radius: 0 0.75rem 0.75rem 0;
+  padding: 0.6em 0.9em;
+}
+.hw-rich pre, .hw-rich code {
+  font-size: 0.9em;
+  white-space: pre-wrap;
+  background: hsl(var(--muted));
+  border-radius: 0.4rem;
+  padding: 0.1em 0.35em;
+}
+.hw-rich pre { padding: 0.7em 0.9em; }
+.hw-rich a { overflow-wrap: anywhere; }
+
+/* The student's answer box: one rounded card, 16px+ text so iOS never
+   zooms in when it gets focus, a toolbar that wraps instead of overflowing. */
+.hw-answer-editor .quill { border: 0; background: transparent; border-radius: 0; }
+.hw-answer-editor .ql-toolbar.ql-snow {
+  border: 2px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+  border-radius: 1.5rem 1.5rem 0 0;
+  background: hsl(var(--muted) / 0.5);
+  padding: 6px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.hw-answer-editor .ql-toolbar.ql-snow .ql-formats { margin-right: 6px; }
+.hw-answer-editor .ql-toolbar.ql-snow button { width: 34px; height: 34px; padding: 6px; }
+.hw-answer-editor .ql-container.ql-snow {
+  border: 2px solid hsl(var(--border));
+  border-top: 0;
+  border-radius: 0 0 1.5rem 1.5rem;
+  background: hsl(var(--card));
+  font-size: 1.0625rem;
+}
+.hw-answer-editor .ql-editor {
+  min-height: 9rem;
+  line-height: 1.65;
+  padding: 0.9rem 1rem;
+  overflow-wrap: break-word;
+}
+.hw-answer-editor .ql-editor.ql-blank::before {
+  font-style: normal;
+  color: hsl(var(--muted-foreground));
+  left: 1rem;
+  right: 1rem;
+}
+.hw-answer-editor:focus-within .ql-container.ql-snow,
+.hw-answer-editor:focus-within .ql-toolbar.ql-snow { border-color: hsl(var(--primary) / 0.6); }
 
 /* Safety-net utility: never allow horizontal overflow */
 .no-x-overflow {
@@ -1248,8 +1356,11 @@ All colors MUST be HSL.
   pointer-events: none;
   z-index: 1;
 }
-.holo-card:hover { transform: translateY(-4px); box-shadow: 0 24px 60px -20px hsl(224 85% 45% / 0.42); }
-.holo-card:hover::after { opacity: 1; animation: holo-sweep 1.1s ease-out; }
+/* Hover lift only where there IS hover: on a phone a tap left cards stuck mid-lift. */
+@media (hover: hover) {
+  .holo-card:hover { transform: translateY(-4px); box-shadow: 0 24px 60px -20px hsl(224 85% 45% / 0.42); }
+  .holo-card:hover::after { opacity: 1; animation: holo-sweep 1.1s ease-out; }
+}
 @keyframes holo-sweep {
   from { background-position: 130% 0; }
   to { background-position: -60% 0; }

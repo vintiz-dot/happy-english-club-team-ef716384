@@ -58,7 +58,7 @@ export function HeroCommandDeck({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
-        "holo-card relative overflow-hidden p-6 md:p-8",
+        "holo-card relative overflow-hidden p-4 sm:p-6 md:p-8",
         isMonitor && "ring-2 ring-amber-400/40",
       )}
     >
@@ -88,7 +88,7 @@ export function HeroCommandDeck({
       <div className="relative z-10">
         <div className="flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-8">
           {/* Identity */}
-          <div className="flex items-center gap-4 md:gap-5 min-w-0 flex-1">
+          <div className="flex items-center gap-3 sm:gap-4 md:gap-5 min-w-0 flex-1">
             <div className="shrink-0">
               <MascotCompanion
                 studentName={fullName}

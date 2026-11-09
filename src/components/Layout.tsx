@@ -182,7 +182,15 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           <div className="hairline-gradient absolute inset-x-0 bottom-0 h-px" />
         </header>
         {role === "student" && <StudentNavBar />}
-        <main className="container mx-auto px-4 py-4 md:py-6 lg:py-8 pb-20 md:pb-8">{children}</main>
+        <main
+          className={
+            role === "student"
+              ? // The bottom tab bar is fixed: leave room for it (and the iPhone home bar) below the page, not above it.
+                // overflow-x-clip: decorative glows must never make a phone page scroll sideways.
+                "container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8"
+              : "container mx-auto px-4 py-4 md:py-6 lg:py-8 pb-20 md:pb-8"
+          }
+        >{children}</main>
         {/* Read-only, RLS-scoped assistant — available to every signed-in role */}
         <AssistantLauncher />
       </div>

@@ -515,21 +515,21 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
       {/* Daily-cap indicator — always-on so students can pace themselves. */}
       <div
         className={cn(
-          "flex items-center justify-between gap-3 rounded-2xl border px-5 py-3 text-sm font-medium",
+          "flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-2xl border px-4 py-3 text-sm font-medium sm:px-5",
           capReached
             ? "bg-amber-50 dark:bg-[hsl(38_20%_12%)] border-amber-200 dark:border-[hsl(38_20%_20%)] text-amber-800 dark:text-amber-400/80"
             : "bg-slate-50 dark:bg-[hsl(240_8%_10%)] border-slate-200 dark:border-[hsl(240_8%_16%)] text-slate-600 dark:text-foreground/50",
         )}
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <CalendarClock className="w-4 h-4 shrink-0" />
-          <span className="truncate">
+        <div className="flex items-start gap-2 min-w-0">
+          <CalendarClock className="mt-0.5 w-4 h-4 shrink-0" />
+          <span className="leading-snug">
             {capReached
               ? `Today's word cap reached (${dailyLimit}/${dailyLimit}) — practice keeps earning points!`
               : `Today: ${savesToday} / ${dailyLimit} new words saved · ${remainingToday} left`}
           </span>
         </div>
-        <div className="flex items-center gap-1" aria-hidden="true">
+        <div className="flex shrink-0 items-center gap-1" aria-hidden="true">
           {Array.from({ length: dailyLimit }).map((_, i) => (
             <span
               key={i}

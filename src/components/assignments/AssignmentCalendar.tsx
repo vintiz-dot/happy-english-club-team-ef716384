@@ -1,4 +1,4 @@
-import { useMemo, useState, useContext, useEffect } from "react";
+import { useMemo, useState, useContext, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { buildMonthGrid, todayKey, dayjs } from "@/lib/date";
@@ -35,6 +35,7 @@ interface AssignmentCalendarProps {
 export function AssignmentCalendar({ onSelectAssignment, role, classId }: AssignmentCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(dayjs().format("YYYY-MM"));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const lastDateRef = useRef<string | null>(null);
   const context = useContext(StudentProfileContext);
   const studentId = context?.studentId;
   const isHydrated = context?.isHydrated;
@@ -172,17 +173,21 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
     setCurrentMonth(dayjs().format("YYYY-MM"));
   };
 
-  const selectedDateAssignments = selectedDate ? assignmentsByDate[selectedDate] || [] : [];
+  // Keep showing the last day while the list animates closed, so it does not blank out mid-fade.
+  if (selectedDate) lastDateRef.current = selectedDate;
+  const shownDate = selectedDate ?? lastDateRef.current;
+  const selectedDateAssignments = shownDate ? assignmentsByDate[shownDate] || [] : [];
 
   return (
     <Card className="glass-sm p-4 md:p-6">
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">
-              {dayjs(currentMonth).format("MMMM YYYY")}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <CalendarIcon className="h-5 w-5 shrink-0 text-primary" />
+            <h2 className="whitespace-nowrap text-base font-semibold sm:text-lg">
+              <span className="sm:hidden">{dayjs(currentMonth).format("MMM YYYY")}</span>
+              <span className="hidden sm:inline">{dayjs(currentMonth).format("MMMM YYYY")}</span>
             </h2>
           </div>
           <div className="flex gap-2">
@@ -291,10 +296,10 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
 
       {/* Assignment Details Dialog */}
       <Dialog open={!!selectedDate} onOpenChange={(open) => !open && setSelectedDate(null)}>
-        <DialogContent className="glass-sm max-w-2xl">
+        <DialogContent className="glass-sm w-[calc(100%-2rem)] max-w-2xl rounded-3xl !bg-background">
           <DialogHeader>
-            <DialogTitle>
-              Assignments for {selectedDate && dayjs(selectedDate).format("MMMM D, YYYY")}
+            <DialogTitle className="pr-8 text-left leading-snug">
+              Assignments for {shownDate && dayjs(shownDate).format("MMMM D, YYYY")}
             </DialogTitle>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh]">
@@ -307,17 +312,21 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
                   <Card
                     key={assignment.id}
                     className="glass-sm p-4 cursor-pointer hover:bg-accent/50 transition-colors"
-                    onClick={() => onSelectAssignment?.(assignment)}
+                    onClick={() => {
+                      // Close this list first, or the homework opens underneath it.
+                      setSelectedDate(null);
+                      onSelectAssignment?.(assignment);
+                    }}
                   >
                     <div className="space-y-2">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{assignment.title}</h3>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold break-words">{assignment.title}</h3>
                           <p className="text-sm text-muted-foreground">
                             {assignment.classes?.name || "No class"}
                           </p>
                         </div>
-                        <Badge
+                        <Badge className="shrink-0"
                           variant={
                             status === "graded" || status === "all-graded"
                               ? "default"

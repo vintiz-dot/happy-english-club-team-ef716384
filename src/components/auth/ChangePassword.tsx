@@ -48,9 +48,9 @@ export function ChangePassword() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <KeyRound className="h-4 w-4 mr-2" />
-          Change Password
+        <Button variant="outline" size="sm" aria-label="Change Password" title="Change Password">
+          <KeyRound className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Change Password</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

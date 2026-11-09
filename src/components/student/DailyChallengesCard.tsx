@@ -35,7 +35,7 @@ export function DailyChallengesCard({
 
   return (
     <motion.div
-      className="glass-lg rounded-3xl p-6 relative overflow-hidden"
+      className="glass-lg rounded-3xl p-4 sm:p-6 relative overflow-hidden"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.01 }}
@@ -80,8 +80,8 @@ export function DailyChallengesCard({
 
       <div className="relative space-y-5">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <motion.div
               className={`p-3 rounded-2xl ${
                 allCompleted 
@@ -107,7 +107,7 @@ export function DailyChallengesCard({
           
           {/* XP Badge */}
           <motion.div 
-            className="flex items-center gap-1 bg-gradient-to-r from-warning/20 to-warning/10 px-3 py-1.5 rounded-full"
+            className="shrink-0 flex items-center gap-1 whitespace-nowrap bg-gradient-to-r from-warning/20 to-warning/10 px-3 py-1.5 rounded-full"
             animate={allCompleted ? { scale: [1, 1.1, 1] } : {}}
             transition={{ duration: 1, repeat: Infinity }}
           >
@@ -129,7 +129,7 @@ export function DailyChallengesCard({
           {challenges.map((challenge, index) => (
             <motion.div
               key={challenge.id}
-              className={`flex items-center gap-4 p-3 rounded-2xl transition-all cursor-pointer ${
+              className={`flex items-center gap-3 sm:gap-4 p-3 rounded-2xl transition-all cursor-pointer ${
                 challenge.completed 
                   ? 'bg-success/10 border border-success/20' 
                   : 'bg-muted/30 hover:bg-muted/50 border border-transparent'
@@ -142,7 +142,7 @@ export function DailyChallengesCard({
             >
               {/* Icon */}
               <motion.div 
-                className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
+                className={`w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-xl flex items-center justify-center text-2xl ${
                   challenge.completed 
                     ? 'bg-success/20' 
                     : 'bg-muted/50'
@@ -156,7 +156,7 @@ export function DailyChallengesCard({
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className={`font-semibold truncate ${challenge.completed ? 'text-success' : 'text-foreground'}`}>
+                  <p className={`font-semibold leading-snug break-words ${challenge.completed ? 'text-success' : 'text-foreground'}`}>
                     {challenge.title}
                   </p>
                   {challenge.completed && (
@@ -169,7 +169,7 @@ export function DailyChallengesCard({
                     </motion.div>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground truncate">{challenge.description}</p>
+                <p className="text-sm leading-snug text-muted-foreground break-words">{challenge.description}</p>
                 
                 {/* Progress bar for incomplete challenges */}
                 {!challenge.completed && challenge.target > 1 && (
@@ -186,7 +186,7 @@ export function DailyChallengesCard({
               </div>
 
               {/* XP Reward */}
-              <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${
+              <div className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg ${
                 challenge.completed 
                   ? 'bg-success/20 text-success' 
                   : 'bg-warning/10 text-warning'
@@ -201,7 +201,7 @@ export function DailyChallengesCard({
         {/* Bonus Reward */}
         {allCompleted && (
           <motion.div
-            className="flex items-center justify-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 border border-primary/30"
+            className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 p-4 text-center rounded-2xl bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 border border-primary/30"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}

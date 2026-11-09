@@ -1,16 +1,16 @@
 import { lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Download, Calendar, Star, AlertTriangle, Clock, Send, CheckCircle2, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { CalendarDays, Download, FileText, Loader2, X } from "lucide-react";
 import { format } from "date-fns";
-import { sanitizeHtml } from "@/lib/sanitize";
-import { getHomeworkStatus, statusConfig, getCountdown } from "@/lib/homeworkStatus";
+import { getHomeworkStatus } from "@/lib/homeworkStatus";
 import { HomeworkPdfDownload } from "@/components/homework/HomeworkPdfDownload";
+import { RichText } from "@/components/homework/RichText";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { classTint, dueText, homeworkLook } from "./homework/homeworkLook";
 
 const HomeworkSubmission = lazy(() => import("./HomeworkSubmission"));
 
@@ -21,27 +21,34 @@ interface HomeworkDetailDialogProps {
   onClose: () => void;
 }
 
-function GradeCircle({ grade }: { grade: string }) {
+/** A numbered step: big friendly number, a heading, then the content. */
+function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="relative w-20 h-20 flex items-center justify-center">
-        <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
-          <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" className="text-emerald-500/20" strokeWidth="4" />
-          <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" className="text-emerald-500" strokeWidth="4" strokeDasharray="226" strokeDashoffset="0" strokeLinecap="round" />
-        </svg>
-        <div className="flex items-center gap-0.5">
-          <Star className="h-3.5 w-3.5 text-emerald-500 fill-emerald-500" />
-          <span className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{grade}</span>
-        </div>
+    <section className="min-w-0">
+      <div className="mb-3 flex items-center gap-3">
+        {n > 0 ? (
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-black text-primary-foreground shadow-[0_3px_0_0_hsl(var(--primary)/0.45)]">
+            {n}
+          </span>
+        ) : (
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center text-2xl" aria-hidden>🌟</span>
+        )}
+        <h3 className="text-lg font-extrabold tracking-tight">{title}</h3>
       </div>
-      <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Your Grade</span>
-    </div>
+      {children}
+    </section>
   );
+}
+
+function fileSize(bytes?: number | null) {
+  if (!bytes) return null;
+  return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
 export default function HomeworkDetailDialog({ homework, studentId, isReadOnly = false, onClose }: HomeworkDetailDialogProps) {
   const isMobile = useIsMobile();
-  // Fetch teacher name for PDF
+
+  // Teacher name for the PDF header.
   const { data: teacherName } = useQuery({
     queryKey: ["class-teacher-name", homework.class_id],
     queryFn: async () => {
@@ -55,20 +62,16 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
     staleTime: 10 * 60 * 1000,
   });
 
-  const { data: submission } = useQuery({
-    queryKey: ["homework-submission", homework.id, studentId],
-    queryFn: async () => {
-      // The submission is already fetched via get_student_homeworks and passed down
-      return homework.submission || null;
-    },
-  });
+  // The submission arrives with the homework (get_student_homeworks).
+  const submission = homework.submission || null;
+  const status = getHomeworkStatus({ ...homework, submission });
+  const look = homeworkLook[status];
+  const done = status === "submitted" || status === "graded";
+  const due = dueText(homework.due_date, done);
+  const className = homework.classes?.name || "Class";
+  const files: any[] = homework.homework_files || [];
 
-  const assignmentWithSub = { ...homework, submission };
-  const status = getHomeworkStatus(assignmentWithSub);
-  const config = statusConfig[status];
-  const countdown = getCountdown(homework.due_date);
-
-  const downloadFile = async (storageKey: string, fileName: string) => {
+  const downloadFile = async (storageKey: string) => {
     try {
       const { data, error } = await supabase.storage.from("homework").createSignedUrl(storageKey, 3600);
       if (error) throw error;
@@ -78,164 +81,182 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
     }
   };
 
-  const inner = (
-    <>
-        {/* Status Banner */}
-        <div className={`px-4 sm:px-6 py-3 flex items-center gap-2 ${config.cardClass} ${config.borderColor} border-b`}>
-          <span className="text-lg">{config.icon}</span>
-          <span className={`font-semibold text-sm ${config.textClass}`}>{config.label}</span>
-          {countdown && (
-            <Badge className={`ml-auto text-[11px] sm:text-xs px-2 py-0.5 ${config.badgeClass}`}>
-              {countdown}
-            </Badge>
-          )}
-          {status === "graded" && submission?.grade && (
-            <div className="ml-auto flex items-center gap-1">
-              <Star className="h-4 w-4 text-emerald-500 fill-emerald-500" />
-              <span className="font-bold text-emerald-700 dark:text-emerald-400">{submission.grade}</span>
-            </div>
-          )}
-        </div>
+  let step = 0;
+  const resultFirst = status === "graded" && !isReadOnly;
+  const hasMaterials = files.length > 0 || !!homework.body;
 
-        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 min-w-0 no-x-overflow">
-          <div className="space-y-3 min-w-0">
-            <h2 className="text-lg sm:text-xl font-semibold leading-tight break-words [overflow-wrap:anywhere]">{homework.title}</h2>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground min-w-0">
-              <Badge variant="secondary" className="text-xs break-words max-w-full">{homework.classes?.name || "Class"}</Badge>
-              {homework.created_at && (
-                <span className="flex items-center gap-1 text-xs">
-                  <Calendar className="h-3 w-3 shrink-0" />
-                  {format(new Date(homework.created_at), "MMM d, yyyy")}
-                </span>
-              )}
-              {homework.due_date && (
-                <Badge variant="outline" className="text-xs">
-                  Due {format(new Date(homework.due_date), "MMM d, yyyy")}
-                </Badge>
-              )}
-            </div>
+  const closeButton = (
+    <button
+      type="button"
+      onClick={onClose}
+      aria-label="Close"
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm ring-1 ring-border backdrop-blur transition hover:bg-background"
+    >
+      <X className="h-5 w-5" strokeWidth={2.5} />
+    </button>
+  );
 
-            {/* Prominent download button — full-width, above the fold */}
-            <div className="pt-1">
-              <HomeworkPdfDownload
-                homework={homework}
-                className={homework.classes?.name}
-                teacherName={teacherName}
-                variant="pill"
-              />
-            </div>
+  const header = (
+    <header className="relative isolate shrink-0 bg-background px-4 pb-4 pt-3 sm:px-6 sm:pt-5">
+      {/* State tint over a solid base, so nothing behind the sheet shows through. */}
+      <div className={cn("absolute inset-0 -z-10 border-0 border-b-2", look.cardClass)} aria-hidden />
+      {isMobile && <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-foreground/15" aria-hidden />}
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={cn("inline-block max-w-full truncate rounded-full px-2.5 py-1 text-xs font-bold", classTint(className))}>
+              {className}
+            </span>
+            <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-extrabold whitespace-nowrap", look.pillClass)}>
+              <span aria-hidden>{look.emoji}</span>
+              {look.pill}
+            </span>
           </div>
-
-          {/* Grade Circle for graded assignments */}
-          {status === "graded" && submission?.grade && (
-            <div className="flex justify-center py-2">
-              <GradeCircle grade={submission.grade} />
-            </div>
+          {isMobile ? (
+            <SheetTitle className="mt-2.5 text-xl font-black leading-snug tracking-tight break-words [hyphens:auto]">
+              {homework.title}
+            </SheetTitle>
+          ) : (
+            <DialogTitle className="mt-2.5 text-2xl font-black leading-snug tracking-tight break-words [hyphens:auto]">
+              {homework.title}
+            </DialogTitle>
           )}
-
-          {homework.body && (
-            <div className="bg-primary/5 border-2 border-primary/20 p-3 sm:p-6 rounded-lg overflow-hidden">
-              <h2 className="text-base sm:text-xl font-bold mb-3 sm:mb-4 text-primary flex items-center gap-2">
-                📋 Assignment Instructions
-              </h2>
-              <div
-                className="prose prose-sm rich-content max-w-none w-full min-w-0 overflow-x-hidden break-words [overflow-wrap:anywhere] [word-break:break-word] [&_*]:max-w-full [&_*]:[overflow-wrap:anywhere] [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_p]:text-foreground [&_p]:break-words [&_strong]:text-foreground [&_em]:text-foreground [&_ul]:text-foreground [&_ol]:text-foreground [&_li]:text-foreground [&_img]:max-w-full [&_img]:h-auto [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_code]:break-all"
-                dangerouslySetInnerHTML={{ __html: sanitizeHtml(homework.body) }}
-              />
-            </div>
-          )}
-
-          {homework.homework_files?.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2">📎 Attachments</h3>
-              <div className="space-y-1.5">
-                {homework.homework_files.map((file: any) => {
-                  const ext = file.file_name?.split(".").pop()?.toLowerCase() || "";
-                  const sizeKB = file.size_bytes ? (file.size_bytes / 1024).toFixed(0) : null;
-                  return (
-                    <Button
-                      key={file.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => downloadFile(file.storage_key, file.file_name)}
-                      className="w-full justify-start text-sm gap-2 min-h-[44px] rounded-xl"
-                    >
-                      <Download className="h-4 w-4 shrink-0" />
-                      <span className="truncate flex-1 text-left">{file.file_name}</span>
-                      {sizeKB && <span className="text-[11px] text-muted-foreground shrink-0">{sizeKB} KB</span>}
-                      <Badge variant="outline" className="text-[11px] shrink-0 uppercase px-1.5 py-0">{ext}</Badge>
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <div>
-            <h3 className="font-semibold mb-2">
-              {isReadOnly ? "Classmate's Submission" : "Your Submission"}
-            </h3>
-            {isReadOnly ? (
-              <div className="p-4 border rounded-lg space-y-3">
-                {submission ? (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">Status:</span>
-                      {submission.status === "graded" ? (
-                        <span className="text-sm font-medium text-emerald-600">Graded - {submission.grade}</span>
-                      ) : submission.status === "submitted" ? (
-                        <span className="text-sm font-medium text-sky-600">Submitted</span>
-                      ) : (
-                        <span className="text-sm font-medium text-muted-foreground">Pending</span>
-                      )}
-                    </div>
-                    {submission.submitted_at && (
-                      <p className="text-sm text-muted-foreground">
-                        Submitted: {format(new Date(submission.submitted_at), "MMM d, yyyy 'at' h:mm a")}
-                      </p>
+          {(() => {
+            const Desc = isMobile ? SheetDescription : DialogDescription;
+            return (
+              <Desc className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold text-muted-foreground">
+                {due && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1.5",
+                      status === "overdue" && "text-rose-600 dark:text-rose-300",
+                      status === "due-today" && "text-amber-700 dark:text-amber-300",
                     )}
-                  </>
-                ) : (
-                  <p className="text-sm text-muted-foreground italic">This classmate has not submitted yet.</p>
+                  >
+                    <CalendarDays className="h-4 w-4 shrink-0" />
+                    {due}
+                  </span>
                 )}
+                {homework.created_at && <span>Set {format(new Date(homework.created_at), "d MMM")}</span>}
+              </Desc>
+            );
+          })()}
+        </div>
+        {/* On a phone the close button floats over the sheet instead (see below). */}
+        {isMobile ? <div className="h-11 w-11 shrink-0" aria-hidden /> : closeButton}
+      </div>
+    </header>
+  );
+
+  const body = (
+    <div className="flex flex-col gap-7 px-4 py-5 sm:px-6 sm:py-6 min-w-0">
+      {homework.body && (
+        <Step n={++step} title="What to do">
+          <div className="rounded-3xl border-2 border-border bg-card p-4 sm:p-5">
+            <RichText html={homework.body} />
+          </div>
+        </Step>
+      )}
+
+      {hasMaterials && (
+        <Step n={++step} title={files.length ? "Your materials" : "Keep a copy"}>
+          <div className="space-y-2">
+            {files.map((file: any) => {
+              const ext = file.file_name?.split(".").pop()?.toUpperCase() || "FILE";
+              const size = fileSize(file.size_bytes);
+              return (
+                <button
+                  key={file.id}
+                  type="button"
+                  onClick={() => downloadFile(file.storage_key)}
+                  className="flex w-full items-center gap-3 rounded-2xl border-2 border-b-4 border-border bg-card p-3 text-left transition-[transform] duration-100 active:translate-y-[2px] active:border-b-2"
+                >
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <FileText className="h-5 w-5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[0.9375rem] font-bold">{file.file_name}</span>
+                    <span className="block text-xs font-semibold text-muted-foreground">
+                      {ext}{size ? ` · ${size}` : ""}
+                    </span>
+                  </span>
+                  <Download className="h-5 w-5 shrink-0 text-muted-foreground" />
+                </button>
+              );
+            })}
+            {homework.body && (
+              <div className="pt-1">
+                <HomeworkPdfDownload homework={homework} className={className} teacherName={teacherName} variant="pill" />
               </div>
-            ) : (
-              <Suspense fallback={<div className="flex items-center justify-center py-8 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" />Loading submission form...</div>}>
-                <HomeworkSubmission homeworkId={homework.id} studentId={studentId} existingSubmission={submission} onSuccess={onClose} />
-              </Suspense>
             )}
           </div>
-        </div>
-    </>
+        </Step>
+      )}
+
+      {/* Once marked, the result is what the student opened the sheet for: show it first. */}
+      <div className={cn("min-w-0", resultFirst && "order-first")}>
+      <Step n={resultFirst ? 0 : ++step} title={isReadOnly ? "Classmate's work" : resultFirst ? "Your result" : "Your answer"}>
+        {isReadOnly ? (
+          <div className="rounded-3xl border-2 border-border bg-card p-4 space-y-2">
+            {submission ? (
+              <>
+                <p className="text-[0.9375rem] font-bold">
+                  {submission.status === "graded"
+                    ? `🌟 Marked${submission.grade ? ` · ${submission.grade}` : ""}`
+                    : submission.status === "submitted"
+                      ? "📬 Sent"
+                      : "📝 Not sent yet"}
+                </p>
+                {submission.submitted_at && (
+                  <p className="text-sm text-muted-foreground">
+                    Sent {format(new Date(submission.submitted_at), "d MMM 'at' h:mm a")}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-[0.9375rem] text-muted-foreground">This classmate has not sent it yet.</p>
+            )}
+          </div>
+        ) : (
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-8 text-muted-foreground">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Getting your answer box ready…
+              </div>
+            }
+          >
+            <HomeworkSubmission homeworkId={homework.id} studentId={studentId} existingSubmission={submission} onSuccess={onClose} />
+          </Suspense>
+        )}
+      </Step>
+      </div>
+    </div>
   );
 
   if (isMobile) {
     return (
-      <Sheet open={true} onOpenChange={onClose}>
+      <Sheet open={true} onOpenChange={(open) => !open && onClose()}>
         <SheetContent
           side="bottom"
-          className="p-0 h-[92vh] max-h-[92vh] overflow-y-auto overflow-x-hidden rounded-t-2xl pb-safe"
+          className="flex h-[94dvh] max-h-[94dvh] flex-col gap-0 overflow-hidden rounded-t-[1.75rem] border-0 !bg-background !backdrop-blur-none p-0 [&>button.absolute]:hidden"
         >
-          {/* Drag handle — visual affordance for the bottom sheet */}
-          <div className="sticky top-0 z-10 flex justify-center pt-2 pb-1 bg-background/95 backdrop-blur-sm">
-            <div className="h-1.5 w-10 rounded-full bg-muted-foreground/30" aria-hidden />
+          {/* Header scrolls with the page, so a long title never pins a third of the screen. */}
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            {header}
+            {body}
           </div>
-          <SheetHeader className="sr-only">
-            <SheetTitle>{homework.title}</SheetTitle>
-          </SheetHeader>
-          {inner}
+          <div className="absolute right-3 top-6 z-20">{closeButton}</div>
         </SheetContent>
       </Sheet>
     );
   }
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-0">
-        <DialogHeader className="sr-only">
-          <DialogTitle>{homework.title}</DialogTitle>
-        </DialogHeader>
-        {inner}
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden rounded-3xl !bg-background p-0 sm:max-w-2xl [&>button.absolute]:hidden">
+        {header}
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">{body}</div>
       </DialogContent>
     </Dialog>
   );

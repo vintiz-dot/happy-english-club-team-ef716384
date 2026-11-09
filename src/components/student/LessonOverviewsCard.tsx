@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import dayjs from "dayjs";
 import { BookOpenCheck, BookOpen, NotebookPen, ChevronDown } from "lucide-react";
 
 export function LessonOverviewsCard({ studentId }: { studentId: string }) {
@@ -65,11 +66,9 @@ export function LessonOverviewsCard({ studentId }: { studentId: string }) {
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate">
-                    {l.title || "Lesson"}{" "}
-                    <span className="font-normal text-muted-foreground">
-                      · {l.classes?.name} · {l.lesson_date}
-                    </span>
+                  <p className="text-sm font-semibold leading-snug break-words">{l.title || "Lesson"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {[l.classes?.name, l.lesson_date && dayjs(l.lesson_date).format("D MMM YYYY")].filter(Boolean).join(" · ")}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
