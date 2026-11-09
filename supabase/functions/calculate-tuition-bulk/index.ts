@@ -161,7 +161,8 @@ Deno.serve(async (req) => {
       supabase, "discount_assignments",
       "student_id, discount_definitions(*)",
       "student_id", studentIds,
-      (q: any) => q.lte("effective_from", nextMonthStart).or(`effective_to.is.null,effective_to.gte.${startDate}`)
+      // A row dated the 1st of next month does not cover this month.
+      (q: any) => q.lt("effective_from", nextMonthStart).or(`effective_to.is.null,effective_to.gte.${startDate}`)
     );
     const discountsByStudent = new Map<string, any[]>();
     for (const d of allDiscountAssignments) {
@@ -177,7 +178,8 @@ Deno.serve(async (req) => {
         supabase, "referral_bonuses",
         "student_id, type, value",
         "student_id", studentIds,
-        (q: any) => q.lte("effective_from", nextMonthStart).or(`effective_to.is.null,effective_to.gte.${startDate}`)
+        // A row dated the 1st of next month does not cover this month.
+        (q: any) => q.lt("effective_from", nextMonthStart).or(`effective_to.is.null,effective_to.gte.${startDate}`)
       );
     } catch { /* table may not exist */ }
     const referralsByStudent = new Map<string, any[]>();

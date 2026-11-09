@@ -20,7 +20,13 @@ globalThis.__tuitionClient = () => ({ from(table) {
     gte(k, v) { rows = rows.filter(r => r[k] >= v); return q; },
     lt(k, v) { rows = rows.filter(r => r[k] < v); return q; },
     lte(k, v) { rows = rows.filter(r => r[k] <= v); return q; },
-    or() { return q; },
+    or(clause) {
+      const tests = clause.split(',').map(part => { const [k, op, ...v] = part.split('.'); return [k, op, v.join('.')]; });
+      const ops = { is: (a, b) => b === 'null' && a == null, eq: (a, b) => a === b, gte: (a, b) => a >= b,
+        gt: (a, b) => a > b, lte: (a, b) => a <= b, lt: (a, b) => a < b };
+      rows = rows.filter(r => tests.some(([k, op, v]) => ops[op](r[k], v)));
+      return q;
+    },
     single() { return Promise.resolve({ data: rows[0], error: null }); },
     maybeSingle() { return Promise.resolve({ data: rows[0] || null, error: null }); },
     upsert(row) { writes.push(row); return Promise.resolve({ error: null }); },
@@ -83,7 +89,8 @@ async function check(month, base, discount) {
     assert.equal(result.totalDiscount, discount, `${name} ${month} discount`);
     assert.equal(result.totalAmount, base - discount, `${name} ${month} charged`);
     if (!name.endsWith('-bulk') && !fixture.invoices.length) {
-      assert.equal(body.breakdown.classes.reduce((sum, c) => sum + c.net_amount_vnd, 0), base - discount, 'class net matches discount');
+      // Class nets carry enrollment terms only; dated specials are not split per class.
+      if (!fixture.discount_assignments && !fixture.referral_bonuses) assert.equal(body.breakdown.classes.reduce((sum, c) => sum + c.net_amount_vnd, 0), base - discount, 'class net matches discount');
       assert.equal(writes.at(-1).discount_amount, discount, 'saved invoice matches response');
     }
     passed++;
@@ -117,4 +124,29 @@ await check('2026-11', 200000, 40000);
 register(); fixture.invoices.push({ student_id: studentId, month: '2026-10', tuition_frozen: true,
   base_amount: 900000, discount_amount: 90000, total_amount: 810000, recorded_payment: 0 });
 await check('2026-10', 900000, 90000);
+// Dated specials: a row dated the 1st of the next month does not touch this month.
+const pct = { name: 'Special', type: 'percent', value: 10, is_active: true };
+function special(table, ...dates) {
+  register(); fixture.enrollments.forEach(e => { e.discount_type = null; });
+  fixture[table] = dates.map(([effective_from, effective_to = null]) => table === 'referral_bonuses'
+    ? { student_id: studentId, type: 'percent', value: 10, effective_from, effective_to }
+    : { student_id: studentId, effective_from, effective_to, discount_definitions: pct });
+}
+for (const table of ['discount_assignments', 'referral_bonuses']) {
+  special(table, ['2026-11-01']);
+  await check('2026-10', 300000, 0);
+  await check('2026-11', 100000, 10000);
+}
+special('discount_assignments', ['2026-10-01', '2026-10-31'], ['2026-11-01', '2026-11-30']); // monthly renewal
+await check('2026-10', 300000, 30000);
+await check('2026-11', 100000, 10000);
+special('discount_assignments', ['2026-10-01', '2026-10-31']);
+await check('2026-10', 300000, 30000);
+await check('2026-11', 100000, 0);
+special('discount_assignments', ['2026-10-15']);
+await check('2026-10', 300000, 30000);
+await check('2026-11', 100000, 10000);
+special('discount_assignments', ['2026-11-01', '2026-11-01']);
+await check('2026-10', 300000, 0);
+await check('2026-11', 100000, 10000);
 console.log(`${passed} passed, 0 failed`);

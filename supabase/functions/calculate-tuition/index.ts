@@ -111,13 +111,15 @@ Deno.serve(async (req) => {
         .from("discount_assignments")
         .select("discount_definitions(*)")
         .eq("student_id", studentId)
-        .lte("effective_from", nextMonthStart)
+        // A row dated the 1st of next month does not cover this month.
+        .lt("effective_from", nextMonthStart)
         .or(`effective_to.is.null,effective_to.gte.${startDate}`),
       supabase
         .from("referral_bonuses")
         .select("*")
         .eq("student_id", studentId)
-        .lte("effective_from", nextMonthStart)
+        // A row dated the 1st of next month does not cover this month.
+        .lt("effective_from", nextMonthStart)
         .or(`effective_to.is.null,effective_to.gte.${startDate}`),
       supabase
         .from("invoices")
