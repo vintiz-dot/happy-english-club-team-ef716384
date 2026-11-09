@@ -17,6 +17,7 @@ import { soundManager } from "@/lib/soundManager";
 import { VideoRecorder } from "./VideoRecorder";
 import { VideoReport, type ApprovedReport } from "./VideoReport";
 import { SignedVideo } from "./SignedVideo";
+import { ShareVideoButton } from "./ShareVideoButton";
 import { VIDEO_BUCKET, extFor, videoDb, type RecordedTake } from "@/lib/video/recorder";
 
 interface VideoHomeworkState {
@@ -218,6 +219,9 @@ export default function VideoHomeworkSubmission({
       {sub && !showRecorder && (
         <div className="space-y-2">
           <SignedVideo path={sub.video_path} className="w-full rounded-2xl bg-black aspect-video" />
+          {sub.status === "approved" && (
+            <ShareVideoButton path={sub.video_path} title={state.title} className="w-full h-11" />
+          )}
           {sub.status !== "approved" && (
             <div className="flex items-center justify-between gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 p-3">
               <p className="text-sm">📬 Sent! Your teacher will watch it soon.</p>

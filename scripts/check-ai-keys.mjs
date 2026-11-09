@@ -16,7 +16,7 @@
 const env = process.env;
 const region = env.AZURE_SPEECH_REGION || "southeastasia";
 const claudeModel = env.CLAUDE_MODEL || "claude-opus-5-5";
-const geminiModel = env.GEMINI_MODEL || "gemini-2.5-flash";
+const geminiModel = env.GEMINI_MODEL || "gemini-3.8-flash";
 
 const explain = (status) =>
   ({ 400: "bad request", 401: "key rejected (wrong or revoked)", 403: "key not allowed (wrong region, quota, or billing)",
