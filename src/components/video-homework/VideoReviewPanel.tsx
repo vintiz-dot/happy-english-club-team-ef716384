@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { SignedVideo } from "./SignedVideo";
+import { ShareVideoButton } from "./ShareVideoButton";
 import { videoDb } from "@/lib/video/recorder";
 import {
   CRITERION_MAX,
@@ -240,6 +241,14 @@ export function VideoReviewPanel({
             </Button>
           )}
         </div>
+      )}
+
+      {v.status === "approved" && (
+        <ShareVideoButton
+          path={v.video_path}
+          title={`${String(v.students?.full_name ?? "").split(" ").slice(-1)[0]} - ${v.homeworks?.title ?? "video homework"}`}
+          size="sm"
+        />
       )}
 
       {stalled && (

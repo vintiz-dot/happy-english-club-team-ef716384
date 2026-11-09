@@ -17,11 +17,13 @@ export const SignedVideo = forwardRef<HTMLVideoElement, Props>(function SignedVi
   const [src, setSrc] = useState<string | null>(null);
   const [poster, setPoster] = useState<string | undefined>(undefined);
   const [failed, setFailed] = useState(false);
+  const [broken, setBroken] = useState(false);
 
   useEffect(() => {
     let live = true;
     setSrc(null);
     setFailed(false);
+    setBroken(false);
     signedVideoUrl(path).then((u) => {
       if (!live) return;
       if (u) setSrc(u);
@@ -41,6 +43,7 @@ export const SignedVideo = forwardRef<HTMLVideoElement, Props>(function SignedVi
     );
   }
   return (
+    <>
     <video
       ref={ref}
       src={src ?? undefined}
@@ -64,6 +67,19 @@ export const SignedVideo = forwardRef<HTMLVideoElement, Props>(function SignedVi
         }
         rest.onLoadedMetadata?.(e);
       }}
+      onError={(e) => {
+        // 3 = MEDIA_ERR_DECODE, 4 = format not supported here.
+        const code = e.currentTarget.error?.code;
+        if (code === 3 || code === 4) setBroken(true);
+        rest.onError?.(e);
+      }}
     />
+    {broken && (
+      <p className="text-xs text-destructive mt-1">
+        This browser can't play this recording to the end. It usually plays on the phone it was made on, or in
+        Safari. If it won't, send it back and ask for a new recording.
+      </p>
+    )}
+    </>
   );
 });

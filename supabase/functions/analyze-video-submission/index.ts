@@ -52,7 +52,7 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
 const BUCKET = "homework-videos";
-const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash";
+const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") || "gemini-3.8-flash";
 const WHISPER_LIMIT = 25 * 1024 * 1024;
 const CEFR = ["Pre-A1", "A1", "A1+", "A2", "A2+", "B1", "B1+", "B2", "B2+", "C1", "C2"];
 const ERROR_TYPES = ["grammar", "vocabulary", "pronunciation", "syntax", "other"];

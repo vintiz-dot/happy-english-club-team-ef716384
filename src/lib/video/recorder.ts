@@ -25,18 +25,28 @@ export function canRecordHere(): boolean {
     && !!navigator.mediaDevices?.getUserMedia;
 }
 
+/**
+ * Safari and every iPhone browser (all WebKit). Since iOS 18.4 they also
+ * offer WebM, but the VP9 WebM an iPhone writes fails to decode in desktop
+ * Chrome after about a second ("video decode error") - seen on the first
+ * real homework, 9 Nov 2026. Their own MP4 (H.264) plays everywhere.
+ */
+export function isAppleWebKit(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return navigator.vendor === "Apple Computer, Inc." || /iPhone|iPad|iPod/.test(navigator.userAgent);
+}
+
+const WEBM_VIDEO = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
+const MP4_VIDEO = ["video/mp4;codecs=avc1,mp4a.40.2", "video/mp4"];
+
 export function pickVideoMime(): string | undefined {
-  return [
-    "video/webm;codecs=vp9,opus",
-    "video/webm;codecs=vp8,opus",
-    "video/webm",
-    "video/mp4;codecs=avc1,mp4a.40.2",
-    "video/mp4",
-  ].find(supported);
+  return (isAppleWebKit() ? [...MP4_VIDEO, ...WEBM_VIDEO] : [...WEBM_VIDEO, ...MP4_VIDEO]).find(supported);
 }
 
 export function pickAudioMime(): string | undefined {
-  return ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"].find(supported);
+  const webm = ["audio/webm;codecs=opus", "audio/webm"];
+  const mp4 = ["audio/mp4"];
+  return [...(isAppleWebKit() ? [...mp4, ...webm] : [...webm, ...mp4]), "audio/ogg;codecs=opus"].find(supported);
 }
 
 /** "video/webm;codecs=vp9" -> "video/webm" (what the bucket allows). */
