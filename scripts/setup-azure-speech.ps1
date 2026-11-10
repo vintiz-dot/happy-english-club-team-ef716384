@@ -22,7 +22,7 @@ param(
   [string]$Name = "hec-speech",
   [string]$Region = "southeastasia",
   [ValidateSet("S0", "F0")][string]$Sku = "S0",
-  [string]$SupabaseProject = "yxdcngazogqmrffllbkl"
+  [string]$SupabaseProject = "aswgmbefikhsnhogtryv"
 )
 
 # Not "Stop": Windows PowerShell 5.1 turns any az warning on stderr into a
