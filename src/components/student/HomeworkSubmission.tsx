@@ -30,7 +30,7 @@ export default function HomeworkSubmission(props: HomeworkSubmissionProps) {
   const { data: video, isLoading } = useVideoHomework(props.homeworkId, props.studentId);
   if (isLoading) return null;
   if (video?.submission_type === "video") {
-    return <VideoHomeworkSubmission homeworkId={props.homeworkId} studentId={props.studentId} onSuccess={props.onSuccess} />;
+    return <VideoHomeworkSubmission homeworkId={props.homeworkId} studentId={props.studentId} onSuccess={props.onSuccess} kid />;
   }
   return <WrittenHomeworkSubmission {...props} />;
 }

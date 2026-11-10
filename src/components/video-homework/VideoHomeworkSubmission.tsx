@@ -19,6 +19,7 @@ import { VideoReport, type ApprovedReport } from "./VideoReport";
 import { SignedVideo } from "./SignedVideo";
 import { ShareVideoButton } from "./ShareVideoButton";
 import { VIDEO_BUCKET, extFor, videoDb, type RecordedTake } from "@/lib/video/recorder";
+import { withRetry } from "@/lib/video/kidVideo";
 
 interface VideoHomeworkState {
   submission_type: string;
@@ -63,7 +64,8 @@ export default function VideoHomeworkSubmission({
   homeworkId,
   studentId,
   onSuccess,
-}: { homeworkId: string; studentId: string; onSuccess?: () => void }) {
+  kid = false,
+}: { homeworkId: string; studentId: string; onSuccess?: () => void; kid?: boolean }) {
   const qc = useQueryClient();
   const { data: state, isLoading } = useVideoHomework(homeworkId, studentId);
   const [recording, setRecording] = useState(false);
@@ -81,8 +83,13 @@ export default function VideoHomeworkSubmission({
       const folder = `${studentId}/${homeworkId}/${stamp}`;
       const up = async (name: string, blob: Blob, type: string) => {
         const path = `${folder}/${name}`;
-        const { error } = await supabase.storage.from(VIDEO_BUCKET).upload(path, blob, { contentType: type, upsert: false });
-        if (error) throw new Error(`Upload failed: ${error.message}`);
+        // A dropped connection repeats this one file, not the whole recording.
+        // If an attempt reached the server but its answer was lost, the retry finds the
+        // file already there (the folder is unique to this take): that is success.
+        await withRetry(async () => {
+          const { error } = await supabase.storage.from(VIDEO_BUCKET).upload(path, blob, { contentType: type, upsert: false });
+          if (error && !/already exists|duplicate/i.test(error.message)) throw new Error(`Upload failed: ${error.message}`);
+        });
         return path;
       };
 
@@ -166,7 +173,7 @@ export default function VideoHomeworkSubmission({
     },
     onSuccess: () => {
       soundManager.play("questComplete");
-      toast.success("🎉 Your video is on its way to your teacher!");
+      toast.success(kid ? "🎉 Great job! Your video is on its way to your teacher! · Video đã được gửi cho cô giáo!" : "🎉 Your video is on its way to your teacher!");
       setRecording(false);
       qc.invalidateQueries({ queryKey: ["video-homework", homeworkId, studentId] });
       qc.invalidateQueries({ queryKey: ["student-assignments"] });
@@ -224,7 +231,7 @@ export default function VideoHomeworkSubmission({
           )}
           {sub.status !== "approved" && (
             <div className="flex items-center justify-between gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 p-3">
-              <p className="text-sm">📬 Sent! Your teacher will watch it soon.</p>
+              <p className={kid ? "text-base" : "text-sm"}>📬 Sent! Your teacher will watch it soon.{kid && <span className="block text-xs text-muted-foreground">Đã gửi! Cô giáo sẽ xem sớm.</span>}</p>
               <Button variant="outline" size="sm" onClick={() => setRecording(true)}>
                 <RefreshCw className="h-4 w-4 mr-1.5" /> Record again
               </Button>
@@ -240,6 +247,7 @@ export default function VideoHomeworkSubmission({
           vocabulary={state.looking_for?.vocabulary ?? []}
           onUse={(take) => send.mutate(take)}
           busy={send.isPending}
+          kid={kid}
         />
       )}
       {send.isPending && <Progress value={progress} className="h-2" />}

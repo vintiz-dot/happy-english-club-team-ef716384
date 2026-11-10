@@ -3,12 +3,15 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, BookOpen, CalendarDays, MoreHorizontal, NotebookPen, DollarSign, Trophy, Zap, FileText, FolderOpen, Sparkles, FileImage, BookOpenCheck, Scale, Video, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, BookOpen, CalendarDays, MoreHorizontal, NotebookPen, DollarSign, Trophy, Zap, FileText, FolderOpen, Sparkles, FileImage, BookOpenCheck, Scale, Video, Languages, ChevronLeft, ChevronRight } from "lucide-react";
+import { useStudentProfile } from "@/contexts/StudentProfileContext";
+import { useSetsForStudent } from "@/hooks/useLanguageSupport";
 
 const allNavItems = [
   { id: "dashboard", label: "Dashboard", emoji: "🏠", path: "/student/dashboard", icon: Home, primary: true },
   { id: "homework", label: "Homework", emoji: "📝", path: "/student/assignments", icon: BookOpen, primary: true },
   { id: "lessons", label: "Lessons", emoji: "📚", path: "/student/lessons", icon: BookOpenCheck, primary: true },
+  { id: "record", label: "Record", emoji: "🎬", path: "/student/record", icon: Video, primary: true },
   { id: "schedule", label: "My Classes", emoji: "📅", path: "/student/dashboard?tab=schedule", icon: CalendarDays, primary: false },
   { id: "reports", label: "Reports", emoji: "📄", path: "/student/dashboard?tab=reports", icon: FileText, primary: false },
   { id: "journal", label: "Journal", emoji: "📖", path: "/student/journal", icon: NotebookPen, primary: false },
@@ -18,6 +21,7 @@ const allNavItems = [
   { id: "vocabulary", label: "Vocabulary", emoji: "✨", path: "/student/vocabulary", icon: Sparkles, primary: false },
   { id: "mywork", label: "My Work", emoji: "🖼️", path: "/student/my-work", icon: FileImage, primary: false },
   { id: "videos", label: "My Videos", emoji: "🎥", path: "/student/videos", icon: Video, primary: false },
+  { id: "picture-reader", label: "Picture Reader", emoji: "🖼️", path: "/student/language-support", icon: Languages, primary: false },
   { id: "defend", label: "Defend My Level", emoji: "🛡️", path: "/student/defend-level", icon: Scale, primary: false },
 ];
 
@@ -72,8 +76,12 @@ export function StudentNavBar() {
     return location.pathname.startsWith(path);
   };
 
-  const primaryItems = allNavItems.filter(i => i.primary);
-  const moreItems = allNavItems.filter(i => !i.primary);
+  // Picture Reader appears only once a teacher has switched a set on for one of the child's classes.
+  const { studentId } = useStudentProfile();
+  const { data: pictureSets = [] } = useSetsForStudent(studentId);
+  const navItems = allNavItems.filter((i) => i.id !== "picture-reader" || pictureSets.length > 0);
+  const primaryItems = navItems.filter(i => i.primary);
+  const moreItems = navItems.filter(i => !i.primary);
   const isMoreActive = moreItems.some(i => isActive(i.path, i.id));
 
   // Mobile: bottom tab bar
@@ -216,7 +224,7 @@ export function StudentNavBar() {
           onScroll={updateScrollState}
           className="flex items-center gap-0.5 py-1.5 overflow-x-auto scrollbar-hide scroll-smooth pr-10"
         >
-          {allNavItems.map((item) => {
+          {navItems.map((item) => {
             const active = isActive(item.path, item.id);
             return (
               <button

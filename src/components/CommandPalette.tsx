@@ -18,6 +18,7 @@ import {
   LayoutGrid, UsersRound, UserCog, School, CalendarDays, Trophy,
   ScanText, AudioLines, BookOpen, GraduationCap, PiggyBank,
   NotebookPen, Sparkles, FileBarChart2, ListTodo,
+  Languages,
 } from "lucide-react";
 
 interface JumpTarget {
@@ -70,6 +71,7 @@ export function CommandPalette() {
         { label: "Smart Upload (OCR)", path: "/teacher/smart-upload", icon: ScanText, keywords: "ocr scan photo vision bulk upload" },
         { label: "Transcript Insights", path: "/teacher/transcripts", icon: AudioLines, keywords: "transcript lesson analysis engagement" },
         { label: "Flipbooks", path: "/teacher/books", icon: BookOpen },
+      { label: "Language Support", path: "/teacher/language-support", icon: Languages, keywords: "picture pictures sentence esl symbols arasaac widgit reader" },
       ];
     }
     return [
@@ -84,6 +86,7 @@ export function CommandPalette() {
       { label: "Smart Upload (OCR)", path: "/teacher/smart-upload", icon: ScanText, keywords: "ocr scan photo vision bulk upload" },
       { label: "Transcript Insights", path: "/teacher/transcripts", icon: AudioLines, keywords: "transcript lesson analysis engagement" },
       { label: "Flipbooks", path: "/teacher/books", icon: BookOpen },
+      { label: "Language Support", path: "/teacher/language-support", icon: Languages, keywords: "picture pictures sentence esl symbols arasaac widgit reader" },
     ];
   }, [role]);
 

@@ -154,6 +154,14 @@ const SUITES = [
   // Video homework: families never see the AI draft, classmates never see
   // a score, a child cannot approve their own, and re-approving replaces.
   { name: "video homework rules", file: "video-homework-rules.test.mjs", migrations: [] },
+  // Language Support: the picture strip, set import and the easy video
+  // recorder's helpers (no database), then the class-activation policies.
+  { name: "language support lib", file: "language-support-lib.test.mjs", migrations: [] },
+  {
+    name: "language support",
+    file: "language-support.test.mjs",
+    migrations: ["20261110090000_language_support.sql"],
+  },
   {
     name: "video homework",
     file: "video-homework.test.mjs",

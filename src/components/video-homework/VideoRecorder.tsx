@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, Circle, RefreshCw, Square, Upload, SwitchCamera, Check } from "lucide-react";
+import { Camera, Circle, RefreshCw, Square, Upload, SwitchCamera, Check, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   MAX_UPLOAD_BYTES,
@@ -21,6 +21,7 @@ import {
 } from "@/lib/video/recorder";
 import { startLivePronunciation, type LivePronunciation } from "@/lib/video/livePronunciation";
 import { formatTimestamp } from "@/lib/videoHomework";
+import { KID_STEPS, inAppBrowser, speak, stepFor } from "@/lib/video/kidVideo";
 
 type Phase = "idle" | "preview" | "countdown" | "recording" | "review";
 
@@ -30,9 +31,11 @@ interface Props {
   vocabulary?: string[];
   onUse: (take: RecordedTake) => void;
   busy?: boolean;
+  /** The easy layout for Grade 1-3: steps, big buttons, English with Vietnamese under it. */
+  kid?: boolean;
 }
 
-export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, busy }: Props) {
+export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, busy, kid = false }: Props) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [count, setCount] = useState(3);
   const [elapsed, setElapsed] = useState(0);
@@ -254,13 +257,53 @@ export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, bus
   };
 
   const remaining = Math.max(0, maxSeconds - elapsed);
+  const inApp = kid && typeof navigator !== "undefined" && inAppBrowser(navigator.userAgent);
+  const step = stepFor(phase);
+  /** English on top; in the easy layout the Vietnamese sits under it, smaller. */
+  const label = (en: string, vi: string) =>
+    kid ? (
+      <span className="flex flex-col items-center leading-tight">
+        <span>{en}</span>
+        <span className="text-xs font-normal opacity-80">{vi}</span>
+      </span>
+    ) : (
+      en
+    );
+  const big = kid ? "h-16 text-lg" : "";
 
   return (
     <div className="space-y-3">
+      {kid && (
+        <ol className="flex items-center justify-center gap-2" aria-label="Steps">
+          {KID_STEPS.map((st, n) => (
+            <li
+              key={st.id}
+              aria-current={st.id === step ? "step" : undefined}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-2xl border-2 py-2 text-sm font-semibold ${
+                st.id === step ? "border-primary bg-primary/10" : "border-transparent bg-muted/50 text-muted-foreground"
+              }`}
+            >
+              <span className="text-xl">{st.emoji}</span>
+              <span className="flex flex-col leading-tight"><span>{n + 1}. {st.en}</span><span className="text-[11px] font-normal">{st.vi}</span></span>
+            </li>
+          ))}
+        </ol>
+      )}
+      {inApp && (
+        <div className="rounded-2xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 text-sm">
+          <p>📱 If the camera does not work, open this page in <strong>Chrome</strong> or <strong>Safari</strong>. You can also choose a video you already made.</p>
+          <p className="text-xs text-muted-foreground mt-1">Nếu máy quay không hoạt động, hãy mở trang này bằng Chrome hoặc Safari. Bạn cũng có thể chọn video đã quay sẵn.</p>
+        </div>
+      )}
       {cueCard && phase !== "review" && (
         <div className="rounded-2xl border-2 border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 p-3">
           <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mb-1">🎬 Your video is about</p>
-          <p className="text-sm leading-relaxed">{cueCard}</p>
+          <p className={kid ? "text-lg leading-relaxed" : "text-sm leading-relaxed"}>{cueCard}</p>
+          {kid && (
+            <Button type="button" variant="outline" size="sm" className="mt-2 h-9" onClick={() => speak(cueCard)}>
+              <Volume2 className="h-4 w-4 mr-1.5" /> Listen · Nghe
+            </Button>
+          )}
           {vocabulary.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2">
               {vocabulary.slice(0, 10).map((w) => (
@@ -290,7 +333,7 @@ export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, bus
         )}
         {phase === "countdown" && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-            <span className="text-7xl font-bold text-white drop-shadow">{count}</span>
+            <span className={`${kid ? "text-9xl" : "text-7xl"} font-bold text-white drop-shadow`}>{count}</span>
           </div>
         )}
         {phase === "recording" && (
@@ -315,38 +358,43 @@ export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, bus
         )}
       </div>
 
-      {cameraError && <p className="text-sm text-destructive">{cameraError}</p>}
+      {cameraError && (
+        <div className="text-sm text-destructive">
+          <p>{cameraError}</p>
+          {kid && <p className="text-xs">Hãy nhờ người lớn cho phép dùng máy quay và micro, rồi thử lại. Bạn cũng có thể chọn một video có sẵn.</p>}
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-2">
         {phase === "idle" && (
           <>
             {canRecordHere() && (
-              <Button size="lg" className="h-12 flex-1 text-base" onClick={() => openCamera()}>
-                <Camera className="h-5 w-5 mr-2" /> Open camera
+              <Button size="lg" className={`h-12 flex-1 text-base ${big}`} onClick={() => openCamera()}>
+                <Camera className="h-5 w-5 mr-2" /> {label("Open camera", "Mở máy quay")}
               </Button>
             )}
-            <Button size="lg" variant="outline" className="h-12 flex-1" onClick={() => fileInput.current?.click()}>
-              <Upload className="h-5 w-5 mr-2" /> Choose a video
+            <Button size="lg" variant="outline" className={`h-12 flex-1 ${big}`} onClick={() => fileInput.current?.click()}>
+              <Upload className="h-5 w-5 mr-2" /> {label("Choose a video", "Chọn video")}
             </Button>
           </>
         )}
         {phase === "preview" && (
-          <Button size="lg" className="h-14 flex-1 text-base bg-red-600 hover:bg-red-700" onClick={beginCountdown}>
-            <Circle className="h-5 w-5 mr-2 fill-current" /> Start recording
+          <Button size="lg" className={`h-14 flex-1 text-base bg-red-600 hover:bg-red-700 ${kid ? "h-20 text-xl" : ""}`} onClick={beginCountdown}>
+            <Circle className="h-5 w-5 mr-2 fill-current" /> {label("Start recording", "Bắt đầu quay")}
           </Button>
         )}
         {phase === "recording" && (
-          <Button size="lg" variant="secondary" className="h-14 flex-1 text-base" onClick={() => void stopRecording()}>
-            <Square className="h-5 w-5 mr-2 fill-current" /> I'm finished
+          <Button size="lg" variant="secondary" className={`h-14 flex-1 text-base ${kid ? "h-20 text-xl" : ""}`} onClick={() => void stopRecording()}>
+            <Square className="h-5 w-5 mr-2 fill-current" /> {label("I'm finished", "Em xong rồi")}
           </Button>
         )}
         {phase === "review" && take && (
           <>
-            <Button size="lg" variant="outline" className="h-12 flex-1" onClick={retake} disabled={busy}>
-              <RefreshCw className="h-5 w-5 mr-2" /> Record again
+            <Button size="lg" variant="outline" className={`h-12 flex-1 ${big}`} onClick={retake} disabled={busy}>
+              <RefreshCw className="h-5 w-5 mr-2" /> {label("Record again", "Quay lại")}
             </Button>
-            <Button size="lg" className="h-12 flex-1 text-base" onClick={() => onUse(take)} disabled={busy}>
-              <Check className="h-5 w-5 mr-2" /> {busy ? "Sending…" : "Send this one"}
+            <Button size="lg" className={`h-12 flex-1 text-base ${big}`} onClick={() => onUse(take)} disabled={busy}>
+              <Check className="h-5 w-5 mr-2" /> {busy ? label("Sending…", "Đang gửi…") : label("Send this one", "Gửi video này")}
             </Button>
           </>
         )}
