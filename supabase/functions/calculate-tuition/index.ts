@@ -1,7 +1,7 @@
 // supabase/functions/calculate-tuition/index.ts
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
-import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { checkRateLimit, getClientIP, rateLimitResponse } from "../_lib/rate-limit.ts";
 import { requireRole, callerOwnsStudent } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
@@ -59,8 +59,8 @@ Deno.serve(async (req) => {
   try {
     // Rate limit by IP
     const clientIP = getClientIP(req);
-    const ipLimit = checkRateLimit(clientIP, 30, 60000, 'ip');
-    
+    const ipLimit = checkRateLimit(clientIP, 30, 60000, "ip");
+
     if (ipLimit.limited) {
       return rateLimitResponse(ipLimit.resetAt, corsHeaders);
     }
@@ -78,15 +78,15 @@ Deno.serve(async (req) => {
 
     // Validate input
     const InputSchema = z.object({
-      studentId: z.string().uuid('Invalid student ID format'),
-      month: z.string().regex(/^\d{4}-\d{2}$/, 'Invalid month format. Expected YYYY-MM'),
+      studentId: z.string().uuid("Invalid student ID format"),
+      month: z.string().regex(/^\d{4}-\d{2}$/, "Invalid month format. Expected YYYY-MM"),
       // Internal preview used by the sibling calculator to avoid recursion/writes.
       siblingPreview: z.boolean().optional().default(false),
     });
 
     const { studentId, month, siblingPreview } = InputSchema.parse(await req.json());
     if (siblingPreview && !gate.isServiceRole) {
-      return new Response(JSON.stringify({ error: 'Internal preview only' }), { status: 403, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: "Internal preview only" }), { status: 403, headers: corsHeaders });
     }
     if (!gate.isServiceRole && !gate.roles.has("admin") && !(await callerOwnsStudent(supabase, gate, studentId))) {
       return new Response(JSON.stringify({ error: 'Not your student' }), {
@@ -114,7 +114,9 @@ Deno.serve(async (req) => {
         .single(),
       supabase
         .from("enrollments")
-        .select("class_id, discount_type, discount_value, discount_cadence, start_date, end_date, rate_override_vnd, allowed_days")
+        .select(
+          "class_id, discount_type, discount_value, discount_cadence, start_date, end_date, rate_override_vnd, allowed_days",
+        )
         .eq("student_id", studentId),
       supabase
         .from("discount_assignments")
@@ -150,7 +152,11 @@ Deno.serve(async (req) => {
     const referralBonuses = referralBonusesRes.data;
 
     // Extract family data if it's an array, handle null families
-    const family = student?.families ? (Array.isArray(student.families) ? student.families[0] : student.families) : null;
+    const family = student?.families
+      ? Array.isArray(student.families)
+        ? student.families[0]
+        : student.families
+      : null;
 
     const activeClassIds = (enrollments ?? [])
       .filter((e) => !e.end_date || e.end_date >= startDate) // still active in this month
@@ -166,8 +172,9 @@ Deno.serve(async (req) => {
         .lt("date", nextMonthStart)
         .in("status", ["Scheduled", "Held"]),
       family?.id
-        ? resolveSiblingStates(supabase, [family.id], month, !siblingPreview)
-            .then(states => ({ data: states[0] ?? null }))
+        ? resolveSiblingStates(supabase, [family.id], month, !siblingPreview).then((states) => ({
+            data: states[0] ?? null,
+          }))
         : Promise.resolve({ data: null as any }),
     ]);
     const { data: sessions, error: sessErr } = sessionsRes;
@@ -194,69 +201,82 @@ Deno.serve(async (req) => {
 
     // Calculate expected tuition using CLASS DEFAULT rates (for review comparison)
     let expectedClassTuition = 0;
-    
+
     // Base charges: bill Present or Absent; Excused not billable
     // Track base amounts per enrollment for accurate discount calculation
     let baseAmount = 0;
     const enrollmentBaseAmounts = new Map<string, number>(); // class_id -> base amount
     const datedEnrollmentBases = new Map<EnrollmentRow, number>();
     const rateAdjustmentSavings = new Map<string, number>(); // class_id -> savings
-    const sessionDetails: Array<{ date: string; rate: number; status: AttendanceStatus | "Scheduled"; class_id: string; class_name: string }> = [];
+    const sessionDetails: Array<{
+      date: string;
+      rate: number;
+      status: AttendanceStatus | "Scheduled";
+      class_id: string;
+      class_name: string;
+    }> = [];
 
     // Class names already fetched in Wave 3
     const classNameMap = new Map((classesNamesRes.data as any[])?.map((c: any) => [c.id, c.name]) || []);
 
     for (const s of sessions ?? []) {
       // Check if student was enrolled on this specific session date
-      const enrollment = (enrollments ?? []).find(e => 
-        e.class_id === s.class_id && e.start_date <= s.date && (!e.end_date || e.end_date >= s.date)
+      const enrollment = (enrollments ?? []).find(
+        (e) => e.class_id === s.class_id && e.start_date <= s.date && (!e.end_date || e.end_date >= s.date),
       );
-      
+
       if (!enrollment) continue; // Skip sessions outside enrollment period
-      
+
       // Check if session day is in student's allowed_days (null means all days allowed)
       const sessionDayOfWeek = getDayOfWeek(s.date);
       if (enrollment.allowed_days && !enrollment.allowed_days.includes(sessionDayOfWeek)) {
         continue; // Skip sessions on days the student doesn't attend
       }
-      
+
       const att = attendanceMap.get(s.id);
       const classData = s.classes ? (Array.isArray(s.classes) ? s.classes[0] : s.classes) : null;
       const defaultRate = Number(classData?.session_rate_vnd ?? 0);
       const overrideRate = enrollment?.rate_override_vnd;
       const actualRate = overrideRate ?? defaultRate;
-      const className = classNameMap.get(s.class_id) || 'Unknown';
+      const className = classNameMap.get(s.class_id) || "Unknown";
 
       // Bill Present, Absent, or Late (all attended/charged); Excused is forgiven.
       const billable = isBillableTuitionSession(s.status, att);
       if (billable && actualRate > 0) {
         // Calculate expected using default rate
         expectedClassTuition += defaultRate;
-        
+
         // ALWAYS use default rate for base amount (not override)
         baseAmount += defaultRate;
         // Track per-enrollment base amount using default rate
         const currentAmount = enrollmentBaseAmounts.get(s.class_id) || 0;
         enrollmentBaseAmounts.set(s.class_id, currentAmount + defaultRate);
         datedEnrollmentBases.set(enrollment, (datedEnrollmentBases.get(enrollment) || 0) + defaultRate);
-        
+
         // Track rate savings if override is lower than default
         if (overrideRate && overrideRate < defaultRate) {
           const savings = defaultRate - overrideRate;
           const currentSavings = rateAdjustmentSavings.get(s.class_id) || 0;
           rateAdjustmentSavings.set(s.class_id, currentSavings + savings);
         }
-        
-        sessionDetails.push({ 
-          date: s.date, 
+
+        sessionDetails.push({
+          date: s.date,
           rate: actualRate, // Show actual rate paid
-          status: (att ?? "Present") as any, 
-          class_id: s.class_id, 
-          class_name: className 
+          status: (att ?? "Present") as any,
+          class_id: s.class_id,
+          class_name: className,
         });
       } else {
         // still return session detail for UI if needed
-        if (att) sessionDetails.push({ date: s.date, rate: actualRate, status: att, class_id: s.class_id, class_name: className });
+        if (att)
+          sessionDetails.push({
+            date: s.date,
+            rate: actualRate,
+            status: att,
+            class_id: s.class_id,
+            class_name: className,
+          });
       }
     }
 
@@ -273,13 +293,13 @@ Deno.serve(async (req) => {
     // Add rate adjustment discounts first
     for (const [classId, savings] of rateAdjustmentSavings.entries()) {
       if (savings > 0) {
-        const className = classNameMap.get(classId) || 'Unknown';
+        const className = classNameMap.get(classId) || "Unknown";
         // Get enrollment to show override rate details
-        const enrollment = (enrollments as EnrollmentRow[] | null | undefined)?.find(e => e.class_id === classId);
+        const enrollment = (enrollments as EnrollmentRow[] | null | undefined)?.find((e) => e.class_id === classId);
         const overrideRate = enrollment?.rate_override_vnd || 0;
-        const defaultRate = sessions?.find(s => s.class_id === classId)?.classes?.[0]?.session_rate_vnd || 0;
+        const defaultRate = sessions?.find((s) => s.class_id === classId)?.classes?.[0]?.session_rate_vnd || 0;
         const savingsPerSession = defaultRate - overrideRate;
-        
+
         discounts.push({
           name: `Rate Adjustment`,
           type: "amount",
@@ -367,13 +387,10 @@ Deno.serve(async (req) => {
     // ---------- Payments and carryovers ----------
     // Prior charges and current month invoice already fetched in Wave 1
     const otherInvoicesDetailed: any[] = priorInvoicesRes.data ?? [];
-    const priorInvoicesDetailed = otherInvoicesDetailed.filter(inv => inv.month < month);
-    const futureInvoicesDetailed = otherInvoicesDetailed.filter(inv => inv.month > month);
+    const priorInvoicesDetailed = otherInvoicesDetailed.filter((inv) => inv.month < month);
+    const futureInvoicesDetailed = otherInvoicesDetailed.filter((inv) => inv.month > month);
     const priorCharges = priorInvoicesDetailed.reduce((s, r) => s + Number(r.total_amount ?? 0), 0);
-    const priorPayments = priorInvoicesDetailed.reduce(
-      (s, inv) => s + Number(inv.recorded_payment ?? 0),
-      0
-    );
+    const priorPayments = priorInvoicesDetailed.reduce((s, inv) => s + Number(inv.recorded_payment ?? 0), 0);
     const monthPayments = Number(currentInvoiceRes.data?.recorded_payment ?? 0);
 
     // Build prior balance breakdown for detailed view
@@ -385,7 +402,7 @@ Deno.serve(async (req) => {
         payments: number;
         netBalance: number;
         items: Array<{
-          type: 'charge' | 'payment' | 'canceled';
+          type: "charge" | "payment" | "canceled";
           className?: string;
           classId?: string;
           amount: number;
@@ -403,54 +420,54 @@ Deno.serve(async (req) => {
       summary: {
         totalPriorCharges: priorCharges,
         totalPriorPayments: priorPayments,
-        netCarryIn: 0 // Will be set after calculation
-      }
+        netCarryIn: 0, // Will be set after calculation
+      },
     };
 
     // Build month-by-month breakdown from prior invoices
     for (const invoice of priorInvoicesDetailed) {
       const invoiceMonth = invoice.month;
       const invoiceDate = new Date(`${invoiceMonth}-01T12:00:00+07:00`);
-      const monthLabel = invoiceDate.toLocaleDateString('en-US', { 
-        month: 'long', 
-        year: 'numeric',
-        timeZone: 'Asia/Bangkok'
+      const monthLabel = invoiceDate.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+        timeZone: "Asia/Bangkok",
       });
-      
-      const items: typeof priorBalanceBreakdown.months[0]['items'] = [];
+
+      const items: (typeof priorBalanceBreakdown.months)[0]["items"] = [];
       const classBreakdownData = invoice.class_breakdown || [];
-      
+
       // Add class charges from breakdown
       for (const classItem of classBreakdownData) {
         items.push({
-          type: 'charge',
+          type: "charge",
           className: classItem.class_name,
           classId: classItem.class_id,
           amount: -Number(classItem.amount_vnd || 0),
-          description: `${classItem.sessions_count || 0} sessions`
+          description: `${classItem.sessions_count || 0} sessions`,
         });
       }
-      
+
       // Add payment if any
       const recordedPayment = Number(invoice.recorded_payment ?? 0);
       if (recordedPayment > 0) {
         items.push({
-          type: 'payment',
+          type: "payment",
           amount: recordedPayment,
-          description: 'Payment received'
+          description: "Payment received",
         });
       }
-      
+
       const invoiceCharges = Number(invoice.total_amount ?? 0);
       const netBalance = recordedPayment - invoiceCharges;
-      
+
       priorBalanceBreakdown.months.push({
         month: invoiceMonth,
         label: monthLabel,
         charges: invoiceCharges,
         payments: recordedPayment,
         netBalance,
-        items
+        items,
       });
     }
 
@@ -458,7 +475,7 @@ Deno.serve(async (req) => {
     const carryInBalance = priorPayments - priorCharges;
     const carryInCredit = carryInBalance > 0 ? carryInBalance : 0;
     const carryInDebt = carryInBalance < 0 ? Math.abs(carryInBalance) : 0;
-    
+
     // Update summary with final carry-in
     priorBalanceBreakdown.summary.netCarryIn = carryInBalance;
 
@@ -491,69 +508,72 @@ Deno.serve(async (req) => {
     // Build per-class breakdown for multi-enrollment students
     // Calculate per-class discounts for net_amount_vnd
     const classDiscounts = new Map<string, number>(); // class_id -> total discounts for that class
-    
+
     // Add rate adjustment savings
     for (const [classId, savings] of rateAdjustmentSavings.entries()) {
       classDiscounts.set(classId, (classDiscounts.get(classId) || 0) + savings);
     }
-    
+
     // Add enrollment-level discounts
     for (const discount of datedDiscounts) {
       classDiscounts.set(discount.class_id, (classDiscounts.get(discount.class_id) || 0) + discount.amount);
     }
-    
+
     const classBreakdown = [];
     for (const [classId, baseAmount] of enrollmentBaseAmounts.entries()) {
       // Get class details from sessions
-      const classSession = sessions?.find(s => s.class_id === classId);
-      const classData = classSession?.classes ? 
-        (Array.isArray(classSession.classes) ? classSession.classes[0] : classSession.classes) : null;
-      
-      const className = (classNameMap.get(classId) as string | undefined) || 'Unknown';
+      const classSession = sessions?.find((s) => s.class_id === classId);
+      const classData = classSession?.classes
+        ? Array.isArray(classSession.classes)
+          ? classSession.classes[0]
+          : classSession.classes
+        : null;
+
+      const className = (classNameMap.get(classId) as string | undefined) || "Unknown";
       const sessionRate = Number(classData?.session_rate_vnd ?? 0);
-      const sessionsCount = sessionDetails.filter(sd => 
-        sd.class_id === classId && (sd.status === 'Present' || sd.status === 'Absent')
+      const sessionsCount = sessionDetails.filter(
+        (sd) => sd.class_id === classId && (sd.status === "Present" || sd.status === "Absent"),
       ).length;
-      
+
       // net_amount_vnd = base - class-specific discounts (enrollment + rate adjustments)
       const classSpecificDiscounts = classDiscounts.get(classId) || 0;
       const netAmount = Math.max(0, baseAmount - classSpecificDiscounts);
-      
+
       classBreakdown.push({
         class_id: classId,
         class_name: className,
         amount_vnd: baseAmount,
         net_amount_vnd: netAmount, // After class-specific discounts, before sibling/student discounts
         sessions_count: sessionsCount,
-        session_rate_vnd: sessionRate
+        session_rate_vnd: sessionRate,
       });
     }
 
     // ---------- Persist invoice (safe) ----------
     // Calculate cumulative paid amount (all payments up to and including this month)
     const cumulativePaidAmount = priorPayments + monthPayments;
-    
+
     // Try with extended fields first; fallback to minimal if schema lacks them.
     // Generate review flags - SIMPLIFIED: Only flag if final payable differs from expected
     const reviewFlags: any[] = [];
-    
+
     // Only flag if there's a difference between expected and final
     if (totalAmount !== expectedClassTuition) {
-      const discountReasons = discounts.map(d => d.name).filter((v, i, a) => a.indexOf(v) === i);
+      const discountReasons = discounts.map((d) => d.name).filter((v, i, a) => a.indexOf(v) === i);
       reviewFlags.push({
-        type: 'tuition_adjustment',
-        label: 'Tuition differs from class rate',
+        type: "tuition_adjustment",
+        label: "Tuition differs from class rate",
         details: {
           expectedClassTuition,
           actualPayable: totalAmount,
           difference: expectedClassTuition - totalAmount,
-          reasons: discountReasons
-        }
+          reasons: discountReasons,
+        },
       });
     }
-    
+
     // Determine confirmation status - simple logic
-    const confirmationStatus = reviewFlags.length === 0 ? 'auto_approved' : 'needs_review';
+    const confirmationStatus = reviewFlags.length === 0 ? "auto_approved" : "needs_review";
 
     const invoicePayloadExtended: any = {
       student_id: studentId,
@@ -580,18 +600,19 @@ Deno.serve(async (req) => {
     const writeInvoice = !siblingPreview && !siblingUnresolved;
     let invoiceUpsertOk = true;
     let invoiceErrorMsg = "";
-    if (writeInvoice) try {
-      const { error: invoiceErr1 } = await supabase
-        .from("invoices")
-        .upsert(invoicePayloadExtended, { onConflict: "student_id,month" });
-      if (invoiceErr1) {
+    if (writeInvoice)
+      try {
+        const { error: invoiceErr1 } = await supabase
+          .from("invoices")
+          .upsert(invoicePayloadExtended, { onConflict: "student_id,month" });
+        if (invoiceErr1) {
+          invoiceUpsertOk = false;
+          invoiceErrorMsg = invoiceErr1.message;
+        }
+      } catch (e: any) {
         invoiceUpsertOk = false;
-        invoiceErrorMsg = invoiceErr1.message;
+        invoiceErrorMsg = e?.message ?? String(e);
       }
-    } catch (e: any) {
-      invoiceUpsertOk = false;
-      invoiceErrorMsg = e?.message ?? String(e);
-    }
 
     if (writeInvoice && !invoiceUpsertOk) {
       // fallback minimal upsert (existing schema in your earlier code)
@@ -609,7 +630,7 @@ Deno.serve(async (req) => {
       );
       if (invoiceErr2) {
         console.error("Invoice upsert failed (both attempts):", invoiceErrorMsg, invoiceErr2.message);
-        throw new Error('Unable to refresh tuition invoice');
+        throw new Error("Unable to refresh tuition invoice");
       }
     }
 
@@ -641,18 +662,19 @@ Deno.serve(async (req) => {
       invoiceSaved: writeInvoice,
       tuitionFrozen,
       breakdown: {
-        classes: classBreakdown
+        classes: classBreakdown,
       },
-      enrollments: enrollments?.map(e => ({
-        class_id: e.class_id,
-        class_name: sessions?.find(s => s.class_id === e.class_id)?.classes ? 
-          (Array.isArray(sessions.find(s => s.class_id === e.class_id)!.classes) 
-            ? (sessions.find(s => s.class_id === e.class_id)!.classes as any)[0]?.name 
-            : (sessions.find(s => s.class_id === e.class_id)!.classes as any)?.name) 
-          : 'Unknown',
-        start_date: e.start_date,
-        end_date: e.end_date
-      })) || [],
+      enrollments:
+        enrollments?.map((e) => ({
+          class_id: e.class_id,
+          class_name: sessions?.find((s) => s.class_id === e.class_id)?.classes
+            ? Array.isArray(sessions.find((s) => s.class_id === e.class_id)!.classes)
+              ? (sessions.find((s) => s.class_id === e.class_id)!.classes as any)[0]?.name
+              : (sessions.find((s) => s.class_id === e.class_id)!.classes as any)?.name
+            : "Unknown",
+          start_date: e.start_date,
+          end_date: e.end_date,
+        })) || [],
       invoice: {
         base_amount: baseAmount,
         discount_amount: totalDiscount,
