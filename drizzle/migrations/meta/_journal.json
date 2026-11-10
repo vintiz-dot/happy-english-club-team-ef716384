@@ -71,6 +71,13 @@
       "when": 1794297285783,
       "tag": "0009_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794319695033,
+      "tag": "0010_scope_staff_quest_and_homework_reads",
+      "breakpoints": true
     }
   ]
 }

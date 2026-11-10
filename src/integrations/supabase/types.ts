@@ -6313,6 +6313,10 @@ export type Database = {
         Args: { _student_id: string; _user_id: string }
         Returns: boolean
       }
+      can_view_teacher: {
+        Args: { _teacher_id: string; _uid: string }
+        Returns: boolean
+      }
       change_enrollment_days: {
         Args: {
           p_allowed_days: number[]
@@ -6441,6 +6445,7 @@ export type Database = {
         Args: { p_category: string; p_source_kind: string }
         Returns: boolean
       }
+      is_staff_member: { Args: { _uid: string }; Returns: boolean }
       is_student_enrolled_in_class: {
         Args: { class_id_check: string; user_id: string }
         Returns: boolean
