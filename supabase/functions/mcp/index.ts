@@ -131,7 +131,7 @@ var list_upcoming_lessons_default = defineTool3({
 });
 
 // src/lib/mcp/index.ts
-var projectRef = "yxdcngazogqmrffllbkl";
+var projectRef = "aswgmbefikhsnhogtryv";
 var mcp_default = defineMcp({
   name: "happy-english-club-team",
   title: "happy-english-club-team",
