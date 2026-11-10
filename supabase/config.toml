@@ -247,3 +247,6 @@ verify_jwt = true
 # well, like every function here: the owner's rule for this live app.
 [functions.explain-family-tuition]
 verify_jwt = true
+
+[functions.parent-video-page]
+verify_jwt = false

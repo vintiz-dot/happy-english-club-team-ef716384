@@ -18,8 +18,9 @@ interface StartupGuardProps {
  */
 const PUBLIC_PATHS = ["/", "/auth", "/auth/reset-password", "/claim"];
 
+// /watch/:token is a parent's secret link to approved videos - no sign-in.
 const isPublicPath = (path: string) =>
-  PUBLIC_PATHS.includes(path.replace(/\/+$/, "") || "/");
+  PUBLIC_PATHS.includes(path.replace(/\/+$/, "") || "/") || path.startsWith("/watch/");
 
 export function StartupGuard({ children }: StartupGuardProps) {
   const [isChecking, setIsChecking] = useState(true);

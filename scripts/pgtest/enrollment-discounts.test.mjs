@@ -40,7 +40,7 @@ for (const name of ['calculate-tuition', 'calculate-tuition-bulk']) {
       b.onLoad({ filter: /.*/, namespace: 'test' }, args => ({ loader: 'js', contents:
         args.path.includes('supabase-js') ? 'export const createClient = globalThis.__tuitionClient;' :
         args.path.includes('zod') ? 'const chain = new Proxy({}, {get: (_, key) => key === "parse" ? v => v : () => chain}); export const z = chain;' :
-        args.path.endsWith('/auth.ts') ? 'export const requireRole = async () => ({isServiceRole: false});' :
+        args.path.endsWith('/auth.ts') ? 'export const requireRole = async () => ({isServiceRole: false, roles: new Set(["admin"])}); export const callerOwnsStudent = async () => true;' :
         args.path.endsWith('/sibling-state.ts') ? 'export const resolveSiblingStates = async () => { throw new Error("Unexpected family calculation"); };' :
         'export const checkRateLimit = () => ({limited: false}); export const getClientIP = () => "test"; export const rateLimitResponse = () => {};'
       }));

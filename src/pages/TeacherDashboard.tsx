@@ -373,6 +373,9 @@ export default function TeacherDashboard() {
         {/* Video homework waiting for review (renders nothing when empty) */}
         <motion.div variants={itemVariants}>
           <VideoReviewQueue />
+          <div className="mt-2 flex justify-end">
+            <Button asChild variant="ghost" size="sm"><Link to="/teacher/videos">Video homework progress →</Link></Button>
+          </div>
         </motion.div>
 
         {/* Stats Grid */}

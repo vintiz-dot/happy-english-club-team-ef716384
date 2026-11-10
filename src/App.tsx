@@ -23,6 +23,8 @@ const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const ClaimAccess = lazy(() => import("./pages/ClaimAccess"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ParentVideos = lazy(() => import("./pages/ParentVideos"));
+const TeacherVideoDashboard = lazy(() => import("./pages/TeacherVideoDashboard"));
 const Students = lazy(() => import("./pages/Students"));
 const StudentDetail = lazy(() => import("./pages/StudentDetail"));
 const Teachers = lazy(() => import("./pages/Teachers"));
@@ -107,6 +109,9 @@ function AppContent() {
                       to check — the hardening is in redeem-access-code. */}
                   <Route path="/claim" element={<ClaimAccess />} />
                   <Route path="/dashboard" element={<Dashboard />} />
+                  {/* Public: a parent's secret link to their child's approved videos. */}
+                  <Route path="/watch/:token" element={<ParentVideos />} />
+                  <Route path="/teacher/videos" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherVideoDashboard /></ProtectedRoute>} />
 
                   {/* Admin-only routes */}
                   <Route path="/students" element={<ProtectedRoute allowedRole="admin"><Students /></ProtectedRoute>} />

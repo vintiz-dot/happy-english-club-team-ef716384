@@ -5857,6 +5857,41 @@ export type Database = {
           },
         ]
       }
+      video_parent_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          revoked_at: string | null
+          student_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          revoked_at?: string | null
+          student_id: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          revoked_at?: string | null
+          student_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_parent_links_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_reactions: {
         Row: {
           created_at: string
@@ -6249,6 +6284,10 @@ export type Database = {
           p_student: string
         }
         Returns: string
+      }
+      can_manage_video_parent_link: {
+        Args: { p_student: string }
+        Returns: boolean
       }
       can_read_student_work_file: { Args: { _path: string }; Returns: boolean }
       can_upload_homework_video: { Args: { p_name: string }; Returns: boolean }
