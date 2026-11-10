@@ -2,7 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
-import { requireRole } from "../_lib/auth.ts";
+import { requireRole, callerOwnsStudent } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts } from "../_lib/enrollment-discounts.ts";
@@ -67,10 +67,13 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    // Admins only. This ran on the service role and never looked at who
-    // was calling, so any signed-in account could act on any child's data.
+    // Admins, and students / parents for their OWN children only. This ran
+    // on the service role and never looked at who was calling, so any
+    // signed-in account could act on any child's data. Locking it to admins
+    // alone then broke the student and parent Tuition pages, which read
+    // their bill through this function - hence the ownership check below.
     // Service-to-service calls still pass - see requireRole.
-    const gate = await requireRole(req, supabase, ["admin"], corsHeaders);
+    const gate = await requireRole(req, supabase, ["admin", "student", "family"], corsHeaders);
     if (gate instanceof Response) return gate;
 
     // Validate input
@@ -84,6 +87,12 @@ Deno.serve(async (req) => {
     const { studentId, month, siblingPreview } = InputSchema.parse(await req.json());
     if (siblingPreview && !gate.isServiceRole) {
       return new Response(JSON.stringify({ error: 'Internal preview only' }), { status: 403, headers: corsHeaders });
+    }
+    if (!gate.isServiceRole && !gate.roles.has("admin") && !(await callerOwnsStudent(supabase, gate, studentId))) {
+      return new Response(JSON.stringify({ error: 'Not your student' }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     if (!studentId || !month) throw new Error("Missing studentId or month (YYYY-MM)");
 

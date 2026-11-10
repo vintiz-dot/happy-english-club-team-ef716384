@@ -171,3 +171,32 @@ export async function callerHoldsStudent(
   }
   return data === true;
 }
+
+/**
+ * Is this student the caller's own record, or one of the caller's children?
+ *
+ * Mirrors the students SELECT policies for families and students
+ * (linked_user_id = the caller, or the family's primary_user_id = the
+ * caller), so a service-role function grants a pupil or parent no more than
+ * reading the row directly would. Fails closed on any error.
+ */
+export async function callerOwnsStudent(
+  sb: SupabaseClient,
+  caller: CallerIdentity,
+  studentId: string | null | undefined,
+): Promise<boolean> {
+  if (caller.isServiceRole) return true;
+  if (!studentId || !caller.userId) return false;
+  const { data, error } = await sb
+    .from("students")
+    .select("linked_user_id, families(primary_user_id)")
+    .eq("id", studentId)
+    .maybeSingle();
+  if (error || !data) {
+    if (error) console.error("callerOwnsStudent failed:", error.message);
+    return false;
+  }
+  if (data.linked_user_id === caller.userId) return true;
+  const fam: any = Array.isArray((data as any).families) ? (data as any).families[0] : (data as any).families;
+  return !!fam && fam.primary_user_id === caller.userId;
+}
