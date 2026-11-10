@@ -2273,6 +2273,96 @@ export type Database = {
           },
         ]
       }
+      language_support_overrides: {
+        Row: {
+          concept: string
+          owner_user_id: string
+          pictogram: number
+          updated_at: string
+        }
+        Insert: {
+          concept: string
+          owner_user_id: string
+          pictogram: number
+          updated_at?: string
+        }
+        Update: {
+          concept?: string
+          owner_user_id?: string
+          pictogram?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      language_support_set_classes: {
+        Row: {
+          active: boolean
+          class_id: string
+          created_at: string
+          created_by: string | null
+          set_id: string
+        }
+        Insert: {
+          active?: boolean
+          class_id: string
+          created_at?: string
+          created_by?: string | null
+          set_id: string
+        }
+        Update: {
+          active?: boolean
+          class_id?: string
+          created_at?: string
+          created_by?: string | null
+          set_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "language_support_set_classes_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "language_support_set_classes_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "language_support_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      language_support_sets: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          owner_user_id: string
+          sentences: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          owner_user_id: string
+          sentences?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          owner_user_id?: string
+          sentences?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ledger_accounts: {
         Row: {
           code: Database["public"]["Enums"]["account_code"]
@@ -6318,6 +6408,18 @@ export type Database = {
       }
       is_teacher_of_class: {
         Args: { class_id: string; user_id: string }
+        Returns: boolean
+      }
+      language_support_family_can_read: {
+        Args: { p_set: string }
+        Returns: boolean
+      }
+      language_support_staff_can_read: {
+        Args: { p_set: string }
+        Returns: boolean
+      }
+      language_support_staff_for_class: {
+        Args: { p_class: string }
         Returns: boolean
       }
       modify_enrollment_transfer: {
