@@ -70,15 +70,29 @@ Deno.serve(async (req) => {
         });
       }
 
+      // This action needs no sign-in, so on a fresh or emptied database ANY visitor
+      // to the login page could mint a full admin (10 Nov 2026: that happened on the
+      // new project while real student records were already loaded). It is therefore
+      // off unless the owner switches it on for the moment of first setup:
+      //   supabase secrets set ALLOW_ADMIN_BOOTSTRAP=true   ... then unset it again.
+      if (Deno.env.get('ALLOW_ADMIN_BOOTSTRAP') !== 'true') {
+        console.log('Bootstrap denied: ALLOW_ADMIN_BOOTSTRAP is not enabled');
+        return new Response(JSON.stringify({
+          error: 'Bootstrap is disabled. Ask the owner to create the first admin in the Supabase dashboard.',
+        }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       // Generate secure admin credentials
       // Use environment variable for email, or default to a secure generated one
       const adminEmail = Deno.env.get('BOOTSTRAP_ADMIN_EMAIL') || `admin-${crypto.randomUUID().slice(0, 8)}@system.local`;
       // Generate a cryptographically secure random password
       const tempPassword = crypto.randomUUID() + crypto.randomUUID(); // 72 character random string
 
+      // Never log the password: function logs are readable by anyone with project access.
       console.log('Creating bootstrap admin user:', adminEmail);
-      console.log('IMPORTANT: Bootstrap admin password:', tempPassword);
-      console.log('Please save this password - it will not be shown again!');
 
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email: adminEmail,
