@@ -8,12 +8,14 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Expose-Headers": "X-Lovable-AIG-Run-ID",
 };
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-const RUN_ID = "X-Lovable-AIG-Run-ID";
+// Claude Haiku: the fast, low-cost model. These are short parent messages worded
+// from figures that are already computed, so a larger model adds cost, not value.
+// EXPLAIN_MODEL can override it without a redeploy of the code.
+const MODEL = Deno.env.get("EXPLAIN_MODEL") || "claude-haiku-5-5";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -22,7 +24,7 @@ Deno.serve(async (req) => {
   const caller = await requireRole(req, sb, ["admin"], corsHeaders, { allowServiceRole: false });
   if (caller instanceof Response) return caller;
 
-  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) return json(500, { error: "AI is not configured." });
 
   let body: any;
@@ -76,32 +78,29 @@ Deno.serve(async (req) => {
     "Format money as Vietnamese đồng with thousands separators (e.g. 1.890.000 ₫). For each child: lessons counted and how attendance affected them " +
     "(Excused lessons are not charged), discounts and why, the amount payable, and any amount paid or still owed. " +
     "Mention the family (sibling) discount where it applies. End with one friendly line inviting questions. Plain text, short paragraphs, no markdown tables.";
-  const input = [
-    { role: "user", content: `Tuition data (JSON):\n${JSON.stringify(facts)}${notes ? `\n\nNotes from the admin to include:\n${notes}` : ""}` },
-  ];
+  const userContent = `Tuition data (JSON):\n${JSON.stringify(facts)}${notes ? `\n\nNotes from the admin to include:\n${notes}` : ""}`;
 
-  const upstream = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+  const upstream = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     signal: req.signal,
-    headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "fetch" },
+    headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({
-      model: "openai/gpt-6-astra",
-      instructions,
-      input,
+      model: MODEL,
+      max_tokens: 1500,
+      system: instructions,
+      messages: [{ role: "user", content: userContent }],
       stream: true,
-      store: false,
-      reasoning: { effort: "low" },
     }),
   }).catch((e) => (req.signal.aborted ? null : Promise.reject(e)));
   if (!upstream) return new Response(null, { status: 499, headers: corsHeaders });
 
-  const runId = upstream.headers.get(RUN_ID);
-  const extra: Record<string, string> = runId ? { [RUN_ID]: runId } : {};
   if (!upstream.ok || !upstream.body) {
     let message = "The explanation could not be written.";
     try { const e = await upstream.json(); message = e?.error?.message || e?.message || message; } catch { /* keep default */ }
-    if (upstream.status === 402) message = "AI credits have run out. Add credits in Settings → Plans & credits.";
+    if (upstream.status === 401 || upstream.status === 403) message = "The AI key was rejected. Ask the owner to check the ANTHROPIC_API_KEY secret.";
+    if (upstream.status === 402 || (upstream.status === 400 && /credit/i.test(message))) message = "The AI account is out of credit. Add credit with the AI provider.";
     if (upstream.status === 429) message = "Too many requests right now. Please try again shortly.";
+    if (upstream.status === 529) message = "The AI service is busy. Please try again in a moment.";
     return json(upstream.status, { error: message });
   }
 
@@ -125,10 +124,10 @@ Deno.serve(async (req) => {
             if (!payload || payload === "[DONE]") continue;
             let ev: any;
             try { ev = JSON.parse(payload); } catch { continue; }
-            if (ev.type === "response.output_text.delta" && ev.delta) {
+            if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta" && ev.delta.text) {
               wrote = true;
-              controller.enqueue(encoder.encode(ev.delta));
-            } else if (ev.type === "response.failed" || ev.type === "error") {
+              controller.enqueue(encoder.encode(ev.delta.text));
+            } else if (ev.type === "error") {
               controller.enqueue(encoder.encode("\n\n[The explanation could not be finished.]"));
             }
           }
@@ -142,5 +141,5 @@ Deno.serve(async (req) => {
     },
     cancel() { reader.cancel(); },
   });
-  return new Response(stream, { headers: { ...corsHeaders, ...extra, "Content-Type": "text/plain; charset=utf-8" } });
+  return new Response(stream, { headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" } });
 });
