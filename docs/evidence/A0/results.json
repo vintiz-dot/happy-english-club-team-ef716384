@@ -1,0 +1,1802 @@
+{
+ "when": "2026-11-11T14:31:46.304Z",
+ "base": "vite dev server, fake client (NOT production)",
+ "screens": {
+  "student-dashboard": {
+   "route": "/student/dashboard",
+   "role": "student",
+   "boardStyle": null,
+   "runs": {
+    "375-light": {
+     "fmrMs": 1576.699999988079,
+     "requests": 33,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:get_student_homeworks": 2,
+      "function:calculate-tuition": 1,
+      "from:notifications": 1,
+      "from:enrollments": 5,
+      "from:profiles": 1,
+      "from:student_login_streaks": 1,
+      "from:class_monitors": 1,
+      "from:student_points": 1,
+      "rpc:get_student_weekly_stats": 1,
+      "from:attendance": 1,
+      "from:language_support_set_classes": 1,
+      "from:daily_login_rewards": 2,
+      "from:sessions": 1,
+      "from:lesson_overviews": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 1199,
+     "path": "/student/dashboard",
+     "idleMs": 1737.8999999761581,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 12,
+      "byImpact": {
+       "serious": 2,
+       "critical": 1,
+       "moderate": 1
+      },
+      "top": [
+       "aria-progressbar-name(serious,1)",
+       "button-name(critical,2)",
+       "color-contrast(serious,8)",
+       "heading-order(moderate,1)"
+      ]
+     },
+     "shot": "student-dashboard-375-light.png",
+     "fmrMedianMs": 1577,
+     "idleMedianMs": 1863,
+     "fmrAll": [
+      1577,
+      1903,
+      1551
+     ],
+     "idleAll": [
+      1738,
+      2060,
+      1863
+     ],
+     "requestsAll": [
+      33,
+      33,
+      33
+     ]
+    },
+    "375-dark": {
+     "fmrMs": 1412.5999999642372,
+     "requests": 33,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:get_student_homeworks": 2,
+      "function:calculate-tuition": 1,
+      "from:notifications": 1,
+      "from:enrollments": 5,
+      "from:profiles": 1,
+      "from:student_login_streaks": 1,
+      "from:class_monitors": 1,
+      "from:student_points": 1,
+      "rpc:get_student_weekly_stats": 1,
+      "from:attendance": 1,
+      "from:language_support_set_classes": 1,
+      "from:daily_login_rewards": 2,
+      "from:sessions": 1,
+      "from:lesson_overviews": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 1199,
+     "path": "/student/dashboard",
+     "idleMs": 1636.8999999761581,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 14,
+      "byImpact": {
+       "serious": 2,
+       "critical": 1,
+       "moderate": 1
+      },
+      "top": [
+       "aria-progressbar-name(serious,1)",
+       "button-name(critical,2)",
+       "color-contrast(serious,10)",
+       "heading-order(moderate,1)"
+      ]
+     },
+     "shot": "student-dashboard-375-dark.png",
+     "fmrMedianMs": 1413,
+     "idleMedianMs": 1637,
+     "fmrAll": [
+      1413
+     ],
+     "idleAll": [
+      1637
+     ],
+     "requestsAll": [
+      33
+     ]
+    },
+    "768-light": {
+     "fmrMs": 1441.699999988079,
+     "requests": 33,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:get_student_homeworks": 2,
+      "function:calculate-tuition": 1,
+      "from:notifications": 1,
+      "from:enrollments": 5,
+      "from:profiles": 1,
+      "from:student_login_streaks": 1,
+      "from:class_monitors": 1,
+      "from:student_points": 1,
+      "rpc:get_student_weekly_stats": 1,
+      "from:attendance": 1,
+      "from:language_support_set_classes": 1,
+      "from:daily_login_rewards": 2,
+      "from:sessions": 1,
+      "from:lesson_overviews": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 1506,
+     "path": "/student/dashboard",
+     "idleMs": 2303.5,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 11,
+      "byImpact": {
+       "serious": 2,
+       "critical": 1,
+       "moderate": 1
+      },
+      "top": [
+       "aria-progressbar-name(serious,1)",
+       "button-name(critical,1)",
+       "color-contrast(serious,8)",
+       "heading-order(moderate,1)"
+      ]
+     },
+     "shot": "student-dashboard-768-light.png",
+     "fmrMedianMs": 1220,
+     "idleMedianMs": 1742,
+     "fmrAll": [
+      1442,
+      1209,
+      1220
+     ],
+     "idleAll": [
+      2304,
+      1729,
+      1742
+     ],
+     "requestsAll": [
+      33,
+      33,
+      33
+     ]
+    },
+    "768-dark": {
+     "fmrMs": 1130.5,
+     "requests": 33,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:get_student_homeworks": 2,
+      "function:calculate-tuition": 1,
+      "from:notifications": 1,
+      "from:enrollments": 5,
+      "from:profiles": 1,
+      "from:student_login_streaks": 1,
+      "from:class_monitors": 1,
+      "from:student_points": 1,
+      "rpc:get_student_weekly_stats": 1,
+      "from:attendance": 1,
+      "from:language_support_set_classes": 1,
+      "from:daily_login_rewards": 2,
+      "from:sessions": 1,
+      "from:lesson_overviews": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 1506,
+     "path": "/student/dashboard",
+     "idleMs": 1704.699999988079,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 19,
+      "byImpact": {
+       "serious": 2,
+       "critical": 1,
+       "moderate": 1
+      },
+      "top": [
+       "aria-progressbar-name(serious,1)",
+       "button-name(critical,1)",
+       "color-contrast(serious,16)",
+       "heading-order(moderate,1)"
+      ]
+     },
+     "shot": "student-dashboard-768-dark.png",
+     "fmrMedianMs": 1131,
+     "idleMedianMs": 1705,
+     "fmrAll": [
+      1131
+     ],
+     "idleAll": [
+      1705
+     ],
+     "requestsAll": [
+      33
+     ]
+    },
+    "1280-light": {
+     "fmrMs": 1330.199999988079,
+     "requests": 33,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:get_student_homeworks": 2,
+      "function:calculate-tuition": 1,
+      "from:notifications": 1,
+      "from:enrollments": 5,
+      "from:profiles": 1,
+      "from:student_login_streaks": 1,
+      "from:class_monitors": 1,
+      "from:student_points": 1,
+      "rpc:get_student_weekly_stats": 1,
+      "from:attendance": 1,
+      "from:language_support_set_classes": 1,
+      "from:daily_login_rewards": 2,
+      "from:sessions": 1,
+      "from:lesson_overviews": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 1506,
+     "path": "/student/dashboard",
+     "idleMs": 1834.9000000357628,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 11,
+      "byImpact": {
+       "serious": 2,
+       "critical": 1,
+       "moderate": 1
+      },
+      "top": [
+       "aria-progressbar-name(serious,1)",
+       "button-name(critical,1)",
+       "color-contrast(serious,8)",
+       "heading-order(moderate,1)"
+      ]
+     },
+     "shot": "student-dashboard-1280-light.png",
+     "fmrMedianMs": 1542,
+     "idleMedianMs": 2129,
+     "fmrAll": [
+      1330,
+      1761,
+      1542
+     ],
+     "idleAll": [
+      1835,
+      2342,
+      2129
+     ],
+     "requestsAll": [
+      33,
+      33,
+      33
+     ]
+    },
+    "1280-dark": {
+     "fmrMs": 1475.199999988079,
+     "requests": 33,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:get_student_homeworks": 2,
+      "function:calculate-tuition": 1,
+      "from:notifications": 1,
+      "from:enrollments": 5,
+      "from:profiles": 1,
+      "from:student_login_streaks": 1,
+      "from:class_monitors": 1,
+      "from:student_points": 1,
+      "rpc:get_student_weekly_stats": 1,
+      "from:attendance": 1,
+      "from:language_support_set_classes": 1,
+      "from:daily_login_rewards": 2,
+      "from:sessions": 1,
+      "from:lesson_overviews": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 1506,
+     "path": "/student/dashboard",
+     "idleMs": 2187.899999976158,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 25,
+      "byImpact": {
+       "serious": 2,
+       "critical": 1,
+       "moderate": 1
+      },
+      "top": [
+       "aria-progressbar-name(serious,1)",
+       "button-name(critical,1)",
+       "color-contrast(serious,22)",
+       "heading-order(moderate,1)"
+      ]
+     },
+     "shot": "student-dashboard-1280-dark.png",
+     "fmrMedianMs": 1475,
+     "idleMedianMs": 2188,
+     "fmrAll": [
+      1475
+     ],
+     "idleAll": [
+      2188
+     ],
+     "requestsAll": [
+      33
+     ]
+    },
+    "375-light-cpu4x": {
+     "fmrMedianMs": 8489,
+     "idleMedianMs": 11181,
+     "fmrAll": [
+      8659,
+      8463,
+      8489
+     ],
+     "idleAll": [
+      11509,
+      11181,
+      11016
+     ],
+     "requests": 33
+    }
+   }
+  },
+  "admin-tuition": {
+   "route": "/students/s-0001/tuition",
+   "role": "admin",
+   "boardStyle": null,
+   "runs": {
+    "375-light": {
+     "fmrMs": 948.8999999761581,
+     "requests": 20,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 4,
+      "from:families": 4,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 546,
+     "path": "/schedule",
+     "idleMs": 1176,
+     "errors": [
+      "Cannot read properties of undefined (reading 'name')",
+      "Cannot read properties of undefined (reading 'name')",
+      "Cannot read properties of undefined (reading 'name')"
+     ],
+     "axe": {
+      "rules": 4,
+      "nodes": 19,
+      "byImpact": {
+       "critical": 1,
+       "serious": 2,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,6)",
+       "color-contrast(serious,8)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)"
+      ]
+     },
+     "shot": "admin-tuition-375-light.png",
+     "fmrMedianMs": 1091,
+     "idleMedianMs": 1362,
+     "fmrAll": [
+      949,
+      1203,
+      1091
+     ],
+     "idleAll": [
+      1176,
+      1443,
+      1362
+     ],
+     "requestsAll": [
+      20,
+      20,
+      20
+     ]
+    },
+    "375-dark": {
+     "fmrMs": 1285.300000011921,
+     "requests": 20,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 4,
+      "from:families": 4,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 546,
+     "path": "/schedule",
+     "idleMs": 1531.699999988079,
+     "errors": [
+      "Cannot read properties of undefined (reading 'name')",
+      "Cannot read properties of undefined (reading 'name')",
+      "Cannot read properties of undefined (reading 'name')"
+     ],
+     "axe": {
+      "rules": 4,
+      "nodes": 23,
+      "byImpact": {
+       "critical": 1,
+       "serious": 2,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,6)",
+       "color-contrast(serious,12)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)"
+      ]
+     },
+     "shot": "admin-tuition-375-dark.png",
+     "fmrMedianMs": 1285,
+     "idleMedianMs": 1532,
+     "fmrAll": [
+      1285
+     ],
+     "idleAll": [
+      1532
+     ],
+     "requestsAll": [
+      20
+     ]
+    },
+    "768-light": {
+     "fmrMs": 963.3000000119209,
+     "requests": 20,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 4,
+      "from:families": 4,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 891,
+     "path": "/schedule",
+     "idleMs": 1146.300000011921,
+     "errors": [
+      "Cannot read properties of undefined (reading 'name')",
+      "Cannot read properties of undefined (reading 'name')",
+      "Cannot read properties of undefined (reading 'name')"
+     ],
+     "axe": {
+      "rules": 6,
+      "nodes": 20,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,3)",
+       "color-contrast(serious,10)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)",
+       "list(serious,1)",
+       "listitem(serious,1)"
+      ]
+     },
+     "shot": "admin-tuition-768-light.png",
+     "fmrMedianMs": 963,
+     "idleMedianMs": 1146,
+     "fmrAll": [
+      963,
+      1036,
+      742
+     ],
+     "idleAll": [
+      1146,
+      1271,
+      907
+     ],
+     "requestsAll": [
+      20,
+      20,
+      20
+     ]
+    },
+    "768-dark": {
+     "fmrMs": 948.3000000119209,
+     "requests": 20,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 4,
+      "from:families": 4,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 891,
+     "path": "/schedule",
+     "idleMs": 1094,
+     "errors": [
+      "Cannot read properties of undefined (reading 'name')",
+      "Cannot read properties of undefined (reading 'name')",
+      "Cannot read properties of undefined (reading 'name')"
+     ],
+     "axe": {
+      "rules": 6,
+      "nodes": 53,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,3)",
+       "color-contrast(serious,43)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)",
+       "list(serious,1)",
+       "listitem(serious,1)"
+      ]
+     },
+     "shot": "admin-tuition-768-dark.png",
+     "fmrMedianMs": 948,
+     "idleMedianMs": 1094,
+     "fmrAll": [
+      948
+     ],
+     "idleAll": [
+      1094
+     ],
+     "requestsAll": [
+      20
+     ]
+    },
+    "1280-light": {
+     "fmrMs": 942,
+     "requests": 20,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 4,
+      "from:families": 4,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 906,
+     "path": "/schedule",
+     "idleMs": 1164.2000000476837,
+     "errors": [
+      "Cannot read properties of undefined (reading 'name')",
+      "Cannot read properties of undefined (reading 'name')",
+      "Cannot read properties of undefined (reading 'name')"
+     ],
+     "axe": {
+      "rules": 6,
+      "nodes": 19,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,2)",
+       "color-contrast(serious,10)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)",
+       "list(serious,1)",
+       "listitem(serious,1)"
+      ]
+     },
+     "shot": "admin-tuition-1280-light.png",
+     "fmrMedianMs": 895,
+     "idleMedianMs": 1034,
+     "fmrAll": [
+      942,
+      818,
+      895
+     ],
+     "idleAll": [
+      1164,
+      970,
+      1034
+     ],
+     "requestsAll": [
+      20,
+      20,
+      20
+     ]
+    },
+    "1280-dark": {
+     "fmrMs": 884.4000000357628,
+     "requests": 20,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 4,
+      "from:families": 4,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 906,
+     "path": "/schedule",
+     "idleMs": 1028.1000000238419,
+     "errors": [
+      "Cannot read properties of undefined (reading 'name')",
+      "Cannot read properties of undefined (reading 'name')",
+      "Cannot read properties of undefined (reading 'name')"
+     ],
+     "axe": {
+      "rules": 6,
+      "nodes": 48,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,2)",
+       "color-contrast(serious,39)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)",
+       "list(serious,1)",
+       "listitem(serious,1)"
+      ]
+     },
+     "shot": "admin-tuition-1280-dark.png",
+     "fmrMedianMs": 884,
+     "idleMedianMs": 1028,
+     "fmrAll": [
+      884
+     ],
+     "idleAll": [
+      1028
+     ],
+     "requestsAll": [
+      20
+     ]
+    }
+   },
+   "error": "page.evaluate: Execution context was destroyed, most likely because of a navigation."
+  },
+  "admin-attendance": {
+   "route": "/teacher/attendance",
+   "role": "admin",
+   "boardStyle": null,
+   "runs": {
+    "375-light": {
+     "fmrMs": 1693.199999988079,
+     "requests": 17,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:teachers": 2,
+      "from:profiles": 1,
+      "from:teaching_assistants": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 194,
+     "path": "/teacher/attendance",
+     "idleMs": 1602.800000011921,
+     "errors": [],
+     "axe": {
+      "rules": 3,
+      "nodes": 19,
+      "byImpact": {
+       "critical": 1,
+       "serious": 1,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,6)",
+       "color-contrast(serious,12)",
+       "page-has-heading-one(moderate,1)"
+      ]
+     },
+     "shot": "admin-attendance-375-light.png",
+     "fmrMedianMs": 2580,
+     "idleMedianMs": 2475,
+     "fmrAll": [
+      1693,
+      2998,
+      2580
+     ],
+     "idleAll": [
+      1603,
+      2902,
+      2475
+     ],
+     "requestsAll": [
+      17,
+      17,
+      17
+     ]
+    },
+    "375-dark": {
+     "fmrMs": 2951.7999999523163,
+     "requests": 17,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:teachers": 2,
+      "from:profiles": 1,
+      "from:teaching_assistants": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 194,
+     "path": "/teacher/attendance",
+     "idleMs": 2848.2999999523163,
+     "errors": [],
+     "axe": {
+      "rules": 3,
+      "nodes": 21,
+      "byImpact": {
+       "critical": 1,
+       "serious": 1,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,6)",
+       "color-contrast(serious,14)",
+       "page-has-heading-one(moderate,1)"
+      ]
+     },
+     "shot": "admin-attendance-375-dark.png",
+     "fmrMedianMs": 2952,
+     "idleMedianMs": 2848,
+     "fmrAll": [
+      2952
+     ],
+     "idleAll": [
+      2848
+     ],
+     "requestsAll": [
+      17
+     ]
+    },
+    "768-light": {
+     "fmrMs": 2808.300000011921,
+     "requests": 17,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:teachers": 2,
+      "from:profiles": 1,
+      "from:teaching_assistants": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 516,
+     "path": "/teacher/attendance",
+     "idleMs": 2843.800000011921,
+     "errors": [],
+     "axe": {
+      "rules": 5,
+      "nodes": 19,
+      "byImpact": {
+       "critical": 1,
+       "serious": 3,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,3)",
+       "color-contrast(serious,12)",
+       "list(serious,1)",
+       "listitem(serious,2)",
+       "page-has-heading-one(moderate,1)"
+      ]
+     },
+     "shot": "admin-attendance-768-light.png",
+     "fmrMedianMs": 2808,
+     "idleMedianMs": 2844,
+     "fmrAll": [
+      2808,
+      2540,
+      4005
+     ],
+     "idleAll": [
+      2844,
+      2570,
+      4046
+     ],
+     "requestsAll": [
+      17,
+      17,
+      17
+     ]
+    },
+    "768-dark": {
+     "fmrMs": 2644.100000023842,
+     "requests": 17,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:teachers": 2,
+      "from:profiles": 1,
+      "from:teaching_assistants": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 516,
+     "path": "/teacher/attendance",
+     "idleMs": 2693.400000035763,
+     "errors": [],
+     "axe": {
+      "rules": 5,
+      "nodes": 52,
+      "byImpact": {
+       "critical": 1,
+       "serious": 3,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,3)",
+       "color-contrast(serious,45)",
+       "list(serious,1)",
+       "listitem(serious,2)",
+       "page-has-heading-one(moderate,1)"
+      ]
+     },
+     "shot": "admin-attendance-768-dark.png",
+     "fmrMedianMs": 2644,
+     "idleMedianMs": 2693,
+     "fmrAll": [
+      2644
+     ],
+     "idleAll": [
+      2693
+     ],
+     "requestsAll": [
+      17
+     ]
+    },
+    "1280-light": {
+     "fmrMs": 3355.800000011921,
+     "requests": 17,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:teachers": 2,
+      "from:profiles": 1,
+      "from:teaching_assistants": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 531,
+     "path": "/teacher/attendance",
+     "idleMs": 3396.400000035763,
+     "errors": [],
+     "axe": {
+      "rules": 5,
+      "nodes": 18,
+      "byImpact": {
+       "critical": 1,
+       "serious": 3,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,2)",
+       "color-contrast(serious,12)",
+       "list(serious,1)",
+       "listitem(serious,2)",
+       "page-has-heading-one(moderate,1)"
+      ]
+     },
+     "shot": "admin-attendance-1280-light.png",
+     "fmrMedianMs": 2895,
+     "idleMedianMs": 2936,
+     "fmrAll": [
+      3356,
+      2438,
+      2895
+     ],
+     "idleAll": [
+      3396,
+      2471,
+      2936
+     ],
+     "requestsAll": [
+      17,
+      17,
+      17
+     ]
+    },
+    "1280-dark": {
+     "fmrMs": 2553.300000011921,
+     "requests": 17,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:teachers": 2,
+      "from:profiles": 1,
+      "from:teaching_assistants": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 531,
+     "path": "/teacher/attendance",
+     "idleMs": 2591.300000011921,
+     "errors": [],
+     "axe": {
+      "rules": 5,
+      "nodes": 48,
+      "byImpact": {
+       "critical": 1,
+       "serious": 3,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,2)",
+       "color-contrast(serious,42)",
+       "list(serious,1)",
+       "listitem(serious,2)",
+       "page-has-heading-one(moderate,1)"
+      ]
+     },
+     "shot": "admin-attendance-1280-dark.png",
+     "fmrMedianMs": 2553,
+     "idleMedianMs": 2591,
+     "fmrAll": [
+      2553
+     ],
+     "idleAll": [
+      2591
+     ],
+     "requestsAll": [
+      17
+     ]
+    },
+    "375-light-cpu4x": {
+     "fmrMedianMs": 7250,
+     "idleMedianMs": 6878,
+     "fmrAll": [
+      7250,
+      6852,
+      7768
+     ],
+     "idleAll": [
+      6878,
+      6455,
+      7614
+     ],
+     "requests": 17
+    }
+   }
+  },
+  "admin-class-sessions": {
+   "route": "/admin/classes/c-0001",
+   "role": "admin",
+   "boardStyle": null,
+   "runs": {
+    "375-light": {
+     "fmrMs": 1593.5999999642372,
+     "requests": 19,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "function:admin-unlock": 1,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:enrollments": 1,
+      "from:profiles": 1,
+      "from:classes": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 741,
+     "path": "/admin/classes/c-0001",
+     "idleMs": 1700.8999999761581,
+     "errors": [],
+     "axe": {
+      "rules": 2,
+      "nodes": 6,
+      "byImpact": {
+       "critical": 1,
+       "serious": 1
+      },
+      "top": [
+       "button-name(critical,5)",
+       "color-contrast(serious,1)"
+      ]
+     },
+     "shot": "admin-class-sessions-375-light.png",
+     "fmrMedianMs": 2263,
+     "idleMedianMs": 2414,
+     "fmrAll": [
+      1594,
+      2263,
+      3961
+     ],
+     "idleAll": [
+      1701,
+      2414,
+      4133
+     ],
+     "requestsAll": [
+      19,
+      19,
+      19
+     ]
+    },
+    "375-dark": {
+     "fmrMs": 2448,
+     "requests": 19,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "function:admin-unlock": 1,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:enrollments": 1,
+      "from:profiles": 1,
+      "from:classes": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 741,
+     "path": "/admin/classes/c-0001",
+     "idleMs": 2598.300000011921,
+     "errors": [],
+     "axe": {
+      "rules": 2,
+      "nodes": 61,
+      "byImpact": {
+       "critical": 1,
+       "serious": 1
+      },
+      "top": [
+       "button-name(critical,5)",
+       "color-contrast(serious,56)"
+      ]
+     },
+     "shot": "admin-class-sessions-375-dark.png",
+     "fmrMedianMs": 2448,
+     "idleMedianMs": 2598,
+     "fmrAll": [
+      2448
+     ],
+     "idleAll": [
+      2598
+     ],
+     "requestsAll": [
+      19
+     ]
+    },
+    "768-light": {
+     "fmrMs": 2271,
+     "requests": 19,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "function:admin-unlock": 1,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:enrollments": 1,
+      "from:profiles": 1,
+      "from:classes": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 1036,
+     "path": "/admin/classes/c-0001",
+     "idleMs": 2420.199999988079,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 11,
+      "byImpact": {
+       "critical": 1,
+       "serious": 3
+      },
+      "top": [
+       "button-name(critical,6)",
+       "color-contrast(serious,1)",
+       "list(serious,1)",
+       "listitem(serious,3)"
+      ]
+     },
+     "shot": "admin-class-sessions-768-light.png",
+     "fmrMedianMs": 2271,
+     "idleMedianMs": 2420,
+     "fmrAll": [
+      2271,
+      2173,
+      2828
+     ],
+     "idleAll": [
+      2420,
+      2298,
+      2999
+     ],
+     "requestsAll": [
+      19,
+      19,
+      19
+     ]
+    },
+    "768-dark": {
+     "fmrMs": 2487.5,
+     "requests": 19,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "function:admin-unlock": 1,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:enrollments": 1,
+      "from:profiles": 1,
+      "from:classes": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 1036,
+     "path": "/admin/classes/c-0001",
+     "idleMs": 2636.099999964237,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 92,
+      "byImpact": {
+       "critical": 1,
+       "serious": 3
+      },
+      "top": [
+       "button-name(critical,6)",
+       "color-contrast(serious,82)",
+       "list(serious,1)",
+       "listitem(serious,3)"
+      ]
+     },
+     "shot": "admin-class-sessions-768-dark.png",
+     "fmrMedianMs": 2488,
+     "idleMedianMs": 2636,
+     "fmrAll": [
+      2488
+     ],
+     "idleAll": [
+      2636
+     ],
+     "requestsAll": [
+      19
+     ]
+    },
+    "1280-light": {
+     "fmrMs": 3168.100000023842,
+     "requests": 19,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "function:admin-unlock": 1,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:enrollments": 1,
+      "from:profiles": 1,
+      "from:classes": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 1051,
+     "path": "/admin/classes/c-0001",
+     "idleMs": 3340.900000035763,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 10,
+      "byImpact": {
+       "critical": 1,
+       "serious": 3
+      },
+      "top": [
+       "button-name(critical,5)",
+       "color-contrast(serious,1)",
+       "list(serious,1)",
+       "listitem(serious,3)"
+      ]
+     },
+     "shot": "admin-class-sessions-1280-light.png",
+     "fmrMedianMs": 3168,
+     "idleMedianMs": 3332,
+     "fmrAll": [
+      3168,
+      3172,
+      2218
+     ],
+     "idleAll": [
+      3341,
+      3332,
+      2363
+     ],
+     "requestsAll": [
+      19,
+      19,
+      19
+     ]
+    },
+    "1280-dark": {
+     "fmrMs": 1953.1000000238419,
+     "requests": 19,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "function:admin-unlock": 1,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:enrollments": 1,
+      "from:profiles": 1,
+      "from:classes": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 1051,
+     "path": "/admin/classes/c-0001",
+     "idleMs": 2083.399999976158,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 88,
+      "byImpact": {
+       "critical": 1,
+       "serious": 3
+      },
+      "top": [
+       "button-name(critical,5)",
+       "color-contrast(serious,79)",
+       "list(serious,1)",
+       "listitem(serious,3)"
+      ]
+     },
+     "shot": "admin-class-sessions-1280-dark.png",
+     "fmrMedianMs": 1953,
+     "idleMedianMs": 2083,
+     "fmrAll": [
+      1953
+     ],
+     "idleAll": [
+      2083
+     ],
+     "requestsAll": [
+      19
+     ]
+    },
+    "375-light-cpu4x": {
+     "fmrMedianMs": 14610,
+     "idleMedianMs": 13542,
+     "fmrAll": [
+      7820,
+      14610,
+      14639
+     ],
+     "idleAll": [
+      8702,
+      13542,
+      16017
+     ],
+     "requests": 19
+    }
+   }
+  },
+  "admin-schedule": {
+   "route": "/schedule",
+   "role": "admin",
+   "boardStyle": null,
+   "runs": {
+    "375-light": {
+     "fmrMs": 3606,
+     "requests": 16,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 546,
+     "path": "/schedule",
+     "idleMs": 3760,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 19,
+      "byImpact": {
+       "critical": 1,
+       "serious": 2,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,6)",
+       "color-contrast(serious,8)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)"
+      ]
+     },
+     "shot": "admin-schedule-375-light.png",
+     "fmrMedianMs": 2675,
+     "idleMedianMs": 2822,
+     "fmrAll": [
+      3606,
+      2440,
+      2675
+     ],
+     "idleAll": [
+      3760,
+      2579,
+      2822
+     ],
+     "requestsAll": [
+      16,
+      16,
+      16
+     ]
+    },
+    "375-dark": {
+     "fmrMs": 3221.199999988079,
+     "requests": 16,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 546,
+     "path": "/schedule",
+     "idleMs": 3372.7999999523163,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 23,
+      "byImpact": {
+       "critical": 1,
+       "serious": 2,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,6)",
+       "color-contrast(serious,12)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)"
+      ]
+     },
+     "shot": "admin-schedule-375-dark.png",
+     "fmrMedianMs": 3221,
+     "idleMedianMs": 3373,
+     "fmrAll": [
+      3221
+     ],
+     "idleAll": [
+      3373
+     ],
+     "requestsAll": [
+      16
+     ]
+    },
+    "768-light": {
+     "fmrMs": 3017.699999988079,
+     "requests": 16,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 891,
+     "path": "/schedule",
+     "idleMs": 3185,
+     "errors": [],
+     "axe": {
+      "rules": 6,
+      "nodes": 20,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,3)",
+       "color-contrast(serious,10)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)",
+       "list(serious,1)",
+       "listitem(serious,1)"
+      ]
+     },
+     "shot": "admin-schedule-768-light.png",
+     "fmrMedianMs": 3331,
+     "idleMedianMs": 3500,
+     "fmrAll": [
+      3018,
+      3977,
+      3331
+     ],
+     "idleAll": [
+      3185,
+      4133,
+      3500
+     ],
+     "requestsAll": [
+      16,
+      16,
+      16
+     ]
+    },
+    "768-dark": {
+     "fmrMs": 3478,
+     "requests": 16,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 891,
+     "path": "/schedule",
+     "idleMs": 3633.599999964237,
+     "errors": [],
+     "axe": {
+      "rules": 6,
+      "nodes": 53,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,3)",
+       "color-contrast(serious,43)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)",
+       "list(serious,1)",
+       "listitem(serious,1)"
+      ]
+     },
+     "shot": "admin-schedule-768-dark.png",
+     "fmrMedianMs": 3478,
+     "idleMedianMs": 3634,
+     "fmrAll": [
+      3478
+     ],
+     "idleAll": [
+      3634
+     ],
+     "requestsAll": [
+      16
+     ]
+    },
+    "1280-light": {
+     "fmrMs": 3139.5,
+     "requests": 16,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 906,
+     "path": "/schedule",
+     "idleMs": 3295.599999964237,
+     "errors": [],
+     "axe": {
+      "rules": 6,
+      "nodes": 19,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,2)",
+       "color-contrast(serious,10)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)",
+       "list(serious,1)",
+       "listitem(serious,1)"
+      ]
+     },
+     "shot": "admin-schedule-1280-light.png",
+     "fmrMedianMs": 3161,
+     "idleMedianMs": 3329,
+     "fmrAll": [
+      3140,
+      3161,
+      3177
+     ],
+     "idleAll": [
+      3296,
+      3329,
+      3338
+     ],
+     "requestsAll": [
+      16,
+      16,
+      16
+     ]
+    },
+    "1280-dark": {
+     "fmrMs": 3584.300000011921,
+     "requests": 16,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "from:sessions": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 906,
+     "path": "/schedule",
+     "idleMs": 3768.400000035763,
+     "errors": [],
+     "axe": {
+      "rules": 6,
+      "nodes": 48,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,2)",
+       "color-contrast(serious,39)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)",
+       "list(serious,1)",
+       "listitem(serious,1)"
+      ]
+     },
+     "shot": "admin-schedule-1280-dark.png",
+     "fmrMedianMs": 3584,
+     "idleMedianMs": 3768,
+     "fmrAll": [
+      3584
+     ],
+     "idleAll": [
+      3768
+     ],
+     "requestsAll": [
+      16
+     ]
+    },
+    "375-light-cpu4x": {
+     "fmrMedianMs": 8935,
+     "idleMedianMs": 9093,
+     "fmrAll": [
+      19906,
+      8935,
+      8480
+     ],
+     "idleAll": [
+      21260,
+      9093,
+      8713
+     ],
+     "requests": 16
+    }
+   }
+  }
+ }
+}

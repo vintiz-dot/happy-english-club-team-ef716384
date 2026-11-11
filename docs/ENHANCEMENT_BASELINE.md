@@ -2,6 +2,17 @@
 
 Measured, not changed: no source file was modified. Every "After" cell is empty on purpose; the same commands fill it later.
 
+## Where I am / next steps (A0 PAUSED by the owner's instruction, 2026-11-11)
+
+Measured and recorded below: Part 1 complete (tsc, pgtest, bun tests, build and bundle, static counts). Part 2 partly: 4 of 12 screens (student dashboard, admin attendance, admin class sessions, admin schedule) with 6 screenshots each in `docs/evidence/A0/`; every number is a dev-server number through the fake client.
+
+Not measured yet: admin Tuition (renders but throws `Cannot read properties of undefined (reading 'name')` against the fake: the fixtures lack a row that page expects, so the screen needs a fixture fix), teacher dashboard, the three class boards (Star Board, High Scores, Night League; below 768 px the app itself falls back to the plain podium), student leaderboard, parent view, admin Payroll. Fidelity caveat: the fake returns `{}` for edge functions other than admin-unlock and calculate-tuition, so the admin screens show real layout but thin data (see request kinds: attendance and sessions screens fetched few tables). Treat their numbers as layout/render cost, not data cost.
+
+Harness (outside the repo, survives the worktree): `C:\Users\Dell\hec-tools\a0-harness\`
+- `node C:\Users\Dell\hec-tools\a0-harness\measure.mjs <repoRoot> [outDir] [screen-id,screen-id]` copies `preview/` (fake Supabase client + invented fixtures) into `<repoRoot>/.claude/a0-preview/` (git-ignored), starts Vite on port 5191, runs every screen at 375/768/1280, light/dark, 4x CPU at 375, writes `results.json` and screenshots to outDir (default `docs/evidence/A0`). Needs `node_modules` linked in the repo and Chrome installed.
+- `report.mjs <results.json>` turns results into the markdown table below; `static-counts.mjs <repoRoot>`, `bundle.mjs <repoRoot>` (after `vite build`), `libs-in-chunks.mjs` give sections 1d/1e.
+- Next step: fix the admin-tuition fixture, then re-run `measure.mjs` with the remaining screen ids, regenerate this section with `report.mjs`. Known harness gap: a `page.evaluate` during a client redirect aborts a screen (admin-tuition); wrap it in a retry.
+
 ## Machine record
 
 | Item | Value |
@@ -119,8 +130,32 @@ Routing: every page in `src/App.tsx` is `lazy(() => import(...))` (admin, teache
 
 ## Part 2 - runtime (fake Supabase client)
 
-RUNTIME_PLACEHOLDER
+Run: 2026-11-11T14:31:46.304Z. vite dev server, fake client (NOT production). Times are **dev-server numbers through the fake client** (Vite on-demand transforms, 15-25 ms fake latency, no minification): comparable only with the same harness. "Render" = first time #root holds >150 characters of non-loader text; "idle" = last resource/fake request activity before 1 s of quiet. Light = median of 3 loads; dark = 1 load (screenshot + axe). Warm-up load before measuring. Requests = fake-client calls (from/rpc/functions/storage) at idle.
+
+| Screen | Route (role) | Req | 375 render/idle ms | 375 @4x CPU render/idle ms | 768 render/idle ms | 1280 render/idle ms | Overflow at 375 | axe 375 (crit/ser/mod/min) | axe 1280 |
+|---|---|---|---|---|---|---|---|---|---|
+| student-dashboard | `/student/dashboard` (student) | 33 | 1577 / 1863 | 8489 / 11181 | 1220 / 1742 | 1542 / 2129 | no | 1/2/1/0 (4 rules, 12 nodes) | 1/2/1/0 (4 rules, 11 nodes) |
+| admin-tuition | /students/s-0001/tuition (admin) | NOT MEASURED: page.evaluate: Execution context was destroyed, most likely because of a navigation. |||||||
+| admin-attendance | `/teacher/attendance` (admin) | 17 | 2580 / 2475 | 7250 / 6878 | 2808 / 2844 | 2895 / 2936 | no | 1/1/1/0 (3 rules, 19 nodes) | 1/3/1/0 (5 rules, 18 nodes) |
+| admin-class-sessions | `/admin/classes/c-0001` (admin) | 19 | 2263 / 2414 | 14610 / 13542 | 2271 / 2420 | 3168 / 3332 | no | 1/1/0/0 (2 rules, 6 nodes) | 1/3/0/0 (4 rules, 10 nodes) |
+| admin-schedule | `/schedule` (admin) | 16 | 2675 / 2822 | 8935 / 9093 | 3331 / 3500 | 3161 / 3329 | no | 1/2/1/0 (4 rules, 19 nodes) | 1/4/1/0 (6 rules, 19 nodes) |
+
+Axe at dark 375 and per-run details are in `docs/evidence/A0/results.json`. Screenshots: `docs/evidence/A0/<screen>-<375|768|1280>-<light|dark>.png` (.jpg when a PNG exceeded 380 KB).
+
+Request kinds per screen (375 light):
+
+- student-dashboard: from:students x5, from:enrollments x5, from:families x3, from:site_announcements x2, from:user_roles x2, rpc:get_student_homeworks x2, from:daily_login_rewards x2, from:announcement_dismissals x1, function:calculate-tuition x1, from:notifications x1, from:profiles x1, from:student_login_streaks x1, from:class_monitors x1, from:student_points x1, rpc:get_student_weekly_stats x1, from:attendance x1, from:language_support_set_classes x1, from:sessions x1, from:lesson_overviews x1
+- admin-tuition: from:students x5, from:user_roles x4, from:families x4, from:site_announcements x2, from:announcement_dismissals x1, rpc:ai_actions_list x1, from:sessions x1, from:profiles x1, from:teachers x1
+- admin-attendance: from:students x4, from:families x3, from:site_announcements x2, from:user_roles x2, from:teachers x2, from:announcement_dismissals x1, rpc:ai_actions_list x1, from:profiles x1, from:teaching_assistants x1
+- admin-class-sessions: from:students x4, from:families x3, from:site_announcements x2, from:user_roles x2, function:admin-unlock x1, from:announcement_dismissals x1, rpc:ai_actions_list x1, from:sessions x1, from:enrollments x1, from:profiles x1, from:classes x1, from:teachers x1
+- admin-schedule: from:students x4, from:families x3, from:site_announcements x2, from:user_roles x2, from:announcement_dismissals x1, rpc:ai_actions_list x1, from:sessions x1, from:profiles x1, from:teachers x1
+
+Page errors seen (375 light): admin-tuition: Cannot read properties of undefined (reading 'name') | Cannot read properties of undefined (reading 'name') | Cannot read properties of undefined (reading 'name')
+
 
 ## Not measured
 
-NOTMEASURED_PLACEHOLDER
+- admin Tuition (fixture gap, see top), teacher dashboard, Star Board / High Scores / Night League boards, student leaderboard, parent view, admin Payroll: not run (task paused).
+- Production-build runtime timings (would hit the live Supabase project).
+- Real-network / real-device timings; Lighthouse.
+- framer-motion chunk location (minified, no name hits).
