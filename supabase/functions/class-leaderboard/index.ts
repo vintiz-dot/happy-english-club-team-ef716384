@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
     // ----- Wave 1: identity lookups + main enrollments, all in parallel -----
-    const [teacherRes, userStudentRes, familyRes, enrollmentsRes] = await Promise.all([
+    const [teacherRes, userStudentRes, familyRes, enrollmentsRes, adminRes] = await Promise.all([
       adminClient.from("teachers")
         .select("id").eq("user_id", user.id).eq("is_active", true).maybeSingle(),
       adminClient.from("students")
@@ -74,7 +74,10 @@ Deno.serve(async (req) => {
       adminClient.from("enrollments")
         .select(`id, student_id, students ( id, full_name, avatar_url )`)
         .eq("class_id", classId).is("end_date", null),
+      adminClient.from("user_roles")
+        .select("role").eq("user_id", user.id).eq("role", "admin").limit(1),
     ]);
+    const isAdmin = ((adminRes as any).data?.length ?? 0) > 0;
 
     const teacher = teacherRes.data;
     const userStudent = userStudentRes.data;
@@ -131,7 +134,11 @@ Deno.serve(async (req) => {
     let isAuthorized = false;
     let currentStudentId: string | null = null;
 
-    if (teacher) {
+    // Admins can see every class board (they are who opens a student's
+    // profile). No student is "the viewer", so currentStudentId stays null.
+    if (isAdmin) isAuthorized = true;
+
+    if (!isAuthorized && teacher) {
       const cls = (classRes as any).data;
       const slots = Array.isArray(cls?.schedule_template?.weeklySlots)
         ? cls.schedule_template.weeklySlots
