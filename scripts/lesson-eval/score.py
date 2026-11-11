@@ -614,6 +614,10 @@ def cmd_to_text(a) -> int:
 
 
 def main(argv=None) -> int:
+    try:  # Windows consoles default to cp1252, which cannot print Vietnamese
+        sys.stdout.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("wer", help="WER/CER; ref TSV id<TAB>text, hyp TSV or result JSON")

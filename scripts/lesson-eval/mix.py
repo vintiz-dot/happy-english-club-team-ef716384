@@ -181,10 +181,13 @@ def main() -> int:
     ap.add_argument("--overlap", type=float, default=0.0, help="target overlapped fraction of speech, e.g. 0.05")
     ap.add_argument("--degrade", choices=["none", "s500"], default="none")
     ap.add_argument("--not-enrolled", default="", help="comma list of codes to treat as open-set (recorded in meta)")
+    ap.add_argument("--exclude", default="", help="comma list of codes to leave out (e.g. S20,S21: other voices)")
     ap.add_argument("--seed", type=int, default=7)
     a = ap.parse_args()
 
     pool = load_pool(a.segments)
+    for c in a.exclude.split(","):
+        pool.pop(c.strip(), None)
     codes_all = sorted(pool)
     if len(codes_all) < 2:
         sys.exit("need held-out speech for at least two children (run split.py)")
@@ -193,7 +196,7 @@ def main() -> int:
     tag = f"seed{a.seed}_ov{int(round(a.overlap * 100)):02d}_{a.degrade}"
     out = safe_out(a.out / tag)
     noise = noise_bank(rng) if a.degrade == "s500" else None
-    meta = {"seed": a.seed, "overlap_target": a.overlap, "degrade": a.degrade,
+    meta = {"seed": a.seed, "overlap_target": a.overlap, "degrade": a.degrade, "excluded": a.exclude,
             "not_enrolled": [c for c in a.not_enrolled.split(",") if c], "mixes": []}
     cache = {}
     for i in range(a.n):

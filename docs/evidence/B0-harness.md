@@ -4,6 +4,26 @@ Task B0 of `docs/MASTER_PLAN.md`. Tooling only; no model comparison (that is B1/
 Aggregates and codes (S01...) only in this file: no transcript text, no names. `key.txt` / `consent.txt` were never opened.
 Appended as the work went; each section says what was run and what it printed.
 
+## Where I am / next steps (PAUSED 2026-11-11 for the money work)
+
+Built and committed (all in `scripts/lesson-eval/`): common.py (repo-write refusal, key.txt/consent.txt skip), extract.py, confirm_pairs.py, split.py, mix.py, score.py + result_schema.json, hardware.py, smoke_local.py, delete_voiceprints.py, delete_all_derived.py, README.md, tests/ (26 pytest cases on synthetic fixtures).
+
+Run, with results (details in sections 2-6):
+- extract `--verify`: 35 unique WAVs pass; 28 SHA-256 duplicates (S21_clip2 + the nested `videos\videos\videos` copy); 30 video WAVs = 27 children (S26 clip2-5 only in the nested folder).
+- confirm_pairs: Recording == outp1ut_compressed; Untitled == output_compressed; Recording is the first 86.9 min of Untitled; je,ch,sa,po distinct. Two unique lesson recordings (~223.5 min).
+- split (X = 50 s): 15 children with held-out (13 clean + S20, S21 with heavy adult-pitch speech); S23 has no child-pitch speech; deterministic.
+- mix: 0/5/15 % overlap targets met (measured 0.000 / 0.050-0.053 / 0.154-0.165), deterministic (byte-identical WAVs on re-run), ground-truth RTTM scores DER 0 against itself.
+- tests: 26 passed. `--help` works on every script. Repo-path output refused with exit 3 (checked with mix.py). Deletion scripts checked with `--dry-run` only.
+- Install (venv, CPU only, no CUDA): faster-whisper 1.2.1 / CTranslate2 4.9.0, torch 2.15.0+cpu, SpeechBrain 1.1.2 (ECAPA), sherpa-onnx 2.0.1 (import only). pyannote.audio not installed (gated models, token needed - not requested).
+- 30 s smoke on S01_clip1: whisper-small int8 8 threads load 35.9 s, transcribe 44.9 s (RTF 1.50 - slower than real time on this i7-8665U); ECAPA load 10.8 s, 10 x 3 s embeddings in 9.8 s (RTF 0.33), dim 192, nothing saved.
+
+Not done / next:
+1. sherpa-onnx diarization models not downloaded or run; whisper base/tiny/medium RTF not measured (B2b).
+2. `score.py ident` and `preserve` exercised on fixtures only; no real annotated slice exists yet (B1 needs hand references and a learner-error slice).
+3. Mix turns reuse held-out segments (reuse factor up to ~4.5 per child in a 3-6 min mix): when scoring identification, count each source segment once (`src_clip,src_start` in turns.csv). Use `--exclude S20,S21` for a clean-speaker set.
+4. Owner questions: S26 coding confirmation; S23 clip (adult-range pitch); S13/S20/S21 mostly adult voice.
+5. Nothing merged to the conductor branch yet.
+
 ## 1. What exists
 
 `scripts/lesson-eval/` (see its README.md for the exact command sequence):
