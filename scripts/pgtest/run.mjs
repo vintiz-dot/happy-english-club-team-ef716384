@@ -49,6 +49,7 @@ const SUITES = [
     file: "cancelled-lessons.test.mjs",
     migrations: ["20261027090000_cancelled_lesson_attendance_guard.sql"],
   },
+  { name: "session held evidence", file: "session-evidence.test.mjs", migrations: ["20261027090000_cancelled_lesson_attendance_guard.sql", "20261112090000_session_held_evidence.sql"] },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.
