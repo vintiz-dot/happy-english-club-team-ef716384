@@ -1,5 +1,7 @@
 # D2 - Cancellation guard: design
 
+> **Where I am / next step (updated each commit):** design sections 0-14 and `D2-threat-model.md` sections 1-6 are complete and committed. Nothing was executed (no `node_modules` in the worktree). Next step: fresh reviewer attacks both files; then the Opus implementer builds from section 3 onward. Not verified and flagged in the text: whether a calculator run rewrites `confirmation_status` on a confirmed bill (section 6); whether pglite has `txid_current()` (4.2); holiday code outside `schedule-sessions` (8.2).
+
 Design only. No code, migration or live-database access went into this file.
 Paths: `M/` = `supabase/migrations/`, `F/` = `supabase/functions/`. Citations are to this worktree (conductor branch 9ba704c merged).
 Inputs read in full: root `AGENTS.md`, `supabase/AGENTS.md`, `docs/MASTER_PLAN.md`, `docs/evidence/D0-inventory.md`, `docs/evidence/D1-evidence-model.md`.
