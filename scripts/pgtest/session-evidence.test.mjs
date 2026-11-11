@@ -269,10 +269,10 @@ const restoreHelper = () => setHelper(`SELECT '[]'::jsonb`);
   const r = await ev(sid), i = item(r, 'attendance_present');
   ok('7 one Late by a teacher -> STRONG, family D', r.level === 'STRONG' && fam(r) === 'D', r);
   ok('7   detail late 1, hec 1, actor the teacher',
-     i.count === 1 && i.detail.late === 1 && i.detail.present === 0 && i.detail.hec === 1 &&
+     !!i && i.count === 1 && i.detail.late === 1 && i.detail.present === 0 && i.detail.hec === 1 &&
      i.detail.pixel_pal === 0 && i.detail.markers === 1 && i.actor_id === teacher, i);
   ok('7   item shape: strength strong, label_key evidence.<type>, at set',
-     i.strength === 'strong' && i.family === 'D' && i.label_key === 'evidence.attendance_present' && i.at !== null, i);
+     !!i && i.strength === 'strong' && i.family === 'D' && i.label_key === 'evidence.attendance_present' && i.at !== null, i);
   ok('7   no child id anywhere in the output', !JSON.stringify(r).includes(
      (await db.query(`SELECT student_id FROM attendance WHERE session_id=$1`, [sid])).rows[0].student_id));
 }
@@ -318,6 +318,12 @@ const restoreHelper = () => setHelper(`SELECT '[]'::jsonb`);
   const a = await mk();
   await pts({ cid: a.cid, by: a.teacher });
   let r = await ev(a.sid);
+  // A-5 / M28: a point row of this class on ANOTHER date is not this lesson's.
+  const a0 = await mk();
+  await pts({ cid: a0.cid, by: a0.teacher, date: '2026-10-19', at: '2026-10-19T11:00:00Z' });
+  await pts({ cid: a0.cid, by: a0.teacher, date: '2026-10-27', at: '2026-10-27T11:00:00Z' });
+  ok('11  teacher points for the class a week earlier and the next day -> NONE (pt.date = s.date)',
+     (await ev(a0.sid)).level === 'NONE');
   ok('11a teacher points, session_id NULL, same date -> SOFT, family P',
      r.level === 'SOFT' && fam(r) === 'P' && item(r, 'points_awarded').count === 1 &&
      item(r, 'points_awarded').actor_id === a.teacher, r);
@@ -599,13 +605,20 @@ const hashOf = async (sid) => (await ev(sid)).snapshot_hash;
   await fill([2, 1, 0]);
   const h2 = await hashOf(sid);
   ok('23 same facts inserted in the opposite order -> same hash', h1 === h2, [h1, h2]);
-  ok('23   independent of now(): computed_at is not hashed',
-     (await db.query(`SELECT (public.session_held_evidence($1)->>'computed_at') IS NOT NULL AS ok`, [sid])).rows[0].ok);
+  {
+    const r1 = await ev(sid);
+    await db.query('SELECT pg_sleep(0.02)');
+    const r2 = await ev(sid);
+    ok('23   independent of now(): computed_at differs between two calls, the hash does not',
+       r1.computed_at !== r2.computed_at && r1.snapshot_hash === r2.snapshot_hash, [r1.computed_at, r2.computed_at]);
+  }
 
-  // 24: every viewer gets the same token
+  // 24 (revised, D-review-1 A-1): admin and internal callers share the
+  // token; the class teacher gets none.
   const asAdmin = await evAdmin(sid), asTeacher = await evAs(teacher, sid), asService = await ev(sid);
-  ok('24 admin, the class teacher and service role get the same hash',
-     asAdmin.snapshot_hash === asTeacher.snapshot_hash && asAdmin.snapshot_hash === asService.snapshot_hash);
+  ok('24 admin and service role get the same hash',
+     /^[0-9a-f]{64}$/.test(asAdmin.snapshot_hash) && asAdmin.snapshot_hash === asService.snapshot_hash);
+  ok('24 the class teacher gets snapshot_hash null (A-1)', asTeacher.snapshot_hash === null, asTeacher.snapshot_hash);
   ok('24   admin view: viewer admin, settled present, invoice_settled item present',
      asAdmin.viewer === 'admin' && asAdmin.redacted === false && asAdmin.settled?.tuition === true &&
      !!item(asAdmin, 'invoice_settled'), asAdmin.viewer);
@@ -655,6 +668,54 @@ const hashOf = async (sid) => (await ev(sid)).snapshot_hash;
   ok('26   and returns when the element goes', (await hashOf(sid)) === prev);
 }
 
+{
+  // A-5 / M4: the hash moves with each of the session's own fields, on a
+  // lesson with no other evidence (so no item can carry the change).
+  const { sid } = await mk();
+  const other = await mk();
+  let prev = await hashOf(sid);
+  for (const [name, sql] of [
+    ['end_time', `UPDATE sessions SET end_time='19:15' WHERE id='${sid}'`],
+    ['teacher_id', `UPDATE sessions SET teacher_id='${randomUUID()}' WHERE id='${sid}'`],
+    ['class_id', `UPDATE sessions SET class_id='${other.cid}' WHERE id='${sid}'`],
+    ['Scheduled -> Canceled with no marks', `UPDATE sessions SET status='Canceled' WHERE id='${sid}'`],
+  ]) {
+    await db.exec(sql);
+    const h = await hashOf(sid);
+    ok(`26 hash changes (bare lesson): ${name}`, h !== prev, [prev, h]);
+    prev = h;
+  }
+}
+{
+  // A-6: recorder row keys are fingerprinted as a sorted JSON array.
+  const { sid } = await mk();
+  await setHelper(`SELECT CASE WHEN p_session_id = '${sid}' THEN '[{"row_keys":["a","b"]}]'::jsonb ELSE '[]'::jsonb END`);
+  const h1 = await hashOf(sid);
+  await setHelper(`SELECT CASE WHEN p_session_id = '${sid}' THEN '[{"row_keys":["a,b"]}]'::jsonb ELSE '[]'::jsonb END`);
+  const h2 = await hashOf(sid);
+  await restoreHelper();
+  ok('26 row_keys ["a","b"] and ["a,b"] give different hashes (A-6)', h1 !== h2, [h1, h2]);
+}
+{
+  // A-1 closed: the review's probe, inverted. Whatever the child's bill
+  // says, the class teacher's answer is the same, so nothing in it can be
+  // guessed against.
+  const { sid, teacher } = await mk();
+  const kid = await att(sid, 'Present', teacher);
+  await inv({ student: kid });
+  const strip = (r) => { const { computed_at, ...rest } = r; return JSON.stringify(rest); };
+  const views = new Set(), adminHashes = new Set();
+  for (const paid of [0, 1]) for (const conf of [0, 1]) for (const frozen of [0, 1]) {
+    await db.query(`UPDATE invoices SET recorded_payment=$2, confirmation_status=$3, tuition_frozen=$4 WHERE student_id=$1`,
+      [kid, paid ? 500000 : 0, conf ? 'confirmed' : 'auto_approved', !!frozen]);
+    views.add(strip(await evAs(teacher, sid)));
+    adminHashes.add((await evAdmin(sid)).snapshot_hash);
+  }
+  ok('A-1 the teacher view is byte-identical for all 8 paid/confirmed/frozen states', views.size === 1, [...views]);
+  ok('A-1   and carries no hash (nothing to guess against)', JSON.parse([...views][0]).snapshot_hash === null);
+  ok('A-1   while the admin hash does tell settled from not settled', adminHashes.size >= 2, adminHashes.size);
+}
+
 // ----------------------------------------------------------------- access
 {
   const { sid, teacher } = await mk();
@@ -675,8 +736,20 @@ const hashOf = async (sid) => (await ev(sid)).snapshot_hash;
      eFake?.code === '42501' && eFake.message === eReal.message, [eReal, eFake]);
   e = await errAs(teacher, random);
   ok('28 even a real teacher gets 42501 for an invented id', e?.code === '42501', e);
-  ok('28 authenticated with an empty JWT role is not "internal"',
+  ok('28 authenticated JWT role with no uid is not "internal"',
      (await errAs(null, sid, 'authenticated', 'authenticated'))?.code === '42501');
+  // A-3: internal is decided positively. No claims at all, but the
+  // connection acts as an API role -> refused, never the money view.
+  e = await errAs(null, sid, '', 'authenticated');
+  ok('28 database role authenticated with NO jwt role and NO uid -> 42501 (A-3)', e?.code === '42501', e);
+  e = await errAs(null, sid, '', 'service_role');
+  ok('28 database role service_role with no jwt role -> internal (not an API role name)',
+     e === null, e);
+  const sqlEditor = (await as(null, '', null, CALL, [sid])).rows[0].r;
+  ok('28 no claims, no SET ROLE (SQL editor, cron) -> internal, full view',
+     sqlEditor.viewer === 'internal' && sqlEditor.settled !== null && !!sqlEditor.snapshot_hash, sqlEditor.viewer);
+  e = await errAs(null, sid, 'anon', 'authenticated');
+  ok('28 jwt role anon with no uid -> 42501', e?.code === '42501', e);
   e = await errAs(ADMIN, random);
   ok('29 admin with a random uuid -> P0002', e?.code === 'P0002', e);
   e = await errAs(ADMIN, null);
@@ -708,7 +781,7 @@ const hashOf = async (sid) => (await ev(sid)).snapshot_hash;
   await ev(sid); await evAdmin(sid); await evAs(teacher, sid);
   ok('W calling it (service, admin, teacher) changes no row anywhere', (await fingerprint()) === before);
   // A replacement helper that tries to write is refused by Postgres:
-  // the whole chain is STABLE.
+  // a write statement inside a STABLE function.
   await db.exec(`CREATE OR REPLACE FUNCTION public.session_recording_evidence(p_session_id uuid)
     RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $b$
     BEGIN
@@ -719,6 +792,39 @@ const hashOf = async (sid) => (await ev(sid)).snapshot_hash;
   try { await ev(sid); } catch (e) { refused = e.message; }
   ok('W a helper that writes is refused (STABLE), and the error propagates', /non-volatile/.test(refused ?? ''), refused);
   ok('W   and nothing was written', (await fingerprint()) === before);
+
+  // A-2: Postgres checks volatility per function, not down the chain.
+  // (a) a VOLATILE helper is refused outright, before it runs.
+  await db.exec(`CREATE OR REPLACE FUNCTION public.session_recording_evidence(p_session_id uuid)
+    RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public AS $b$
+    BEGIN
+      INSERT INTO public.point_transactions(student_id,class_id,points,type,date) VALUES (gen_random_uuid(),gen_random_uuid(),1,'participation','2026-10-26');
+      RETURN '[]'::jsonb;
+    END $b$;`);
+  let volErr = null;
+  try { await ev(sid); } catch (e) { volErr = e; }
+  ok('W a VOLATILE helper makes the evidence call raise 55000 (A-2)', volErr?.code === '55000', volErr?.message);
+  ok('W   and nothing was written', (await fingerprint()) === before);
+  // (b) a STABLE helper that calls a VOLATILE writer: the write is rolled
+  // back, the answer still comes out.
+  await db.exec(`CREATE OR REPLACE FUNCTION public._test_writer() RETURNS int LANGUAGE plpgsql VOLATILE AS $b$
+    BEGIN
+      INSERT INTO public.point_transactions(student_id,class_id,points,type,date) VALUES (gen_random_uuid(),gen_random_uuid(),1,'participation','2026-10-26');
+      UPDATE public.invoices SET recorded_payment = 999;
+      RETURN 1;
+    END $b$;
+    CREATE OR REPLACE FUNCTION public.session_recording_evidence(p_session_id uuid)
+    RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $b$
+      SELECT CASE WHEN public._test_writer() = 1 THEN '[]'::jsonb END $b$;`);
+  let chainErr = null, chained = null;
+  try { chained = await ev(sid); } catch (e) { chainErr = e.message; }
+  ok('W a STABLE helper calling a VOLATILE writer: the call still answers', chainErr === null && chained?.level === 'STRONG', chainErr);
+  ok('W   and every row it wrote was rolled back (A-2: the claim holds down the chain)', (await fingerprint()) === before);
+  for (const [who, fn] of [['admin', () => evAdmin(sid)], ['teacher', () => evAs(teacher, sid)]]) {
+    await fn();
+    ok(`W   same for a call as the ${who}`, (await fingerprint()) === before);
+  }
+  await db.exec(`DROP FUNCTION public._test_writer()`);
   await restoreHelper();
 }
 
@@ -747,9 +853,10 @@ const hashOf = async (sid) => (await ev(sid)).snapshot_hash;
       has_function_privilege('service_role','public.session_held_evidence(uuid)','EXECUTE') s,
       has_function_privilege('anon','public.session_held_evidence(uuid)','EXECUTE') n,
       has_function_privilege('authenticated','public.session_recording_evidence(uuid)','EXECUTE') ra,
-      has_function_privilege('anon','public.session_recording_evidence(uuid)','EXECUTE') rn`)).rows[0];
-  ok('32 grants: evidence for authenticated + service_role only; helper for nobody',
-     grants.a && grants.s && !grants.n && !grants.ra && !grants.rn, grants);
+      has_function_privilege('anon','public.session_recording_evidence(uuid)','EXECUTE') rn,
+      has_function_privilege('service_role','public.session_recording_evidence(uuid)','EXECUTE') rs`)).rows[0];
+  ok('32 grants: evidence for authenticated + service_role only; helper for nobody (service_role included)',
+     grants.a && grants.s && !grants.n && !grants.ra && !grants.rn && !grants.rs, grants);
 }
 
 await db.close();

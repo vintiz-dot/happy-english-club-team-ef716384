@@ -228,7 +228,6 @@ DECLARE
   v_out jsonb;
   v_rec_vol "char";
   v_rec_ok boolean := false;
-  v_jwt_role text;
 BEGIN
   IF p_session_id IS NULL THEN
     RAISE EXCEPTION 'session_held_evidence: a session id is required' USING ERRCODE = '22004';
