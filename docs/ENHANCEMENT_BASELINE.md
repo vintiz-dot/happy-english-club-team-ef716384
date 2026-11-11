@@ -44,7 +44,55 @@ Per-suite (passed/failed): family payment month 6/0, dated enrollment discounts 
 
 ### 1d. Production build
 
-BUILD_PLACEHOLDER
+Command: `node node_modules/vite/bin/vite.js build` (exit 0, 90 s wall, "built in 1m 27s"; output kept in `docs/evidence/A0/build-output.txt`). Analysed with `node C:\Users\Dell\hec-tools\a0-harness\bundle.mjs <repo root>` (raw bytes, gzip level 9; KiB = 1024 B; full list in `docs/evidence/A0/bundle.json`). Only vite's own "chunks over 500 kB" warning was printed.
+
+| Metric | Baseline | After |
+|---|---|---|
+| Total JS, gzip (147 JS files) | 1474.7 KiB (raw 5032.8 KiB) | |
+| **Initial-load JS gzip** (entry `index-lDZDr1uY.js`; `dist/index.html` has one `<script type=module>`, zero `modulepreload`, and the entry has no static imports of other chunks) | **216.3 KiB** (raw 694.5 KiB) | |
+| Initial CSS gzip (`index-CEIBNdKR.css`, only stylesheet) | 44.3 KiB (raw 299.8 KiB) | |
+| Files in dist/assets | 158 (147 JS, 1 CSS, 10 avatar PNG ~60 KiB each) | |
+| JS chunks over 500 kB raw | 3: Layout, index (entry), Admin | |
+
+Top chunks by raw size (JS and CSS):
+
+| Chunk | Raw KB | Gzip KB |
+|---|---|---|
+| Layout-C6kXVtG6.js | 1380.3 | 391.9 |
+| index-lDZDr1uY.js | 694.5 | 216.3 |
+| Admin-ta8GU85f.js | 527.4 | 136.2 |
+| microsoft.cognitiveservices.speech.sdk-BHxAY8Yr.js | 373.3 | 80.7 |
+| index-CEIBNdKR.css | 299.8 | 44.3 |
+| index-DwBFokjN.js | 204.6 | 61.1 |
+| index.es-B6ykoAna.js | 147.2 | 50.2 |
+| StudentDetail-J53gEBh3.js | 137.1 | 35.1 |
+| StudentDashboard-BtxsVJYw.js | 135.0 | 34.9 |
+| BulkReportExport-DpFyyk8c.js | 106.5 | 33.9 |
+| Vocabulary-aWp9Abbc.js | 88.4 | 25.5 |
+| GlobalCalendar-Jty9zQWS.js | 86.3 | 26.9 |
+| ClassDetail-5bZEs3oC.js | 47.9 | 12.8 |
+| TeacherTranscripts-Jz6eGjma.js | 46.0 | 11.7 |
+| Teachers-E82X9zeI.js | 44.9 | 11.0 |
+| ClassBoardWindow-WyorB0lL.js | 41.2 | 14.1 |
+| StudentProfileEdit-CzaTOX71.js | 33.5 | 10.7 |
+| calendar-FWToLH7a.js | 33.0 | 10.5 |
+| TeacherProfile-CCNFwB-T.js | 31.3 | 8.6 |
+| TeacherClassDetail-CbS2qJ0T.js | 29.7 | 8.9 |
+| HighScores-BceODYFH.js | 28.4 | 7.6 |
+| NightLeague-COxUj_pl.js | 28.0 | 7.5 |
+| TeacherSmartUpload-CdVLh9TU.js | 27.2 | 8.3 |
+| AssignmentUpload-aA_1HcP0.js | 25.0 | 7.1 |
+| StarBoard-6KByQl58.js | 25.0 | 6.9 |
+
+
+Findings that matter for A3:
+
+- **`Layout-*.js` is 1380 KiB raw / 392 KiB gzip and is fetched by every page that renders `<Layout>` (79 chunks reference it), including the student dashboard, teacher dashboard and admin.** It is not in the initial bundle, but every screen waits for it after the entry. Signature counts show it holds recharts (82 hits), jsPDF (87), html2canvas (23), date-fns and lucide (90): rollup parked the shared dependency graph in the Layout chunk, so PDF and chart code is downloaded by a student opening the dashboard. framer-motion cannot be located by name after minification (0 name hits in any chunk); `Layout.tsx` imports `motion` statically so it is probably in that chunk too (unverified).
+- Heavy libs in the **initial** (entry) chunk: none of recharts, jsPDF, html2canvas, pdf.js, framer-motion by signature. The entry holds react-router, react-query, the supabase client, lucide and fuse.
+- Heavy libs in **lazy** chunks: recharts also in StudentDashboard, StudentDetail, StudentProfileEdit; quill in `index-DwBFokjN.js` (205 KiB raw, 61 KiB gzip); Azure speech SDK as its own chunk (373 KiB raw, 81 KiB gzip); `index.es-*` (147 KiB raw, 50 KiB gzip) lazy.
+- **Admin code vs student/parent bundle:** every route in `src/App.tsx` is `lazy()`, so `Admin-*.js` (527 KiB raw, 136 KiB gzip) is not in the initial bundle and a student never downloads it. What they share is the Layout chunk above. `ProtectedRoute` statically imports `AdminUnlockGate` into the entry (small).
+- Not measured: production-build runtime timings (the built app would call the live Supabase project; forbidden). Sizes are static.
+
 
 ### 1e. Static counts
 
