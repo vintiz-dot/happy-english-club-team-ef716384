@@ -50,6 +50,18 @@ const SUITES = [
     migrations: ["20261027090000_cancelled_lesson_attendance_guard.sql"],
   },
   { name: "session held evidence", file: "session-evidence.test.mjs", migrations: ["20261027090000_cancelled_lesson_attendance_guard.sql", "20261112090000_session_held_evidence.sql"] },
+  // The cancellation guard on top of the real audit trigger, the real
+  // cancelled-lesson guard and the evidence function, in paste order.
+  {
+    name: "session cancel guard",
+    file: "session-cancel-guard.test.mjs",
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+    ],
+  },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.
