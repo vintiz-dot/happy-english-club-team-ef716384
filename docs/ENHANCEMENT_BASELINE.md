@@ -22,7 +22,7 @@ Measured, not changed: no source file was modified. Every "After" cell is empty 
 | Check | Command | Baseline | After |
 |---|---|---|---|
 | App type check | `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | PASS, 0 errors, 213 s wall | |
-| pgtest | `node scripts/pgtest/run.mjs` | see section "pgtest" below | |
+| pgtest | `node scripts/pgtest/run.mjs` | PASS 1611 assertions, 30 suites, 0 failed, 473 s | |
 | payrollCalculation | `npx --yes bun test scripts/payrollCalculation.test.ts` | PASS 6 / 0 fail | |
 | enrolledMonths | `npx --yes bun test scripts/enrolledMonths.test.ts` | PASS 4 / 0 fail | |
 | paymentMonth | `npx --yes bun test scripts/paymentMonth.test.ts` | PASS 3 / 0 fail | |
@@ -34,7 +34,13 @@ Measured, not changed: no source file was modified. Every "After" cell is empty 
 
 ### pgtest
 
-PGTEST_PLACEHOLDER
+`node scripts/pgtest/run.mjs`: exit 0, 473 s wall (it includes its own app typecheck and edge-function typecheck, run while other jobs shared the CPU). **1611 assertions across 30 suites, 0 suites failed. No pre-existing failure.** Full per-suite output: `docs/evidence/A0/pgtest.txt`.
+
+Per-suite (passed/failed): family payment month 6/0, dated enrollment discounts 22/0, cancelled lessons 25/0, shared-module mirrors 13/0, edge functions typecheck 5/0, app typecheck 3/0, chat assistant 201/0, AI admin actions 71/0, payroll session rules 27/0, payroll screen rows 69/0, pay-rate history 38/0, payroll month locking 55/0, stars sync 46/0, stars sync engine 172/0, stars sync upgrade 17/0, stars sync homework 138/0, stars sync core 75/0, stars link tool 94/0, stars records 126/0, homework grading 27/0, video homework rules 26/0, language support lib 49/0, language support 27/0, video homework 55/0, audit clips lib 27/0, audit clips 33/0, ta standing assignments 10/0, assistant absence 15/0, recurring expenditures 24/0, class overhead 115/0.
+
+| Metric | Baseline | After |
+|---|---|---|
+| Assertions / suites / failed suites | 1611 / 30 / 0 | |
 
 ### 1d. Production build
 
