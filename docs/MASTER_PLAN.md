@@ -62,7 +62,7 @@ Status: todo / running / review / PASS / FAIL / reverted / blocked-owner. Model 
 
 | Id | Task | Model (impl / review) | Files owned | Status | Evidence |
 |---|---|---|---|---|---|
-| D0 | Inventory of cancel / owe-changing paths | sonnet / fable | docs/evidence/D0-inventory.md | running | |
+| D0 | Inventory of cancel / owe-changing paths | sonnet / fable | docs/evidence/D0-inventory.md | PASS (conductor spot-check) | docs/evidence/D0-inventory.md, 480ad48; 6 claims re-read in code by conductor |
 | D1 | Evidence model design; `session_held_evidence` | fable design, opus build / fable | docs/evidence/D1-evidence-model.md; supabase/migrations/2026111209*_session_held_evidence.sql; scripts/pgtest/session-evidence.test.mjs | running (design) | |
 | D2 | Guard: trigger + `cancel_session_checked` + threat model | fable design, opus build / fable | docs/evidence/D2-*.md; guard migration; manage-session; bulk-cancel-sessions; pgtest | todo | |
 | D3 | Nudge UI + override review screen | sonnet / opus + fable wording | CancelSessionDialog, SessionActionsModal, EditSessionModal, DeleteSessionDialog, BulkSessionDelete, new review screen | todo | |
@@ -108,6 +108,7 @@ Migration timestamp blocks (so parallel writers never collide): D = 202611120900
 - Q3. Design checkpoint: approve the rollout beyond the student dashboard (A4).
 - Q4. Recorder first real-class use; parental consent on file per class (C).
 - Q5. MONITOR_GO (B-GATE).
+- Q7. Approve adding an admin/cron check to `watch-sibling-threshold` (currently callable with the public anon key; it writes sibling state and retro credits)?
 - Q6. ARASAAC non-commercial licence (pre-existing, from AGENTS.md) - not part of this work, still open.
 
 ## 9. Reverted / dropped tasks
@@ -124,3 +125,5 @@ Migration timestamp blocks (so parallel writers never collide): D = 202611120900
   - Under the owner's rule ("if a vendor cannot offer that, skip it"), NO vendor is fully confirmed yet; Q1 now also asks the owner to check the OpenAI dashboard for ZDR and accept or decline Azure on its retention terms alone.
 - 2026-11-11 B0 audio prep done (haiku; conductor spot-checked names and one WAV format). 35 WAVs at 16 kHz mono under hec-audio-eval\work\wav16k\ (30 clips, 5 lessons); 63 sources, 28 byte-duplicates (a nested videos\videos copy, and S21_clip2 = S21_clip1). DIFFERS from the brief's inventory: S26 is now present with four clips (clip2-clip5, no clip1), so 27 children / 30 unique clips / 69.2 min, not 26 / 27 / ~75. Lessons total 536 min.
 - 2026-11-11 Usage limit hit mid-wave (D0, A0, B0 harness, audio prep stopped with nothing committed); resumed 16:33 after the owner said continue.
+- 2026-11-11 D0 merged (sonnet, 480ad48): 28 session paths, 26 owe-changing paths. All four known gaps CONFIRMED; conductor re-read manage-session :126/:164/:210/:315, bulk-cancel-sessions :15-16/:99, the admin FOR ALL policy on sessions (20251012023454:146). New gaps D2 must cover: admin client writes straight to `sessions` (SessionActionsModal:134 delete, EditSessionModal:122, GlobalCalendar:191) and manage-session `delete` with no guard; un-cancel triggers no tuition refresh and leaves attendance Excused; hard delete and reschedule skip the refresh; "attendance exists" is not evidence (auto-mark, repair and the seed trigger all write rows). supabase/functions/generate-sessions/index.ts is an empty file.
+- SECURITY FINDING for the owner (not fixed - a permission change needs approval): `watch-sibling-threshold` has no role check (conductor grep found none), only verify_jwt, which the public anon key satisfies; it upserts sibling state and posts retro credits. Proposed fix: requireRole admin or the cron secret. Goes to A5 as well. See Q7.
