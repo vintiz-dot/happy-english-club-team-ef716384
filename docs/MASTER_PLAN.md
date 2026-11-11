@@ -51,8 +51,8 @@ Filled by A0 into `docs/ENHANCEMENT_BASELINE.md`; headline figures copied here o
 
 | Check | Baseline | After | Evidence |
 |---|---|---|---|
-| `tsc --noEmit -p tsconfig.app.json` | pending | | |
-| `node scripts/pgtest/run.mjs` | pending | | |
+| `tsc --noEmit -p tsconfig.app.json` | exit 0, 3m21s (conductor, 9ba819f) | | conductor run 2026-11-11 |
+| `node scripts/pgtest/run.mjs` | 1611 assertions, 30 suites, 0 failed (conductor, 9ba819f) | | conductor run 2026-11-11 |
 | `bun test scripts/payrollCalculation.test.ts` | pending (bun is NOT installed on this machine; see D-3) | | |
 | production build, initial JS gzip | pending | | |
 
