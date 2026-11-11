@@ -21,7 +21,7 @@ How to read the confidence marks:
 
 | Check | Before | After |
 |---|---|---|
-| `node scripts/pgtest/run.mjs` | 1611 assertions, 30 suites, 0 failed | see "Test log" at the end of this file |
+| `node scripts/pgtest/run.mjs` | 1611 assertions, 30 suites, 0 failed | 1802 assertions, 31 suites, 0 failed (1611 + the 191 new; no existing suite changed its count) |
 | `recorder.test.mjs` alone | - | 191 passed, 0 failed |
 
 The migration applies twice without error in the harness **[tested]**. It has not been run against any real database; the harness prelude is a dozen tables (`scripts/pgtest/run.mjs:15-17`), so "applying is still the proof".
@@ -465,3 +465,4 @@ What it proves and what it does not - D should grade accordingly:
 
 - 2026-11-11, before any change: `node scripts/pgtest/run.mjs` -> `1611 assertions across 30 suites, 0 suite(s) failed`.
 - 2026-11-11, `node scripts/pgtest/recorder.test.mjs <20261111110000> <20261112100000>` -> `191 passed, 0 failed`.
+- 2026-11-11, after the migration, the suite and its one line in run.mjs: `node scripts/pgtest/run.mjs` -> `1802 assertions across 31 suites, 0 suite(s) failed` (includes the app and edge-function typechecks).
