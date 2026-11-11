@@ -26,9 +26,35 @@
 -- strongest evidence is gone. Callers read this first, under the session
 -- row lock, then cancel.
 --
--- READ-ONLY. Both functions are STABLE, so Postgres itself refuses any
--- write inside them. SECURITY DEFINER so the answer, and above all the
--- hash, is the same whoever asks; the caller check is inside.
+-- READ-ONLY. Both functions are STABLE, so Postgres refuses a write
+-- statement written in their own bodies. That alone is NOT enough:
+-- Postgres checks volatility per function, not down the call chain, so a
+-- STABLE function may call a VOLATILE one that writes (D-review-1 A-2).
+-- Two things make the claim true for the one call this function makes
+-- out of itself, the recorder helper:
+--   * the helper must be STABLE or IMMUTABLE, checked at every call;
+--     a VOLATILE replacement makes this function raise 55000 (closed and
+--     loud: every cancel then stops until the helper is fixed);
+--   * the helper runs inside a sub-transaction that is always rolled
+--     back, so any row it, or anything it calls, writes is undone before
+--     this function goes on. Only its returned value is kept.
+-- Not undone by a rollback: sequence advances and session-level advisory
+-- locks. Neither is a row.
+-- SECURITY DEFINER so the answer is the same whoever asks; the caller
+-- check is inside.
+--
+-- WHO IS "INTERNAL" (sees the money flags). Decided positively, never
+-- from absent claims (D-review-1 A-3): no auth.uid() AND either the JWT
+-- role is service_role, or there is no JWT role at all AND the session
+-- is not acting as an API role (neither the session user nor the SET
+-- ROLE is authenticator / authenticated / anon). The SQL editor and cron
+-- qualify; a connection running as authenticated without claims does not.
+--
+-- THE HASH IS FOR ADMINS AND INTERNAL CALLERS ONLY. It covers the money
+-- flags, which the class teacher may not learn; every other input of it
+-- is something the teacher already holds, so returning it would let a
+-- teacher guess each child's paid / confirmed / frozen state
+-- (D-review-1 A-1). The teacher's view carries snapshot_hash = NULL.
 --
 -- Safe to paste twice: CREATE OR REPLACE throughout, and the recorder
 -- helper is created only when it does not exist yet, so a re-paste of
@@ -108,7 +134,10 @@ END $pre$;
 -- The recorder's extension point.
 --
 -- CONTRACT for whoever replaces it (workstream C): CREATE OR REPLACE this
--- function and nothing else. Return a jsonb ARRAY, one element per
+-- function and nothing else. It MUST stay STABLE (or IMMUTABLE):
+-- session_held_evidence refuses to run (55000) while it is VOLATILE, and
+-- rolls back anything it writes. Row keys may contain any character
+-- (they are fingerprinted as a sorted JSON array). Return a jsonb ARRAY, one element per
 -- COMPLETED recording of the session:
 --
 --   { "count": 1, "detail": {...}, "at": "<timestamptz>",
@@ -197,13 +226,16 @@ DECLARE
 
   v_hash text;
   v_out jsonb;
+  v_rec_vol "char";
+  v_rec_ok boolean := false;
+  v_jwt_role text;
 BEGIN
   IF p_session_id IS NULL THEN
     RAISE EXCEPTION 'session_held_evidence: a session id is required' USING ERRCODE = '22004';
   END IF;
 
   v_uid  := auth.uid();
-  v_role := auth.role();
+  v_role := NULLIF(auth.role(), '');
 
   SELECT ss.id, ss.class_id, ss.date, ss.start_time, ss.end_time, ss.status, ss.teacher_id
     INTO s
@@ -212,9 +244,14 @@ BEGIN
   v_found := FOUND;
 
   -- Service-role edge function, a trigger fired by one, the SQL editor, cron.
+  -- Positive test (header, WHO IS "INTERNAL"): a missing claim never
+  -- grants the internal view to a session acting as an API role.
   v_internal := v_uid IS NULL
-                AND v_role IS DISTINCT FROM 'authenticated'
-                AND v_role IS DISTINCT FROM 'anon';
+                AND (v_role = 'service_role'
+                     OR (v_role IS NULL
+                         AND session_user::text NOT IN ('authenticator', 'authenticated', 'anon')
+                         AND COALESCE(NULLIF(current_setting('role', true), ''), 'none')
+                               NOT IN ('authenticator', 'authenticated', 'anon')));
   v_admin    := v_uid IS NOT NULL AND public.has_role(v_uid, 'admin'::public.app_role);
   v_teacher  := v_found AND v_uid IS NOT NULL AND public.is_teacher_of_class(v_uid, s.class_id);
 
@@ -272,7 +309,27 @@ BEGIN
   END IF;
 
   -- ------------------------------------------------ 2 recording_completed
-  v_rec := public.session_recording_evidence(p_session_id);
+  -- STABLE or IMMUTABLE, or nothing (header, READ-ONLY).
+  SELECT p.provolatile INTO v_rec_vol
+    FROM pg_catalog.pg_proc p
+   WHERE p.oid = 'public.session_recording_evidence(uuid)'::regprocedure;
+  IF v_rec_vol IS DISTINCT FROM 's' AND v_rec_vol IS DISTINCT FROM 'i' THEN
+    RAISE EXCEPTION 'session_held_evidence: session_recording_evidence must be STABLE (found %)', v_rec_vol
+      USING ERRCODE = '55000', HINT = 'Re-create the recorder helper as STABLE; no evidence can be read until then.';
+  END IF;
+  -- Run it in a sub-transaction that is always rolled back: whatever it
+  -- writes is undone, its returned value (a plpgsql variable, which a
+  -- rollback does not touch) is kept. Its own errors propagate.
+  BEGIN
+    v_rec := public.session_recording_evidence(p_session_id);
+    v_rec_ok := true;
+    RAISE EXCEPTION USING ERRCODE = 'HC0RO', MESSAGE = 'session_held_evidence: discard helper writes';
+  EXCEPTION WHEN SQLSTATE 'HC0RO' THEN
+    NULL;
+  END;
+  IF NOT v_rec_ok THEN
+    RAISE EXCEPTION 'session_held_evidence: the recorder helper did not return' USING ERRCODE = '55000';
+  END IF;
   IF v_rec IS NULL OR jsonb_typeof(v_rec) IS DISTINCT FROM 'array' THEN
     v_rec := '[]'::jsonb;
   END IF;
@@ -291,7 +348,9 @@ BEGIN
               GREATEST(1, COALESCE(CASE WHEN jsonb_typeof(e -> 'count') = 'number'
                                         THEN floor((e ->> 'count')::numeric)::int END, 1))), 0)::int
        FROM el),
-    (SELECT md5(string_agg(COALESCE(key, ''), ',' ORDER BY COALESCE(key, '') COLLATE "C")) FROM keys),
+    -- A sorted JSON array, not a joined string: ["a","b"] and ["a,b"]
+    -- must differ (D-review-1 A-6).
+    (SELECT md5(jsonb_agg(to_jsonb(COALESCE(key, '')) ORDER BY COALESCE(key, '') COLLATE "C")::text) FROM keys),
     (SELECT max((e ->> 'at')::timestamptz) FROM el),
     (SELECT (e ->> 'actor_id')::uuid FROM el
       ORDER BY (e ->> 'at')::timestamptz DESC NULLS LAST, (e -> 'row_keys')::text COLLATE "C" LIMIT 1),
@@ -598,8 +657,9 @@ BEGIN
   END;
 
   -- ------------------------------------------------ hash
-  -- Before redaction, over every item, money included: every viewer gets
-  -- the same token. Arrays, not objects; text keys sorted with COLLATE "C";
+  -- Before redaction, over every item, money included. Returned ONLY to
+  -- admins and internal callers (header, THE HASH). Arrays, not objects;
+  -- text keys sorted with COLLATE "C";
   -- no timestamps except through the session's own date and times.
   v_hash := encode(sha256(convert_to(jsonb_build_array(
     1,
@@ -637,7 +697,10 @@ BEGIN
   ELSE
     -- The class's teacher: no money. Item 6 stays (no amount, and staff
     -- can already read whether a month is closed).
+    -- The full hash would let the teacher guess the money flags (A-1):
+    -- every other input of it is in this JSON or in their register.
     v_out := v_out || jsonb_build_object(
+      'snapshot_hash', NULL,
       'settled', NULL,
       'items', (SELECT COALESCE(jsonb_agg(i ORDER BY n), '[]'::jsonb)
                   FROM jsonb_array_elements(v_items) WITH ORDINALITY AS t(i, n)
@@ -658,7 +721,9 @@ COMMENT ON FUNCTION public.session_held_evidence(uuid) IS
 
 REVOKE ALL ON FUNCTION public.session_held_evidence(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.session_held_evidence(uuid) TO authenticated, service_role;
-REVOKE ALL ON FUNCTION public.session_recording_evidence(uuid) FROM PUBLIC, anon, authenticated;
+-- service_role too: on Supabase the default privileges grant it, and
+-- nothing but the definer function above should call the helper.
+REVOKE ALL ON FUNCTION public.session_recording_evidence(uuid) FROM PUBLIC, anon, authenticated, service_role;
 
 NOTIFY pgrst, 'reload schema';
 
