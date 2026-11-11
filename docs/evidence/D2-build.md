@@ -1,6 +1,6 @@
 # D2 build log - cancellation guard (SQL + tests)
 
-Where I am / next step: STEP 1 done (D1 revision 1, 143/0). STEP 2: migration `20261112091000_session_cancel_guard.sql` and suite `session-cancel-guard.test.mjs` written, suite 212/0, registered in run.mjs. Running: full `node scripts/pgtest/run.mjs` and a mutation check of the guard. Next: paste their totals below, then remove the node_modules link and report.
+Where I am / next step: FINISHED. Step 1 (D1 revision 1, 143/0) and step 2 (guard migration + suite 212/0, full run 2157/33/0, 17/17 mutants caught) committed; node_modules link removed. Next belongs to the conductor: review, then the edge-function task works from "Contract for the edge functions and UI" below.
 
 Written and tested only. NOT applied to any database (no Supabase/MCP tool, no live access).
 
@@ -184,4 +184,4 @@ node scripts/pgtest/run.mjs
    (baseline 1925 / 32 / 0; +20 D1 revision, +212 new suite; no existing assertion removed or failing)
 ```
 
-Mutation check of the guard (scratch copies, never committed): see below.
+Mutation check of the guard (17 scratch copies of the migration, never committed), all caught (exit 1): no txid check (2 FAIL), no session check (5), no action check (2), signed-in lane open (4), no destination-started check (1), no destination-lock check (1), token without affected (3), token without invoices (2), no HC050 check (2), insert guard off (3), no erased_recently (4), bulk cap 500 (1), no own-reason rule (1), B-1 regression (2). Three were caught as a CRASH rather than FAIL lines (flag not consumed, confirm skipped, delete with evidence), because a fixture-level checked call outside `tryIt` threw; caught, but a crash hides later cases - worth hardening in a later pass.
