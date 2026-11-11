@@ -267,3 +267,355 @@ settled.any                   = payroll_month_locked OR tuition
 ```
 
 `settled.any` is what D2 keys its heavier path on. It is deliberately the wide reading asked for in the brief ("falls in a closed payroll month, or in a month with a paid/confirmed invoice for an affected student"). `payroll_paid_as_held` is the narrower fact, kept so D2/D3 can word the warning ("the teacher has probably been paid for this lesson").
+
+---
+
+## 3. "That day": time zone
+
+- `sessions.date` / `start_time` / `end_time` are Hanoi wall-clock values (section 0). The function uses ONE constant, `c_tz constant text := 'Asia/Ho_Chi_Minh'`. Existing database code uses `'Asia/Bangkok'`; the two zones have the same offset (UTC+7) and no DST, so results are identical. The test must assert the zone name resolves in pglite (case 21); if it does not, use `'Asia/Bangkok'` as the rest of the database does and say so in a comment.
+- The Hanoi day of the session, as an instant range, computed once:
+  `v_day_start := (s.date::timestamp AT TIME ZONE c_tz)`, `v_day_end := ((s.date + 1)::timestamp AT TIME ZONE c_tz)`.
+  Every `timestamptz` column is tested as `col >= v_day_start AND col < v_day_end` (half-open, index-friendly, no casting of the column).
+- `DATE` columns are compared to `s.date` directly. Two of them are not Hanoi dates and the rules already allow for it:
+  - `point_transactions.date` is written by the browser as `new Date().toISOString().slice(0,10)` - the UTC date (`src/lib/pointsHelper.ts:114`, same idiom in `awardPoints`). It differs from the Hanoi date only between 00:00 and 07:00 Hanoi time, when no class runs. Accepted.
+  - `class_transcripts.transcript_date` is the server's `CURRENT_DATE` at upload (1.2). That is why `transcript_same_day` ALSO accepts `created_at` inside the Hanoi day.
+- The lesson window, reported but never used for the level: `v_start := ((s.date + s.start_time) AT TIME ZONE c_tz)`, `v_end := ((s.date + s.end_time) AT TIME ZONE c_tz)`, plus one day when `end_time <= start_time` (same rule as `M/20261028090000_stars_sync_review_fixes.sql:677-681`). `points_awarded.detail.in_lesson_window` counts rows with `created_at` between `v_start - 15 min` and `v_end + 30 min`.
+- `now()` appears only in `computed_at`. Nothing about the level, the items or the hash depends on the current time, so the same data gives the same answer tomorrow.
+
+---
+
+## 4. The function
+
+```
+public.session_held_evidence(p_session_id uuid) RETURNS jsonb
+LANGUAGE plpgsql  STABLE  SECURITY DEFINER  SET search_path = public
+```
+
+plus the internal extension point of 1.2:
+
+```
+public.session_recording_evidence(p_session_id uuid) RETURNS jsonb
+LANGUAGE sql  STABLE  SECURITY DEFINER  SET search_path = public      -- body: SELECT '[]'::jsonb
+```
+
+### 4.1 Return value
+
+```jsonc
+{
+  "version": 1,
+  "session": { "id", "class_id", "date": "YYYY-MM-DD", "start_time", "end_time", "status", "teacher_id" },
+  "level": "NONE" | "SOFT" | "STRONG",
+  "families": { "D": bool, "R": bool, "P": bool, "T": bool, "H": bool },
+  "settled": {                       // null when "redacted" is true
+    "any": bool,
+    "month": "YYYY-MM",
+    "payroll_month_locked": bool,
+    "payroll_paid_as_held": bool,
+    "tuition": bool,
+    "tuition_students": int,         // affected students whose month is settled
+    "affected_students": int         // attendance rows Present/Absent/Late on this session
+  },
+  "items": [ Item, ... ],            // fixed order, see 4.2; family M items omitted when redacted
+  "snapshot_hash": "<64 lowercase hex>",
+  "viewer": "admin" | "teacher" | "internal",
+  "redacted": bool,
+  "computed_at": "<timestamptz>"     // informational; not hashed
+}
+```
+
+`Item`:
+
+```jsonc
+{
+  "type": "attendance_present",      // one of the 12 types below
+  "family": "D",
+  "strength": "strong" | "soft" | "aux" | "money",
+  "label_key": "evidence.attendance_present",   // always "evidence." || type; D3 owns the wording
+  "count": 7,
+  "detail": { ... },                 // per type, below; counts and ids of staff only
+  "at": "<timestamptz>" | null,      // the most recent qualifying row
+  "actor_id": "<uuid>" | null        // auth user behind that most recent row, when the table records one
+}
+```
+
+An item is present only when its `count > 0`. The output never contains a child's name or a child's id: counts only. (Row identities go into the hash, not into the JSON.)
+
+### 4.2 The twelve item types, in output order
+
+| # | type | family / strength | Rows (all scoped as in section 1) | `count` | `detail` | `at` / `actor_id` | row key (for the hash) |
+|---|---|---|---|---|---|---|---|
+| 1 | `attendance_present` | D / strong | attendance: `session_id = p`, `marked_by IS NOT NULL`, status `Present`/`Late` | rows | `present`, `late`, `pixel_pal` (rows with a `stars_sync_attendance_state` row of equal status), `hec` (the rest), `markers` (distinct `marked_by`) | max `marked_at` / that row's `marked_by` | `student_id:status:marked_by` |
+| 2 | `recording_completed` | D / strong | elements returned by `session_recording_evidence(p)` | sum of element `count` (default 1 each) | element `detail` values collected under `recordings: [...]` | max element `at` / its `actor_id` | each element's `row_keys` |
+| 3 | `transcript_linked` | D / strong | class_transcripts: `class_id = s.class_id AND session_id = p`, and (`status <> 'failed'` or `audio_storage_path IS NOT NULL`) | rows | `audio` (rows with a stored recording), `analyzed`, `audio_seconds` (sum, rounded) | max `created_at` / `uploaded_by` | `id:status` |
+| 4 | `attendance_register_only` | R / soft | emitted ONLY when item 1 is absent: attendance `session_id = p`, `marked_by IS NOT NULL`, status `Absent` | rows | `absent`, `pixel_pal`, `hec`, `markers` | max `marked_at` / `marked_by` | `student_id:status:marked_by` |
+| 5 | `status_held` | R / soft | `s.status = 'Held'` | 1 | `flipped_by_stars_sync` (a `stars_sync_held_flips` row exists) | `stars_sync_held_flips.flipped_at` or null / null | literal `Held` |
+| 6 | `payroll_paid_as_held` | R / soft | section 2.1 | 1 | `month`, `lines` (matching payroll_lines rows) | `payroll_periods.locked_at` / `locked_by` | `month` + each matching `payroll_lines.id` |
+| 7 | `points_awarded` | P / soft | point_transactions, rule of 1.4 | rows | `students` (distinct), `total_points`, `linked_to_session`, `pixel_pal` (`notes LIKE '[Pixel Pal]%'`), `in_lesson_window` | max `created_at` / `created_by` (may be null) | `id:points` |
+| 8 | `transcript_same_day` | T / soft | class_transcripts, rule of 1.2 | rows | as item 3 | max `created_at` / `uploaded_by` | `id:status` |
+| 9 | `homework_assigned` | H / aux | homeworks: `class_id = s.class_id`, `created_at` in the Hanoi day, no `stars_homework_map` row | rows | `with_due_date` | max `created_at` / `created_by` | `id` |
+| 10 | `homework_graded` | H / aux | homework_submissions joined to homeworks of the class, `graded_at` in the Hanoi day, no `stars_sync_grade_state` row | rows | `homeworks` (distinct) | max `graded_at` / null | submission `id` |
+| 11 | `payroll_month_locked` | M / money | `payroll_month_is_locked(month)` | 1 | `month` | `locked_at` / `locked_by` | `month` |
+| 12 | `invoice_settled` | M / money | section 1.6 | settled affected students | `month`, `affected_students`, `paid` (`recorded_payment > 0` or status paid/partial), `confirmed`, `frozen`, `with_carry_in_credit` (reported, not part of the rule - Q4) | max `confirmed_at` or null / null | `student_id:` + three flags paid/confirmed/frozen as `0/1` |
+
+### 4.3 `snapshot_hash`
+
+Purpose: D2's acknowledgement token says "I saw THIS evidence". The hash must be identical for two reads of unchanged data - by anyone, in any order of rows, at any time - and different as soon as any fact an admin was shown (or the session itself) changes.
+
+Definition, exactly:
+
+```
+fp(item)    = md5( string_agg(row_key, ',' ORDER BY row_key) )          -- over that item's qualifying rows
+hash_input  = jsonb_build_array(
+                1,                                                       -- algorithm version; bump on any rule change
+                jsonb_build_array(s.id, s.class_id, s.date, s.start_time, s.end_time, s.status, s.teacher_id),
+                v_level,
+                jsonb_build_array(payroll_month_locked, payroll_paid_as_held, tuition_settled),
+                ( jsonb_agg( jsonb_build_array(type, count, fp) ORDER BY type ) over ALL items present, '[]' if none )
+              )
+snapshot_hash = encode( sha256( convert_to(hash_input::text, 'UTF8') ), 'hex' )
+```
+
+Rules:
+
+1. **Order-stable.** Every aggregate that feeds the hash has an explicit `ORDER BY` on a text key. Nested arrays, not objects, so nothing depends on jsonb key ordering. Row keys are built with `::text` casts of uuids, integers and enum/text values only - no floats, no timestamps.
+2. **Computed before redaction** and over ALL twelve types, money included. A teacher and an admin get the same hash for the same data. The hash reveals nothing (SHA-256 over uuids).
+3. **Not in the hash:** `computed_at`, `viewer`, `redacted`, labels, every `at` timestamp, every `detail` field that is not already implied by a row key. So a teacher re-saving an unchanged register (new `marked_at`, same statuses, same `marked_by`) does NOT invalidate an admin's acknowledgement, while changing one child from Absent to Present, a different person re-marking, a new point row, a transcript finishing analysis, the month being locked, a bill being paid, or the session being moved or re-statused all do.
+4. Seeded rows change the hash only through `invoice_settled` (they define who is affected). A new seeded row for a child with no settled bill changes nothing - correct, the admin was shown nothing about it.
+5. `sha256(bytea)` and `md5(text)` are core Postgres (no pgcrypto), so they exist in pglite.
+
+### 4.4 SECURITY DEFINER, and who may call
+
+**Definer, with the check inside.** Reasons:
+
+- The answer has to be the same whoever asks, or the hash is useless as a token. Under INVOKER a teacher cannot read `invoices`, `payroll_lines` or `stars_sync_attendance_state` (admin-only policies: `M/20261021093000_payroll_month_locking.sql:241-255`; `M/20261027100000_stars_sync_engine.sql:180-182`), and a covering teacher's view of `attendance` is limited to sessions they are on (`M/20260403050441_...sql:8-18`). Level and hash would vary by caller.
+- D2's trigger calls it from inside a `SECURITY DEFINER` trigger function fired by whichever role performed the update (service role from `manage-session`, `authenticated` from a direct write). The evidence must not depend on that either.
+- It is `STABLE` and writes nothing, so definer rights cannot be turned into a write. This matches the existing helpers (`has_role`, `is_teacher_of_class`, `student_enrolled_on`, `payroll_month_is_locked` are all definer).
+
+Authorisation, in this order, inside the function:
+
+```
+IF p_session_id IS NULL                      -> RAISE ... USING ERRCODE = '22004'
+v_uid  := auth.uid();   v_role := auth.role();
+SELECT ... INTO s FROM public.sessions WHERE id = p_session_id;      -- plain read, no lock (STABLE)
+
+internal := v_uid IS NULL AND v_role IS DISTINCT FROM 'authenticated' AND v_role IS DISTINCT FROM 'anon'
+            -- service-role edge function, a trigger fired by one, the SQL editor, cron
+admin    := v_uid IS NOT NULL AND public.has_role(v_uid, 'admin'::public.app_role)
+teacher  := FOUND AND v_uid IS NOT NULL AND public.is_teacher_of_class(v_uid, s.class_id)
+
+IF NOT (internal OR admin OR teacher)        -> RAISE 'not allowed'      USING ERRCODE = '42501'
+IF NOT FOUND                                 -> RAISE 'lesson not found' USING ERRCODE = 'P0002'
+```
+
+- The 42501 check comes before the not-found check, so a caller who is neither admin nor the class's teacher gets the same error for a real and an invented id: nothing leaks about other classes.
+- `is_teacher_of_class` is the one definition of "your class" (`M/20261111110000_ta_standing_assignments_and_homework_upload.sql:54-118`); it includes standing and rostered assistants. Do not write a second test.
+- **Teacher view is redacted:** `settled` is `null`, items 11 and 12 are removed, `redacted: true`. Item 6 stays (it carries no amount, only that the month is closed, which staff may already read: `M/20261021093000_...sql:236-239`). Admin and internal views are complete.
+- `auth.role()` is already used this way in the tree (`M/20251024152825_6747d865-6888-4aa4-b728-fdb8e5a109d3.sql:35`).
+
+**Missing session never returns JSON.** A `null` or an empty object could be read by a careless caller as "no evidence, go ahead". It raises instead (fail closed). Same for a NULL argument. Any error inside the helper or a lookup propagates; nothing is caught and turned into NONE.
+
+### 4.5 Grants (in the migration, explicitly)
+
+```
+REVOKE ALL ON FUNCTION public.session_held_evidence(uuid)      FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.session_held_evidence(uuid)  TO authenticated, service_role;
+REVOKE ALL ON FUNCTION public.session_recording_evidence(uuid) FROM PUBLIC, anon, authenticated;
+NOTIFY pgrst, 'reload schema';
+```
+
+No table is created, so no table GRANTs are needed. No policy changes. The migration starts with a preflight `DO` block in the style of `M/20261027090000_cancelled_lesson_attendance_guard.sql:51-82` that RAISES if any of these is missing, rather than installing a function that fails at the first cancellation: `session_status` label `Canceled`; functions `has_role(uuid, app_role)`, `is_teacher_of_class(uuid, uuid)`, `payroll_month_is_locked(text)`, `auth.uid()`, `auth.role()`; tables `attendance`, `point_transactions`, `class_transcripts`, `homeworks`, `homework_submissions`, `invoices`, `payroll_periods`, `payroll_lines`, `session_participants`, `stars_sync_attendance_state`, `stars_sync_held_flips`, `stars_homework_map`, `stars_sync_grade_state`; columns `invoices.recorded_payment`, `invoices.confirmation_status`, `invoices.tuition_frozen`, `class_transcripts.audio_storage_path`. It must apply twice unchanged (`CREATE OR REPLACE`; the owner pastes by hand).
+
+Because migrations are applied by hand, the live database may lag the tree; the preflight is what turns "a column is not there yet" into a clear message at paste time.
+
+### 4.6 Performance
+
+One session row by primary key, then about a dozen small indexed reads. Every one has an index already; **no new index is required.**
+
+| Read | Index used | Cite |
+|---|---|---|
+| attendance by `session_id` | `idx_attendance_session_id` | `M/20260504024032_bcf6e388-8d42-470b-b6f9-d272c75e4a9f.sql:5` |
+| stars state by `(session_id, student_id)` | primary key | `M/20261027100000_stars_sync_engine.sql:178` |
+| held flip by `session_id` | primary key | `M/20261028090000_stars_sync_review_fixes.sql:107` |
+| point_transactions by `(class_id, date)` | `idx_point_transactions_class_month` | `M/20251107052426_...sql:19` |
+| class_transcripts by `class_id` (+ date) | `idx_transcripts_class` | `M/20260712090000_...sql:117-118` |
+| homeworks by `(class_id, created_at)` | `idx_homeworks_class_created` | `M/20260117143635_...sql:10` |
+| homework_submissions by `homework_id` | `idx_homework_submissions_homework_id` | `M/20260504024032_...sql:31` |
+| stars_homework_map by `homework_id` | UNIQUE | `M/20261023100000_stars_sync_foundation.sql:90` |
+| payroll_periods by `month` | primary key | `M/20261021093000_...sql:52` |
+| payroll_lines by `(month, teacher_id)` / `(month, assistant_id)` | unique indexes | `M/20261021093000_...sql:115-118` |
+| session_participants by `session_id` | `idx_session_participants_session` | `M/20260322050903_f081efc8-9be3-42ea-8ce5-7fe8e7fcdf23.sql:39` |
+| invoices by `(student_id, month)` | UNIQUE | `M/20251012022746_...sql:50` |
+
+Write `transcript_linked` as `class_id = s.class_id AND session_id = p` (never `session_id = p` alone: that column has no index). Write each read as its own statement into local variables; do not build one large join. Expected cost is a few milliseconds per session; a bulk cancel of a few hundred sessions calls it once per row inside D2's trigger and stays well under a second. It is called on demand only - never from a list view per row (D3: fetch when the dialog opens).
+
+### 4.7 One copy
+
+`session_held_evidence` is the only place the question "is there evidence this lesson was held?" is answered.
+
+- **D2's trigger and `cancel_session_checked`** call it and compare `snapshot_hash` with the token.
+- **Edge functions** (`manage-session`, `bulk-cancel-sessions`) call it by `rpc('session_held_evidence', { p_session_id })` and pass the JSON through; they do not inspect attendance or points themselves.
+- **The UI** (D3) renders `level`, `settled` and `items` from that JSON using `label_key`; it must not query `attendance`/`point_transactions` to decide whether to warn, and must not recompute a level from the items.
+- No TypeScript mirror of the rules, no SQL view restating them. A new evidence source is a new item type inside this function plus a test case - or, for recordings only, a replacement of `session_recording_evidence`.
+- Regenerating `src/integrations/supabase/types.ts` is the conductor's job (shared file); until then the client calls it through an untyped `rpc`.
+
+---
+
+## 5. Test: `scripts/pgtest/session-evidence.test.mjs`
+
+Registered in `scripts/pgtest/run.mjs` beside the cancelled-lessons suite (`run.mjs:47-51`) with
+
+```
+migrations: ["20261027090000_cancelled_lesson_attendance_guard.sql",
+             "20261112090000_session_held_evidence.sql"]
+```
+
+so the REAL cancel trigger is present (case 19) and the SQL is read from `supabase/migrations/`, never from `drizzle/` (root `AGENTS.md`, Database migrations).
+
+### 5.1 Prelude
+
+Same approach as `scripts/pgtest/cancelled-lessons.test.mjs:14-25`: hand-written minimal tables carrying every real column the migrations touch, nothing more. "A prelude thinner than production turns a real column into a test-only failure" (`:19-22`) - so column names and nullability must match `T`.
+
+- Roles `anon`, `authenticated`, `service_role`.
+- `CREATE SCHEMA auth`; `auth.uid()` reading `current_setting('test.uid', true)` (as `scripts/pgtest/video-homework.test.mjs:130-131`); `auth.role()` reading `current_setting('test.jwt_role', true)` and returning NULL when empty.
+- `public.app_role` enum (take the real labels from `T` Enums); `public.session_status` enum.
+- `public.user_roles(user_id, role)` and the real body of `has_role` (`M/20251012023454_6adfb949-50dc-4ebb-8853-6de73d8e8441.sql:34-47`).
+- `public.is_teacher_of_class(user_id, class_id)` stub over `classes.default_teacher_user` (same stub as `video-homework.test.mjs:135-139`).
+- `public.payroll_month_is_locked(text)`: copy the real body verbatim (`M/20261021093000_...sql:162-173`) with a comment naming the source.
+- Tables, with the columns listed:
+  - `classes(id, default_teacher_user)`
+  - `sessions(id, class_id, date, start_time, end_time, status, teacher_id, updated_at)`
+  - `enrollments(class_id, student_id, start_date, end_date, allowed_days)` - needed by 20261027090000's preflight and seed
+  - `attendance(id, session_id, student_id, status DEFAULT 'Present', marked_at, marked_by, notes, created_at, updated_at, UNIQUE(session_id, student_id))`
+  - `stars_sync_attendance_state(session_id, student_id, status, event_id, updated_at, PK(session_id, student_id))`
+  - `stars_sync_held_flips(session_id PK, event_id, flipped_at)`
+  - `stars_homework_map(stars_homework_ref PK, homework_id UNIQUE)`
+  - `stars_sync_grade_state(homework_id, student_id, grade, PK(homework_id, student_id))`
+  - `point_transactions(id, student_id, class_id, session_id, points, type, date, notes, created_by, created_at)`
+  - `class_transcripts(id, class_id, session_id, uploaded_by, transcript_date, status, audio_storage_path, audio_duration_seconds, created_at)`
+  - `homeworks(id, class_id, due_date, created_by, created_at)`
+  - `homework_submissions(id, homework_id, student_id, grade, graded_at)`
+  - `payroll_periods(month PK, status, locked_at, locked_by)`
+  - `payroll_lines(id, month, teacher_id, assistant_id)`
+  - `session_participants(session_id, participant_type, teaching_assistant_id, attended)`
+  - `invoices(id, student_id, month, status, recorded_payment, confirmation_status, confirmed_at, tuition_frozen, carry_in_credit, UNIQUE(student_id, month))` - `status` may be plain text in the prelude
+- A helper `as(uid, jwtRole, dbRole, fn)` that sets `test.uid`, `test.jwt_role`, `SET ROLE`, runs, and `RESET ROLE` in `finally` (pattern: `scripts/pgtest/ai-actions.test.mjs:108-111`).
+- All fixture timestamps are written as explicit UTC instants; the session is `2026-10-26 17:30-19:00` Hanoi. Do not use `now()` in fixtures.
+
+### 5.2 Cases the implementer must write
+
+Each case builds its own session (own class) so counts cannot bleed, and asserts `level`, `families`, the item's `count`, and where stated `settled` and the hash.
+
+Baseline and exclusions
+
+1. A session with nothing: `NONE`, `items = []`, all families false, `settled.any = false`, hash is 64 hex chars.
+2. **Seeded rows do not count:** three rows `Present`, `marked_by NULL` (insert them through `_attendance_seed_for_class_dates` with an enrollment) -> `NONE`.
+3. **Auto-marked rows do not count:** rows shaped exactly as `auto-mark-attendance` writes them (`Present`, `marked_by NULL`, `marked_at` set) -> `NONE`.
+4. **Repair rows do not count:** `Present` and `Absent`, `marked_by NULL`, `notes 'Auto-repaired on 2026-10-27'` -> `NONE`.
+5. Human-marked `Excused` only -> `NONE`.
+6. Automatic streak bonus (`participation`, `created_by NULL`, `session_id NULL`, same date) -> `NONE`. Vocabulary row with the child's id in `created_by` -> `NONE`. Homework award dated that day -> `NONE`. `adjustment` by an admin -> `NONE`. A negative participation row alone -> `NONE`.
+
+One per evidence type
+
+7. `attendance_present`: one `Late` by a teacher -> `STRONG`, `detail.late = 1`, `detail.hec = 1`, `actor_id` = the teacher.
+8. Pixel Pal mark: `Present`, `marked_by` = teacher, `notes 'Pixel Pal'`, matching `stars_sync_attendance_state` -> `STRONG`, `detail.pixel_pal = 1`, `detail.hec = 0`.
+9. `attendance_register_only`: two `Absent` by a teacher, session still `Scheduled` -> `SOFT`, family R. Add `status = 'Held'` -> still `SOFT` (same family), items 4 and 5 both present.
+10. `status_held` alone -> `SOFT`; with a `stars_sync_held_flips` row `detail.flipped_by_stars_sync = true`.
+11. `points_awarded`: (a) teacher row, `session_id NULL`, `date = s.date` -> `SOFT`; (b) admin-panel row, `created_by NULL`, `session_id = s.id` -> counted; (c) a row linked to ANOTHER session of the same class and date -> not counted for this one; (d) a `correction` row -> counted; (e) `in_lesson_window` is 1 for a row created 18:00 Hanoi and 0 for one created 23:00.
+12. `transcript_same_day`: (a) `transcript_date = s.date` -> `SOFT`; (b) `transcript_date` the day before but `created_at` 06:30 Hanoi on `s.date` -> counted; (c) `status 'failed'` text paste -> not counted; (d) `status 'failed'` with `audio_storage_path` -> counted, `detail.audio = 1`.
+13. `transcript_linked`: `session_id = s.id`, `analyzed` -> `STRONG`, and it is NOT also reported as `transcript_same_day`.
+14. `recording_completed`: `CREATE OR REPLACE` the helper to return one element with `row_keys` -> `STRONG`; an element without `row_keys` is dropped; helper returning `NULL` or an object is treated as `[]`. Restore the helper afterwards.
+15. `homework_assigned`: created 20:00 Hanoi on `s.date` -> `SOFT`, family H; created 00:30 Hanoi the next day -> not counted; one with a `stars_homework_map` row -> not counted.
+16. `homework_graded`: `graded_at` inside the day -> `SOFT`; one with a `stars_sync_grade_state` row -> not counted.
+17. Payroll: (a) month locked, session `Scheduled`, no marks -> `NONE`, `settled.payroll_month_locked = true`, `settled.any = true`; (b) session `Held` + line for its teacher -> item 6 present, `payroll_paid_as_held = true`, level `SOFT`; (c) line only for an assistant with `attended = false` -> `payroll_paid_as_held = false`; (d) month `open` -> all false.
+18. Invoice: one affected child (seeded `Present` counts as affected) with (a) `recorded_payment > 0`; (b) `confirmation_status 'confirmed'`; (c) `tuition_frozen`; (d) `status 'paid'` -> each gives `settled.tuition = true`, level still `NONE`. (e) `auto_approved` with `recorded_payment = 0` -> false. (f) `paid_amount` is deliberately absent from the prelude: the function must not reference it. (g) a paid invoice for a child whose row on this session is `Excused` -> not affected -> false. (h) `carry_in_credit > 0` only -> `tuition = false`, `detail.with_carry_in_credit = 1`.
+
+Levels and combinations
+
+19. **After a real cancel** (through 20261027090000's trigger): a session with three teacher-marked `Present` is `STRONG`; `UPDATE sessions SET status = 'Canceled'`; the same call now returns `NONE` with `session.status = 'Canceled'`. This pins the fact D2 depends on: read first, then cancel.
+20. Truth table: R+P -> `STRONG`; R+T -> `STRONG`; P+T -> `STRONG`; H + exactly one of R/P/T -> `SOFT`; H alone -> `SOFT`; D with nothing else -> `STRONG`; M alone -> `NONE`.
+21. Time zone: `SELECT now() AT TIME ZONE 'Asia/Ho_Chi_Minh'` succeeds; a homework created `2026-10-26 17:05Z` (00:05 on the 27th in Hanoi) is NOT on the 26th and IS on the 27th.
+
+Hash
+
+22. **Stable:** two calls on unchanged data give the same hash.
+23. **Order-stable:** the same facts (fixed uuids) inserted in opposite row order, in a second database or after delete-and-reinsert -> same hash.
+24. **Same for every viewer:** admin, the class's teacher and service role get the same hash; the teacher's JSON has `settled = null`, no item 11/12, `redacted = true`.
+25. **Unchanged by noise:** updating only `marked_at` / `updated_at` on a human mark, or adding a seeded row for a child with no settled invoice, leaves the hash unchanged.
+26. **Changes with evidence:** each of these changes the hash - one mark `Absent -> Present`; the same mark re-made by a different `marked_by`; a new point row; a point row's `points` edited; a transcript `processing -> analyzed`; session `Scheduled -> Held`; session date or start time moved; payroll month locked; an affected child's invoice gaining `recorded_payment`; a new recording element from the helper.
+
+Access
+
+27. `anon` cannot execute (`permission denied for function`).
+28. Signed-in user with no role, and a teacher of a DIFFERENT class -> `42501`; and the same `42501` for a random uuid (no existence leak).
+29. Admin with a random uuid -> `P0002`. NULL argument -> `22004`.
+30. `authenticated` cannot execute `session_recording_evidence` directly.
+31. The migration applies a second time unchanged.
+32. Volatility and settings: `pg_proc.provolatile = 's'`, `prosecdef = true`, and `proconfig` contains `search_path=public` for both functions.
+
+---
+
+## 6. Risks
+
+False STRONG (the nudge fires, or D2 demands more, for a lesson that did not run)
+
+| Risk | How it arises | Mitigation |
+|---|---|---|
+| **Cancelled at the door after roll-call** | Teacher marks the children who turned up, then the lesson is abandoned (power cut, teacher ill). Marks are real, the lesson is not. | This is the case the nudge exists for; the admin sees who was marked, by whom, when, and acknowledges with a reason. **D2 must therefore treat STRONG as "acknowledge and explain", never as an absolute refusal** - otherwise this legitimate cancellation becomes impossible. Stated for D2 in section 7. |
+| Teacher saves the register with defaults | The teacher screen upserts a row for every child with the teacher's id (`src/components/teacher/AttendanceMarking.tsx:195-206`). A teacher who opens the wrong lesson and presses Save creates STRONG evidence. | Same path: acknowledge. The item shows `markers` and `at`, so a register saved at 09:00 for a 17:30 lesson looks wrong at a glance. |
+| Pixel Pal register pre-filled | If Pixel Pal sends `Present` for children nobody ticked (unknown - Q3). | Engine already refuses marks before start + 5 min. `detail.pixel_pal` lets the admin see the source. Q3 decides whether Pixel-Pal-only should drop to SOFT. |
+| Forged or mistaken `marked_by` | RLS does not constrain the column (1.1). | Only staff can write attendance at all; out of scope for D1, worth a line in A5's audit. |
+| Two lessons of one class on one day | Unlinked points and same-day transcripts count for both. | Only SOFT families are affected; a direct (D) item is always per session. |
+| Homework set BECAUSE the lesson was called off | 1.3. | Homework is auxiliary: SOFT at most. |
+| Admin sets `Held` by hand, teacher awards points for another reason that day | R + P = STRONG without a lesson. | Rare; acknowledge path. |
+
+False NONE (a taught lesson can be cancelled with no warning)
+
+| Risk | How it arises | Mitigation |
+|---|---|---|
+| **Nobody marked the register** | Teacher forgot; the 10 pm job filled in `Present` with `marked_by NULL`. By design those do not count, so a genuinely taught, unmarked lesson is NONE. | Unavoidable without inventing evidence. D2's stale-screen protection and the settled flag still apply; whether a past-dated cancellation with NONE should still ask for a reason is a D2/D3 decision. |
+| **Evidence already erased** | Function called after the session is `Canceled`: every mark is `Excused`. | Callers read first (case 19). D2 stores the JSON it acted on. |
+| Session deleted | `attendance`, stars state and held flips cascade away; points and transcripts lose `session_id` (`ON DELETE SET NULL`). | D2 must guard DELETE with the same function, before the delete. |
+| Child's `Present` rewritten to `Excused` by an enrollment change | The lesson falls outside a changed enrollment; older rows were excused by the 20261106090000 back-fill (`M/20261106090000_attendance_enrollment_guard.sql:14-17`). | Other children's marks normally remain. Not fixable here. |
+| Transcript uploaded days later | Lands on another date; `session_id` is never set. | SOFT type only; workstream C's recorder gives a linked, STRONG source. |
+| Points written before 07:00 Hanoi | UTC date is the previous day. | No class runs then. |
+| `repair-attendance` used to record a real lesson after the fact | Rows have `marked_by NULL`. | By rule not counted; an admin ran the repair and an admin is cancelling. |
+| Live database behind the tree | A table this reads is not there yet. | Preflight refuses to install (4.5). |
+
+Other
+
+- **Month-level payroll.** `payroll_paid_as_held` can be true for a lesson marked Held after the month was locked (not actually in the paid count), and false for one that was Held at lock time and has since been reset. It is wording help, not arithmetic; any carry-forward figure comes from `calculate-payroll` and `PayrollMonthLock`, never from here.
+- **Old `Held` rows.** The October 2025 back-fill set `Held` on every session with any attendance row, seeded ones included (1.7). For lessons before that date `status_held` alone means little. It is only SOFT.
+- **Hash scope.** The hash covers what this function reads. A change elsewhere that matters to a cancellation (an enrollment edit, a discount) does not move it. D2's token should also carry the session's `updated_at` if it wants "nothing at all changed".
+
+---
+
+## 7. Notes for D2, D3 and D5 (consequences of this model, not decisions made for them)
+
+1. **Read before write, under the session lock.** D2's guard must be a `BEFORE UPDATE` (and `BEFORE DELETE`) trigger on `sessions`: `trg_cancel_session_excused` is an AFTER trigger and destroys the marks (`M/20261027090000_...sql:167-172`). `cancel_session_checked` should `SELECT ... FROM sessions WHERE id = p FOR UPDATE` first and call `session_held_evidence` in a LATER statement: every attendance write takes the same row lock (`M/20261027090000_...sql:128`), so once the admin's transaction holds it no mark can land between the check and the cancel, and the function then sees every mark committed before the lock was granted.
+2. **Persist the snapshot.** Store the full JSON (it has no names) in D2's append-only audit row together with the token and the reason. After the cancel the function can no longer reproduce it.
+3. **Do not hard-block on STRONG.** See the first risk. The level selects how much the admin must confirm; `settled.any` selects the heavier path.
+4. **D5, past cancellations.** For lessons already cancelled, points, transcripts and homework (items 3, 7, 8, 9, 10) are still readable by calling this function on the cancelled session. Item 1 is not; the pre-cancel marks survive only in `audit_log` (`entity = 'attendance'`, `diff -> 'new' ->> 'status'`, `actor_user_id`) and only since `M/20261009130000_audit_every_admin_action.sql` was applied (`:152-156`). The trigger's own rewrite to `Excused` is not logged there, because writes made by another trigger are skipped (`:87-89`) - so the last logged value IS the human mark. D5's owner SQL should read that, clearly separate from this function.
+5. **D3.** Render from the JSON. `label_key` values are `evidence.<type>` for the twelve types in 4.2. Fetch on dialog open and again on confirm; a changed `snapshot_hash` is the stale-screen signal.
+6. **Workstream C.** Replace `session_recording_evidence` only; contract in 1.2. Add a positive case against the real table in the recorder's own test.
+
+---
+
+## 8. Open questions for the owner (policy only)
+
+| # | Question | Recommended default (what the design above does) |
+|---|---|---|
+| Q1 | A teacher marked every child **Absent** and nothing else exists. Is that "held"? It is billed like a held lesson today. | **SOFT.** A register was taken, nobody was recorded as there. |
+| Q2 | Do marks that arrived from **Pixel Pal** count as fully as marks made in HEC? | **Yes, STRONG.** They already pay the teacher and bill the family. |
+| Q3 | Does Pixel Pal's register **pre-fill Present**? (Not answerable from this repo.) If it does, should a lesson whose only marks are Pixel Pal's drop to SOFT? | Keep **STRONG** until Pixel Pal's behaviour is confirmed; the item shows the source either way. |
+| Q4 | A family's bill for the month has no payment recorded against it but is covered by **credit carried in** from an earlier overpayment. Does that count as "already paid" for the settled flag? | **No** - reported in the detail (`with_carry_in_credit`), not part of the flag. Cancelling only increases their credit. |
+| Q5 | Should **homework set or marked that day** count at all? It is the weakest signal and is sometimes set because a lesson was called off. | **Yes, as SOFT only**, never towards STRONG. Dropping it means removing family H and cases 15-16. |
+| Q6 | Should a lesson that is `Held` in a **locked payroll month** be STRONG on that alone (the teacher has very probably been paid for it)? | **No, SOFT + settled.** The data cannot tie a payroll line to a lesson; the settled path already makes the admin stop. |
+
+## 9. What could not be determined
+
+- **Pixel Pal's register defaults** (Q3): external system, not in this repo.
+- **Whether pglite ships `Asia/Ho_Chi_Minh`.** Existing suites only exercise `Asia/Bangkok`. Case 21 settles it; fallback stated in section 3. Nothing was executed for this design (the worktree has no `node_modules`).
+- **The live database's state.** By rule no live access was used. Unknown: whether every migration this reads has been pasted; how many old `Held` sessions come from the 2025 back-fill; whether any live `class_transcripts.session_id` is non-null (no code writes it); the server time zone behind `transcript_date DEFAULT CURRENT_DATE` (assumed UTC, the Supabase default - the same-day rule is written to be right either way).
+- **Whether a payroll line included a given lesson**: not recorded anywhere (1.5).
+- **D0's inventory** of cancel paths was not present in this worktree. Section 1.7 lists the status-changing paths found while verifying; D0 is the authority for the full list.
+- `app_role` enum labels for the prelude were not read; the implementer takes them from `T` Enums.
