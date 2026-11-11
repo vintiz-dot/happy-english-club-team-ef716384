@@ -9,9 +9,10 @@ Steps:
      excluded from both sets. This is a heuristic: it misses adult women with
      high voices and other children; clips are NOT assumed single-speaker,
      and B2 must re-check with embeddings.
-  3. Remaining segments are grouped into contiguous blocks of >= --block s of
+  3. Remaining segments are grouped into contiguous blocks of >= --block s (default 5) of
      speech; blocks are shuffled with --seed and dealt to HELD-OUT until it has
-     max(--min-heldout, --heldout-frac * total) seconds; the rest is ENROL.
+     max(--min-heldout, --heldout-frac * total) seconds, never leaving ENROL
+     below --min-enrol; the rest is ENROL.
      A child is split only if total speech >= --min-speech (default
      min-enrol + min-heldout); otherwise every block is ENROL ("enrol-only").
 
@@ -106,7 +107,7 @@ def main() -> int:
     ap.add_argument("--min-heldout", type=float, default=20.0, help="speech s a held-out set needs")
     ap.add_argument("--min-speech", type=float, default=None, help="total speech s to qualify (default enrol+heldout)")
     ap.add_argument("--heldout-frac", type=float, default=0.4)
-    ap.add_argument("--block", type=float, default=8.0, help="speech seconds per contiguous block")
+    ap.add_argument("--block", type=float, default=5.0, help="speech seconds per contiguous block")
     ap.add_argument("--adult-f0", type=float, default=200.0, help="median F0 below this flags another (adult) voice")
     a = ap.parse_args()
     out = safe_out(a.out)
@@ -141,20 +142,30 @@ def main() -> int:
             blocks.append(cur)
         heldout = 0.0
         if total >= min_speech:
-            target = max(a.min_heldout, a.heldout_frac * total)
+            cap = total - a.min_enrol  # enrolment always keeps >= min_enrol
+            target = min(max(a.min_heldout, a.heldout_frac * total), cap)
             order = list(range(len(blocks)))
             random.Random(f"{a.seed}:{code}").shuffle(order)
             for i in order:
                 if heldout >= target:
                     break
+                bd = sum(s["dur"] for s in blocks[i])
+                if heldout + bd > cap:
+                    continue
                 for s in blocks[i]:
                     s["set"] = "heldout"
-                heldout += sum(s["dur"] for s in blocks[i])
+                heldout += bd
+            if heldout < a.min_heldout:  # block granularity defeated the rule: keep it all for enrolment
+                for s in usable:
+                    s["set"] = ""
+                heldout = 0.0
         for s in usable:
             s["set"] = s["set"] or "enrol"
         for s in segs:
             s["set"] = s["set"] or "excluded"
-        status = "split" if total >= min_speech else ("enrol-only" if total >= a.min_enrol else "enrol-only(thin)")
+        status = "split" if heldout > 0 else ("enrol-only" if total >= a.min_enrol else "enrol-only(thin)")
+        if flagged > 0.25 * (total + flagged):
+            status += ";other-voice>25%"
         summary.append({"code": code, "clips": len(wavs), "speech_s": round(total, 1),
                         "flagged_other_voice_s": round(flagged, 1), "segments": len(segs),
                         "enrol_s": round(total - heldout, 1), "heldout_s": round(heldout, 1), "status": status})

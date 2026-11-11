@@ -13,9 +13,11 @@ Method (memory-safe for 139-minute files):
      (ms per hour) and last-minus-first lag.
 
 Verdict per ordered pair:
-  SAME       >= 75 % of non-silent windows match (NCC >= 0.6, PSR >= 3) and
+  SAME       >= 75 % of non-silent windows match (NCC >= 0.6, PSR >= 1.5) and
              their refined lags fit a line within 50 ms residual
-  PARTIAL    some windows match consistently, fewer than 75 %
+  A_CONTAINED_IN_B  as SAME, but B is more than a minute longer than A
+  PARTIAL    some windows match consistently, fewer than 75 % (A contains a
+             stretch of B: `match_span_a_s` gives the first/last matched window)
   DIFFERENT  no window matches
 Every pair of lesson files is tested; unrelated pairs are the negative controls.
 
@@ -110,7 +112,9 @@ def compare(a_path: Path, b_path: Path, ea, eb, n_win: int, win_s: float) -> dic
         wins.append({"t_a": s / FPS, "silent": False, "ncc": round(peak, 3),
                      "lag_s": round((i - s) / FPS, 2), "psr": round(peak / max(side, 1e-3), 2)})
     live = [w for w in wins if not w["silent"]]
-    matched = [w for w in live if w["ncc"] >= 0.6 and w["psr"] >= 3]
+    # Unrelated speech envelopes correlate up to ~0.4 anywhere (measured on the negative
+    # controls), so a true match is NCC >= 0.6 standing >= 1.5x above every other offset.
+    matched = [w for w in live if w["ncc"] >= 0.6 and w["psr"] >= 1.5]
     for w in matched:
         lag, wncc = refine(a_path, b_path, w["t_a"] + win_s / 2, w["lag_s"])
         w["lag_fine_s"] = None if lag is None else round(lag, 5)
@@ -137,12 +141,16 @@ def compare(a_path: Path, b_path: Path, ea, eb, n_win: int, win_s: float) -> dic
         res.update({"lag_first_s": fine[0]["lag_fine_s"], "lag_last_s": fine[0]["lag_fine_s"]})
     if matched:
         res["median_ncc_matched"] = round(float(np.median([w["ncc"] for w in matched])), 3)
+        res["match_span_a_s"] = [matched[0]["t_a"], matched[-1]["t_a"] + win_s]
+        res["matched_fraction"] = round(len(matched) / len(live), 3)
     if not matched:
         verdict = "DIFFERENT"
     elif live and len(matched) >= 0.75 * len(live) and (consistent or len(fine) == 1):
         verdict = "SAME"
     else:
         verdict = "PARTIAL" if (consistent or len(fine) <= 1) else "INCONSISTENT"
+    if verdict == "SAME" and res["dur_b_min"] - res["dur_a_min"] > 1.0:
+        verdict = "A_CONTAINED_IN_B"  # all of A is found in a longer B
     res["verdict"] = verdict
     res["per_window"] = wins
     return res
