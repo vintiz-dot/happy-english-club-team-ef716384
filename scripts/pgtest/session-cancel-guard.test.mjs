@@ -524,7 +524,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   const lockMonth = (await clock(45)).date.slice(0, 7);
   await asSuper(`INSERT INTO payroll_periods VALUES ($1,'locked',now(),$2)`, [lockMonth, ADMIN]);
   const intoLocked = await mk();
-  r = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [intoLocked.sid, (await clock(45)).date]));
+  const lockDate = (await clock(45)).date;
+  r = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [intoLocked.sid, lockDate]));
   ok('B-3 automation cannot move a lesson into a month whose payroll is locked -> HC020', r.code === 'HC020', r);
   // into a month where a billed child's invoice is paid
   const destDay = await clock(75);

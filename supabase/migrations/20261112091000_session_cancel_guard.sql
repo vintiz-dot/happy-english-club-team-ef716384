@@ -1046,7 +1046,7 @@ COMMIT;
 
 -- What landed, as a result set the SQL editor will always print.
 SELECT
-  (SELECT string_agg(tgname || '=' || tgenabled, ', ' ORDER BY tgname) FROM pg_trigger
+  (SELECT string_agg(tgname::text || '=' || tgenabled::text, ', ' ORDER BY tgname) FROM pg_trigger
     WHERE tgrelid = 'public.sessions'::regclass AND tgname LIKE 'zz_session%')          AS session_guard_triggers,
   (SELECT count(*) FROM public.session_cancel_overrides)                                 AS override_rows,
   (SELECT count(*) FROM public.session_cancel_override_events WHERE kind = 'guard_installed') AS installs;
