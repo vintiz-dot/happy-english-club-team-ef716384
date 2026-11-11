@@ -26,6 +26,7 @@ import {
   AUDIT_BUCKET,
   currentClassNames,
   exportName,
+  exportPlan,
   extFor,
   formatBytes,
   isAcceptedClip,
@@ -288,6 +289,59 @@ export default function AuditClipsTab() {
     }
   };
 
+  // Save every uploaded clip straight into the audit folder the admin picks
+  // (Chrome / Edge). Files stream to disk, so a long video never sits in memory.
+  // An existing file of the right size is skipped, so it can be run again after a failure.
+  const [saving, setSaving] = useState<{ done: number; total: number; current: string; errors: string[] } | null>(null);
+  const saveAll = async () => {
+    const pick = (window as any).showDirectoryPicker;
+    if (!pick) { toast.error("This needs Chrome or Edge on a computer. Use the download buttons on a phone."); return; }
+    let root: any;
+    try { root = await pick.call(window, { mode: "readwrite" }); } catch { return; } // cancelled
+    const plan = exportPlan(data?.subjects ?? [], data?.clips ?? []);
+    const state = { done: 0, total: plan.files.length, current: "", errors: [] as string[] };
+    setSaving({ ...state });
+    try {
+      const videos = await root.getDirectoryHandle("videos", { create: true });
+      for (const f of plan.files) {
+        state.current = f.name;
+        setSaving({ ...state });
+        try {
+          const have = await videos.getFileHandle(f.name).then((h: any) => h.getFile()).catch(() => null);
+          if (have && f.size != null && have.size === f.size) { state.done++; continue; }
+          const { data: s, error } = await supabase.storage.from(AUDIT_BUCKET).createSignedUrl(f.storagePath, 900);
+          if (error || !s) throw new Error(error?.message ?? "no link");
+          const res = await fetch(s.signedUrl);
+          if (!res.ok || !res.body) throw new Error(`download failed (${res.status})`);
+          const w = await (await videos.getFileHandle(f.name, { create: true })).createWritable();
+          await res.body.pipeTo(w);
+          state.done++;
+        } catch (e: any) {
+          state.errors.push(`${f.name}: ${e?.message ?? "failed"}`);
+        }
+        setSaving({ ...state });
+      }
+      const write = async (dir: any, name: string, text: string) => {
+        const w = await (await dir.getFileHandle(name, { create: true })).createWritable();
+        await w.write(text); await w.close();
+      };
+      // Never overwrite a key.txt the admin has already filled in by hand.
+      const keyRows = (data?.subjects ?? []).map((s) => ({
+        code: s.code, name: data?.students.find((x) => x.id === s.student_id)?.full_name ?? "?",
+      }));
+      const hasKey = await root.getFileHandle("key.txt").then(() => true).catch(() => false);
+      await write(root, hasKey ? "key.from-portal.txt" : "key.txt", keyFileText(keyRows));
+      if (plan.links.length) await write(root, "youtube_links.txt", plan.links.join("\n") + "\n");
+      state.current = "";
+      setSaving({ ...state });
+      toast[state.errors.length ? "error" : "success"](
+        state.errors.length ? `Saved ${state.done} of ${state.total}; ${state.errors.length} failed.` : `Saved ${state.done} clips to the folder.`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not write to that folder.");
+      setSaving(null);
+    }
+  };
+
   // key.txt is built here and saved by the admin; it is never stored.
   const downloadKey = () => {
     const rows = (data?.subjects ?? []).map((s) => ({
@@ -518,6 +572,29 @@ export default function AuditClipsTab() {
               </Card>
             </>
           )}
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Save to the audit folder</CardTitle>
+              <CardDescription>
+                Pick <code>hec-audio-eval</code> once. Every uploaded clip is saved into its <code>videos</code> folder as
+                S01_clip1.mp4 and so on, a <code>key.txt</code> is added if there isn't one (an existing one is never overwritten),
+                and YouTube links go in <code>youtube_links.txt</code>. Run it again any time; clips already there are skipped.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button onClick={saveAll} disabled={!data?.clips.length || (!!saving && !!saving.current)} className="min-h-11">
+                <Download className="mr-2 h-4 w-4" />Save all clips to my folder
+              </Button>
+              {saving && (
+                <div aria-live="polite" className="space-y-1 text-sm">
+                  <Progress value={saving.total ? Math.round((saving.done / saving.total) * 100) : 100} aria-label="Saving progress" />
+                  <div>{saving.done} of {saving.total} saved{saving.current ? ` · ${saving.current}` : ""}</div>
+                  {saving.errors.map((e) => <div key={e} className="text-xs text-destructive">{e}</div>)}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={downloadKey} disabled={!data?.subjects.length}>

@@ -66,5 +66,20 @@ eq("progress: a bad percentage is clamped", L.overallProgress([{ size: 10, stage
 eq("stage labels read as plain words", [L.STAGE_LABEL.queued, L.STAGE_LABEL.saving, L.STAGE_LABEL.uploading],
   ["Waiting", "Saving record", "Uploading"]);
 
+{
+  const plan = L.exportPlan(
+    [{ student_id: "b", code: "S02" }, { student_id: "a", code: "S01" }],
+    [
+      { student_id: "b", clip_no: 1, source_kind: "file", storage_path: "S02/x.mov", mime_type: "video/quicktime", original_name: "q.mov", size_bytes: 5, youtube_url: null },
+      { student_id: "a", clip_no: 2, source_kind: "youtube", storage_path: null, mime_type: null, original_name: null, size_bytes: null, youtube_url: "https://youtu.be/dQw4w9WgXcQ" },
+      { student_id: "a", clip_no: 1, source_kind: "file", storage_path: "S01/y.mp4", mime_type: "video/mp4", original_name: "w.mp4", size_bytes: 9, youtube_url: null },
+      { student_id: "zz", clip_no: 1, source_kind: "file", storage_path: "S99/z.mp4", mime_type: "video/mp4", original_name: "z.mp4", size_bytes: 1, youtube_url: null },
+    ],
+  );
+  eq("export plan: files use the audit names, in code order", plan.files.map((f) => f.name), ["S01_clip1.mp4", "S02_clip1.mov"]);
+  eq("export plan: a YouTube link becomes a line, not a file", plan.links, ["S01\tclip2\thttps://youtu.be/dQw4w9WgXcQ"]);
+  ok("export plan: a clip with no child on record is not exported", !plan.files.some((f) => f.storagePath === "S99/z.mp4"));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

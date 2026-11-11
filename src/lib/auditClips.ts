@@ -121,6 +121,32 @@ export function overallProgress(
   };
 }
 
+/**
+ * What "save everything to the audit folder" writes: every uploaded file under
+ * its audit name (S01_clip1.mp4), and one line per YouTube link, since a link
+ * has no file to save. Pure, so the naming is tested.
+ */
+export function exportPlan(
+  subjects: { student_id: string; code: string }[],
+  clips: {
+    student_id: string; clip_no: number; source_kind: string; storage_path: string | null;
+    mime_type: string | null; original_name: string | null; size_bytes: number | null; youtube_url: string | null;
+  }[],
+): { files: { name: string; storagePath: string; size: number | null }[]; links: string[] } {
+  const code = new Map(subjects.map((s) => [s.student_id, s.code]));
+  const ordered = [...clips].sort((a, b) =>
+    (code.get(a.student_id) ?? "").localeCompare(code.get(b.student_id) ?? "") || a.clip_no - b.clip_no);
+  const files: { name: string; storagePath: string; size: number | null }[] = [];
+  const links: string[] = [];
+  for (const c of ordered) {
+    const cd = code.get(c.student_id);
+    if (!cd) continue;
+    if (c.source_kind === "youtube") links.push(`${cd}\tclip${c.clip_no}\t${c.youtube_url ?? ""}`);
+    else if (c.storage_path) files.push({ name: exportName(cd, c.clip_no, extFor(c.mime_type, c.original_name)), storagePath: c.storage_path, size: c.size_bytes });
+  }
+  return { files, links };
+}
+
 /** The classes a child is in today: a start on or before it, no end or an end on or after it. */
 export function currentClassNames(
   enrollments: { start_date: string; end_date: string | null; class_name: string | null }[],
