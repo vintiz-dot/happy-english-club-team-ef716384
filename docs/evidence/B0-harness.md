@@ -55,3 +55,46 @@ Verdicts:
 - **New finding: Recording.mp3 is the first 86.9 minutes of Untitled.mp3** (sample-aligned at lag 0, waveform NCC 1.000 between the two 48 kHz files). The owner's "87 min" and "139 min" lessons are NOT two lessons: there is one 139-minute recording, of which Recording/outp1ut_compressed is a prefix cut.
 - **je,ch,sa,po.mp3 is a different recording** from all the others (negative controls: max NCC 0.37-0.39, no window passes).
 - So the five lesson files hold **two distinct recordings, about 223.5 min of unique audio** (Untitled 139.0 min + je,ch,sa,po 84.5 min). Use the 48 kHz originals (Untitled, and je,ch,sa,po which only exists at 16 kHz) for B1/B2; the compressed copies are the 32 kbps comparison condition. Scoring Recording and Untitled separately would double-count its first 87 minutes.
+
+## 4. Speech seconds per child, other voices, ENROL / HELD-OUT split (run 2026-11-11)
+
+`.venv\Scripts\python scripts\lesson-eval\split.py` (defaults: seed 7, silero VAD from faster-whisper 1.2.1, min-enrol 30 s, min-heldout 20 s, held-out fraction 0.4, 5 s contiguous blocks, adult-F0 flag < 200 Hz). ~2 min. Run twice with the same seed: `segments.csv` byte-identical (`cmp` -> DETERMINISTIC). Outputs `work\split\segments.csv`, `work\split\summary.csv`.
+
+**Choice of X (speech needed for a held-out set): X = 50 s** = 30 s enrolment (a usual minimum for an ECAPA-style voiceprint) + 20 s held-out (5-10 test turns of 2-4 s). The data has a cluster at 50-60 s (S07 50.5, S17 52.7, S06 52.8, S24 53.0, S18 59.6) and a gap below to 42.8 s (S09), so X = 50 keeps that cluster; X = 60 would give 10 clean children. The split never leaves enrolment below 30 s.
+
+Other voices: clips are NOT single-speaker. Each VAD segment gets a median F0; < 200 Hz is flagged as a probable adult (teacher/parent) and excluded from both sets. Heuristic only: it cannot catch a high-pitched adult woman or another child; B2 must re-check with embeddings.
+
+| code | clips | usable speech s | flagged other-voice s | enrol s | held-out s | status |
+|---|---|---|---|---|---|---|
+| S01 | 1 | 113.7 | 0.0 | 64.5 | 49.2 | split |
+| S02 | 1 | 223.8 | 3.3 | 133.9 | 89.8 | split |
+| S03 | 1 | 87.4 | 0.0 | 49.2 | 38.2 | split |
+| S04 | 1 | 82.0 | 19.6 | 44.7 | 37.2 | split |
+| S05 | 1 | 87.0 | 0.0 | 47.8 | 39.2 | split |
+| S06 | 1 | 52.8 | 0.0 | 30.1 | 22.7 | split |
+| S07 | 1 | 50.5 | 0.0 | 30.1 | 20.3 | split |
+| S08 | 1 | 25.8 | 0.0 | 25.8 | 0 | enrol-only (thin, < 30 s) |
+| S09 | 1 | 42.8 | 0.0 | 42.8 | 0 | enrol-only |
+| S10 | 1 | 67.5 | 2.3 | 38.4 | 29.1 | split |
+| S11 | 1 | 76.4 | 3.7 | 37.7 | 38.7 | split |
+| S12 | 1 | 37.8 | 0.0 | 37.8 | 0 | enrol-only |
+| S13 | 1 | 25.5 | 398.3 | 25.5 | 0 | enrol-only (thin); clip dominated by a low (adult) voice, median F0 108 Hz |
+| S14 | 1 | 66.2 | 0.0 | 37.8 | 28.4 | split |
+| S15 | 1 | 69.0 | 0.0 | 39.6 | 29.4 | split |
+| S16 | 1 | 28.5 | 1.7 | 28.5 | 0 | enrol-only (thin) |
+| S17 | 1 | 52.7 | 0.0 | 32.4 | 20.2 | split |
+| S18 | 1 | 59.6 | 0.0 | 31.0 | 28.6 | split |
+| S19 | 1 | 24.9 | 0.0 | 24.9 | 0 | enrol-only (thin) |
+| S20 | 1 | 72.6 | 159.5 | 39.9 | 32.7 | split, other voice > 25 % - verify |
+| S21 | 1 | 117.7 | 252.7 | 64.7 | 53.1 | split, other voice > 25 % - verify |
+| S22 | 1 | 21.8 | 0.0 | 21.8 | 0 | enrol-only (thin) |
+| S23 | 1 | 0.0 | 58.7 | 0 | 0 | unusable as is: ALL speech has adult-range pitch (median 134 Hz) |
+| S24 | 1 | 53.0 | 0.3 | 32.3 | 20.6 | split |
+| S25 | 1 | 20.9 | 0.0 | 20.9 | 0 | enrol-only (thin) |
+| S26 | 4 | 37.6 | 0.0 | 37.6 | 0 | enrol-only |
+| S30 | 1 | 133.8 | 0.0 | 75.2 | 58.6 | split |
+
+Result: **15 children qualify for a held-out set** (S01-S07, S10, S11, S14, S15, S17, S18, S24, S30 = 13 clean, plus S20 and S21 whose clips carry a lot of adult-pitch speech, so their "child" share rests on the F0 heuristic). 12 are enrol-only (S08, S09, S12, S13, S16, S19, S22, S25, S26; S23 has no child-pitch speech at all).
+Owner questions: (a) is S23's clip really the child (a 134 Hz median is adult/teen range)? (b) S13, S20, S21 (the long > 8 min clips) are mostly an adult voice - expected (lesson recordings with a teacher) or wrong clips?
+
+First run (8 s blocks, no enrolment floor) let held-out eat into enrolment (S24 enrol 20 s); fixed with the 30 s floor, 5 s blocks and up to 100 seeded deals per child.

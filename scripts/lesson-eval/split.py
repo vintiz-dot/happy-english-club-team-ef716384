@@ -144,21 +144,26 @@ def main() -> int:
         if total >= min_speech:
             cap = total - a.min_enrol  # enrolment always keeps >= min_enrol
             target = min(max(a.min_heldout, a.heldout_frac * total), cap)
-            order = list(range(len(blocks)))
-            random.Random(f"{a.seed}:{code}").shuffle(order)
-            for i in order:
-                if heldout >= target:
+            bdur = [sum(s["dur"] for s in b) for b in blocks]
+            chosen = []
+            # Up to 100 seeded shuffles (deterministic): the first whose greedy deal reaches
+            # min_heldout without crossing the cap wins; blocks are whole, so one may not fit.
+            for attempt in range(100):
+                order = list(range(len(blocks)))
+                random.Random(f"{a.seed}:{code}:{attempt}").shuffle(order)
+                pick, h = [], 0.0
+                for i in order:
+                    if h >= target:
+                        break
+                    if h + bdur[i] <= cap:
+                        pick.append(i)
+                        h += bdur[i]
+                if h >= a.min_heldout:
+                    chosen, heldout = pick, h
                     break
-                bd = sum(s["dur"] for s in blocks[i])
-                if heldout + bd > cap:
-                    continue
+            for i in chosen:
                 for s in blocks[i]:
                     s["set"] = "heldout"
-                heldout += bd
-            if heldout < a.min_heldout:  # block granularity defeated the rule: keep it all for enrolment
-                for s in usable:
-                    s["set"] = ""
-                heldout = 0.0
         for s in usable:
             s["set"] = s["set"] or "enrol"
         for s in segs:
