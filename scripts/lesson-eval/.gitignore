@@ -1,0 +1,17 @@
+# Children's audio and anything derived from it never belongs in the repo.
+*.wav
+*.mp3
+*.mp4
+*.m4a
+*.mov
+*.webm
+*.flac
+*.ogg
+*.aac
+*.npy
+*.npz
+*.pt
+*.onnx
+*.pkl
+__pycache__/
+.pytest_cache/
