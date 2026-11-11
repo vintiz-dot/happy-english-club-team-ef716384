@@ -172,4 +172,16 @@ For `schedule-sessions` when a delete/time update comes back `HC020`/`HC021`: on
 
 ## Verification
 
-(totals pasted below when the runs finish)
+```
+node scripts/pgtest/session-evidence.test.mjs supabase/migrations/20261027090000_cancelled_lesson_attendance_guard.sql supabase/migrations/20261112090000_session_held_evidence.sql
+-> 143 passed, 0 failed
+
+node scripts/pgtest/session-cancel-guard.test.mjs supabase/migrations/20261009130000_audit_every_admin_action.sql supabase/migrations/20261027090000_cancelled_lesson_attendance_guard.sql supabase/migrations/20261112090000_session_held_evidence.sql supabase/migrations/20261112091000_session_cancel_guard.sql
+-> 212 passed, 0 failed   (timing line: one bulk call, 50 lessons x 15 marked children, pglite: 844 ms)
+
+node scripts/pgtest/run.mjs
+-> 2157 assertions across 33 suites, 0 suite(s) failed
+   (baseline 1925 / 32 / 0; +20 D1 revision, +212 new suite; no existing assertion removed or failing)
+```
+
+Mutation check of the guard (scratch copies, never committed): see below.
