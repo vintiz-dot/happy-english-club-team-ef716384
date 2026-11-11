@@ -2,10 +2,11 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0'
 import { ymNowBangkok } from '../_lib/lock.ts'
 import { tieHash } from '../_lib/hash.ts'
 import { getHighestClassPerStudent } from '../_lib/projected-per-class.ts'
+import { requireRole } from '../_lib/auth.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
 }
 
 Deno.serve(async (req) => {
@@ -17,6 +18,18 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // This assigns a family's sibling discount and posts a retroactive credit,
+    // so only an admin, another function holding the service-role key, or a
+    // scheduled job presenting the cron secret may run it. verify_jwt alone is
+    // not a check: the public anon key is a valid JWT.
+    const cronSecret = Deno.env.get('CRON_SECRET_TOKEN')
+    const presented = req.headers.get('x-cron-secret')
+    const isCron = !!cronSecret && !!presented && presented === cronSecret
+    if (!isCron) {
+      const gate = await requireRole(req, supabase, ['admin'], corsHeaders)
+      if (gate instanceof Response) return gate
+    }
 
     const body = await req.json().catch(() => ({}))
     const month = body?.month ?? ymNowBangkok()
