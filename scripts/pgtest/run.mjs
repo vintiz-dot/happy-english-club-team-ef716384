@@ -182,6 +182,7 @@ const SUITES = [
     file: "ta-standing.test.mjs",
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql"],
   },
+  { name: "class recorder", file: "recorder.test.mjs", migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql"] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
