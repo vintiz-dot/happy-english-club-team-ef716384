@@ -62,3 +62,38 @@ export function formatBytes(n: number | null | undefined): string {
   if (n < 1024 * 1024) return `${Math.max(1, Math.round(n / 1024))} KB`;
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+const YT_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be", "www.youtu.be"]);
+const YT_ID = /^[A-Za-z0-9_-]{11}$/;
+
+/**
+ * The 11-character id of a public YouTube video from a pasted address, or
+ * null. The host must be YouTube's own: "evil.com/?v=..." is not a video.
+ */
+export function parseYoutubeId(input: string | null | undefined): string | null {
+  const raw = (input || "").trim();
+  if (!raw) return null;
+  let u: URL;
+  try { u = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`); } catch { return null; }
+  if (!/^https?:$/.test(u.protocol) || !YT_HOSTS.has(u.hostname.toLowerCase())) return null;
+  const parts = u.pathname.split("/").filter(Boolean);
+  let id: string | null = null;
+  if (u.hostname.toLowerCase().endsWith("youtu.be")) id = parts[0] ?? null;
+  else if (parts[0] === "watch") id = u.searchParams.get("v");
+  else if (["shorts", "embed", "live", "v"].includes(parts[0])) id = parts[1] ?? null;
+  return id && YT_ID.test(id) ? id : null;
+}
+
+export const youtubeEmbedUrl = (id: string) => `https://www.youtube-nocookie.com/embed/${id}`;
+export const youtubeWatchUrl = (id: string) => `https://www.youtube.com/watch?v=${id}`;
+
+/** The classes a child is in today: a start on or before it, no end or an end on or after it. */
+export function currentClassNames(
+  enrollments: { start_date: string; end_date: string | null; class_name: string | null }[],
+  today: string,
+): string[] {
+  const names = enrollments
+    .filter((e) => e.start_date <= today && (!e.end_date || e.end_date >= today) && e.class_name)
+    .map((e) => e.class_name as string);
+  return [...new Set(names)].sort((a, b) => a.localeCompare(b));
+}

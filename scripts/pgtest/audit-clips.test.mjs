@@ -107,10 +107,35 @@ eq("a teacher cannot read it", (await as(TEACHER, "teacher", () => db.query(`SEL
 eq("an admin can", (await as(ADMIN, "admin", () => db.query(`SELECT 1 FROM storage.objects WHERE bucket_id='audit-clips'`))).rows.length, 1);
 eq("the bucket is private", (await one(`SELECT public FROM storage.buckets WHERE id='audit-clips'`)).public, false);
 
+console.log("=== YouTube links ===");
+{
+  const link = (sid, id, uid = ADMIN, role = "admin") => as(uid, role, () => db.query(
+    `INSERT INTO public.audit_clips (student_id, source_kind, youtube_id, youtube_url)
+     VALUES ($1, 'youtube', $2, 'https://youtu.be/' || $2)`, [sid, id]));
+  await link(an, "dQw4w9WgXcQ");
+  eq("a link gets the next clip number for the child",
+    (await one(`SELECT clip_no, storage_path, source_kind FROM public.audit_clips WHERE youtube_id='dQw4w9WgXcQ'`)),
+    { clip_no: 2, storage_path: null, source_kind: "youtube" });
+  ok("the same link twice for one child is refused",
+    /unique|duplicate/i.test(await tryAs(ADMIN, "admin", () => link(an, "dQw4w9WgXcQ")) ?? ""));
+  ok("a malformed video id is refused",
+    /check/i.test(await tryAs(ADMIN, "admin", () => link(an, "not-an-id")) ?? ""));
+  ok("a link with a file path as well is refused",
+    /check/i.test(await tryAs(ADMIN, "admin", () => db.query(
+      `INSERT INTO public.audit_clips (student_id, source_kind, youtube_id, storage_path) VALUES ($1,'youtube','abcdefghijk','S02/q.mp4')`, [an])) ?? ""));
+  ok("a file with no path is refused",
+    /check|null/i.test(await tryAs(ADMIN, "admin", () => db.query(
+      `INSERT INTO public.audit_clips (student_id) VALUES ($1)`, [an])) ?? ""));
+  ok("a link for a child with no consent is refused",
+    /Consent has not been recorded/.test(await tryAs(ADMIN, "admin", () => link(lan, "abcdefghijk")) ?? ""));
+  ok("a teacher cannot add a link", (await tryAs(TEACHER, "teacher", () => link(an, "abcdefghijk", TEACHER, "teacher"))) !== null);
+  eq("a teacher cannot see links", (await as(TEACHER, "teacher", () => db.query(`SELECT 1 FROM public.audit_clips WHERE source_kind='youtube'`))).rows.length, 0);
+}
+
 console.log("=== withdrawing ===");
 await as(ADMIN, "admin", () => db.query(`DELETE FROM public.audit_clip_subjects WHERE student_id=$1`, [minh]));
 eq("withdrawing a child removes their clips", (await one(`SELECT count(*)::int n FROM public.audit_clips WHERE student_id=$1`, [minh])).n, 0);
-eq("and leaves another child's", (await one(`SELECT count(*)::int n FROM public.audit_clips WHERE student_id=$1`, [an])).n, 1);
+eq("and leaves another child's", (await one(`SELECT count(*)::int n FROM public.audit_clips WHERE student_id=$1`, [an])).n, 2);
 eq("the next child gets a code no one else holds", await enrol(ADMIN, "admin", lan, "ok"), "S03");
 
 console.log(`\n${pass} passed, ${fail} failed`);

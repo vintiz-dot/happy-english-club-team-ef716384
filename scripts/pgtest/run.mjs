@@ -175,7 +175,7 @@ const SUITES = [
   {
     name: "audit clips",
     file: "audit-clips.test.mjs",
-    migrations: ["20261111090000_audit_voice_clips.sql"],
+    migrations: ["20261111090000_audit_voice_clips.sql", "20261111100000_audit_clips_youtube_links.sql"],
   },
   {
     name: "assistant absence",

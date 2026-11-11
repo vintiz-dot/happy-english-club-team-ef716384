@@ -31,5 +31,23 @@ ok("expired only after the day has passed",
 eq("key file is sorted and tab separated",
   L.keyFileText([{ code: "S02", name: "An" }, { code: "S01", name: "Minh" }]), "S01\tMinh\nS02\tAn\n");
 
+eq("youtube: watch link", L.parseYoutubeId("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=4s"), "dQw4w9WgXcQ");
+eq("youtube: short link", L.parseYoutubeId("https://youtu.be/dQw4w9WgXcQ?si=abc"), "dQw4w9WgXcQ");
+eq("youtube: shorts and embed",
+  [L.parseYoutubeId("youtube.com/shorts/dQw4w9WgXcQ"), L.parseYoutubeId("https://www.youtube.com/embed/dQw4w9WgXcQ")],
+  ["dQw4w9WgXcQ", "dQw4w9WgXcQ"]);
+eq("youtube: not YouTube's host", L.parseYoutubeId("https://evil.com/watch?v=dQw4w9WgXcQ"), null);
+eq("youtube: lookalike host", L.parseYoutubeId("https://youtube.com.evil.com/watch?v=dQw4w9WgXcQ"), null);
+eq("youtube: bad id and junk",
+  [L.parseYoutubeId("https://youtu.be/short"), L.parseYoutubeId("not a url"), L.parseYoutubeId("")], [null, null, null]);
+eq("embed uses the no-cookie host", L.youtubeEmbedUrl("dQw4w9WgXcQ"), "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ");
+eq("current classes: ended, future, duplicate and unnamed enrolments are left out", L.currentClassNames([
+  { start_date: "2026-01-01", end_date: null, class_name: "Stars" },
+  { start_date: "2026-01-01", end_date: "2026-06-30", class_name: "Moons" },
+  { start_date: "2027-01-01", end_date: null, class_name: "Suns" },
+  { start_date: "2026-09-01", end_date: "2026-11-11", class_name: "Stars" },
+  { start_date: "2026-01-01", end_date: null, class_name: null },
+], "2026-11-11"), ["Stars"]);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
