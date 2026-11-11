@@ -41,3 +41,21 @@ Files:
 node scripts/pgtest/session-evidence.test.mjs supabase/migrations/20261027090000_cancelled_lesson_attendance_guard.sql supabase/migrations/20261112090000_session_held_evidence.sql
 -> 123 passed, 0 failed
 ```
+
+## Revision 1 (2026-11-12, after docs/evidence/D-review-1.md Part A)
+
+Edited in place (never applied anywhere). What changed:
+
+- **A-1 (MAJOR) closed.** The redacted (class teacher) view now returns `snapshot_hash: null`. The full hash, over the money flags, is returned only to admins and internal callers, which is all D2's token needs. Test case 24 revised (it asserted the leak as a requirement); new case "A-1" (the review's probe, inverted): one child's invoice is driven through all 8 paid/confirmed/frozen states and the teacher's JSON (minus `computed_at`) is byte-identical for all 8 and carries no hash, while the admin hash does change.
+- **A-2 closed (claim made true).** Before calling `session_recording_evidence` the function reads its `provolatile` and raises `55000` unless it is STABLE or IMMUTABLE. The helper then runs inside a sub-transaction that is always rolled back (`RAISE ... 'HC0RO'`, caught at once; its return value lives in a plpgsql variable, which a rollback does not touch), so any row it, or anything it calls, writes is undone. Residue named in the header: sequence advances, session advisory locks. Tests: a VOLATILE writing helper -> 55000, nothing written; a STABLE helper calling a VOLATILE writer (INSERT + UPDATE invoices) -> the call answers and every row is rolled back, for service, admin and teacher calls. Contract comment updated. `REVOKE` on the helper now also names `service_role` (review table, "NOT listed"), asserted in case 32.
+- **A-3 closed.** "Internal" is now positive: no uid AND (JWT role `service_role`, OR no JWT role AND neither `session_user` nor the SET ROLE is authenticator/authenticated/anon). The new A-3 test found a second, worse defect in the same lines: with no JWT role, `v_role = 'service_role'` is NULL, so `v_internal` was NULL and `IF NOT (NULL OR false OR false)` does not raise - the gate fell OPEN and the caller got the redacted view. Every gate operand is now NULL-safe and COALESCEd to false. Tests: authenticated DB role with no claims -> 42501; jwt anon -> 42501; service_role DB role with no claims -> internal; no claims and no SET ROLE (SQL editor, cron) -> internal full view. The mis-named test at old `:678` renamed.
+- **A-4** carried into D2 (token covers `affected` and the invoice fields, B-6).
+- **A-5.** New cases: points of the class dated a week earlier and the next day -> NONE (kills M28); hash changes on a bare lesson for `end_time`, `teacher_id`, `class_id` and `Scheduled -> Canceled` with no marks (kills M4). `item(...)` guarded at case 7 so a missing item FAILs instead of crashing the suite (M16). The vacuous `computed_at` assertion replaced by a real one (two calls 20 ms apart: `computed_at` differs, the hash does not).
+- **A-6 closed.** Recorder row keys are fingerprinted as a sorted JSON array; test: `["a","b"]` vs `["a,b"]` give different hashes.
+
+Mutation re-check (scratch copies, never committed): M4 caught (1 FAIL), M28 caught (1), M16 caught (3 FAILs, no crash), teacher-gets-hash caught (3), no-rollback caught (3), no-volatility-check caught (1), old internal rule caught (2), comma-joined keys caught (1).
+
+```
+node scripts/pgtest/session-evidence.test.mjs supabase/migrations/20261027090000_cancelled_lesson_attendance_guard.sql supabase/migrations/20261112090000_session_held_evidence.sql
+-> 143 passed, 0 failed
+```
