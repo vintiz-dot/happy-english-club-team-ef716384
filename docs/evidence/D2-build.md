@@ -58,6 +58,118 @@ Files (all on this branch):
 - Real two-connection lock behaviour (pglite is one connection): lock order is asserted structurally (d37) only.
 - `authenticated`'s live statement timeout (B-5): the owner should read `SELECT rolconfig FROM pg_roles WHERE rolname = 'authenticated'` before rollout.
 
+## Contract for the edge functions and UI (as built)
+
+All RPCs are called through PostgREST `rpc` on a client built from the CALLER'S OWN `Authorization` header (anon key + the admin's JWT). They are granted to `authenticated` only; `service_role` cannot execute them, and with no `auth.uid()` they refuse anyway (`42501`). Each checks `has_role(auth.uid(), 'admin')` first. Tokens are opaque 64-hex strings: send back exactly what the preview returned. Nothing returned by a preview may be cached across dialog opens.
+
+### `session_change_preview(p_session_id uuid, p_action text, p_change jsonb DEFAULT NULL) -> jsonb`
+
+STABLE, writes nothing, takes no lock. `p_action` in `cancel | delete | move | uncancel`. For `move`, `p_change = {"date":"YYYY-MM-DD","start_time":"HH:MM[:SS]","end_time":"HH:MM[:SS]"}` - the same values must then be passed to `move_session_checked`.
+
+```jsonc
+{
+  "action": "cancel",
+  "kind": "cancel" | "delete" | "move" | "uncancel" | null,   // null: a move-shaped edit the guard does not cover (B-1) - send it as a plain update
+  "session": { "id","class_id","date","start_time","end_time","status","teacher_id","updated_at" },
+  "started": bool,                    // for a move: started at the source OR the destination
+  "tier": 0 | 1 | 2 | 3,
+  "level": "NONE" | "SOFT" | "STRONG",
+  "settled": { ...D1 settled object... },
+  "settled_any": bool,                // source OR destination settled (move)
+  "destination": null | { "month","started","payroll_month_locked","tuition","any" },   // move only
+  "change": null | { "new_date","new_start_time","new_end_time","destination" },      // move only
+  "evidence": { ...the whole D1 JSON (admin view)... },
+  "requires": { "reason_min": 15, "confirm": bool, "correction_reason": bool },
+  "allowed": bool,
+  "refuse_code": null | "already_canceled" | "not_canceled" | "use_cancel" | "bad_change" | "bad_action",
+  "affected": [ { "student_id","month","status","marked_by_person": bool } ],   // every attendance row of the lesson, source month
+  "invoices_before": [ { "id","student_id","month","base_amount","discount_amount","total_amount","recorded_payment",
+                         "status","confirmation_status","tuition_frozen","carry_in_credit","carry_in_debt",
+                         "carry_out_credit","carry_out_debt","class_breakdown" } ],   // stored rows, both months on a crossing move
+  "refresh_pairs": [ { "student_id","month" } ],   // what to send to calculate-tuition afterwards
+  "after_cancel": { "marks_excused": int|null, "marks_excused_now": int|null },   // cancel: marks the cancel will excuse; uncancel: rows Excused now
+  "token": "<64 hex>"
+}
+```
+
+Errors: `42501` not an admin, `22004` NULL id, `P0002` no such lesson, `55000` evidence unavailable (recorder helper not STABLE, or evidence without its admin view).
+
+### `cancel_session_checked(p_session_id uuid, p_action text, p_reason text, p_token text, p_confirm boolean DEFAULT false, p_correction_reason text DEFAULT NULL, p_context jsonb DEFAULT '{}') -> jsonb`
+
+`p_action` in `cancel | delete`. `p_context` (optional keys, never used for a decision): `batch_id` (uuid string), `set_manual` (`"true"`: cancel also sets `is_manual = true, manual_reason = reason`, as bulk-cancel does today), `attached` (object, stored as given, < 128 KB - e.g. `{ "source": "manage-session", "tuition_before": [...] }`).
+
+### `move_session_checked(p_session_id uuid, p_new_date date, p_new_start time, p_new_end time, p_reason text, p_token text, p_confirm boolean DEFAULT false, p_correction_reason text DEFAULT NULL, p_context jsonb DEFAULT '{}') -> jsonb`
+
+Token from `session_change_preview(id, 'move', {date, start_time, end_time})`. A same-day time edit that leaves a started lesson started is NOT a move (`HC015 bad_change`): send it as a plain update. Every date move by a signed-in person, even of an untouched future lesson (T0), must use this RPC (ruling: no raw lane for people).
+
+### `uncancel_session_checked(p_session_id uuid, p_reason text, p_token text, p_context jsonb DEFAULT '{}', p_correction_reason text DEFAULT NULL) -> jsonb`
+
+Back to `Scheduled` only. No `confirm`. `canceled_*` columns and attendance (`Excused`) are left as they are. `23505` = a replacement lesson sits in the slot.
+
+Return shape of the three single RPCs:
+
+```jsonc
+{ "override_id": "<uuid>", "action": "...", "session_id": "<uuid>", "tier": 0-3, "level": "...",
+  "review_required": bool, "erased_recently": bool,
+  "affected": [ { "student_id","month" } ],
+  "refresh_pairs": [ { "student_id","month" } ],   // refresh ALL of these after every action, move included (B-7)
+  "session_before": { ...the sessions row before the change... } }
+```
+
+### `cancel_sessions_checked_bulk(p_items jsonb, p_reason text, p_batch_id uuid, p_context jsonb DEFAULT '{}') -> jsonb`
+
+`p_items = [{ "id", "token", "confirm"?, "reason"?, "correction_reason"? }]`, at most 50 (`HC016`); `p_batch_id` required (`22004`). The edge function loops over chunks of <= 50 with ONE `batch_id`; each chunk is its own transaction. Items are processed in ascending id. A T2/T3 item needs its own `reason` (`HC017` otherwise), a T1+ item `confirm: true`, a T3 item `correction_reason`. Per-item refusals roll back only that item; any other error (deadlock, `HC050`, `55000`...) aborts the whole chunk.
+
+```jsonc
+{ "batch_id": "<uuid>",
+  "done":    [ { "id","override_id","tier","review_required","refresh_pairs" } ],
+  "refused": [ { "id", "code": "<SQLSTATE>", "message" } ] }   // codes: HC010-HC015, HC017, P0002
+```
+
+### `record_session_override_event(p_override_id uuid, p_kind text, p_payload jsonb DEFAULT '{}') -> uuid`
+
+`p_kind` in `tuition_refreshed | tuition_refresh_failed | reviewed`. Tuition kinds: the payload (an object; suggested `{ "results": [ { "student_id","month","ok": bool,"error"?, "response"? } ] }` - loop to the end, one entry per pair) is stored under `payload.attached`, and SQL adds `payload.invoices_after` (its own copy of the bills of `refresh_pairs`). `reviewed` needs `payload.note` passing the reason rule (`HC010`). Errors: `42501`, `HC015 bad_kind|bad_payload`, `P0002`.
+
+### `session_cancel_guard_status() -> jsonb` (admin only)
+
+`{ "installed_at", "update_trigger", "delete_trigger", "truncate_trigger" ('O' enabled, 'D' disabled, null missing), "evidence_function": bool, "recording_helper_stable": bool, "ok": bool }`. Red banner unless `ok`.
+
+### `log_session_automation_refused(p_session_id uuid, p_source text) -> uuid` (service_role only)
+
+For `schedule-sessions` when a delete/time update comes back `HC020`/`HC021`: one `automation_refused` event. Decides nothing. `42501` when called with a user JWT.
+
+### Views (admin-only through RLS, `security_invoker`)
+
+- `session_cancel_review_queue`: `override_id, created_at, actor_user_id, session_id, class_id, teacher_id, session_date, action, via, batch_id, tier, level, settled, correction_mode, reason, correction_reason, confirmed, change, affected, invoices_before, refresh_pairs, payroll_month_locked, erased_recently, attached, tuition_state ('refreshed'|'failed'|'pending'), age`. Rows: `review_required` and no `reviewed` event. `review_required` = T3, or T2 STRONG, or delete at T1+, or move at T2+, or `erased_recently` not empty.
+- `session_cancel_tuition_pending`: `override_id, created_at, actor_user_id, session_id, action, refresh_pairs, last_tuition_event, age` - any action older than 10 minutes with refresh pairs and no `tuition_refreshed` event.
+- Tables `session_cancel_overrides` / `session_cancel_override_events`: readable by admins; full `evidence`, `session_before`, `deleted_rows` live there.
+
+### Error codes (SQLSTATE in PostgREST's `code`)
+
+| SQLSTATE | message | meaning | suggested HTTP |
+|---|---|---|---|
+| `HC010` | `reason_too_short` | reason (or review note) fails the rule: 15-1000 chars after trimming/collapsing, >= 5 distinct characters, not a retired canned string | 422 |
+| `HC011` | `token_stale` | lesson row, evidence, affected children, shown bill fields, tier, action or caller changed since the preview | 409 + fresh preview |
+| `HC012` | `confirm_required` | T1+ cancel/delete/move without `confirm` | 422 |
+| `HC013` | `correction_reason_required` | T3 without a valid correction reason | 422 |
+| `HC014` | `use_cancel` | delete of a lesson with evidence | 409 |
+| `HC015` | the refuse code | `already_canceled`, `not_canceled`, `bad_change`, `bad_action`, `bad_kind`, `bad_items`, `bad_payload` | 409 / 400 |
+| `HC016` | `too_many` | bulk over 50 | 413 |
+| `HC017` | `own_reason_required` | bulk T2/T3 item with only the batch reason | 422 |
+| `HC020` | `session_change_requires_checked_path` | a raw write was refused (DETAIL `kind=...; ...`) | 409 |
+| `HC021` | same | raw `class_id` change refused | 409 |
+| `HC022` | `one change at a time` | two guarded kinds in one statement | 409 |
+| `HC030` | | TRUNCATE sessions | - |
+| `HC040` / `HC041` | | audit row update/delete/truncate / direct insert | - |
+| `HC050` | `guard_broken` | the trigger did not consume the acknowledgement (missing/disabled); nothing changed | 503 |
+| `23505` | | slot taken (move, un-cancel) | 409 `slot_taken` |
+| `40P01`, `40001` | | retry; nothing changed | 503 |
+| `P0002` | | not found | 404 |
+| `42501` | | not an admin / not executable | 403 |
+| `22004` | | NULL id or batch id | 400 |
+| `55000` | | evidence unavailable (recorder helper VOLATILE, evidence incomplete) | 503 |
+| `PGRST202` / `42883` | | function missing: migration not pasted | 503 `guard_not_installed` |
+
 ## Verification
 
 (totals pasted below when the runs finish)
