@@ -6,10 +6,10 @@
  * added to the audit only after the admin records how the parents consented.
  * Nothing here sends a clip anywhere else; analysis is a separate step.
  */
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Download, ExternalLink, FileVideo, Link2, Loader2, Play, ShieldCheck, Trash2, Upload, Youtube } from "lucide-react";
+import { Download, ExternalLink, FileVideo, Link2, Loader2, Play, RotateCcw, ShieldCheck, Trash2, Upload, X, Youtube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+import { cancel, clearFinished, enqueue, getJobs, retry, subscribe, type UploadRequest } from "@/lib/auditUploads";
 import {
   ACCEPTED_TYPES,
+  STAGE_LABEL,
+  overallProgress,
   AUDIT_BUCKET,
   currentClassNames,
   exportName,
@@ -128,6 +132,17 @@ export default function AuditClipsTab() {
   const clips = student ? clipsOf.get(student.id) ?? [] : [];
   const refresh = () => qc.invalidateQueries({ queryKey: KEY });
 
+  // The queue outlives this screen; here we only watch it.
+  const jobs = useSyncExternalStore(subscribe, getJobs);
+  const progress = useMemo(() => overallProgress(jobs), [jobs]);
+  useEffect(() => { if (progress.done) void qc.invalidateQueries({ queryKey: KEY }); }, [progress.done, qc]);
+  useEffect(() => {
+    if (!progress.active) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [progress.active]);
+
   const enrol = async () => {
     if (!student) return;
     setBusy("enrol");
@@ -144,37 +159,26 @@ export default function AuditClipsTab() {
     }
   };
 
-  const upload = async (files: FileList | null) => {
+  // Files join the shared queue (src/lib/auditUploads.ts), which keeps going while
+  // other children are picked, so several children's videos can be added in one sitting.
+  const upload = (files: FileList | null) => {
     if (!student || !subject || !files?.length) return;
-    setBusy("upload");
-    const { data: u } = await supabase.auth.getUser();
-    let done = 0;
+    const items: UploadRequest[] = [];
     for (const file of Array.from(files)) {
       if (!isAcceptedClip(file.type)) {
         toast.error(`${file.name}: not a video or audio type this store accepts (${ACCEPTED_TYPES.join(", ")}).`);
         continue;
       }
-      const id = crypto.randomUUID();
-      const path = storagePathFor(subject.code, id, extFor(file.type, file.name));
-      // The row first: the database numbers the clip, and refuses a child with no consent on record.
-      const ins = await db.from("audit_clips").insert({
-        id, student_id: student.id, storage_path: path, original_name: file.name, mime_type: file.type,
-        size_bytes: file.size, source_note: sourceNote.trim() || null, delete_after: deleteAfter || null,
-        uploaded_by: u.user?.id ?? null,
+      items.push({
+        studentId: student.id, studentName: student.full_name, code: subject.code, file,
+        sourceNote: sourceNote.trim() || null, deleteAfter: deleteAfter || null,
       });
-      if (ins.error) { toast.error(`${file.name}: ${ins.error.message}`); continue; }
-      const up = await supabase.storage.from(AUDIT_BUCKET).upload(path, file, { contentType: file.type, upsert: false });
-      if (up.error) {
-        await db.from("audit_clips").delete().eq("id", id);
-        toast.error(`${file.name}: ${up.error.message}`);
-        continue;
-      }
-      done++;
     }
     if (fileInput.current) fileInput.current.value = "";
-    setBusy(null);
-    if (done) toast.success(`${done} clip${done > 1 ? "s" : ""} saved for ${subject.code}.`);
-    await refresh();
+    if (items.length) {
+      enqueue(items);
+      toast.message(`${items.length} video${items.length > 1 ? "s" : ""} added to the upload queue for ${subject.code}.`);
+    }
   };
 
   // Pasted YouTube addresses, one per line. Only the 11-character id is kept;
@@ -315,6 +319,48 @@ export default function AuditClipsTab() {
         </p>
       </div>
 
+      {jobs.length > 0 && (
+        <Card aria-label="Upload progress">
+          <CardHeader className="pb-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <CardTitle className="text-base">Uploads</CardTitle>
+              {progress.active === 0 && (
+                <Button size="sm" variant="outline" onClick={clearFinished}>Clear finished</Button>
+              )}
+            </div>
+            <div aria-live="polite" className="text-sm text-muted-foreground">
+              {progress.done} of {progress.total} done
+              {progress.active > 0 && ` · ${progress.active} in progress`}
+              {progress.failed > 0 && ` · ${progress.failed} failed`}
+              {progress.active > 0 && " · keep this tab open until they finish"}
+            </div>
+            <Progress value={progress.percent} aria-label="Overall upload progress" />
+          </CardHeader>
+          <CardContent className="max-h-72 space-y-2 overflow-y-auto">
+            {jobs.map((j) => (
+              <div key={j.id} className="rounded-md border p-2 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary">{j.code}</Badge>
+                  <span className="min-w-0 flex-1 truncate">{j.studentName} · {j.fileName}</span>
+                  <span className="text-xs text-muted-foreground">{formatBytes(j.size)}</span>
+                  <Badge variant={j.stage === "failed" ? "destructive" : j.stage === "done" ? "default" : "outline"}>
+                    {STAGE_LABEL[j.stage]}{j.stage === "uploading" ? ` ${j.pct}%` : ""}
+                  </Badge>
+                  {(j.stage === "queued" || j.stage === "saving" || j.stage === "uploading") && (
+                    <Button size="icon" variant="ghost" aria-label={`Cancel ${j.fileName}`} onClick={() => cancel(j.id)}><X className="h-4 w-4" /></Button>
+                  )}
+                  {j.stage === "failed" && j.error !== "Cancelled" && (
+                    <Button size="icon" variant="ghost" aria-label={`Retry ${j.fileName}`} onClick={() => retry(j.id)}><RotateCcw className="h-4 w-4" /></Button>
+                  )}
+                </div>
+                {(j.stage === "uploading" || j.stage === "done") && <Progress className="mt-2 h-1.5" value={j.pct} aria-label={`${j.fileName} progress`} />}
+                {j.stage === "failed" && j.error && <p className="mt-1 text-xs text-destructive">{j.error}</p>}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 md:grid-cols-[18rem_1fr]">
         <Card>
           <CardHeader className="pb-2">
@@ -401,8 +447,8 @@ export default function AuditClipsTab() {
                   </div>
                   <input ref={fileInput} type="file" multiple accept={ACCEPTED_TYPES.join(",")} className="hidden"
                     onChange={(e) => upload(e.target.files)} aria-label="Choose video files" />
-                  <Button onClick={() => fileInput.current?.click()} disabled={busy === "upload"} className="min-h-11">
-                    {busy === "upload" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                  <Button onClick={() => fileInput.current?.click()} className="min-h-11">
+                    <Upload className="mr-2 h-4 w-4" />
                     Add videos for {student.full_name}
                   </Button>
 

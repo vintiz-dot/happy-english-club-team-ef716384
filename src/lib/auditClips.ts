@@ -87,6 +87,40 @@ export function parseYoutubeId(input: string | null | undefined): string | null 
 export const youtubeEmbedUrl = (id: string) => `https://www.youtube-nocookie.com/embed/${id}`;
 export const youtubeWatchUrl = (id: string) => `https://www.youtube.com/watch?v=${id}`;
 
+export type UploadStage = "queued" | "saving" | "uploading" | "done" | "failed";
+
+export const STAGE_LABEL: Record<UploadStage, string> = {
+  queued: "Waiting",
+  saving: "Saving record",
+  uploading: "Uploading",
+  done: "Done",
+  failed: "Failed",
+};
+
+/**
+ * One bar for the whole queue, weighted by file size so a 200 MB video counts
+ * for more than a 2 MB one. A failed file is left out of the bar (it is
+ * counted separately) so one failure cannot hold the bar below 100%.
+ */
+export function overallProgress(
+  jobs: { size: number; stage: UploadStage; pct: number }[],
+): { percent: number; total: number; done: number; active: number; failed: number } {
+  const live = jobs.filter((j) => j.stage !== "failed");
+  const weight = (j: { size: number }) => Math.max(1, j.size);
+  const all = live.reduce((a, j) => a + weight(j), 0);
+  const sent = live.reduce((a, j) => {
+    const f = j.stage === "done" ? 1 : j.stage === "uploading" ? Math.min(100, Math.max(0, j.pct)) / 100 : 0;
+    return a + weight(j) * f;
+  }, 0);
+  return {
+    percent: all ? Math.round((sent / all) * 100) : 0,
+    total: jobs.length,
+    done: jobs.filter((j) => j.stage === "done").length,
+    active: jobs.filter((j) => j.stage === "queued" || j.stage === "saving" || j.stage === "uploading").length,
+    failed: jobs.filter((j) => j.stage === "failed").length,
+  };
+}
+
 /** The classes a child is in today: a start on or before it, no end or an end on or after it. */
 export function currentClassNames(
   enrollments: { start_date: string; end_date: string | null; class_name: string | null }[],

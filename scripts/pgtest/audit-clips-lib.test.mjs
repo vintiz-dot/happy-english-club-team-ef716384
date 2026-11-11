@@ -49,5 +49,22 @@ eq("current classes: ended, future, duplicate and unnamed enrolments are left ou
   { start_date: "2026-01-01", end_date: null, class_name: null },
 ], "2026-11-11"), ["Stars"]);
 
+eq("progress: empty queue is 0%", L.overallProgress([]), { percent: 0, total: 0, done: 0, active: 0, failed: 0 });
+eq("progress: weighted by size, not by count", L.overallProgress([
+  { size: 900, stage: "done", pct: 100 },
+  { size: 100, stage: "queued", pct: 0 },
+]), { percent: 90, total: 2, done: 1, active: 1, failed: 0 });
+eq("progress: a file part-way counts its bytes", L.overallProgress([
+  { size: 100, stage: "uploading", pct: 50 },
+  { size: 100, stage: "saving", pct: 0 },
+]).percent, 25);
+eq("progress: a failure leaves the bar but is counted", L.overallProgress([
+  { size: 100, stage: "done", pct: 100 },
+  { size: 5000, stage: "failed", pct: 0 },
+]), { percent: 100, total: 2, done: 1, active: 0, failed: 1 });
+eq("progress: a bad percentage is clamped", L.overallProgress([{ size: 10, stage: "uploading", pct: 250 }]).percent, 100);
+eq("stage labels read as plain words", [L.STAGE_LABEL.queued, L.STAGE_LABEL.saving, L.STAGE_LABEL.uploading],
+  ["Waiting", "Saving record", "Uploading"]);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
