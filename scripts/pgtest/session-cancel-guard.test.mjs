@@ -32,7 +32,9 @@ const sqlOf = (f) => readFileSync(f, 'utf8');
 // Real columns, names and nullability of src/integrations/supabase/types.ts
 // for every table the four migrations read.
 const PRELUDE = `
-  CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
+  -- service_role bypasses RLS on Supabase; without BYPASSRLS here a write
+  -- would be filtered to zero rows before any trigger could refuse it.
+  CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;
   CREATE SCHEMA auth;
   GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
   CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS
@@ -260,7 +262,11 @@ const uncancel = (sid, { reason = R, token, corr = null } = {}, uid = ADMIN) =>
 const bulk = (items, reason = R, batch = randomUUID(), uid = ADMIN) =>
   as(uid, 'authenticated', 'authenticated', 'SELECT public.cancel_sessions_checked_bulk($1::jsonb,$2,$3,$4::jsonb) r',
     [JSON.stringify(items), reason, batch, '{}']).then((r) => r.rows[0].r);
-const cancelNow = async (sid, opts = {}) => { const p = await preview(sid); return checked(sid, { token: p.token, confirm: true, ...opts }); };
+const CORR = 'Correction: register belonged to another lesson';
+const cancelNow = async (sid, opts = {}) => {
+  const p = await preview(sid);
+  return checked(sid, { token: p.token, confirm: true, corr: p.tier === 3 ? CORR : null, ...opts });
+};
 
 const sess = async (sid) => (await asSuper(`SELECT * FROM sessions WHERE id=$1`, [sid])).rows[0];
 const overrides = async (sid) => (await asSuper(`SELECT * FROM session_cancel_overrides WHERE session_id=$1 ORDER BY created_at, id`, [sid])).rows;
@@ -273,6 +279,8 @@ const clock = async (days = 0, hours = 0) => (await db.query(`
     FROM (SELECT date_trunc('minute', now() AT TIME ZONE 'Asia/Ho_Chi_Minh') + make_interval(days => $1::int, hours => $2::int) AS t) q`,
   [days, hours])).rows[0];
 const PAST = await clock(-3), FUTURE = await clock(10), FAR = await clock(20);
+// A past month no other case uses (37 days from PAST, so always another month): d24 locks its payroll.
+const OLD = await clock(-40);
 
 /** A class of its own, with its teacher, and one lesson on it. */
 async function mk({ when = FUTURE, start = '17:30', end = '19:00', status = 'Scheduled', cid } = {}) {
@@ -659,7 +667,7 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
 }
 {
   // d24, d25, d33: tiers and correction mode.
-  const t2 = await mk({ when: PAST, status: 'Held' });
+  const t2 = await mk({ when: OLD, status: 'Held' });
   for (let i = 0; i < 2; i++) await att(t2.sid, 'Present', t2.teacher);
   let p = await preview(t2.sid);
   ok('d24 STRONG, month open -> T2', p.tier === 2 && p.requires.correction_reason === false, p.tier);
@@ -702,7 +710,7 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   await inv(kids[0], a.month, { recorded: 540000 });
   await inv(kids[1], a.month);
   const p = await preview(a.sid);
-  const res = await checked(a.sid, { token: p.token, confirm: true });
+  const res = await checked(a.sid, { token: p.token, confirm: true, corr: CORR });
   const o = (await overrides(a.sid))[0];
   const marks = (await asSuper(`SELECT status FROM attendance WHERE session_id=$1`, [a.sid])).rows.map((x) => x.status);
   ok('d26 STRONG is cancellable (ruling 1): cancelled, every mark now Excused',
@@ -896,7 +904,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   const items = [];
   for (const s of t0s) items.push({ id: s.sid, token: await tok(s) });
   items.push({ id: t1.sid, token: await tok(t1) });                                   // no confirm
-  items.push({ id: t2.sid, token: await tok(t2), confirm: true, reason: 'Class abandoned after roll-call, fire alarm' });
+  const p2tier3 = (await preview(t2.sid)).tier === 3;
+  items.push({ id: t2.sid, token: await tok(t2), confirm: true, reason: 'Class abandoned after roll-call, fire alarm', correction_reason: p2tier3 ? CORR : undefined });
   const st = await tok(stale);
   await asSuper(`UPDATE sessions SET notes='changed' WHERE id=$1`, [stale.sid]);
   items.push({ id: stale.sid, token: st });
@@ -911,7 +920,7 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
      rows.find((x) => x.session_id === t2.sid).reason === 'Class abandoned after roll-call, fire alarm', rows.length);
   ok('d35   refused ones untouched', (await sess(t1.sid)).status === 'Scheduled' && (await sess(stale.sid)).status === 'Scheduled');
   const t2b = await mk({ when: PAST, status: 'Held' }); await att(t2b.sid, 'Present', t2b.teacher);
-  const o2 = await bulk([{ id: t2b.sid, token: await tok(t2b), confirm: true }]);
+  const o2 = await bulk([{ id: t2b.sid, token: await tok(t2b), confirm: true, correction_reason: CORR }]);
   ok('d35 a T2 item with the batch reason only -> refused HC017 (each one explained)',
      o2.refused.length === 1 && o2.refused[0].code === 'HC017', o2);
   const many = Array.from({ length: 51 }, () => ({ id: randomUUID(), token: 'x' }));
