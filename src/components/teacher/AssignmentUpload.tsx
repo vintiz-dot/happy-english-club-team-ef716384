@@ -99,6 +99,16 @@ async function fetchTeacherData(userId: string) {
       if (cls?.id) classMap.set(cls.id, cls);
     });
 
+    // Standing assignments: a class the TA is on until an admin removes them,
+    // even when it has no sessions scheduled yet.
+    const { data: standing } = await (supabase as any)
+      .from("class_teaching_assistants")
+      .select("classes!inner(id, name)")
+      .eq("teaching_assistant_id", ta.id);
+    (standing || []).forEach((row: any) => {
+      if (row.classes?.id) classMap.set(row.classes.id, row.classes);
+    });
+
     return { teacherId: ta.id, classes: Array.from(classMap.values()) };
   }
 

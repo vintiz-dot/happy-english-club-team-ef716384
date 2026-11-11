@@ -18,7 +18,7 @@ interface TAClassAssignmentProps {
   taId: string;
 }
 
-type AssignMode = "once" | "recurring" | "month";
+type AssignMode = "once" | "recurring" | "month" | "permanent";
 
 export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
   const queryClient = useQueryClient();
@@ -44,7 +44,7 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
   // Fetch sessions for selected class based on mode
   const { data: availableSessions } = useQuery({
     queryKey: ["class-sessions-for-ta", selectedClassId, assignMode, effectiveFrom],
-    enabled: !!selectedClassId && !!effectiveFrom,
+    enabled: !!selectedClassId && !!effectiveFrom && assignMode !== "permanent",
     queryFn: async () => {
       const fromDate = effectiveFrom ? format(effectiveFrom, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd");
 
@@ -88,6 +88,47 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
       if (error) throw error;
       return data || [];
     },
+  });
+
+  // Standing assignments: on the class until an admin removes them.
+  const { data: standing } = useQuery({
+    queryKey: ["ta-standing", taId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("class_teaching_assistants")
+        .select("id, class_id, classes(name)")
+        .eq("teaching_assistant_id", taId);
+      if (error) throw error;
+      return (data || []) as { id: string; class_id: string; classes: { name: string } | null }[];
+    },
+  });
+
+  const permanentMutation = useMutation({
+    mutationFn: async (classId: string) => {
+      const { error } = await (supabase as any)
+        .from("class_teaching_assistants")
+        .upsert({ class_id: classId, teaching_assistant_id: taId }, { onConflict: "class_id,teaching_assistant_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ta-standing", taId] });
+      queryClient.invalidateQueries({ queryKey: ["ta-assignments", taId] });
+      toast.success("Assigned permanently - stays until you remove them from the class");
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const removeStandingMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any).from("class_teaching_assistants").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ta-standing", taId] });
+      queryClient.invalidateQueries({ queryKey: ["ta-assignments", taId] });
+      toast.success("Removed from the class (future sessions cleared; past ones kept)");
+    },
+    onError: (err: any) => toast.error(err.message),
   });
 
   const assignMutation = useMutation({
@@ -186,11 +227,13 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
                 <SelectItem value="once">Once (pick specific sessions)</SelectItem>
                 <SelectItem value="month">For the Month</SelectItem>
                 <SelectItem value="recurring">Recurring (3 months)</SelectItem>
+                <SelectItem value="permanent">Permanent (until I remove them)</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Effective From */}
+          {assignMode !== "permanent" && (
           <div>
             <Label>Effective From</Label>
             <Popover>
@@ -211,9 +254,10 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
               </PopoverContent>
             </Popover>
           </div>
+          )}
 
           {/* Sessions List */}
-          {selectedClassId && availableSessions && availableSessions.length > 0 && (
+          {assignMode !== "permanent" && selectedClassId && availableSessions && availableSessions.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2">
                 <Label>Sessions ({availableSessions.length})</Label>
@@ -250,10 +294,20 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
             </div>
           )}
 
-          {selectedClassId && availableSessions?.length === 0 && (
+          {assignMode !== "permanent" && selectedClassId && availableSessions?.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">No sessions found for this class from the selected date</p>
           )}
 
+          {assignMode === "permanent" ? (
+            <Button
+              onClick={() => permanentMutation.mutate(selectedClassId)}
+              disabled={!selectedClassId || permanentMutation.isPending || !!standing?.some(s => s.class_id === selectedClassId)}
+              className="w-full"
+            >
+              <GraduationCap className="h-4 w-4 mr-2" />
+              {standing?.some(s => s.class_id === selectedClassId) ? "Already permanent on this class" : "Assign permanently"}
+            </Button>
+          ) : (
           <Button
             onClick={handleAssign}
             disabled={selectedSessionIds.length === 0 || assignMutation.isPending}
@@ -262,8 +316,33 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
             <GraduationCap className="h-4 w-4 mr-2" />
             Assign to {selectedSessionIds.length} Session{selectedSessionIds.length !== 1 ? "s" : ""}
           </Button>
+          )}
         </CardContent>
       </Card>
+
+      {standing && standing.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Permanent classes</CardTitle>
+            <CardDescription>On every session of these classes until you remove them</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {standing.map(s => (
+              <div key={s.id} className="flex items-center justify-between p-2.5 border rounded-lg">
+                <p className="text-sm font-medium">{s.classes?.name}</p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-destructive hover:text-destructive"
+                  onClick={() => removeStandingMutation.mutate(s.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Current Assignments */}
       <Card>

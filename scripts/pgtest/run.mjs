@@ -178,6 +178,11 @@ const SUITES = [
     migrations: ["20261111090000_audit_voice_clips.sql", "20261111100000_audit_clips_youtube_links.sql"],
   },
   {
+    name: "ta standing assignments",
+    file: "ta-standing.test.mjs",
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql"],
+  },
+  {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
     migrations: ["20261022090000_assistant_absence_on_a_session.sql"],
