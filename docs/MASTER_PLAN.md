@@ -62,25 +62,25 @@ Status: todo / running / review / PASS / FAIL / reverted / blocked-owner. Model 
 
 | Id | Task | Model (impl / review) | Files owned | Status | Evidence |
 |---|---|---|---|---|---|
-| D0 | Inventory of cancel / owe-changing paths | sonnet / fable | docs/evidence/D0-inventory.md | todo | |
-| D1 | Evidence model design; `session_held_evidence` | fable design, opus build / fable | docs/evidence/D1-evidence-model.md; supabase/migrations/2026111209*_session_held_evidence.sql; scripts/pgtest/session-evidence.test.mjs | todo | |
+| D0 | Inventory of cancel / owe-changing paths | sonnet / fable | docs/evidence/D0-inventory.md | running | |
+| D1 | Evidence model design; `session_held_evidence` | fable design, opus build / fable | docs/evidence/D1-evidence-model.md; supabase/migrations/2026111209*_session_held_evidence.sql; scripts/pgtest/session-evidence.test.mjs | running (design) | |
 | D2 | Guard: trigger + `cancel_session_checked` + threat model | fable design, opus build / fable | docs/evidence/D2-*.md; guard migration; manage-session; bulk-cancel-sessions; pgtest | todo | |
 | D3 | Nudge UI + override review screen | sonnet / opus + fable wording | CancelSessionDialog, SessionActionsModal, EditSessionModal, DeleteSessionDialog, BulkSessionDelete, new review screen | todo | |
 | D4 | Other tuition-affecting actions | fable design, opus build / fable | docs/evidence/D4-*.md; migration; affected dialogs | todo | |
 | D5 | Invariant audit + regression tests + owner SQL | fable audit, sonnet/opus tests / fable | docs/evidence/D5-audit.md; scripts/pgtest/*; scripts/CHECK-past-cancellations-with-evidence.sql | todo | |
-| A0 | Baseline | sonnet (haiku captures) / fable | docs/ENHANCEMENT_BASELINE.md; docs/evidence/A0/ | todo | |
+| A0 | Baseline | sonnet (haiku captures) / fable | docs/ENHANCEMENT_BASELINE.md; docs/evidence/A0/ | running | |
 | A1 | Plan + critic | fable / fable critic | docs/evidence/A1-plan.md | todo | |
 | A2 | Teacher stability: flipbook, tooltips | opus / fable | TeacherBooks + viewer, SkillButton, LiveEngagementHUD, tooltips in TeacherLeaderboards/SmartUpload/Transcripts | todo | |
 | A3 | Speed | sonnet bundle, opus data / same-or-higher | set in A1 | todo | |
 | A4 | Design system + a11y + dark mode | fable system, opus first screens, sonnet rollout / fable | docs/DESIGN_SYSTEM.md, src/index.css, tailwind.config.ts, student dashboard | todo | HOLD at checkpoint |
 | A5 | Security audit, report only | fable x2 / opus verifier | docs/AUDIT_FINDINGS.md | todo | |
-| B0 | Harness + vendor research + audio prep | opus, sonnet, haiku / fable | scripts/lesson-eval/; docs/evidence/B0-*.md | todo | |
+| B0 | Harness + vendor research + audio prep | opus, sonnet, haiku / fable | scripts/lesson-eval/; docs/evidence/B0-*.md | running (research done, harness + audio prep running) | |
 | B1 | Transcript quality | sonnet runs, opus scorer / fable method | docs/evidence/B1-*.md | todo | vendor rows need Q1 |
 | B2 | Speaker identification | opus / fable | scripts/lesson-eval/; docs/evidence/B2-*.md | todo | |
 | B2b | CPU-only performance | sonnet / opus, fable decides | docs/evidence/B2b-*.md | todo | |
 | B3 | Monitor design, no code | fable / fable critic | docs/LESSON_MONITOR_DESIGN.md | todo | |
 | B-GATE | docs/LESSON_MONITOR_REPORT.md, then STOP | fable | docs/LESSON_MONITOR_REPORT.md | todo | |
-| C1 | Recorder architecture, schema, RLS, consent | fable / fable critic | docs/evidence/C1-architecture.md; recorder migration; scripts/pgtest/recorder.test.mjs | todo | |
+| C1 | Recorder architecture, schema, RLS, consent | fable / fable critic | docs/evidence/C1-architecture.md; recorder migration; scripts/pgtest/recorder.test.mjs | running | |
 | C2 | Capture core | opus / fable | src/lib/recorder/ | todo | |
 | C3 | Plug-and-play UI | sonnet / opus | src/components/recorder/ | todo | |
 | C4 | Tests | sonnet / opus | recorder tests | todo | |
@@ -113,3 +113,12 @@ Migration timestamp blocks (so parallel writers never collide): D = 202611120900
 ## 9. Reverted / dropped tasks
 
 (none yet)
+
+## 10. Stage log
+
+- 2026-11-11 Conductor baseline: `tsc --noEmit -p tsconfig.app.json` exit 0 (3m21s) at 9ba819f.
+- 2026-11-11 B0-R vendor research merged (sonnet, ba9e3b0, docs/evidence/B0-vendors.md; read by conductor as a report, method review pending). Headlines, all from pages read 2026-11-11:
+  - Azure Speaker Recognition (enrolled voices) was RETIRED 2025-09-30, so "Azure with enrolled voices" cannot be tested; identification must be a local embedding approach or another vendor (Speechmatics documents enrolment-based speaker ID; we hold no key - owner decision).
+  - Azure fast transcription: nothing stored; no-training clause UNCONFIRMED. OpenAI: 30-day abuse logs by default, ZDR only after sales approval - UNCONFIRMED for our org. Gemini: FAILS the owner's rule (logging, no ZDR, terms bar under-18 targeted use) - skip. Google Chirp 3: UNCONFIRMED.
+  - Supabase edge limits: 256 MB, 2 s CPU, 150 s (free) / 400 s (paid) wall clock -> one invocation per 10-15 minute piece.
+  - Under the owner's rule ("if a vendor cannot offer that, skip it"), NO vendor is fully confirmed yet; Q1 now also asks the owner to check the OpenAI dashboard for ZDR and accept or decline Azure on its retention terms alone.
