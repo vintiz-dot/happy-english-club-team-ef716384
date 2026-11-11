@@ -245,18 +245,22 @@ BEGIN
   -- Service-role edge function, a trigger fired by one, the SQL editor, cron.
   -- Positive test (header, WHO IS "INTERNAL"): a missing claim never
   -- grants the internal view to a session acting as an API role.
-  v_internal := v_uid IS NULL
-                AND (v_role = 'service_role'
-                     OR (v_role IS NULL
-                         AND session_user::text NOT IN ('authenticator', 'authenticated', 'anon')
-                         AND COALESCE(NULLIF(current_setting('role', true), ''), 'none')
-                               NOT IN ('authenticator', 'authenticated', 'anon')));
-  v_admin    := v_uid IS NOT NULL AND public.has_role(v_uid, 'admin'::public.app_role);
-  v_teacher  := v_found AND v_uid IS NOT NULL AND public.is_teacher_of_class(v_uid, s.class_id);
+  -- Every operand is NULL-safe and the result is COALESCEd: a NULL here
+  -- would read as "not refused" below (three-valued logic fails open).
+  v_internal := COALESCE(
+                  v_uid IS NULL
+                  AND (v_role IS NOT DISTINCT FROM 'service_role'
+                       OR (v_role IS NULL
+                           AND session_user::text NOT IN ('authenticator', 'authenticated', 'anon')
+                           AND COALESCE(NULLIF(current_setting('role', true), ''), 'none')
+                                 NOT IN ('authenticator', 'authenticated', 'anon'))),
+                  false);
+  v_admin    := COALESCE(v_uid IS NOT NULL AND public.has_role(v_uid, 'admin'::public.app_role), false);
+  v_teacher  := COALESCE(v_found AND v_uid IS NOT NULL AND public.is_teacher_of_class(v_uid, s.class_id), false);
 
   -- Before the not-found check: a caller who may not ask gets the same
   -- answer for a real lesson and an invented id.
-  IF NOT (v_internal OR v_admin OR v_teacher) THEN
+  IF NOT COALESCE(v_internal OR v_admin OR v_teacher, false) THEN
     RAISE EXCEPTION 'session_held_evidence: not allowed' USING ERRCODE = '42501';
   END IF;
   -- Never an empty answer: "no JSON" must not read as "no evidence".
