@@ -170,6 +170,13 @@ const SUITES = [
       "20261109090000_video_homework.sql",
     ],
   },
+  // Audit clips: admin-only store of children's clips, consent before upload.
+  { name: "audit clips lib", file: "audit-clips-lib.test.mjs", migrations: [] },
+  {
+    name: "audit clips",
+    file: "audit-clips.test.mjs",
+    migrations: ["20261111090000_audit_voice_clips.sql"],
+  },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",

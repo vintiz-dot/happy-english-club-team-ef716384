@@ -86,6 +86,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           { icon: Bot, label: "AI actions", path: "/admin?tab=ai-actions" },
           { icon: HardDrive, label: "Data", path: "/admin?tab=data" },
           { icon: Plug, label: "Stars Sync", path: "/admin?tab=stars-sync" },
+          { icon: AudioLines, label: "Audit clips", path: "/admin?tab=audit-clips" },
           { icon: Megaphone, label: "Announcements", path: "/admin?tab=announcements" },
           { icon: ScanText, label: "Smart Upload", path: "/teacher/smart-upload" },
           { icon: AudioLines, label: "Transcripts", path: "/teacher/transcripts" },

@@ -15,6 +15,7 @@ import { AnnouncementManager } from "@/components/admin/AnnouncementManager";
 import ExamReportsTab from "@/components/admin/tabs/ExamReportsTab";
 import StarsSyncTab from "@/components/admin/tabs/StarsSyncTab";
 import AiActionsTab from "@/components/admin/tabs/AiActionsTab";
+import AuditClipsTab from "@/components/admin/tabs/AuditClipsTab";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Admin = ({ defaultTab }: { defaultTab?: string } = {}) => {
@@ -51,6 +52,8 @@ const Admin = ({ defaultTab }: { defaultTab?: string } = {}) => {
         return <StarsSyncTab />;
       case "ai-actions":
         return <AiActionsTab />;
+      case "audit-clips":
+        return <AuditClipsTab />;
       default:
         return <OverviewTab />;
     }
