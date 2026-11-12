@@ -59,6 +59,8 @@ export interface ChunkMeta {
   refusal?: string;
   createdAt: number;
   confirmedAt?: number;
+  /** Main-thread milliseconds the encoder took (measurement). */
+  encodeMs?: number;
   /** When the server registered it (laptop clock). */
   registeredAt?: number;
   /**

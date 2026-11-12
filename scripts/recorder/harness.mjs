@@ -45,7 +45,7 @@ window.setup = async ({ uid, format = "flac", chunkMs = 10000, tap = false }) =>
   const log = { errors: [], states: [], chunks: [], health: [], constraints: [], ups: [], storage: [] };
   rec.on("error", (e) => log.errors.push({ code: e.code, refusal: e.refusal ?? null, message: e.message }));
   rec.on("state", (e) => log.states.push(e.state));
-  rec.on("chunk", (c) => log.chunks.push({ track: c.track, seq: c.seq, state: c.state, bytes: c.byteSize, encoding: c.encoding, t: Date.now(), late: !!c.late }));
+  rec.on("chunk", (c) => log.chunks.push({ track: c.track, seq: c.seq, state: c.state, bytes: c.byteSize, encoding: c.encoding, t: Date.now(), late: !!c.late, encodeMs: c.encodeMs ?? null }));
   rec.on("health", (h) => log.health.push({ kind: h.kind, track: h.track ?? null }));
   rec.on("constraints", (c) => log.constraints.push(c));
   rec.on("upload", (p) => log.ups.push({ t: Date.now(), confirmed: p.confirmed, pending: p.pending, offline: p.offline, late: p.late }));

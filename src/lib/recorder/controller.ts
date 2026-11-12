@@ -593,7 +593,7 @@ export class Recorder {
         recordingId: rec.id, track: c.track, seq: c.seq, startFrame, endFrame, sampleRate: rec.sampleRate,
         tStartMs: frameToMs(startFrame, rec.sampleRate), tEndMs: frameToMs(endFrame, rec.sampleRate),
         byteSize: enc.bytes.length, sha256: await sha256Hex(enc.bytes), mime: enc.mime, ext: enc.ext, encoding: enc.encoding,
-        state: "captured", attempts: 0, createdAt: this.o.now(),
+        state: "captured", attempts: 0, createdAt: this.o.now(), encodeMs: Math.round(enc.encodeMs * 10) / 10,
       };
       await this.storeChunk(rec, meta, enc.bytes);
       await this.o.store.deleteSegments(rec.id, c.track, c.seq);
