@@ -123,10 +123,10 @@ export function ClassSelectorModal({ userId, forceOpen, onForceOpenChange, onSel
         if (!next) onForceOpenChange?.(false);
       }}
     >
-      <DialogContent className="sm:max-w-md rounded-2xl bg-white dark:bg-[hsl(240_8%_10%)] border-slate-200 dark:border-[hsl(240_8%_18%)]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-blue-600" />
+            <GraduationCap className="w-5 h-5 shrink-0 text-hec-brass" aria-hidden="true" />
             What class are you in?
           </DialogTitle>
           <DialogDescription>
@@ -143,12 +143,12 @@ export function ClassSelectorModal({ userId, forceOpen, onForceOpenChange, onSel
             <Label
               key={opt.value}
               htmlFor={`grade-${opt.value}`}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-[hsl(240_8%_18%)] p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-[hsl(240_8%_14%)] has-[:checked]:border-blue-500/40 has-[:checked]:bg-blue-50/50 dark:has-[:checked]:bg-[hsl(265_25%_12%)] transition-all duration-200"
+              className="flex min-h-hec-target cursor-pointer items-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised p-3 text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken has-[[data-state=checked]]:border-hec-brass has-[[data-state=checked]]:bg-hec-sunken"
             >
-              <RadioGroupItem id={`grade-${opt.value}`} value={opt.value} />
-              <div className="flex-1">
-                <div className="text-sm font-medium">{opt.label}</div>
-                <div className="text-[10px] text-muted-foreground">CEFR {opt.cefr}</div>
+              <RadioGroupItem id={`grade-${opt.value}`} value={opt.value} className="shrink-0 border-hec-line-strong text-hec-brass data-[state=checked]:border-hec-brass" />
+              <div className="min-w-0 flex-1">
+                <div className="text-hec-small font-medium text-hec-ink">{opt.label}</div>
+                <div className="text-hec-caption text-hec-ink-soft">CEFR {opt.cefr}</div>
               </div>
             </Label>
           ))}
@@ -157,7 +157,7 @@ export function ClassSelectorModal({ userId, forceOpen, onForceOpenChange, onSel
         <Button
           onClick={handleSubmit}
           disabled={!selectedValue || loading}
-          className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white dark:bg-[hsl(265_40%_16%)] dark:hover:bg-[hsl(265_40%_20%)] dark:text-blue-200 dark:border dark:border-[hsl(265_40%_24%)] h-11 text-sm font-medium shadow-sm"
+          className="w-full"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
         </Button>

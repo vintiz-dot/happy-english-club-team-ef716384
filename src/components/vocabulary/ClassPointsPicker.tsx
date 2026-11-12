@@ -26,10 +26,10 @@ interface Props {
 export function ClassPointsPicker({ open, classes, onChoose, onClose }: Props) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-md rounded-2xl bg-white dark:bg-[hsl(240_8%_10%)] border-slate-200 dark:border-[hsl(240_8%_18%)]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-600" />
+            <Users className="w-5 h-5 shrink-0 text-hec-brass" aria-hidden="true" />
             Which class earns the points?
           </DialogTitle>
           <DialogDescription>
@@ -42,7 +42,7 @@ export function ClassPointsPicker({ open, classes, onChoose, onClose }: Props) {
             <Button
               key={c.id}
               variant="outline"
-              className="justify-start h-12 text-base font-semibold rounded-xl border-slate-200 dark:border-[hsl(240_8%_18%)] bg-transparent hover:bg-slate-50 dark:hover:bg-[hsl(240_8%_14%)] transition-all duration-200"
+              className="h-auto min-h-hec-target justify-start whitespace-normal break-words hyphens-none py-3 text-left text-hec-body font-semibold"
               onClick={() => onChoose(c.id)}
             >
               {c.name}
