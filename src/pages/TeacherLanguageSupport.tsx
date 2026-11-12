@@ -29,7 +29,7 @@ export default function TeacherLanguageSupport() {
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1">
             <Languages className="h-6 w-6 text-hec-ink-soft" />
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 basis-56">
             <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Language Support</h1>
             <p className="text-hec-small text-hec-ink-soft">
               Turn sentences into pictures for Grade 1–3 readers, then choose which of your classes can read them.
