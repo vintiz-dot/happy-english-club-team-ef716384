@@ -168,4 +168,27 @@ TOTALS
 
 ## Requests to the conductor
 
-REQUESTS
+1. **The retention cron entry** (C1 6.5 assigns it to C2 as `20261112100100_*`, but that migration is not in my file list, so it is not written). Exact SQL to add, following `20261110160000` (skip silently where pg_cron / pg_net are absent; the token is read from `schedule_runner` at run time, the URL/anon key are the project's public ones as in that file):
+   ```sql
+   DO $do$ BEGIN
+     IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron')
+        AND to_regprocedure('net.http_post(text,jsonb,jsonb,jsonb,integer)') IS NOT NULL THEN
+       PERFORM cron.schedule('recorder-retention', '0 20 * * *', $cmd$
+         select net.http_post(
+           url := 'https://<project>.supabase.co/functions/v1/recorder-retention',
+           headers := jsonb_build_object('Content-Type','application/json','apikey','<anon key>','Authorization','Bearer <anon key>',
+                                         'x-schedule-runner-secret', (select token from public.schedule_runner where id = 1)),
+           body := '{}'::jsonb, timeout_milliseconds := 300000);
+       $cmd$);
+     END IF;
+   END $do$;
+   ```
+   (`0 20 * * *` UTC = 03:00 Hanoi.) The function accepts that header or an admin JWT, nothing else - not even the service-role key on its own.
+2. **Revision 2, `late` from the server.** The engine registers early and reads a `late` boolean from `recorder_register_chunk`'s result if present (`RegisterResult.late`); until the revised function returns it, the page estimates lateness from its own clock (cut time vs registration time, chunk length + 10 min). Please have the revised RPC return `late`, and confirm the tolerance, so the UI shows the server's truth.
+3. **Revision 2, Stop after the window.** If a tab dies during a lesson and is reopened after `capture_closes_at`, the refused Stop leaves the row `recording` with all its audio uploaded; nothing can complete it, and the stale sweep abandons it after 14 days. The engine reports it (`stopRefused`, `window_closed`) and keeps the local audio. Suggest the server either accept a late `crash_recovered` Stop with `ended_at` = the last registered chunk's end, or abandon it at once with a reason the UI can show. Fail-closed reading kept until then.
+4. **Revision 2, bucket name.** Engine and retention use `class-recorder-audio` (one constant each; a test asserts they match). The current migration file on my branch still creates `class-recordings`; my fake server follows the new name.
+5. **Byte floor vs digital silence.** A muted/dead input yields all-zero chunks that FLAC compresses far below 4 000 B/s; the engine re-encodes such a chunk VERBATIM (96 kB/s of the real samples). That keeps the timeline whole but means a dead track uploads raw-size zeros. If the conductor prefers, the server could accept "constant-signal" chunks below the floor without counting them as verified audio; the engine would then drop the verbatim fallback.
+6. **Register the engine's unit suite in `run.mjs`?** `scripts/recorder/unit.test.mjs` (193 assertions, Node only, ~5-15 min on a loaded machine because the controller scenarios encode minutes of audio) is not in `run.mjs` (my edit allowance was one line, used for the retention suite). One line would add it: `{ name: "recorder engine", file: "../recorder/unit.test.mjs", migrations: [] }`.
+7. **Server-side SHA.** The read-back SHA-256 the page sends at confirm is still only the page's own check (C1 5.5). Not built here; it would need a second edge function that downloads the object, i.e. audio through function memory, which the design avoided on purpose.
+8. **`types.ts`.** The engine talks to the recorder tables through local types in `backend.ts` (C1 assumption 6). After the migration is applied and types regenerated, nothing needs to change, but a follow-up could type the adapter against the generated `Database`.
+9. **Evidence column rename** (`recording_ran_evidence`): the engine never reads the evidence view, so nothing to change here.
