@@ -99,12 +99,12 @@ export function TeacherProfilePictureUpload({
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="relative group">
-        <Avatar className="h-32 w-32 ring-4 ring-primary/10 transition-all group-hover:ring-primary/20">
+        <Avatar className="h-32 w-32 border border-hec-line">
           <AvatarImage src={currentAvatarUrl || undefined} alt={teacherName} />
-          <AvatarFallback className="text-2xl bg-gradient-to-br from-primary/20 to-primary/10">{initials}</AvatarFallback>
+          <AvatarFallback className="bg-hec-sunken font-display text-hec-h1 text-hec-ink-soft">{initials}</AvatarFallback>
         </Avatar>
-        <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <Camera className="h-8 w-8 text-white" />
+        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-hec-action/60 opacity-0 transition-opacity duration-hec-1 ease-hec group-hover:opacity-100">
+          <Camera className="h-8 w-8 text-hec-on-action" />
         </div>
       </div>
       
@@ -124,7 +124,7 @@ export function TeacherProfilePictureUpload({
             size="lg"
             disabled={uploading}
             onClick={() => document.getElementById("teacher-avatar-upload")?.click()}
-            className="w-full font-semibold"
+            className="w-full"
             asChild
           >
             <span>
@@ -144,7 +144,7 @@ export function TeacherProfilePictureUpload({
         </label>
       </div>
       
-      <p className="text-xs text-muted-foreground text-center">
+      <p className="text-center text-hec-caption text-hec-ink-soft">
         Maximum file size: 5MB<br />
         Supported formats: JPG, PNG, WEBP
       </p>
