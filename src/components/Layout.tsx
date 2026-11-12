@@ -22,6 +22,7 @@ import { AiActionBanner } from "@/components/admin/AiActionBanner";
 import { motion, MotionConfig } from "framer-motion";
 import { useIvory } from "@/hooks/useIvory";
 import { UserMenu } from "@/components/theme/UserMenu";
+import { guardedSignOut } from "@/components/recorder/signOutGuard";
 
 interface LayoutProps {
   children: ReactNode;
@@ -32,7 +33,9 @@ interface LayoutProps {
 const SIDEBAR_KEY = "sidebar-collapsed";
 
 const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
-  const { user, role, signOut } = useAuth();
+  const { user, role, signOut: rawSignOut } = useAuth();
+  // The class recorder may refuse (a lesson is being recorded) or tidy its local audio first.
+  const signOut = () => guardedSignOut(rawSignOut);
   const navigate = useNavigate();
   const location = useLocation();
   const { data: identity } = useIdentity();
