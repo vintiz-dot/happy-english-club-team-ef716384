@@ -1,6 +1,6 @@
 # T2 - class-recordings bucket access
 
-Where I am / next step: migration + suite (81/0) committed; mutants running. Next: mutant results, recorder suite, full run, probes, rollback.
+Where I am / next step: migration, suite, mutants, probes and rollback written. Next: rerun suite + mutant 2, recorder suite, full run, record totals.
 
 ## Part 1 - facts
 
@@ -36,3 +36,125 @@ Where I am / next step: migration + suite (81/0) committed; mutants running. Nex
 
 ### Finding F2 (reported, not fixed here): `transcribe-lesson-audio` has no caller check
 `index.ts:407-458`: verify_jwt only, then service role. Any signed-in user can re-trigger transcription of any transcript id. It returns no audio or text, but it reruns the pipeline on someone else's row. Needs a function change (caller's JWT: has_role admin or is_teacher_of_class for tr.class_id); out of scope for a migration task.
+
+## Part 2 - the fix: `supabase/migrations/20261112120000_class_recordings_scope.sql`
+
+sha256 (LF, as committed): see "Fingerprint" below.
+
+- Preflight: refuses if storage.objects has no RLS, or `class_transcripts.audio_storage_path` is missing.
+- `public.class_recordings_staff_can(_name text)` - SQL, STABLE, SECURITY DEFINER, `search_path = public`, EXECUTE revoked from PUBLIC/anon, granted to authenticated. False when: no uid, NULL name, caller lacks role `teacher`, name is not exactly `<uuid>/<one segment>`. Otherwise `is_teacher_of_class(auth.uid(), first segment::uuid)` (the cast only runs after the regex matched). Each branch coalesced to false.
+- Drops "staff_manage_class_recordings" (and its own names, for a second paste); creates:
+  - `class_recordings_admin_all` FOR ALL: `bucket_id = 'class-recordings' AND has_role(admin)` (USING + WITH CHECK);
+  - `class_recordings_staff_select` / `_insert` / `_update` (USING and WITH CHECK, so the old AND the new name must be the caller's class) / `_delete`, each `bucket_id = 'class-recordings' AND class_recordings_staff_can(name)`.
+- F1: `class_transcripts_audio_path_in_class CHECK (audio_storage_path IS NULL OR lower(split_part(audio_storage_path,'/',1)) = class_id::text) NOT VALID`.
+- Why this shape: the object is uploaded BEFORE its row exists, so the path is the only class key at INSERT time; the app has written one path format since day one, so path scoping covers every object; `is_teacher_of_class` is the very predicate the transcript row is checked against, so whoever can complete the flow today still can and nobody else; the old `has_role teacher` gate is kept as a conjunct so nothing is widened (a `teachers` row without the role gets nothing, tested). No owner-based rule: other teachers of the same class legitimately share the class's audio, and `owner` is not needed for scoping.
+- No src change needed. No new table, so no GRANTs beyond the function's.
+
+### Before / after
+
+| who | before (any class's object) | after: own class's object `<class>/<uuid>.<ext>` | after: other class's object | after: undeterminable path |
+|---|---|---|---|---|
+| admin | all 4 | all 4 | all 4 | all 4 |
+| teacher of the class | all 4 | all 4 | none | none |
+| teacher of another class | all 4 | - | none | none |
+| TA on the class (session or standing) | all 4 | all 4 (UI allows them today) | none | none |
+| TA not on the class | all 4 | - | none | none |
+| `teachers` row, no teacher role | none | none | none | none |
+| parent / student / anon / no-uid | none | none | none | none |
+| service role (transcribe-lesson-audio) | all | all | all | all |
+
+"all 4" = select (download, sign, list), insert (upload), update (overwrite, upsert, move), delete.
+
+### Existing objects
+Nothing is moved or rewritten. Every object the app wrote is `<class uuid>/<uuid>.<ext>` and stays reachable by that class's staff and admins. Any object of another shape, or under a uuid that is not a class the caller teaches, becomes admin-only (probe P3 counts them). Orphans left by a TA not on the class (upload allowed, row refused) become admin-only unless the TA is on that class.
+
+### Functions' access path
+- `transcribe-lesson-audio`: service role (`index.ts:415-418`) -> bypasses RLS; unaffected (tested: service role reads every object). It updates the row with the service role too; the F1 constraint applies to it, which is intended (a mismatched row can no longer be processed).
+- `analyze-transcript`: never touches the bucket.
+- The browser upload runs as the caller: tested as the page does it (upload then row) for the teacher and for a TA on the class.
+
+## Tests
+`scripts/pgtest/class-recordings-scope.test.mjs`, registered in `scripts/pgtest/run.mjs` ("class recordings scope"). Loads the real 20260717090000, 20261111110000, the fix (pasted twice, then once more after the recorder and once after the rollback) and 20261112100000 (pasted twice after the fix). Results: see "Runs" below.
+
+Writes are tested WITHOUT RETURNING: with RETURNING (or a WHERE naming a column) Postgres also holds the new row to the SELECT policy, which hid a weak UPDATE WITH CHECK in the first mutant run (mutant 2 survived). A column-free UPDATE (constant SET, no WHERE) is the case where only the UPDATE policy's WITH CHECK applies; the suite now has it.
+
+### Mutants (`.probe/`, throwaway copy of the migration)
+| # | mutant | result |
+|---|---|---|
+| 1 | helper returns true for any teacher (no class check) | CAUGHT (12 fail) |
+| 2 | UPDATE WITH CHECK only `bucket_id` | first run SURVIVED (SELECT policy masked it); see Runs for the rerun |
+| 3 | regex allows nested paths | CAUGHT (5 fail) |
+| 4 | `has_role teacher` conjunct dropped | CAUGHT (1 fail) |
+| 5 | INSERT allowed for any teacher | CAUGHT (22 fail) |
+| 6 | old policy not dropped | CAUGHT (28 fail) |
+| 7 | F1 constraint removed | CAUGHT |
+| 8 | no uid -> true | CAUGHT (4 fail) |
+
+## Post-apply probes (read-only; P4 also BEFORE applying)
+```sql
+-- P1: exactly five rows, no "staff_manage_class_recordings"
+SELECT policyname, cmd, roles::text, qual, with_check FROM pg_policies
+ WHERE schemaname = 'storage' AND tablename = 'objects'
+   AND (policyname LIKE '%class_recordings%' OR concat_ws(' ', qual, with_check) LIKE '%''class-recordings''%')
+ ORDER BY policyname;
+-- P2: t | s | {search_path=public} | f | t
+SELECT p.prosecdef, p.provolatile, p.proconfig::text,
+       has_function_privilege('anon', p.oid, 'EXECUTE') anon_exec,
+       has_function_privilege('authenticated', p.oid, 'EXECUTE') auth_exec
+  FROM pg_proc p WHERE p.proname = 'class_recordings_staff_can';
+-- P3: objects whose class cannot be determined (now admin only) - COUNT ONLY
+SELECT count(*) FROM storage.objects o
+ WHERE o.bucket_id = 'class-recordings'
+   AND (o.name IS NULL
+        OR o.name !~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/[^/]+$'
+        OR NOT EXISTS (SELECT 1 FROM public.classes c WHERE c.id::text = lower(split_part(o.name, '/', 1))));
+-- P4: RUN BEFORE APPLYING. Expect 0. If not 0, STOP: those rows could not be updated afterwards.
+SELECT count(*) FROM public.class_transcripts
+ WHERE audio_storage_path IS NOT NULL AND lower(split_part(audio_storage_path, '/', 1)) <> class_id::text;
+-- P5: class_transcripts_audio_path_in_class | f
+SELECT conname, convalidated FROM pg_constraint WHERE conname = 'class_transcripts_audio_path_in_class';
+-- P6 (information): objects with no transcript row (orphans) - COUNT ONLY
+SELECT count(*) FROM storage.objects o WHERE o.bucket_id = 'class-recordings'
+   AND NOT EXISTS (SELECT 1 FROM public.class_transcripts t WHERE t.audio_storage_path = o.name);
+```
+Behavioural check after applying: upload an mp3 on Teacher Transcripts as a teacher of that class; it transcribes as before.
+
+## Rollback (re-creates the old policy, and with it the defect; tested by the suite)
+<!-- rollback -->
+```sql
+BEGIN;
+DROP POLICY IF EXISTS class_recordings_admin_all ON storage.objects;
+DROP POLICY IF EXISTS class_recordings_staff_select ON storage.objects;
+DROP POLICY IF EXISTS class_recordings_staff_insert ON storage.objects;
+DROP POLICY IF EXISTS class_recordings_staff_update ON storage.objects;
+DROP POLICY IF EXISTS class_recordings_staff_delete ON storage.objects;
+DROP POLICY IF EXISTS "staff_manage_class_recordings" ON storage.objects;
+CREATE POLICY "staff_manage_class_recordings" ON storage.objects
+  FOR ALL TO authenticated
+  USING (
+    bucket_id = 'class-recordings'
+    AND (
+      public.has_role(auth.uid(), 'admin')
+      OR public.has_role(auth.uid(), 'teacher')
+    )
+  )
+  WITH CHECK (
+    bucket_id = 'class-recordings'
+    AND (
+      public.has_role(auth.uid(), 'admin')
+      OR public.has_role(auth.uid(), 'teacher')
+    )
+  );
+ALTER TABLE public.class_transcripts DROP CONSTRAINT IF EXISTS class_transcripts_audio_path_in_class;
+DROP FUNCTION IF EXISTS public.class_recordings_staff_can(text);
+COMMIT;
+```
+
+## Not determinable from the repo
+- Whether the live bucket and "staff_manage_class_recordings" exist exactly as 20260717090000 writes them, or whether dashboard-made policies on this bucket exist (P1 shows every policy naming it; a policy that names it differently would not be dropped - P1 lists it).
+- Whether 20261111110000 is applied (it changes which TAs is_teacher_of_class admits; the policy follows either version).
+- What objects the live bucket holds (P3, P6 count them).
+- F2 (no caller check in transcribe-lesson-audio) stays open: a function change.
+
+## Runs
+(filled in below)

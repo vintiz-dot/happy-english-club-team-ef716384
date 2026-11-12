@@ -233,6 +233,20 @@ console.log("=== planting and moving ===");
   ok("teacher B cannot move a class B file into class A's folder", mv2.err !== null, mv2.err ?? `allowed (${mv2.n} row)`);
   const mvOdd = await attempt(TEA, `UPDATE storage.objects SET name = $2 WHERE id = $1`, [objA, `${CA}/sub/hidden.mp3`]);
   ok("teacher A cannot move class A's file to a shape only admins can see", mvOdd.err !== null, mvOdd.err ?? `allowed (${mvOdd.n} row)`);
+  // An UPDATE that names no column (no WHERE, a constant SET) is the one
+  // shape where Postgres does NOT also hold the new row to the SELECT
+  // policy - so only the UPDATE policy's own WITH CHECK stands between it
+  // and a move into another class's folder. Teacher D sees exactly one file.
+  const TED = U(9);
+  await q(`INSERT INTO auth.users (id) VALUES ($1)`, [TED]);
+  await q(`INSERT INTO public.user_roles VALUES ($1,'teacher')`, [TED]);
+  const tD = (await one(`INSERT INTO public.teachers (user_id) VALUES ($1) RETURNING id`, [TED])).id;
+  const CD = (await one(`INSERT INTO public.classes (name, default_teacher_id) VALUES ('Class D', $1) RETURNING id`, [tD])).id;
+  await put(appPath(CD));
+  eq("teacher D sees exactly one file", (await attempt(TED, `SELECT count(*)::int n FROM storage.objects`)).rows[0].n, 1);
+  const blind = await attempt(TED, `UPDATE storage.objects SET name = '${CA}/planted.mp3'`);
+  ok("teacher D cannot move it into class A's folder even with a column-free UPDATE (WITH CHECK holds on its own)",
+    blind.err !== null, blind.err ?? `allowed (${blind.n} row)`);
   const mv3 = await attempt(TEA, `UPDATE storage.objects SET name = $2 WHERE id = $1`, [objA, appPath(CA)]);
   ok("teacher A can rename within class A's folder", mv3.err === null && mv3.n === 1, mv3.err ?? "");
   const up = await attempt(TEB, `INSERT INTO storage.objects (bucket_id, name) VALUES ($1,$2)
@@ -363,6 +377,24 @@ eq("class A's transcript audio: still teacher A all, teacher B none, after the r
   ok("the fix pastes again after the recorder", e3 === null, e3 ?? "");
   eq("and the recorder's two policies are untouched by it", await recPolicies(), before);
   eq("recorder has its two policies", before.map((p) => p.policyname), ["class_recorder_audio_insert", "class_recorder_audio_select"]);
+}
+
+console.log("=== the rollback in docs/evidence/T2-class-recordings-access.md ===");
+{
+  const ev = readFileSync(new URL("../../docs/evidence/T2-class-recordings-access.md", import.meta.url), "utf8");
+  const m = /<!-- rollback -->\s*```sql\s*([\s\S]*?)```/.exec(ev);
+  ok("the evidence file carries a rollback block", !!m);
+  if (m) {
+    let e = null; try { await db.exec(m[1]); } catch (x) { e = x.message; }
+    ok("it runs", e === null, e ?? "");
+    eq("it restores exactly the old policy", (await policies()).map((p) => `${p.policyname}:${p.cmd}`), ["staff_manage_class_recordings:ALL"]);
+    eq("and with it the old behaviour (teacher B reads class A's audio again)", (await can(TEB, objA, appPath(CA))).select, true);
+    eq("the helper and the constraint are gone", (await one(`SELECT
+      (SELECT count(*)::int FROM pg_proc WHERE proname = 'class_recordings_staff_can') f,
+      (SELECT count(*)::int FROM pg_constraint WHERE conname = 'class_transcripts_audio_path_in_class') c`)), { f: 0, c: 0 });
+    let e2 = null; try { await db.exec(fixText); } catch (x) { e2 = x.message; }
+    ok("and the fix pastes again over the rolled-back state", e2 === null && (await policies()).length === 5, e2 ?? "");
+  }
 }
 
 console.log(`${pass} passed, ${fail} failed`);
