@@ -50,3 +50,54 @@ Disagreements: today's rate instead of the dated one; `rate_override_vnd` is app
 - `src/components/admin/reports/OperationalReports.tsx:114` - "saved payroll" for cancelled lessons at the teacher row's rate (no TA, no history). `:300-305` - fallback that prices the class's sessions itself when calculate-payroll did not answer.
 - `src/components/admin/class/ClassCalendarEnhanced.tsx:120` - class "cost" = sum of `rate_override_vnd` (a third reading of that column).
 - Not pricing: `PayRateFields.tsx:55` (preview of the rate being typed), `TeacherDashboard.tsx:350` (prints today's rate, which is what it says), `PayRateHistory.tsx:104,133` (which record is in force).
+
+## 2. Who may call calculate-payroll
+
+Read at 6465f08, unchanged by T5 (only a comment added): `requireRole(req, sb, ["admin", "teacher"])` decodes the JWT (service-role key passes as an internal call). A caller who is a teacher and not an admin is scoped to the `teachers` row whose `user_id` is the JWT's user; the body's `teacherId` is ignored for them, and the assistants loop runs for admins only. A TA holds the `teacher` role but has no `teachers` row, so `.single()` finds nothing and the function answers 403 before reading any lesson. Families and pupils fail `requireRole` (403). So the gate already met the rule; nothing was widened.
+
+It runs on the service role for everything (teachers, sessions, rates, periods, lines), as it always has: close-payroll-month and schedule-sessions call it with the service key, and the teacher's own path reads `staff_pay_rates` for everyone into memory but returns only their row. A teacher's call also upserts their own `payroll_summaries` row for an open month (existing behaviour).
+
+One change, admin-only: an admin naming one person (`teacherId`) now gets that person only. At 6465f08 every TA was appended after the named teacher, and an archived teacher with no lessons that month was dropped, so `payrollData[0]` was the first TA - the admin profile showed a TA's pay under the teacher's name. `teacherId` may now also name a TA. Admin with no `teacherId`, and the service role, are unchanged.
+
+`scripts/pgtest/teacher-payroll.test.mjs` (real function bundled, in-memory tables): no sign-in / forged token 401; parent, student 403; TA and a teacher-role login with no staff row 403 whether they name T_A or their own TA id - no lesson read, nothing written, nothing of T_A in the body; teacher A naming B gets A only, no lesson of B read, no B id/name/lesson id in the body; B naming A likewise; admin gets anyone; service role everyone. Mutation runs: disabling the teacher scoping fails 8 checks; removing the TA narrowing fails 3.
+
+## 3-4. The screens read the function; browser pricing deleted
+
+- `src/lib/teacherPayrollView.ts` (new): maps one person's row - picked by id, never `[0]` - to what the two screens draw. Renaming, grouping by day and class, adding up; imports only `payrollSessions` (fallback for "which lessons are paid" when `sessionDetailsActual` is absent).
+- `TeacherPayrollCalendar.tsx`: takes the view's sessions and `earnedByDate`; `sessionPayVnd`/`durationMinutes`/`payRate` gone. A day whose figure is unavailable shows a dash with "Figure unavailable" for screen readers. Dates compared as `yyyy-MM-dd` text. R12 classes kept.
+- `TeacherPayroll.tsx`: teacher row read for `id` only; Lost Income query and `totalPayVnd` gone (now `lostIncome` from the function); CSV rate/basis per lesson from the function; headline from the view; a closed month says so.
+- `TeacherProfilePayroll.tsx`: `calculateSessionAmount` (incl. `rate_override_vnd`) and the class-breakdown query gone; table reads the function's lessons (it was always empty: it read a `sessions` field the function never returned); `payRate` prop removed (`TeacherProfile.tsx`).
+- Closed month: the teacher (and the profile) see the frozen totals. Per-lesson/day amounts are shown when the recomputed figures still equal the frozen ones, and withheld ("figure unavailable") when lessons changed after the close. "Still to come" is set against the live actuals. `payrollRows.ts`/`PayrollTab`/`PayrollMonthLock` untouched; the test asserts the admin screen still gets the live figure for a closed month.
+- `datedPayrollTotal` and every mirrored module untouched.
+
+### Response fields added (calculate-payroll)
+
+- per lesson in `sessionDetailsActual` / `sessionDetailsProjected` / `discrepancies`: `payRateType`, `rateVnd` - the rate that lesson was priced at.
+- per row: `lostIncome { sessionsCount, totalMinutes, totalAmount, quantityLabel }` - the month's `Canceled` lessons through the same `computeTotals` (dated rate, per-session = one fee). For TAs it counts cancelled lessons they were rostered on. In no total.
+- Proven otherwise identical to 6465f08 for 9 callers/months (admin open/closed/Nov, teacher open/closed, teacher naming another, service role, TA, parent): same status, same figures, same writes, once the new fields are stripped.
+
+Fallbacks (browser ahead of the deploy): Lost Income and the CSV rate column show "Figure unavailable" / blank. Per-lesson amounts were already in the deployed response, so the calendar works before the redeploy.
+
+## 5. Before / after on fixture data
+
+From `teacher-payroll.test.mjs` (fixture: teacher A raised 200,000 -> 300,000/h on 15 Oct; B per-session 250,000; TA on two of A's lessons, absent from one; September closed at 300,000 for one lesson, a second marked Held after; browser clock 13 Nov). Old browser = the 6465f08 code reproduced over the same rows with the real `payRate.ts` / `sessionDuration.ts`.
+
+| Screen | Figure | Old browser | Function (now shown) | Why |
+|---|---|---|---|---|
+| calendar (A, Oct) | 6 Oct, two 90-min lessons before the raise | 900,000 | 600,000 | browser used today's 300,000/h; function the 6 Oct rate 200,000/h |
+| calendar (A, Oct) | 20 Oct, 120 min after the raise | 600,000 | 600,000 | same rate either way |
+| calendar (A, Oct) | sum of the days vs Amount Earned 1,200,000 | 1,500,000 | 1,200,000 | old days added up to 1,500,000 beside a headline of 1,200,000 |
+| Lost Income (A, Oct) | 13 Oct cancellation, 90 min | 450,000 | 300,000 | today's rate vs the 13 Oct rate |
+| Lost Income (B, Oct) | per-session teacher, one cancellation | 250,000 | 250,000 | no rate change: agrees |
+| CSV (A, Oct) | Rate column on the 6 Oct lines | 300,000 | 200,000 | printed today's rate beside the function's amount |
+| admin profile (A, Oct) | 20 Oct lesson with rate_override_vnd 400,000 | 800,000 | 600,000 | override applied as the hourly rate; the function ignores it, so nobody is paid that |
+| admin profile (A, Oct) | 6 Oct lesson, Amount column | 450,000 | 300,000 | today's rate vs the dated one |
+| admin profile (A, Oct) | rows in the Session Details table | 0 | 4 | old table read payrollData[0].sessions, which the function never returns: always empty |
+| admin profile (archived, Oct) | Current (Actual) for an archived teacher with no lessons | 350,000 | 0 | old [0] was the TA's row (Chi Le's pay under Zed's name) |
+| calendar (A, Sep CLOSED) | 15 Sep, marked Held after the close | 450,000 | unavailable | old: a recomputed figure at today's rate; now withheld - the month was paid at 300,000 |
+| calendar (A, Sep CLOSED) | what the days add up to, beside Amount Earned (frozen 300,000) | 900,000 | unavailable | only the paid total is shown |
+| headline (A, Sep CLOSED) | Amount Earned | 300,000 | 300,000 | both the frozen figure |
+| headline (A, Sep CLOSED) | "+X from N scheduled": X | 300,000 | 0 | old subtracted the frozen actual from the live projection |
+| calendar (A, Nov) | 30 Nov, status Held but dated after today | 0 | 450,000 | function pays it (Held); old calendar showed it Scheduled and left it out of the day |
+
+Every old disagreement on a rate change is upward (the overpaying direction) whenever the rate went up.
