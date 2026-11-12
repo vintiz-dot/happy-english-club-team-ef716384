@@ -18,6 +18,19 @@ import { dayjs } from "@/lib/date";
 import { useAuth } from "@/hooks/useAuth";
 import { ParticipationPoints } from "@/components/admin/ParticipationPoints";
 import { SessionActionsModal } from "../SessionActionsModal";
+import { useIvory } from "@/hooks/useIvory";
+import { cn } from "@/lib/utils";
+
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
+
+// Ivory attendance chips (DESIGN_SYSTEM s.14): present is leaf, absent is
+// red, excused is neutral - the word says which.
+const IVORY_ATTENDANCE: Record<string, string> = {
+  Present: "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
+  Absent: "border-hec-danger/30 bg-hec-danger-tint text-hec-danger",
+  Excused: "border-hec-line bg-hec-sunken text-hec-ink-soft",
+};
 
 interface AttendanceDrawerProps {
   session: any;
@@ -32,6 +45,9 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
   const [swappingTeacher, setSwappingTeacher] = useState(false);
   const queryClient = useQueryClient();
   const { role } = useAuth();
+  // Also opened from GlobalCalendar on "/" (teacher home) and from the
+  // classroom tools, which are not on a listed route yet: old look there.
+  const ivory = useIvory();
 
   const { data: students } = useQuery({
     queryKey: ["session-students", session?.id],
@@ -255,31 +271,31 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
 
         {/* Quick Swap Teacher — admin only */}
         {role === "admin" && (
-          <div className="mt-4 p-3 border rounded-lg bg-muted/30">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Teacher:</span>
-                <span className="font-medium">{currentTeacherName}</span>
+          <div className={ivory ? "mt-4 rounded-hec-md border border-hec-line bg-hec-sunken p-4" : "mt-4 p-3 border rounded-lg bg-muted/30"}>
+            <div className={ivory ? "flex items-start justify-between gap-3" : "flex items-center justify-between"}>
+              <div className={ivory ? "flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 text-hec-small" : "flex items-center gap-2 text-sm"}>
+                <span className={ivory ? "text-hec-ink-soft" : "text-muted-foreground"}>Teacher:</span>
+                <span className={ivory ? "whitespace-normal break-words font-medium text-hec-ink" : "font-medium"}>{currentTeacherName}</span>
               </div>
               {!swappingTeacher && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setSwappingTeacher(true)}
-                  className="h-7 text-xs gap-1"
+                  className={ivory ? "shrink-0 gap-2" : "h-7 text-xs gap-1"}
                 >
-                  <ArrowLeftRight className="h-3 w-3" />
+                  <ArrowLeftRight className={ivory ? "h-4 w-4" : "h-3 w-3"} />
                   Swap
                 </Button>
               )}
             </div>
             {swappingTeacher && (
-              <div className="mt-2 flex gap-2">
+              <div className={ivory ? "mt-2 flex flex-wrap gap-2" : "mt-2 flex gap-2"}>
                 <Select
                   value=""
                   onValueChange={(val) => swapTeacherMutation.mutate(val)}
                 >
-                  <SelectTrigger className="h-8 text-xs flex-1">
+                  <SelectTrigger className={ivory ? "min-w-0 flex-1" : "h-8 text-xs flex-1"}>
                     <SelectValue placeholder="Select new teacher..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -293,7 +309,7 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 text-xs"
+                  className={ivory ? undefined : "h-8 text-xs"}
                   onClick={() => setSwappingTeacher(false)}
                 >
                   Cancel
@@ -309,23 +325,25 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
             app that stops an assistant being paid for a lesson, and
             nobody could find it. */}
         {role === "admin" && sessionTAs && sessionTAs.length > 0 && (
-          <div className="mt-4 rounded-lg border p-3">
+          <div className={ivory ? "mt-4 rounded-hec-md border border-hec-line bg-hec-surface p-4" : "mt-4 rounded-lg border p-3"}>
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Teaching assistants</span>
+              <Users className={ivory ? "h-4 w-4 text-hec-ink-soft" : "h-4 w-4 text-muted-foreground"} />
+              <span className={ivory ? "text-hec-small font-medium text-hec-ink" : "text-sm font-medium"}>Teaching assistants</span>
             </div>
-            <div className="mt-2 space-y-1.5">
+            <div className={ivory ? "mt-2 space-y-2" : "mt-2 space-y-1.5"}>
               {sessionTAs.map((p: any) => {
                 const here = p.attended !== false;
                 return (
-                  <div key={p.id ?? p.teaching_assistant_id} className="flex items-center justify-between gap-2">
-                    <span className={`text-sm ${here ? "" : "text-muted-foreground line-through"}`}>
+                  <div key={p.id ?? p.teaching_assistant_id} className={ivory ? "flex items-start justify-between gap-3" : "flex items-center justify-between gap-2"}>
+                    <span className={ivory
+                      ? cn("min-w-0 flex-1 whitespace-normal break-words text-hec-small", here ? "text-hec-ink" : "text-hec-ink-soft line-through")
+                      : `text-sm ${here ? "" : "text-muted-foreground line-through"}`}>
                       {p.teaching_assistants?.full_name || "Unknown"}
                     </span>
                     <Button
                       variant={here ? "outline" : "secondary"}
                       size="sm"
-                      className="h-7 px-2 text-xs"
+                      className={ivory ? "shrink-0" : "h-7 px-2 text-xs"}
                       disabled={taPresenceMutation.isPending}
                       onClick={() => taPresenceMutation.mutate({ id: p.id, attended: !here })}
                     >
@@ -335,7 +353,7 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
                 );
               })}
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className={ivory ? "mt-2 text-hec-caption text-hec-ink-soft" : "mt-2 text-xs text-muted-foreground"}>
               An absent assistant stays on the lesson — the record of who was meant
               to be here survives — but is not paid for it.
             </p>
@@ -355,7 +373,7 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
         )}
 
         {!canEdit && (
-          <div className="my-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground">
+          <div className={ivory ? "my-4 rounded-hec-md border border-hec-line bg-hec-sunken p-4 text-hec-small text-hec-ink-soft" : "my-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground"}>
             {session.status === 'Canceled' ? 'Cancelled — all students are Excused. No tuition charge.' : role === "teacher" 
               ? isFutureSession
                 ? "⚠️ Attendance can be marked 5 minutes after session starts (prevents invalid 'Held' status)"
@@ -365,16 +383,17 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
         )}
         
         {isFutureSession && role === "admin" && (
-          <div className="my-4 p-3 bg-orange-100 dark:bg-orange-900 rounded-lg text-sm">
+          <div className={ivory ? "my-4 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4 text-hec-small text-hec-ink" : "my-4 p-3 bg-orange-100 dark:bg-orange-900 rounded-lg text-sm"}>
             ⚠️ This session hasn't started yet. Marking attendance will NOT set status to "Held" until 5 minutes after start time.
           </div>
         )}
 
         <div className="space-y-4 mt-6">
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className={ivory ? "h-5 w-5 shrink-0 text-hec-ink-soft" : "h-4 w-4 text-muted-foreground"} aria-hidden={ivory || undefined} />
             <Input
               placeholder="Search students..."
+              aria-label={ivory ? "Search students" : undefined}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1"
@@ -385,15 +404,34 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
             {filteredStudents?.map((student: any) => (
               <div
                 key={student.id}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
+                className={ivory
+                  ? "flex min-h-hec-target items-start justify-between gap-3 rounded-hec-md border border-hec-line bg-hec-surface px-4 py-3"
+                  : "flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"}
               >
-                <span className="font-medium">{student.full_name}</span>
-                <Badge
-                  className={`cursor-pointer ${attendanceColor(attendance[student.id])} ${!canEdit && "cursor-not-allowed opacity-70"}`}
-                  onClick={() => canEdit && toggleAttendance(student.id)}
-                >
-                  {attendance[student.id]}
-                </Badge>
+                <span className={ivory ? "min-w-0 flex-1 self-center whitespace-normal break-words hyphens-none text-hec-body font-medium text-hec-ink" : "font-medium"}>{student.full_name}</span>
+                {ivory ? (
+                  // Was a clickable badge (not reachable by keyboard); same handler.
+                  <button
+                    type="button"
+                    aria-disabled={!canEdit}
+                    className={cn(
+                      "inline-flex min-h-hec-target min-w-hec-target shrink-0 items-center justify-center rounded-full border px-4 text-hec-caption font-medium transition-colors duration-hec-1 ease-hec",
+                      FOCUS,
+                      IVORY_ATTENDANCE[attendance[student.id]] || "border-hec-line bg-hec-sunken text-hec-ink-soft",
+                      !canEdit && "cursor-not-allowed opacity-70",
+                    )}
+                    onClick={() => canEdit && toggleAttendance(student.id)}
+                  >
+                    {attendance[student.id]}
+                  </button>
+                ) : (
+                  <Badge
+                    className={`cursor-pointer ${attendanceColor(attendance[student.id])} ${!canEdit && "cursor-not-allowed opacity-70"}`}
+                    onClick={() => canEdit && toggleAttendance(student.id)}
+                  >
+                    {attendance[student.id]}
+                  </Badge>
+                )}
               </div>
             ))}
           </div>

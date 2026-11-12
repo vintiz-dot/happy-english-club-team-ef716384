@@ -130,6 +130,66 @@ export const STATUS_META: Record<StatusKey, StatusMeta> = {
   },
 };
 
+/**
+ * STATUS_META in the "Ivory" system (docs/DESIGN_SYSTEM.md s.14), for the
+ * calendar views on a listed route. Same keys, labels and `actionable` flag
+ * as STATUS_META - only the colour classes differ. Still one loud state:
+ * needsAttention is amber; cancelled is red; today carries the brass mark
+ * (the current item); scheduled, held and holiday are quiet ink rails.
+ * STATUS_META stays as it is for screens not yet migrated.
+ */
+export const STATUS_META_IVORY: Record<StatusKey, StatusMeta> = {
+  scheduled: {
+    label: "Scheduled",
+    rail: "bg-hec-line-strong",
+    tint: "bg-hec-surface",
+    border: "border-hec-line",
+    text: "text-hec-ink",
+    dot: "bg-hec-line-strong",
+  },
+  today: {
+    label: "Today",
+    rail: "bg-hec-brass",
+    tint: "bg-hec-surface",
+    border: "border-hec-brass/40",
+    text: "text-hec-ink",
+    dot: "bg-hec-brass",
+  },
+  needsAttention: {
+    label: "Needs attendance",
+    rail: "bg-hec-warn",
+    tint: "bg-hec-warn-tint",
+    border: "border-hec-warn/30",
+    text: "text-hec-ink",
+    dot: "bg-hec-warn",
+    actionable: true,
+  },
+  held: {
+    label: "Held",
+    rail: "bg-hec-ink-faint",
+    tint: "bg-hec-sunken",
+    border: "border-hec-line",
+    text: "text-hec-ink-soft",
+    dot: "bg-hec-ink-faint",
+  },
+  canceled: {
+    label: "Canceled",
+    rail: "bg-hec-danger",
+    tint: "bg-hec-danger-tint",
+    border: "border-hec-danger/30",
+    text: "text-hec-ink-soft line-through decoration-hec-danger/50",
+    dot: "bg-hec-danger",
+  },
+  holiday: {
+    label: "Holiday",
+    rail: "bg-hec-ink-soft",
+    tint: "bg-hec-sunken",
+    border: "border-hec-line",
+    text: "text-hec-ink-soft",
+    dot: "bg-hec-ink-soft",
+  },
+};
+
 export function getStatusKey(event: CalendarEvent): StatusKey {
   const displayStatus = getSessionDisplayStatus({
     date: event.date,

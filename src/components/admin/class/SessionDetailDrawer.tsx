@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ParticipationPoints } from "@/components/admin/ParticipationPoints";
 import { CancelSessionDialog } from "@/components/admin/CancelSessionDialog";
 import { DeleteSessionDialog } from "@/components/admin/DeleteSessionDialog";
+import { cn } from "@/lib/utils";
 
 interface SessionDetailDrawerProps {
   session: any;
@@ -171,13 +172,14 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
     }));
   };
 
+  // DESIGN_SYSTEM s.14: present is leaf, absent is red, excused is neutral.
   const attendanceColor = (status: string) => {
     const colors: Record<string, string> = {
-      Present: "bg-green-100 text-green-800 hover:bg-green-200",
-      Absent: "bg-red-100 text-red-800 hover:bg-red-200",
-      Excused: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
+      Present: "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf hover:bg-hec-leaf-tint/70",
+      Absent: "border-hec-danger/30 bg-hec-danger-tint text-hec-danger hover:bg-hec-danger-tint/70",
+      Excused: "border-hec-line bg-hec-sunken text-hec-ink-soft hover:bg-hec-line",
     };
-    return colors[status] || "bg-gray-100";
+    return colors[status] || "border-hec-line bg-hec-sunken text-hec-ink-soft";
   };
 
   const sessionEnd = dayjs(`${session.date} ${session.end_time}`);
@@ -190,19 +192,19 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
       <Sheet open={!!session} onOpenChange={onClose}>
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader>
-            <SheetTitle className="flex items-center justify-between">
+            <SheetTitle className="flex flex-wrap items-center justify-between gap-2">
               <span>Session Details</span>
-              <Badge variant={session.status === "Canceled" ? "destructive" : "default"}>
+              <Badge variant={session.status === "Canceled" ? "destructive" : "secondary"} className="font-sans">
                 {session.status}
               </Badge>
             </SheetTitle>
-            <SheetDescription>
+            <SheetDescription className="tabular-nums">
               {dayjs(session.date).format("MMM D, YYYY")} • {session.start_time?.slice(0, 5)} - {session.end_time?.slice(0, 5)}
             </SheetDescription>
           </SheetHeader>
 
           {!canEdit && (
-            <div className="my-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground">
+            <div className="my-4 rounded-hec-md border border-hec-line bg-hec-sunken p-4 text-hec-small text-hec-ink-soft">
               {role === "teacher" 
                 ? "Editing window closed (24 hours after session end)"
                 : "You don't have permission to edit this session"}
@@ -210,7 +212,7 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
           )}
 
           {isPastHeld && role === "admin" && (
-            <div className="my-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+            <div className="my-4 rounded-hec-md border border-hec-line bg-hec-sunken p-4 text-hec-small text-hec-ink">
               This is a past Held session. Attendance can be edited, but the session cannot be canceled or deleted.
             </div>
           )}
@@ -219,13 +221,13 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
             {/* Teacher Info */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between text-base">
+                <CardTitle className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
+                    <User className="h-4 w-4 text-hec-ink-soft" />
                     Teacher
                   </div>
                   {canEdit && !isEditingTeacher && (
-                    <Button variant="ghost" size="sm" onClick={() => setIsEditingTeacher(true)}>
+                    <Button variant="ghost" size="sm" aria-label="Change teacher" onClick={() => setIsEditingTeacher(true)}>
                       <Edit2 className="h-4 w-4" />
                     </Button>
                   )}
@@ -246,7 +248,7 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
                         ))}
                       </SelectContent>
                     </Select>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button 
                         onClick={() => updateSessionMutation.mutate({ teacherId: selectedTeacher })}
                         size="sm"
@@ -266,7 +268,7 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
                     </div>
                   </div>
                 ) : (
-                  <p className="font-medium">{session.teacher?.full_name || session.teachers?.full_name || "Not assigned"}</p>
+                  <p className="whitespace-normal break-words text-hec-body font-medium text-hec-ink">{session.teacher?.full_name || session.teachers?.full_name || "Not assigned"}</p>
                 )}
               </CardContent>
             </Card>
@@ -275,18 +277,18 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
             {homework && homework.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <FileText className="h-4 w-4" />
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-hec-ink-soft" />
                     Class Homework
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
                     {homework.map((hw: any) => (
-                      <div key={hw.id} className="p-3 border rounded-lg">
-                        <p className="font-medium">{hw.title}</p>
+                      <div key={hw.id} className="rounded-hec-md border border-hec-line p-4">
+                        <p className="whitespace-normal break-words text-hec-body font-medium text-hec-ink">{hw.title}</p>
                         {hw.due_date && (
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-hec-small text-hec-ink-soft">
                             Due: {dayjs(hw.due_date).format("MMM D, YYYY")}
                           </p>
                         )}
@@ -300,8 +302,8 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
             {/* Attendance */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Users className="h-4 w-4" />
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-hec-ink-soft" />
                   Attendance
                 </CardTitle>
               </CardHeader>
@@ -310,15 +312,22 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
                   {students?.map((student: any) => (
                     <div
                       key={student.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
+                      className="flex min-h-hec-target items-start justify-between gap-3 rounded-hec-md border border-hec-line px-4 py-2"
                     >
-                      <span className="font-medium">{student.full_name}</span>
-                      <Badge
-                        className={`cursor-pointer ${attendanceColor(attendance[student.id] || student.status)} ${!canEdit && "cursor-not-allowed opacity-70"}`}
+                      <span className="min-w-0 flex-1 self-center whitespace-normal break-words hyphens-none text-hec-body font-medium text-hec-ink">{student.full_name}</span>
+                      {/* Was a clickable badge (not reachable by keyboard); same handler. */}
+                      <button
+                        type="button"
+                        aria-disabled={!canEdit}
+                        className={cn(
+                          "inline-flex min-h-hec-target min-w-hec-target shrink-0 items-center justify-center rounded-full border px-4 text-hec-caption font-medium transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+                          attendanceColor(attendance[student.id] || student.status),
+                          !canEdit && "cursor-not-allowed opacity-70",
+                        )}
                         onClick={() => canEdit && toggleAttendance(student.id)}
                       >
                         {attendance[student.id] || student.status}
-                      </Badge>
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -328,8 +337,8 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
             {/* Notes */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Edit2 className="h-4 w-4" />
+                <CardTitle className="flex items-center gap-2">
+                  <Edit2 className="h-4 w-4 text-hec-ink-soft" />
                   Session Notes
                 </CardTitle>
               </CardHeader>
@@ -338,6 +347,7 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Add notes about this session..."
+                  aria-label="Session notes"
                   rows={4}
                   disabled={!canEdit}
                 />
@@ -360,10 +370,10 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
                 </Button>
                 
                 {role === "admin" && session.status !== "Canceled" && !isPastHeld && (
-                  <div className="flex gap-2 pt-4 border-t">
+                  <div className="flex flex-col gap-2 border-t border-hec-line pt-4 sm:flex-row">
                     <Button
                       onClick={() => setShowCancelDialog(true)}
-                      variant="outline"
+                      variant="destructive-quiet"
                       className="flex-1"
                     >
                       <Ban className="h-4 w-4 mr-2" />
@@ -371,7 +381,7 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
                     </Button>
                     <Button
                       onClick={() => setShowDeleteDialog(true)}
-                      variant="destructive"
+                      variant="destructive-quiet"
                       className="flex-1"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
