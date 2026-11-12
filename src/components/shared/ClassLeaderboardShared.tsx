@@ -357,7 +357,9 @@ export function ClassLeaderboardShared({
       <div
         className={
           ivory
-            ? "relative z-20 flex flex-wrap items-center justify-between gap-2 px-4 pb-3 pt-4 sm:px-6"
+            ? // pb-2 as before: the board below starts exactly where it did, so
+              // the scaled display boards are not shifted (pixel check, R20).
+              "relative z-20 flex flex-wrap items-center justify-between gap-2 px-4 pb-2 pt-4 sm:px-6"
             : "relative z-20 flex items-center justify-between gap-2 px-3 pb-2 pt-4 sm:px-6"
         }
       >
