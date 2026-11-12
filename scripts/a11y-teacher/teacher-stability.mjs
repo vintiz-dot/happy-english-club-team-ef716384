@@ -428,7 +428,7 @@ async function hints(size) {
       await page.goto(BASE + '/__lab'); await page.waitForSelector('#lab-hud button', { timeout: 90000 });
       await page.__throttle();
       const chip = page.locator('#lab-hud button').filter({ hasText: /\+\d/ }).first();
-      await hintMatrix(page, S, 'HUD-chip-last-engaged', chip, 'Last engaged', { native: /title="?Last engaged/.test(await chip.evaluate((b) => b.outerHTML)) });
+      await hintMatrix(page, S, 'HUD-chip-last-engaged', chip, 'Last engaged', { native: /title="?Last engaged/.test(await chip.evaluate((b) => b.outerHTML)) });
       await hintMatrix(page, S, 'ui-tooltip-primitive', page.locator('#lab-tip-trigger'), 'Lab tooltip text');
     } catch (e) { record('hints.lab.error', S, 'FAIL', String(e), 'scenario aborted: ' + String(e).split('\n')[0]); } finally { await ctx.close(); }
   }
