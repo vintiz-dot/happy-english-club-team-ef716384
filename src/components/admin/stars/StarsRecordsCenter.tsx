@@ -368,7 +368,7 @@ function RecordsTable({ records, view, onOpen, onLinkChild, onSort, sortable }: 
               {columns.map((c) => (
                 <TableHead key={c.key} className={cn("whitespace-nowrap", compact ? "px-2" : "px-3")}>
                   {sortable ? (
-                    <button type="button" className={cn("inline-flex min-h-hec-target items-center gap-1 rounded-hec-sm font-medium uppercase tracking-wider hover:text-hec-ink", FOCUS)} onClick={() => onSort(c.key)}>
+                    <button type="button" className={cn("inline-flex min-h-hec-target min-w-hec-target items-center gap-1 rounded-hec-sm font-medium uppercase tracking-wider hover:text-hec-ink", FOCUS)} onClick={() => onSort(c.key)}>
                       {c.label}
                       {view.sort === c.key && (view.descending ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />)}
                     </button>
