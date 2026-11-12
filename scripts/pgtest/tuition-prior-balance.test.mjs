@@ -206,15 +206,24 @@ ok(row('no-row').browser.status === 'open' && row('no-row').calculator.status ==
 ok(row('stale-total').browser.status === 'settled' && row('stale-total').calculator.status === 'underpaid' && row('stale-total').calculator.carryOutDebt === RATE, 'stale total: browser settled, calculator 180,000 short');
 // Money recorded on a later month: same figures, but only the calculator knows the debt was settled later.
 ok(row('paid-on-later-month').differs.length === 0 && row('paid-on-later-month').browser.status === 'unpaid' && row('paid-on-later-month').calculator.status === 'settled in 2026-12', 'paid on December: browser "unpaid", calculator "settled in 2026-12"');
-// Family discount unresolved: the bulk answer is priced WITHOUT the discount and says nothing about it.
+// Family discount unresolved: the bulk answer is priced WITHOUT the discount - and, since T1 round 2, says so.
 const bw = bulk.find((r) => r.studentId === id(14)); const sw = single.find((r) => r.studentId === id(14));
 ok(bw.totalAmount === FULL && row('sibling-winner').browser.totalAmount === FULL - FULL / 10, 'unresolved family discount: bulk 1,440,000, saved bill 1,296,000');
-ok(!('siblingUnresolved' in bw) && !('siblingState' in bw), 'the bulk answer carries no sign that the discount is unresolved');
+ok(bw.siblingUnresolved === true && bulk.find((r) => r.studentId === id(15)).siblingUnresolved === true, 'the bulk answer marks both children of the family siblingUnresolved: true');
+ok(bulk.filter((r) => r.siblingUnresolved).length === 2 && bulk.every((r) => typeof r.siblingUnresolved === 'boolean'), 'and nobody else: every other answer says siblingUnresolved: false');
 ok(sw.siblingUnresolved === true && sw.invoiceSaved === false, 'the single calculator says so and does not save');
 ok(writes.every((w) => w.student_id !== id(14) && w.student_id !== id(15)), 'no invoice written for the unresolved family');
 ok(row('sibling-other').differs.length === 0, 'the other child is unaffected');
-// Neither calculator returns a payable or a signed balance.
-ok(!('payable' in bw.carry) && !('finalPayable' in bw) && !('balance' in bw) && !('payable' in sw.carry) && !('finalPayable' in sw), 'no payable / balance field in either response');
+// Both calculators return the payable (T1 round 2), and it is the same figure in both.
+for (const c of CASES) {
+  const b = bulk.find((r) => r.studentId === id(c.n)); const s = single.find((r) => r.studentId === id(c.n));
+  ok(Number.isFinite(b.carry.payable) && b.carry.payable === s.carry.payable, `${c.key}: bulk and single agree on carry.payable (${b.carry.payable} vs ${s.carry.payable})`);
+  // What is still owed after this month's payment is the carry-out: the payable is tied to the figures beside it.
+  ok(b.carry.payable - b.payments.monthPayments === b.carry.carryOutDebt - b.carry.carryOutCredit, `${c.key}: payable less paid is the carry-out`);
+}
+ok(row('arrears').calculator.carryInDebt === 1000000 && bulk.find((r) => r.studentId === id(2)).carry.payable === 2440000, 'arrears: payable 2,440,000');
+ok(bulk.find((r) => r.studentId === id(3)).carry.payable === 880000, 'credit: payable 880,000');
+ok(bulk.find((r) => r.studentId === id(8)).carry.payable === 0, 'paid on October: payable 0');
 
 // --- what the admin tuition list now shows: src/lib/tuitionRows.ts over the REAL answers.
 {
@@ -225,15 +234,21 @@ ok(!('payable' in bw.carry) && !('finalPayable' in bw) && !('balance' in bw) && 
   for (const c of CASES) {
     const b = bulk.find((r) => r.studentId === id(c.n));
     const f = rows.tuitionFigures(b);
+    if (c.family) {
+      // The function says the family discount is unresolved: the list shows no figure of that bill.
+      ok(f.state === 'pending' && f.charge === null && f.payable === null && rows.carriedOut(f).kind === 'pending' && rows.tuitionStatusInput(f) === null, `${c.key}: unresolved - no figure is shown`);
+      continue;
+    }
     ok(f.state === 'ready', `${c.key}: the list has figures`);
+    ok(f.payable === b.carry.payable, `${c.key}: Payable is the function's carry.payable`);
     // Each figure on the row is the function's own number, untouched.
     ok(f.charge === b.totalAmount && f.paid === b.payments.monthPayments && f.base === b.baseAmount && f.discount === b.totalDiscount, `${c.key}: charge, paid, base, discount are the function's`);
     const cin = rows.carriedIn(f), cout = rows.carriedOut(f);
-    ok((cin.kind === 'owed' && cin.amount === b.carry.carryInDebt) || (cin.kind === 'credit' && cin.amount === b.carry.carryInCredit) || (cin.kind === 'none' && b.carry.carryInDebt === 0 && b.carry.carryInCredit === 0), `${c.key}: Prior Bal. is the function's carry-in`);
-    ok((cout.kind === 'owed' && cout.amount === b.carry.carryOutDebt) || (cout.kind === 'credit' && cout.amount === b.carry.carryOutCredit) || (cout.kind === 'none' && b.carry.carryOutDebt === 0 && b.carry.carryOutCredit === 0), `${c.key}: Balance is the function's carry-out`);
+    ok((cin.kind === 'owed' && cin.amount > 0 && cin.amount === b.carry.carryInDebt) || (cin.kind === 'credit' && cin.amount > 0 && cin.amount === b.carry.carryInCredit) || (cin.kind === 'none' && b.carry.carryInDebt === 0 && b.carry.carryInCredit === 0), `${c.key}: Prior Bal. is the function's carry-in`);
+    ok((cout.kind === 'owed' && cout.amount > 0 && cout.amount === b.carry.carryOutDebt) || (cout.kind === 'credit' && cout.amount > 0 && cout.amount === b.carry.carryOutCredit) || (cout.kind === 'none' && b.carry.carryOutDebt === 0 && b.carry.carryOutCredit === 0), `${c.key}: Balance is the function's carry-out`);
     ok(statusOf(rows.tuitionStatusInput(f)) === row(c.key).calculator.status, `${c.key}: the status is judged on the function's figures`);
   }
-  // The single calculator DOES say when a family discount is unresolved: nothing of that bill is shown.
+  // The single calculator says the same: nothing of that bill is shown.
   const pending = rows.tuitionFigures(sw);
   ok(pending.state === 'pending' && pending.charge === null && rows.carriedOut(pending).kind === 'pending', 'an answer marked unresolved shows no figure');
   ok(rows.tuitionFigures({ studentId: id(1), error: true }).state === 'unavailable' && rows.tuitionFigures(undefined).state === 'unavailable', 'an error row or no answer shows no figure');
