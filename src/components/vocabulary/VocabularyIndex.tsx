@@ -273,7 +273,13 @@ export function VocabularyIndex({ items, onDelete, onUpdate }: Props) {
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive-quiet" size="icon" aria-label="Delete word">
+                        {/* Quiet like Edit beside it (one per card, many in view); the red is kept for the confirm. */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-hec-ink-soft hover:bg-hec-danger-tint hover:text-hec-danger"
+                          aria-label="Delete word"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
