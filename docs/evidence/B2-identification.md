@@ -7,7 +7,7 @@ Aggregates and codes (S01..., L1/L2/L3) only. No transcript text, no source file
 
 ## Where I am / next step
 
-**2026-11-12, wrapping up.** Done: sections 1-5 and 7-10. Running: real lessons, first 20 min each (section 6). 3ds_eres2v2 dropped (RTF ~1.4 under load, ~4 h).
+**2026-11-12, DONE.** All sections written. Next step (not this task): a teacher fills `work\teacher-check\check_sheet.csv`; B2b timing on a quiet machine; an in-room enrolment recording.
 
 ## 1. Setup, models, what installed
 
@@ -71,7 +71,7 @@ split.py dealt contiguous 5 s blocks to HELD-OUT and left ENROL the short fragme
 ## 3c. Diagnosis findings 3 and 4: thin voiceprints are hubs; test turns were too short
 
 On the time split (3ds_campp, cosine, closed set of 26; run 2026-11-12, `work\b2\segcut_timesplit_results_*.json`):
-- **Hubs.** At s500 2 s, 52 of the wrong answers went to S08 and 20 to S07; S08 has 25.8 s of fragmentary enrolment. A voiceprint built from little, poor audio sits near the average of everyone and attracts every uncertain turn. With the 17 test children's own voiceprints only (no thin distractors), the same windows scored 47 % top-1 (clean 2 s, chance 6 %); with the 26-child gallery, 18 %. Rule adopted: a child is enrolled only with >= 30 s of enrolment speech (B0's own minimum); S08, S13, S16, S19, S22, S25 are therefore NOT enrolled (in a product they would be UNKNOWN until re-enrolled). AS-norm and centring (enrolment-mean subtraction) did not remove the hub effect on their own.
+- **Hubs.** At s500 2 s, 52 of the wrong answers went to S08 and 20 to S07; S08 has 25.8 s of fragmentary enrolment. A voiceprint built from little, poor audio sits near the average of everyone and attracts every uncertain turn. With the 17 test children's own voiceprints only (no thin distractors), the same windows scored 47 % top-1 (clean 2 s, chance 6 %); with the 26-child gallery, 18 %. Rule adopted: a child is enrolled only with >= 30 s of enrolment speech (B0's own minimum); on the final units S08, S13, S19, S22, S25 are therefore NOT enrolled (S16 reaches 30 s once utterances keep their pauses, so the final gallery is 21 children) (in a product they would be UNKNOWN until re-enrolled). AS-norm and centring (enrolment-mean subtraction) did not remove the hub effect on their own.
 - **Turn length.** Windows that must fit inside one silero segment were almost all 1 s (386 of 534 per condition); only 25 were 4 s and 3 were 8 s, because silero cuts at every 300 ms pause. 1 s windows were at chance for every model (top-1 0.3-10 %), and aggregating up to 20 of them did not help. Fix: segments of the same set separated by a pause < 0.8 s are joined into one utterance (contiguous audio with its pauses, no splice; never across an adult-pitch segment). Units now: 484 enrolment, 473 raw, 97 adult-pitch, 2504 test windows (131.7 min).
 
 ## 3d. Local diarizer check on the synthetic mixes (no identification)
@@ -205,7 +205,38 @@ Top-1 score quantiles (5/25/50/75/95 %), s500 all lengths, k3-asnorm: correct [-
 
 ## 6. Real lessons L1, L2, L3 - UNVERIFIED
 
-(filled below when the run finishes)
+**First 20 minutes of each lesson only** (the full 300 min would take several hours of this contended CPU). Rosters are unknown and there is no reference: every figure in this section is UNVERIFIED. `b2_lessons.py run --minutes 20 --diar-model 3ds_campp --diar-threshold 0.1 --id-model ecapa --id-config vad-all-k3-asnorm` (run 2026-11-12). Clusters with >= 10 s speech are matched; voiceprint = centroid of up to 60 of the cluster's longest turns (>= 1 s). The run used the single-turn threshold 4.726; the table also applies the recommended T = 6.0, and the teacher check sheet was rewritten to T = 6.0.
+
+### UNVERIFIED - real lessons, first 20 min, codes only
+
+| lesson | cluster | speech s | turns | median F0 Hz | adult-pitch flag | best match | score | margin to runner-up | turn vote share | at T 4.726 | **at T 6.0** |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| L1 | c00 | 380.3 | 148 | 202.5 | (borderline) | S20 | 3.13 | 2.61 | 0.75 | UNKNOWN | UNKNOWN |
+| L1 | c01 | 437.8 | 212 | 301.9 | | S10 | 4.40 | 0.21 | 0.27 | UNKNOWN | UNKNOWN |
+| L1 | c02 | 56.9 | 38 | 296.3 | | S20 | 2.54 | 1.69 | 0.39 | UNKNOWN | UNKNOWN |
+| L1 | c03 | 108.4 | 54 | 313.7 | | S16* | 4.38 | 0.35 | 0.17 | UNKNOWN | UNKNOWN |
+| L2 | c00 | 344.4 | 181 | 285.7 | | S05 | 3.97 | 0.06 | 0.08 | UNKNOWN | UNKNOWN |
+| L2 | c01 | 445.3 | 156 | 179.8 | yes | S20 | 1.97 | 0.06 | 0.50 | UNKNOWN | UNKNOWN |
+| L2 | c02 | 90.1 | 45 | 301.9 | | S21 | 3.71 | 0.10 | 0.09 | UNKNOWN | UNKNOWN |
+| L2 | c03 | 23.5 | 11 | 254.0 | | S05 | 1.20 | 0.70 | 0.00 | UNKNOWN | UNKNOWN |
+| L2 | c04 | 16.5 | 10 | 271.2 | | S20 | -0.23 | 1.22 | 0.40 | UNKNOWN | UNKNOWN |
+| L2 | c05 | 4.9 | 3 | 326.5 | | - | - | - | - | minor | UNKNOWN |
+| L3 | c00 | 521.7 | 245 | 307.7 | | S24 | 5.76 | 1.11 | 0.32 | S24 (would have been suggested) | UNKNOWN |
+| L3 | c01 | 344.9 | 168 | 186.0 | yes | S21 | 2.92 | 0.72 | 0.40 | UNKNOWN | UNKNOWN |
+
+(*S16 had 28.5 s of VAD speech in B0's split; its windowed enrolment, which keeps short pauses, passes the 30 s floor, so it is in the gallery - a borderline voiceprint.)
+
+| lesson | clusters found (>= 10 s) | matched to a child at T 6.0 | UNKNOWN | adult-pitch (teacher?) clusters |
+|---|---|---|---|---|
+| L1 | 4 (4) | 0 | 4 | 0 (c00 at 202 Hz is borderline, possibly mixed) |
+| L2 | 6 (5) | 0 | 6 | 1 (c01) |
+| L3 | 2 (2) | 0 | 2 | 1 (c01) |
+
+Reading, UNVERIFIED: the diarizer found 2-6 voice groups in 20 minutes, and the large ones hold 340-520 s of speech in 150-250 turns, far more than one child usually speaks in 20 minutes: these clusters almost certainly merge several children (and the low-pitch ones the teacher with children). The per-turn vote shares (0.08-0.75) and small margins (0.06-0.35 for most) say the same: the turns inside a cluster do not agree on one child. So nothing was suggested at T 6.0; at the looser single-turn threshold one cluster (L3 c00) would have been labelled S24 - exactly the case a teacher must be able to reject. Also unknown: whether the enrolled children were in these lessons at all.
+
+Teacher check (by code only, not in the repo): `C:\Users\Dell\hec-audio-eval\work\teacher-check\` holds `L1\L1_c00.wav` ... `L3\L3_c01.wav` (one 15-20 s sample per matched cluster, stitched from the turns closest to the cluster centroid), `check_sheet.csv` (lesson, cluster, sample, speech s, turns, median F0, adult-pitch flag, suggestion = UNKNOWN for all at T 6.0, score, threshold, margin, vote share, blank `teacher_answer_code_or_adult_or_unknown`, blank notes) and `README.txt`. The teacher's answers ("mixed", "adult", a code) are the first real ground truth for diarization purity and matching. Delete the folder when done (children's audio).
+
+Lesson compute (contaminated): diarization 61-78 s per 20 min (RTF ~0.06), ECAPA on cluster turns 272-949 s per 20 min (it re-embeds up to 60 long turns per cluster; RTF 0.2-0.8 under 4 parallel jobs).
 
 ## 7. Recommended configuration
 
