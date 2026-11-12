@@ -17,7 +17,6 @@ import { Plus, Minus, Sparkles, Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl, getRandomAvatarUrl } from "@/lib/avatars";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { awardPoints } from "@/lib/pointsHelper";
 import { SKILL_CONFIG, BEHAVIOR_CONFIG, CORRECTION_CONFIG } from "@/lib/skillConfig";
 import { soundManager } from "@/lib/soundManager";
@@ -223,7 +222,12 @@ export function BulkPointsDialog({
             <Label className="text-base font-semibold">
               Selected Students ({selectedStudents.length})
             </Label>
-            <ScrollArea className="h-24 rounded-hec-md border border-hec-line p-3 bg-hec-sunken">
+            <div
+              tabIndex={0}
+              role="group"
+              aria-label="Selected students"
+              className="max-h-32 overflow-y-auto rounded-hec-md border border-hec-line p-3 bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+            >
               <div className="flex flex-wrap gap-2">
                 {selectedStudents.map((student) => (
                   <div
@@ -243,7 +247,7 @@ export function BulkPointsDialog({
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           </div>
 
           {/* Category Selection */}
