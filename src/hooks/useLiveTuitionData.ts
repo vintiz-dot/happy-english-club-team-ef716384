@@ -5,36 +5,37 @@ import {
   fetchStudentsInMonth,
   monthBounds,
 } from "@/lib/finance/studentsInMonth";
+import { liveTuitionItem, type LiveTuitionItem } from "@/lib/liveTuitionItem";
 
-interface LiveTuitionItem {
-  id: string;
-  student_id: string;
-  month: string;
-  base_amount: number;
-  discount_amount: number;
-  total_amount: number;
-  recorded_payment: number;
-  finalPayable: number;
-  balance: number;
-  carry_out_credit: number;
-  carry_out_debt: number;
-  carry_in_credit: number;
-  carry_in_debt: number;
-  priorBalance: number;
-  settled_in_month: string | null;
-  status: string;
-  confirmation_status: string;
-  students: {
-    id: string;
-    full_name: string;
-    family_id: string | null;
-    avatar_url: string | null;
-    is_active: boolean;
-  };
-  classes: Array<{ id: string; name: string }>;
-  hasDiscount: boolean;
-  hasSiblings: boolean;
-  discounts: any[];
+export { liveTuitionItem, type LiveTuitionItem };
+
+/**
+ * calculate-tuition-bulk for a set of students, keyed by student id.
+ *
+ * The function caps its input at 200 student ids per request (and can time
+ * out on very large batches), so a roster above that must be chunked -
+ * otherwise the single call returns a non-2xx and the whole tuition tab
+ * errors. The one place the batching lives: the Finance tab and the admin
+ * tuition list (/tuition) both ask through here.
+ */
+export async function fetchBulkTuition(studentIds: string[], month: string): Promise<Map<string, any>> {
+  const BATCH_SIZE = 150;
+  const batches: string[][] = [];
+  for (let i = 0; i < studentIds.length; i += BATCH_SIZE) {
+    batches.push(studentIds.slice(i, i + BATCH_SIZE));
+  }
+
+  // One batch after another, not all at once. Each batch asks
+  // compute-sibling-discounts for the families it has no decision for, and
+  // that function holds one lock per month: batches sent together found it
+  // busy and came back with those families "unresolved".
+  const bulkResults: any[] = [];
+  for (const ids of batches) {
+    const { data, error } = await supabase.functions.invoke("calculate-tuition-bulk", { body: { studentIds: ids, month } });
+    if (error) throw error;
+    bulkResults.push(...((data?.results as any[]) || []));
+  }
+  return new Map<string, any>(bulkResults.map((r: any) => [r.studentId, r]));
 }
 
 /**
@@ -98,31 +99,8 @@ export function useLiveTuitionData(month: string) {
           .map((s) => s.id)
       );
 
-      // Call bulk endpoint in batches. calculate-tuition-bulk caps its input
-      // at 200 student ids per request (and can time out on very large
-      // batches), so a roster above that must be chunked — otherwise the
-      // single call returns a non-2xx and the whole tuition tab errors.
-      const studentIdsToProcess = studentsWithEnrollments.map((s) => s.id);
-
-      const BATCH_SIZE = 150;
-      const batches: string[][] = [];
-      for (let i = 0; i < studentIdsToProcess.length; i += BATCH_SIZE) {
-        batches.push(studentIdsToProcess.slice(i, i + BATCH_SIZE));
-      }
-
-      const batchResultArrays = await Promise.all(
-        batches.map((ids) =>
-          supabase.functions
-            .invoke("calculate-tuition-bulk", { body: { studentIds: ids, month } })
-            .then(({ data, error }) => {
-              if (error) throw error;
-              return (data?.results as any[]) || [];
-            })
-        )
-      );
-
-      const bulkResults = batchResultArrays.flat();
-      const resultMap = new Map<string, any>(bulkResults.map((r: any) => [r.studentId, r]));
+      // Call bulk endpoint in batches (see fetchBulkTuition).
+      const resultMap = await fetchBulkTuition(studentsWithEnrollments.map((s) => s.id), month);
 
       // Map to LiveTuitionItem[]
       const results: LiveTuitionItem[] = [];
@@ -131,30 +109,13 @@ export function useLiveTuitionData(month: string) {
         const data: any = resultMap.get(student.id);
         if (!data || data.error) continue;
 
-        results.push({
-          id: data.invoiceId || `placeholder-${student.id}`,
-          student_id: student.id,
-          month,
-          base_amount: data.baseAmount ?? 0,
-          discount_amount: data.totalDiscount ?? 0,
-          total_amount: data.totalAmount ?? 0,
-          recorded_payment: data.payments?.monthPayments ?? 0,
-          finalPayable: data.totalAmount + (data.carry?.carryInDebt ?? 0) - (data.carry?.carryInCredit ?? 0),
-          balance: (data.carry?.carryOutDebt || 0) - (data.carry?.carryOutCredit || 0),
-          carry_out_credit: data.carry?.carryOutCredit ?? 0,
-          carry_out_debt: data.carry?.carryOutDebt ?? 0,
-          carry_in_credit: data.carry?.carryInCredit ?? 0,
-          carry_in_debt: data.carry?.carryInDebt ?? 0,
-          priorBalance: (data.carry?.carryInCredit ?? 0) - (data.carry?.carryInDebt ?? 0),
-          settled_in_month: data.carry?.settledInMonth ?? null,
-          status: data.invoiceStatus || data.carry?.status || "open",
-          confirmation_status: data.confirmationStatus || "needs_review",
-          students: student,
-          classes: studentClasses.get(student.id) || [],
-          hasDiscount: studentDiscounts.has(student.id),
-          hasSiblings: siblingStudents.has(student.id),
-          discounts: [],
-        });
+        results.push(
+          liveTuitionItem(student, data, month, {
+            classes: studentClasses.get(student.id) || [],
+            hasDiscount: studentDiscounts.has(student.id),
+            hasSiblings: siblingStudents.has(student.id),
+          }),
+        );
       }
 
       return results;

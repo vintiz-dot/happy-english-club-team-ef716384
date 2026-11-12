@@ -188,7 +188,9 @@ function invoiceQuery() {
     neq(k, v) { where.push(`${k} <> ${p(v)}`); return q; },
     lte(k, v) { where.push(`${k} <= ${p(v)}`); return q; },
     in(k, vs) { where.push(vs.length ? `${k} IN (${vs.map((v) => p(v)).join(', ')})` : 'false'); return q; },
-    order(k, o = {}) { order = ` ORDER BY ${k} ${o.ascending === false ? 'DESC' : 'ASC'}`; return q; },
+    // Like PostgREST, a second order() is a further sort key, not a replacement.
+    order(k, o = {}) { order = `${order ? `${order},` : ' ORDER BY'} ${k} ${o.ascending === false ? 'DESC' : 'ASC'}`; return q; },
+    gt(k, v) { where.push(`${k} > ${p(v)}`); return q; },
     limit(n) { limit = ` LIMIT ${Number(n)}`; return q; },
     upsert(v, o = {}) { mode = 'upsert'; payload = Array.isArray(v) ? v[0] : v; conflict = o.onConflict; return q; },
     insert(v) { mode = 'insert'; payload = Array.isArray(v) ? v[0] : v; return q; },
@@ -202,8 +204,13 @@ function invoiceQuery() {
 
 function memoryQuery(table) {
   let rows = fixture[table] || [];
+  // PostgREST rows always carry their id; calculate-tuition-bulk pages by it.
+  rows.forEach((r, i) => { if (r.id == null) r.id = `${table}-${String(i).padStart(6, '0')}`; });
+  let orderKey = null, lim = Infinity;
+  const page = () => { const out = orderKey ? [...rows].sort((a, b) => (String(a[orderKey]) < String(b[orderKey]) ? -1 : String(a[orderKey]) > String(b[orderKey]) ? 1 : 0)) : rows; return out.slice(0, lim); };
   const q = {
-    select() { return q; }, order() { return q; }, or() { return q; }, limit() { return q; },
+    select() { return q; }, order(k) { orderKey = k; return q; }, or() { return q; }, limit(n) { lim = n; return q; },
+    gt(k, v) { rows = rows.filter((r) => String(r[k]) > String(v)); return q; },
     // A filter on an embedded relation ('ledger_accounts.student_id') is left to the fixture.
     eq(k, v) { if (!k.includes('.')) rows = rows.filter((r) => r[k] === v); return q; },
     neq(k, v) { rows = rows.filter((r) => r[k] !== v); return q; },
@@ -217,7 +224,7 @@ function memoryQuery(table) {
     delete() { memoryWrites.push({ table, op: 'delete' }); return q; },
     single() { return Promise.resolve({ data: rows[0], error: null }); },
     maybeSingle() { return Promise.resolve({ data: rows[0] || null, error: null }); },
-    then(done) { return Promise.resolve({ data: rows, error: null }).then(done); },
+    then(done) { return Promise.resolve({ data: page(), error: null }).then(done); },
   };
   return q;
 }
@@ -703,8 +710,15 @@ console.log('\nRound 2 - ONE rule for the paid label, and every writer agrees wi
   for (const f of ['RecordPaymentDialog.tsx', 'QuickPayPanel.tsx', 'BatchPaymentDialog.tsx']) {
     ok(`  ${f} writes by this rule (recorded vs payable; paid / partial / issued)`, dialogRule.test(src(`src/components/admin/${f}`)));
   }
-  ok('  the dialogs\' payable is charge + carry-in debt - carry-in credit (useLiveTuitionData)',
-     /finalPayable:[^\n]*carryInDebt[^\n]*-[^\n]*carryInCredit/.test(src('src/hooks/useLiveTuitionData.ts')));
+  // The row the dialogs read moved to src/lib/liveTuitionItem.ts (T3 round 2):
+  // the function's own carry.payable (monthPayable, above), and for a
+  // function too old to send it, the same sum over the function's figures.
+  // scripts/tuitionRows.test.ts checks both by value.
+  const liveItem = src('src/lib/liveTuitionItem.ts');
+  ok('  the dialogs\' payable is the function\'s carry.payable (liveTuitionItem)',
+     /finalPayable:\s*payableFromFunction\(/.test(liveItem));
+  ok('  and for an older function, charge + carry-in debt - carry-in credit',
+     /\?\?[\s\S]{0,120}data\.totalAmount \+ \(data\.carry\?\.carryInDebt \?\? 0\) - \(data\.carry\?\.carryInCredit \?\? 0\)/.test(liveItem));
   const aiSql = src('supabase/migrations/20261107090000_ai_assisted_admin_actions.sql');
   ok('  ai_action_apply / undo write by this rule too',
      /v_payable := coalesce\(inv\.total_amount, 0\) \+ coalesce\(inv\.carry_in_debt, 0\) - coalesce\(inv\.carry_in_credit, 0\)/.test(aiSql)
