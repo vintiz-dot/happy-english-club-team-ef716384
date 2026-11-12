@@ -1,3 +1,3 @@
 # D2 edge build
 
-Where I am / next step: STEP 1 done. manage-session + bulk-cancel-sessions rewired (edge type check 5/5). Next: scripts/pgtest/session-guard-functions.test.mjs (pglite + real migrations), then full run, then the D3 contract.
+Where I am / next step: function suite 81/0 registered in run.mjs; edge type check 5/5. Next: full run.mjs, then the D3 contract section.
