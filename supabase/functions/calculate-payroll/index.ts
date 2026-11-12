@@ -83,6 +83,22 @@ function indexScheduleVersions(rows: ScheduleVersionRow[] | null | undefined) {
   return byClass;
 }
 
+/**
+ * The status a cancelled lesson carries (public.session_status). Written out
+ * here rather than added to ../_lib/payroll-sessions.ts because that module
+ * answers "which lessons are PAID", and a cancelled lesson is in neither of
+ * its sets; it is priced only to show a teacher what the cancellation cost.
+ */
+const CANCELLED_SESSION_STATUS = "Canceled";
+
+type LostIncome = {
+  sessionsCount: number;
+  totalMinutes: number;
+  totalAmount: number;
+  /** "3 h" or "2 sessions", on the basis of the month's headline rate. */
+  quantityLabel: string;
+};
+
 type SessionRow = {
   id: string;
   date: string; // YYYY-MM-DD
@@ -338,6 +354,14 @@ function computeTotals(
     classes?: { name: string } | null;
     minutes: number;
     amount: number;
+    /**
+     * The rate `amount` was priced at - the one in force on this session's
+     * own date - in the unit `payRateType` names. Reported so a screen can
+     * print it beside the amount instead of printing the staff row's rate
+     * of today, which is a different number after any change of rate.
+     */
+    payRateType: "hourly" | "per_session";
+    rateVnd: number;
     expectedMinutes: number | null;
     varianceMinutes: number | null;
     varianceAmount: number | null;
@@ -401,6 +425,8 @@ function computeTotals(
       classes: classes ? { name: classes.name } : null,
       minutes,
       amount,
+      payRateType: payRateTypeOf(rate),
+      rateVnd: effectiveRateVnd(rate),
       expectedMinutes,
       varianceMinutes,
       varianceAmount,
@@ -487,6 +513,13 @@ Deno.serve(async (req) => {
     const { startDate, nextMonthStart } = monthRange(month);
 
     // Teachers — scope non-admin teachers to their own data only.
+    //
+    // WHO SEES WHOSE PAY. A teacher who is not an admin gets exactly one
+    // row: the teachers row whose user_id is the verified JWT's user. Any
+    // teacherId in the body is ignored for them, and the assistants loop
+    // below runs for admins only. A TA (who holds the 'teacher' role but has
+    // no teachers row) gets 403 here; families and students never pass
+    // requireRole. scripts/pgtest/teacher-payroll.test.mjs holds this.
     //
     // NOT filtered by is_active, deliberately. Archiving or deactivating a
     // teacher must not erase work they have already done: the filter used
@@ -683,8 +716,35 @@ Deno.serve(async (req) => {
       discrepancies: ReturnType<typeof computeTotals>["discrepancies"];
       sessionDetailsActual: ReturnType<typeof computeTotals>["perSession"];
       sessionDetailsProjected: ReturnType<typeof computeTotals>["perSession"];
+      /**
+       * What this month's cancelled lessons would have paid, priced exactly
+       * as a held one would be (the rate in force on each lesson's own
+       * date). Not owed and not part of any total: it is the "Lost Income"
+       * figure on the teacher's own payroll page, which used to price these
+       * lessons in the browser at the staff row's rate of today.
+       */
+      lostIncome: LostIncome;
       staffType?: string;
     }> = [];
+
+    /** Prices the month's cancelled lessons through the same computeTotals. */
+    const lostIncomeFor = (
+      cancelled: SessionRow[] | null | undefined,
+      staff: StaffPayRate,
+      rates: PayRateRecord[],
+      headline: StaffPayRate,
+    ): LostIncome => {
+      const t = computeTotals(cancelled ?? [], staff, versionsByClass, rates);
+      return {
+        sessionsCount: t.perSession.length,
+        totalMinutes: t.totalMinutes,
+        totalAmount: t.totalAmount,
+        quantityLabel: describeQuantity(headline, {
+          sessions: t.perSession.length,
+          minutes: t.totalMinutes,
+        }),
+      };
+    };
 
     for (const t of teachers ?? []) {
       // Actual and projected are defined in ../_lib/payroll-sessions.ts,
@@ -710,6 +770,16 @@ Deno.serve(async (req) => {
         .lt("date", nextMonthStart);
 
       if (projErr) throw projErr;
+
+      const { data: cancelled, error: cancelErr } = await supabase
+        .from("sessions")
+        .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
+        .eq("teacher_id", t.id)
+        .eq("status", CANCELLED_SESSION_STATUS)
+        .gte("date", startDate)
+        .lt("date", nextMonthStart);
+
+      if (cancelErr) throw cancelErr;
 
       const teacherRates = ratesByStaff.get(t.id) ?? [];
       const actual = computeTotals(held ?? [], t, versionsByClass, teacherRates);
@@ -754,6 +824,7 @@ Deno.serve(async (req) => {
         discrepancies: future.discrepancies,
         sessionDetailsActual: actual.perSession,
         sessionDetailsProjected: future.perSession,
+        lostIncome: lostIncomeFor(cancelled, t, teacherRates, headline.rate),
         staffType: "teacher",
       });
 
@@ -780,12 +851,20 @@ Deno.serve(async (req) => {
 
     // Also calculate payroll for Teaching Assistants
     if (isAdmin) {
-      const { data: assistants } = await supabase
+      let aq = supabase
         .from("teaching_assistants")
         // Same reasoning as the teachers query above: an archived TA is
         // still owed for the lessons they assisted before they left.
         .select("id, full_name, hourly_rate_vnd, pay_rate_type, per_session_rate_vnd, is_active")
         .order("full_name");
+      // An admin asking about ONE person gets that person, not that person
+      // followed by every assistant in the school. Callers read
+      // payrollData[0]; with every TA appended, an archived teacher with no
+      // lessons that month (dropped above) made [0] the first TA, and the
+      // teacher's profile showed that TA's pay under the teacher's name.
+      // teacherId may also name an assistant, which this now answers.
+      if (teacherId) aq = aq.eq("id", teacherId);
+      const { data: assistants } = await aq;
 
       for (const ta of assistants ?? []) {
         // Lessons this TA is on, minus the ones they missed. The rule is
@@ -817,6 +896,14 @@ Deno.serve(async (req) => {
           .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
           .in("id", sessionIds)
           .in("status", [...PROJECTED_SESSION_STATUSES])
+          .gte("date", startDate)
+          .lt("date", nextMonthStart);
+
+        const { data: cancelled } = await supabase
+          .from("sessions")
+          .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
+          .in("id", sessionIds)
+          .eq("status", CANCELLED_SESSION_STATUS)
           .gte("date", startDate)
           .lt("date", nextMonthStart);
 
@@ -859,6 +946,7 @@ Deno.serve(async (req) => {
             discrepancies: future.discrepancies,
             sessionDetailsActual: actual.perSession,
             sessionDetailsProjected: future.perSession,
+            lostIncome: lostIncomeFor(cancelled, ta, taRates, headline.rate),
             staffType: "teaching_assistant",
           });
         }
