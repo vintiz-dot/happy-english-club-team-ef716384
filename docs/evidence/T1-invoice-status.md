@@ -81,6 +81,37 @@ Triggers on `invoices` (all of them):
 4. What should happen to a confirmed bill whose figures later change (attendance edit, cancellation, discount) is written nowhere. The code's actual behaviour is the defect: it is silently set back to `auto_approved` / `needs_review` on the next calculation whether or not anything changed, and the fact that it was confirmed survives only in `confirmed_at` / `confirmed_by`, which no screen reads.
 5. A frozen bill (`tuition_frozen`) keeps base / discount / total / class breakdown through the trigger and the function reports the saved figures (`calculate-tuition/index.ts:378-385`) - but its `status` and `confirmation_status` are overwritten like any other bill's.
 
-### e. Reproduction
+### e. Reproduction - THE DEFECT REPRODUCES
 
-(next)
+`scripts/pgtest/invoice-status.test.mjs` drives the real calculate-tuition, calculate-tuition-bulk and confirm-tuition handlers; `invoices` is a real PostgreSQL table (pglite) carrying the real migrations 20251117061416 (CHECK), 20261009120000 (carry trigger), 20261009130000 (audit trigger), 20261106120000 (freeze trigger). Run against the UNCHANGED function (working copy identical to 736264c, `git diff --stat 736264c -- supabase/functions/calculate-tuition/index.ts` empty):
+
+```
+node scripts/pgtest/invoice-status.test.mjs <the four migrations>      => 66 passed, 29 failed
+```
+
+Real output, nothing changed between the confirm / payment and the recalculation:
+
+```
+auto_approved bill: confirm-tuition -> 200, the bill is confirmed by the admin            PASS
+  after recalculation => {"status":"issued","confirmation_status":"auto_approved","total_amount":400000,"recorded_payment":0,"confirmed_at":"set","flags":[]}
+  FAIL recalculated with nothing changed: STILL confirmed
+needs_review bill (10% discount), confirmed, after recalculation
+  => {"status":"issued","confirmation_status":"needs_review","total_amount":360000,"recorded_payment":0,"confirmed_at":"set","flags":["tuition_adjustment"]}
+adjusted, after recalculation => {"status":"issued","confirmation_status":"needs_review",...}            FAIL adjusted stays adjusted
+paid, after recalculation    => {"status":"issued","confirmation_status":"auto_approved","total_amount":400000,"recorded_payment":400000,...}   FAIL STILL paid
+partial, after recalculation => {"status":"issued",...,"recorded_payment":150000,...}                    FAIL STILL partial
+frozen (confirmed, paid), after recalculation => {"status":"issued","confirmation_status":"needs_review","total_amount":810000,"recorded_payment":810000,...}
+cancellation guard predicate after two recalculations of a confirmed, unpaid bill
+  => {"paid_in":false,"by_status":false,"by_confirmation":false,"frozen":false}
+```
+
+So: `confirmed` and `adjusted` are lost on the next call (the row keeps `confirmed_at` / `confirmed_by`, which is how victims can be found), `paid` and `partial` become `issued`, a frozen bill keeps its figures but loses both labels, and an admin-set `credit` becomes `issued`. Money columns are NOT damaged by this: `recorded_payment`, the totals and the carry balances are the same before and after.
+
+**A second defect found by the same suite (worse, rarer).** The current bill is read at `calculate-tuition/index.ts:139-144` and the error is never looked at. If that one read fails (timeout, connection), the function carries on with "no bill", and saves `recorded_payment: 0`:
+
+```
+invoice read fails => 200 {...}
+writes: [{"mode":"upsert","payload":{...,"paid_amount":0,"recorded_payment":0,...,"carry_out_debt":400000,"confirmation_status":"auto_approved",...,"status":"issued"}}]
+```
+
+That erases the month's recorded payment on a bill that was paid 400,000. Fixed below by failing the call (fail closed); listed for the owner because past damage of this kind would look like a payment that vanished.
