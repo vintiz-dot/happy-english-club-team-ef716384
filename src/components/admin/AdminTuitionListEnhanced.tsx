@@ -340,7 +340,7 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
             animate={{ y: 0, opacity: 1 }}
             exit={ivory ? { y: 8, opacity: 0 } : { y: 80, opacity: 0 }}
             transition={ivory ? { duration: 0.24, ease: [0.22, 1, 0.36, 1] } : { type: "spring", stiffness: 260, damping: 26 }}
-            className={iv("fixed bottom-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 pb-[env(safe-area-inset-bottom)]", "fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-2xl")}
+            className={iv("fixed inset-x-4 bottom-4 z-50 mx-auto max-w-2xl pb-[env(safe-area-inset-bottom)]", "fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-2xl")}
           >
             <div className={iv("flex flex-wrap items-center gap-3 rounded-hec-lg border border-hec-line bg-hec-raised px-4 py-3 shadow-hec-2", "surface-2 shadow-q3 ring-1 ring-border rounded-2xl px-4 py-3 flex items-center gap-3 backdrop-blur-md supports-[backdrop-filter]:bg-card/80")}>
               <Checkbox

@@ -354,9 +354,9 @@ export function TuitionBulkDownload({ month }: { month: string }) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Scope</label>
+              <label htmlFor="bulk-dl-scope" className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Scope</label>
               <Select value={scope} onValueChange={(v: Scope) => setScope(v)}>
-                <SelectTrigger>
+                <SelectTrigger id="bulk-dl-scope">
                   <SelectValue placeholder="Select scope" />
                 </SelectTrigger>
                 <SelectContent>
@@ -378,9 +378,9 @@ export function TuitionBulkDownload({ month }: { month: string }) {
 
             {scope === "class" && (
               <div className="space-y-2">
-                <label className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Class</label>
+                <label htmlFor="bulk-dl-class" className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Class</label>
                 <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-                  <SelectTrigger>
+                  <SelectTrigger id="bulk-dl-class">
                     <SelectValue placeholder="Choose a class" />
                   </SelectTrigger>
                   <SelectContent>
@@ -396,9 +396,9 @@ export function TuitionBulkDownload({ month }: { month: string }) {
 
             {scope === "family" && (
               <div className="space-y-2">
-                <label className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Family</label>
+                <label htmlFor="bulk-dl-family" className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Family</label>
                 <Select value={selectedFamilyId} onValueChange={setSelectedFamilyId}>
-                  <SelectTrigger>
+                  <SelectTrigger id="bulk-dl-family">
                     <SelectValue placeholder="Choose a family" />
                   </SelectTrigger>
                   <SelectContent>
