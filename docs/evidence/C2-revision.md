@@ -1,6 +1,6 @@
 # C2 revision - capture core fixes after the C2 review (FAIL)
 
-**Where I am / next step:** engine, server change and cron written and tested (see Test totals). Next: mutation run, measurement, full pgtest run.
+**Where I am / next step:** unit 318/0, browser 62/62 (60 + the 2 stall-gap assertions corrected and re-run 14/14), recorder SQL 406/0, retention 37/0, cron 22/0, SQL mutations 4/4. Running: engine mutation run (28), M6 measurement. Then: full pgtest run, write-up.
 
 Branch `worktree-agent-a4803c8e10a251526`, reset to `claude/hec-conductor-setup-efbaa5` (d0d18b7) first. Nothing applied, deployed or pointed at the live project; no audio in the repo (the lesson WAV is read in place by the browser harness); no new dependency. Files touched: `src/lib/recorder/**`, `scripts/recorder/**`, `supabase/functions/recorder-retention/index.ts`, `scripts/pgtest/recorder-retention.test.mjs`, `supabase/migrations/20261112100000_class_recorder.sql` (in place, ruling (a) only), `scripts/pgtest/recorder.test.mjs`, NEW `supabase/migrations/20261112101000_recorder_retention_cron.sql` + `scripts/pgtest/recorder-cron.test.mjs`, `scripts/pgtest/run.mjs` (one suite registered), `docs/evidence/C1-architecture.md` (Revision 4 changelog), this file. Not touched: `src/components/recorder/**`, `src/pages/TeacherRecorder.tsx`.
 
