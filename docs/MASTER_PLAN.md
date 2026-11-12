@@ -72,7 +72,7 @@ Status: todo / running / review / PASS / FAIL / reverted / blocked-owner. Model 
 | A1 | Plan + critic | fable / fable critic | docs/evidence/A1-plan.md | PASS (fable, 85051bd; conductor read sections 1.3-4 as the critic - no separate critic, see D-8) | docs/evidence/A1-plan.md |
 | A2 | Teacher stability: flipbook, tooltips | opus / fable | TeacherBooks + viewer, SkillButton, LiveEngagementHUD, tooltips in TeacherLeaderboards/SmartUpload/Transcripts | todo | |
 | A3 | Speed | sonnet bundle, opus data / same-or-higher | set in A1 | todo | |
-| A4 | Design system + a11y + dark mode | fable system, opus first screens, sonnet rollout / fable | docs/DESIGN_SYSTEM.md, src/index.css, tailwind.config.ts, student dashboard | todo | HOLD at checkpoint |
+| A4 | Design system + a11y + dark mode | fable system, opus first screens, sonnet rollout / fable | docs/DESIGN_SYSTEM.md, src/index.css, tailwind.config.ts, student dashboard | A4.1 + A4.2 merged; DESIGN CHECKPOINT REACHED - screenshots sent to the owner 2026-11-12; rollout HELD | docs/DESIGN_SYSTEM.md, docs/evidence/A4/ |
 | A5 | Security audit, report only | fable x2 / opus verifier | docs/AUDIT_FINDINGS.md | todo | |
 | B0 | Harness + vendor research + audio prep | opus, sonnet, haiku / fable | scripts/lesson-eval/; docs/evidence/B0-*.md | DONE (opus, 0241f04; scorer tests 26/26 reported; conductor checked no audio or file names in the repo) | docs/evidence/B0-harness.md, B0-vendors.md |
 | B1 | Transcript quality | sonnet runs, opus scorer / fable method | docs/evidence/B1-*.md | todo | vendor rows need Q1 |
@@ -152,11 +152,11 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 | Stream | Units | Done | What is done |
 |---|---|---|---|
 | D money integrity | 18.5 | 9.5 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
-| A overhaul | 12.0 | 6.9 | A0, A1, A2.1, A2.2, A3.1, A3.2, A3.3, A3.4, A4.1, A4.5 (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
+| A overhaul | 12.0 | 7.9 | A0, A1, A2.1, A2.2 (shipped), A3.1, A3.2, A3.3, A3.4, A4.1, A4.2, A4.5 (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
 | B lesson monitor evaluation | 10.5 | 3.7 | vendor research, audio prep, harness, vendor proxy built (deploy running). Left: B1, B2, B2b, B3, report |
 | C class recorder | 8.0 | 1.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **21.6** | **42%** |
+| **Total** | **51.0** | **22.6** | **44%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -246,3 +246,7 @@ Log: 2026-11-12 10:55 - 42% (D3 dialogs merged).
 - 2026-11-12 SHIPPED: A2.2 flipbook fix pushed alone to main as 78659cb (type-check of main + the one file: exit 0). Cloudflare deploys from main. Not verified on the live site: the real provider's book inside the frame.
 - 2026-11-12 Owner signed in through `vendor_run.py --login --whoami`: "signed in" (admin accepted by Supabase auth; the proxy's admin gate is exercised on the first real call).
 - 2026-11-12 FIRST REAL VENDOR CALL (owner ran it): Azure fast-multilingual through `audit-eval-proxy`, two synthetic pieces (191 s and 347 s), both ok, estimated USD 0.15 together. The proxy's admin gate, bucket read, cap reservation, Azure request and normalisation all work end to end. Conductor read the saved result in aggregate only: 298 and 507 words with speaker labels, 5 speakers reported per piece; no per-word confidence or language tag came back. Next: one owner-run batch (sign in once) across all vendors and inputs, then scoring (B1).
+Log: 2026-11-12 - 44% (A4.2 merged; design checkpoint reached).
+
+- 2026-11-12 A4.2 student dashboard restyle merged (opus, 4342df9). DESIGN CHECKPOINT: before/after at 375 and 1280, light and dark, in docs/evidence/A4/ and sent to the owner. Agent's numbers: inside the dashboard and its bottom bar axe reports nothing at any impact; whole page critical 2 -> 1 and serious 2 -> 0 (1 on dark 1280), the remainder in Layout's header (unlabelled icon buttons, one 4.32:1 subtitle); no horizontal overflow; no clipped text incl. the long Vietnamese name at 320; targets under 44 px: 0 in the dashboard, 3 left in the header; requests identical (33), every on-screen number equal, no query/hook/handler line changed; reduced motion honoured. Conductor looked at phone-light and desktop-dark: calm ivory / deep ink, serif name, one brass progress line, the speech bubble no longer covers the name. Open points for the owner: the level title shows twice in the hero; the mascot greets by the FAMILY name ("Hey Nguyễn"); the purple assistant button (Layout) sits over the hero; the bottom tab reads "Home" here and "Dashboard" elsewhere until rollout; the larger "young" scale is decided from date of birth. HELD: nothing from A4.1/A4.2 goes to main and no other screen is restyled until the owner approves (Q3).
+- INCIDENT 2026-11-12 ~11:30: part of the SHARED node_modules in the main checkout was deleted (scoped folders from the start of the alphabet up to @electric-sql, including @dnd-kit and @electric-sql/pglite). Cause not established; the pattern matches a recursive delete that followed a worktree's node_modules junction. Effect: type checks failed with missing @dnd-kit, and any pgtest run in that window would have failed to load pglite. Conductor ran `npm install` in the main checkout (11 packages restored, `npm ls` clean, no tracked file changed). Running agents were told to re-run anything that failed in that window and reminded to remove their link ONLY with `cmd //c rmdir node_modules`.
