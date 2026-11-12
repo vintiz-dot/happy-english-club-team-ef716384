@@ -1,6 +1,6 @@
 # S1 security fixes (F-01, F-14, F-15, F-16, F-21, F-02)
 
-**Where I am / next step:** 13 Nov 2026. COMPLETE for this batch: F-01, F-14, F-15, F-16, F-21 (five migrations) and F-02 (nine functions) are built, tested and written up below. `node scripts/pgtest/run.mjs` and `tsc --noEmit -p tsconfig.app.json` are green. Next step is the owner's: the decisions table at the end. Then the conductor applies each migration and deploys the nine functions.
+**Where I am / next step:** 13 Nov 2026. COMPLETE for this batch: F-01, F-14, F-15, F-16, F-21 (five migrations) and F-02 (nine functions) are built, tested and written up below. `node scripts/pgtest/run.mjs`: 4198 assertions across 47 suites, 0 failed (it includes the app type check, `tsc --noEmit -p tsconfig.app.json`, and the edge-function type check). The exact steps for applying are in `docs/evidence/S1-live-apply-brief.md`. Next step is the owner's: the decisions table at the end. Then the conductor applies each migration and deploys the nine functions.
 
 Build and test only. **Nothing here has been applied to live, deployed or pushed.** The live database was read read-only (catalog, aggregate counts). No row about a person was selected; no secret was read.
 
