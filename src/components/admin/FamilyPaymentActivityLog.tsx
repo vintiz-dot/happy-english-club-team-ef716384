@@ -202,9 +202,9 @@ export function FamilyPaymentActivityLog({ selectedMonth }: FamilyPaymentActivit
                     <CollapsibleTrigger asChild>
                       <Button
                         variant="ghost"
-                        className={iv("w-full justify-between gap-3 whitespace-normal rounded-none p-4 h-auto text-left hover:bg-hec-sunken/60", "w-full justify-between p-4 h-auto hover:bg-muted/50")}
+                        className={iv("w-full flex-wrap justify-between gap-3 whitespace-normal rounded-none p-4 h-auto text-left hover:bg-hec-sunken/60", "w-full justify-between p-4 h-auto hover:bg-muted/50")}
                       >
-                        <div className={iv("flex min-w-0 items-start gap-3", "flex items-center gap-3")}>
+                        <div className={iv("flex min-w-0 flex-1 basis-48 items-start gap-3", "flex items-center gap-3")}>
                           <div className={ivory ? `h-10 w-10 shrink-0 rounded-full border flex items-center justify-center ${
                             summary.isComplete ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf" : "border-hec-warn/30 bg-hec-warn-tint text-hec-warn"
                           }` : `h-10 w-10 rounded-full flex items-center justify-center ${
@@ -219,7 +219,7 @@ export function FamilyPaymentActivityLog({ selectedMonth }: FamilyPaymentActivit
                             </div>
                           </div>
                         </div>
-                        <div className={iv("flex shrink-0 items-center gap-3", "flex items-center gap-3")}>
+                        <div className={iv("ml-auto flex shrink-0 items-center gap-3", "flex items-center gap-3")}>
                           <div className="text-right">
                             <div className={iv("whitespace-nowrap font-semibold text-hec-ink tabular-nums", "font-semibold")}>{formatVND(summary.totalPayment)}</div>
                             <div className={iv("text-hec-caption font-normal text-hec-ink-soft tabular-nums", "text-xs text-muted-foreground")}>

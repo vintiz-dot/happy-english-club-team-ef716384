@@ -215,10 +215,10 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col gap-3 min-h-0">
+        <div className={iv("flex-1 overflow-y-auto flex flex-col gap-3 min-h-0 -mx-2 px-2", "flex-1 overflow-hidden flex flex-col gap-3 min-h-0")}>
           {tuitionMonth.field}
           {/* Global controls - collapsible row */}
-          <div className={iv("shrink-0 grid grid-cols-1 min-[400px]:grid-cols-2 gap-3", "shrink-0 grid grid-cols-2 gap-3")}>
+          <div className="shrink-0 grid grid-cols-2 gap-3">
             <div className={iv("min-w-0 space-y-2", "space-y-1")}>
               <Label htmlFor="batch-payment-date" className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Date</Label>
               <Input id="batch-payment-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={iv("", "h-8")} />
@@ -259,7 +259,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
           <Separator className="shrink-0" />
 
           {/* Student list - takes remaining space */}
-          <div className="flex-1 min-h-0 overflow-y-auto -mx-2 px-2 pb-1">
+          <div className={iv("shrink-0 pb-1", "flex-1 min-h-0 overflow-y-auto -mx-2 px-2 pb-1")}>
             <div className="space-y-2">
               {items.map((item) => {
                 const studentName = item.students?.full_name || "Student";
@@ -348,7 +348,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
 
           {/* Summary bar */}
           {totalPayment > 0 && (
-            <div className={iv("shrink-0 border-t-2 border-hec-ink pt-3 flex flex-wrap items-baseline justify-between gap-2", "shrink-0 rounded-lg bg-primary/5 border border-primary/20 p-2.5 flex items-center justify-between")}>
+            <div className={iv("sticky bottom-0 z-10 shrink-0 bg-hec-raised border-t-2 border-hec-ink pt-3 pb-1 flex flex-wrap items-baseline justify-between gap-2", "shrink-0 rounded-lg bg-primary/5 border border-primary/20 p-2.5 flex items-center justify-between")}>
               <span className={iv("text-hec-body font-medium text-hec-ink", "text-sm font-medium")}>
                 Total: <span className={iv("whitespace-nowrap font-sans text-hec-h3 font-semibold text-hec-ink tabular-nums", "text-primary font-bold")}>{fmt(totalPayment)}</span>
               </span>
