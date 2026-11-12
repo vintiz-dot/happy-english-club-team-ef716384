@@ -2,6 +2,20 @@
 
 Task C1 of `docs/MASTER_PLAN.md`. Author: Fable 5.2, 2026-11-11. Branch `worktree-agent-acf51c46cb0eb722c`.
 
+## Revision 1 (2026-11-12) - after the C1 critic (`docs/evidence/C1-critic.md`)
+
+The migration was never applied, so it was edited in place. Evidence and the mutation run: `docs/evidence/C1-revision.md`. What changed, by finding:
+
+- **F1 (evidence was the laptop's claim).** `started_at` / `ended_at` are now the server's clock at the start/stop transitions; the laptop's times are kept only as `client_started_at` / `client_ended_at`. A chunk is refused at registration unless its span is at most one chunk (+ tolerance), it has at least the format's byte floor (`min_bytes_per_sec_*`), it ends no later than the server's clock allows (`clock_timestamp() - started_at` + tolerance), not after Stop, and not after the capture window. `complete` additionally requires every confirmed chunk to still be in storage at its confirmed size, no overlap between consecutive chunks of a track, and no chunk ending after the server's start-to-stop span. The view dropped `confirmed_audio_ms` for `claimed_audio_ms` (a claim), `server_capture_ms`, `stored_bytes`, `verified_audio_ms`, `verified_lesson_ms`, `held_threshold_ms`, and the strict **`counts_as_held_evidence`**, which D reads (section 7).
+- **F2 (cover teacher read the whole class).** "May record" and "may listen" are split. Recording: admin, standing teacher (default / timetable), or the teacher of THAT session. Listening (rows, parts, files): admin, standing teacher, or the teacher of the recording's own session. The -7/+60-day tier is gone; class-level reads (switch, missing count, switch-off) need a lesson of the class TODAY.
+- **F3.** Per-child consent must be under the CURRENT wording, in the one shared count; a wording change switches every class off at once.
+- **F4.** `session_id` can go NULL only through the foreign key once the session row is gone; `armed_session_id` (immutable, NOT NULL) keys the one-live-recording index and the cancel trigger.
+- **F5.** Capture window enforced by the server: `capture_opens_at = start - pre_roll (5)`, `capture_closes_at = end + grace (10)`, snapshot at arming. `max_overrun_minutes` is removed; grace is the one overrun number. Arming may still happen 20 minutes early (it is only a row).
+- **F6.** `SET row_security = off` on every function that reads `storage.objects`; the DELETE trigger re-checks storage. If the owner cannot see storage, they raise.
+- **F8-F15.** After-Stop audio refused; a child enrolled without consent switches the class off; a cancelled lesson abandons armed and stops running recordings; deletion attribution, stop reason and device profile are server-checked; `recorder_is_class_teacher` is no longer executable by signed-in users; the started-by read arm is open-recordings-only and rows-only; sample rate capped at 48 kHz; no admin DELETE policy on the bucket.
+
+Sections 0, 3, 4, 5.5, 6, 7, 8 and 9.1 below are updated to match; where an older sentence survives it is marked "(rev. 1)".
+
 Deliverables:
 
 - this document (the contract for C2 capture core, C3 UI, C4 tests, C5 runbook, and for D1);
