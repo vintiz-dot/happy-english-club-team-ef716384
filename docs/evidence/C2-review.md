@@ -8,7 +8,7 @@ Reviewed at `05c5184` (claude/hec-conductor-setup-efbaa5), fresh context. Baseli
 
 Why FAIL: the brief's rule is "any path that loses audio silently". Three were reproduced (B1, B2, B3). No privileged key is used in the browser and no teacher can upload or read another teacher's audio through the server; those two FAIL conditions are not met.
 
-Counts: 4 BLOCKER, 7 MAJOR, 9 MINOR.
+Counts: 4 BLOCKER, 8 MAJOR, 9 MINOR.
 
 ## BLOCKER (all four before any lesson with real children)
 
@@ -24,7 +24,7 @@ Fix: make `serverNow()` monotonic: at each `measureClock()` store `serverAtMeasu
 
 **B3. Chunks cut while the start request is in flight are dropped without a word, and the rest of the recording cannot complete.**
 `controller.ts:592` (`onRawChunk` returns when `!startedAtServer`), :585 (`onSegment` the same), :516 (t0 = frame at SEND) vs the server stamping `started_at` at ARRIVAL.
-Evidence (probe P1, run three times, same result twice; the first run differed and is not explained): start held 25 s with 10 s chunks -> chunks 0 and 1 never stored, no error event for them; server rows are seq 2,3,4; because the whole timeline now sits 25 s ahead of the server, chunks are delayed by `ahead_of_server_clock` retries and the last two are refused `after_stop`; recording stuck in `uploading`. supabase-js has no request timeout, so a stalled connection at the start of a lesson is enough. In production (30 s chunks) it needs a start slower than 30 s to drop a chunk, and slower than 15 s (clock tolerance) to shift the timeline into refusals.
+Evidence (probe P1, run three times, same result twice; in the first run the probe played its audio before the engine had opened the microphones - the probe's own 50 ms wait lost a race on a loaded machine - so the start was not in flight and nothing was dropped; that is my reading of it, not something I isolated): start held 25 s with 10 s chunks -> chunks 0 and 1 never stored, no error event for them; server rows are seq 2,3,4; because the whole timeline now sits 25 s ahead of the server, chunks are delayed by `ahead_of_server_clock` retries and the last two are refused `after_stop`; recording stuck in `uploading`. supabase-js has no request timeout, so a stalled connection at the start of a lesson is enough. In production (30 s chunks) it needs a start slower than 30 s to drop a chunk, and slower than 15 s (clock tolerance) to shift the timeline into refusals.
 Fix (smallest): when the start answer arrives more than 5 s after it was sent, re-anchor: `chunker.reset(); chunker.setT0(source.lastFrame)` before setting `startedAtServer`, and emit an error saying how many seconds of pre-roll were not kept. Add an `AbortController` timeout (10 s) to the start call so it retries from `tick()` instead of hanging. Never `return` silently in `onRawChunk`/`onSegment`: emit an error. Test: P1.
 
 **B4. One failed Stop call is permanent: the lesson never becomes `complete`, and after the first error nothing says so.**
@@ -61,6 +61,8 @@ Fix: C3 must not offer it for lessons with real children until the owner decides
 `controller.ts:594` (`encodePcmChunk` inside the worklet-port message handler); `chunker.ts:91` emits teacher and room in the same call. See item 8 below. Besides jank, a block longer than 1 s makes `onAudioTick` (:399-409) see `wall - audio > 1000` on the delayed tick and write a FALSE `context_stall` discontinuity and `gap` marker (the author measured 1.79 s for one chunk under load; two run consecutively).
 
 **M7. Retention has no schedule.** See item 5 below.
+
+**M8. Five guards have no test that can fail** (mutation run, item 7): the read-back checksum compare, the manifest read-back compare, the server's `late` flag, the typed word for Discard, and registration in seq order. The first is the only thing that proves stored audio is the recorded audio (the server compares the hash the page reports, not the object). Add one case each; the fake server already has `corruptDownload()`.
 
 ## MINOR
 
@@ -129,7 +131,26 @@ The browser suite and Chrome's fake devices: there are three fake inputs with di
 
 Mutation run (16 mutants, each a throwaway copy of the engine under `.probe/m/`, `unit.test.mjs` run against it):
 
-MUTATION_TABLE
+| # | Mutant | Result | What noticed |
+|---|---|---|---|
+| 01 | store deletes bytes of unconfirmed chunks | caught | "only confirmed bytes are deleted", "unconfirmed bytes stay" |
+| 02 | confirmed bytes deleted before the recording is complete | caught, by one unrelated assertion | "the row is abandoned; the local audio is kept" - nothing asserts bytes are still held while a healthy recording is uploading |
+| 03 | local bytes deleted after upload, before the read-back confirm | caught, by the same single assertion | as 02 |
+| 04 | **read-back checksum not compared** (`uploader.ts:176`) | **SURVIVED** 195/0 | nothing. The fake has `corruptDownload()` and no test uses it |
+| 05 | wrong sequence on resume | caught | the reload case (3 assertions) |
+| 06 | echoCancellation requested true | caught | constraints case |
+| 07 | read-back never reports a flag left on | caught | "a flag left on is reported" |
+| 08 | bucket constant changed | caught | the two bucket assertions (then the run crashed) |
+| 09 | **server's `late` flag ignored** (`uploader.ts:165`) | **SURVIVED** 195/0 | nothing: the 12-minute-offline case is satisfied by the page's own confirm-time rule at :188 |
+| 10 | FLAC frame CRC-16 wrong | caught, by a crash | the suite's own decoder throws and the run dies with no summary - make it an assertion |
+| 11 | FLAC header CRC-8 wrong | caught, by a crash | as 10 |
+| 12 | **manifest read-back not compared** (`controller.ts:816`) | **SURVIVED** 195/0 | nothing |
+| 13 | **discard without the typed word** (`controller.ts:367`) | **SURVIVED** 195/0 | `discardLocal` has no test |
+| 14 | scheduled stop sent 15 min after the window | caught | "the scheduled stop lands inside the window" |
+| 15 | server's abandoned answer to Stop not reported | caught | the late-Stop case |
+| 16 | **chunks registered newest first** (`uploader.ts:136`) | **SURVIVED** 195/0 | nothing asserts registration order, although "never leave a hole" depends on it |
+
+11 caught (2 of them only by an incidental assertion, 3 by crashing the run), 5 survived. The survivors are M8.
 
 ### 8. CPU
 Encoding is on the main thread, not in a Worker or the worklet (`controller.ts:594`). Per 30 s the page does two encodes back to back (author's numbers: 0.61 s mean, 1.79 s max each under load), i.e. a main-thread block of roughly 1.2 s typical and up to ~3.6 s, every 30 seconds, plus two SHA-256 passes (async, off-thread in WebCrypto) and the per-batch float->int16 and level meter.
@@ -141,7 +162,8 @@ Recommendation: move `encodePcmChunk` + the hash into a dedicated Worker (pure f
 ## What must land when
 
 Before a first supervised test lesson with real children: B1, B2, B3, B4 (each with its probe turned into a unit case); M2's purge-after-complete; M5 (do not offer the backup); m1. And two written conditions: one teacher per browser profile until M1 lands; the recorder in its own window until M6 lands.
-Can follow: M1 (before a second teacher uses the laptop), M3, M4 + ruling (b), M6 (Worker), M7 cron (before the first `delete_after`), ruling (a) (before recordings count as evidence), m2-m9, the missing tests in item 7.
+Also before the first lesson, because it is cheap and it guards the integrity claim: the checksum test of M8 (mutant 04).
+Can follow: M1 (before a second teacher uses the laptop), M3, M4 + ruling (b), M6 (Worker), M7 cron (before the first `delete_after`), the rest of M8, ruling (a) (before recordings count as evidence), m2-m9, the missing tests in item 7.
 
 ## Checked and found sound
 - No local chunk is deleted before the server's read-back confirm AND `complete` (one call site; store refuses unconfirmed).
