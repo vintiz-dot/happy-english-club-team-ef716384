@@ -152,11 +152,11 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 | Stream | Units | Done | What is done |
 |---|---|---|---|
 | D money integrity | 18.5 | 10.5 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
-| A overhaul | 12.0 | 7.9 | A0, A1, A2.1, A2.2 (shipped), A3.1, A3.2, A3.3, A3.4, A4.1, A4.2, A4.5 (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
+| A overhaul | 12.0 | 8.9 | A0, A1, A2.1, A2.2 (shipped), A2.3, A3.1-A3.4, A4.1, A4.2, A4.5 merged; release 1 being gated. Left: A3.5-A3.7, A4.3, A4.4, rollout, A5 |
 | B lesson monitor evaluation | 10.5 | 3.7 | vendor research, audio prep, harness, vendor proxy built (deploy running). Left: B1, B2, B2b, B3, report |
 | C class recorder | 8.0 | 2.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **24.6** | **48%** |
+| **Total** | **51.0** | **25.6** | **50%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -257,3 +257,7 @@ Log: 2026-11-12 - 48% (D ship fixes merged).
 
 - 2026-11-12 D ship fixes merged (opus, fef8b01). F-1: the preview is one read-only RPC; it calls neither calculate-tuition nor calculate-payroll (the pay line is dropped because calculate-payroll upserts payroll_summaries when called); a test reproduces the review's probe with calculate-tuition's real upsert: zero invokes, bills byte-identical, tier stays 3, no bill created for a far month. F-2: 7 non-admin callers x 20 actions all 401/403 with zero reads/writes/RPCs. Mutants: functions 27/27, SQL 18/18, plus 10 new, all caught. Agent's full run 2525/35/0; conductor's own full run in progress. Left by ruling for D4: F-11, F-13, a lesson created already Held, and the bill of a child whose mark was moved to another child. The agent says its mutation runner PROBABLY caused the node_modules deletion (an rmSync over a leftover junction after the restart); not provable from logs; the runner is fixed.
 - 2026-11-12 PRE-APPLY PROBES on live (read-only, conductor): statement_timeout is 8 s for authenticated and authenticator, 3 s for anon (a 50-lesson bulk took 0.84 s in pglite, so the cap of 50 has room); the 30-day attendance window in audit_log is 1401 rows, 985 kB (small); no session_held_evidence function, no session_cancel_overrides table and no guard trigger exist yet; current triggers on sessions: audit_sessions, cta_new_session, trg_attendance_after_session_ins, trg_cancel_session_excused, update_sessions_updated_at, validate_session_status_trigger.
+Log: 2026-11-12 - 50% (A2.3 merged).
+
+- 2026-11-12 A2.3 merged (opus, 95b6159): one hook (useFullscreenContainer / useOverlayContainer) subscribes to fullscreenchange and gives every overlay primitive its portal container; tooltips open on tap on coarse pointers; native title hints replaced; the HUD debounces invalidation. Script: 28 PASS / 70 FAIL -> 114 PASS / 18 FAIL, the 18 being the flipbook checks fixed separately by A2.2 (already on main). Overlays visible in fullscreen 12/24 -> 39/0; neutrality group 27/0 (with nothing fullscreen every overlay still portals to document.body, pixel-identical); click-through writes identical; HUD burst of 5 events 20 queries -> 4. Conductor read the hook and the dialog primitive diff: with nothing fullscreen the container is undefined and Radix behaves as before. Leftover: after Escape closes a student action popover the chip tooltip stays open (about 20 idle re-renders a minute, no extra queries). The agent also edited the shared test script and added alert-dialog and sheet.
+- A RELEASE 1 (speed + stability; no design, no D): a sonnet agent assembles A3.1, A3.2, A3.3, A3.4, A4.5 and A2.3 on top of origin/main with a per-file leak check against held work, runs G1, G3-G6 and the teacher regression script, and fills the After column. Brief: docs/evidence/A-release-1-brief.md. The conductor pushes after reading the result.
