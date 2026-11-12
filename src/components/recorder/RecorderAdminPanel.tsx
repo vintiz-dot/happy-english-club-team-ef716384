@@ -74,7 +74,7 @@ export function RecorderAdminPanel() {
   return (
     <section aria-labelledby="rec-admin-h" className="space-y-4">
       <div className="space-y-1">
-        <h2 id="rec-admin-h" className="text-2xl font-semibold">Class recorder</h2>
+        <h2 id="rec-admin-h" className="text-2xl font-semibold">Recorder admin</h2>
         <p className="text-muted-foreground">Recording is off for every class until you switch it on here. Recordings are kept {settings.data?.retentionDays ?? 30} days, then deleted by themselves.</p>
       </div>
       <Tabs defaultValue="classes">
