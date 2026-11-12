@@ -121,31 +121,34 @@ The setup wizard (C3) must end with a stored profile and proof that the two inpu
 
 | Moment | Rule | Default | Where enforced |
 |---|---|---|---|
-| Arm | Insert the `class_recordings` row (status `armed`). The server checks everything in section 4 at this moment. | from 20 min before start (`arm_window_minutes`) | trigger **[tested]** "Too early" |
-| Start capture | Automatically at start - 5 min (`pre_roll_minutes`) | 5 | page; server only requires start >= arming |
-| Stop | Automatically at scheduled end + grace, or the teacher's Stop | grace 10 min (`grace_minutes`) | page |
-| Hard limit | No audio later than scheduled end + overrun, whatever the page does | 30 min (`max_overrun_minutes`) | `max_duration_ms` fixed at arming; chunks beyond it are refused **[tested]** |
-| Manual start | "Record now" is the same insert; allowed any time from arm-window-open until the scheduled end | - | trigger **[tested]** "Too late" after the end |
-| Manual extend | "Keep recording" moves the page's stop up to the hard limit, in 10-minute steps | - | page; hard limit above |
+| Arm | Insert the `class_recordings` row (status `armed`). The server checks everything in section 4 at this moment. Arming is only a row: no audio is accepted while armed. | from 20 min before start (`arm_window_minutes`) | trigger **[tested]** "Too early" |
+| Start capture | `armed -> recording`, at start - 5 min (`pre_roll_minutes`) | 5 | **server (rev. 1)**: refused before `capture_opens_at = scheduled_start - pre_roll`; `started_at` is the server's clock **[tested]** |
+| Stop | At scheduled end + grace, or the teacher's Stop | grace 10 min (`grace_minutes`) | page; `ended_at` is the server's clock, never later than `capture_closes_at` **[tested]** |
+| Hard limit | No audio later than `capture_closes_at = scheduled_end + grace` (+ 15 s tolerance), whatever the page does | the grace setting; there is no separate overrun any more (rev. 1) | `recorder_register_chunk` refuses `started_at + t_end_ms` past it, even while still `recording` **[tested]** |
+| Manual start | "Record now" is the same insert; allowed any time from arm-window-open until the scheduled end; capture still waits for pre-roll | - | trigger **[tested]** "Too late" after the end |
+| Manual extend | "Keep recording" moves the page's stop up to the hard limit | - | page; hard limit above |
 
-Why 10 minutes' grace: lessons overrun and the goodbye is part of the lesson; ten minutes covers that without recording the next group at length. It is a setting (`recorder_settings`).
+Both the pre-roll and the grace are snapshot onto the recording at arming (`capture_opens_at`, `capture_closes_at`, immutable **[tested]**), so a later settings change cannot widen a recording's window.
+
+Why 10 minutes' grace: lessons overrun and the goodbye is part of the lesson; ten minutes covers that without recording the next group at length. It is a setting (`recorder_settings.grace_minutes`, 0-30, default 10).
 
 **Cancelled or rescheduled meanwhile.**
 
 - Cancelled BEFORE arming: the insert is refused **[tested]**.
-- Cancelled AFTER arming or during capture: the page sees it on its next 60 s read, stops, and finishes with `stop_reason = 'session_canceled'`. The audio already captured is uploaded, not discarded: "a lesson was being recorded when someone cancelled it" is exactly the fact workstream D needs (7). An admin can delete it (6.6).
+- Cancelled AFTER arming or during capture: a trigger on `sessions` (rev. 1) abandons an armed recording of that lesson (`abandon_reason = 'session_canceled'`) and stamps `stop_requested_at` on a running one **[tested]**; the page sees it on its next read, stops, and finishes with `stop_reason = 'session_canceled'` (accepted only because the server asked it to stop). The audio already captured is uploaded, not discarded: "a lesson was being recorded when someone cancelled it" is exactly the fact workstream D needs (7). An admin can delete it (6.6).
 - Time changed: the window is fixed at arming (`scheduled_start/end` are snapshots and immutable **[tested]**). The page abandons the armed row and arms again for the new time. If the lesson is already being recorded, it carries on under the old window.
 - Session row deleted: the nightly rebuild deletes Scheduled, non-manual sessions dated today or later that no longer match the template (`supabase/functions/schedule-sessions/index.ts:728-746`), and it runs at 02:00 UTC = 09:00 Hanoi (`supabase/migrations/20261110160000_schedule_runner_and_nightly_rebuild.sql:27-38`), i.e. possibly during a morning lesson. So `class_recordings.session_id` is `ON DELETE SET NULL` and the recording keeps the class, date and window it was armed with **[tested]**. A restrictive foreign key here would have broken the rebuild.
 
 **Back-to-back lessons (B starts when A ends).** A recording holds the voices of ONE class. Rule: A stops at `min(A.end + grace, B.start)`; B starts at `max(B.start - pre_roll, A's stop)`. So when B follows A directly, A gets no grace, B gets no pre-roll, and the handover is at the timetable boundary. Children of class A are never stored under class B's consent. "B" means the next session today that this laptop's teacher teaches. (A different teacher's class walking into the same room is a room rule for the runbook, not something the laptop can know.)
 
-The database also refuses two live recordings of one session (`class_recordings_one_live_per_session`, partial unique index - deliberately not an upsert target) **[tested]**.
+The database also refuses two live recordings of one session (`class_recordings_one_live_per_session`, a partial unique index on the immutable `armed_session_id` - deliberately not an upsert target; nothing names it in an ON CONFLICT) **[tested]**. Since rev. 1 the recorder cannot detach a recording from its session to get round it **[tested]**.
 
 **Clock skew.** The laptop's clock is not trusted for anything that grants permission:
 
 - Whether a lesson may be armed is decided by the database clock at insert.
 - For its own timers the page measures `offset = server - local` with `recorder_server_time()` (midpoint of the round trip), at load and every 10 minutes, and schedules on corrected time. If `|offset| > 5 s` it shows a notice; if it cannot reach the server it does not arm.
-- `started_at` / `ended_at` are the laptop's claim clamped between things the server saw: not before `armed_at`, not after "now", not after the hard limit **[tested]**.
+- `started_at` / `ended_at` are the SERVER's clock at the start and stop transitions (rev. 1); the laptop's claims are kept in `client_started_at` / `client_ended_at` for information and are never evidence **[tested]**.
+- A chunk's position (`t_end_ms`) may not run ahead of `clock_timestamp() - started_at` by more than `clock_tolerance_seconds` (15): audio cannot be registered before it could have been captured **[tested]**.
 - Positions inside the recording never use the wall clock at all (5.3).
 
 **Arming needs the network.** Deliberate: the consent check is on the server, so with no connection the answer is "no" (fail closed). Once armed, capture and local queueing need no network; upload resumes when it returns.
