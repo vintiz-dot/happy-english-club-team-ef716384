@@ -1959,10 +1959,10 @@ All colors MUST be HSL.
 
 /* ---- Boards opt out (A4.6, DESIGN_SYSTEM s.17). The old token values are
    re-declared on [data-hec-board] by the :root / .dark blocks at the top of
-   this file; here the two inherited properties the scope sets go back to
-   what the page gave a board before. ---- */
+   this file; here the font the scope sets on <html> goes back to the old
+   stack. (Colour is left to inherit: the frame around every board sets
+   its own, and forcing one here changed two elements.) ---- */
 [data-hec-theme="ivory"] [data-hec-board] {
-  color: hsl(var(--foreground));
   font-family: var(--font-sans);
 }
 

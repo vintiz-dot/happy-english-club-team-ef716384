@@ -22,6 +22,7 @@
  * remount.
  */
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { MotionConfig } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { BoardStyle } from "./types";
 
@@ -125,7 +126,11 @@ export function BoardFrame({
     >
       {/* Until the first measurement the board would render at full size
           and blow out the layout for a frame, so it waits. */}
+      {/* The app shell asks framer-motion to follow the device's reduced-motion
+          setting; a board already does that itself (its `motion` prop), so it
+          keeps its own rule and moves exactly as before. */}
       {scale > 0 && (
+        <MotionConfig reducedMotion="never">
         <div
           className="absolute left-1/2 top-1/2"
           style={{
@@ -137,6 +142,7 @@ export function BoardFrame({
         >
           {children}
         </div>
+        </MotionConfig>
       )}
     </div>
   );
