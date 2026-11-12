@@ -1,5 +1,5 @@
 {
- "when": "2026-11-12T00:42:47.835Z",
+ "when": "2026-11-12T00:44:43.231Z",
  "base": "vite dev server, fake client (NOT production)",
  "screens": {
   "student-dashboard": {
@@ -3702,6 +3702,384 @@
       11199
      ],
      "requests": 30
+    }
+   }
+  },
+  "parent-view": {
+   "route": "/family/dashboard",
+   "role": "family",
+   "boardStyle": null,
+   "runs": {
+    "375-light": {
+     "fmrMs": 954.5999999642372,
+     "requests": 78,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 4,
+      "from:announcement_dismissals": 1,
+      "from:students": 6,
+      "from:chat_conversations": 1,
+      "from:profiles": 1,
+      "from:teachers": 1,
+      "from:student_learning_profiles": 12,
+      "from:student_points": 12,
+      "from:attendance": 12,
+      "from:enrollments": 12,
+      "from:lesson_overviews": 12
+     },
+     "scrollWidth": 383,
+     "clientWidth": 375,
+     "overflow": true,
+     "offenders": [
+      "div.gemini-glow-1.absolute.-top-36 right=530",
+      "div.gemini-glow-2.absolute.-bottom-44 right=400",
+      "div.gemini-glow-3.absolute.top-1/3 right=901",
+      "div.flex.items-center.gap-2 right=383"
+     ],
+     "text": 1037,
+     "path": "/family/dashboard",
+     "idleMs": 2281.399999976158,
+     "errors": [],
+     "axe": {
+      "rules": 3,
+      "nodes": 4,
+      "byImpact": {
+       "critical": 1,
+       "moderate": 2
+      },
+      "top": [
+       "button-name(critical,2)",
+       "heading-order(moderate,1)",
+       "region(moderate,1)"
+      ]
+     },
+     "shot": "parent-view-375-light.png",
+     "fmrMedianMs": 777,
+     "idleMedianMs": 1816,
+     "fmrAll": [
+      955,
+      777,
+      745
+     ],
+     "idleAll": [
+      2281,
+      1792,
+      1816
+     ],
+     "requestsAll": [
+      78,
+      78,
+      78
+     ]
+    },
+    "375-dark": {
+     "fmrMs": 732.6999999880791,
+     "requests": 78,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 4,
+      "from:announcement_dismissals": 1,
+      "from:students": 6,
+      "from:chat_conversations": 1,
+      "from:profiles": 1,
+      "from:teachers": 1,
+      "from:student_learning_profiles": 12,
+      "from:student_points": 12,
+      "from:attendance": 12,
+      "from:enrollments": 12,
+      "from:lesson_overviews": 12
+     },
+     "scrollWidth": 383,
+     "clientWidth": 375,
+     "overflow": true,
+     "offenders": [
+      "div.gemini-glow-1.absolute.-top-36 right=532",
+      "div.gemini-glow-2.absolute.-bottom-44 right=400",
+      "div.gemini-glow-3.absolute.top-1/3 right=902",
+      "div.flex.items-center.gap-2 right=383"
+     ],
+     "text": 1037,
+     "path": "/family/dashboard",
+     "idleMs": 1836.2999999523163,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 13,
+      "byImpact": {
+       "critical": 1,
+       "serious": 1,
+       "moderate": 2
+      },
+      "top": [
+       "button-name(critical,2)",
+       "color-contrast(serious,9)",
+       "heading-order(moderate,1)",
+       "region(moderate,1)"
+      ]
+     },
+     "shot": "parent-view-375-dark.png",
+     "fmrMedianMs": 733,
+     "idleMedianMs": 1836,
+     "fmrAll": [
+      733
+     ],
+     "idleAll": [
+      1836
+     ],
+     "requestsAll": [
+      78
+     ]
+    },
+    "768-light": {
+     "fmrMs": 882.6999999880791,
+     "requests": 78,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 4,
+      "from:announcement_dismissals": 1,
+      "from:students": 6,
+      "from:chat_conversations": 1,
+      "from:profiles": 1,
+      "from:teachers": 1,
+      "from:student_learning_profiles": 12,
+      "from:student_points": 12,
+      "from:attendance": 12,
+      "from:enrollments": 12,
+      "from:lesson_overviews": 12
+     },
+     "scrollWidth": 861,
+     "clientWidth": 768,
+     "overflow": true,
+     "offenders": [
+      "div.gemini-glow-1.absolute.-top-36 right=930",
+      "div.gemini-glow-3.absolute.top-1/3 right=1100",
+      "div.flex.items-center.gap-2 right=861",
+      "button.items-center.justify-center.gap-2 right=861"
+     ],
+     "text": 1126,
+     "path": "/family/dashboard",
+     "idleMs": 2172,
+     "errors": [],
+     "axe": {
+      "rules": 3,
+      "nodes": 3,
+      "byImpact": {
+       "critical": 1,
+       "moderate": 2
+      },
+      "top": [
+       "button-name(critical,1)",
+       "heading-order(moderate,1)",
+       "region(moderate,1)"
+      ]
+     },
+     "shot": "parent-view-768-light.png",
+     "fmrMedianMs": 824,
+     "idleMedianMs": 1945,
+     "fmrAll": [
+      883,
+      716,
+      824
+     ],
+     "idleAll": [
+      2172,
+      1743,
+      1945
+     ],
+     "requestsAll": [
+      78,
+      78,
+      78
+     ]
+    },
+    "768-dark": {
+     "fmrMs": 990.5,
+     "requests": 78,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 4,
+      "from:announcement_dismissals": 1,
+      "from:students": 6,
+      "from:chat_conversations": 1,
+      "from:profiles": 1,
+      "from:teachers": 1,
+      "from:student_learning_profiles": 12,
+      "from:student_points": 12,
+      "from:attendance": 12,
+      "from:enrollments": 12,
+      "from:lesson_overviews": 12
+     },
+     "scrollWidth": 861,
+     "clientWidth": 768,
+     "overflow": true,
+     "offenders": [
+      "div.gemini-glow-1.absolute.-top-36 right=923",
+      "div.gemini-glow-3.absolute.top-1/3 right=1098",
+      "div.flex.items-center.gap-2 right=861",
+      "button.items-center.justify-center.gap-2 right=861"
+     ],
+     "text": 1126,
+     "path": "/family/dashboard",
+     "idleMs": 2268.2000000476837,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 14,
+      "byImpact": {
+       "critical": 1,
+       "serious": 1,
+       "moderate": 2
+      },
+      "top": [
+       "button-name(critical,1)",
+       "color-contrast(serious,11)",
+       "heading-order(moderate,1)",
+       "region(moderate,1)"
+      ]
+     },
+     "shot": "parent-view-768-dark.png",
+     "fmrMedianMs": 991,
+     "idleMedianMs": 2268,
+     "fmrAll": [
+      991
+     ],
+     "idleAll": [
+      2268
+     ],
+     "requestsAll": [
+      78
+     ]
+    },
+    "1280-light": {
+     "fmrMs": 817.9000000357628,
+     "requests": 78,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 4,
+      "from:announcement_dismissals": 1,
+      "from:students": 6,
+      "from:chat_conversations": 1,
+      "from:profiles": 1,
+      "from:teachers": 1,
+      "from:student_learning_profiles": 12,
+      "from:student_points": 12,
+      "from:attendance": 12,
+      "from:enrollments": 12,
+      "from:lesson_overviews": 12
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 1126,
+     "path": "/family/dashboard",
+     "idleMs": 2170.7000000476837,
+     "errors": [],
+     "axe": {
+      "rules": 3,
+      "nodes": 3,
+      "byImpact": {
+       "critical": 1,
+       "moderate": 2
+      },
+      "top": [
+       "button-name(critical,1)",
+       "heading-order(moderate,1)",
+       "region(moderate,1)"
+      ]
+     },
+     "shot": "parent-view-1280-light.png",
+     "fmrMedianMs": 802,
+     "idleMedianMs": 1848,
+     "fmrAll": [
+      818,
+      802,
+      719
+     ],
+     "idleAll": [
+      2171,
+      1796,
+      1848
+     ],
+     "requestsAll": [
+      78,
+      78,
+      78
+     ]
+    },
+    "1280-dark": {
+     "fmrMs": 659.5,
+     "requests": 78,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 4,
+      "from:announcement_dismissals": 1,
+      "from:students": 6,
+      "from:chat_conversations": 1,
+      "from:profiles": 1,
+      "from:teachers": 1,
+      "from:student_learning_profiles": 12,
+      "from:student_points": 12,
+      "from:attendance": 12,
+      "from:enrollments": 12,
+      "from:lesson_overviews": 12
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 1126,
+     "path": "/family/dashboard",
+     "idleMs": 2009,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 15,
+      "byImpact": {
+       "critical": 1,
+       "serious": 1,
+       "moderate": 2
+      },
+      "top": [
+       "button-name(critical,1)",
+       "color-contrast(serious,12)",
+       "heading-order(moderate,1)",
+       "region(moderate,1)"
+      ]
+     },
+     "shot": "parent-view-1280-dark.png",
+     "fmrMedianMs": 660,
+     "idleMedianMs": 2009,
+     "fmrAll": [
+      660
+     ],
+     "idleAll": [
+      2009
+     ],
+     "requestsAll": [
+      78
+     ]
+    },
+    "375-light-cpu4x": {
+     "fmrMedianMs": 3491,
+     "idleMedianMs": 4622,
+     "fmrAll": [
+      5143,
+      2797,
+      3491
+     ],
+     "idleAll": [
+      6589,
+      3832,
+      4622
+     ],
+     "requests": 10
     }
    }
   }
