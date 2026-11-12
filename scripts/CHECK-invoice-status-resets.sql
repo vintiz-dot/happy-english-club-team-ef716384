@@ -82,14 +82,20 @@ WHERE i.confirmed_at IS NOT NULL
 ORDER BY i.month DESC, i.id;
 
 -- 3) ROWS: bills with a recorded payment whose status says issued / draft.
---    would_be_by_month_rule is what family-payment would have written
---    (recorded_payment against the month's total); the payment dialogs
---    compare against the total plus carry-in instead, so treat it as a
---    hint, not as the value to set.
+--    EXPECT A LONG LIST: before the fix every bill was reset to 'issued' at
+--    its next calculation, so nearly every bill that has a payment is
+--    here. That is the old behaviour showing, not new damage, and nothing
+--    needs doing by hand: after the fix the next ordinary calculation of a
+--    bill (opening its tuition screen) writes the label below.
+--    would_be_by_month_rule is the one label rule (_lib/invoice-status.ts):
+--    recorded payment against the month's charge plus debt carried in less
+--    credit carried in.
 SELECT
   i.id AS invoice_id, i.student_id, i.month, i.status AS status_now,
   i.total_amount, i.recorded_payment, i.carry_in_debt, i.carry_in_credit,
-  CASE WHEN COALESCE(i.recorded_payment, 0) >= i.total_amount THEN 'paid' ELSE 'partial' END AS would_be_by_month_rule,
+  CASE WHEN COALESCE(i.recorded_payment, 0) >= i.total_amount + COALESCE(i.carry_in_debt, 0) - COALESCE(i.carry_in_credit, 0)
+            AND i.total_amount + COALESCE(i.carry_in_debt, 0) - COALESCE(i.carry_in_credit, 0) > 0
+       THEN 'paid' ELSE 'partial' END AS would_be_by_month_rule,
   i.updated_at
 FROM public.invoices i
 WHERE COALESCE(i.recorded_payment, 0) > 0
@@ -146,7 +152,10 @@ ORDER BY l.occurred_at DESC;
 -- 5) FROM THE AUDIT TRAIL: a paid / partial / credit bill set back to
 --    'issued' by the service role (actor_user_id IS NULL: an edge function,
 --    not a signed-in admin - the payment dialogs and the status override
---    screen write as the admin). Counts, then rows.
+--    screen write as the admin). Counts, then rows. Dated before the fix
+--    these are the defect. Dated after it, a row here is the label being
+--    corrected because the month's money changed (a payment edited down or
+--    moved away, a wrong "paid" from the old cumulative rule): expected.
 SELECT
   count(*) AS resets, count(DISTINCT l.entity_id) AS bills,
   min(l.occurred_at) AS first_seen, max(l.occurred_at) AS last_seen
@@ -178,12 +187,15 @@ WHERE l.entity = 'invoices' AND l.operation = 'UPDATE'
 ORDER BY l.occurred_at DESC;
 
 -- 6) A DIFFERENT FAULT, about money: a recorded payment LOWERED by the
---    service role. calculate-tuition writes back the payment it read, so it
---    should never lower one - but before T1, if its read of the bill
---    failed, it carried on and saved recorded_payment 0. No other edge
---    function lowers recorded_payment (corrections and reversals are made
---    by a signed-in admin and carry that admin's id). Expect zero rows;
---    any row here is a payment to look at by hand. Counts, then rows.
+--    service role. Before T1 calculate-tuition wrote back the payment it
+--    had read at the start, which lowered one in two situations: (a) its
+--    read of the bill failed and it carried on, saving recorded_payment 0;
+--    (b) a payment was recorded while it was calculating, and its save put
+--    the older figure back. Both are closed now (the read fails the call;
+--    the function no longer writes the column). No other edge function
+--    lowers recorded_payment (corrections and reversals are made by a
+--    signed-in admin and carry that admin's id). Expect zero or very few
+--    rows; each is a payment to look at by hand. Counts, then rows.
 SELECT
   count(*) AS times, count(DISTINCT l.entity_id) AS bills,
   sum((l.diff -> 'old' ->> 'recorded_payment')::bigint
