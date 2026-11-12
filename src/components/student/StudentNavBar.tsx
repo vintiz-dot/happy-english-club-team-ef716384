@@ -98,7 +98,7 @@ export function StudentNavBar() {
         {moreOpen && (
           <div
             data-hec-theme="ivory"
-            className="fixed inset-0 z-[99] bg-hec-scrim/60 md:hidden"
+            className="fixed inset-0 z-[44] bg-hec-scrim/60 md:hidden"
             onClick={() => setMoreOpen(false)}
           >
             <div
@@ -135,7 +135,7 @@ export function StudentNavBar() {
         <nav
           data-hec-theme="ivory"
           aria-label="Student"
-          className="fixed inset-x-0 bottom-0 z-[100] border-t border-hec-line bg-hec-surface pb-[env(safe-area-inset-bottom)] shadow-hec-2 md:hidden"
+          className="fixed inset-x-0 bottom-0 z-[45] border-t border-hec-line bg-hec-surface pb-[env(safe-area-inset-bottom)] shadow-hec-2 md:hidden"
         >
           <div className="flex items-stretch">
             {primaryItems.map((item) => {
