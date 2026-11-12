@@ -409,7 +409,15 @@ async function normalizeFutureHeld(supabase: any, month: string): Promise<string
     .select('id')
     .eq('status', 'Held')
     .eq('is_manual', false)
-    .gte('date', today)
+    // Strictly AFTER today. A lesson dated today may already have been taught
+    // and marked Held; resetting it to Scheduled drops it from the teacher's
+    // pay. Only a Held lesson on a day that has not arrived is invalid state.
+    // NOTE (12 Nov 2026): the .like() below is applied to a DATE column, which
+    // Postgres rejects (42883, date ~~ unknown), so this select has always
+    // failed and this function has never reset anything in production. Do not
+    // repair the month filter without the owner's say: that would switch on a
+    // reset that has never run.
+    .gt('date', today)
     .like('date', `${month}%`);
 
   if (!futureHeld || futureHeld.length === 0) return [];
