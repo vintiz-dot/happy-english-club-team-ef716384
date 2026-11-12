@@ -51,10 +51,11 @@ export function SkillButton({
   };
 
   const baseClasses = cn(
-    "flex flex-col items-center justify-center gap-1 p-3 rounded-xl min-w-[56px] min-h-[56px] transition-all active:scale-95 touch-manipulation select-none",
-    variant === "positive" 
-      ? "bg-green-500/20 hover:bg-green-500/30 text-green-600 dark:text-green-400" 
-      : "bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400"
+    "flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-hec-md border min-w-[64px] min-h-[56px] transition-colors duration-hec-1 ease-hec touch-manipulation select-none",
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+    variant === "positive"
+      ? "border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken"
+      : "border-hec-danger bg-transparent text-hec-danger hover:bg-hec-danger-tint"
   );
 
   return (
@@ -65,24 +66,24 @@ export function SkillButton({
           onClick={handleClick}
           onContextMenu={(e) => e.preventDefault()}
         >
-          <Icon className="h-6 w-6" />
-          <span className="text-[10px] font-medium leading-tight">{label}</span>
+          <Icon className="h-6 w-6" aria-hidden />
+          <span className="text-hec-caption font-medium">{label}</span>
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-2" side="top" align="center">
-        <div className="flex gap-1 items-center">
+        <div className="flex flex-wrap justify-center gap-2 items-center">
           {POINT_OPTIONS.map((pts) => (
             <Button
               key={pts}
               variant="outline"
               size="sm"
-              className="w-10 h-10 p-0 text-sm font-bold hover:bg-warmGray hover:text-royalGreen hover:border-royalGreen dark:hover:bg-warmGray-dark dark:hover:text-royalGreen-light dark:hover:border-royalGreen-light"
+              className="w-10 h-10 p-0 font-sans font-bold tabular-nums"
               onClick={() => handlePointSelect(pts)}
             >
               +{pts}
             </Button>
           ))}
-          <div className="flex items-center gap-0.5 ml-1">
+          <div className="flex items-center gap-2">
             <Input
               ref={inputRef}
               type="number"
@@ -93,7 +94,7 @@ export function SkillButton({
               onChange={(e) => setCustomValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleCustomSubmit(); }}
               aria-label={`Custom points for ${label}`}
-              className="w-12 h-10 [@media(hover:none)]:h-11 text-center text-sm font-bold p-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-14 h-10 [@media(hover:none)]:h-11 text-center font-sans font-bold tabular-nums px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <Button
               variant="outline"
@@ -101,6 +102,7 @@ export function SkillButton({
               className="w-8 h-10 p-0"
               disabled={!customValue || isNaN(parseInt(customValue)) || parseInt(customValue) < 1}
               onClick={handleCustomSubmit}
+              aria-label={`Give custom points for ${label}`}
             >
               <Check className="h-4 w-4" />
             </Button>
