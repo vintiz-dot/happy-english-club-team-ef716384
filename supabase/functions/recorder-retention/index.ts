@@ -83,10 +83,20 @@ export interface RetentionResult {
   deleted_ids: string[];
   objects_removed: number;
   skipped: { recording_id: string; reason: string }[];
+  /** C2 review m8: due recordings left for the next run (the run is capped in count and time). */
+  remaining: number;
 }
 
-export async function runRetention(sb: any, opts: { recordingId?: string | null } = {}): Promise<RetentionResult> {
-  const result: RetentionResult = { expired_stale: 0, due: 0, deleted: 0, deleted_ids: [], objects_removed: 0, skipped: [] };
+/** At most this many recordings, and this long, per run; the next night continues (it is idempotent). */
+export const MAX_RECORDINGS_PER_RUN = 25;
+export const RUN_BUDGET_MS = 100_000;
+
+export async function runRetention(sb: any, opts: { recordingId?: string | null; maxRecordings?: number; budgetMs?: number; now?: () => number } = {}): Promise<RetentionResult> {
+  const result: RetentionResult = { expired_stale: 0, due: 0, deleted: 0, deleted_ids: [], objects_removed: 0, skipped: [], remaining: 0 };
+  const now = opts.now ?? (() => Date.now());
+  const startedAt = now();
+  const max = opts.maxRecordings ?? MAX_RECORDINGS_PER_RUN;
+  const budget = opts.budgetMs ?? RUN_BUDGET_MS;
 
   // 1. Recordings never finished 14 days after their lesson become abandoned (and so due).
   const stale = await sb.rpc("recorder_expire_stale");
@@ -100,7 +110,12 @@ export async function runRetention(sb: any, opts: { recordingId?: string | null 
   if (opts.recordingId) rows = rows.filter((r) => r.recording_id === opts.recordingId);
   result.due = rows.length;
 
+  let done = 0;
   for (const r of rows) {
+    // m8: a backlog (the first run weeks after go-live) must not outlast the
+    // function's limit; what is left is reported and taken next time.
+    if (done >= max || now() - startedAt > budget) { result.remaining = rows.length - done; break; }
+    done += 1;
     const expected = `${r.class_id}/${r.recording_id}/`;
     if (!UUID.test(r.class_id) || !UUID.test(r.recording_id) || r.storage_prefix !== expected) {
       result.skipped.push({ recording_id: r.recording_id, reason: "prefix is not {class}/{recording}/" });
@@ -158,7 +173,7 @@ Deno.serve(async (req) => {
     if (recordingId !== null && !UUID.test(recordingId)) return json(400, { error: "recording_id must be a uuid" });
 
     const result = await runRetention(sb, { recordingId });
-    console.log(JSON.stringify({ fn: "recorder-retention", by: who, expired_stale: result.expired_stale, due: result.due, deleted: result.deleted, deleted_ids: result.deleted_ids, objects_removed: result.objects_removed, skipped: result.skipped.map((s) => s.recording_id) }));
+    console.log(JSON.stringify({ fn: "recorder-retention", by: who, expired_stale: result.expired_stale, due: result.due, deleted: result.deleted, deleted_ids: result.deleted_ids, objects_removed: result.objects_removed, remaining: result.remaining, skipped: result.skipped.map((s) => s.recording_id) }));
     return json(200, result);
   } catch (e) {
     console.error(JSON.stringify({ fn: "recorder-retention", error: String((e as Error)?.message ?? e).slice(0, 200) }));

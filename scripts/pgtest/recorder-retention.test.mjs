@@ -146,6 +146,28 @@ console.log("=== an admin's delete-now for one recording ===");
   eq("the others are left", [objectsOf(s.many.id), server.recordings.get(s.many.id).status], [230, "complete"]);
 }
 
+console.log("=== bounded (C2 review m8) ===");
+{
+  const backlog = () => {
+    seed();
+    for (let i = 0; i < 30; i++) {
+      const id = `e0000000-0000-4000-8000-${String(i).padStart(12, "0")}`;
+      server.recordings.set(id, { ...server.recordings.get("d0000000-0000-4000-8000-000000000001"), id, armed_session_id: id });
+      server.objects.set(`${FAKE_BUCKET}/${CLASS}/${id}/manifest.json`, { bytes: new Uint8Array(1), size: 1 });
+    }
+  };
+  backlog();
+  eq("the run is capped: 25 recordings per run", [mod.MAX_RECORDINGS_PER_RUN, mod.RUN_BUDGET_MS], [25, 100000]);
+  const r = await call({ "x-schedule-runner-secret": server.runnerToken });
+  eq("a backlog of 33 due: 25 deleted, 8 reported remaining", [r.body.due, r.body.deleted, r.body.remaining], [33, 25, 8]);
+  const r2 = await call({ "x-schedule-runner-secret": server.runnerToken });
+  eq("the next run takes the rest", [r2.body.due, r2.body.deleted, r2.body.remaining], [8, 8, 0]);
+  backlog();
+  let t = 0;
+  const timed = await mod.runRetention(globalThis.__fakeCreateClient("u", SERVICE_KEY), { now: () => (t += 60000), budgetMs: 100000 });
+  ok("and capped in time: with each recording taking a minute, the 100 s budget stops it", timed.due === 33 && timed.deleted >= 1 && timed.deleted <= 2 && timed.remaining === 33 - timed.deleted, JSON.stringify({ d: timed.deleted, rem: timed.remaining, due: timed.due }));
+}
+
 console.log("=== fails closed ===");
 {
   let s = seed();
