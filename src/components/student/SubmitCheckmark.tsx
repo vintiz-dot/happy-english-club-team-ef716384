@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
+import { useIvory } from "@/hooks/useIvory";
 
 interface SubmitCheckmarkProps {
   show: boolean;
@@ -7,6 +8,36 @@ interface SubmitCheckmarkProps {
 }
 
 export function SubmitCheckmark({ show, onComplete }: SubmitCheckmarkProps) {
+  const ivory = useIvory();
+
+  // "Ivory" design system: one calm confirmation, a fade only (DS s.9), solid scrim.
+  if (ivory) {
+    return (
+      <AnimatePresence>
+        {show && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-hec-scrim/60"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.24 }}
+            onAnimationComplete={() => {
+              setTimeout(() => onComplete?.(), 800);
+            }}
+          >
+            <div
+              role="status"
+              className="flex flex-col items-center gap-3 rounded-hec-lg border border-hec-line bg-hec-raised px-8 py-6 shadow-hec-3"
+            >
+              <CheckCircle2 className="h-12 w-12 text-hec-leaf" aria-hidden />
+              <p className="font-display text-hec-h2 font-medium text-hec-ink">Submitted! ✨</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  }
+
   return (
     <AnimatePresence>
       {show && (
