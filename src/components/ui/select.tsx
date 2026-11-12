@@ -3,7 +3,7 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { useFullscreenContainer } from "@/hooks/useFullscreenContainer";
+import { useOverlayContainer } from "@/hooks/useFullscreenContainer";
 
 const Select = SelectPrimitive.Root;
 
@@ -68,12 +68,12 @@ const SelectContent = React.forwardRef<
   SelectContentProps
 >(({ className, children, position = "popper", container, ...props }, ref) => {
   // subscribed, not read once: a value read when this wrapper last rendered went stale on fullscreen
-  const fullscreen = useFullscreenContainer();
+  const [fullscreen, contentRef] = useOverlayContainer(ref);
   const portalContainer = container ?? fullscreen;
   return (
     <SelectPrimitive.Portal container={portalContainer}>
       <SelectPrimitive.Content
-        ref={ref}
+        ref={contentRef}
         className={cn(
           "glass relative z-[110] max-h-96 min-w-[8rem] overflow-hidden rounded-xl text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
           position === "popper" &&

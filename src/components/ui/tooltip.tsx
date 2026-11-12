@@ -2,7 +2,7 @@ import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 
 import { cn } from "@/lib/utils";
-import { useFullscreenContainer } from "@/hooks/useFullscreenContainer";
+import { useOverlayContainer } from "@/hooks/useFullscreenContainer";
 
 /**
  * Nova tooltip system
@@ -133,12 +133,12 @@ const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   TooltipContentProps
 >(({ className, sideOffset = 6, container, ...props }, ref) => {
-  const fullscreen = useFullscreenContainer();
+  const [fullscreen, contentRef] = useOverlayContainer(ref);
   const portalContainer = container ?? fullscreen;
   return (
     <TooltipPrimitive.Portal container={portalContainer}>
       <TooltipPrimitive.Content
-        ref={ref}
+        ref={contentRef}
         sideOffset={sideOffset}
         className={cn(
           "nova-tip z-[9999] rounded-xl px-3 py-1.5 text-xs font-medium",

@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { useFullscreenContainer } from "@/hooks/useFullscreenContainer";
+import { useOverlayContainer } from "@/hooks/useFullscreenContainer";
 
 const Sheet = SheetPrimitive.Root;
 
@@ -57,14 +57,14 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
   ({ side = "right", className, children, container, ...props }, ref) => {
     // subscribed, not read once: a value read when this wrapper last rendered went stale on fullscreen
-    const fs = useFullscreenContainer();
+    const [fs, contentRef] = useOverlayContainer(ref);
     // Never re-parent into a class screen: it lives inside this sheet, and
     // moving the sheet into it remounts the screen and drops fullscreen.
     const portalContainer = container ?? (fs && !fs.closest("[data-class-screen]") ? fs : undefined);
     return (
       <SheetPrimitive.Portal container={portalContainer}>
         <SheetOverlay />
-        <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
+        <SheetPrimitive.Content ref={contentRef} className={cn(sheetVariants({ side }), className)} {...props}>
           {children}
           <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
             <X className="h-4 w-4" />
