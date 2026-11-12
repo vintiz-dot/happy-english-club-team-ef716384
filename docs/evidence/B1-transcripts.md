@@ -2,6 +2,10 @@
 
 **Where I am / next step:** Parts 1 and 2 built, tested and committed; first Azure numbers scored; local faster-whisper slice running (result folds into the tables when `b1_score.py` is re-run). NEXT: the owner runs `vendor_batch.py --login`, then `b1_score.py --evidence docs\evidence\B1-transcripts.md`; the teacher then marks the pack in `work\teacher-check\b1\`.
 
+## Local comparison system (faster-whisper small, int8, CPU, language auto)
+
+`b1_local_fwhisper.py` ran on the loaded shared CPU: a 120 s slice of the first synthetic mix and the 61 s held-out clip join of one child (S01) finished (about 1.4 to 4.8 s of wall per audio second, NOT a benchmark); the 120 s lesson slice (L1) was stopped as too slow. On the synthetic slice it wrote 24 words where Azure wrote about 190 in the same 120 s, so agreement is 0.14: the local run with language auto-detect and VAD is not a usable comparison on the room-degraded mix, and that figure says more about that configuration than about faster-whisper. No local speaker labels. A longer local run is not worth it on this machine; the vendors are the comparison.
+
 ## Method and limits (read first)
 
 - Nothing here is word accuracy: there is no human reference for any audio, and the synthetic mixes carry no text reference (`mix.py` stores RTTM turns and turn tables, not transcripts). Only speaker structure of the mixes has ground truth. Every agreement figure is agreement between systems, not accuracy.
@@ -22,6 +26,7 @@
 | system | kind | files | minutes processed | pieces failed | wall s per audio min (includes upload/proxy overhead; NOT a benchmark, shared CPU) | USD per audio hour (estimate) | USD recorded by proxy |
 |---|---|---|---|---|---|---|---|
 | azure-fast-multilingual | vendor | 2 | 9.0 | n/a (no batch summary) | 3.03 (run level incl. upload) | 1.0 | 0.149 |
+| local-fwhisper-small | local | 2 | 3.0 | n/a (no batch summary) | 151.21 (run level incl. upload) | 0.0 | 0.0 |
 
 ### (a) Synthetic mixes: speakers found vs true (ground truth: speakers only; NO text reference, so no word accuracy)
 
@@ -29,6 +34,7 @@
 |---|---|---|---|---|---|---|---|---|
 | azure-fast-multilingual | mix_seed7_ov00_s500_000 | 0 | s500 | 3 | 5 | 4 | 0.3457 | 0.3457 |
 | azure-fast-multilingual | mix_seed7_ov00_s500_001 | 0 | s500 | 5 | 5 | 3 | 0.5618 | 0.5618 |
+| local-fwhisper-small | mix_seed7_ov00_s500_000 | 0 | s500 | 3 | n/a | n/a | n/a (no speaker labels) | n/a |
 
 ### (a) DER by condition (pooled over files; miss / false alarm / confusion as shares of reference speech)
 
@@ -38,7 +44,16 @@
 
 ### (b) Word AGREEMENT between systems, synthetic mixes - AGREEMENT, NOT ACCURACY, UNCHECKED (cell = pooled agreement, n = files)
 
-pending owner run (needs two systems on the same files)
+|  | azure-fast-multilingual | local-fwhisper-small |
+|---|---|---|
+| azure-fast-multilingual | 1 | 0.143 (n=1) |
+| local-fwhisper-small | 0.143 (n=1) | 1 |
+
+Where systems disagree most, synthetic mixes (per file: lowest and highest agreeing pair), UNCHECKED:
+
+| file | systems | lowest agreement | highest agreement |
+|---|---|---|---|
+| mix_seed7_ov00_s500_000 | 2 | 0.143 (azure-fast-multilingual vs local-fwhisper-small) | 0.143 (azure-fast-multilingual vs local-fwhisper-small) |
 
 ### (b) Word AGREEMENT between systems, held-out clips - AGREEMENT, NOT ACCURACY, UNCHECKED (cell = pooled agreement, n = files)
 
