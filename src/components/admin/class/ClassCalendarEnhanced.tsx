@@ -225,7 +225,7 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
 
       <div className="flex gap-3 flex-wrap">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-40" aria-label="Filter by status">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -305,8 +305,9 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
               )}
             </>
           ) : (
-            /* ── Month Grid View ── */
-            <div>
+            /* ── Month Grid View ── At 375 the grid borrows the card's inner
+               gutter so each day is a 44 px target. */
+            <div className="-mx-2 sm:mx-0">
               {/* Day headers */}
               <div className="grid grid-cols-7 mb-1">
                 {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(d => (
@@ -327,11 +328,11 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
                   return (
                     <div
                       key={dateStr}
-                      className={`min-h-20 min-w-0 border-b border-r border-hec-line p-1 ${
+                      className={`min-h-20 min-w-0 border-b border-r border-hec-line p-0 sm:p-1 ${
                         !inMonth ? "bg-hec-sunken/60" : today ? "bg-hec-raised ring-1 ring-inset ring-hec-brass/40" : "bg-hec-surface"
                       }`}
                     >
-                      <div className={`mb-1 text-hec-caption font-medium tabular-nums ${
+                      <div className={`mb-1 px-1 text-hec-caption font-medium tabular-nums sm:px-0 ${
                         today ? "font-semibold text-hec-brass" : !inMonth ? "text-hec-ink-faint" : "text-hec-ink"
                       }`}>
                         {format(day, "d")}
