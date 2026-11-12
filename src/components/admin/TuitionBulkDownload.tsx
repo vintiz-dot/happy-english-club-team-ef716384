@@ -8,8 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
 import JSZip from "jszip";
 
 import type { InvoiceData, BankInfo } from "@/lib/invoice/types";
@@ -271,6 +269,8 @@ export function TuitionBulkDownload({ month }: { month: string }) {
 
         try {
           // Use html2canvas + jsPDF directly (safer than html2pdf.js)
+          const { default: html2canvas } = await import("html2canvas");
+          const { jsPDF } = await import("jspdf");
           const canvas = await html2canvas(node, {
             scale: 2,
             useCORS: true,

@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { loadMyStudents, clearShellCache } from "@/hooks/useShellQueries";
 
 export default function ProfilePicker() {
   const { studentId, setStudentId } = useStudentProfile();
@@ -19,6 +20,7 @@ export default function ProfilePicker() {
       hasAutoSelectedRef.current = false;
       try {
         if (!user) {
+          clearShellCache(queryClient);
           setLoading(false);
           return;
         }
@@ -29,31 +31,9 @@ export default function ProfilePicker() {
           return;
         }
 
-        // Get students linked to user or in their family
-        const { data: familyData } = await supabase
-          .from("families")
-          .select("id")
-          .eq("primary_user_id", user.id)
-          .maybeSingle();
-
-        let studentData;
-        if (familyData) {
-          const { data } = await supabase
-            .from("students")
-            .select("id, full_name, date_of_birth")
-            .eq("family_id", familyData.id)
-            .eq("is_active", true)
-            .order("full_name");
-          studentData = data;
-        } else {
-          const { data } = await supabase
-            .from("students")
-            .select("id, full_name, date_of_birth")
-            .eq("linked_user_id", user.id)
-            .eq("is_active", true)
-            .order("full_name");
-          studentData = data;
-        }
+        // Students linked to the user or in their family: shared, cached lookup
+        // (src/hooks/useShellQueries.ts); same two queries as before.
+        const studentData = await loadMyStudents(queryClient, user.id);
 
         setStudents(studentData || []);
 
@@ -85,6 +65,7 @@ export default function ProfilePicker() {
     // Listen for auth state changes to reset on logout
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
+        clearShellCache(queryClient);
         setStudents(null);
         setLoading(false);
         hasAutoSelectedRef.current = false;
