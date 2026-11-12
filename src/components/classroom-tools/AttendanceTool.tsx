@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { dayjs } from "@/lib/date";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import AttendanceDrawer from "@/components/admin/class/AttendanceDrawer";
 import { one } from "@/lib/pgrst";
 import {
@@ -144,6 +145,9 @@ export function AttendanceTool() {
     },
   });
 
+  // Ivory on a listed route (src/lib/ivoryScope.ts); the studio look elsewhere, unchanged.
+  const ivory = useIvory();
+
   const isLive = (session: SessionRow) => {
     if (session.date !== dayjs().format("YYYY-MM-DD")) return false;
     const now = new Date().toTimeString().slice(0, 8);
@@ -167,7 +171,7 @@ export function AttendanceTool() {
             >
               <ChevronLeft className="h-4 w-4" aria-hidden />
             </QuietButton>
-            <span className="min-w-[7.5rem] text-center text-xs font-bold text-ink">
+            <span className={ivory ? "min-w-[7.5rem] text-center text-hec-small font-semibold text-hec-ink" : "min-w-[7.5rem] text-center text-xs font-bold text-ink"}>
               {isToday ? "Today" : dayjs(viewDate).format("ddd D MMM")}
             </span>
             <QuietButton
@@ -182,7 +186,7 @@ export function AttendanceTool() {
       >
         {isLoading || sessions.length === 0 ? (
           <Stage className="min-h-[120px] p-6 text-center">
-            <p className="text-sm text-ink-faint">
+            <p className={ivory ? "text-hec-small text-hec-ink-soft" : "text-sm text-ink-faint"}>
               {isLoading ? "Loading your day…" : "Nothing scheduled on this day."}
             </p>
           </Stage>
@@ -197,39 +201,49 @@ export function AttendanceTool() {
                   <button
                     type="button"
                     onClick={() => setSelectedSession(session)}
-                    className={cn(
-                      "studio-focus w-full rounded-2xl border border-studio bg-studio-stage p-3 text-left transition-all",
-                      "hover:-translate-y-0.5 hover:shadow-studio",
-                      cancelled && "opacity-55",
-                      live && "border-transparent ring-2 ring-[hsl(var(--studio-ink))]",
-                    )}
+                    className={
+                      ivory
+                        ? cn(
+                            "min-h-hec-target w-full rounded-hec-md border border-hec-line bg-hec-raised p-3 text-left text-hec-ink transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2",
+                            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+                            cancelled && "opacity-60",
+                            live && "border-hec-action",
+                          )
+                        : cn(
+                            "studio-focus w-full rounded-2xl border border-studio bg-studio-stage p-3 text-left transition-all",
+                            "hover:-translate-y-0.5 hover:shadow-studio",
+                            cancelled && "opacity-55",
+                            live && "border-transparent ring-2 ring-[hsl(var(--studio-ink))]",
+                          )
+                    }
                   >
                     <div className="mb-1 flex items-start justify-between gap-2">
-                      <span className="truncate font-bold text-ink">{session.class_name}</span>
+                      {/* A class name wraps, never cut (DESIGN_SYSTEM s.13). */}
+                      <span className={ivory ? "min-w-0 whitespace-normal break-words text-balance font-semibold text-hec-ink hyphens-none" : "truncate font-bold text-ink"}>{session.class_name}</span>
                       {live && (
-                        <span className="shrink-0 rounded-full bg-[hsl(var(--studio-ink))] px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wider text-[hsl(var(--studio-card))]">
+                        <span className={ivory ? "shrink-0 rounded-full bg-hec-action px-2 py-0.5 text-hec-caption font-semibold uppercase tracking-wider text-hec-on-action" : "shrink-0 rounded-full bg-[hsl(var(--studio-ink))] px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wider text-[hsl(var(--studio-card))]"}>
                           Now
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center justify-between gap-2 text-xs text-ink-soft">
-                      <span className="inline-flex items-center gap-1 tabular-nums">
-                        <Clock className="h-3 w-3" aria-hidden />
+                    <div className={ivory ? "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-hec-small text-hec-ink-soft" : "flex items-center justify-between gap-2 text-xs text-ink-soft"}>
+                      <span className={ivory ? "inline-flex items-center gap-1 whitespace-nowrap tabular-nums" : "inline-flex items-center gap-1 tabular-nums"}>
+                        <Clock className={ivory ? "h-4 w-4" : "h-3 w-3"} aria-hidden />
                         {session.start_time.slice(0, 5)}–{session.end_time.slice(0, 5)}
                       </span>
                       {tally && tally.present + tally.absent > 0 ? (
-                        <span className="tabular-nums">
-                          <span className="font-bold text-[hsl(var(--studio-sage-ink))]">
+                        <span className={ivory ? "whitespace-nowrap tabular-nums" : "tabular-nums"}>
+                          <span className={ivory ? "font-semibold text-hec-leaf" : "font-bold text-[hsl(var(--studio-sage-ink))]"}>
                             {tally.present}
                           </span>
                           {" in · "}
-                          <span className="font-bold text-[hsl(var(--studio-clay-ink))]">
+                          <span className={ivory ? "font-semibold text-hec-ink" : "font-bold text-[hsl(var(--studio-clay-ink))]"}>
                             {tally.absent}
                           </span>
                           {" out"}
                         </span>
                       ) : (
-                        <span className="text-ink-faint">Not marked</span>
+                        <span className={ivory ? "text-hec-ink-soft" : "text-ink-faint"}>Not marked</span>
                       )}
                     </div>
                   </button>
