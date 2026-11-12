@@ -101,6 +101,8 @@ const NOCLICK = `<!doctype html><meta charset="utf-8"><title>no click</title><sc
   try { window.__s = await navigator.mediaDevices.getUserMedia({ audio: true }); out.getUserMediaNoGesture = "ok"; } catch (e) { out.getUserMediaNoGesture = e.name; }
   await new Promise((r) => setTimeout(r, 500));
   out.firstContextAfterCapture = ac.state;
+  ac.resume().catch(() => {}); await new Promise((r) => setTimeout(r, 500)); out.firstContextResumedAfterCapture = ac.state;
+  out.activationBeforeSecondContext = navigator.userActivation ? navigator.userActivation.hasBeenActive : null;
   const ac2 = new AudioContext(); ac2.resume().catch(() => {});
   await new Promise((r) => setTimeout(r, 500));
   out.contextCreatedWhileCapturing = ac2.state;

@@ -128,16 +128,21 @@ try {
     });
     const row = await page.evaluate(async (L) => rec.arm(L), L);
     await sleep(5000);
-    const other = await ctx.newPage();
-    await other.goto("about:blank");
-    await other.bringToFront();
-    await sleep(2000);
+    // Another tab brought to the front did NOT hide the page under Playwright
+    // (first attempt: visibilityState stayed "visible" - it emulates focus).
+    // Minimising the window through CDP does hide it, as the OS would.
+    const cdp = await ctx.newCDPSession(page);
+    const { windowId } = await cdp.send("Browser.getWindowForTarget");
+    await cdp.send("Browser.setWindowBounds", { windowId, bounds: { windowState: "minimized" } });
+    await sleep(3000);
     out.visibilityWhileBehind = await page.evaluate(() => document.visibilityState);
+    out.hideMethod = "window minimised (CDP Browser.setWindowBounds)";
     const hiddenFrom = Date.now();
     const pc = spawnSync("powercfg", ["/requests"], { encoding: "utf8" });
     out.powercfg = (pc.stdout || pc.stderr || String(pc.error)).trim().slice(0, 1500);
     while (Date.now() - hiddenFrom < minutes * 60000) { await sleep(60000); console.log(`  hidden ${Math.round((Date.now() - hiddenFrom) / 60000)} min`); }
     const hiddenTo = Date.now();
+    await cdp.send("Browser.setWindowBounds", { windowId, bounds: { windowState: "normal" } });
     await page.bringToFront();
     await sleep(1500);
     const p = await page.evaluate(() => ({ probe: window.probe, log: window.log, state: rec.state, sr: rec.o.source.sampleRate }));

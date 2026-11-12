@@ -240,7 +240,7 @@ try {
       const ctx = await b.newContext({ permissions: ["microphone"] });
       const page = await ctx.newPage();
       await page.goto(H.url + "noclick");
-      await page.waitForFunction(() => !!window.__noclick, null, { timeout: 20000 }).catch(() => {});
+      await sleep(7000); // no waitForFunction: its polling would itself count as a gesture
       const r = await page.evaluate(() => window.__noclick ?? null);
       info(`no-click (${label})`, r);
       await b.close();
