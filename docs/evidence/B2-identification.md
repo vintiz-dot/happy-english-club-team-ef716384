@@ -54,4 +54,18 @@ Every child's enrolment centroid had cosine 0.80-0.97 with the centroid of ALL c
 
 After the fix: 440 enrolment windows (1-3 s), 473 raw-clip windows, 97 adult-pitch windows, 1652 test windows (87.9 min of audio). Fewer test windows than the first cut, because only whole windows inside a segment count.
 
+## 3b. Diagnosis finding 2: the B0 split left enrolment only the fragments
+
+With windows cut inside segments (3ds_campp, cosine, clean 2 s windows; run 2026-11-12, kept as `work\b2\segcut_b0split_results_3ds_campp.json`):
+
+| check | top-1 | chance |
+|---|---|---|
+| held-out first half -> held-out second half | 78.5 % (79 windows, 16 children) | 6.2 % |
+| enrol first half -> enrol second half | 19.2 % (224 windows, 26 children) | 3.8 % |
+| enrol -> held-out | 37.2 % (148 windows) | 6.2 % |
+| full pipeline, s500 pooled: best EER (centred AS-norm) / top-1 | 20-29 % / 11-14 % | - |
+| 1 s windows, any aggregation of up to 20 of them | top-1 4-6 % (chance level) | 3.8 % |
+
+split.py dealt contiguous 5 s blocks to HELD-OUT and left ENROL the short fragments between them, so the enrolment was the worst audio each child had. Fix: `b2_units.py --resplit time` (now the default) re-splits each child's clean (non-adult-pitch) speech BY TIME: the first 60 % enrols, the later 40 % is the test - both sides get whole utterances, and test speech is from a later part of the recording, never seen in enrolment. Same 17 children qualify (>= 50 s clean speech); enrolment 30.8-138.4 s, test 18.5-85.3 s per child. Units: 467 enrolment, 473 raw, 97 adult-pitch, 1358 test windows (80.3 min). This is what a real enrolment looks like (a child speaking continuously), so the results below use it.
+
 **Statistical caveat stated once for every table:** confidence intervals are 95 % Wilson intervals over windows, treating windows as independent. They are not: all windows come from 15 children and from 20-90 s of speech each, so the true uncertainty is wider than shown, above all for per-child figures.
