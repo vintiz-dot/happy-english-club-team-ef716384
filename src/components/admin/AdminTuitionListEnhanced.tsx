@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useIvory } from "@/hooks/useIvory";
 
 type Density = "card" | "table";
 const DENSITY_KEY = "admin-tuition-density";
@@ -23,6 +24,8 @@ interface AdminTuitionListEnhancedProps {
 }
 
 export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProps) => {
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
   const [sortBy, setSortBy] = useState<"name" | "balance" | "total" | "class">("name");
   const [activeFilter, setActiveFilter] = useState("all");
   const [confirmationFilter, setConfirmationFilter] = useState<string>("all");
@@ -209,9 +212,9 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Tuition Overview</h2>
-          <p className="text-muted-foreground">{dayjs(month).format("MMMM YYYY")}</p>
+        <div className={iv("min-w-0", "")}>
+          <h2 className={iv("font-display text-hec-h1 font-medium text-hec-ink", "text-2xl font-bold tracking-tight")}>Tuition Overview</h2>
+          <p className={iv("text-hec-body text-hec-ink-soft", "text-muted-foreground")}>{dayjs(month).format("MMMM YYYY")}</p>
         </div>
         <div className="flex items-center gap-2">
           <ToggleGroup
@@ -222,10 +225,10 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
             aria-label="List density"
             className="hidden md:inline-flex"
           >
-            <ToggleGroupItem value="card" aria-label="Card view" className="h-9 w-9">
+            <ToggleGroupItem value="card" aria-label="Card view" className={iv("min-h-hec-target min-w-hec-target rounded-hec-md text-hec-ink data-[state=on]:bg-hec-sunken", "h-9 w-9")}>
               <LayoutGrid className="h-4 w-4" />
             </ToggleGroupItem>
-            <ToggleGroupItem value="table" aria-label="Table view" className="h-9 w-9">
+            <ToggleGroupItem value="table" aria-label="Table view" className={iv("min-h-hec-target min-w-hec-target rounded-hec-md text-hec-ink data-[state=on]:bg-hec-sunken", "h-9 w-9")}>
               <Rows className="h-4 w-4" />
             </ToggleGroupItem>
           </ToggleGroup>
@@ -243,10 +246,10 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
 
       {/* Error state — surfaces edge-function failures instead of crashing */}
       {isError && (
-        <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="font-semibold text-destructive">Couldn't load tuition</p>
-            <p className="text-sm text-muted-foreground">
+        <div className={iv("flex flex-wrap items-center justify-between gap-3 rounded-hec-lg border border-hec-danger/30 bg-hec-danger-tint p-4", "rounded-xl border border-destructive/40 bg-destructive/5 p-4 flex flex-wrap items-center justify-between gap-3")}>
+          <div className={iv("min-w-0", "")}>
+            <p className={iv("font-semibold text-hec-danger", "font-semibold text-destructive")}>Couldn't load tuition</p>
+            <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
               {(error as any)?.message || "The tuition calculation service returned an error."}
             </p>
           </div>
@@ -258,7 +261,7 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
 
       {/* Summary Cards — sticky compact strip when scrolled */}
       <div className="sticky top-[72px] md:top-[64px] z-30 -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className="surface-2 backdrop-blur-md supports-[backdrop-filter]:bg-card/80 rounded-xl">
+        <div className={iv("rounded-hec-lg bg-hec-paper", "surface-2 backdrop-blur-md supports-[backdrop-filter]:bg-card/80 rounded-xl")}>
           <TuitionSummaryCards stats={stats} isLoading={isLoading} />
         </div>
       </div>
@@ -284,7 +287,7 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
+            <div key={i} className={iv("h-24 animate-pulse rounded-hec-lg bg-hec-sunken", "h-24 bg-muted animate-pulse rounded-lg")} />
           ))}
         </div>
       ) : filteredAndSortedData.length === 0 ? (
@@ -293,9 +296,9 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
           animate={{ opacity: 1 }}
           className="flex flex-col items-center justify-center py-16 text-center"
         >
-          <FileSearch className="h-12 w-12 text-muted-foreground/50 mb-4" />
-          <h3 className="text-lg font-semibold">No students found</h3>
-          <p className="text-muted-foreground text-sm max-w-md mt-1">
+          <FileSearch className={iv("mb-4 h-12 w-12 text-hec-ink-faint", "h-12 w-12 text-muted-foreground/50 mb-4")} />
+          <h3 className={iv("text-hec-h3 font-semibold text-hec-ink", "text-lg font-semibold")}>No students found</h3>
+          <p className={iv("mt-1 max-w-md text-hec-small text-hec-ink-soft", "text-muted-foreground text-sm max-w-md mt-1")}>
             {searchQuery
               ? `No results for "${searchQuery}". Try a different search term.`
               : "No tuition records match your current filters."}
@@ -333,23 +336,23 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
       <AnimatePresence>
         {selectionMode && (
           <motion.div
-            initial={{ y: 80, opacity: 0 }}
+            initial={ivory ? { y: 8, opacity: 0 } : { y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 260, damping: 26 }}
-            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-2xl"
+            exit={ivory ? { y: 8, opacity: 0 } : { y: 80, opacity: 0 }}
+            transition={ivory ? { duration: 0.24, ease: [0.22, 1, 0.36, 1] } : { type: "spring", stiffness: 260, damping: 26 }}
+            className={iv("fixed bottom-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 pb-[env(safe-area-inset-bottom)]", "fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-2xl")}
           >
-            <div className="surface-2 shadow-q3 ring-1 ring-border rounded-2xl px-4 py-3 flex items-center gap-3 backdrop-blur-md supports-[backdrop-filter]:bg-card/80">
+            <div className={iv("flex flex-wrap items-center gap-3 rounded-hec-lg border border-hec-line bg-hec-raised px-4 py-3 shadow-hec-2", "surface-2 shadow-q3 ring-1 ring-border rounded-2xl px-4 py-3 flex items-center gap-3 backdrop-blur-md supports-[backdrop-filter]:bg-card/80")}>
               <Checkbox
                 checked={selectedIds.size === filteredAndSortedData.length && filteredAndSortedData.length > 0}
                 onCheckedChange={toggleSelectAll}
                 aria-label="Select all"
               />
               <div className="min-w-0 flex-1">
-                <p className="type-body font-semibold leading-tight">
+                <p className={iv("text-hec-body font-semibold text-hec-ink", "type-body font-semibold leading-tight")}>
                   {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select students"}
                 </p>
-                <p className="type-micro text-muted-foreground">
+                <p className={iv("text-hec-caption text-hec-ink-soft", "type-micro text-muted-foreground")}>
                   {filteredAndSortedData.length} visible
                 </p>
               </div>
@@ -370,7 +373,7 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
               >
                 <CreditCard className="h-4 w-4" />
                 Batch Pay
-                <Badge variant="secondary" className="bg-primary-foreground/20 text-primary-foreground">
+                <Badge variant="secondary" className={iv("border-transparent bg-hec-on-action/20 tabular-nums text-hec-on-action", "bg-primary-foreground/20 text-primary-foreground")}>
                   {selectedIds.size}
                 </Badge>
               </Button>
@@ -381,7 +384,7 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
 
       {/* Results Count */}
       {!isLoading && filteredAndSortedData.length > 0 && (
-        <p className="text-sm text-muted-foreground text-center">
+        <p className={iv("text-center text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground text-center")}>
           Showing {filteredAndSortedData.length} of {tuitionData?.length || 0} students
         </p>
       )}
