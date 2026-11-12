@@ -1,6 +1,6 @@
 # T3 round 2 - after review (docs/evidence/T3-review.md @ 16ae3ff)
 
-**Where I am / next step:** steps 1-5 done and committed (last code commit 7148f2a). Running step 6: full `node scripts/pgtest/run.mjs`, `tsc -p tsconfig.app.json`, and the preview harness on the round-2 code (`C:\Users\Dell\hec-tools\t3-out\after-r2.json|log`). Next: write the results into "6. Verification" below, commit, remove the node_modules link with `cmd //c rmdir node_modules`, report. Nothing pushed, nothing deployed.
+**Where I am / next step:** COMPLETE - all six steps done, all three checks green on the final tree. Nothing pushed, nothing deployed. Next step is the reviewer's.
 
 Round 1 is `docs/evidence/T3-prior-balance.md` (facts, the fifteen cases, the first before/after table). This file is what changed after the review. Where the two differ, this one is current: in particular round 1's "Stopped on" is closed.
 
@@ -72,10 +72,47 @@ How: the cells moved out of the JSX into `tuitionRowCells` (unit-tested with sev
 - F6, F7: section 5 above.
 - F8: the SQL header now says it cannot show a stale saved total or a row cap.
 
-## 6. Verification
+## 6. Verification (final tree)
 
-(pending)
+- `node scripts/pgtest/run.mjs`: 3,416 assertions across 40 suites, 0 failed, exit 0. Of these: tuition prior balance 267, invoice status 188 (golden file untouched), dated enrollment discounts 22, shared-module mirrors 13, edge functions typecheck 5.
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0.
+- `npx --yes bun test scripts/tuitionRows.test.ts`: 46 pass, 0 fail.
+- One assertion of T1's `invoice-status.test.mjs` pinned the source text of the payable line in `useLiveTuitionData.ts`. The line moved to `src/lib/liveTuitionItem.ts` and now prefers the function's figure, so that check was rewritten to the new place and the new rule (two assertions instead of one). It failed in the run before I rewrote it; nothing else failed in any run.
+- Preview harness on the round-2 code (`C:\Users\Dell\hec-tools\t3-out\after-r2.json|log`; the fake's bulk answers are the real handler's, regenerated with `carry.payable` and `siblingUnresolved`):
+  - 14 of 16 rows on `/tuition` are text-identical to round 1 and to the Finance tab where it lists them.
+  - Case 14 and Case 15 (the family whose discount is unresolved) now read "Being calculated" in every cell, with Record Pay disabled, and the page asked the calculator again by itself (3 bulk calls in the run: the load and two retries). In round 1 they showed the undiscounted 1,440,000 with no sign. The Finance tab still shows 1,440,000 for them.
+  - Case 16 (calculator error): "Not available", Record Pay disabled, as in round 1.
+  - The Finance tab's rows are identical to round 1.
+- Not run: the page in a real browser against the deployed function; the Ivory rendering of the page; more than 150 students in a browser (sequential batches).
+
+## What an admin sees, beyond round 1
+
+- A family whose sibling discount is still being decided shows "Being calculated" on `/tuition` for a few seconds and then fills in by itself, instead of a charge without the discount.
+- If the calculator fails, the page shows "Couldn't load tuition" with a Retry button.
+- Record Pay is greyed out for a moment while the list refreshes after a payment.
+- Once the bulk function is redeployed, students who were losing arrears or lessons to the row cap (if any were) show the right figures on both `/tuition` and the Finance tab. Whether any were depends on the live `max-rows` and the school's size; I could not look.
+
+## Deploy order
+
+Either order works. The browser reads `carry.payable` and `siblingUnresolved` when the function sends them and behaves as before when it does not; the function's new fields are additions. The row-cap fix takes effect only when `calculate-tuition-bulk` is redeployed.
 
 ## Files
 
-(pending)
+For main (browser):
+- `src/components/admin/AdminTuitionList.tsx`
+- `src/hooks/useLiveTuitionData.ts`
+- `src/lib/tuitionRows.ts` (new)
+- `src/lib/liveTuitionItem.ts` (new)
+- `src/hooks/useIvory.ts` (new on main; unchanged from the conductor branch)
+
+Functions to redeploy:
+- `calculate-tuition-bulk` (this change: paging; plus T1's `carry.payable` / `siblingUnresolved`, with `_lib/invoice-status.ts`)
+- `calculate-tuition` is T1's, not changed here.
+
+Tests and documents:
+- `scripts/tuitionRows.test.ts`, `scripts/pgtest/tuition-prior-balance.test.mjs`, `scripts/pgtest/run.mjs` (the "tuition prior balance" entry)
+- `scripts/pgtest/enrollment-discounts.test.mjs`, `scripts/pgtest/invoice-status.test.mjs` (stand-ins page; the source check)
+- `scripts/CHECK-prior-balance-differences.sql`
+- `docs/evidence/T3-prior-balance.md`, `docs/evidence/T3-round2.md`
+
+No migration.
