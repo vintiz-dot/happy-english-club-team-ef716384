@@ -1,6 +1,6 @@
 # A5 security audit - findings
 
-**Where I am / next step:** 13 Nov 2026. Sections 1, 2, 3 written (F-01 to F-20). Next: section 4 (bundle and repo), 5 (auth and sessions), 6 (abuse and cost), 7 (advisors), 8 (dependencies), then top five and owner summary.
+**Where I am / next step:** 13 Nov 2026. COMPLETE. All eight sections, the ranked list, the top five, what could not be checked and the owner's page are written (F-01 to F-27). Next step belongs to the owner: approve the permission changes. Nothing was changed, pushed or deployed.
 
 Report only. No product code changed, nothing pushed or deployed. Live catalog read read-only (policies, grants, function bodies, counts). No child, family, staff or payment row was selected. No secret was read or printed.
 
@@ -243,3 +243,174 @@ What is in good order
 | The assistant has no write path and cannot call apply/undo | YES | `chat/index.ts` and its `_lib` contain no insert/update/upsert/delete and one rpc, `ai_action_preview` (`:1544`), which is STABLE in the live catalog. The service-role client is used only inside `authenticateUser` (`:1681-1682`). `ai_action_apply` / `ai_action_undo` are named only in a comment; they are called from `src/lib/aiActions.ts` by the admin's click and each begins with an admin check. |
 
 Not a listed rule, but the same subject - see F-14 (homework files), F-16 (classmate records), F-01/F-06 (learning profiles).
+
+---
+
+## 4. The browser bundle and the repository
+
+In good order
+- No service key or server secret in `src/`, `index.html` or `public/`. The bundle reads only `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_BUILD_HASH`, `VITE_VISEME_HEAD_URL`. `service_role` does not occur in `src/`.
+- `.env` IS tracked in git, but holds only public values: the project URL and the browser key, whose role claim is `anon` (decoded the claim only). The same anon key is written into `supabase/migrations/20261110160000_schedule_runner_and_nightly_rebuild.sql:45-57` for the nightly job - public, so acceptable.
+- Every `dangerouslySetInnerHTML` (17 places: homework bodies, submissions, announcements, exam reports, journal) goes through DOMPurify (`src/lib/sanitize.ts`, `src/lib/richText.ts`). `HomeworkPdfDownload.tsx:169-178` escapes the title and cleans the body before `innerHTML`. The assistant's chat text is not rendered as HTML.
+- One `postMessage` listener (`src/integrations/supabase/previewAuthStorage.ts:86-95`): only on Lovable preview hosts, only when framed, origin checked against an allow-list, and it posts to a named origin. Not active on the production domain.
+- Open redirect: `src/lib/oauth-return-path.ts` accepts only a same-origin path (rejects `//`, backslash, control characters). `OAuthConsent.tsx` redirects only to what Supabase Auth returns.
+- Stars Sync in the browser: the `localStorage` keys in `components/admin/stars/` hold view settings and sets of ids (`hec.stars.link.rejected.v1`, ...), not names.
+
+### F-21 HIGH - Any signed-in account can plant "approved work", a "published report", a CEFR level or error-log entries on any child's pages, including a link of its choosing
+- Who: any signed-in account that knows a child's id (classmates' ids are readable, F-16; a self-made teacher gets them all, F-01).
+- Proof (live policies): four tables let the CREATOR do anything with a row, with no role or class test and no trigger:
+  - `student_work` ALL: `uploaded_by = auth.uid() OR (teacher of class)`. A row with `uploaded_by = me`, any `student_id`, `status = 'approved'`, `external_url`, `teacher_notes`, `ai_feedback` passes; the child then sees it (`student_work` SELECT: approved and own) in `src/components/student/MyWorkGallery.tsx:78-83` and `src/pages/StudentLessonDetail.tsx:311-312`, where `external_url` goes straight into `<a href>`.
+  - `student_reports` ALL: `generated_by = auth.uid() OR ...` - a `published` report for any child, which the child reads.
+  - `cefr_assessments` ALL: `created_by = auth.uid() OR ...` - families read their child's CEFR points.
+  - `student_error_log` ALL: `created_by = auth.uid() OR ...`.
+  - Also `resources` INSERT `uploaded_by = auth.uid()` for anyone (only staff read it unless a teacher-role account also adds a `resource_class_access` row, which any "teacher" may).
+- The link: nothing checks the scheme of `external_url` (`MyWorkGallery`, `StudentLessonDetail`, `ResourceCard.tsx:31`, `TeacherResources.tsx:110`, `TeacherBooks.tsx:536`). React 18 does not block a `javascript:` href. Whether a given browser runs it from a `target="_blank"` link I did not test (no exploit run); treat it as a script-injection path into a child's or parent's session until a scheme check exists.
+- Impact: forged school records shown to a family as if from the teacher; a possible way into another family's session.
+- Smallest fix: add `AND (has_role(auth.uid(),'teacher') AND can_view_student_in_class(student_id, auth.uid()) OR has_role(auth.uid(),'admin'))` to the creator branch of those four policies (and staff-only on `resources` INSERT); in the UI allow only `http:`/`https:` links.
+- Permission change needing the owner: YES for the policies; the UI check is code.
+
+### F-22 MEDIUM - A Google API key is in the git history
+- `git log -G` finds an `AIza...`-pattern key assigned to `GOOGLE_API_KEY` in `supabase/functions/image-search/index.ts`, added in commit fb545fd (11 May 2026) and removed in dbfa621 (12 May 2026). The value is still in history for anyone with the repository. I did not print or copy it. No other key pattern (OpenAI `sk-`, private key block, `sb_secret_`, service-role JWT) was found in tracked files or in history of `.env*`, `src`, `index.html`, `public`.
+- Fix: rotate that key in Google Cloud if it has not been rotated since May, and restrict it by API and referrer. Not a permission change.
+
+### F-23 LOW - Smaller browser-side items
+- `sanitizeHtml` (`src/lib/sanitize.ts:24-31`) allows any `style` and `class`; `cleanRichHtml` filters both. A child's submission text is shown to the teacher through `sanitizeHtml` (`HomeworkGrading.tsx:440`, `HomeworkGradingList.tsx:387`), so a child can draw over the grading screen with CSS (no script). Use the filtered cleaner there.
+- No Content-Security-Policy or frame-ancestors header: there is no `public/_headers`, and a HEAD of the Lovable host shows only HSTS, nosniff and referrer-policy. A CSP would blunt F-21's link and any future sanitiser miss; `frame-ancestors` stops the app being framed by another site.
+- Upload limits are enforced in the browser only for homework (5 MB, `HomeworkSubmission.tsx:110`); the `homework`, `exam-reports`, `submissions`, `resources` buckets have no size or type limit of their own (F-19).
+- `selected_student_id` in `localStorage` (`src/contexts/StudentProfileContext.tsx:21-28`) is only a filter; the server decides (section 5).
+
+---
+
+## 5. Auth and sessions
+
+| Topic | Result |
+|---|---|
+| Sign-up | OPEN on live, with a role picker - F-01. Email confirmation is required (0 of 76 accounts unconfirmed). |
+| Shared family login and the child selector | The chosen child is a browser value. Forging it gains nothing beyond what RLS gives the account: `can_view_student` (own or family's child) on bills, payments, attendance, video; `callerOwnsStudent` in `calculate-tuition` (`:93`); `studentFor` / `classFor` in `chat/index.ts:337-365` hold parents, children and teachers to their own; `cefr-defense` uses the JWT's linked student. The exception is what RLS itself over-shares: classmates (F-16). |
+| Admin unlock gate | Passcode: PBKDF2-SHA256 210k, constant-time compare, 5 tries then lock, tokens hashed, 12 h. Weakness: F-07 (passkey enrolment needs no prior unlock; only `reset-points` enforces the gate). |
+| Demo access | Demo is OFF (`demo_access.enabled = false`). `student@demo.com` exists with the student role and is enrolled in nothing; no real child is in "Demo Class". `manage-demo-student` is admin-only and refuses privileged demo accounts. BUT: a demo student is an ordinary `student` account, so while F-14 is open, switching the demo on would let a demo visitor download every real child's homework file - against the rule that demo surfaces never read production data. Fix F-14 before the demo is ever enabled. Residue (F-25): `teacher@demo.com` and `family@demo.com` still exist - banned, no roles, but each still has a `teachers` / `families` row. Delete them. |
+| Password reset | Email reset is refused in the browser for school-issued handles (`Auth.tsx:150-163`) - a convenience, not a control: Supabase will still send a reset mail to whoever owns that domain if asked directly. That risk is inherent in using other people's domains (`hanh@hanh.com`) as login names; prefer a domain the school owns. |
+| Front-desk codes | 50-bit single-use codes, hashed, expiring, staff accounts refused (`redeem-access-code`, `manage-student-access`). Notes in F-12. |
+| Migration ("claim") account | A child creates one extra login for their own record, once (`student-create-migration-account`). Any email may be chosen (F-13). |
+| OAuth consent page | Shows the client name, redirect and scopes; approval goes through Supabase Auth. F-24 (LOW): the page says the app gets "read-only tools", but what is issued is the user's own access token (audience `authenticated`), which works against the whole API with that user's rights, not only the three tools. An admin approving a client gives it admin reach. Say so on the page, and do not approve clients as an admin. |
+| MCP (`src/lib/mcp/`) | Holds: OAuth issuer check, three read-only tools (`whoami`, `list_classes`, `list_upcoming_lessons`), each builds a client from the caller's token and the public key (`supabase.ts`), so RLS applies. No service role anywhere in `src/lib/mcp/` or the generated `supabase/functions/mcp/index.ts`. Dependency advisories for the MCP packages: section 8. |
+| Admin bootstrap | Unauthenticated by design but refuses unless there are zero admins AND the secret `ALLOW_ADMIN_BOOTSTRAP` is `true` (`manage-admin-users/index.ts:63-86`). I could not read the secret; confirm it is unset. `checkAdmins` tells anyone whether an admin exists - harmless. |
+
+Accounts the owner should look at (counts only, I did not open them): 2 teacher-role accounts with no teacher or TA record and no admin role; 16 student/family-role accounts linked to no child or family. With sign-up open, some of these may be people who registered themselves.
+
+---
+
+## 6. Abuse and cost
+
+- Open spend: F-02 (nine functions; four need no key). This is the main item.
+- Signed-in spend without a durable limit: `chat` (daily cap kept in memory, `chat/index.ts:108-118`; up to 5 model rounds per message), `analyze-video-submission` (re-runs, F-13), `cefr-defense`, `generate-student-report`, `ocr-*`, `analyze-transcript`, `transcribe-lesson-audio`, `generate-work-feedback`, `refresh-student-profile`, `video-rubric`, `explain-family-tuition` - staff or admin only, no per-user cap. With F-01 "staff" is self-service.
+- Messages: no function sends email or SMS on a caller's request. Supabase Auth mail (sign-up confirmation, reset) is open to anyone and limited only by Supabase's own rate limits; closing sign-up (F-01) removes most of it.
+- `calculate-tuition` is rate limited (30/min) and ownership-checked; a parent can only recalc their own child.
+- `stars-sync` every 5 minutes and `rebuild-upcoming-sessions` nightly are the only cron jobs; both present a database-held token compared in constant time.
+- `audit-eval-proxy` (temporary): CONFIRMED admin-only. `requireRole(..., ["admin"], { allowServiceRole: false })` at `audit-eval-proxy/index.ts:237`; audio is read as the caller from bucket `audit-eval`, whose four policies are admin-only (insert also pins the file-name pattern); minutes are reserved in SQL before the vendor call (`audit_eval_reserve` -> trigger `audit_eval_runs_guard`), caps 400 calls / 600 min per run, 2000 min global. State on 13 Nov: switch `enabled = true`, 283 runs, about USD 9.24 estimated, 1,230 of 2,000 minutes used; 37 objects in `audit-eval`, 33 in `audit-clips`. Until teardown: set `enabled = false` when no batch is running. At teardown: delete the function, empty both buckets, and note that `audit_clip_enrol`, `audit_eval_reserve`, `audit_eval_finish` are executable by `anon` (each checks admin inside, so harmless) - revoke with the rest. The function is not on `main` (section 1 note).
+- `recorder-retention` (conductor branch only, not live): runner token or a named admin, service key alone refused (`:140-155`). Nothing to report.
+
+---
+
+## 7. Supabase security advisors (13 Nov)
+
+| Advisor | Level | Count | Triage |
+|---|---|---|---|
+| RLS enabled, no policy | info | 9 | Intended - server-only tables (listed in section 2). No action. |
+| Function search_path mutable | warn | 15 | All are non-definer helpers (`stars_sync__*`, `ai_*` formatters, `homework_video_path_ids`, `language_support_touch`, `is_payroll_expenditure`, `audit_*`). Low; pin `search_path` when next touched. `homework_video_path_ids` matters most: storage policies depend on it. |
+| Extension in public | warn | 2 | `btree_gist`, `pg_net`. Low. `pg_net` in `public` means its functions sit beside the app's; move to `extensions` when convenient. |
+| SECURITY DEFINER function executable by anon | warn | 16 | Seven are trigger functions (not callable usefully). Real ones: `recompute_student_points`, `is_enrolled_in_class`, `is_linked_student`, three `language_support_*`, three `audit_*`. Revoke from `anon` (F-20). |
+| SECURITY DEFINER function executable by authenticated | warn | 79 | Mostly intended RPCs and policy helpers. The ones that matter are F-15 (`pause_enrollment`), F-17 (`teacher_rate_on`, `assistant_rate_on`) and the id-oracle helpers in F-20. |
+| Leaked password protection disabled | warn | 1 | Turn on in Auth settings (checks new passwords against known breaches). Owner setting. F-27 LOW. |
+
+Remediation pages: https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy , ...lint=0011_function_search_path_mutable , ...lint=0014_extension_in_public , ...lint=0028_anon_security_definer_function_executable , ...lint=0029_authenticated_security_definer_function_executable , https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
+
+The advisors do not flag F-01, F-14, F-15, F-16 or F-21: they check shape, not meaning.
+
+---
+
+## 8. Dependencies - `npm audit --omit=dev` (13 Nov)
+
+14 advisories: 1 critical, 5 high, 6 moderate, 2 low. (F-26)
+
+| Package (installed) | Severity | What | Does it bite here? |
+|---|---|---|---|
+| dompurify 3.4.16 | critical | SAFE_FOR_TEMPLATES bypass; IN_PLACE hook leaves handlers armed | It is the app's only XSS barrier, so upgrade first. The two modes named are not used in `src/` (grep: none), so present exposure is low. Non-breaking fix available. |
+| vite 5.4.21, esbuild | high / moderate | dev-server path traversal and request forgery | Dev machine only, not the deployed site. Fix is a major upgrade. |
+| zod 3.25.76 | high | memory exhaustion on oversized collections | Browser-side use; edge functions import their own zod from a URL. Low here. Major upgrade. |
+| @lovable.dev/mcp-js 3.3.0, @modelcontextprotocol/sdk, @modelcontextprotocol/server | high | OAuth client could send credentials to a server-chosen authorization server; shared transport could deliver one client's messages to another; memory exhaustion | The `mcp` edge function is live and bundles these. The "one client's messages to another" item is the one to take seriously for a server that answers as different users. Upgrade when Lovable publishes a fixed build (the function is generated; AGENTS.md says not to hand-edit). |
+| @hono/node-server | moderate | static path double-decode | Transitive of the MCP kit; not used for static files here. |
+| glob, minimatch, postcss-selector-parser, sucrase | moderate | DoS in build tooling | Build time only. |
+| quill 2.0.3 / react-quill-new 3.8.3 | low | XSS through HTML export | The editors' output is re-sanitised on display. Low. |
+
+`npm audit fix` (non-major) covers dompurify, the MCP SDKs, hono, glob, minimatch, postcss-selector-parser, sucrase. Run `npm install` afterwards so both lockfiles agree (root AGENTS.md).
+
+---
+
+## Ranked list
+
+| # | Severity | Finding | Owner approval needed |
+|---|---|---|---|
+| F-01 | CRITICAL | Public sign-up grants the role the visitor picks (teacher, family) | yes |
+| F-14 | CRITICAL | `homework` bucket readable by every student/family/teacher account | yes |
+| F-15 | HIGH | `pause_enrollment` has no role check: any account can excuse any child's lessons | yes |
+| F-16 | HIGH | Families can read classmates' full records (DOB, phone, notes, attendance, comments) | yes |
+| F-21 | HIGH | Creator-owned policies: forged work, reports, CEFR, error log on any child; unchecked links | yes |
+| F-02 | HIGH | Nine AI/speech functions callable without sign-in, no limit | yes (4 gateway flips) |
+| F-04 | MEDIUM | Five staff functions with no class scope (bulk tuition, cefr-defense, ocr x2, report) | yes |
+| F-06 | MEDIUM | Learning profiles and finance snapshots readable by any teacher | yes |
+| F-17 | MEDIUM | Staff pay and contact details readable by any signed-in account | yes |
+| F-18 | MEDIUM | "Any teacher" storage rules on children's work photos and other buckets | yes |
+| F-05 | MEDIUM | A child can set their own homework grade and teacher feedback | yes |
+| F-03 | MEDIUM | Anonymous caller can plant dictionary content children read | no |
+| F-07 | MEDIUM | Admin unlock gate passable via passkey enrolment; enforced on one function | partly |
+| F-22 | MEDIUM | Google API key in git history | no |
+| F-26 | LOW-MEDIUM | 14 dependency advisories (dompurify, MCP kit first) | no |
+| F-08..F-13, F-19, F-20, F-23, F-24, F-25, F-27 | LOW | timing compares, dead deployments, weak temp passwords, `.single()` role checks, in-memory rate limits, small items, child-writable counters, hardening, CSS in sanitiser, consent wording, demo residue, leaked-password check off | mixed |
+
+Counts: 2 critical, 4 high, 8 medium, 13 low (27 findings).
+
+## The top five to fix first
+
+1. **Close the front door (F-01).** Make `handle_new_user` always insert `student`, remove the role picker, and switch public sign-up off in Supabase Auth unless the school truly uses it. Then look at the 2 unexplained teacher-role accounts and the 16 unlinked student/family accounts. One small migration and one dashboard switch remove the stranger from every other finding.
+2. **Homework files (F-14).** Drop the three "can view all homework files" storage policies and the any-teacher one. One migration.
+3. **`pause_enrollment` (F-15).** Add the admin check its sibling functions have. One line in one function.
+4. **What families can read and write about other children (F-16, F-21).** Replace the classmate row read with a name-and-avatar function; add role and class tests to the four creator-owned policies. This one needs the most care because screens depend on it; do it with two test families and the pgtest harness.
+5. **Open spend (F-02, F-03).** Require a signed-in user in the nine vendor functions and put a durable per-user cap behind them.
+
+Next after those: F-04, F-06, F-17, F-18 (teacher scope), F-05, then the dependency upgrade.
+
+## What I could NOT check, and why
+
+- **Nothing was exploited.** By the rules of this audit every finding is proved by reading code and the live catalog, not by doing it. Whoever fixes F-14, F-15, F-16 and F-21 should first confirm each with two throw-away test accounts on a branch database, and keep the test as the regression.
+- **Supabase Auth dashboard settings** other than the three public flags: password rules, OTP/link expiry, redirect allow-list, whether OAuth dynamic client registration is open, auth hooks, session lifetime. Not reachable by SQL or the public endpoint.
+- **Edge function secrets**: whether `ALLOW_ADMIN_BOOTSTRAP` is unset, what `CRON_SECRET_TOKEN` is (F-09). I must not read secrets.
+- **Whether live code equals the repo for all 70 functions.** I read live source for `generate-sessions` only and relied on version numbers, dates and MASTER_PLAN for the rest. `transcribe-lesson-audio` and `audit-eval-proxy` are known to be live from the conductor branch, not main.
+- **Row contents.** Not read, by rule. So: whether `transcript_speaker_metrics.highlights` quotes other children; whether avatars are real photographs; whether the unexplained accounts are legitimate; whether the video report's `strengths` / `criteria_scores` are the teacher's final text.
+- **The cron jobs' command text** (`cron.job.command`): names and schedules only, because the commands carry tokens.
+- **Browser behaviour for a `javascript:` link** in F-21: not run.
+- **The production domain's headers.** `user.hanoienglish.vip` answered 301 to a HEAD and I did not follow it; the Lovable host has no CSP. Also not checked: whether the `*.lovable.app` copy is an old build pointing at the same database.
+- **Who can see the git repository** (decides how urgent F-22 is), and function / database logs.
+- **The recorder migration (20261112100000)** is not applied; its policies were not audited here beyond what the C1 critics did.
+
+## One page for the owner, in plain words
+
+The app's foundations are sound. Every table has its lock switched on, money tables can only be changed by an admin, the payment and payroll functions all check for an admin, the AI assistant cannot change anything, the lesson-audio fix from yesterday holds, and no secret key is in the web page. The problems are a handful of doors that were left wider than the screens suggest.
+
+**The two that matter most**
+
+1. **Anyone can sign up and call themselves a teacher.** The login page has a "Join the club" form with a "Teacher" choice, and the database believes it. A stranger who does this can read every child's learning profile and, from there, families' bills. *Fix: one small database change and switching public sign-up off.* Until then, please look in Supabase > Authentication for accounts you do not recognise - there are two "teacher" accounts with no teacher record behind them.
+2. **Every homework file can be opened by every account.** An old rule says "students can view all homework files". It was meant for convenience; it means one family can download another child's homework, and so can anyone who signs up. *Fix: remove three old rules.*
+
+**Four more that deserve this week**
+
+3. A database function for "pausing" a student has no check on who is calling. Any parent could mark their own child excused for a month - which lowers the bill - or change another child's attendance. It is logged, and one line fixes it.
+4. To draw the class leaderboard, the app lets families read classmates' whole records - birthday, phone, the school's private notes, attendance, teacher comments - when it only needs a name and a picture.
+5. Any account can add "approved work", a "report" or an English level to any child's page, as if a teacher had.
+6. Nine AI and speech features (dictionary, pronunciation, picture generation) can be used by anyone on the internet without signing in. No child's data leaks, but somebody could run up the OpenAI and Azure bills.
+
+**Then:** teachers can currently see more than their own classes in a few places (all children's profiles, work photos, bulk tuition figures); every signed-in person can read teachers' pay rates; a child can type in their own homework grade; a Google key from May is still in the code history and should be replaced; and some software libraries need updating.
+
+**What I need from you:** almost every fix changes who is allowed to do what, so each needs your yes. I recommend approving 1, 2 and 3 today - they are small, and they do not change anything a real family or teacher sees. 4 and 5 need testing with two pretend families before they go live. Nothing has been changed by this audit.
+
+**The temporary vendor-test tool** (`audit-eval-proxy`) is admin-only as intended. It is still switched on; it has used about 9 US dollars and 1,230 of its 2,000 minutes. Switch it off between batches and remove it, with its two audio folders, when the comparison is finished.
