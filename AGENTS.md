@@ -57,6 +57,11 @@
 # Frozen bills
 - `invoices.tuition_frozen` locks a bill's charged figures (base, discount, total, class breakdown): a trigger keeps them on every update, and calculate-tuition / calculate-tuition-bulk report the saved figures instead of repricing. Used when enrollment history is corrected but what was billed must stand; only an admin explicitly setting it false unfreezes.
 
+# Bill status labels
+- calculate-tuition saves the bill on every call, so it must not decide `invoices.status` or un-confirm a bill: `_lib/invoice-status.ts` says which label columns a save may write. `status` on an existing bill belongs to the payment paths and the admin (only a draft is still issued); a `confirmed` / `adjusted` bill stays so while base, discount and total are unchanged, and goes to `needs_review` with a `changed_after_confirmation` flag (what was confirmed, what it is now) when they change. Only confirm-tuition sets `confirmed`.
+- The lesson-cancellation guard reads both columns to decide whether a bill is settled, so a writer that resets them lowers the guard. A new invoice writer needs a case in `scripts/pgtest/invoice-status.test.mjs`, which also compares every figure with `fixtures/tuition-figures.golden.json` (the function before that change); regenerate the golden only from figures known to be right.
+- If the month's own bill cannot be read, calculate-tuition fails rather than saving: carrying on would write `recorded_payment: 0` over a payment.
+
 # Payment month
 - Payment forms share `useTuitionMonthConfirmation`: explicitly confirm the target invoice month separately from receipt date, resetting on reopen/month changes; `family-payment` requires and filters by that month, using monthly `recorded_payment` rather than cumulative `paid_amount`.
 
