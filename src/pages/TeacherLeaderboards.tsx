@@ -145,7 +145,7 @@ export default function TeacherLeaderboards() {
                 value={displayClassId || ""}
                 onValueChange={setSelectedClassId}
               >
-                <SelectTrigger className="w-full sm:w-auto sm:min-w-48">
+                <SelectTrigger className="w-full sm:w-auto sm:min-w-48" aria-label="Class">
                   <SelectValue placeholder="Select class" />
                 </SelectTrigger>
                 <SelectContent>
@@ -164,6 +164,7 @@ export default function TeacherLeaderboards() {
                 variant={viewMode === "standard" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("standard")}
+                aria-label="Standard"
                 className="rounded-none gap-1.5"
               >
                 <BarChart3 className="h-4 w-4" />

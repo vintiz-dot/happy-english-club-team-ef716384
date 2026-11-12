@@ -64,6 +64,7 @@ function AssignStudentCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label={selected ? `Assigned student: ${selected.full_name}` : "Assign student"}
           className="h-auto w-full justify-between py-2 font-normal"
         >
           <span className={cn("min-w-0 whitespace-normal break-words text-left", !selected && "text-hec-ink-faint")}>
@@ -116,7 +117,7 @@ function TeamPicker({
     <div className="space-y-1.5">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" role="combobox" disabled={disabled} className="w-full justify-between font-normal">
+          <Button variant="outline" role="combobox" aria-label={`Team members: ${label}`} disabled={disabled} className="w-full justify-between font-normal">
             <span className={cn("tabular-nums", value.length === 0 && "text-hec-ink-faint")}>{label}</span>
             <ChevronsUpDown className="h-4 w-4 shrink-0 text-hec-ink-soft" />
           </Button>
@@ -587,7 +588,7 @@ export default function TeacherSmartUpload() {
                 onValueChange={(v) => { setClassId(v); setStudentId(""); }}
                 disabled={classesLoading || classes.length === 0}
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label="Class">
                   <SelectValue
                     placeholder={classesLoading ? "Loading your classes" : "Select class"}
                   />
@@ -612,7 +613,7 @@ export default function TeacherSmartUpload() {
                 Student <span className="font-normal text-hec-ink-soft">(required for vocab scans)</span>
               </p>
               <Select value={studentId} onValueChange={setStudentId} disabled={!classId}>
-                <SelectTrigger><SelectValue placeholder="Auto-detect from the page" /></SelectTrigger>
+                <SelectTrigger aria-label="Student"><SelectValue placeholder="Auto-detect from the page" /></SelectTrigger>
                 <SelectContent>
                   {students.map((s) => (
                     <SelectItem key={s.id} value={s.id}>

@@ -94,6 +94,7 @@ function Grid({ ids, labels, current, onPick }: { ids: number[]; labels?: string
           type="button"
           onClick={() => onPick(id)}
           aria-pressed={id === current}
+          aria-label={labels?.[i] || `Picture ${id}`}
           className={`flex min-h-hec-target flex-col items-center gap-1 rounded-hec-md border p-2 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${id === current ? "border-hec-brass bg-hec-brass/15" : "border-hec-line bg-hec-raised"}`}
         >
           <img src={pictureUrl(id)} alt="" loading="lazy" className="h-16 w-16 object-contain" />

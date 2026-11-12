@@ -264,7 +264,7 @@ export default function TeacherVocabularyAudit() {
           {/* Class + month picker */}
           <div className="flex flex-wrap items-center gap-2">
             <Select value={selectedClass} onValueChange={setSelectedClass}>
-              <SelectTrigger className="w-full sm:w-auto sm:min-w-48">
+              <SelectTrigger className="w-full sm:w-auto sm:min-w-48" aria-label="Class">
                 <SelectValue placeholder={loadingClasses ? "Loading…" : "Select class"} />
               </SelectTrigger>
               <SelectContent>
@@ -323,7 +323,7 @@ export default function TeacherVocabularyAudit() {
             <TabsContent value="micro" className="mt-6">
               <div className="space-y-4">
                 <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-                  <SelectTrigger className="w-full sm:w-auto sm:min-w-72">
+                  <SelectTrigger className="w-full sm:w-auto sm:min-w-72" aria-label="Student">
                     <SelectValue placeholder="Select a student" />
                   </SelectTrigger>
                   <SelectContent>

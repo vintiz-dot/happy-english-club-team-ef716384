@@ -783,7 +783,7 @@ export default function TeacherTranscripts() {
           <CardContent className="space-y-3 pt-4 sm:pt-6">
             <div className="flex flex-col gap-3 md:flex-row">
               <Select value={classId} onValueChange={(v) => { setClassId(v); setSelectedId(null); }}>
-                <SelectTrigger className="md:w-64"><SelectValue placeholder="Select class" /></SelectTrigger>
+                <SelectTrigger className="md:w-64" aria-label="Class"><SelectValue placeholder="Select class" /></SelectTrigger>
                 <SelectContent>
                   {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
@@ -1606,7 +1606,7 @@ export default function TeacherTranscripts() {
                               onValueChange={(sid) => assignSpeakerMutation.mutate({ metric: m, studentId: sid })}
                               disabled={assignSpeakerMutation.isPending}
                             >
-                              <SelectTrigger className="">
+                              <SelectTrigger className="" aria-label="Assign to a student">
                                 <SelectValue placeholder="Assign to a student…" />
                               </SelectTrigger>
                               <SelectContent>
