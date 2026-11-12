@@ -228,6 +228,7 @@ const SUITES = [
   // The recorder engine (src/lib/recorder) against the contract-enforcing fake
   // server: synthetic audio, no browser. Slow (minutes): it encodes real FLAC.
   { name: "recorder engine", file: "../recorder/unit.test.mjs", migrations: [] },
+  { name: "recorder screens logic", file: "../recorder/ui.test.mjs", migrations: [] },
   // The retention schedule (pg_cron / pg_net stand-ins: pglite has neither).
   { name: "recorder cron", file: "recorder-cron.test.mjs", migrations: ["20261112101000_recorder_retention_cron.sql"] },
   // 20260717090000 first: the existing class-recordings bucket and its policy,
