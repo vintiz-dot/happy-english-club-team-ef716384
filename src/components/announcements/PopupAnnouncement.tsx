@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { useIvory } from "@/hooks/useIvory";
 import type { Announcement } from "@/hooks/useAnnouncements";
 
 interface Props {
@@ -8,7 +9,10 @@ interface Props {
   onDismiss?: () => void;
 }
 
+// Rendered on every area: ivory classes only while the route is in the system
+// (useIvory), the old strings unchanged elsewhere.
 export const PopupAnnouncement = ({ announcement, onDismiss }: Props) => {
+  const ivory = useIvory();
   const config = announcement.style_config || {};
   const bg = config.bg || undefined;
   const text = config.text || undefined;
@@ -22,7 +26,7 @@ export const PopupAnnouncement = ({ announcement, onDismiss }: Props) => {
     >
       {/* Backdrop */}
       <motion.div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className={ivory ? "absolute inset-0 bg-hec-scrim/60" : "absolute inset-0 bg-black/60 backdrop-blur-sm"}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -30,12 +34,16 @@ export const PopupAnnouncement = ({ announcement, onDismiss }: Props) => {
       />
       {/* Content */}
       <motion.div
-        className="relative z-10 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden bg-card"
+        className={
+          ivory
+            ? "relative z-10 max-h-[85dvh] w-full max-w-lg overflow-y-auto rounded-hec-lg border border-hec-line bg-hec-raised text-hec-ink shadow-hec-3"
+            : "relative z-10 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden bg-card"
+        }
         style={{ background: bg, color: text }}
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.8, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        initial={ivory ? { y: 8, opacity: 0 } : { scale: 0.8, opacity: 0 }}
+        animate={ivory ? { y: 0, opacity: 1 } : { scale: 1, opacity: 1 }}
+        exit={ivory ? { y: 8, opacity: 0 } : { scale: 0.8, opacity: 0 }}
+        transition={ivory ? { duration: 0.42, ease: [0.22, 1, 0.36, 1] } : { type: "spring", stiffness: 400, damping: 30 }}
       >
         {announcement.image_url && (
           <div className="aspect-video w-full overflow-hidden">
@@ -50,11 +58,11 @@ export const PopupAnnouncement = ({ announcement, onDismiss }: Props) => {
         )}
         <div className="p-6">
           {announcement.title && (
-            <h3 className="text-xl font-bold mb-2">{announcement.title}</h3>
+            <h3 className={ivory ? "mb-2 break-words pr-8 font-display text-hec-h2 font-medium" : "text-xl font-bold mb-2"}>{announcement.title}</h3>
           )}
           {announcement.body && (
             <div
-              className="text-sm opacity-80 prose prose-sm max-w-none"
+              className={ivory ? "prose max-w-none break-words text-hec-body" : "text-sm opacity-80 prose prose-sm max-w-none"}
               dangerouslySetInnerHTML={{ __html: sanitizeHtml(announcement.body) }}
             />
           )}
@@ -62,9 +70,14 @@ export const PopupAnnouncement = ({ announcement, onDismiss }: Props) => {
         {announcement.is_dismissible && onDismiss && (
           <button
             onClick={onDismiss}
-            className="absolute top-3 right-3 p-1.5 rounded-full bg-black/20 hover:bg-black/40 transition-colors text-white"
+            aria-label={ivory ? "Dismiss announcement" : undefined}
+            className={
+              ivory
+                ? "absolute right-2 top-2 inline-flex min-h-hec-target min-w-hec-target items-center justify-center rounded-full bg-hec-raised text-hec-ink shadow-hec-1 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+                : "absolute top-3 right-3 p-1.5 rounded-full bg-black/20 hover:bg-black/40 transition-colors text-white"
+            }
           >
-            <X className="h-4 w-4" />
+            <X className={ivory ? "h-5 w-5" : "h-4 w-4"} />
           </button>
         )}
       </motion.div>
