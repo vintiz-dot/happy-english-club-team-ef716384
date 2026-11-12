@@ -12,6 +12,11 @@ import { PGlite } from '@electric-sql/pglite';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { randomUUID } from 'node:crypto';
+import { build } from 'esbuild';
+import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { harness, makeDb, repo } from './d4-prelude.mjs';
 import { functionsHarness } from './d4-functions-harness.mjs';
 
@@ -115,6 +120,22 @@ await section('F-11 through the deployed function: the floor holds the tier', as
   const p = await ms(admin.tok, 'preview', { id: s.sid, op: 'cancel' });
   ok('preview after the removals: tier 3, level STRONG, level_now NONE, review_required',
      p.body.preview.tier === 3 && p.body.preview.level === 'STRONG' && p.body.preview.level_now === 'NONE' && p.body.preview.review_required === true, p.body.preview);
+  // The dialog's wording (src/lib/sessionGuard.ts, bundled) over THIS preview.
+  const out = await build({ entryPoints: [resolve(repo, 'src/lib/sessionGuard.ts')], bundle: true, format: 'esm', platform: 'neutral', write: false, logLevel: 'silent' });
+  const libPath = resolve(tmpdir(), `d4-sessionGuard.${process.pid}.mjs`);
+  writeFileSync(libPath, out.outputFiles[0].text);
+  const lib = await import(pathToFileURL(libPath).href);
+  const list = lib.evidenceList(p.body.preview);
+  const removed = list.filter((e) => e.removed);
+  ok('src/lib/sessionGuard: evidenceList lists the two removals under "Recorded, and later removed", after the current items',
+     removed.length === 2 && removed.every((e) => e.text.startsWith('Recorded, and later removed: ')) &&
+     list.findIndex((e) => e.removed) === list.length - 2 && removed.some((e) => /Points awarded/.test(e.text)) &&
+     removed.some((e) => /transcript/.test(e.text)) && removed.every((e) => /by a staff member/.test(e.text)), list.map((e) => e.text));
+  ok('src/lib/sessionGuard: floorNote says the lesson once had strong evidence and shows none now',
+     /once had strong evidence/.test(lib.floorNote(p.body.preview) ?? '') && /shows no evidence now/.test(lib.floorNote(p.body.preview) ?? ''),
+     lib.floorNote(p.body.preview));
+  ok('src/lib/sessionGuard: a preview without a floor (a pre-D4 server) adds nothing', lib.floorNote({ ...p.body.preview, floor: undefined }) === null &&
+     lib.evidenceList({ ...p.body.preview, floor: undefined }).every((e) => !e.removed));
   let r = await ms(admin.tok, 'cancel', { id: s.sid, token: p.body.preview.token, reason: REASON, confirm: true });
   ok('cancel without a correction reason -> refused', r.body?.code === 'correction_reason_required', r);
   r = await ms(admin.tok, 'cancel', { id: s.sid, token: p.body.preview.token, reason: REASON, confirm: true, correction_reason: CORR });

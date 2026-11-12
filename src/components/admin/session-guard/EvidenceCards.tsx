@@ -1,16 +1,25 @@
-import { CheckCircle2, ClipboardCheck, ShieldAlert } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, History, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { COPY, evidenceList, evidenceMode, guidanceFor, type GuardPreview } from "@/lib/sessionGuard";
+import { COPY, evidenceList, evidenceMode, floorNote, guidanceFor, type GuardPreview } from "@/lib/sessionGuard";
 
 /**
  * What the system found about whether this lesson took place, in plain
  * language, straight from the preview's evidence items. Wording lives in
  * src/lib/sessionGuard.ts. Colour is never the only signal: each card
  * carries a text tag, and the summary starts with a word, not a shade.
+ *
+ * D4 (floors): when evidence was removed after the lesson, the server
+ * keeps what the lesson once had (preview.floor) and judges the change by
+ * it. This card says so, and lists each removal under "Recorded, and later
+ * removed". It decides nothing: the level, the tier and what is required
+ * all come from the preview.
  */
 export function EvidenceCards({ preview }: { preview: GuardPreview }) {
   const mode = evidenceMode(preview);
-  const items = evidenceList(preview);
+  const all = evidenceList(preview);
+  const items = all.filter((e) => !e.removed);
+  const removed = all.filter((e) => e.removed);
+  const once = floorNote(preview);
   const strong = preview.level === "STRONG";
   const some = mode === "some";
 
@@ -55,6 +64,30 @@ export function EvidenceCards({ preview }: { preview: GuardPreview }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {once && (
+        <div className="space-y-2 rounded-xl border border-warning/50 bg-warning/10 p-3 text-sm" role="note" aria-labelledby="sg-floor-h">
+          <p id="sg-floor-h" className="flex items-start gap-2 break-words">
+            <History className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>
+              <span className="font-semibold">{COPY.floorRemoved}. </span>
+              {once}
+            </span>
+          </p>
+          {removed.length > 0 && (
+            <ul className="space-y-1.5" aria-label={COPY.floorRemoved}>
+              {removed.map((e) => (
+                <li key={e.key} className="flex items-start gap-2 break-words">
+                  <span className="mt-0.5 shrink-0 rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    Removed
+                  </span>
+                  <span className="min-w-0">{e.text}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
 
       {preview.erased_recently && preview.erased_recently.length > 0 && (
