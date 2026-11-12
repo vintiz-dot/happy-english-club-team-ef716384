@@ -2,7 +2,7 @@
 
 MONEY: yes. Base `claude/hec-conductor-setup-efbaa5` (6465f08). Build and test only: nothing pushed, nothing deployed, no database touched.
 
-**Where I am / next step:** step 1 (facts) written. Next: step 2, the auth gate.
+**Where I am / next step:** DONE. Next: independent review, then redeploy calculate-payroll. Nothing pushed, nothing deployed.
 
 ## 1. What the browser prices today (file:line at 6465f08)
 
@@ -101,3 +101,20 @@ From `teacher-payroll.test.mjs` (fixture: teacher A raised 200,000 -> 300,000/h 
 | calendar (A, Nov) | 30 Nov, status Held but dated after today | 0 | 450,000 | function pays it (Held); old calendar showed it Scheduled and left it out of the day |
 
 Every old disagreement on a rate change is upward (the overpaying direction) whenever the rate went up.
+
+## Acceptance
+
+- `node scripts/pgtest/run.mjs`: 3630 assertions, 43 suites, 0 failed (teacher payroll view 59/0, teacher payroll function 81/0, payroll screen rows 69/0, mirrors 13/0, edge functions typecheck 5/0, app typecheck 3/0, payroll month locking 55/0).
+- `npx --yes bun test scripts/payrollCalculation.test.ts`: 6 pass, 0 fail.
+- `tsc --noEmit -p tsconfig.app.json`: clean.
+
+## To redeploy
+
+`calculate-payroll` only (no migration). Either order is safe: a browser ahead shows Lost Income "Figure unavailable" and a blank CSV rate until the redeploy; the old browser ignores the new fields.
+
+## For the owner
+
+1. Closed month with lessons corrected after the close: the teacher sees the paid totals and per-lesson amounts are withheld. Alternative: show the recomputed per-lesson figures labelled as such.
+2. `sessions.rate_override_vnd` is ignored by calculate-payroll (so by actual pay); the admin profile used to show it applied. If overrides are meant to pay, that is a function change to decide.
+3. Not fixed here (recorded in 1): `TAProfileDrawer` earnings (counts lessons a TA was absent from, today's rate), `OperationalReports` saved-payroll and fallback pricing, `ClassCalendarEnhanced` cost.
+4. TAs have no own pay page; the function answers them 403.
