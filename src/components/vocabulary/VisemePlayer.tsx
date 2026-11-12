@@ -301,7 +301,7 @@ export function VisemePlayer({ word, compact, className }: Props) {
   return (
     <div
       className={cn(
-        compact ? "inline-flex items-center gap-1.5" : "flex flex-col items-center gap-2",
+        compact ? "inline-flex items-center gap-2" : "flex flex-col items-center gap-2",
         className
       )}
     >
@@ -310,17 +310,17 @@ export function VisemePlayer({ word, compact, className }: Props) {
         onClick={play}
         disabled={loading}
         className={cn(
-          "relative rounded-2xl border-2 transition-all overflow-hidden",
-          compact ? "p-1.5" : "p-2",
+          "relative inline-flex min-h-hec-target min-w-hec-target items-center justify-center overflow-hidden rounded-hec-lg border transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+          compact ? "p-1" : "p-2",
           playing
-            ? "border-violet-400 bg-violet-50 dark:bg-violet-950/30 shadow-lg shadow-violet-200/50 dark:shadow-violet-900/30"
-            : "border-slate-200 dark:border-slate-700 hover:border-violet-300 hover:bg-violet-50/50 dark:hover:bg-violet-950/20"
+            ? "border-hec-brass bg-hec-sunken shadow-hec-2"
+            : "border-hec-line-strong bg-hec-raised hover:bg-hec-sunken"
         )}
         title="Click to hear pronunciation and see mouth shapes"
       >
         {loading ? (
           <div className={cn("flex items-center justify-center", compact ? "w-9 h-7" : "w-24 h-20")}>
-            <Loader2 className={cn("animate-spin text-violet-500", compact ? "w-4 h-4" : "w-6 h-6")} />
+            <Loader2 className={cn("animate-spin text-hec-ink-soft", compact ? "h-4 w-4" : "h-6 w-6")} />
           </div>
         ) : HEAD_URL ? (
           // 3D head canvas (always mounted so the GLB loader has somewhere to render).
@@ -341,9 +341,6 @@ export function VisemePlayer({ word, compact, className }: Props) {
           />
         )}
 
-        {playing && !compact && (
-          <div className="absolute inset-0 rounded-2xl border-2 border-violet-400 animate-ping opacity-20 pointer-events-none" />
-        )}
       </button>
 
       {/* 2D lip-shape overlay, driven by Azure's per-phoneme viseme ID. */}
@@ -352,13 +349,13 @@ export function VisemePlayer({ word, compact, className }: Props) {
       )}
 
       {!compact && (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Volume2 className="w-3 h-3" />
+        <div className="flex items-center gap-1 text-hec-caption text-hec-ink-soft">
+          <Volume2 className="h-4 w-4" />
           <span>{playing ? "Speaking..." : "Tap to pronounce"}</span>
         </div>
       )}
       {compact && (
-        <Volume2 className="w-3.5 h-3.5 text-violet-500" />
+        <Volume2 className="h-4 w-4 text-hec-ink-soft" />
       )}
     </div>
   );
@@ -433,7 +430,7 @@ function LipImageOverlay({
     <div
       aria-hidden={!visible}
       className={cn(
-        "w-20 h-20 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-900 transition-opacity duration-100",
+        "h-20 w-20 overflow-hidden rounded-hec-md border border-hec-line bg-hec-raised transition-opacity duration-hec-1",
         visible ? "opacity-100" : "opacity-0 pointer-events-none"
       )}
     >
@@ -473,29 +470,30 @@ function SvgMouth({
   return (
     <svg
       viewBox="0 0 60 40"
-      className={cn(compact ? "w-7 h-5" : "w-20 h-14", playing && "scale-105 transition-transform")}
+      className={compact ? "h-5 w-7" : "h-14 w-20"}
     >
       <ellipse
         cx="30" cy="20" rx="28" ry="18"
         fill="none" stroke="currentColor" strokeWidth="1.5"
-        className="text-slate-200 dark:text-slate-700"
+        className="text-hec-line"
       />
       {!compact && (
         <>
-          <circle cx="20" cy="12" r="2" fill="currentColor" className="text-slate-400" />
-          <circle cx="40" cy="12" r="2" fill="currentColor" className="text-slate-400" />
+          <circle cx="20" cy="12" r="2" fill="currentColor" className="text-hec-ink-faint" />
+          <circle cx="40" cy="12" r="2" fill="currentColor" className="text-hec-ink-faint" />
         </>
       )}
       <path
         d="M 8,20 Q 20,14 30,13 Q 40,14 52,20"
         fill="none" stroke="currentColor" strokeWidth={compact ? 2 : 2.5}
-        strokeLinecap="round" className="text-rose-400"
+        strokeLinecap="round" className="text-hec-ink-soft"
       />
       <path
         d={lowerLip}
-        fill={playing ? "rgba(239,68,68,0.15)" : "none"}
+        fill={playing ? "currentColor" : "none"}
+        fillOpacity={playing ? 0.15 : undefined}
         stroke="currentColor" strokeWidth={compact ? 2 : 2.5}
-        strokeLinecap="round" className="text-rose-400"
+        strokeLinecap="round" className="text-hec-ink-soft"
       />
     </svg>
   );
