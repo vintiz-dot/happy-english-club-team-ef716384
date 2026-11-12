@@ -105,4 +105,100 @@ From the `b2_eval.py` logs (run 2026-11-12; ECAPA/TitaNet rows written before a 
 
 Reading: the two CAM++ models are close to chance on these children's voices; ECAPA is clearly the best of the four, TitaNet second. Adaptive s-norm (cohort = the other enrolled children) lowers ECAPA's EER from 34 % to 26-29 %; sub-centroids (k2/k3) add a little; enrolment length 10 / 20 / 40 s / all gives top-1 53 / 62 / 65 / 68 % (cosine) - more enrolment helps, but with no data beyond ~140 s per child we cannot say where it stops. Raw-clip enrolment (no VAD, no adult-pitch filter) is close to the cleaned enrolment for ECAPA (65.2 vs 68.2 % top-1), because the 30 s floor keeps the adult-dominated clips (S13) out of the gallery.
 
+## 5. Results with the best model (ECAPA) - SYNTHETIC, UPPER BOUND
+
+`b2_eval.py --models ecapa` (final units, 21 enrolled, 17 test children; open set = leave-one-out, so every test window is also an unenrolled-speaker trial; run 2026-11-12, `work\b2\results_ecapa.json`, ECAPA rerun with 11 configurations and 3 cluster shuffles after the restart). "named" = correct child shown; "wrong child" = an enrolled child shown as someone else (closed set); "open accepted" = an unenrolled child shown as an enrolled one. Thresholds are chosen by `score.recommend_split` on the pooled s500* conditions so that BOTH the closed-set wrong-child rate and the open-set accept rate meet the target; "ok" = the 95 % upper bound meets it (1 358 test windows per population: enough to show 1 %, unlike B0's ~100).
+
+### 5.1 Configurations (pooled s500* conditions, all lengths)
+
+| config | EER % | top-1 closed % [CI] | T @1 % | named % [CI] | wrong child % [CI] | open accepted % [CI] | T @5 % | named % | wrong % | open acc % |
+|---|---|---|---|---|---|---|---|---|---|---|
+| vad-all-mean-cos (baseline) | 34.0 | 68.2 [65.8-70.4] | 0.694 ok | 8.1 [6.9-9.6] | 0.3 [0.1-0.6] | 0.5 [0.3-1.0] | 0.646 | 17.7 | 1.7 | 3.8 |
+| vad-10-mean-cos (10 s enrolment) | 35.5 | 53.0 [50.5-55.4] | 0.684 | 2.9 | 0.3 | 0.5 | 0.636 | 9.1 | 2.0 | 3.9 |
+| vad-20-mean-cos | 35.8 | 61.9 [59.5-64.3] | 0.697 | 4.5 | 0.2 | 0.5 | 0.643 | 12.5 | 1.6 | 3.9 |
+| vad-40-mean-cos | 34.7 | 65.0 [62.7-67.3] | 0.693 | 6.9 | 0.2 | 0.5 | 0.646 | 15.2 | 1.5 | 3.8 |
+| vad-all-mean-asnorm | 27.1 | 66.7 [64.3-68.9] | 4.416 ok | 20.7 [18.8-22.8] | 0.1 | 0.5 | 3.432 | 28.7 | 0.8 | 3.9 |
+| vad-10-mean-asnorm | 27.9 | 56.7 | 4.542 | 10.5 | 0.3 | 0.5 | 3.188 | 19.8 | 1.0 | 3.9 |
+| vad-20-mean-asnorm | 27.8 | 62.8 | 4.612 | 12.9 | 0.2 | 0.5 | 3.350 | 23.6 | 1.1 | 3.9 |
+| vad-40-mean-asnorm | 28.9 | 65.8 | 4.580 | 16.1 | 0.1 | 0.5 | 3.361 | 26.0 | 0.9 | 3.9 |
+| **vad-all-k3-asnorm** (3 sub-centroids) | **25.5** | **68.4 [66.1-70.7]** | **4.726 ok** | 18.5 [16.7-20.5] | 0.1 [0.0-0.5] | 0.5 [0.3-1.0] | 3.500 | 28.8 | 0.7 | 3.9 |
+| raw-all-mean-cos (no VAD / pitch clean-up) | 33.2 | 65.2 | 0.695 | 7.7 | 0.1 | 0.5 | 0.651 | 16.9 | 1.7 | 3.9 |
+| vad-all-mean-ccos (centred cosine) | 26.5 | 65.3 | 0.455 | 15.9 | 0.4 | 0.5 | 0.397 | 27.6 | 2.0 | 3.9 |
+
+Normalisation (AS-norm) is the step that matters: at the same 1 % point it more than doubles the share of turns that get a name (8 % -> 19-21 %). Enrolment length helps steadily (10 s -> all: top-1 53 -> 68 % cosine, 57 -> 67 % AS-norm).
+
+### 5.2 Accuracy by turn length (vad-all-k3-asnorm, s500 room)
+
+| window (stands for) | n | top-1, no threshold | at T@1 % = 4.726: named % [CI] | wrong child % | UNKNOWN % | open accepted % [CI] | at T@5 % = 3.500: named % | wrong % | open acc % |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 s (< 1.5 s) | 549 | 52.8 (cosine) | 4.6 [3.1-6.6] | 0.0 | 95.4 | 0.0 [0.0-0.7] | 7.5 | 0.0 | 0.5 |
+| 2 s (1.5-3 s) | 243 | 77.0 | 16.0 [12.0-21.2] | 0.4 | 83.5 | 0.4 [0.1-2.3] | 31.7 | 1.6 | 6.2 |
+| 4 s (3-6 s) | 95 | 86.3 | 49.5 [39.6-59.4] | 0.0 | 50.5 | 2.1 [0.6-7.4] | 67.4 | 1.1 | 8.4 |
+| 8 s (> 6 s) | 27 | 96.3 | 81.5 [63.3-91.8] | 0.0 | 18.5 | 0.0 [0.0-12.5] | 92.6 | 0.0 | 18.5 |
+
+Most children's turns in a lesson are short, and that is where it fails: under 1.5 s, 95 % of turns stay UNKNOWN at the 1 % point and still 92 % at the 5 % point. Note the 5 % threshold, applied per length, lets 6-18 % of unenrolled children's 2-8 s turns through as a wrong name: one global threshold does not hold its false-accept rate across lengths.
+
+### 5.3 Room and overlap (top-1 no threshold, cosine baseline; named at T@1 % for k3-asnorm)
+
+| window | clean | s500 room | s500 + 5 % overlap | s500 + 15 % overlap |
+|---|---|---|---|---|
+| 1 s top-1 | 76.7 | 52.8 | - | - |
+| 2 s top-1 | 86.8 | 77.0 | 70.4 | 67.1 |
+| 4 s top-1 | 93.7 | 86.3 | 88.4 | 85.3 |
+| 2 s named @T1 (k3-asnorm) | 39.9 | 16.0 | 19.3 | 14.4 |
+| 4 s named @T1 (k3-asnorm) | 75.8 | 49.5 | 40.0 | 43.2 |
+
+The simulated room costs more than overlap: at 2 s it halves the share named at the 1 % point (40 -> 16 %). Overlap of 5-15 % costs a few more points of top-1 at 2 s; at 4 s the differences are within noise (n = 95).
+
+### 5.4 Aggregating a cluster's turns (the realistic use; vad-all-k3-asnorm, s500; T chosen per row)
+
+| turns of | k turns | speech s | clusters (independent) | top-1 % [CI] | T @1 % | named % [CI] | wrong % | open accepted % [CI] | evidence |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 s | 1 | 1 | 549 | 50.6 [48.2-53.0] | 4.034 | 5.8 [4.8-7.1] | 0.0 | 0.4 [0.2-0.8] | ok |
+| 1 s | 5 | 5 | 103 | 82.2 [77.5-86.1] | 4.858 | 34.0 [28.9-39.4] | 0.6 | 1.0 [0.3-2.8] | insufficient |
+| 1 s | 10 | 10 | 47 | 91.5 [85.7-95.1] | 5.475 | 40.4 [32.7-48.7] | 0.0 | 0.7 [0.1-3.9] | insufficient |
+| 2 s | 1 | 2 | 243 | 75.7 [72.5-78.7] | none (inf) | 0 | 0 | 0 | - |
+| 2 s | 3 | 6 | 74 | 90.5 [86.0-93.7] | 5.590 | 43.7 [37.3-50.3] | 0.0 | 0.9 [0.2-3.2] | insufficient |
+| 2 s | 5 | 10 | 42 | 92.9 [87.0-96.2] | 5.985 | 52.4 [43.7-60.9] | 0.0 | 0.8 [0.1-4.4] | insufficient |
+| 2 s | 10 | 20 | 20 | 100.0 [94.0-100.0] | 5.986 @5 % | 71.7 (@5 %) | - | 5.0 (@5 %) | insufficient |
+| 2 s + 5 % overlap | 5 | 10 | 42 | 94.4 [89.0-97.3] | 7.370 | 42.1 [33.8-50.8] | 0.0 | 0.8 [0.1-4.4] | insufficient |
+
+(CIs on clusters use rows pooled over 3 shuffles; "independent" is per shuffle, so the true intervals are wider.) Aggregation is the biggest gain measured: 10 s of a child's turns gives the right child top-1 in 92-93 % of clusters (vs 51-76 % for single turns), and about half of such clusters can be NAMED at a 1 % false-accept point. But only 20-103 independent clusters exist, so a 1 % rate cannot be demonstrated (needs ~300 with no error).
+
+### 5.5 Threshold stability (chosen on half of the children, applied to the other half; 1 % target)
+
+| T chosen on half A, applied to half B | T chosen on half B, applied to half A |
+|---|---|
+| T 4.594: named 23.0 %, wrong 0.3 %, open accepted 1.2 % | T 6.031: named 10.0 %, wrong 0.0 %, open accepted 0.0 % |
+
+The two halves disagree (4.6 vs 6.0) and the lower one breaks the 1 % open-set target on unseen children (1.2 %). **Recommended threshold: T = 6.0** (AS-norm score, ECAPA, vad-all-k3-asnorm) for both single turns and clusters - the larger of the cross-half and per-row 1 % values, i.e. fail closed. At T = 6.0 expect most single turns UNKNOWN and roughly half of 10-s clusters named.
+
+### 5.6 Per child, adult contamination, score distributions (ECAPA cosine baseline, s500 2 s)
+
+| child | windows | top-1 % | most frequent wrong answers |
+|---|---|---|---|
+| S01 | 24 | 79 | S05 x2, S12 x2, S03 x1 |
+| S02 | 41 | 98 | S05 x1 |
+| S03 | 14 | 86 | S24, S26 |
+| S04 | 11 | **9** | S05 x4, S24 x3, S01 x2 |
+| S05 | 14 | 86 | S20, S04 |
+| S06 | 6 | 67 | S10, S30 |
+| S07 | 10 | 60 | S05 x2, S01, S20 |
+| S10 | 14 | 71 | S02 x3, S05 |
+| S11 | 12 | 100 | |
+| S14 | 12 | 58 | S01, S24, S07 |
+| S15 | 11 | 64 | S03 x4 |
+| S17 | 11 | 64 | S24, S04, S10 |
+| S18 | 11 | 82 | S21, S01 |
+| S20 | 8 | 62 | S24 x3 |
+| S21 | 12 | 50 | S24 x3, S26, S30 |
+| S24 | 10 | 90 | S03 |
+| S30 | 22 | 95 | S12 |
+
+Wrong answers received ("hubs"): S24 12, S05 10, S03 10, S01 5. Per-child rates rest on 6-41 windows each: indicative only.
+
+Adult-pitch speech in the enrolment clips (ECAPA): S20 has 30 adult-pitch windows against 17 child windows and S21 26 against 30; 5 of S20's and 9 of S21's enrolment windows are closer to the adult centroid than to their own child centroid, i.e. the "child" enrolment of S20/S21 still contains adult speech that the 200 Hz pitch filter missed (cosine adult-vs-enrolment centroid 0.42 / 0.58). They are kept in, and flagged: their top-1 (62 % / 50 %) is below the median. S13 (clip dominated by an adult voice, 25.5 s child speech) and S23 (no child-pitch speech) are not enrolled. S04's enrolment is not adult-contaminated (cos 0.29) yet it fails (9 %): not explained; a teacher should check that S04's clip is one child.
+
+Top-1 score quantiles (5/25/50/75/95 %), s500 all lengths, k3-asnorm: correct [-1.29, 0.67, 2.39, 4.57, 8.97]; wrong enrolled child [-2.77, -1.22, -0.21, 0.92, 2.53]; unenrolled child [-2.95, -1.19, 0.06, 1.17, 3.07]. The out-of-set distribution sits on top of the wrong-child one: an unenrolled child looks exactly like a mistaken enrolled one, which is why open-set matters. Cosine: correct median 0.53, wrong 0.43, out-of-set 0.44 - heavy overlap.
+
 **Statistical caveat stated once for every table:** confidence intervals are 95 % Wilson intervals over windows, treating windows as independent. They are not: all windows come from 15 children and from 20-90 s of speech each, so the true uncertainty is wider than shown, above all for per-child figures.
