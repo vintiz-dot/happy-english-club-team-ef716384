@@ -17,6 +17,7 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { safeHttpUrl } from "@/lib/safeUrl";
 import {
   ArrowLeft, Loader2, BookOpen, NotebookPen, Sparkles, MessageSquareText,
   HelpCircle, AlertTriangle, TrendingUp, Coins, FileImage, Link2, Users,
@@ -309,7 +310,7 @@ export default function StudentLessonDetail() {
                     {w.url ? (
                       <a href={w.url} target="_blank" rel="noreferrer"><img src={w.url} alt="work" loading="lazy" className="h-28 w-full object-cover" /></a>
                     ) : w.external_url ? (
-                      <a href={w.external_url} target="_blank" rel="noreferrer" className="flex h-28 min-h-hec-target w-full flex-col items-center justify-center gap-1 bg-hec-sunken hover:bg-hec-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
+                      <a href={safeHttpUrl(w.external_url)} target="_blank" rel="noreferrer" className="flex h-28 min-h-hec-target w-full flex-col items-center justify-center gap-1 bg-hec-sunken hover:bg-hec-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
                         <Link2 className="h-6 w-6 text-hec-ink-soft" />
                         <span className="flex items-center gap-0.5 text-hec-caption font-medium text-hec-brass">Open <ExternalLink className="h-3 w-3" /></span>
                       </a>
