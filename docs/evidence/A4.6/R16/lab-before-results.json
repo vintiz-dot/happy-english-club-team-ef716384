@@ -1,0 +1,394 @@
+{
+ "label": "before",
+ "ivory": false,
+ "runs": {
+  "1280-light": {
+   "steps": {
+    "hud": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      41,
+      78,
+      122,
+      20
+     ],
+     "z": null,
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(32, 29, 48)",
+     "inViewport": true
+    },
+    "hud-chip-hint": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      0,
+      89,
+      163,
+      28
+     ],
+     "z": "9999",
+     "bg": "rgba(255, 255, 255, 0.85)",
+     "color": "rgb(32, 29, 48)",
+     "inViewport": true
+    },
+    "hud-chip-popover": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      65,
+      237,
+      60,
+      15
+     ],
+     "z": "100",
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(32, 29, 48)",
+     "inViewport": true
+    },
+    "skillbutton-popover": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      185,
+      158,
+      40,
+      40
+     ],
+     "z": "100",
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(32, 29, 48)",
+     "inViewport": true
+    },
+    "radial-main": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      375,
+      413,
+      48,
+      13
+     ],
+     "z": null,
+     "bg": "rgba(239, 68, 68, 0.2)",
+     "color": "rgb(220, 38, 38)",
+     "inViewport": true
+    },
+    "radial-skill-popover": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      185,
+      247,
+      40,
+      40
+     ],
+     "z": "100",
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(32, 29, 48)",
+     "inViewport": true
+    },
+    "radial-reasons": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      99,
+      306,
+      87,
+      20
+     ],
+     "z": null,
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(103, 98, 132)",
+     "inViewport": true
+    },
+    "radial-points": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      356,
+      340,
+      48,
+      48
+     ],
+     "z": null,
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(220, 38, 38)",
+     "inViewport": true
+    },
+    "sap-main": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      61,
+      505,
+      260,
+      20
+     ],
+     "z": "100",
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(255, 255, 255)",
+     "inViewport": true
+    },
+    "sap-attendance": {
+     "fullscreen": true,
+     "inDom": false,
+     "insideFs": false,
+     "visible": false,
+     "rect": null,
+     "z": null,
+     "bg": null,
+     "color": null
+    },
+    "sap-skills": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      13,
+      250,
+      310,
+      15
+     ],
+     "z": "100",
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(103, 98, 132)",
+     "inViewport": true
+    },
+    "sap-flag": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      13,
+      742,
+      310,
+      40
+     ],
+     "z": "100",
+     "bg": "rgb(30, 59, 138)",
+     "color": "rgb(255, 255, 255)",
+     "inViewport": true
+    }
+   },
+   "errors": [],
+   "fullscreenElement": "fs-host",
+   "htmlAttr": null,
+   "taps": []
+  },
+  "375-light": {
+   "steps": {
+    "hud": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      41,
+      98,
+      122,
+      20
+     ],
+     "z": null,
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(32, 29, 48)",
+     "inViewport": true
+    },
+    "hud-chip-hint": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      0,
+      109,
+      163,
+      28
+     ],
+     "z": "9999",
+     "bg": "rgba(255, 255, 255, 0.85)",
+     "color": "rgb(32, 29, 48)",
+     "inViewport": true
+    },
+    "hud-chip-popover": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      65,
+      275,
+      60,
+      15
+     ],
+     "z": "100",
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(32, 29, 48)",
+     "inViewport": true
+    },
+    "skillbutton-popover": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      201,
+      258,
+      44,
+      44
+     ],
+     "z": "100",
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(32, 29, 48)",
+     "inViewport": true
+    },
+    "radial-main": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      260,
+      517,
+      48,
+      13
+     ],
+     "z": null,
+     "bg": "rgba(239, 68, 68, 0.2)",
+     "color": "rgb(220, 38, 38)",
+     "inViewport": true
+    },
+    "radial-skill-popover": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      201,
+      348,
+      44,
+      44
+     ],
+     "z": "100",
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(32, 29, 48)",
+     "inViewport": true
+    },
+    "radial-reasons": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      99,
+      417,
+      87,
+      20
+     ],
+     "z": null,
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(103, 98, 132)",
+     "inViewport": true
+    },
+    "radial-points": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      248,
+      457,
+      48,
+      48
+     ],
+     "z": null,
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(220, 38, 38)",
+     "inViewport": true
+    },
+    "sap-main": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      61,
+      630,
+      260,
+      20
+     ],
+     "z": "100",
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(255, 255, 255)",
+     "inViewport": true
+    },
+    "sap-attendance": {
+     "fullscreen": true,
+     "inDom": false,
+     "insideFs": false,
+     "visible": false,
+     "rect": null,
+     "z": null,
+     "bg": null,
+     "color": null
+    },
+    "sap-skills": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      13,
+      306,
+      310,
+      15
+     ],
+     "z": "100",
+     "bg": "rgba(255, 255, 255, 0.6)",
+     "color": "rgb(103, 98, 132)",
+     "inViewport": true
+    },
+    "sap-flag": {
+     "fullscreen": true,
+     "inDom": true,
+     "insideFs": true,
+     "visible": true,
+     "rect": [
+      13,
+      504,
+      310,
+      44
+     ],
+     "z": "100",
+     "bg": "rgb(30, 59, 138)",
+     "color": "rgb(255, 255, 255)",
+     "inViewport": true
+    }
+   },
+   "errors": [],
+   "fullscreenElement": "fs-host",
+   "htmlAttr": null,
+   "taps": []
+  }
+ }
+}

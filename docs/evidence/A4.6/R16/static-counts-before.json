@@ -1,0 +1,75 @@
+{
+ "selectStar_src": 67,
+ "selectStar_fn": 21,
+ "selectNoArgs_src": 6,
+ "selectNoArgs_fn": 9,
+ "img_total": 38,
+ "img_without_alt": 3,
+ "img_without_alt_files": [
+  "src/components/homework/HomeworkPdfDownload.tsx",
+  "src/components/vocabulary/ImageCarousel.tsx"
+ ],
+ "iconOnlyButtons": 37,
+ "iconOnlyButtons_without_aria_label": 21,
+ "useQuery_total": 341,
+ "useQuery_without_staleTime": 295,
+ "queryClientFiles": [
+  "src/App.tsx"
+ ],
+ "colon_any": 820,
+ "as_any": 386,
+ "files_over_800_lines": [
+  [
+   "src/integrations/supabase/types.ts",
+   6822
+  ],
+  [
+   "src/components/leaderboard/HighScores.tsx",
+   1917
+  ],
+  [
+   "src/pages/TeacherTranscripts.tsx",
+   1756
+  ],
+  [
+   "src/components/leaderboard/StarBoard.tsx",
+   1656
+  ],
+  [
+   "src/components/leaderboard/NightLeague.tsx",
+   1519
+  ],
+  [
+   "src/components/admin/tabs/StarsSyncTab.tsx",
+   1248
+  ],
+  [
+   "src/pages/TeacherSmartUpload.tsx",
+   1099
+  ],
+  [
+   "src/components/admin/stars/StarsRecordsCenter.tsx",
+   1076
+  ],
+  [
+   "src/components/admin/stars/StarsTools.tsx",
+   981
+  ],
+  [
+   "src/components/vocabulary/WordExplorer.tsx",
+   977
+  ],
+  [
+   "src/lib/recorder/controller.ts",
+   975
+  ],
+  [
+   "src/lib/sessionGuard.ts",
+   937
+  ],
+  [
+   "src/lib/starsRecords.ts",
+   849
+  ]
+ ]
+}
