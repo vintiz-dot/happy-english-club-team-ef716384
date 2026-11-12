@@ -1158,7 +1158,9 @@ await chunkUp(T2, rCov.id, "teacher", 0, 64_000, 0, 30_000);
   const rCov2 = await arm(T2, sCov2);
   await q(`UPDATE public.sessions SET teacher_id = $2 WHERE id = $1`, [sCov2, t1]);
   refused("and one they armed cannot start", await setStatus(T2, rCov2.id, "recording"), /no longer teach this lesson/);
-  await setStatus(T2, rCov2.id, "abandoned", `, abandon_reason = 'test'`);
+  // No longer a listener, they cannot see the row once it is closed, so
+  // closing it is the admin's (or the stale sweep's) job.
+  eq("an admin abandons it", await setStatus(ADMIN, rCov2.id, "abandoned", `, abandon_reason = 'cover taken off'`), null);
   await q(`UPDATE public.sessions SET teacher_id = $2 WHERE id = $1`, [sCov, t2]);
   eq("given back to them, it takes audio again", await tryReg(T2, rCov.id, "teacher", 1, 64_000, SHA("a"), 30_000, 60_000), null);
 }
