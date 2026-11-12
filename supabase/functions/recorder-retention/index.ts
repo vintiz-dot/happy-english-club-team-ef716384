@@ -80,12 +80,13 @@ export interface RetentionResult {
   expired_stale: number;
   due: number;
   deleted: number;
+  deleted_ids: string[];
   objects_removed: number;
   skipped: { recording_id: string; reason: string }[];
 }
 
 export async function runRetention(sb: any, opts: { recordingId?: string | null } = {}): Promise<RetentionResult> {
-  const result: RetentionResult = { expired_stale: 0, due: 0, deleted: 0, objects_removed: 0, skipped: [] };
+  const result: RetentionResult = { expired_stale: 0, due: 0, deleted: 0, deleted_ids: [], objects_removed: 0, skipped: [] };
 
   // 1. Recordings never finished 14 days after their lesson become abandoned (and so due).
   const stale = await sb.rpc("recorder_expire_stale");
@@ -126,6 +127,7 @@ export async function runRetention(sb: any, opts: { recordingId?: string | null 
         continue;
       }
       result.deleted += 1;
+      result.deleted_ids.push(r.recording_id);
     } catch (e) {
       result.skipped.push({ recording_id: r.recording_id, reason: String((e as Error)?.message ?? e).slice(0, 120) });
     }
@@ -156,7 +158,7 @@ Deno.serve(async (req) => {
     if (recordingId !== null && !UUID.test(recordingId)) return json(400, { error: "recording_id must be a uuid" });
 
     const result = await runRetention(sb, { recordingId });
-    console.log(JSON.stringify({ fn: "recorder-retention", by: who, expired_stale: result.expired_stale, due: result.due, deleted: result.deleted, objects_removed: result.objects_removed, skipped: result.skipped.map((s) => s.recording_id) }));
+    console.log(JSON.stringify({ fn: "recorder-retention", by: who, expired_stale: result.expired_stale, due: result.due, deleted: result.deleted, deleted_ids: result.deleted_ids, objects_removed: result.objects_removed, skipped: result.skipped.map((s) => s.recording_id) }));
     return json(200, result);
   } catch (e) {
     console.error(JSON.stringify({ fn: "recorder-retention", error: String((e as Error)?.message ?? e).slice(0, 200) }));
