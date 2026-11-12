@@ -222,55 +222,56 @@ export async function refreshAndRecord(service: any, asCaller: any, overrideId: 
   };
 }
 
-/** Consequences shown in a single preview. BEFORE figures come from
- *  calculate-tuition (which saves the canonical bill as it always does, so
- *  this runs BEFORE session_change_preview: the token then covers the
- *  refreshed bill). There is no projection mode in calculate-tuition, so
- *  AFTER figures are not available until the change is made - said so,
- *  never estimated. The teacher's pay line is calculate-payroll's, for a
- *  Held lesson only (only Held lessons are paid). */
-export async function fetchConsequences(service: any, session: any, students: string[], months: string[]) {
-  const tuition: any[] = [];
-  for (const studentId of students) {
-    for (const month of months) {
-      try {
-        const { data, error } = await service.functions.invoke('calculate-tuition', { body: { studentId, month } });
-        if (error || data?.error) {
-          tuition.push({ student_id: studentId, month, fetched: false, error: String(data?.error ?? error?.message ?? 'failed') });
-        } else {
-          tuition.push({ student_id: studentId, month, fetched: true, before: tuitionSnapshot(data),
-                         after: { fetched: false, reason: 'not_available_before_the_change' } });
-        }
-      } catch (e) {
-        tuition.push({ student_id: studentId, month, fetched: false, error: String((e as Error)?.message ?? e) });
-      }
-    }
-  }
-  let payroll: any = { fetched: false, reason: 'lesson_not_held' };
-  if (session?.status === 'Held' && session?.teacher_id && session?.date) {
-    try {
-      const month = String(session.date).slice(0, 7);
-      const { data, error } = await service.functions.invoke('calculate-payroll', {
-        body: { month, teacherId: session.teacher_id },
-      });
-      payroll = error || data?.error
-        ? { fetched: false, reason: 'calculate_payroll_failed', error: String(data?.error ?? error?.message ?? 'failed') }
-        : { fetched: true, month, teacher_id: session.teacher_id, response: data };
-    } catch (e) {
-      payroll = { fetched: false, reason: 'calculate_payroll_failed', error: String((e as Error)?.message ?? e) };
-    }
-  }
-  return { tuition, payroll };
-}
+export const AFTER_NOT_AVAILABLE = { available: false, reason: 'worked out after the change' } as const;
 
-/** Months a preview's refresh pairs touch, and the students on the register. */
-export function studentsAndMonths(p: any): { students: string[]; months: string[] } {
-  const pairs: Array<{ student_id: string; month: string }> = p?.refresh_pairs ?? [];
+/** Consequences shown in a preview: READ-ONLY (D-review-3 F-1).
+ *
+ *  A preview never invokes calculate-tuition: every call of it upserts the
+ *  bill with confirmation_status auto_approved|needs_review and status
+ *  'issued', so a preview would un-confirm the bills it is about to judge
+ *  (lowering the guard's own tier), create bills for months that had none,
+ *  and spend the 30-a-minute budget the confirm's refresh needs. Nor does
+ *  it invoke calculate-payroll, which upserts payroll_summaries for an open
+ *  month. What it shows are the bills AS STORED, taken verbatim from the
+ *  preview RPC's own `invoices_before` (the rows the token fingerprints),
+ *  one entry per (student, month) the change touches, `bill: null` when no
+ *  bill is saved. Nothing is computed here; the after-figures come from the
+ *  confirm step's refresh through calculate-tuition. */
+export function storedConsequences(p: any) {
+  const pairs: Array<{ student_id: string; month: string }> = Array.isArray(p?.refresh_pairs) ? p.refresh_pairs : [];
+  const stored: any[] = Array.isArray(p?.invoices_before) ? p.invoices_before : [];
+  const marks = new Map<string, any>();
+  for (const a of Array.isArray(p?.affected) ? p.affected : []) if (a?.student_id) marks.set(String(a.student_id), a);
+  const seen = new Set<string>();
+  const affected_students: any[] = [];
+  const invoices_before: any[] = [];
+  for (const pr of pairs) {
+    if (!pr?.student_id || !pr?.month) continue;
+    const key = `${pr.student_id}:${pr.month}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const m = marks.get(String(pr.student_id));
+    affected_students.push({ student_id: pr.student_id, month: pr.month,
+                             mark: m ? { status: m.status ?? null, marked_by_person: m.marked_by_person ?? null } : null });
+    const i = stored.find((x) => x && String(x.student_id) === String(pr.student_id) && x.month === pr.month);
+    invoices_before.push({ student_id: pr.student_id, month: pr.month, bill: i ? {
+      total_amount: i.total_amount ?? null,
+      discount_amount: i.discount_amount ?? null,
+      recorded_payment: i.recorded_payment ?? null,
+      confirmation_status: i.confirmation_status ?? null,
+      status: i.status ?? null,
+      tuition_frozen: i.tuition_frozen ?? null,
+    } : null });
+  }
   return {
-    students: [...new Set(pairs.map((x) => x.student_id))],
-    months: [...new Set(pairs.map((x) => x.month))],
+    source: 'stored',
+    affected_students,
+    invoices_before,
+    after: AFTER_NOT_AVAILABLE,
+    pay_line: { available: false, reason: 'not fetched in a preview: calculate-payroll saves the month summary when it runs' },
   };
 }
+
 
 // ------------------------------------------------------------------ bulk
 
@@ -324,7 +325,7 @@ export async function bulkPreview(asCaller: any, sessions: any[], op: string) {
     else if (v.tier === 0) plain.push(row);
     else needs_ack.push({ ...row, level: v.level, settled_any: v.settled_any, requires: v.requires,
                           review_required: v.review_required, evidence: v.evidence, affected: v.affected,
-                          invoices_before: v.invoices_before });
+                          invoices_before: v.invoices_before, consequences: storedConsequences(v) });
   }
   return { plain, needs_ack, refused, preview_failed };
 }

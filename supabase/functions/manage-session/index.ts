@@ -2,9 +2,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
 import {
-  BULK_PREVIEW_CAP, bulkCancelChunks, bulkPreview, callerClient, cleanItems, corsHeaders, fail, fetchConsequences,
+  BULK_PREVIEW_CAP, bulkCancelChunks, bulkPreview, callerClient, cleanItems, corsHeaders, fail, storedConsequences,
   guardError, isUuid, json, mapDbError, preview, readReason, refreshAndRecord, refreshDone, rpc,
-  studentsAndMonths, type GuardError,
+  type GuardError,
 } from '../_lib/session-guard.ts';
 
 // Cancel, un-cancel, delete and move go through the checked RPCs of
@@ -144,20 +144,12 @@ Deno.serve(async (req) => {
         }
         change = { date: c.date, start_time: hhmmss(c.start_time), end_time: hhmmss(c.end_time) };
       }
-      // First read: who is on the register and which months (and is the guard there at all).
-      const first = await preview(asCaller, data.id, op, change);
-      if ('error' in first) return fail(first.error);
-      let consequences: any = { fetched: false, reason: 'not_requested' };
-      if (data.figures !== false) {
-        const session = await loadSession(data.id);
-        const { students, months } = studentsAndMonths(first.data);
-        // calculate-tuition saves the canonical bill as it always does, so it
-        // runs BEFORE the preview that issues the token.
-        consequences = await fetchConsequences(supabase, session, students, months);
-      }
-      const final = data.figures === false ? first : await preview(asCaller, data.id, op, change);
-      if ('error' in final) return fail(final.error);
-      return json({ ok: true, preview: final.data, consequences });
+      // ONE read-only call (D-review-3 F-1): no calculate-tuition, no
+      // calculate-payroll, nothing written. The bills shown are the stored
+      // ones the token already covers. `figures` is accepted and ignored.
+      const p = await preview(asCaller, data.id, op, change);
+      if ('error' in p) return fail(p.error);
+      return json({ ok: true, preview: p.data, consequences: storedConsequences(p.data) });
     }
 
     // ----------------------------------------------- cancel / force-cancel
