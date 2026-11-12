@@ -127,12 +127,15 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
     const sessionDate = new Date(session.date);
     sessionDate.setHours(0, 0, 0, 0);
 
-    if (isToday(sessionDate)) return { color: "bg-amber-100 border-amber-300", label: "Today" };
-    if (session.status === "Canceled") return { color: "bg-red-100 border-red-300", label: "Canceled" };
-    if (session.status === "Holiday") return { color: "bg-slate-100 border-slate-300", label: "Holiday" };
-    if (session.status === "Held") return { color: "bg-gray-100 border-gray-300", label: "Held" };
-    if (sessionDate > today) return { color: "bg-green-100 border-green-300", label: "Scheduled" };
-    return { color: "bg-muted border-muted", label: "Scheduled" };
+    // Colours per DESIGN_SYSTEM s.14 (labels and order unchanged): today has
+    // the brass mark, cancelled is red, the rest are quiet and told apart by
+    // their words.
+    if (isToday(sessionDate)) return { color: "bg-hec-surface border-hec-brass", label: "Today" };
+    if (session.status === "Canceled") return { color: "bg-hec-danger-tint border-hec-danger/30", label: "Canceled" };
+    if (session.status === "Holiday") return { color: "bg-hec-sunken border-hec-line", label: "Holiday" };
+    if (session.status === "Held") return { color: "bg-hec-sunken border-hec-line", label: "Held" };
+    if (sessionDate > today) return { color: "bg-hec-surface border-hec-line", label: "Scheduled" };
+    return { color: "bg-hec-surface border-hec-line", label: "Scheduled" };
   };
 
   // Month grid days
@@ -158,25 +161,26 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => setMonth(subMonths(month, 1))}>
-            <ChevronLeft className="h-4 w-4" />
+          <Button variant="outline" size="icon" aria-label="Previous month" onClick={() => setMonth(subMonths(month, 1))}>
+            <ChevronLeft className="h-5 w-5" />
           </Button>
           <Button variant="outline" onClick={() => setMonth(new Date())}>Today</Button>
-          <h2 className="text-xl font-semibold min-w-[200px] text-center">
+          <h2 className="min-w-0 text-center font-display text-hec-h2 font-medium text-hec-ink sm:min-w-52">
             {format(month, "MMMM yyyy")}
           </h2>
-          <Button variant="outline" size="icon" onClick={() => setMonth(addMonths(month, 1))}>
-            <ChevronRight className="h-4 w-4" />
+          <Button variant="outline" size="icon" aria-label="Next month" onClick={() => setMonth(addMonths(month, 1))}>
+            <ChevronRight className="h-5 w-5" />
           </Button>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
           {/* View toggle */}
-          <div className="flex border rounded-lg overflow-hidden">
+          <div className="flex overflow-hidden rounded-hec-md border border-hec-line-strong">
             <Button
               variant={viewMode === "cards" ? "default" : "ghost"}
               size="sm"
-              className="rounded-none h-8 px-3"
+              className="rounded-none px-3"
+              aria-pressed={viewMode === "cards"}
               onClick={() => setViewMode("cards")}
             >
               <LayoutGrid className="h-4 w-4 mr-1" />
@@ -185,7 +189,8 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
             <Button
               variant={viewMode === "month" ? "default" : "ghost"}
               size="sm"
-              className="rounded-none h-8 px-3"
+              className="rounded-none px-3"
+              aria-pressed={viewMode === "month"}
               onClick={() => setViewMode("month")}
             >
               <CalendarDays className="h-4 w-4 mr-1" />
@@ -195,21 +200,21 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
 
           <Card className="px-4 py-2">
             <div className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">{monthStats.total} sessions</span>
+              <CalendarIcon className="h-4 w-4 text-hec-ink-soft" />
+              <span className="text-hec-small font-medium tabular-nums text-hec-ink">{monthStats.total} sessions</span>
             </div>
           </Card>
           <Card className="px-4 py-2">
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">{monthStats.enrolled} students</span>
+              <Users className="h-4 w-4 text-hec-ink-soft" />
+              <span className="text-hec-small font-medium tabular-nums text-hec-ink">{monthStats.enrolled} students</span>
             </div>
           </Card>
           {monthStats.cost > 0 && (
             <Card className="px-4 py-2">
               <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">
+                <DollarSign className="h-4 w-4 text-hec-ink-soft" />
+                <span className="whitespace-nowrap text-hec-small font-medium tabular-nums text-hec-ink">
                   {monthStats.cost.toLocaleString('vi-VN')} ₫
                 </span>
               </div>
@@ -234,6 +239,7 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
 
         <Input
           placeholder="Search by student name..."
+          aria-label="Search by student name"
           value={studentSearch}
           onChange={(e) => setStudentSearch(e.target.value)}
           className="max-w-xs"
@@ -242,7 +248,7 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle>{viewMode === "cards" ? "Monthly Sessions" : format(month, "MMMM yyyy")}</CardTitle>
             <Button onClick={() => setAddSessionDate(new Date())} size="sm">
               <Plus className="h-4 w-4 mr-2" />
@@ -263,27 +269,27 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
                     <button
                       key={session.id}
                       onClick={() => setSelectedSession(session)}
-                      className={`p-4 rounded-lg border-2 text-left hover:shadow-md transition-all ${status.color}`}
+                      className={`rounded-hec-lg border p-4 text-left text-hec-ink shadow-hec-1 transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${status.color}`}
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="text-sm font-semibold">
+                      <div className="mb-2 flex items-start justify-between gap-2">
+                        <div className="text-hec-small font-semibold">
                           {format(new Date(session.date), "EEE, MMM d")}
                         </div>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="shrink-0">
                           {status.label}
                         </Badge>
                       </div>
 
-                      <div className="text-xs text-muted-foreground mb-1">
+                      <div className="mb-1 text-hec-caption tabular-nums text-hec-ink-soft">
                         {session.start_time?.slice(0, 5)} - {session.end_time?.slice(0, 5)}
                       </div>
 
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          <span>{enrolledCount} students</span>
+                      <div className="flex items-start justify-between gap-2 text-hec-caption">
+                        <div className="flex shrink-0 items-center gap-1">
+                          <Users className="h-4 w-4 text-hec-ink-soft" />
+                          <span className="tabular-nums">{enrolledCount} students</span>
                         </div>
-                        <span className="text-muted-foreground truncate ml-2">
+                        <span className="min-w-0 whitespace-normal break-words text-right text-hec-ink-soft">
                           👤 {(session.teachers as any)?.full_name || "—"}
                         </span>
                       </div>
@@ -293,7 +299,7 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
               </div>
 
               {filteredSessions?.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="py-12 text-center text-hec-body text-hec-ink-soft">
                   No sessions found for this month
                 </div>
               )}
@@ -304,14 +310,14 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
               {/* Day headers */}
               <div className="grid grid-cols-7 mb-1">
                 {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(d => (
-                  <div key={d} className="text-xs font-medium text-muted-foreground text-center py-2">
+                  <div key={d} className="py-2 text-center text-hec-caption font-medium text-hec-ink-soft">
                     {d}
                   </div>
                 ))}
               </div>
 
               {/* Day cells */}
-              <div className="grid grid-cols-7 border-t border-l">
+              <div className="grid grid-cols-7 border-l border-t border-hec-line">
                 {calendarDays.map(day => {
                   const dateStr = format(day, "yyyy-MM-dd");
                   const daySessions = sessionsByDate[dateStr] || [];
@@ -321,12 +327,12 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
                   return (
                     <div
                       key={dateStr}
-                      className={`min-h-[80px] border-r border-b p-1 transition-colors ${
-                        !inMonth ? "bg-muted/30" : today ? "bg-amber-50 dark:bg-amber-950/30" : "bg-background"
+                      className={`min-h-20 min-w-0 border-b border-r border-hec-line p-1 ${
+                        !inMonth ? "bg-hec-sunken/60" : today ? "bg-hec-raised ring-1 ring-inset ring-hec-brass/40" : "bg-hec-surface"
                       }`}
                     >
-                      <div className={`text-xs font-medium mb-1 ${
-                        today ? "text-primary font-bold" : !inMonth ? "text-muted-foreground/50" : "text-foreground"
+                      <div className={`mb-1 text-hec-caption font-medium tabular-nums ${
+                        today ? "font-semibold text-hec-brass" : !inMonth ? "text-hec-ink-faint" : "text-hec-ink"
                       }`}>
                         {format(day, "d")}
                       </div>
@@ -338,11 +344,11 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
                             <button
                               key={s.id}
                               onClick={() => setSelectedSession(s)}
-                              className={`w-full text-left px-1.5 py-0.5 rounded text-[10px] leading-tight truncate border ${status.color} hover:shadow-sm transition-shadow`}
+                              className={`min-h-hec-target w-full whitespace-normal break-words rounded-hec-sm border px-1 py-1 text-left text-hec-caption text-hec-ink transition-shadow duration-hec-1 ease-hec hover:shadow-hec-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${status.color}`}
                             >
-                              <span className="font-medium">{s.start_time?.slice(0, 5)}</span>
+                              <span className="font-medium tabular-nums">{s.start_time?.slice(0, 5)}</span>
                               {" "}
-                              <span className="text-muted-foreground">
+                              <span className="text-hec-ink-soft">
                                 {(s.teachers as any)?.full_name?.split(" ")[0] || "—"}
                               </span>
                             </button>
@@ -354,9 +360,10 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
                       {inMonth && daySessions.length === 0 && (
                         <button
                           onClick={() => setAddSessionDate(day)}
-                          className="w-full h-8 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                          aria-label={`Add a session on ${format(day, "d MMMM")}`}
+                          className="flex min-h-hec-target w-full items-center justify-center rounded-hec-sm opacity-0 transition-opacity duration-hec-1 ease-hec hover:opacity-100 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                         >
-                          <Plus className="h-3 w-3 text-muted-foreground" />
+                          <Plus className="h-4 w-4 text-hec-ink-soft" />
                         </button>
                       )}
                     </div>
@@ -367,12 +374,12 @@ const ClassCalendarEnhanced = ({ classId }: EnhancedClassCalendarProps) => {
           )}
 
           {/* Legend */}
-          <div className="flex flex-wrap gap-3 mt-6 text-xs">
-            <span className="px-3 py-1 rounded bg-green-100 border border-green-300">Scheduled</span>
-            <span className="px-3 py-1 rounded bg-amber-100 border border-amber-300">Today</span>
-            <span className="px-3 py-1 rounded bg-gray-100 border border-gray-300">Held</span>
-            <span className="px-3 py-1 rounded bg-red-100 border border-red-300">Canceled</span>
-            <span className="px-3 py-1 rounded bg-slate-100 border border-slate-300">Holiday</span>
+          <div className="mt-6 flex flex-wrap gap-2 text-hec-caption text-hec-ink">
+            <span className="rounded-hec-sm border border-hec-line bg-hec-surface px-3 py-1">Scheduled</span>
+            <span className="rounded-hec-sm border border-hec-brass bg-hec-surface px-3 py-1">Today</span>
+            <span className="rounded-hec-sm border border-hec-line bg-hec-sunken px-3 py-1">Held</span>
+            <span className="rounded-hec-sm border border-hec-danger/30 bg-hec-danger-tint px-3 py-1">Canceled</span>
+            <span className="rounded-hec-sm border border-hec-line bg-hec-sunken px-3 py-1">Holiday</span>
           </div>
         </CardContent>
       </Card>
