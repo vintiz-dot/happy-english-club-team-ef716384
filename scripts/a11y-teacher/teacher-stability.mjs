@@ -32,7 +32,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 if (PORT === 5191) { console.error('5191 is the A0 harness port; pick another'); process.exit(2); }
 
 const req = createRequire(path.join(HARNESS, 'package.json'));
-const { chromium } = await import(pathToFileURL(req.resolve('playwright')).href);
+const pw = await import(pathToFileURL(req.resolve('playwright')).href);
+const chromium = pw.chromium || pw.default.chromium;
 
 // ---------------------------------------------------------------- results
 const results = { when: new Date().toISOString(), base: 'vite dev server + fake Supabase client + local stand-in book (NOT production, NOT the real book hosts)', cpu: '4x (CDP Emulation.setCPUThrottlingRate)', network: 'Fast 3G-like (CDP Network.emulateNetworkConditions latency 562.5 ms, 180 KB/s down, 84 KB/s up) applied after the app shell has loaded, plus a 562 ms delay on every book.html request', checks: [] };
@@ -49,12 +50,17 @@ const saveResults = () => { fs.mkdirSync(OUT, { recursive: true }); fs.writeFile
 const pv = path.join(HARNESS, 'preview');
 fs.mkdirSync(pv, { recursive: true });
 for (const f of fs.readdirSync(path.join(here, 'preview'))) fs.copyFileSync(path.join(here, 'preview', f), path.join(pv, f));
+// bare imports from the preview files (react, radix ...) resolve through a junction to the repo's packages
+const pvModules = path.join(pv, 'node_modules');
+let hasLink = false; try { hasLink = fs.lstatSync(pvModules).isSymbolicLink(); } catch {}
+if (!hasLink) fs.symlinkSync(fs.realpathSync(path.join(repo, 'node_modules')), pvModules, 'junction');
 await new Promise((r) => spawn(process.execPath, [path.join(here, 'gen-schema.mjs'), repo, path.join(pv, 'schema.json')], { stdio: 'inherit' }).on('exit', r));
 // Vite runs in-process from the repo's own node_modules (a config file outside the repo could not
 // resolve "vite"). The fake client alias comes BEFORE "@", so no page can reach the live project.
 const repoReq = createRequire(path.join(repo, 'package.json'));
-const { createServer } = await import(pathToFileURL(repoReq.resolve('vite')).href);
-const react = (await import(pathToFileURL(repoReq.resolve('@vitejs/plugin-react-swc')).href)).default;
+const { createServer } = await import(pathToFileURL(path.join(repo, 'node_modules/vite/dist/node/index.js')).href);
+const reactMod = await import(pathToFileURL(repoReq.resolve('@vitejs/plugin-react-swc')).href);
+const react = typeof reactMod.default === 'function' ? reactMod.default : reactMod.default.default;
 process.chdir(repo); // tailwind content globs are relative to the cwd
 const server = await createServer({
   configFile: false, root: pv, cacheDir: path.join(HARNESS, '.vite-cache'), logLevel: 'error',
