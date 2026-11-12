@@ -96,7 +96,7 @@ export function createFakeServer(opts = {}) {
       min_bytes_per_sec: row.format === "opus-webm" ? st.min_bytes_per_sec_opus : row.format === "flac" ? st.min_bytes_per_sec_flac : st.min_bytes_per_sec_wav,
       clock_tolerance_ms: st.clock_tolerance_seconds * 1000, held_min_fraction: st.held_evidence_min_fraction, late_after_ms: (st.late_after_minutes ?? 10) * MIN, stop_request_reason: null,
       started_by: uid, device_profile_id: row.device_profile_id ?? null, client_info: row.client_info ?? {}, armed_at: iso(now),
-      client_started_at: null, client_ended_at: null, started_at: null, ended_at: null, stopped_by: null, stop_reason: null,
+      client_started_at: null, client_ended_at: null, started_at: null, pre_start_ms: 0, ended_at: null, stopped_by: null, stop_reason: null,
       stop_requested_at: null, manifest_path: null, manifest_sha256: null, completed_at: null, abandoned_at: null, abandon_reason: null,
       delete_after: iso(sess.end + st.retention_days * 86400000), deletion_requested_at: null, audio_deleted_at: null,
     };
@@ -116,6 +116,13 @@ export function createFakeServer(opts = {}) {
     const n = { ...old, ...patch };
     for (const k of ["started_at", "ended_at", "stopped_by", "stop_reason", "completed_at", "abandoned_at", "audio_deleted_at"]) n[k] = old[k];
     const now = s.now();
+    // C2 round 3 (as the migration's trigger): pre_start_ms once, while open, before any chunk, not before the window opened.
+    if ("pre_start_ms" in patch && patch.pre_start_ms !== (old.pre_start_ms ?? 0)) {
+      const maxBack = old.started_at ? Math.max(0, Date.parse(old.started_at) - Date.parse(old.capture_opens_at)) : -1;
+      if ((old.pre_start_ms ?? 0) !== 0 || !old.started_at || !["recording", "uploading"].includes(old.status) || !(patch.pre_start_ms >= 0)
+          || patch.pre_start_ms > maxBack || s.chunkRows(id).length)
+        return err("The audio before the server's start can be stated once, before any chunk, and not from before the window opened");
+    }
     const admin = service || isAdmin(uid);
     if (["complete", "abandoned", "deleted"].includes(old.status)) for (const k of ["manifest_path", "manifest_sha256", "abandon_reason", "client_started_at", "client_ended_at", "client_info"]) n[k] = old[k];
     if (patch.status && patch.status !== old.status) {
@@ -152,7 +159,7 @@ export function createFakeServer(opts = {}) {
         }
         for (const c of rows) { const o = s.objects.get(`${BUCKET}/${c.storage_path}`); if (!o || o.size !== c.stored_size) return err("A confirmed chunk is no longer in storage at the size it was confirmed with"); }
         for (const a of rows) { const b = rows.find((x) => x.track === a.track && x.seq === a.seq + 1); if (b && b.t_start_ms < a.t_end_ms - 100) return err("Two chunks of one track overlap: the audio would be counted twice"); }
-        const span = Date.parse(old.ended_at) - Date.parse(old.started_at);
+        const span = Date.parse(old.ended_at) - Date.parse(old.started_at) + (old.pre_start_ms ?? 0);
         if (rows.some((c) => c.t_end_ms > span + old.clock_tolerance_ms)) return err(`The audio claims to be longer than the server saw the recording run (${span} ms)`);
         n.completed_at = iso(now);
       } else if (patch.status === "abandoned") {
@@ -180,7 +187,8 @@ export function createFakeServer(opts = {}) {
     if (!s.tracks.has(`${r.id}|${a.p_track}`)) return err(`Describe the ${a.p_track} track before sending its audio`);
     if (a.p_seq == null || a.p_seq < 0 || a.p_seq > 99999 || !(a.p_byte_size > 0) || !/^[0-9a-f]{64}$/.test(a.p_sha256 ?? "") || a.p_t_start_ms < 0 || !(a.p_t_end_ms > a.p_t_start_ms))
       return err("A chunk needs a number, a size, a SHA-256 and a time span");
-    const started = Date.parse(r.started_at);
+    // C2 round 3: the chunks' t = 0 is started_at - pre_start_ms (the first captured sample).
+    const started = Date.parse(r.started_at) - (r.pre_start_ms ?? 0);
     if (r.stop_requested_at && a.p_t_start_ms > Date.parse(r.stop_requested_at) - started + 60000) return err("Recording was asked to stop: audio captured after that is refused");
     const span = a.p_t_end_ms - a.p_t_start_ms;
     if (span > r.chunk_ms + r.clock_tolerance_ms) return err(`A chunk is at most ${r.chunk_ms} ms of audio: refused`);
