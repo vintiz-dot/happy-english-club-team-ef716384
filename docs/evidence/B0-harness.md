@@ -6,11 +6,13 @@ Appended as the work went; each section says what was run and what it printed.
 
 ## Where I am / next steps (paused 2026-11-11, RESUMED 2026-11-12)
 
-**Next step right now:** first ECAPA identification run (`ident_ecapa.py`, oracle turns) on the s500 mixes is running; then `score.py ident` on its output -> section 7.
+**Next step right now:** confirm_pairs re-run with lesson L3 included (section 8) is running; record its verdict, then B0 is complete.
 
-Built and committed (all in `scripts/lesson-eval/`): common.py (repo-write refusal, key.txt/consent.txt skip), extract.py, confirm_pairs.py, split.py, mix.py, score.py + result_schema.json, hardware.py, smoke_local.py, delete_voiceprints.py, delete_all_derived.py, README.md, tests/ (26 pytest cases on synthetic fixtures).
+Built and committed (all in `scripts/lesson-eval/`): common.py (repo-write refusal, key.txt/consent.txt skip), extract.py, confirm_pairs.py, split.py, mix.py, score.py + result_schema.json, hardware.py, smoke_local.py, ident_ecapa.py, delete_voiceprints.py, delete_all_derived.py, README.md, tests/ (26 pytest cases on synthetic fixtures).
 
-Run, with results (details in sections 2-6):
+Run, with results (details in sections 2-8):
+- ECAPA identification baseline (section 7): 23 enrolled, open set S05/S07/S15, 100-120 unique turns per set; EER 26-39 %; at the 1 % false-accept point it names only 11-53 % of turns (rest UNKNOWN); evidence insufficient at this turn count.
+- L3 (sixth lesson, section 8): extracted, 76.7 min, 48 kHz AAC mono.
 - extract `--verify`: 35 unique WAVs pass; 28 SHA-256 duplicates (S21_clip2 + the nested `videos\videos\videos` copy); 30 video WAVs = 27 children (S26 clip2-5 only in the nested folder).
 - confirm_pairs: Recording == outp1ut_compressed; Untitled == output_compressed; Recording is the first 86.9 min of Untitled; je,ch,sa,po distinct. Two unique lesson recordings (~223.5 min).
 - split (X = 50 s): 15 children with held-out (13 clean + S20, S21 with heavy adult-pitch speech); S23 has no child-pitch speech; deterministic.
@@ -21,7 +23,7 @@ Run, with results (details in sections 2-6):
 
 Not done / next:
 1. sherpa-onnx diarization models not downloaded or run; whisper base/tiny/medium RTF not measured (B2b).
-2. `score.py ident` and `preserve` exercised on fixtures only; no real annotated slice exists yet (B1 needs hand references and a learner-error slice).
+2. `score.py preserve` exercised on fixtures only (ident now also on real voices, section 7); no real annotated slice exists yet (B1 needs hand references and a learner-error slice).
 3. Mix turns reuse held-out segments (reuse factor up to ~4.5 per child in a 3-6 min mix): when scoring identification, count each source segment once (`src_clip,src_start` in turns.csv). Use `--exclude S20,S21` for a clean-speaker set.
 4. Owner questions: S26 coding confirmation; S23 clip (adult-range pitch); S13/S20/S21 mostly adult voice.
 5. Nothing merged to the conductor branch yet.
