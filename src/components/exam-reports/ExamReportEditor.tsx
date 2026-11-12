@@ -221,18 +221,18 @@ export function ExamReportEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{report ? "Edit exam report" : "New exam report"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {!fixedClassId && (
-              <div>
-                <Label>Class</Label>
+              <div className="space-y-2">
+                <Label htmlFor="exam-report-class">Class</Label>
                 <Select value={classId} onValueChange={(v) => { setClassId(v); if (!fixedStudentId) setStudentId(undefined); }}>
-                  <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
+                  <SelectTrigger id="exam-report-class"><SelectValue placeholder="Select class" /></SelectTrigger>
                   <SelectContent>
                     {classes?.map((c) => (
                       <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -242,10 +242,10 @@ export function ExamReportEditor({
               </div>
             )}
             {!fixedStudentId && (
-              <div>
-                <Label>Student</Label>
+              <div className="space-y-2">
+                <Label htmlFor="exam-report-student">Student</Label>
                 <Select value={studentId} onValueChange={setStudentId} disabled={!classId}>
-                  <SelectTrigger><SelectValue placeholder={classId ? "Select student" : "Pick a class first"} /></SelectTrigger>
+                  <SelectTrigger id="exam-report-student"><SelectValue placeholder={classId ? "Select student" : "Pick a class first"} /></SelectTrigger>
                   <SelectContent>
                     {students?.map((s) => (
                       <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
@@ -256,21 +256,21 @@ export function ExamReportEditor({
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <Label>Report title</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Midterm Exam Report" maxLength={200} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="exam-report-title">Report title</Label>
+              <Input id="exam-report-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Midterm Exam Report" maxLength={200} />
             </div>
-            <div>
-              <Label>Exam date (optional)</Label>
-              <Input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} />
+            <div className="space-y-2">
+              <Label htmlFor="exam-report-date">Exam date (optional)</Label>
+              <Input id="exam-report-date" type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} />
             </div>
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label>Report content (optional)</Label>
-            <Suspense fallback={<div className="h-40 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin" /></div>}>
-              <div className="bg-background rounded-md">
+            <Suspense fallback={<div className="flex h-40 items-center justify-center text-hec-ink-faint"><Loader2 className="h-5 w-5 animate-spin" /></div>}>
+              <div className="rounded-hec-md bg-hec-raised text-hec-ink">
                 <ReactQuill
                   value={contentHtml}
                   onChange={setContentHtml}
@@ -289,34 +289,34 @@ export function ExamReportEditor({
             </Suspense>
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label>Attach PDF (optional, max 10 MB)</Label>
             {existingFileName && !removeExistingFile && !pdfFile && (
-              <div className="flex items-center justify-between border rounded-md p-2 mb-2 bg-muted/30">
-                <div className="flex items-center gap-2 text-sm">
-                  <FileText className="h-4 w-4 text-primary" />
+              <div className="flex items-center justify-between gap-2 rounded-hec-md border border-hec-line bg-hec-sunken p-2">
+                <div className="flex min-w-0 items-center gap-2 text-hec-small text-hec-ink">
+                  <FileText className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
                   <span className="truncate">{existingFileName}</span>
                 </div>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setRemoveExistingFile(true)}>
+                <Button type="button" variant="ghost" size="sm" className="shrink-0" aria-label="Remove the PDF" onClick={() => setRemoveExistingFile(true)}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             )}
             {pdfFile && (
-              <div className="flex items-center justify-between border rounded-md p-2 mb-2 bg-muted/30">
-                <div className="flex items-center gap-2 text-sm">
-                  <FileText className="h-4 w-4 text-primary" />
+              <div className="flex items-center justify-between gap-2 rounded-hec-md border border-hec-line bg-hec-sunken p-2">
+                <div className="flex min-w-0 items-center gap-2 text-hec-small text-hec-ink">
+                  <FileText className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
                   <span className="truncate">{pdfFile.name}</span>
                 </div>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setPdfFile(null)}>
+                <Button type="button" variant="ghost" size="sm" className="shrink-0" aria-label="Remove the PDF" onClick={() => setPdfFile(null)}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             )}
-            <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-md p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-              <Upload className="h-4 w-4" />
-              <span className="text-sm">Choose PDF file</span>
-              <input type="file" accept="application/pdf" className="hidden" onChange={handlePdfChange} />
+            <label className="flex min-h-hec-target cursor-pointer items-center justify-center gap-2 rounded-hec-md border border-dashed border-hec-line-strong p-4 text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-hec-ring">
+              <Upload className="h-4 w-4" aria-hidden />
+              <span className="text-hec-small">Choose PDF file</span>
+              <input type="file" accept="application/pdf" className="sr-only" onChange={handlePdfChange} />
             </label>
           </div>
         </div>
