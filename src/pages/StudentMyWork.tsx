@@ -5,14 +5,14 @@ import { FileImage } from "lucide-react";
 export default function StudentMyWork() {
   return (
     <Layout title="My Work">
-      <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
+      <div className="max-w-5xl mx-auto p-4 md:p-6 pb-24 space-y-6">
         <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-md">
-            <FileImage className="h-6 w-6 text-white" />
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hec-md border border-hec-line bg-hec-sunken">
+            <FileImage className="h-6 w-6 text-hec-ink-soft" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">My Work</h1>
-            <p className="text-sm text-muted-foreground">
+          <div className="min-w-0">
+            <h1 className="font-display text-hec-h1 font-medium text-hec-ink">My Work</h1>
+            <p className="text-hec-small text-hec-ink-soft">
               Classwork your teacher scanned and shared with you — with their notes.
             </p>
           </div>
