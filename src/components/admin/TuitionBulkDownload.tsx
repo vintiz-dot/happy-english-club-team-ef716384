@@ -13,6 +13,7 @@ import JSZip from "jszip";
 import type { InvoiceData, BankInfo } from "@/lib/invoice/types";
 import { fetchInvoiceData } from "@/lib/invoice/fetchInvoiceData";
 import { InvoicePrintView } from "@/components/invoice/InvoicePrintView";
+import { useIvory } from "@/hooks/useIvory";
 
 type Pair = { invoice: InvoiceData; bankInfo: BankInfo | null };
 type Scope = "all" | "class" | "family";
@@ -29,6 +30,10 @@ const CONTENT_H_PX = Math.round((A4_H_MM - 2 * MARGIN_MM) * PX_PER_MM * CONTENT_
 
 export function TuitionBulkDownload({ month }: { month: string }) {
   const { toast } = useToast();
+  // Ivory touches the on-screen controls only. The invoice page wrapper below
+  // (.bulk-invoice-page) is captured by html2canvas into the PDF: it stays as is.
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
   const [loadingIds, setLoadingIds] = useState(false);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -349,7 +354,7 @@ export function TuitionBulkDownload({ month }: { month: string }) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Scope</label>
+              <label className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Scope</label>
               <Select value={scope} onValueChange={(v: Scope) => setScope(v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select scope" />
@@ -360,10 +365,10 @@ export function TuitionBulkDownload({ month }: { month: string }) {
                   <SelectItem value="family">By family</SelectItem>
                 </SelectContent>
               </Select>
-              <label className="flex items-center gap-2 text-sm mt-2 select-none">
+              <label className={iv("mt-2 flex min-h-hec-target select-none items-center gap-3 text-hec-small text-hec-ink", "flex items-center gap-2 text-sm mt-2 select-none")}>
                 <input
                   type="checkbox"
-                  className="h-4 w-4"
+                  className={iv("h-5 w-5 shrink-0 accent-hec-action focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring", "h-4 w-4")}
                   checked={includeInactive}
                   onChange={(e) => setIncludeInactive(e.target.checked)}
                 />
@@ -373,7 +378,7 @@ export function TuitionBulkDownload({ month }: { month: string }) {
 
             {scope === "class" && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Class</label>
+                <label className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Class</label>
                 <Select value={selectedClassId} onValueChange={setSelectedClassId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a class" />
@@ -391,7 +396,7 @@ export function TuitionBulkDownload({ month }: { month: string }) {
 
             {scope === "family" && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Family</label>
+                <label className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Family</label>
                 <Select value={selectedFamilyId} onValueChange={setSelectedFamilyId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a family" />
@@ -408,7 +413,7 @@ export function TuitionBulkDownload({ month }: { month: string }) {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className={iv("flex flex-wrap items-center gap-3", "flex items-center gap-2")}>
             <Button onClick={loadInvoices} disabled={loadingInvoices || loadingIds || idsLoading}>
               {loadingInvoices ? (
                 <>
@@ -422,8 +427,8 @@ export function TuitionBulkDownload({ month }: { month: string }) {
                 </>
               )}
             </Button>
-            <div className="text-xs text-muted-foreground">
-              Month: <span className="font-mono">{month}</span>
+            <div className={iv("text-hec-small text-hec-ink-soft", "text-xs text-muted-foreground")}>
+              Month: <span className={iv("tabular-nums", "font-mono")}>{month}</span>
             </div>
           </div>
         </CardContent>
@@ -431,8 +436,8 @@ export function TuitionBulkDownload({ month }: { month: string }) {
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-auto">
-          <div className="flex items-center justify-between mb-3 no-print gap-2">
-            <div className="text-sm">
+          <div className={iv("no-print mb-3 flex flex-wrap items-center justify-between gap-3", "flex items-center justify-between mb-3 no-print gap-2")}>
+            <div className={iv("text-hec-small tabular-nums text-hec-ink", "text-sm")}>
               {building ? (
                 <>
                   Rendering PDFs… {progress.done}/{progress.total}
@@ -443,7 +448,7 @@ export function TuitionBulkDownload({ month }: { month: string }) {
                 <>Preview ready. Click “Regenerate PDFs” if needed.</>
               ) : null}
             </div>
-            <div className="flex gap-2">
+            <div className={iv("flex flex-wrap gap-2", "flex gap-2")}>
               <Button variant="outline" onClick={regenerate} disabled={building || pairs.length === 0}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Regenerate PDFs
@@ -456,7 +461,7 @@ export function TuitionBulkDownload({ month }: { month: string }) {
           </div>
 
           {pairs.length === 0 ? (
-            <div className="text-sm text-muted-foreground">No invoices loaded</div>
+            <div className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>No invoices loaded</div>
           ) : (
             <div className="space-y-4">
               {pairs.map((p) => (
