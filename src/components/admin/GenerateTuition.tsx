@@ -8,11 +8,15 @@ import { dayjs } from "@/lib/date";
 import { toast } from "sonner";
 import { Calculator, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useIvory } from "@/hooks/useIvory";
 
 export function GenerateTuition() {
   const [selectedMonth, setSelectedMonth] = useState(dayjs().format("YYYY-MM"));
   const [results, setResults] = useState<any>(null);
   const queryClient = useQueryClient();
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
+  const ResultBox = ivory ? IvoryNote : Alert;
 
   const generateMutation = useMutation({
     mutationFn: async (month: string) => {
@@ -98,32 +102,45 @@ export function GenerateTuition() {
         <CardDescription>Calculate and generate tuition invoices for all active students</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-end gap-4">
-          <div className="flex-1">
-            <label className="text-sm font-medium mb-2 block">Select Month</label>
+        <div className={iv("flex flex-col gap-4 sm:flex-row sm:items-end", "flex items-end gap-4")}>
+          <div className={iv("min-w-0 flex-1", "flex-1")}>
+            <label className={iv("mb-2 block text-hec-small font-medium text-hec-ink", "text-sm font-medium mb-2 block")}>Select Month</label>
             <MonthPicker value={selectedMonth} onChange={setSelectedMonth} />
           </div>
-          <Button onClick={() => generateMutation.mutate(selectedMonth)} disabled={generateMutation.isPending}>
+          {/* Generate writes invoices for every student this month: it is the
+              irreversible act on this card, so in Ivory it is the
+              destructive-quiet control and says what it does. */}
+          <Button
+            variant={ivory ? "destructive-quiet" : "default"}
+            className={iv("w-full sm:w-auto", "")}
+            onClick={() => generateMutation.mutate(selectedMonth)}
+            disabled={generateMutation.isPending}
+          >
             {generateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Generate
+            {ivory ? (generateMutation.isPending ? "Generating tuition invoices..." : "Generate tuition invoices") : "Generate"}
           </Button>
         </div>
         {results && (
-          <Alert>
-            <AlertDescription>
+          <ResultBox>
+            <AlertDescription className={iv("text-hec-small", "")}>
               Generated tuition for {results.processed} students.
               {results.needsReview > 0 && (
-                <div className="mt-2">
-                  <strong className="text-amber-600">{results.needsReview} students need review.</strong>
-                  <Button variant="link" className="p-0 h-auto ml-2" onClick={() => window.location.href = `/admin/tuition-review?month=${selectedMonth}`}>
+                <div className={iv("mt-2 flex flex-wrap items-center gap-2", "mt-2")}>
+                  <strong className={iv("font-semibold text-hec-warn", "text-amber-600")}>{results.needsReview} students need review.</strong>
+                  <Button variant="link" className={iv("h-auto min-h-hec-target p-0", "p-0 h-auto ml-2")} onClick={() => window.location.href = `/admin/tuition-review?month=${selectedMonth}`}>
                     Go to Review Queue →
                   </Button>
                 </div>
               )}
             </AlertDescription>
-          </Alert>
+          </ResultBox>
         )}
       </CardContent>
     </Card>
   );
+}
+
+// Ivory: the same role="alert" box as a solid sunken panel (the shared Alert keeps its old translucent look).
+function IvoryNote({ children }: { children: React.ReactNode }) {
+  return <div role="alert" className="rounded-hec-md border border-hec-line bg-hec-sunken p-4 text-hec-ink">{children}</div>;
 }
