@@ -1070,10 +1070,10 @@ export default function TeacherSmartUpload() {
                             </Tooltip>
                           )}
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row">
                           <Button
                             size="sm"
-                            className="flex-1 gap-2"
+                            className="gap-2 sm:flex-1"
                             disabled={reviewMutation.isPending}
                             onClick={() => reviewMutation.mutate({ work: w, decision: "approved" })}
                           >
