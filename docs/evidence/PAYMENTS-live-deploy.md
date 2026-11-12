@@ -1,5 +1,31 @@
 # Payments release (T4) - live deploy log
 
-**Where I am / next step:** STARTED - next: step 1, pre-checks (read-only). Nothing applied or deployed yet.
+**Where I am / next step:** step 1 done, everything as expected; next: step 2, the migration.
+
+## Step 1 - pre-checks (read-only, 2026-11-12 21:54 UTC)
+
+Release blobs: the 14 function files and the migration exported from a9cbbe53 with autocrlf off; 0 CR bytes; each git blob hash equals `git ls-tree a9cbbe53`. Relative imports read from each entrypoint equal the manifest's lists; `invoice-status.ts` and `recorded-payment-write.ts` import nothing. Against 93ca410: `confirm-tuition/index.ts`, `rate-limit`, `auth`, `sibling-state`, `tuition-session`, `enrollment-discounts` are byte-identical; the other six entrypoints and `invoice-status.ts` changed; `recorded-payment-write.ts` is new.
+
+The seven functions (`list_edge_functions`): all v4, ACTIVE, verify_jwt true, and each carries the same `updated_at` and the same `ezbr_sha256` as the answer to my own deploy of 12 Nov (188aac7a, bc53fc1e, 620e841b, c751a4d2, 8e5c925b, 14e966c8, d6a55f8b). Nobody has deployed since. I did not download the seven again: the bundle hash is unchanged, and the files I fetched from live straight after that deploy (script-compared then, byte for byte equal to 93ca410) are copied to `C:\Users\Dell\hec-tools\payments-rollback\<function>\v4\`.
+
+| check | expected | live |
+|---|---|---|
+| P1 `ai_action_apply` md5(prosrc) | 7179f282e4ce1d8cfb9541c6c8560635 | the same; 7,024 chars; patched 0; SECURITY DEFINER; owner postgres; `search_path=public`; ACL postgres, authenticated, service_role |
+| P1 `ai_action_undo` md5(prosrc) | 77175a4cb698a06b8ebfe7f75c5f8dc0 | the same; 9,791 chars; patched 0; same definer, owner, config, ACL |
+| `invoice_paid_label(bigint x4)` | not there yet | not there |
+| P2 ledger keys `settlement-writeoff%` | 0 | 0 |
+| CHECK-payment-paths 2b, counts_on_bill_after_t4 | 0 | 0 (discount 2 settlements, voluntary_contribution 2) |
+| P3 bills / sum recorded_payment / sum total_amount | 708 / 864,719,903 / 884,051,800 | 708 / 864,719,903 / 884,051,800 |
+| P4 status | draft 10, issued 557, paid 115, partial 26 | the same; credit 0 |
+| confirmation_status | - | auto_approved 497, confirmed 156, needs_review 55 |
+| P5 recorded_payment NULL / negative | 0 / 0 | 0 / 0 |
+| P5 unique index on ledger_entries.tx_key | 1 | 1 |
+| `ai_actions` rows / `payments` rows | - | 1 / 14 |
+
+Also: sum base_amount 950,702,000, discount_amount 67,174,200, paid_amount 5,178,349,523 (all as on 12 Nov). The newest `invoices.updated_at` is now 20:41:23 UTC on 12 Nov, on one bill: one calculation has run through the v4 calculate-tuition since the tuition deploy and changed no figure and no label (invoice audit rows still 523).
+
+Both definitions saved with `pg_get_functiondef`, written by script from the tool result (not re-typed): `C:\Users\Dell\hec-tools\payments-rollback\ai_action_apply.v1.sql` (7,232 bytes) and `ai_action_undo.v1.sql` (9,962 bytes). The md5 of the body inside each saved file equals the live md5(prosrc) above, so the copies are exact (CRLF as installed).
+
+Migration list tail: 20261112101734 class_recordings_scope is the newest; the two unrelated security migrations are not there yet.
 
 Source: `release/payments-1` at a9cbbe53. Live project `aswgmbefikhsnhogtryv`. Rollback copies under `C:\Users\Dell\hec-tools\payments-rollback\`.
