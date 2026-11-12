@@ -1,0 +1,1066 @@
+{
+  "functions": [
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_change_apply(p_session_id uuid, p_action text, p_change jsonb, p_reason text, p_token text, p_confirm boolean, p_correction_reason text, p_context jsonb, p_via text, p_batch_id uuid, p_own_reason boolean)",
+      "identity_arguments": "p_session_id uuid, p_action text, p_change jsonb, p_reason text, p_token text, p_confirm boolean, p_correction_reason text, p_context jsonb, p_via text, p_batch_id uuid, p_own_reason boolean",
+      "md5_prosrc": "c4de046f974934d555ac7e827b185b7a",
+      "proname": "_session_change_apply",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_change_assess(s sessions, p_action text, p_change jsonb, p_uid uuid)",
+      "identity_arguments": "s sessions, p_action text, p_change jsonb, p_uid uuid",
+      "md5_prosrc": "e0acbcc9a958a789aa437a6c8c4a84ec",
+      "proname": "_session_change_assess",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_erased_recently(p_session_id uuid)",
+      "identity_arguments": "p_session_id uuid",
+      "md5_prosrc": "32c7fac7d6336c6ac48ba15bfe891630",
+      "proname": "_session_erased_recently",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_require_admin()",
+      "identity_arguments": "",
+      "md5_prosrc": "a2fbfe6ba15ca47d240940c2eb77cc50",
+      "proname": "_session_require_admin",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_review_required(a jsonb, p_action text, p_erased jsonb)",
+      "identity_arguments": "a jsonb, p_action text, p_erased jsonb",
+      "md5_prosrc": "f49ecbf1247d9ed23402c42a6cffc2d3",
+      "proname": "_session_review_required",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.cancel_session_checked(p_session_id uuid, p_action text, p_reason text, p_token text, p_confirm boolean, p_correction_reason text, p_context jsonb)",
+      "identity_arguments": "p_session_id uuid, p_action text, p_reason text, p_token text, p_confirm boolean, p_correction_reason text, p_context jsonb",
+      "md5_prosrc": "79be46ef623216409422d99a17f64fce",
+      "proname": "cancel_session_checked",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.cancel_sessions_checked_bulk(p_items jsonb, p_reason text, p_batch_id uuid, p_context jsonb)",
+      "identity_arguments": "p_items jsonb, p_reason text, p_batch_id uuid, p_context jsonb",
+      "md5_prosrc": "9ddc8f4fca50a4e4f312235d28c1fb9d",
+      "proname": "cancel_sessions_checked_bulk",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": true
+      },
+      "identity": "public.log_session_automation_refused(p_session_id uuid, p_source text)",
+      "identity_arguments": "p_session_id uuid, p_source text",
+      "md5_prosrc": "5bcb42687066f39ba13094ce9c49c713",
+      "proname": "log_session_automation_refused",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.move_session_checked(p_session_id uuid, p_new_date date, p_new_start time without time zone, p_new_end time without time zone, p_reason text, p_token text, p_confirm boolean, p_correction_reason text, p_context jsonb)",
+      "identity_arguments": "p_session_id uuid, p_new_date date, p_new_start time without time zone, p_new_end time without time zone, p_reason text, p_token text, p_confirm boolean, p_correction_reason text, p_context jsonb",
+      "md5_prosrc": "5b4713755bca4d5c56996b456b45a9f9",
+      "proname": "move_session_checked",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.record_session_override_event(p_override_id uuid, p_kind text, p_payload jsonb)",
+      "identity_arguments": "p_override_id uuid, p_kind text, p_payload jsonb",
+      "md5_prosrc": "f95f2671914138e8e0e82b64ee97be30",
+      "proname": "record_session_override_event",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_cancel_audit_append_only()",
+      "identity_arguments": "",
+      "md5_prosrc": "863a2f0da9cf0a6235fb63ceae39b26a",
+      "proname": "session_cancel_audit_append_only",
+      "security_definer": false,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_cancel_audit_insert_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "a9975e21bda621f8aca242afbb8929d1",
+      "proname": "session_cancel_audit_insert_guard",
+      "security_definer": false,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.session_cancel_guard_status()",
+      "identity_arguments": "",
+      "md5_prosrc": "7d6d73ff2d565b2d28accb7970af694f",
+      "proname": "session_cancel_guard_status",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_change_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "e01907e6ad723b28a04a76874905e6a8",
+      "proname": "session_change_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_change_kind(o sessions, n sessions)",
+      "identity_arguments": "o sessions, n sessions",
+      "md5_prosrc": "007d4347b5c16f247df665a644e30559",
+      "proname": "session_change_kind",
+      "security_definer": false,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.session_change_preview(p_session_id uuid, p_action text, p_change jsonb)",
+      "identity_arguments": "p_session_id uuid, p_action text, p_change jsonb",
+      "md5_prosrc": "81f6e99dc907c3e8c16ef0e8709363b4",
+      "proname": "session_change_preview",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_change_reason_ok(p text)",
+      "identity_arguments": "p text",
+      "md5_prosrc": "fe7fce7a133605f45d93559c8ebbc10d",
+      "proname": "session_change_reason_ok",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_change_tier(p_started boolean, p_level text, p_settled boolean)",
+      "identity_arguments": "p_started boolean, p_level text, p_settled boolean",
+      "md5_prosrc": "77b7dbd4e271a2a4923b3a9c06591c7c",
+      "proname": "session_change_tier",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_day_evidence(p_session_id uuid, p_class_id uuid, p_date date)",
+      "identity_arguments": "p_session_id uuid, p_class_id uuid, p_date date",
+      "md5_prosrc": "63b0d7a9be540e6393f0934c4e87e497",
+      "proname": "session_day_evidence",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_has_started(p_date date, p_start time without time zone)",
+      "identity_arguments": "p_date date, p_start time without time zone",
+      "md5_prosrc": "5231c81f30607c28bc04afbdc99e92a3",
+      "proname": "session_has_started",
+      "security_definer": false,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": true
+      },
+      "identity": "public.session_held_evidence(p_session_id uuid)",
+      "identity_arguments": "p_session_id uuid",
+      "md5_prosrc": "71a58e2d403a6eb271172d27aef3b139",
+      "proname": "session_held_evidence",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_month_tuition_settled(p_session_id uuid, p_month text)",
+      "identity_arguments": "p_session_id uuid, p_month text",
+      "md5_prosrc": "8cb885588972176a77b6a35f961a069b",
+      "proname": "session_month_tuition_settled",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_recording_evidence(p_session_id uuid)",
+      "identity_arguments": "p_session_id uuid",
+      "md5_prosrc": "8bb5ed8fff9c48f6f2ab068db95dba8f",
+      "proname": "session_recording_evidence",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_refuse_truncate()",
+      "identity_arguments": "",
+      "md5_prosrc": "3538c7a77929f141437aa2741421f2c6",
+      "proname": "session_refuse_truncate",
+      "security_definer": false,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.uncancel_session_checked(p_session_id uuid, p_reason text, p_token text, p_context jsonb, p_correction_reason text)",
+      "identity_arguments": "p_session_id uuid, p_reason text, p_token text, p_context jsonb, p_correction_reason text",
+      "md5_prosrc": "4bd1dcab7a2f2064651faa0b1f8181bf",
+      "proname": "uncancel_session_checked",
+      "security_definer": true,
+      "volatility": "v"
+    }
+  ],
+  "informational": {
+    "view_definitions_md5": {
+      "session_cancel_review_queue": "6bc572ee17d067265f8ede6ecad951ca",
+      "session_cancel_tuition_pending": "3f9f0800bec5337b88ff71d5c6e56f74"
+    },
+    "view_options": {
+      "session_cancel_review_queue": [
+        "security_invoker=true"
+      ],
+      "session_cancel_tuition_pending": [
+        "security_invoker=true"
+      ]
+    }
+  },
+  "relations": {
+    "session_cancel_override_events": {
+      "columns": [
+        {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": "now()",
+          "name": "created_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": null,
+          "name": "override_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "actor_user_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "kind",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": "'{}'::jsonb",
+          "name": "payload",
+          "not_null": true,
+          "type": "jsonb"
+        }
+      ],
+      "constraints": [
+        {
+          "md5_def": "6872bf93a44733f8824e87d0b38add62",
+          "name": "session_cancel_override_events_kind_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "41af132463d8884108edcb39a0991cd0",
+          "name": "session_cancel_override_events_override_id_fkey",
+          "type": "f"
+        },
+        {
+          "md5_def": "ab4afefbe79477595f0173ab5d3bdb78",
+          "name": "session_cancel_override_events_payload_size",
+          "type": "c"
+        },
+        {
+          "md5_def": "4c6419b3704337bbfe50f018842a9ad3",
+          "name": "session_cancel_override_events_pkey",
+          "type": "p"
+        }
+      ],
+      "force_row_level_security": false,
+      "kind": "r",
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "md5_qual": "9825a11ce3360af9af9d6bd1d3d426c0",
+          "md5_with_check": null,
+          "name": "session_cancel_override_events_admin_read",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "DELETE",
+          "INSERT",
+          "REFERENCES",
+          "SELECT",
+          "TRIGGER",
+          "TRUNCATE",
+          "UPDATE"
+        ]
+      },
+      "row_level_security": true
+    },
+    "session_cancel_overrides": {
+      "columns": [
+        {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": "now()",
+          "name": "created_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "txid_current()",
+          "name": "txid",
+          "not_null": true,
+          "type": "bigint"
+        },
+        {
+          "default": null,
+          "name": "actor_user_id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "session_id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "class_id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "teacher_id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "session_date",
+          "not_null": true,
+          "type": "date"
+        },
+        {
+          "default": null,
+          "name": "action",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "via",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "batch_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "tier",
+          "not_null": true,
+          "type": "integer"
+        },
+        {
+          "default": null,
+          "name": "level",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "settled",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "correction_mode",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "reason",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "correction_reason",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "confirmed",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "token",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "evidence",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "session_before",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "change",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "affected",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "invoices_before",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "refresh_pairs",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "deleted_rows",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "payroll_month_locked",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "'[]'::jsonb",
+          "name": "erased_recently",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "review_required",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "'{}'::jsonb",
+          "name": "attached",
+          "not_null": true,
+          "type": "jsonb"
+        }
+      ],
+      "constraints": [
+        {
+          "md5_def": "7e1284d41d60f5b48a0eb951d239f17e",
+          "name": "session_cancel_overrides_action_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "2a42b82f457e6db4b248159e1d45bb4d",
+          "name": "session_cancel_overrides_attached_size",
+          "type": "c"
+        },
+        {
+          "md5_def": "083947ebc160f79164f7b56d9dbe89f7",
+          "name": "session_cancel_overrides_correction",
+          "type": "c"
+        },
+        {
+          "md5_def": "d2b15b0cd203230fecc70e10f8b4c7a9",
+          "name": "session_cancel_overrides_level_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "4c6419b3704337bbfe50f018842a9ad3",
+          "name": "session_cancel_overrides_pkey",
+          "type": "p"
+        },
+        {
+          "md5_def": "0a4c8fc7dfb1aa14c6eaa028fe7ee97b",
+          "name": "session_cancel_overrides_tier_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "3f2d4739b65d5f012d5ec31990811408",
+          "name": "session_cancel_overrides_via_check",
+          "type": "c"
+        }
+      ],
+      "force_row_level_security": false,
+      "kind": "r",
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "md5_qual": "9825a11ce3360af9af9d6bd1d3d426c0",
+          "md5_with_check": null,
+          "name": "session_cancel_overrides_admin_read",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "DELETE",
+          "INSERT",
+          "REFERENCES",
+          "SELECT",
+          "TRIGGER",
+          "TRUNCATE",
+          "UPDATE"
+        ]
+      },
+      "row_level_security": true
+    },
+    "session_cancel_review_queue": {
+      "columns": [
+        {
+          "default": null,
+          "name": "override_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "not_null": false,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": null,
+          "name": "actor_user_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "session_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "class_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "teacher_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "session_date",
+          "not_null": false,
+          "type": "date"
+        },
+        {
+          "default": null,
+          "name": "action",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "via",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "batch_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "tier",
+          "not_null": false,
+          "type": "integer"
+        },
+        {
+          "default": null,
+          "name": "level",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "settled",
+          "not_null": false,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "correction_mode",
+          "not_null": false,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "reason",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "correction_reason",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "confirmed",
+          "not_null": false,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "change",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "affected",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "invoices_before",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "refresh_pairs",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "payroll_month_locked",
+          "not_null": false,
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "erased_recently",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "attached",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "tuition_state",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "age",
+          "not_null": false,
+          "type": "interval"
+        }
+      ],
+      "constraints": [],
+      "force_row_level_security": false,
+      "kind": "v",
+      "policies": [],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "SELECT"
+        ]
+      },
+      "row_level_security": false
+    },
+    "session_cancel_tuition_pending": {
+      "columns": [
+        {
+          "default": null,
+          "name": "override_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "not_null": false,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": null,
+          "name": "actor_user_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "session_id",
+          "not_null": false,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "action",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "refresh_pairs",
+          "not_null": false,
+          "type": "jsonb"
+        },
+        {
+          "default": null,
+          "name": "last_tuition_event",
+          "not_null": false,
+          "type": "text"
+        },
+        {
+          "default": null,
+          "name": "age",
+          "not_null": false,
+          "type": "interval"
+        }
+      ],
+      "constraints": [],
+      "force_row_level_security": false,
+      "kind": "v",
+      "policies": [],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "SELECT"
+        ]
+      },
+      "row_level_security": false
+    }
+  },
+  "triggers": [
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_append_only",
+      "name": "session_cancel_override_events_append_only",
+      "table": "session_cancel_override_events",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_insert_guard",
+      "name": "session_cancel_override_events_insert_guard",
+      "table": "session_cancel_override_events",
+      "tgtype": 7
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_append_only",
+      "name": "session_cancel_override_events_no_truncate",
+      "table": "session_cancel_override_events",
+      "tgtype": 34
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_append_only",
+      "name": "session_cancel_overrides_append_only",
+      "table": "session_cancel_overrides",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_insert_guard",
+      "name": "session_cancel_overrides_insert_guard",
+      "table": "session_cancel_overrides",
+      "tgtype": 7
+    },
+    {
+      "enabled": "O",
+      "function": "session_cancel_audit_append_only",
+      "name": "session_cancel_overrides_no_truncate",
+      "table": "session_cancel_overrides",
+      "tgtype": 34
+    },
+    {
+      "enabled": "O",
+      "function": "session_change_guard",
+      "name": "zz_session_change_guard_del",
+      "table": "sessions",
+      "tgtype": 11
+    },
+    {
+      "enabled": "O",
+      "function": "session_change_guard",
+      "name": "zz_session_change_guard_upd",
+      "table": "sessions",
+      "tgtype": 19
+    },
+    {
+      "enabled": "O",
+      "function": "session_refuse_truncate",
+      "name": "zz_session_no_truncate",
+      "table": "sessions",
+      "tgtype": 34
+    }
+  ]
+}
