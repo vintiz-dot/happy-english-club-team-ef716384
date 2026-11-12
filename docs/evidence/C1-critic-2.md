@@ -73,4 +73,14 @@ silently kept (server-owned): started_at ended_at stopped_by stop_reason complet
 
 `F2 cover T2 reads rows of class A: 1` (its own open recording only); after the session is given back to T1: `T2 (still recording) reads rows: 1`, and register reaches the track check (would accept audio). MINOR (N5): a recorder taken off the lesson keeps capturing it until Stop. Fix: in `recorder_register_chunk` re-check `recorder__teaches_session OR recorder_is_class_teacher OR admin` for `started_by`, refuse otherwise; or a `sessions.teacher_id` change trigger that sets `stop_requested_at`, same shape as F10.
 
-Where I am / next step: clock edges + 0.50 boundary, F6 owner on mark_audio_deleted, F3 ended enrolment; then mutations.
+### Re-checks that held (executed, `.probe/p2.mjs`)
+
+- F1 original probe (one 1-byte chunk claiming 90 min): suite assertion "the critic's probe: ONE 1-byte chunk claiming 90 minutes is refused" passes in the 284/0 run. Chunks referencing another recording's objects: impossible, the path is built by the server from the recording id (:1353-1355) and confirm reads that exact path. Silence-sized payloads: refused by the byte floor; but any bytes pass it (N2).
+- F5 clock edges: `start 6 min before the lesson: Too early: capture opens at ...`; `start 4 min before: null`; window `pre 300 s, grace 600 s`; stored wall clock 11:51 = Hanoi 11:51 of the UTC timestamp. A lesson 23:30-00:30: `v_end + 1 day` (:741), read only (arm result depends on the hour the probe ran).
+- 0.50 boundary: `exactly 2 700 000 ms -> counts_as_held_evidence true`, `2 699 999 ms -> false` (threshold 2 700 000 of a 5 400 000 ms lesson).
+- F6: the suite's NOBYPASSRLS-owner cases (recorder.test.mjs:904-932: mark-deleted via `recorder_mark_audio_deleted` as service role, row DELETE, confirm) all RAISE `row-level security policy for table "objects"` in the 284/0 run.
+- F2 future/past cover, F3 old wording / mid-enrolment / ended enrolment, F12 oracle: the suite's named cases pass; not re-probed beyond N5.
+- New SECURITY DEFINER functions: all 23 pin `search_path=public`; the 3 storage readers add `row_security=off`. EXECUTE for `authenticated`: can_listen, can_read_class, can_read_object, can_read_recording, can_upload, class_missing_consent, confirm_chunk, owns_open, record_child_consent, register_chunk, request_deletion, set_class_recording (DEFINER) and mark_audio_deleted, path_parts, retention_due, server_time (INVOKER). None for anon except the trigger body `recorder__audit_is_append_only` (only raises).
+- Called by a parent and by an authenticated caller with no uid: every one returns false / 0 rows or raises (`Not your class`, `Sign in first`, `No such chunk`); `UPDATE recorder_settings` -> 0 rows. The only `row_security = off` function callable by a non-admin, `recorder_confirm_chunk`, distinguishes "No such chunk" from "Not your recording" (a random-uuid existence oracle, negligible).
+
+Where I am / next step: mutation run (.probe/mut.mjs), then apply-to-live section and verdict.
