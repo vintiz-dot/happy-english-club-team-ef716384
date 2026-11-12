@@ -844,8 +844,8 @@ refused("the critic's probe: ONE 1-byte chunk claiming 90 minutes is refused",
   await tryReg(T1, rP.id, "teacher", 0, 1, SHA("a"), 0, 5_400_000), /at most 30000 ms/);
 refused("a chunk longer than one chunk is refused, however many bytes it has",
   await tryReg(T1, rP.id, "teacher", 0, 8_000_000, SHA("a"), 0, 120_000), /at most 30000 ms/);
-refused("a chunk below the format's byte floor is refused (opus-webm: 2000 B/s, so 30 s needs 60 000 B)",
-  await tryReg(T1, rP.id, "teacher", 0, 59_999, SHA("a"), 0, 30_000), /too small to hold 30000 ms of opus-webm/);
+refused("a chunk too small to be audio at all is refused (ruling (a): only under 40 bytes; a quieter one is flagged, below)",
+  await tryReg(T1, rP.id, "teacher", 0, 39, SHA("a"), 0, 30_000), /too small to hold any audio/);
 refused("audio ending later than the server's clock allows is refused (just armed: 30 s cannot exist yet)",
   await tryReg(T1, rP.id, "teacher", 0, 64_000, SHA("a"), 0, 30_000), /server's clock/);
 await travel(rP.id, 1);
@@ -926,6 +926,46 @@ await as(ADMIN, () => db.query(`UPDATE public.recorder_settings SET evidence_min
   eq("a complete recording whose Stop came after the window + late allowance is no evidence, however it got there (N2)",
     (await one(`SELECT recording_ran_evidence FROM public.recorder_session_evidence WHERE recording_id=$1`, [rL.id])).recording_ran_evidence, false);
   await raw(`UPDATE public.class_recordings SET ended_at = $2::timestamptz WHERE id=$1`, [rL.id, was]);
+}
+
+console.log("=== ruling (a): silence below the byte floor is stored, flagged, never evidence (C2 review) ===");
+{
+  const s = await sessAt(C1, t1, -60, 30);
+  const r = await arm(T1, s, { chunk_ms: 60000 });   // opus-webm: floor 2000 B/s, so 120 000 B a minute
+  await setStatus(T1, r.id, "recording");
+  await addTrack(T1, r.id, "teacher");
+  await addTrack(T1, r.id, "room");
+  await travel(r.id, 1);
+  refused("a chunk under 40 bytes is still refused: it cannot be an audio file",
+    await tryReg(T1, r.id, "teacher", 0, 39, SHA("a"), 0, 60_000), /too small to hold any audio/);
+  const silent = await reg(T1, r.id, "room", 0, 500, SHA("a"), 0, 60_000);
+  eq("a chunk below the floor (500 B for 60 s) is ACCEPTED and flagged below_floor", [silent.already_registered, silent.below_floor], [false, true]);
+  const loud = await reg(T1, r.id, "teacher", 0, 120_000, SHA("a"), 0, 60_000);
+  eq("one at the floor is not flagged", loud.below_floor, false);
+  eq("registering the silent chunk again returns the same row, still flagged", (await reg(T1, r.id, "room", 0, 500, SHA("a"), 0, 60_000)).below_floor, true);
+  refused("the recorder cannot clear the flag itself (no UPDATE on chunks)", await tryAs(T1, () => db.query(
+    `UPDATE public.class_recording_chunks SET below_floor = false WHERE recording_id=$1`, [r.id])), /permission denied/);
+  for (const k of await q(`SELECT id, storage_path, byte_size FROM public.class_recording_chunks WHERE recording_id=$1`, [r.id])) {
+    await put(T1, k.storage_path, Number(k.byte_size)); await confirm(T1, k.id, SHA("a"));
+  }
+  // 58 live minutes on both tracks: the teacher speaks for 40, then is silent
+  // for 18 (a dead lapel); the room track is silent all along.
+  for (let i = 1; i < 58; i++) {
+    await travel(r.id, 1);
+    await chunkUp(T1, r.id, "teacher", i, i < 40 ? 120_000 : 900, i * 60_000, (i + 1) * 60_000);
+    await chunkUp(T1, r.id, "room", i, 500, i * 60_000, (i + 1) * 60_000);
+  }
+  await setStatus(T1, r.id, "uploading");
+  await put(T1, manifestOf(r.id), 300);
+  await as(T1, () => db.query(`UPDATE public.class_recording_tracks SET chunk_count = 58 WHERE recording_id=$1`, [r.id]));
+  eq("a recording with silent chunks still completes: the timeline is whole", await completeRec(T1, r.id), null);
+  eq("below-floor chunks are counted in the table as below_floor", (await one(
+    `SELECT count(*) FILTER (WHERE below_floor)::int n, count(*)::int a FROM public.class_recording_chunks WHERE recording_id=$1`, [r.id])), { n: 76, a: 116 });
+  eq("but never as evidence: 40 live minutes of a 90-minute lesson, the 18 silent ones and the silent room track do not count",
+    (await one(`SELECT was_completed, recording_ran_evidence, too_short, verified_audio_ms::int v, verified_lesson_ms::int vl,
+                       late_audio_ms::int l, below_floor_ms::int bf, tracks_with_audio
+                  FROM public.recorder_session_evidence WHERE recording_id=$1`, [r.id])),
+    { was_completed: true, recording_ran_evidence: false, too_short: true, v: 2_400_000, vl: 2_400_000, l: 0, bf: 3_480_000, tracks_with_audio: 1 });
 }
 
 console.log("=== evidence is what reached the server LIVE (C1 critic 2, N2) ===");
