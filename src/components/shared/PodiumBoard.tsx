@@ -231,6 +231,8 @@ function Avatar48({
     >
       <AvatarImage
         src={getAvatarUrl(entry.students?.avatar_url) || getRandomAvatarUrl(entry.student_id)}
+        // Decorative: the child's name is printed beside every avatar.
+        alt={ivory ? "" : undefined}
         className="object-cover"
       />
       <AvatarFallback className={ivory ? "bg-hec-sunken font-semibold text-hec-ink" : "bg-studio-stage font-bold text-ink"}>
