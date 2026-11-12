@@ -2,6 +2,17 @@
 
 Task C1 of `docs/MASTER_PLAN.md`. Author: Fable 5.2, 2026-11-11. Branch `worktree-agent-acf51c46cb0eb722c`.
 
+## Revision 3 (2026-11-12) - after C1 critic 3 (`docs/evidence/C1-critic-3.md`)
+
+Still never applied, edited in place. Evidence, mutation run, contract note and post-apply probes: `docs/evidence/C1-revision-3.md`. This list supersedes any sentence below that says otherwise.
+
+- **M1.** A chunk is LIVE only if the server both registered it AND confirmed its bytes in storage no later than `late_after` after the moment it claims to end (`registered_at` and `confirmed_at` `<= started_at + t_end_ms + late_after_ms`). Bytes uploaded later are stored and listenable, reported in `late_audio_ms`, and never count.
+- **M2.** Toward the half-lesson rule only the part of each live chunk between `scheduled_start` and `scheduled_end` counts (bytes pro rata for the byte floor); pre-roll and grace audio never count. `verified_lesson_ms` is that figure (still capped by `lesson_overlap_ms`) and is what `recording_ran_evidence` / `too_short` compare with `evidence_threshold_ms`. `verified_audio_ms` keeps its meaning (all live audio). No column added or renamed.
+- **m1.** `abandon_reason` is written only by the move to `abandoned`; the server's reasons (`switch_off`, `session_canceled`, `deletion requested`, `never finished`, `stopped after the lesson window`) only from the server's paths (transaction-local flag `abandon:<reason>`); a page that writes one gets `unspecified`; other page text is kept.
+- **m2.** `class_recording_tracks`: column-level UPDATE, without `recording_id`, `track`, `created_at`.
+- **m3.** The deletion flag moves `delete_after` forward only together with the stamped request.
+- Tests for critic 3's three surviving mutants (other-class upload prefix, deleted recording unreadable by an admin, lesson-overlap cap).
+
 ## Revision 2 (2026-11-12) - after C1 critic 2 (`docs/evidence/C1-critic-2.md`) and the conductor's rulings
 
 Still never applied, so edited in place again. Evidence, mutation run and both contracts: `docs/evidence/C1-revision-2.md`. Where this document says otherwise below, the section is updated; a sentence marked "(rev. 1)" that conflicts with this list is superseded by it.
