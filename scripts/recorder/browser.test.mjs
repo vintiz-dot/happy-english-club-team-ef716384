@@ -307,7 +307,9 @@ try {
     info("autostart", r);
     const fin = r.recordingId && serverRec(r.recordingId);
     ok("no gesture at any point", r.activationAtPrepare === false && r.activationAt20s === false);
-    ok("context suspended at prepare, re-made once the mics were open, then running", r.contextAtPrepare === "suspended" && r.contextRebuilt === true && r.contextNow === "running", JSON.stringify(r));
+    // Chrome either resumes the first context once the mics are open or needs a new one (both seen); the engine does whichever works.
+    info("autostart: context re-made (else resumed)", r.contextRebuilt);
+    ok("context suspended at prepare, running once the mics were open (resumed or re-made), no gesture", r.contextAtPrepare === "suspended" && r.contextNow === "running", JSON.stringify(r).slice(0, 300));
     ok("audio flowed and the recording completed with no click", r.framesDelivered > 48000 * 15 && fin?.status === "complete", fin?.status);
     await Promise.race([b.close(), sleep(8000)]);
   }
