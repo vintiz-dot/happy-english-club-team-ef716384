@@ -928,12 +928,12 @@ export function WordExplorer({ onWordSaved }: Props = {}) {
             {/* Save Button */}
             <div className="pt-2">
               {saved ? (
-                <div className="flex flex-wrap items-center justify-center gap-2 rounded-hec-md border border-hec-leaf/30 bg-hec-leaf-tint px-4 py-3 text-center text-hec-body font-medium text-hec-leaf">
+                <div className="flex items-center justify-center gap-2 rounded-hec-md border border-hec-leaf/30 bg-hec-leaf-tint px-4 py-3 text-center text-hec-body font-medium text-hec-leaf">
                   <CheckCircle2 className="h-5 w-5 shrink-0" />
                   Word saved to your bank!
                 </div>
               ) : isDuplicate ? (
-                <div className="flex flex-wrap items-center justify-center gap-2 rounded-hec-md border border-hec-leaf/30 bg-hec-leaf-tint px-4 py-3 text-center text-hec-body font-medium text-hec-leaf">
+                <div className="flex items-center justify-center gap-2 rounded-hec-md border border-hec-leaf/30 bg-hec-leaf-tint px-4 py-3 text-center text-hec-body font-medium text-hec-leaf">
                   <PartyPopper className="h-5 w-5 shrink-0" />
                   Already in your Word Bank — go practice it! 🚀
                 </div>
