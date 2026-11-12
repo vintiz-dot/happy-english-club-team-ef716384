@@ -23,7 +23,7 @@ import { decodeFlac } from "./flac-decode.mjs";
 const arg = (k, d) => (process.argv.find((a) => a.startsWith(`--${k}=`)) ?? `=${d}`).split("=")[1];
 const run = arg("run", "formats");
 const minutes = Number(arg("minutes", run === "hidden" ? 11 : 32));
-const OUT = "C:\\Users\\Dell\\hec-tools\\c2-harness";
+const OUT = process.env.RECORDER_OUT ?? "C:\\Users\\Dell\\hec-tools\\c2-harness";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const T = "22222222-2222-4222-8222-222222222222";
 const out = { run, minutes, startedAt: new Date().toISOString() };
