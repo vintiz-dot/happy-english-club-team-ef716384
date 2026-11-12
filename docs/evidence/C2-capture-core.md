@@ -113,18 +113,54 @@ So zero-touch IS possible in this Chromium: open the microphones first, then cre
 Run 2 is a real finding: with the CPU starved by other processes, the AudioContext itself ran 14% slow (fake devices are software-clocked), so 91 s of a 665 s server-seen span is simply absent from the audio. The engine marks a context stall when wall time outruns audio time by > 1 s between ticks (`gap` marker, `context_stall` discontinuity); the server's `verified_audio_ms` would count only what is there. On real hardware the device clock does not stop with the CPU, so the symptom would be dropped frames instead - the frames-captured vs frames-written counts in the manifest are what show it.
 
 By documented platform behaviour (not executed here):
-- **Hidden tab:** Chrome's intensive throttling (one timer wake-up a minute after 5 minutes hidden) is waived while the page is capturing audio/WebRTC and does not apply to the audio thread at all. The capture path uses no main-thread timer (worklet -> port message); uploads are driven by chunk events and the 5 s check in `tick()`, which also runs from the worklet's ticks. Expected: capture and uploads continue. **Owner check 8 is still required.**
+- **Hidden tab:** Chrome's intensive throttling (one timer wake-up a minute after 5 minutes hidden, https://developer.chrome.com/blog/timer-throttling-in-chrome-88) exempts pages using WebRTC; the article does not plainly name a bare getUserMedia capture (C1 1.1), and throttling of timers never applies to the AudioWorklet's audio thread. The capture path uses no main-thread timer (worklet -> port message); uploads are driven by chunk events and the 5 s check in `tick()`, which also runs from the worklet's ticks. Expected: capture and uploads continue. **Owner check 8 is still required.**
 - **Tab or browser closed:** capture stops at once (a page cannot run without its window). Measured instead: reload and renderer crash mid-recording lose 2.3 s and 2.8 s (segments every 5 s), and the next load finishes the recording as `crash_recovered`.
 - **Laptop sleeps / lid closes:** the OS suspends the audio devices and the page; no web API prevents it. On wake the context stall check writes a `gap` marker. Runbook: power plan "do nothing" on lid close, sleep never on mains.
 - `powercfg /requests` needs an elevated prompt; not run (owner check).
 
 ## Simulated vs needs the real hardware
 
-SIMULATED
+Simulated here: TWO DISTINCT simultaneous inputs - Chrome's `--use-fake-device-for-media-stream` exposes "Fake Default Audio Input" plus "Fake Audio Input 1" and "Fake Audio Input 2" with distinct deviceIds and groupIds, and both open at once with exact ids. Both play the SAME `--use-file-for-fake-audio-capture` WAV (the decoded tracks matched sample for sample at a 480-sample offset), so they are distinct devices but not distinct signals: the swap and dead-mic heuristics, the correlation "same signal twice" check and the drift numbers are only meaningful on the real pair. Unplugging is simulated by stopping the track and firing `ended` on it; reopening succeeds because the fake device is still there.
+
+Needs the real S500 and lapel (numbered for the owner; extends C1 9.2):
+
+1. Both devices listed in Chrome on the school laptop; write the exact labels here (they feed `hintRole` and the label fallback).
+2. Read-back on the real pair: do `echoCancellation/noiseSuppression/autoGainControl/voiceIsolation` read back `false` for the S500 (an echo-cancelling speakerphone) and for the lapel receiver? Is `channelCount` 1 or 2? Native `sampleRate`? (The engine records it; the UI shows `notHonoured`.)
+3. Zero-touch on that laptop's Chrome/Edge: open the recorder page with no click and let a lesson arm; does it start (context re-made after the mics open)? Installed-PWA and plain tab both.
+4. Hidden-tab integrity, 100 minutes, recorder window behind another full-screen app and then minimised: manifest `frames_captured == frames_written` on both tracks, no `gap` marker.
+5. Clap test at minute 1 and minute 95: inter-track offset and its growth (criterion 2: under 20 ms, growth under 10 ms).
+6. FLAC CPU on the school laptop: the browser's task manager while recording; encoder ms per chunk is in each chunk event (`encodeMs`).
+7. Real bytes per second of FLAC for a normal lesson AND for a silent room (the floors: 4 000 FLAC / 2 000 Opus B/s); report against [C2-measure].
+8. Unplug the lapel receiver for 10 s and plug it back: `device_unplugged` then `device_restored`, no hole in the timeline; and for > 60 s: `device_lost`, the lesson continues on one track.
+9. Move the receiver to another USB port between lessons: found by label (same name, new id) or the page asks for the microphone check.
+10. Roles swapped on purpose (lapel on the desk, S500 near the teacher): `roles_maybe_swapped` raised in the first minute.
+11. Close the lid for one minute mid-recording; what the page shows, and the `gap` marker.
+12. `powercfg /requests` (elevated) during a hidden-tab recording.
+13. Upload keeps up on the school uplink at lesson time (FLAC needs ~0.75 Mbit/s for two tracks at the measured rate).
+14. Windows "Audio enhancements" off for both devices; AnkerWork switches, if any.
 
 ## Failure-injection table
 
-FAILURES
+| Injected failure | Where | Result |
+|---|---|---|
+| Network down 25 s mid-recording (`context.setOffline`) | browser | chunks keep landing in IndexedDB (6 local, 0 on the server), `offline` reported, everything confirmed once online, recording completes |
+| Network down 45 s / 12 min (fake server offline) | unit | 45 s: nothing late; 12 min: chunks registered after capture + chunk + 10 min flagged `late` (still uploaded), `lateMs` reported, completes |
+| Storage down, PostgREST up | unit | rows registered as soon as chunks are cut (register-early), uploads catch up later |
+| Upload fails twice, confirm fails three times | unit | each (track, seq) registered once, one object per chunk, all confirmed, completes |
+| Same chunk re-registered / different bytes under the same seq | unit | same row returned / refused by the server; local store refuses too |
+| Upload over a confirmed path | unit | refused by the storage policy; bytes unchanged |
+| Page reload mid-recording | browser | found on next load, finished `crash_recovered`, contiguous, no duplicates, 2.3 s lost |
+| Renderer killed (`Page.crash`) mid-recording | browser | same, 2.8 s lost |
+| Tab dies with the last chunks offline (Node) | unit | chunks 0, 1 and a 5 s salvaged chunk 2 from segments, completes; a second reload finds nothing |
+| Track `ended` (unplug) and back | browser + unit | `device_unplugged` -> reopened by exact id -> `device_restored`; zeros keep the timeline; `device_change` markers |
+| Device gone for good | unit | `device_lost` after 60 s, track closed, other track continues, manifest `closed_at_frame` |
+| Switch off / consent missing / not a teacher / cancelled / too early / second live recording | unit | arm refused with `switch_off`, `consent_missing`, `not_teacher`, `session_canceled`, `too_early`, `already_live` |
+| Server stop request (admin switched off) | unit | stops, `stop_reason = switch_off`, completes |
+| Lesson window ends while recording | unit | scheduled stop lands inside the window (5 s margin), no audio past it, `scheduled_end`, completes |
+| Tab reopened after the window (revision 2: late Stop refused) | unit | the page reports the server's refusal (`stopRefused`, `window_closed`), keeps the audio; the row stays `recording` (see requests) |
+| Byte floor no format can meet | unit | refused locally before the server, the track ends at the first refusal (no hole), bytes kept |
+| No gesture at all | browser | context suspended -> re-made after the mics open -> recording completes |
+| Retention: remove fails / storage says yes but files remain / listing fails / prefix not `{class}/{recording}/` / due list unreadable / token table unreadable | pgtest | never marked deleted; skipped with a reason / 500 / 401 |
 
 ## Test totals
 
