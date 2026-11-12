@@ -11,8 +11,9 @@ import { CreditCard, Loader2, Zap, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getPaymentStatus, getTuitionStatusBadge } from "@/lib/tuitionStatus";
+import { getPaymentStatus, getTuitionStatusBadge, getIvoryTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { useIvory } from "@/hooks/useIvory";
 
 interface RecordPaymentDialogProps {
   open: boolean;
@@ -24,6 +25,8 @@ interface RecordPaymentDialogProps {
 
 export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: RecordPaymentDialogProps) => {
   const tuitionMonth = useTuitionMonthConfirmation(month, open);
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
   const [mode, setMode] = useState<"payment" | "correction">("payment");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -51,8 +54,8 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
       monthPayments: item.recorded_payment ?? 0,
       settledInMonth: item.settled_in_month,
     });
-    return getTuitionStatusBadge(status, item.settled_in_month);
-  }, [item]);
+    return (ivory ? getIvoryTuitionStatusBadge : getTuitionStatusBadge)(status, item.settled_in_month);
+  }, [item, ivory]);
 
   const UUID_RE = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
   const isPlaceholder = !UUID_RE.test(String(item?.id ?? ""));
@@ -213,31 +216,31 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
           <div className="space-y-4">
             {tuitionMonth.field}
             <Tabs value={mode} onValueChange={(v) => setMode(v as any)} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="payment">Record Payment</TabsTrigger>
-                <TabsTrigger value="correction">Correction / Refund</TabsTrigger>
+              <TabsList className={iv("grid h-auto w-full grid-cols-2", "grid w-full grid-cols-2")}>
+                <TabsTrigger value="payment" className={ivory ? "whitespace-normal text-center" : undefined}>Record Payment</TabsTrigger>
+                <TabsTrigger value="correction" className={ivory ? "whitespace-normal text-center" : undefined}>Correction / Refund</TabsTrigger>
               </TabsList>
             </Tabs>
 
             {/* Student header */}
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-lg">{studentName}</span>
-              {statusBadge}
+            <div className={iv("flex items-start justify-between gap-3", "flex items-center justify-between")}>
+              <span className={iv("min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-h3 font-semibold text-hec-ink", "font-semibold text-lg")}>{studentName}</span>
+              {ivory ? <span className="shrink-0">{statusBadge}</span> : statusBadge}
             </div>
 
             {/* Financial summary */}
-            <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted/50 p-3">
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground">Payable</p>
-                <p className="font-semibold text-sm">{fmt(payable)}</p>
+            <div className={iv("grid grid-cols-1 min-[400px]:grid-cols-3 gap-2 rounded-hec-md border border-hec-line bg-hec-sunken p-3", "grid grid-cols-3 gap-2 rounded-lg bg-muted/50 p-3")}>
+              <div className={iv("flex items-baseline justify-between gap-4 min-[400px]:block min-[400px]:text-center", "text-center")}>
+                <p className={iv("text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground")}>Payable</p>
+                <p className={iv("whitespace-nowrap font-semibold text-hec-small text-hec-ink tabular-nums", "font-semibold text-sm")}>{fmt(payable)}</p>
               </div>
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground">Paid</p>
-                <p className="font-semibold text-sm text-green-600">{fmt(alreadyPaid)}</p>
+              <div className={iv("flex items-baseline justify-between gap-4 min-[400px]:block min-[400px]:text-center", "text-center")}>
+                <p className={iv("text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground")}>Paid</p>
+                <p className={iv("whitespace-nowrap font-semibold text-hec-small text-hec-ink tabular-nums", "font-semibold text-sm text-green-600")}>{fmt(alreadyPaid)}</p>
               </div>
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground">Outstanding</p>
-                <p className={`font-semibold text-sm ${outstanding > 0 ? "text-destructive" : "text-green-600"}`}>
+              <div className={iv("flex items-baseline justify-between gap-4 min-[400px]:block min-[400px]:text-center", "text-center")}>
+                <p className={ivory ? `text-hec-caption font-medium ${outstanding > 0 ? "text-hec-danger" : "text-hec-leaf"}` : "text-xs text-muted-foreground"}>Outstanding</p>
+                <p className={ivory ? "whitespace-nowrap font-semibold text-hec-small text-hec-ink tabular-nums" : `font-semibold text-sm ${outstanding > 0 ? "text-destructive" : "text-green-600"}`}>
                   {fmt(outstanding)}
                 </p>
               </div>
@@ -254,7 +257,7 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
                   placeholder="0"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="flex-1"
+                  className={iv("min-w-0 flex-1 tabular-nums", "flex-1")}
                   autoFocus
                 />
                 <Button 
@@ -276,13 +279,13 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
             {/* Date & Method */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Date</Label>
-                <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                <Label htmlFor="record-payment-date">Date</Label>
+                <Input id="record-payment-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Method</Label>
+                <Label htmlFor="record-payment-method">Method</Label>
                 <Select value={method} onValueChange={setMethod}>
-                  <SelectTrigger>
+                  <SelectTrigger id="record-payment-method">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -297,7 +300,7 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
 
             {/* Memo */}
             <div className="space-y-2">
-              <Label>Note {mode === "correction" ? <span className="text-destructive">*</span> : "(optional)"}</Label>
+              <Label>Note {mode === "correction" ? <span className={iv("text-hec-danger", "text-destructive")}>*</span> : "(optional)"}</Label>
               <Textarea
                 placeholder={mode === "correction" ? "E.g. Parent mistakenly paid twice, refunding..." : "E.g. Paid via Momo..."}
                 value={memo}
@@ -308,13 +311,17 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
 
             {/* Live preview */}
             {enteredAmount > 0 && (
-              <div className={`rounded-lg p-3 text-sm font-medium ${
+              <div className={ivory ? `rounded-hec-md border p-3 text-hec-small font-medium text-hec-ink ${
+                newBalance <= 0
+                  ? "border-hec-leaf/30 bg-hec-leaf-tint"
+                  : "border-hec-warn/30 bg-hec-warn-tint"
+              }` : `rounded-lg p-3 text-sm font-medium ${
                 newBalance <= 0
                   ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
                   : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
               }`}>
                 After this {mode}: Balance will be{" "}
-                <span className="font-bold">{fmt(newBalance)}</span>
+                <span className={iv("whitespace-nowrap font-semibold tabular-nums", "font-bold")}>{fmt(newBalance)}</span>
                 {newBalance < 0 && " (overpaid)"}
               </div>
             )}

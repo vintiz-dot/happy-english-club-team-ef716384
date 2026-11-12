@@ -14,6 +14,7 @@ import { Users, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { useIvory } from "@/hooks/useIvory";
 
 interface FamilyPaymentModalProps {
   open: boolean;
@@ -62,6 +63,8 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
 
   const queryClient = useQueryClient();
   const tuitionMonth = useTuitionMonthConfirmation(formData.month, open);
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
 
   useEffect(() => {
     if (open) {
@@ -321,13 +324,13 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
               {/* Step 2: Select Siblings */}
               <div className="space-y-3">
                 <Label>Select Students to Include</Label>
-                <div className="border rounded-lg p-4 space-y-2">
+                <div className={iv("border border-hec-line rounded-hec-md p-4 space-y-2", "border rounded-lg p-4 space-y-2")}>
                   {siblings.map((sibling) => {
                     const balance = getStudentBalance(sibling.id);
                     const classes = sibling.enrollments?.map(e => e.classes.name).join(", ") || "—";
                     return (
-                      <div key={sibling.id} className="flex items-center justify-between p-2 hover:bg-muted rounded">
-                        <div className="flex items-center space-x-3 flex-1">
+                      <div key={sibling.id} className={iv("flex min-h-hec-target items-start justify-between gap-3 p-2 hover:bg-hec-sunken rounded-hec-sm", "flex items-center justify-between p-2 hover:bg-muted rounded")}>
+                        <div className={iv("flex min-w-0 items-start space-x-3 flex-1", "flex items-center space-x-3 flex-1")}>
                           <Checkbox
                             id={`sibling-${sibling.id}`}
                             checked={selectedSiblings.has(sibling.id)}
@@ -341,27 +344,27 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
                               setSelectedSiblings(newSet);
                             }}
                           />
-                          <div className="flex flex-col flex-1">
-                            <label htmlFor={`sibling-${sibling.id}`} className="cursor-pointer font-medium">
+                          <div className={iv("flex min-w-0 flex-col flex-1", "flex flex-col flex-1")}>
+                            <label htmlFor={`sibling-${sibling.id}`} className={iv("cursor-pointer whitespace-normal break-words hyphens-none text-hec-body font-medium text-hec-ink", "cursor-pointer font-medium")}>
                               {sibling.full_name}
                             </label>
-                            <span className="text-xs text-muted-foreground">{classes}</span>
+                            <span className={iv("whitespace-normal break-words text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground")}>{classes}</span>
                           </div>
                         </div>
-                        <Badge variant={balance > 0 ? "destructive" : "secondary"}>
+                        <Badge variant={balance > 0 ? "destructive" : "secondary"} className={iv("shrink-0 whitespace-nowrap tabular-nums", "")}>
                           {balance > 0 ? "+" : ""}{balance.toLocaleString()} ₫
                         </Badge>
                       </div>
                     );
                   })}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Total AR Balance: <span className="font-semibold">{getTotalBalance().toLocaleString()} ₫</span>
+                <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
+                  Total AR Balance: <span className={iv("whitespace-nowrap font-semibold text-hec-ink tabular-nums", "font-semibold")}>{getTotalBalance().toLocaleString()} ₫</span>
                 </p>
               </div>
 
               {/* Step 3: Payment Details */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className={iv("grid grid-cols-1 sm:grid-cols-2 gap-4", "grid grid-cols-2 gap-4")}>
                 <div className="space-y-2">
                   <Label htmlFor="amount">Payment Amount (VND) *</Label>
                   <Input
@@ -401,7 +404,7 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
                   />
                 </div>
 
-                <div className="space-y-2 col-span-2">
+                <div className={iv("space-y-2 sm:col-span-2", "space-y-2 col-span-2")}>
                   <Label htmlFor="memo">Memo</Label>
                   <Input
                     id="memo"
@@ -419,37 +422,37 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
                   value={formData.allocationMode}
                   onValueChange={(v: any) => setFormData({ ...formData, allocationMode: v })}
                 >
-                  <div className="flex items-start space-x-2 p-3 border rounded-lg">
+                  <div className={iv("flex items-start space-x-2 p-3 border border-hec-line-strong rounded-hec-md", "flex items-start space-x-2 p-3 border rounded-lg")}>
                     <RadioGroupItem value="oldest-first" id="oldest" />
-                    <div className="flex-1">
-                      <label htmlFor="oldest" className="font-medium cursor-pointer">
+                    <div className={iv("min-w-0 flex-1", "flex-1")}>
+                      <label htmlFor="oldest" className={iv("font-medium text-hec-body text-hec-ink cursor-pointer", "font-medium cursor-pointer")}>
                         Oldest-First Waterfall (Recommended)
                       </label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
                         Apply to oldest invoices first across selected students
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-2 p-3 border rounded-lg">
+                  <div className={iv("flex items-start space-x-2 p-3 border border-hec-line-strong rounded-hec-md", "flex items-start space-x-2 p-3 border rounded-lg")}>
                     <RadioGroupItem value="pro-rata" id="prorata" />
-                    <div className="flex-1">
-                      <label htmlFor="prorata" className="font-medium cursor-pointer">
+                    <div className={iv("min-w-0 flex-1", "flex-1")}>
+                      <label htmlFor="prorata" className={iv("font-medium text-hec-body text-hec-ink cursor-pointer", "font-medium cursor-pointer")}>
                         Pro-Rata by Balance
                       </label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
                         Distribute proportionally based on each student's balance
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-2 p-3 border rounded-lg">
+                  <div className={iv("flex items-start space-x-2 p-3 border border-hec-line-strong rounded-hec-md", "flex items-start space-x-2 p-3 border rounded-lg")}>
                     <RadioGroupItem value="manual" id="manual" />
-                    <div className="flex-1">
-                      <label htmlFor="manual" className="font-medium cursor-pointer">
+                    <div className={iv("min-w-0 flex-1", "flex-1")}>
+                      <label htmlFor="manual" className={iv("font-medium text-hec-body text-hec-ink cursor-pointer", "font-medium cursor-pointer")}>
                         Manual Split
                       </label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
                         Specify exact amounts for each student
                       </p>
                     </div>
@@ -458,14 +461,14 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
               </div>
 
               {formData.allocationMode === "manual" && (
-                <div className="space-y-3 border rounded-lg p-4">
+                <div className={iv("space-y-3 border border-hec-line rounded-hec-md p-4", "space-y-3 border rounded-lg p-4")}>
                   <Label>Manual Allocation Amounts</Label>
                   {Array.from(selectedSiblings).map((sid) => {
                     const sibling = siblings.find(s => s.id === sid);
                     if (!sibling) return null;
                     return (
-                      <div key={sid} className="flex items-center gap-3">
-                        <span className="flex-1 font-medium">{sibling.full_name}</span>
+                      <div key={sid} className={iv("flex flex-wrap items-center gap-3", "flex items-center gap-3")}>
+                        <span className={iv("min-w-0 flex-1 basis-40 whitespace-normal break-words hyphens-none font-medium text-hec-ink", "flex-1 font-medium")}>{sibling.full_name}</span>
                         <Input
                           type="number"
                           value={manualAllocations[sid] || ""}
@@ -473,9 +476,10 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
                             setManualAllocations({ ...manualAllocations, [sid]: e.target.value })
                           }
                           placeholder="0"
-                          className="w-40"
+                          className={iv("w-40 tabular-nums", "w-40")}
+                          aria-label={ivory ? `Amount for ${sibling.full_name}` : undefined}
                         />
-                        <span className="text-muted-foreground">₫</span>
+                        <span className={iv("text-hec-ink-soft", "text-muted-foreground")}>₫</span>
                       </div>
                     );
                   })}
@@ -484,7 +488,7 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
 
               {/* Leftover Handling */}
               {preview.leftover > 0 && (
-                <Alert>
+                <Alert className={iv("rounded-hec-md border-hec-warn/30 bg-hec-warn-tint text-hec-ink [&>svg]:text-hec-warn", "")}>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
                     <div className="space-y-3">
@@ -529,9 +533,9 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
               )}
 
               {/* Preview */}
-              <div className="rounded-lg border border-blue-500 bg-blue-50 p-4 space-y-2">
-                <div className="font-medium text-blue-800">Allocation Preview</div>
-                <div className="text-sm text-blue-700 space-y-1">
+              <div className={iv("rounded-hec-md border border-hec-line bg-hec-sunken p-4 space-y-2", "rounded-lg border border-blue-500 bg-blue-50 p-4 space-y-2")}>
+                <div className={iv("font-medium text-hec-ink", "font-medium text-blue-800")}>Allocation Preview</div>
+                <div className={iv("text-hec-small text-hec-ink tabular-nums space-y-1", "text-sm text-blue-700 space-y-1")}>
                   <p>• Payment Amount: {preview.totalAmount.toLocaleString()} ₫</p>
                   <p>• Total AR Balance: {preview.totalBalance.toLocaleString()} ₫</p>
                   <p>• Will Apply: {preview.willApply.toLocaleString()} ₫</p>

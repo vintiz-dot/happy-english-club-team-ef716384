@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { useIvory } from "@/hooks/useIvory";
 
 interface SettleBillModalProps {
   studentId: string | null;
@@ -39,6 +40,8 @@ export function SettleBillModal({
 
   const queryClient = useQueryClient();
   const tuitionMonth = useTuitionMonthConfirmation(month, !!studentId);
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,14 +112,14 @@ export function SettleBillModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {tuitionMonth.field}
-          <div className="rounded-lg border p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Current Balance:</span>
-              <span className={`text-lg font-bold ${isDebit ? "text-destructive" : "text-green-600"}`}>
+          <div className={iv("rounded-hec-md border border-hec-line bg-hec-surface p-4 space-y-2", "rounded-lg border p-4 space-y-2")}>
+            <div className={iv("flex items-baseline justify-between gap-4", "flex items-center justify-between")}>
+              <span className={iv("min-w-0 text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Current Balance:</span>
+              <span className={ivory ? "shrink-0 whitespace-nowrap font-sans text-hec-h3 font-semibold text-hec-ink tabular-nums" : `text-lg font-bold ${isDebit ? "text-destructive" : "text-green-600"}`}>
                 {isDebit ? "+" : ""}{balance.toLocaleString()} VND
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className={ivory ? `text-hec-caption font-medium ${isDebit ? "text-hec-danger" : "text-hec-ink-soft"}` : "text-xs text-muted-foreground"}>
               {isDebit ? "Amount owed by student" : "Credit balance (overpaid)"}
             </p>
           </div>
@@ -125,13 +128,13 @@ export function SettleBillModal({
             <div className="space-y-3">
               <Label>Settlement Type</Label>
               <RadioGroup value={settlementType} onValueChange={setSettlementType}>
-                <div className="flex items-start space-x-2 p-3 border rounded-lg">
+                <div className={iv("flex items-start space-x-2 p-3 border border-hec-line-strong rounded-hec-md", "flex items-start space-x-2 p-3 border rounded-lg")}>
                   <RadioGroupItem value="discount" id="discount" />
-                  <div className="flex-1">
-                    <label htmlFor="discount" className="font-medium cursor-pointer">
+                  <div className={iv("min-w-0 flex-1", "flex-1")}>
+                    <label htmlFor="discount" className={iv("font-medium text-hec-body text-hec-ink cursor-pointer", "font-medium cursor-pointer")}>
                       Tuition Adjustment (Discount)
                     </label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
                       Write off debt as tuition discount expense
                     </p>
                   </div>
@@ -144,25 +147,25 @@ export function SettleBillModal({
             <div className="space-y-3">
               <Label>How to handle overpayment?</Label>
               <RadioGroup value={settlementType} onValueChange={setSettlementType}>
-                <div className="flex items-start space-x-2 p-3 border rounded-lg">
+                <div className={iv("flex items-start space-x-2 p-3 border border-hec-line-strong rounded-hec-md", "flex items-start space-x-2 p-3 border rounded-lg")}>
                   <RadioGroupItem value="unapplied_cash" id="unapplied" />
-                  <div className="flex-1">
-                    <label htmlFor="unapplied" className="font-medium cursor-pointer">
+                  <div className={iv("min-w-0 flex-1", "flex-1")}>
+                    <label htmlFor="unapplied" className={iv("font-medium text-hec-body text-hec-ink cursor-pointer", "font-medium cursor-pointer")}>
                       Unapplied Cash (Recommended)
                     </label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
                       Keep as customer credit for future tuition
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-2 p-3 border rounded-lg border-amber-500 bg-amber-50">
+                <div className={iv("flex items-start space-x-2 p-3 border rounded-hec-md border-hec-warn/30 bg-hec-warn-tint", "flex items-start space-x-2 p-3 border rounded-lg border-amber-500 bg-amber-50")}>
                   <RadioGroupItem value="voluntary_contribution" id="contribution" />
-                  <div className="flex-1">
-                    <label htmlFor="contribution" className="font-medium cursor-pointer">
+                  <div className={iv("min-w-0 flex-1", "flex-1")}>
+                    <label htmlFor="contribution" className={iv("font-medium text-hec-body text-hec-ink cursor-pointer", "font-medium cursor-pointer")}>
                       Voluntary Contribution
                     </label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
                       Convert to unrestricted revenue (requires parent consent)
                     </p>
                   </div>
@@ -172,7 +175,7 @@ export function SettleBillModal({
           )}
 
           {settlementType === "voluntary_contribution" && (
-            <Alert>
+            <Alert className={iv("rounded-hec-md border-hec-warn/30 bg-hec-warn-tint text-hec-ink [&>svg]:text-hec-warn", "")}>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 <div className="space-y-3">
@@ -185,7 +188,7 @@ export function SettleBillModal({
                     />
                     <label
                       htmlFor="consent"
-                      className="text-sm cursor-pointer"
+                      className={iv("flex min-h-hec-target items-center text-hec-small text-hec-ink cursor-pointer", "text-sm cursor-pointer")}
                     >
                       Parent has given explicit consent for voluntary contribution (non-refundable)
                     </label>
@@ -214,8 +217,9 @@ export function SettleBillModal({
               onChange={(e) => setAmount(e.target.value)}
               max={Math.abs(balance)}
               required
+              className={ivory ? "tabular-nums" : undefined}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className={iv("text-hec-caption text-hec-ink-soft tabular-nums", "text-xs text-muted-foreground")}>
               Maximum: {Math.abs(balance).toLocaleString()} VND
             </p>
           </div>
@@ -232,12 +236,12 @@ export function SettleBillModal({
             />
           </div>
 
-          <div className="rounded-lg border border-blue-500 bg-blue-50 p-4 space-y-2">
-            <div className="flex items-center gap-2 text-blue-800 font-medium">
-              <CheckCircle2 className="h-4 w-4" />
+          <div className={iv("rounded-hec-md border border-hec-line bg-hec-sunken p-4 space-y-2", "rounded-lg border border-blue-500 bg-blue-50 p-4 space-y-2")}>
+            <div className={iv("flex items-center gap-2 text-hec-ink font-medium", "flex items-center gap-2 text-blue-800 font-medium")}>
+              <CheckCircle2 className={iv("h-4 w-4 text-hec-ink-soft", "h-4 w-4")} />
               Settlement Preview
             </div>
-            <div className="text-sm text-blue-700 space-y-1">
+            <div className={iv("text-hec-small text-hec-ink tabular-nums space-y-1", "text-sm text-blue-700 space-y-1")}>
               <p>• Current Balance: {balance.toLocaleString()} VND</p>
               <p>• Settlement Amount: {parseInt(amount).toLocaleString()} VND</p>
               <p>
