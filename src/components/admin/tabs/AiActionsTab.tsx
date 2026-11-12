@@ -51,7 +51,7 @@ export default function AiActionsTab() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-violet-600" />
+          <Bot className="h-5 w-5 text-hec-ink-soft" aria-hidden />
           AI actions
         </CardTitle>
         <CardDescription>
@@ -61,19 +61,19 @@ export default function AiActionsTab() {
       </CardHeader>
       <CardContent className="space-y-3">
         {isLoading && (
-          <p className="text-sm text-muted-foreground flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+          <p className="flex items-center gap-2 text-hec-small text-hec-ink-soft">
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Loading…
           </p>
         )}
         {error && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-hec-small text-hec-ink-soft">
             The AI actions log isn't available yet. Its database change needs to be applied first.
           </p>
         )}
-        {data && data.length === 0 && <p className="text-sm text-muted-foreground">Nothing has been set up by the assistant yet.</p>}
+        {data && data.length === 0 && <p className="text-hec-small text-hec-ink-soft">Nothing has been set up by the assistant yet.</p>}
         {(data ?? []).map((a) => (
-          <div key={a.id} className="rounded-xl border p-3 space-y-2">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <div key={a.id} className="space-y-2 rounded-hec-md border border-hec-line bg-hec-surface p-4">
+            <div className="flex flex-wrap items-center gap-2 text-hec-caption text-hec-ink-soft">
               <span>{when(a.created_at)}</span>
               <span>·</span>
               <span>confirmed by {a.created_by_name}</span>
@@ -82,25 +82,25 @@ export default function AiActionsTab() {
               ) : a.reviewed_at ? (
                 <Badge variant="outline">Checked</Badge>
               ) : (
-                <Badge className="bg-violet-600">Waiting to be checked</Badge>
+                <Badge variant="warning">Waiting to be checked</Badge>
               )}
             </div>
-            <ul className="text-sm list-disc pl-5 space-y-0.5">
+            <ul className="list-disc space-y-1 pl-5 text-hec-small text-hec-ink">
               {a.summary.map((line) => (
-                <li key={line} className={a.status === "undone" ? "line-through text-muted-foreground" : undefined}>{line}</li>
+                <li key={line} className={a.status === "undone" ? "break-words text-hec-ink-faint line-through" : "break-words"}>{line}</li>
               ))}
             </ul>
-            <p className="text-xs text-muted-foreground italic">"{a.instruction}"</p>
+            <p className="break-words text-hec-caption italic text-hec-ink-soft">"{a.instruction}"</p>
             {(blocked[a.id] ?? []).length > 0 && (
-              <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 ring-1 ring-amber-200 dark:ring-amber-900 px-3 py-2 text-xs text-amber-900 dark:text-amber-200 space-y-0.5">
-                <p className="font-medium">Not undone, and nothing was changed:</p>
+              <div className="space-y-1 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint px-3 py-2 text-hec-caption text-hec-ink">
+                <p className="font-medium text-hec-warn">Not undone, and nothing was changed:</p>
                 {blocked[a.id].map((r) => <p key={r}>• {r}</p>)}
               </div>
             )}
             <div className="flex flex-wrap gap-2">
               {a.status === "applied" && (
                 <Button size="sm" variant="outline" onClick={() => undo(a)} disabled={undoing !== null}>
-                  {undoing === a.id ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Undo2 className="h-3.5 w-3.5 mr-1.5" />}
+                  {undoing === a.id ? <Loader2 className="animate-spin" aria-hidden /> : <Undo2 aria-hidden />}
                   Undo
                 </Button>
               )}
