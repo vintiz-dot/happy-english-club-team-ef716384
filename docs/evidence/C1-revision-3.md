@@ -1,6 +1,6 @@
 # C1 Revision 3 - class recorder fixes for critic 3 (M1, M2, minors, survivors)
 
-**Where I am / next step:** migration and tests done, recorder suite 396/0; full run and mutation run in progress (totals below once in).
+**Where I am / next step:** DONE. Recorder suite 398 passed / 0 failed (was 367). Full run 2730 / 35 suites / 0 failed (at 396 recorder assertions; two cases added after it for mutation survivors, recorder suite re-run alone: 398/0). 24 mutations, 24 caught (two after a case was added). `.probe/` and the node_modules link removed.
 
 Setup note: the worktree's base (dc0deb5, release/d1) conflicted with `claude/hec-conductor-setup-efbaa5` in `src/components/ui/tooltip.tsx` (not a file I may touch), so the merge was aborted and this branch reset to the conductor branch (5c40025); every commit here sits on top of it. Nothing was lost: dc0deb5 is on other branches.
 
@@ -8,8 +8,8 @@ Files touched (only these): `supabase/migrations/20261112100000_class_recorder.s
 
 ## Commands and totals
 
-- `node scripts/pgtest/recorder.test.mjs supabase/migrations/20260717090000_audio_transcript_pipeline.sql supabase/migrations/20261111110000_ta_standing_assignments_and_homework_upload.sql supabase/migrations/20261112100000_class_recorder.sql` -> before any test was added, with the migration already changed: `367 passed, 0 failed` (no existing assertion broke). With the new cases: **`396 passed, 0 failed`**. The suite pastes the edited file twice at the start ("applies", "and applies a second time unchanged"), four more times in the preflight cases and once over live data.
-- `node scripts/pgtest/run.mjs` -> FULL_RUN_PENDING
+- `node scripts/pgtest/recorder.test.mjs supabase/migrations/20260717090000_audio_transcript_pipeline.sql supabase/migrations/20261111110000_ta_standing_assignments_and_homework_upload.sql supabase/migrations/20261112100000_class_recorder.sql` -> before any test was added, with the migration already changed: `367 passed, 0 failed` (no existing assertion broke). With the new cases: `396 passed, 0 failed`; after the two survivor cases (mutation run below): **`398 passed, 0 failed`**. The suite pastes the edited file twice at the start ("applies", "and applies a second time unchanged"), four more times in the preflight cases and once over live data.
+- `node scripts/pgtest/run.mjs` -> `2730 assertions across 35 suites, 0 suite(s) failed` (`class recorder 396 passed, 0 failed`; session cancel guard 266, session held evidence 143, app and edge-function typechecks ok). Revision 2 was 2699 at 365 recorder assertions: +31, all recorder. Then two recorder assertions added and the suite re-run alone: 398/0.
 - No assertion removed, renamed or changed.
 
 ## How each finding was closed
@@ -33,7 +33,36 @@ Late-uploaded bytes are stored but never count: a chunk counts toward `recording
 
 ## Mutation run
 
-MUTATION_PENDING
+`.probe/mut.mjs` (throwaway, deleted) wrote each mutated copy to `.probe/m<N>_class_recorder.sql` and ran the real suite on it, 4 in parallel. CAUGHT = a FAIL or a non-zero exit. Critic 3's 16 were rebuilt from its table (its script was deleted), each against today's text.
+
+| Mutation | Result |
+|---|---|
+| preflight: unscoped-policy test removed | CAUGHT (395/1) |
+| preflight: bucket size-limit test removed | CAUGHT (395/1) |
+| upload: a confirmed chunk may be uploaded again | CAUGHT (392/4) |
+| upload: class prefix not checked (critic 3 survivor 1) | CAUGHT (395/1) |
+| read object: deleted recordings still readable (survivor 2) | CAUGHT (394/2) |
+| view: live allowance doubled (registration bound) | SURVIVED (396/0) on the first run -> case added -> CAUGHT (397/1) |
+| retention: non-admin may move delete_after | CAUGHT (391/5) |
+| row delete: allowed before 'deleted' | CAUGHT (395/1) |
+| deletion request: any signed-in user | CAUGHT (388/8) |
+| enrolment without consent does not switch off | CAUGHT (392/4) |
+| cancellation does not request a stop | CAUGHT (393/3) |
+| register: audio after the window accepted | CAUGHT (395/1) |
+| confirm: stored size not compared | CAUGHT (suite crashed) |
+| grant: server stamps writable again | CAUGHT (395/1) |
+| listen: `is_teacher_of_class` instead of the session's teacher | CAUGHT (383/13) |
+| view: evidence not capped by lesson overlap (survivor 3) | CAUGHT (395/1) |
+| **new** M1: confirmation time not checked | CAUGHT (394/2) |
+| **new** M1: confirmation allowance doubled | CAUGHT (395/1) |
+| **new** M2: pre-roll counts (no clip at the start) | CAUGHT (394/2) |
+| **new** M2: grace counts (no clip at the end) | CAUGHT (394/2) |
+| extra m1: a page may give a server reason | CAUGHT (395/1) |
+| extra m2: whole-table UPDATE on tracks back | CAUGHT (393/3) |
+| extra m3: the flag alone moves delete_after | CAUGHT (395/1) |
+| extra M2: bytes not pro rata | SURVIVED (396/0) on the first run -> case added -> CAUGHT (397/1) |
+
+**24 applied, 24 caught** (two after a case was added). Why the registration-bound survivor: with M1 the confirm bound implies it through the API (a chunk is confirmed only after it is registered), so only a hand-set state (registered late, confirmed early) can tell them apart; the case "a chunk the server registered 11 minutes after its end is late, whenever its bytes came" keeps the bound tested in its own right. The pro-rata case: "and only that part's share of its bytes counts toward the byte floor (M2, pro rata)" (885 000 vs 900 000).
 
 ## Post-apply read-only probes for the conductor (SQL editor)
 
