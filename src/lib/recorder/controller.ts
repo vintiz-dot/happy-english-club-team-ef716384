@@ -297,6 +297,13 @@ export class Recorder {
         try {
           const row = await this.o.backend.stop(rec.id, rec.stopReason ?? "manual", rec.clientEndedAt ?? new Date(this.o.now()).toISOString());
           rec.serverStatus = row.status; rec.stopPending = false;
+          // Revision 2: a Stop after capture_closes_at + late_after leaves the
+          // row ABANDONED. Read back what the server did and say so.
+          if (row.status === "abandoned") {
+            rec.phase = "abandoned";
+            this.events.emit("error", new RecorderError("server_refused", `The server did not accept this Stop: ${row.abandon_reason ?? "stopped after the lesson window"}. The audio is kept on this laptop.`, { refusal: "stopped_after_window" }));
+            if (this.active?.rec.id === rec.id) this.setState("abandoned");
+          }
           await this.saveRec(rec);
         } catch (e) {
           const err = toRecorderError(e);
@@ -455,7 +462,7 @@ export class Recorder {
       sampleRate: this.o.source.sampleRate, purpose: row.purpose, serverStatus: row.status, phase: "armed",
       scheduledStart: row.scheduled_start, scheduledEnd: row.scheduled_end, captureOpensAt: row.capture_opens_at,
       captureClosesAt: row.capture_closes_at, sessionDate: row.session_date, minBytesPerSec: row.min_bytes_per_sec,
-      clockToleranceMs: row.clock_tolerance_ms, maxDurationMs: row.max_duration_ms,
+      clockToleranceMs: row.clock_tolerance_ms, maxDurationMs: row.max_duration_ms, lateAfterMs: row.late_after_ms ?? 600000,
       tracks: [], anchors: [], discontinuities: [], deviceProfileId: this.o.profile?.serverId ?? null,
       installId: this.o.installId, appVersion: this.o.appVersion, userAgent: this.o.userAgent,
       createdAt: this.o.now(), updatedAt: this.o.now(),
@@ -874,8 +881,13 @@ export class Recorder {
     }
     if (row.stop_requested_at && a.capturing && !a.rec.stopRequested) {
       a.rec.stopRequested = true;
-      const st = a.rec.sessionId ? await this.o.backend.sessionStatus(a.rec.sessionId).catch(() => null) : null;
-      const reason = st === "Canceled" ? "session_canceled" : "switch_off";
+      // Revision 2: the server says why (stop_request_reason); only that reason is accepted.
+      let reason: "session_canceled" | "switch_off";
+      if (row.stop_request_reason === "session_canceled" || row.stop_request_reason === "switch_off") reason = row.stop_request_reason;
+      else {
+        const st = a.rec.sessionId ? await this.o.backend.sessionStatus(a.rec.sessionId).catch(() => null) : null;
+        reason = st === "Canceled" ? "session_canceled" : "switch_off";
+      }
       this.events.emit("stop_requested", { recordingId: a.rec.id, reason });
       this.serial(() => this.endCapture(reason));
     }

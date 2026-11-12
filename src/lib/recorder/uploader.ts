@@ -39,7 +39,7 @@ export interface UploadProgress {
   /** Unregistered chunks: their rows have not reached the server yet. */
   unregistered: number;
   /**
-   * "Recorded offline too long: these minutes will not count as evidence."
+   * "Uploaded too late to count as a live recording" (revision 2 wording).
    * Chunks registered after the tolerance; they are still uploaded and kept.
    */
   late: number;
@@ -50,7 +50,7 @@ export interface UploaderOptions {
   now?: () => number;
   random?: () => number;
   maxBackoffMs?: number;
-  /** Registration later than capture + chunk length + this is "late" (default 10 min). */
+  /** Fallback when the row has no late_after_ms: registered later than the chunk end + this is "late" (default 10 min). */
   lateToleranceMs?: number;
   onChunk?: (c: ChunkMeta) => void;
   onError?: (e: RecorderError, c?: ChunkMeta) => void;
@@ -59,7 +59,7 @@ export interface UploaderOptions {
 /** Refusals after which no later chunk of the track can be accepted either. */
 const TRACK_ENDING: ServerRefusal[] = ["stop_requested", "after_stop", "after_window", "span_too_long", "below_byte_floor", "conflicting_chunk"];
 /** Refusals that stop the whole recording. */
-const HALTING: ServerRefusal[] = ["recording_closed", "not_your_recording", "not_started"];
+const HALTING: ServerRefusal[] = ["recording_closed", "not_your_recording", "not_started", "no_longer_teaching"];
 
 export class Uploader {
   private now: () => number;
@@ -161,7 +161,8 @@ export class Uploader {
         if (!c.registeredAt) c.registeredAt = this.now();
         // The server's verdict when it gives one; otherwise our own estimate
         // (cut at createdAt, registered now) so the UI can warn either way.
-        c.late = typeof (r as any).late === "boolean" ? (r as any).late : c.registeredAt - c.createdAt > rec.chunkMs + this.lateToleranceMs;
+        // (revision 2: late = registered more than late_after_ms after the chunk ENDS; createdAt is when it was cut, i.e. its end)
+        c.late = typeof (r as any).late === "boolean" ? (r as any).late : c.registeredAt - c.createdAt > (rec.lateAfterMs ?? this.lateToleranceMs);
         c.state = r.confirmed ? "confirmed" : "registered";
         if (r.confirmed) c.confirmedAt = this.now();
       } else if (c.state === "registered") {

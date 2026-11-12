@@ -139,6 +139,8 @@ export interface LocalRecording {
   minBytesPerSec: number;
   clockToleranceMs: number;
   maxDurationMs: number;
+  /** Revision 2 (late_after_ms, snapshot at arming). */
+  lateAfterMs?: number;
   startedAtServer?: string;
   clientStartedAt?: string;
   clientEndedAt?: string;
@@ -184,6 +186,10 @@ export interface ServerRecording {
   ended_at: string | null;
   stop_reason: string | null;
   stop_requested_at: string | null;
+  /** Revision 2: why the server asked the recording to stop. */
+  stop_request_reason?: string | null;
+  /** Revision 2: a chunk registered later than its end + this does not count (default 10 min). */
+  late_after_ms?: number;
   manifest_path: string | null;
   manifest_sha256: string | null;
   abandon_reason?: string | null;

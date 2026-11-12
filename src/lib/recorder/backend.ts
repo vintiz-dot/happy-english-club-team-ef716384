@@ -71,7 +71,7 @@ export interface SupabaseLike {
   storage: { from(bucket: string): { upload(path: string, body: Blob | ArrayBuffer | Uint8Array, opts?: Record<string, unknown>): PromiseLike<{ data: any; error: any }>; download(path: string): PromiseLike<{ data: Blob | null; error: any }> } };
 }
 
-const REC_COLUMNS = "id,class_id,session_id,armed_session_id,session_date,scheduled_start,scheduled_end,capture_opens_at,capture_closes_at,status,format,chunk_ms,max_duration_ms,min_bytes_per_sec,clock_tolerance_ms,purpose,started_at,ended_at,stop_reason,stop_requested_at,manifest_path,manifest_sha256,abandon_reason";
+const REC_COLUMNS = "id,class_id,session_id,armed_session_id,session_date,scheduled_start,scheduled_end,capture_opens_at,capture_closes_at,status,format,chunk_ms,max_duration_ms,min_bytes_per_sec,clock_tolerance_ms,purpose,started_at,ended_at,stop_reason,stop_requested_at,stop_request_reason,late_after_ms,manifest_path,manifest_sha256,abandon_reason";
 
 async function unwrap<T>(p: PromiseLike<{ data: T; error: any }>, what: string): Promise<T> {
   let r: { data: T; error: any };

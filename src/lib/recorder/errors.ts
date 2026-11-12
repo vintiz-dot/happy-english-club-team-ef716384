@@ -27,6 +27,8 @@ export type ServerRefusal =
   | "switch_off"             // recording is switched off for the class
   | "consent_missing"        // a child lacks consent / older wording / no confirmation
   | "not_teacher"            // only a teacher of the class can record it
+  | "no_longer_teaching"     // revision 2: taken off the lesson mid-recording; keep the bytes, ask an admin
+  | "stopped_after_window"   // revision 2: the Stop came after the window + late_after; the server abandoned it
   | "session_canceled"
   | "session_invalid"        // no such session / no time
   | "already_live"           // another live recording of this session exists
@@ -69,6 +71,7 @@ const PATTERNS: [RegExp, ServerRefusal][] = [
   [/asked to stop/i, "stop_requested"],
   [/switched off/i, "switch_off"],
   [/consent/i, "consent_missing"],
+  [/no longer teach this lesson/i, "no_longer_teaching"],
   [/only a teacher of this class/i, "not_teacher"],
   [/cancelled|canceled/i, "session_canceled"],
   [/no such session|has no time|belongs to a lesson/i, "session_invalid"],

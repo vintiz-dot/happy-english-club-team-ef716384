@@ -89,7 +89,7 @@ export function createFakeServer(opts = {}) {
       scheduled_start: iso(sess.start), scheduled_end: iso(sess.end), capture_opens_at: iso(opens), capture_closes_at: iso(closes),
       purpose: row.purpose ?? "lesson", status: "armed", format: row.format, chunk_ms, max_duration_ms: closes - opens,
       min_bytes_per_sec: row.format === "opus-webm" ? st.min_bytes_per_sec_opus : row.format === "flac" ? st.min_bytes_per_sec_flac : st.min_bytes_per_sec_wav,
-      clock_tolerance_ms: st.clock_tolerance_seconds * 1000, held_min_fraction: st.held_evidence_min_fraction,
+      clock_tolerance_ms: st.clock_tolerance_seconds * 1000, held_min_fraction: st.held_evidence_min_fraction, late_after_ms: (st.late_after_minutes ?? 10) * MIN, stop_request_reason: null,
       started_by: uid, device_profile_id: row.device_profile_id ?? null, client_info: row.client_info ?? {}, armed_at: iso(now),
       client_started_at: null, client_ended_at: null, started_at: null, ended_at: null, stopped_by: null, stop_reason: null,
       stop_requested_at: null, manifest_path: null, manifest_sha256: null, completed_at: null, abandoned_at: null, abandon_reason: null,
@@ -121,13 +121,17 @@ export function createFakeServer(opts = {}) {
         if (now >= Date.parse(old.capture_closes_at)) return err("The lesson window is over: this recording can no longer start");
         n.started_at = iso(now);
       } else if (patch.status === "uploading") {
-        // Revision 2: a Stop after the window is refused, not clamped.
-        if (now > Date.parse(old.capture_closes_at) + old.clock_tolerance_ms) return err("The lesson window is over: a Stop after it is refused");
+        // Revision 2: a Stop later than the window + late_after is not a Stop: abandoned.
+        if (now > Date.parse(old.capture_closes_at) + old.late_after_ms) {
+          n.status = "abandoned"; n.abandoned_at = iso(now); n.abandon_reason = "stopped after the lesson window"; n.ended_at = iso(now); n.stop_reason = null;
+          s.recordings.set(id, n);
+          return ok({ ...n });
+        }
         n.ended_at = iso(now);
         n.stopped_by = uid;
         const asked = patch.stop_reason;
         n.stop_reason = ["manual", "scheduled_end", "device_lost", "crash_recovered"].includes(asked) ? asked
-          : (["switch_off", "session_canceled"].includes(asked) && old.stop_requested_at) ? asked : "manual";
+          : (["switch_off", "session_canceled"].includes(asked) && old.stop_request_reason === asked) ? asked : "manual";
       } else if (patch.status === "complete") {
         if (n.manifest_path !== `${old.class_id}/${old.id}/manifest.json` || !n.manifest_sha256) return err("A recording is complete only with its manifest and the manifest's checksum");
         if (!old.started_at || !old.ended_at) return err("A recording the server did not see start and stop cannot be complete");
@@ -188,9 +192,9 @@ export function createFakeServer(opts = {}) {
         return err(`Chunk ${a.p_seq} of the ${a.p_track} track is already registered with different audio`);
       return ok({ chunk_id: have.id, storage_path: have.storage_path, already_registered: true, confirmed: !!have.confirmed_at, late: !!have.late });
     }
-    // Revision 2: a chunk registered long after it was captured is stored but
-    // marked late (it does not count as evidence). Tolerance: chunk length + 10 min.
-    const late = s.now() - (started + a.p_t_end_ms) > r.chunk_ms + (s.settings.late_registration_minutes ?? 10) * MIN;
+    // Revision 2: registered later than started_at + t_end_ms + late_after_ms:
+    // stored but marked late (never evidence).
+    const late = s.now() > started + a.p_t_end_ms + r.late_after_ms;
     const c = { id: randomUUID(), recording_id: r.id, track: a.p_track, seq: a.p_seq, storage_path: path, byte_size: a.p_byte_size, sha256: a.p_sha256.toLowerCase(),
       t_start_ms: a.p_t_start_ms, t_end_ms: a.p_t_end_ms, registered_by: uid, registered_at: iso(s.now()), stored_size: null, confirmed_at: null, late };
     s.chunks.set(c.id, c);

@@ -223,6 +223,7 @@ console.log("=== backoff, refusals, schedule ===");
     ["The file is not in storage: keep the local copy", "not_in_storage"],
     ["This recording is abandoned and takes no more audio", "recording_closed"],
     ["Only a teacher of this class can record it", "not_teacher"],
+    ["You no longer teach this lesson: it cannot be recorded by you", "no_longer_teaching"],
     ['duplicate key value violates unique constraint "class_recordings_one_live_per_session"', "already_live"],
     ["Some chunks are registered but not confirmed in storage", "complete_refused"],
     ["Not your recording", "not_your_recording"],
@@ -501,7 +502,7 @@ console.log("=== offline -> online, and late registration ===");
   w.server.offline = false;
   await r.drive(row.id); await r.settle();
   const p = await r.uploadProgress(row.id);
-  ok("chunks registered after the tolerance are marked late (still uploaded)", p.late > 0 && w.server.chunkRows(row.id).some((c) => c.late && c.confirmed_at), `${p.late} late, ${Math.round(p.lateMs / 1000)} s`);
+  ok("chunks registered later than their end + late_after_ms are marked late by the server (still uploaded)", p.late > 0 && w.server.chunkRows(row.id).some((c) => c.late && c.confirmed_at), `${p.late} late, ${Math.round(p.lateMs / 1000)} s`);
   ok("the progress says how many minutes will not count", p.lateMs >= 60000);
   ok("register-early: once back online the rows are registered before the uploads finish", true);
   await r.stop(); await r.settle();
@@ -641,7 +642,7 @@ console.log("=== the server refuses: switch off, consent, not a teacher, cancell
     const row = await r.arm(entry(w.sid));
     r.tick(); await r.settle();
     await src.play(12, r);
-    w.server.recordings.get(row.id).stop_requested_at = new Date(clock).toISOString(); // an admin switched the class off
+    Object.assign(w.server.recordings.get(row.id), { stop_requested_at: new Date(clock).toISOString(), stop_request_reason: "switch_off" }); // an admin switched the class off
     clock += 61000;
     r.tick(); await r.settle();
     await src.play(2, r);
@@ -676,8 +677,8 @@ console.log("=== the server refuses: switch off, consent, not a teacher, cancell
     await b.r.prepare();
     await b.r.recover(); await b.r.settle();
     const loc = await store.getRecording(row.id);
-    ok("a Stop after the window is refused, and the page reports it rather than pretending", !!loc.stopRefused && b.errors.some((e) => e.refusal === "window_closed"), loc.stopRefused);
-    eq("the server still says recording; the local audio is kept", [w.server.recordings.get(row.id).status, (await store.bytesHeld(row.id)) > 0], ["recording", true]);
+    ok("a Stop after the window + late_after: the server abandons it, and the page reports that rather than pretending", loc.phase === "abandoned" && b.errors.some((e) => e.refusal === "stopped_after_window"), b.errors.map((e) => e.refusal).join(","));
+    eq("the row is abandoned; the local audio is kept", [w.server.recordings.get(row.id).status, (await store.bytesHeld(row.id)) > 0], ["abandoned", true]);
   }
 }
 
