@@ -49,12 +49,15 @@ export interface WorkerLike {
  * If the worker cannot be made or fails, every pending and later job is
  * encoded inline instead, and `onFallback` says so once.
  */
-export function workerEncoder(make: () => WorkerLike, onFallback?: (why: string) => void): ChunkEncoder {
+export function workerEncoder(make: () => WorkerLike, onFallback?: (why: string) => void, opts: { jobTimeoutMs?: number } = {}): ChunkEncoder {
   const inline = inlineEncoder();
+  // N-M6: a worker that neither answers nor raises an error must not hold the
+  // chunk queue (and the crash segments behind it, and the Stop) for ever.
+  const jobTimeoutMs = opts.jobTimeoutMs ?? 20000;
   let w: WorkerLike | null = null;
   let dead = false;
   let next = 1;
-  const pending = new Map<number, { format: RecorderFormat; samples: Int16Array; sampleRate: number; ok: (e: EncodedChunk) => void; no: (e: unknown) => void }>();
+  const pending = new Map<number, { format: RecorderFormat; samples: Int16Array; sampleRate: number; ok: (e: EncodedChunk) => void; no: (e: unknown) => void; timer: any }>();
   const fallBack = (why: string) => {
     if (dead) return;
     dead = true;
@@ -64,15 +67,17 @@ export function workerEncoder(make: () => WorkerLike, onFallback?: (why: string)
     // Re-run what the worker had not answered, in order, here.
     const jobs = [...pending.entries()].sort((a, b) => a[0] - b[0]);
     pending.clear();
-    for (const [, j] of jobs) inline.encode(j.format, j.samples, j.sampleRate).then(j.ok, j.no);
+    for (const [, j] of jobs) { clearTimeout(j.timer); inline.encode(j.format, j.samples, j.sampleRate).then(j.ok, j.no); }
   };
   try {
     w = make();
+    (w as any).onmessageerror = () => fallBack("the encoder worker could not read a message");
     w.onmessage = (e) => {
       const d = e.data || {};
       const j = pending.get(d.id);
       if (!j) return;
       pending.delete(d.id);
+      clearTimeout(j.timer);
       if (d.ok) j.ok({ bytes: new Uint8Array(d.bytes), encoding: d.encoding, mime: d.mime, ext: d.ext, encodeMs: d.encodeMs, sha256: d.sha256 });
       else {
         // The encoder threw for this job in the worker: try it here (a real
@@ -90,7 +95,8 @@ export function workerEncoder(make: () => WorkerLike, onFallback?: (why: string)
       if (dead || !w) return inline.encode(format, samples, sampleRate);
       return new Promise<EncodedChunk>((ok, no) => {
         const id = next++;
-        pending.set(id, { format, samples, sampleRate, ok, no });
+        const timer = setTimeout(() => fallBack(`the encoder worker did not answer in ${Math.round(jobTimeoutMs / 1000)} s`), jobTimeoutMs);
+        pending.set(id, { format, samples, sampleRate, ok, no, timer });
         try { w!.postMessage({ id, format, samples, sampleRate }); }
         catch (e) { fallBack(`could not post to the encoder worker: ${String((e as any)?.message ?? e)}`); }
       });

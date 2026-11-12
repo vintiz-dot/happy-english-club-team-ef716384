@@ -69,6 +69,8 @@ export interface RecorderBackend {
    * expired JWT), so the call can be retried as the same teacher. Optional.
    */
   refreshAuth?(): Promise<boolean>;
+  /** C2 round 3 (N-B1): the audio captured before the server stamped its start, stated once before any chunk. Optional. */
+  setPreStart?(id: string, preStartMs: number): Promise<void>;
   /** C2 revision (m2): a reopened microphone's read-back settings onto its track row. Optional. */
   updateTrack?(id: string, track: TrackRole, patch: { applied_settings: Record<string, unknown> }): Promise<void>;
 }
@@ -84,7 +86,7 @@ export interface SupabaseLike {
   auth?: { refreshSession?(): PromiseLike<{ data?: any; error: any }> } | any;
 }
 
-const REC_COLUMNS = "id,class_id,session_id,armed_session_id,session_date,scheduled_start,scheduled_end,capture_opens_at,capture_closes_at,status,format,chunk_ms,max_duration_ms,min_bytes_per_sec,clock_tolerance_ms,purpose,started_at,ended_at,stop_reason,stop_requested_at,stop_request_reason,late_after_ms,manifest_path,manifest_sha256,abandon_reason";
+const REC_COLUMNS = "id,class_id,session_id,armed_session_id,session_date,scheduled_start,scheduled_end,capture_opens_at,capture_closes_at,status,format,chunk_ms,max_duration_ms,min_bytes_per_sec,clock_tolerance_ms,purpose,started_at,ended_at,stop_reason,stop_requested_at,stop_request_reason,late_after_ms,manifest_path,manifest_sha256,abandon_reason,pre_start_ms,started_by";
 
 async function unwrap<T>(p: PromiseLike<{ data: T; error: any }>, what: string): Promise<T> {
   let r: { data: T; error: any };
@@ -170,6 +172,9 @@ export function supabaseBackend(client: SupabaseLike): RecorderBackend {
       const auth = (client as any).auth;
       if (!auth || typeof auth.refreshSession !== "function") return false;
       try { const r = await auth.refreshSession(); return !r?.error; } catch { return false; }
+    },
+    async setPreStart(id, preStartMs) {
+      await unwrap(rec().update({ pre_start_ms: preStartMs }).eq("id", id).select("id").single(), "pre-start");
     },
     async updateTrack(id, track, patch) {
       await unwrap(client.from("class_recording_tracks").update(patch).eq("recording_id", id).eq("track", track), "track settings");

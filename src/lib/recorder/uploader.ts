@@ -105,7 +105,8 @@ export class Uploader {
     const rec = await this.store.getRecording(recordingId);
     if (!rec) throw new RecorderError("internal", `no local recording ${recordingId}`);
     const state = { offline: false, lastError: null as RecorderError | null, halted: null as ServerRefusal | null };
-    if (rec.startedAtServer) {
+    // C2 round 3: nothing is registered before the server knows where its start sits on the timeline.
+    if (rec.startedAtServer && rec.preStartAcked !== false) {
       await Promise.all((["teacher", "room"] as TrackRole[]).map((t) => this.track(rec, t, state)));
     }
     return this.progress(recordingId, state);
@@ -184,7 +185,7 @@ export class Uploader {
   private async step(rec: LocalRecording, c: ChunkMeta, state: { offline: boolean; lastError: RecorderError | null; halted: ServerRefusal | null }): Promise<boolean> {
     try {
       if (c.state === "captured") {
-        const windowMs = Date.parse(rec.captureClosesAt) - Date.parse(rec.startedAtServer!);
+        const windowMs = Date.parse(rec.captureClosesAt) - Date.parse(rec.startedAtServer!) + (rec.preStartMs ?? 0);
         // Ruling (a): the byte floor is no longer a local refusal - the server
         // stores a below-floor chunk and flags it - so it is not checked here.
         const v = checkChunkLocally(c.byteSize, c.tStartMs, c.tEndMs, {

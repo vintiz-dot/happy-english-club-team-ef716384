@@ -74,6 +74,19 @@ export class HealthMonitor {
   /** Forget the swap measurement (a new recording). */
   resetSwap() { this.diffs = []; this.swapDone = false; this.elapsed = 0; }
 
+  /**
+   * C2 round 3 (N-M8): forget EVERYTHING - a new lesson on the same engine
+   * must raise a fault that carried over (a dead mic, clipping) again, and
+   * its clock (tMs) restarts at 0.
+   */
+  reset() {
+    this.resetSwap();
+    for (const t of ["teacher", "room"] as TrackRole[]) {
+      this.silent[t] = 0; this.flatFor[t] = 0; this.dead[t] = false; this.flatReported[t] = false;
+      this.silenceReported[t] = false; this.clipAcc[t] = 0; this.lastClipReport[t] = -1e9;
+    }
+  }
+
   push(teacher: Float32Array, room: Float32Array, tMs: number): HealthEvent[] {
     const out: HealthEvent[] = [];
     const sec = teacher.length / this.o.sampleRate;

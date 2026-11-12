@@ -33,6 +33,8 @@ export interface RecorderStore {
   listMarkers(recordingId: string): Promise<MarkerRecord[]>;
   putManifest(recordingId: string, bytes: Uint8Array, sha256: string): Promise<void>;
   getManifest(recordingId: string): Promise<{ bytes: Uint8Array; sha256: string } | undefined>;
+  /** C2 round 3 (N-M5): drop a recording's manifest (it lists marker labels). Optional for older stores. */
+  deleteManifest?(recordingId: string): Promise<void>;
   /** Bytes held locally (for the UI). */
   bytesHeld(recordingId?: string): Promise<number>;
 }
@@ -105,6 +107,7 @@ export class MemoryStore implements RecorderStore {
     this.manifests.set(recordingId, { bytes: bytes.slice(), sha256 });
   }
   async getManifest(recordingId: string) { const m = this.manifests.get(recordingId); return m ? { bytes: m.bytes.slice(), sha256: m.sha256 } : undefined; }
+  async deleteManifest(recordingId: string) { this.manifests.delete(recordingId); }
   async bytesHeld(recordingId?: string) {
     let n = 0;
     for (const [k, b] of this.bytes) if (!recordingId || k.startsWith(`${recordingId}|`)) n += b.length;
@@ -231,6 +234,7 @@ export class IdbStore implements RecorderStore {
     if (!have) t.objectStore("manifests").put({ bytes: bytes.slice().buffer, sha256 }, recordingId);
     await done(t);
   }
+  async deleteManifest(recordingId: string) { const t = this.tx(["manifests"], "readwrite"); t.objectStore("manifests").delete(recordingId); await done(t); }
   async getManifest(recordingId: string) {
     const m = (await req(this.tx(["manifests"]).objectStore("manifests").get(recordingId))) as any;
     return m ? { bytes: new Uint8Array(m.bytes), sha256: m.sha256 } : undefined;

@@ -93,8 +93,10 @@ export interface Discontinuity {
    * local_store_failed: the browser would not store this track's chunk at t_ms; the track ends there.
    * pre_start_trimmed: the server stamped its start wall_gap_ms after the page asked; that audio is not part of the recording.
    */
-  kind: "context_stall" | "clock_change" | "device_lost" | "device_restored" | "local_store_failed" | "pre_start_trimmed";
+  kind: "context_stall" | "clock_change" | "device_lost" | "device_restored" | "local_store_failed" | "pre_start_trimmed" | "pre_start";
   wall_gap_ms: number;
+  /** context_stall: how much of the gap was filled with silence (C2 round 3, N-M2). pre_start: wall_gap_ms is the audio before the server's Start. */
+  padded_ms?: number;
   track?: TrackRole;
 }
 
@@ -160,6 +162,11 @@ export interface LocalRecording {
   /** Revision 2 (late_after_ms, snapshot at arming). */
   lateAfterMs?: number;
   startedAtServer?: string;
+  /** C2 round 3 (N-B1): the server's time at the first captured sample (t = 0 of the chunks). */
+  firstSampleServer?: number;
+  /** Audio captured before the server stamped its start (ms), and whether the server has been told. */
+  preStartMs?: number;
+  preStartAcked?: boolean;
   clientStartedAt?: string;
   clientEndedAt?: string;
   stopReason?: StopReason;
@@ -214,6 +221,10 @@ export interface ServerRecording {
   manifest_path: string | null;
   manifest_sha256: string | null;
   abandon_reason?: string | null;
+  /** C2 round 3: the audio before the server's start (ms) on the chunks' timeline. */
+  pre_start_ms?: number;
+  /** Who recorded it (adopting an old engine's rows, N-M4). */
+  started_by?: string;
 }
 
 /** A lesson from `public.sessions` (Hanoi wall-clock). */

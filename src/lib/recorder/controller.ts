@@ -77,6 +77,8 @@ export interface RecorderOptions {
   deviceRetryMs?: number;
   /** After this long without the lost microphone, say so again (default 60 s). */
   deviceLostAlertMs?: number;
+  /** N-M6: an encoder answer not in after this long is not waited for: the chunk is encoded inline (default 30 s). */
+  encodeTimeoutMs?: number;
   /** N-M3: a clock measurement with a slower round trip than this is not kept (default 2 s). */
   clockMaxRttMs?: number;
   /** N-M7: a re-open of a lost microphone that has not answered after this long is given up and tried again (default 10 s). */
@@ -175,6 +177,7 @@ export class Recorder {
   private lastParkedTry = -1e15;
   private lastAuthRefresh = -1e15;
   private lastClockErrorAt = -1e15;
+  private encoderGaveUp = false;
   private interval: any = null;
   private work: Promise<unknown> = Promise.resolve();
   /** Chunk storing runs on its own queue, so a control step can wait for it. */
@@ -201,7 +204,7 @@ export class Recorder {
     this.o = {
       format: "flac", chunkMs: 30000, appVersion: "dev", userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "node",
       now: () => Date.now(), perfNow: () => performance.now(), autoTick: true, window: DEFAULT_WINDOW, storageWarnBytes: 4 * 1024 ** 3, storageRefuseBytes: 2 * 1024 ** 3,
-      storageStopBytes: 64 * 1024 ** 2, deviceRetryMs: Infinity, deviceLostAlertMs: 60000, reopenTimeoutMs: 10000, clockMaxRttMs: 2000, deviceRetryEveryMs: 2000, useLocks: true, encoder: null as any,
+      storageStopBytes: 64 * 1024 ** 2, deviceRetryMs: Infinity, deviceLostAlertMs: 60000, reopenTimeoutMs: 10000, clockMaxRttMs: 2000, encodeTimeoutMs: 30000, deviceRetryEveryMs: 2000, useLocks: true, encoder: null as any,
       stallAfterMs: 3000, startTimeoutMs: 10000, preStartHoldMs: 120000, startLeadOkMs: 5000, stuckAfterMs: 14 * 86400000,
       memoryHoldBytes: 150 * 1024 ** 2, durable: true, ...opts,
     } as any;
@@ -362,11 +365,12 @@ export class Recorder {
    */
   async recover(): Promise<string[]> {
     await this.takeLock();
+    await this.adoptLegacy();
     const ids: string[] = [];
     for (const rec of await this.mine()) {
       if (rec.phase === "complete") {
-        // Older engines kept the local copy after complete: purge it now (M2).
-        await this.o.store.purgeRecording(rec.id, { allowUnconfirmed: false }).catch(() => null);
+        // Older engines kept the local copy after complete: clean it now (M2, N-M5).
+        await this.cleanAfterComplete(rec.id);
         continue;
       }
       // B4: a Stop refusal recorded by an older pass is reconsidered; the
@@ -537,7 +541,7 @@ export class Recorder {
   async discardLocal(recordingId: string, confirmation: string): Promise<void> {
     if (confirmation !== "DISCARD") throw new RecorderError("internal", "Type DISCARD to throw away audio that the server does not have");
     const rec = await this.o.store.getRecording(recordingId);
-    if (rec && !this.isMine(rec)) throw new RecorderError("server_refused", "This audio was recorded by another account: only that teacher can discard it", { refusal: "not_your_recording" });
+    if (rec && rec.ownerUserId && !this.isMine(rec)) throw new RecorderError("server_refused", "This audio was recorded by another account: only that teacher can discard it", { refusal: "not_your_recording" });
     if (rec && rec.phase !== "abandoned" && rec.phase !== "complete") throw new RecorderError("internal", "Only a finished or abandoned recording can be discarded");
     await this.o.store.purgeRecording(recordingId, { allowUnconfirmed: true });
   }
@@ -565,7 +569,7 @@ export class Recorder {
   async heldAudio(): Promise<HeldAudio[]> {
     const out: HeldAudio[] = [];
     for (const r of await this.mine()) {
-      if (r.phase === "complete") continue;
+      // (complete recordings are listed too when refused chunks still hold audio: N-M5)
       const chunks = await this.o.store.listChunks(r.id);
       let bytes = 0;
       for (const c of chunks) if (c.state !== "confirmed") bytes += (await this.o.store.getBytes(r.id, c.track, c.seq))?.length ?? 0;
@@ -587,7 +591,7 @@ export class Recorder {
     if (this.active?.capturing) throw new RecorderError("internal", "Stop the recording before signing out");
     await this.settle();
     for (const r of await this.mine()) {
-      if (r.phase === "complete") { await this.o.store.purgeRecording(r.id, { allowUnconfirmed: false }).catch(() => null); continue; }
+      if (r.phase === "complete") { await this.cleanAfterComplete(r.id); continue; }
       await this.o.store.deleteConfirmedBytes(r.id);
     }
     const held = await this.heldAudio();
@@ -626,6 +630,41 @@ export class Recorder {
   // ------------------------------------------------------------ ownership (M1)
 
   private isMine(r: LocalRecording): boolean { return !!r.ownerUserId && r.ownerUserId === this.o.userId; }
+
+  /**
+   * N-M4: recordings stored by the previous engine carry no owner. A
+   * complete one is cleaned whoever signs in (its audio is on the server;
+   * what is left is metadata and labels). An unfinished one is asked about:
+   * the server answers only its recorder or a listener, and `started_by`
+   * says whose it is; the signed-in user adopts it when it is theirs.
+   * Otherwise it stays (reported in othersPending; the typed Discard works on it).
+   */
+  private async adoptLegacy() {
+    for (const r of await this.o.store.listRecordings()) {
+      if (r.ownerUserId) continue;
+      const row = await this.o.backend.getRecording(r.id).catch(() => null);
+      if (row && row.started_by && row.started_by === this.o.userId) {
+        r.ownerUserId = this.o.userId;
+        await this.o.store.putRecording(r);
+      }
+      if (r.phase === "complete") await this.cleanAfterComplete(r.id);
+    }
+  }
+
+  /**
+   * After `complete` (M2, N-M5): confirmed audio, marker labels and the
+   * manifest go at once. If refused chunks still hold audio the server does
+   * not have, the recording stays listed (heldAudio, the 14-day `stuck`
+   * report, the typed Discard) instead of sitting invisibly.
+   */
+  private async cleanAfterComplete(recordingId: string) {
+    await this.o.store.deleteConfirmedBytes(recordingId).catch(() => 0);
+    let unsent = 0;
+    for (const c of await this.o.store.listChunks(recordingId)) if (c.state !== "confirmed" && (await this.o.store.getBytes(recordingId, c.track, c.seq))) unsent++;
+    if (!unsent) { await this.o.store.purgeRecording(recordingId, { allowUnconfirmed: true }).catch((e) => this.events.emit("error", toRecorderError(e))); return; }
+    await this.forgetLabels(recordingId);
+    await this.o.store.deleteManifest?.(recordingId).catch(() => null);
+  }
   private async mine(): Promise<LocalRecording[]> { return (await this.o.store.listRecordings()).filter((r) => this.isMine(r)); }
 
   // ------------------------------------------------------------ heartbeat
@@ -1141,7 +1180,21 @@ export class Recorder {
     if (!a || a.rec.format === "opus-webm") return;
     const rec = a.rec;
     // M6: encoded in the worker; the job is posted now, so the order holds.
-    const job = this.encoder.encode(rec.format, c.samples, rec.sampleRate);
+    // N-M6: whatever the encoder, an answer that does not come in time is not
+    // waited for: the chunk is encoded here (its samples are still ours), and
+    // so is the rest of the lesson. The timer runs from the moment it is posted.
+    const posted = this.encoder.encode(rec.format, c.samples, rec.sampleRate);
+    const job = new Promise<Awaited<typeof posted>>((ok, no) => {
+      const t = setTimeout(() => {
+        if (!this.encoderGaveUp) {
+          this.encoderGaveUp = true;
+          this.events.emit("error", new RecorderError("internal", `The audio encoder did not answer in ${Math.round(this.o.encodeTimeoutMs / 1000)} s: the audio is encoded on the page from now on. Keep recording.`));
+          this.encoder = inlineEncoder();
+        }
+        inlineEncoder().encode(rec.format, c.samples, rec.sampleRate).then(ok, no);
+      }, this.o.encodeTimeoutMs);
+      posted.then((x) => { clearTimeout(t); ok(x); }, (e) => { clearTimeout(t); no(e); });
+    });
     const startFrame = c.startFrame, endFrame = c.startFrame + c.samples.length;
     const ts = this.o.source.timestamp();
     rec.anchors.push({ t_ms: frameToMs(endFrame, rec.sampleRate), context_time: ts.contextTime, performance_now: ts.performanceNow, date_now: this.o.now(), server_offset_ms: this.offsetMs });
@@ -1571,7 +1624,7 @@ export class Recorder {
       // M2: the server confirmed every chunk AND the recording is complete:
       // the whole local copy goes - audio, chunk rows, markers (labels), manifest.
       await this.o.store.deleteConfirmedBytes(rec.id);
-      await this.o.store.purgeRecording(rec.id, { allowUnconfirmed: false }).catch((e) => this.events.emit("error", toRecorderError(e)));
+      await this.cleanAfterComplete(rec.id);
       if (this.active?.rec.id === rec.id) { this.active.rec.phase = "complete"; this.active.rec.serverStatus = "complete"; this.setState("complete"); }
     }
   }
@@ -1734,8 +1787,9 @@ export class Recorder {
     if (this._state === s) return;
     this._state = s;
     if (typeof document !== "undefined" && this.active) {
-      const title = document.title.replace(/^(● RECORDING|◌ ARMED|⚠ NOT RECORDING) - /, "");
-      document.title = s === "recording" || s === "starting" ? `● RECORDING - ${title}` : s === "stalled" ? `⚠ NOT RECORDING - ${title}` : s === "armed" ? `◌ ARMED - ${title}` : title;
+      const title = document.title.replace(/^(● RECORDING|◌ ARMED|⚠ NOT RECORDING|◌ WAITING FOR THE SERVER) - /, "");
+      // N-B1: `starting` is never titled RECORDING: the server has not confirmed it yet.
+      document.title = s === "recording" ? `● RECORDING - ${title}` : s === "starting" ? `◌ WAITING FOR THE SERVER - ${title}` : s === "stalled" ? `⚠ NOT RECORDING - ${title}` : s === "armed" ? `◌ ARMED - ${title}` : title;
     }
     this.events.emit("state", { state: s, recordingId: this.active?.rec.id ?? null });
   }
