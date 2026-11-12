@@ -332,7 +332,7 @@ SELECT count(*), max(created_at) FROM public.pause_windows;
 ```
 Then an admin opens Students > a student > Enrollments > Modify > Pause on a test enrollment (or simply opens the tab: the check runs only on Confirm).
 
-Worth a look by the owner (not done here - it needs rows): `SELECT count(*) FROM public.pause_windows pw WHERE NOT EXISTS (SELECT 1 FROM public.user_roles r WHERE r.user_id = pw.created_by AND r.role = 'admin')` - pause windows made by a non-admin. Expect 0.
+Was the hole used? Checked on live with aggregates: 8 pause windows exist (4 Jul - 9 Aug 2026), each with its audit row, all made by ONE account, never the paused child's own family. That account holds only `student` today, but its 792 audit-log rows are admin work from Oct 2025 to 9 Oct 2026 (confirm tuition, record payments, create admins, end and transfer enrollments): it is the school's former admin login, demoted when the separate admin logins were made. So: no sign that a parent or stranger has called `pause_enrollment`.
 
 ### Every SECURITY DEFINER function executable by `authenticated` or `anon` (live catalog, 13 Nov: 79), with a verdict
 
@@ -562,7 +562,7 @@ One `FOR ALL` policy each on `student_work`, `student_reports`, `cefr_assessment
 
 No feature here is self-service for a child: the child's account only reads (approved work, published reports, own CEFR, own errors).
 
-Live rows (aggregates): `student_work` 253 (246 uploaded by the class's current staff, 7 by an account holding no role today, 28 with no child yet, 10 whose child never had an enrollment in that class - 3 of those not reachable by the uploader's current classes either); `student_reports` 9 and `cefr_assessments` 9 with a creator, **all 18 made on 30-31 Jul 2026 by one account that holds no role today**; `student_error_log` 170 with a creator, all by class staff; `resources` 8, all by teachers / admins. 41 links stored (`student_work` 37, `resources` 4): all `http(s)://`, none with whitespace.
+Live rows (aggregates): `student_work` 253 (246 uploaded by the class's current staff, 7 by an account holding no role today, 28 with no child yet, 10 whose child never had an enrollment in that class - 3 of those not reachable by the uploader's current classes either); `student_reports` 9 and `cefr_assessments` 9 with a creator, all 18 made on 30-31 Jul 2026 by one account that is neither teacher nor admin today - the same account as those 7 work items and the 8 pause windows in F-15: the school's former admin login (admin work in the audit log until 9 Oct 2026; holds `student` now). Genuine rows, made by an admin at the time; `student_error_log` 170 with a creator, all by class staff; `resources` 8, all by teachers / admins. 41 links stored (`student_work` 37, `resources` 4): all `http(s)://`, none with whitespace.
 
 ### The fix
 
@@ -578,7 +578,7 @@ Links: `external_url` on `student_work` and `resources`, and `resources.thumbnai
 | A teacher of another class | the same, about any child | not for a class they do not teach, nor a child who is not theirs |
 | A teacher / TA of the class | everything on the class's rows | the same writes; cannot move a row to another class, re-point it at another class's child, or sign it as someone else |
 | The creator who is not class staff | full control of "their" rows forever | reads them while a teacher; cannot change or delete |
-| An account that made rows and now holds no role (the 18 + 7 live rows) | reads and edits them | neither. The rows themselves are untouched; class staff, admins and the child still read them |
+| An account that made rows and is no longer staff (live: the former admin login, 18 + 7 rows) | reads and edits them | neither. The rows themselves are untouched; class staff, admins and the child still read them |
 | Admin, service role | everything | everything |
 | Anyone, a non-http(s) link | accepted, rendered into `<a href>` | refused by the table; not rendered by the browser |
 
@@ -613,7 +613,7 @@ SELECT (SELECT count(*) FROM public.student_work WHERE external_url IS NOT NULL 
 ```
 Then a teacher uploads one photo in Smart Upload, approves it, and flags one error in class.
 
-For the owner (needs rows, so not done here): look at the 9 reports and 9 CEFR points created on 30-31 Jul 2026 and the 7 work items by an account with no role - `SELECT generated_by, count(*) FROM public.student_reports GROUP BY 1` - and decide whether they are genuine (they may be the retired demo teacher's).
+Nothing in these four tables looks planted: every row with a creator was made by the class's staff or by the former admin login (above). Rows with no creator (154) come from the service role.
 
 Rollback: `docs/evidence/S1-F21-rollback.sql` (the seven policies verbatim; drops the new policies, helpers and constraints). Run by the suite. Reopens F-21.
 
@@ -682,7 +682,7 @@ Rollback: redeploy the nine from `origin/main` with their previous `verify_jwt` 
 | 1 | Apply F-01, F-14, F-15 (three pastes) | Yes, today, in that order. No real family or teacher sees a difference. |
 | 2 | Turn off public sign-ups in Supabase Auth, and remove the "Join the club" tab | Yes. New families get a front-desk card, as they have since October. |
 | 3 | F-16: a family can no longer open a classmate's skills, attendance and point history in the board pop-up (name and points stay) | Yes. Ship the browser change with the paste. |
-| 4 | F-21: creators lose control of rows outside their classes; the role-less account's 18 July rows become unreadable to it | Yes. And look at those 18 rows and the 7 work items. |
+| 4 | F-21: creators lose control of rows outside their classes (live: only the former admin login is affected - 25 rows it can no longer read as a `student`) | Yes. |
 | 5 | F-02: the Vocabulary page stops working for visitors who are not signed in; four functions go behind the gateway check | Yes. |
 | 6 | The 2 teacher-role accounts with no teacher record; the 15 student accounts linked to nothing; the 17 with legacy `users.role = admin` | Run `scripts/CHECK-unlinked-accounts.sql`, look each up in Authentication > Users; remove the teacher role from the two unless you know them. Nothing here changes them. |
 
