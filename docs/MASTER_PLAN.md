@@ -152,11 +152,11 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 | Stream | Units | Done | What is done |
 |---|---|---|---|
 | D money integrity | 18.5 | 13.5 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
-| A overhaul | 12.0 | 9.4 | A0, A1, A2.1-A2.3, A3.1-A3.4, A4.5 SHIPPED to main (release 1, dbfe3cc); A4.1, A4.2 merged; rollout running. Left: A3.5-A3.7, A4.3, A4.4, rollout batches, A5 |
+| A overhaul | 12.0 | 10.4 | Release 1 shipped; A4.1, A4.2, A4.3 (dark-mode control) and the rollout foundations merged; rollout wave 1 of 7 running. Left: 24 rollout batches, A3.5-A3.7, A4.4, A5 |
 | B lesson monitor evaluation | 10.5 | 4.7 | vendor research, audio prep, harness, vendor proxy live, B1 batch runner + scoring built (owner batch run pending). Left: B1 results, B2, B2b, B3, report |
 | C class recorder | 8.0 | 2.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **30.1** | **59%** |
+| **Total** | **51.0** | **31.1** | **61%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -290,3 +290,7 @@ Log: 2026-11-12 - 59% (D release LIVE).
 
 - 2026-11-12 C1 revision 2 merged (opus, 636c83b; NOT applied): own bucket `class-recorder-audio`, the existing `class-recordings` bucket and its policy proven byte-identical before and after, with a preflight that refuses to install on a conflicting bucket or an unscoped storage policy; a chunk counts only if registered within 10 minutes of its claimed end (late chunks stored, never counted); Stop is never clamped (after window + 10 min the recording is abandoned); retention stamps are server-set; early deletion by a person ends the evidence, retention keeps a tombstone; evidence column renamed `recording_ran_evidence` ("A recording was made" - not proof of attendance). Recorder suite 367/0; agent's full run 2699/35/0; 24/24 mutants caught. Left as is: a cover teacher taken off a lesson cannot close their own recording (admin or the 14-day sweep does); the preflight reads policy text and cannot see a policy that ORs bucket_id with something else. Third critic (opus) launched; nothing is applied until it passes.
 - 2026-11-12 Type check of the combined main dc0deb5 (A release 1 + D release): exit 0.
+Log: 2026-11-12 - 61% (rollout foundations merged; wave 1 launched).
+
+- 2026-11-12 A4.6 foundations + rollout plan merged (opus, 2e35ca7; nothing pushed). SCOPE DECISION: the new theme is switched on PER ROUTE (src/lib/ivoryScope.ts lists migrated routes; IvoryScope sets the attribute on <html> for those only; primitives and shell use the new design on listed routes and today's classes elsewhere). An app-wide flip was tried on four unmigrated screens and rejected (old gradients and purple buttons on ivory paper). SHIP UNIT: a whole area at once - Student after batch R08, Staff (admin + teacher) after R21, Parent + public after R23; a batch alone never goes to main. Built: board opt-out; `young:` variant; dark mode control (System / Light / Dark in a new account menu, per device and user, default Light, forced light on unlisted routes, no-flash script); shell (no glow, labelled 44 px controls, the child-name switcher wraps on its own row at 375, assistant button above the bottom bar); 14 primitives by token; the 0.4 s dialog jump fixed for every dialog; `cn()` was silently dropping the new text sizes (fixed); dashboard greets by the GIVEN name (helper + 33 tests), level title once, one tab label. Checks: requests and on-screen numbers identical on 24 runs; axe critical and serious 0 on dashboard, dialog and account menu; tsc 0. Not right yet (agent's own list): boards under the scope differ in letter anti-aliasing (recheck in R21); the header's Change Password button is heavy; the assistant button overlaps card corners while scrolling; staff routes stay unlisted until R21.
+- Rollout plan: 24 batches (R01-R24) in 7 waves of up to four agents (docs/evidence/A4.6-rollout-plan.md). Wave 1 launched: R01 homework, R02 lessons/record/videos, R03 dashboard tabs/analytics/profile, R04 defend-level/resources/games/quest kit (sonnet x4).
