@@ -239,7 +239,7 @@ export const COPY = {
   keep: { cancel: "Keep lesson", delete: "Keep lesson", move: "Keep lesson where it is", uncancel: "Leave cancelled" } as Record<GuardOp, string>,
   noneFuture: "Nothing suggests this lesson has taken place. It has not started yet.",
   nonePast:
-    "Nobody marked this lesson: no attendance, transcript, homework or points were recorded. Check that it really did not take place before you cancel it.",
+    "No attendance, transcript, homework or points were recorded. Check that it really did not take place before you cancel it.",
   soft: "Something was recorded for this lesson. Look at what was recorded and explain why it is being changed.",
   strong: "This lesson looks like it was taught. Look at the evidence, then explain exactly why it is being changed.",
   settled: "This lesson is already billed or paid, or its payroll month is closed. This is a correction and will be reviewed.",
