@@ -1,6 +1,8 @@
 # A1 - Overhaul plan (workstream A)
 
-Where I am / next step: A2 section written. Next: A3 (speed) section, then A4, waves, dropped list, gaps, owner questions.
+Where I am / next step: COMPLETE (A2, A3, A4, waves, dropped, gaps, assumptions, owner questions). Next step: a fresh critic attacks it; then the conductor copies the task rows into MASTER_PLAN section 5.
+
+Contents: 0 ground rules - 1 A2 teacher stability - 2 A3 speed - 3 A4 design + accessibility - 4 waves and whole-stream gates - 5 dropped - 6 baseline gaps - 7 assumptions - 8 owner questions. Model routing follows the owner's instruction of 2026-11-12: cheapest verifiable model, reviewer at most one tier up, up to four agents per wave.
 
 Planner: fable, 2026-11-12, branch `worktree-agent-a8f00ad86a68ee78f` (merged `claude/hec-conductor-setup-efbaa5`). No source file changed. Every file:line below was read in this worktree at that merge; a line number is a pointer, the implementer re-reads before editing.
 
@@ -111,3 +113,146 @@ MODEL ROUTING, revised on the owner's instruction of 2026-11-12 ("use the most o
 **A3.6 Hot-path `select('*')` -> named columns** - sonnet / opus. Goal: the 16 conversions on the every-visit path, each proven. Files: `src/components/NotificationBell.tsx`, `src/hooks/useLoginChallenge.ts`, `src/hooks/useStaffProfile.ts`, `src/pages/TeacherDashboard.tsx`, `src/components/leaderboard/ProjectedBoard.tsx`, `src/components/student/{PointsBreakdownChart,LearningJourneyCard,AvatarPicker,SrsReviewDeck}.tsx`, `src/pages/StudentLessonDetail.tsx`. (`useAnnouncements.ts` belongs to A3.4 and `ClassLeaderboardShared.tsx` to A3.1 in the same wave, so their three are done by those tasks' owners under this task's proof rule, or left.) Acceptance: static count `select('*')` in src 67 -> <= 53; G1-G6. No-behaviour-change proof, per query, in a table: table name; every property read from the rows in that file AND in every component the rows are passed to (followed through props; a row passed to a `...spread`, to `JSON.stringify`, to an `any`-typed helper or to an update/upsert payload is NOT converted and is listed as skipped); the chosen column list; the generated type for the table from `types.ts` so a mistyped column fails tsc. Then the reviewer runs the screen against the fake with that table stripped to the listed columns: screenshots identical. Risk low per query given the skip rule. Gain: honest statement - NOT visible in the harness (the fake does not model payload size); the measurable gain is the static count (-21 %) and, live, smaller rows on `notifications`, `teachers`, `students`. If the conductor applies the 5 % rule strictly to gate metrics, this is the first task to drop. Ships once gated.
 
 **A3.7 Admin screen: tabs on demand** - sonnet / opus. Goal: an admin opening `/admin?tab=payroll` does not parse the other fifteen tabs. Shape: `lazy()` for the tab components in `src/pages/Admin.tsx` with one Suspense per tab panel; the audit-clips tab's import line is left exactly as it is. Files: `src/pages/Admin.tsx` ONLY. Acceptance: Admin chunk gzip <= 70 KiB (baseline 136.2, -49 %); admin-payroll render at 375@4x improved by more than the band (baseline 21.2 s; target <= 16 s) and not slower anywhere; every tab opens in the preview with no error; the admin-unlock gate still runs before the tab body; G1-G6; `payroll-rows.test.mjs` untouched and passing. Proof: per tab, DOM text snapshot before/after equal; diff is import lines + Suspense wrappers only. Risk low. Gain: -66 KiB gzip and about -25 % render time on the slowest measured screen. Ships once gated.
+
+**Stale-chunk rule for A3.1 and A3.7 (required, part of their acceptance).** The app deploys often and `public/service-worker.js:53-79` is network-first for navigations and cache-then-refresh for everything else; no code in `src/` handles a failed dynamic import. Today a tab left open across a deploy breaks on the next NAVIGATION. A3.1 and A3.7 add lazy boundaries behind CLICKS (a tool panel, an admin tab, a PDF button), where the same failure would look like a dead button mid-lesson. So A3.1 adds `src/lib/lazyRetry.ts` (new, owned by A3.1, imported by A3.7 later): retry the import once, then show the existing toast "A new version is available - reload". Acceptance: with the preview's chunk request blocked once, the panel opens on retry; blocked twice, the toast shows and nothing throws.
+
+## 3. A4 - Design + accessibility
+
+### 3.1 Survey (measured in this worktree)
+
+| Fact | Number | Source |
+|---|---|---|
+| Hard-coded Tailwind palette classes (`bg-blue-500`, `text-slate-700`, `from-cyan-400` ...) | 3148 uses in 190 of 459 `.tsx` files | grep, families bg/text/border/from/to/via/ring/fill/stroke/shadow/outline/divide x 22 palette names + white/black |
+| Token classes (`bg-background`, `text-muted-foreground`, `border-border`, `bg-primary` ...) | 3686 uses | grep |
+| Hex literals in ts/tsx | 277 in 15 files (concentrated: the three boards, charts, PDF templates) | grep |
+| `rgb()/rgba()` in ts/tsx | 127 | grep |
+| Colour literals inside `src/index.css` (1694 lines) | 52 lines | grep |
+| `dark:` variants in tsx | 587 | grep |
+| `truncate` / `line-clamp-*` sites (each a possible cut Vietnamese name) | 184 | grep |
+| Token blocks | THREE `:root` blocks (index.css:7, :60, :1432) and three `.dark` blocks (:88, :345, :1470); the :60 block defines 18 custom properties, its `.dark` twin at :88 only 7 - so tokens are NOT all defined in both themes | read |
+| Dark mode wiring | `darkMode: ["class"]` (tailwind.config.ts:4); NO ThemeProvider anywhere; `ui/sonner.tsx:1,7` calls `useTheme()` from next-themes with no provider above it; nothing ever adds the `dark` class | grep |
+| Fonts | system stacks only: `--font-sans` (index.css:8), `--font-display: var(--font-sans)` (:10), and a system SERIF stack already exists as `--font-studio` (:1466: Iowan Old Style, Palatino Linotype, Palatino, Book Antiqua...). No `@font-face`, no font link in index.html, no font package | read |
+| Reduced motion | three `prefers-reduced-motion` blocks exist (index.css:822, :1414, :1628); framer-motion animations in 69 files are NOT covered by CSS and need `MotionConfig reducedMotion="user"` once at the root | read |
+| Logo | `new hec logo.jpg`: a single fresh leaf green (about #8CC63F) on white, serif "HEC" wordmark, open book, the motto "Learning, an endless journey to perfection". There is NO navy and NO brass in the logo. `index.html` theme-color is already navy `#1e3a8a`; tailwind has `royalGreen` and `warmGray` custom colours | looked at the jpg |
+| Visible defects in A0 screenshots | student dashboard 375 (both themes): the "All homework done!" speech bubble covers the child's name and greeting; the header logo renders as a broken image with alt text in the preview; parent view 375: the Sign-out button is cut at the right edge (flex row right=383) and the screenshot is of the "Select Student Profile" picker over a blurred dashboard, not of the dashboard | looked at the png |
+
+Consequences for the plan:
+
+1. **The owner's direction (ink/navy, ivory, one brass accent) is not "derived from the logo"; the logo is green.** Proposal for the system, to be confirmed at the checkpoint (owner question Q-A2): navy ink and warm ivory carry the interface, brass is the ONE interactive accent, and the logo's green stays what it is - the mark itself, plus a darkened "leaf" (about #3E7B1F, AA on ivory; the raw logo green is about 2:1 on white and must never carry text) reserved for growth/success states. If the owner prefers, the alternative is green as the single accent and no brass; the token names make that a one-line swap.
+2. **Remapping the existing tokens (`--primary`, `--background` ...) would restyle all 3686 token-class uses on every screen at once: that IS the rollout.** So the checkpoint is built behind a scope: the new token values live under a `[data-hec-theme="ivory"]` selector (and `.dark[data-hec-theme="ivory"]`), set on the student dashboard's root only. Every other screen is pixel-identical until the owner approves; then the rollout's first step is moving the scope to `<html>`.
+3. **Rollout cost is known:** about 3150 hard-coded classes in 190 files to map, of which the three boards (HighScores 1916 lines, StarBoard 1655, NightLeague 1518) are deliberately themed canvases and are EXCLUDED from tokenisation; the remainder is about 12 batches of 15 files for sonnet, with haiku for pure class-for-class swaps checked by screenshot diff.
+4. **Fonts:** no web font today. The checkpoint uses the existing system serif stack for display headings (zero network, zero bytes; on Android it resolves to Noto Serif, which has full Vietnamese diacritics) and the system sans for body. A self-hosted display serif is an owner decision (Q-A3); agents may not download files without permission anyway.
+
+### 3.2 Tasks
+
+**A4.1 The design system** - fable / fresh fable critic. Goal: one written system and one token set, complete in both themes, scoped so nothing ships by accident. Deliverable: `docs/DESIGN_SYSTEM.md` (palette with contrast ratios for every text/surface pair in light and dark, type scale incl. the larger Grades 1-3 scale, spacing, radius, hairline borders, the layered shadow set, motion durations/easings and the reduced-motion rule, focus ring, 44 px target rule, the "never truncate a name" rule with the wrapping pattern, component recipes for card / button / input / nav / dialog / tooltip, do/don't); tokens added to `src/index.css` under the scope selector, every token defined in BOTH themes (a script check: the set of custom properties in the light scope equals the set in the dark scope); `tailwind.config.ts` gains `fontFamily.display`/`serif` and the new colour names mapped to the variables. Files: `docs/DESIGN_SYSTEM.md` (new), `src/index.css` (SHARED - owned by A4.1 from wave 1 until the checkpoint), `tailwind.config.ts` (SHARED - same). Acceptance: token parity check passes (0 tokens missing in either theme); every documented text/surface pair >= 4.5:1 (>= 3:1 for large text and UI borders), computed by a script from the token values, table in the doc; with the scope attribute absent, the 12 baseline screens are pixel-identical to baseline at 375 light (harness screenshot diff = 0 changed pixels beyond anti-aliasing threshold) - this is the proof of no change; initial CSS gzip up by <= 3 KiB; G1, G4-G6. Risk low (additive, scoped). Gain: enables the a11y gates; itself 0. Ships: MAY ride along to main because it is inert without the attribute, but default is to hold it with the checkpoint (conductor's call).
+
+**A4.2 Student dashboard restyled** - opus / fable. Goal: the first screen in the new system, light and dark, 375 first. Includes the defects seen in A0: the speech bubble over the name, targets under 44 px, the critical and serious axe findings on this screen. Grades 1-3 keep warmth and the larger type scale (the doc's "young" scale; the playful avatar/XP elements stay, recoloured, not removed). Files: `src/pages/StudentDashboard.tsx`, `src/components/student/StudentNavBar.tsx`, and the cards rendered on the dashboard tab under `src/components/student/` (implementer lists them from StudentDashboard's imports in its evidence file before editing; `StudentTuitionTab`, `StudentLedger`, `StudentWallet`, `DepositModal`, `WithdrawModal` are OUT - money). Conflicts: A3.5 and A3.6 touch the same files - both must be merged first. Acceptance on student-dashboard and student-leaderboard, light AND dark, 375 and 1280: axe critical 1 -> 0, serious 2 -> 0, moderate <= 1; horizontal overflow none; 0 interactive elements under 44x44 at 375; 0 text nodes clipped (script: `scrollWidth > clientWidth` on elements with text, tested with the long Vietnamese fixture name "Nguyễn Hoàng Phương Thảo Nguyên"); requests unchanged (same count as after A3.5); render/idle not slower beyond the band; with `prefers-reduced-motion` no element animates longer than 0.01 s (script reads computed animation/transition durations) ; G1-G6. No-behaviour-change proof: fake-client request list identical before/after; every number on the screen (XP, streak, classes, quests, tuition line) text-equal before/after; no query, hook or handler line in the diff. Evidence: before/after screenshots at 375 and 1280 in light and dark in `docs/evidence/A4/`. Risk medium (most-used screen) - acceptable only because it does NOT ship: HOLD for the owner.
+
+**A4.3 Dark mode switch** - sonnet / opus. Goal: a working, remembered theme choice. Shape: next-themes `ThemeProvider` (already a dependency) with `attribute="class"`, `defaultTheme="system"`, `enableSystem`; a three-way control (System / Light / Dark) in the user menu; remembered in localStorage under a key that includes the user id (per user on a shared family device; a server-side preference would need a migration, which A may not write - Q-A5); inline no-flash script in index.html; `MotionConfig reducedMotion="user"` at the root; `<meta name="theme-color">` per theme. Files: `src/components/ThemeToggle.tsx` (new), `src/App.tsx` (SHARED - owned by A4.3 in wave 4), `src/components/Layout.tsx` (SHARED - owned by A4.3 in wave 4, after A4.5 released it), `index.html`. Acceptance: toggling changes `<html class>` without reload; choice survives reload and sign-out/in as the same user; a second user on the same browser gets their own; "System" follows an emulated `prefers-color-scheme` change live; no flash of the wrong theme on load (first paint screenshot at 4x CPU); the control is reachable by keyboard and has a label; G1-G6. Proof of no behaviour change: with no stored choice and a light system, all 12 screens pixel-identical to the post-A4.1 state. Risk low-medium: it exposes the unfinished dark theme of every un-restyled screen to anyone who picks Dark or whose phone is in dark mode (today nobody can reach it). Therefore HOLD with the checkpoint, and Q-A4 asks whether "System" may be the default before the rollout is done (recommended: default Light until rollout completes, then System).
+
+**A4.4 Mechanical accessibility pass** - haiku / sonnet. Goal: the countable gaps, nothing visual. Shape: `alt` on the 3 images without it (decorative -> `alt=""`), `aria-label` on the 27 unlabelled icon-only buttons, `htmlFor`/`id` or `aria-label` on unlabelled form controls axe reports, `loading="lazy" decoding="async"` + `width`/`height` on below-the-fold images (24 of 36 lack lazy). Files: exactly the files printed by `static-counts.mjs` for those two counts plus the files named in `results.json` for axe rules `button-name`, `image-alt`, `label`, `select-name`, MINUS: the session dialogs, `src/components/recorder/**`, audit-clips files, and any file owned by a task running in the same wave (A4.2's and A4.3's lists). The conductor freezes that file list in the brief. Acceptance: img without alt 3 -> 0; icon-only without label 27 -> <= 3 (only excluded files remain, listed); axe `button-name` / `image-alt` / `label` node counts across the 12 screens down to 0 outside excluded files; critical count per screen 1 -> 0 wherever the critical rule is one of those (step 1 of the task is to print the rule ids from results.json; if the every-screen critical is a different rule, e.g. `meta-viewport` or `aria-required-children` in a shared primitive, it is reported to the conductor and becomes a one-file sonnet task); screenshots pixel-identical (labels are invisible); G1, G5, G6. Proof: diff contains only attribute additions. Risk low. Gain: the two static a11y counts to about zero. Ships under the release policy once gated (alt text / labels are explicitly allowed).
+
+**A4.5 No horizontal scroll at 375 + visible focus** - sonnet / opus. Goal: fix the one measured overflow and make keyboard focus visible on the shell. Shape: `AmbientBackground` wrapper clips its glow divs (`fx/AmbientBackground.tsx:32` and siblings: `overflow: clip` on the fixed wrapper, `pointer-events-none`, `aria-hidden`); the student/family header row in `Layout.tsx:125-175` wraps or shrinks at 375 so Sign out is fully on screen (icon-only with label below 400 px); `focus-visible` ring on the shell's buttons and nav links using the existing `--ring` token. Files: `src/components/fx/AmbientBackground.tsx`, `src/components/Layout.tsx` (SHARED - owned by A4.5 in wave 3, one small commit). Acceptance: overflow at 375 = "no" on all 12 screens (baseline: parent-view YES, 4 elements); every header control fully inside the viewport at 375 and 320; Tab order through the header shows a visible ring on each stop (screenshot per stop); screens otherwise pixel-identical at 768/1280; G1-G6. Proof: no handler or query in the diff; request lists identical. Risk low. Gain: the zero-overflow gate (1 failing screen -> 0). Ships once gated (it is a layout bug fix, not the redesign; if the conductor reads the header change as design, hold only that hunk).
+
+**A4.6 Rollout** - sonnet (haiku for class-for-class batches) / opus, fable signs off each area. NOT STARTED until the owner approves the checkpoint (Q3 in the ledger). Not broken down here on purpose: its batches depend on what the owner changes at the checkpoint. Known inputs: 190 files / about 3150 classes, three boards excluded, D's session dialogs only after D3 is merged, money screens restyled by token only with a figure-equality check per screen, Vietnamese long-string check on the 184 truncate sites.
+
+### 3.3 THE DESIGN CHECKPOINT (conductor stops here)
+
+Done = A4.1 + A4.2 + A4.3 merged on the conductor branch (not main), with: `docs/DESIGN_SYSTEM.md`; before/after screenshots of the student dashboard at 375 and 1280, light and dark (8 images + the 8 baselines) in `docs/evidence/A4/`; the contrast table; the axe before/after for that screen; the owner questions Q-A1..Q-A5 answered or defaulted. Then HOLD: no further screen is restyled and nothing from A4.1-A4.3 goes to main until the owner writes approval in MASTER_PLAN section 8 (Q3).
+
+## 4. Waves (at most FOUR agents at once; file sets inside a wave are disjoint)
+
+| Wave | Tasks (implementer) | Shared-file owner in this wave | Ships? |
+|---|---|---|---|
+| 1 | A2.1 (opus) - A3.1 (sonnet) - A3.3 (sonnet) - A4.1 (fable) | index.css + tailwind.config.ts: A4.1 | A3.1, A3.3 ship when gated |
+| 2 | A2.2 (sonnet) - A2.3 (opus) - A3.2 (sonnet) - A3.4 (sonnet) | App.tsx: A3.2 | all four ship when gated |
+| 3 | A3.5 (sonnet) - A3.6 (sonnet) - A3.7 (sonnet) - A4.5 (sonnet) | Layout.tsx: A4.5 | all four ship when gated |
+| 4 | A4.2 (opus) - A4.3 (sonnet) - A4.4 (haiku) | App.tsx + Layout.tsx: A4.3; index.css + tailwind: still A4.1 (A4.2 sends token changes to the conductor as a patch) | A4.4 ships; A4.2, A4.3 HOLD |
+| - | DESIGN CHECKPOINT - owner | | |
+| 5+ | A4.6 rollout batches | conductor assigns per batch | after approval |
+
+Conflicts and order, stated once:
+- A2.1 before A2.2 and A2.3 (they are judged by its script).
+- A3.1 before A3.7 (`src/lib/lazyRetry.ts` is created by A3.1) and before A2.3's fullscreen re-check of the tool panels.
+- A2.3 before any A4 restyle of `ui/tooltip.tsx` / `ui/popover.tsx`.
+- A3.4 before A3.5 (A3.5's request target assumes A3.4's saving); A3.5 and A3.6 before A4.2 (same student files).
+- `src/App.tsx`: A3.2 (wave 2) then A4.3 (wave 4). `src/components/Layout.tsx`: A4.5 (wave 3) then A4.3 (wave 4); A3.1 does NOT edit Layout (the fix is inside ClassroomToolsLauncher). `index.html`: A3.2 then A4.3. `src/main.tsx`: A3.2 only. `vite.config.ts` and `src/integrations/supabase/types.ts`: no A task touches them.
+- `ClassLeaderboardShared.tsx` belongs to A3.1; `useAnnouncements.ts` to A3.4; A3.6 leaves both alone.
+- After each wave the conductor merges, runs G1-G6 on the merged branch, fills the "After" column of ENHANCEMENT_BASELINE.md, and re-fetches main before any push.
+- vite.config.ts is on Windows-special footing (mcp plugin switched off there, AGENTS.md); one more reason no A task edits it.
+
+Task count: A2 = 3, A3 = 7, A4 = 5 now + 1 held (A4.6). 15 active tasks in 4 waves.
+
+Whole-stream gates after wave 3 (what "A met its goal" means, all from the existing harness):
+
+| Gate | Baseline | Target |
+|---|---|---|
+| Initial-load JS gzip (entry) | 216.3 KiB | <= 190 |
+| Layout chunk gzip | 391.9 KiB | <= 150 |
+| JS gzip to first render, student dashboard | about 643 KiB | <= 470 (-27 %) |
+| Admin chunk gzip | 136.2 KiB | <= 70 |
+| Requests: parent-view / student-dashboard / admin-schedule | 78 / 33 / 16 | <= 37 / <= 28 / <= 13 |
+| Any screen slower beyond the 20 % band | - | 0 screens |
+| Horizontal overflow at 375 | 1 screen | 0 |
+| img without alt / icon-only buttons unlabelled | 3 / 27 | 0 / <= 3 (after wave 4) |
+| `select('*')` in src | 67 | <= 53 |
+| tsc, pgtest, bun tests | pass | pass, assertions not lower |
+
+## 5. Dropped (conductor's rule: expected gain under about 5 %, or risk not clearly low)
+
+| # | Dropped | Why |
+|---|---|---|
+| D1 | Vendor `manualChunks` splitting in vite.config.ts | Saves no bytes; the benefit (cache survival across deploys, parallel fetch) cannot be measured by the harness, which has no production-runtime mode; hand-written manualChunks can create circular chunk initialisation, so risk is not clearly low; and vite.config.ts is a shared, Windows-special file. Revisit only if gap G-1 is closed and shows a waterfall problem after A3.1. |
+| D2 | React Query `staleTime` / key tuning across 285 calls | Global default is already 60 s with no refetch on focus; expected gain under 5 %. The duplicate-key cases that matter are handled in A3.4 and A3.5. |
+| D3 | Stabilising `user` identity and the double role fetch in `useAuth.tsx` | The root cause of A2's H1 and of user_roles x2, but every screen and ProtectedRoute depend on it and it decides who is signed in: risk not clearly low. A2.2 fixes the symptom locally. Reported to the owner as a follow-up worth doing with its own review. |
+| D4 | Re-render work inside StarBoard / HighScores / NightLeague | 5000 lines bound to `restPaging`; no baseline number shows a render problem at their real size (they were measured only as the 375 podium); risk high. |
+| D5 | Virtualising long lists | Needs a new dependency (`@tanstack/react-virtual`): owner decision (Q-A6). No baseline number for a long list exists either. |
+| D6 | Skeletons / layout-shift pass | The baseline has no CLS number, so no gate can show a gain. The student dashboard gets its skeletons inside A4.2. |
+| D7 | The other 51 `select('*')` in src | Low-traffic admin screens, or money / forbidden files (ledger, invoice, banking, discount modal, audit clips, session drawer). Gain invisible to the harness, risk real where rows are spread or typed `any`. |
+| D8 | `select('*')` in edge functions (25) | Out of A's browser scope; needs hand deploys; several are money functions. |
+| D9 | Lazy-loading framer-motion | Imported by 69 files including Layout; it is the shell. Only the entry-chunk copy is addressed (A3.2). |
+| D10 | Flipbook page preloading, off-main-thread decode, per-flip render work | The viewer is a third-party cross-origin iframe; the app cannot touch it (A2 R1). |
+| D11 | `any` clean-up (749 + 355), splitting the 12 files over 800 lines | No user-visible gain; high churn; conflicts with every other task. |
+| D12 | A downloaded web font | Network/privacy choice and a file download: owner (Q-A3). Checkpoint uses system stacks. |
+| D13 | Read-path loops in TeacherSmartUpload / TeacherTranscripts / StudentLessonDetail, and all payment-modal loops | Teacher loops are per-upload writes; payment loops are money and sequential on purpose. |
+| D14 | Tuition and payroll screens' speed | Slowest measured (payroll 21 s at 4x) but the fake returns empty/incorrect data for both (gaps G-2, G-3); the only safe change is A3.7's tab laziness in Admin.tsx. No query on those screens is touched. |
+
+## 6. Gaps in the baseline that weaken a gate, and the cheapest fix
+
+| # | Gap | Which gate it weakens | Cheapest fix |
+|---|---|---|---|
+| G-1 | No production-build runtime numbers: all timings are Vite dev-server numbers, where chunking does not exist. A3.1, A3.2 and A3.7 are chunking changes, so their timing gain is INVISIBLE to measure.mjs; only bundle.json shows it. | "no screen slower", and every A3 bundle claim in seconds | Harness-only (outside the repo): build with the fake-client alias into a temp outDir (`vite build --outDir <tmp>` with the same alias the preview uses), serve it with `vite preview`, run the same 12 screens under "Fast 3G" + 4x CPU. One sonnet task, no repo file. Until then A3 bundle tasks are gated on bytes, and on "not slower" in dev. |
+| G-2 | admin Tuition throws `reading 'name'` against the fake at 375. | Any claim about the tuition screen | Fix the fake's canned calculate-tuition shape (harness-only). Not needed by this plan: no task touches tuition screens. |
+| G-3 | admin Payroll gets an empty calculate-payroll answer: no pay lines. | A3.7's proof on the payroll tab; the 21 s number is layout only | Give the fake a canned response built from the fixtures in `scripts/pgtest/payroll-rows.test.mjs` (open and closed month, with `live`). Needed BEFORE A3.7 is reviewed. |
+| G-4 | parent-view was captured behind the "Select Student Profile" picker. Request count (78) is real; the screenshot, axe and overflow results describe the picker, not the dashboard. | A3.3's visual proof; A4.5's overflow gate on that screen | Harness: choose the child before measuring (click the first profile or seed the stored selection). Re-baseline that one screen before wave 1's A3.3 is judged. |
+| G-5 | No teacher flipbook, fullscreen, touch or tooltip measurement at all. | All of A2 | A2.1 builds it (planned). |
+| G-6 | Timings +/- 20 % because other jobs shared the CPU. | Every "not slower" verdict | Conductor runs measure.mjs with nothing else running and 5 loads instead of 3 for the gated screens; a result inside the band is "no change", never "faster". |
+| G-7 | The three display boards were measured only as the 375 podium and the 768/1280 style was not confirmed by eye. | None in this plan (no board task); it is why D4 was dropped | Leave. |
+| G-8 | No CLS / INP / long-task numbers. | D6 | Add a PerformanceObserver to measure.mjs if D6 is ever revived. |
+| G-9 | The header logo is a broken image in every preview screenshot (alt text "HEC" drawn). Probably the preview not serving `/favicon.jpg`, possibly real. | A4.2's before/after pictures | Check `public/favicon.jpg` is served by the preview; 5 minutes. |
+| G-10 | The static counts are regex heuristics (icon-only detection misses `sr-only` spans and wrapped buttons). | A4.4's count | Accept; axe node counts are the second witness. |
+| G-11 | The axe rule ids behind "1 critical on every screen" are in results.json but not in the baseline doc; I did not extract them. | A4.4 scope | First step of A4.4 (planned). |
+
+## 7. Assumptions a critic should attack
+
+1. supabase-js emits an auth event on tab refocus and on hourly token refresh that reaches `useAuth.tsx:60-64` with a new `user` object. Read from code, NOT executed; A2.1's M1 is the test. If false, H1 falls and H2/H5/H6 carry A2.
+2. Rollup put recharts/jsPDF/html2canvas in the Layout chunk because of the static chain in 2.1. The chain was traced with a regex import walker, not with Rollup's own graph; A3.1's first step is to confirm with `libs-in-chunks.mjs` after making only the ClassroomToolsLauncher change.
+3. Size estimates (recharts about 100, jsPDF about 110, html2canvas about 45 KiB gzip) are from general knowledge of those packages, not from this build; the acceptance numbers were set conservatively (Layout <= 150, not <= 130).
+4. The baseline's request counts include React StrictMode / dev double-invocation effects or not - unknown. Targets are stated as absolute counts measured the same way, so the comparison holds either way, but the production saving may be half of what the harness shows.
+5. `fuse.js` is in the entry chunk per the baseline; I did not find the importer in the entry's static closure. A3.2 treats it as "find, and lazy only if it is one import".
+6. The fake client returns the same rows for a batched `.in()` query as for N `.eq()` queries. If the fake ignores filters, A3.3's equality proof is vacuous; its check must first show the fake distinguishes two children.
+7. A scoped token set (`[data-hec-theme]`) can restyle the dashboard without editing shared primitives. Where a primitive hard-codes a palette class (e.g. `ui/tooltip.tsx:85` uses `blue-500`), A4.2 must override locally, not edit the primitive.
+8. "Remembered per user" is satisfied by a per-user localStorage key. A cross-device preference needs a column and is out of A's reach.
+
+## 8. Open owner questions (recommended default in brackets)
+
+- Q-A1. Ship order: may the speed and stability tasks (A2.2, A2.3, A3.1-A3.7, A4.4, A4.5) go to main wave by wave as each passes its gates, per the release policy? [Yes.]
+- Q-A2. The logo is leaf green; the brief asks for navy, ivory and brass. Keep green as the logo mark and for "growth/success" only, with brass as the single accent? Or make green the accent and drop brass? [Navy + ivory + brass, green reserved for the mark and success states.]
+- Q-A3. Display serif: system serif stack (no network, no bytes; looks slightly different per device) or one self-hosted open-licence serif with the Vietnamese subset in `public/fonts` (about 40-60 KiB once, no third party)? Google Fonts by link is NOT recommended: every child's phone would call Google. [System stack for the checkpoint; decide on self-hosting when you see it.]
+- Q-A4. Until every screen is restyled, should dark mode follow the phone automatically, or be opt-in from the menu? [Opt-in (default Light) until the rollout is finished, then follow the system.]
+- Q-A5. Theme remembered per user on this device (no database change), or across devices (needs a migration you paste)? [Per device.]
+- Q-A6. New dependency `@tanstack/react-virtual` for long lists? [No - not needed by this plan.]
+- Q-A7. `useAuth` re-creates the signed-in user object on every token refresh; fixing it at the root would remove a class of "screen reloads itself" bugs but touches sign-in for everyone. Schedule it as its own reviewed task after this stream? [Yes, after A, with a fable review.]
+- Q-A8. Teachers' books are third-party embeds (Google Slides, Canva, flipbook sites). If A2.1 shows the page-turn lag is inside the host's own viewer, the app cannot fix it; the alternative is a different host or uploading PDFs to an in-app viewer (a new feature, and a new dependency). Want that costed? [Wait for A2.1's numbers.]
+- Q-A9. ARASAAC licence (ledger Q6) is untouched by this plan.
