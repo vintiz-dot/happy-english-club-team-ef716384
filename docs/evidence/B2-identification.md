@@ -7,7 +7,7 @@ Aggregates and codes (S01..., L1/L2/L3) only. No transcript text, no source file
 
 ## Where I am / next step
 
-**2026-11-12, resumed after a session restart.** Done: setup, models fetched, scorer additions + tests, unit cuts (b2_units.py), wes_campp embeddings. Lost in the restart and re-started detached: ecapa / 3ds_campp / titanet_l embeddings, wes_campp eval, diarization tune. 3ds_eres2v2 dropped: at RTF ~1.4 under this load it would take ~4 h (it had done 1280/4165 units in 51 min). Next: eval each model as it lands, write sections 3-5; then lessons (section 6).
+**2026-11-12, wrapping up.** Done: sections 1-5 and 7-10. Running: real lessons, first 20 min each (section 6). 3ds_eres2v2 dropped (RTF ~1.4 under load, ~4 h).
 
 ## 1. Setup, models, what installed
 
@@ -129,9 +129,9 @@ Normalisation (AS-norm) is the step that matters: at the same 1 % point it more 
 
 ### 5.2 Accuracy by turn length (vad-all-k3-asnorm, s500 room)
 
-| window (stands for) | n | top-1, no threshold | at T@1 % = 4.726: named % [CI] | wrong child % | UNKNOWN % | open accepted % [CI] | at T@5 % = 3.500: named % | wrong % | open acc % |
+| window (stands for) | n | top-1, no threshold (cosine baseline) | at T@1 % = 4.726: named % [CI] | wrong child % | UNKNOWN % | open accepted % [CI] | at T@5 % = 3.500: named % | wrong % | open acc % |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 s (< 1.5 s) | 549 | 52.8 (cosine) | 4.6 [3.1-6.6] | 0.0 | 95.4 | 0.0 [0.0-0.7] | 7.5 | 0.0 | 0.5 |
+| 1 s (< 1.5 s) | 549 | 52.8 | 4.6 [3.1-6.6] | 0.0 | 95.4 | 0.0 [0.0-0.7] | 7.5 | 0.0 | 0.5 |
 | 2 s (1.5-3 s) | 243 | 77.0 | 16.0 [12.0-21.2] | 0.4 | 83.5 | 0.4 [0.1-2.3] | 31.7 | 1.6 | 6.2 |
 | 4 s (3-6 s) | 95 | 86.3 | 49.5 [39.6-59.4] | 0.0 | 50.5 | 2.1 [0.6-7.4] | 67.4 | 1.1 | 8.4 |
 | 8 s (> 6 s) | 27 | 96.3 | 81.5 [63.3-91.8] | 0.0 | 18.5 | 0.0 [0.0-12.5] | 92.6 | 0.0 | 18.5 |
@@ -201,4 +201,32 @@ Adult-pitch speech in the enrolment clips (ECAPA): S20 has 30 adult-pitch window
 
 Top-1 score quantiles (5/25/50/75/95 %), s500 all lengths, k3-asnorm: correct [-1.29, 0.67, 2.39, 4.57, 8.97]; wrong enrolled child [-2.77, -1.22, -0.21, 0.92, 2.53]; unenrolled child [-2.95, -1.19, 0.06, 1.17, 3.07]. The out-of-set distribution sits on top of the wrong-child one: an unenrolled child looks exactly like a mistaken enrolled one, which is why open-set matters. Cosine: correct median 0.53, wrong 0.43, out-of-set 0.44 - heavy overlap.
 
-**Statistical caveat stated once for every table:** confidence intervals are 95 % Wilson intervals over windows, treating windows as independent. They are not: all windows come from 15 children and from 20-90 s of speech each, so the true uncertainty is wider than shown, above all for per-child figures.
+**Statistical caveat stated once for every table:** confidence intervals are 95 % Wilson intervals over windows, treating windows as independent. They are not: all windows come from 17 children and from 18-85 s of test speech each, so the true uncertainty is wider than shown, above all for per-child figures.
+
+## 6. Real lessons L1, L2, L3 - UNVERIFIED
+
+(filled below when the run finishes)
+
+## 7. Recommended configuration
+
+- Embedding: SpeechBrain ECAPA (`spkrec-ecapa-voxceleb`). The CAM++ models (WeSpeaker, 3D-Speaker) were near chance on these children; TitaNet-L second.
+- Enrolment: all available clean speech, windows cut inside utterances (never spliced), at least 30 s per child or the child is not enrolled; 3 sub-centroids per child.
+- Scoring: adaptive s-norm, cohort = the other enrolled children's enrolment windows (top 50).
+- Matching unit: a diarized cluster of at least 5 turns / 10 s, never a single short turn.
+- Threshold: UNKNOWN below T = 6.0 (AS-norm score). Below it, or with fewer than 10 s of cluster speech, the answer is UNKNOWN. Recalibrate T on real classroom audio before any use; the synthetic T is not transferable.
+
+## 8. Verdict (three lines)
+
+(a) With the CURRENT enrolment audio, suggestion-with-confidence is NOT viable for single turns (under 1.5 s, 95 % stay UNKNOWN at the 1 % false-accept point and the threshold is unstable between halves of the children), and only marginal for clusters (about half of 10-s clusters named on synthetic audio, an upper bound, with too few clusters to prove 1 % false accept) - and the local diarizer cannot yet deliver one-child clusters (DER 0.57 on the mixes).
+(b) Viable only with a better enrolment: each child recorded 60 s or more on the S500 in the classroom (same microphone and room as the lessons, removing the clean-video vs room mismatch that halved the named rate here) and the planned "say your name before speaking" roll-call as labelled ground truth to calibrate T per class. MEASURED here: more enrolment helps (10 s -> all: top-1 53 -> 68 %), normalisation doubles the share named at 1 % false accept, aggregating 10 s of turns lifts top-1 from 51-76 % to 92-93 %, the room costs about half the named share. EXPECTED only (not measured): that in-room enrolment closes the room gap, and that a roll-call can calibrate T.
+(c) Must stay human: every name. The system may only offer "this cluster sounds like Sxx (score)" to a teacher; a teacher confirms or corrects every cluster, unenrolled and adult voices stay UNKNOWN, and nothing from a lesson reaches a family before a teacher approves it.
+
+## 9. Compute cost observed (contaminated by other agents' load; B2b measures properly)
+
+Embedding the 131.7 min of test material: 3ds_campp 1 760 s (RTF 0.22), wes_campp 1 521 s (0.19), titanet_l 2 920 s (0.37), ecapa 5 273 s (0.67), all with 2 threads and 3-4 jobs at once. sherpa-onnx diarization pipeline RTF 1.34; own diarizer (energy VAD + 3ds CAM++ chunks + AHC) RTF 0.13-0.17. A 60-90 min lesson would need roughly 10-15 min of CPU for diarization and a few minutes for ECAPA on clusters on this laptop, so a nightly batch on one CPU machine is plausible; it does not fit a Supabase edge function (2 s CPU limit, B0-vendors) and would need a small always-on box or a job runner with ~2 GB RAM. Measure on a quiet machine (B2b) before deciding.
+
+## 10. Reproduce
+
+See `scripts/lesson-eval/README.md`, section "Speaker identification (B2)". In order: `fetch_models.py`; `b2_units.py --seed 11`; `b2_embed.py --model {ecapa,titanet_l,wes_campp,3ds_campp} --threads 2`; `b2_eval.py --models <m> --json work\b2\results_<m>.json`; `b2_report.py --diag-model ecapa`; `b2_lessons.py tune --engine own --diar-model 3ds_campp --thresholds=-0.1,0.0,0.1,0.2,0.3`; `b2_lessons.py run --lessons L1,L2,L3 --minutes 20 --diar-model 3ds_campp --diar-threshold 0.1 --id-model ecapa --id-config vad-all-k3-asnorm --threshold 4.7264`; tests `python -m pytest scripts\lesson-eval\tests -q -p no:cacheprovider`. Deletion: `delete_voiceprints.py --yes` (all embeddings and cluster voiceprints), `delete_all_derived.py --yes` (also unit audio and teacher samples).
+
+Not done: wes_r34lm and 3ds_eres2v2 on the final units; TitaNet's full table (its eval was cut by the restart; EER/top-1 per config are from its log, section 4); B0's fixed-turn mixes rescored with the fixed pipeline; lessons beyond their first 20 minutes.
