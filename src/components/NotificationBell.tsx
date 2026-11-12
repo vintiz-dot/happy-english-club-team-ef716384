@@ -191,68 +191,64 @@ export default function NotificationBell() {
                 <Bell className={ivory ? "mx-auto mb-3 h-12 w-12 text-hec-ink-faint" : "h-12 w-12 mx-auto mb-3 text-muted-foreground/50"} />
                 <p className={ivory ? "text-hec-small text-hec-ink-soft" : "text-sm text-muted-foreground"}>No notifications yet</p>
               </div>
-            ) : ivory ? (
-              <div className="space-y-2 pr-2">
-                {notifications.map((notification: any) => {
-                  const metadata = notification.metadata || {};
-                  // Same row, same handler as below; a <button> so it is reachable by keyboard.
-                  return (
-                    <button
-                      key={notification.id}
-                      type="button"
-                      className={`flex w-full min-h-hec-target items-start gap-3 rounded-hec-md border p-3 text-left transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken ${FOCUS} ${
-                        notification.is_read ? "border-transparent" : "border-hec-line bg-hec-surface"
-                      }`}
-                      onClick={() => handleNotificationClick(notification)}
-                    >
-                      <span className="shrink-0 rounded-full bg-hec-sunken p-2 text-hec-ink-soft">
-                        <Bell className="h-4 w-4" />
-                      </span>
-
-                      <span className="block min-w-0 flex-1 space-y-1">
-                        <span className="block text-hec-small font-semibold text-hec-ink line-clamp-2">
-                          {notification.title}
-                        </span>
-                        {notification.message && (
-                          <span className="block text-hec-caption text-hec-ink-soft line-clamp-2">
-                            {notification.message}
-                          </span>
-                        )}
-                        {metadata.student_name && (
-                          <span className="block break-words text-hec-caption font-medium text-hec-ink">
-                            👤 {metadata.student_name}
-                          </span>
-                        )}
-                        {metadata.class_name && (
-                          <span className="block break-words text-hec-caption font-medium text-hec-ink">
-                            📚 {metadata.class_name}
-                          </span>
-                        )}
-                        {metadata.homework_title && (
-                          <span className="block text-hec-caption font-medium text-hec-ink-soft">
-                            📝 {metadata.homework_title}
-                          </span>
-                        )}
-                        <span className="block text-hec-caption text-hec-ink-soft">
-                          {formatDistanceToNow(new Date(notification.created_at), {
-                            addSuffix: true,
-                          })}
-                        </span>
-                      </span>
-
-                      {!notification.is_read && (
-                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-hec-brass" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
             ) : (
               <div className="space-y-2 pr-2">
                 {notifications.map((notification: any) => {
                   const metadata = notification.metadata || {};
                   const isHomework = notification.type === 'homework_assigned' || notification.type === 'homework_graded' || notification.type === 'homework_submitted';
                   const isJournal = notification.type === 'new_journal' || notification.type === 'journal_collaboration';
+                  // Ivory: the same row and handler as below, as a <button> so it is reachable by keyboard.
+                  if (ivory) {
+                    return (
+                      <button
+                        key={notification.id}
+                        type="button"
+                        className={`flex w-full min-h-hec-target items-start gap-3 rounded-hec-md border p-3 text-left transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken ${FOCUS} ${
+                          notification.is_read ? "border-transparent" : "border-hec-line bg-hec-surface"
+                        }`}
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <span className="shrink-0 rounded-full bg-hec-sunken p-2 text-hec-ink-soft">
+                          <Bell className="h-4 w-4" />
+                        </span>
+  
+                        <span className="block min-w-0 flex-1 space-y-1">
+                          <span className="block text-hec-small font-semibold text-hec-ink line-clamp-2">
+                            {notification.title}
+                          </span>
+                          {notification.message && (
+                            <span className="block text-hec-caption text-hec-ink-soft line-clamp-2">
+                              {notification.message}
+                            </span>
+                          )}
+                          {metadata.student_name && (
+                            <span className="block break-words text-hec-caption font-medium text-hec-ink">
+                              👤 {metadata.student_name}
+                            </span>
+                          )}
+                          {metadata.class_name && (
+                            <span className="block break-words text-hec-caption font-medium text-hec-ink">
+                              📚 {metadata.class_name}
+                            </span>
+                          )}
+                          {metadata.homework_title && (
+                            <span className="block text-hec-caption font-medium text-hec-ink-soft">
+                              📝 {metadata.homework_title}
+                            </span>
+                          )}
+                          <span className="block text-hec-caption text-hec-ink-soft">
+                            {formatDistanceToNow(new Date(notification.created_at), {
+                              addSuffix: true,
+                            })}
+                          </span>
+                        </span>
+  
+                        {!notification.is_read && (
+                          <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-hec-brass" />
+                        )}
+                      </button>
+                    );
+                  }
                   
                   return (
                     <div
