@@ -82,36 +82,36 @@ export default function TeacherVideoDashboard() {
   return (
     <Layout>
       <div className="container mx-auto max-w-5xl space-y-6 px-4 py-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Video className="h-6 w-6" /> Video homework progress</h1>
-          <p className="text-muted-foreground text-sm">AI draft scores, approved grades, and drafts waiting for you.</p>
+        <div className="space-y-2">
+          <h1 className="flex items-center gap-2 font-display text-hec-display font-medium text-hec-ink"><Video className="h-6 w-6 shrink-0 text-hec-ink-soft" aria-hidden /> Video homework progress</h1>
+          <p className="text-hec-body text-hec-ink-soft">AI draft scores, approved grades, and drafts waiting for you.</p>
         </div>
 
         <VideoReviewQueue />
 
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Students</CardTitle>
+          <CardHeader>
+            <CardTitle>Students</CardTitle>
             <CardDescription>"AI" is the draft score; "Final" is what you approved. Parent link opens their child's approved videos without signing in.</CardDescription>
-            <Input placeholder="Search student or class" value={search} onChange={(e) => setSearch(e.target.value)} className="mt-2 max-w-sm" />
+            <Input placeholder="Search student or class" aria-label="Search student or class" value={search} onChange={(e) => setSearch(e.target.value)} className="mt-2 max-w-sm" />
           </CardHeader>
           <CardContent className="space-y-4">
-            {isLoading && <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>}
-            {!isLoading && students.length === 0 && <p className="text-sm text-muted-foreground">No video homework yet.</p>}
+            {isLoading && <div className="flex items-center gap-2 text-hec-small text-hec-ink-soft"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>}
+            {!isLoading && students.length === 0 && <p className="text-hec-small text-hec-ink-soft">No video homework yet.</p>}
             {students.map((s) => {
               const approved = s.rows.filter((r) => r.status === "approved");
               const finals = approved.map((r) => one(r.video_analyses)?.final_score).filter((n): n is number => typeof n === "number");
               const avg = finals.length ? Math.round(finals.reduce((a, b) => a + b, 0) / finals.length) : null;
               const pending = s.rows.filter((r) => r.status === "ready_for_review").length;
               return (
-                <div key={s.id} className="rounded-xl border p-3 space-y-2">
+                <div key={s.id} className="space-y-3 rounded-hec-md border border-hec-line p-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold">{s.name}</p>
-                    {s.className && <span className="text-xs text-muted-foreground">{s.className}</span>}
-                    <Badge variant="secondary">{approved.length}/{s.rows.length} approved</Badge>
-                    {avg !== null && <Badge>Avg {avg}</Badge>}
-                    {pending > 0 && <Badge variant="outline">{pending} draft{pending > 1 ? "s" : ""} to review</Badge>}
-                    <Button size="sm" variant="outline" className="ml-auto gap-1" disabled={linking === s.id} onClick={() => shareLink(s.id, s.name)}>
+                    <p className="min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-semibold text-hec-ink">{s.name}</p>
+                    {s.className && <span className="whitespace-normal break-words text-hec-small text-hec-ink-soft">{s.className}</span>}
+                    <Badge variant="secondary" className="tabular-nums">{approved.length}/{s.rows.length} approved</Badge>
+                    {avg !== null && <Badge className="tabular-nums">Avg {avg}</Badge>}
+                    {pending > 0 && <Badge variant="outline" className="tabular-nums">{pending} draft{pending > 1 ? "s" : ""} to review</Badge>}
+                    <Button size="sm" variant="outline" className="ml-auto" disabled={linking === s.id} onClick={() => shareLink(s.id, s.name)}>
                       {linking === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Link2 className="h-3 w-3" />} Parent link
                     </Button>
                   </div>
@@ -120,11 +120,11 @@ export default function TeacherVideoDashboard() {
                       const a = one(r.video_analyses);
                       return (
                         <button key={r.id} type="button" onClick={() => setOpen(r.id)}
-                          className="w-full flex flex-wrap items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-muted/50">
+                          className="flex min-h-hec-target w-full flex-wrap items-center gap-2 rounded-hec-sm px-2 py-2 text-left text-hec-small text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
                           <span className="min-w-0 flex-1 truncate">{r.homeworks?.title ?? "Video"}</span>
-                          <span className="text-xs text-muted-foreground">AI {a?.overall_score ?? "–"}</span>
-                          <span className="text-xs">Final {a?.final_score ?? "–"}{a?.final_grade ? ` · ${a.final_grade}` : ""}</span>
-                          <Badge variant={r.status === "approved" ? "default" : "outline"} className="text-[10px]">{r.status.replace(/_/g, " ")}</Badge>
+                          <span className="whitespace-nowrap text-hec-caption tabular-nums text-hec-ink-soft">AI {a?.overall_score ?? "–"}</span>
+                          <span className="whitespace-nowrap text-hec-caption tabular-nums text-hec-ink">Final {a?.final_score ?? "–"}{a?.final_grade ? ` · ${a.final_grade}` : ""}</span>
+                          <Badge variant={r.status === "approved" ? "default" : "outline"}>{r.status.replace(/_/g, " ")}</Badge>
                         </button>
                       );
                     })}
