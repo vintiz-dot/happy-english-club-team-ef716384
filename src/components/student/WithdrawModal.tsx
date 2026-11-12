@@ -111,8 +111,9 @@ export function WithdrawModal({ open, onOpenChange, studentId, classId, totalPoi
           </div>
 
           <div className="space-y-2">
-            <Label>Cash to withdraw</Label>
+            <Label htmlFor="withdraw-cash-amount">Cash to withdraw</Label>
             <Input
+              id="withdraw-cash-amount"
               type="number"
               min={1}
               max={maxCash}
