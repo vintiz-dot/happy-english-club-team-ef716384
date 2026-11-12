@@ -58,6 +58,35 @@ Files (all on this branch):
 - Real two-connection lock behaviour (pglite is one connection): lock order is asserted structurally (d37) only.
 - `authenticated`'s live statement timeout (B-5): the owner should read `SELECT rolconfig FROM pg_roles WHERE rolname = 'authenticated'` before rollout.
 
+## Revision 1 (D-review-2, conductor rulings on review 2)
+
+Edited in place: `20261112091000_session_cancel_guard.sql` (never applied) and its suite. Nothing else in `supabase/migrations/` touched.
+
+| Item | Change | Where | Test (suite label) |
+|---|---|---|---|
+| F-1 MAJOR | A register row re-parented away from the lesson (`UPDATE attendance SET session_id = ...`) is erased evidence, ANY status, seeded or person-marked (fail closed: the child's bill line leaves with it). New `attendance_reparented` entries (student, old/new status, `new_session_id`) in `erased_recently`; the ordinary attendance branch no longer double-counts a re-parent. Refusing the write itself stays D4. | `_session_erased_recently` | `F-1 E2 ...` (probe reproduced: T3 lesson, admin re-parents both Present marks, preview then cancel -> `review_required:true`, both rows listed, in the queue); seeded re-parent counted; control lesson not reviewed |
+| F-4 | A session's id cannot change: `OLD.id IS DISTINCT FROM NEW.id` added to the UPDATE trigger's WHEN, and `session_change_guard` raises `HC020` (`DETAIL kind=id_change`) for EVERY caller, before either lane. | trigger WHEN, `session_change_guard` | `F-4 UPDATE sessions SET id by the admin/service role/superuser -> HC020`; probe E4 |
+| F-5 / B-3(c) | New `session_day_evidence(session, class, date)` (STABLE, internal): points, transcripts, homework and other Held/person-marked lessons of the class on a day. A move's `destination` now carries `day_evidence`. Destination evidence raises the tier to at least 1 (reason + confirm). Review rule now one function `_session_review_required`, which adds: a move whose destination is started, settled (`destination.any`) or has day evidence; an un-cancel when any register child's bill in the month is settled (D1's `settled` reads false after a cancel because every mark is Excused). Automation lane: a move onto a day with evidence -> `HC020`. | `_session_change_assess`, `_session_review_required`, `session_change_guard` | `F-5 G2 ...`, `F-5 G3 ...`, `F-5 I5 ...`, `F-5 automation ... homework -> HC020` + control |
+| F-7 | Every top-level block of the suite now runs inside `section(name, fn)`: an unexpected throw is a FAIL line and the suite goes on. Bare fixture calls after a refusal test wrapped in `must(label, fn)` (d21, d22, d23, d24/d33, d26, d29 x3, d31, d32). New cases for the three survivors: M08 (an acknowledged un-cancel written as Held -> HC020, control Scheduled accepted), M32 (`log_session_automation_refused` with a uid on the service role -> 42501), M38 (automation move out of a paid source month into another month -> HC020, control allowed). | suite | `M08 ...`, `M32 ...`, `M38 ...` |
+| F-8.2 | The preview now returns `review_required` and `erased_recently` (informational, not in the token; the RPC result is the authority). | `session_change_preview` | `F-8.2 preview of an untouched future lesson ...`, F-1/F-5 cases |
+| F-9 (second half) | The audit-table insert guard is owner-only: refuses any `current_user` that is not the table's owner, besides the named API roles. | `session_cancel_audit_insert_guard` | `F-9 ...` |
+
+Deferred, not built (rulings): guarding deletion of points/transcripts (D4); wiring the recorder view into `session_recording_evidence` (ships with the recorder migration). The F-9 `EXPLAIN ANALYZE` of the 30-day `audit_log` scan and `authenticated`'s statement timeout remain owner reads before the paste; the preview now runs the scan too (one more call per preview).
+
+Revision deviations (fail-closed choices):
+- R1. `attendance_reparented` counts rows of any status and seeded rows (the review asked only for the session_id branch on person-marked Present/Late).
+- R2. Destination-day evidence raises the tier to >= 1 as well as requiring review (the ruling asked for the reviewed path only).
+- R3. Destination-day evidence is read over-inclusively: points linked to ANOTHER lesson, any transcript of the day not linked to this lesson, and other Held/marked lessons of the class that day also count.
+
+Verification (revision 1):
+
+```
+node scripts/pgtest/session-cancel-guard.test.mjs supabase/migrations/20261009130000_audit_every_admin_action.sql supabase/migrations/20261027090000_cancelled_lesson_attendance_guard.sql supabase/migrations/20261112090000_session_held_evidence.sql supabase/migrations/20261112091000_session_cancel_guard.sql
+-> 239 passed, 0 failed   (was 212; no case removed or weakened)
+```
+
+Mutation re-run (scratch copies, never committed), 11 mutants, all caught with the summary line printed (no crash): M08 uncancel to any status (2 FAIL), M32 automation log without uid check (4), M38 move out of a settled month (1), F-1 no re-parent branch (4), F-4 id change allowed (4), F-5 no day evidence in the raw lane (1), F-5 review ignores the destination (5), M19 flag not consumed (42 FAIL, 186 assertions reported - was a crash at 37), M17 confirm never required (12 - was a crash), M27 delete with evidence allowed (4 - was a crash), F-9 insert guard role list only (1).
+
 ## Contract for the edge functions and UI (as built)
 
 All RPCs are called through PostgREST `rpc` on a client built from the CALLER'S OWN `Authorization` header (anon key + the admin's JWT). They are granted to `authenticated` only; `service_role` cannot execute them, and with no `auth.uid()` they refuse anyway (`42501`). Each checks `has_role(auth.uid(), 'admin')` first. Tokens are opaque 64-hex strings: send back exactly what the preview returned. Nothing returned by a preview may be cached across dialog opens.
