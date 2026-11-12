@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIvory } from "@/hooks/useIvory";
 import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput,
   CommandItem, CommandList, CommandSeparator, CommandShortcut,
@@ -33,6 +34,11 @@ export function CommandPalette() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  // Mounted in Layout on every page: ivory on a listed route (src/lib/ivoryScope.ts),
+  // today's classes elsewhere, byte-identical.
+  const ivory = useIvory();
+  const item = ivory ? "min-h-hec-target" : undefined;
+  const icon = (old: string) => (ivory ? "mr-2 h-4 w-4 shrink-0 text-hec-ink-soft" : old);
 
   const enabled = role === "admin" || role === "teacher";
 
@@ -130,8 +136,9 @@ export function CommandPalette() {
                 key={s.id}
                 value={`student ${s.full_name}`}
                 onSelect={() => go(`/students/${s.id}`)}
+                className={item}
               >
-                <GraduationCap className="mr-2 h-4 w-4 text-blue-500" />
+                <GraduationCap className={icon("mr-2 h-4 w-4 text-blue-500")} />
                 {s.full_name}
               </CommandItem>
             ))}
@@ -147,8 +154,9 @@ export function CommandPalette() {
                 onSelect={() =>
                   go(role === "admin" ? `/admin/classes/${c.id}` : `/teacher/classes/${c.id}`)
                 }
+                className={item}
               >
-                <School className="mr-2 h-4 w-4 text-emerald-500" />
+                <School className={icon("mr-2 h-4 w-4 text-emerald-500")} />
                 {c.name}
               </CommandItem>
             ))}
@@ -165,8 +173,9 @@ export function CommandPalette() {
               key={p.path + p.label}
               value={`${p.label} ${p.keywords ?? ""}`}
               onSelect={() => go(p.path)}
+              className={item}
             >
-              <p.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+              <p.icon className={icon("mr-2 h-4 w-4 text-muted-foreground")} />
               {p.label}
             </CommandItem>
           ))}
@@ -174,8 +183,8 @@ export function CommandPalette() {
 
         <CommandSeparator />
         <CommandGroup heading="Tips">
-          <CommandItem value="shortcut help keyboard" onSelect={() => setOpen(false)}>
-            <Sparkles className="mr-2 h-4 w-4 text-violet-500" />
+          <CommandItem value="shortcut help keyboard" onSelect={() => setOpen(false)} className={item}>
+            <Sparkles className={icon("mr-2 h-4 w-4 text-violet-500")} />
             Press Ctrl+K anywhere to open this bar
             <CommandShortcut>Ctrl K</CommandShortcut>
           </CommandItem>
