@@ -74,6 +74,11 @@ def main(argv=None) -> int:
         audio_s += dur
         files.append({"file_id": src["file_id"], "duration_s": round(dur, 3), "words": words, "turns": [],
                       "language": info.language})
+        write(out_dir, a, files, t_start, audio_s)  # after every set: a slow or stopped run keeps what it finished
+    return 0
+
+
+def write(out_dir, a, files, t_start, audio_s) -> None:
     result = {"schema": "hec-lesson-eval/1",
               "system": {"name": f"local-fwhisper-{a.size}", "kind": "local", "model": f"faster-whisper {a.size} int8 CPU",
                          "settings": {"language": "auto", "beam": 5, "vad_filter": True, "word_timing": "vendor",
@@ -83,8 +88,7 @@ def main(argv=None) -> int:
               "files": files}
     p = common.safe_out(out_dir / f"result_local-fwhisper-{a.size}.json")
     p.write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"wrote {p}")
-    return 0
+    print(f"wrote {p} ({len(files)} file(s))")
 
 
 if __name__ == "__main__":
