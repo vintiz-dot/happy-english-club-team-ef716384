@@ -97,9 +97,6 @@ export function ResourceCard({ resource, compact = false, classNameMap }: Props)
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
       )}
       onClick={handleOpen}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && handleOpen()}
     >
       {/* ---- Icon header ---- */}
       <div

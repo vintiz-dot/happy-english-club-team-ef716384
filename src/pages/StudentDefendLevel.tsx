@@ -141,7 +141,7 @@ export default function StudentDefendLevel() {
                     </CardTitle>
                     <Badge variant="secondary">{answeredCount}/{totalCount} answered</Badge>
                   </div>
-                  <Progress value={(answeredCount / Math.max(totalCount, 1)) * 100} className="h-1.5 mt-2" />
+                  <Progress value={(answeredCount / Math.max(totalCount, 1)) * 100} aria-label="Questions answered" className="h-1.5 mt-2" />
                   <CardDescription className="mt-2 text-hec-small">
                     Read carefully and answer every question. The next stage adapts to how you do here.
                   </CardDescription>
