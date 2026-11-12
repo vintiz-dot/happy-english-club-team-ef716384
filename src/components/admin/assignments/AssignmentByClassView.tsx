@@ -33,8 +33,8 @@ export function AssignmentByClassView({ byClass, enrolledPerClass }: Props) {
   return (
     <div className="space-y-6">
       {chartData.length > 0 && (
-        <Card className="glass-sm p-4">
-          <h3 className="text-sm font-semibold mb-3">Submission & Grading Rates</h3>
+        <Card className="p-4 sm:p-6">
+          <h3 className="mb-3 text-hec-h3 font-semibold text-hec-ink">Submission & Grading Rates</h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={chartData}>
               <XAxis dataKey="name" tick={{ fontSize: 11 }} />
@@ -53,16 +53,17 @@ export function AssignmentByClassView({ byClass, enrolledPerClass }: Props) {
           const isOpen = openClasses.has(cs.classId);
           return (
             <Collapsible key={cs.classId} open={isOpen} onOpenChange={() => toggle(cs.classId)}>
-              <Card className="glass-sm overflow-hidden">
-                <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <ChevronRight className={`h-4 w-4 transition-transform ${isOpen ? "rotate-90" : ""}`} />
-                    <div className="text-left">
-                      <h3 className="font-semibold">{cs.className}</h3>
-                      <p className="text-xs text-muted-foreground">{cs.teacherName} · {enrolled} students · {cs.assignmentCount} assignments</p>
+              <Card className="overflow-hidden">
+                <CollapsibleTrigger className="flex min-h-hec-target w-full cursor-pointer flex-wrap items-start justify-between gap-3 p-4 text-left transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken/60 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hec-ring">
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <ChevronRight className={`mt-1 h-4 w-4 shrink-0 text-hec-ink-soft transition-transform duration-hec-1 ease-hec ${isOpen ? "rotate-90" : ""}`} />
+                    <div className="min-w-0 flex-1 text-left">
+                      {/* Class and teacher names wrap, never cut (DESIGN_SYSTEM s.13). */}
+                      <h3 className="whitespace-normal break-words hyphens-none text-balance text-hec-body font-semibold text-hec-ink">{cs.className}</h3>
+                      <p className="whitespace-normal break-words text-hec-small tabular-nums text-hec-ink-soft">{cs.teacherName} · {enrolled} students · {cs.assignmentCount} assignments</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex shrink-0 flex-wrap gap-2 pl-7 sm:pl-0">
                     <Badge variant="secondary">{cs.submissionRate.toFixed(0)}% submitted</Badge>
                     <Badge variant="outline">{cs.gradingRate.toFixed(0)}% graded</Badge>
                   </div>
@@ -86,9 +87,9 @@ export function AssignmentByClassView({ byClass, enrolledPerClass }: Props) {
                             return (
                               <TableRow key={a.id}>
                                 <TableCell className="font-medium">{a.title}</TableCell>
-                                <TableCell>{a.due_date || "—"}</TableCell>
-                                <TableCell className="text-right">{subs}/{enrolled}</TableCell>
-                                <TableCell className="text-right">{graded}</TableCell>
+                                <TableCell className="whitespace-nowrap tabular-nums">{a.due_date || "—"}</TableCell>
+                                <TableCell className="whitespace-nowrap text-right tabular-nums">{subs}/{enrolled}</TableCell>
+                                <TableCell className="whitespace-nowrap text-right tabular-nums">{graded}</TableCell>
                               </TableRow>
                             );
                           })}
