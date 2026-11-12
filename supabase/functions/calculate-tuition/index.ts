@@ -6,7 +6,7 @@ import { requireRole, callerOwnsStudent } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts } from "../_lib/enrollment-discounts.ts";
-import { invoiceLabelFields, paidLabel } from "../_lib/invoice-status.ts";
+import { invoiceLabelFields, monthPayable, paidLabel } from "../_lib/invoice-status.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -493,6 +493,11 @@ Deno.serve(async (req) => {
 
     // Closing balance for this month: current charges - carry-in credit + carry-in debt - current payments
     // carryInBalance > 0 means credit (reduces what's owed), < 0 means debt (increases what's owed)
+    // What the month asks for before this month's payment: its charge plus
+    // debt carried in, less credit carried in (negative when the credit is
+    // larger). Returned as carry.payable so no screen adds it up, and the
+    // figure the paid label is judged against - one arithmetic for both.
+    const payable = monthPayable({ total_amount: totalAmount, carry_in_debt: carryInDebt, carry_in_credit: carryInCredit });
     const closingBalance = totalAmount - carryInBalance - monthPayments;
     const carryOutCredit = closingBalance < 0 ? Math.abs(closingBalance) : 0;
     const carryOutDebt = closingBalance > 0 ? closingBalance : 0;
@@ -593,7 +598,7 @@ Deno.serve(async (req) => {
       reviewFlags,
       savedAt,
       // paid / partial / issued from the month's own money - the one rule.
-      paidLabel(monthPayments, totalAmount + carryInDebt - carryInCredit),
+      paidLabel(monthPayments, payable),
     );
 
     // recorded_payment is NOT in this save. It belongs to the payment paths;
@@ -676,6 +681,7 @@ Deno.serve(async (req) => {
         carryInDebt,
         carryOutCredit,
         carryOutDebt,
+        payable, // charge + carry-in debt - carry-in credit, before this month's payment
         settledInMonth,
         status: balanceStatus, // 'credit' | 'debt' | 'settled'
         message: balanceMessage, // show in UI

@@ -4,6 +4,7 @@ import { requireRole } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts } from "../_lib/enrollment-discounts.ts";
+import { monthPayable } from "../_lib/invoice-status.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -386,7 +387,15 @@ Deno.serve(async (req) => {
           totalDiscount,
           totalAmount,
           payments: { priorPayments, monthPayments },
-          carry: { carryInCredit, carryInDebt, carryOutCredit, carryOutDebt, settledInMonth },
+          carry: {
+            carryInCredit, carryInDebt, carryOutCredit, carryOutDebt, settledInMonth,
+            // charge + carry-in debt - carry-in credit, before this month's
+            // payment: the same figure, by the same helper, as calculate-tuition.
+            payable: monthPayable({ total_amount: totalAmount, carry_in_debt: carryInDebt, carry_in_credit: carryInCredit }),
+          },
+          // The family discount is still being decided: totalAmount leaves it
+          // out, so the figures are provisional (same meaning as in calculate-tuition).
+          siblingUnresolved: family?.id ? siblingStateMap.get(family.id)?.status === "unresolved" : false,
           breakdown: { classes: classBreakdown },
           invoiceId: currentInvoice?.id || null,
           invoiceStatus: currentInvoice?.status || null,
