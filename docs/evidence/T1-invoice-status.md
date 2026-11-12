@@ -136,3 +136,92 @@ calculate-tuition keeps deciding every FIGURE exactly as before. What changes is
 8. Frozen bills: the function reports the saved figures, so rule 3 applies - a frozen confirmed bill stays confirmed, and the trigger still keeps its figures. Sibling-preview and unresolved-discount calls still write nothing. calculate-tuition-bulk writes no invoice and needs no change.
 
 "Charged figure" means `base_amount`, `discount_amount`, `total_amount`. Payments and carry balances are not what an admin confirms and move for other reasons (a payment in an earlier month), so they do not un-confirm a bill.
+
+---
+
+## Part 2 - what was done
+
+### Files changed
+
+| file | change |
+|---|---|
+| `supabase/functions/_lib/invoice-status.ts` (new) | `invoiceLabelFields(existing, figures, computedFlags, nowIso)`: pure, imports nothing; returns `review_flags` always, `status` / `confirmation_status` only when the save may set them (rules 1-6). Not a mirrored pair: nothing in `src/` needs it. |
+| `supabase/functions/calculate-tuition/index.ts` | (1) the current-bill read also selects `status, confirmation_status, review_flags, confirmed_at, confirmed_by`; (2) a failed read of that bill throws (rule 7); (3) the payload takes its three label columns from `invoiceLabelFields` instead of hard-coding `issued` and `auto_approved | needs_review`; (4) the fallback minimal upsert writes `status` only when the helper returned one. No line that computes a figure was touched (`git diff 736264c -- supabase/functions/calculate-tuition/index.ts`: the import, the read, the guard and the payload). |
+| `scripts/pgtest/invoice-status.test.mjs` (new), `scripts/pgtest/fixtures/tuition-figures.golden.json` (new), `scripts/pgtest/run.mjs` (suite registered) | the suite, below |
+| `scripts/CHECK-invoice-status-resets.sql` (new) | read-only owner query |
+| `AGENTS.md` | section "Bill status labels" |
+
+### What was NOT changed
+
+- No figure: base, discount, total, `paid_amount`, `recorded_payment`, carry, class breakdown and the whole response are byte-identical (below).
+- No migration, no new status value, no new column, no trigger.
+- No historical row: nothing back-fills or repairs; past damage is only listed by the owner SQL.
+- calculate-tuition-bulk (it writes no invoice), confirm-tuition, every payment function, the browser dialogs, the freeze trigger, the sibling paths, the session guard (SQL and `_lib/session-guard.ts` / `src/lib/sessionGuard.ts`).
+- The comment at `supabase/functions/_lib/session-guard.ts:229-232` still says calculate-tuition un-confirms bills. That reason is now out of date; the other two it gives (a preview would create bills for months that had none, and spend the 30-a-minute budget) still hold, so the preview stays read-only. Left alone on purpose: touching that file means redeploying manage-session and bulk-cancel-sessions for a comment.
+- The calculate-tuition stand-in in `session-guard-functions.test.mjs:192-194` still imitates the old reset. It is a stand-in used to prove the preview never calls the function; unchanged, still passing.
+
+### The suite (`scripts/pgtest/invoice-status.test.mjs`)
+
+Real handlers (calculate-tuition, calculate-tuition-bulk, confirm-tuition), `invoices` in pglite with the real CHECK, carry, audit and freeze migrations.
+
+| case | result after the fix |
+|---|---|
+| new bill, no discount / with 10% discount | `issued` + `auto_approved` / `issued` + `needs_review` + `tuition_adjustment` - as before |
+| confirmed (from auto_approved and from needs_review), recalculated x4 | `confirmed`; `confirmed_at` / `confirmed_by` untouched; audit trail shows 0 changes to either column |
+| adjusted, recalculated | `adjusted` |
+| paid / partial, recalculated | `paid` / `partial`, payment and carry intact |
+| payment recorded before the first calculation | figures filled in, stays `partial` |
+| draft / admin-set credit | `issued` (as before) / stays `credit` |
+| fallback minimal upsert on a paid bill | stays `paid` |
+| confirmed, one lesson then excused (400,000 -> 300,000) | `needs_review`, flag `{"type":"changed_after_confirmation","label":"Changed after confirmation","details":{"previousStatus":"confirmed","confirmedAt":...,"confirmedBy":<admin>,"confirmed":{"base_amount":400000,"discount_amount":0,"total_amount":400000},"current":{...300000},"difference":-100000,"changedAt":...}}` |
+| ...recalculated again / changed again / figures back to 400,000 | stays `needs_review`; `confirmed` in the flag stays 400,000, `current` follows |
+| ...admin confirms again, recalculated, later change | `confirmed`, old flag gone; the later change is measured against the second confirmation |
+| adjusted + paid + discount, then a change | `needs_review`, both flags, `previousStatus: adjusted`, status still `paid`, 360,000 payment and 90,000 credit on the row |
+| frozen, confirmed, paid | saved figures reported and kept, still `confirmed` and `paid` |
+| bulk | same base / discount / total as single, reports the stored labels, makes zero invoice writes, row byte-identical |
+| family discount unresolved / sibling preview | nothing written, row byte-identical |
+| current bill unreadable | 400 `Unable to read the current tuition invoice`, zero writes, payment / paid / confirmed stand |
+| guard predicate (`20261112091000:316-319`) | confirmed-unpaid bill still settled by confirmation after two recalculations; status-paid bill still settled by status |
+| owner SQL | runs (11 statements), SELECT-only, finds a manufactured victim in every query, reports a healthy bill in none, changes nothing |
+| FIGURES, 18 fixtures x (first call, repeat) | response and saved figure columns byte-identical to the function at 736264c |
+
+The 18 figure fixtures: plain month; 10% enrollment discount; Excused + Late + Absent + a Canceled lesson; rate override; special discount + referral; sibling winner over two classes; family where another child wins; debt carried in with a part payment and a later settling month; credit carried in; frozen bill; a month with no lessons; and the seven registers of `enrollment-discounts.test.mjs` (weekday split in Sep / Oct / Nov, fixed allowance monthly and once, differing second-term discount, second term without one). The golden file was written by running this same suite with `T1_HANDLER_SOURCE` pointing at a copy of `git show 736264c:supabase/functions/calculate-tuition/index.ts` and `T1_WRITE_GOLDEN=1`; the fixed function is compared with it on every run.
+
+### What the cancellation guard's "settled" check sees now
+
+`session_month_tuition_settled` (`20261112091000:307-319`) and the D1 evidence (`20261112090000:622`) read `recorded_payment > 0 OR status IN (paid, partial) OR confirmation_status IN (confirmed, adjusted) OR tuition_frozen`.
+
+- Before: two of the four were erased by any page view, so a taught lesson whose bills were confirmed but unpaid was judged tier 2 instead of 3 (D-review-3 F-1), and a bill settled by discount (`status: paid`, no recorded payment) was not seen as settled at all.
+- Now: `confirmed` / `adjusted` and `paid` / `partial` survive recalculation, so those bills count as settled until something really changes them.
+- After a guarded cancellation is confirmed, its refresh changes the figures of the affected bills; a bill that was confirmed becomes `needs_review` with the before/after flag. It is then no longer "settled by confirmation" (correct: its new figure is unconfirmed) but still settled by payment or status if it was paid. The guard itself is untouched.
+- `status` can now stay `paid` on a bill whose total later rose above what was paid. For the guard that errs towards "settled" (more caution, not less). Whether the label should follow is owner question 2.
+
+### Known limits (not fixed here, by design)
+
+- Read-then-write: the function reads the bill, computes, then upserts. An admin confirming, or a payment landing, in the short gap between the two can still be overwritten (`needs_review` over a fresh `confirmed`; on a bill that did not exist at the read, `issued` over a fresh `partial`). The gap existed before and is far narrower than "every page view"; closing it needs a compare-and-set in SQL (a trigger or RPC = a migration), which this task was told not to add. confirm-tuition itself is safe: it recalculates first and confirms after.
+- After an admin re-confirms a changed bill, the `changed_after_confirmation` flag stays in `review_flags` until the next calculation of that bill (any tuition screen), then drops. In between, a confirmed bill can show the badge.
+- `class_breakdown` is not compared: a child moved between two classes at the same price, with base / discount / total identical, stays confirmed.
+
+### Edge functions to redeploy
+
+- **`calculate-tuition`** - the only one. It bundles the new `_lib/invoice-status.ts`.
+- Nothing else imports the new module; no migration; no browser change, so no publish is needed for the fix (the review card already prints every flag's label).
+
+### Owner SQL
+
+`scripts/CHECK-invoice-status-resets.sql` - read-only, not run by the agent against anything but the test database. Counts first, then rows by invoice id / student id / month, no names.
+
+- 0: can the audit queries run (columns + trigger present), and since when.
+- 1, 1b, 2: bills with `confirmed_at` set that are no longer `confirmed` / `adjusted` (works without the audit trail: `confirmed_at` is only written by confirm-tuition and never cleared).
+- 3: bills with a recorded payment whose status says `issued` / `draft`.
+- 4, 4b: audit trail - each `confirmed|adjusted -> auto_approved|needs_review`, with whether the figures changed in that same save. `audit_log` does record this: the generic trigger of `20261009130000` logs every invoices UPDATE with `changed_fields` and old/new values, actor NULL for the service role - but only from the day that migration was applied.
+- 5, 5b: audit trail - `paid|partial|credit -> issued` by the service role.
+- 6, 6b: audit trail - a recorded payment LOWERED by the service role (the failed-read fault). Expected to be empty.
+
+### Open questions for the owner (policy only)
+
+1. **Bills already reset.** Should the admins re-confirm the bills query 2 lists, or leave them? Recommended default: leave the rows alone; re-confirm in the review queue only the months still being collected. Nothing was mis-charged.
+2. **A paid bill whose total later changes** keeps the label `paid` (or `partial`). Should the label be re-derived? Recommended default: no - the amount owed is read from the recorded payment and the carry balances, never from this label, and the four payment paths disagree on the rule; unifying them is a separate decision.
+3. **Figures that return to exactly what was confirmed** (a lesson cancelled, then restored): the bill stays in review until an admin confirms. Recommended default: keep it that way - one click, and nobody is told "confirmed" by a machine.
+4. **A change in class breakdown only** (same totals) does not un-confirm. Recommended default: keep.
+5. **Query 6 rows, if any**: a payment that an edge function lowered. Recommended default: look at each by hand against the family's receipts before touching anything; no automatic repair.
