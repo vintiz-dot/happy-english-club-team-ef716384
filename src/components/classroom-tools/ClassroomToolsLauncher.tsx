@@ -34,6 +34,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/
 import { AssistantChat } from "@/components/chat/AssistantChat";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useTimer } from "@/contexts/TimerContext";
 import { useNoiseMeter } from "@/contexts/NoiseMeterContext";
@@ -108,6 +109,7 @@ const TOOLS: ToolEntry[] = [
 /** Admins open the assistant from here too, and it answers for the whole school. */
 function AssistantTool() {
   const { role } = useAuth();
+  const ivory = useIvory();
   return (
     <ToolCard
       icon={Bot}
@@ -120,7 +122,7 @@ function AssistantTool() {
       }
       wide
     >
-      <div className="h-[420px] overflow-hidden rounded-2xl border border-studio">
+      <div className={ivory ? "h-[420px] overflow-hidden rounded-hec-lg border border-hec-line bg-hec-raised p-3" : "h-[420px] overflow-hidden rounded-2xl border border-studio"}>
         <AssistantChat className="h-full" />
       </div>
     </ToolCard>
@@ -140,6 +142,9 @@ export function ClassroomToolsLauncher() {
   const noiseLive = noiseStatus === "running";
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [panelEl, setPanelEl] = useState<HTMLDivElement | null>(null);
+  // Ivory on a listed route (src/lib/ivoryScope.ts); the studio look elsewhere,
+  // unchanged. The launcher shows for staff on every page they open, `/` too.
+  const ivory = useIvory();
 
   const jumpTo = useCallback((id: string) => {
     const el = scrollRef.current?.querySelector<HTMLElement>(`[data-tool="${id}"]`);
@@ -168,13 +173,24 @@ export function ClassroomToolsLauncher() {
           setOpen(true);
         }}
         aria-label={alarming ? "Stop the timer alarm" : "Open classroom tools"}
-        className={cn(
-          "studio-focus fixed bottom-5 right-5 z-40 grid h-14 w-14 place-items-center rounded-full transition-transform md:bottom-6 md:right-6",
-          "hover:scale-105 active:scale-95",
-          alarming
-            ? "animate-bounce bg-[hsl(2_72%_46%)] text-white shadow-[0_10px_30px_-8px_hsl(2_72%_40%/0.7)]"
-            : "bg-[hsl(var(--studio-ink))] text-[hsl(var(--studio-card))] shadow-studio-lg",
-        )}
+        className={
+          ivory
+            ? cn(
+                "fixed bottom-5 right-5 z-40 grid h-14 w-14 place-items-center rounded-full shadow-hec-2 transition-colors duration-hec-1 ease-hec md:bottom-6 md:right-6",
+                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+                // Ringing: the danger fill, the bell icon and the label say it (no bounce: DESIGN_SYSTEM s.9).
+                alarming
+                  ? "bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90"
+                  : "bg-hec-action text-hec-on-action hover:bg-hec-action/90",
+              )
+            : cn(
+                "studio-focus fixed bottom-5 right-5 z-40 grid h-14 w-14 place-items-center rounded-full transition-transform md:bottom-6 md:right-6",
+                "hover:scale-105 active:scale-95",
+                alarming
+                  ? "animate-bounce bg-[hsl(2_72%_46%)] text-white shadow-[0_10px_30px_-8px_hsl(2_72%_40%/0.7)]"
+                  : "bg-[hsl(var(--studio-ink))] text-[hsl(var(--studio-card))] shadow-studio-lg",
+              )
+        }
       >
         {alarming ? (
           <Bell className="h-6 w-6" aria-hidden />
@@ -183,19 +199,28 @@ export function ClassroomToolsLauncher() {
         )}
 
         {running && !alarming && (
-          <span className="pointer-events-none absolute -right-1 -top-1 min-w-[2.25rem] rounded-full bg-[hsl(var(--studio-sage))] px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums text-[hsl(var(--studio-sage-ink))] shadow-studio">
+          <span className={ivory ? "pointer-events-none absolute -right-2 -top-2 min-w-[2.75rem] rounded-full border border-hec-line bg-hec-raised px-1.5 py-0.5 text-center text-hec-caption font-semibold tabular-nums text-hec-ink shadow-hec-1" : "pointer-events-none absolute -right-1 -top-1 min-w-[2.25rem] rounded-full bg-[hsl(var(--studio-sage))] px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums text-[hsl(var(--studio-sage-ink))] shadow-studio"}>
             {formatCompact(remaining)}
           </span>
         )}
 
         {noiseLive && !alarming && !running && (
           <span
-            className={cn(
-              "pointer-events-none absolute -bottom-0.5 -left-0.5 min-w-[1.75rem] rounded-full px-1 py-0.5 text-[9px] font-bold leading-none tabular-nums shadow-studio",
-              noiseLevel > 65
-                ? "animate-pulse bg-[hsl(var(--studio-clay))] text-[hsl(var(--studio-clay-ink))]"
-                : "bg-[hsl(var(--studio-sage))] text-[hsl(var(--studio-sage-ink))]",
-            )}
+            className={
+              ivory
+                ? cn(
+                    "pointer-events-none absolute -bottom-1 -left-1 min-w-[2rem] rounded-full border px-1 py-0.5 text-center text-hec-caption font-semibold tabular-nums shadow-hec-1",
+                    noiseLevel > 65
+                      ? "border-hec-warn/30 bg-hec-warn-tint text-hec-warn"
+                      : "border-hec-line bg-hec-raised text-hec-ink",
+                  )
+                : cn(
+                    "pointer-events-none absolute -bottom-0.5 -left-0.5 min-w-[1.75rem] rounded-full px-1 py-0.5 text-[9px] font-bold leading-none tabular-nums shadow-studio",
+                    noiseLevel > 65
+                      ? "animate-pulse bg-[hsl(var(--studio-clay))] text-[hsl(var(--studio-clay-ink))]"
+                      : "bg-[hsl(var(--studio-sage))] text-[hsl(var(--studio-sage-ink))]",
+                  )
+            }
           >
             {noiseLevel}
           </span>
@@ -209,34 +234,43 @@ export function ClassroomToolsLauncher() {
           onInteractOutside={keepOpenForClassScreen}
           onPointerDownOutside={keepOpenForClassScreen}
           onFocusOutside={keepOpenForClassScreen}
-          className="studio-surface [backdrop-filter:none] flex w-full flex-col gap-0 border-l-0 p-0 sm:max-w-[min(100vw-2rem,82rem)]"
+          className={
+            ivory
+              ? "flex w-full flex-col gap-0 bg-hec-paper p-0 text-hec-ink sm:max-w-[min(100vw-2rem,82rem)]"
+              : "studio-surface [backdrop-filter:none] flex w-full flex-col gap-0 border-l-0 p-0 sm:max-w-[min(100vw-2rem,82rem)]"
+          }
         >
           <ClassScreenContainerContext.Provider value={panelEl}>
-          <header className="shrink-0 border-b border-studio px-5 pb-3 pt-5 sm:px-7">
-            <SheetTitle className="studio-title text-2xl">Classroom tools</SheetTitle>
-            <SheetDescription className="mt-0.5 text-sm text-ink-soft">
+          <header className={ivory ? "shrink-0 border-b border-hec-line px-4 pb-3 pr-14 pt-4 sm:px-6 sm:pr-14" : "shrink-0 border-b border-studio px-5 pb-3 pt-5 sm:px-7"}>
+            <SheetTitle className={ivory ? "font-display text-hec-h2 font-medium text-hec-ink" : "studio-title text-2xl"}>Classroom tools</SheetTitle>
+            <SheetDescription className={ivory ? "mt-1 text-hec-small text-hec-ink-soft" : "mt-0.5 text-sm text-ink-soft"}>
               Everything on one page — nothing hides anything else.
             </SheetDescription>
 
+            {/* Ivory: the jump bar wraps instead of scrolling sideways (DESIGN_SYSTEM s.12); icons from sm, so a phone fits it in three rows. */}
             <nav
               aria-label="Jump to a tool"
-              className="scrollbar-hide -mx-1 mt-3 flex gap-1 overflow-x-auto px-1 pb-1"
+              className={ivory ? "mt-3 flex flex-wrap gap-2" : "scrollbar-hide -mx-1 mt-3 flex gap-1 overflow-x-auto px-1 pb-1"}
             >
               {TOOLS.map((tool) => (
                 <button
                   key={tool.id}
                   type="button"
                   onClick={() => jumpTo(tool.id)}
-                  className="studio-focus inline-flex shrink-0 items-center gap-1.5 rounded-full border border-studio bg-studio-card px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-[hsl(var(--studio-ink))] hover:text-[hsl(var(--studio-card))]"
+                  className={
+                    ivory
+                      ? "inline-flex min-h-hec-target items-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 text-hec-small font-medium text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+                      : "studio-focus inline-flex shrink-0 items-center gap-1.5 rounded-full border border-studio bg-studio-card px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-[hsl(var(--studio-ink))] hover:text-[hsl(var(--studio-card))]"
+                  }
                 >
-                  <tool.icon className="h-3.5 w-3.5" aria-hidden />
+                  <tool.icon className={ivory ? "hidden h-4 w-4 sm:block" : "h-3.5 w-3.5"} aria-hidden />
                   {tool.label}
                 </button>
               ))}
             </nav>
           </header>
 
-          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7">
+          <div ref={scrollRef} className={ivory ? "min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6" : "min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7"}>
             {/* Three across only from xl. At lg the sheet is barely 1000px, and
                 three columns there squeezed every card title onto two lines
                 and truncated the controls. */}
@@ -254,7 +288,7 @@ export function ClassroomToolsLauncher() {
                     fallback={
                       <div
                         aria-hidden
-                        className="studio-card animate-pulse opacity-60"
+                        className={ivory ? "animate-pulse rounded-hec-lg border border-hec-line bg-hec-surface opacity-60 shadow-hec-1" : "studio-card animate-pulse opacity-60"}
                         style={{ minHeight: tool.wide ? 300 : 260 }}
                       />
                     }
