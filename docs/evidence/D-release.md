@@ -33,3 +33,10 @@ How to compare: paste the .sql in the SQL editor after applying both migrations,
 - `informational` (view definition md5, view reloptions) may differ across Postgres major versions (deparse); investigate only if the views' columns or privileges also differ.
 - May legitimately differ between pglite and Supabase: `columns[].default` and `constraints[].md5_def` and policy `md5_qual`/`md5_with_check` are deparsed text and could differ by Postgres version in formatting; they match in a same-version comparison. `config` is sorted `name=value` text, expected `["search_path=public"]`.
 - Privileges use has_function_privilege/has_table_privilege, which include PUBLIC and inherited grants; Supabase default privileges are revoked by the migrations' own REVOKE statements for every object they list.
+
+## Gates (run on release/d1 with the node_modules junction)
+
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0.
+- `node scripts/pgtest/run.mjs`: 2155 assertions across 33 suites, 0 suite(s) failed (30 from origin/main + 3 D). session held evidence 143/0, session cancel guard 266/0, session guard functions 135/0, shared-module mirrors 13/0, edge functions typecheck 5/0.
+- `npx --yes bun test scripts/*.test.ts`: 73 pass, 0 fail (7 files, includes sessionGuard.test.ts).
+- `git diff --stat origin/main release/d1`: 42 files, only IN paths plus the fingerprint files and this evidence file.
