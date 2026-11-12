@@ -61,7 +61,7 @@ export function LevelMeter({ label, level, device }: { label: string; level: Lev
     <div className="space-y-1.5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
         <span className="font-medium">{label}</span>
-        <span className={cn("text-sm font-medium inline-flex items-center gap-1", toneText[w.tone])}>
+        <span className="text-sm font-medium inline-flex items-center gap-1 text-foreground">
           <ToneIcon tone={w.tone} className="h-4 w-4" /> {level ? w.word : "Not listening"}
         </span>
       </div>
@@ -90,7 +90,7 @@ export function MicTick({ label, ok, detail }: { label: string; ok: boolean; det
     <div className="flex items-start gap-2 min-w-0">
       <ToneIcon tone={ok ? "ok" : "error"} className="mt-0.5 h-6 w-6" />
       <div className="min-w-0">
-        <p className="font-medium">{label} <span className={cn("text-sm", ok ? "text-success" : "text-destructive")}>{ok ? "ready" : "not ready"}</span></p>
+        <p className="font-medium">{label} <span className="text-sm font-semibold text-foreground">- {ok ? "ready" : "not ready"}</span></p>
         <p className="text-sm text-muted-foreground break-words">{detail}</p>
       </div>
     </div>
