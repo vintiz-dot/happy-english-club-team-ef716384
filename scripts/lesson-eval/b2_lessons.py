@@ -113,7 +113,7 @@ def lesson_wav(code: str) -> Path:
     with open(MANIFEST, newline="", encoding="utf-8") as f:
         for r in csv.DictReader(f):
             if r["set"] == "lessons" and r["source_sha256"].startswith(LESSONS[code]):
-                return WAV_DIR.parent / r["wav_file"] if not Path(r["wav_file"]).is_absolute() else Path(r["wav_file"])
+                return WAV_DIR / r["wav_file"] if not Path(r["wav_file"]).is_absolute() else Path(r["wav_file"])
     sys.exit(f"{code}: not found in manifest")
 
 
