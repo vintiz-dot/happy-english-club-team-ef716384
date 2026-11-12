@@ -1,6 +1,6 @@
 # D3 dialogs ("Check before cancelling")
 
-Where I am / next step: all code, tests and screenshots done; waiting on the final tsc run result (see "Verification"), then remove the node_modules link and report.
+Where I am / next step: DONE. Final commit made; node_modules links removed.
 
 Written and rendered against a FAKE client only. Nothing deployed, no live Supabase, no sign-in.
 
@@ -22,7 +22,7 @@ All read through ONE adapter, `readStoredBills()` in `src/lib/sessionGuard.ts`; 
 ## Verification
 
 - `npx --yes bun test scripts/sessionGuard.test.ts`: 30 pass, 0 fail (reason mirror, typed date, canSubmit gating, error codes and parseInvokeError, stale diff, stored-bill rows/totals without arithmetic, payroll line, refresh summary, bulk grouping and acknowledgement, review filters).
-- tsc: see the last line of this file.
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0 (run after the type fixes; the later contrast edits changed only CSS class strings). The first run had caught 14 real errors (boolean `ok` does not narrow without strictNullChecks), fixed.
 - No direct write to `sessions` in any file I touched (grep script over `src/`, `.from("sessions")` followed by insert/update/delete/upsert). Remaining direct session writes elsewhere in `src/` (not mine; contract says unaffected by the functions, but the migration's trigger still governs them):
   - `src/components/admin/class/AttendanceDrawer.tsx:129`
   - `src/components/admin/class/SessionDetailDrawer.tsx:115` (teacher/notes)
