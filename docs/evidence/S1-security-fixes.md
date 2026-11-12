@@ -1,6 +1,6 @@
 # S1 security fixes (F-01, F-14, F-15, F-16, F-21, F-02)
 
-**Where I am / next step:** 13 Nov 2026. F-01, F-14 and F-15 are built, tested and written up below (three migrations, three suites). Next: F-16 (classmates' rows), then F-21, then F-02.
+**Where I am / next step:** 13 Nov 2026. COMPLETE for this batch: F-01, F-14, F-15, F-16, F-21 (five migrations) and F-02 (nine functions) are built, tested and written up below. `node scripts/pgtest/run.mjs` and `tsc --noEmit -p tsconfig.app.json` are green. Next step is the owner's: the decisions table at the end. Then the conductor applies each migration and deploys the nine functions.
 
 Build and test only. **Nothing here has been applied to live, deployed or pushed.** The live database was read read-only (catalog, aggregate counts). No row about a person was selected; no secret was read.
 
@@ -8,9 +8,16 @@ Each fix is its own migration so the owner can approve, and the conductor apply,
 
 | Finding | Migration | Suite (`node scripts/pgtest/run.mjs`) | Code that ships with it |
 |---|---|---|---|
-| F-01 | `supabase/migrations/20261113100000_signup_role_from_server_only.sql` | `signup-role.test.mjs` (77) | `src/pages/Auth.tsx` (form offers Student / Family only); `student-create-migration-account` (upsert) |
+| F-01 | `supabase/migrations/20261113100000_signup_role_from_server_only.sql` | `signup-role.test.mjs` (80) | `src/pages/Auth.tsx` (form offers Student / Family only); `student-create-migration-account` (upsert; needs a deploy) |
 | F-14 | `supabase/migrations/20261113110000_homework_bucket_scope.sql` | `homework-bucket-scope.test.mjs` (141) | none |
-| F-15 | `supabase/migrations/20261113120000_pause_enrollment_admin_only.sql` | `pause-enrollment.test.mjs` | none |
+| F-15 | `supabase/migrations/20261113120000_pause_enrollment_admin_only.sql` | `pause-enrollment.test.mjs` (37) | none |
+| F-16 | `supabase/migrations/20261113130000_classmate_rows_private.sql` | `classmate-rows.test.mjs` (77) | `src/lib/classSkillPoints.ts`, `RadarChartTab`, `PerformanceHeatmapTab`, `StudentAnalyticsModal` |
+| F-21 | `supabase/migrations/20261113140000_creator_rows_need_class_staff.sql` | `creator-rows.test.mjs` (123) | `src/lib/safeUrl.ts` and the five places a stored link is rendered |
+| F-02 | none (edge functions) | `ai-gate.test.mjs` (250) | `_lib/ai-gate.ts`, the nine functions, `supabase/config.toml` |
+
+Rollbacks: F-01 and F-15 are the fenced blocks marked `<!-- rollback F-0x -->` in this file; F-14, F-16, F-21 are `docs/evidence/S1-F14-rollback.sql`, `S1-F16-rollback.sql`, `S1-F21-rollback.sql`. Every one is executed by its suite. Where a suite needs "production as it is", it gets it from that same rollback text, and the function bodies involved are checked against md5 sums read from the live catalog.
+
+Browser and database can ship in either order for every item: the browser changes work against the old database (they fall back or only narrow what is shown), and the migrations do not need the new browser - except that F-16 without the browser change leaves the classmate pop-up's tabs open and empty rather than replaced by the "private" line.
 
 ---
 
@@ -456,3 +463,231 @@ $function$;
 REVOKE EXECUTE ON FUNCTION public.pause_enrollment(uuid, uuid, date, date, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.pause_enrollment(uuid, uuid, date, date, text) TO authenticated;
 ```
+
+---
+
+## F-16 - classmates' rows
+
+### The policies (live, 13 Nov 2026)
+
+| Table | Policy | What it handed to every family in the class |
+|---|---|---|
+| `students` | "Students can view classmates for leaderboard" (`can_view_classmate`) | the whole row: date of birth, phone, email, the school's notes, family id, linked user id, cash, sibling-discount date |
+| `attendance` | "Classmates can view attendance" | every classmate's status and note, per lesson |
+| `skill_assessments` | "Students can view class skill assessments" | every score and the teacher's comment |
+| `point_transactions` | "Students can view class transactions" | every award with its note |
+| `student_points` | "Students can view class leaderboard" | month totals per child - **kept**: numbers only, and the board needs them |
+
+### What the screens really read (traced in `src/` and the edge functions)
+
+| Screen | Where classmates' data comes from | Affected? |
+|---|---|---|
+| The class board a family sees (`StudentClassLeaderboard` -> Star Board / High Scores / Night League / podium) | edge function `class-leaderboard`: service role, checks the caller's enrollment, returns id, name, avatar, points. `canReadLedger={false}`. | no |
+| Staff boards (`ClassLeaderboardShared`, `ProjectedBoard`, `TeacherLeaderboards`, `ClassBoardWindow`) and their ledger (`useBoardExtras`) | the staff's own policies (`is_teacher_of_class`, admin) | no |
+| Video wall | `get_class_video_wall` | no |
+| Calendar (`GlobalCalendar`, `StudentScheduleCalendar`, `calendar-events`, `assignment-calendar`) | own enrollments; `sessions` through `is_student_enrolled_in_class` | no |
+| Family / student dashboards, attendance heat-map, points chart, lesson detail | every query filters by the child's own id | no |
+| The assistant (`chat`) | `_lib/chat-context` reads the caller's own children; `studentFor` / `classFor` refuse anyone else before a query runs. Narrower row policies only add a second wall behind it. `chat-assistant.test.mjs` stays green (201). | no |
+| **The pop-up opened by tapping a child on the board** (`StudentAnalyticsModal`: Attributes, Performance, Quest Log, History) | direct reads of `skill_assessments`, `attendance`, `point_transactions` by that child's id - for a classmate this is exactly the leak | **yes - see below** |
+| The same pop-up for one's own child: "class best", class average and the top three per skill | class-wide `skill_assessments` rows (with `students!inner(full_name)`) | **yes - now a function** |
+
+### The fix
+
+Each of the four policies keeps its old test and gains one more, `is_family_student(<child>, auth.uid())`: the row's child must be in the caller's own family (the child's login, second login, the family's primary login, or a login linked to a brother or sister). The new policy is literally `is_family_student(...) AND <the old expression>` - the suite asserts that word for word - so it can only return a subset of what the old one did. Why not just drop them: `skill_assessments` has no other family read policy (dropping it would hide a child's own scores from their parent), and 5 live accounts are linked to one child and read a sibling only through these policies (counted: 5 accounts, 5 children; they keep exactly that).
+
+`get_class_skill_points(class, from, to)` returns student id, name, skill and summed score - no comment, no date, no row id - to the class's current families, its staff and admins. `src/lib/classSkillPoints.ts` calls it for the two class panels and falls back to the old query, so browser and database can ship in either order.
+
+The pop-up, for a classmate, now shows its header (name, avatar, level, points by category - what the board already shows) and one line: "...Skills, attendance and history are private to each student and their family." It decides by asking the database for that child's `students` row, so staff, admins and the child's own family see the tabs as before.
+
+**This is the one visible change in the whole batch, and it is the owner's call** (decision 3 below): until now a parent or child could open a classmate's skills chart, attendance and point history. The brief for this fix says a classmate is a name and points; the pop-up now matches that.
+
+### Before / after
+
+| Who | Before | After |
+|---|---|---|
+| A family, about a classmate | the full `students` row; attendance + notes; skill scores + teacher comments; every award + note | nothing in those four tables; the month's point totals; name / avatar / points through the board; per-skill totals with names through the function |
+| A family, about its own children | everything | everything, unchanged (asserted row for row) |
+| A login linked to one child, about that child's sibling | what the classmate policies happened to give | exactly the same |
+| Teacher / TA of the class, admin | unchanged | unchanged (asserted) |
+| Unlinked account, no role, anon | nothing | nothing |
+
+### What could break, and the test (`classmate-rows.test.mjs`, 77 assertions)
+
+- the five helper functions in the test are production's, checked by md5 against the live catalog; the four old policies come from the rollback file, verbatim; every other policy on the tables is copied from `pg_policies`.
+- before: a parent reads a classmate's phone, email, date of birth and notes; a child reads the teacher's comments on a classmate; a classmate's parent reads another child's register note.
+- after, per login and per table: whose rows are visible; then three general statements over every login and table - **no login reads a row it could not read before; no family login reads a row about a child outside its family; no family login lost a row about its own family**.
+- each screen's query as the caller (the SQL PostgREST runs): the service-role roster of `class-leaderboard`; the family's `student_points` read; staff rosters with names, the ledger, the economy cash column; admin; the pop-up's four tabs for an own child (rows and the teacher's comment still there) and for a classmate (nothing; the row probe says no); the two dashboards; the calendar (own class and the sibling's); the assistant's context, `find_students` and a teacher's roster.
+- `get_class_skill_points` equals, figure for figure, what the panel added up from rows before; 0 rows for a teacher of another class, a family of another class, an unlinked account, a role-less account, no uid; anon cannot call it.
+- a stray policy under an old name is dropped; an unknown policy still calling `can_view_classmate` stops the install; pasted twice; rollback file run (policies byte-identical to the start, every login's reach identical to before), fix re-pasted.
+
+Not covered: the browser itself. After applying, open a class board as a parent, tap own child (four tabs with data), tap a classmate (header and the private line), and check "Class best" on the Attributes tab still shows a number.
+
+### Post-apply probes (read-only)
+
+```sql
+-- P1  the four old names are gone, the four new ones are there: expect 4 rows, all "Family logins ..."
+SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public'
+   AND (policyname LIKE 'Family logins can view %' OR policyname IN ('Students can view classmates for leaderboard',
+        'Classmates can view attendance', 'Students can view class skill assessments', 'Students can view class transactions')) ORDER BY 1;
+-- P2  the board's numbers are still class-wide: expect 1 row
+SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = 'student_points' AND policyname = 'Students can view class leaderboard';
+-- P3  the two functions: definer t, anon f, authenticated t
+SELECT proname, prosecdef, has_function_privilege('anon', oid, 'EXECUTE') anon, has_function_privilege('authenticated', oid, 'EXECUTE') authenticated
+  FROM pg_proc WHERE proname IN ('is_family_student', 'get_class_skill_points');
+-- P4  sibling reach kept (the 5 accounts): expect the same number before and after the paste (13 Nov: 5)
+WITH linked AS (SELECT DISTINCT family_id, u FROM (SELECT family_id, linked_user_id u FROM public.students WHERE linked_user_id IS NOT NULL AND family_id IS NOT NULL
+                 UNION ALL SELECT family_id, secondary_user_id FROM public.students WHERE secondary_user_id IS NOT NULL AND family_id IS NOT NULL) x)
+SELECT count(*) FROM public.students s JOIN linked l ON l.family_id = s.family_id
+ WHERE NOT public.can_view_student(s.id, l.u) AND public.can_view_classmate(s.id, l.u);
+```
+
+Rollback: `docs/evidence/S1-F16-rollback.sql` (the four policies verbatim; drops the two functions). Run by the suite. Reopens F-16.
+
+---
+
+## F-21 - creator-owned rows, and links
+
+### The policies (live) and who really writes these tables
+
+One `FOR ALL` policy each on `student_work`, `student_reports`, `cefr_assessments`, `student_error_log`: `<creator column> = auth.uid() OR (class_id IS NOT NULL AND is_teacher_of_class(...))`. The first half has no role and no class. `resources` had insert / update / delete on `uploaded_by = auth.uid()` for anyone, and its UPDATE had no WITH CHECK.
+
+| Writer | As | Sets |
+|---|---|---|
+| `TeacherSmartUpload` (photo, team work, link, approve) | a teacher / TA of the class | `uploaded_by = me`, `class_id` = the class open |
+| `BulkReportExport` from a class page; publish toggle | a teacher / TA of the class | `generated_by = me`, `class_id` |
+| `AIReportDialog`, `BulkReportExport` in admin reports | an admin (`class_id` may be null) | admin policy |
+| `TeacherTranscripts` backfill, live "flag" (`StudentActionPopover`) | a teacher / TA of the class | `created_by = me`, `class_id` |
+| `ocr-student-work`, `ocr-vocab-scan`, `generate-work-feedback`, `generate-student-report`, `analyze-transcript`, `cefr-defense`, `approve_video_feedback` | service role / SECURITY DEFINER | not subject to these policies |
+| `useResources` (teacher library) | a teacher or admin | `uploaded_by = me` |
+
+No feature here is self-service for a child: the child's account only reads (approved work, published reports, own CEFR, own errors).
+
+Live rows (aggregates): `student_work` 253 (246 uploaded by the class's current staff, 7 by an account holding no role today, 28 with no child yet, 10 whose child never had an enrollment in that class - 3 of those not reachable by the uploader's current classes either); `student_reports` 9 and `cefr_assessments` 9 with a creator, **all 18 made on 30-31 Jul 2026 by one account that holds no role today**; `student_error_log` 170 with a creator, all by class staff; `resources` 8, all by teachers / admins. 41 links stored (`student_work` 37, `resources` 4): all `http(s)://`, none with whitespace.
+
+### The fix
+
+Per table: SELECT - class staff as before, the creator only while holding role `teacher`; INSERT - role `teacher`, staff of the row's class, the creator column is the caller, and the child has an enrollment in that class (any date) or is currently in one of the caller's classes; UPDATE - staff of the row's class before and after, same child test on the new row (being the creator is no longer enough); DELETE - staff of the row's class. `student_work` checks every team member the same way. `resources`: own rows only while holding `teacher` or `admin`; an update cannot hand the row away.
+
+Links: `external_url` on `student_work` and `resources`, and `resources.thumbnail_url`, must match `^https?://` with no whitespace or control characters (CHECK, NOT VALID - existing rows are not re-checked at paste time; all 41 pass anyway, so no existing row is blocked from later updates). In the browser `src/lib/safeUrl.ts` applies the same rule at the five places a stored link is rendered or opened.
+
+### Before / after
+
+| Who | Before | After |
+|---|---|---|
+| Any signed-in account (parent, child, new, role-less) | plants approved work with notes and a link, a published report, a CEFR level, error-log entries on ANY child; adds resources | none of it |
+| A teacher of another class | the same, about any child | not for a class they do not teach, nor a child who is not theirs |
+| A teacher / TA of the class | everything on the class's rows | the same writes; cannot move a row to another class, re-point it at another class's child, or sign it as someone else |
+| The creator who is not class staff | full control of "their" rows forever | reads them while a teacher; cannot change or delete |
+| An account that made rows and now holds no role (the 18 + 7 live rows) | reads and edits them | neither. The rows themselves are untouched; class staff, admins and the child still read them |
+| Admin, service role | everything | everything |
+| Anyone, a non-http(s) link | accepted, rendered into `<a href>` | refused by the table; not rendered by the browser |
+
+### What could break, and the test (`creator-rows.test.mjs`, 123 assertions)
+
+- before: five kinds of account each plant all five; the targeted child's own login then reads the forged work (with its link), report, level and error entry; a `javascript:` link is stored.
+- after: the same attempts by a parent, a child, a new account, a role-less account, a self-made teacher, a former-staff account, no uid, anon - nothing; a parent cannot write these about their own child either; teacher B cannot write about class A; teacher A cannot file class-A rows about a class-B child, a child enrolled nowhere, or with no class, or under another person's id.
+- what staff really do, statement by statement, as a teacher and as a TA: photo upload with no child yet (and the id comes back), team work, an https link, approve with a child assigned, start a report, publish it, transcript backfill, live flag, CEFR point; work for a child who has left the class; editing rows the service role created; reject and delete; admin with no class; the service role's writes.
+- updates and moves: a creator from another class reads but cannot change; the class's staff can; the role-less creator reads nothing and the child still reads the report; no move to another class, no re-pointing at another class's child, no foreign team member, no column-free UPDATE across classes.
+- no login reads a row it could not read before; the child's and family's reads are unchanged.
+- links: four ordinary URLs accepted; sixteen bad ones refused for all three columns (`javascript:` in several spellings, `data:`, `vbscript:`, `file:`, scheme-relative, bare host, whitespace, newline, NUL, empty string, `ftp:`); refused for the service role too; a bad link planted before the paste survives it and can be cleared; the browser rule exists and all five render sites use it.
+- an unknown creator-owned policy stops the install; pasted twice; rollback file run (policies byte-identical to the start, forgeries possible again), fix re-pasted.
+
+Known edges, on purpose: 3 live `student_work` rows name a child who was never in that class and is not in the uploader's classes today - class staff can no longer re-save those three (an admin can). A self-made `teacher` account can still add a resource of its own; that is closed by F-01 and by looking at the two unexplained teacher accounts, not here. `resource_class_access` is unchanged (any teacher can share a resource with any class - with F-18). `TeacherBooks` opens a teacher's own flip-book URL without the helper (their own data, their own session).
+
+### Post-apply probes (read-only)
+
+```sql
+-- P1  no creator-only write policy left: expect 0 rows
+SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public'
+   AND tablename IN ('student_work','student_reports','cefr_assessments','student_error_log','resources') AND cmd IN ('ALL','INSERT','UPDATE')
+   AND concat_ws(' ', qual, with_check) ~ '(uploaded_by|generated_by|created_by) = auth\.uid\(\)'
+   AND concat_ws(' ', qual, with_check) !~ 'staff_may_write_for|has_role';
+-- P2  the new set: expect 4, 4, 4, 4 and resources 3 (+ the admin / read policies already there)
+SELECT tablename, count(*) FROM pg_policies WHERE schemaname = 'public' AND policyname ~ '_staff_(select|insert|update|delete)' GROUP BY 1 ORDER BY 1;
+-- P3  the three link constraints: expect 3 rows, convalidated f
+SELECT conrelid::regclass, conname, convalidated FROM pg_constraint WHERE conname LIKE '%_url_http';
+-- P4  no stored link fails them: expect 0, 0 (13 Nov: 0, 0). A non-zero count names rows that can no longer be updated until fixed.
+SELECT (SELECT count(*) FROM public.student_work WHERE external_url IS NOT NULL AND external_url !~* '^https?://[^[:space:][:cntrl:]]+$') work,
+       (SELECT count(*) FROM public.resources WHERE (external_url IS NOT NULL AND external_url !~* '^https?://[^[:space:][:cntrl:]]+$')
+                                                 OR (thumbnail_url IS NOT NULL AND thumbnail_url !~* '^https?://[^[:space:][:cntrl:]]+$')) resources;
+```
+Then a teacher uploads one photo in Smart Upload, approves it, and flags one error in class.
+
+For the owner (needs rows, so not done here): look at the 9 reports and 9 CEFR points created on 30-31 Jul 2026 and the 7 work items by an account with no role - `SELECT generated_by, count(*) FROM public.student_reports GROUP BY 1` - and decide whether they are genuine (they may be the retired demo teacher's).
+
+Rollback: `docs/evidence/S1-F21-rollback.sql` (the seven policies verbatim; drops the new policies, helpers and constraints). Run by the suite. Reopens F-21.
+
+---
+
+## F-02 - the nine AI / speech / image functions
+
+No migration. Code in `supabase/functions/` (needs a deploy of the nine, with `verify_jwt = true`) and `supabase/config.toml`.
+
+### What each is, who calls it, and the gate it now stands behind
+
+All nine: `requireSpender` (`_lib/ai-gate.ts`) straight after the CORS preflight, before the body is read - a real session verified with Supabase Auth (`authenticateUser`; the public key alone is 401), a role from `user_roles` (`requireRole`; an account with no role is 403; the service-role key is 403 - nothing calls these internally), then the existing in-memory limiter keyed by function + user id from the token.
+
+| Function | Vendor | Caller in `src/` | Roles | Limit per account | Live `verify_jwt` -> now |
+|---|---|---|---|---|---|
+| `word-enrichment` | OpenAI | `WordExplorer.tsx:227` (Vocabulary page) | any role | 40 / 5 min | off -> on |
+| `image-search` | Pixabay, Pexels, Google CSE, Unsplash | `ImageCarousel.tsx:83, 294`, `VocabularyCreator.tsx:200` | any role; `provider` / `skip_cache` staff only | 90 / 5 min | off -> on |
+| `pronounce-syllables` | Azure TTS | `WordExplorer.tsx:284` | any role | 60 / 5 min | off -> on |
+| `pronounce-viseme` | Azure Speech SDK | `VisemePlayer.tsx:251` (only inside `VocabularyCreator`, which nothing mounts) | any role | 60 / 5 min | off -> on |
+| `smart-dictation` | OpenAI | `VocabularyCreator.tsx:224` (unmounted) | any role | 40 / 5 min | on |
+| `smart-dictionary` | OpenAI + dictionaries | `VocabularyCreator.tsx:117` (unmounted) | any role | 40 / 5 min | on |
+| `sapling-grammar` | Sapling | `grammarChecker.ts:416` (from `WordExplorer`) | any role | 90 / 5 min | on |
+| `get-speech-token` | Azure Speech token | `video/livePronunciation.ts:27` (the video recorder) | any role | 30 / 10 min | on |
+| `image-generate` | OpenAI DALL-E 3 | none | teacher, admin | 10 / 10 min | on |
+
+"Any role" = student, family, teacher or admin. Every caller goes through `supabase.functions.invoke`, which sends the signed-in session's token; none uses a raw `fetch`; no sign-in, reset, claim, consent or shared-video page calls any of them (all asserted by the suite).
+
+### Before / after
+
+| Caller | Before | After |
+|---|---|---|
+| Nobody at all (no header) | reaches the vendor on 4 functions | 401 at the gateway (once deployed with `verify_jwt = true`) and 401 in the function |
+| The public key from the web page | reaches the vendor on all 9 | 401 |
+| A signed-in account with no role | reaches the vendor | 403 |
+| The service-role key | reaches the vendor | 403 |
+| Student / family | reaches the vendor | let through on 8, limited per account; 403 on `image-generate` and on `image-search`'s diagnostic switches |
+| Teacher / TA / admin | reaches the vendor | let through on 9, limited per account |
+
+### Tests (`ai-gate.test.mjs`, 250 assertions; each real function bundled and driven)
+
+Per function: the version before the gate (from git) spends for a caller with no header and for the public key - the defect; then no header, the public key, a non-session token, an empty bearer -> 401; service key, role-less account, an account whose role lookup errors -> 403; all with **no vendor call and no table read**; a role-less account naming an admin in the body and headers -> 403; each of the four roles let through (or 403 on the staff-only one) with the vendor actually called; an admin who also holds `student`; exactly N calls per account pass and call N+1 is 429 with Retry-After and no spend; another account unaffected; changing IP headers does not escape; unauthenticated is still 401, not 429; the gate is the first awaited thing after the preflight and its settings are the ones tested. `edge-functions.test.mjs` (type check) stays green.
+
+### What could break
+
+- **The Vocabulary page for a visitor who is not signed in.** `/vocabulary` and `/student/vocabulary` are not behind `ProtectedRoute`, so today anyone with the address can look words up at the school's expense. After this they get "Could not look up word". Nothing links there before sign-in. (Decision 5.)
+- A child who looks up more than 40 words in five minutes waits for the window. The limits are per account and generous for one child; a shared family login used on several devices at once shares one allowance.
+- The limiter is in memory: it resets on a cold start and is per instance (audit F-12). It stops a loop, not a determined account. A durable daily cap per account belongs in `_lib/ai-gate.ts`; not built here.
+- Not addressed here: F-03 (a signed-in caller's `context` still shapes the cached definition; the anonymous half is closed by the gate), input length caps, `voice` going into SSML unescaped (F-13).
+
+### Deploying it (the conductor, after the owner agrees)
+
+Deploy the nine functions from this branch with `verify_jwt = true` each (the four that were off are the permission change). `_lib/ai-gate.ts`, `_lib/auth.ts` and `_lib/rate-limit.ts` go with each. The browser needs no change. Post-deploy probes, no payload that reaches a vendor:
+
+- `curl -s -o /dev/null -w "%{http_code}" -X POST https://<project>.supabase.co/functions/v1/word-enrichment -d '{}'` -> 401 (was 400: it reached the handler). Same for `image-search`, `pronounce-syllables`, `pronounce-viseme`.
+- the same with `-H "Authorization: Bearer <public key>" -H "apikey: <public key>"` on all nine -> 401 (was 400 / 200).
+- signed in as a child: look up one word on the Vocabulary page (definition, pictures, the syllable audio) and start the video recorder once.
+
+Rollback: redeploy the nine from `origin/main` with their previous `verify_jwt` (off for `word-enrichment`, `image-search`, `pronounce-syllables`, `pronounce-viseme`). No data is involved.
+
+---
+
+## Owner decisions
+
+| # | Decision | Recommended default |
+|---|---|---|
+| 1 | Apply F-01, F-14, F-15 (three pastes) | Yes, today, in that order. No real family or teacher sees a difference. |
+| 2 | Turn off public sign-ups in Supabase Auth, and remove the "Join the club" tab | Yes. New families get a front-desk card, as they have since October. |
+| 3 | F-16: a family can no longer open a classmate's skills, attendance and point history in the board pop-up (name and points stay) | Yes. Ship the browser change with the paste. |
+| 4 | F-21: creators lose control of rows outside their classes; the role-less account's 18 July rows become unreadable to it | Yes. And look at those 18 rows and the 7 work items. |
+| 5 | F-02: the Vocabulary page stops working for visitors who are not signed in; four functions go behind the gateway check | Yes. |
+| 6 | The 2 teacher-role accounts with no teacher record; the 15 student accounts linked to nothing; the 17 with legacy `users.role = admin` | Run `scripts/CHECK-unlinked-accounts.sql`, look each up in Authentication > Users; remove the teacher role from the two unless you know them. Nothing here changes them. |
+
+## What is not done
+
+- Nothing is applied, deployed or pushed.
+- No real browser run: every screen claim above is from reading the code and from SQL / handler tests. The post-apply hand checks are listed per finding.
+- Out of this batch, noted on the way: `get_student_homeworks` lets a teacher with any lesson ever in a class read that child's homework (F-04); `teacher_rate_on` / `assistant_rate_on` (F-17); `recompute_student_points` / `refresh_invoice_carry` unchecked (F-20); `resource_class_access` any-teacher (F-18); the `homework` bucket has no size or type limit (F-19); `calendar-events` reads the legacy `users.role` (unused by the browser); new staff accounts get `users.role = student` in that legacy column.
