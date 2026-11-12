@@ -77,22 +77,23 @@ export default function StudentResources() {
     <Layout title="Resources">
       <div className="space-y-6">
         {/* ---- Header ---- */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2">
-            <div className="flex h-12 w-12 items-center justify-center rounded-hec-lg bg-hec-sunken">
-              <Sparkles className="h-6 w-6 text-hec-brass" />
-            </div>
+        {/* The same page header as Lessons, Videos and My Work: icon tile, title, one line under it. */}
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hec-md border border-hec-line bg-hec-sunken">
+            <Sparkles className="h-5 w-5 text-hec-brass" aria-hidden />
           </div>
-          <h1 className="font-display text-hec-display font-medium text-hec-ink">
-            My Resources
-          </h1>
-          <p className="text-hec-small text-hec-ink-soft">
-            {totalItems} thing{totalItems !== 1 ? "s" : ""} to explore! 🎉
-          </p>
+          <div className="min-w-0">
+            <h1 className="font-display text-hec-h1 font-medium text-hec-ink">
+              My Resources
+            </h1>
+            <p className="text-hec-small text-hec-ink-soft">
+              {totalItems} thing{totalItems !== 1 ? "s" : ""} to explore! 🎉
+            </p>
+          </div>
         </div>
 
         {/* ---- Search ---- */}
-        <div className="relative max-w-lg mx-auto">
+        <div className="relative max-w-lg">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-hec-ink-soft" />
           <Input
             placeholder="🔍 Search for resources..."
@@ -107,7 +108,7 @@ export default function StudentResources() {
 
         {/* ---- Class filter chips ---- */}
         {enrolledClasses.length > 1 && (
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => { setClassFilter(null); setPage(1); }}
               className={cn(
@@ -149,7 +150,7 @@ export default function StudentResources() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             {paged.map((resource) => (
               <ResourceCard
                 key={resource.id}
