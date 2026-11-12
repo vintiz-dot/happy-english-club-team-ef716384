@@ -1,6 +1,6 @@
 # C2 round 3 - after C2 review 2 (FAIL: N-B1..N-B3, N-M1..N-M9) and the C3 change list
 
-**Where I am / next step:** unit 404/0, recorder SQL 415/0, screens logic 30/0, app typecheck exit 0. Running: mutation run (reviewer's six + 13 new). Then browser suite, full pgtest, totals.
+**Where I am / next step:** DONE. All three blockers and nine majors fixed and tested; the C3 change list applied; suites green (totals below).
 
 Branch `worktree-agent-a4803c8e10a251526`; merged `claude/hec-conductor-setup-efbaa5` (review 2, C3 screens) at 5999dde. Synthetic audio only in every test. Nothing applied, deployed or pushed.
 
@@ -63,6 +63,20 @@ Review 2 section 7, item by item: (1) `stalled` is in CAPTURING: the bar and Sto
 
 The reviewer's six: 6 caught (D after one case). 13 new: 13 caught (I after one case).
 
+## Test totals (final code)
+
+- `node scripts/pgtest/run.mjs`: **3627 assertions across 42 suites, 0 suite(s) failed** - incl. recorder engine (unit) **406/0** (was 337), recorder screens logic **30/0** (new), class recorder SQL **415/0** (was 406), recorder retention 37/0, recorder cron 22/0, app typecheck 3/0, edge functions typecheck 5/0.
+- `tsc --noEmit -p tsconfig.app.json`: exit 0 (alone too).
+- `node scripts/recorder/browser.test.mjs` (Chromium, fake devices on the synthetic WAV, port 5362): full run 61/1 - the failing assertion demanded that the context be RE-MADE at autostart, but Chrome resumed the first one once the mics were open (recorded with no gesture all the same); the assertion now accepts either -> `--only=autostart` 3/3. 62 assertions in all, including the real `ctx.suspend()` / `ctx.close()` cases.
+
 ## Synthetic audio only
 
-The unit suite's one real-lesson FLAC check now runs only with `RECORDER_REAL_AUDIO=1`; the browser harness defaults to a synthetic WAV made by `scripts/recorder/make-synthetic-wav.mjs` (`C:\Users\Dell\hec-tools\c2r-harness\synthetic.wav`, harmonic tones + noise with pauses). Every run reported here used synthetic audio.
+The unit suite's one real-lesson FLAC check now runs only with `RECORDER_REAL_AUDIO=1`; the browser harness defaults to a synthetic WAV made by `scripts/recorder/make-synthetic-wav.mjs` (`C:\Users\Dell\hec-tools\c2r-harness\synthetic.wav`, harmonic tones + noise with pauses). Honest note: the first unit run of this round and the 19-mutant run started before that guard, so that one FLAC ratio check read a minute of the lesson file in place (nothing copied, nothing stored); the final unit run, the full pgtest run, the D/I re-run and the browser suite used synthetic audio only.
+
+## For the owner / conductor
+
+- The migration change (pre_start_ms) must be pasted with the rest of 20261112100000 (still never applied); the engine works against an older server too (no `setPreStart` -> treated as told), but then a slow start's audio is ahead of the server's clock.
+- Decision still open (review 2): unsent children's audio stays on the laptop until someone types DISCARD; the 14-day rule only reports.
+- Real-hardware checks: as in `docs/evidence/C2-revision.md`, plus: Wi-Fi off at the bell for 10 minutes (everything must reach the server afterwards), both USB microphones pulled at once (NOT RECORDING, then back by itself).
+
+**Where I am / next step:** DONE.
