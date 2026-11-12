@@ -113,6 +113,31 @@ const NOCLICK = `<!doctype html><meta charset="utf-8"><title>no click</title><sc
 })();
 </script>`;
 
+// The whole recorder started at load, with no gesture at all: prepare, arm
+// the lesson in ?l=<json>, record; results read later from window.__auto.
+const AUTOSTART = `<!doctype html><meta charset="utf-8"><title>autostart</title><script type="module">
+import * as R from "/recorder.js";
+import { makeClient, httpTransport } from "/fake-client.js";
+const out = window.__auto = { steps: [], errors: [] };
+try {
+  const L = JSON.parse(new URLSearchParams(location.search).get("l"));
+  const uid = "22222222-2222-4222-8222-222222222222";
+  const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach((t) => t.stop());
+  const devs = R.realInputs((await navigator.mediaDevices.enumerateDevices()).map((d) => ({ deviceId: d.deviceId, groupId: d.groupId, label: d.label, kind: d.kind })));
+  const pick = (d) => ({ deviceId: d.deviceId, groupId: d.groupId, label: d.label });
+  const profile = { version: 1, installId: R.getInstallId(), userId: uid, teacher: pick(devs[0]), room: pick(devs[1]), checks: {}, verifiedAt: null };
+  const rec = await R.createRecorder({ backend: R.supabaseBackend(makeClient(httpTransport(location.origin, () => uid))), userId: uid, profile, chunkMs: 10000, storageRefuseBytes: 0, storageWarnBytes: 0 });
+  window.rec = rec;
+  rec.on("error", (e) => out.errors.push(e.code));
+  rec.on("state", (e) => out.steps.push(e.state));
+  const p = await rec.prepare();
+  out.contextAtPrepare = p.contextRunning ? "running" : "suspended";
+  out.activationAtPrepare = navigator.userActivation.hasBeenActive;
+  out.recordingId = (await rec.arm(L)).id;
+  setTimeout(() => { out.contextRebuilt = rec.o.source.rebuiltContext; out.contextNow = rec.o.source.contextState; out.framesDelivered = rec.o.source.graph.framesDelivered; out.activationAt20s = navigator.userActivation.hasBeenActive; rec.stop(); }, 20000);
+} catch (e) { out.fatal = String(e && e.message || e); }
+</script>`;
+
 export async function startHarness() {
   const server = createFakeServer();
   const recorderJs = await bundleRecorder({ platform: "browser" });
@@ -130,7 +155,7 @@ export async function startHarness() {
         res.end(JSON.stringify(out));
         return;
       }
-      const types = { "/": ["text/html", PAGE], "/noclick": ["text/html", NOCLICK], "/recorder.js": ["text/javascript", recorderJs], "/fake-client.js": ["text/javascript", clientJs] };
+      const types = { "/": ["text/html", PAGE], "/noclick": ["text/html", NOCLICK], "/autostart": ["text/html", AUTOSTART], "/recorder.js": ["text/javascript", recorderJs], "/fake-client.js": ["text/javascript", clientJs] };
       const t = types[req.url.split("?")[0]];
       if (!t) { res.writeHead(404); res.end(); return; }
       res.writeHead(200, { "content-type": t[0], "cache-control": "no-store" });
