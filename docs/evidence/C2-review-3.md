@@ -10,6 +10,53 @@ A correction to review 2 first. I wrote there that no real audio was read. That 
 
 File:line is at bb70791; `controller.ts` etc. are under `src/lib/recorder/`.
 
+Probes: as in review 2, the unit suite's own harness (`unit.test.mjs` lines 14-33, 296-403, 775-789, verbatim) + my scenarios Q1-Q8, synthetic source, against the unmodified engine at bb70791; scenarios saved as `docs/evidence/C2-review-3-probes.mjs.txt`.
+
+## 1. The three blockers
+
+### N-B1 (slow / offline Start) - FIXED as designed; ONE new hole at 30 minutes
+Read: `beginCapture` sets t0 at the first captured sample and the local phase `capturing` before any Start is sent, so chunks and 5-s segments go to IndexedDB from the first second; `adoptServerStart` computes `pre_start_ms = server stamp - first sample`; `sendPreStart` states it before the uploader registers anything (`uploader.ts`: `rec.startedAtServer && rec.preStartAcked !== false`); `setState` titles `starting` "◌ WAITING FOR THE SERVER". The author's P2a/P2b cases are real (I re-ran the suite, section 4-5) and my own scenarios agree:
+- Q6, the page reloaded while waiting offline, network back 3 minutes later: `recovered 1 | server complete pre_start_ms 300021 stop_reason crash_recovered | teacher s on server 120` - all 120 s captured before the reload arrive.
+- Q7, Stop pressed while waiting offline: message `Stopped before the school server confirmed the start. The 90 s recorded are kept on this laptop and will be sent if the server still accepts this recording.`; online: `complete, pre_start_ms 94984, teacher s on server 90`.
+- Q8, a stated refusal after 3 minutes of waiting: `state error | source open false | 'NOT RECORDED on the server: Recording is switched off for this class. The 189 s captured before that are kept on this laptop (they cannot be sent); recording has stopped.' | heldAudio ['abandoned 25557698 B']` - true, and listed.
+- Messages: every text I could raise says what is true, with one exception below.
+
+**R3-B1 - MUST FIX before a real class (Q1).** The migration refuses `pre_start_ms` above 30 minutes (section 3, R3-1); the engine does not know, and the test fake has no such cap, so no suite can see it. With the SQL's rule applied in front of the fake (29 minutes as the control):
+```
+29 min offline: 5 min after the network is back: state recording | server chunks 406 ... | after Stop: server complete | teacher s on server 2040
+31 min offline: 5 min after the network is back: state recording | server chunks 0 | local chunks 432 | setPreStart calls 116
+                errors {"start_delayed":1,"server_refused":116}
+                'The school server started the recording 1877 s after this laptop began recording. All of it is kept and sent; ...'
+                "The audio before the server's start can be stated once, before any chunk, and not from before the window opened"
+                5 min after Stop: state uploading | server recording, ended_at null | teacher s on server 0 | pending 432 | stopPending true | errors total 204
+```
+`driveOnce` returns as soon as `sendPreStart` fails, before the Stop and before any upload, on every pass, for ever: not one chunk of the lesson reaches the server - including everything recorded AFTER the network came back - the Stop never lands (the row stays `recording` until the 14-day sweep abandons it), the state says `recording` with the red dot throughout, the one message says "kept and sent", and an error is raised every 2.5 s. The audio is safe on the laptop, so this is not a loss; it is a lesson that silently never becomes a server recording, on a school-internet outage of half an hour at the bell (or a reload followed by a late Start). Fix: remove the `LEAST(1800000, ...)` (the window bound is enough) or teach the engine and the fake the cap; either way a refused pre-start must not be retried for ever with the red dot on - after N refusals say "this recording cannot be sent" and stop claiming it is. Tests: SQL at 30 min + 1 ms; the engine at 31 minutes offline with the fake enforcing whatever the SQL enforces.
+
+Minor, same code: the in-memory copy never learns that the offset was accepted (`sendPreStart` saves the store's copy; the next chunk's `saveRec(a.rec)` writes `preStartAcked: false` back), so the statement is re-sent on every pass - 58 UPDATEs in the 29-minute control. Harmless only because the server treats an equal value as no change; copy the flag back into `a.rec`.
+
+### N-B2 (only a stated refusal ends Start) - FIXED
+`FINAL_START_REFUSALS` in `controller.ts`; everything else retried 2 s -> 30 s while capture continues. New scenario Q4, the Start LANDS, its answer is lost and the next two read-backs fail: `state recording | source open true | errors {"server_unavailable":2} | server complete, teacher s 40`. (In SQL a second `status = 'recording'` on a recording row is not a transition, :1095, so the retry simply returns the row.) Mutant N3 (section 4) asks whether each name in the list is tested.
+
+### N-B3 (both microphones lost) - FIXED
+`onTrackEnded` -> `noMics` -> `stalled` + `capture_stalled`; `capturingState()` is the only place a capturing state is chosen, and it never answers `recording` while `stalled || noMics`. Q5, one lost, then the other, then one back: `room lost: recording | teacher lost too: stalled | room back: recording`; the outage's chunks are below the floor (`teacher below_floor 20 s, room 30 s`). Q5b, both lost while the Start is unanswered: `stalled`, still `stalled` when the server answers, then `recording` when they return (`starting,stalled,starting,recording`). Both are searched for (two `device_unplugged`, the re-open loop per role).
+
+## 2. The eight majors
+
+| # | Verdict | Evidence |
+|---|---|---|
+| N-M1 second dead context | FIXED | `tryRecover`: no per-lesson latch, one re-make per 30 s (`lastRebuildAt`); `leaveStall` clears `rebuilt`. Author's P1 case; mutant B caught (section 4). |
+| N-M2 late after a long stall | FIXED for lateness; **the fill is not honest for short stalls - R3-M1 below** | `padSilence` (<= 30 min, both tracks), `padded_ms` in the manifest, a `gap` marker on the server. |
+| N-M3 clock round trip | FIXED | `measureClock` keeps a measurement only when `rtt <= 2 s` (the first one provisionally, re-measured in a minute). |
+| N-M4 ownerless legacy rows | FIXED | `adoptLegacy` asks the server (`started_by` is now in `REC_COLUMNS`); complete leftovers cleaned. Left over: an ownerless UNFINISHED row the server no longer knows cannot be discarded (`discardLocal` wants `abandoned` / `complete`); rare, minor. |
+| N-M5 complete with refused chunks | FIXED | `cleanAfterComplete`: labels and manifest go, refused audio stays AND is listed (`heldAudio` no longer skips `complete`). |
+| N-M6 hung encoder | FIXED | 30 s per-chunk timeout in `onRawChunk` -> inline for the rest of the lesson; `workerEncoder` 20 s + `onmessageerror`. (The hung Worker is not terminated; minor.) |
+| N-M7 hung re-open | FIXED | the re-open is raced against 10 s; `reopening` cleared in `finally`. |
+| N-M8 health across lessons | FIXED | `HealthMonitor.reset()` in `beginCapture`. |
+
+**R3-M1 (MAJOR, evidence): filled silence inside a chunk counts as recorded audio.** The honesty of the fill rests on "the silence is stored below the byte floor". That is true only for chunks that are ALL silence. A stall shorter than a chunk leaves its silence inside chunks that also hold real audio; those are far above the floor (4000 B/s for FLAC, :166) and count in full. Q3, twelve stalls of about 6 s in 4.5 minutes (10 s chunks): `stalls 12 | silence filled (s) 73 | teacher s on server 262 | of which below_floor (never evidence) 0 | counted as audio 262` - 73 of the 262 "recorded" seconds never existed, and the server's view cannot tell (the manifest and the `gap` markers say so; `recorder_session_evidence` reads neither). With production's 30 s chunks every stall under about 25 s is invisible to the evidence, and a long stall still over-counts up to one chunk at each end. Before round 3 the timeline simply had less audio, so nothing was over-counted. Bounded and not a loss - but it is exactly the question asked: is the fill "never evidence that the recording ran"? Not always. Fix (a claim that only ever LOWERS evidence needs no verification): let the page state the padded total with the Stop (or per track with the counts) and subtract it in the view; or subtract the server's own `gap` markers.
+
+Also for the runbook, not a defect: the fill is sized by the page's monotonic clock and capped at 30 minutes; a sleep the clock does not count, or a stall over 30 minutes, leaves the old behaviour (later chunks late). Hardware check 4 below.
+
 ## 3. The migration (`supabase/migrations/20261112100000_class_recorder.sql`, 52 changed lines, still unapplied)
 
 The cron migration `20261112101000` did not change (`git diff d449acc bb70791` on it is empty).

@@ -1,0 +1,121 @@
+// C2 review 3 - probe scenarios Q1-Q8 quoted in docs/evidence/C2-review-3.md (text, not a test suite, not product code).
+// To run at bb70791: prepend lines 14-33, 296-403 and 775-789 of scripts/recorder/unit.test.mjs (fix the four relative imports),
+// save next to that file, then: node scripts/recorder/probe3.mjs [Q1,Q3]. Synthetic audio only.
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const say = (...a) => console.log("   ", ...a);
+const codes = (errors, from = 0) => { const m = {}; for (const e of errors.slice(from)) m[e.code] = (m[e.code] ?? 0) + 1; return JSON.stringify(m); };
+const only = process.argv[2];
+const P = async (name, fn) => { if (only && !only.split(",").some((o) => name.startsWith(o + " "))) return; console.log(`\n=== ${name}`); try { await fn(); } catch (e) { console.log("    THREW", e?.stack ?? e); } };
+const secs = (w, id, track = "teacher", f = () => true) => Math.round(w.server.chunkRows(id).filter((c) => c.track === track && f(c)).reduce((n, c) => n + c.t_end_ms - c.t_start_ms, 0) / 1000);
+// The migration's own bound on pre_start_ms (20261112100000_class_recorder.sql:1012): at most 30 minutes. The fake server has no such cap.
+const sqlCap = (w) => {
+  const orig = w.backend.setPreStart.bind(w.backend); const calls = [];
+  w.backend.setPreStart = async (id, ms) => { calls.push(ms); if (ms > 1800000) throw { message: "The audio before the server's start can be stated once, before any chunk, and not from before the window opened", code: "P0001" }; return orig(id, ms); };
+  return calls;
+};
+
+for (const mins of [29, 31]) await P(`Q1 offline for the first ${mins} min of the window, with the migration's 30-min cap on pre_start_ms`, async () => {
+  const { w, src, r, errors, states, row, store } = await started();
+  const calls = sqlCap(w);
+  w.server.offline = true;
+  r.tick(); await r.settle();
+  await src.play(mins * 60, r, 400);
+  w.server.offline = false;
+  const n0 = errors.length;
+  await src.play(300, r, 200);
+  say("5 min after the network is back: state", r.state, "| server", w.server.recordings.get(row.id).status, "| server chunks", w.server.chunkRows(row.id).length, "| local chunks", (await store.listChunks(row.id)).length, "| setPreStart calls", calls.length, "first", calls[0], "| errors since", codes(errors, n0));
+  say("  ", [...new Set(errors.slice(n0).map((e) => e.message))].slice(0, 3));
+  await r.stop(); await r.settle(); await ticks(r, 60);
+  const up = await r.uploadProgress(row.id).catch((e) => e.message);
+  say("5 min after Stop: state", r.state, "| server", w.server.recordings.get(row.id).status, "ended_at", w.server.recordings.get(row.id).ended_at, "| teacher s on server", secs(w, row.id), "| progress", typeof up === "string" ? up : `pending ${up.pending} confirmed ${up.confirmed} stopPending ${up.stopPending}`, "| setPreStart calls", calls.length, "| errors total", errors.length);
+});
+
+await P("Q3 many short stalls: how much of what counts as audio is filled silence?", async () => {
+  const { w, src, r, row } = await started();
+  r.tick(); await r.settle();
+  let real = 0, down = 0;
+  for (let i = 0; i < 12; i++) {
+    await src.play(14, r); real += 14;
+    src.stalled = true; src.resumeHeals = false; src.rebuildHeals = false;
+    const c0 = clock; await src.play(5, r, 24); src.resumeHeals = true; await src.play(2, r, 24); down += (clock - c0) / 1000 - 0;
+  }
+  await src.play(10, r); real += 10;
+  await r.stop(); await r.settle(); await ticks(r, 4);
+  const man = manifestOf(w, row.id);
+  const padded = man.discontinuities.filter((d) => d.kind === "context_stall").reduce((n, d) => n + (d.padded_ms ?? 0), 0);
+  say("server", w.server.recordings.get(row.id).status, "| stalls", man.discontinuities.filter((d) => d.kind === "context_stall").length, "| silence filled (s)", Math.round(padded / 1000), "| teacher s on server", secs(w, row.id), "| of which below_floor (never evidence)", secs(w, row.id, "teacher", (c) => c.below_floor), "| counted as audio", secs(w, row.id, "teacher", (c) => !c.below_floor && !c.late));
+});
+
+await P("Q4 Start lands, its answer is lost and the read-back fails twice", async () => {
+  const { w, src, r, errors, states, row } = await started();
+  const start = w.backend.start.bind(w.backend), get = w.backend.getRecording.bind(w.backend);
+  let lose = 1, loseGet = 2;
+  w.backend.start = async (...a) => { const x = await start(...a); if (lose-- > 0) throw { message: "upstream request timeout", code: "503" }; return x; };
+  w.backend.getRecording = async (...a) => { if (lose < 1 && loseGet-- > 0) throw { message: "upstream request timeout", code: "503" }; return get(...a); };
+  r.tick(); await r.settle(); await src.play(40, r);
+  say("state", r.state, "| states", [...new Set(states)].join(","), "| source open", src.open, "| errors", codes(errors));
+  await r.stop(); await r.settle(); await ticks(r, 4);
+  say("server", w.server.recordings.get(row.id).status, "teacher s", secs(w, row.id));
+});
+
+await P("Q5 one microphone lost, then the other; then one comes back", async () => {
+  const { w, src, r, errors, states, row, health } = await started();
+  r.tick(); await r.settle(); await src.play(12, r);
+  const devs = src.devices.slice();
+  src.dead.room = true; src.devices = [devs[0]]; src.onTrackEnded("room");
+  await src.play(20, r, 100); say("room lost:", r.state);
+  src.dead.teacher = true; src.devices = []; src.onTrackEnded("teacher");
+  await src.play(20, r, 100); say("teacher lost too:", r.state);
+  src.devices = [devs[1]]; src.onDeviceChange?.(); await r.settle(); await src.play(10, r, 100);
+  say("room back:", r.state, "| errors", codes(errors));
+  src.devices = devs; src.onDeviceChange?.(); await r.settle(); await src.play(10, r, 100);
+  await r.stop(); await r.settle(); await ticks(r, 4);
+  say("server", w.server.recordings.get(row.id).status, "| teacher s", secs(w, row.id), "below_floor", secs(w, row.id, "teacher", (c) => c.below_floor), "| room below_floor", secs(w, row.id, "room", (c) => c.below_floor));
+});
+
+await P("Q5b both microphones lost while the server has not confirmed the start", async () => {
+  const { w, src, r, errors, states, row } = await started();
+  w.server.offline = true;
+  r.tick(); await r.settle(); await src.play(12, r);
+  const devs = src.devices.slice();
+  src.dead.room = true; src.dead.teacher = true; src.devices = []; src.onTrackEnded("room"); src.onTrackEnded("teacher");
+  await src.play(20, r, 100); say("both lost while starting:", r.state);
+  w.server.offline = false; await src.play(20, r, 100); say("server answers, still no microphone:", r.state);
+  src.devices = devs; src.dead.room = false; src.dead.teacher = false; src.onDeviceChange?.(); await r.settle(); await src.play(10, r, 100);
+  say("back:", r.state, "| states", states.join(","));
+});
+
+await P("Q6 the page is reloaded while waiting for the server (offline), network back 3 min later", async () => {
+  const { w, src, r, errors, row, store } = await started();
+  w.server.offline = true;
+  r.tick(); await r.settle(); await src.play(120, r, 200);
+  await r.dispose();                                   // the tab is reloaded / crashes
+  clock += 180000; w.server.offline = false;
+  const h2 = recorder(w, store, new FakeSource());
+  await h2.r.prepare(); const ids = await h2.r.recover(); await h2.r.settle(); await ticks(h2.r, 12);
+  const sr = w.server.recordings.get(row.id);
+  say("recovered", ids.length, "| server", sr.status, "pre_start_ms", sr.pre_start_ms, "stop_reason", sr.stop_reason, "| teacher s on server", secs(w, row.id), "| errors", h2.errors.map((e) => `${e.code}: ${e.message}`.slice(0, 150)));
+});
+
+await P("Q7 Stop pressed while waiting for the server (offline), network back later", async () => {
+  const { w, src, r, errors, states, row, store } = await started();
+  w.server.offline = true;
+  r.tick(); await r.settle(); await src.play(90, r, 200);
+  await Promise.race([r.stop(), sleep(2000)]); await r.settle();
+  say("after Stop offline: state", r.state, "| last message", errors.at(-1)?.message?.slice(0, 160));
+  w.server.offline = false; await ticks(r, 12);
+  const sr = w.server.recordings.get(row.id);
+  say("online: state", r.state, "| server", sr.status, "pre_start_ms", sr.pre_start_ms, "| teacher s on server", secs(w, row.id), "| states", [...new Set(states)].join(","));
+});
+
+await P("Q8 a stated refusal after 3 minutes of waiting (recording switched off)", async () => {
+  const { w, src, r, errors, states, row, store } = await started();
+  w.server.offline = true;
+  r.tick(); await r.settle(); await src.play(180, r, 200);
+  w.server.offline = false;
+  w.server.failNext("update:class_recordings", 1, { message: "Recording is switched off for this class", code: "P0001" });
+  await src.play(30, r, 200);
+  say("state", r.state, "| source open", src.open, "| message", errors.filter((e) => e.code === "start_failed").map((e) => e.message), "| heldAudio", (await r.heldAudio()).map((h) => `${h.phase} ${h.bytes} B`));
+});
+process.exit(0);
