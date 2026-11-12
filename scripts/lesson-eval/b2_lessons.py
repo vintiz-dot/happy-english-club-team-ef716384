@@ -280,7 +280,7 @@ def main() -> int:
     p = sub.add_parser("tune")
     p.add_argument("--thresholds", default="0.5,0.6,0.7,0.8,0.9")
     p.add_argument("--mix-sets", default="seed7_ov05_s500,seed7_ov15_s500")
-    p.add_argument("--diar-model", default="wes_campp", choices=sorted(EMB))
+    p.add_argument("--diar-model", default="wes_campp", choices=sorted(EMB) + ["ecapa"])
     p.add_argument("--engine", choices=["own", "sherpa"], default="own",
                    help="own = silero VAD + 1.5 s chunks + AHC; sherpa = pyannote-seg ONNX pipeline (slow here)")
     p.add_argument("--threads", type=int, default=2)
