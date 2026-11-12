@@ -1,6 +1,6 @@
 /**
  * SectionHeading — consistent section rhythm across the student dashboard.
- * Presentational: gradient icon well, title, optional subtitle and action.
+ * Presentational. Ivory: the display serif over a hairline, one ink icon.
  */
 import { cn } from "@/lib/utils";
 
@@ -8,25 +8,23 @@ interface Props {
   icon: React.ElementType;
   title: string;
   subtitle?: string;
+  /** Kept for callers; the Ivory heading has no gradient. */
   gradient?: string;
   action?: React.ReactNode;
   className?: string;
 }
 
 export function SectionHeading({
-  icon: Icon, title, subtitle, gradient = "from-violet-500 to-indigo-600", action, className,
+  icon: Icon, title, subtitle, action, className,
 }: Props) {
   return (
-    <div className={cn("flex items-center gap-3", className)}>
-      <div className={cn("icon-well p-2.5 shrink-0 bg-gradient-to-br", gradient)}>
-        <Icon className="h-5 w-5 text-white drop-shadow" />
-      </div>
+    <div className={cn("flex items-end gap-3 border-b border-hec-line pb-2", className)}>
+      <Icon className="mb-1.5 h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
       <div className="min-w-0 flex-1">
-        <h2 className="text-lg md:text-xl font-black leading-tight truncate">{title}</h2>
-        {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
+        <h2 className="font-display text-hec-h2 font-medium text-hec-ink [[data-hec-scale=young]_&]:font-bold">{title}</h2>
+        {subtitle && <p className="text-hec-small text-hec-ink-soft">{subtitle}</p>}
       </div>
       {action}
-      <div className="hidden sm:block h-px flex-1 bg-gradient-to-r from-border to-transparent" />
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
 import { BookOpenCheck, BookOpen, NotebookPen, ChevronDown } from "lucide-react";
+import { CARD_TITLE, FOCUS } from "@/components/student/nova/ivory";
 
 export function LessonOverviewsCard({ studentId }: { studentId: string }) {
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -45,13 +46,13 @@ export function LessonOverviewsCard({ studentId }: { studentId: string }) {
   if (!lessons.length) return null;
 
   return (
-    <Card className="glass-lg border-0 shadow-xl rounded-2xl">
+    <Card className="rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
-          <BookOpenCheck className="h-4 w-4 text-cyan-500" />
+        <CardTitle className={cn(CARD_TITLE, "flex items-center gap-2")}>
+          <BookOpenCheck className="h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
           Your recent lessons
         </CardTitle>
-        <CardDescription className="text-xs">
+        <CardDescription className="text-hec-small text-hec-ink-soft">
           What we covered, the materials we used, and your homework.
         </CardDescription>
       </CardHeader>
@@ -62,44 +63,45 @@ export function LessonOverviewsCard({ studentId }: { studentId: string }) {
             <button
               key={l.id}
               onClick={() => setExpanded(isOpen ? null : l.id)}
-              className="w-full text-left rounded-xl border bg-card/60 p-3 transition-colors hover:bg-muted/40"
+              aria-expanded={isOpen}
+              className={cn("w-full min-h-hec-target rounded-hec-md border border-hec-line bg-hec-paper p-3 text-left transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken", FOCUS)}
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold leading-snug break-words">{l.title || "Lesson"}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="break-words font-medium text-hec-ink">{l.title || "Lesson"}</p>
+                  <p className="text-hec-small text-hec-ink-soft">
                     {[l.classes?.name, l.lesson_date && dayjs(l.lesson_date).format("D MMM YYYY")].filter(Boolean).join(" · ")}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   {l.homework && (
-                    <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 text-[10px] gap-1">
+                    <Badge className="gap-1 border-hec-line bg-hec-sunken text-hec-caption font-medium text-hec-ink-soft shadow-none hover:bg-hec-sunken">
                       <NotebookPen className="h-3 w-3" />homework
                     </Badge>
                   )}
-                  <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
+                  <ChevronDown className={cn("h-5 w-5 text-hec-ink-soft transition-transform duration-hec-1 ease-hec", isOpen && "rotate-180")} aria-hidden />
                 </div>
               </div>
 
               {isOpen && (
-                <div className="mt-2 space-y-2 border-t pt-2">
+                <div className="mt-3 space-y-2 border-t border-hec-line pt-3">
                   {l.summary && (
-                    <p className="text-xs text-muted-foreground leading-relaxed">{l.summary}</p>
+                    <p className="text-hec-small text-hec-ink-soft">{l.summary}</p>
                   )}
                   {Array.isArray(l.materials) && l.materials.length > 0 && (
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <BookOpen className="h-3.5 w-3.5 text-blue-500" />
+                      <BookOpen className="h-4 w-4 text-hec-ink-soft" aria-hidden />
                       {l.materials.map((m: any, i: number) => (
-                        <Badge key={i} variant="secondary" className="font-normal text-[11px]">
+                        <Badge key={i} variant="secondary" className="border-hec-line bg-hec-sunken text-hec-caption font-normal text-hec-ink shadow-none">
                           {m.name}{m.pages ? ` · p.${m.pages}` : ""}
                         </Badge>
                       ))}
                     </div>
                   )}
                   {l.homework && (
-                    <p className="text-xs flex items-start gap-1.5 rounded-lg bg-amber-500/10 ring-1 ring-amber-500/25 px-2.5 py-2">
-                      <NotebookPen className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
-                      <span className="text-foreground">{l.homework}</span>
+                    <p className="flex items-start gap-2 rounded-hec-sm bg-hec-sunken px-3 py-2 text-hec-small">
+                      <NotebookPen className="mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
+                      <span className="text-hec-ink">{l.homework}</span>
                     </p>
                   )}
                 </div>
