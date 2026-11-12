@@ -912,6 +912,15 @@ await as(ADMIN, () => db.query(`UPDATE public.recorder_settings SET evidence_min
 eq("a later change of the threshold does not reinterpret it: the fraction was snapshot at arming", (await one(
   `SELECT recording_ran_evidence FROM public.recorder_session_evidence WHERE session_id=$1`, [sL])).recording_ran_evidence, true);
 await as(ADMIN, () => db.query(`UPDATE public.recorder_settings SET evidence_min_fraction = 0.50`));
+{
+  // A state the API cannot reach (a late Stop abandons), set by hand: the view
+  // checks the Stop time itself as well.
+  const was = (await one(`SELECT ended_at::text e FROM public.class_recordings WHERE id=$1`, [rL.id])).e;
+  await raw(`UPDATE public.class_recordings SET ended_at = capture_closes_at + interval '11 minutes' WHERE id=$1`, [rL.id]);
+  eq("a complete recording whose Stop came after the window + late allowance is no evidence, however it got there (N2)",
+    (await one(`SELECT recording_ran_evidence FROM public.recorder_session_evidence WHERE recording_id=$1`, [rL.id])).recording_ran_evidence, false);
+  await raw(`UPDATE public.class_recordings SET ended_at = $2::timestamptz WHERE id=$1`, [rL.id, was]);
+}
 
 console.log("=== evidence is what reached the server LIVE (C1 critic 2, N2) ===");
 eq("the late allowance is snapshot at arming: 10 minutes", (await one(
