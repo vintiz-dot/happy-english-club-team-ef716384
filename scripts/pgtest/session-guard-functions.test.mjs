@@ -643,8 +643,8 @@ await section('bulk: more than 50 lessons are sent in chunks of at most 50', asy
     items: r.body.plain.map((x) => ({ id: x.id, token: x.token })) });
   const calls = log.rpcs.filter((x) => x.name === 'cancel_sessions_checked_bulk');
   ok('120 cancelled in 3 RPC calls of <= 50, each on the caller\'s client', r.status === 200 && r.body.canceled.length === 120 &&
-     calls.length === 3 && calls.every((c) => JSON.parse(c.params.p_items).length <= 50 && c.who === 'user'),
-     { canceled: r.body.canceled?.length, calls: calls.map((c) => [JSON.parse(c.params.p_items).length, c.who]) });
+     calls.length === 3 && calls.every((c) => c.params.p_items.length <= 50 && c.who === 'user'),
+     { canceled: r.body.canceled?.length, calls: calls.map((c) => [c.params.p_items.length, c.who]) });
 });
 
 await section('manage-session bulk-delete (hard): one checked delete per lesson', async () => {
