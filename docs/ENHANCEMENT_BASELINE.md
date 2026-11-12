@@ -2,16 +2,14 @@
 
 Measured, not changed: no source file was modified. Every "After" cell is empty on purpose; the same commands fill it later.
 
-## Where I am / next steps (A0 PAUSED by the owner's instruction, 2026-11-11)
+## Where I am / next step
 
-Measured and recorded below: Part 1 complete (tsc, pgtest, bun tests, build and bundle, static counts). Part 2 partly: 4 of 12 screens (student dashboard, admin attendance, admin class sessions, admin schedule) with 6 screenshots each in `docs/evidence/A0/`; every number is a dev-server number through the fake client.
-
-Not measured yet: admin Tuition (renders but throws `Cannot read properties of undefined (reading 'name')` against the fake: the fixtures lack a row that page expects, so the screen needs a fixture fix), teacher dashboard, the three class boards (Star Board, High Scores, Night League; below 768 px the app itself falls back to the plain podium), student leaderboard, parent view, admin Payroll. Fidelity caveat: the fake returns `{}` for edge functions other than admin-unlock and calculate-tuition, so the admin screens show real layout but thin data (see request kinds: attendance and sessions screens fetched few tables). Treat their numbers as layout/render cost, not data cost.
-
-Harness (outside the repo, survives the worktree): `C:\Users\Dell\hec-tools\a0-harness\`
-- `node C:\Users\Dell\hec-tools\a0-harness\measure.mjs <repoRoot> [outDir] [screen-id,screen-id]` copies `preview/` (fake Supabase client + invented fixtures) into `<repoRoot>/.claude/a0-preview/` (git-ignored), starts Vite on port 5191, runs every screen at 375/768/1280, light/dark, 4x CPU at 375, writes `results.json` and screenshots to outDir (default `docs/evidence/A0`). Needs `node_modules` linked in the repo and Chrome installed.
-- `report.mjs <results.json>` turns results into the markdown table below; `static-counts.mjs <repoRoot>`, `bundle.mjs <repoRoot>` (after `vite build`), `libs-in-chunks.mjs` give sections 1d/1e.
-- Next step: fix the admin-tuition fixture, then re-run `measure.mjs` with the remaining screen ids, regenerate this section with `report.mjs`. Known harness gap: a `page.evaluate` during a client redirect aborts a screen (admin-tuition); wrap it in a retry.
+- Part 1 (tsc, pgtest, bun tests, build and bundle, static counts): complete.
+- Part 2 measured: student dashboard, admin Tuition, admin Attendance, admin class sessions, admin schedule (5 of 12).
+- Not yet measured: teacher dashboard, 3 class boards, student leaderboard, parent view, admin Payroll.
+- Next step: measure teacher-dashboard, board-*, student-leaderboard, parent-view, admin-payroll one at a time
+- Caveats: every Part 2 number is a dev-server number through a fake client; the fake returns `{}` for edge functions other than admin-unlock and calculate-tuition, so admin screens show real layout but thin data (see request kinds). Below 768 px the app itself falls back from the three display boards to the plain podium.
+- Harness (outside the repo): `C:\Users\Dell\hec-tools\a0-harness\`. Run `node C:\Users\Dell\hec-tools\a0-harness\measure.mjs <repoRoot> <outDir> [screen-id,...]` (needs node_modules linked in the repo and Chrome installed; deploys the fake client into the git-ignored `<repo>/.claude/a0-preview/`, starts Vite on 5191, writes results.json + screenshots to outDir), then `node finalize.mjs <repoRoot> <outDir>` merges into `docs/evidence/A0` and regenerates the Part 2 tables. `static-counts.mjs`, `bundle.mjs`, `libs-in-chunks.mjs` give sections 1d/1e.
 
 ## Machine record
 
@@ -130,12 +128,12 @@ Routing: every page in `src/App.tsx` is `lazy(() => import(...))` (admin, teache
 
 ## Part 2 - runtime (fake Supabase client)
 
-Run: 2026-11-11T14:31:46.304Z. vite dev server, fake client (NOT production). Times are **dev-server numbers through the fake client** (Vite on-demand transforms, 15-25 ms fake latency, no minification): comparable only with the same harness. "Render" = first time #root holds >150 characters of non-loader text; "idle" = last resource/fake request activity before 1 s of quiet. Light = median of 3 loads; dark = 1 load (screenshot + axe). Warm-up load before measuring. Requests = fake-client calls (from/rpc/functions/storage) at idle.
+Run: 2026-11-12T00:31:38.691Z. vite dev server, fake client (NOT production). Times are **dev-server numbers through the fake client** (Vite on-demand transforms, 15-25 ms fake latency, no minification): comparable only with the same harness. "Render" = first time #root holds >150 characters of non-loader text; "idle" = last resource/fake request activity before 1 s of quiet. Light = median of 3 loads; dark = 1 load (screenshot + axe). Warm-up load before measuring. Requests = fake-client calls (from/rpc/functions/storage) at idle.
 
 | Screen | Route (role) | Req | 375 render/idle ms | 375 @4x CPU render/idle ms | 768 render/idle ms | 1280 render/idle ms | Overflow at 375 | axe 375 (crit/ser/mod/min) | axe 1280 |
 |---|---|---|---|---|---|---|---|---|---|
 | student-dashboard | `/student/dashboard` (student) | 33 | 1577 / 1863 | 8489 / 11181 | 1220 / 1742 | 1542 / 2129 | no | 1/2/1/0 (4 rules, 12 nodes) | 1/2/1/0 (4 rules, 11 nodes) |
-| admin-tuition | /students/s-0001/tuition (admin) | NOT MEASURED: page.evaluate: Execution context was destroyed, most likely because of a navigation. |||||||
+| admin-tuition | `/tuition` (admin) | 20 | 1399 / 1690 | 10490 / 12438 | 1224 / 1449 | 1071 / 1336 | no | 1/2/1/0 (4 rules, 19 nodes) | 1/4/1/0 (6 rules, 19 nodes) |
 | admin-attendance | `/teacher/attendance` (admin) | 17 | 2580 / 2475 | 7250 / 6878 | 2808 / 2844 | 2895 / 2936 | no | 1/1/1/0 (3 rules, 19 nodes) | 1/3/1/0 (5 rules, 18 nodes) |
 | admin-class-sessions | `/admin/classes/c-0001` (admin) | 19 | 2263 / 2414 | 14610 / 13542 | 2271 / 2420 | 3168 / 3332 | no | 1/1/0/0 (2 rules, 6 nodes) | 1/3/0/0 (4 rules, 10 nodes) |
 | admin-schedule | `/schedule` (admin) | 16 | 2675 / 2822 | 8935 / 9093 | 3331 / 3500 | 3161 / 3329 | no | 1/2/1/0 (4 rules, 19 nodes) | 1/4/1/0 (6 rules, 19 nodes) |

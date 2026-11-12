@@ -1,5 +1,5 @@
 {
- "when": "2026-11-11T14:31:46.304Z",
+ "when": "2026-11-12T00:31:38.691Z",
  "base": "vite dev server, fake client (NOT production)",
  "screens": {
   "student-dashboard": {
@@ -403,12 +403,12 @@
    }
   },
   "admin-tuition": {
-   "route": "/students/s-0001/tuition",
+   "route": "/tuition",
    "role": "admin",
    "boardStyle": null,
    "runs": {
     "375-light": {
-     "fmrMs": 948.8999999761581,
+     "fmrMs": 1018.3000000119209,
      "requests": 20,
      "requestKinds": {
       "from:site_announcements": 2,
@@ -425,9 +425,9 @@
      "clientWidth": 375,
      "overflow": false,
      "offenders": [],
-     "text": 546,
+     "text": 542,
      "path": "/schedule",
-     "idleMs": 1176,
+     "idleMs": 1230.8999999761581,
      "errors": [
       "Cannot read properties of undefined (reading 'name')",
       "Cannot read properties of undefined (reading 'name')",
@@ -449,17 +449,17 @@
       ]
      },
      "shot": "admin-tuition-375-light.png",
-     "fmrMedianMs": 1091,
-     "idleMedianMs": 1362,
+     "fmrMedianMs": 1399,
+     "idleMedianMs": 1690,
      "fmrAll": [
-      949,
-      1203,
-      1091
+      1018,
+      1580,
+      1399
      ],
      "idleAll": [
-      1176,
-      1443,
-      1362
+      1231,
+      1852,
+      1690
      ],
      "requestsAll": [
       20,
@@ -468,7 +468,7 @@
      ]
     },
     "375-dark": {
-     "fmrMs": 1285.300000011921,
+     "fmrMs": 1102.8999999761581,
      "requests": 20,
      "requestKinds": {
       "from:site_announcements": 2,
@@ -485,9 +485,9 @@
      "clientWidth": 375,
      "overflow": false,
      "offenders": [],
-     "text": 546,
+     "text": 542,
      "path": "/schedule",
-     "idleMs": 1531.699999988079,
+     "idleMs": 1298.800000011921,
      "errors": [
       "Cannot read properties of undefined (reading 'name')",
       "Cannot read properties of undefined (reading 'name')",
@@ -509,20 +509,20 @@
       ]
      },
      "shot": "admin-tuition-375-dark.png",
-     "fmrMedianMs": 1285,
-     "idleMedianMs": 1532,
+     "fmrMedianMs": 1103,
+     "idleMedianMs": 1299,
      "fmrAll": [
-      1285
+      1103
      ],
      "idleAll": [
-      1532
+      1299
      ],
      "requestsAll": [
       20
      ]
     },
     "768-light": {
-     "fmrMs": 963.3000000119209,
+     "fmrMs": 1146.1000000238419,
      "requests": 20,
      "requestKinds": {
       "from:site_announcements": 2,
@@ -539,9 +539,9 @@
      "clientWidth": 768,
      "overflow": false,
      "offenders": [],
-     "text": 891,
+     "text": 887,
      "path": "/schedule",
-     "idleMs": 1146.300000011921,
+     "idleMs": 1317.9000000357628,
      "errors": [
       "Cannot read properties of undefined (reading 'name')",
       "Cannot read properties of undefined (reading 'name')",
@@ -565,17 +565,17 @@
       ]
      },
      "shot": "admin-tuition-768-light.png",
-     "fmrMedianMs": 963,
-     "idleMedianMs": 1146,
+     "fmrMedianMs": 1224,
+     "idleMedianMs": 1449,
      "fmrAll": [
-      963,
-      1036,
-      742
+      1146,
+      1224,
+      1241
      ],
      "idleAll": [
-      1146,
-      1271,
-      907
+      1318,
+      1453,
+      1449
      ],
      "requestsAll": [
       20,
@@ -584,7 +584,7 @@
      ]
     },
     "768-dark": {
-     "fmrMs": 948.3000000119209,
+     "fmrMs": 1228.6000000238419,
      "requests": 20,
      "requestKinds": {
       "from:site_announcements": 2,
@@ -601,9 +601,9 @@
      "clientWidth": 768,
      "overflow": false,
      "offenders": [],
-     "text": 891,
+     "text": 887,
      "path": "/schedule",
-     "idleMs": 1094,
+     "idleMs": 1565.9000000357628,
      "errors": [
       "Cannot read properties of undefined (reading 'name')",
       "Cannot read properties of undefined (reading 'name')",
@@ -627,20 +627,20 @@
       ]
      },
      "shot": "admin-tuition-768-dark.png",
-     "fmrMedianMs": 948,
-     "idleMedianMs": 1094,
+     "fmrMedianMs": 1229,
+     "idleMedianMs": 1566,
      "fmrAll": [
-      948
+      1229
      ],
      "idleAll": [
-      1094
+      1566
      ],
      "requestsAll": [
       20
      ]
     },
     "1280-light": {
-     "fmrMs": 942,
+     "fmrMs": 1070.5999999642372,
      "requests": 20,
      "requestKinds": {
       "from:site_announcements": 2,
@@ -657,9 +657,9 @@
      "clientWidth": 1280,
      "overflow": false,
      "offenders": [],
-     "text": 906,
+     "text": 902,
      "path": "/schedule",
-     "idleMs": 1164.2000000476837,
+     "idleMs": 1374.5,
      "errors": [
       "Cannot read properties of undefined (reading 'name')",
       "Cannot read properties of undefined (reading 'name')",
@@ -683,17 +683,17 @@
       ]
      },
      "shot": "admin-tuition-1280-light.png",
-     "fmrMedianMs": 895,
-     "idleMedianMs": 1034,
+     "fmrMedianMs": 1071,
+     "idleMedianMs": 1336,
      "fmrAll": [
-      942,
-      818,
-      895
+      1071,
+      1142,
+      1070
      ],
      "idleAll": [
-      1164,
-      970,
-      1034
+      1375,
+      1336,
+      1283
      ],
      "requestsAll": [
       20,
@@ -702,7 +702,7 @@
      ]
     },
     "1280-dark": {
-     "fmrMs": 884.4000000357628,
+     "fmrMs": 1191.8999999761581,
      "requests": 20,
      "requestKinds": {
       "from:site_announcements": 2,
@@ -719,9 +719,9 @@
      "clientWidth": 1280,
      "overflow": false,
      "offenders": [],
-     "text": 906,
+     "text": 902,
      "path": "/schedule",
-     "idleMs": 1028.1000000238419,
+     "idleMs": 1718.699999988079,
      "errors": [
       "Cannot read properties of undefined (reading 'name')",
       "Cannot read properties of undefined (reading 'name')",
@@ -745,20 +745,34 @@
       ]
      },
      "shot": "admin-tuition-1280-dark.png",
-     "fmrMedianMs": 884,
-     "idleMedianMs": 1028,
+     "fmrMedianMs": 1192,
+     "idleMedianMs": 1719,
      "fmrAll": [
-      884
+      1192
      ],
      "idleAll": [
-      1028
+      1719
      ],
      "requestsAll": [
       20
      ]
+    },
+    "375-light-cpu4x": {
+     "fmrMedianMs": 10490,
+     "idleMedianMs": 12438,
+     "fmrAll": [
+      10490,
+      14781,
+      9776
+     ],
+     "idleAll": [
+      12438,
+      17648,
+      11780
+     ],
+     "requests": 20
     }
-   },
-   "error": "page.evaluate: Execution context was destroyed, most likely because of a navigation."
+   }
   },
   "admin-attendance": {
    "route": "/teacher/attendance",
