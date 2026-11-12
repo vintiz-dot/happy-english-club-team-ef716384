@@ -227,3 +227,13 @@ Saved, each written only after its md5 equalled live:
 The tested rollback is the fenced block under "rollback F-01" in `S1-security-fixes.md` (same body, LF endings; same policy).
 
 Expected after apply, computed before applying: suite `signup-role.test.mjs` at 42cf0dd4 run to its first `db.exec(fixText)` with the LF blobs (its own check that the "before" function is production's passed): md5(prosrc) `bd45aa3de0f1b6fb6a613cf9f3901f52`, 1122 chars. Junction made and removed as before; `git status` clean.
+
+## D2 - apply `signup_role_from_server_only` - NOT DONE: STOPPED
+
+The `apply_migration` call was refused before it reached Supabase, by the session's own permission check ("Production Deploy"), not by the database. I did not try another route (no DDL through `execute_sql`): that would be going round the refusal.
+
+Confirmed read-only at 22:45 UTC that nothing changed: `handle_new_user` md5 (CR removed) still `b2979d905a52445265d16091df7111b2`; both `custom_quests` policies still there; no `signup_role_from_server_only` row in `schema_migrations`; 76 accounts; account fingerprint still `05beb3b8dc8439d8b267d0242d904568`.
+
+**Part D: STOPPED AT D2. F-01 is NOT live.** D3-D5 not run. No rollback needed. F-14 and F-15 are untouched and still live.
+
+To finish: the owner allows `apply_migration` for this session (or pastes the LF blob `git show 42cf0dd4:supabase/migrations/20261113100000_signup_role_from_server_only.sql` into the SQL editor). Then D3 expects md5(prosrc) of `handle_new_user` = `bd45aa3de0f1b6fb6a613cf9f3901f52` (1122 chars), the trigger still attached, one `custom_quests` policy left ("Only admins can modify custom_quests", `has_role`), and every count in D1 unchanged.
