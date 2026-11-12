@@ -3,8 +3,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, ChevronDown, AlertTriangle, Timer, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import { type ClassColor } from "@/lib/classColors";
-import { STATUS_META, type StatusKey } from "./lib/calendarStatus";
+import { STATUS_META, STATUS_META_IVORY, type StatusKey } from "./lib/calendarStatus";
 
 export interface CalendarFilterValue {
   classes: string[];
@@ -36,6 +37,9 @@ export interface ClassOption {
   colorKey: string;
 }
 
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
+
 function MultiSelect({
   label,
   options,
@@ -52,6 +56,7 @@ function MultiSelect({
   swatches?: Record<string, string>;
   colorFor?: (key: string) => ClassColor;
 }) {
+  const ivory = useIvory();
   if (options.length === 0) return null;
 
   const toggle = (option: string) =>
@@ -67,23 +72,37 @@ function MultiSelect({
         <Button
           variant="outline"
           size="sm"
-          className={cn("h-8 gap-1.5", selected.length > 0 && "border-primary/50 bg-primary/5")}
+          className={
+            ivory
+              ? cn("gap-2", selected.length > 0 && "border-hec-brass")
+              : cn("h-8 gap-1.5", selected.length > 0 && "border-primary/50 bg-primary/5")
+          }
         >
           {label}
           {selected.length > 0 && (
-            <span className="rounded bg-primary/15 px-1 text-[10px] font-semibold tabular-nums text-primary">
+            <span
+              className={
+                ivory
+                  ? "rounded-full border border-hec-brass/40 px-2 text-hec-caption font-medium tabular-nums text-hec-brass"
+                  : "rounded bg-primary/15 px-1 text-[10px] font-semibold tabular-nums text-primary"
+              }
+            >
               {selected.length}
             </span>
           )}
-          <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+          <ChevronDown className={ivory ? "h-4 w-4 text-hec-ink-soft" : "h-3.5 w-3.5 opacity-60"} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-56 p-1.5">
-        <div className="max-h-64 space-y-0.5 overflow-y-auto">
+      <PopoverContent align="start" className={ivory ? "w-64 p-2" : "w-56 p-1.5"}>
+        <div className={ivory ? "max-h-72 space-y-1 overflow-y-auto" : "max-h-64 space-y-0.5 overflow-y-auto"}>
           {options.map((option) => (
             <label
               key={option}
-              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+              className={
+                ivory
+                  ? "flex min-h-hec-target cursor-pointer items-center gap-2 rounded-hec-sm px-2 text-hec-small text-hec-ink hover:bg-hec-sunken"
+                  : "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+              }
             >
               <Checkbox
                 checked={selected.includes(option)}
@@ -95,7 +114,8 @@ function MultiSelect({
                   className={cn("h-2.5 w-2.5 shrink-0 rounded-full", colorFor(swatches[option]).rail)}
                 />
               )}
-              <span className="truncate">{option}</span>
+              {/* A class or teacher name: it wraps, never cut (DS s.13). */}
+              <span className={ivory ? "min-w-0 whitespace-normal break-words hyphens-none py-2" : "truncate"}>{option}</span>
             </label>
           ))}
         </div>
@@ -103,7 +123,11 @@ function MultiSelect({
           <button
             type="button"
             onClick={() => onChange([])}
-            className="mt-1 w-full rounded-md px-2 py-1 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+            className={
+              ivory
+                ? cn("mt-1 flex min-h-hec-target w-full items-center rounded-hec-sm px-2 text-left text-hec-small text-hec-ink-soft hover:bg-hec-sunken hover:text-hec-ink", FOCUS)
+                : "mt-1 w-full rounded-md px-2 py-1 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+            }
           >
             Clear
           </button>
@@ -135,6 +159,7 @@ export default function CalendarFilters({
   varianceCount,
   colorFor,
 }: CalendarFiltersProps) {
+  const ivory = useIvory();
   const classNames = classes.map((c) => c.name);
   const classSwatches = Object.fromEntries(classes.map((c) => [c.name, c.colorKey]));
   const toggleStatus = (key: StatusKey) =>
@@ -144,6 +169,18 @@ export default function CalendarFilters({
         ? value.statuses.filter((s) => s !== key)
         : [...value.statuses, key],
     });
+
+  // Ivory count pill: the warning badge (DS s.15) on the outline button; on
+  // the pressed (ink) button a quiet wash of its own label colour.
+  const pill = (pressed: boolean) =>
+    ivory
+      ? pressed
+        ? "rounded-full bg-hec-on-action/20 px-2 text-hec-caption font-medium tabular-nums"
+        : "rounded-full border border-hec-warn/30 bg-hec-warn-tint px-2 text-hec-caption font-medium tabular-nums text-hec-warn"
+      : cn(
+          "rounded px-1 text-[10px] font-semibold tabular-nums",
+          pressed ? "bg-primary-foreground/20" : "bg-warning text-warning-foreground",
+        );
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -160,27 +197,24 @@ export default function CalendarFilters({
         size="sm"
         onClick={() => onChange({ ...value, actionableOnly: !value.actionableOnly })}
         disabled={actionableCount === 0 && !value.actionableOnly}
-        className={cn(
-          "h-8 gap-1.5",
-          actionableCount > 0 && !value.actionableOnly && "border-warning/60 text-foreground",
-        )}
+        className={
+          ivory
+            ? cn("gap-2", actionableCount > 0 && !value.actionableOnly && "border-hec-warn")
+            : cn(
+                "h-8 gap-1.5",
+                actionableCount > 0 && !value.actionableOnly && "border-warning/60 text-foreground",
+              )
+        }
       >
         <AlertTriangle
           className={cn(
-            "h-3.5 w-3.5",
-            actionableCount > 0 && !value.actionableOnly && "text-warning",
+            ivory ? "h-4 w-4" : "h-3.5 w-3.5",
+            actionableCount > 0 && !value.actionableOnly && (ivory ? "text-hec-warn" : "text-warning"),
           )}
         />
         {actionableCount > 0 ? (
           <>
-            <span
-              className={cn(
-                "rounded px-1 text-[10px] font-semibold tabular-nums",
-                value.actionableOnly
-                  ? "bg-primary-foreground/20"
-                  : "bg-warning text-warning-foreground",
-              )}
-            >
+            <span className={pill(value.actionableOnly)}>
               {actionableCount}
             </span>
             need attendance
@@ -198,15 +232,20 @@ export default function CalendarFilters({
           variant={value.varianceOnly ? "default" : "outline"}
           size="sm"
           onClick={() => onChange({ ...value, varianceOnly: !value.varianceOnly })}
-          className={cn("h-8 gap-1.5", !value.varianceOnly && "border-warning/60 text-foreground")}
+          className={
+            ivory
+              ? cn("gap-2", !value.varianceOnly && "border-hec-warn")
+              : cn("h-8 gap-1.5", !value.varianceOnly && "border-warning/60 text-foreground")
+          }
         >
-          <Timer className={cn("h-3.5 w-3.5", !value.varianceOnly && "text-warning")} />
-          <span
-            className={cn(
-              "rounded px-1 text-[10px] font-semibold tabular-nums",
-              value.varianceOnly ? "bg-primary-foreground/20" : "bg-warning text-warning-foreground",
-            )}
-          >
+          <Timer
+            className={
+              ivory
+                ? cn("h-4 w-4", !value.varianceOnly && "text-hec-warn")
+                : cn("h-3.5 w-3.5", !value.varianceOnly && "text-warning")
+            }
+          />
+          <span className={pill(value.varianceOnly)}>
             {varianceCount}
           </span>
           wrong length
@@ -231,9 +270,9 @@ export default function CalendarFilters({
       {/* Only statuses actually present in the visible range, so this is a
           working filter rather than a six-item legend that never changes. */}
       {statuses.length > 1 && (
-        <div className="flex flex-wrap items-center gap-1">
+        <div className={ivory ? "flex flex-wrap items-center gap-2" : "flex flex-wrap items-center gap-1"}>
           {statuses.map((key) => {
-            const meta = STATUS_META[key];
+            const meta = (ivory ? STATUS_META_IVORY : STATUS_META)[key];
             const active = value.statuses.includes(key);
             return (
               <button
@@ -241,17 +280,27 @@ export default function CalendarFilters({
                 type="button"
                 onClick={() => toggleStatus(key)}
                 aria-pressed={active}
-                className={cn(
-                  "flex h-8 items-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  active
-                    ? "border-primary/50 bg-primary/10 text-foreground"
-                    : "border-border/60 text-muted-foreground hover:bg-muted",
-                )}
+                className={
+                  ivory
+                    ? cn(
+                        "flex min-h-hec-target items-center gap-2 rounded-hec-md border px-3 text-hec-caption font-medium transition-colors duration-hec-1 ease-hec",
+                        FOCUS,
+                        active
+                          ? "border-hec-brass bg-hec-sunken text-hec-ink"
+                          : "border-hec-line-strong text-hec-ink-soft hover:bg-hec-sunken",
+                      )
+                    : cn(
+                        "flex h-8 items-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        active
+                          ? "border-primary/50 bg-primary/10 text-foreground"
+                          : "border-border/60 text-muted-foreground hover:bg-muted",
+                      )
+                }
               >
                 <span className={cn("h-2 w-2 rounded-full", meta.dot)} />
                 {meta.label}
-                {active && <Check className="h-3 w-3" />}
+                {active && <Check className={ivory ? "h-4 w-4" : "h-3 w-3"} />}
               </button>
             );
           })}
@@ -263,9 +312,9 @@ export default function CalendarFilters({
           variant="ghost"
           size="sm"
           onClick={() => onChange(EMPTY_FILTERS)}
-          className="h-8 gap-1 text-muted-foreground"
+          className={ivory ? "gap-2 text-hec-ink-soft" : "h-8 gap-1 text-muted-foreground"}
         >
-          <X className="h-3.5 w-3.5" />
+          <X className={ivory ? "h-4 w-4" : "h-3.5 w-3.5"} />
           Clear
         </Button>
       )}
