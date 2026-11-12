@@ -19,6 +19,10 @@ interface JournalEntry {
   owner_user_id: string;
 }
 
+// A segmented control like the Tabs on the other student screens (DS s.15): the current one raised.
+const TAB =
+  "min-h-hec-target flex-1 whitespace-nowrap text-hec-ink-soft hover:bg-hec-raised/60 hover:text-hec-ink aria-pressed:bg-hec-raised aria-pressed:font-medium aria-pressed:text-hec-ink aria-pressed:shadow-hec-1";
+
 export function StudentJournal({ studentId }: StudentJournalProps) {
   const [journalType, setJournalType] = useState<"personal" | "collab_student_teacher">("personal");
   const [isCreating, setIsCreating] = useState(false);
@@ -50,7 +54,7 @@ export function StudentJournal({ studentId }: StudentJournalProps) {
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <h2 className="text-2xl md:text-3xl font-bold">My Journals</h2>
+        <h1 className="font-display text-hec-h1 font-medium text-hec-ink">My Journals</h1>
         <div className="flex gap-2">
           <Button 
             onClick={() => {
@@ -79,25 +83,28 @@ export function StudentJournal({ studentId }: StudentJournalProps) {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 overflow-x-auto pb-2 border-b">
+      <div className="flex gap-1 overflow-x-auto rounded-hec-lg bg-hec-sunken p-1" role="group" aria-label="Which journals">
         <Button
-          variant={activeTab === "personal" ? "default" : "ghost"}
+          variant="ghost"
+          aria-pressed={activeTab === "personal"}
           onClick={() => setActiveTab("personal")}
-          className="whitespace-nowrap"
+          className={TAB}
         >
           Personal
         </Button>
         <Button
-          variant={activeTab === "student" ? "default" : "ghost"}
+          variant="ghost"
+          aria-pressed={activeTab === "student"}
           onClick={() => setActiveTab("student")}
-          className="whitespace-nowrap"
+          className={TAB}
         >
           About Me
         </Button>
         <Button
-          variant={activeTab === "class" ? "default" : "ghost"}
+          variant="ghost"
+          aria-pressed={activeTab === "class"}
           onClick={() => setActiveTab("class")}
-          className="whitespace-nowrap"
+          className={TAB}
         >
           Class Journals
         </Button>

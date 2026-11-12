@@ -535,13 +535,9 @@ export default function StudentDashboard() {
             }
             caption={`${dayjs().format("MMMM")} - tap to view`}
             gradient="from-amber-500 to-orange-600"
-            valueClassName={
-              tuitionData?.carryOutDebt
-                ? "text-hec-danger"
-                : tuitionData?.carryOutCredit
-                  ? "text-hec-ink"
-                  : "text-hec-ink"
-            }
+            // Ink: red on an amount means overdue and needs the word (DESIGN_SYSTEM s.14);
+            // a balance owed this month is not that. The Tuition page carries the status word.
+            valueClassName="text-hec-ink"
             onClick={() => navigate('/tuition')}
             delay={0.19}
           />

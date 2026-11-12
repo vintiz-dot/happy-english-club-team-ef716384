@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import { Pencil, Trash2, Eye, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { PlaceholderCard } from "@/components/ui/loading";
+import { useIvory } from "@/hooks/useIvory";
 
 type JournalType = "personal" | "student" | "class" | "collab_student_teacher";
 
@@ -51,6 +52,9 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
   const [searchQuery, setSearchQuery] = useState("");
   const [isOwner, setIsOwner] = useState<Record<string, boolean>>({});
   const [isMember, setIsMember] = useState<Record<string, boolean>>({});
+  // Rendered for students (flipped, R08) and for teachers/admins (not yet): new classes only on an ivory route.
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
 
   useEffect(() => {
     loadEntries();
@@ -165,6 +169,8 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
       class: "outline",
       collab_student_teacher: "destructive",
     };
+    // Ivory: the kind of journal is a label, not a state - one neutral badge (a red "collab" read as an error).
+    if (ivory) return <Badge variant="outline" className="shrink-0 self-start capitalize">{type.replace(/_/g, " ")}</Badge>;
     return <Badge variant={variants[type] as any}>{type.replace(/_/g, " ")}</Badge>;
   };
 
@@ -188,7 +194,7 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
 
       {filteredEntries.length === 0 ? (
         <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
+          <CardContent className={iv("p-6 text-center text-hec-body text-hec-ink-soft", "p-6 text-center text-muted-foreground")}>
             No journal entries found.
           </CardContent>
         </Card>
@@ -197,18 +203,18 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
           const truncatedContent = entry.content_rich.replace(/<[^>]*>/g, "").substring(0, 150);
           
           return (
-            <Card key={entry.id} className="mb-3 md:mb-4 overflow-hidden hover:shadow-lg transition-all border-2">
-              <CardHeader className="bg-gradient-to-br from-muted/30 to-muted/10 pb-3">
+            <Card key={entry.id} className={iv("mb-3 md:mb-4 overflow-hidden", "mb-3 md:mb-4 overflow-hidden hover:shadow-lg transition-all border-2")}>
+              <CardHeader className={iv("pb-3", "bg-gradient-to-br from-muted/30 to-muted/10 pb-3")}>
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                  <CardTitle className="text-base md:text-lg line-clamp-2">{entry.title}</CardTitle>
+                  <CardTitle className={iv("min-w-0 break-words text-hec-h3", "text-base md:text-lg line-clamp-2")}>{entry.title}</CardTitle>
                   {getTypeBadge(entry.type)}
                 </div>
-                <p className="text-xs md:text-sm text-muted-foreground">
+                <p className={iv("text-hec-small text-hec-ink-soft", "text-xs md:text-sm text-muted-foreground")}>
                   📅 {format(new Date(entry.created_at), "MMM d, yyyy")}
                 </p>
               </CardHeader>
               <CardContent className="pt-3">
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                <p className={iv("mb-4 line-clamp-3 break-words text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground mb-4 line-clamp-3")}>
                   {truncatedContent}
                   {entry.content_rich.length > 150 && "..."}
                 </p>
@@ -218,7 +224,7 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
                       variant="outline"
                       size="sm"
                       onClick={() => onView(entry)}
-                      className="flex-1 sm:flex-none min-h-[40px]"
+                      className={iv("min-h-hec-target flex-1 sm:flex-none", "flex-1 sm:flex-none min-h-[40px]")}
                     >
                       <Eye className="h-4 w-4 mr-2" />
                       View
@@ -229,7 +235,7 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
                       variant="outline"
                       size="sm"
                       onClick={() => onEdit(entry.id)}
-                      className="flex-1 sm:flex-none min-h-[40px]"
+                      className={iv("min-h-hec-target flex-1 sm:flex-none", "flex-1 sm:flex-none min-h-[40px]")}
                     >
                       <Pencil className="h-4 w-4 mr-2" />
                       Edit
@@ -237,10 +243,10 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
                   )}
                   {isOwner[entry.id] ? (
                     <Button
-                      variant="destructive"
+                      variant={ivory ? "destructive-quiet" : "destructive"}
                       size="sm"
                       onClick={() => setDeleteId(entry.id)}
-                      className="flex-1 sm:flex-none min-h-[40px]"
+                      className={iv("min-h-hec-target flex-1 sm:flex-none", "flex-1 sm:flex-none min-h-[40px]")}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete
@@ -254,7 +260,7 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
                         variant="outline"
                         size="sm"
                         onClick={() => handleLeave(entry.id)}
-                        className="flex-1 sm:flex-none min-h-[40px]"
+                        className={iv("min-h-hec-target flex-1 sm:flex-none", "flex-1 sm:flex-none min-h-[40px]")}
                       >
                         <LogOut className="h-4 w-4 mr-2" />
                         Leave
@@ -278,7 +284,7 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className={iv("bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90", "")}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

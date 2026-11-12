@@ -231,8 +231,18 @@ export function QuestLogTab({ studentId, classId, selectedMonth, viewerStudentId
                 <div
                   key={mission.id}
                   onClick={() => setSelectedHomework(mission)}
+                  // A keyboard path to the same action (the row holds a heading, so it stays a div).
+                  {...(ivory
+                    ? {
+                        role: "button",
+                        tabIndex: 0,
+                        onKeyDown: (e: React.KeyboardEvent) => {
+                          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedHomework(mission); }
+                        },
+                      }
+                    : {})}
                   className={ivory
-                    ? `p-4 rounded-hec-lg border bg-hec-surface shadow-hec-1 transition-shadow duration-hec-1 cursor-pointer hover:shadow-hec-2 ${status === "missing" ? "border-hec-danger/30 bg-hec-danger-tint" : "border-hec-line"}`
+                    ? `p-4 rounded-hec-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring border bg-hec-surface shadow-hec-1 transition-shadow duration-hec-1 cursor-pointer hover:shadow-hec-2 ${status === "missing" ? "border-hec-danger/30 bg-hec-danger-tint" : "border-hec-line"}`
                     : `glass-panel p-4 rounded-xl border transition-all cursor-pointer hover:border-primary/50 hover:scale-[1.01] ${
                     status === "missing" ? "border-red-500/30 bg-red-500/5" : "border-border/50"
                   }`}

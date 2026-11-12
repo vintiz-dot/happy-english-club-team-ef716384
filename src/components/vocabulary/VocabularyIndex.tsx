@@ -9,7 +9,7 @@
 import { useState, useMemo } from "react";
 import Fuse from "fuse.js";
 import {
-  Search, ArrowDownAZ, ArrowUpZA, Volume2, Star, Trash2, Pencil, Save, Loader2,
+  Search, ArrowDownAZ, ArrowUpZA, Volume2, Star, Trash2, Pencil, Save, Loader2, ImageIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -204,7 +204,12 @@ export function VocabularyIndex({ items, onDelete, onUpdate }: Props) {
                     loading="lazy"
                     decoding="async"
                   />
-                ) : null}
+                ) : (
+                  // No picture yet: a quiet mark, so the well does not read as a hole (dark theme).
+                  <div className="flex h-full w-full items-center justify-center" aria-hidden>
+                    <ImageIcon className="h-8 w-8 text-hec-ink-faint" />
+                  </div>
+                )}
                 <button
                   type="button"
                   className={cn(FOCUS, "absolute inset-0 h-full w-full cursor-pointer focus-visible:-outline-offset-2")}
@@ -273,7 +278,13 @@ export function VocabularyIndex({ items, onDelete, onUpdate }: Props) {
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive-quiet" size="icon" aria-label="Delete word">
+                        {/* Quiet like Edit beside it (one per card, many in view); the red is kept for the confirm. */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-hec-ink-soft hover:bg-hec-danger-tint hover:text-hec-danger"
+                          aria-label="Delete word"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>

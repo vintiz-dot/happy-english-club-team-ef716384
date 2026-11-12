@@ -86,7 +86,7 @@ export default function StudentDefendLevel() {
 
   return (
     <Layout title="Defend My Level">
-      <div className="max-w-3xl mx-auto p-4 md:p-6 space-y-6">
+      <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-start gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hec-lg bg-hec-sunken">
             <Scale className="h-6 w-6 text-hec-ink" />

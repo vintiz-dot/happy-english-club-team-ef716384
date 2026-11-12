@@ -140,7 +140,7 @@ export default function StudentLessonDetail() {
 
   return (
     <Layout title="Lesson">
-      <div className="max-w-3xl mx-auto p-4 md:p-6 pb-24 space-y-4">
+      <div className="max-w-3xl mx-auto space-y-4">
         <Button variant="quiet" size="sm" className="gap-1.5 -ml-2" onClick={() => navigate("/student/lessons")}>
           <ArrowLeft className="h-4 w-4" />All lessons
         </Button>
