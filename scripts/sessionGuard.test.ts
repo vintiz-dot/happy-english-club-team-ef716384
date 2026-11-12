@@ -5,6 +5,10 @@ import {
   bulkAckReady,
   canSubmit,
   checkReason,
+  COPY,
+  OUTCOME_UNKNOWN_TEXT,
+  UNKNOWN_OUTCOME_CODES,
+  isSessionRelatedQuery,
   cleanReason,
   consequenceRows,
   describeEvidence,
@@ -151,14 +155,84 @@ test("an unknown error shows its code", () => {
   expect(errorText("weird_new_code")).toContain("weird_new_code");
   expect(errorText("weird_new_code", "boom")).toContain("boom");
 });
-test("parseInvokeError reads error.context.json() and prefers a body in data", async () => {
-  const body = { ok: false, code: "token_stale", message: "x", preview: base() };
-  const err = { name: "FunctionsHttpError", context: { json: async () => body } };
-  expect((await parseInvokeError(err)).code).toBe("token_stale");
+/*
+ * Error objects shaped like @supabase/functions-js 2.75 (dist/module/types.js,
+ * FunctionsClient.js): FunctionsError(message, name, context). HttpError and
+ * RelayError carry the fetch Response as `context`; FetchError carries the
+ * thrown fetch exception. A real Response is used so json()/bodyUsed behave.
+ */
+class FunctionsError extends Error {
+  context: any;
+  constructor(message: string, name: string, context: any) {
+    super(message);
+    this.name = name;
+    this.context = context;
+  }
+}
+const httpErr = (status: number, body: string, type = "application/json") =>
+  new FunctionsError("Edge Function returned a non-2xx status code", "FunctionsHttpError", new Response(body, { status, headers: { "Content-Type": type } }));
+const relayErr = (status: number) =>
+  new FunctionsError("Relay Error invoking the Edge Function", "FunctionsRelayError", new Response("relay says no", { status, headers: { "x-relay-error": "true" } }));
+const fetchErr = (inner: Error) => new FunctionsError("Failed to send a request to the Edge Function", "FunctionsFetchError", inner);
+
+test("parseInvokeError: FunctionsHttpError with the guard's own body reads context.json()", async () => {
+  const fresh = base();
+  const e = await parseInvokeError(httpErr(409, JSON.stringify({ ok: false, code: "token_stale", message_key: "sessionGuard.error.token_stale", preview: fresh })));
+  expect(e.code).toBe("token_stale");
+  expect(e.ok).toBe(false);
+  expect(e.status).toBe(409);
+  expect(e.preview?.token).toBe(fresh.token);
+  expect((await parseInvokeError(httpErr(503, JSON.stringify({ ok: false, code: "guard_not_installed" })))).code).toBe("guard_not_installed");
+});
+test("parseInvokeError: a body already in data is preferred", async () => {
   expect((await parseInvokeError(null, { ok: false, code: "use_cancel" })).code).toBe("use_cancel");
-  expect((await parseInvokeError({ name: "FunctionsFetchError", message: "Failed to fetch" })).code).toBe("network");
+});
+test("parseInvokeError: gateway bodies are mapped by status and never overwrite our code", async () => {
+  // Supabase gateway on an expired JWT: numeric code
+  const jwt = await parseInvokeError(httpErr(401, JSON.stringify({ code: 401, message: "Invalid JWT" })));
+  expect(jwt.code).toBe("unauthorized");
+  expect(jwt.message).toBe("Invalid JWT");
+  // Function not deployed: the platform's string code is not one of ours
+  expect((await parseInvokeError(httpErr(404, JSON.stringify({ code: "NOT_FOUND", message: "Requested function was not found" })))).code).toBe("function_missing");
+  // HTML from a proxy, and an empty 500
+  expect((await parseInvokeError(httpErr(502, "<html>Bad gateway</html>", "text/html"))).code).toBe("http_error");
+  expect((await parseInvokeError(httpErr(500, ""))).code).toBe("http_error");
+  expect((await parseInvokeError(httpErr(546, JSON.stringify({ code: "WORKER_LIMIT", message: "limit" })))).code).toBe("http_error");
+});
+test("parseInvokeError: a body that was already read is not read again", async () => {
+  const e = httpErr(409, JSON.stringify({ ok: false, code: "slot_taken" }));
+  await e.context.text();
+  const out = await parseInvokeError(e);
+  expect(out.code).toBe("http_error");
+  expect(out.status).toBe(409);
+});
+test("parseInvokeError: FunctionsRelayError has the relay's body, not the function's", async () => {
+  const e = await parseInvokeError(relayErr(502));
+  expect(e.code).toBe("relay");
+  expect(e.status).toBe(502);
+});
+test("parseInvokeError: FunctionsFetchError has no body (network, abort)", async () => {
+  expect((await parseInvokeError(fetchErr(new TypeError("Failed to fetch")))).code).toBe("network");
+  const abort = new Error("The operation was aborted");
+  abort.name = "AbortError";
+  expect((await parseInvokeError(fetchErr(abort))).code).toBe("network");
+});
+test("parseInvokeError: anything thrown that is not a FunctionsError", async () => {
+  expect((await parseInvokeError(new TypeError("Failed to fetch"))).code).toBe("network");
   expect((await parseInvokeError({ message: "weird" })).code).toBe("unexpected");
-  expect((await parseInvokeError({ context: { json: async () => { throw new Error("no"); } } })).code).toBe("unexpected");
+  expect((await parseInvokeError(undefined)).code).toBe("unexpected");
+});
+test("a confirm that ended without a clear answer is never told 'Nothing was changed'", () => {
+  for (const c of ["network", "relay", "unexpected", "http_error"]) {
+    expect(UNKNOWN_OUTCOME_CODES.has(c)).toBe(true);
+    expect(ERROR_TEXT[c]).not.toContain("Nothing was changed");
+  }
+  expect(OUTCOME_UNKNOWN_TEXT).toContain("cannot tell whether");
+  expect(UNKNOWN_OUTCOME_CODES.has("token_stale")).toBe(false);
+  expect(UNKNOWN_OUTCOME_CODES.has("reason_too_short")).toBe(false);
+});
+test("review wording does not promise a second administrator", () => {
+  expect(COPY.reviewNote).toBe("This change is recorded for review.");
 });
 
 /* stale diff */
@@ -219,6 +293,16 @@ test("payroll line is the calculate-payroll figure, or says it was not fetched",
   expect(payrollLine({ payroll: { fetched: false, reason: "lesson_not_held" } }).text).toContain("not marked Held");
   expect(payrollLine({ payroll: { fetched: true, month: "2026-11", teacher_id: "zz", response: { payrollData: [{ teacherId: "a" }, { teacherId: "b" }] } } }).fetched).toBe(false);
   expect(payrollLine(null).fetched).toBe(false);
+  // A single row for ANOTHER teacher is never shown as this lesson's teacher's pay.
+  expect(payrollLine({ payroll: { fetched: true, month: "2026-11", teacher_id: "t1", response: { payrollData: [{ teacherId: "t9", totalAmountActual: 999 }] } } }).fetched).toBe(false);
+  expect(payrollLine({ payroll: { fetched: true, month: "2026-11", teacher_id: "t1", response: { payrollData: [{ totalAmountActual: 5 }] } } }).fetched).toBe(true);
+});
+
+test("query refresh covers the lesson screens the old dialogs' parents refetched", () => {
+  for (const k of ["calendar-sessions", "class-sessions", "student-lessons-all", "lesson-overview", "today-agenda", "teacher-lost-income", "lost-revenue", "excused-absences", "student-tuition", "payroll"]) {
+    expect(isSessionRelatedQuery([k])).toBe(true);
+  }
+  expect(isSessionRelatedQuery(["announcements"])).toBe(false);
 });
 
 /* refresh */

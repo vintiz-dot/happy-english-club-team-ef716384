@@ -6,6 +6,7 @@ import {
   isSessionRelatedQuery,
   requirementsFor,
   stalePreviewDiff,
+  UNKNOWN_OUTCOME_CODES,
   type Consequences,
   type GuardErrorBody,
   type GuardForm,
@@ -62,6 +63,7 @@ export function useGuardedChange({ open, sessionId, op, change, figures }: Optio
   const previewRef = useRef<GuardPreview | null>(null);
   previewRef.current = preview;
   const submitting = useRef(false);
+  const retrying = useRef(false);
 
   const invalidate = useCallback(() => {
     void qc.invalidateQueries({ predicate: (q) => isSessionRelatedQuery(q.queryKey) });
@@ -74,6 +76,7 @@ export function useGuardedChange({ open, sessionId, op, change, figures }: Optio
     setStale(null);
     setPreview(null);
     setConsequences(null);
+    setSuccess(null);
     const data: Record<string, unknown> = { id: sessionId, op };
     if (op === "move" && change) data.change = change;
     if (figures === false) data.figures = false;
@@ -131,9 +134,24 @@ export function useGuardedChange({ open, sessionId, op, change, figures }: Optio
           if (req.confirm && form.confirm) data.confirm = true;
           if (req.correctionReason && checkReason(form.correctionReason, req.reasonMin).ok) data.correction_reason = cleanReason(form.correctionReason);
         }
+        const opened = seq.current;
         const res = await manageSession<GuardSuccess>(op, data);
+        if (opened !== seq.current) {
+          // The dialog was closed (or re-opened) while the request ran. Claim
+          // nothing on a screen that is gone; the lists behind it are refreshed
+          // so they show whatever really happened.
+          invalidate();
+          return;
+        }
         if (!res.ok) {
           const err = res.error;
+          if (UNKNOWN_OUTCOME_CODES.has(err.code)) {
+            // The change may have reached the database before the answer was lost.
+            setError({ ...err, outcome_unknown: true });
+            setPhase("failed");
+            invalidate();
+            return;
+          }
           if (err.code === "token_stale") {
             // Never retried silently: show the fresh preview and ask again.
             const fresh = err.preview && typeof err.preview === "object" ? (err.preview as GuardPreview) : null;
@@ -165,9 +183,16 @@ export function useGuardedChange({ open, sessionId, op, change, figures }: Optio
 
   const retryRefresh = useCallback(async () => {
     const overrideId = success?.result?.override_id;
-    if (!overrideId) return;
+    if (!overrideId || retrying.current) return;
+    retrying.current = true;
     setRetry({ busy: true });
+    const opened = seq.current;
     const res = await manageSession<{ tuition: any }>("refresh-tuition", { override_id: overrideId });
+    retrying.current = false;
+    if (opened !== seq.current) {
+      invalidate();
+      return;
+    }
     if (!res.ok) {
       setRetry({ busy: false, error: res.error });
       return;

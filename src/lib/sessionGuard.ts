@@ -216,9 +216,23 @@ export const ERROR_TEXT: Record<string, string> = {
   evidence_unavailable: "The evidence check could not run. Nothing was changed. Try again in a minute.",
   retry: "The database was busy. Nothing was changed. Try again.",
   misconfigured: "The server is missing a setting and cannot make this change safely. Nothing was changed.",
-  unexpected: "Something unexpected went wrong on the server. Nothing was changed.",
-  network: "Could not reach the server. Nothing was changed. Check your connection and try again.",
+  unexpected: "Something unexpected went wrong on the server. Reload the lesson to see whether anything was changed before trying again.",
+  network: "Could not reach the server. Check your connection, then reload the lesson to see whether anything was changed.",
+  relay: "The server could not run this request (the function did not answer). Reload the lesson to see whether anything was changed.",
+  function_missing: "The server function for this change is not deployed yet. Nothing was changed.",
+  http_error: "The server answered with an error the app does not recognise. Reload the lesson to see whether anything was changed.",
 };
+
+/**
+ * Codes after which the app cannot know whether a CONFIRM step reached the
+ * database (the request may have been applied before the answer was lost).
+ * The dialog says so instead of "Nothing was changed", and refreshes the
+ * screens behind it.
+ */
+export const UNKNOWN_OUTCOME_CODES = new Set(["network", "relay", "unexpected", "http_error"]);
+
+export const OUTCOME_UNKNOWN_TEXT =
+  "The app did not get a clear answer, so it cannot tell whether the lesson was changed. Close this window, reload the lesson and look at its status before trying again.";
 
 export function errorText(code: string | null | undefined, fallback?: string | null): string {
   if (code && ERROR_TEXT[code]) return ERROR_TEXT[code];
@@ -227,7 +241,7 @@ export function errorText(code: string | null | undefined, fallback?: string | n
 }
 
 /** Codes where the action cannot work at all until something outside the dialog changes. */
-export const BLOCKING_CODES = new Set(["guard_not_installed", "guard_broken", "misconfigured", "forbidden", "unauthorized", "preview_required"]);
+export const BLOCKING_CODES = new Set(["guard_not_installed", "guard_broken", "misconfigured", "forbidden", "unauthorized", "preview_required", "function_missing"]);
 
 export const COPY = {
   titles: {
@@ -245,7 +259,7 @@ export const COPY = {
   settled: "This lesson is already billed or paid, or its payroll month is closed. This is a correction and will be reviewed.",
   stale: "This lesson changed while you were looking at it",
   stalePrompt: "Read what is different below, then confirm again. Nothing was changed.",
-  reviewNote: "This change goes to review: another administrator will look at it.",
+  reviewNote: "This change is recorded for review.",
   erasedNote: "Marks were removed before this change",
   consequenceNotFetched: "not available",
   payrollNotFetched: "could not be worked out - check Payroll after the change",
@@ -563,7 +577,9 @@ export function payrollLine(c: Consequences | null | undefined): PayrollLine {
     return { fetched: false, month: p.month, text: COPY.payrollNotFetched };
   }
   const rows: any[] = p.response?.payrollData ?? [];
-  const mine = rows.find((r) => r?.teacherId === p.teacher_id) ?? (rows.length === 1 ? rows[0] : null);
+  // Only this lesson's teacher. A single row is used only when it names no teacher at all;
+  // a row naming someone else is never shown as this teacher's pay.
+  const mine = rows.find((r) => r?.teacherId === p.teacher_id) ?? (rows.length === 1 && !rows[0]?.teacherId ? rows[0] : null);
   if (!mine) return { fetched: false, month: p.month, text: COPY.payrollNotFetched };
   const amount = mine.totalAmountActual ?? mine.totalAmountProjected;
   const sessions = mine.sessionsCountActual ?? mine.sessionsCountProjected;
@@ -602,24 +618,59 @@ export function stalePreviewDiff(before: GuardPreview | null | undefined, after:
 
 /* ---------------------------------------------------------------- errors */
 
-/** Shape supabase-js hands back on a non-2xx: FunctionsHttpError with `.context` a Response. */
+/** The code to use for a non-2xx whose body is not one of the guard's own error bodies (gateway, platform). */
+function codeForStatus(status: number | null): string {
+  if (status === 401) return "unauthorized";
+  if (status === 403) return "forbidden";
+  if (status === 404) return "function_missing";
+  return "http_error";
+}
+
+const isGuardBody = (b: any): boolean =>
+  !!b && typeof b === "object" && typeof b.code === "string" && (b.ok === false || Object.prototype.hasOwnProperty.call(ERROR_TEXT, b.code));
+
+/**
+ * Turn what `supabase.functions.invoke` handed back into one error body.
+ * Read against @supabase/functions-js 2.75 (FunctionsClient.invoke, types.ts):
+ *  - FunctionsHttpError (non-2xx): `context` is the fetch Response. Its body is
+ *    the function's JSON `{ ok:false, code, ... }`, read once with
+ *    `context.json()`. A gateway answer (Invalid JWT, function not found,
+ *    WORKER_LIMIT) has a different JSON or HTML: mapped by HTTP status, and
+ *    its own `code` (a number, or "NOT_FOUND") never overwrites ours.
+ *  - FunctionsRelayError: `context` is the Response too, but the body is the
+ *    relay's, not the function's: code `relay`.
+ *  - FunctionsFetchError: `context` is the fetch exception (TypeError, an
+ *    AbortError); there is no body: code `network`.
+ *  - anything thrown (not a FunctionsError): `network` when it looks like one,
+ *    else `unexpected`.
+ * Fails closed: never returns ok.
+ */
 export async function parseInvokeError(error: any, data?: any): Promise<GuardErrorBody> {
   if (data && typeof data === "object" && data.ok === false && typeof data.code === "string") return data as GuardErrorBody;
-  try {
-    const ctx = error?.context;
-    if (ctx && typeof ctx.json === "function") {
-      const body = await ctx.json();
-      if (body && typeof body === "object" && typeof body.code === "string") return { ok: false, ...body } as GuardErrorBody;
-      if (body && typeof body === "object") return { ok: false, code: "unexpected", message: body.error ?? body.message, ...body } as GuardErrorBody;
-    }
-  } catch {
-    /* fall through */
-  }
   const name = String(error?.name ?? "");
-  if (name === "FunctionsFetchError" || /failed to fetch|network/i.test(String(error?.message ?? ""))) {
-    return { ok: false, code: "network", message: String(error?.message ?? "") };
+  const ctx = error?.context;
+  const status: number | null = ctx && typeof ctx.status === "number" ? ctx.status : null;
+  const msg = String(error?.message ?? "");
+  if (name === "FunctionsFetchError") {
+    return { ok: false, code: "network", message: String(ctx?.message ?? msg) };
   }
-  return { ok: false, code: "unexpected", message: String(error?.message ?? "") };
+  if (name === "FunctionsRelayError") {
+    return { ok: false, code: "relay", status, message: msg };
+  }
+  if (ctx && typeof ctx.json === "function" && !ctx.bodyUsed) {
+    let body: any;
+    try {
+      body = await ctx.json();
+    } catch {
+      body = undefined;
+    }
+    if (isGuardBody(body)) return { ...body, ok: false, status } as GuardErrorBody;
+    const said = body && typeof body === "object" ? String(body.message ?? body.msg ?? body.error ?? "") : "";
+    return { ok: false, code: codeForStatus(status), status, message: said || msg };
+  }
+  if (name === "FunctionsHttpError") return { ok: false, code: codeForStatus(status), status, message: msg };
+  if (/failed to fetch|networkerror|load failed|network request failed/i.test(msg)) return { ok: false, code: "network", message: msg };
+  return { ok: false, code: "unexpected", message: msg };
 }
 
 /* ------------------------------------------------------- tuition refresh */
@@ -785,7 +836,7 @@ export function normaliseBulkResult(r: any): BulkResult {
 /** React Query keys touched by a lesson change: calendars, class sessions, tuition, payroll, invoices. */
 export function isSessionRelatedQuery(key: readonly unknown[]): boolean {
   const first = String(key?.[0] ?? "");
-  return /session|calendar|tuition|payroll|invoice|attendance|schedule|finance|family/i.test(first);
+  return /session|calendar|tuition|payroll|invoice|attendance|schedule|finance|family|lesson|agenda|lost-|excused|breakdown|overview-stats|recorded-payments/i.test(first);
 }
 
 /* --------------------------------------------------------- review screen */

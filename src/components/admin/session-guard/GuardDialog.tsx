@@ -11,6 +11,7 @@ import {
   COPY,
   errorText,
   longDate,
+  OUTCOME_UNKNOWN_TEXT,
   refreshSummary,
   requirementsFor,
   typedDateMatches,
@@ -88,6 +89,17 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
     }
   }, [staleNonce]);
 
+  // Focus never falls to the page when the footer changes: the result screen
+  // focuses Done; an error or a stale screen puts it back on Keep lesson.
+  useEffect(() => {
+    if (!open) return;
+    if (phase === "done") doneRef.current?.focus();
+    else if (phase === "failed") keepRef.current?.focus();
+  }, [open, phase]);
+  useEffect(() => {
+    if (staleNonce > 0) keepRef.current?.focus();
+  }, [staleNonce]);
+
   const req = requirementsFor(preview);
   const form = { reason, confirm, correctionReason, typedDate };
   const unguarded = op === "move" && preview?.kind === null;
@@ -123,7 +135,12 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
   return (
     <Dialog open={open} onOpenChange={(o) => !o && close()}>
       <DialogContent
-        className="flex max-h-[92dvh] w-[calc(100vw-1rem)] max-w-xl flex-col gap-0 overflow-hidden !bg-background p-0 sm:max-h-[90dvh]"
+        // Centred by inset-0 + m-auto + h-fit, NOT by translate(-50%,-50%): the shared
+        // spring-in keyframes set `transform: scale()`, which replaces the centring
+        // translate for the 0.4 s of the animation and throws the dialog to the
+        // bottom-right (top-left at 50%/50%). With no translate to lose, the scale
+        // animates around the centre. Body scrolls; header and footer stay put.
+        className="inset-0 m-auto flex h-fit max-h-[92dvh] w-[calc(100vw-1rem)] max-w-xl translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden !bg-background p-0 sm:max-h-[90dvh]"
         onOpenAutoFocus={(e) => {
           // Keep lesson is the default: it, not the first form field, takes focus.
           e.preventDefault();
@@ -151,7 +168,12 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
           {phase === "loading" && <LoadingBody />}
 
           {phase === "failed" && error && (
-            <ErrorBanner id="sg-error" title="The check could not be completed" text={errorText(error.code, error.message)} code={error.code} />
+            <ErrorBanner
+              id="sg-error"
+              title={error.outcome_unknown ? "Not confirmed" : "The check could not be completed"}
+              text={error.outcome_unknown ? OUTCOME_UNKNOWN_TEXT : errorText(error.code, error.message)}
+              code={error.code}
+            />
           )}
 
           {phase === "done" && success && (
@@ -272,7 +294,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
                     size="lg"
                     className="min-h-12 w-full border-destructive text-foreground hover:bg-destructive/10 hover:text-foreground [&_svg]:text-destructive sm:w-auto"
                     disabled={!canGo || busy || phase === "loading" || phase === "failed" || !!blockingError}
-                    aria-describedby={missing.length ? "sg-missing" : undefined}
+                    aria-describedby={[missing.length && !busy ? "sg-missing" : "", error ? "sg-error" : ""].filter(Boolean).join(" ") || undefined}
                     onClick={() => void g.submit(form)}
                   >
                     {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Icon aria-hidden="true" />}
