@@ -38,3 +38,6 @@ Probes (publishable key from .env, not printed):
 - POST manage-session with no Authorization -> 401 UNAUTHORIZED_NO_AUTH_HEADER (gateway).
 - POST bulk-cancel-sessions with no Authorization -> 401.
 Next: step 5, straight away.
+
+## Step 5 - migration 2 applied
+apply_migration `session_cancel_guard` (20261112091000, LF blob md5 7a8c9b3a61600a9c26153d900d4f5a27, 1180 lines) -> success, no error.
