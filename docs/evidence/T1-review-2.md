@@ -4,7 +4,7 @@ Reviewed commit: 36c6af1 (`worktree-agent-ab1ade20b08d798c9`) against `claude/he
 
 Where this file lives: my session runs in the conductor's own worktree, so I did NOT detach its HEAD. The reviewed commit was read and tested in a separate checkout (`.claude/worktrees/t1r2`, detached at 36c6af1); this file is committed on `claude/hec-conductor-setup-efbaa5`, one file, nothing else staged.
 
-**Where I am / next step:** sections 1-3 written. Next: 4 (M-2), 5 (family-payment), 6, 7 (suites), 8.
+**Where I am / next step:** sections 1-6 written. Next: 7 (suites, running), 8 (stopped-on list), verdict.
 
 ## 1. History risk - measured on LIVE (12 Nov 2026, read-only, counts only)
 
@@ -83,3 +83,44 @@ Guard (unchanged SQL, `20261112091000:307-319`, and the un-cancel twin `:608-611
 - Against what is live today the guard gets STRONGER: the live function resets `status` to `issued` and `confirmation_status` to auto/needs_review at each view; after the release a confirmed bill stays confirmed.
 - Going forward, the one weakening relative to round 1: a `paid` set by hand (Invoice Status Manager) or left by a settle-bill write-off with nothing recorded no longer holds the guard after the next calculation. Under round 1 it would have; on live it does not. To protect such a bill the admin confirms or freezes it - both survive. Acceptable; say so in the admin notes.
 - The implementer's changed assertion ("a paid label with nothing recorded is corrected to issued") is accurate about the code and harmless on live data.
+
+## 4. M-2 - can a payment still be lost or zeroed?
+
+Writers of `invoices.recorded_payment` in `supabase/functions` at 36c6af1 (grep): `family-payment/index.ts:269`, `smart-family-payment/index.ts:284` and `:297` - all three add to it. calculate-tuition no longer names the column in either save: full payload `calculate-tuition/index.ts:609-623`, fallback `:647-658`. (`:712` is a field of the JSON answer, not a write.) PostgREST's upsert sets only the columns in the payload, so on conflict the stored payment is left alone.
+
+- New bill: the column default applies. Checked on LIVE, not only in the migration: `recorded_payment` default `0`, and 0 of 708 bills hold NULL. Same value as was written before.
+- Race, payment lands between read (`:139-147`) and save (`:635`): the save carries stale `carry_out_*` and `paid_amount`, but `invoices_carry_sync` is an AFTER INSERT OR UPDATE row trigger that recomputes the student's whole carry chain from the rows themselves (`20261009120000`, `refresh_invoice_carry`); it is present and enabled on live. So the carry is right when the statement ends. `paid_amount` stays stale until the next calculation; nothing owed is read from it (but see 8.1: settle-bill reads it).
+- Race, payment creates the bill in the gap: the payment survives; the calculation, having read "no bill", writes `status: issued` and a fresh `confirmation_status` (`invoice-status.ts:133`). Label only, corrected by the recalculation every payment path runs afterwards; the guard holds anyway through `recorded_payment > 0`.
+- Label race the evidence does not list: a calculation that read `issued` with 100,000 recorded (every part-paid bill, the first time it is opened after the deploy) will write `partial`; if a payment completes that bill in the gap, `partial` lands over the payment's `paid`. Money intact, guard intact (`partial` counts), next calculation corrects. MINOR.
+- Fail closed still holds: `:158` (the month's bill) and now `:162` (earlier months) throw before any write; unresolved sibling state and `siblingPreview` still skip the save (`:628`).
+- Executed: suite cases at `invoice-status.test.mjs:955-990` (no save mentions the column, fallback included; payment mid-calculation survives with carry-out 0; payment creating the bill survives with carry-out debt 200,000).
+- NOT closed, and not claimed closed: the payment functions themselves read `recorded_payment` and write back read + applied (`family-payment:264-269`, `smart-family-payment:275-284`), so two payments for one child and month at the same instant can lose one. Pre-existing, unrelated to calculate-tuition, needs an atomic increment (SQL). Follow-up, not a blocker.
+
+Verdict: M-2 is closed for calculate-tuition. No path in this diff lowers or zeroes a payment.
+
+## 5. family-payment selection
+
+`family-payment/index.ts:92-107`: reads the bills of the selected children for exactly the posted month (`.eq('month', month)`; `month` is required by the schema, `:58`), then keeps those where `invoicePaidLabel(inv) !== 'paid'` - monthly `recorded_payment` against `total_amount + carry_in_debt - carry_in_credit`. Cumulative `paid_amount` is not read anywhere in the function (grep: no occurrence).
+
+| bill | selected? | right? |
+|---|---|---|
+| 400,000 charge, 100,000 credit in, 300,000 recorded | no | yes - this is the case the review's "drop the filter" would have overcharged |
+| stored label `paid` but only part recorded | yes | yes (was skipped while the ledger entry was still posted) |
+| frozen, saved total 810,000, 400,000 recorded | yes, against the saved total | yes |
+| confirmed target month | only that month is read | yes; the client side (`FamilyPaymentModal.tsx:64`, `useTuitionMonthConfirmation`) is unchanged |
+| credit in covers the month, nothing recorded | **yes** | no: `owed = total - recorded` (`:134, :169, :262`) ignores the credit, so the full charge is taken again and becomes credit carried out |
+| 300,000 debt in, the month's 400,000 recorded | **yes**, with `owed` 0 | no: nothing can be applied to carried-in debt; a zero allocation row and zero ledger pair are written, the money falls to "leftover" |
+
+The last two rows are the `owed` arithmetic, which this round did not touch and which behaved the same under the old filter (those bills read `issued`). Money is not lost in either (it ends as credit or leftover) but it is put in the wrong place. The implementer's "no zero-amount allocation rows are created" is true for a paid bill, not for the debt-carried-in row. `FamilyPaymentModal` is not mounted (grep `<FamilyPaymentModal` in `src`: none; the mounted family screen is `BatchFamilyPaymentModal.tsx:273` -> smart-family-payment), so this is latent. Fix before anyone mounts it: `owed = max(0, monthPayable(inv) - recorded)` in the three places. Not a blocker.
+
+smart-family-payment (the mounted one): allocates from calculate-tuition's carry-out (`:153-154`), labels with `invoicePaidLabel(invoice, newRecorded)` (`:283`) and, on a missing row, `paidLabel(applied, debt - credit)` (`:300`) - correct: with no row nothing is recorded, so carry-out is the payable.
+
+Small inconsistency: calculate-tuition never replaces an admin's `credit`; the four payment functions write the derived label over it (`family-payment:270`, `smart-family-payment:283`, `settle-bill:194`, `delete-payment:139`). Live bills labelled `credit`: 0. MINOR.
+
+## 6. Pricing, confirmation, frozen figures, golden
+
+- Browser: the only `src` change in `git diff claude/hec-conductor-setup-efbaa5...36c6af1` is one string in `TuitionReviewQueue.tsx:146`. No arithmetic.
+- `confirmed`: the only writer of `confirmation_status` outside the helper is `confirm-tuition/index.ts:57`; the helper can only produce `auto_approved` / `needs_review` (`invoice-status.ts:100, 133, 147, 172, 180`). The new block in confirm-tuition (`:66-81`) updates `review_flags` only, after the confirmation, and a failure there is logged, not thrown.
+- Frozen: calculate-tuition still takes the saved base, discount and total (`:393-397`), the label is judged on that saved total, and `keep_frozen_invoice_amounts` (enabled on live) pins the four figure columns regardless. `status` is not one of the pinned columns, so a frozen bill's label follows its payment - intended; 44 frozen bills on live go issued -> paid/partial.
+- Golden: `git diff claude/hec-conductor-setup-efbaa5...36c6af1 -- scripts/pgtest/fixtures` is empty; `git log -- scripts/pgtest/fixtures/tuition-figures.golden.json` shows one commit, 4cbe742 (round 1, generated from the old function).
+- No migration in the diff.
