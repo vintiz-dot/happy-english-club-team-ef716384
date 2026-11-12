@@ -379,7 +379,7 @@ export function AssistantChat({ className }: { className?: string }) {
               }
             }}
             placeholder={copy.placeholder}
-            className={ivory ? "max-h-32 min-h-hec-target resize-none" : "min-h-[44px] max-h-32 resize-none text-sm"}
+            className={ivory ? "max-h-32 min-h-24 resize-none" : "min-h-[44px] max-h-32 resize-none text-sm"}
             rows={1}
             disabled={busy}
           />
