@@ -210,8 +210,10 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
 
           <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
             <SelectTrigger className="w-full sm:w-[200px]" aria-label="Sort">
-              <ArrowDownUp className="mr-2 h-4 w-4 shrink-0" aria-hidden />
-              <SelectValue />
+              <span className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                <ArrowDownUp className="h-4 w-4 shrink-0" aria-hidden />
+                <SelectValue />
+              </span>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="balance">Most owed first</SelectItem>

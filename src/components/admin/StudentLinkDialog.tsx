@@ -290,7 +290,7 @@ export function StudentLinkDialog({
                           <div className="min-w-0 flex-1">
                             <div className="mb-1 flex items-start gap-2">
                               <Mail className="mt-1 h-3 w-3 shrink-0 text-hec-ink-soft" aria-hidden />
-                              <p className="min-w-0 break-all text-hec-small font-medium">{user.email}</p>
+                              <p className="min-w-0 break-words text-hec-small font-medium [overflow-wrap:anywhere]">{user.email}</p>
                             </div>
                             <p className="truncate text-hec-caption text-hec-ink-soft">ID: {user.id}</p>
                             {user.isLinked && (
@@ -300,7 +300,7 @@ export function StudentLinkDialog({
                               </p>
                             )}
                           </div>
-                          <div className="flex flex-wrap justify-end gap-1">
+                          <div className="flex w-full flex-wrap gap-1 sm:w-auto sm:justify-end">
                             {user.roles.map((role) => (
                               <Badge
                                 key={role}
