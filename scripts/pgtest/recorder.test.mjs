@@ -2,7 +2,10 @@
 // database refuses whatever the page sends.
 //
 // Drives supabase/migrations/20261112100000_class_recorder.sql against an
-// in-process Postgres, after 20261111110000 (the real is_teacher_of_class,
+// in-process Postgres, after 20260717090000 (the EXISTING bucket
+// `class-recordings` and its policy "staff_manage_class_recordings", which
+// lets every teacher read, write and delete in it - as the live database has
+// them, C1 critic 2 N1) and 20261111110000 (the real is_teacher_of_class,
 // which says yes to teaching assistants - so the suite can show the recorder
 // does not use it).
 //
@@ -27,8 +30,17 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 
 const MIGS = process.argv.slice(2);
+const PIPE_MIG = MIGS.find((f) => f.includes("20260717090000"));
 const TA_MIG = MIGS.find((f) => f.includes("20261111110000"));
 const REC_MIG = MIGS.find((f) => f.includes("class_recorder"));
+if (!PIPE_MIG || !TA_MIG || !REC_MIG) {
+  console.log("usage: recorder.test.mjs <20260717090000_...> <20261111110000_...> <20261112100000_class_recorder.sql>");
+  console.log("0 passed, 1 failed");
+  process.exit(1);
+}
+// The recorder's own bucket. Teacher Transcripts' bucket is OLD_BUCKET.
+const BUCKET = "class-recorder-audio";
+const OLD_BUCKET = "class-recordings";
 let pass = 0, fail = 0;
 const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${x ? " :: " + x : ""}`); c ? pass++ : fail++; };
 const eq = (n, got, want) => ok(n, JSON.stringify(got) === JSON.stringify(want),
@@ -74,16 +86,34 @@ const PRELUDE = `
   ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
   CREATE FUNCTION storage.foldername(n text) RETURNS text[] LANGUAGE sql AS
     $f$ SELECT (string_to_array(n,'/'))[1:array_length(string_to_array(n,'/'),1)-1] $f$;
-  GRANT USAGE ON SCHEMA storage TO authenticated, service_role;
-  GRANT USAGE ON SCHEMA auth TO authenticated, service_role;
-  GRANT SELECT, INSERT, UPDATE, DELETE ON storage.objects TO authenticated, service_role;
+  -- As Supabase has it: anon too holds table privileges on storage.objects;
+  -- only the policies decide.
+  GRANT USAGE ON SCHEMA storage TO anon, authenticated, service_role;
+  GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+  GRANT SELECT, INSERT, UPDATE, DELETE ON storage.objects TO anon, authenticated, service_role;
+  -- What 20260717090000 alters (Teacher Transcripts).
+  CREATE TABLE public.class_transcripts (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), raw_text text,
+    source_format text, CONSTRAINT class_transcripts_source_format_check CHECK (source_format IN ('vtt','srt','txt','paste')));
   -- As production has them (20260712023825): the other buckets' policies read these.
   GRANT SELECT ON public.teachers, public.teaching_assistants, public.classes, public.sessions,
     public.homeworks, public.session_participants, public.students, public.enrollments TO authenticated;
 `;
 
 const db = new PGlite();
+const q = async (s, p) => (await db.query(s, p)).rows;
+const one = async (s, p) => (await q(s, p))[0];
 await db.exec(PRELUDE);
+// The live database has Teacher Transcripts' bucket and its policy.
+await db.exec(readFileSync(PIPE_MIG, "utf8"));
+const oldBucketState = async () => ({
+  bucket: (await db.query(`SELECT row_to_json(b)::text j FROM storage.buckets b WHERE id = $1`, [OLD_BUCKET])).rows.map((r) => r.j),
+  policies: (await db.query(
+    `SELECT policyname, permissive, roles::text, cmd, qual, with_check FROM pg_policies
+      WHERE schemaname = 'storage' AND tablename = 'objects'
+        AND (policyname = 'staff_manage_class_recordings' OR concat_ws(' ', qual, with_check) LIKE '%' || $1 || '''%')
+      ORDER BY policyname`, [OLD_BUCKET])).rows,
+});
+const OLD_BEFORE = await oldBucketState();
 await db.exec(readFileSync(TA_MIG, "utf8"));
 // 20260719014455 grants this back to signed-in users in production.
 await db.exec(`GRANT EXECUTE ON FUNCTION public.is_teacher_of_class(uuid, uuid) TO authenticated`);
@@ -95,9 +125,53 @@ ok("applies", true);
   ok("and applies a second time unchanged", again === null, again ?? "");
 }
 
-const q = async (s, p) => (await db.query(s, p)).rows;
-const one = async (s, p) => (await q(s, p))[0];
-const U = (n) => `${String(n).repeat(8)}-0000-0000-0000-000000000000`;
+console.log("=== the recorder's own bucket; Teacher Transcripts' is untouched (C1 critic 2, N1) ===");
+ok("the old bucket and its policy were there before (the suite sees what live has)",
+  OLD_BEFORE.bucket.length === 1 && OLD_BEFORE.policies.length === 1 && OLD_BEFORE.policies[0].cmd === "ALL");
+eq("after two applies, `class-recordings` and every policy that names it are byte-identical", await oldBucketState(), OLD_BEFORE);
+eq("the old bucket still takes Teacher Transcripts' 50 MB mp3/m4a/mp4", (await one(
+  `SELECT file_size_limit::int l, 'audio/mpeg' = ANY (allowed_mime_types) AND 'video/mp4' = ANY (allowed_mime_types) t
+     FROM storage.buckets WHERE id = $1`, [OLD_BUCKET])), { l: 52428800, t: true });
+eq("the recorder's bucket is its own: private, 8 MB, webm/flac/wav/json", (await one(
+  `SELECT name, public, file_size_limit::int l, allowed_mime_types t FROM storage.buckets WHERE id = $1`, [BUCKET])),
+  { name: BUCKET, public: false, l: 8388608, t: ["audio/webm", "audio/flac", "audio/x-flac", "audio/wav", "audio/x-wav", "application/json"] });
+eq("exactly two policies reach the recorder's bucket, both its own", (await q(
+  `SELECT policyname, cmd FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects'
+     AND concat_ws(' ', qual, with_check) LIKE '%' || $1 || '%' ORDER BY 1`, [BUCKET])),
+  [{ policyname: "class_recorder_audio_insert", cmd: "INSERT" }, { policyname: "class_recorder_audio_select", cmd: "SELECT" }]);
+eq("no recorder SQL names the old bucket in code (only comments may)", (await one(
+  `SELECT count(*)::int n FROM pg_proc WHERE proname LIKE 'recorder%' AND prosrc LIKE '%' || $1 || '''%'`, [OLD_BUCKET])).n, 0);
+{
+  // The preflight: each of these refuses the whole file before anything lands.
+  const paste = async () => {
+    try { await db.exec(readFileSync(REC_MIG, "utf8")); return null; }
+    catch (e) { try { await db.exec("ROLLBACK"); } catch { /* not in a transaction */ } return e.message; }
+  };
+  await db.exec(`CREATE POLICY probe_everything ON storage.objects FOR SELECT TO authenticated USING (true)`);
+  refused("preflight: a storage policy not scoped by bucket_id (it would reach every bucket) refuses the install",
+    await paste(), /Refusing to install the class recorder: storage policies that could reach its bucket: probe_everything/);
+  await db.exec(`DROP POLICY probe_everything ON storage.objects`);
+  await db.exec(`CREATE POLICY probe_named ON storage.objects FOR ALL TO authenticated
+                   USING (bucket_id = '${BUCKET}' AND public.has_role(auth.uid(), 'teacher'))`);
+  refused("preflight: someone else's policy on the recorder's bucket refuses the install", await paste(), /could reach its bucket: probe_named/);
+  await db.exec(`DROP POLICY probe_named ON storage.objects`);
+  await db.exec(`CREATE POLICY probe_narrow ON storage.objects AS RESTRICTIVE FOR SELECT TO authenticated USING (owner = auth.uid())`);
+  eq("preflight: a RESTRICTIVE policy only narrows access, so it is no reason to refuse", await paste(), null);
+  await db.exec(`DROP POLICY probe_narrow ON storage.objects`);
+  await db.exec(`UPDATE storage.buckets SET public = true WHERE id = '${BUCKET}'`);
+  refused("preflight: the recorder's bucket existing with other settings (public) refuses the install", await paste(),
+    /a bucket "class-recorder-audio" already exists with other settings/);
+  await db.exec(`UPDATE storage.buckets SET public = false, file_size_limit = 52428800 WHERE id = '${BUCKET}'`);
+  refused("preflight: so does another size limit", await paste(), /already exists with other settings/);
+  await db.exec(`UPDATE storage.buckets SET file_size_limit = 8388608 WHERE id = '${BUCKET}'`);
+  await db.exec(`ALTER TABLE storage.objects DISABLE ROW LEVEL SECURITY`);
+  refused("preflight: storage.objects without row level security refuses the install", await paste(), /row level security is not enabled/);
+  await db.exec(`ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY`);
+  eq("with all of that put back it pastes again", await paste(), null);
+  eq("and the old bucket is still byte-identical", await oldBucketState(), OLD_BEFORE);
+}
+
+const U =(n) => `${String(n).repeat(8)}-0000-0000-0000-000000000000`;
 const ADMIN = U(1), T1 = U(2), T2 = U(3), TA = U(4), PARENT = U(5), STUDENT = U(6);
 await q(`INSERT INTO auth.users (id) VALUES ($1),($2),($3),($4),($5),($6)`, [ADMIN, T1, T2, TA, PARENT, STUDENT]);
 await q(`INSERT INTO public.user_roles VALUES ($1,'admin'),($2,'teacher'),($3,'teacher'),($4,'teacher'),($5,'family'),($6,'student')`,
@@ -262,7 +336,7 @@ eq("the class comes from the session and the state is 'armed', whatever the page
   const w = await one(`SELECT extract(epoch FROM (scheduled_start - capture_opens_at))::int AS pre,
                               extract(epoch FROM (capture_closes_at - scheduled_end))::int AS grace,
                               max_duration_ms = floor(extract(epoch FROM (capture_closes_at - capture_opens_at)) * 1000) AS dur,
-                              min_bytes_per_sec, clock_tolerance_ms, held_min_fraction::text AS f
+                              min_bytes_per_sec, clock_tolerance_ms, evidence_min_fraction::text AS f
                        FROM public.class_recordings WHERE id=$1`, [rec.id]);
   eq("the capture window is 5 minutes before the lesson to its end + 10 minutes' grace, server-side (F5)",
     [w.pre, w.grace, w.dur], [300, 600, true]);
@@ -279,7 +353,7 @@ const reg = (uid, r, track, seq, size, sha, t0, t1) => as(uid, async () => (awai
   `SELECT public.recorder_register_chunk($1,$2,$3,$4,$5,$6,$7) AS j`, [r, track, seq, size, sha, t0, t1])).rows[0].j);
 const tryReg = async (...a) => { try { await reg(...a); return null; } catch (e) { return e.message; } };
 const put = (uid, name, size, role) => tryAs(uid, () => db.query(
-  `INSERT INTO storage.objects (bucket_id, name, owner, metadata) VALUES ('class-recordings', $1, $2, jsonb_build_object('size', $3::bigint))`,
+  `INSERT INTO storage.objects (bucket_id, name, owner, metadata) VALUES ('${BUCKET}', $1, $2, jsonb_build_object('size', $3::bigint))`,
   [name, uid, size]), role);
 const confirm = (uid, chunk, sha) => tryAs(uid, () => db.query(`SELECT public.recorder_confirm_chunk($1,$2)`, [chunk, sha]));
 const setStatus = (uid, id, status, extra = "", role) => tryAs(uid, () => db.query(
@@ -344,6 +418,10 @@ ok("nor a stray file name", (await put(T1, `${C1}/${rec.id}/notes.txt`, 10)) !==
 ok("another teacher cannot upload to the registered path", (await put(T2, c0.storage_path, 64000)) !== null);
 ok("a TA cannot", (await put(TA, c0.storage_path, 64000)) !== null);
 ok("a parent cannot", (await put(PARENT, c0.storage_path, 64000)) !== null);
+ok("a student cannot (N1)", (await put(STUDENT, c0.storage_path, 64000)) !== null);
+ok("nobody signed in (anon) cannot (N1)", (await put(null, c0.storage_path, 64000, "anon")) !== null);
+ok("the critic's probe: a teacher of another class - who the old staff policy lets write `class-recordings` - cannot write a registered path in the recorder's bucket (N1)",
+  /row-level security/.test(await put(T2, c0.storage_path, 64000) ?? ""));
 ok("the manifest cannot be uploaded while still recording", (await put(T1, manifestOf(rec.id), 300)) !== null);
 eq("the recorder uploads the registered chunk", await put(T1, c0.storage_path, 63999), null);
 refused("a size that differs from what was recorded is not a confirmation", await confirm(T1, c0.chunk_id, SHA("a")), /Storage holds 63999 bytes/);
@@ -414,7 +492,7 @@ const counts = async (uid) => {
   // The other class has a switch row of its own (off), which its teacher may read.
   for (const t of TABLES) out[t] = (await rowsAs(uid,
     `SELECT 1 FROM public.${t}${t === "class_recording_settings" ? ` WHERE class_id = '${C1}'` : ""}`)).length;
-  out.files = (await rowsAs(uid, `SELECT 1 FROM storage.objects WHERE bucket_id = 'class-recordings'`)).length;
+  out.files = (await rowsAs(uid, `SELECT 1 FROM storage.objects WHERE bucket_id = '${BUCKET}'`)).length;
   return out;
 };
 const NOTHING = Object.fromEntries([...TABLES, "files"].map((t) => [t, 0]));
@@ -422,6 +500,34 @@ for (const [who, uid] of [["a teacher of another class", T2], ["a teaching assis
   eq(`${who} reads nothing: no row, no file`, await counts(uid), NOTHING);
 }
 eq("no one signed in reads nothing either", await counts(null), NOTHING);
+{
+  // C1 critic 2, N1: the recorder's files are untouchable by anyone but its
+  // listeners, whatever the old staff policy says about `class-recordings`.
+  await q(`INSERT INTO storage.objects (bucket_id, name, metadata) VALUES ($1, $2, '{"size": 1000}')`,
+    [OLD_BUCKET, `${C1}/${U(7)}.mp3`]);
+  eq("control: the old policy is live here - a teacher of another class reads Teacher Transcripts' upload",
+    (await rowsAs(T2, `SELECT 1 FROM storage.objects WHERE bucket_id = $1`, [OLD_BUCKET])).length, 1);
+  const files = (await q(`SELECT name FROM storage.objects WHERE bucket_id = $1 ORDER BY name`, [BUCKET])).map((r) => r.name);
+  ok("there are recorder files to probe", files.length === 3);
+  const matrix = async (uid, role = "authenticated") => ({
+    select: (await rowsAs(uid, `SELECT 1 FROM storage.objects WHERE bucket_id = $1`, [BUCKET], role)).length,
+    update: (await rowsAs(uid, `UPDATE storage.objects SET metadata = '{"size": 1}' WHERE bucket_id = $1 RETURNING 1`, [BUCKET], role)).length,
+    delete: (await rowsAs(uid, `DELETE FROM storage.objects WHERE bucket_id = $1 RETURNING 1`, [BUCKET], role)).length,
+    insert: (await tryAs(uid, () => db.query(
+      `INSERT INTO storage.objects (bucket_id, name, metadata) VALUES ($1, $2, '{"size": 64000}')`,
+      [BUCKET, `${C1}/${rec.id}/teacher/000001.webm`]), role)) !== null ? "refused" : "ALLOWED",
+  });
+  const NONE = { select: 0, update: 0, delete: 0, insert: "refused" };
+  for (const [who, uid, role] of [["a teacher of another class (the critic's T2)", T2], ["a teaching assistant of the class", TA],
+    ["a parent", PARENT], ["a student", STUDENT], ["anon", null, "anon"]]) {
+    eq(`the critic's probe: ${who} can do nothing in the recorder's bucket - select, update, delete, insert (N1)`, await matrix(uid, role), NONE);
+  }
+  eq("the files are all still there, unchanged", (await q(
+    `SELECT name, metadata->>'size' s FROM storage.objects WHERE bucket_id = $1 ORDER BY name`, [BUCKET])).map((r) => r.name), files);
+  eq("no policy at all - staff_manage_class_recordings included - shows T2 a recorder file, whichever bucket it is asked about (N1)",
+    (await rowsAs(T2, `SELECT 1 FROM storage.objects WHERE name = ANY ($1::text[])`, [files])).length, 0);
+  await q(`DELETE FROM storage.objects WHERE bucket_id = $1`, [OLD_BUCKET]);
+}
 {
   const c = await counts(T1);
   eq("the class teacher reads the recording, its parts and its files",
@@ -440,15 +546,15 @@ eq("no one signed in reads nothing either", await counts(null), NOTHING);
 eq("a parent cannot read the recorder settings", (await rowsAs(PARENT, `SELECT 1 FROM public.recorder_settings`)).length, 0);
 eq("a teacher can", (await rowsAs(T1, `SELECT 1 FROM public.recorder_settings`)).length, 1);
 eq("a teacher cannot change them", (await rowsAs(T1, `UPDATE public.recorder_settings SET retention_days = 90 RETURNING 1`)).length, 0);
-eq("the bucket is private", (await one(`SELECT public FROM storage.buckets WHERE id='class-recordings'`)).public, false);
+eq("the bucket is private", (await one(`SELECT public FROM storage.buckets WHERE id='${BUCKET}'`)).public, false);
 eq("anon holds no privilege on any recorder table", (await one(
   `SELECT count(*)::int n FROM information_schema.role_table_grants
     WHERE grantee IN ('anon','PUBLIC') AND (table_name LIKE 'class_recording%' OR table_name LIKE 'recorder_%')`)).n, 0);
 eq("no family or student policy exists on the bucket, and no delete policy: its only policies are insert and select (F15)", (await q(
-  `SELECT policyname FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname LIKE 'class_recordings%' ORDER BY 1`))
-  .map((r) => r.policyname), ["class_recordings_storage_insert", "class_recordings_storage_select"]);
+  `SELECT policyname FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname LIKE 'class_recorder_audio%' ORDER BY 1`))
+  .map((r) => r.policyname), ["class_recorder_audio_insert", "class_recorder_audio_select"]);
 ok("an admin cannot delete a stored file by hand either: removal goes through the retention job, which logs (F15)",
-  (await rowsAs(ADMIN, `DELETE FROM storage.objects WHERE bucket_id='class-recordings' RETURNING 1`)).length === 0);
+  (await rowsAs(ADMIN, `DELETE FROM storage.objects WHERE bucket_id='${BUCKET}' RETURNING 1`)).length === 0);
 {
   // A profile is the person's own.
   eq("a teacher saves their device profile", await tryAs(T1, () => db.query(
@@ -491,14 +597,14 @@ refused("or call the writer", await tryAs(ADMIN, () => db.query(
 
 console.log("=== the contract for D1 ===");
 {
-  const e = await one(`SELECT session_id, status, was_completed, counts_as_held_evidence, too_short, started_by,
+  const e = await one(`SELECT session_id, status, was_completed, recording_ran_evidence, too_short, started_by,
                               started_at IS NOT NULL AS s, ended_at IS NOT NULL AS e,
                               claimed_audio_ms::int AS claimed, verified_audio_ms::int AS ms, stored_bytes::int AS bytes,
                               server_capture_ms BETWEEN 110000 AND 130000 AS span, tracks_with_audio,
                               first_chunk_registered_at IS NOT NULL AS f, first_chunk_confirmed_at IS NOT NULL AS fc
                        FROM public.recorder_session_evidence WHERE session_id = $1`, [s1]);
-  eq("a completed 30-second recording of a session is one row: complete, but it does NOT count as a held lesson", e,
-    { session_id: s1, status: "complete", was_completed: true, counts_as_held_evidence: false, too_short: true, started_by: T1,
+  eq("a completed 30-second recording of a session is one row: complete, but it does NOT count as evidence that a recording ran", e,
+    { session_id: s1, status: "complete", was_completed: true, recording_ran_evidence: false, too_short: true, started_by: T1,
       s: true, e: true, claimed: 30000, ms: 30000, bytes: 134000, span: true, tracks_with_audio: 2, f: true, fc: true });
   eq("two tracks of one lesson are 30 seconds of lesson, not 60", e.ms, 30000);
   eq("a session with no recording has no row", (await q(`SELECT 1 FROM public.recorder_session_evidence WHERE session_id = $1`, [s2])).length, 0);
@@ -524,6 +630,21 @@ eq("a teacher cannot push a deletion date later", await (async () => {
   await as(T1, () => db.query(`UPDATE public.class_recordings SET delete_after = delete_after + interval '100 days' WHERE id=$1`, [recB.id]));
   return (await one(`SELECT round(extract(epoch FROM (delete_after - scheduled_end)) / 86400)::int d FROM public.class_recordings WHERE id=$1`, [recB.id])).d;
 })(), 30);
+{
+  // C1 critic 2, N3: retention is the server's.
+  const before = (await one(`SELECT delete_after::text d FROM public.class_recordings WHERE id=$1`, [recB.id])).d;
+  eq("the critic's probe: the recorder setting delete_after to the past while open is ignored (N3)", await tryAs(T1, () => db.query(
+    `UPDATE public.class_recordings SET delete_after = '2000-01-01' WHERE id=$1`, [recB.id])), null);
+  eq("the date stands", (await one(`SELECT delete_after::text d FROM public.class_recordings WHERE id=$1`, [recB.id])).d, before);
+  eq("so the retention job is not told to remove it", (await due("now()")).includes(recB.id), false);
+  eq("and no retention change is logged for the teacher", (await one(
+    `SELECT count(*)::int n FROM public.recorder_audit_log WHERE recording_id=$1 AND action IN ('retention_changed','deletion_requested')`, [recB.id])).n, 0);
+  refused("the deletion, stop-reason and stamp columns are not writable by a signed-in caller at all (column privileges)",
+    await tryAs(T1, () => db.query(`UPDATE public.class_recordings SET deletion_reason = 'x' WHERE id=$1`, [recB.id])), /permission denied/);
+  refused("nor ended_at", await tryAs(ADMIN, () => db.query(`UPDATE public.class_recordings SET ended_at = now() WHERE id=$1`, [recB.id])), /permission denied/);
+  refused("nor stop_request_reason", await tryAs(ADMIN, () => db.query(
+    `UPDATE public.class_recordings SET stop_request_reason = 'admin' WHERE id=$1`, [recB.id])), /permission denied/);
+}
 eq("an admin can, and it is logged", await (async () => {
   await as(ADMIN, () => db.query(`UPDATE public.class_recordings SET delete_after = scheduled_end + interval '60 days' WHERE id=$1`, [recB.id]));
   return (await one(`SELECT count(*)::int n FROM public.recorder_audit_log WHERE recording_id=$1 AND action='retention_changed' AND actor=$2`, [recB.id, ADMIN])).n;
@@ -547,8 +668,8 @@ refused("it cannot be marked deleted while a file is left", await tryAs(null, ()
 refused("the row cannot be deleted while its audio exists", await tryAs(null, () => db.query(
   `DELETE FROM public.class_recordings WHERE id=$1`, [rec.id]), "service_role"), /kept until its audio has been removed/);
 ok("a teacher cannot remove the files", (await rowsAs(T1,
-  `DELETE FROM storage.objects WHERE bucket_id='class-recordings' RETURNING 1`)).length === 0);
-await as(null, () => db.query(`DELETE FROM storage.objects WHERE bucket_id='class-recordings' AND name LIKE $1`, [`${C1}/${rec.id}/%`]), "service_role");
+  `DELETE FROM storage.objects WHERE bucket_id='${BUCKET}' RETURNING 1`)).length === 0);
+await as(null, () => db.query(`DELETE FROM storage.objects WHERE bucket_id='${BUCKET}' AND name LIKE $1`, [`${C1}/${rec.id}/%`]), "service_role");
 eq("a teacher cannot mark it deleted", (await rowsAs(T1, `SELECT public.recorder_mark_audio_deleted($1) AS d`, [rec.id]))[0].d, false);
 eq("with the files gone the job marks it deleted", (await rowsAs(null, `SELECT public.recorder_mark_audio_deleted($1) AS d`, [rec.id], "service_role"))[0].d, true);
 eq("the row stays as a record that the audio is gone", (await one(
@@ -557,6 +678,10 @@ eq("it is not due again", await due("now() + interval '400 days'"), []);
 eq("the evidence that the lesson was recorded outlives the audio", (await one(
   `SELECT status, was_completed, verified_audio_ms::int ms FROM public.recorder_session_evidence WHERE recording_id=$1`, [rec.id])),
   { status: "deleted", was_completed: true, ms: 30000 });
+eq("deleted early at a person's request, it is no evidence and the view says who asked (N3)", (await one(
+  `SELECT recording_ran_evidence, deleted_by_retention, deletion_requested_by, audio_deleted_at IS NOT NULL AS gone
+     FROM public.recorder_session_evidence WHERE recording_id=$1`, [rec.id])),
+  { recording_ran_evidence: false, deleted_by_retention: false, deletion_requested_by: T1, gone: true });
 ok("the deletion is in the log, by the system", (await q(
   `SELECT actor FROM public.recorder_audit_log WHERE recording_id=$1 AND action='audio_deleted'`, [rec.id]))[0]?.actor === null);
 refused("a teacher cannot run the stale sweep", await tryAs(T1, () => db.query(`SELECT public.recorder_expire_stale(now())`)), /permission denied/);
@@ -674,19 +799,28 @@ refused("a second live recording of that lesson is still refused", await tryArm(
                     VALUES ($1,$2,$3,'flac',1,'2000-01-01',now(),now()+interval '1 hour',now(),$4)`, [s1d, C1, T1, t2profile]);
   }), /not yours/);
 }
-await tryAs(T1, () => db.query(`UPDATE public.class_recordings SET deletion_requested_by = $2, deletion_requested_at = now() - interval '9 days',
-                                  deletion_reason = 'test' WHERE id=$1`, [rA.id, ADMIN]));
-eq("a deletion request written by the recorder is stamped with the recorder and the server's time, not what it wrote",
-  (await one(`SELECT deletion_requested_by, deletion_requested_at > now() - interval '1 minute' AS now_ish FROM public.class_recordings WHERE id=$1`, [rA.id])),
-  { deletion_requested_by: T1, now_ish: true });
-await tryAs(T1, () => db.query(`UPDATE public.class_recordings SET deletion_requested_by = $2 WHERE id=$1`, [rA.id, ADMIN]));
-eq("and it cannot be re-attributed afterwards", (await one(`SELECT deletion_requested_by FROM public.class_recordings WHERE id=$1`, [rA.id])).deletion_requested_by, T1);
+refused("a deletion request cannot be written into the row by the recorder: only recorder_request_deletion makes one (N3)",
+  await tryAs(T1, () => db.query(`UPDATE public.class_recordings SET deletion_requested_by = $2, deletion_requested_at = now() - interval '9 days',
+                                    deletion_reason = 'test' WHERE id=$1`, [rA.id, ADMIN])), /permission denied/);
+eq("so there is none", (await one(`SELECT deletion_requested_at, deletion_requested_by FROM public.class_recordings WHERE id=$1`, [rA.id])),
+  { deletion_requested_at: null, deletion_requested_by: null });
 await setStatus(T1, rA.id, "recording");
+eq("the recorder may write stop_requested_at, but it is ignored: a stop request is the server's (N4)", await tryAs(T1, () => db.query(
+  `UPDATE public.class_recordings SET stop_requested_at = now() WHERE id=$1`, [rA.id])), null);
+eq("and there is none", (await one(`SELECT stop_requested_at, stop_request_reason FROM public.class_recordings WHERE id=$1`, [rA.id])),
+  { stop_requested_at: null, stop_request_reason: null });
 await setStatus(T1, rA.id, "uploading", `, stop_reason = 'admin'`);
 eq("a teacher cannot claim an admin stopped it", (await one(`SELECT stop_reason FROM public.class_recordings WHERE id=$1`, [rA.id])).stop_reason, "manual");
 await tryAs(T1, () => db.query(`UPDATE public.class_recordings SET stop_reason = 'switch_off' WHERE id=$1`, [rA.id]));
 eq("nor rewrite the stop reason later", (await one(`SELECT stop_reason FROM public.class_recordings WHERE id=$1`, [rA.id])).stop_reason, "manual");
 await setStatus(T1, rA.id, "abandoned", `, abandon_reason = 'test over'`);
+eq("a deletion request made through the function is stamped with the recorder and the server's time", [
+  await tryAs(T1, () => db.query(`SELECT public.recorder_request_deletion($1, 'test')`, [rA.id])),
+  await one(`SELECT deletion_requested_by, deletion_requested_at > now() - interval '1 minute' AS now_ish FROM public.class_recordings WHERE id=$1`, [rA.id])],
+  [null, { deletion_requested_by: T1, now_ish: true }]);
+refused("and it cannot be re-attributed afterwards, not even by an admin", await tryAs(ADMIN, () => db.query(
+  `UPDATE public.class_recordings SET deletion_requested_by = $2 WHERE id=$1`, [rA.id, ADMIN])), /permission denied/);
+eq("it is still the recorder's", (await one(`SELECT deletion_requested_by FROM public.class_recordings WHERE id=$1`, [rA.id])).deletion_requested_by, T1);
 
 console.log("=== role oracle closed (F12) ===");
 refused("a parent cannot ask whether someone teaches a class", await tryAs(PARENT, () => db.query(
@@ -741,14 +875,14 @@ await raw(`UPDATE public.class_recordings SET ended_at = started_at + interval '
 const lost = (await one(`SELECT storage_path FROM public.class_recording_chunks WHERE recording_id=$1 AND seq=1`, [rS.id])).storage_path;
 await q(`DELETE FROM storage.objects WHERE name=$1`, [lost]);
 refused("a confirmed chunk that has gone from storage blocks completion", await completeRec(T1, rS.id), /no longer in storage/);
-await q(`INSERT INTO storage.objects (bucket_id, name, metadata) VALUES ('class-recordings', $1, '{"size": 59000}')`, [lost]);
+await q(`INSERT INTO storage.objects (bucket_id, name, metadata) VALUES ('${BUCKET}', $1, '{"size": 59000}')`, [lost]);
 refused("and so does one whose stored size changed", await completeRec(T1, rS.id), /no longer in storage/);
 await q(`UPDATE storage.objects SET metadata = '{"size": 60000}' WHERE name=$1`, [lost]);
 eq("with every object there at its confirmed size, it completes", await completeRec(T1, rS.id), null);
-eq("90 seconds of a 95-minute lesson: complete, but not evidence the lesson was held", (await one(
-  `SELECT was_completed, counts_as_held_evidence, too_short, claimed_audio_ms::int c, verified_audio_ms::int v,
+eq("90 seconds of a 95-minute lesson: complete, but not evidence that a recording ran", (await one(
+  `SELECT was_completed, recording_ran_evidence, too_short, claimed_audio_ms::int c, verified_audio_ms::int v,
           server_capture_ms::int s, stored_bytes::int b FROM public.recorder_session_evidence WHERE recording_id=$1`, [rS.id])),
-  { was_completed: true, counts_as_held_evidence: false, too_short: true, c: 90_000, v: 90_000, s: 180_000, b: 180_000 });
+  { was_completed: true, recording_ran_evidence: false, too_short: true, c: 90_000, v: 90_000, s: 180_000, b: 180_000 });
 await q(`UPDATE public.class_recording_chunks SET stored_size = 1000 WHERE recording_id=$1`, [rS.id]);
 eq("and the view never vouches for more audio than the stored bytes can hold at the format's floor", (await one(
   `SELECT verified_audio_ms::int v FROM public.recorder_session_evidence WHERE recording_id=$1`, [rS.id])).v, 1500);
@@ -758,23 +892,172 @@ const sL = await sessAt(C1, t1, -60, 30);
 const rL = await arm(T1, sL, { chunk_ms: 60000 });
 await setStatus(T1, rL.id, "recording");
 await addTrack(T1, rL.id);
-await travel(rL.id, 58);
-for (let i = 0; i < 58; i++) await chunkUp(T1, rL.id, "teacher", i, 120_000, i * 60_000, (i + 1) * 60_000);
+// Live: each minute's chunk reaches the server as that minute ends (N2).
+for (let i = 0; i < 58; i++) {
+  await travel(rL.id, 1);
+  await chunkUp(T1, rL.id, "teacher", i, 120_000, i * 60_000, (i + 1) * 60_000);
+}
 await setStatus(T1, rL.id, "uploading");
 await put(T1, manifestOf(rL.id), 300);
 await as(T1, () => db.query(`UPDATE public.class_recording_tracks SET chunk_count = 58 WHERE recording_id=$1`, [rL.id]));
 eq("58 minutes of a 90-minute lesson, captured live, completes", await completeRec(T1, rL.id), null);
 {
-  const e = await one(`SELECT was_completed, counts_as_held_evidence, too_short, verified_audio_ms::int v,
-                              verified_lesson_ms::int vl, held_threshold_ms::int th, tracks_with_audio
+  const e = await one(`SELECT was_completed, recording_ran_evidence, too_short, verified_audio_ms::int v,
+                              verified_lesson_ms::int vl, evidence_threshold_ms::int th, tracks_with_audio
                        FROM public.recorder_session_evidence WHERE session_id=$1`, [sL]);
-  eq("and counts as evidence the lesson was held: verified 58 min >= half of 90", e,
-    { was_completed: true, counts_as_held_evidence: true, too_short: false, v: 3_480_000, vl: 3_480_000, th: 2_700_000, tracks_with_audio: 1 });
+  eq("and counts as evidence that a recording ran: verified live 58 min >= half of 90", e,
+    { was_completed: true, recording_ran_evidence: true, too_short: false, v: 3_480_000, vl: 3_480_000, th: 2_700_000, tracks_with_audio: 1 });
 }
-await as(ADMIN, () => db.query(`UPDATE public.recorder_settings SET held_evidence_min_fraction = 0.90`));
+await as(ADMIN, () => db.query(`UPDATE public.recorder_settings SET evidence_min_fraction = 0.90`));
 eq("a later change of the threshold does not reinterpret it: the fraction was snapshot at arming", (await one(
-  `SELECT counts_as_held_evidence FROM public.recorder_session_evidence WHERE session_id=$1`, [sL])).counts_as_held_evidence, true);
-await as(ADMIN, () => db.query(`UPDATE public.recorder_settings SET held_evidence_min_fraction = 0.50`));
+  `SELECT recording_ran_evidence FROM public.recorder_session_evidence WHERE session_id=$1`, [sL])).recording_ran_evidence, true);
+await as(ADMIN, () => db.query(`UPDATE public.recorder_settings SET evidence_min_fraction = 0.50`));
+
+console.log("=== evidence is what reached the server LIVE (C1 critic 2, N2) ===");
+eq("the late allowance is snapshot at arming: 10 minutes", (await one(
+  `SELECT late_after_ms FROM public.class_recordings WHERE id=$1`, [rL.id])).late_after_ms, 600_000);
+const evidenceOf = (id) => one(
+  `SELECT status, was_completed, recording_ran_evidence, verified_audio_ms::int v, late_audio_ms::int l,
+          evidence_threshold_ms::int th, abandon_reason, deleted_by_retention, audio_deleted_at IS NOT NULL AS gone
+     FROM public.recorder_session_evidence WHERE recording_id=$1`, [id]);
+// A lesson of `mins` minutes that began a minute ago, recorded live for `n`
+// one-minute chunks (the whole lesson moves into the past as time "passes").
+const liveRec = async (mins, n, uid = T1) => {
+  const s = await sessAt(C1, t1, -1, mins - 1);
+  const r = await arm(uid, s, { chunk_ms: 60000 });
+  await setStatus(uid, r.id, "recording");
+  await addTrack(uid, r.id);
+  for (let i = 0; i < n; i++) {
+    await travel(r.id, 1, true);
+    await chunkUp(uid, r.id, "teacher", i, 120_000, i * 60_000, (i + 1) * 60_000);
+  }
+  return r;
+};
+const finish = async (id, n, uid = T1) => {
+  await put(uid, manifestOf(id), 300);
+  await as(uid, () => db.query(`UPDATE public.class_recording_tracks SET chunk_count = $2 WHERE recording_id=$1`, [id, n]));
+  return completeRec(uid, id);
+};
+{
+  // The critic's probe: Start inside the window, nothing for three days, Stop, filler.
+  const s = await sessAt(C1, t1, -1, 89);
+  const r = await arm(T1, s);
+  await setStatus(T1, r.id, "recording");
+  await addTrack(T1, r.id);
+  await travel(r.id, 3 * 24 * 60, true);
+  eq("the critic's probe: a Stop three days later is accepted as a call", await setStatus(T1, r.id, "uploading"), null);
+  eq("but it is not a Stop: the recording is abandoned, and the real moment is kept, not clamped into the window", (await one(
+    `SELECT status, abandon_reason, ended_at > capture_closes_at + interval '2 days' AS real_time, stopped_by
+       FROM public.class_recordings WHERE id=$1`, [r.id])),
+    { status: "abandoned", abandon_reason: "stopped after the lesson window", real_time: true, stopped_by: T1 });
+  refused("and no filler is taken after it", await tryReg(T1, r.id, "teacher", 0, 120_000, SHA("a"), 0, 60_000), /abandoned and takes no more audio/);
+  eq("so it is no evidence", (await evidenceOf(r.id)).recording_ran_evidence, false);
+}
+{
+  // Stop on time, but upload a lesson's worth of audio afterwards.
+  const s = await sessAt(C1, t1, -1, 89);
+  const r = await arm(T1, s, { chunk_ms: 60000 });
+  await setStatus(T1, r.id, "recording");
+  await addTrack(T1, r.id);
+  await travel(r.id, 92, true);
+  eq("a Stop inside the window (3 minutes after the lesson) is a Stop", await setStatus(T1, r.id, "uploading"), null);
+  eq("at the real moment: ended_at is the server's clock, not moved", (await one(
+    `SELECT status, ended_at > scheduled_end AS after_end, ended_at <= capture_closes_at AS in_window FROM public.class_recordings WHERE id=$1`, [r.id])),
+    { status: "uploading", after_end: true, in_window: true });
+  const lateFlags = [];
+  for (let i = 0; i < 92; i++) lateFlags.push((await chunkUp(T1, r.id, "teacher", i, 120_000, i * 60_000, (i + 1) * 60_000)).late);
+  eq("audio sent long after the moment it claims is stored, and the server says it is late", [lateFlags[0], lateFlags[50], lateFlags[91]], [true, true, false]);
+  eq("it can still complete (all of it is stored and listenable)", await finish(r.id, 92), null);
+  const e = await evidenceOf(r.id);
+  eq("the critic's probe, offline variant: 92 minutes uploaded after Stop is no evidence: late audio counts for nothing",
+    [e.was_completed, e.recording_ran_evidence, e.l >= 80 * 60_000, e.v <= 11 * 60_000], [true, false, true, true]);
+}
+{
+  // The allowance itself: 10 minutes after the moment a chunk claims to end.
+  const s = await sessAt(C1, t1, -1, 89);
+  const r = await arm(T1, s, { chunk_ms: 60000 });
+  await setStatus(T1, r.id, "recording");
+  await addTrack(T1, r.id);
+  await travel(r.id, 10, true);
+  const a = await reg(T1, r.id, "teacher", 0, 120_000, SHA("a"), 0, 60_000);
+  eq("a chunk that reaches the server 9 minutes after its end (an offline queue draining) is live", a.late, false);
+  await travel(r.id, 12, true);
+  const b = await reg(T1, r.id, "teacher", 1, 120_000, SHA("a"), 60_000, 120_000);
+  eq("one that reaches it 20 minutes after its end is late", b.late, true);
+  eq("registering the first again does not refresh it: still live, and the second still late",
+    [(await reg(T1, r.id, "teacher", 0, 120_000, SHA("a"), 0, 60_000)).late, (await reg(T1, r.id, "teacher", 1, 120_000, SHA("a"), 60_000, 120_000)).late],
+    [false, true]);
+  await setStatus(T1, r.id, "abandoned", `, abandon_reason = 'test'`);
+}
+{
+  // C1 critic 2, N6: only a COMPLETED recording counts.
+  const r = await liveRec(10, 6);
+  eq("still recording: not evidence", (await evidenceOf(r.id)).recording_ran_evidence, false);
+  await setStatus(T1, r.id, "uploading");
+  eq("6 live minutes of a 10-minute lesson, stopped, still uploading: enough verified audio, but not evidence (N6)",
+    await evidenceOf(r.id).then((e) => [e.v, e.th, e.recording_ran_evidence]), [360_000, 300_000, false]);
+  await setStatus(T1, r.id, "abandoned", `, abandon_reason = 'test'`);
+  eq("abandoned with all its audio confirmed: not evidence (N6)", await evidenceOf(r.id).then((e) => [e.status, e.v, e.was_completed, e.recording_ran_evidence]),
+    ["abandoned", 360_000, false, false]);
+}
+
+console.log("=== deletion: retention keeps a tombstone, a person's early deletion ends the evidence (N3) ===");
+{
+  const rT = await liveRec(10, 6);
+  await setStatus(T1, rT.id, "uploading");
+  eq("a verified live recording completes", await finish(rT.id, 6), null);
+  eq("and is evidence that a recording ran", (await evidenceOf(rT.id)).recording_ran_evidence, true);
+  await as(null, () => db.query(`DELETE FROM storage.objects WHERE bucket_id = $1 AND name LIKE $2`, [BUCKET, `${C1}/${rT.id}/%`]), "service_role");
+  refused("files gone, but before its date nobody - not the retention job - may mark it deleted: an early deletion is a request",
+    await tryAs(null, () => db.query(`SELECT public.recorder_mark_audio_deleted($1)`, [rT.id]), "service_role"), /not due for deletion/);
+  await travel(rT.id, 31 * 24 * 60, true);
+  eq("31 days on it is due", (await due("now()")).includes(rT.id), true);
+  eq("the retention job marks it deleted", (await rowsAs(null, `SELECT public.recorder_mark_audio_deleted($1) AS d`, [rT.id], "service_role"))[0].d, true);
+  eq("the tombstone: deleted by retention after a verified complete recording, it still says a recording ran, and when the audio went",
+    await evidenceOf(rT.id).then((e) => [e.status, e.deleted_by_retention, e.gone, e.recording_ran_evidence]), ["deleted", true, true, true]);
+
+  const rQ = await liveRec(10, 6);
+  await setStatus(T1, rQ.id, "uploading");
+  await finish(rQ.id, 6);
+  eq("a second verified recording is evidence", (await evidenceOf(rQ.id)).recording_ran_evidence, true);
+  eq("the class teacher asks for its early deletion", await tryAs(T1, () => db.query(
+    `SELECT public.recorder_request_deletion($1, 'the wrong class was in the room')`, [rQ.id])), null);
+  eq("from that moment it is no evidence - before the audio is even gone", (await evidenceOf(rQ.id)).recording_ran_evidence, false);
+  ok("and the request is in the append-only log, by the teacher", (await q(
+    `SELECT 1 FROM public.recorder_audit_log WHERE recording_id=$1 AND action='deletion_requested' AND actor=$2`, [rQ.id, T1])).length === 1);
+  await as(null, () => db.query(`DELETE FROM storage.objects WHERE bucket_id = $1 AND name LIKE $2`, [BUCKET, `${C1}/${rQ.id}/%`]), "service_role");
+  eq("once the job has removed it", (await rowsAs(null, `SELECT public.recorder_mark_audio_deleted($1) AS d`, [rQ.id], "service_role"))[0].d, true);
+  eq("it is deleted, not by retention, and still no evidence",
+    await evidenceOf(rQ.id).then((e) => [e.status, e.deleted_by_retention, e.recording_ran_evidence]), ["deleted", false, false]);
+
+  const rX = await liveRec(10, 6);
+  await setStatus(T1, rX.id, "uploading");
+  await finish(rX.id, 6);
+  eq("an admin bringing a verified recording's deletion forward", await tryAs(ADMIN, () => db.query(
+    `UPDATE public.class_recordings SET delete_after = now() WHERE id=$1`, [rX.id])), null);
+  eq("is an early deletion by a person: stamped as a request by the admin, logged, and the evidence ends",
+    [(await one(`SELECT deletion_requested_by, deletion_reason FROM public.class_recordings WHERE id=$1`, [rX.id])),
+     (await one(`SELECT count(*)::int n FROM public.recorder_audit_log WHERE recording_id=$1 AND action='deletion_requested' AND actor=$2`, [rX.id, ADMIN])).n,
+     (await evidenceOf(rX.id)).recording_ran_evidence],
+    [{ deletion_requested_by: ADMIN, deletion_reason: "retention brought forward by an admin" }, 1, false]);
+}
+
+console.log("=== who stopped it is who pressed Stop (N6) ===");
+{
+  const s = await sessAt(C1, t1, -1, 89);
+  const r = await arm(T1, s);
+  await setStatus(T1, r.id, "recording");
+  eq("an admin may ask a running recording to stop", await tryAs(ADMIN, () => db.query(
+    `UPDATE public.class_recordings SET stop_requested_at = now() - interval '1 day' WHERE id=$1`, [r.id])), null);
+  eq("stamped by the server, with the reason", (await one(
+    `SELECT stop_requested_at > now() - interval '1 minute' AS now_ish, stop_request_reason FROM public.class_recordings WHERE id=$1`, [r.id])),
+    { now_ish: true, stop_request_reason: "admin" });
+  eq("an admin stops the teacher's recording", await setStatus(ADMIN, r.id, "uploading", `, stop_reason = 'admin'`), null);
+  eq("stopped_by is the admin who pressed Stop, not the owner", (await one(
+    `SELECT stopped_by, stop_reason, started_by FROM public.class_recordings WHERE id=$1`, [r.id])),
+    { stopped_by: ADMIN, stop_reason: "admin", started_by: T1 });
+  await setStatus(T1, r.id, "abandoned", `, abandon_reason = 'test'`);
+}
 
 console.log("=== capture only inside the window (F5) ===");
 const sEarly = await sessAt(C1, t1, 19, 109);
@@ -795,8 +1078,11 @@ eq("audio up to the end + grace registers", (await tryReg(T1, rW.id, "teacher", 
 refused("audio after the end + grace (+15 s) is refused, even while still 'recording'",
   await tryReg(T1, rW.id, "teacher", 22, 60_000, SHA("a"), 660_000, 690_000), /after the lesson window/);
 await setStatus(T1, rW.id, "uploading");
-eq("a Stop after the window is recorded at the window's end", (await one(
-  `SELECT ended_at = capture_closes_at AS at_close FROM public.class_recordings WHERE id=$1`, [rW.id])).at_close, true);
+// Revision 2 (N2): this used to assert "recorded at the window's end" - the
+// silent clamp the critic showed could turn a Stop days later into a valid one.
+eq("a Stop long after the window is not clamped into it: the recording is abandoned, at the real moment", (await one(
+  `SELECT status, abandon_reason, ended_at > capture_closes_at AS real_time FROM public.class_recordings WHERE id=$1`, [rW.id])),
+  { status: "abandoned", abandon_reason: "stopped after the lesson window", real_time: true });
 await setStatus(T1, rSoon.id, "abandoned");
 await setStatus(T1, rEarly.id, "abandoned");
 
@@ -811,6 +1097,27 @@ eq("the running one is told to stop, and keeps what it has", (await one(
   `SELECT status, stop_requested_at IS NOT NULL AS s FROM public.class_recordings WHERE id=$1`, [rK2.id])), { status: "recording", s: true });
 await setStatus(T1, rK2.id, "uploading", `, stop_reason = 'session_canceled'`);
 eq("and may say it stopped because the lesson was cancelled", (await one(`SELECT stop_reason FROM public.class_recordings WHERE id=$1`, [rK2.id])).stop_reason, "session_canceled");
+eq("the server recorded why it asked", (await one(`SELECT stop_request_reason FROM public.class_recordings WHERE id=$1`, [rK2.id])).stop_request_reason, "session_canceled");
+{
+  // C1 critic 2, N4: the recorder cannot make the stop request itself.
+  const sK3 = await sess(C1, t1);
+  const rK3 = await arm(T1, sK3);
+  await setStatus(T1, rK3.id, "recording");
+  await tryAs(T1, () => db.query(`UPDATE public.class_recordings SET stop_requested_at = now() WHERE id=$1`, [rK3.id]));
+  await setStatus(T1, rK3.id, "uploading", `, stop_reason = 'session_canceled'`);
+  eq("the critic's probe: a teacher who files its own stop request cannot then say the lesson was cancelled (N4)", (await one(
+    `SELECT stop_requested_at, stop_reason, stop_request_reason FROM public.class_recordings WHERE id=$1`, [rK3.id])),
+    { stop_requested_at: null, stop_reason: "manual", stop_request_reason: null });
+  const sK4 = await sess(C1, t1);
+  const rK4 = await arm(T1, sK4);
+  await setStatus(T1, rK4.id, "recording");
+  await q(`UPDATE public.sessions SET status = 'Canceled' WHERE id = $1`, [sK4]);
+  await setStatus(T1, rK4.id, "uploading", `, stop_reason = 'switch_off'`);
+  eq("nor claim the class was switched off when the lesson was cancelled", (await one(
+    `SELECT stop_reason FROM public.class_recordings WHERE id=$1`, [rK4.id])).stop_reason, "manual");
+  await setStatus(T1, rK3.id, "abandoned", `, abandon_reason = 'test'`);
+  await setStatus(T1, rK4.id, "abandoned", `, abandon_reason = 'test'`);
+}
 
 console.log("=== a cover teacher hears only the lesson they covered (F2) ===");
 const rSfile = (await one(`SELECT storage_path FROM public.class_recording_chunks WHERE recording_id=$1 AND seq=0`, [rS.id])).storage_path;
@@ -840,6 +1147,20 @@ await chunkUp(T2, rCov.id, "teacher", 0, 64_000, 0, 30_000);
     [c.class_recordings, c.class_recording_tracks, c.class_recording_chunks, c.files, c.recorder_session_evidence], [1, 1, 1, 1, 1]);
   eq("not the class teacher's file", await canObj(T2, rSfile), false);
   eq("while the class teacher hears the cover lesson too", (await rowsAs(T1, `SELECT 1 FROM public.class_recordings WHERE id=$1`, [rCov.id])).length, 1);
+}
+{
+  // C1 critic 2, N5: a cover teacher taken off the lesson stops adding to it.
+  await travel(rCov.id, 1);
+  await q(`UPDATE public.sessions SET teacher_id = $2 WHERE id = $1`, [sCov, t1]);
+  refused("the critic's probe: the lesson given back to the class teacher, the cover teacher's recorder takes no more audio (N5)",
+    await tryReg(T2, rCov.id, "teacher", 1, 64_000, SHA("a"), 30_000, 60_000), /no longer teach this lesson/);
+  const sCov2 = await sess(C1, t2);
+  const rCov2 = await arm(T2, sCov2);
+  await q(`UPDATE public.sessions SET teacher_id = $2 WHERE id = $1`, [sCov2, t1]);
+  refused("and one they armed cannot start", await setStatus(T2, rCov2.id, "recording"), /no longer teach this lesson/);
+  await setStatus(T2, rCov2.id, "abandoned", `, abandon_reason = 'test'`);
+  await q(`UPDATE public.sessions SET teacher_id = $2 WHERE id = $1`, [sCov, t2]);
+  eq("given back to them, it takes audio again", await tryReg(T2, rCov.id, "teacher", 1, 64_000, SHA("a"), 30_000, 60_000), null);
 }
 await setStatus(T2, rCov.id, "abandoned", `, abandon_reason = 'test'`);
 await q(`UPDATE public.sessions SET date = date - 1 WHERE id=$1`, [sCov]);
@@ -900,6 +1221,7 @@ eq("every function that reads storage.objects runs with row_security = off", (aw
   ok("pasting the migration again over live data succeeds", again === null, again ?? "");
   eq("and changes nothing that was there", [(await one(`SELECT count(*)::int n FROM public.class_recordings`)).n,
     (await one(`SELECT consent_wording_version v FROM public.recorder_settings`)).v], [before, "v2-2027-01"]);
+  eq("and after everything, Teacher Transcripts' bucket and its policy are still byte-identical (N1)", await oldBucketState(), OLD_BEFORE);
 }
 // Production: the pasting role owns the public tables but NOT storage.objects.
 // If it is subject to RLS there, the checks must refuse, not pass.
