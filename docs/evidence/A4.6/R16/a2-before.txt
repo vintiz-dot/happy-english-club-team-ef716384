@@ -1,0 +1,54 @@
+124 tables
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+[INFO] M5.control.SkillButton-popover @1024x768: not fullscreen (control): SkillButton-popover visible
+[INFO] M5.control.StudentActionPopover @1024x768: not fullscreen (control): StudentActionPopover visible
+[INFO] M5.control.ui-popover @1024x768: not fullscreen (control): ui-popover visible
+[INFO] M5.control.ui-select @1024x768: not fullscreen (control): ui-select visible
+[INFO] M5.control.ui-dialog @1024x768: not fullscreen (control): ui-dialog visible
+[INFO] M5.control.ui-dropdown-menu @1024x768: not fullscreen (control): ui-dropdown-menu visible
+[INFO] M5.control.ui-alert-dialog @1024x768: not fullscreen (control): ui-alert-dialog visible
+[INFO] M5.control.ui-sheet @1024x768: not fullscreen (control): ui-sheet visible
+[INFO] M5.control.ui-tooltip @1024x768: not fullscreen (control): ui-tooltip visible
+[PASS] M5.H8.tooltip-open-across-enter @1024x768: tooltip open by keyboard (24 Tabs, visible true) then fullscreen on: tooltip still open, inside the fullscreen element, visible true
+[PASS] M5.SkillButton-popover @1024x768: in fullscreen: SkillButton-popover opened=true, inside fullscreen element, visible=true
+[PASS] M5.StudentActionPopover @1024x768: in fullscreen: StudentActionPopover opened=true, inside fullscreen element, visible=true
+[PASS] M5.ui-popover @1024x768: in fullscreen: ui-popover opened=true, inside fullscreen element, visible=true
+[PASS] M5.ui-select @1024x768: in fullscreen: ui-select opened=true, inside fullscreen element, visible=true
+[PASS] M5.ui-dialog @1024x768: in fullscreen: ui-dialog opened=true, inside fullscreen element, visible=true
+[PASS] M5.ui-dropdown-menu @1024x768: in fullscreen: ui-dropdown-menu opened=true, inside fullscreen element, visible=true
+[PASS] M5.ui-alert-dialog @1024x768: in fullscreen: ui-alert-dialog opened=true, inside fullscreen element, visible=true
+[PASS] M5.ui-sheet @1024x768: in fullscreen: ui-sheet opened=true, inside fullscreen element, visible=true
+[PASS] M5.ui-tooltip @1024x768: in fullscreen: ui-tooltip opened=true, inside fullscreen element, visible=true
+[PASS] M5.H8.tooltip-open-across-exit @1024x768: tooltip open in fullscreen (visible true), fullscreen ends: still open, connected true, visible true
+[PASS] M5.TeacherBooks.classroom-tools-sheet @1024x768: fullscreen DIV (holds the book); classroom tools sheet visible=true
+[PASS] M5.TeacherBooks.tool-select @1024x768: Select in a tool panel: first option "Starters 1 (Mon-Wed)" inside fullscreen=true, hit-testable=true
+[FAIL] hints.lab.error @1024x768: scenario aborted: TimeoutError: locator.evaluate: Timeout 30000ms exceeded.
+[INFO] M6.Leaderboards-live.state @1024x768: Live button disabled=true, pointer-events=none, visible name "Live"
+[PASS] M6.Leaderboards-live-reason.hover @1024x768: hover: hint visible=true
+[PASS] M6.Leaderboards-live-reason.keyboard @1024x768: keyboard: reached after 21 Tab(s), hint visible=true
+[PASS] M6.Leaderboards-live-reason.tap @1024x768: tap: hint visible=true
+[INFO] M6.Books-back-button.hover @1024x768: hover: DOM hint visible=true (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)
+[PASS] M6.Books-back-button.keyboard @1024x768: keyboard: reached after 1 Tab(s), hint visible=true (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)
+[INFO] M6.Books-back-button.tap @1024x768: tap: not run - a tap activates this control (navigates / opens a tab); there is no hint to see first
+[INFO] M6.Books-open-in-tab.hover @1024x768: hover: DOM hint visible=true (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)
+[PASS] M6.Books-open-in-tab.keyboard @1024x768: keyboard: reached after 6 Tab(s), hint visible=true (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)
+[INFO] M6.Books-open-in-tab.tap @1024x768: tap: not run - a tap activates this control (navigates / opens a tab); there is no hint to see first
+[INFO] M8.media @1024x768 touch: (hover: none)=true, (pointer: coarse)=true
+[PASS] M8.HUD-chips @1024x768 touch: 0 of 6 interactive targets under 44x44
+[PASS] M8.SkillButton-popover @1024x768 touch: 0 of 7 interactive targets under 44x44
+[PASS] M8.RadialSkillMenu-all-stages @1024x768 touch: 0 of 19 interactive targets under 44x44
+[INFO] M8.StudentActionPopover @1024x768 touch: 0 of 4 interactive targets under 44x44
+[INFO] M8.media @1024x768 mouse: (hover: none)=false, (pointer: coarse)=false
+[INFO] M8.HUD-chips @1024x768 mouse: 6 of 6 interactive targets under 44x44: "Nguyên" 73x26, "Hân" 52x26, "Anh" 52x26, "Khôi" 55x26, "Châu" 58x26, "Bảo" 51x26
+[INFO] M8.SkillButton-popover @1024x768 mouse: 7 of 7 interactive targets under 44x44: "+1" 40x40, "+2" 40x40, "+3" 40x40, "+5" 40x40, "+10" 40x40, "Custom points for Speaki" 48x40, ...
+[INFO] M8.RadialSkillMenu-all-stages @1024x768 mouse: 7 of 19 interactive targets under 44x44: "← Back" 62x32, "Not Paying Attention" 479x34, "Disrupting Class" 479x34, "Missing Homework" 479x34, "Late to Class" 489x35, "Other" 479x34, ...
+[INFO] M8.StudentActionPopover @1024x768 mouse: 0 of 4 interactive targets under 44x44
+[INFO] M7.attendance-subscription-filter @1024x768: HUD realtime subscriptions: point_transactions(INSERT) filter=class_id=eq.c-0001; attendance(*) filter=NONE
+[INFO] M7.unrelated-single @1024x768: each unrelated attendance event (another class's session): delivered to 1/1/1 HUD handler(s), HUD commits 0/0/0, HUD queries 3/3/3
+[PASS] M7.unrelated-burst @1024x768: 5 unrelated attendance events in ~1 s: HUD commits 0, HUD queries 3 (gate: <= 1 commit and <= 1 refetch = 4 queries per 2 s)
+[INFO] M7.related-control @1024x768: control: a point for THIS class -> HUD commits 0, queries 3
+[PASS] M7.open-popover-kept @1024x768: open StudentActionPopover (focus on "Quick +5Instant award") across an unrelated event (+0 commits, +3 queries): still open=true, focus kept=true, focused node connected=true
+[NOTMEASURED] M7.idle-minute @1024x768: run with --idle-minute to measure the 61 s idle window
+
+49 lines, 1 FAIL. Results: ..\r16-out\a2-before\results.json
+exit=1
