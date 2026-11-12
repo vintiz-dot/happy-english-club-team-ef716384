@@ -68,4 +68,27 @@ With windows cut inside segments (3ds_campp, cosine, clean 2 s windows; run 2026
 
 split.py dealt contiguous 5 s blocks to HELD-OUT and left ENROL the short fragments between them, so the enrolment was the worst audio each child had. Fix: `b2_units.py --resplit time` (now the default) re-splits each child's clean (non-adult-pitch) speech BY TIME: the first 60 % enrols, the later 40 % is the test - both sides get whole utterances, and test speech is from a later part of the recording, never seen in enrolment. Same 17 children qualify (>= 50 s clean speech); enrolment 30.8-138.4 s, test 18.5-85.3 s per child. Units: 467 enrolment, 473 raw, 97 adult-pitch, 1358 test windows (80.3 min). This is what a real enrolment looks like (a child speaking continuously), so the results below use it.
 
+## 3c. Diagnosis findings 3 and 4: thin voiceprints are hubs; test turns were too short
+
+On the time split (3ds_campp, cosine, closed set of 26; run 2026-11-12, `work\b2\segcut_timesplit_results_*.json`):
+- **Hubs.** At s500 2 s, 52 of the wrong answers went to S08 and 20 to S07; S08 has 25.8 s of fragmentary enrolment. A voiceprint built from little, poor audio sits near the average of everyone and attracts every uncertain turn. With the 17 test children's own voiceprints only (no thin distractors), the same windows scored 47 % top-1 (clean 2 s, chance 6 %); with the 26-child gallery, 18 %. Rule adopted: a child is enrolled only with >= 30 s of enrolment speech (B0's own minimum); S08, S13, S16, S19, S22, S25 are therefore NOT enrolled (in a product they would be UNKNOWN until re-enrolled). AS-norm and centring (enrolment-mean subtraction) did not remove the hub effect on their own.
+- **Turn length.** Windows that must fit inside one silero segment were almost all 1 s (386 of 534 per condition); only 25 were 4 s and 3 were 8 s, because silero cuts at every 300 ms pause. 1 s windows were at chance for every model (top-1 0.3-10 %), and aggregating up to 20 of them did not help. Fix: segments of the same set separated by a pause < 0.8 s are joined into one utterance (contiguous audio with its pauses, no splice; never across an adult-pitch segment). Units now: 484 enrolment, 473 raw, 97 adult-pitch, 2504 test windows (131.7 min).
+
+## 3d. Local diarizer check on the synthetic mixes (no identification)
+
+`b2_lessons.py tune` on the six mixes of seed7_ov05_s500 + seed7_ov15_s500 (3-5 children, 3-6 min each), DER with `score.der_file`, collar 0.25 s (run 2026-11-12):
+
+| diarizer | setting | mean DER | clusters found vs reference speakers (6 mixes) | note |
+|---|---|---|---|---|
+| sherpa-onnx (pyannote-seg-3.0 ONNX + wes CAM++ + fast clustering) | threshold 0.5 | 0.663 | +2..+13 too many | RTF 1.34 under load: too slow for 300 min here; not pursued |
+| own: silero VAD + 1.5 s chunks + AHC, no centring (3ds CAM++) | 0.3 (best) | 0.725 | 2-6 vs 3-5 | silero missed 27-90 % of speech |
+| own, centred | 0.0 | 0.713 | | same VAD problem |
+| own, 6 dB energy VAD, centred (3ds CAM++) | **-0.1** | **0.565** | 2 vs 3-5 (always 2) | best; VAD miss alone 8-28 % |
+| same | 0.0 | 0.573 | 2-3 vs 3-5 | |
+| same | 0.1 | 0.579 | 4-5 vs 3-5 | closest count |
+| same | 0.3 | 0.658 | 12-14 | over-split |
+
+VAD check (one-speaker hypothesis, miss rate of reference speech): silero threshold 0.5 missed 27-90 %, silero 0.3 missed 10-74 %, energy VAD 6 dB missed 8-28 %; false alarm 0 % in all (the mixes contain little non-speech, so false alarm is not tested here; in a real room the energy VAD will also pass noise).
+Reading: even on these clean-source mixes, the local diarizer gets more than half of the speech time wrong and does not find the right number of children. A cluster in a real lesson is therefore NOT reliably one child: it can merge children, and one child can be split over clusters. That limits everything in section 6.
+
 **Statistical caveat stated once for every table:** confidence intervals are 95 % Wilson intervals over windows, treating windows as independent. They are not: all windows come from 15 children and from 20-90 s of speech each, so the true uncertainty is wider than shown, above all for per-child figures.
