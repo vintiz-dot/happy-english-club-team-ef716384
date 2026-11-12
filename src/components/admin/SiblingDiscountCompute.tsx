@@ -330,8 +330,9 @@ export function SiblingDiscountCompute() {
                             </Label>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Label className={iv("text-hec-small text-hec-ink whitespace-nowrap", "text-sm whitespace-nowrap")}>Discount %:</Label>
+                            <Label htmlFor={`percent-${result.family_id}`} className={iv("text-hec-small text-hec-ink whitespace-nowrap", "text-sm whitespace-nowrap")}>Discount %:</Label>
                             <Input
+                              id={`percent-${result.family_id}`}
                               type="number"
                               min={0}
                               max={100}
