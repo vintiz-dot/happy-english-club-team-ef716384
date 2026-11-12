@@ -1061,6 +1061,11 @@ console.log("=== the BYTES must reach storage live too (C1 critic 3, M1) ===");
   await put(T1, b.storage_path, 120_000); await confirm(T1, b.chunk_id, SHA("a"));
   eq("bytes confirmed 9 minutes after the chunk's end count as live; 11 minutes after, late (M1)",
     await evidenceOf(r.id).then((e) => [e.v, e.l]), [60_000, 60_000]);
+  // The registration bound still stands on its own (a state the API cannot
+  // reach: registered late, confirmed early), set by hand.
+  await raw(`UPDATE public.class_recording_chunks SET registered_at = confirmed_at + interval '2 minutes' WHERE id=$1`, [a.chunk_id]);
+  eq("a chunk the server registered 11 minutes after its end is late, whenever its bytes came (N2 bound, by hand)",
+    await evidenceOf(r.id).then((e) => [e.v, e.l]), [0, 120_000]);
   await setStatus(T1, r.id, "abandoned", `, abandon_reason = 'test'`);
 }
 
@@ -1130,6 +1135,12 @@ const range = (a, b) => Array.from({ length: b - a }, (_, i) => a + i);
   const r = await windowRec(4.5, 60, range(4, 34), 65);
   eq("a chunk straddling the lesson's start counts only its part inside: 29.5 of 60 minutes is not half (M2)",
     await lessonEvidence(r.id).then((e) => [e.recording_ran_evidence, e.v, e.vl, e.th]), [false, 1_800_000, 1_770_000, 1_800_000]);
+  // The byte floor uses only the straddling chunk's bytes inside the lesson
+  // (pro rata). Half the floor in every chunk, by hand: 29 x 60 000 + 30 000 B.
+  await q(`UPDATE public.class_recording_chunks SET stored_size = 60000 WHERE recording_id=$1`, [r.id]);
+  eq("and only that part's share of its bytes counts toward the byte floor (M2, pro rata)",
+    (await lessonEvidence(r.id)).vl, 885_000);
+  await q(`UPDATE public.class_recording_chunks SET stored_size = byte_size WHERE recording_id=$1`, [r.id]);
 }
 {
   // The lesson ends 64.5 minutes in: the chunk of minute 64 holds 30 s of it;
