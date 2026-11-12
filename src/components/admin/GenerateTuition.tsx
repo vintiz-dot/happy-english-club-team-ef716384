@@ -140,7 +140,7 @@ export function GenerateTuition() {
   );
 }
 
-// Ivory: the same role="alert" box as a solid sunken panel (the shared Alert is still glass).
+// Ivory: the same role="alert" box as a solid sunken panel (the shared Alert keeps its old translucent look).
 function IvoryNote({ children }: { children: React.ReactNode }) {
   return <div role="alert" className="rounded-hec-md border border-hec-line bg-hec-sunken p-4 text-hec-ink">{children}</div>;
 }
