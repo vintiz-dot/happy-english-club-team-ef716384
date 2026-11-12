@@ -14,19 +14,23 @@ import {
 import { TeacherBankingInfo } from "@/components/teacher/TeacherBankingInfo";
 import { School, TrendingUp } from "lucide-react";
 import { MonthPicker } from "@/components/MonthPicker";
-import { payRateTypeOf, sessionPayVnd, type StaffPayRate } from "@/lib/payRate";
-import { durationMinutes } from "@/lib/sessionDuration";
+import { teacherPayrollView } from "@/lib/teacherPayrollView";
 
 interface TeacherProfilePayrollProps {
   teacherId: string;
   selectedMonth: string;
-  /** The teacher's whole pay rate, so a per-session teacher is not costed
-      as though their fee scaled with the clock. */
-  payRate: StaffPayRate;
   onMonthChange?: (month: string) => void;
 }
 
-export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMonthChange }: TeacherProfilePayrollProps) {
+/**
+ * The admin's view of one teacher's month. Every figure is calculate-payroll's
+ * (through teacherPayrollView): this used to price each lesson itself at the
+ * teacher row's rate of today, applying sessions.rate_override_vnd that the
+ * function - and so the actual pay - ignores, and read a `sessions` field the
+ * function does not return, so its table was always empty. The class summary
+ * is grouped from the same response, so it counts exactly the lessons paid.
+ */
+export function TeacherProfilePayroll({ teacherId, selectedMonth, onMonthChange }: TeacherProfilePayrollProps) {
   const { data: payrollData } = useQuery({
     queryKey: ["teacher-payroll-detail", teacherId, selectedMonth],
     queryFn: async () => {
@@ -34,78 +38,11 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
         body: { month: selectedMonth, teacherId },
       });
       if (error) throw error;
-      return data?.payrollData?.[0];
+      return teacherPayrollView(data, teacherId);
     },
   });
 
-  // Fetch class breakdown summary
-  const { data: classBreakdown } = useQuery({
-    queryKey: ["teacher-class-breakdown", teacherId, selectedMonth],
-    queryFn: async () => {
-      const monthStart = `${selectedMonth}-01`;
-      const nextMonth = new Date(selectedMonth + "-01");
-      nextMonth.setMonth(nextMonth.getMonth() + 1);
-      const monthEnd = nextMonth.toISOString().slice(0, 10);
-
-      const { data: sessions, error } = await supabase
-        .from("sessions")
-        .select("id, status, classes(id, name)")
-        .eq("teacher_id", teacherId)
-        .gte("date", monthStart)
-        .lt("date", monthEnd)
-        .in("status", ["Held", "Scheduled"]);
-
-      if (error) throw error;
-
-      // Group by class
-      const classMap = new Map<string, { name: string; held: number; scheduled: number }>();
-      
-      for (const session of sessions || []) {
-        const classId = session.classes?.id;
-        const className = session.classes?.name || "Unknown";
-        
-        if (!classId) continue;
-        
-        if (!classMap.has(classId)) {
-          classMap.set(classId, { name: className, held: 0, scheduled: 0 });
-        }
-        
-        const entry = classMap.get(classId)!;
-        if (session.status === "Held") {
-          entry.held++;
-        } else if (session.status === "Scheduled") {
-          entry.scheduled++;
-        }
-      }
-
-      // Sort by total sessions descending
-      return Array.from(classMap.entries())
-        .map(([id, data]) => ({ id, ...data, total: data.held + data.scheduled }))
-        .sort((a, b) => b.total - a.total);
-    },
-  });
-
-  const calculateSessionAmount = (session: any) => {
-    const minutes = durationMinutes(session.start_time, session.end_time) ?? 0;
-    const override = session.rate_override_vnd;
-    if (!override) return sessionPayVnd(payRate, minutes);
-    // sessions.rate_override_vnd is read inconsistently across the app -
-    // as an hourly rate here, as a flat session cost in
-    // ClassCalendarEnhanced - and calculate-payroll, which produces the
-    // figure actually paid, ignores it entirely. Not settling that here.
-    // The override is applied in whatever unit the teacher is paid in,
-    // which keeps this screen unchanged for hourly teachers and is the
-    // only reading that makes sense for per-session ones.
-    return sessionPayVnd(
-      {
-        pay_rate_type: payRateTypeOf(payRate),
-        hourly_rate_vnd: override,
-        per_session_rate_vnd: override,
-      },
-      minutes,
-    );
-  };
-
+  const classBreakdown = payrollData?.classes;
   const totalClasses = classBreakdown?.length || 0;
   const totalSessions = classBreakdown?.reduce((sum, c) => sum + c.total, 0) || 0;
 
@@ -126,17 +63,17 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
           <CardHeader className="pb-2">
             <CardDescription>Projected Total</CardDescription>
             <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">
-              {(payrollData?.totalAmountProjected || 0).toLocaleString()} ₫
+              {(payrollData?.projectedTotal || 0).toLocaleString()} ₫
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-hec-small tabular-nums text-hec-ink-soft">
-              Based on {payrollData?.sessionsCountProjected || 0} scheduled sessions
+              Based on {(payrollData?.heldSessions || 0) + (payrollData?.scheduledSessions || 0)} scheduled sessions
             </p>
             <DurationVarianceNotice
               variant="block"
               count={payrollData?.discrepancyCount || 0}
-              varianceAmount={payrollData?.varianceAmountProjected}
+              varianceAmount={payrollData?.varianceAmount}
             />
           </CardContent>
         </Card>
@@ -145,13 +82,23 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
           <CardHeader className="pb-2">
             <CardDescription>Current (Actual)</CardDescription>
             <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">
-              {(payrollData?.totalAmountActual || 0).toLocaleString()} ₫
+              {(payrollData?.earned || 0).toLocaleString()} ₫
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-1">
             <p className="text-hec-small tabular-nums text-hec-ink-soft">
-              From {payrollData?.sessionsCountActual || 0} held sessions
+              From {payrollData?.heldSessions || 0} held sessions
             </p>
+            {payrollData?.closed && (
+              <p className="text-hec-small text-hec-ink-soft">
+                Month closed: this is what it was paid at. Corrections since are on the Payroll tab.
+              </p>
+            )}
+            {payrollData?.monthLocked && !payrollData.closed && (
+              <p className="text-hec-small text-hec-ink-soft">
+                Month closed with no line for this teacher: this figure is calculated now, not what was paid.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -233,7 +180,7 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
           <CardDescription>Per-session earnings breakdown</CardDescription>
         </CardHeader>
         <CardContent>
-          {payrollData?.sessions && payrollData.sessions.length > 0 ? (
+          {payrollData && payrollData.sessions.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -245,16 +192,16 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {payrollData.sessions.map((session: any) => {
-                  const amount = calculateSessionAmount(session);
+                {payrollData.sessions.map((session) => {
+                  const amount = session.amount;
                   return (
                     <TableRow key={session.id}>
                       <TableCell className="px-2 sm:px-4">{new Date(session.date).toLocaleDateString()}</TableCell>
                       <TableCell className="px-2 sm:px-4">
-                        {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
+                        {session.startTime.slice(0, 5)} - {session.endTime.slice(0, 5)}
                       </TableCell>
                       <TableCell className="px-2 sm:px-4">
-                        {(session.durationMinutes / 60).toFixed(1)}h
+                        {session.minutes === null ? "—" : `${(session.minutes / 60).toFixed(1)}h`}
                       </TableCell>
                       <TableCell className="px-2 sm:px-4">
                         <Badge variant={session.status === "Held" ? "default" : "secondary"} className={session.status === "Held" ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf" : ""}>
@@ -262,7 +209,9 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
                         </Badge>
                       </TableCell>
                       <TableCell className="px-2 sm:px-4 whitespace-nowrap text-right font-medium tabular-nums">
-                        {amount.toLocaleString()} ₫
+                        {amount === null
+                          ? <span title="Figure unavailable"><span aria-hidden="true">—</span><span className="sr-only">Figure unavailable</span></span>
+                          : `${amount.toLocaleString()} ₫`}
                       </TableCell>
                     </TableRow>
                   );

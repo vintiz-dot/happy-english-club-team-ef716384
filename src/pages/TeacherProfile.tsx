@@ -176,7 +176,7 @@ const TeacherProfile = () => {
           </TabsContent>
 
           <TabsContent value="payroll">
-            <TeacherProfilePayroll teacherId={teacher.id} selectedMonth={selectedMonth} payRate={teacher} onMonthChange={setSelectedMonth} />
+            <TeacherProfilePayroll teacherId={teacher.id} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
           </TabsContent>
 
           <TabsContent value="profile">
