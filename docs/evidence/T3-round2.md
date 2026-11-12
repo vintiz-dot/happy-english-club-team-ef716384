@@ -116,3 +116,7 @@ Tests and documents:
 - `docs/evidence/T3-prior-balance.md`, `docs/evidence/T3-round2.md`
 
 No migration.
+
+## Row order
+
+**Where I am / next step:** STARTED on branch `release/tuition-1b` (cut from 9804590; `release/tuition-1` is checked out in another worktree). Next: list every place in `calculate-tuition-bulk` and its `_lib` helpers where the result depends on the order of fetched rows.
