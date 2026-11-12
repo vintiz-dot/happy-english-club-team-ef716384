@@ -1177,8 +1177,13 @@ console.log("=== M8: the read-back checksum, the manifest read-back, the server'
 {
   const { w, src, r, errors, row, store } = await started();
   w.server.corruptDownload(R.chunkPath(CLASS, row.id, "teacher", 1, "flac"));
+  const confirmedWith = []; const origConfirm = w.backend.confirmChunk;
+  w.backend.confirmChunk = (id, sha) => { confirmedWith.push(sha); return origConfirm(id, sha); };
   r.tick(); await r.settle();
   await src.play(35, r);
+  const bad = w.server.chunkRows(row.id).find((c) => c.track === "teacher" && c.seq === 1);
+  ok("M8: the page itself compares the read-back: it never asks the server to confirm bytes that did not round-trip",
+    confirmedWith.length >= 4 && confirmedWith.every((s) => w.server.chunkRows(row.id).some((c) => c.sha256 === s)) && !!bad, `${confirmedWith.length} confirms`);
   const c1 = (await store.listChunks(row.id)).find((c) => c.track === "teacher" && c.seq === 1);
   ok("M8: storage returned different bytes: the chunk is NOT confirmed", !w.server.chunkRows(row.id).find((c) => c.track === "teacher" && c.seq === 1).confirmed_at);
   ok("M8: it is marked readback_mismatch locally and its bytes are kept", c1.state === "refused" && c1.refusal === "readback_mismatch" && !!(await store.getBytes(row.id, "teacher", 1)));
