@@ -1,8 +1,12 @@
 # T3 - prior balance on the admin tuition list (D-15)
 
-**Where I am / next step:** Part 1 done and committed. Done: executed test (`scripts/pgtest/tuition-prior-balance.test.mjs`, 135 pass), mapper `src/lib/tuitionRows.ts` + `scripts/tuitionRows.test.ts` (25 pass), hook refactor (`fetchBulkTuition`, `liveTuitionItem`), AdminTuitionList rewritten to read the calculator (committed WIP, `tsc -p tsconfig.app.json` was still running - re-run it), owner SQL written (`scripts/CHECK-prior-balance-differences.sql`, not yet syntax-checked against pglite). BEFORE harness output is saved at `C:\Users\Dell\hec-tools\t3-out\before.json` / `before.log` (harness: `C:\Users\Dell\hec-tools\t3-harness\t3.mjs <repo> <out.json> <label>`, port 5373). Next: tsc exit 0; AFTER harness run (`after.json`) and the before/after table; bun tests; static-counts; arithmetic grep; write the fix / files / what admins see / stopped-on / open questions sections below; remove the node_modules junction with `cmd //c rmdir node_modules` only.
+**Where I am / next step:** COMPLETE, awaiting review. Nothing pushed or deployed. Not done by design: one figure (Payable) is still added in the browser from the calculator's own figures, because the calculator returns none - see "Stopped on".
 
-Decisions already taken (to be written up): single source = `calculate-tuition-bulk` through the Finance tab's own fetch; `/tuition` keeps its wider roster (everyone on the roster, enrolled or not); rows the calculator could not answer show "Not available" and Record Pay is disabled for them. STOPPED ON: neither calculator returns a `payable` (charge + carry-in debt - carry-in credit), so `useLiveTuitionData.liveTuitionItem` still adds it from the calculator's own figures (the payment dialogs write the invoice status from it); exact field wanted: `carry.payable` in both functions' responses. Also the bulk response has no `siblingUnresolved` / `siblingState`.
+## Summary
+
+- The two sources CAN disagree (1c): the browser used the SAVED charge for the month (0 when there was no bill row), read the whole school's history in one request, and never knew a debt was settled in a later month.
+- Fix: `/tuition` now shows `calculate-tuition-bulk`'s figures, fetched through the same code as the Finance tab. It reads no invoice row and does no arithmetic on money.
+- Stopped on: neither calculator returns a payable. Field wanted: `carry.payable` in both responses.
 
 Branch `worktree-agent-a34c3c84114092f37`, reset to `claude/hec-conductor-setup-efbaa5` (304bfd9) and merged with the R09 restyle branch `worktree-agent-a7ffca465dcc98572` (no conflict). Line numbers below are as of that merge (6765613).
 
@@ -115,3 +119,83 @@ Three things the test shows about the calculator itself (I did not touch `supaba
 - **Neither response has a payable or a signed balance** (asserted). See "Stopped on".
 - **The bulk response does not say when a family discount is unresolved** (asserted: no `siblingState`, no `siblingUnresolved`), while its `totalAmount` leaves the discount out. The Finance tab has always shown that provisional figure as if final for as long as `compute-sibling-discounts` is busy; after this fix `/tuition` does too.
 - The bulk function reads "all other invoices" for up to 200 students in one unpaged request (`calculate-tuition-bulk/index.ts:199-204` via `fetchChunked`, 40-58). With the Finance tab's batches of 150, that passes 1,000 rows once the average student has 7 earlier bills. If the project's PostgREST `max-rows` is still the default 1,000, the bulk carry would be short for the LATEST months of the last students in a batch (rows are ordered by month). I cannot see the live setting from here; the owner SQL below shows whether the stored carry and a full sum agree.
+
+## 2. The fix and the single source chosen
+
+**Source: `calculate-tuition-bulk`, through the Finance tab's own fetch.** Not the stored `carry_*` columns: they exist only where a bill row exists and are right only while the saved total is current (1b), and `/tuition` lists students with no bill yet. Not `calculate-tuition` per student: it is limited to 30 calls a minute and writes an invoice on every call.
+
+- `src/lib/tuitionRows.ts` (new, imports nothing): `tuitionFigures(answer)` hands over the function's figures or null; `carriedIn` / `carriedOut` word the carry as owed / credit / none; `tuitionStatusInput` feeds `getPaymentStatus`; `largestFirst` sorts by comparison. No sum, difference, clamp or sign flip. A missing figure makes the whole row "Not available"; an answer marked unresolved makes it "Being calculated".
+- `src/hooks/useLiveTuitionData.ts`: the batching (150 ids) moved into exported `fetchBulkTuition`, the row literal into exported `liveTuitionItem`. The Finance tab's rows are unchanged (harness: Finance tab before == after, byte-equal).
+- `src/components/admin/AdminTuitionList.tsx`: the two `invoices` reads and all the arithmetic are gone. Roster, class names and the Discount/Sibling badges are obtained as before. Prior Bal., Balance, the status badge, the status filters and both sorts come from the mapper. Query key is now `["admin-tuition-live", month, "everyone"]`, so a payment recorded from this page refreshes it (it did not before). Bounded sibling retry (`siblingRetryDelayMs`) is wired for rows the function marks unresolved. A failed fetch says "Tuition could not be calculated" instead of "No tuition records found". No class or layout change.
+- Record Pay: a row with figures is handed to `RecordPaymentDialog` as exactly the Finance tab's row (`liveTuitionItem`), so the dialog behaves as it does there. A row without figures has Record Pay disabled - otherwise the dialog would read the gaps as 0 and write that.
+
+Files changed: `src/components/admin/AdminTuitionList.tsx`, `src/hooks/useLiveTuitionData.ts`, `src/lib/tuitionRows.ts` (new), `scripts/tuitionRows.test.ts` (new), `scripts/pgtest/tuition-prior-balance.test.mjs` (new), `scripts/pgtest/run.mjs` (suite added), `scripts/CHECK-prior-balance-differences.sql` (new), this file. Nothing under `supabase/`.
+
+## Stopped on (needs the calculator, which I may not touch)
+
+1. **No payable in either response.** Exact field wanted: `carry.payable` (number; charge + carry-in debt - carry-in credit; can be negative) in each `calculate-tuition-bulk` result and in `calculate-tuition`'s response. Until it exists, `liveTuitionItem` (`src/hooks/useLiveTuitionData.ts:95`) still adds it from the function's own three figures, as the Finance tab always did, and `/tuition` shows that same number. I kept it rather than show "Not available" because the payment dialogs decide the invoice status they WRITE from it (`RecordPaymentDialog.tsx:36, 90-97`); blanking it would change a write. The line already prefers `carry.payable` when the function sends it, so the addition stops being used the day the field ships.
+2. **The bulk response does not flag an unresolved family discount.** Wanted: `siblingUnresolved: true` (or `siblingState`) per result. The mapper and the retry already act on either; today they can never fire for the bulk function.
+
+## 3. Proof
+
+**Figure table.** Harness `C:\Users\Dell\hec-tools\t3-harness\t3.mjs` (fake Supabase client, port 5373, made-up people). Its bulk answers are the REAL handler's output for the case school (`T3_DUMP` of the executed test); Case 16 is a forced error row. Raw output: `C:\Users\Dell\hec-tools\t3-out\before.json|log`, `after.json|log`. `/tuition` as admin, every row opened. "A -> **B**" is before -> after.
+
+| Family | Prior Bal. | Payable | Balance | Status | Verdict | = Finance tab (same run) |
+|---|---|---|---|---|---|---|
+| Case 01 Bill in step | — | 1.440.000 ₫ | 1.440.000 ₫ | Unpaid | equal | text-equal |
+| Case 02 Arrears | 1.000.000 ₫ | 2.440.000 ₫ | 2.440.000 ₫ | Unpaid | equal | text-equal |
+| Case 03 Credit | +560.000 ₫ | 880.000 ₫ | 880.000 ₫ | Unpaid | equal | text-equal |
+| Case 04 No bill yet, arrears | 1.000.000 ₫ | 1.000.000 ₫ -> **2.440.000 ₫** | 1.000.000 ₫ -> **2.440.000 ₫** | Unpaid | DIFFERS (no bill row) | text-equal |
+| Case 05 No bill yet | — | 0 ₫ -> **1.440.000 ₫** | 0 ₫ -> **1.440.000 ₫** | Open -> **Unpaid** | DIFFERS (no bill row) | text-equal |
+| Case 06 Bill out of date | — | 1.260.000 ₫ -> **1.440.000 ₫** | 0 ₫ -> **180.000 ₫** | Settled -> **Underpaid** | DIFFERS (saved total stale) | text-equal |
+| Case 07 Frozen bill | — | 810.000 ₫ | 810.000 ₫ | Unpaid | equal | text-equal |
+| Case 08 Paid on October | +1.440.000 ₫ | 0 ₫ | 0 ₫ | Settled | equal | text-equal |
+| Case 09 Paid on December | — | 1.440.000 ₫ | 1.440.000 ₫ | Unpaid -> **Settled in 2026-12** | DIFFERS (status only) | text-equal |
+| Case 10 Payment corrected | 500.000 ₫ | 1.940.000 ₫ | 1.940.000 ₫ | Unpaid | equal | text-equal |
+| Case 11 Zero-charge month | — | 1.440.000 ₫ | 1.440.000 ₫ | Unpaid | equal | text-equal |
+| Case 12 Left owing | 700.000 ₫ | 700.000 ₫ | 700.000 ₫ | Unpaid | equal | not listed on the Finance tab |
+| Case 13 October re-billed | +180.000 ₫ | 1.260.000 ₫ | 1.260.000 ₫ | Unpaid | equal | text-equal |
+| Case 14 Sibling (discount unresolved) | — | 1.296.000 ₫ -> **1.440.000 ₫** | 1.296.000 ₫ -> **1.440.000 ₫** | Unpaid | DIFFERS (bulk gives the provisional charge, unflagged) | text-equal |
+| Case 15 Sibling (full price) | — | 1.440.000 ₫ | 1.440.000 ₫ | Unpaid | equal | text-equal |
+| Case 16 Calculator error | — -> **Not available** | 1.440.000 ₫ -> **Not available** | 1.440.000 ₫ -> **Not available** | Unpaid -> **Not available** | DIFFERS (Record Pay disabled) | not listed on the Finance tab |
+
+All 14 families the Finance tab lists are text-equal to `/tuition` after the fix (Base, Discount, Prior Bal., Payable, Paid, Balance, header balance, status). The Finance tab's own rows are identical before and after. Requests on `/tuition`: before `invoices` select x2, no calculator call; after `calculate-tuition-bulk` x1, no `invoices` read.
+
+**Checks (final tree, 33875b0 + this file):**
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0.
+- `npx --yes bun test scripts/*.test.ts`: 111 pass, 0 fail (10 files; `tuitionRows.test.ts` is 25 of them).
+- `node scripts/pgtest/tuition-prior-balance.test.mjs`: 212 passed, 0 failed. Also run: enrollment-discounts 22, family-payment-month 6, mirrors 13, ivory-scope 33, all pass. I did not run the whole of `run.mjs`.
+- `static-counts.mjs`: before vs after, one difference: `selectStar_src` 68 -> 67 (better). Nothing worse.
+- Owner SQL executed on an in-process Postgres (pglite) with made-up rows: runs, returns the expected rows, contains no write keyword. Not run on the live database.
+
+**Arithmetic on money in the files I touched** (grep for `Math.`, `.reduce(`, `+ - * /` beside a money name):
+- `src/lib/tuitionRows.ts`: none (also asserted by a unit test).
+- `src/components/admin/AdminTuitionList.tsx`: none. The two hits are not money: `dataUpdateCount - 1` (retry attempt count) and `settled + overpaid` (a count of rows).
+- `src/hooks/useLiveTuitionData.ts`: three lines, all pre-existing, moved not written: `finalPayable` (95, see "Stopped on"), `balance` (96), `priorBalance` (101). `/tuition` displays only the first.
+
+**Left elsewhere, for the conductor** (all over the calculator's own figures, none from raw invoice rows; all blocked on the same missing payable or on totals the function does not return): `AdminTuitionListEnhanced.tsx:67-70, 165`; `tuition/TuitionStudentCard.tsx:57, 223`; `QuickPayPanel.tsx:61, 77, 86, 193-204, 330`; `RecordPaymentDialog.tsx:36-43, 156-158`; `BatchPaymentDialog.tsx:43, 65, 165-171, 330-334`; `useFinanceOverview.ts:113-128`; `useFinanceSummary.ts:39-42` (raw invoice rows, month totals, no carry); `student/StudentTuitionTab.tsx:427, 536-538`; `useStudentMonthFinance.ts:163-166`; `student/PriorBalanceBreakdown.tsx:72-76, 112, 156`; `reports/StudentAuditPanel.tsx:172, 313, 322`; `lib/invoice/adapter.ts:50-52`.
+
+## What an admin will see change on the live site
+
+On `/tuition` (and `/students/:id/tuition`), the numbers become the Finance tab's numbers. For most families nothing moves. They move for:
+- **A student with no bill saved yet for the month.** The page used to show a charge of 0 for the month (and "Open" or just the old arrears). It now shows the month's charge and the full amount owed.
+- **A student whose saved bill is out of date** (lessons marked or changed since it was last calculated). Payable, Balance and the badge follow the register: a "Settled" can become "Underpaid", or the reverse.
+- **A month whose debt was paid off in a later month.** The badge reads "Settled in <month>" instead of "Unpaid" / "Underpaid". The figures do not change.
+- **A family whose sibling discount is being re-decided at that moment.** The page briefly shows the charge without the discount, as the Finance tab does. This is the calculator's gap (Stopped on, 2), not new arithmetic.
+- **A student the calculator could not answer for.** "Not available" in every cell and no Record Pay, instead of figures from saved rows.
+- If the school's history is past the row cap, some students who read as owing nothing for earlier months will now show their arrears.
+
+Also, not money: the page takes a little longer to load (one calculator call instead of two table reads); it refreshes after a payment is recorded from it; and the Review Queue count and the confirmation filter now work on it (the row carries the bill's confirmation status, as on the Finance tab - before, that filter emptied the list).
+
+One thing to know about Record Pay: for a student with no bill row, the dialog creates the bill with the calculator's base, discount and total, where it used to create it with 0. That is what it already does from the Finance tab. I added no write.
+
+## Owner SQL
+
+`scripts/CHECK-prior-balance-differences.sql` - read-only, one SELECT, student ids only. For this month and the two before: counts first (bills checked and bills whose stored carry-in differs from the sum over earlier bills; enrolled students with no bill row), then each differing bill with both numbers, then each student with no bill row. Not run on the live database.
+
+## Open questions (policy)
+
+1. **Payable while the calculator returns none.** Recommended default: ship as is (the Finance tab's figure on both screens), add `carry.payable` to both functions next, then delete the fallback at `useLiveTuitionData.ts:95`. The alternative, showing "Not available" for Payable on both screens until then, would also change what the payment dialogs write.
+2. **School totals on the Finance tab** (Total Billed / Collected / Outstanding) are browser sums across students of the calculator's per-student figures; the function is called in batches and returns no totals. Recommended default: leave them, and treat "no arithmetic" as applying to one family's bill, not to adding families up.
+3. **Students with arrears but no enrolment this month** are on `/tuition` and absent from the Finance tab. Recommended default: keep them on `/tuition` (that is where arrears are chased); decide separately whether the Finance tab should list them.
+4. **Unresolved sibling discount in the bulk answer.** Recommended default: have the bulk function send the flag; both screens then show "Being calculated" and retry instead of a provisional charge.
