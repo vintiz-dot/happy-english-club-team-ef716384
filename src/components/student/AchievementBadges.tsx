@@ -133,12 +133,28 @@ export function AchievementBadges({
                       "relative flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center rounded-hec-md border",
                       badge.earned ? "border-hec-brass/40 bg-hec-surface" : "border-hec-line bg-hec-sunken",
                       featuredBadgeId === badge.id && "outline outline-2 outline-offset-2 outline-hec-brass",
+                      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
                     )}
                     onClick={() => {
                       if (badge.earned && onFeatureBadge) {
                         onFeatureBadge(featuredBadgeId === badge.id ? null : badge.id);
                       }
                     }}
+                    // Keyboard: the same action on Enter / Space, for a badge that can be featured.
+                    {...(badge.earned && onFeatureBadge
+                      ? {
+                          role: "button",
+                          tabIndex: 0,
+                          "aria-pressed": featuredBadgeId === badge.id,
+                          "aria-label": badge.name,
+                          onKeyDown: (e: React.KeyboardEvent) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              onFeatureBadge(featuredBadgeId === badge.id ? null : badge.id);
+                            }
+                          },
+                        }
+                      : {})}
                   >
                     {badge.earned ? (
                       <span className="text-2xl">{badge.icon}</span>
