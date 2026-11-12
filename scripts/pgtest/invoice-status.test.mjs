@@ -717,9 +717,11 @@ console.log('\nRound 2 - ONE rule for the paid label, and every writer agrees wi
     [1, 400000, 0, 0, 'partial'], [0, 400000, 0, 0, 'issued'],
     [400000, 400000, 300000, 0, 'partial'], [700000, 400000, 300000, 0, 'paid'],      // debt carried in
     [300000, 400000, 0, 100000, 'paid'], [200000, 400000, 0, 100000, 'partial'],       // part of the month covered by credit
-    [0, 400000, 0, 400000, 'issued'], [0, 400000, 0, 650000, 'issued'],                // credit covers the month, nothing recorded
-    [50000, 400000, 0, 650000, 'partial'],
-    [0, 0, 0, 0, 'issued'], [100000, 0, 0, 0, 'partial'], [300000, 0, 300000, 0, 'paid'], // zero-charge month
+    // T4 (fault 5): nothing left to pay reads paid. These three were issued / issued / partial.
+    [0, 400000, 0, 400000, 'paid'], [0, 400000, 0, 650000, 'paid'],                    // credit covers the month, nothing recorded
+    [50000, 400000, 0, 650000, 'paid'],
+    // zero-charge month: nothing at all stays issued; money on it is "nothing left to pay" (was partial)
+    [0, 0, 0, 0, 'issued'], [100000, 0, 0, 0, 'paid'], [300000, 0, 300000, 0, 'paid'],
   ];
   ok('the rule, case by case (debt carried in, credit carried in, a zero-charge month)',
      table.every(([r, t, d, c, want]) => invoicePaidLabel({ total_amount: t, carry_in_debt: d, carry_in_credit: c, recorded_payment: r }) === want),
@@ -729,14 +731,11 @@ console.log('\nRound 2 - ONE rule for the paid label, and every writer agrees wi
        && monthPayable({ total_amount: 400000, carry_in_debt: 0, carry_in_credit: 650000 }) === -250000
        && monthPayable({ total_amount: 400000 }) === 400000);
   ok('  missing or unreadable numbers count as 0, never as paid',
-     paidLabel(null, 400000) === 'issued' && paidLabel(undefined, undefined) === 'issued' && paidLabel('x', 'y') === 'issued' && paidLabel(100, null) === 'partial');
+     paidLabel(null, 400000, 400000) === 'issued' && paidLabel(undefined, undefined, undefined) === 'issued'
+       && paidLabel('x', 'y', 'z') === 'issued' && paidLabel(100, 400000, null) === 'partial');
 
-  // The writers that already had it right must be saying the same thing.
+  // The dialogs no longer state the rule; they import its mirror (T4, faults 3-4, below).
   const src = (rel) => readFileSync(join(repo, rel), 'utf8');
-  const dialogRule = /newTotalPaid >= payable && payable > 0\)[\s\S]{0,80}"paid"[\s\S]{0,120}newTotalPaid > 0\)[\s\S]{0,60}"partial"[\s\S]{0,80}"issued"/;
-  for (const f of ['RecordPaymentDialog.tsx', 'QuickPayPanel.tsx', 'BatchPaymentDialog.tsx']) {
-    ok(`  ${f} writes by this rule (recorded vs payable; paid / partial / issued)`, dialogRule.test(src(`src/components/admin/${f}`)));
-  }
   // The row the dialogs read moved to src/lib/liveTuitionItem.ts (T3 round 2):
   // the function's own carry.payable (monthPayable, above), and for a
   // function too old to send it, the same sum over the function's figures.
@@ -747,22 +746,28 @@ console.log('\nRound 2 - ONE rule for the paid label, and every writer agrees wi
   ok('  and for an older function, charge + carry-in debt - carry-in credit',
      /\?\?[\s\S]{0,120}data\.totalAmount \+ \(data\.carry\?\.carryInDebt \?\? 0\) - \(data\.carry\?\.carryInCredit \?\? 0\)/.test(liveItem));
   const aiSql = src('supabase/migrations/20261107090000_ai_assisted_admin_actions.sql');
-  ok('  ai_action_apply / undo write by this rule too',
+  // ai_action_apply / undo: 20261107090000 still holds its own CASE (history);
+  // migration 20261113090000 (T4) replaces it in the installed functions with
+  // public.invoice_paid_label - checked against the live definitions by
+  // ai-actions.test.mjs, and against this helper in the T4 section below.
+  ok('  ai_action_apply / undo: the CASE that 20261113090000 replaces is the one 20261107090000 installs',
      /v_payable := coalesce\(inv\.total_amount, 0\) \+ coalesce\(inv\.carry_in_debt, 0\) - coalesce\(inv\.carry_in_credit, 0\)/.test(aiSql)
        && /WHEN v_total >= v_payable AND v_payable > 0 THEN 'paid'\s+WHEN v_total > 0 THEN 'partial' ELSE 'issued'/.test(aiSql)
        && /WHEN v_left >= v_payable AND v_payable > 0 THEN 'paid'\s+WHEN v_left > 0 THEN 'partial' ELSE 'issued'/.test(aiSql));
-  // The same CASE, run by PostgreSQL, against the helper over a grid.
+  // The old CASE and the T4 rule agree wherever something is still owed (payable > 0); they part only where nothing is.
   const grid = [];
-  for (const r of [0, 1, 100000, 399999, 400000, 700000]) for (const pv of [-250000, 0, 1, 400000, 700000]) grid.push([r, pv]);
+  for (const r of [0, 1, 100000, 399999, 400000, 700000]) for (const pv of [1, 400000, 700000]) grid.push([r, pv]);
   const sqlSays = await Promise.all(grid.map(async ([r, pv]) => (await db.query(
     `SELECT (CASE WHEN $1::bigint >= $2::bigint AND $2::bigint > 0 THEN 'paid' WHEN $1::bigint > 0 THEN 'partial' ELSE 'issued' END) AS l`, [r, pv])).rows[0].l));
-  ok(`  and PostgreSQL evaluating that CASE agrees with the helper on ${grid.length} (recorded, payable) pairs`,
-     grid.every(([r, pv], i) => paidLabel(r, pv) === sqlSays[i]));
-  const fns = ['calculate-tuition', 'smart-family-payment', 'family-payment', 'settle-bill', 'delete-payment'];
+  ok(`  and the old CASE agrees with the helper on all ${grid.length} (recorded, payable > 0) pairs - T4 changed only "nothing left to pay"`,
+     grid.every(([r, pv], i) => paidLabel(r, pv, 400000) === sqlSays[i]));
+  const fns = ['calculate-tuition', 'smart-family-payment', 'family-payment', 'delete-payment'];
   ok('  every edge function that writes invoices.status imports the helper and has no rule of its own',
      fns.every((f) => /from ['"]\.\.\/_lib\/invoice-status\.ts['"]/.test(src(`supabase/functions/${f}/index.ts`))
        && !/status:[^\n]*\?\s*['"]paid['"]/.test(src(`supabase/functions/${f}/index.ts`))
        && !/newStatus = ['"](paid|partial|draft)['"]/.test(src(`supabase/functions/${f}/index.ts`))));
+  ok('  settle-bill writes no label at all any more: its write-off reaches the bill through the recalculation',
+     !/from\(['"]invoices['"]\)[\s\S]{0,80}\.update\(/.test(src('supabase/functions/settle-bill/index.ts')) && !/status:/.test(src('supabase/functions/settle-bill/index.ts')));
   ok('  and none of them judges a bill by cumulative paid_amount',
      fns.every((f) => !/paid_amount[^\n]*>=|>=[^\n]*paid_amount|<=[^\n]*paid_amount \+/.test(src(`supabase/functions/${f}/index.ts`))));
 }
@@ -817,8 +822,10 @@ console.log('\nRound 2 - the label after each payment path and the standard reca
   ok('family-payment, the rest: paid', r.status === 200 && b?.status === 'paid' && b?.recorded_payment === 400000, money(b));
   invoiceWrites = []; memoryWrites = [];
   r = await familyPay(100000);
-  ok('family-payment on a bill that IS paid: the bill is not selected - no invoice write, no allocation',
-     r.status === 200 && invoiceWrites.filter((w) => w.mode === 'update').length === 0
+  // T4: with nothing owed and no instruction for the money, it is refused
+  // before anything is written (it used to answer 200 and drop the 100,000).
+  ok('family-payment on a bill that IS paid: the bill is not selected - no invoice write, no allocation (T4: and the call is refused)',
+     r.status === 400 && invoiceWrites.filter((w) => w.mode === 'update').length === 0
        && !memoryWrites.some((w) => w.table === 'payment_allocations') && (await bill())?.recorded_payment === 400000,
      { invoiceWrites, allocations: memoryWrites.filter((w) => w.table === 'payment_allocations') });
 
@@ -842,8 +849,8 @@ console.log('\nRound 2 - the label after each payment path and the standard reca
      b?.total_amount - b?.recorded_payment === 100000);
   invoiceWrites = [];
   r = await familyPay(100000);
-  ok('  with the selection kept (judged by the money) nothing more is taken for it; without it 100,000 would be',
-     r.status === 200 && invoiceWrites.filter((w) => w.mode === 'update').length === 0 && (await bill())?.recorded_payment === 300000,
+  ok('  with the selection kept (judged by the money) nothing more is taken for it; without it 100,000 would be (T4: refused, nothing owed)',
+     r.status === 400 && invoiceWrites.filter((w) => w.mode === 'update').length === 0 && (await bill())?.recorded_payment === 300000,
      { invoiceWrites, b: money(await bill()) });
 
   // ---- debt carried in
@@ -864,8 +871,8 @@ console.log('\nRound 2 - the label after each payment path and the standard reca
   await seedBill(SEP, 400000, 800000, 'paid');
   r = await calc(); b = await bill();
   console.log(`    credit covers the month => ${JSON.stringify(money(b))}, payable ${r.body.carry?.payable}`);
-  ok('credit carried in covers the whole month, nothing recorded in it: issued, nothing owed, payable 0',
-     b?.status === 'issued' && b?.carry_in_credit === 400000 && b?.carry_out_debt === 0 && r.body.carry?.payable === 0, money(b));
+  ok('credit carried in covers the whole month, nothing recorded in it: paid (T4; was issued), nothing owed, payable 0',
+     b?.status === 'paid' && b?.carry_in_credit === 400000 && b?.carry_out_debt === 0 && r.body.carry?.payable === 0, money(b));
   ok('  September, which holds the overpayment, is not rewritten by October\'s calculation',
      (await bill(S1, SEP))?.status === 'paid' && (await bill(S1, SEP))?.recorded_payment === 800000);
 
@@ -874,7 +881,7 @@ console.log('\nRound 2 - the label after each payment path and the standard reca
   r = await calc(S1, '2026-12');
   ok('a month with no charge: issued', (await bill(S1, '2026-12'))?.status === 'issued' && (await bill(S1, '2026-12'))?.total_amount === 0);
   await editRecorded('2026-12', 50000); await calc(S1, '2026-12');
-  ok('  money recorded on it: partial (never "paid" for a month that asks for nothing)', (await bill(S1, '2026-12'))?.status === 'partial');
+  ok('  money recorded on it: paid - nothing is left to pay (T4; was partial)', (await bill(S1, '2026-12'))?.status === 'paid');
   await reset(); world();
   await db.query(`INSERT INTO public.invoices (student_id, month, base_amount, discount_amount, total_amount, recorded_payment, status, tuition_frozen)
     VALUES ($1, $2, 900000, 90000, 810000, 400000, 'issued', true)`, [S1, MONTH]);
@@ -884,55 +891,50 @@ console.log('\nRound 2 - the label after each payment path and the standard reca
   await editRecorded(MONTH, 810000); await calc();
   ok('  and 810,000 is paid', (await bill())?.status === 'paid' && (await bill())?.total_amount === 810000);
 
-  // ---- settle-bill
-  // (No earlier months here. settle-bill works out the balance it may write
-  // off from cumulative paid_amount, so for a family WITH paid history it
-  // finds "no outstanding debt" and refuses - recorded below, not changed.)
+  // ---- settle-bill (T4 changed it: see "T4 fault 2" for the full set)
   await reset(); world(); await calc();
-  const beforeSettle = await bill();
   r = await settle(400000);
   await calc(); b = await bill();
   console.log(`    settle-bill, write-off in full => ${r.status} ${JSON.stringify(r.body)} ; bill ${JSON.stringify(money(b))}`);
-  ok('settle-bill, write-off IN FULL: the ledger is posted and the bill\'s money is unchanged',
+  ok('settle-bill, write-off IN FULL: the ledger is posted and (T4) the bill carries it - charge 0, nothing owed',
      r.status === 200 && r.body.amount === 400000 && memoryWrites.some((w) => w.table === 'ledger_entries')
-       && same(figures(b), figures(beforeSettle)), { now: figures(b), then: figures(beforeSettle) });
-  ok('  so the label stays issued: the bill still shows 400,000 owed, and the label does not contradict it (was: "paid")',
-     b?.status === 'issued' && b?.carry_out_debt === 400000, money(b));
+       && b?.total_amount === 0 && b?.carry_out_debt === 0, money(b));
+  ok('  so the label is paid: nothing is left to pay (round 2: issued, with the 400,000 still on the bill)', b?.status === 'paid', money(b));
   await reset(); world(); await calc();
   await pay((await bill()).id, 100000, 'partial'); await calc();
   r = await settle(100000);
   await calc(); b = await bill();
-  ok('settle-bill, write-off IN PART on a part-paid bill: stays partial',
-     r.status === 200 && b?.status === 'partial' && b?.recorded_payment === 100000 && b?.carry_out_debt === 300000, { r: r.body, b: money(b) });
+  ok('settle-bill, write-off IN PART on a part-paid bill: stays partial, 200,000 left',
+     r.status === 200 && b?.status === 'partial' && b?.recorded_payment === 100000 && b?.carry_out_debt === 200000, { r: r.body, b: money(b) });
   await withHistory();
   r = await settle(400000);
   console.log(`    settle-bill, family with a paid September, October unpaid => ${r.status} ${JSON.stringify(r.body)}`);
-  ok('PRE-EXISTING, reported not fixed: for a family with paid history settle-bill refuses a real 400,000 debt ("balance: 0")',
-     r.status === 400 && /No outstanding debt/.test(r.body.error) && (await bill())?.carry_out_debt === 400000 && (await bill())?.status === 'issued',
-     { r: r.body, b: money(await bill()) });
+  ok('FIXED in T4: for a family with paid history settle-bill accepts the real 400,000 debt (round 2: refused, "balance: 0")',
+     r.status === 200 && r.body.beforeBalance === 400000 && (await bill())?.carry_out_debt === 0, { r: r.body, b: money(await bill()) });
 
-  // ---- delete-payment
+  // ---- delete-payment (T4 changed it: see "T4 fault 1" for the full set)
   const ledgerPayment = () => {
     fixture.payments = [{ id: PAY_ID, student_id: S1, parent_payment_id: null, family_id: null, amount: 400000, payment_allocations: [] }];
-    fixture.ledger_entries = [{ id: 'le-1', tx_key: `payment-${PAY_ID}-ar`, month: MONTH, debit: 0, credit: 400000,
+    fixture.ledger_entries = [{ id: 'le-1', tx_id: 'tx-old', tx_key: `payment-${PAY_ID}-ar`, month: MONTH, debit: 0, credit: 400000,
       account_id: 'acc-AR', ledger_accounts: { student_id: S1, code: 'AR' } }];
   };
   await withHistory(); ledgerPayment();
-  // A stale "paid" of the old cumulative kind: nothing recorded on the bill.
+  // The ledger says this payment put 400,000 on October, but nothing is recorded there.
   await db.query(`UPDATE public.invoices SET status = 'paid' WHERE student_id = $1 AND month = $2`, [S1, MONTH]);
+  memoryWrites = [];
   r = await call('delete-payment', { paymentId: PAY_ID, deleteReason: 'entered twice' });
   b = await bill();
   console.log(`    delete-payment, nothing recorded on the bill => ${r.status} ; bill ${JSON.stringify(money(b))}`);
-  ok('delete-payment, nothing recorded on the bill: issued straight away (was: "paid" left behind, or "draft")',
-     r.status === 200 && b?.status === 'issued' && memoryWrites.some((w) => w.table === 'payments' && w.op === 'delete'), { r: r.body, b: money(b) });
+  ok('delete-payment, the bill records less than the payment put there: refused, nothing reversed or deleted (T4; round 2 relabelled and deleted)',
+     r.status === 409 && !memoryWrites.some((w) => w.table === 'payments' || w.table === 'ledger_entries'), { r: r.body, b: money(b) });
   await calc();
-  ok('  and issued after the recalculation', (await bill())?.status === 'issued');
+  ok('  the next recalculation still corrects the stale label: issued', (await bill())?.status === 'issued');
   await withHistory(); ledgerPayment();
   await smartPay(150000);
   r = await call('delete-payment', { paymentId: PAY_ID, deleteReason: 'entered twice' });
   await calc(); b = await bill();
-  ok('delete-payment while 150,000 is still recorded on the bill: partial - the label says what the bill records',
-     r.status === 200 && b?.status === 'partial' && b?.recorded_payment === 150000, money(b));
+  ok('delete-payment when the bill holds only another payment\'s 150,000: refused, and that 150,000 stays (partial)',
+     r.status === 409 && b?.status === 'partial' && b?.recorded_payment === 150000, money(b));
   // The bill's own figure is taken off by an admin in Recorded Payment Manager.
   await editRecorded(MONTH, 0); await calc(); b = await bill();
   ok('payment reversed on the bill (recorded_payment 0, status untouched by the screen), recalculated: issued',
@@ -1180,8 +1182,10 @@ console.log('\nT4 fault 1 - deleting a payment takes it off the bill');
   await withHistory();
   await smartPay(400000); await editRecorded(MONTH, 100000); await calc();
   const [cut] = familyPayments();
+  memoryWrites = [];
   r = await delPay(cut?.id); b = await bill();
-  ok('a bill already edited down to 100,000: lowered to 0, never below', r.status === 200 && b?.recorded_payment === 0, { r: r.body, b: money(b) });
+  ok('a bill edited down to 100,000 since the 400,000 payment: refused before anything is written (taking 400,000 off could take other money)',
+     r.status === 409 && b?.recorded_payment === 100000 && reversalOf(cut?.id).length === 0 && !memoryWrites.some((w) => w.table === 'payments'), { r: r.body, b: money(b) });
 
   // An admin's credit label stays.
   await withHistory();
@@ -1318,7 +1322,7 @@ console.log('\nT4 fault 5 - nothing left to pay reads paid');
   await calc();
   ok('through calculate-tuition: credit carried in covers October, nothing recorded: paid (was issued)', (await bill())?.status === 'paid', money(await bill()));
   await editRecorded(MONTH, 50000); await calc();
-  ok('  and paid again on top: paid (was partial)', (await bill())?.status === 'paid' && (await bill())?.carry_out_credit === 450000, money(await bill()));
+  ok('  and paid again on top: paid (was partial)', (await bill())?.status === 'paid' && (await bill())?.carry_out_credit === 50000, money(await bill()));
   await reset(); world();
   await calc(S1, '2026-12');
   ok('  a month with no lessons and nothing paid: still issued', (await bill(S1, '2026-12'))?.status === 'issued');
@@ -1338,6 +1342,16 @@ console.log('\nT4 fault 5 - nothing left to pay reads paid');
     } catch (e) { sqlErr = e.message; }
   }
   ok('  public.invoice_paid_label (SQL, for ai_action_apply / undo) agrees with the helper on a grid', sqlOk, sqlErr);
+  // A live function that holds neither the old expression nor the new call: stop, change nothing.
+  let refused = null, body = null;
+  if (existsSync(mig)) {
+    await db.exec(`CREATE FUNCTION public.ai_action_undo(p uuid) RETURNS jsonb LANGUAGE sql AS $f$ SELECT '{"someone":"rewrote me"}'::jsonb $f$`);
+    try { await db.exec(readFileSync(mig, 'utf8')); } catch (e) { refused = e.message; }
+    body = (await db.query(`SELECT prosrc FROM pg_proc WHERE proname = 'ai_action_undo'`)).rows[0]?.prosrc;
+    await db.exec('DROP FUNCTION public.ai_action_undo(uuid)');
+  }
+  ok('  the migration STOPS on a function it does not recognise, and leaves it as it was',
+     /expected exactly one label expression/.test(refused ?? '') && /rewrote me/.test(body ?? ''), { refused, body });
 }
 
 console.log('\nT4 faults 3 and 4 - the browser writes the label by the same rule (a registered mirror), and nowhere restates it');

@@ -347,6 +347,12 @@ console.log("=== recording tuition ===");
     + (await one("SELECT pg_get_functiondef('public.ai_action_undo(uuid)'::regprocedure) AS d")).d;
   ok("T4: ai_action_apply / undo state no label rule of their own any more",
      (def.match(/public\.invoice_paid_label\(/g) || []).length === 2 && !/THEN 'paid'/.test(def));
+  const t4mig = process.argv.slice(2).find((f) => f.includes("20261113090000"));
+  let again = "not run";
+  try { await db.exec(readFileSync(t4mig, "utf8")); again = null; } catch (e) { again = e.message; }
+  const def2 = (await one("SELECT pg_get_functiondef('public.ai_action_apply(uuid, text, jsonb)'::regprocedure) AS d")).d
+    + (await one("SELECT pg_get_functiondef('public.ai_action_undo(uuid)'::regprocedure) AS d")).d;
+  ok("T4: the migration run a second time changes nothing", again === null && def2 === def, again);
 }
 
 console.log("=== families ===");

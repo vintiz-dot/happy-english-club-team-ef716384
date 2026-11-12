@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
-import { invoicePaidLabel, paidLabel } from '../_lib/invoice-status.ts';
+import { labelAfterPayment, monthCharged, paidLabel } from '../_lib/invoice-status.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -265,7 +265,7 @@ Deno.serve(async (req) => {
         // Update or create invoice
         const { data: invoice } = await supabase
           .from('invoices')
-          .select('id, paid_amount, total_amount, recorded_payment, carry_in_debt, carry_in_credit')
+          .select('id, paid_amount, base_amount, total_amount, recorded_payment, carry_in_debt, carry_in_credit, status')
           .eq('student_id', sibling.id)
           .eq('month', month)
           .single();
@@ -273,14 +273,14 @@ Deno.serve(async (req) => {
         if (invoice) {
           const newPaid = (invoice.paid_amount || 0) + applied;
           const newRecorded = (invoice.recorded_payment || 0) + applied;
+          // The month's own money against what the month asks for (the one
+          // rule; an admin's 'credit' label is left alone).
+          const label = labelAfterPayment(invoice, newRecorded);
           await supabase
             .from('invoices')
             .update({
               paid_amount: newPaid,
-              // The month's own money against what the month asks for.
-              // paid_amount is cumulative: compared with one month's total
-              // it called nearly every part payment "paid".
-              status: invoicePaidLabel(invoice, newRecorded),
+              ...(label ? { status: label } : {}),
               recorded_payment: newRecorded
             })
             .eq('id', invoice.id);
@@ -297,7 +297,8 @@ Deno.serve(async (req) => {
             recorded_payment: applied,
             // No bill row yet, so nothing is recorded for the month and the
             // calculator's closing balance IS the month's payable.
-            status: paidLabel(applied, sibling.debt - sibling.credit),
+            status: paidLabel(applied, sibling.debt - sibling.credit,
+              monthCharged({ base_amount: sibData.baseAmount, total_amount: sibData.totalAmount })),
           });
         }
 

@@ -6,7 +6,15 @@ import { requireRole, callerOwnsStudent } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts, enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
-import { invoiceLabelFields, monthPayable, paidLabel } from "../_lib/invoice-status.ts";
+import {
+  invoiceLabelFields,
+  monthCharged,
+  monthPayable,
+  paidLabel,
+  SETTLEMENTS_ON_BILL_FROM,
+  settledWriteOff,
+  WRITE_OFF_NAME,
+} from "../_lib/invoice-status.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -107,6 +115,7 @@ Deno.serve(async (req) => {
       referralBonusesRes,
       priorInvoicesRes,
       currentInvoiceRes,
+      settlementsRes,
     ] = await Promise.all([
       supabase
         .from("students")
@@ -145,6 +154,14 @@ Deno.serve(async (req) => {
         .eq("student_id", studentId)
         .eq("month", month)
         .maybeSingle(),
+      // Settle Bill write-offs of this month (see _lib/invoice-status.ts).
+      supabase
+        .from("settlements")
+        .select("settlement_type, amount, created_at")
+        .eq("student_id", studentId)
+        .eq("month", month)
+        .eq("settlement_type", "discount")
+        .gte("created_at", SETTLEMENTS_ON_BILL_FROM),
     ]);
 
     const { data: student, error: studentError } = studentRes;
@@ -164,6 +181,11 @@ Deno.serve(async (req) => {
     // count as "no earlier payments": a wrong carry in the answer and a
     // wrong paid label saved.
     if (priorInvoicesRes.error) throw new Error("Unable to read the earlier tuition invoices");
+    // Every read that prices the month fails the call: a discount, bonus or
+    // write-off silently left out is a wrong charge saved over the bill.
+    if (discountAssignmentsRes.error) throw new Error("Unable to read the student's discounts");
+    if (referralBonusesRes.error) throw new Error("Unable to read the student's referral bonuses");
+    if (settlementsRes.error) throw new Error("Unable to read the month's settlements");
     const discountAssignments = discountAssignmentsRes.data;
     const referralBonuses = referralBonusesRes.data;
 
@@ -389,6 +411,15 @@ Deno.serve(async (req) => {
     }
 
     let totalAmount = Math.max(0, baseAmount - totalDiscount);
+    // A Settle Bill write-off lowers what the month charges, after every other
+    // discount and never below 0 (settle-bill caps it at the month's charge).
+    // A frozen bill keeps its saved figures (below), so nothing is added there.
+    const writeOff = Math.min(settledWriteOff(settlementsRes.data), totalAmount);
+    if (writeOff > 0 && currentInvoiceRes.data?.tuition_frozen !== true) {
+      discounts.push({ name: WRITE_OFF_NAME, type: "amount", value: writeOff, amount: writeOff, isSettlement: true });
+      totalDiscount += writeOff;
+      totalAmount -= writeOff;
+    }
     // A frozen bill keeps its saved figures whatever the enrollment says now.
     const frozenInvoice: any = currentInvoiceRes.data;
     const tuitionFrozen = frozenInvoice?.tuition_frozen === true;
@@ -600,7 +631,7 @@ Deno.serve(async (req) => {
       reviewFlags,
       savedAt,
       // paid / partial / issued from the month's own money - the one rule.
-      paidLabel(monthPayments, payable),
+      paidLabel(monthPayments, payable, monthCharged({ base_amount: baseAmount, total_amount: totalAmount })),
     );
 
     // recorded_payment is NOT in this save. It belongs to the payment paths;

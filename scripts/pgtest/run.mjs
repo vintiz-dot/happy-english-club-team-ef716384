@@ -118,7 +118,9 @@ const SUITES = [
   {
     name: "AI admin actions",
     file: "ai-actions.test.mjs",
-    migrations: ["20261107090000_ai_assisted_admin_actions.sql"],
+    // 20261113090000 (T4) swaps their label CASE for invoice_paid_label, in
+    // whatever definition is installed; run after it, as production will.
+    migrations: ["20261107090000_ai_assisted_admin_actions.sql", "20261113090000_invoice_paid_label.sql"],
   },
   { name: "payroll session rules", file: "payroll-sessions.test.mjs", migrations: [] },
   // Also not a database test: the admin Payroll screen reads
