@@ -138,7 +138,7 @@ await S.endSession();
   const m2 = model();
   ok("R4-2: the bar says armed, starts at 09:55", !!m2?.show && /Armed/.test(m2.text) && /starts at 09:55/.test(m2.text), m2?.text);
   r.emit("starting"); r.emit("recording");
-  ok("R4-2: then the recording state, with Stop and the red dot", (() => { const x = model(); return x.show && x.redDot && x.stop && /Recording/.test(x.text); })());
+  ok("R4-2: then the recording state, with Stop and the red dot", (() => { const x = model(); return !!x?.show && x.redDot && x.stop && /Recording/.test(x.text); })());
   T = H("09:41"); await S.armTick(); await flush();
   ok("R4-2: armed once (a later pass does not arm the same lesson again)", r.arms.length === 1);
   ok("R4-2: Ready and what was armed are kept for the day on this device", (() => { const x = S.readyFor("t-a", DATE); return !!x && x.armed.includes("s1") && x.capturing === "s1"; })(), JSON.stringify(S.readyFor("t-a", DATE)));
