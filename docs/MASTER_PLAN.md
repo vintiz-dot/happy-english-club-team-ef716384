@@ -153,10 +153,10 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 |---|---|---|---|
 | D money integrity | 18.5 | 10.5 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
 | A overhaul | 12.0 | 8.9 | A0, A1, A2.1, A2.2 (shipped), A2.3, A3.1-A3.4, A4.1, A4.2, A4.5 merged; release 1 being gated. Left: A3.5-A3.7, A4.3, A4.4, rollout, A5 |
-| B lesson monitor evaluation | 10.5 | 3.7 | vendor research, audio prep, harness, vendor proxy built (deploy running). Left: B1, B2, B2b, B3, report |
+| B lesson monitor evaluation | 10.5 | 4.7 | vendor research, audio prep, harness, vendor proxy live, B1 batch runner + scoring built (owner batch run pending). Left: B1 results, B2, B2b, B3, report |
 | C class recorder | 8.0 | 2.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **25.6** | **50%** |
+| **Total** | **51.0** | **26.6** | **52%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -264,3 +264,7 @@ Log: 2026-11-12 - 50% (A2.3 merged).
 
 - 2026-11-12 C1 second critic merged (opus, docs/evidence/C1-critic-2.md): FAIL - 1 blocker, 2 majors, 3 minors, all executed; the first critic's F1-F7 are closed. N1 BLOCKER: the bucket name `class-recordings` ALREADY EXISTS (20260717090000_audio_transcript_pipeline.sql) with a policy giving every teacher full rights on it; the recorder reused the name, so another class's teacher could read, overwrite and delete recordings, and applying the migration would have shrunk the live bucket from 50 MB to 8 MB and dropped mp3/m4a/mp4 - breaking Teacher Transcripts uploads in production. N2 MAJOR: Start, wait three days, Stop, upload filler -> counts as held evidence (Stop is clamped silently; chunk registration time is never compared with its claimed time). N3 MAJOR: the recording teacher can set delete_after to the past; retention deletes the audio and the evidence still says true.
 - CONDUCTOR RULINGS on critic 2: the recorder gets its OWN bucket (`class-recorder-audio`), with a preflight that refuses to install if a bucket of that name already exists with other policies, and it must not touch `class-recordings` at all. N2: a chunk is accepted only if registered within a short tolerance of its claimed capture time on the SERVER clock, and Stop outside the window is refused, not clamped. N3: delete_after is server-set only. The evidence flag is renamed to say what it proves: a recording RAN for at least half the lesson (`recording_ran_evidence`), and D1 will label it "A recording was made" - it is not proof children attended. Nothing is applied until a third review passes. The migration was NOT applied at any point.
+Log: 2026-11-12 - 52% (B1 runner and scoring merged).
+
+- 2026-11-12 B1 batch runner + scoring merged (sonnet, 3ac24d9). Owner command: `vendor_batch.py --login` under scripts/lesson-eval, run with the venv python (sign in once, plan shown, type YES). Conductor dry-ran the plan (no network): 7 systems x 148 audio minutes (12 synthetic mixes, 17 held-out clips, first 20 min of L1-L3, and L1's compressed twin as L4), 1027 minutes to send, estimated USD 8.57 (prices mostly unconfirmed). First scored numbers from the two saved Azure pieces only: speakers found 5 and 5 against 3 and 5 true; diarization error 0.35 and 0.56 (pooled 0.49: miss 0.23, false alarm 0.01, confusion 0.25) - two files, proves the pipeline and nothing more. Local faster-whisper wrote 24 words where Azure wrote about 190 on the same 120 s, on a shared CPU: not a usable comparison yet (B2b on a quiet machine). No word-accuracy number exists or may be claimed: there is no human transcript of any audio; the teacher check sheet is docs/LESSON_MONITOR_TEACHER_CHECK.md.
+- Pre-existing exposure for A5 (found by the recorder critic, not changed): in the existing `class-recordings` bucket the policy "staff_manage_class_recordings" lets ANY teacher read, overwrite and delete any class's uploaded lesson audio (20260717090000:35-48).
