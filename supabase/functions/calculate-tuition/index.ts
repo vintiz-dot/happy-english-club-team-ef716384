@@ -5,7 +5,7 @@ import { checkRateLimit, getClientIP, rateLimitResponse } from "../_lib/rate-lim
 import { requireRole, callerOwnsStudent } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
-import { enrollmentDiscounts } from "../_lib/enrollment-discounts.ts";
+import { enrollmentDiscounts, enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
 import { invoiceLabelFields, monthPayable, paidLabel } from "../_lib/invoice-status.ts";
 
 const corsHeaders = {
@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
       supabase
         .from("enrollments")
         .select(
-          "class_id, discount_type, discount_value, discount_cadence, start_date, end_date, rate_override_vnd, allowed_days",
+          "id, created_at, class_id, discount_type, discount_value, discount_cadence, start_date, end_date, rate_override_vnd, allowed_days",
         )
         .eq("student_id", studentId),
       supabase
@@ -149,8 +149,12 @@ Deno.serve(async (req) => {
 
     const { data: student, error: studentError } = studentRes;
     if (studentError) throw studentError;
-    const { data: enrollments, error: enrollErr } = enrollmentsRes;
+    const { data: enrollmentRows, error: enrollErr } = enrollmentsRes;
     if (enrollErr) throw enrollErr;
+    // The query has no ORDER BY. Creation order, stated: where two rows of one
+    // class overlap, the one created first prices the lesson - the same rule,
+    // by the same helper, as calculate-tuition-bulk. See enrollment-discounts.ts.
+    const enrollments = inCreationOrder(enrollmentRows);
     // The month's own bill carries this month's payment and the labels an
     // admin or a payment put on it. If it cannot be read, stop: carrying on
     // as if there were no bill would save recorded_payment 0 over a payment
@@ -233,9 +237,7 @@ Deno.serve(async (req) => {
 
     for (const s of sessions ?? []) {
       // Check if student was enrolled on this specific session date
-      const enrollment = (enrollments ?? []).find(
-        (e) => e.class_id === s.class_id && e.start_date <= s.date && (!e.end_date || e.end_date >= s.date),
-      );
+      const enrollment = enrollmentOn(enrollments, s.class_id, s.date);
 
       if (!enrollment) continue; // Skip sessions outside enrollment period
 
