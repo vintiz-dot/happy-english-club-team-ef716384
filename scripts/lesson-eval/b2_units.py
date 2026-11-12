@@ -109,17 +109,17 @@ def main() -> int:
                     adult.setdefault((code, r["clip"]), []).append((float(r["start"]), float(r["end"])))
         for key in [k for k in segs if k[1] in ("enrol", "heldout")]:
             rows = sorted(segs[key], key=lambda r: (int(r["clip"]), float(r["start"])))
-            out = []
+            mrg = []
             for r in rows:
-                if out and out[-1]["clip"] == r["clip"]:
-                    gs, ge = float(out[-1]["end"]), float(r["start"])
+                if mrg and mrg[-1]["clip"] == r["clip"]:
+                    gs, ge = float(mrg[-1]["end"]), float(r["start"])
                     blocked = any(s < ge and e > gs for s, e in adult.get((key[0], r["clip"]), []))
                     if 0 <= ge - gs < a.merge_gap and not blocked:
-                        out[-1] = {**out[-1], "end": r["end"],
-                                   "dur": str(float(out[-1]["dur"]) + float(r["dur"]))}
+                        mrg[-1] = {**mrg[-1], "end": r["end"],
+                                   "dur": str(float(mrg[-1]["dur"]) + float(r["dur"]))}
                         continue
-                out.append(dict(r))
-            segs[key] = out
+                mrg.append(dict(r))
+            segs[key] = mrg
     cache = {}
 
     def wav(code, clip):
