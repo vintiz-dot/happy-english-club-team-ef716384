@@ -232,24 +232,24 @@ export const AnnouncementManager = () => {
   const getStatusBadge = (a: Announcement) => {
     const now = new Date();
     if (!a.is_active) return <Badge variant="secondary">Disabled</Badge>;
-    if (a.expires_at && new Date(a.expires_at) < now) return <Badge variant="outline" className="text-muted-foreground">Expired</Badge>;
-    if (a.starts_at && new Date(a.starts_at) > now) return <Badge className="bg-amber-500/20 text-amber-700 border-amber-300">Scheduled</Badge>;
-    return <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-300">Live</Badge>;
+    if (a.expires_at && new Date(a.expires_at) < now) return <Badge variant="outline">Expired</Badge>;
+    if (a.starts_at && new Date(a.starts_at) > now) return <Badge variant="warning">Scheduled</Badge>;
+    return <Badge variant="success">Live</Badge>;
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
-            <Megaphone className="h-5 w-5 text-white" />
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hec-md bg-hec-sunken">
+            <Megaphone className="h-5 w-5 text-hec-ink-soft" />
           </div>
-          <div>
-            <h2 className="text-xl font-semibold">Announcements</h2>
-            <p className="text-sm text-muted-foreground">Manage site-wide notifications</p>
+          <div className="min-w-0">
+            <h2 className="font-display text-hec-h1 font-medium text-hec-ink">Announcements</h2>
+            <p className="text-hec-small text-hec-ink-soft">Manage site-wide notifications</p>
           </div>
         </div>
-        <Button onClick={openCreate} className="gap-2">
+        <Button onClick={openCreate} className="w-full gap-2 sm:w-auto">
           <Plus className="h-4 w-4" /> New Announcement
         </Button>
       </div>
@@ -258,8 +258,8 @@ export const AnnouncementManager = () => {
         <PlaceholderCard rows={3} />
       ) : announcements.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Megaphone className="h-10 w-10 mx-auto mb-3 opacity-40" />
+          <CardContent className="py-12 text-center text-hec-body text-hec-ink-soft">
+            <Megaphone className="mx-auto mb-3 h-10 w-10 text-hec-ink-faint" />
             <p>No announcements yet. Create one to get started.</p>
           </CardContent>
         </Card>
@@ -274,20 +274,21 @@ export const AnnouncementManager = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <Card className="border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-md transition-shadow">
-                  <CardContent className="py-4 px-5 flex items-center gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="font-semibold text-sm">{a.title}</span>
+                <Card>
+                  <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-6">
+                    <div className="min-w-0 flex-1">
+                      {/* The title can name a child or a class: it wraps, never cut. */}
+                      <p className="mb-2 whitespace-normal break-words text-hec-body font-medium text-hec-ink">{a.title}</p>
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
                         {getStatusBadge(a)}
-                        <Badge variant="outline" className="text-xs capitalize">{a.display_type.replace("_", " ")}</Badge>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="capitalize">{a.display_type.replace("_", " ")}</Badge>
+                        <Badge variant="outline">
                           <Users className="h-3 w-3 mr-1" />
                           {a.target_audience.replace("_", " ")}
                         </Badge>
                       </div>
                       {a.starts_at || a.expires_at ? (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <p className="flex flex-wrap items-center gap-1 text-hec-caption tabular-nums text-hec-ink-soft">
                           <Calendar className="h-3 w-3" />
                           {a.starts_at ? format(new Date(a.starts_at), "MMM d, yyyy HH:mm") : "Now"}
                           {" → "}
@@ -295,21 +296,27 @@ export const AnnouncementManager = () => {
                         </p>
                       ) : null}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
                         onClick={() => toggle({ id: a.id, is_active: !a.is_active })}
                         title={a.is_active ? "Disable" : "Enable"}
+                        aria-label={a.is_active ? "Disable" : "Enable"}
                       >
-                        {a.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                        {a.is_active ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5 text-hec-ink-soft" />}
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(a)}>
-                        <Pencil className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" aria-label="Edit announcement" onClick={() => openEdit(a)}>
+                        <Pencil className="h-5 w-5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(a.id)}>
-                        <Trash2 className="h-4 w-4" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Delete announcement"
+                        className="text-hec-danger hover:bg-hec-danger-tint hover:text-hec-danger"
+                        onClick={() => handleDelete(a.id)}
+                      >
+                        <Trash2 className="h-5 w-5" />
                       </Button>
                     </div>
                   </CardContent>
@@ -322,68 +329,68 @@ export const AnnouncementManager = () => {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[85dvh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Edit Announcement" : "New Announcement"}</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 mt-2">
-            <div>
-              <Label>Title</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Announcement title" />
+          <div className="mt-2 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="ann-title">Title</Label>
+              <Input id="ann-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Announcement title" />
             </div>
 
-            <div>
-              <Label>Body (HTML supported)</Label>
-              <Textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} placeholder="Announcement content…" rows={4} />
+            <div className="space-y-2">
+              <Label htmlFor="ann-body">Body (HTML supported)</Label>
+              <Textarea id="ann-body" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} placeholder="Announcement content…" rows={4} />
             </div>
 
-            <div>
-              <Label>Image</Label>
-              <div className="flex items-center gap-3">
-                <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="Image URL (or upload)" className="flex-1" />
+            <div className="space-y-2">
+              <Label htmlFor="ann-image">Image</Label>
+              <div className="flex flex-wrap items-center gap-3">
+                <Input id="ann-image" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="Image URL (or upload)" className="min-w-0 flex-1" />
                 <label className="shrink-0">
                   <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
-                  <Button variant="outline" size="sm" asChild disabled={uploading}>
-                    <span><Upload className="h-3.5 w-3.5 mr-1" />{uploading ? "…" : "Upload"}</span>
+                  <Button variant="outline" asChild disabled={uploading}>
+                    <span><Upload className="h-4 w-4" />{uploading ? "…" : "Upload"}</span>
                   </Button>
                 </label>
               </div>
               {form.image_url && (
-                <img src={form.image_url} alt="Preview" className="mt-2 h-20 rounded-lg object-cover" />
+                <img src={form.image_url} alt="Preview" className="mt-2 h-20 rounded-hec-md object-cover" />
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Display Type</Label>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="ann-type">Display Type</Label>
                 <Select value={form.display_type} onValueChange={(v) => setForm({ ...form, display_type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="ann-type"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {DISPLAY_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Priority</Label>
-                <Input type="number" value={form.priority} onChange={(e) => setForm({ ...form, priority: parseInt(e.target.value) || 0 })} />
+              <div className="space-y-2">
+                <Label htmlFor="ann-priority">Priority</Label>
+                <Input id="ann-priority" type="number" className="tabular-nums" value={form.priority} onChange={(e) => setForm({ ...form, priority: parseInt(e.target.value) || 0 })} />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Target Audience</Label>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="ann-audience">Target Audience</Label>
                 <Select value={form.target_audience} onValueChange={(v) => setForm({ ...form, target_audience: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="ann-audience"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {AUDIENCES.map((a) => <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Placement</Label>
+              <div className="space-y-2">
+                <Label htmlFor="ann-placement">Placement</Label>
                 <Select value={form.placement} onValueChange={(v) => setForm({ ...form, placement: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="ann-placement"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {PLACEMENTS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
                   </SelectContent>
@@ -393,16 +400,16 @@ export const AnnouncementManager = () => {
 
             {/* Class & Student targeting — shown for student audiences */}
             {(form.target_audience === "students" || form.target_audience === "paying_students") && (
-              <div className="space-y-4 rounded-lg border border-border/60 bg-muted/30 p-4">
-                <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+              <div className="space-y-4 rounded-hec-md border border-hec-line bg-hec-sunken p-4">
+                <p className="flex items-center gap-2 text-hec-small font-medium text-hec-ink-soft">
                   <Users className="h-4 w-4" /> Targeting Options
                 </p>
 
                 {/* Class scope */}
-                <div>
-                  <Label>Class Filter</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="ann-class-scope">Class Filter</Label>
                   <Select value={form.class_scope} onValueChange={(v) => setForm({ ...form, class_scope: v as "all" | "specific", target_class_ids: [], target_student_ids: [], student_scope: "all" })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="ann-class-scope"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Classes</SelectItem>
                       <SelectItem value="specific">Specific Classes</SelectItem>
@@ -411,9 +418,9 @@ export const AnnouncementManager = () => {
                 </div>
 
                 {form.class_scope === "specific" && (
-                  <div className="space-y-2 max-h-40 overflow-y-auto rounded border border-border/40 p-2">
+                  <div className="max-h-40 space-y-1 overflow-y-auto rounded-hec-md border border-hec-line bg-hec-raised p-2">
                     {allClasses.map((cls) => (
-                      <label key={cls.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
+                      <label key={cls.id} className="flex min-h-hec-target cursor-pointer items-center gap-3 whitespace-normal break-words rounded-hec-sm px-2 py-2 text-hec-small text-hec-ink hover:bg-hec-sunken">
                         <Checkbox
                           checked={form.target_class_ids.includes(cls.id)}
                           onCheckedChange={(checked) => {
@@ -434,10 +441,10 @@ export const AnnouncementManager = () => {
                 )}
 
                 {/* Student scope */}
-                <div>
-                  <Label>Student Filter</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="ann-student-scope">Student Filter</Label>
                   <Select value={form.student_scope} onValueChange={(v) => setForm({ ...form, student_scope: v as "all" | "specific", target_student_ids: [] })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="ann-student-scope"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Students{form.class_scope === "specific" ? " (in selected classes)" : ""}</SelectItem>
                       <SelectItem value="specific">Specific Students</SelectItem>
@@ -446,11 +453,11 @@ export const AnnouncementManager = () => {
                 </div>
 
                 {form.student_scope === "specific" && (
-                  <div className="space-y-2 max-h-48 overflow-y-auto rounded border border-border/40 p-2">
+                  <div className="max-h-48 space-y-1 overflow-y-auto rounded-hec-md border border-hec-line bg-hec-raised p-2">
                     {allStudents.length === 0 ? (
-                      <p className="text-xs text-muted-foreground py-2 text-center">No students found</p>
+                      <p className="py-2 text-center text-hec-caption text-hec-ink-soft">No students found</p>
                     ) : allStudents.map((s: any) => (
-                      <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
+                      <label key={s.id} className="flex min-h-hec-target cursor-pointer items-center gap-3 whitespace-normal break-words rounded-hec-sm px-2 py-2 text-hec-small text-hec-ink hover:bg-hec-sunken">
                         <Checkbox
                           checked={form.target_student_ids.includes(s.id)}
                           onCheckedChange={(checked) => {
@@ -470,37 +477,37 @@ export const AnnouncementManager = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Starts At (optional)</Label>
-                <Input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="ann-starts">Starts At (optional)</Label>
+                <Input id="ann-starts" type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
               </div>
-              <div>
-                <Label>Expires At (optional)</Label>
-                <Input type="datetime-local" value={form.expires_at} onChange={(e) => setForm({ ...form, expires_at: e.target.value })} />
+              <div className="space-y-2">
+                <Label htmlFor="ann-expires">Expires At (optional)</Label>
+                <Input id="ann-expires" type="datetime-local" value={form.expires_at} onChange={(e) => setForm({ ...form, expires_at: e.target.value })} />
               </div>
             </div>
 
             {/* Style Config */}
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>Background Color</Label>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="ann-bg">Background Color</Label>
                 <div className="flex items-center gap-2">
-                  <input type="color" value={form.style_bg || "#7c3aed"} onChange={(e) => setForm({ ...form, style_bg: e.target.value })} className="h-9 w-9 rounded cursor-pointer border-0" />
-                  <Input value={form.style_bg} onChange={(e) => setForm({ ...form, style_bg: e.target.value })} placeholder="#hex" className="flex-1" />
+                  <input type="color" aria-label="Background Color" value={form.style_bg || "#7c3aed"} onChange={(e) => setForm({ ...form, style_bg: e.target.value })} className="h-11 w-11 shrink-0 cursor-pointer rounded-hec-sm border border-hec-line-strong bg-hec-raised" />
+                  <Input id="ann-bg" value={form.style_bg} onChange={(e) => setForm({ ...form, style_bg: e.target.value })} placeholder="#hex" className="min-w-0 flex-1" />
                 </div>
               </div>
-              <div>
-                <Label>Text Color</Label>
+              <div className="space-y-2">
+                <Label htmlFor="ann-text">Text Color</Label>
                 <div className="flex items-center gap-2">
-                  <input type="color" value={form.style_text || "#ffffff"} onChange={(e) => setForm({ ...form, style_text: e.target.value })} className="h-9 w-9 rounded cursor-pointer border-0" />
-                  <Input value={form.style_text} onChange={(e) => setForm({ ...form, style_text: e.target.value })} placeholder="#hex" className="flex-1" />
+                  <input type="color" aria-label="Text Color" value={form.style_text || "#ffffff"} onChange={(e) => setForm({ ...form, style_text: e.target.value })} className="h-11 w-11 shrink-0 cursor-pointer rounded-hec-sm border border-hec-line-strong bg-hec-raised" />
+                  <Input id="ann-text" value={form.style_text} onChange={(e) => setForm({ ...form, style_text: e.target.value })} placeholder="#hex" className="min-w-0 flex-1" />
                 </div>
               </div>
-              <div>
-                <Label>Animation</Label>
+              <div className="space-y-2">
+                <Label htmlFor="ann-animation">Animation</Label>
                 <Select value={form.style_animation || "none"} onValueChange={(v) => setForm({ ...form, style_animation: v === "none" ? "" : v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="ann-animation"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
                     <SelectItem value="pulse">Pulse</SelectItem>
@@ -509,18 +516,18 @@ export const AnnouncementManager = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex min-h-hec-target items-center gap-2">
                 <Switch id="active" checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
                 <Label htmlFor="active">Active</Label>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex min-h-hec-target items-center gap-2">
                 <Switch id="dismissible" checked={form.is_dismissible} onCheckedChange={(v) => setForm({ ...form, is_dismissible: v })} />
                 <Label htmlFor="dismissible">Dismissible</Label>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
               <Button onClick={handleSubmit} disabled={isCreating || isUpdating}>
                 {editingId ? "Save Changes" : "Create Announcement"}
