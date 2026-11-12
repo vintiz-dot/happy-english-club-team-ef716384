@@ -65,7 +65,7 @@ Status: todo / running / review / PASS / FAIL / reverted / blocked-owner. Model 
 | D0 | Inventory of cancel / owe-changing paths | sonnet / fable | docs/evidence/D0-inventory.md | PASS (conductor spot-check) | docs/evidence/D0-inventory.md, 480ad48; 6 claims re-read in code by conductor |
 | D1 | Evidence model design; `session_held_evidence` | fable design, opus build / fable | docs/evidence/D1-evidence-model.md; supabase/migrations/2026111209*_session_held_evidence.sql; scripts/pgtest/session-evidence.test.mjs | PASS (fable review 2, 8b9d1a2, no findings; suite 143/0) | docs/evidence/D1-evidence-model.md, 61ce962 |
 | D2 | Guard: trigger + `cancel_session_checked` + threat model | fable design, opus build / fable | docs/evidence/D2-*.md; guard migration; manage-session; bulk-cancel-sessions; pgtest | review 3: SQL PASS, functions PASS WITH CHANGES, SHIP: YES AFTER FIXES (fable, a26ccdf); ship fixes running (opus) | docs/evidence/D2-guard-design.md, D2-threat-model.md |
-| D3 | Nudge UI + override review screen | sonnet / opus + fable wording | CancelSessionDialog, SessionActionsModal, EditSessionModal, DeleteSessionDialog, BulkSessionDelete, new review screen | running (sonnet) | |
+| D3 | Nudge UI + override review screen | sonnet / opus + fable wording | CancelSessionDialog, SessionActionsModal, EditSessionModal, DeleteSessionDialog, BulkSessionDelete, new review screen | built and merged (sonnet, 3416c6c); opus review-and-fix running (mobile centring defect found by conductor) | docs/evidence/D3-dialogs.md, docs/evidence/D3/ |
 | D4 | Other tuition-affecting actions | fable design, opus build / fable | docs/evidence/D4-*.md; migration; affected dialogs | todo | |
 | D5 | Invariant audit + regression tests + owner SQL | fable audit, sonnet/opus tests / fable | docs/evidence/D5-audit.md; scripts/pgtest/*; scripts/CHECK-past-cancellations-with-evidence.sql | todo | |
 | A0 | Baseline | sonnet (haiku captures) / fable | docs/ENHANCEMENT_BASELINE.md; docs/evidence/A0/ | PASS (sonnet, e4df152; conductor re-ran tsc + pgtest, viewed a screenshot, checked the PDF-import claim) | docs/ENHANCEMENT_BASELINE.md, docs/evidence/A0/ |
@@ -151,12 +151,12 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 
 | Stream | Units | Done | What is done |
 |---|---|---|---|
-| D money integrity | 18.5 | 8.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
+| D money integrity | 18.5 | 9.5 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
 | A overhaul | 12.0 | 6.9 | A0, A1, A2.1, A2.2, A3.1, A3.2, A3.3, A3.4, A4.1, A4.5 (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
 | B lesson monitor evaluation | 10.5 | 3.7 | vendor research, audio prep, harness, vendor proxy built (deploy running). Left: B1, B2, B2b, B3, report |
 | C class recorder | 8.0 | 1.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **20.1** | **39%** |
+| **Total** | **51.0** | **21.6** | **42%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -239,3 +239,7 @@ Log: 2026-11-12 - 38% (A2.2 merged).
 Log: 2026-11-12 - 39% (A4.5 merged).
 
 - 2026-11-12 A4.5 merged (sonnet, 34d6db2), Layout.tsx header only (class changes + one wrapper; conductor read the 5-line diff). Parent view sideways scroll: picker 383 px wide at 375 -> none; parent dashboard 408 at 320/375 -> none; 861/886 at 768 -> none. Cause was the child-name switcher not shrinking, not the ambient glow. Focus ring already existed; no change. CAVEAT recorded for the A4 rollout: the fix lets a long child name TRUNCATE in the header switcher at phone width, which the new design system forbids ("never truncate a name") - accepted as the layout-bug fix, to be replaced by a wrapping or given-name form in the header restyle. Also noted: the profile picker card is 400 px wide, wider than a 375 screen (inside a fixed overlay, so no page scroll). Not done by the agent: request-list check, eyeballing the 768/1280 pairs.
+Log: 2026-11-12 10:55 - 42% (D3 dialogs merged).
+
+- 2026-11-12 D3 dialogs merged (sonnet, 3416c6c): GuardDialog + evidence cards + consequence table + reason / typed-date fields + bulk flow + override review screen (mounted in the Automation tab; Admin.tsx untouched); seven callers rewired; tsc 0, 30 helper tests, 46 screenshots. Conductor looked at two: desktop is right (Keep lesson primary, destructive button named, reason + tick + typed date); at 375 px the dialog is NOT centred and mostly off-screen - a release blocker, first item of the opus review-and-fix now running (brief: docs/evidence/D3-review-brief.md). Wording to fix: "another administrator will look at it" is untrue under the current default. Five direct writes to sessions remain outside D3 (teacher swaps, notes, bulk teacher transfer, the teacher's Scheduled -> Held flip); the review must prove by probe that the guard does not refuse any of them, or the screens break on apply.
+- 2026-11-12 10:48 the desktop session restarted; five running agents stopped with work committed (C1 revision, A4.2, B2, D ship fixes, A2.3) and were resumed; the flipbook ship type-check was restarted.
