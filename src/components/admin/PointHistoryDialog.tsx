@@ -70,18 +70,9 @@ export function PointHistoryDialog({
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "homework":
-        return "bg-blue-500/10 text-blue-700 dark:text-blue-400";
-      case "participation":
-        return "bg-green-500/10 text-green-700 dark:text-green-400";
-      case "adjustment":
-        return "bg-slate-500/10 text-slate-700 dark:text-slate-400";
-      default:
-        return "bg-gray-500/10 text-gray-700 dark:text-gray-400";
-    }
-  };
+  // Every type gets the same quiet tile: the icon and the badge's word tell
+  // the types apart, so no colour has to (DS s.14).
+  const getTypeColor = (_type: string) => "bg-hec-sunken text-hec-ink-soft";
 
   const totalPoints = transactions?.reduce((sum, t) => sum + t.points, 0) || 0;
   const selectedPoints = transactions?.filter(t => selectedIds.has(t.id)).reduce((sum, t) => sum + t.points, 0) || 0;
@@ -163,35 +154,36 @@ export function PointHistoryDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Point History - {studentName}
+          <DialogTitle className="flex items-start gap-2">
+            <Calendar className="mt-1 h-5 w-5 shrink-0" aria-hidden />
+            <span className="min-w-0 whitespace-normal break-words hyphens-none text-balance">Point History - {studentName}</span>
           </DialogTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-hec-small tabular-nums text-hec-ink-soft">
             {format(new Date(`${month}-01`), "MMMM yyyy")} • Total: {totalPoints} points
           </p>
         </DialogHeader>
 
         {canDelete && transactions && transactions.length > 0 && (
-          <div className="flex items-center justify-between border-b pb-3">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hec-line pb-3">
+            <div className="flex min-h-hec-target items-center gap-3">
               <Checkbox
                 id="select-all"
                 checked={selectedIds.size === transactions.length && transactions.length > 0}
                 onCheckedChange={toggleSelectAll}
               />
-              <label htmlFor="select-all" className="text-sm cursor-pointer">
+              <label htmlFor="select-all" className="cursor-pointer py-2 text-hec-small text-hec-ink">
                 Select all ({transactions.length})
               </label>
             </div>
             {selectedIds.size > 0 && (
               <Button
-                variant="destructive"
+                variant="destructive-quiet"
                 size="sm"
+                className="tabular-nums"
                 onClick={() => setShowBulkDeleteConfirm(true)}
                 disabled={bulkDeleteMutation.isPending}
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="h-4 w-4" aria-hidden />
                 Delete {selectedIds.size} selected ({selectedPoints > 0 ? '+' : ''}{selectedPoints} pts)
               </Button>
             )}
@@ -200,79 +192,80 @@ export function PointHistoryDialog({
 
         <ScrollArea className="max-h-[500px] pr-4">
           {isLoading ? (
-            <p className="text-center text-muted-foreground py-8">Loading history...</p>
+            <p className="py-8 text-center text-hec-body text-hec-ink-soft">Loading history...</p>
           ) : transactions?.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No point history for this month</p>
+            <p className="py-8 text-center text-hec-body text-hec-ink-soft">No point history for this month</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {transactions?.map((transaction) => (
                 <div
                   key={transaction.id}
-                  className={`border rounded-lg p-4 hover:bg-muted/50 transition-colors ${
-                    selectedIds.has(transaction.id) ? 'bg-muted/30 border-primary/50' : ''
+                  className={`rounded-hec-md border p-4 transition-colors duration-hec-1 ease-hec ${
+                    selectedIds.has(transaction.id) ? 'border-hec-brass bg-hec-sunken' : 'border-hec-line bg-hec-surface'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
                       {canDelete && (
                         <Checkbox
                           checked={selectedIds.has(transaction.id)}
                           onCheckedChange={() => toggleSelect(transaction.id)}
+                          aria-label={`Select ${transaction.type} entry, ${format(new Date(transaction.date), "MMM dd, yyyy")}`}
                           className="mt-1"
                         />
                       )}
-                      <div className={`p-2 rounded-lg ${getTypeColor(transaction.type)}`}>
+                      <div className={`shrink-0 rounded-hec-sm p-2 ${getTypeColor(transaction.type)}`} aria-hidden>
                         {getTypeIcon(transaction.type)}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
                           <Badge
                             variant="outline"
                             className="capitalize"
                           >
                             {transaction.type}
                           </Badge>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-hec-caption tabular-nums text-hec-ink-soft">
                             {format(new Date(transaction.date), "MMM dd, yyyy")}
                           </span>
                         </div>
-                        
+
                         {transaction.type === "homework" && transaction.homework_title && (
-                          <p className="text-sm font-medium mb-1">
+                          <p className="mb-1 break-words text-hec-small font-medium text-hec-ink">
                             {transaction.homework_title}
                           </p>
                         )}
-                        
+
                         {transaction.type === "participation" && (
-                          <p className="text-sm font-medium mb-1">
+                          <p className="mb-1 text-hec-small font-medium text-hec-ink">
                             Class Participation
                           </p>
                         )}
-                        
+
                         {transaction.type === "adjustment" && (
-                          <p className="text-sm font-medium mb-1">
+                          <p className="mb-1 text-hec-small font-medium text-hec-ink">
                             Point Adjustment
                           </p>
                         )}
-                        
+
                         {transaction.notes && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="break-words text-hec-caption text-hec-ink-soft">
                             {transaction.notes}
                           </p>
                         )}
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
+
+                    <div className="flex shrink-0 items-center gap-2">
                       <div className="flex items-center gap-1">
                         {transaction.points > 0 ? (
-                          <TrendingUp className="h-4 w-4 text-green-600" />
+                          <TrendingUp className="h-4 w-4 text-hec-leaf" aria-hidden />
                         ) : (
-                          <TrendingDown className="h-4 w-4 text-red-600" />
+                          <TrendingDown className="h-4 w-4 text-hec-danger" aria-hidden />
                         )}
                         <span
-                          className={`text-lg font-bold ${
-                            transaction.points > 0 ? "text-green-600" : "text-red-600"
+                          className={`whitespace-nowrap text-hec-h3 font-semibold tabular-nums ${
+                            transaction.points > 0 ? "text-hec-leaf" : "text-hec-danger"
                           }`}
                         >
                           {transaction.points > 0 ? "+" : ""}
@@ -283,13 +276,14 @@ export function PointHistoryDialog({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          className="text-hec-ink-soft hover:bg-hec-danger-tint hover:text-hec-danger"
+                          aria-label={`Delete this ${transaction.type} entry`}
                           onClick={(e) => {
                             e.stopPropagation();
                             setTransactionToDelete({ id: transaction.id, points: transaction.points });
                           }}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-5 w-5" aria-hidden />
                         </Button>
                       )}
                     </div>
@@ -311,12 +305,12 @@ export function PointHistoryDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Keep the entry</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90"
               onClick={() => transactionToDelete && deleteMutation.mutate(transactionToDelete.id)}
             >
-              Delete
+              Delete the entry
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -332,9 +326,9 @@ export function PointHistoryDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Keep the entries</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90"
               onClick={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
               disabled={bulkDeleteMutation.isPending}
             >

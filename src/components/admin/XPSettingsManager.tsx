@@ -124,16 +124,10 @@ export function XPSettingsManager() {
     },
   });
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "daily": return "bg-blue-500/20 text-blue-700 border-blue-500/30";
-      case "homework": return "bg-green-500/20 text-green-700 border-green-500/30";
-      case "participation": return "bg-blue-500/20 text-blue-700 border-blue-500/30";
-      case "streaks": return "bg-orange-500/20 text-orange-700 border-orange-500/30";
-      case "achievements": return "bg-yellow-500/20 text-yellow-700 border-yellow-500/30";
-      default: return "bg-muted text-muted-foreground";
-    }
-  };
+  // One neutral badge for every category: the word names the category, and
+  // the old tints failed contrast on the ivory surface (and gave "daily" and
+  // "participation" the same blue anyway).
+  const getCategoryColor = (_category: string) => "border-hec-line bg-hec-sunken text-hec-ink-soft";
 
   const emojiOptions = ["⭐", "🎯", "🏆", "💎", "🔥", "⚡", "🎮", "📚", "🎓", "🌟", "💪", "🚀"];
 
@@ -141,7 +135,7 @@ export function XPSettingsManager() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
+          <Sparkles className="h-5 w-5 shrink-0 text-hec-brass" aria-hidden />
           XP & Quest Settings
         </CardTitle>
         <CardDescription>
@@ -158,7 +152,7 @@ export function XPSettingsManager() {
           {/* XP Settings Tab */}
           <TabsContent value="settings">
             {loadingSettings ? (
-              <p className="text-muted-foreground">Loading settings...</p>
+              <p className="text-hec-body text-hec-ink-soft">Loading settings...</p>
             ) : (
               <Table>
                 <TableHeader>
@@ -180,7 +174,7 @@ export function XPSettingsManager() {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">{setting.setting_name}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+                      <TableCell className="max-w-[200px] truncate text-hec-small text-hec-ink-soft">
                         {setting.description}
                       </TableCell>
                       <TableCell>
@@ -189,14 +183,16 @@ export function XPSettingsManager() {
                             type="number"
                             value={editPoints}
                             onChange={(e) => setEditPoints(Number(e.target.value))}
-                            className="w-20 h-8"
+                            aria-label={`Points for ${setting.setting_name}`}
+                            className="w-24 tabular-nums"
                           />
                         ) : (
-                          <span className="font-bold text-primary">{setting.points}</span>
+                          <span className="font-semibold tabular-nums text-hec-ink">{setting.points}</span>
                         )}
                       </TableCell>
                       <TableCell>
                         <Switch
+                          aria-label={`${setting.setting_name} active`}
                           checked={setting.is_active}
                           onCheckedChange={(checked) =>
                             updateSettingMutation.mutate({ id: setting.id, is_active: checked })
@@ -206,22 +202,24 @@ export function XPSettingsManager() {
                       <TableCell>
                         {editingId === setting.id ? (
                           <Button
-                            size="sm"
+                            size="icon"
+                            aria-label={`Save points for ${setting.setting_name}`}
                             onClick={() => updateSettingMutation.mutate({ id: setting.id, points: editPoints })}
                             disabled={updateSettingMutation.isPending}
                           >
-                            <Save className="h-4 w-4" />
+                            <Save className="h-5 w-5" aria-hidden />
                           </Button>
                         ) : (
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="ghost"
+                            aria-label={`Edit points for ${setting.setting_name}`}
                             onClick={() => {
                               setEditingId(setting.id);
                               setEditPoints(setting.points);
                             }}
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Pencil className="h-5 w-5" aria-hidden />
                           </Button>
                         )}
                       </TableCell>
@@ -238,7 +236,7 @@ export function XPSettingsManager() {
               <Dialog open={showAddQuest} onOpenChange={setShowAddQuest}>
                 <DialogTrigger asChild>
                   <Button>
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4" aria-hidden />
                     Add Quest
                   </Button>
                 </DialogTrigger>
@@ -247,10 +245,10 @@ export function XPSettingsManager() {
                     <DialogTitle>Create New Quest</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">Icon</Label>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="quest-icon">Icon</Label>
                       <Select value={newQuest.icon} onValueChange={(v) => setNewQuest({ ...newQuest, icon: v })}>
-                        <SelectTrigger className="col-span-3">
+                        <SelectTrigger id="quest-icon">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -262,37 +260,38 @@ export function XPSettingsManager() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">Name</Label>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="quest-name">Name</Label>
                       <Input
-                        className="col-span-3"
+                        id="quest-name"
                         value={newQuest.name}
                         onChange={(e) => setNewQuest({ ...newQuest, name: e.target.value })}
                         placeholder="Quest name"
                       />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">Description</Label>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="quest-description">Description</Label>
                       <Textarea
-                        className="col-span-3"
+                        id="quest-description"
                         value={newQuest.description}
                         onChange={(e) => setNewQuest({ ...newQuest, description: e.target.value })}
                         placeholder="How to complete this quest"
                       />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">Points</Label>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="quest-points">Points</Label>
                       <Input
+                        id="quest-points"
                         type="number"
-                        className="col-span-3"
+                        className="tabular-nums"
                         value={newQuest.points}
                         onChange={(e) => setNewQuest({ ...newQuest, points: Number(e.target.value) })}
                       />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">Category</Label>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="quest-category">Category</Label>
                       <Select value={newQuest.category} onValueChange={(v) => setNewQuest({ ...newQuest, category: v })}>
-                        <SelectTrigger className="col-span-3">
+                        <SelectTrigger id="quest-category">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -321,9 +320,9 @@ export function XPSettingsManager() {
             </div>
 
             {loadingQuests ? (
-              <p className="text-muted-foreground">Loading quests...</p>
+              <p className="text-hec-body text-hec-ink-soft">Loading quests...</p>
             ) : customQuests?.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="py-8 text-center text-hec-body text-hec-ink-soft">
                 No custom quests yet. Create one to get started!
               </div>
             ) : (
@@ -342,13 +341,13 @@ export function XPSettingsManager() {
                 <TableBody>
                   {customQuests?.map((quest) => (
                     <TableRow key={quest.id}>
-                      <TableCell className="text-2xl">{quest.icon}</TableCell>
-                      <TableCell className="font-medium">{quest.name}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+                      <TableCell className="text-2xl" aria-hidden>{quest.icon}</TableCell>
+                      <TableCell className="break-words font-medium">{quest.name}</TableCell>
+                      <TableCell className="max-w-[200px] truncate text-hec-small text-hec-ink-soft">
                         {quest.description}
                       </TableCell>
                       <TableCell>
-                        <span className="font-bold text-primary">{quest.points} XP</span>
+                        <span className="whitespace-nowrap font-semibold tabular-nums text-hec-ink">{quest.points} XP</span>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={getCategoryColor(quest.category)}>
@@ -357,6 +356,7 @@ export function XPSettingsManager() {
                       </TableCell>
                       <TableCell>
                         <Switch
+                          aria-label={`${quest.name} active`}
                           checked={quest.is_active}
                           onCheckedChange={(checked) =>
                             toggleQuestMutation.mutate({ id: quest.id, is_active: checked })
@@ -365,12 +365,13 @@ export function XPSettingsManager() {
                       </TableCell>
                       <TableCell>
                         <Button
-                          size="sm"
+                          size="icon"
                           variant="ghost"
-                          className="text-destructive hover:text-destructive"
+                          className="text-hec-danger hover:bg-hec-danger-tint hover:text-hec-danger"
+                          aria-label={`Delete quest ${quest.name}`}
                           onClick={() => deleteQuestMutation.mutate(quest.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-5 w-5" aria-hidden />
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -194,18 +194,18 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
       {/* Assign to Class */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Plus className="h-4 w-4" />
+          <CardTitle className="flex items-center gap-2">
+            <Plus className="h-5 w-5 shrink-0" aria-hidden />
             Assign to Class
           </CardTitle>
           <CardDescription>Map this assistant to class sessions</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Class Picker */}
-          <div>
-            <Label>Class</Label>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="ta-class">Class</Label>
             <Select value={selectedClassId} onValueChange={(v) => { setSelectedClassId(v); setSelectedSessionIds([]); }}>
-              <SelectTrigger>
+              <SelectTrigger id="ta-class">
                 <SelectValue placeholder="Select a class" />
               </SelectTrigger>
               <SelectContent>
@@ -217,10 +217,10 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
           </div>
 
           {/* Assignment Mode */}
-          <div>
-            <Label>Assignment Type</Label>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="ta-mode">Assignment Type</Label>
             <Select value={assignMode} onValueChange={(v) => { setAssignMode(v as AssignMode); setSelectedSessionIds([]); }}>
-              <SelectTrigger>
+              <SelectTrigger id="ta-mode">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -234,12 +234,12 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
 
           {/* Effective From */}
           {assignMode !== "permanent" && (
-          <div>
-            <Label>Effective From</Label>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="ta-from">Effective From</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !effectiveFrom && "text-muted-foreground")}>
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                <Button id="ta-from" variant="outline" className={cn("w-full justify-start text-left font-normal", !effectiveFrom && "text-hec-ink-faint")}>
+                  <CalendarIcon className="h-4 w-4" aria-hidden />
                   {effectiveFrom ? format(effectiveFrom, "PPP") : "Pick a date"}
                 </Button>
               </PopoverTrigger>
@@ -259,20 +259,20 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
           {/* Sessions List */}
           {assignMode !== "permanent" && selectedClassId && availableSessions && availableSessions.length > 0 && (
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <Label>Sessions ({availableSessions.length})</Label>
-                <Button variant="ghost" size="sm" onClick={selectAll} className="text-xs h-7">
+                <Button variant="ghost" size="sm" onClick={selectAll}>
                   Select All Unassigned
                 </Button>
               </div>
-              <div className="border rounded-lg max-h-48 overflow-y-auto divide-y">
+              <div className="max-h-48 divide-y divide-hec-line overflow-y-auto rounded-hec-lg border border-hec-line bg-hec-surface">
                 {availableSessions.map(session => {
                   const isAssigned = alreadyAssignedIds.has(session.id);
                   return (
                     <label
                       key={session.id}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors",
+                        "flex min-h-hec-target cursor-pointer items-center gap-3 px-3 py-2 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken/60",
                         isAssigned && "opacity-50 cursor-not-allowed"
                       )}
                     >
@@ -281,12 +281,12 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
                         disabled={isAssigned}
                         onCheckedChange={() => toggleSession(session.id)}
                       />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{new Date(session.date + 'T00:00:00').toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</p>
-                        <p className="text-xs text-muted-foreground">{session.start_time?.slice(0, 5)} – {session.end_time?.slice(0, 5)}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-hec-small font-medium text-hec-ink">{new Date(session.date + 'T00:00:00').toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</p>
+                        <p className="text-hec-caption tabular-nums text-hec-ink-soft">{session.start_time?.slice(0, 5)} – {session.end_time?.slice(0, 5)}</p>
                       </div>
-                      {isAssigned && <Badge variant="secondary" className="text-xs shrink-0">Assigned</Badge>}
-                      <Badge variant="outline" className="text-xs shrink-0">{session.status}</Badge>
+                      {isAssigned && <Badge variant="secondary" className="shrink-0">Assigned</Badge>}
+                      <Badge variant="outline" className="shrink-0">{session.status}</Badge>
                     </label>
                   );
                 })}
@@ -295,7 +295,7 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
           )}
 
           {assignMode !== "permanent" && selectedClassId && availableSessions?.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">No sessions found for this class from the selected date</p>
+            <p className="py-4 text-center text-hec-small text-hec-ink-soft">No sessions found for this class from the selected date</p>
           )}
 
           {assignMode === "permanent" ? (
@@ -304,7 +304,7 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
               disabled={!selectedClassId || permanentMutation.isPending || !!standing?.some(s => s.class_id === selectedClassId)}
               className="w-full"
             >
-              <GraduationCap className="h-4 w-4 mr-2" />
+              <GraduationCap className="h-4 w-4" aria-hidden />
               {standing?.some(s => s.class_id === selectedClassId) ? "Already permanent on this class" : "Assign permanently"}
             </Button>
           ) : (
@@ -313,7 +313,7 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
             disabled={selectedSessionIds.length === 0 || assignMutation.isPending}
             className="w-full"
           >
-            <GraduationCap className="h-4 w-4 mr-2" />
+            <GraduationCap className="h-4 w-4" aria-hidden />
             Assign to {selectedSessionIds.length} Session{selectedSessionIds.length !== 1 ? "s" : ""}
           </Button>
           )}
@@ -323,20 +323,21 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
       {standing && standing.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Permanent classes</CardTitle>
+            <CardTitle>Permanent classes</CardTitle>
             <CardDescription>On every session of these classes until you remove them</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {standing.map(s => (
-              <div key={s.id} className="flex items-center justify-between p-2.5 border rounded-lg">
-                <p className="text-sm font-medium">{s.classes?.name}</p>
+              <div key={s.id} className="flex min-h-hec-target items-center gap-3 rounded-hec-md border border-hec-line px-3 py-2">
+                <p className="min-w-0 flex-1 break-words text-hec-small font-medium text-hec-ink">{s.classes?.name}</p>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-destructive hover:text-destructive"
+                  className="shrink-0 text-hec-danger hover:bg-hec-danger-tint hover:text-hec-danger"
+                  aria-label={`Remove from ${s.classes?.name ?? "this class"}`}
                   onClick={() => removeStandingMutation.mutate(s.id)}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-5 w-5" aria-hidden />
                 </Button>
               </div>
             ))}
@@ -347,40 +348,41 @@ export function TAClassAssignment({ taId }: TAClassAssignmentProps) {
       {/* Current Assignments */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Current Assignments</CardTitle>
+          <CardTitle>Current Assignments</CardTitle>
           <CardDescription>{currentAssignments?.length || 0} session(s) assigned</CardDescription>
         </CardHeader>
         <CardContent>
           {currentAssignments && currentAssignments.length > 0 ? (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div className="max-h-64 space-y-2 overflow-y-auto">
               {currentAssignments.map((a: any) => (
-                <div key={a.id} className="flex items-center justify-between p-2.5 border rounded-lg hover:bg-muted/30 transition-colors">
-                  <div>
-                    <p className="text-sm font-medium">{a.sessions?.classes?.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                <div key={a.id} className="flex min-h-hec-target items-start gap-3 rounded-hec-md border border-hec-line px-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words text-hec-small font-medium text-hec-ink">{a.sessions?.classes?.name}</p>
+                    <p className="text-hec-caption tabular-nums text-hec-ink-soft">
                       {new Date(a.sessions?.date + 'T00:00:00').toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                       {" • "}
                       {a.sessions?.start_time?.slice(0, 5)} – {a.sessions?.end_time?.slice(0, 5)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={a.sessions?.status === "Held" ? "default" : "secondary"} className={cn("text-xs", a.sessions?.status === "Held" && "bg-emerald-500")}>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Badge variant={a.sessions?.status === "Held" ? "success" : "secondary"}>
                       {a.sessions?.status}
                     </Badge>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      className="text-hec-danger hover:bg-hec-danger-tint hover:text-hec-danger"
+                      aria-label={`Remove from ${a.sessions?.classes?.name ?? "this session"}`}
                       onClick={() => removeMutation.mutate(a.id)}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-5 w-5" aria-hidden />
                     </Button>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-6">No sessions assigned yet</p>
+            <p className="py-6 text-center text-hec-small text-hec-ink-soft">No sessions assigned yet</p>
           )}
         </CardContent>
       </Card>

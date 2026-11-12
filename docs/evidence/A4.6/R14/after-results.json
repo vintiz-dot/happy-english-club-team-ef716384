@@ -1,0 +1,6423 @@
+{
+ "label": "after",
+ "runs": {
+  "students-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:families:select": 3,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"\" 44x24",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "14",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "button[aria-controls=\"radix-:ri:\"]",
+       "button[aria-controls=\"radix-:rj:\"]",
+       "button[aria-controls=\"radix-:rk:\"]"
+      ]
+     }
+    ]
+   },
+   "shot": "after-students-375-light.png",
+   "kb": 41
+  },
+  "students-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:families:select": 3,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"\" 44x24",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "14",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "button[aria-controls=\"radix-:ri:\"]",
+       "button[aria-controls=\"radix-:rj:\"]",
+       "button[aria-controls=\"radix-:rk:\"]"
+      ]
+     }
+    ]
+   },
+   "shot": "after-students-375-dark.png",
+   "kb": 42
+  },
+  "students-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:families:select": 3,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"\" 44x24",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "14",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "button[aria-controls=\"radix-:ri:\"]",
+       "button[aria-controls=\"radix-:rj:\"]",
+       "button[aria-controls=\"radix-:rk:\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".contents > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "after-students-1280-light.png",
+   "kb": 92
+  },
+  "students-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:families:select": 3,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"\" 44x24",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "14",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       "button[aria-controls=\"radix-:ri:\"]",
+       "button[aria-controls=\"radix-:rj:\"]",
+       "button[aria-controls=\"radix-:rk:\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".contents > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "after-students-1280-dark.png",
+   "kb": 91
+  },
+  "students-deactivate-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:families:select": 3,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "14",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-students-deactivate-375-light.png",
+   "kb": 45
+  },
+  "students-deactivate-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:families:select": 3,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "14",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-students-deactivate-375-dark.png",
+   "kb": 42
+  },
+  "students-deactivate-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:families:select": 3,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "14",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-students-deactivate-1280-light.png",
+   "kb": 102
+  },
+  "students-deactivate-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 2,
+     "from:families:select": 3,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "14",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-students-deactivate-1280-dark.png",
+   "kb": 97
+  },
+  "ta-list-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-ta-list-375-light.png",
+   "kb": 42
+  },
+  "ta-list-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-ta-list-375-dark.png",
+   "kb": 42
+  },
+  "ta-list-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-ta-list-1280-light.png",
+   "kb": 76
+  },
+  "ta-list-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-ta-list-1280-dark.png",
+   "kb": 76
+  },
+  "ta-drawer-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": [
+     "0",
+     "0",
+     "000",
+     "000",
+     "0900",
+     "120,000",
+     "13",
+     "2026",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ta-drawer-375-light.png",
+   "kb": 42
+  },
+  "ta-drawer-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": [
+     "0",
+     "0",
+     "000",
+     "000",
+     "0900",
+     "120,000",
+     "13",
+     "2026",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ta-drawer-375-dark.png",
+   "kb": 44
+  },
+  "ta-drawer-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": [
+     "0",
+     "0",
+     "000",
+     "000",
+     "0900",
+     "120,000",
+     "13",
+     "2026",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ta-drawer-1280-light.png",
+   "kb": 99
+  },
+  "ta-drawer-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": [
+     "0",
+     "0",
+     "000",
+     "000",
+     "0900",
+     "120,000",
+     "13",
+     "2026",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ta-drawer-1280-dark.png",
+   "kb": 101
+  },
+  "ta-sessions-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": [
+     "0",
+     "0",
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "13",
+     "16",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "2026",
+     "23",
+     "25",
+     "3",
+     "30",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ta-sessions-375-light.png",
+   "kb": 43
+  },
+  "ta-sessions-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": [
+     "0",
+     "0",
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "13",
+     "16",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "2026",
+     "23",
+     "25",
+     "3",
+     "30",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ta-sessions-375-dark.png",
+   "kb": 44
+  },
+  "ta-sessions-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": [
+     "0",
+     "0",
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "13",
+     "16",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "2026",
+     "23",
+     "25",
+     "3",
+     "30",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ta-sessions-1280-light.png",
+   "kb": 104
+  },
+  "ta-sessions-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 15,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "225,000",
+     "30"
+    ],
+    "dialogNumbers": [
+     "0",
+     "0",
+     "000",
+     "000",
+     "0900",
+     "1",
+     "120,000",
+     "13",
+     "16",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "2026",
+     "23",
+     "25",
+     "3",
+     "30",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ta-sessions-1280-dark.png",
+   "kb": 103
+  },
+  "xp-settings-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"homework_submitted active\" 44x24",
+     "main:BUTTON \"class_participation active\" 44x24",
+     "main:BUTTON \"weekly_streak active\" 44x24"
+    ],
+    "numbers": [
+     "10",
+     "20",
+     "5"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-xp-settings-375-light.png",
+   "kb": 43
+  },
+  "xp-settings-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"homework_submitted active\" 44x24",
+     "main:BUTTON \"class_participation active\" 44x24",
+     "main:BUTTON \"weekly_streak active\" 44x24"
+    ],
+    "numbers": [
+     "10",
+     "20",
+     "5"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-xp-settings-375-dark.png",
+   "kb": 43
+  },
+  "xp-settings-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"homework_submitted active\" 44x24",
+     "main:BUTTON \"class_participation active\" 44x24",
+     "main:BUTTON \"weekly_streak active\" 44x24"
+    ],
+    "numbers": [
+     "10",
+     "20",
+     "5"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-xp-settings-1280-light.png",
+   "kb": 93
+  },
+  "xp-settings-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"homework_submitted active\" 44x24",
+     "main:BUTTON \"class_participation active\" 44x24",
+     "main:BUTTON \"weekly_streak active\" 44x24"
+    ],
+    "numbers": [
+     "10",
+     "20",
+     "5"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-xp-settings-1280-dark.png",
+   "kb": 93
+  },
+  "xp-quests-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Read three picture books activ\" 44x24"
+    ],
+    "numbers": [
+     "15"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-xp-quests-375-light.png",
+   "kb": 40
+  },
+  "xp-quests-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"Read three picture books activ\" 44x24"
+    ],
+    "numbers": [
+     "15"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-xp-quests-375-dark.png",
+   "kb": 41
+  },
+  "xp-quests-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Read three picture books activ\" 44x24"
+    ],
+    "numbers": [
+     "15"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-xp-quests-1280-light.png",
+   "kb": 83
+  },
+  "xp-quests-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"Read three picture books activ\" 44x24"
+    ],
+    "numbers": [
+     "15"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-xp-quests-1280-dark.png",
+   "kb": 83
+  },
+  "xp-add-quest-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "15"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-xp-add-quest-375-light.png",
+   "kb": 37
+  },
+  "xp-add-quest-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "15"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-xp-add-quest-375-dark.png",
+   "kb": 35
+  },
+  "xp-add-quest-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "15"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-xp-add-quest-1280-light.png",
+   "kb": 96
+  },
+  "xp-add-quest-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "15"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-xp-add-quest-1280-dark.png",
+   "kb": 93
+  },
+  "access-search-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-access-search-375-light.png",
+   "kb": 42
+  },
+  "access-search-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-access-search-375-dark.png",
+   "kb": 42
+  },
+  "access-search-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-access-search-1280-light.png",
+   "kb": 87
+  },
+  "access-search-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-access-search-1280-dark.png",
+   "kb": 89
+  },
+  "access-confirm-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-access-confirm-375-light.png",
+   "kb": 44
+  },
+  "access-confirm-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-access-confirm-375-dark.png",
+   "kb": 45
+  },
+  "access-confirm-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-access-confirm-1280-light.png",
+   "kb": 88
+  },
+  "access-confirm-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "2"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-access-confirm-1280-dark.png",
+   "kb": 89
+  },
+  "audit-roster-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "304.000",
+     "304.000"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-audit-roster-375-light.png",
+   "kb": 46
+  },
+  "audit-roster-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "304.000",
+     "304.000"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-audit-roster-375-dark.png",
+   "kb": 47
+  },
+  "audit-roster-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "304.000",
+     "304.000"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5.inline-flex",
+       ".contents:nth-child(2) > .gap-1\\.5.inline-flex"
+      ]
+     }
+    ]
+   },
+   "shot": "after-audit-roster-1280-light.png",
+   "kb": 106
+  },
+  "audit-roster-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "304.000",
+     "304.000"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5.inline-flex",
+       ".contents:nth-child(2) > .gap-1\\.5.inline-flex"
+      ]
+     }
+    ]
+   },
+   "shot": "after-audit-roster-1280-dark.png",
+   "kb": 108
+  },
+  "audit-open-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "-13",
+     "-202609",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.290.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "150.000",
+     "150.000",
+     "150.000",
+     "160.000",
+     "160.000",
+     "160.000",
+     "17:12",
+     "2",
+     "2",
+     "2.730.000",
+     "2.730.000",
+     "2.880.000",
+     "2.880.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026,",
+     "27",
+     "28",
+     "304.000",
+     "304.000",
+     "5",
+     "5",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-audit-open-375-light.png",
+   "kb": 41
+  },
+  "audit-open-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "-13",
+     "-202609",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.290.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "150.000",
+     "150.000",
+     "150.000",
+     "160.000",
+     "160.000",
+     "160.000",
+     "17:12",
+     "2",
+     "2",
+     "2.730.000",
+     "2.730.000",
+     "2.880.000",
+     "2.880.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026,",
+     "27",
+     "28",
+     "304.000",
+     "304.000",
+     "5",
+     "5",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-audit-open-375-dark.png",
+   "kb": 41
+  },
+  "audit-open-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "-13",
+     "-202609",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.290.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "150.000",
+     "150.000",
+     "150.000",
+     "160.000",
+     "160.000",
+     "160.000",
+     "17:12",
+     "2",
+     "2",
+     "2.730.000",
+     "2.730.000",
+     "2.880.000",
+     "2.880.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026,",
+     "27",
+     "28",
+     "304.000",
+     "304.000",
+     "5",
+     "5",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "after-audit-open-1280-light.png",
+   "kb": 105
+  },
+  "audit-open-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "-13",
+     "-202609",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.290.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "150.000",
+     "150.000",
+     "150.000",
+     "160.000",
+     "160.000",
+     "160.000",
+     "17:12",
+     "2",
+     "2",
+     "2.730.000",
+     "2.730.000",
+     "2.880.000",
+     "2.880.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026,",
+     "27",
+     "28",
+     "304.000",
+     "304.000",
+     "5",
+     "5",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "after-audit-open-1280-dark.png",
+   "kb": 106
+  },
+  "audit-month-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "-13",
+     "-202609",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.290.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "150.000",
+     "150.000",
+     "150.000",
+     "160.000",
+     "160.000",
+     "160.000",
+     "17:12",
+     "2",
+     "2",
+     "2.730.000",
+     "2.730.000",
+     "2.880.000",
+     "2.880.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026,",
+     "27",
+     "28",
+     "304.000",
+     "304.000",
+     "5",
+     "5",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-audit-month-375-light.png",
+   "kb": 41
+  },
+  "audit-month-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "-13",
+     "-202609",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.290.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "150.000",
+     "150.000",
+     "150.000",
+     "160.000",
+     "160.000",
+     "160.000",
+     "17:12",
+     "2",
+     "2",
+     "2.730.000",
+     "2.730.000",
+     "2.880.000",
+     "2.880.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026,",
+     "27",
+     "28",
+     "304.000",
+     "304.000",
+     "5",
+     "5",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-audit-month-375-dark.png",
+   "kb": 41
+  },
+  "audit-month-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "-13",
+     "-202609",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.290.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "150.000",
+     "150.000",
+     "150.000",
+     "160.000",
+     "160.000",
+     "160.000",
+     "17:12",
+     "2",
+     "2",
+     "2.730.000",
+     "2.730.000",
+     "2.880.000",
+     "2.880.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026,",
+     "27",
+     "28",
+     "304.000",
+     "304.000",
+     "5",
+     "5",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "after-audit-month-1280-light.png",
+   "kb": 107
+  },
+  "audit-month-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "-13",
+     "-202609",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1.290.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.296.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.440.000",
+     "1.456.000",
+     "1.456.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "1.600.000",
+     "13",
+     "14",
+     "14.",
+     "14.512.000",
+     "144.000",
+     "144.000",
+     "150.000",
+     "150.000",
+     "150.000",
+     "160.000",
+     "160.000",
+     "160.000",
+     "17:12",
+     "2",
+     "2",
+     "2.730.000",
+     "2.730.000",
+     "2.880.000",
+     "2.880.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026,",
+     "27",
+     "28",
+     "304.000",
+     "304.000",
+     "5",
+     "5",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "after-audit-month-1280-dark.png",
+   "kb": 109
+  },
+  "reports-bulk-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-bulk-375-light.png",
+   "kb": 33
+  },
+  "reports-bulk-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-bulk-375-dark.png",
+   "kb": 33
+  },
+  "reports-bulk-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-bulk-1280-light.png",
+   "kb": 73
+  },
+  "reports-bulk-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-bulk-1280-dark.png",
+   "kb": 75
+  },
+  "reports-bulk-roster-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.shadow-hec-1.rounded-hec-lg"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-bulk-roster-375-light.png",
+   "kb": 48
+  },
+  "reports-bulk-roster-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.shadow-hec-1.rounded-hec-lg"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-bulk-roster-375-dark.png",
+   "kb": 48
+  },
+  "reports-bulk-roster-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.shadow-hec-1.rounded-hec-lg"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-bulk-roster-1280-light.png",
+   "kb": 101
+  },
+  "reports-bulk-roster-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 16x16",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.shadow-hec-1.rounded-hec-lg"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-bulk-roster-1280-dark.png",
+   "kb": 103
+  },
+  "reports-ops-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-ops-375-light.png",
+   "kb": 34
+  },
+  "reports-ops-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-ops-375-dark.png",
+   "kb": 35
+  },
+  "reports-ops-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-ops-1280-light.png",
+   "kb": 68
+  },
+  "reports-ops-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-ops-1280-dark.png",
+   "kb": 70
+  },
+  "reports-finance-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-finance-375-light.png",
+   "kb": 40
+  },
+  "reports-finance-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-finance-375-dark.png",
+   "kb": 40
+  },
+  "reports-finance-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-finance-1280-light.png",
+   "kb": 88
+  },
+  "reports-finance-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-finance-1280-dark.png",
+   "kb": 88
+  },
+  "reports-finance-row-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-finance-row-375-light.png",
+   "kb": 46
+  },
+  "reports-finance-row-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-finance-row-375-dark.png",
+   "kb": 47
+  },
+  "reports-finance-row-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-finance-row-1280-light.png",
+   "kb": 103
+  },
+  "reports-finance-row-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:invoices:select": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "-2.080.000",
+     "-2.250.000",
+     "-4.330.000",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "2",
+     "2.080.000",
+     "2.250.000",
+     "2.250.000",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "4.330.000",
+     "6",
+     "8",
+     "8",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     },
+     {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".pt-0.sm\\:pt-0.sm\\:p-6 > .overflow-auto.rounded-hec-lg.shadow-hec-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-reports-finance-row-1280-dark.png",
+   "kb": 104
+  },
+  "student-detail-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "minor": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       ".w-\\[180px\\]",
+       ".w-\\[140px\\]",
+       "button[aria-controls=\"radix-:r1c:\"]"
+      ]
+     }
+    ]
+   },
+   "shot": "after-student-detail-375-light.png",
+   "kb": 42
+  },
+  "student-detail-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "minor": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       ".w-\\[180px\\]",
+       ".w-\\[140px\\]",
+       "button[aria-controls=\"radix-:r1c:\"]"
+      ]
+     }
+    ]
+   },
+   "shot": "after-student-detail-375-dark.png",
+   "kb": 42
+  },
+  "student-detail-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "1",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "3",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "minor": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       ".w-\\[180px\\]",
+       ".w-\\[140px\\]",
+       "button[aria-controls=\"radix-:r1c:\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-student-detail-1280-light.png",
+   "kb": 86
+  },
+  "student-detail-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "1",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "3",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "minor": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 3,
+      "t": [
+       ".w-\\[180px\\]",
+       ".w-\\[140px\\]",
+       "button[aria-controls=\"radix-:r1c:\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-student-detail-1280-dark.png",
+   "kb": 86
+  },
+  "student-link-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-student-link-375-light.png",
+   "kb": 37
+  },
+  "student-link-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-student-link-375-dark.png",
+   "kb": 35
+  },
+  "student-link-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "1",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "3",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-student-link-1280-light.png",
+   "kb": 86
+  },
+  "student-link-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "1",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "3",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-student-link-1280-dark.png",
+   "kb": 82
+  },
+  "ai-report-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": [
+     "90"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ai-report-375-light.png",
+   "kb": 43
+  },
+  "ai-report-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": [
+     "90"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ai-report-375-dark.png",
+   "kb": 40
+  },
+  "ai-report-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "1",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "3",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": [
+     "90"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ai-report-1280-light.png",
+   "kb": 97
+  },
+  "ai-report-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "1",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "3",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": [
+     "90"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ai-report-1280-dark.png",
+   "kb": 93
+  },
+  "student-link-users-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": [
+     "-2"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-student-link-users-375-light.png",
+   "kb": 49
+  },
+  "student-link-users-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": [
+     "-2"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-student-link-users-375-dark.png",
+   "kb": 47
+  },
+  "student-link-users-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "1",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "3",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": [
+     "-2"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-student-link-users-1280-light.png",
+   "kb": 107
+  },
+  "student-link-users-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:cefr_assessments:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 3,
+     "from:point_transactions:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_learning_profiles:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:cefr-defense:select": 1,
+     "function:class-leaderboard:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "1",
+     "13,",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2014",
+     "2026",
+     "2026",
+     "2026",
+     "21",
+     "26",
+     "28",
+     "3",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "7",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8"
+    ],
+    "dialogNumbers": [
+     "-2"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-student-link-users-1280-dark.png",
+   "kb": 103
+  }
+ }
+}

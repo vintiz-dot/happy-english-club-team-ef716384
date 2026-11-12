@@ -134,81 +134,81 @@ export function StudentsList({ searchQuery = "", sortBy = "name-asc", filterClas
   });
 
   if (isLoading) {
-    return <p className="text-muted-foreground">Loading students...</p>;
+    return <p className="text-hec-body text-hec-ink-soft">Loading students...</p>;
   }
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
             <CardTitle className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5" />
+              <GraduationCap className="h-5 w-5 shrink-0" aria-hidden />
               {showInactive ? "Inactive" : "All"} Students ({students?.length || 0})
             </CardTitle>
             <CardDescription>Manage your student records</CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex min-h-hec-target items-center gap-2">
             <Switch id="show-inactive" checked={showInactive} onCheckedChange={setShowInactive} />
-            <Label htmlFor="show-inactive" className="text-sm cursor-pointer">Show Inactive</Label>
+            <Label htmlFor="show-inactive" className="flex min-h-hec-target cursor-pointer items-center text-hec-small font-medium text-hec-ink">Show Inactive</Label>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         {students?.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">No students found</p>
+          <p className="py-8 text-center text-hec-body text-hec-ink-soft">No students found</p>
         ) : (
-          <div className="space-y-3">
+          <ul className="rounded-hec-lg border border-hec-line bg-hec-surface">
             {students?.map((student) => (
-              <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <Avatar className="h-12 w-12 ring-2 ring-background shadow-md shrink-0">
-                    <AvatarImage 
-                      src={getAvatarUrl(student.avatar_url) || undefined} 
+              <li key={student.id} className="flex flex-col gap-3 border-b border-hec-line px-4 py-3 last:border-b-0 sm:flex-row sm:items-start">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <Avatar className="h-12 w-12 shrink-0">
+                    <AvatarImage
+                      src={getAvatarUrl(student.avatar_url) || undefined}
                       alt={student.full_name}
                       className="object-cover"
                     />
-                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+                    <AvatarFallback className="bg-hec-sunken font-semibold text-hec-ink-soft">
                       {student.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold truncate">{student.full_name}</p>
-                      <Badge variant={student.is_active ? "default" : "secondary"} className="shrink-0">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-start gap-2">
+                      <p className="min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{student.full_name}</p>
+                      <Badge variant={student.is_active ? "success" : "secondary"} className="shrink-0">
                         {student.is_active ? "Active" : "Inactive"}
                       </Badge>
                     </div>
                     {(student.enrollments as any)?.length > 0 && (
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="break-words text-hec-small text-hec-ink-soft">
                         📚 {[...new Set((student.enrollments as any).map((e: any) => e.classes?.name).filter(Boolean))].join(", ")}
                       </p>
                     )}
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-hec-small text-hec-ink-soft">
                       {student.families && (
-                        <span>👨‍👩‍👧 {(student.families as any).name}</span>
+                        <span className="break-words">👨‍👩‍👧 {(student.families as any).name}</span>
                       )}
                       {student.email && (
-                        <span className="hidden sm:inline">✉️ {student.email}</span>
+                        <span className="hidden break-all sm:inline">✉️ {student.email}</span>
                       )}
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2 shrink-0">
+                <div className="flex shrink-0 gap-2 pl-16 sm:pl-0">
                   <Button variant="outline" size="sm" onClick={() => navigate(`/students/${student.id}`)}>
-                    <Eye className="h-4 w-4 mr-1" />
+                    <Eye className="h-4 w-4" aria-hidden />
                     View
                   </Button>
                   {showInactive ? (
                     <Button variant="outline" size="sm" onClick={() => reactivateMutation.mutate(student.id)} disabled={reactivateMutation.isPending}>
-                      <RotateCcw className="h-4 w-4 mr-1" />
+                      <RotateCcw className="h-4 w-4" aria-hidden />
                       Reactivate
                     </Button>
                   ) : (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" aria-label={`Deactivate ${student.full_name}`}>
+                          <Trash2 className="h-5 w-5" aria-hidden />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -228,9 +228,9 @@ export function StudentsList({ searchQuery = "", sortBy = "name-asc", filterClas
                     </AlertDialog>
                   )}
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </CardContent>
     </Card>
