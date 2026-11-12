@@ -31,6 +31,8 @@ DROP POLICY IF EXISTS "Students can view class transactions" ON public.point_tra
 CREATE POLICY "Students can view class transactions" ON public.point_transactions FOR SELECT TO authenticated
   USING ((class_id IN ( SELECT DISTINCT e.class_id FROM (enrollments e JOIN students s ON ((s.id = e.student_id))) WHERE ((s.linked_user_id = auth.uid()) OR (s.family_id IN ( SELECT students.family_id FROM students WHERE (students.linked_user_id = auth.uid()))) OR (s.family_id IN ( SELECT families.id FROM families WHERE (families.primary_user_id = auth.uid())))))));
 
+-- (20261113150000, if it was applied on top: its summary goes too.)
+DROP FUNCTION IF EXISTS public.get_class_skill_summary(uuid, date, date);
 DROP FUNCTION IF EXISTS public.get_class_skill_points(uuid, date, date);
 DROP FUNCTION IF EXISTS public.is_family_student(uuid, uuid);
 

@@ -716,3 +716,71 @@ Rollback: redeploy the nine from `origin/main` with their previous `verify_jwt` 
 - Nothing is applied, deployed or pushed.
 - No real browser run: every screen claim above is from reading the code and from SQL / handler tests. The post-apply hand checks are listed per finding.
 - Out of this batch, noted on the way: `get_student_homeworks` lets a teacher with any lesson ever in a class read that child's homework (F-04); `teacher_rate_on` / `assistant_rate_on` (F-17); `recompute_student_points` / `refresh_invoice_carry` unchecked (F-20); `resource_class_access` any-teacher (F-18); the `homework` bucket has no size or type limit (F-19); `calendar-events` reads the legacy `users.role` (unused by the browser); new staff accounts get `users.role = student` in that legacy column.
+
+---
+
+## Round 2 (after `docs/evidence/S1-review.md`)
+
+**Where this stands:** F-14 and F-15 were approved as built and are being applied by another agent; their files are untouched since. F-01 is corrected (above, "Round 2" inside the F-01 section). Below: the class skill summary (the review's open point on F-16), the browser release branches, the F-02 deploy steps, and the two teacher accounts with no teacher record.
+
+### Class skill figures without names - `20261113150000_class_skill_summary_without_names.sql`
+
+The review's finding: `get_class_skill_points` (added by the F-16 migration) hands every family of a class every classmate's per-skill total with id and name - the figures the classmate pop-up no longer shows, one RPC call away.
+
+Choice made, of the two offered: **the child's own totals plus a class summary with no names** (not "names with total points", which the board already gives through `class-leaderboard`). Reason: the two panels need exactly three class figures - best, average, top three - and none of them needs to say whose they are.
+
+- `get_class_skill_summary(class, from, to)` returns one row per skill: `best`, `total` and `students` (for the average), `class_students`, and `top` = the three highest totals as bare integers. No id, no name, and nothing linking one skill's figures to another's.
+- A family gets nothing for a class where fewer than three children have assessments in the range: a best or average over two children is the other child's score. Staff of the class and admins are not held to that.
+- `get_class_skill_points` is dropped by the same file.
+- The child's own totals never went through either function: the panels read the child's own rows.
+
+In the browser (`src/lib/classSkillPoints.ts`, `RadarChartTab`, `PerformanceHeatmapTab`): class best and class average are unchanged figures; "Top 3 in <skill>" shows three medals with points and "#1 / #2 / #3" in place of first names, with "You" on the child's own entry. Teachers and admins opening the same pop-up from their boards still see names (they read the rows). The lib asks for the summary, then the named function, then rows, so it works against every state of the database.
+
+| Who | `get_class_skill_points` (F-16 as built) | After `20261113150000` |
+|---|---|---|
+| A family of the class | every classmate: id, name, total per skill | per skill: best, sum, counts, top three numbers |
+| A family, class with fewer than 3 assessed children | the other children's totals by name | nothing |
+| Teacher / TA of the class, admin | the same named rows | the summary (and the rows themselves, as always) |
+| Family of another class, unlinked, role-less, anon | nothing | nothing |
+
+Tests: `classmate-rows.test.mjs` run with the third migration (suite "class skill summary" in `run.mjs`): before - a parent gets classmates' per-skill totals by name; after - the function is gone, the summary's result type has no uuid or name column, its figures equal what the panel used to add up from rows (best, rounded average, top three), nothing in the answer matches an id or a surname; 0 rows for a teacher of another class, another class's family, an unlinked account, a role-less account, no uid; anon cannot call; a class of two returns nothing to a family and everything to its teacher, three returns figures, a month with fewer than three assessed returns nothing; classmates' rows still closed and the child's own totals still readable; pasted twice; refused before `20261113130000`; rollback block run and the old function restored byte for byte (md5), then re-pasted.
+
+Order: paste right after `20261113130000` (its preflight insists on it). Between the two a family can call the named function. Do not paste `20261113130000` again afterwards (it recreates the named function); if it happens, paste this file again. Browser first, as for F-16.
+
+Probes (read-only):
+```sql
+-- expect one row: get_class_skill_summary, definer t, anon f, authenticated t - and no get_class_skill_points
+SELECT proname, prosecdef, has_function_privilege('anon', oid, 'EXECUTE') anon, has_function_privilege('authenticated', oid, 'EXECUTE') authenticated
+  FROM pg_proc WHERE proname IN ('get_class_skill_summary', 'get_class_skill_points');
+```
+
+<!-- rollback class-skill-summary -->
+```sql
+-- Brings back get_class_skill_points exactly as 20261113130000 defines it and
+-- drops the summary. THIS REOPENS the review's point: classmates' per-skill
+-- totals by name for every family of the class.
+BEGIN;
+CREATE OR REPLACE FUNCTION public.get_class_skill_points(p_class uuid, p_from date DEFAULT NULL, p_to date DEFAULT NULL)
+RETURNS TABLE (student_id uuid, student_name text, skill text, total integer)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+  SELECT sa.student_id, s.full_name, sa.skill::text, sum(sa.score)::integer
+    FROM public.skill_assessments sa
+    JOIN public.students s ON s.id = sa.student_id
+   WHERE sa.class_id = p_class
+     AND (p_from IS NULL OR sa.date >= p_from)
+     AND (p_to IS NULL OR sa.date <= p_to)
+     AND auth.uid() IS NOT NULL
+     AND (   coalesce(public.has_role(auth.uid(), 'admin'::public.app_role), false)
+          OR coalesce(public.is_teacher_of_class(auth.uid(), p_class), false)
+          OR coalesce(public.is_student_enrolled_in_class(auth.uid(), p_class), false))
+   GROUP BY sa.student_id, s.full_name, sa.skill
+$function$;
+REVOKE EXECUTE ON FUNCTION public.get_class_skill_points(uuid, date, date) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_class_skill_points(uuid, date, date) TO authenticated;
+DROP FUNCTION IF EXISTS public.get_class_skill_summary(uuid, date, date);
+COMMIT;
+```

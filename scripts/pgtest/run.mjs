@@ -275,6 +275,13 @@ const SUITES = [
     file: "classmate-rows.test.mjs",
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113130000_classmate_rows_private.sql"],
   },
+  // The same suite with 20261113150000 pasted on top: class skill figures
+  // for a family as a summary that names no child.
+  {
+    name: "class skill summary",
+    file: "classmate-rows.test.mjs",
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113130000_classmate_rows_private.sql", "20261113150000_class_skill_summary_without_names.sql"],
+  },
   // F-21: creator-owned write policies, and what a stored link may be.
   {
     name: "creator rows (F-21)",
