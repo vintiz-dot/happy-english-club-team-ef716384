@@ -126,7 +126,7 @@ export function HeroCommandDeck({
                 className="h-2 rounded-full bg-hec-brass"
                 initial={reduce ? false : { width: 0 }}
                 animate={{ width: `${Math.max(progress, 2)}%` }}
-                transition={{ duration: 0.42, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+                transition={reduce ? { duration: 0 } : { duration: 0.42, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
               />
             </div>
             <button
