@@ -1,6 +1,6 @@
 # T2b: transcribe-lesson-audio caller gate (T2 finding F2)
 
-Where I am / next step: full run.mjs in progress; then record its total. Nothing deployed or pushed.
+Where I am / next step: fix, test (107/107), registration, mutants (6/6), typecheck and write-up committed; full run.mjs running - next: record its total under Runs, remove the node_modules junction, hand back.
 
 ## Facts (base `dedd193`)
 - Callers: the browser only, two places, both `supabase.functions.invoke("transcribe-lesson-audio", { body: { transcript_id } })` under the signed-in user's JWT:
