@@ -119,4 +119,52 @@ No migration.
 
 ## Row order
 
-**Where I am / next step:** STARTED on branch `release/tuition-1b` (cut from 9804590; `release/tuition-1` is checked out in another worktree). Next: list every place in `calculate-tuition-bulk` and its `_lib` helpers where the result depends on the order of fetched rows.
+**Where I am / next step:** code, test and this write-up done on branch `release/tuition-1b` (cut from 9804590; `release/tuition-1` is checked out in another worktree, so the work could not go on it directly). Next: the three checks on the final tree, then the numbers below.
+
+Why: the paged reads return rows in `id` order. The pre-deploy probe found one pair of overlapping enrollments of one student in one class (7 days, 2025-11; same override, days and discount; ids in the reverse of creation order). Which row prices a shared lesson must not depend on how the rows were fetched.
+
+### Order-dependent places (line numbers are this branch's)
+
+Result depends on row order - fixed:
+
+| # | where | what |
+|---|---|---|
+| 1 | `calculate-tuition-bulk/index.ts:298` (was `enrollments.find`, `:295`) | the FIRST enrollment of the class covering the lesson's date decides its allowed days (billed or skipped), override rate (the saving) and discount terms. Rows came in id order. |
+| 2 | `calculate-tuition/index.ts:240` (was `.find`, `:236`) | the same pick, over a query with NO `ORDER BY` (`:119-124`): whatever order Postgres returned. |
+| 3 | `calculate-tuition/index.ts:312` | `enrollments.find(class)` for the WORDS of the "Rate Adjustment" line (`overrideRate`, `savingsPerSession`). Not a charged figure; now reads the same sorted list, so it is stable too. |
+
+Reads row order but cannot change a figure - left as they are:
+
+| where | why it is safe |
+|---|---|
+| bulk `:126` students, `:157` classes (maps by `id`) | primary key: one row per key |
+| bulk `:192` attendance map, last row wins per session+student; single `:216` | `attendance UNIQUE(session_id, student_id)` (20251012062405:12) |
+| bulk `:232` sibling state map; single `:192` `states[0]`; `_lib/sibling-state.ts:15,32,39` `.some` | `sibling_discount_state PRIMARY KEY (family_id, month)` (20251012080009:10); `.some` is a yes/no |
+| bulk `:243` invoices sorted by month, then the "settled in" walk; `:265` this month's bill map | `invoices UNIQUE(student_id, month)`: no ties to break |
+| bulk prior charges / payments (`reduce`), student discounts, referral bonuses | sums of whole dong, each amount rounded on its own from the month's base: any order gives the same total |
+| `_lib/enrollment-discounts.ts` `enrollmentDiscounts` | groups by the terms themselves; the group's first row supplies only those same terms; one rounding per group |
+| bulk `:288` lessons gathered class by class; `:315` class breakdown in first-seen order | sums only. The ORDER of `breakdown.classes` follows the enrollments, so it is now creation order (stable). In calculate-tuition it follows the sessions query, which has no `ORDER BY`: the list order there (and of `sessionDetails`) is still the database's. No figure; not changed, to keep this change small. |
+
+### The rule
+
+The enrollment **created first** wins: rows sorted by `created_at`, then `id`, before use. One helper for both functions, in `_lib/enrollment-discounts.ts` (already uploaded with both): `inCreationOrder(rows)` and `enrollmentOn(ordered, classId, date)`. Both selects gained `created_at` (and calculate-tuition `id`); `enrollments.created_at` is `timestamptz NOT NULL DEFAULT now()`.
+
+Why this reproduces present behaviour: calculate-tuition reads with no `ORDER BY`, and so did the bulk function until this release; for rows still lying in the table in the order they were inserted, that is creation order, so "first created" is the row both have been picking. For the live pair the release as reviewed (id order) would have picked the other row; with this it picks the same row as before. Their terms are identical, so no figure moves either way. What I cannot know from here: Postgres does not promise that order (an updated row can move), so for some pair the old pick may have been the other row. calculate-tuition relied on the unordered query; both now share the explicit rule.
+
+Ties: same `created_at` to the millisecond falls to the text (Postgres keeps microseconds), then to the lower `id`. A row without `created_at` (impossible in the table) sorts last, as a NULL does.
+
+No pricing rule changed. Frozen bills: untouched (the frozen branch reads the saved figures after this point, as before). No shared-module pair touched.
+
+### Test - `scripts/pgtest/enrollment-order.test.mjs` (new; "enrollment row order" in run.mjs)
+
+Real handlers, the stand-in of `enrollment-discounts.test.mjs`. Two enrollments of one class, the first to 14 Nov, the second from 8 Nov (lessons on 12 and 14 Nov belong to both), 8 lessons at 100,000. Each fixture seeded four ways: ids following / reversing creation order x the unordered read handing over the older / the newer row first.
+
+| fixture | base | discount | if the later row had won |
+|---|---|---|---|
+| (a) identical terms (override 80,000, Wed+Fri, 5%) | 800,000 | 200,000 | same |
+| (b) different rates (80,000 then 60,000) | 800,000 | 240,000 | 280,000 |
+| (c) different days and discount (Wed 10%, then Wed+Fri 20%) | 600,000 | 100,000 | base 700,000 |
+| created microseconds apart | 800,000 | 240,000 | 280,000 |
+| same `created_at`: the lower id wins | - | 240,000 or 280,000 by id | - |
+
+In every seeding: bulk deep-equals per-student (base, discount, charge, payable, carry-out, class amounts), both equal the expected figures, and the bill calculate-tuition saves carries them. With the sort taken out (helper returning the rows as given) the suite fails at "different rates [ids follow creation, unordered read newest first]: bulk and per-student agree".

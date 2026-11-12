@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
     // The query has no ORDER BY. Creation order, stated: where two rows of one
     // class overlap, the one created first prices the lesson - the same rule,
     // by the same helper, as calculate-tuition-bulk. See enrollment-discounts.ts.
-    const enrollments = inCreationOrder(enrollmentRows);
+    const enrollments: any[] = inCreationOrder<any>(enrollmentRows);
     // The month's own bill carries this month's payment and the labels an
     // admin or a payment put on it. If it cannot be read, stop: carrying on
     // as if there were no bill would save recorded_payment 0 over a payment
