@@ -78,9 +78,25 @@ Mutations M10-M13 (below) all survive: the sign of the Payable addition in `live
 
 **7. `/students/:id/tuition`.** `App.tsx` routes it to the same `Tuition` page, which ignores `:id`; same list, same findings. `src/pages/Tuition.tsx`, `useStudentMonthFinance`, `StudentTuitionTab` are byte-identical to origin/main: the student and parent views are untouched.
 
-**8. Tests.** `tsc --noEmit -p tsconfig.app.json`: exit 0. `npx --yes bun test scripts/*.test.ts`: 111 pass, 0 fail. Full `node scripts/pgtest/run.mjs`: __FULLRUN__. Mutations (`.probe/mutate.mjs`, each applied to the source, both tests run, source restored):
+**8. Tests.** `tsc --noEmit -p tsconfig.app.json`: exit 0. `npx --yes bun test scripts/*.test.ts`: 111 pass, 0 fail. Full `node scripts/pgtest/run.mjs`: 2977 assertions across 37 suites, 0 suite(s) failed, exit 0 (the author had not run it; "tuition prior balance" is 212 of them). Mutations (`.probe/mutate.mjs`, each applied to the source, both tests run, source restored):
 
-__MUTATIONS__
+| # | Mutation | File | bun unit test | pgtest |
+|---|---|---|---|---|
+| M1 | Balance mapped to the carry-IN | tuitionRows.ts | caught | caught |
+| M2 | charge mapped to baseAmount | tuitionRows.ts | caught | caught |
+| M3 | payable added up in the mapper | tuitionRows.ts | caught | survived |
+| M4 | a missing figure becomes 0 | tuitionRows.ts | caught | survived |
+| M5 | unresolved treated as ready | tuitionRows.ts | caught | caught |
+| M6 | status judged with the charge as paid | tuitionRows.ts | caught | caught |
+| M7 | settledInMonth dropped | tuitionRows.ts | caught | caught |
+| M8 | credit tested before debt (`credit >= 0`) | tuitionRows.ts | caught | survived |
+| M9 | sort reversed | tuitionRows.ts | caught | survived |
+| M10 | Payable sign flipped in liveTuitionItem | useLiveTuitionData.ts | SURVIVED | SURVIVED |
+| M11 | Balance cell shows the prior balance | AdminTuitionList.tsx | SURVIVED | SURVIVED |
+| M12 | Record Pay enabled without figures | AdminTuitionList.tsx | SURVIVED | SURVIVED |
+| M13 | balance = payable - paid put back in the page | AdminTuitionList.tsx | SURVIVED | SURVIVED |
+
+9 of 13 caught, all 9 in the mapper (every mapper mutation is caught by the unit test). 4 survive, all outside the mapper: nothing automated reads the page or the Payable line (F6, F7). The pgtest alone misses M8 because its Prior Bal. / Balance check accepts `kind === "credit"` with amount 0 (`tuition-prior-balance.test.mjs:231-232`); tighten it to require `amount > 0`.
 
 **9. Owner SQL.** One `WITH ... SELECT`; no write keyword, no function beyond `now`, `to_char`, `date_trunc`, `make_interval`, `to_date`, aggregates; ids only, no names. `summed_carry_in` = sum of `recorded_payment - total_amount` over `month < this bill's month`: the old browser sum and the calculator's carry-in. `stored_carry_in` = `carry_in_credit - carry_in_debt`. Sound for what it claims (F8 for what it does not).
 
