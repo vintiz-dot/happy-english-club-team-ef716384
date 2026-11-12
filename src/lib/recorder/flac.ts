@@ -98,37 +98,54 @@ const zig = (r: number) => (r >= 0 ? r * 2 : -r * 2 - 1);
 
 interface RicePlan { porder: number; params: number[]; bits: number }
 
-/** Choose the partition order and Rice parameters with the fewest bits. */
+const MAX_PORDER = 6;
+const partSums = new Float64Array(1 << MAX_PORDER);
+
+/** Rice parameter and estimated bit cost for `count` values summing to `sum` (libFLAC-style estimate). */
+function riceFor(sum: number, count: number): { k: number; bits: number } {
+  if (count === 0) return { k: 0, bits: 0 };
+  const mean = sum / count;
+  let k = mean > 1 ? Math.floor(Math.log2(mean)) : 0;
+  if (k > 14) k = 14;
+  // cost ~ count * (k + 1) + sum / 2^k; try k and its neighbours on that estimate
+  let bestK = k, best = Infinity;
+  for (let kk = Math.max(0, k - 1); kk <= Math.min(14, k + 1); kk++) {
+    const c = count * (kk + 1) + sum / (1 << kk);
+    if (c < best) { best = c; bestK = kk; }
+  }
+  return { k: bestK, bits: Math.ceil(best) };
+}
+
+/**
+ * Choose the partition order and Rice parameters. One pass computes the sums
+ * of the finest partitions; coarser orders add them up. (The first version
+ * re-scanned the block ~28 times and cost ~4 s of main thread per 30 s chunk.)
+ */
 function planRice(res: Int32Array, n: number, blockSize: number, order: number): RicePlan {
+  let pmax = 0;
+  while (pmax < MAX_PORDER && blockSize % (1 << (pmax + 1)) === 0 && blockSize / (1 << (pmax + 1)) > order) pmax++;
+  const parts = 1 << pmax, psize = blockSize / parts;
+  let idx = 0;
+  for (let q = 0; q < parts; q++) {
+    const count = q === 0 ? psize - order : psize;
+    let s = 0;
+    for (let i = 0; i < count; i++) { const r = res[idx + i]; s += r >= 0 ? r * 2 : -r * 2 - 1; }
+    partSums[q] = s;
+    idx += count;
+  }
   let best: RicePlan | null = null;
-  for (let p = 0; p <= 6; p++) {
-    const parts = 1 << p;
-    if (blockSize % parts !== 0) break;
-    const psize = blockSize / parts;
-    if (psize <= order) break;
+  for (let p = pmax; p >= 0; p--) {
+    const np = 1 << p, step = 1 << (pmax - p), size = blockSize / np;
     const params: number[] = [];
-    let bits = 0;
-    let idx = 0;
-    for (let q = 0; q < parts; q++) {
-      const count = q === 0 ? psize - order : psize;
-      let sum = 0;
-      for (let i = 0; i < count; i++) sum += zig(res[idx + i]);
-      const mean = count ? sum / count : 0;
-      let k = mean > 0 ? Math.max(0, Math.floor(Math.log2(mean))) : 0;
-      if (k > 14) k = 14;
-      // Exact cost for k and its neighbours.
-      let bestK = k, bestCost = Infinity;
-      for (const kk of [k - 1, k, k + 1]) {
-        if (kk < 0 || kk > 14) continue;
-        let c = count * (kk + 1);
-        for (let i = 0; i < count; i++) c += zig(res[idx + i]) >>> kk;
-        if (c < bestCost) { bestCost = c; bestK = kk; }
-      }
-      params.push(bestK);
-      bits += 4 + bestCost;
-      idx += count;
+    let bits = 6;
+    for (let q = 0; q < np; q++) {
+      let s = 0;
+      for (let j = 0; j < step; j++) s += partSums[q * step + j];
+      const count = q === 0 ? size - order : size;
+      const r = riceFor(s, count);
+      params.push(r.k);
+      bits += 4 + r.bits;
     }
-    bits += 2 + 4;
     if (!best || bits < best.bits) best = { porder: p, params, bits };
   }
   return best!;
@@ -146,10 +163,9 @@ function writeRice(w: BitWriter, res: Int32Array, blockSize: number, order: numb
     w.bits(k, 4);
     for (let i = 0; i < count; i++) {
       const u = zig(res[idx + i]);
-      const hi = u >>> k;
-      w.zeros(hi);
-      w.bits(1, 1);
-      if (k) w.bits(u & ((1 << k) - 1), k);
+      w.zeros(u >>> k);
+      // the stop bit and the k low bits in one write
+      w.bits((1 << k) | (u & ((1 << k) - 1)), k + 1);
     }
     idx += count;
   }
@@ -204,12 +220,25 @@ export function encodeFlac(samples: Int16Array, sampleRate: number, opts: FlacOp
       w.bits(samples[start] & 0xffff, 16);
     } else {
       // Pick the fixed order with the smallest residual magnitude.
-      let bestOrder = 0, bestSum = Infinity;
-      for (let order = 0; order <= 4 && order < bs; order++) {
-        fixedResidual(samples, start, end, order, res);
-        let s = 0;
-        for (let i = 0; i < bs - order; i++) s += Math.abs(res[i]);
-        if (s < bestSum) { bestSum = s; bestOrder = order; }
+      // All five orders' residual magnitudes in one pass (successive differences).
+      let bestOrder = 0;
+      if (bs > 4) {
+        const sums = [0, 0, 0, 0, 0];
+        // 1st/2nd/3rd differences at i = start + 3
+        let d1p = samples[start + 3] - samples[start + 2];
+        let d2p = d1p - (samples[start + 2] - samples[start + 1]);
+        let d3p = d2p - ((samples[start + 2] - samples[start + 1]) - (samples[start + 1] - samples[start]));
+        for (let i = start + 4; i < end; i++) {
+          const e0 = samples[i];
+          const e1 = e0 - samples[i - 1];
+          const e2 = e1 - d1p;
+          const e3 = e2 - d2p;
+          const e4 = e3 - d3p;
+          sums[0] += e0 < 0 ? -e0 : e0; sums[1] += e1 < 0 ? -e1 : e1; sums[2] += e2 < 0 ? -e2 : e2;
+          sums[3] += e3 < 0 ? -e3 : e3; sums[4] += e4 < 0 ? -e4 : e4;
+          d1p = e1; d2p = e2; d3p = e3;
+        }
+        for (let o = 1; o <= 4; o++) if (sums[o] < sums[bestOrder]) bestOrder = o;
       }
       fixedResidual(samples, start, end, bestOrder, res);
       const plan = planRice(res, bs - bestOrder, bs, bestOrder);
