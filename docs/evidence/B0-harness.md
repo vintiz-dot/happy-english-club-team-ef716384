@@ -4,13 +4,17 @@ Task B0 of `docs/MASTER_PLAN.md`. Tooling only; no model comparison (that is B1/
 Aggregates and codes (S01...) only in this file: no transcript text, no names. `key.txt` / `consent.txt` were never opened.
 Appended as the work went; each section says what was run and what it printed.
 
-## Where I am / next steps (PAUSED 2026-11-11 for the money work)
+## Where I am / next steps (paused 2026-11-11, RESUMED 2026-11-12)
 
-Built and committed (all in `scripts/lesson-eval/`): common.py (repo-write refusal, key.txt/consent.txt skip), extract.py, confirm_pairs.py, split.py, mix.py, score.py + result_schema.json, hardware.py, smoke_local.py, delete_voiceprints.py, delete_all_derived.py, README.md, tests/ (26 pytest cases on synthetic fixtures).
+**Next step right now:** none - B0 is complete. The open items under "Not done / next" belong to B1/B2/B2b or need the owner.
 
-Run, with results (details in sections 2-6):
+Built and committed (all in `scripts/lesson-eval/`): common.py (repo-write refusal, key.txt/consent.txt skip), extract.py, confirm_pairs.py, split.py, mix.py, score.py + result_schema.json, hardware.py, smoke_local.py, ident_ecapa.py, delete_voiceprints.py, delete_all_derived.py, README.md, tests/ (26 pytest cases on synthetic fixtures).
+
+Run, with results (details in sections 2-8):
+- ECAPA identification baseline (section 7): 23 enrolled, open set S05/S07/S15, 100-120 unique turns per set; EER 26-39 %; at the 1 % false-accept point it names only 11-53 % of turns (rest UNKNOWN); evidence insufficient at this turn count.
+- L3 (sixth lesson, section 8): extracted, 76.7 min, 48 kHz AAC mono; confirm_pairs: a separate recording (0/24 windows match any other file). Three unique lessons, ~300 min.
 - extract `--verify`: 35 unique WAVs pass; 28 SHA-256 duplicates (S21_clip2 + the nested `videos\videos\videos` copy); 30 video WAVs = 27 children (S26 clip2-5 only in the nested folder).
-- confirm_pairs: Recording == outp1ut_compressed; Untitled == output_compressed; Recording is the first 86.9 min of Untitled; je,ch,sa,po distinct. Two unique lesson recordings (~223.5 min).
+- confirm_pairs: Recording == outp1ut_compressed; Untitled == output_compressed; Recording is the first 86.9 min of Untitled; je,ch,sa,po distinct (L3 below makes three unique recordings).
 - split (X = 50 s): 15 children with held-out (13 clean + S20, S21 with heavy adult-pitch speech); S23 has no child-pitch speech; deterministic.
 - mix: 0/5/15 % overlap targets met (measured 0.000 / 0.050-0.053 / 0.154-0.165), deterministic (byte-identical WAVs on re-run), ground-truth RTTM scores DER 0 against itself.
 - tests: 26 passed. `--help` works on every script. Repo-path output refused with exit 3 (checked with mix.py). Deletion scripts checked with `--dry-run` only.
@@ -19,7 +23,7 @@ Run, with results (details in sections 2-6):
 
 Not done / next:
 1. sherpa-onnx diarization models not downloaded or run; whisper base/tiny/medium RTF not measured (B2b).
-2. `score.py ident` and `preserve` exercised on fixtures only; no real annotated slice exists yet (B1 needs hand references and a learner-error slice).
+2. `score.py preserve` exercised on fixtures only (ident now also on real voices, section 7); no real annotated slice exists yet (B1 needs hand references and a learner-error slice).
 3. Mix turns reuse held-out segments (reuse factor up to ~4.5 per child in a 3-6 min mix): when scoring identification, count each source segment once (`src_clip,src_start` in turns.csv). Use `--exclude S20,S21` for a clean-speaker set.
 4. Owner questions: S26 coding confirmation; S23 clip (adult-range pitch); S13/S20/S21 mostly adult voice.
 5. Nothing merged to the conductor branch yet.
@@ -118,3 +122,58 @@ Result: **15 children qualify for a held-out set** (S01-S07, S10, S11, S14, S15,
 Owner questions: (a) is S23's clip really the child (a 134 Hz median is adult/teen range)? (b) S13, S20, S21 (the long > 8 min clips) are mostly an adult voice - expected (lesson recordings with a teacher) or wrong clips?
 
 First run (8 s blocks, no enrolment floor) let held-out eat into enrolment (S24 enrol 20 s); fixed with the 30 s floor, 5 s blocks and up to 100 seeded deals per child.
+
+## 5. Synthetic discussions (mix.py, run 2026-11-11)
+
+`mix.py --n 3 --overlap {0.00,0.05,0.15} --degrade s500 --seed 7` and `--n 3 --overlap 0.05 --seed 7` (no degradation). 12 mixes of 3.1-5.8 min, 3-5 children each, 47-109 turns. Outputs `work\mix\seed7_ov{00,05,15}_{s500,none}\`.
+
+| set | measured overlap fraction per mix | notes |
+|---|---|---|
+| ov00_s500 | 0.000 / 0.000 / 0.000 | |
+| ov05_s500 | 0.051 / 0.050 / 0.051 | |
+| ov15_s500 | 0.154 / 0.165 / 0.161 | SNR 15.3 / 22.2 / 12.9 dB |
+| ov05_none | 0.052 / 0.050 / 0.051 | |
+
+Checks: re-run of ov15_s500 into a second folder -> all three WAVs byte-identical (`cmp`); its ground-truth RTTM scored against itself with `score.py der` -> DER 0.0. Held-out segments are reused (max reuse factor 2.9-4.5 per child within a mix), so independent test turns are fewer than turns; ident scoring counts each source segment once. `--exclude S20,S21` (added) builds a set without the two clips carrying adult speech. `mix.py --out <path in repo>` -> "REFUSED ... inside the git repository", exit 3.
+
+## 6. Hardware, install matrix, smoke run (2026-11-11)
+
+`hardware.py --out work\hardware.json`: Intel Core i7-8665U @ 1.90 GHz (4 cores / 8 threads, max clock 2112 MHz reported), 15.8 GB RAM, Windows 11 (10.0.26300), Python 3.13.14, ffmpeg 8.1.2. GPUs: Intel UHD 620 + a virtual monitor; **no CUDA** (torch.cuda False, CTranslate2 0 CUDA devices, onnxruntime providers CPU + Azure only).
+
+| stack | installed in `.venv` (Python 3.13) | result |
+|---|---|---|
+| numpy 2.5.4, scipy 1.18.1, soundfile 0.14.0, pytest 9.2.0 | yes | used by every script |
+| faster-whisper 1.2.1 (CTranslate2 4.9.0, onnxruntime 1.31.1, av 19.0.2) | yes | smoke OK; its silero VAD used by split.py |
+| torch 2.15.0+cpu, torchaudio 2.11.1+cpu (pytorch CPU index) | yes | OK on Python 3.13 |
+| SpeechBrain 1.1.2, ECAPA `speechbrain/spkrec-ecapa-voxceleb` (ungated) | yes | smoke OK (needs `LocalStrategy.COPY` on Windows: no symlinks) |
+| sherpa-onnx 2.0.1 | yes | import only; diarization models not fetched |
+| pyannote.audio | not installed | models gated on Hugging Face; needs a token (requirement recorded, none requested) |
+
+Smoke (`smoke_local.py --wav ...\S01_clip1.wav`, first 30 s, 8 threads; timings only): whisper-small int8 load 35.9 s (first download included), transcribe 44.9 s = RTF 1.50, 42 words, mean word confidence 0.84. ECAPA load 10.8 s, 10 x 3 s windows embedded in 9.8 s = RTF 0.33, 192-dim; embeddings not saved. Models cached under `C:\Users\Dell\hec-audio-eval\models\`.
+
+## 7. First identification run: ECAPA, oracle turns, by threshold (2026-11-12)
+
+`ident_ecapa.py --mixes work\mix\seed7_ov00_s500 --mixes ...ov05_s500 --mixes ...ov15_s500 --mixes ...ov05_none --open 3 --seed 7` (9 min 57 s on CPU), then `score.py ident --table work\ident\<set>.ident.csv --thresholds 0.2,...,0.7`.
+Setup: SpeechBrain ECAPA (VoxCeleb, adult-trained), voiceprint = mean of 3 s window embeddings over up to 60 s of ENROL speech. **23 children enrolled** (every child with >= 20 s enrol speech, minus the open set); **open set S05, S07, S15** (seeded) have held-out turns but no voiceprint, so their only correct answer is UNKNOWN. Turn boundaries are the ground truth (identification only, no diarization). Each source segment is scored once (mix reuse removed). Voiceprints: 23 files of 192 floats in `work\voiceprints\` (delete with `delete_voiceprints.py --yes`). This is a baseline for the harness, not the B2 result.
+
+| set | unique turns (enrolled / open) | EER | T=0.5: acc / false-accept / false-reject / unknown | T=0.7: acc / FA / FR / unknown | recommended "UNKNOWN below T" at 1 % FA |
+|---|---|---|---|---|---|
+| ov00_s500 | 100 (89 / 11) | 0.391 | 0.48 / 0.16 / 0.24 / 0.38 | 0.21 / 0.01 / 0.63 / 0.88 | T = 0.709: acc 0.21, unknown 0.88 - insufficient evidence (FA upper bound 5.4 %) |
+| ov05_s500 | 100 (80 / 20) | 0.360 | 0.40 / 0.18 / 0.21 / 0.46 | 0.27 / 0.02 / 0.55 / 0.89 | T = 0.715: acc 0.28, unknown 0.90 - insufficient |
+| ov15_s500 | 118 (107 / 11) | 0.263 | 0.40 / 0.18 / 0.09 / 0.46 | 0.14 / 0.02 / 0.42 / 0.92 | T = 0.738: acc 0.11, unknown 0.97 - insufficient |
+| ov05_none (no degradation) | 120 (104 / 16) | 0.353 | 0.62 / 0.14 / 0.18 / 0.25 | 0.53 / 0.00 / 0.42 / 0.60 | T = 0.696: acc 0.53, unknown 0.58 - insufficient |
+
+What this says (aggregate only):
+- The scorer works end to end on real voices: per-threshold accuracy, false-accept (wrong child shown), false-reject, unknown rate, EER, and a fail-closed threshold rule that flags too little evidence (about 300 independent turns with no false accept are needed to show 1 %; each set has 100-120).
+- An off-the-shelf adult-trained ECAPA with 20-60 s enrolment is weak on these children: EER 26-39 %. At a threshold low enough to name most children it shows a wrong child on 14-18 % of turns; at the 1 % false-accept point it names only 11-53 % and leaves the rest UNKNOWN. Room/S500 degradation costs a lot (accuracy at T=0.5: 0.62 clean vs 0.40-0.48 degraded). Under the hard rule (low confidence stays UNKNOWN), this baseline would mostly say UNKNOWN - B2 should try more enrolment audio, child-adapted or other embedding models, and turn-length effects.
+- The EER differences between sets are within noise at ~100 turns; do not rank them.
+
+## 8. Sixth lesson file, lesson code L3 (2026-11-12)
+
+The owner added a sixth file to `lessons\` (an .m4a; referred to here only as **L3**, its file name is not used in the repo). Roster unknown.
+`extract.py` (default, skips existing) -> converted only L3; `ALL CHECKS PASSED`; 64 sources, 28 duplicates (unchanged), lessons now 6 WAVs / 612.9 min. L3 source: AAC, 48000 Hz, 1 channel, 68 kbps, 4604.2 s (76.7 min); WAV 4604.2 s; SHA-256 af000bb5bdb4... (unique).
+
+`confirm_pairs.py --windows 24` re-run over all six lessons (3 min 35 s, 30 ordered pairs):
+- **L3 is a separate recording (verified, not assumed):** L3 against each of the other five, in both directions: 0/24 windows matched, max envelope NCC 0.30-0.36. That is the negative-control range; a true match here scores 1.000, and the threshold is NCC >= 0.6.
+- The verdicts among the first five files are unchanged (same SAME / A_CONTAINED_IN_B / PARTIAL / DIFFERENT pattern and window counts).
+- Unique lesson audio is now **three recordings, about 300 min**: Untitled (139.0 min, which contains Recording/outp1ut_compressed as its first 86.9 min), je,ch,sa,po (84.5 min), L3 (76.7 min).
