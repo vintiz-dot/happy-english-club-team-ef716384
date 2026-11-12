@@ -452,6 +452,7 @@ BEGIN
    WHERE class_id = p_class AND recording_enabled;
   IF NOT FOUND THEN RETURN; END IF;
 
+  PERFORM set_config('recorder.server_write', 'abandon:switch_off', true);
   UPDATE public.class_recordings
      SET status = 'abandoned', abandon_reason = 'switch_off'
    WHERE class_id = p_class AND status = 'armed';
@@ -949,6 +950,9 @@ DECLARE
   v_flag text := COALESCE(current_setting('recorder.server_write', true), '');
   v_server_stop text := CASE WHEN v_flag IN ('stop:switch_off', 'stop:session_canceled') THEN substr(v_flag, 6) END;
   v_server_delete boolean := v_flag = 'delete:' || OLD.id::text;
+  -- 'abandon:<reason>': the server's own abandon paths (switch-off,
+  -- cancellation, deletion request, stale sweep). C1 critic 3, m1.
+  v_server_abandon text := CASE WHEN v_flag LIKE 'abandon:%' THEN substr(v_flag, 9) END;
 BEGIN
   IF NEW.id IS DISTINCT FROM OLD.id
      OR NEW.class_id IS DISTINCT FROM OLD.class_id
@@ -1036,7 +1040,9 @@ BEGIN
   -- exactly as recorder_request_deletion does.
   IF NEW.delete_after IS NULL THEN
     NEW.delete_after := OLD.delete_after;
-  ELSIF v_server_delete THEN
+  ELSIF v_server_delete AND NEW.deletion_requested_at IS NOT NULL THEN
+    -- Only together with the stamped request (C1 critic 3, m3): the flag on
+    -- its own moves nothing, so an early date always has a requester.
     NEW.delete_after := LEAST(OLD.delete_after, NEW.delete_after);
   ELSIF NOT v_person_admin THEN
     NEW.delete_after := OLD.delete_after;
@@ -1053,6 +1059,11 @@ BEGIN
     NEW.client_ended_at := OLD.client_ended_at;
     NEW.client_info := OLD.client_info;
     NEW.device_profile_id := OLD.device_profile_id;
+  END IF;
+  -- The reason is written only by the move to 'abandoned' (below), never
+  -- preset on an open row (C1 critic 3, m1).
+  IF NEW.status IS DISTINCT FROM 'abandoned' OR OLD.status = 'abandoned' THEN
+    NEW.abandon_reason := OLD.abandon_reason;
   END IF;
 
   IF NEW.status IS DISTINCT FROM OLD.status THEN
@@ -1169,7 +1180,16 @@ BEGIN
 
     ELSIF NEW.status = 'abandoned' THEN
       NEW.abandoned_at := v_now;
-      NEW.abandon_reason := COALESCE(NULLIF(btrim(NEW.abandon_reason), ''), 'unspecified');
+      -- The server's reasons only from the server's paths (flag); a page
+      -- writing one of them gets 'unspecified' (C1 critic 3, m1). Other text
+      -- from the page is kept as the page's own words.
+      NEW.abandon_reason := CASE
+        WHEN v_server_abandon IS NOT NULL THEN v_server_abandon
+        WHEN lower(btrim(COALESCE(NEW.abandon_reason, ''))) IN
+             ('switch_off', 'session_canceled', 'deletion requested', 'never finished',
+              'stopped after the lesson window')
+          THEN 'unspecified'
+        ELSE COALESCE(NULLIF(btrim(NEW.abandon_reason), ''), 'unspecified') END;
       IF OLD.started_at IS NOT NULL AND OLD.ended_at IS NULL THEN
         NEW.ended_at := v_now;
         NEW.stopped_by := v_uid;
@@ -1327,6 +1347,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  PERFORM set_config('recorder.server_write', 'abandon:session_canceled', true);
   UPDATE public.class_recordings
      SET status = 'abandoned', abandon_reason = 'session_canceled'
    WHERE armed_session_id = NEW.id AND status = 'armed';
@@ -1619,9 +1640,11 @@ BEGIN
   END IF;
   IF v_rec.status = 'deleted' THEN RETURN; END IF;
   IF v_rec.status IN ('armed', 'recording', 'uploading') THEN
+    PERFORM set_config('recorder.server_write', 'abandon:deletion requested', true);
     UPDATE public.class_recordings
        SET status = 'abandoned', abandon_reason = 'deletion requested'
      WHERE id = p_recording;
+    PERFORM set_config('recorder.server_write', '', true);
   END IF;
   -- The update trigger stamps who asked and when; it takes the request and
   -- the earlier date only with this flag (N3). An early deletion asked for
@@ -1671,11 +1694,13 @@ DECLARE
 BEGIN
   SELECT stale_upload_days INTO v_days FROM public.recorder_settings WHERE id = 1;
   IF v_days IS NULL THEN RETURN 0; END IF;
+  PERFORM set_config('recorder.server_write', 'abandon:never finished', true);
   UPDATE public.class_recordings
      SET status = 'abandoned', abandon_reason = 'never finished'
    WHERE status IN ('armed', 'recording', 'uploading')
      AND scheduled_end + make_interval(days => v_days) < p_now;
   GET DIAGNOSTICS v_n = ROW_COUNT;
+  PERFORM set_config('recorder.server_write', '', true);
   RETURN v_n;
 END;
 $$;
@@ -1716,9 +1741,14 @@ GRANT EXECUTE ON FUNCTION public.recorder_mark_audio_deleted(uuid) TO authentica
 --                              * nobody asked for its early deletion (an
 --                                admin bringing the date forward is a request);
 --                              * LIVE verified audio inside the lesson >= the
---                                threshold. Live = registered by the server no
---                                later than late_after after the moment the
---                                chunk claims to end.
+--                                threshold. Live = registered AND confirmed in
+--                                storage by the server no later than
+--                                late_after after the moment the chunk claims
+--                                to end (C1 critic 3, M1: bytes uploaded days
+--                                later never count). Inside the lesson = only
+--                                the part of each chunk between the scheduled
+--                                start and end; the pre-roll and the grace
+--                                never count (C1 critic 3, M2).
 --                            After deletion by RETENTION it stays true: a
 --                            tombstone "a recording ran", with
 --                            audio_deleted_at. It is NOT proof that children
@@ -1730,8 +1760,11 @@ GRANT EXECUTE ON FUNCTION public.recorder_mark_audio_deleted(uuid) TO authentica
 --   server_capture_ms        ended_at - started_at, both server-stamped.
 --   verified_audio_ms        per track LEAST(live claimed, server_capture_ms,
 --                            live stored bytes / format floor), longest track.
---   verified_lesson_ms       LEAST(verified_audio_ms, server-seen overlap with
---                            the scheduled lesson).
+--   verified_lesson_ms       the same per track over only the part of each live
+--                            chunk inside the scheduled lesson (its bytes
+--                            pro rata), then LEAST with the server-seen overlap
+--                            with the scheduled lesson. What the flag compares
+--                            with evidence_threshold_ms.
 CREATE OR REPLACE VIEW public.recorder_session_evidence
 WITH (security_invoker = true) AS
 SELECT
@@ -1746,9 +1779,9 @@ SELECT
            AND r.deletion_requested_at IS NULL
            AND r.ended_at <= r.capture_closes_at + (r.late_after_ms * INTERVAL '1 millisecond')
            AND m.tracks_with_audio > 0
-           AND LEAST(m.verified_audio_ms, w.lesson_overlap_ms) >= w.evidence_threshold_ms, false)
+           AND LEAST(m.verified_lesson_ms, w.lesson_overlap_ms) >= w.evidence_threshold_ms, false)
     AS recording_ran_evidence,
-  NOT COALESCE(LEAST(m.verified_audio_ms, w.lesson_overlap_ms) >= w.evidence_threshold_ms, false) AS too_short,
+  NOT COALESCE(LEAST(m.verified_lesson_ms, w.lesson_overlap_ms) >= w.evidence_threshold_ms, false) AS too_short,
   r.audio_deleted_at,
   (r.status = 'deleted' AND r.deletion_requested_at IS NULL) AS deleted_by_retention,
   r.deletion_requested_at,
@@ -1775,7 +1808,7 @@ SELECT
   COALESCE(m.late_audio_ms, 0)::bigint AS late_audio_ms,
   COALESCE(m.stored_bytes, 0)::bigint AS stored_bytes,
   COALESCE(m.verified_audio_ms, 0)::bigint AS verified_audio_ms,
-  LEAST(COALESCE(m.verified_audio_ms, 0), w.lesson_overlap_ms)::bigint AS verified_lesson_ms,
+  LEAST(COALESCE(m.verified_lesson_ms, 0), w.lesson_overlap_ms)::bigint AS verified_lesson_ms,
   COALESCE(m.tracks_with_audio, 0)::integer AS tracks_with_audio,
   c.first_chunk_registered_at,
   c.last_chunk_registered_at,
@@ -1800,6 +1833,8 @@ LEFT JOIN LATERAL (
          sum(t.stored_bytes) AS stored_bytes,
          max(LEAST(t.live_ms, w.server_capture_ms,
                    floor(t.live_bytes * 1000 / r.min_bytes_per_sec)::bigint)) AS verified_audio_ms,
+         max(LEAST(t.lesson_ms, w.server_capture_ms,
+                   floor(t.lesson_bytes * 1000 / r.min_bytes_per_sec)::bigint)) AS verified_lesson_ms,
          count(*) AS tracks_with_audio
   FROM (
     SELECT k.track,
@@ -1807,11 +1842,27 @@ LEFT JOIN LATERAL (
            sum(k.stored_size)::bigint AS stored_bytes,
            COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE o.live), 0)::bigint AS live_ms,
            COALESCE(sum(k.stored_size) FILTER (WHERE o.live), 0)::bigint AS live_bytes,
-           COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE NOT o.live), 0)::bigint AS late_ms
+           COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE NOT o.live), 0)::bigint AS late_ms,
+           -- M2: only the part inside the scheduled lesson, its bytes pro rata.
+           COALESCE(sum(o.in_lesson_ms) FILTER (WHERE o.live), 0)::bigint AS lesson_ms,
+           COALESCE(sum(k.stored_size * o.in_lesson_ms / (k.t_end_ms - k.t_start_ms)) FILTER (WHERE o.live), 0)::bigint
+             AS lesson_bytes
     FROM public.class_recording_chunks k
     CROSS JOIN LATERAL (
+      -- The lesson on the chunks' own timeline (ms after the server's Start),
+      -- rounded inwards.
+      SELECT ceil(extract(epoch FROM (r.scheduled_start - r.started_at)) * 1000)::bigint AS start_ms,
+             floor(extract(epoch FROM (r.scheduled_end - r.started_at)) * 1000)::bigint AS end_ms
+    ) ls
+    CROSS JOIN LATERAL (
+      -- Live (N2, M1): the server registered the chunk AND confirmed its bytes
+      -- in storage within late_after of the moment it claims to end.
       SELECT COALESCE(k.registered_at <= r.started_at
-                        + ((k.t_end_ms + r.late_after_ms) * INTERVAL '1 millisecond'), false) AS live
+                        + ((k.t_end_ms + r.late_after_ms) * INTERVAL '1 millisecond')
+                      AND k.confirmed_at <= r.started_at
+                        + ((k.t_end_ms + r.late_after_ms) * INTERVAL '1 millisecond'), false) AS live,
+             COALESCE(GREATEST(0, LEAST(k.t_end_ms, ls.end_ms) - GREATEST(k.t_start_ms, ls.start_ms)), 0)::bigint
+               AS in_lesson_ms
     ) o
     WHERE k.recording_id = r.id AND k.confirmed_at IS NOT NULL AND k.stored_size IS NOT NULL
     GROUP BY k.track
@@ -1971,7 +2022,12 @@ GRANT UPDATE (status, session_id, class_id, armed_session_id, session_date, sche
               device_profile_id, client_info, client_started_at, client_ended_at, stop_reason,
               stop_requested_at, manifest_path, manifest_sha256, abandon_reason, delete_after)
                                      ON public.class_recordings         TO authenticated;
-GRANT SELECT, INSERT, UPDATE         ON public.class_recording_tracks   TO authenticated;
+GRANT SELECT, INSERT                 ON public.class_recording_tracks   TO authenticated;
+-- A track's recording, name and creation time are fixed once inserted
+-- (C1 critic 3, m2): UPDATE only on what describes it.
+GRANT UPDATE (device_label, device_hash, sample_rate, channel_count, codec, bitrate, applied_settings,
+              chunk_count, total_bytes, total_ms)
+                                     ON public.class_recording_tracks   TO authenticated;
 GRANT SELECT                         ON public.class_recording_chunks   TO authenticated;
 GRANT SELECT, INSERT, DELETE         ON public.class_recording_markers  TO authenticated;
 GRANT SELECT                         ON public.recorder_audit_log       TO authenticated;
