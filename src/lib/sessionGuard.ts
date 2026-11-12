@@ -79,8 +79,15 @@ export interface TuitionFigure {
 }
 
 export interface Consequences {
+  /** Final contract: "stored" (the saved bills, read-only). */
+  source?: string;
+  affected_students?: Array<{ student_id: string; month: string; mark?: { status?: string; marked_by_person?: boolean } | null }>;
+  invoices_before?: any[];
+  after?: { available: boolean; reason?: string };
+  pay_line?: { available: boolean; reason?: string };
   fetched?: boolean;
   reason?: string;
+  /** Older shapes, read defensively only. */
   tuition?: TuitionFigure[];
   payroll?: {
     fetched: boolean;
@@ -216,9 +223,26 @@ export const ERROR_TEXT: Record<string, string> = {
   evidence_unavailable: "The evidence check could not run. Nothing was changed. Try again in a minute.",
   retry: "The database was busy. Nothing was changed. Try again.",
   misconfigured: "The server is missing a setting and cannot make this change safely. Nothing was changed.",
-  unexpected: "Something unexpected went wrong on the server. Nothing was changed.",
-  network: "Could not reach the server. Nothing was changed. Check your connection and try again.",
+  unexpected: "Something unexpected went wrong on the server. Reload the lesson to see whether anything was changed before trying again.",
+  rate_limited: "Too many lesson changes in one minute. Nothing was changed. Wait a minute, then check again.",
+  outside_criteria: "This lesson is outside the dates, class or teacher you chose, so it was not sent. Nothing was changed for it.",
+  network: "Could not reach the server. Check your connection, then reload the lesson to see whether anything was changed.",
+  relay: "The server could not run this request (the function did not answer). Reload the lesson to see whether anything was changed.",
+  function_missing: "The server function for this change is not deployed yet. Nothing was changed.",
+  not_refreshed: "The server answered, but did not confirm that every bill was recalculated. Try again in a minute.",
+  http_error: "The server answered with an error the app does not recognise. Reload the lesson to see whether anything was changed.",
 };
+
+/**
+ * Codes after which the app cannot know whether a CONFIRM step reached the
+ * database (the request may have been applied before the answer was lost).
+ * The dialog says so instead of "Nothing was changed", and refreshes the
+ * screens behind it.
+ */
+export const UNKNOWN_OUTCOME_CODES = new Set(["network", "relay", "unexpected", "http_error"]);
+
+export const OUTCOME_UNKNOWN_TEXT =
+  "The app did not get a clear answer, so it cannot tell whether the lesson was changed. Close this window, reload the lesson and look at its status before trying again.";
 
 export function errorText(code: string | null | undefined, fallback?: string | null): string {
   if (code && ERROR_TEXT[code]) return ERROR_TEXT[code];
@@ -227,7 +251,7 @@ export function errorText(code: string | null | undefined, fallback?: string | n
 }
 
 /** Codes where the action cannot work at all until something outside the dialog changes. */
-export const BLOCKING_CODES = new Set(["guard_not_installed", "guard_broken", "misconfigured", "forbidden", "unauthorized", "preview_required"]);
+export const BLOCKING_CODES = new Set(["guard_not_installed", "guard_broken", "misconfigured", "forbidden", "unauthorized", "preview_required", "function_missing"]);
 
 export const COPY = {
   titles: {
@@ -245,10 +269,10 @@ export const COPY = {
   settled: "This lesson is already billed or paid, or its payroll month is closed. This is a correction and will be reviewed.",
   stale: "This lesson changed while you were looking at it",
   stalePrompt: "Read what is different below, then confirm again. Nothing was changed.",
-  reviewNote: "This change goes to review: another administrator will look at it.",
+  reviewNote: "This change is recorded for review.",
   erasedNote: "Marks were removed before this change",
   consequenceNotFetched: "not available",
-  payrollNotFetched: "could not be worked out - check Payroll after the change",
+  payRecalculated: "Pay is recalculated by Payroll after the change.",
   afterNotAvailable: "worked out after the change",
 };
 
@@ -472,6 +496,8 @@ export interface ConsequenceRow {
 export interface StoredBill {
   studentId: string;
   month: string;
+  /** The server said there is no bill saved for this child and month. */
+  noBill?: boolean;
   total: number | null;
   discount: number | null;
   recordedPayment: number | null;
@@ -486,16 +512,24 @@ export function readStoredBills(c: Consequences | null | undefined, preview?: Gu
   const anyC: any = c ?? {};
   const list: any[] | null = Array.isArray(anyC.invoices_before) ? anyC.invoices_before : Array.isArray(anyC.bills) ? anyC.bills : Array.isArray(preview?.invoices_before) ? preview!.invoices_before! : null;
   if (list) {
-    return list.map((b) => ({
-      studentId: String(b?.student_id ?? ""),
-      month: String(b?.month ?? ""),
-      total: numOrNull(b?.total_amount ?? b?.totalAmount),
-      discount: numOrNull(b?.discount_amount ?? b?.totalDiscount),
-      recordedPayment: numOrNull(b?.recorded_payment),
-      status: b?.status ?? null,
-      confirmation: b?.confirmation_status ?? null,
-      frozen: !!(b?.tuition_frozen ?? b?.tuitionFrozen),
-    }));
+    return list.map((e) => {
+      // Final contract (D-ship-fixes "CONTRACT FIELDS"): { student_id, month, bill: {...} | null }.
+      // bill: null = no bill saved for that child and month ("no bill yet", never 0).
+      // An entry without a `bill` key is read flat (the preview's own invoices_before rows).
+      const hasBillKey = !!e && typeof e === "object" && Object.prototype.hasOwnProperty.call(e, "bill");
+      const b = hasBillKey ? e.bill : e;
+      return {
+        studentId: String(e?.student_id ?? ""),
+        month: String(e?.month ?? ""),
+        noBill: hasBillKey && (b === null || b === undefined),
+        total: numOrNull(b?.total_amount ?? b?.totalAmount),
+        discount: numOrNull(b?.discount_amount ?? b?.totalDiscount),
+        recordedPayment: numOrNull(b?.recorded_payment),
+        status: b?.status ?? null,
+        confirmation: b?.confirmation_status ?? null,
+        frozen: !!(b?.tuition_frozen ?? b?.tuitionFrozen),
+      };
+    });
   }
   // Older shape: calculate-tuition snapshots.
   return (anyC.tuition ?? []).map((t: TuitionFigure) => ({
@@ -516,12 +550,18 @@ export function consequenceRows(c: Consequences | null | undefined, preview?: Gu
     if (b.frozen) notes.push("This bill is frozen and will not change");
     const state = [b.status, b.confirmation].filter(Boolean).join(", ");
     const fetched = b.total !== null;
+    const paid = b.recordedPayment !== null && b.recordedPayment !== 0 ? `; paid this month ${formatVnd(b.recordedPayment)}` : "";
     return {
       key: `${b.studentId}-${b.month}-${i}`,
       studentId: b.studentId,
       month: b.month,
-      fetched,
-      nowText: fetched ? `Current bill for ${b.month}: ${formatVnd(b.total)}${state ? ` (${state})` : ""}` : "Current bill: not available",
+      // "No bill yet" is a known answer, not a missing figure.
+      fetched: fetched || !!b.noBill,
+      nowText: b.noBill
+        ? `No bill saved yet for ${b.month}`
+        : fetched
+          ? `Current bill for ${b.month}: ${formatVnd(b.total)}${state ? ` (${state})` : ""}${paid}`
+          : "Current bill: not available",
       afterText: b.frozen ? "unchanged (frozen)" : COPY.afterNotAvailable,
       notes,
       frozen: b.frozen,
@@ -529,7 +569,7 @@ export function consequenceRows(c: Consequences | null | undefined, preview?: Gu
   });
 }
 
-export const NEW_BILL_LINE = "The new bill is worked out after the lesson is cancelled and shown here.";
+export const NEW_BILL_LINE = "These are the bills as saved now. The new bills are worked out after the change and shown on the next screen.";
 
 export interface TotalsRow {
   bills: number;
@@ -554,25 +594,14 @@ export interface PayrollLine {
   text: string;
 }
 
-/** The teacher's line as calculate-payroll reported it; nothing derived. */
-export function payrollLine(c: Consequences | null | undefined): PayrollLine {
-  const p = c?.payroll;
-  if (!p) return { fetched: false, text: COPY.payrollNotFetched };
-  if (!p.fetched) {
-    if (p.reason === "lesson_not_held") return { fetched: false, text: "The lesson is not marked Held, so no teacher pay is attached to it." };
-    return { fetched: false, month: p.month, text: COPY.payrollNotFetched };
-  }
-  const rows: any[] = p.response?.payrollData ?? [];
-  const mine = rows.find((r) => r?.teacherId === p.teacher_id) ?? (rows.length === 1 ? rows[0] : null);
-  if (!mine) return { fetched: false, month: p.month, text: COPY.payrollNotFetched };
-  const amount = mine.totalAmountActual ?? mine.totalAmountProjected;
-  const sessions = mine.sessionsCountActual ?? mine.sessionsCountProjected;
-  if (amount === undefined || amount === null) return { fetched: false, month: p.month, text: COPY.payrollNotFetched };
-  return {
-    fetched: true,
-    month: p.month,
-    text: `Pay line for ${p.month} as it stands now: ${formatVnd(amount)}${sessions !== undefined && sessions !== null ? ` for ${fmtCount(Number(sessions), "lesson", "lessons")}` : ""}. It is recalculated by Payroll after the change.`,
-  };
+/**
+ * Teacher pay in a preview. Final contract: the preview never returns a pay
+ * figure (`pay_line: { available: false }`), because calculate-payroll saves
+ * the month summary whenever it runs. So the dialog shows one fixed line and
+ * never a number, even if an older server still sends `payroll`.
+ */
+export function payrollLine(_c?: Consequences | null): PayrollLine {
+  return { fetched: false, text: COPY.payRecalculated };
 }
 
 /* ----------------------------------------------------------------- stale */
@@ -595,6 +624,7 @@ export function stalePreviewDiff(before: GuardPreview | null | undefined, after:
     if (!ai.has(type)) out.push(`No longer recorded: ${describeEvidence((before.evidence?.items ?? []).find((i) => i.type === type)!)}.`);
   }
   if ((before.affected?.length ?? 0) !== (after.affected?.length ?? 0)) out.push("The number of children on the lesson changed.");
+  if (JSON.stringify(before.invoices_before ?? []) !== JSON.stringify(after.invoices_before ?? [])) out.push("A family bill for this lesson changed (look at the bills again).");
   if (before.tier !== after.tier) out.push("The level of care this change needs has changed.");
   if (!out.length) out.push("Something recorded against this lesson changed.");
   return out;
@@ -602,24 +632,59 @@ export function stalePreviewDiff(before: GuardPreview | null | undefined, after:
 
 /* ---------------------------------------------------------------- errors */
 
-/** Shape supabase-js hands back on a non-2xx: FunctionsHttpError with `.context` a Response. */
+/** The code to use for a non-2xx whose body is not one of the guard's own error bodies (gateway, platform). */
+function codeForStatus(status: number | null): string {
+  if (status === 401) return "unauthorized";
+  if (status === 403) return "forbidden";
+  if (status === 404) return "function_missing";
+  return "http_error";
+}
+
+const isGuardBody = (b: any): boolean =>
+  !!b && typeof b === "object" && typeof b.code === "string" && (b.ok === false || Object.prototype.hasOwnProperty.call(ERROR_TEXT, b.code));
+
+/**
+ * Turn what `supabase.functions.invoke` handed back into one error body.
+ * Read against @supabase/functions-js 2.75 (FunctionsClient.invoke, types.ts):
+ *  - FunctionsHttpError (non-2xx): `context` is the fetch Response. Its body is
+ *    the function's JSON `{ ok:false, code, ... }`, read once with
+ *    `context.json()`. A gateway answer (Invalid JWT, function not found,
+ *    WORKER_LIMIT) has a different JSON or HTML: mapped by HTTP status, and
+ *    its own `code` (a number, or "NOT_FOUND") never overwrites ours.
+ *  - FunctionsRelayError: `context` is the Response too, but the body is the
+ *    relay's, not the function's: code `relay`.
+ *  - FunctionsFetchError: `context` is the fetch exception (TypeError, an
+ *    AbortError); there is no body: code `network`.
+ *  - anything thrown (not a FunctionsError): `network` when it looks like one,
+ *    else `unexpected`.
+ * Fails closed: never returns ok.
+ */
 export async function parseInvokeError(error: any, data?: any): Promise<GuardErrorBody> {
   if (data && typeof data === "object" && data.ok === false && typeof data.code === "string") return data as GuardErrorBody;
-  try {
-    const ctx = error?.context;
-    if (ctx && typeof ctx.json === "function") {
-      const body = await ctx.json();
-      if (body && typeof body === "object" && typeof body.code === "string") return { ok: false, ...body } as GuardErrorBody;
-      if (body && typeof body === "object") return { ok: false, code: "unexpected", message: body.error ?? body.message, ...body } as GuardErrorBody;
-    }
-  } catch {
-    /* fall through */
-  }
   const name = String(error?.name ?? "");
-  if (name === "FunctionsFetchError" || /failed to fetch|network/i.test(String(error?.message ?? ""))) {
-    return { ok: false, code: "network", message: String(error?.message ?? "") };
+  const ctx = error?.context;
+  const status: number | null = ctx && typeof ctx.status === "number" ? ctx.status : null;
+  const msg = String(error?.message ?? "");
+  if (name === "FunctionsFetchError") {
+    return { ok: false, code: "network", message: String(ctx?.message ?? msg) };
   }
-  return { ok: false, code: "unexpected", message: String(error?.message ?? "") };
+  if (name === "FunctionsRelayError") {
+    return { ok: false, code: "relay", status, message: msg };
+  }
+  if (ctx && typeof ctx.json === "function" && !ctx.bodyUsed) {
+    let body: any;
+    try {
+      body = await ctx.json();
+    } catch {
+      body = undefined;
+    }
+    if (isGuardBody(body)) return { ...body, ok: false, status } as GuardErrorBody;
+    const said = body && typeof body === "object" ? String(body.message ?? body.msg ?? body.error ?? "") : "";
+    return { ok: false, code: codeForStatus(status), status, message: said || msg };
+  }
+  if (name === "FunctionsHttpError") return { ok: false, code: codeForStatus(status), status, message: msg };
+  if (/failed to fetch|networkerror|load failed|network request failed/i.test(msg)) return { ok: false, code: "network", message: msg };
+  return { ok: false, code: "unexpected", message: msg };
 }
 
 /* ------------------------------------------------------- tuition refresh */
@@ -764,20 +829,37 @@ export type BulkResult = {
   notAttempted: Array<{ id: string; code?: string }>;
   stopped: { code?: string; message?: string } | null;
   tuitionFailed: any[];
+  /** Lessons whose bill refresh failed, each with the override id the retry needs. */
+  tuitionRetry: Array<{ id: string; override_id: string }>;
+  /** Evidence lessons the server left alone (not ticked in, or sent without include_held). */
+  leftAlone: number;
   partial: boolean;
 };
 
 /** Normalise bulk-cancel (`canceled`) and bulk-delete (`done`) responses. */
 export function normaliseBulkResult(r: any): BulkResult {
   const arr = (x: any) => (Array.isArray(x) ? x : []);
+  const perSession = arr(r?.tuition?.per_session);
   return {
     done: arr(r?.canceled ?? r?.done),
     refused: arr(r?.refused),
     notAttempted: arr(r?.not_attempted),
     stopped: r?.stopped ?? null,
     tuitionFailed: arr(r?.tuition?.failed),
+    tuitionRetry: perSession
+      .filter((s: any) => s && s.override_id && s.status !== "refreshed" && s.status !== "none")
+      .map((s: any) => ({ id: String(s.id ?? ""), override_id: String(s.override_id) })),
+    leftAlone: arr(r?.needs_ack).length + (Number.isFinite(Number(r?.held_ignored)) ? Number(r?.held_ignored) : 0),
     partial: !!r?.partial || !!r?.stopped,
   };
+}
+
+/** Index of the preview's rows by id, so a result can name each lesson (date, time, class). */
+export function bulkRowIndex(b: BulkPreview | null | undefined): Record<string, BulkRow> {
+  const out: Record<string, BulkRow> = {};
+  if (!b) return out;
+  for (const r of [...b.plain, ...b.needs_ack, ...b.refused]) out[r.id] = r;
+  return out;
 }
 
 /* --------------------------------------------------------- query refresh */
@@ -785,7 +867,7 @@ export function normaliseBulkResult(r: any): BulkResult {
 /** React Query keys touched by a lesson change: calendars, class sessions, tuition, payroll, invoices. */
 export function isSessionRelatedQuery(key: readonly unknown[]): boolean {
   const first = String(key?.[0] ?? "");
-  return /session|calendar|tuition|payroll|invoice|attendance|schedule|finance|family/i.test(first);
+  return /session|calendar|tuition|payroll|invoice|attendance|schedule|finance|family|lesson|agenda|lost-|excused|breakdown|overview-stats|recorded-payments/i.test(first);
 }
 
 /* --------------------------------------------------------- review screen */
