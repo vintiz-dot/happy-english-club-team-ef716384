@@ -8,7 +8,7 @@ export default function StudentJournal() {
   if (!studentId) {
     return (
       <Layout title="Journal">
-        <p className="text-center text-muted-foreground">Please select a student profile.</p>
+        <p className="text-center text-hec-body text-hec-ink-soft">Please select a student profile.</p>
       </Layout>
     );
   }
