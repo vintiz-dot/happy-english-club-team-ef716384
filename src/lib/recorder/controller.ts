@@ -37,9 +37,9 @@ import { RecorderError, toRecorderError, type ServerRefusal } from "./errors";
 import { Chunker, type RawChunk, type RawSegment } from "./chunker";
 import { inlineEncoder, type ChunkEncoder } from "./encoderClient";
 import { sha256Hex, randomUuid } from "./hash";
-import { floatToInt16, frameToMs, framesPerChunk, manifestPath, FORMAT_EXT, FORMAT_MIME } from "./chunkMath";
+import { floatToInt16, frameToMs, preStartLimitMs, framesPerChunk, manifestPath, FORMAT_EXT, FORMAT_MIME } from "./chunkMath";
 import { Uploader, type UploadProgress } from "./uploader";
-import { buildManifest, countedChunks, manifestBytes, trackCounts } from "./manifest";
+import { buildManifest, countedChunks, manifestBytes, paddedInside, trackCounts } from "./manifest";
 import { HealthMonitor } from "./health";
 import { CLOCK_WARN_MS, plan, type WindowSettings, DEFAULT_WINDOW } from "./schedule";
 import { resolveDevice, resolveProfile, type DeviceProfile } from "./devices";
@@ -77,6 +77,8 @@ export interface RecorderOptions {
   deviceRetryMs?: number;
   /** After this long without the lost microphone, say so again (default 60 s). */
   deviceLostAlertMs?: number;
+  /** Owner ruling (round 4): unsent audio of a recording the server gave up is deleted this long after (default 14 days). */
+  abandonedKeepMs?: number;
   /** N-M6: an encoder answer not in after this long is not waited for: the chunk is encoded inline (default 30 s). */
   encodeTimeoutMs?: number;
   /** N-M3: a clock measurement with a slower round trip than this is not kept (default 2 s). */
@@ -156,6 +158,8 @@ const ms = (iso: string) => Date.parse(iso);
 export const STOP_MARGIN_MS = 5000;
 /** Start refusals the server actually stated: final. Anything else is retried (N-B2). */
 const FINAL_START_REFUSALS: ServerRefusal[] = ["window_closed", "switch_off", "consent_missing", "session_canceled", "not_teacher", "no_longer_teaching", "already_live", "recording_closed", "not_your_recording", "session_invalid"];
+/** A stated "this lesson must not be recorded": what was captured before it is deleted at once (R3-M2). */
+const DELETE_ON_NO: ServerRefusal[] = ["switch_off", "consent_missing", "session_canceled", "not_teacher"];
 /** Stop refusals the server actually stated: final. Anything else is retried (B4). */
 const FINAL_STOP_REFUSALS: ServerRefusal[] = ["window_closed", "recording_closed", "not_your_recording", "no_longer_teaching"];
 
@@ -204,7 +208,7 @@ export class Recorder {
     this.o = {
       format: "flac", chunkMs: 30000, appVersion: "dev", userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "node",
       now: () => Date.now(), perfNow: () => performance.now(), autoTick: true, window: DEFAULT_WINDOW, storageWarnBytes: 4 * 1024 ** 3, storageRefuseBytes: 2 * 1024 ** 3,
-      storageStopBytes: 64 * 1024 ** 2, deviceRetryMs: Infinity, deviceLostAlertMs: 60000, reopenTimeoutMs: 10000, clockMaxRttMs: 2000, encodeTimeoutMs: 30000, deviceRetryEveryMs: 2000, useLocks: true, encoder: null as any,
+      storageStopBytes: 64 * 1024 ** 2, deviceRetryMs: Infinity, deviceLostAlertMs: 60000, reopenTimeoutMs: 10000, clockMaxRttMs: 2000, encodeTimeoutMs: 30000, abandonedKeepMs: 14 * 86400000, deviceRetryEveryMs: 2000, useLocks: true, encoder: null as any,
       stallAfterMs: 3000, startTimeoutMs: 10000, preStartHoldMs: 120000, startLeadOkMs: 5000, stuckAfterMs: 14 * 86400000,
       memoryHoldBytes: 150 * 1024 ** 2, durable: true, ...opts,
     } as any;
@@ -405,6 +409,13 @@ export class Recorder {
         if (row && row.status === "deleted") { await this.o.store.purgeRecording(rec.id, { allowUnconfirmed: true }); continue; }
         await this.o.store.deleteConfirmedBytes(rec.id);
         await this.forgetLabels(rec.id);
+        // Owner ruling: the server can never take it now; 14 days after it was
+        // given up the unsent audio is deleted (the countdown is shown meanwhile).
+        if (!rec.abandonedAt) await this.saveRec(rec);
+        if (this.serverNow() - (rec.abandonedAt ?? this.serverNow()) > this.o.abandonedKeepMs) {
+          await this.o.store.purgeRecording(rec.id, { allowUnconfirmed: true });
+          this.events.emit("error", new RecorderError("internal", `Unsent audio from ${rec.sessionDate} was deleted from this laptop: the server gave that recording up more than ${Math.round(this.o.abandonedKeepMs / 86400000)} days ago.`, { detail: { recordingId: rec.id, autoDeleted: true } }));
+        }
         continue;
       }
       if (rec.phase === "stopped" || rec.phase === "finalized") { ids.push(rec.id); void this.drive(rec.id); }
@@ -575,7 +586,8 @@ export class Recorder {
       for (const c of chunks) if (c.state !== "confirmed") bytes += (await this.o.store.getBytes(r.id, c.track, c.seq))?.length ?? 0;
       if (!bytes) continue;
       const ageMs = Math.max(0, this.serverNow() - r.createdAt);
-      out.push({ recordingId: r.id, sessionDate: r.sessionDate, phase: r.phase, serverStatus: r.serverStatus, bytes, ageMs, overLimit: ageMs > this.o.stuckAfterMs });
+      out.push({ recordingId: r.id, sessionDate: r.sessionDate, phase: r.phase, serverStatus: r.serverStatus, bytes, ageMs, overLimit: ageMs > this.o.stuckAfterMs,
+        deleteAt: r.phase === "abandoned" && r.abandonedAt ? r.abandonedAt + this.o.abandonedKeepMs : null });
     }
     return out;
   }
@@ -615,7 +627,28 @@ export class Recorder {
     return (await this.o.store.getRecording(this.active.rec.id)) ?? this.active.rec;
   }
 
+  /**
+   * What a tab that dies does (tests, crash simulation): everything stops
+   * where it is, nothing is flushed or sent. Not for the app: use dispose().
+   */
+  kill() {
+    this.disposed = true;
+    if (this.interval) clearInterval(this.interval);
+    this.interval = null;
+    this.lockRelease?.();
+    this.lockRelease = null;
+    this.o.source.onBatch = null; this.o.source.onTick = null; this.o.source.onTrackEnded = null;
+  }
+
   async dispose() {
+    // C3-a: disposing while capturing ends the capture properly first - the
+    // last audio stored, the microphones closed, the Stop queued (sent now if
+    // the network allows, else by the next page that recovers) - never a
+    // silent abandon with the microphones left open.
+    if (this.active?.capturing && !this.disposed) {
+      await Promise.race([this.endCapture("manual").catch(() => null), new Promise((r) => setTimeout(r, 5000))]);
+      this.o.source.closeTracks();
+    }
     this.disposed = true;
     if (this.interval) clearInterval(this.interval);
     this.interval = null;
@@ -659,6 +692,7 @@ export class Recorder {
    */
   private async cleanAfterComplete(recordingId: string) {
     await this.o.store.deleteConfirmedBytes(recordingId).catch(() => 0);
+    await this.dropForbidden(recordingId);
     let unsent = 0;
     for (const c of await this.o.store.listChunks(recordingId)) if (c.state !== "confirmed" && (await this.o.store.getBytes(recordingId, c.track, c.seq))) unsent++;
     if (!unsent) { await this.o.store.purgeRecording(recordingId, { allowUnconfirmed: true }).catch((e) => this.events.emit("error", toRecorderError(e))); return; }
@@ -1029,7 +1063,8 @@ export class Recorder {
   private async adoptServerStart(rec: LocalRecording, row: ServerRecording) {
     const S = ms(row.started_at!);
     const first = rec.firstSampleServer ?? S;
-    const maxBack = Math.max(0, S - ms(rec.captureOpensAt));
+    // R3-B1: the one limit, the same expression as the migration (chunkMath.preStartLimitMs).
+    const maxBack = preStartLimitMs({ startedAt: S, captureOpensAt: rec.captureOpensAt, maxDurationMs: rec.maxDurationMs });
     const pre = Math.max(0, Math.min(Math.round(S - first), maxBack));
     rec.startedAtServer = row.started_at!;
     rec.clientStartedAt = rec.clientStartedAt ?? new Date(this.o.now()).toISOString();
@@ -1039,7 +1074,7 @@ export class Recorder {
     rec.preStartAcked = pre === 0;
     if (pre > this.o.startLeadOkMs) {
       rec.discontinuities.push({ t_ms: 0, kind: "pre_start", wall_gap_ms: pre });
-      this.events.emit("error", new RecorderError("start_delayed", `The school server started the recording ${Math.round(pre / 1000)} s after this laptop began recording. All of it is kept and sent; those first ${Math.round(pre / 1000)} s do not count as evidence that the lesson was recorded.`, { detail: { preStartMs: pre } }));
+      // (said once the server has ACCEPTED the offset - sendPreStart - never before: R3-B1)
     }
     const ts = this.o.source.timestamp();
     rec.anchors.push({ t_ms: 0, context_time: ts.contextTime, performance_now: ts.performanceNow, date_now: this.o.now(), server_offset_ms: this.offsetMs });
@@ -1064,10 +1099,51 @@ export class Recorder {
       const err = toRecorderError(e);
       const row = err.code === "offline" ? null : await this.o.backend.getRecording(rec.id).catch(() => null);
       if (row && (row as any).pre_start_ms === rec.preStartMs) rec.preStartAcked = true;
-      else { this.events.emit("error", err); return false; }
+      else {
+        // R3-B1: a statement the server REFUSES (not a network failure) is not
+        // retried for ever with the recording shown as running: after three,
+        // this recording is said to be impossible to send, capture ends, the
+        // row is given up, the audio stays listed on the laptop.
+        if (err.code === "server_refused" && !err.retryable) rec.preStartRefusals = (rec.preStartRefusals ?? 0) + 1;
+        if ((rec.preStartRefusals ?? 0) >= 3) { await this.preStartImpossible(rec, err.message); return false; }
+        await this.saveRec(rec);
+        if (this.active?.rec.id === rec.id) this.active.rec.preStartRefusals = rec.preStartRefusals;
+        this.events.emit("error", err);
+        return false;
+      }
     }
     await this.saveRec(rec);
+    // Minor (review 3): the in-memory copy learns it too, or the next save writes `false` back.
+    if (this.active?.rec.id === rec.id) {
+      this.active.rec.preStartAcked = true;
+      if (this.active.capturing) this.setState(this.capturingState(this.active));
+    }
+    const pre = rec.preStartMs ?? 0;
+    if (pre > this.o.startLeadOkMs)
+      this.events.emit("error", new RecorderError("start_delayed", `The school server started the recording ${Math.round(pre / 1000)} s after this laptop began recording. The server has accepted all of it; those first ${Math.round(pre / 1000)} s do not count as evidence that the lesson was recorded.`, { detail: { preStartMs: pre } }));
     return true;
+  }
+
+  private async preStartImpossible(rec: LocalRecording, why: string) {
+    const a = this.active;
+    if (a?.rec.id === rec.id && a.capturing) {
+      // Stop capturing here (not endCapture: that would drive this same recording from inside its own pass).
+      a.capturing = false;
+      this.o.source.forward(false);
+      if (a.chunker?.started) a.chunker.flush();
+      this.o.source.closeTracks();
+      await this.io;
+      this.releaseWakeLock();
+    }
+    const fresh = a?.rec.id === rec.id ? a.rec : ((await this.o.store.getRecording(rec.id)) ?? rec);
+    fresh.preStartRefusals = rec.preStartRefusals;
+    fresh.phase = "abandoned"; fresh.stopPending = false;
+    await this.o.backend.abandon(rec.id, "the server would not take the audio captured before its start").catch(() => null);
+    fresh.serverStatus = "abandoned";
+    await this.saveRec(fresh);
+    const kept = Math.round((await this.o.store.listChunks(rec.id)).filter((c) => c.track === "teacher").reduce((n, c) => n + c.tEndMs - c.tStartMs, 0) / 1000);
+    this.events.emit("error", new RecorderError("start_failed", `This recording CANNOT be sent to the school server (${why}). Recording has stopped; the ${kept} s recorded are kept on this laptop and listed there.`, { detail: { keptMs: kept * 1000 } }));
+    if (a?.rec.id === rec.id) { a.rec.phase = "abandoned"; this.setState("error"); }
   }
 
   /**
@@ -1109,7 +1185,8 @@ export class Recorder {
   /** What a capture shows: never `recording` while no audio is being kept (N-B3). */
   private capturingState(a: Active): RecorderState {
     if (a.stalled || a.noMics) return "stalled";
-    return a.rec.startedAtServer ? "recording" : "starting";
+    // R3-B1: not `recording` until the server knows where its start sits (nothing is sent before that).
+    return a.rec.startedAtServer && a.rec.preStartAcked !== false ? "recording" : "starting";
   }
 
   /** The server will not take this recording: explicit failed state, the held audio kept locally. */
@@ -1122,8 +1199,17 @@ export class Recorder {
     if (err.refusal === "window_closed") await this.o.backend.abandon(a.rec.id, "the window closed before capture started").catch(() => null);
     a.rec.phase = "abandoned"; a.rec.serverStatus = "abandoned";
     await this.saveRec(a.rec);
-    const kept = Math.round((await this.o.store.listChunks(a.rec.id)).filter((c) => c.track === "teacher").reduce((n, c) => n + c.tEndMs - c.tStartMs, 0) / 1000);
-    this.events.emit("error", new RecorderError("start_failed", `NOT RECORDED on the server: ${err.message}. The ${kept} s captured before that are kept on this laptop (they cannot be sent); recording has stopped.`, { refusal: err.refusal, detail: { keptMs: kept * 1000 } }));
+    const captured = Math.round((await this.o.store.listChunks(a.rec.id)).filter((c) => c.track === "teacher").reduce((n, c) => n + c.tEndMs - c.tStartMs, 0) / 1000);
+    if (err.refusal && DELETE_ON_NO.includes(err.refusal)) {
+      // R3-M2 / owner ruling: the school has said this lesson must NOT be
+      // recorded (switched off, consent missing, cancelled, not this teacher's
+      // class): what was captured before that answer is deleted at once, and
+      // nothing was sent.
+      await this.o.store.purgeRecording(a.rec.id, { allowUnconfirmed: true });
+      this.events.emit("error", new RecorderError("start_failed", `NOT RECORDED: ${err.message}. The ${captured} s captured before the school's answer have been DELETED from this laptop; nothing was sent.`, { refusal: err.refusal, detail: { keptMs: 0, deletedMs: captured * 1000 } }));
+    } else {
+      this.events.emit("error", new RecorderError("start_failed", `NOT RECORDED on the server: ${err.message}. The ${captured} s captured before that are kept on this laptop (they cannot be sent); recording has stopped.`, { refusal: err.refusal, detail: { keptMs: captured * 1000 } }));
+    }
     this.setState("error");
     this.releaseWakeLock();
   }
@@ -1574,7 +1660,19 @@ export class Recorder {
   /** M2: an abandoned recording keeps no labels (children's names) and no audio the server has. */
   private async afterAbandoned(recordingId: string) {
     await this.o.store.deleteConfirmedBytes(recordingId).catch(() => 0);
+    await this.dropForbidden(recordingId);
     await this.forgetLabels(recordingId);
+  }
+
+  /**
+   * R3-M2: audio recorded after the school said stop (chunks the server
+   * refused as `stop_requested`) will never be taken and must not be kept:
+   * deleted at once.
+   */
+  private async dropForbidden(recordingId: string) {
+    if (!this.o.store.deleteChunkBytes) return;
+    for (const c of await this.o.store.listChunks(recordingId))
+      if (c.state === "refused" && c.refusal === "stop_requested") await this.o.store.deleteChunkBytes(recordingId, c.track, c.seq).catch(() => null);
   }
 
   private async forgetLabels(recordingId: string) {
@@ -1598,7 +1696,8 @@ export class Recorder {
         this.events.emit("error", new RecorderError("server_refused", `The ${t.track} track has chunks the server registered but did not confirm: the recording cannot be completed, and its local copy is kept`, { refusal: "complete_refused" }));
         return;
       }
-      await this.o.backend.setTrackCounts(rec.id, t.track, trackCounts(counted));
+      // R3-M1: the silence filled into stalls that sits inside chunks which count is stated exactly, and the server subtracts it.
+      await this.o.backend.setTrackCounts(rec.id, t.track, { ...trackCounts(counted), padded_ms: paddedInside(rec, counted) });
     }
     let saved = await this.o.store.getManifest(rec.id);
     if (!saved) {
@@ -1637,6 +1736,8 @@ export class Recorder {
    */
   private async saveRec(rec: LocalRecording): Promise<void> {
     const stored = await this.o.store.getRecording(rec.id);
+    // Owner ruling: the 14-day clock for unsent audio starts when the recording is given up.
+    if (rec.phase === "abandoned" && !rec.abandonedAt) rec.abandonedAt = stored?.abandonedAt ?? this.serverNow();
     if (stored) {
       for (const t of rec.tracks) {
         const s = stored.tracks.find((x) => x.track === t.track);
@@ -1704,6 +1805,12 @@ export class Recorder {
       if (a.capturing) await this.endCapture("switch_off");
       a.rec.phase = "abandoned"; a.rec.serverStatus = "abandoned";
       await this.saveRec(a.rec);
+      // R3-M2: the server gave it up because the school said no (switch-off,
+      // consent, cancellation): nothing it did not take may stay here.
+      if (/switch|consent|cancel/i.test(row.abandon_reason ?? "")) {
+        await this.o.store.purgeRecording(a.rec.id, { allowUnconfirmed: true }).catch(() => null);
+        this.events.emit("error", new RecorderError("start_failed", "The school switched recording off for this lesson: whatever was not on the server yet has been DELETED from this laptop.", { refusal: "switch_off", detail: { keptMs: 0 } }));
+      }
       this.setState("abandoned");
       this.releaseWakeLock();
       return;

@@ -992,6 +992,30 @@ console.log("=== C2 round 3 (N-B1): audio from before the server's Start is kept
   eq("the two pre-start minutes are stored but never evidence: 48 live minutes count, not 50",
     (await one(`SELECT was_completed, recording_ran_evidence, verified_audio_ms::int v, verified_lesson_ms::int vl FROM public.recorder_session_evidence WHERE recording_id=$1`, [r.id])),
     { was_completed: true, recording_ran_evidence: true, v: 2_880_000, vl: 2_880_000 });
+  // C2 round 4 (R3-M1): silence the page filled into stalls is subtracted.
+  await raw(`UPDATE public.class_recording_tracks SET padded_ms = 600000 WHERE recording_id=$1`, [r.id]);
+  eq("R3-M1: 10 minutes of filled silence stated: verified audio and lesson drop by 10 minutes, and the 38 left are not evidence",
+    (await one(`SELECT recording_ran_evidence, verified_audio_ms::int v, verified_lesson_ms::int vl, padded_audio_ms::int p, pre_start_ms::int ps FROM public.recorder_session_evidence WHERE recording_id=$1`, [r.id])),
+    { recording_ran_evidence: false, v: 2_280_000, vl: 2_280_000, p: 600_000, ps: 120_000 });
+  await raw(`UPDATE public.class_recording_tracks SET padded_ms = 0 WHERE recording_id=$1`, [r.id]);
+  {
+    // C2 round 4 (R3-B1): the one limit is the window; no 30-minute cap.
+    const s3 = await sessAt(C1, t1, -60, 30);
+    const r3 = await arm(T1, s3, { chunk_ms: 60000 });
+    await setStatus(T1, r3.id, "recording"); await addTrack(T1, r3.id); await travel(r3.id, 1);
+    const bound = Number((await one(`SELECT LEAST(max_duration_ms, floor(extract(epoch FROM (started_at - capture_opens_at)) * 1000))::bigint b FROM public.class_recordings WHERE id=$1`, [r3.id])).b);
+    ok("R3-B1: the window allows more than 30 minutes here", bound > 1_800_001, String(bound));
+    refused("R3-B1: one millisecond past the window bound is refused", await tryAs(T1, () => db.query(`UPDATE public.class_recordings SET pre_start_ms = $2 WHERE id=$1`, [r3.id, bound + 1])), /stated once/);
+    eq("R3-B1: another teacher cannot state it (the row is not theirs: nothing changes)", [await tryAs(T2, () => db.query(`UPDATE public.class_recordings SET pre_start_ms = 1000 WHERE id=$1`, [r3.id])), (await one(`SELECT pre_start_ms::int p FROM public.class_recordings WHERE id=$1`, [r3.id])).p], [null, 0]);
+    eq("R3-B1: 30 minutes + 1 ms is accepted (the old cap is gone)", await tryAs(T1, () => db.query(`UPDATE public.class_recordings SET pre_start_ms = 1800001 WHERE id=$1`, [r3.id])), null);
+    eq("R3-M1: the recorder may state padded_ms on its open track", await tryAs(T1, () => db.query(`UPDATE public.class_recording_tracks SET padded_ms = 5000 WHERE recording_id=$1`, [r3.id])), null);
+    refused("R3-M1: never negative", await tryAs(T1, () => db.query(`UPDATE public.class_recording_tracks SET padded_ms = -1 WHERE recording_id=$1`, [r3.id])), /check constraint|violates/);
+    const s4 = await sessAt(C1, t1, -60, 30);
+    const r4 = await arm(T1, s4, { chunk_ms: 60000 });
+    await setStatus(T1, r4.id, "recording"); await addTrack(T1, r4.id); await travel(r4.id, 1);
+    const b4 = Number((await one(`SELECT LEAST(max_duration_ms, floor(extract(epoch FROM (started_at - capture_opens_at)) * 1000))::bigint b FROM public.class_recordings WHERE id=$1`, [r4.id])).b);
+    eq("R3-B1: exactly the window bound is accepted", await tryAs(T1, () => db.query(`UPDATE public.class_recordings SET pre_start_ms = $2 WHERE id=$1`, [r4.id, b4 - 50])), null);
+  }
   const s2 = await sessAt(C1, t1, -60, 30);
   const r2 = await arm(T1, s2, { chunk_ms: 60000 });
   await setStatus(T1, r2.id, "recording"); await addTrack(T1, r2.id); await travel(r2.id, 2);

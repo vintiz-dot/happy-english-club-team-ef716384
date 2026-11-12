@@ -28,6 +28,22 @@ export function trackCounts(chunks: ChunkMeta[]): TrackCounts {
   };
 }
 
+/**
+ * C2 round 4 (R3-M1): ms of silence the page filled into stall gaps that lie
+ * inside chunks which would otherwise count (not below the byte floor):
+ * the exact overlap of each `context_stall` fill [t_ms, t_ms + padded_ms)
+ * with those chunks. The server subtracts it from the verified figures.
+ */
+export function paddedInside(rec: { discontinuities: { kind: string; t_ms: number; padded_ms?: number }[] }, chunks: ChunkMeta[]): number {
+  const fills = rec.discontinuities.filter((d) => d.kind === "context_stall" && (d.padded_ms ?? 0) > 0).map((d) => [d.t_ms, d.t_ms + (d.padded_ms ?? 0)] as const);
+  let n = 0;
+  for (const c of chunks) {
+    if (c.belowFloor) continue;
+    for (const [a, b] of fills) n += Math.max(0, Math.min(b, c.tEndMs) - Math.max(a, c.tStartMs));
+  }
+  return n;
+}
+
 /** Stable JSON: keys sorted, so the bytes do not depend on insertion order. */
 export function stableStringify(v: unknown): string {
   if (v === null || typeof v !== "object") return JSON.stringify(v ?? null);

@@ -16,6 +16,8 @@ export interface HeldAudio {
   ageMs: number;
   /** Older than the stated limit (default 14 days): show it to the teacher / an admin. Never deleted automatically. */
   overLimit: boolean;
+  /** Owner ruling (round 4): when this unsent audio is deleted by itself (14 days after the server gave the recording up), or null while the server can still take it. */
+  deleteAt?: number | null;
 }
 
 export interface RecorderEvents {

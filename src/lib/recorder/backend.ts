@@ -57,7 +57,7 @@ export interface RecorderBackend {
   download(path: string): Promise<Uint8Array>;
   confirmChunk(chunkId: string, readbackSha256: string): Promise<boolean>;
   stop(id: string, reason: StopReason, clientEndedAt: string): Promise<ServerRecording>;
-  setTrackCounts(id: string, track: TrackRole, c: { chunk_count: number; total_bytes: number; total_ms: number }): Promise<void>;
+  setTrackCounts(id: string, track: TrackRole, c: { chunk_count: number; total_bytes: number; total_ms: number; padded_ms?: number }): Promise<void>;
   complete(id: string, manifestPath: string, manifestSha256: string): Promise<ServerRecording>;
   abandon(id: string, reason: string): Promise<ServerRecording>;
   /** "already" = a re-sent marker (same client_marker_id): a no-op. */

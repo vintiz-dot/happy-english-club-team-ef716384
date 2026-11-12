@@ -752,6 +752,10 @@ CREATE TABLE IF NOT EXISTS public.class_recording_tracks (
   chunk_count      integer CHECK (chunk_count IS NULL OR chunk_count >= 0),
   total_bytes      bigint,
   total_ms         bigint,
+  -- C2 round 4 (R3-M1): silence the page filled into a stall gap that sits
+  -- inside chunks which count (stated with the counts). The view subtracts it:
+  -- a claim that only ever LOWERS the evidence, so it needs no verification.
+  padded_ms        bigint NOT NULL DEFAULT 0 CHECK (padded_ms >= 0),
   created_at       timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (recording_id, track)
 );
@@ -1005,11 +1009,17 @@ BEGIN
 
   -- C2 round 3 (N-B1): the pre-start audio is stated once, by the page,
   -- while the recording is open, before any chunk is registered, and never
-  -- reaches back before the capture window opened (nor more than 30 min).
+  -- reaches back before the capture window opened.
+  -- C2 round 4 (R3-B1): that window bound is the ONE limit - no separate
+  -- numeric cap (a 30-minute one stranded a whole lesson after a half-hour
+  -- outage at the bell). The page computes exactly the same bound
+  -- (src/lib/recorder/chunkMath.ts preStartLimitMs: LEAST(max_duration_ms,
+  -- started_at - capture_opens_at)); a test reads this expression and
+  -- compares. Pre-start audio is never evidence whatever its length (the view).
   IF NEW.pre_start_ms IS DISTINCT FROM OLD.pre_start_ms THEN
     IF OLD.pre_start_ms <> 0 OR OLD.started_at IS NULL OR OLD.status NOT IN ('recording', 'uploading')
        OR NEW.pre_start_ms IS NULL OR NEW.pre_start_ms < 0
-       OR NEW.pre_start_ms > LEAST(1800000::bigint,
+       OR NEW.pre_start_ms > LEAST(OLD.max_duration_ms,
             GREATEST(0, floor(extract(epoch FROM (OLD.started_at - OLD.capture_opens_at)) * 1000))::bigint)
        OR EXISTS (SELECT 1 FROM public.class_recording_chunks c WHERE c.recording_id = OLD.id) THEN
       RAISE EXCEPTION 'The audio before the server''s start can be stated once, before any chunk, and not from before the window opened';
@@ -1851,7 +1861,12 @@ SELECT
   c.last_chunk_confirmed_at,
   -- Ruling (a): confirmed audio below the format's byte floor (silence),
   -- longest track. Stored, listenable, never evidence.
-  COALESCE(m.below_floor_ms, 0)::bigint AS below_floor_ms
+  COALESCE(m.below_floor_ms, 0)::bigint AS below_floor_ms,
+  -- C2 round 4: what readers must know about the timeline - audio before
+  -- t = pre_start_ms is the laptop's claim (never seen by the server), and
+  -- padded_audio_ms of silence was filled into stalls (longest track).
+  r.pre_start_ms,
+  COALESCE(m.padded_ms, 0)::bigint AS padded_audio_ms
 FROM public.class_recordings r
 CROSS JOIN LATERAL (
   SELECT
@@ -1869,14 +1884,17 @@ LEFT JOIN LATERAL (
   SELECT max(t.claimed_ms) AS claimed_audio_ms,
          max(t.late_ms) AS late_audio_ms,
          sum(t.stored_bytes) AS stored_bytes,
-         max(LEAST(t.live_ms, w.server_capture_ms,
+         -- C2 round 4 (R3-M1): silence the page filled into a stall never counts.
+         max(LEAST(GREATEST(0, t.live_ms - t.padded_ms), w.server_capture_ms,
                    floor(t.live_bytes * 1000 / r.min_bytes_per_sec)::bigint)) AS verified_audio_ms,
-         max(LEAST(t.lesson_ms, w.server_capture_ms,
+         max(LEAST(GREATEST(0, t.lesson_ms - t.padded_ms), w.server_capture_ms,
                    floor(t.lesson_bytes * 1000 / r.min_bytes_per_sec)::bigint)) AS verified_lesson_ms,
          count(*) FILTER (WHERE t.claimed_ms > t.below_floor_ms) AS tracks_with_audio,
-         max(t.below_floor_ms) AS below_floor_ms
+         max(t.below_floor_ms) AS below_floor_ms,
+         max(t.padded_ms) AS padded_ms
   FROM (
     SELECT k.track,
+           COALESCE(max(tr.padded_ms), 0)::bigint AS padded_ms,
            sum(k.t_end_ms - k.t_start_ms)::bigint AS claimed_ms,
            sum(k.stored_size)::bigint AS stored_bytes,
            COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE o.live), 0)::bigint AS live_ms,
@@ -1908,6 +1926,7 @@ LEFT JOIN LATERAL (
              COALESCE(GREATEST(0, LEAST(k.t_end_ms, ls.end_ms) - GREATEST(k.t_start_ms, ls.start_ms)), 0)::bigint
                AS in_lesson_ms
     ) o
+    LEFT JOIN public.class_recording_tracks tr ON tr.recording_id = k.recording_id AND tr.track = k.track
     WHERE k.recording_id = r.id AND k.confirmed_at IS NOT NULL AND k.stored_size IS NOT NULL
     GROUP BY k.track
   ) t
@@ -2070,7 +2089,7 @@ GRANT SELECT, INSERT                 ON public.class_recording_tracks   TO authe
 -- A track's recording, name and creation time are fixed once inserted
 -- (C1 critic 3, m2): UPDATE only on what describes it.
 GRANT UPDATE (device_label, device_hash, sample_rate, channel_count, codec, bitrate, applied_settings,
-              chunk_count, total_bytes, total_ms)
+              chunk_count, total_bytes, total_ms, padded_ms)
                                      ON public.class_recording_tracks   TO authenticated;
 GRANT SELECT                         ON public.class_recording_chunks   TO authenticated;
 GRANT SELECT, INSERT, DELETE         ON public.class_recording_markers  TO authenticated;

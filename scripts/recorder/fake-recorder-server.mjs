@@ -118,7 +118,8 @@ export function createFakeServer(opts = {}) {
     const now = s.now();
     // C2 round 3 (as the migration's trigger): pre_start_ms once, while open, before any chunk, not before the window opened.
     if ("pre_start_ms" in patch && patch.pre_start_ms !== (old.pre_start_ms ?? 0)) {
-      const maxBack = old.started_at ? Math.max(0, Date.parse(old.started_at) - Date.parse(old.capture_opens_at)) : -1;
+      // The ONE limit, exactly as the migration and chunkMath.preStartLimitMs: LEAST(max_duration_ms, started_at - capture_opens_at).
+      const maxBack = old.started_at ? Math.min(old.max_duration_ms, Math.max(0, Math.floor(Date.parse(old.started_at) - Date.parse(old.capture_opens_at)))) : -1;
       if ((old.pre_start_ms ?? 0) !== 0 || !old.started_at || !["recording", "uploading"].includes(old.status) || !(patch.pre_start_ms >= 0)
           || patch.pre_start_ms > maxBack || s.chunkRows(id).length)
         return err("The audio before the server's start can be stated once, before any chunk, and not from before the window opened");
