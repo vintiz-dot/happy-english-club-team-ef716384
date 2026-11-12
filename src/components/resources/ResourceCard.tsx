@@ -57,25 +57,25 @@ export function ResourceCard({ resource, compact = false, classNameMap }: Props)
   // ---- Compact (teacher list row) ----
   if (compact) {
     return (
-      <div className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/40 transition-colors group">
-        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center text-xl shrink-0 text-white", fileInfo.color)}>
+      <div className="group flex items-center gap-3 rounded-hec-md border border-hec-line bg-hec-surface p-3 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-hec-md bg-hec-sunken text-xl">
           {fileInfo.icon}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm truncate">{resource.title}</p>
-          <p className="text-xs text-muted-foreground truncate">
+          <p className="truncate text-hec-small font-medium text-hec-ink">{resource.title}</p>
+          <p className="truncate text-hec-caption text-hec-ink-soft">
             {resource.file_name || resource.external_url || "No file"}
             {resource.file_size ? ` · ${(resource.file_size / 1024 / 1024).toFixed(1)} MB` : ""}
           </p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {resource.visibility === "private" && (
-            <Badge variant="outline" className="text-[10px]">Private</Badge>
+            <Badge variant="outline" className="text-hec-caption">Private</Badge>
           )}
           {hasBoth && (
-            <Badge variant="secondary" className="text-[10px]">Link + File</Badge>
+            <Badge variant="secondary" className="text-hec-caption">Link + File</Badge>
           )}
-          <Badge variant="secondary" className="text-[10px]">{fileInfo.label}</Badge>
+          <Badge variant="secondary" className="text-hec-caption">{fileInfo.label}</Badge>
         </div>
       </div>
     );
@@ -92,9 +92,9 @@ export function ResourceCard({ resource, compact = false, classNameMap }: Props)
   return (
     <div
       className={cn(
-        "group relative flex flex-col rounded-2xl border-2 bg-card overflow-hidden",
-        "transition-all duration-200 hover:shadow-lg hover:scale-[1.02] hover:border-blue-400",
-        "cursor-pointer active:scale-[0.98]",
+        "group relative flex flex-col overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1",
+        "cursor-pointer transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2",
+        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
       )}
       onClick={handleOpen}
       role="button"
@@ -104,21 +104,20 @@ export function ResourceCard({ resource, compact = false, classNameMap }: Props)
       {/* ---- Icon header ---- */}
       <div
         className={cn(
-          "flex items-center justify-center py-6",
-          "bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-900/20 dark:to-sky-900/20",
+          "flex items-center justify-center bg-hec-sunken py-6",
         )}
       >
-        <span className="text-5xl drop-shadow-md transition-transform group-hover:scale-110">
+        <span className="text-5xl">
           {fileInfo.icon}
         </span>
       </div>
 
       {/* ---- Content ---- */}
       <div className="flex-1 p-4 space-y-2">
-        <h3 className="font-bold text-base leading-snug line-clamp-2">{resource.title}</h3>
+        <h3 className="line-clamp-2 text-hec-body font-semibold text-hec-ink">{resource.title}</h3>
 
         {resource.description && (
-          <p className="text-xs text-muted-foreground line-clamp-2">{resource.description}</p>
+          <p className="line-clamp-2 text-hec-small text-hec-ink-soft">{resource.description}</p>
         )}
 
         {/* Tags */}
@@ -126,7 +125,7 @@ export function ResourceCard({ resource, compact = false, classNameMap }: Props)
           {bloomLabels.map((b) => (
             <span
               key={b!.value}
-              className={cn("inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium", b!.color)}
+              className={"inline-flex items-center gap-1 rounded-full border border-hec-line bg-hec-sunken px-2 py-0.5 text-hec-caption font-medium text-hec-ink-soft"}
             >
               {b!.icon} {b!.label}
             </span>
@@ -134,18 +133,18 @@ export function ResourceCard({ resource, compact = false, classNameMap }: Props)
           {pypLabels.map((t) => (
             <span
               key={t!.value}
-              className={cn("inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium", t!.color)}
+              className={"inline-flex items-center gap-1 rounded-full border border-hec-line bg-hec-sunken px-2 py-0.5 text-hec-caption font-medium text-hec-ink-soft"}
             >
               {t!.icon} {t!.shortLabel || t!.label}
             </span>
           ))}
           {resource.vocab_tags.slice(0, 3).map((tag) => (
-            <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0">
+            <Badge key={tag} variant="outline" className="px-1.5 py-0 text-hec-caption">
               {tag}
             </Badge>
           ))}
           {resource.vocab_tags.length > 3 && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+            <Badge variant="outline" className="px-1.5 py-0 text-hec-caption">
               +{resource.vocab_tags.length - 3}
             </Badge>
           )}
@@ -155,12 +154,12 @@ export function ResourceCard({ resource, compact = false, classNameMap }: Props)
         {classNameMap && resource.class_ids && resource.class_ids.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {resource.class_ids.slice(0, 2).map((cid) => (
-              <Badge key={cid} variant="secondary" className="text-[10px]">
+              <Badge key={cid} variant="secondary" className="text-hec-caption">
                 {classNameMap.get(cid) || "Class"}
               </Badge>
             ))}
             {resource.class_ids.length > 2 && (
-              <Badge variant="secondary" className="text-[10px]">
+              <Badge variant="secondary" className="text-hec-caption">
                 +{resource.class_ids.length - 2}
               </Badge>
             )}
@@ -175,10 +174,7 @@ export function ResourceCard({ resource, compact = false, classNameMap }: Props)
           <div className="grid grid-cols-2 gap-2">
             <Button
               size="sm"
-              className={cn(
-                "gap-1.5 rounded-xl font-bold text-xs h-10",
-                "bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white",
-              )}
+              className="min-h-hec-target gap-1.5 text-hec-small"
               onClick={(e) => {
                 e.stopPropagation();
                 openLink();
@@ -190,7 +186,7 @@ export function ResourceCard({ resource, compact = false, classNameMap }: Props)
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5 rounded-xl font-bold text-xs h-10 border-2"
+              className="min-h-hec-target gap-1.5 text-hec-small"
               onClick={(e) => {
                 e.stopPropagation();
                 downloadFile();
@@ -208,10 +204,7 @@ export function ResourceCard({ resource, compact = false, classNameMap }: Props)
         ) : (
           <Button
             size="lg"
-            className={cn(
-              "w-full gap-2 rounded-xl font-bold text-sm h-11",
-              "bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white",
-            )}
+            className="min-h-hec-target w-full gap-2"
             onClick={(e) => {
               e.stopPropagation();
               handleOpen();
