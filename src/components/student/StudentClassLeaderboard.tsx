@@ -32,6 +32,13 @@ interface StudentClassLeaderboardProps {
   classId: string;
   className?: string;
   currentStudentId?: string;
+  /**
+   * "Ivory" design system frame (student dashboard, A4.2): the card, title
+   * and month picker around the board follow the system. The board itself
+   * is a themed display canvas and is not restyled (DESIGN_SYSTEM section 17).
+   * Off by default, so other screens keep the studio frame.
+   */
+  ivory?: boolean;
 }
 
 interface EdgeEntry {
@@ -66,6 +73,7 @@ export function StudentClassLeaderboard({
   classId,
   className,
   currentStudentId,
+  ivory = false,
 }: StudentClassLeaderboardProps) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [analyticsStudent, setAnalyticsStudent] = useState<{
@@ -122,20 +130,50 @@ export function StudentClassLeaderboard({
   const viewerStudentId = currentStudentId ?? data?.currentStudentId ?? undefined;
 
   return (
-    <div className="studio-surface relative overflow-hidden rounded-3xl border border-studio shadow-studio">
-      <div className="flex items-center justify-between gap-2 px-3 pb-2 pt-4 sm:px-6">
-        <div className="flex min-w-0 items-center gap-2">
+    <div
+      className={
+        ivory
+          ? "relative overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1"
+          : "studio-surface relative overflow-hidden rounded-3xl border border-studio shadow-studio"
+      }
+    >
+      <div
+        className={
+          ivory
+            ? "flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-6"
+            : "flex items-center justify-between gap-2 px-3 pb-2 pt-4 sm:px-6"
+        }
+      >
+        <div className={ivory ? "flex min-w-0 items-start gap-2 pt-2" : "flex min-w-0 items-center gap-2"}>
           <Trophy
-            className="h-5 w-5 shrink-0 text-[hsl(var(--studio-butter-ink))]"
+            className={ivory ? "mt-1 h-5 w-5 shrink-0 text-hec-ink-soft" : "h-5 w-5 shrink-0 text-[hsl(var(--studio-butter-ink))]"}
             aria-hidden
           />
-          <h3 className="studio-title truncate text-xl">{className || "Leaderboard"}</h3>
+          <h3
+            className={
+              ivory
+                ? "min-w-0 whitespace-normal break-words font-display text-hec-h2 font-medium text-hec-ink"
+                : "studio-title truncate text-xl"
+            }
+          >
+            {className || "Leaderboard"}
+          </h3>
         </div>
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="h-9 w-[140px] shrink-0 rounded-full border-studio bg-studio-card text-xs font-semibold text-ink focus:ring-0 focus:ring-offset-0">
+          <SelectTrigger
+            aria-label={ivory ? "Month" : undefined}
+            className={
+              ivory
+                ? "min-h-hec-target w-36 shrink-0 rounded-hec-md border-hec-line-strong bg-hec-raised text-hec-small text-hec-ink focus:ring-0 focus:ring-offset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+                : "h-9 w-[140px] shrink-0 rounded-full border-studio bg-studio-card text-xs font-semibold text-ink focus:ring-0 focus:ring-offset-0"
+            }
+          >
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent
+            data-hec-theme={ivory ? "ivory" : undefined}
+            className={ivory ? "rounded-hec-md border-hec-line bg-hec-raised text-hec-ink shadow-hec-2" : undefined}
+          >
             {Array.from({ length: 6 }, (_, i) => {
               const date = new Date();
               date.setMonth(date.getMonth() - i);
@@ -151,11 +189,11 @@ export function StudentClassLeaderboard({
       </div>
 
       {isLoading ? (
-        <div className="grid min-h-[260px] place-items-center p-8 text-sm text-ink-soft">
+        <div className={ivory ? "grid min-h-[260px] place-items-center p-8 text-hec-small text-hec-ink-soft" : "grid min-h-[260px] place-items-center p-8 text-sm text-ink-soft"}>
           Counting up this month's points…
         </div>
       ) : error ? (
-        <div className="grid min-h-[260px] place-items-center p-8 text-center text-sm text-ink-soft">
+        <div className={ivory ? "grid min-h-[260px] place-items-center p-8 text-center text-hec-small text-hec-ink-soft" : "grid min-h-[260px] place-items-center p-8 text-center text-sm text-ink-soft"}>
           This board could not be loaded right now.
         </div>
       ) : (
