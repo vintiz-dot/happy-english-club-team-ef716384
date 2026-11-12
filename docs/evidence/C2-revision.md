@@ -1,6 +1,6 @@
 # C2 revision - capture core fixes after the C2 review (FAIL)
 
-**Where I am / next step:** field finding (mic stops mid-lesson, clipping) added; unit 337/0. Running: mutations 27, 29-32 and the full pgtest run; then the browser suite again, totals, hand back.
+**Where I am / next step:** DONE. Every blocker, major, the field findings and the minors (two left, with reasons) are closed with tests; totals and mutation table below. Remaining: the owner's real-hardware list.
 
 Branch `worktree-agent-a4803c8e10a251526`, reset to `claude/hec-conductor-setup-efbaa5` (d0d18b7) first. Nothing applied, deployed or pointed at the live project; no audio in the repo (the lesson WAV is read in place by the browser harness); no new dependency. Files touched: `src/lib/recorder/**`, `scripts/recorder/**`, `supabase/functions/recorder-retention/index.ts`, `scripts/pgtest/recorder-retention.test.mjs`, `supabase/migrations/20261112100000_class_recorder.sql` (in place, ruling (a) only), `scripts/pgtest/recorder.test.mjs`, NEW `supabase/migrations/20261112101000_recorder_retention_cron.sql` + `scripts/pgtest/recorder-cron.test.mjs`, `scripts/pgtest/run.mjs` (one suite registered), `docs/evidence/C1-architecture.md` (Revision 4 changelog), this file. Not touched: `src/components/recorder/**`, `src/pages/TeacherRecorder.tsx`.
 
@@ -97,7 +97,11 @@ The review's 16: 16 caught (04 after one added case). New 8 for B1-B4/M1 (17-24)
 
 ## Test totals
 
-TOTALS
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0 (alone, and as "app typecheck" 3/0 in the full run, which asserts it loaded the source).
+- `node scripts/recorder/unit.test.mjs`: **337 passed, 0 failed** (was 195). Engine code final at a784575.
+- `node scripts/recorder/browser.test.mjs` (Chromium 145, fake devices, Playwright from `C:\Users\Dell\hec-tools\a0-harness`, port 5362, results in `C:\Users\Dell\hec-tools\c2r-harness\`): **62 assertions** (was 49): full run 59 passed / 3 failed, all three test expectations, not the engine: (1-2) "no errors" in the flac / opus runs failed on the NEW clipping warning - the lesson WAV really reaches 0 dBFS (4 warnings per run), now counted as info; (3) the stall-gap threshold (>= 200 ms) was above what a fast real resume leaves (180 ms), now > 0. Those sections re-run after the fix: 34/34. New browser cases: real `ctx.suspend()` and `ctx.close()` mid-recording (B1), the encoder runs in the Worker (M6).
+- `node scripts/pgtest/recorder-retention.test.mjs`: **37/0** (was 33). `recorder-cron.test.mjs`: **22/0** (new). Recorder SQL suite `recorder.test.mjs`: **406/0** (was 398).
+- `node scripts/pgtest/run.mjs`: **2799 assertions across 37 suites, 0 suite(s) failed** (C2 reported 2734 / 36; +1 suite "recorder cron").
 
 ## Real-hardware checks for the owner (replaces C2-capture-core's list)
 
