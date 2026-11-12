@@ -44,6 +44,9 @@ const m = (name) => join(migrations, name);
 const SUITES = [
   { name: "family payment month", file: "family-payment-month.test.mjs", migrations: [] },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
+  // Two overlapping enrollments of one class: the one created first prices
+  // the lesson, in both calculators, whatever order the rows are fetched in.
+  { name: "enrollment row order", file: "enrollment-order.test.mjs", migrations: [] },
   // A recalculation must not un-confirm or un-pay a bill. The real
   // calculate-tuition, -bulk and confirm-tuition handlers over an invoices
   // table carrying the real CHECK, carry, audit and freeze migrations; and

@@ -3,7 +3,7 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { requireRole } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
-import { enrollmentDiscounts } from "../_lib/enrollment-discounts.ts";
+import { enrollmentDiscounts, enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
 import { monthPayable } from "../_lib/invoice-status.ts";
 
 const corsHeaders = {
@@ -126,11 +126,14 @@ Deno.serve(async (req) => {
     const studentMap = new Map(students.map(s => [s.id, s]));
 
     // 2. All enrollments for these students
-    const allEnrollments: any[] = await fetchChunked(
+    // Read in id order (paging), then put in creation order: where two rows of
+    // one class overlap, the one created first prices the lesson - the same
+    // rule, by the same helper, as calculate-tuition. See enrollment-discounts.ts.
+    const allEnrollments: any[] = inCreationOrder(await fetchChunked<any>(
       supabase, "enrollments",
-      "id, student_id, class_id, discount_type, discount_value, discount_cadence, start_date, end_date, rate_override_vnd, allowed_days",
+      "id, created_at, student_id, class_id, discount_type, discount_value, discount_cadence, start_date, end_date, rate_override_vnd, allowed_days",
       "student_id", studentIds
-    );
+    ));
 
     // Group enrollments by student
     const enrollmentsByStudent = new Map<string, any[]>();
@@ -292,9 +295,7 @@ Deno.serve(async (req) => {
         const rateAdjustmentSavings = new Map<string, number>();
 
         for (const s of studentSessions) {
-          const enrollment = enrollments.find((e: any) =>
-            e.class_id === s.class_id && e.start_date <= s.date && (!e.end_date || e.end_date >= s.date)
-          );
+          const enrollment = enrollmentOn(enrollments, s.class_id, s.date);
           if (!enrollment) continue;
 
           const sessionDayOfWeek = getDayOfWeek(s.date);
