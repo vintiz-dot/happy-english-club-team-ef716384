@@ -180,3 +180,13 @@ Logs from the F-14 apply (21:54:55 UTC) to 22:01:
 - An admin opening an orphaned or any other file, and using the Pause tab.
 
 If a homework screen fails for a real user: `docs/evidence/S1-F14-rollback.sql` (reopens F-14).
+
+---
+
+# Part D - F-01, `20261113100000_signup_role_from_server_only.sql`
+
+Source: commit 42cf0dd4 (the migration corrected after the review: only a request for `teacher` gets no role; `admin` gets `student`). Asked for by the conductor after F-14 / F-15; owner approval D-18.
+
+**Part D, where I am / next step:** started. Next: D1 pre-checks (read-only). F-01 not applied yet.
+
+Conditions of the review, as I could check them: (1) the diff 9ad0a53a -> 42cf0dd4 of the migration is exactly review Change 1 (`IF v_requested IN ('teacher', 'admin')` became `IF v_requested = 'teacher'`, a WARNING for `admin`, header reworded); (2) `src/pages/Auth.tsx` at 6707d97d offers Student and Family only. That 6707d97d is what is deployed is the conductor's statement; I did not check the deploy.
