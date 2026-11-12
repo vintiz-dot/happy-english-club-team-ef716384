@@ -1,6 +1,6 @@
 # T2 - class-recordings bucket access
 
-Where I am / next step: Part 1 facts a-e written. Next: write migration 20261112120000, then the suite.
+Where I am / next step: migration + suite (81/0) committed; mutants running. Next: mutant results, recorder suite, full run, probes, rollback.
 
 ## Part 1 - facts
 
