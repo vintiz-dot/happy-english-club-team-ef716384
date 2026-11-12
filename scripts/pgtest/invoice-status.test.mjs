@@ -1266,10 +1266,32 @@ console.log('\nT4 fault 2 - Settle Bill: the balance is the bill\'s own, and a w
   r = await settleAs('discount', 100000);
   ok('the family discount still being decided: refused, nothing posted', r.status === 409 && !memoryWrites.some((w) => w.table === 'ledger_entries'), r.body);
 
-  await reset(); world();
-  fixture.settlements = [{ id: 'old-1', student_id: S1, month: MONTH, settlement_type: 'discount', amount: 100000, created_at: '2026-10-07T03:00:00.000Z' }];
-  r = await calc();
-  ok('a write-off made before the change (7 Oct) does not reprice the bill on its next view', r.body.totalAmount === 400000, r.body.discounts);
+  // Which write-offs count is decided by what posted them, not by a date
+  // (T4 review M2): the old settle-bill keyed its ledger 'settlement-discount-'.
+  const oldStyle = (when) => {
+    fixture.settlements = [{ id: 'old-1', student_id: S1, month: MONTH, settlement_type: 'discount', amount: 100000, tx_id: 'tx-old-wo', created_at: when }];
+    fixture.ledger_entries = [
+      { id: 'lo-1', tx_id: 'tx-old-wo', tx_key: `settlement-discount-${S1}-${MONTH}-1`, account_id: 'acc-DISCOUNT', debit: 100000, credit: 0, month: MONTH },
+      { id: 'lo-2', tx_id: 'tx-old-wo', tx_key: null, account_id: 'acc-AR', debit: 0, credit: 100000, month: MONTH },
+    ];
+  };
+  for (const [label, when] of [['made on 7 Oct', '2026-10-07T03:00:00.000Z'], ['made TODAY by the old function, before the deploy', new Date().toISOString()]]) {
+    await reset(); world(); oldStyle(when);
+    const one = await calc(); const many = await bulk();
+    ok(`a write-off posted by the OLD settle-bill (${label}) does not reprice the bill, in either calculator`,
+       one.body.totalAmount === 400000 && many.body.results?.[0]?.totalAmount === 400000, { one: one.body.discounts, many: many.body.results?.[0] });
+  }
+  await reset(); world(); oldStyle('2026-10-07T03:00:00.000Z');
+  fixture.ledger_entries[0].tx_key = `settlement-writeoff-${S1}-${MONTH}-1`;
+  const counted = await calc(); const countedBulk = await bulk();
+  ok('  the same row with the T4 key counts, in both (so the filter is the key alone)',
+     counted.body.totalAmount === 300000 && countedBulk.body.results?.[0]?.totalAmount === 300000, { one: counted.body.totalAmount, many: countedBulk.body.results?.[0]?.totalAmount });
+  await reset(); world(); oldStyle('2026-10-07T03:00:00.000Z');
+  fixture.ledger_entries[0].tx_key = `settlement-writeoff-${S1}-${MONTH}-1`;
+  failTables.add('ledger_entries');
+  const s2 = await calc(); const m2 = await bulk();
+  failTables.delete('ledger_entries');
+  ok('  their ledger legs cannot be read: both calculators fail', s2.status === 400 && m2.status === 400, { s2: s2.body, m2: m2.body });
 
   await reset(); world(); await calc();
   await confirm([(await bill()).id]);
@@ -1443,7 +1465,7 @@ console.log('\nT4 - scripts/CHECK-payment-paths.sql counts what each fault touch
     CREATE TABLE IF NOT EXISTS public.payment_deletions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), payment_id uuid, snapshot jsonb, deleted_at timestamptz DEFAULT now());
     CREATE TABLE IF NOT EXISTS public.payments (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid, family_id uuid, parent_payment_id uuid, amount integer);
     CREATE TABLE IF NOT EXISTS public.ledger_entries (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tx_id uuid, tx_key text, debit integer DEFAULT 0, credit integer DEFAULT 0, month text);
-    CREATE TABLE IF NOT EXISTS public.settlements (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid, month text, settlement_type text, amount integer, created_at timestamptz DEFAULT now());
+    CREATE TABLE IF NOT EXISTS public.settlements (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid, month text, settlement_type text, amount integer, tx_id uuid, created_at timestamptz DEFAULT now());
     CREATE TABLE IF NOT EXISTS public.referral_bonuses (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid, effective_from date, effective_to date);
   `);
   await reset(); world(); inFamilyOf();

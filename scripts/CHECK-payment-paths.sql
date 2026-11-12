@@ -44,16 +44,17 @@ SELECT
   count(*)                                                      AS bills
 FROM b;
 
--- 2b) settlements made so far, by type. counts_on_bill_after_t4: made from
---     2026-11-12 (SETTLEMENTS_ON_BILL_FROM) - the only ones the calculators
---     add to a bill. Expected 0 before the deploy; anything above 0 was made by
---     the OLD settle-bill and will reprice its bill at the next view - look first.
+-- 2b) settlements made so far, by type. counts_on_bill_after_t4: those whose
+--     ledger transaction is keyed 'settlement-writeoff-' - only the T4
+--     settle-bill writes that key, and only those are added to a bill by the
+--     calculators. Must be 0 before the deploy (the old function cannot make one).
 --     on_frozen_bill: a write-off there could never count (T4 refuses it).
 SELECT
   s.settlement_type,
   count(*)                                                                   AS settlements,
   coalesce(sum(s.amount), 0)                                                 AS amount_vnd,
-  count(*) FILTER (WHERE s.created_at >= '2026-11-12T00:00:00Z')            AS counts_on_bill_after_t4,
+  count(*) FILTER (WHERE s.settlement_type = 'discount' AND EXISTS (
+    SELECT 1 FROM public.ledger_entries e WHERE e.tx_id = s.tx_id AND e.tx_key LIKE 'settlement-writeoff-%')) AS counts_on_bill_after_t4,
   count(*) FILTER (WHERE i.tuition_frozen)                                   AS on_frozen_bill,
   count(*) FILTER (WHERE coalesce(i.carry_out_debt, 0) > 0)                  AS bill_still_shows_debt,
   max(s.created_at)::date                                                    AS last_made

@@ -4,7 +4,7 @@ import { requireRole } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts, enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
-import { monthPayable, SETTLEMENTS_ON_BILL_FROM, settledWriteOff } from "../_lib/invoice-status.ts";
+import { monthPayable, settledWriteOff } from "../_lib/invoice-status.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -217,9 +217,15 @@ Deno.serve(async (req) => {
     // 8b. Settle Bill write-offs of this month (see _lib/invoice-status.ts).
     const allSettlements: any[] = await fetchChunked(
       supabase, "settlements",
-      "id, student_id, settlement_type, amount, created_at",
+      "id, student_id, settlement_type, amount, tx_id",
       "student_id", studentIds,
-      (q: any) => q.eq("month", month).eq("settlement_type", "discount").gte("created_at", SETTLEMENTS_ON_BILL_FROM)
+      (q: any) => q.eq("month", month).eq("settlement_type", "discount")
+    );
+    // Their ledger legs say which the T4 settle-bill posted (settledWriteOff filters).
+    const settlementLegs: any[] = await fetchChunked(
+      supabase, "ledger_entries",
+      "id, tx_id, tx_key",
+      "tx_id", [...new Set(allSettlements.map((s) => s.tx_id).filter(Boolean))] as string[]
     );
     const settlementsByStudent = new Map<string, any[]>();
     for (const s of allSettlements) {
@@ -379,7 +385,7 @@ Deno.serve(async (req) => {
         let totalAmount = Math.max(0, baseAmount - totalDiscount);
         // Settle Bill write-off: the same line, in the same place, as calculate-tuition.
         const frozenInv = currentInvoiceMap.get(sid);
-        const writeOff = Math.min(settledWriteOff(settlementsByStudent.get(sid)), totalAmount);
+        const writeOff = Math.min(settledWriteOff(settlementsByStudent.get(sid), settlementLegs), totalAmount);
         if (writeOff > 0 && !frozenInv?.tuition_frozen) {
           totalDiscount += writeOff;
           totalAmount -= writeOff;

@@ -11,7 +11,6 @@ import {
   monthCharged,
   monthPayable,
   paidLabel,
-  SETTLEMENTS_ON_BILL_FROM,
   settledWriteOff,
   WRITE_OFF_NAME,
 } from "../_lib/invoice-status.ts";
@@ -157,11 +156,10 @@ Deno.serve(async (req) => {
       // Settle Bill write-offs of this month (see _lib/invoice-status.ts).
       supabase
         .from("settlements")
-        .select("settlement_type, amount, created_at")
+        .select("settlement_type, amount, tx_id")
         .eq("student_id", studentId)
         .eq("month", month)
-        .eq("settlement_type", "discount")
-        .gte("created_at", SETTLEMENTS_ON_BILL_FROM),
+        .eq("settlement_type", "discount"),
     ]);
 
     const { data: student, error: studentError } = studentRes;
@@ -186,6 +184,15 @@ Deno.serve(async (req) => {
     if (discountAssignmentsRes.error) throw new Error("Unable to read the student's discounts");
     if (referralBonusesRes.error) throw new Error("Unable to read the student's referral bonuses");
     if (settlementsRes.error) throw new Error("Unable to read the month's settlements");
+    // Which of them the T4 settle-bill posted: their ledger legs say (the
+    // filter itself is settledWriteOff's, in _lib/invoice-status.ts).
+    const settlementTxIds = [...new Set((settlementsRes.data ?? []).map((s: any) => s.tx_id).filter(Boolean))];
+    let settlementLegs: any[] = [];
+    if (settlementTxIds.length) {
+      const legsRes = await supabase.from("ledger_entries").select("tx_id, tx_key").in("tx_id", settlementTxIds);
+      if (legsRes.error) throw new Error("Unable to read the month's settlements");
+      settlementLegs = legsRes.data ?? [];
+    }
     const discountAssignments = discountAssignmentsRes.data;
     const referralBonuses = referralBonusesRes.data;
 
@@ -414,7 +421,7 @@ Deno.serve(async (req) => {
     // A Settle Bill write-off lowers what the month charges, after every other
     // discount and never below 0 (settle-bill caps it at the month's charge).
     // A frozen bill keeps its saved figures (below), so nothing is added there.
-    const writeOff = Math.min(settledWriteOff(settlementsRes.data), totalAmount);
+    const writeOff = Math.min(settledWriteOff(settlementsRes.data, settlementLegs), totalAmount);
     if (writeOff > 0 && currentInvoiceRes.data?.tuition_frozen !== true) {
       discounts.push({ name: WRITE_OFF_NAME, type: "amount", value: writeOff, amount: writeOff, isSettlement: true });
       totalDiscount += writeOff;

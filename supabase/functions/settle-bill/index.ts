@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { WRITE_OFF_KEY_PREFIX } from '../_lib/invoice-status.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -151,7 +152,11 @@ Deno.serve(async (req) => {
       await insertEntries([
         {
           tx_id: txId,
-          tx_key: `settlement-discount-${studentId}-${month}-${Date.now()}`,
+          // This key is what makes the write-off count on the bill: both
+          // calculators add only settlements whose ledger transaction starts
+          // WRITE_OFF_KEY_PREFIX (_lib/invoice-status.ts). The old function
+          // wrote 'settlement-discount-...', which stays ledger-only.
+          tx_key: `${WRITE_OFF_KEY_PREFIX}${studentId}-${month}-${Date.now()}`,
           account_id: accountMap.get('DISCOUNT'),
           debit: settledAmount,
           credit: 0,
