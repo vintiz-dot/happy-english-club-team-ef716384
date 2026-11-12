@@ -520,6 +520,12 @@ money_changes_checked_bulk(p_items jsonb, p_reason text, p_batch_id uuid, p_cont
 record_money_change_event(p_override_id uuid, p_kind text, p_payload jsonb DEFAULT '{}') RETURNS uuid
 money_change_guard_status() RETURNS jsonb
 change_enrollment_terms(p_enrollment_id uuid, p_terms jsonb, p_effective_date date) RETURNS jsonb   -- G-12 set_terms_from
+attendance_change_allowed(p_session_id uuid, p_marks jsonb) RETURNS jsonb
+     -- STABLE. Caller: admin, or is_teacher_of_class for the lesson's class (else 42501). Answers only
+     -- {allowed, refused:[{student_id}]}: a mark that crosses the billable line in a month whose
+     -- tuition_month_state tier >= 1. No bill state is returned (a teacher may not learn it; D-review-1 A-1).
+log_money_automation_refused(p_entity text, p_target uuid, p_source text) RETURNS uuid
+     -- service_role only (auth.uid() must be NULL), insert-only, decides nothing; twin of log_session_automation_refused.
 -- internal, granted to nobody:
 _money_change_plan (p_entity text, p_op text, p_args jsonb, p_uid uuid) RETURNS jsonb     -- STABLE
 _money_change_apply(p_entity text, p_op text, p_args jsonb, p_reason text, p_token text, p_confirm boolean,
@@ -622,5 +628,74 @@ set_change_approval_settings(p_patch jsonb, p_reason text) RETURNS jsonb
 change_approval_status() RETURNS jsonb     -- {enabled, admins, single_admin, pending, expired, settings}
 ```
 Their rules are section (e). One more trigger, active only while `enabled`: `zz_admin_grant_guard BEFORE INSERT OR UPDATE ON public.user_roles` - a row with `role = 'admin'` written on the person or service lane without a claimed request is refused with HC060 (otherwise an admin makes a second login and approves themselves).
+
+---
+
+## (d) Edge-function and `src` changes, file by file
+
+Rules for all of it (D2's, unchanged): a person-initiated write to a guarded table goes through the caller's own client (`callerClient`), never the service key; a guarded change is `preview` -> confirm with the token; a missing RPC answers `503 guard_not_installed` and writes nothing, no fallback; after a committed change an exception in the after-work is not reported as a failed change.
+
+### Edge functions
+
+**`supabase/functions/_lib/session-guard.ts`** (track A)
+- `SQLSTATE`: add HC023 `[409,'born_status']`, HC024 `[409,'attendance_identity']`, HC025 `[409,'attendance_requires_checked_path']`, HC060 `[409,'approval_required']`, HC061 `[403,'self_approval']`, HC062 `[409,'request_not_pending']`, HC063 `[409,'approval_already_pending']`, HC064 `[410,'request_expired']`, HC065 `[409,'approval_setting_locked']`, HC120 `[409,'money_requires_checked_path']`, HC121 `[409,'money_refused']` with the texts of b.4. For HC025, HC120, HC121 and HC060 the DETAIL is passed through (`kind`, `tier`, `code`, `reasons`).
+- `HC015` map: add `not_held`, `already_held`, `not_started`, `same_teacher`, `teacher_not_found`, `not_frozen`, `nothing_to_change`, `approval_not_needed` (all 409 except `teacher_not_found` 404).
+- `preview()` accepts the ops `unhold | hold | reteach | retime | restaff`; new `previewCreate(asCaller, session)` calling `session_create_preview`.
+- `storedConsequences()` passes `floor`, `level_now` and `impact` through unchanged; adds `approval: {required, reasons}` read from the preview.
+
+**`supabase/functions/_lib/money-guard.ts`** (new, track B; imports only from `session-guard.ts`): `moneyPreview`, `moneyConfirm`, `refreshMoneyChange(service, asCaller, overrideId)` (reads `refresh_pairs` of a `money_change_overrides` row as the caller, runs `refreshPairs`, records `record_money_change_event`).
+
+**`supabase/functions/manage-session/index.ts`** (track A)
+- `preview`: ops list becomes `cancel, delete, move, uncancel, unhold, hold, reteach, retime, restaff`; `op: 'create'` takes `data.session` and calls `previewCreate`.
+- `change-status` (`:242-250`): the plain update is removed. Held -> Scheduled: `readAck()` then `confirmed('unhold', id, 'session_status_checked', {p_to: 'Scheduled', ...})`. Scheduled -> Held: call `preview(asCaller, id, 'hold')`; `kind === null` (a person's mark exists) -> plain update as the caller, as today; else `readAck()` and `session_status_checked` with `p_to: 'Held'`.
+- `update` (`:289-327`): `status` is no longer written at all (a status in the body that differs from the lesson's -> `409 requires_checked_path, use_action: 'change-status'`). A `teacher_id` that differs on a Held lesson -> `409 requires_checked_path, use_action: 'set-teacher'`. Notes, `rate_override_vnd`, `is_manual`, and the teacher of a lesson that is not Held stay a plain update as the caller.
+- new actions `set-teacher` (`session_teacher_checked`), `set-time` (`session_time_checked`), `set-staff` (`session_staff_checked`), each `readAck()` + `confirmed(...)`.
+- `move` (`:262-273`): when the preview's `kind` is null and the lesson is Held and a time differs, re-preview as `retime` and require the token (no more silent `plain_update` on a Held lesson). Scheduled lessons keep `plain_update`.
+- `create` (`:427-453`): `status` from the caller is ignored (always Scheduled; a body asking for another status -> `409 born_status`). Not started: `asCaller.from('sessions').insert(...)` - the service key leaves this action. Started: `readAck()` then `create_session_checked`; then the standard tuition refresh over the returned `refresh_pairs`.
+- `refresh-tuition`: unchanged.
+- Every `confirmed(...)` maps HC060 to `409 approval_required` with `{reasons, can_request: true}`; new action `request-approval` forwards to `request_change_approval` with the same body the confirm had. (Approve / reject / withdraw are called by the UI directly as RPCs; they need no function.)
+
+**`supabase/functions/bulk-cancel-sessions/index.ts`** (track A): nothing but the code map; a lesson refused with HC060 comes back in `refused` with `code: 'approval_required'`.
+
+**`supabase/functions/mark-attendance/index.ts`** (track A)
+- The caller is an admin: the attendance upsert (`:160-162`) and the Held flip (`:174-178`) are made with `callerClient` instead of the service client, so G-9 / G-10 / G-11 and the `hold` kind bind. HC025 `retro_mark` -> `409 attendance_requires_checked_path` with `{tier, month, use: 'money_change_checked'}`; the screen then opens the guard dialog.
+- The caller is a teacher: before the service write, for every entry whose new status crosses the billable line against the stored row, call `tuition_month_state` through a small admin-or-teacher RPC `attendance_change_allowed(p_session_id, p_marks jsonb) RETURNS jsonb` (c.2, STABLE, returns `{allowed, refused:[{student_id, tier}]}` and reveals no money state beyond allowed / not allowed). Any refused -> `409 attendance_requires_checked_path` with the teacher wording, nothing written.
+- HC024 / HC025 from the database are mapped, never retried with the service key.
+
+**`supabase/functions/schedule-sessions/index.ts`** (track A): at `:698-708`, when the Held time update returns HC020, push the lesson to `attention` with `reason: 'held_time_not_changed'` and call `log_session_automation_refused(id, 'schedule-sessions:include-held')`. `normalizeFutureHeld` (`:427-430`): read the row count back and report lessons kept Held by the guard; the broken `.like()` filter is NOT repaired (MASTER_PLAN Q9 stands).
+
+**`supabase/functions/update-enrollment-rate/index.ts`** (track B): the service-key update at `:57` is replaced by `callerClient(...).rpc('money_change_checked', {p_entity: 'enrollment', p_op: 'set_rate', ...})`; the body gains `token`, `confirm`, `correction_reason`; without a token at T1+ it answers `409 preview_required` with the preview. `reason` stops being optional at T1+. A service-role caller (`caller.isServiceRole`) is refused: nothing internal calls it (grep before removing; if something does, it must pass a user JWT).
+
+**`supabase/functions/admin-data-import/index.ts`** (track B): before the loop at `:94`, `select id from payments limit 1`; when a row exists the tables `sessions, attendance, enrollments, discount_assignments, discount_definitions` are skipped with `results[table] = { error: 'closed_on_a_live_system' }`. Dry run unchanged. HC120 / HC121 / HC020 from an upsert are reported per table, not thrown.
+
+**`supabase/functions/guarded-change-refresh/index.ts`** (new, track B; admin only, `verify_jwt = true` in `config.toml`): `{action: 'refresh', override_id}` -> `refreshMoneyChange`; `{action: 'log-refused', ...}` is service-role only and writes the `automation_refused` event through `log_money_automation_refused`. It prices nothing: it calls calculate-tuition for the stored pairs, exactly as `refreshAndRecord` does for lessons.
+
+**`supabase/functions/chat/**`**: no change. `ai_action_apply` / `ai_action_undo` are not given any new caller.
+
+**Not touched:** calculate-tuition, calculate-payroll, close-payroll-month, confirm-tuition, the payment functions, stars-sync (its SQL engine is not re-created; G-1 is built so it need not be).
+
+### `src`
+
+Pure helpers (tested by pgtest suites, no React):
+- **`src/lib/sessionGuard.ts`** (track A): `GuardOp` adds `unhold | hold | reteach | retime | restaff | create`; `GuardPreview` adds `level_now`, `floor`, `impact`, `approval`; `ERROR_TEXT` gets every new code of b.4; `actionLabel` / `COPY` / `guidanceFor` for the new ops ("Mark as not held", "Mark as held without a register", "Change teacher", "Change time", "Change assistants", "Add a past lesson"); `evidenceList` appends the floor's causes under the heading "Removed since"; `OverrideRow` adds `approved_by`, `approval_request_id`; `TIER_WORDS` unchanged.
+- **`src/lib/moneyGuard.ts`** (new, track B): types for the money preview, `reachRows(preview)` (child, month, state word, stored bill), `stateWord` (`none` -> "No bill yet", `issued` -> "Billed, not paid", `paid` -> "Paid", `signed` -> "Confirmed", `frozen` -> "Frozen"), `moneyRequirements`, `canSubmitMoney`, `moneyActionLabel(entity, op)`. Reuses `checkReason`, `formatVnd`, `parseInvokeError` from `sessionGuard.ts`.
+- **`src/lib/approvals.ts`** (new, step C): `approvalReasonText` (`tier3` -> "A taught lesson whose money is settled", `closed_payroll` -> "A closed payroll month", `families` -> "Bills of N or more families", `paid` -> "More than X already paid", `unfreeze` -> "Unfreezing a bill", `settings` -> "Loosening the approval rule"), `requestState`, `canApprove(request, me)`.
+
+Components, track A (`src/components/admin/session-guard/` and the lesson screens):
+- `api.ts`, `useGuardedChange.ts`: the new ops and the `create` flow; on `approval_required` the hook exposes `requestApproval()`.
+- `GuardDialog.tsx`, `EvidenceCards.tsx`: the "Removed since" card; per-op headline and consequence sentence; when `approval.required`, the destructive button reads "Send for approval" and the footer says who can approve (names from `change_approval_status`).
+- `SessionActionsModal.tsx`: Held <-> Scheduled opens the dialog (`unhold` / `hold`).
+- `class/AttendanceDrawer.tsx:141-160` (teacher swap), `class/SessionDetailDrawer.tsx:108-118`, `EditSessionModal.tsx`: on a Held lesson the teacher change goes through `set-teacher`, times through `set-time`, assistants through `set-staff`; on a lesson that is not Held nothing changes. `AttendanceDrawer.tsx:246` (assistant attended): try the plain write, on HC020 `kind=restaff` open the dialog.
+- `AddSessionModal.tsx`: a past date / started time runs the `create` preview and dialog.
+- `TeacherScheduleTransfer.tsx`: no behaviour change (Scheduled only); its error toast uses `errorText` so an HC020 from a lesson that became Held meanwhile reads properly.
+- `SessionGenerator.tsx`, `SessionGeneratorConfirm.tsx`: the include-held option is removed, with one line of help text ("Lessons already held are changed one at a time, with a reason").
+- `PastAttendanceEditor.tsx` (track B, it needs M2): on `409 attendance_requires_checked_path` open `MoneyGuardDialog` for `('attendance','set_marks')`.
+
+Components, track B (new folder `src/components/admin/money-guard/`): `api.ts` (`supabase.rpc('money_change_preview' | 'money_change_checked' | 'money_changes_checked_bulk')`, then `guarded-change-refresh`), `useMoneyChange.ts` (preview -> T0: confirm at once, no dialog; T1+: dialog), `MoneyGuardDialog.tsx` (reuses `Fields.tsx` and the layout of `GuardDialog.tsx`), `ReachTable.tsx`, `MoneyChangesReview.tsx` (the money queue with "Mark as reviewed"). Callers rewired to `useMoneyChange`, each replacing the raw write named in (a):
+`BulkEnrollmentDateSetter.tsx` (bulk), `class/ClassEnrollments.tsx` (`:51`, `:220`), `ModifyEnrollmentModal.tsx` (rate `:268`; the three RPC calls become ops `set_days`, `end`, `transfer`; new field "from which date" using `set_terms_from`), `discount/EditEnrollmentDiscountModal.tsx`, `EnrollmentRateEditor.tsx` (rate via the function; weekdays via `set_days` with the first day of the reviewed month - the in-place write at `:99-102` goes), `EnrollStudentDialog.tsx`, `StudentForm.tsx`, `EnrollmentRequestsManager.tsx` (`enroll`), `discount/AssignDiscountModal.tsx`, `discount/StudentDiscountsTab.tsx`, `discount/EditDiscountModal.tsx`, `DiscountManager.tsx`, `class/ClassSettings.tsx` (fee field only), `staff/PayRateHistory.tsx` (the upsert and the mirror update become one `('pay_rate','set')`), `student/BillFreezePanel.tsx` (unfreeze only), `tabs/DataTab.tsx` (shows the closed tables), `src/lib/aiActions.ts` (wording for `needs_reason_path`).
+
+Step C (after both tracks): `src/components/admin/approvals/ApprovalInbox.tsx` (pending, mine, history; approve / reject / withdraw), `ApprovalSettingsCard.tsx`, `PendingApprovalBadge.tsx` (on the lesson drawer and the enrolment row); `CancelOverridesReview.tsx` gains tabs "Lessons | Other changes | Approvals" and shows requested-by / approved-by; `AdminAlerts.tsx` one line "N changes waiting for a second administrator"; `tabs/AutomationTab.tsx` mounts the three (conductor merges; shared file).
+
+`src/integrations/supabase/types.ts`: regenerated by the conductor after the paste (it lags, per memory); the new code reads the new tables and RPCs through typed wrappers in the two `api.ts` files so nothing else depends on it.
 
 <!-- END -->
