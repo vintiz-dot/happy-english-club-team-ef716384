@@ -151,12 +151,12 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 
 | Stream | Units | Done | What is done |
 |---|---|---|---|
-| D money integrity | 18.5 | 10.5 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
+| D money integrity | 18.5 | 12.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
 | A overhaul | 12.0 | 8.9 | A0, A1, A2.1, A2.2 (shipped), A2.3, A3.1-A3.4, A4.1, A4.2, A4.5 merged; release 1 being gated. Left: A3.5-A3.7, A4.3, A4.4, rollout, A5 |
 | B lesson monitor evaluation | 10.5 | 4.7 | vendor research, audio prep, harness, vendor proxy live, B1 batch runner + scoring built (owner batch run pending). Left: B1 results, B2, B2b, B3, report |
 | C class recorder | 8.0 | 2.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **26.6** | **52%** |
+| **Total** | **51.0** | **28.1** | **55%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -269,3 +269,7 @@ Log: 2026-11-12 - 52% (B1 runner and scoring merged).
 - 2026-11-12 B1 batch runner + scoring merged (sonnet, 3ac24d9). Owner command: `vendor_batch.py --login` under scripts/lesson-eval, run with the venv python (sign in once, plan shown, type YES). Conductor dry-ran the plan (no network): 7 systems x 148 audio minutes (12 synthetic mixes, 17 held-out clips, first 20 min of L1-L3, and L1's compressed twin as L4), 1027 minutes to send, estimated USD 8.57 (prices mostly unconfirmed). First scored numbers from the two saved Azure pieces only: speakers found 5 and 5 against 3 and 5 true; diarization error 0.35 and 0.56 (pooled 0.49: miss 0.23, false alarm 0.01, confusion 0.25) - two files, proves the pipeline and nothing more. Local faster-whisper wrote 24 words where Azure wrote about 190 on the same 120 s, on a shared CPU: not a usable comparison yet (B2b on a quiet machine). No word-accuracy number exists or may be claimed: there is no human transcript of any audio; the teacher check sheet is docs/LESSON_MONITOR_TEACHER_CHECK.md.
 - Pre-existing exposure for A5 (found by the recorder critic, not changed): in the existing `class-recordings` bucket the policy "staff_manage_class_recordings" lets ANY teacher read, overwrite and delete any class's uploaded lesson audio (20260717090000:35-48).
 - 2026-11-12 Conductor full pgtest run on the merged branch (D ship fixes + recorder revision 1 + audit-eval): 2618 assertions across 35 suites, 0 suite(s) failed, exit 0.
+Log: 2026-11-12 - 55% (D3 review passed; D release being assembled).
+
+- 2026-11-12 D3 review merged (opus, f030bee): PASS AFTER FIXES - 0 blocker, 6 major, 5 minor, all fixed (error parsing for three supabase-js error classes; "Nothing was changed" shown after an unanswered confirm; a late answer reaching a closed dialog; stale bills after token_stale; unclear bulk results), aligned to the final contract (stored bills, no pay figure), "Mark as reviewed" added on the existing RPC. Mobile defect cause: the shared `spring-in` keyframes replace the centring translate during the 0.4 s open animation; fixed in GuardDialog by centring with inset + margin. Conductor looked at the re-taken 375 screenshot: whole dialog on screen, Keep lesson primary, sticky footer. NOTE for A: every OTHER dialog in the app still jumps for 0.4 s on open (fix belongs in ui/dialog.tsx). Item 8, executed probe on the real migrations: the five remaining direct writes (teacher swaps, notes, bulk teacher transfer, the teacher's Scheduled -> Held flip) are ALLOWED by the guard on future, started, Held and settled lessons - nothing breaks on apply.
+- D RELEASE: a sonnet agent assembles migrations + functions + dialogs on top of origin/main (leak check against A/C/B/design work), runs tsc, the full pgtest run and bun tests, and writes a catalog FINGERPRINT (md5 of every function body, triggers, policies, grants) so that after the conductor applies the migrations through the Supabase connection the live database can be proven identical to the repo text - the connection re-types the SQL, so this check is the guard against a silent alteration. Brief: docs/evidence/D-release-brief.md. Then: apply 20261112090000 -> deploy both functions -> apply 20261112091000 -> push.
