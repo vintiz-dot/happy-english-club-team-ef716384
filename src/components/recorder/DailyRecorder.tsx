@@ -201,7 +201,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
         </span>
         <span className="tabular-nums text-lg">{startedAt ? clock(tick - startedAt) : "00:00"}</span>
         <span className="min-w-0 break-words">{lesson?.className}</span>
-        <Button variant="secondary" className="ml-auto min-h-11 text-base" onClick={() => setConfirmStop(true)}>
+        <Button className="ml-auto min-h-11 text-base bg-background text-foreground hover:bg-background/90 font-semibold" onClick={() => setConfirmStop(true)}>
           <Square className="h-4 w-4 mr-2" aria-hidden /> Stop
         </Button>
       </div>
