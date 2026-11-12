@@ -131,7 +131,7 @@ export function TodayAgenda() {
                 transition={{ delay: i * 0.05 }}
                 className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 rounded-hec-md border border-hec-line bg-hec-surface p-3"
               >
-                <div className="flex min-w-0 flex-1 items-start gap-3">
+                <div className="flex min-w-0 flex-1 basis-56 items-start gap-3">
                   <div className="shrink-0 whitespace-nowrap pt-0.5 text-hec-caption tabular-nums text-hec-ink-soft">
                     {s.startTime}–{s.endTime}
                   </div>
