@@ -128,7 +128,7 @@ await section('F-11 through the deployed function: the floor holds the tier', as
   const list = lib.evidenceList(p.body.preview);
   const removed = list.filter((e) => e.removed);
   ok('src/lib/sessionGuard: evidenceList lists the two removals under "Recorded, and later removed", after the current items',
-     removed.length === 2 && removed.every((e) => e.text.startsWith('Recorded, and later removed: ')) &&
+     removed.length === 2 && lib.COPY.floorRemoved === 'Recorded, and later removed' &&
      list.findIndex((e) => e.removed) === list.length - 2 && removed.some((e) => /Points awarded/.test(e.text)) &&
      removed.some((e) => /transcript/.test(e.text)) && removed.every((e) => /by a staff member/.test(e.text)), list.map((e) => e.text));
   ok('src/lib/sessionGuard: floorNote says the lesson once had strong evidence and shows none now',

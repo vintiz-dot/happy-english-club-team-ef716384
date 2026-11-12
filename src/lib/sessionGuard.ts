@@ -497,13 +497,17 @@ const FLOOR_WHO: Record<string, string> = {
   owner: "from the database console",
 };
 
-/** One floor cause in words: "Recorded, and later removed: ... on 12 Nov 2026 at 18:05, by a staff member". */
+/**
+ * One floor cause in words, shown under the heading COPY.floorRemoved
+ * ("Recorded, and later removed"): "Points awarded that day were removed or
+ * moved to another day on 12 Nov 2026 at 18:05, by a staff member".
+ */
 export function describeFloorCause(c: FloorCause): string {
   const what = (c.what && FLOOR_WHAT[c.what]?.(c)) ?? `${String(c.what ?? c.table ?? "a record").replace(/_/g, " ")} changed`;
   const day = formatDay(c.at ?? null);
   const at = formatClock(c.at ?? null);
   const who = FLOOR_WHO[c.lane ?? ""] ?? "";
-  return `${COPY.floorRemoved}: ${what}${day ? ` on ${day}${at ? ` at ${at}` : ""}` : ""}${who ? `, ${who}` : ""}`;
+  return `${what}${day ? ` on ${day}${at ? ` at ${at}` : ""}` : ""}${who ? `, ${who}` : ""}`;
 }
 
 /**

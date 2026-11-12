@@ -20,6 +20,9 @@ export function EvidenceCards({ preview }: { preview: GuardPreview }) {
   const items = all.filter((e) => !e.removed);
   const removed = all.filter((e) => e.removed);
   const once = floorNote(preview);
+  // The floor's own entries (source "floor") are listed in the block above;
+  // this sentence counts the audit-log ones, as before D4.
+  const erased = (preview.erased_recently ?? []).filter((x) => x?.source !== "floor");
   const strong = preview.level === "STRONG";
   const some = mode === "some";
 
@@ -90,10 +93,10 @@ export function EvidenceCards({ preview }: { preview: GuardPreview }) {
         </div>
       )}
 
-      {preview.erased_recently && preview.erased_recently.length > 0 && (
+      {erased.length > 0 && (
         <p className="rounded-xl border border-warning/50 bg-warning/10 p-3 text-sm break-words">
           <span className="font-semibold">{COPY.erasedNote}. </span>
-          {preview.erased_recently.length === 1 ? "One record about this lesson was removed shortly before this change." : `${preview.erased_recently.length} records about this lesson were removed shortly before this change.`}
+          {erased.length === 1 ? "One record about this lesson was removed shortly before this change." : `${erased.length} records about this lesson were removed shortly before this change.`}
         </p>
       )}
     </section>
