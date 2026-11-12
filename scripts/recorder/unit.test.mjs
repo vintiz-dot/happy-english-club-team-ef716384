@@ -302,7 +302,8 @@ function world(o = {}) {
   server.addUser(OTHER, ["teacher"]);
   server.addClass(CLASS, { teachers: [TEACHER], ...o.cls });
   const sid = o.sid ?? crypto.randomUUID();
-  server.addSession(sid, { class_id: CLASS, start: clock + 5 * 60000, end: clock + 5 * 60000 + (o.lessonMs ?? 90 * 60000), teacher_id: TEACHER });
+  const start = o.start ?? clock + 5 * 60000;
+  server.addSession(sid, { class_id: CLASS, start, end: start + (o.lessonMs ?? 90 * 60000), teacher_id: TEACHER });
   const client = (uid) => makeClient((q) => server.handle(q, uid));
   return { server, sid, client, backend: R.supabaseBackend(client(TEACHER)) };
 }
@@ -618,7 +619,7 @@ console.log("=== the server refuses: switch off, consent, not a teacher, cancell
   }
   {
     clock = Date.parse("2026-11-12T09:30:00.000Z");
-    const w = world();
+    const w = world({ start: Date.parse("2026-11-12T10:00:00.000Z") });
     const { r } = recorder(w, new R.MemoryStore(), new FakeSource());
     await r.prepare();
     await throwsLike("arm refused: too early (more than 20 min before)", () => r.arm(entry(w.sid)), /too_early/);
