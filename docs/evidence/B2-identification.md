@@ -91,4 +91,18 @@ On the time split (3ds_campp, cosine, closed set of 26; run 2026-11-12, `work\b2
 VAD check (one-speaker hypothesis, miss rate of reference speech): silero threshold 0.5 missed 27-90 %, silero 0.3 missed 10-74 %, energy VAD 6 dB missed 8-28 %; false alarm 0 % in all (the mixes contain little non-speech, so false alarm is not tested here; in a real room the energy VAD will also pass noise).
 Reading: even on these clean-source mixes, the local diarizer gets more than half of the speech time wrong and does not find the right number of children. A cluster in a real lesson is therefore NOT reliably one child: it can merge children, and one child can be split over clusters. That limits everything in section 6.
 
+## 4. Model comparison on the final units (closed set of 21 enrolled, realistic s500* pool, all window lengths)
+
+From the `b2_eval.py` logs (run 2026-11-12; ECAPA/TitaNet rows written before a session restart cut those runs short; full tables in section 5). EER = top-1 verification EER, closed + leave-one-out open set. Chance top-1 = 1/21 = 4.8 %.
+
+| model | best-EER config | EER | top-1 (closed) | cosine baseline (vad-all-mean-cos) EER / top-1 |
+|---|---|---|---|---|
+| **ecapa** (SpeechBrain, VoxCeleb) | vad-all-k3-asnorm | **25.5 %** | **68.4 %** | 34.0 % / 68.2 % |
+| titanet_l (NeMo) | vad-all-k2-asnorm | 33.3 % | 41.1 % | 44.1 % / 41.3 % |
+| wes_campp (WeSpeaker CAM++) | raw-all-mean-asnorm | 40.4 % | 14.0 % | 45.1 % / 13.4 % |
+| 3ds_campp (3D-Speaker CAM++) | vad-all-k3-asnorm | 37.5 % | 9.4 % | 60.1 % / 16.1 % |
+| wes_r34lm, 3ds_eres2v2 | not run on final units | - | - | eres2v2 ran at RTF ~1.4 under load (~4 h); dropped for time |
+
+Reading: the two CAM++ models are close to chance on these children's voices; ECAPA is clearly the best of the four, TitaNet second. Adaptive s-norm (cohort = the other enrolled children) lowers ECAPA's EER from 34 % to 26-29 %; sub-centroids (k2/k3) add a little; enrolment length 10 / 20 / 40 s / all gives top-1 53 / 62 / 65 / 68 % (cosine) - more enrolment helps, but with no data beyond ~140 s per child we cannot say where it stops. Raw-clip enrolment (no VAD, no adult-pitch filter) is close to the cleaned enrolment for ECAPA (65.2 vs 68.2 % top-1), because the 30 s floor keeps the adult-dominated clips (S13) out of the gallery.
+
 **Statistical caveat stated once for every table:** confidence intervals are 95 % Wilson intervals over windows, treating windows as independent. They are not: all windows come from 15 children and from 20-90 s of speech each, so the true uncertainty is wider than shown, above all for per-child figures.
