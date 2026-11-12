@@ -189,7 +189,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
       setDevices(p.devices);
       setNotDurable(r.durable === false);
       await r.recover();
-      setStuck((await r.heldAudio().catch(() => [] as HeldAudio[])).filter((h) => h.overLimit));
+      setStuck((await r.heldAudio().catch(() => [] as HeldAudio[])).filter((h) => h.overLimit || !!h.deleteAt));
       if (r.state === "ready" || r.state === "idle") setState(r.state);
     } catch (e: any) {
       showError(e?.code ? e : { code: "internal", message: String(e?.message ?? e) } as RecorderError);
