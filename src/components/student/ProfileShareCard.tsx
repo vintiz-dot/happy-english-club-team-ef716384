@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { getAvatarUrl } from "@/lib/avatars";
 import { getLevelTitle } from "@/lib/levelUtils";
 import { Share2, Download, Star, Zap, Flame } from "lucide-react";
-import html2canvas from "html2canvas";
 import { toast } from "sonner";
 
 interface ProfileShareCardProps {
@@ -32,6 +31,7 @@ export function ProfileShareCard({
     if (!cardRef.current) return;
     setSaving(true);
     try {
+      const { default: html2canvas } = await import("html2canvas");
       const canvas = await html2canvas(cardRef.current, {
         backgroundColor: null,
         scale: 2,
@@ -66,92 +66,72 @@ export function ProfileShareCard({
   const title = getLevelTitle(level);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* The card that is saved as an image: ink, ivory type, one brass rule. */}
       <div
         ref={cardRef}
-        className="relative rounded-2xl overflow-hidden p-6"
-        style={{
-          background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary)))",
-          backgroundSize: "200% 200%",
-        }}
+        className="relative overflow-hidden rounded-hec-lg bg-hec-action p-6 text-hec-on-action shadow-hec-2"
       >
-        {/* Decorative dots */}
-        <div className="absolute inset-0 opacity-10">
-          {Array.from({ length: 30 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute rounded-full bg-white"
-              style={{
-                width: `${Math.random() * 4 + 2}px`,
-                height: `${Math.random() * 4 + 2}px`,
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-            />
-          ))}
-        </div>
-
-        <div className="relative flex items-center gap-4">
+        <div className="relative flex items-start gap-4">
           {/* Avatar */}
-          <Avatar className="h-20 w-20 border-4 border-white/30 shadow-xl">
+          <Avatar className="h-20 w-20 shrink-0 border border-hec-on-action/30">
             <AvatarImage src={getAvatarUrl(avatarUrl) || undefined} alt={name} className="object-cover" />
-            <AvatarFallback className="text-xl font-bold bg-white/20 text-white">{initials}</AvatarFallback>
+            <AvatarFallback className="bg-hec-on-action/10 font-sans text-xl font-semibold text-hec-on-action">{initials}</AvatarFallback>
           </Avatar>
 
           {/* Info */}
-          <div className="flex-1 text-white space-y-1">
-            <h3 className="text-2xl font-black drop-shadow-md">{name}</h3>
+          <div className="min-w-0 flex-1 space-y-1">
+            <h3 className="whitespace-normal break-words text-balance font-display text-hec-h1 font-medium [hyphens:none]">{name}</h3>
             {statusMessage && (
-              <p className="text-sm italic text-white/80">"{statusMessage}"</p>
+              <p className="break-words text-hec-small italic text-hec-on-action/80">"{statusMessage}"</p>
             )}
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-white" />
-              <span className="font-bold text-sm">{title}</span>
-              <span className="text-white/60 text-xs ml-1">LV {level}</span>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="text-hec-small font-medium">{title}</span>
+              <span className="text-hec-caption tabular-nums text-hec-on-action/80">LV {level}</span>
             </div>
           </div>
         </div>
 
         {/* Stats row */}
-        <div className="relative flex justify-around mt-5 pt-4 border-t border-white/20">
-          <div className="text-center text-white">
-            <Zap className="h-5 w-5 mx-auto mb-1 fill-white" />
-            <p className="text-xl font-black">{totalXp}</p>
-            <p className="text-xs text-white/70">Total XP</p>
+        <div className="relative mt-6 grid grid-cols-3 gap-2 border-t border-hec-brass pt-4">
+          <div className="text-center">
+            <Zap className="mx-auto mb-1 h-5 w-5 text-hec-on-action/80" aria-hidden />
+            <p className="font-sans text-hec-h2 font-semibold tabular-nums">{totalXp}</p>
+            <p className="text-hec-caption text-hec-on-action/80">Total XP</p>
           </div>
-          <div className="text-center text-white">
-            <Star className="h-5 w-5 mx-auto mb-1 fill-white" />
-            <p className="text-xl font-black">{level}</p>
-            <p className="text-xs text-white/70">Level</p>
+          <div className="text-center">
+            <Star className="mx-auto mb-1 h-5 w-5 text-hec-on-action/80" aria-hidden />
+            <p className="font-sans text-hec-h2 font-semibold tabular-nums">{level}</p>
+            <p className="text-hec-caption text-hec-on-action/80">Level</p>
           </div>
-          <div className="text-center text-white">
-            <Flame className="h-5 w-5 mx-auto mb-1 fill-white" />
-            <p className="text-xl font-black">{currentStreak}</p>
-            <p className="text-xs text-white/70">Streak</p>
+          <div className="text-center">
+            <Flame className="mx-auto mb-1 h-5 w-5 text-hec-on-action/80" aria-hidden />
+            <p className="font-sans text-hec-h2 font-semibold tabular-nums">{currentStreak}</p>
+            <p className="text-hec-caption text-hec-on-action/80">Streak</p>
           </div>
         </div>
 
         {/* Watermark */}
-        <p className="relative text-center text-[10px] text-white/40 mt-3 font-medium">
+        <p className="relative mt-4 text-center font-display text-hec-caption tracking-wider text-hec-on-action/80">
           Happy English Club ✨
         </p>
       </div>
 
-      <Button
+      <button
+        type="button"
         onClick={handleShare}
         disabled={saving}
-        variant="outline"
-        className="w-full gap-2"
+        className="inline-flex min-h-hec-target w-full items-center justify-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised px-6 text-hec-body font-medium text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
       >
         {saving ? (
           <>Saving...</>
         ) : (
           <>
-            <Share2 className="h-4 w-4" />
+            <Share2 className="h-4 w-4" aria-hidden />
             Share Profile Card
           </>
         )}
-      </Button>
+      </button>
     </div>
   );
 }

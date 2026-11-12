@@ -49,6 +49,33 @@ const SUITES = [
     file: "cancelled-lessons.test.mjs",
     migrations: ["20261027090000_cancelled_lesson_attendance_guard.sql"],
   },
+  { name: "session held evidence", file: "session-evidence.test.mjs", migrations: ["20261027090000_cancelled_lesson_attendance_guard.sql", "20261112090000_session_held_evidence.sql"] },
+  // The cancellation guard on top of the real audit trigger, the real
+  // cancelled-lesson guard and the evidence function, in paste order.
+  {
+    name: "session cancel guard",
+    file: "session-cancel-guard.test.mjs",
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+    ],
+  },
+  // manage-session and bulk-cancel-sessions bundled and driven with
+  // requests, their Supabase clients a stand-in for PostgREST over the same
+  // real migrations: the checked RPCs run, and every sessions write is
+  // checked to be on the admin's own JWT.
+  {
+    name: "session guard functions",
+    file: "session-guard-functions.test.mjs",
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+    ],
+  },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.
@@ -177,11 +204,13 @@ const SUITES = [
     file: "audit-clips.test.mjs",
     migrations: ["20261111090000_audit_voice_clips.sql", "20261111100000_audit_clips_youtube_links.sql"],
   },
+  { name: "audit eval proxy (TEMP)", file: "audit-eval.test.mjs", migrations: ["20261112110000_audit_eval_bucket.sql"] },
   {
     name: "ta standing assignments",
     file: "ta-standing.test.mjs",
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql"],
   },
+  { name: "class recorder", file: "recorder.test.mjs", migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql"] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",

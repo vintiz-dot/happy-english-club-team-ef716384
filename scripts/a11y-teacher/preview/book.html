@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Stand-in book (local, made up)</title>
+<style>
+  html, body { margin: 0; height: 100%; font: 22px system-ui, sans-serif; background: #fffdf5; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  #pg { font-size: 40px; font-weight: 700; }
+  button { font-size: 22px; min-width: 88px; min-height: 64px; }
+</style>
+</head>
+<body>
+  <!-- Stand-in for a third-party flipbook embed. It is served from a different origin than the app
+       (localhost vs 127.0.0.1), has 60 pages, pushes one history entry per turn like the real hosts
+       do (TeacherBooks.tsx:435-437), and tells the parent page about every load and every turn. -->
+  <div id="pg">Page 1 / 60</div>
+  <div><button id="prev" type="button">Prev</button> <button id="next" type="button">Next</button></div>
+  <script>
+    var N = 60, page = 1, loadId = Math.random().toString(36).slice(2);
+    function post(type) { try { parent.postMessage({ source: 'a2-book', type: type, page: page, loadId: loadId, href: location.href }, '*'); } catch (e) {} }
+    function show() { document.getElementById('pg').textContent = 'Page ' + page + ' / ' + N; }
+    function turn(d) {
+      var p = Math.min(N, Math.max(1, page + d)); if (p === page) return;
+      page = p; history.pushState({ page: page }, '', '#p' + page); show(); post('page');
+    }
+    document.getElementById('next').onclick = function () { turn(1); };
+    document.getElementById('prev').onclick = function () { turn(-1); };
+    window.addEventListener('message', function (e) { if (e.data && e.data.a2turn) turn(e.data.a2turn); });
+    window.addEventListener('popstate', function (e) { page = (e.state && e.state.page) || 1; show(); post('page'); });
+    show(); post('load');
+  </script>
+</body>
+</html>

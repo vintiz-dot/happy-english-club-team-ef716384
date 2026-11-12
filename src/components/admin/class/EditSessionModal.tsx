@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { GuardDialog } from "@/components/admin/session-guard/GuardDialog";
+import { manageSession } from "@/components/admin/session-guard/api";
+import { errorText, type GuardOp } from "@/lib/sessionGuard";
 
 interface EditSessionModalProps {
   session: {
@@ -26,6 +29,8 @@ const EditSessionModal = ({ session, onClose, onSaved }: EditSessionModalProps) 
   const [status, setStatus] = useState(session.status || "Scheduled");
   const [notes, setNotes] = useState(session.notes || "");
   const [saving, setSaving] = useState(false);
+  // Status into or out of Canceled is a checked change: it opens the guard dialog.
+  const [guardOp, setGuardOp] = useState<GuardOp | null>(null);
 
   const { data: teachers } = useQuery({
     queryKey: ["teachers"],
@@ -41,22 +46,32 @@ const EditSessionModal = ({ session, onClose, onSaved }: EditSessionModalProps) 
   });
 
   const handleSave = async () => {
+    const from = session.status || "Scheduled";
+    if (from === "Canceled" && status !== "Canceled" && status !== "Scheduled") {
+      toast.error("A cancelled lesson can only be restored to Scheduled.");
+      return;
+    }
+    const cancelling = from !== "Canceled" && status === "Canceled";
+    const restoring = from === "Canceled" && status === "Scheduled";
+
     setSaving(true);
     try {
-      const { error } = await supabase.functions.invoke("manage-session", {
-        body: {
-          action: "update",
-          data: {
-            id: session.id,
-            teacher_id: teacherId || null,
-            rate_override_vnd: rate ? parseInt(rate) : null,
-            status,
-            notes: notes || null,
-          },
-        },
-      });
-
-      if (error) throw error;
+      const data: Record<string, unknown> = {
+        id: session.id,
+        teacher_id: teacherId || null,
+        rate_override_vnd: rate ? parseInt(rate) : null,
+        notes: notes || null,
+      };
+      // Any status change except into/out of Canceled is a plain update.
+      if (!cancelling && !restoring && status !== from) data.status = status;
+      const res = await manageSession("update", data);
+      if (!res.ok) throw new Error(errorText(res.error.code, res.error.message));
+      if (cancelling || restoring) {
+        // The other fields are saved; the status itself waits for the check.
+        toast.success("Other changes saved. Now check the status change.");
+        setGuardOp(cancelling ? "cancel" : "uncancel");
+        return;
+      }
       toast.success("Session updated successfully");
       onSaved();
     } catch (error: any) {
@@ -66,6 +81,18 @@ const EditSessionModal = ({ session, onClose, onSaved }: EditSessionModalProps) 
       setSaving(false);
     }
   };
+
+  if (guardOp) {
+    return (
+      <GuardDialog
+        open
+        session={{ id: session.id }}
+        op={guardOp}
+        onClose={() => setGuardOp(null)}
+        onDone={() => onSaved()}
+      />
+    );
+  }
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -99,9 +126,9 @@ const EditSessionModal = ({ session, onClose, onSaved }: EditSessionModalProps) 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Scheduled">Scheduled</SelectItem>
-                <SelectItem value="Held">Held</SelectItem>
-                <SelectItem value="Canceled">Canceled</SelectItem>
-                <SelectItem value="Holiday">Holiday</SelectItem>
+                <SelectItem value="Held" disabled={session.status === "Canceled"}>Held</SelectItem>
+                <SelectItem value="Canceled">Canceled (checked first)</SelectItem>
+                <SelectItem value="Holiday" disabled={session.status === "Canceled"}>Holiday</SelectItem>
               </SelectContent>
             </Select>
           </div>
