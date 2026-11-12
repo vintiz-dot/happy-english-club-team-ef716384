@@ -82,14 +82,14 @@ export function TodayAgenda() {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Clock className="h-4 w-4" /> Today's Agenda
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-hec-ink-soft" aria-hidden /> Today's Agenda
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-12 bg-muted rounded-lg" />
+              <div key={i} className="h-12 rounded-hec-md bg-hec-sunken" />
             ))}
           </div>
         </CardContent>
@@ -100,23 +100,23 @@ export function TodayAgenda() {
   const sessions = data?.sessions || [];
 
   return (
-    <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+    <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-              <Clock className="h-4 w-4 text-white" />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <CardTitle className="flex items-center gap-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-hec-md bg-hec-sunken text-hec-ink-soft">
+              <Clock className="h-5 w-5" aria-hidden />
             </div>
             Today's Agenda
           </CardTitle>
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="secondary" className="whitespace-nowrap tabular-nums">
             {sessions.length} {sessions.length === 1 ? "session" : "sessions"}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
         {sessions.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">No classes today 🎉</p>
+          <p className="py-4 text-center text-hec-small text-hec-ink-soft">No classes today 🎉</p>
         ) : (
           sessions.map((s, i) => {
             const markedCount = s.attendance?.total || 0;
@@ -126,35 +126,35 @@ export function TodayAgenda() {
             return (
               <motion.div
                 key={s.id}
-                initial={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className="flex items-center justify-between p-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors"
+                className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 rounded-hec-md border border-hec-line bg-hec-surface p-3"
               >
-                <div className="flex items-center gap-3">
-                  <div className="text-xs font-mono text-muted-foreground whitespace-nowrap">
+                <div className="flex min-w-0 flex-1 basis-56 items-start gap-3">
+                  <div className="shrink-0 whitespace-nowrap pt-0.5 text-hec-caption tabular-nums text-hec-ink-soft">
                     {s.startTime}–{s.endTime}
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold">{s.className}</p>
-                    <p className="text-xs text-muted-foreground">{s.teacherName}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="whitespace-normal break-words text-hec-small font-semibold text-hec-ink">{s.className}</p>
+                    <p className="whitespace-normal break-words text-hec-caption text-hec-ink-soft">{s.teacherName}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
                   {s.status === "Held" && (
-                    <Badge className="bg-success/20 text-success text-[10px]">Done</Badge>
+                    <Badge variant="success">Done</Badge>
                   )}
                   {s.status === "Scheduled" && (
-                    <Badge variant="outline" className="text-[10px]">Upcoming</Badge>
+                    <Badge variant="outline">Upcoming</Badge>
                   )}
                   {/* Attendance completion indicator */}
                   {enrolledCount > 0 && (
-                    <span className={`text-[10px] font-mono ${isFullyMarked ? "text-emerald-600" : "text-muted-foreground"}`}>
+                    <span className={`whitespace-nowrap text-hec-caption tabular-nums ${isFullyMarked ? "text-hec-leaf" : "text-hec-ink-soft"}`}>
                       {markedCount}/{enrolledCount}
                     </span>
                   )}
                   {s.attendance && (
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="whitespace-nowrap text-hec-caption tabular-nums text-hec-ink-soft">
                       {s.attendance.present}P{s.attendance.absent > 0 ? ` ${s.attendance.absent}A` : ""}
                     </span>
                   )}

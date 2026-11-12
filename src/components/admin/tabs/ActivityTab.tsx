@@ -62,9 +62,9 @@ interface Response {
 const PAGE = 50;
 
 const OPERATION = {
-  INSERT: { label: "Created", icon: Plus, tone: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" },
-  UPDATE: { label: "Changed", icon: Pencil, tone: "bg-sky-500/10 text-sky-700 dark:text-sky-300" },
-  DELETE: { label: "Deleted", icon: Trash2, tone: "bg-rose-500/10 text-rose-700 dark:text-rose-300" },
+  INSERT: { label: "Created", icon: Plus, tone: "bg-hec-leaf-tint text-hec-leaf" },
+  UPDATE: { label: "Changed", icon: Pencil, tone: "bg-hec-sunken text-hec-ink-soft" },
+  DELETE: { label: "Deleted", icon: Trash2, tone: "bg-hec-danger-tint text-hec-danger" },
 } as const;
 
 /** Values in a diff are arbitrary JSON; render them without exploding. */
@@ -102,20 +102,20 @@ function Entry({
   const canExpand = !!row.diff && (fields.length > 0 || !!row.diff.old || !!row.diff.new);
 
   return (
-    <li className="border-b border-border/60 last:border-0">
+    <li className="border-b border-hec-line last:border-0">
       <button
         type="button"
         onClick={() => canExpand && setOpen((v) => !v)}
         aria-expanded={canExpand ? open : undefined}
         className={cn(
-          "flex w-full items-start gap-3 px-3 py-3 text-left transition-colors",
-          canExpand && "hover:bg-muted/50",
+          "flex min-h-hec-target w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hec-ring",
+          canExpand && "hover:bg-hec-sunken/60",
         )}
       >
         <span
           className={cn(
-            "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg",
-            op?.tone ?? "bg-muted text-muted-foreground",
+            "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-hec-md",
+            op?.tone ?? "bg-hec-sunken text-hec-ink-soft",
           )}
         >
           <Icon className="h-4 w-4" aria-hidden />
@@ -123,24 +123,24 @@ function Entry({
 
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-baseline gap-x-2">
-            <span className="font-semibold capitalize">{headline}</span>
+            <span className="break-words text-hec-small font-semibold capitalize text-hec-ink">{headline}</span>
             {fields.length > 0 && (
-              <span className="text-xs text-muted-foreground">
+              <span className="break-words text-hec-caption text-hec-ink-soft">
                 {fields.slice(0, 4).join(", ")}
                 {fields.length > 4 ? ` +${fields.length - 4} more` : ""}
               </span>
             )}
           </span>
-          <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">{actorName}</span>
-            <span>·</span>
-            <time dateTime={row.occurred_at} title={dayjs(row.occurred_at).format("D MMM YYYY, HH:mm:ss")}>
+          <span className="mt-1 flex flex-wrap items-center gap-x-2 text-hec-caption text-hec-ink-soft">
+            <span className="whitespace-normal break-words font-medium text-hec-ink">{actorName}</span>
+            <span aria-hidden>·</span>
+            <time className="tabular-nums" dateTime={row.occurred_at} title={dayjs(row.occurred_at).format("D MMM YYYY, HH:mm:ss")}>
               {dayjs(row.occurred_at).format("D MMM, HH:mm")}
             </time>
             {row.entity_id && (
               <>
-                <span>·</span>
-                <code className="rounded bg-muted px-1 py-0.5 text-[10px]">
+                <span aria-hidden>·</span>
+                <code className="rounded-hec-sm bg-hec-sunken px-1 text-hec-caption text-hec-ink-soft">
                   {row.entity_id.slice(0, 8)}
                 </code>
               </>
@@ -150,21 +150,21 @@ function Entry({
 
         {canExpand &&
           (open ? (
-            <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            <ChevronDown className="mt-1 h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
           ) : (
-            <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
           ))}
       </button>
 
       {open && row.diff && (
-        <div className="px-3 pb-3 pl-14">
-          <div className="overflow-hidden rounded-lg border">
-            <table className="w-full text-xs">
-              <thead className="bg-muted/60">
+        <div className="px-4 pb-3 sm:pl-14">
+          <div className="overflow-hidden rounded-hec-md border border-hec-line">
+            <table className="w-full text-hec-caption text-hec-ink">
+              <thead className="bg-hec-sunken">
                 <tr>
-                  <th className="px-2 py-1.5 text-left font-semibold">Field</th>
-                  <th className="px-2 py-1.5 text-left font-semibold">Before</th>
-                  <th className="px-2 py-1.5 text-left font-semibold">After</th>
+                  <th className="px-2 py-2 text-left text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">Field</th>
+                  <th className="px-2 py-2 text-left text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">Before</th>
+                  <th className="px-2 py-2 text-left text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">After</th>
                 </tr>
               </thead>
               <tbody>
@@ -175,12 +175,12 @@ function Entry({
                       ...Object.keys(row.diff.new ?? {}),
                     ])]
                 ).map((field) => (
-                  <tr key={field} className="border-t">
-                    <td className="px-2 py-1.5 font-medium">{field.replace(/_/g, " ")}</td>
-                    <td className="max-w-[18rem] truncate px-2 py-1.5 text-muted-foreground">
+                  <tr key={field} className="border-t border-hec-line">
+                    <td className="break-words px-2 py-2 align-top font-medium">{field.replace(/_/g, " ")}</td>
+                    <td className="max-w-[18rem] whitespace-normal break-words px-2 py-2 align-top tabular-nums text-hec-ink-soft">
                       {show(row.diff?.old?.[field])}
                     </td>
-                    <td className="max-w-[18rem] truncate px-2 py-1.5">
+                    <td className="max-w-[18rem] whitespace-normal break-words px-2 py-2 align-top tabular-nums">
                       {show(row.diff?.new?.[field])}
                     </td>
                   </tr>
@@ -189,7 +189,7 @@ function Entry({
             </table>
           </div>
           {(row.client_ip || row.user_agent) && (
-            <p className="mt-1.5 truncate text-[11px] text-muted-foreground">
+            <p className="mt-2 truncate text-hec-caption text-hec-ink-soft">
               {row.client_ip ?? "unknown IP"}
               {row.user_agent ? ` · ${row.user_agent}` : ""}
             </p>
@@ -272,12 +272,12 @@ export default function ActivityTab() {
         <CardContent className="space-y-3">
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hec-ink-faint" aria-hidden />
               <Input
                 value={search}
                 onChange={(e) => resetTo(() => setSearch(e.target.value))}
                 placeholder="Search action or record id"
-                className="pl-8"
+                className="pl-9"
                 aria-label="Search the activity log"
               />
             </div>
@@ -325,17 +325,17 @@ export default function ActivityTab() {
           </div>
 
           {isError && (
-            <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
-              <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
+            <div className="flex items-start gap-2 rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-3 text-hec-small text-hec-ink">
+              <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-hec-danger" aria-hidden />
               <span>{(error as Error)?.message ?? "Could not load the activity log."}</span>
             </div>
           )}
 
-          <div className="rounded-xl border">
+          <div className="rounded-hec-lg border border-hec-line bg-hec-surface">
             {isLoading ? (
-              <p className="p-8 text-center text-sm text-muted-foreground">Loading activity…</p>
+              <p className="p-8 text-center text-hec-small text-hec-ink-soft">Loading activity…</p>
             ) : (data?.logs.length ?? 0) === 0 ? (
-              <p className="p-8 text-center text-sm text-muted-foreground">
+              <p className="p-8 text-center text-hec-small text-hec-ink-soft">
                 Nothing matches those filters.
               </p>
             ) : (
@@ -355,8 +355,8 @@ export default function ActivityTab() {
             )}
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-hec-caption tabular-nums text-hec-ink-soft">
               {total > 0
                 ? `${page * PAGE + 1}–${Math.min((page + 1) * PAGE, total)} of ${total.toLocaleString()}`
                 : "No entries"}
