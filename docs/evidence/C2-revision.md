@@ -58,7 +58,42 @@ Reading: the CPU spent is the same (it moved, it did not shrink); what changes i
 
 `.probe/mut.mjs` (throwaway, deleted): each mutant a copy of `src/lib/recorder` under `.probe/m/<n>/`, `unit.test.mjs` run against it via `RECORDER_SRC`. CAUGHT = a FAIL or a non-zero exit.
 
-MUTATION_TABLE
+| # | Mutant | Result (passed/failed) | What noticed |
+|---|---|---|---|
+| 01 | store deletes bytes of unconfirmed chunks | CAUGHT 310/8 | store cases; "M2: audio the server does not have is kept" |
+| 02 | confirmed bytes deleted before complete | CAUGHT 316/2 | NEW "M8: while a healthy recording runs, confirmed chunks still hold their bytes" (the review: only one incidental assertion) |
+| 03 | bytes deleted after upload, before the read-back confirm | CAUGHT 314/4 | same + "its bytes are kept" (readback case) |
+| 04 | **read-back checksum not compared** | SURVIVED 318/0 on the first run (the fake server's own sha check refused the bad confirm, so every assertion held) -> case added -> **CAUGHT 318/1** | NEW "the page itself compares the read-back: it never asks the server to confirm bytes that did not round-trip" |
+| 05 | wrong sequence on salvage | CAUGHT 315/3 | reload case |
+| 06 | echoCancellation requested true | CAUGHT 317/1 | constraints |
+| 07 | read-back never reports a flag left on | CAUGHT 317/1 | constraints |
+| 08 | bucket constant changed | CAUGHT (run crashed after the bucket assertions failed) | bucket |
+| 09 | **server's late flag ignored** | CAUGHT 317/1 | NEW "the server's own late flag is taken, not the page's estimate" (`forceLate`) |
+| 10 | FLAC CRC-16 wrong | CAUGHT (the suite's decoder throws) | as in the review |
+| 11 | FLAC CRC-8 wrong | CAUGHT (crash) | as in the review |
+| 12 | **manifest read-back not compared** | CAUGHT 316/2 | NEW manifest corrupt-download case |
+| 13 | **discard without the typed word** | CAUGHT 316/2 | NEW "a lower-case 'discard' is refused" + "nothing was thrown away" |
+| 14 | scheduled stop 15 min after the window | CAUGHT 317/2 | window case + B2 "3 h wrong from boot" |
+| 15 | server's abandoned answer to Stop not reported | CAUGHT 317/2 | late-tab case |
+| 16 | **chunks registered newest first** | CAUGHT 318/1 | NEW "a backlog is registered oldest first per track" |
+| 17 | B1 watchdog never fires | CAUGHT 310/9 | B1 |
+| 18 | B1 a stall keeps the recording state | CAUGHT 317/2 | B1 "never `recording`" |
+| 19 | B1 context never re-made | CAUGHT 316/3 | B1 rebuild |
+| 20 | B2 `serverNow()` on the wall clock | CAUGHT 317/2 | B2 +3 h ends the lesson as `scheduled_end` |
+| 21 | B3 audio before the Start answer dropped | CAUGHT 315/4 | B3 held audio, sample-exact compare |
+| 22 | B3 late stamp not re-anchored | CAUGHT 314/5 | B3 25 s travel |
+| 23 | B4 every Stop failure final | CAUGHT 316/3 | B4 503 / JWT |
+| 24 | M1 every local recording "mine" | CAUGHT 313/6 | M1 |
+| 25 | M3 a refused chunk dropped, not held | CAUGHT 316/3 | M3 |
+| 26 | M2 no purge after complete | CAUGHT 317/2 | M2 |
+| 27 | M4 late Stop sent before the uploads | SURVIVED 319/0 on the first run (the case had nothing pending when the tab died) -> case changed (last chunks offline) -> **CAUGHT 335/2** | "the late tab uploaded its chunks FIRST" |
+| 28 | ruling (a) no `mic_silent` | CAUGHT 318/1 | ruling (a) client |
+| 29 | field: reopen by id only | CAUGHT 333/4 | field: re-acquired by label |
+| 30 | field: give up after 60 s again | CAUGHT 331/6 | field: still sought, re-acquired after 90 s |
+| 31 | field: devicechange ignored | CAUGHT 335/2 | field: devicechange |
+| 32 | field: no clipping on the meter | CAUGHT 336/1 | field: clipping |
+
+The review's 16: 16 caught (04 after one added case). New 8 for B1-B4/M1 (17-24): 8 caught. Extra 8 (25-32): 8 caught (27 after the case was fixed). Mutants 01-26 and 28 ran against the suite before the field cases were added (318-319 assertions); 04 was re-run after its case was added, 27 and 29-32 against the final suite. SQL (ruling (a), `.probe/sqlmut.mjs` against `recorder.test.mjs`): S1 below_floor counts as live CAUGHT 405/1; S2 never flagged CAUGHT 402/4; S3 a silent-only track counts in `tracks_with_audio` CAUGHT 405/1; S4 40-byte minimum removed CAUGHT (crash). `.probe/` (copies, scripts, outputs) deleted afterwards; only its own files.
 
 ## Test totals
 
