@@ -1,9 +1,12 @@
 """Delete ALL voice-enrolment artefacts (children's biometric data) in one command.
 
 Removes everything under <root>\\work\\voiceprints\\ (embeddings, enrolment
-lists, score caches) and any *.voiceprint.* / *_embeddings.* file elsewhere
-under <root>\\work\\. Source media and other derived files are untouched; use
-delete_all_derived.py for those.
+lists, score caches; B2 adds voiceprints\\b2\\<model>.embeddings.npz for every
+model and voiceprints\\b2\\lessons\\<L>_<cluster>.voiceprint.npy for lesson
+clusters) and any *.voiceprint.* / *_embeddings.* / *.embeddings.* file
+elsewhere under <root>\\work\\. Source media and other derived files (B2's
+work\\b2\\units.npz audio cuts, work\\teacher-check\\ samples) are untouched;
+use delete_all_derived.py for those.
 
     python delete_voiceprints.py            # asks for confirmation
     python delete_voiceprints.py --yes      # no prompt
@@ -19,7 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import WORK  # noqa: E402
 
-PATTERNS = ["*.voiceprint.*", "*_embeddings.*", "*.embedding.*"]
+PATTERNS = ["*.voiceprint.*", "*_embeddings.*", "*.embedding.*", "*.embeddings.*"]
 
 
 def targets(work: Path) -> list[Path]:

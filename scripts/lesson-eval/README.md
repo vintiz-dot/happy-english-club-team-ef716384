@@ -80,3 +80,25 @@ It asks for the admin email, then the password (hidden). Check the sign-in alone
     C:\Users\Dell\hec-audio-eval\.venv\Scripts\python.exe scripts\lesson-eval\vendor_run.py --login --whoami
 
 A non-admin account is refused by the proxy (HTTP 403); the script says so in plain words. `HEC_ADMIN_JWT` still works as before; without it, on a terminal, the script prompts as if `--login` were given.
+
+## Speaker identification (B2, `docs/evidence/B2-identification.md`)
+
+All outputs stay under `work\`; embeddings and lesson-cluster voiceprints under `work\voiceprints\b2\`
+(`delete_voiceprints.py --yes` removes them); unit audio `work\b2\units.npz` and teacher samples
+`work\teacher-check\` go with `delete_all_derived.py --yes`. Ungated models only; no token.
+
+```powershell
+PY scripts\lesson-eval\fetch_models.py                 # sherpa-onnx embedding + segmentation ONNX into models\sherpa
+PY scripts\lesson-eval\b2_units.py --seed 11           # time re-split, windows inside utterances, 1/2/4/8 s x clean/s500/overlap
+PY scripts\lesson-eval\b2_embed.py --model ecapa --threads 2       # also wes_campp, 3ds_campp, titanet_l (wes_r34lm, 3ds_eres2v2)
+PY scripts\lesson-eval\b2_eval.py --models ecapa --json work\b2\results_ecapa.json   # closed + leave-one-out open set, thresholds
+PY scripts\lesson-eval\b2_report.py --diag-model ecapa > work\b2\report.md          # Markdown tables, codes only
+PY scripts\lesson-eval\b2_lessons.py tune --engine own --diar-model 3ds_campp --thresholds=-0.1,0.0,0.1,0.2,0.3
+PY scripts\lesson-eval\b2_lessons.py run --lessons L1,L2,L3 --minutes 20 --diar-model 3ds_campp --diar-threshold 0.1 `
+   --id-model ecapa --id-config vad-all-k3-asnorm --threshold 4.7264
+PY -m pytest scripts\lesson-eval\tests -q -p no:cacheprovider
+```
+
+`b2_lessons.py run` writes `work\teacher-check\check_sheet.csv` (cluster, suggestion or UNKNOWN, score, blank
+teacher answer) and one 10-20 s WAV per cluster, by code only. Every suggestion is a guess for a teacher to
+confirm; nothing is linked.
