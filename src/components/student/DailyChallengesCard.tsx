@@ -38,7 +38,7 @@ export function DailyChallengesCard({
     <section className={cn(CARD, "h-full")}>
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <span
               className={cn(
@@ -69,6 +69,7 @@ export function DailyChallengesCard({
         {/* Overall Progress */}
         <Progress
           value={(completedCount / challenges.length) * 100}
+          aria-label="Challenges completed today"
           className="h-2 bg-hec-sunken"
         />
 
@@ -108,6 +109,7 @@ export function DailyChallengesCard({
                   <div className="mt-2">
                     <Progress
                       value={(challenge.progress / challenge.target) * 100}
+                      aria-label={`${challenge.title} progress`}
                       className="h-1.5 bg-hec-sunken"
                     />
                     <p className="mt-1 text-hec-caption tabular-nums text-hec-ink-soft">

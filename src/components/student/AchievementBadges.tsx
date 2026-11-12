@@ -1,8 +1,7 @@
 import { Lock, Trophy, Star, Zap, Crown } from "lucide-react";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { CARD_TITLE } from "@/components/student/nova/ivory";
+import { CARD_TITLE, FOCUS } from "@/components/student/nova/ivory";
 
 interface Badge {
   id: string;
@@ -117,8 +116,14 @@ export function AchievementBadges({
         </span>
       </div>
 
-      <ScrollArea className="w-full">
-        <div className="flex gap-3 pb-3 pt-1">
+      {/* A keyboard-focusable strip: it scrolls sideways inside the card, never the page. */}
+      <div
+        role="region"
+        aria-label="Achievement badges"
+        tabIndex={0}
+        className={cn("w-full overflow-x-auto rounded-hec-md scrollbar-hide", FOCUS)}
+      >
+        <div className="flex gap-3 px-1 pb-3 pt-2">
           <TooltipProvider>
             {badges.map((badge) => (
               <Tooltip key={badge.id}>
@@ -171,8 +176,7 @@ export function AchievementBadges({
             ))}
           </TooltipProvider>
         </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      </div>
     </div>
   );
 }

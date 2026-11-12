@@ -154,9 +154,10 @@ export function StudentNavBar() {
                     IVORY_FOCUS,
                   )}
                 >
-                  {active && <span aria-hidden className="absolute top-0 h-0.5 w-6 rounded-full bg-hec-brass" />}
+                  {active && <span aria-hidden className="absolute left-1/2 top-0 h-0.5 w-6 -translate-x-1/2 rounded-full bg-hec-brass" />}
                   <Icon className="h-5 w-5" aria-hidden />
-                  <span>{item.label}</span>
+                  {/* One short word per tab (DESIGN_SYSTEM section 15): "Dashboard" does not fit five across at 375. */}
+                  <span className="whitespace-nowrap">{item.id === "dashboard" ? "Home" : item.label}</span>
                 </button>
               );
             })}
@@ -171,7 +172,7 @@ export function StudentNavBar() {
                 IVORY_FOCUS,
               )}
             >
-              {isMoreActive && <span aria-hidden className="absolute top-0 h-0.5 w-6 rounded-full bg-hec-brass" />}
+              {isMoreActive && <span aria-hidden className="absolute left-1/2 top-0 h-0.5 w-6 -translate-x-1/2 rounded-full bg-hec-brass" />}
               <MoreHorizontal className="h-5 w-5" aria-hidden />
               <span>More</span>
             </button>
