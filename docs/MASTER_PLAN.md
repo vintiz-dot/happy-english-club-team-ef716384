@@ -152,11 +152,11 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 | Stream | Units | Done | What is done |
 |---|---|---|---|
 | D money integrity | 18.5 | 6.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
-| A overhaul | 12.0 | 2.0 | A0 baseline, A1 plan. Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
+| A overhaul | 12.0 | 2.4 | A0 baseline, A1 plan, A3.3 (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
 | B lesson monitor evaluation | 10.5 | 3.0 | vendor research, audio prep, harness. Left: B1, B2, B2b, B3, report |
 | C class recorder | 8.0 | 1.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **12.5** | **25%** |
+| **Total** | **51.0** | **12.9** | **25%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -199,3 +199,5 @@ MONITOR_GO
 Log: 2026-11-12 - 25% (B0 harness merged).
 
 - 2026-11-12 B0 harness complete and merged (opus, 0241f04). The owner's new recording is lesson L3: 76.7 min, 48 kHz AAC mono; cross-correlation against the other five files matched 0 of 24 windows (max 0.30-0.36), so it is a separate recording. Unique lesson audio is now THREE recordings, about 300 min. First local identification run (SpeechBrain ECAPA, 23 children enrolled, 3 held out as open-set, synthetic mixes): equal error rate 26-39%; at a 1% false-accept target only 11-53% of turns get a name and the rest stay UNKNOWN; about 100 turns per set is too few to demonstrate a 1% rate (the scorer flags it). Read plainly: with these short, compressed video clips as enrolment, voice identification of children is NOT reliable enough to name speakers - this is an upper-bound setting and it is already weak. B2 must test better embeddings / longer enrolment before any conclusion; the monitor design must assume "unknown" is the common case. pyannote still needs a Hugging Face token (not requested). B2 (opus) is queued behind the A wave-1 agents because eight processes on eight cores would distort every measurement.
+- D-11 (2026-11-12, owner, verbatim): "keep everything local and continue." No cloud session. Keep-awake requested for the session; a closed lid still sleeps.
+- 2026-11-12 A3.3 merged (sonnet, 127088c): parent view batched to one request per table with the original per-child code kept as fallback (on error or >=1000 rows). Conductor reviewed the diff (same tables, columns, caller client; `maybeSingle` semantics for 0 and >1 rows preserved) and re-ran `npx --yes bun test scripts/familyDashboardBatch.test.ts`: 6 pass, 0 fail - serialised output byte-identical for 1, 2 and 6 children. Requests on the fake: 2 children 11 -> 7; 6 children 30 -> 7. Harness parent-view figure (78 -> about 24) is the agent's calculation; G5 measures it after the wave. Not shipped yet: goes with the wave after G1-G6 on the merged branch.
