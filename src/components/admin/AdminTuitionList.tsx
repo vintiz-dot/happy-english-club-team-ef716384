@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getPaymentStatus, getTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { RecordPaymentDialog } from "@/components/admin/RecordPaymentDialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useIvory } from "@/hooks/useIvory";
 
 const fmt = (n: number) => n.toLocaleString("vi-VN") + " ₫";
 
@@ -26,6 +27,8 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
   const [confirmationFilter, setConfirmationFilter] = useState<string>("all");
   const [paymentItem, setPaymentItem] = useState<any>(null);
   const navigate = useNavigate();
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
 
   const { data: tuitionData, isLoading } = useQuery({
     queryKey: ["admin-tuition-list", month],
@@ -239,7 +242,7 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
   };
 
   if (isLoading) {
-    return <p className="text-muted-foreground">Loading tuition data...</p>;
+    return <p className={iv("text-hec-body text-hec-ink-soft", "text-muted-foreground")}>Loading tuition data...</p>;
   }
 
   return (
@@ -247,12 +250,12 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+            <DollarSign className={iv("h-5 w-5 shrink-0 text-hec-ink-soft", "h-5 w-5")} />
             Tuition Overview - {dayjs(month).format("MMMM YYYY")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4 mb-4">
+          <div className={iv("mb-4 flex flex-wrap items-center gap-4", "flex items-center gap-4 mb-4")}>
             <Button
               variant="outline"
               onClick={() => navigate(`/admin/tuition-review?month=${month}`)}
@@ -268,7 +271,7 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
             </Button>
 
             <Select value={confirmationFilter} onValueChange={setConfirmationFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className={iv("w-full sm:w-[200px]", "w-[200px]")}>
                 <SelectValue placeholder="All Confirmations" />
               </SelectTrigger>
               <SelectContent>
@@ -287,9 +290,9 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
           />
 
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Sort by:</span>
+            <div className={iv("flex flex-wrap items-center gap-2", "flex items-center gap-2")}>
+              <ArrowUpDown className={iv("h-4 w-4 text-hec-ink-soft", "h-4 w-4 text-muted-foreground")} />
+              <span className={iv("text-hec-small font-medium text-hec-ink", "text-sm font-medium")}>Sort by:</span>
               <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue />
@@ -305,7 +308,7 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
           </div>
 
           {filteredAndSortedData.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No tuition records found</p>
+            <p className={iv("py-8 text-center text-hec-body text-hec-ink-soft", "text-muted-foreground text-center py-8")}>No tuition records found</p>
           ) : (
             <div className="space-y-3">
               {filteredAndSortedData.map((item) => {
@@ -358,49 +361,55 @@ function TuitionStudentRow({
   onView: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
   const studentName = (item.students as any)?.full_name ?? "—";
   const classNames = (item as any).classes?.map((c: any) => c.name).join(", ") || "No class";
   const balance = item.balance ?? 0;
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="border rounded-xl overflow-hidden bg-card transition-shadow hover:shadow-md">
+      <div className={iv("overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1", "border rounded-xl overflow-hidden bg-card transition-shadow hover:shadow-md")}>
         {/* ── Header row: always visible ── */}
         <CollapsibleTrigger asChild>
-          <button className="w-full text-left p-3 sm:p-4 flex items-center gap-3 group">
+          <button className={iv("group flex min-h-hec-target w-full items-start gap-3 p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hec-ring", "w-full text-left p-3 sm:p-4 flex items-center gap-3 group")}>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-sm sm:text-base truncate">{studentName}</span>
+                <span className={iv("whitespace-normal break-words hyphens-none text-balance text-hec-body font-semibold text-hec-ink", "font-semibold text-sm sm:text-base truncate")}>{studentName}</span>
                 {statusBadge}
-                {item.hasDiscount && <Badge variant="outline" className="text-[10px] px-1.5 py-0">Discount</Badge>}
-                {item.hasSiblings && <Badge variant="outline" className="text-[10px] px-1.5 py-0">Sibling</Badge>}
+                {item.hasDiscount && <Badge variant={ivory ? "secondary" : "outline"} className={iv("", "text-[10px] px-1.5 py-0")}>Discount</Badge>}
+                {item.hasSiblings && <Badge variant={ivory ? "secondary" : "outline"} className={iv("", "text-[10px] px-1.5 py-0")}>Sibling</Badge>}
               </div>
-              <p className="text-xs text-muted-foreground truncate mt-0.5">{classNames}</p>
+              <p className={iv("mt-1 whitespace-normal break-words text-hec-small text-hec-ink-soft", "text-xs text-muted-foreground truncate mt-0.5")}>{classNames}</p>
             </div>
             {/* Right side: balance + chevron */}
             <div className="text-right shrink-0">
-              <p className={`text-sm font-bold tabular-nums ${
+              <p className={ivory
+                ? `whitespace-nowrap font-sans text-hec-body font-semibold tabular-nums ${balance === 0 ? "text-hec-ink-soft" : "text-hec-ink"}`
+                : `text-sm font-bold tabular-nums ${
                 balance > 0 ? "text-destructive" : balance < 0 ? "text-emerald-600" : "text-muted-foreground"
               }`}>
                 {balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "Settled"}
               </p>
-              <p className="text-[10px] text-muted-foreground">Balance</p>
+              <p className={iv("text-hec-caption text-hec-ink-soft", "text-[10px] text-muted-foreground")}>Balance</p>
             </div>
-            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${open ? "rotate-180" : ""}`} />
+            <ChevronDown className={ivory ? `mt-1 h-5 w-5 shrink-0 text-hec-ink-soft transition-transform duration-hec-1 ease-hec ${open ? "rotate-180" : ""}` : `h-4 w-4 text-muted-foreground transition-transform shrink-0 ${open ? "rotate-180" : ""}`} />
           </button>
         </CollapsibleTrigger>
 
         {/* ── Expanded detail ── */}
         <CollapsibleContent>
-          <div className="border-t px-3 sm:px-4 py-3 space-y-3">
+          <div className={iv("space-y-4 border-t border-hec-line p-4", "border-t px-3 sm:px-4 py-3 space-y-3")}>
             {/* Finance breakdown grid */}
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-y-3 gap-x-2 text-center">
-              <FinanceCell label="Base" value={fmt(item.base_amount)} />
-              <FinanceCell label="Discount" value={item.discount_amount > 0 ? `−${fmt(item.discount_amount)}` : "—"} accent={item.discount_amount > 0 ? "green" : undefined} />
-              <FinanceCell label="Prior Bal." value={priorNet === 0 ? "—" : priorNet > 0 ? fmt(priorNet) : `+${fmt(Math.abs(priorNet))}`} accent={priorNet > 0 ? "red" : priorNet < 0 ? "green" : undefined} />
-              <FinanceCell label="Payable" value={fmt(item.finalPayable)} bold />
-              <FinanceCell label="Paid" value={fmt(item.recorded_payment ?? item.paid_amount)} accent="blue" />
+            <div className={iv("grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-6", "grid grid-cols-3 sm:grid-cols-6 gap-y-3 gap-x-2 text-center")}>
+              <FinanceCell ivory={ivory} label="Base" value={fmt(item.base_amount)} />
+              <FinanceCell ivory={ivory} label="Discount" value={item.discount_amount > 0 ? `−${fmt(item.discount_amount)}` : "—"} accent={item.discount_amount > 0 ? "green" : undefined} />
+              <FinanceCell ivory={ivory} label="Prior Bal." value={priorNet === 0 ? "—" : priorNet > 0 ? fmt(priorNet) : `+${fmt(Math.abs(priorNet))}`} accent={priorNet > 0 ? "red" : priorNet < 0 ? "green" : undefined} />
+              <FinanceCell ivory={ivory} label="Payable" value={fmt(item.finalPayable)} bold />
+              <FinanceCell ivory={ivory} label="Paid" value={fmt(item.recorded_payment ?? item.paid_amount)} accent="blue" />
               <FinanceCell
+                ivory={ivory}
+                total
                 label="Balance"
                 value={balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "0 ₫"}
                 accent={balance > 0 ? "red" : balance < 0 ? "green" : undefined}
@@ -409,7 +418,7 @@ function TuitionStudentRow({
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 pt-1">
+            <div className={iv("flex flex-wrap gap-2", "flex gap-2 pt-1")}>
               <Button size="sm" onClick={onRecordPay} className="flex-1 sm:flex-none gap-1.5">
                 <CreditCard className="h-3.5 w-3.5" />
                 Record Pay
@@ -432,12 +441,28 @@ function FinanceCell({
   value,
   accent,
   bold,
+  ivory,
+  total,
 }: {
   label: string;
   value: string;
   accent?: "green" | "red" | "blue";
   bold?: boolean;
+  ivory?: boolean;
+  total?: boolean;
 }) {
+  if (ivory) {
+    // Ivory: every amount is ink, sans, tabular and never cut; the Balance is
+    // the one total of the card, under the 2 px ink rule.
+    return (
+      <div className={`min-w-0 ${total ? "border-t-2 border-hec-ink pt-2" : "pt-2"}`}>
+        <p className="text-hec-caption uppercase tracking-wider text-hec-ink-soft">{label}</p>
+        <p className={`whitespace-nowrap font-sans tabular-nums text-hec-ink ${total ? "text-hec-h3 font-semibold" : bold ? "text-hec-small font-semibold" : "text-hec-small"}`}>
+          {value}
+        </p>
+      </div>
+    );
+  }
   const colorClass =
     accent === "green" ? "text-emerald-600" :
     accent === "red" ? "text-destructive" :
