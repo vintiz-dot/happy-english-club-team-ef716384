@@ -367,10 +367,10 @@ export default function StudentDashboard() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center glass-lg rounded-3xl p-12"
+            className="text-center rounded-hec-lg border border-hec-line bg-hec-surface p-12 shadow-hec-1"
           >
-            <Sparkles className="h-16 w-16 mx-auto mb-4 text-primary animate-pulse" />
-            <p className="text-xl text-muted-foreground">
+            <Sparkles className="h-16 w-16 mx-auto mb-4 text-hec-brass" aria-hidden />
+            <p className="text-hec-h2 text-hec-ink-soft">
               {studentId ? "Loading your profile…" : "Please select a student profile."}
             </p>
           </motion.div>
