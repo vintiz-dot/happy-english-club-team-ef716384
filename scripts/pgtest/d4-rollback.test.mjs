@@ -82,6 +82,31 @@ await section('step 2: 20261112091000 pasted again', async () => {
   ok('  on this database too: both bodies are the D release ones', fp[0].m === 'e0acbcc9a958a789aa437a6c8c4a84ec' && fp[1].m === '32c7fac7d6336c6ac48ba15bfe891630', fp);
 });
 
+await section('what the rollback leaves, exactly (the list in the script header)', async () => {
+  const LEFT_FNS = ['_caller_lane', '_floor_table_guard', '_floor_families_or', '_floor_causes_push', '_floor_mark_level',
+    '_floor_point_level', '_floor_transcript_level', '_session_evidence_keep', 'session_effective_level', 'invoice_floor_state',
+    '_attendance_evidence_guard', '_point_evidence_keep', '_transcript_evidence_keep', '_homework_evidence_keep',
+    '_session_evidence_keep_trg', '_invoice_state_floor'];
+  const fns = (await db.query(`SELECT proname, has_function_privilege('anon', oid, 'EXECUTE') an,
+      has_function_privilege('authenticated', oid, 'EXECUTE') au, has_function_privilege('service_role', oid, 'EXECUTE') sr
+      FROM pg_proc WHERE pronamespace = 'public'::regnamespace AND proname = ANY($1)`, [LEFT_FNS])).rows;
+  ok('the 16 functions of the file stay, none executable by anon / authenticated / service_role',
+     fns.length === 16 && fns.every((f) => !f.an && !f.au && !f.sr), fns.map((f) => f.proname));
+  const t = (await db.query(`SELECT c.relname || '.' || t.tgname k FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+      WHERE NOT t.tgisinternal AND (c.relname IN ('session_evidence_floor', 'invoice_state_floor') OR t.tgname = 'audit_point_transactions')
+      ORDER BY 1`)).rows.map((r) => r.k);
+  ok('the two tables keep their guard and no-truncate triggers; audit_point_transactions stays',
+     JSON.stringify(t) === JSON.stringify(['invoice_state_floor.invoice_state_floor_guard', 'invoice_state_floor.invoice_state_floor_no_truncate',
+       'point_transactions.audit_point_transactions', 'session_evidence_floor.session_evidence_floor_guard',
+       'session_evidence_floor.session_evidence_floor_no_truncate']), t);
+  const users = (await db.query(`SELECT count(*)::int n FROM pg_proc WHERE pronamespace = 'public'::regnamespace
+      AND proname NOT IN (SELECT unnest($1::text[])) AND (prosrc LIKE '%session_effective_level%' OR prosrc LIKE '%_session_evidence_keep%'
+      OR prosrc LIKE '%invoice_floor_state%' OR prosrc LIKE '%session_evidence_floor%' OR prosrc LIKE '%invoice_state_floor%')`, [LEFT_FNS])).rows[0].n;
+  ok('after the D2 re-paste no other function calls them or reads the floor tables', users === 0, users);
+  const r = await tryIt(() => asSuper(`DELETE FROM session_evidence_floor`));
+  ok('the floor rows are still protected (DELETE -> HC040)', r.code === 'HC040', r);
+});
+
 await section('after the rollback', async () => {
   let r = await tryIt(() => asAdmin(`UPDATE attendance SET student_id=gen_random_uuid() WHERE session_id=$1`, [s.sid]));
   ok('a raw write D4 refused (re-point, HC024) now passes again', r.ok !== undefined, r);

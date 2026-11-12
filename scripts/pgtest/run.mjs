@@ -102,7 +102,7 @@ const SUITES = [
   {
     name: "d4 floors",
     file: "d4-floors.test.mjs",
-    expect: 198,
+    expect: 213,
     migrations: [
       "20261009130000_audit_every_admin_action.sql",
       "20261027090000_cancelled_lesson_attendance_guard.sql",
@@ -139,7 +139,7 @@ const SUITES = [
   {
     name: "d4 rollback",
     file: "d4-rollback.test.mjs",
-    expect: 22,
+    expect: 26,
     migrations: [
       "20261009130000_audit_every_admin_action.sql",
       "20261027090000_cancelled_lesson_attendance_guard.sql",
