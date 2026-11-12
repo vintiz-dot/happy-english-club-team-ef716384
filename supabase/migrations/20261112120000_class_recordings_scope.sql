@@ -105,7 +105,10 @@ ALTER TABLE public.class_transcripts
 ALTER TABLE public.class_transcripts
   ADD CONSTRAINT class_transcripts_audio_path_in_class
   CHECK (audio_storage_path IS NULL
-         OR lower(split_part(audio_storage_path, '/', 1)) = class_id::text)
+         OR (lower(split_part(audio_storage_path, '/', 1)) = class_id::text
+             -- exactly <class>/<file>: no further slash or backslash, so
+             -- 'A/../B/x.mp3' cannot name another class's file.
+             AND audio_storage_path ~ '^[^/\\]+/[^/\\]+$'))
   NOT VALID;
 
 COMMIT;
