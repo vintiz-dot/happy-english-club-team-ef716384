@@ -1,8 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import {
-  BULK_PREVIEW_CAP, bulkCancelChunks, bulkPreview, callerClient, cleanItems, corsHeaders, fail, guardError,
-  isUuid, json, preview, readReason, refreshDone, type BulkItem,
+  BULK_PREVIEW_CAP, bulkCancelChunks, bulkConfirmItems, bulkPreview, callerClient, corsHeaders, fail, guardError,
+  isUuid, json, outsideCriteria, preview, readReason, refreshDone, storedConsequences, type BulkItem,
 } from '../_lib/session-guard.ts';
 
 // Bulk cancel, checked (docs/evidence/D2-guard-design.md 7.3 as amended;
@@ -110,33 +110,26 @@ Deno.serve(async (req) => {
     const rr = readReason(validationResult.data.reason);
     if ('error' in rr) return fail(rr.error, { success: false });
 
-    const plainIn = validationResult.data.items ?? [];
-    const heldIn = validationResult.data.held_items ?? [];
-    let held_ignored = 0;
-    const all: any[] = [];
     // Plain items: id + token only - never a confirmation or own reason,
     // so the database refuses any of them that is not tier 0.
-    for (const it of plainIn) all.push({ id: it?.id, token: it?.token });
-    if (include_held) {
-      for (const it of heldIn) {
-        if (it?.confirm !== true) {
-          return fail(guardError(422, 'confirm_required', 'Every lesson with evidence needs its own confirmation.'), { id: it?.id ?? null });
-        }
-        all.push(it);
-      }
-    } else {
-      held_ignored = heldIn.length;
-    }
-    if (all.length === 0) return fail(guardError(400, 'bad_items', 'Nothing to cancel: send the previewed items.'));
-    const cleaned = cleanItems(all);           // held items listed after plain ones win a duplicate id
-    if ('error' in cleaned) return fail(cleaned.error);
-    const items: BulkItem[] = cleaned.items;
+    const split = bulkConfirmItems(validationResult.data.items, validationResult.data.held_items, include_held);
+    if ('error' in split) return fail(split.error, split.extra ?? {});
+    const held_ignored = split.held_ignored;
+    // Criteria the request states are enforced, not only recorded (F-5).
+    const outside = await outsideCriteria(supabase, split.items.map((i) => i.id),
+      { from: date_from, to: date_to, class_id, teacher_id });
+    const items: BulkItem[] = split.items.filter((i) => !outside.has(i.id));
+    const outsideRefused = [...outside].map((id) => ({ id, code: 'outside_criteria',
+      message_key: 'sessionGuard.error.outside_criteria', sqlstate: null }));
     const batchId = validationResult.data.batch_id ?? crypto.randomUUID();
 
-    const { done, refused, not_attempted, chunkError } = await bulkCancelChunks(asCaller, items, rr.reason, batchId, {
+    const { done, refused: dbRefused, not_attempted, chunkError } = items.length === 0
+      ? { done: [] as any[], refused: [] as any[], not_attempted: [] as any[], chunkError: null }
+      : await bulkCancelChunks(asCaller, items, rr.reason, batchId, {
       set_manual: 'true',
       attached: { source: 'bulk-cancel-sessions', criteria: { date_from, date_to, class_id, teacher_id }, include_held: !!include_held },
     });
+    const refused = [...outsideRefused, ...dbRefused];
     if (chunkError && done.length === 0 && refused.length === 0) {
       return fail(chunkError, { success: false, not_attempted });
     }
@@ -151,7 +144,7 @@ Deno.serve(async (req) => {
       if ('data' in p) {
         needs_ack.push({ id: r.id, tier: p.data.tier, level: p.data.level, settled_any: p.data.settled_any,
                          requires: p.data.requires, review_required: p.data.review_required,
-                         evidence: p.data.evidence, token: p.data.token });
+                         evidence: p.data.evidence, token: p.data.token, consequences: storedConsequences(p.data) });
       }
     }
 

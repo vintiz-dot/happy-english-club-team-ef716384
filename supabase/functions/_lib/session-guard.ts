@@ -348,6 +348,51 @@ export function cleanItems(raw: unknown): { items: BulkItem[] } | { error: Guard
   return { items: [...byId.values()] };
 }
 
+/** The one bulk confirm shape, used by bulk-cancel-sessions AND manage-session
+ *  bulk-delete (D-review-3 F-4). Plain items are stripped to {id, token}, so
+ *  no confirmation or own reason can ride along: the database refuses any of
+ *  them that is not tier 0. A lesson that needs acknowledging comes only in
+ *  `held_items` with `include_held: true`, each with `confirm: true`. */
+export function bulkConfirmItems(plainIn: unknown, heldIn: unknown, includeHeld: unknown):
+  { items: BulkItem[]; held_ignored: number } | { error: GuardError; extra?: Record<string, unknown> } {
+  const plain = Array.isArray(plainIn) ? plainIn : [];
+  const held = Array.isArray(heldIn) ? heldIn : [];
+  const all: any[] = [];
+  for (const it of plain) all.push({ id: (it as any)?.id, token: (it as any)?.token });
+  let held_ignored = 0;
+  if (includeHeld === true) {
+    for (const it of held as any[]) {
+      if (it?.confirm !== true) {
+        return { error: guardError(422, 'confirm_required', 'Every lesson with evidence needs its own confirmation.'),
+                 extra: { id: it?.id ?? null } };
+      }
+      all.push(it);
+    }
+  } else {
+    held_ignored = held.length;
+  }
+  if (all.length === 0) return { error: guardError(400, 'bad_items', 'Nothing to change: send the previewed items.') };
+  const cleaned = cleanItems(all);           // held items listed after plain ones win a duplicate id
+  if ('error' in cleaned) return { error: cleaned.error };
+  return { items: cleaned.items, held_ignored };
+}
+
+/** Ids among `ids` that the stated criteria did NOT select (D-review-3 F-5):
+ *  the audit row records the criteria, so a lesson outside them is refused,
+ *  not sent. Read on the given client; a lesson not found is left to the RPC. */
+export async function outsideCriteria(client: any, ids: string[],
+  c: { from?: string | null; to?: string | null; class_id?: string | null; teacher_id?: string | null }) {
+  const out = new Set<string>();
+  if (ids.length === 0) return out;
+  const { data, error } = await client.from('sessions').select('id, date, class_id, teacher_id').in('id', ids);
+  if (error) throw error;
+  for (const s of data ?? []) {
+    if ((c.from && s.date < c.from) || (c.to && s.date > c.to) ||
+        (c.class_id && s.class_id !== c.class_id) || (c.teacher_id && s.teacher_id !== c.teacher_id)) out.add(s.id);
+  }
+  return out;
+}
+
 /** Refresh every done lesson's pairs, one event per override, continuing past failures. */
 export async function refreshDone(service: any, asCaller: any, done: any[]) {
   const per: any[] = [];
