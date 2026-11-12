@@ -152,11 +152,11 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 | Stream | Units | Done | What is done |
 |---|---|---|---|
 | D money integrity | 18.5 | 8.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
-| A overhaul | 12.0 | 5.7 | A0, A1, A2.1 diagnosis, A3.1, A3.2, A3.3, A3.4, A4.1 (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
+| A overhaul | 12.0 | 6.4 | A0, A1, A2.1, A2.2, A3.1, A3.2, A3.3, A3.4, A4.1 (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
 | B lesson monitor evaluation | 10.5 | 3.7 | vendor research, audio prep, harness, vendor proxy built (deploy running). Left: B1, B2, B2b, B3, report |
 | C class recorder | 8.0 | 1.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **18.9** | **37%** |
+| **Total** | **51.0** | **19.6** | **38%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -232,3 +232,7 @@ Log: 2026-11-12 - 36% (D review 3 merged).
 Log: 2026-11-12 - 37% (A3.4 merged).
 
 - 2026-11-12 A3.4 merged (sonnet, e996811): the header and the profile picker share one cached families -> students lookup (key includes the user id; 30 s; never cached on error; cleared on sign-out and when there is no user); announcements wait for auth. Requests on the fake: student dashboard 33 -> 28, parent view 25 -> 20, admin schedule 16 -> 13; the after-list is a subset of the before-list. Agent's proofs: 7 unit tests (user A's list never returned for B; sign-out clears), 20/20 preview checks incl. no name from the first family anywhere after signing in as a second. Conductor read useShellQueries.ts and the three caller diffs: query text unchanged, selection logic untouched. Not changed (pre-existing): no cancel flag for a fetch still in flight when the user changes. Held back to avoid file conflicts: A3.6 and A3.5 (student files, behind the A4.2 restyle), A3.7 (Admin.tsx, behind D3). A4.5 (overflow + focus ring) launched.
+Log: 2026-11-12 - 38% (A2.2 merged).
+
+- 2026-11-12 A2.2 merged (sonnet, 0b921aa), one file (src/pages/TeacherBooks.tsx): the loader is keyed on the user's id instead of the user object, the spinner no longer replaces the page once books are loaded, the chosen book is kept if it still exists, the Presenter panel stays mounted (hidden) while Settings is open. Script before -> after at all three sizes: token refresh FAIL -> PASS (0 extra loads, page and book kept), fullscreen kept FAIL -> PASS, visibility FAIL -> PASS, tab switch +1 -> +0, title edit +0, URL edit +1. Conductor read the diff: the only query line changed is user.id -> userId (same value). Not measured: the real provider's iframe, real auth events. SHIPPING under the release policy (flipbook fix, no figure/permission): being type-checked alone on top of origin/main, then pushed.
+- origin/main moved: 50663b3 "signOut: fall back to local sign-out..." from another session; merged into the conductor branch.
