@@ -1,6 +1,45 @@
 # C1 Revision 2 - class recorder fixes for critic 2 (N1-N6)
 
-**Where I am / next step:** migration, suite and architecture doc done; recorder suite 365 passed / 0 failed (was 284). Waiting on the full `run.mjs` and the mutation run; then results below, cleanup of `.probe/` and the node_modules link.
+**Where I am / next step:** DONE. Recorder suite 367 passed / 0 failed (was 284). Full run 2699 / 35 suites / 0 failed (at 365 recorder assertions; two cases added after it, recorder suite re-run alone). 24 mutations, 24 caught. `.probe/` and the node_modules link removed.
+
+## Commands and totals
+
+- `node scripts/pgtest/recorder.test.mjs supabase/migrations/20260717090000_audio_transcript_pipeline.sql supabase/migrations/20261111110000_ta_standing_assignments_and_homework_upload.sql supabase/migrations/20261112100000_class_recorder.sql` -> `367 passed, 0 failed`. The migration is pasted twice at the start, four more times by the preflight cases (refusals and one success), and once over live data near the end.
+- `node scripts/pgtest/run.mjs` -> `2699 assertions across 35 suites, 0 suite(s) failed` (`class recorder 365 passed, 0 failed`; app and edge-function typechecks ok). Then two assertions were added to the recorder suite only (late-Stop view check, service-role deletion write) and the suite re-run alone: 367/0.
+- No old assertion was dropped; six were renamed or changed with their rule (table below). The post-apply probes below were run against an in-process database after two pastes: P2 0/0/`30,10,0.50,v1-2026-11`; P3 10 triggers `O`; P4 32 functions, 0 DEFINER without `search_path`; P5 `class_recordings` INSERT,SELECT + 28 UPDATE columns, no anon; P6/P7 as stated.
+
+## Mutation run
+
+`.probe/mut.mjs` (throwaway, deleted) wrote a mutated copy to `.probe/m_class_recorder.sql` and ran the real suite on it. CAUGHT = a FAIL or a non-zero exit.
+
+| Mutation | Result |
+|---|---|
+| N1 recorder back on the old bucket `class-recordings` (every literal, DO UPDATE) | CAUGHT (crash) |
+| N1 preflight policy check removed | CAUGHT (363/2) |
+| N1 preflight bucket-settings check removed | CAUGHT (363/2) |
+| N1 preflight ignores RLS off on storage.objects | CAUGHT (364/1) |
+| N1 select policy not scoped by bucket (OR) | CAUGHT (348/17) |
+| N1 migration also edits the old bucket | CAUGHT (361/4) |
+| N2 view: late chunks count as live | CAUGHT (364/1) |
+| N2 late allowance x100 at arming | CAUGHT (359/6) |
+| N2 Stop clamped into the window again | CAUGHT (363/2) |
+| N2 late Stop not abandoned | CAUGHT (362/3) |
+| N2 view: evidence ignores a late Stop | SURVIVED (365/0) on the first run -> case added -> CAUGHT (366/1) |
+| N2 register: late flag always false | CAUGHT (362/3) |
+| N3 non-admin may shorten delete_after | CAUGHT (363/2) |
+| N3 view: evidence survives a person's deletion request | CAUGHT (362/3) |
+| N3 marked deleted before its date | CAUGHT (362/3) |
+| N3 admin bringing retention forward is not a request | CAUGHT (364/1) |
+| N3 whole-table UPDATE grant back | CAUGHT (361/5) |
+| N3 deletion fields taken without the server flag | SURVIVED (366/0) (column privileges hid it) -> service-role case added -> CAUGHT (366/1) |
+| N4 non-admin stop request accepted | CAUGHT (364/2) |
+| N4 stop reason checked against any request, not its reason | CAUGHT (366/1) |
+| N5 register skips the still-teaches check | CAUGHT (366/1) |
+| N5 start skips the still-teaches check | CAUGHT (366/1) |
+| critic 2 survivor 1: evidence without `completed_at` | CAUGHT (365/2) |
+| critic 2 survivor 2: `stopped_by` = the owner, not the actor | CAUGHT (366/1) |
+
+**24 applied, 24 caught** (two after a case was added; both re-runs listed).
 
 Files touched (only these): `supabase/migrations/20261112100000_class_recorder.sql` (edited in place: never applied), `scripts/pgtest/recorder.test.mjs`, `scripts/pgtest/run.mjs` (one line: the recorder suite also loads `20260717090000_audio_transcript_pipeline.sql`, first), `docs/evidence/C1-architecture.md` (Revision 2 changelog at the top; sections 5.5, 6.2, 6.3, 6.4, 6.5, 6.6, 7, 8, 9.1), this file. Written and tested, NOT applied to any database.
 
