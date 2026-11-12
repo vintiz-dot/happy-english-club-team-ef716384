@@ -54,6 +54,7 @@ EMB = {"wes_campp": "wespeaker_en_voxceleb_CAM++.onnx", "3ds_campp": "3dspeaker_
 
 
 CHUNK = 1.5  # seconds per diarization chunk
+CENTER = True  # set by --no-center
 
 
 def vad_chunks(x: np.ndarray) -> list[tuple[float, float]]:
@@ -72,8 +73,10 @@ def vad_chunks(x: np.ndarray) -> list[tuple[float, float]]:
 
 
 def own_diarize(x, chunks, E, threshold: float, min_cluster_s: float = 0.0):
-    """AHC (average linkage, cosine) over chunk embeddings; adjacent same-label chunks merged."""
-    lab = idlib.ahc(E, threshold)
+    """AHC (average linkage, cosine) over chunk embeddings, after subtracting the
+    recording's mean embedding (removes the shared room/channel direction, which
+    otherwise makes every chunk look alike); adjacent same-label chunks merged."""
+    lab = idlib.ahc(idlib.l2n(E - E.mean(0)) if CENTER else E, threshold)
     segs = [(s, e, f"c{l:02d}") for (s, e), l in zip(chunks, lab)]
     merged = []
     for s, e, c in segs:
@@ -142,7 +145,7 @@ def cmd_tune(a) -> int:
                   f"RTF {cost:.3f} (contaminated)", flush=True)
         p = safe_out(WORK / "b2" / "diar_tune.json")
         prev = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
-        prev[f"own|{a.diar_model}|{a.mix_sets}"] = out
+        prev[f"own|center={CENTER}|{a.diar_model}|{a.mix_sets}"] = out
         p.write_text(json.dumps(prev, indent=1), encoding="utf-8")
         return 0
     for thr in [float(t) for t in a.thresholds.split(",")]:
@@ -299,7 +302,10 @@ def main() -> int:
     p.add_argument("--sample-s", type=float, default=15.0)
     p.add_argument("--threads", type=int, default=2)
     p.set_defaults(fn=cmd_run)
+    ap.add_argument("--no-center", action="store_true", help="cluster raw embeddings (no per-recording mean removal)")
     a = ap.parse_args()
+    global CENTER
+    CENTER = not a.no_center
     return a.fn(a)
 
 
