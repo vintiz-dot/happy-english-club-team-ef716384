@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 
 interface PWAInstallButtonProps {
   className?: string;
@@ -14,6 +15,8 @@ export function PWAInstallButton({ className, variant = "outline", sidebarOpen =
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  // Shell, every area: ivory on a listed route (src/lib/ivoryScope.ts), today's classes elsewhere.
+  const ivory = useIvory();
 
   useEffect(() => {
     // 1. Check if running in standalone mode (already installed and opened)
@@ -94,14 +97,19 @@ export function PWAInstallButton({ className, variant = "outline", sidebarOpen =
     <Button
       onClick={handleInstallClick}
       variant={variant}
-      className={cn(
-        "gap-2 transition-all duration-200",
-        !sidebarOpen && "justify-center p-2 min-w-10",
-        className
-      )}
+      className={
+        ivory
+          ? cn("gap-2", !sidebarOpen && "justify-center px-0", className)
+          : cn(
+              "gap-2 transition-all duration-200",
+              !sidebarOpen && "justify-center p-2 min-w-10",
+              className
+            )
+      }
       title="Install Happy English App"
+      aria-label={ivory && !sidebarOpen ? "Install Happy English App" : undefined}
     >
-      <Download className="h-4 w-4 text-blue-600 dark:text-blue-400 animate-bounce" />
+      <Download className={ivory ? "h-4 w-4" : "h-4 w-4 text-blue-600 dark:text-blue-400 animate-bounce"} />
       {sidebarOpen && <span>Install App</span>}
     </Button>
   );
