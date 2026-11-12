@@ -1,6 +1,6 @@
 # C2 round 3 - after C2 review 2 (FAIL: N-B1..N-B3, N-M1..N-M9) and the C3 change list
 
-**Where I am / next step:** all fixes and tests written and committed; running: unit suite, app typecheck. Then: mutation run of the reviewer's six + new ones, browser suite, full pgtest, totals.
+**Where I am / next step:** unit 404/0, recorder SQL 415/0, screens logic 30/0, app typecheck exit 0. Running: mutation run (reviewer's six + 13 new). Then browser suite, full pgtest, totals.
 
 Branch `worktree-agent-a4803c8e10a251526`; merged `claude/hec-conductor-setup-efbaa5` (review 2, C3 screens) at 5999dde. Synthetic audio only in every test. Nothing applied, deployed or pushed.
 
