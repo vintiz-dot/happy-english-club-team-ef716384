@@ -38,4 +38,20 @@ Units: 366 enrolment windows (3 s, VAD + pitch-filtered by split.py), 473 raw-cl
 
 **S23 is excluded from everything** (enrolment, gallery, distractors, tests): split.py found no child-pitch speech in its clip (median 134 Hz), so there is no voice to call S23's. It is not "flagged and kept" because a voiceprint built from an adult voice would attract the teacher's speech in real lessons and be suggested as a child.
 
+## 3. Diagnosis finding 1: spliced enrolment destroys the voiceprint (found and fixed)
+
+The first cut of the units (and B0's `ident_ecapa.py`) concatenated a child's VAD segments and then cut 3 s windows across the joins. The ENROL set is mostly short fragments (split.py gave the long 5 s blocks to HELD-OUT), so most enrolment windows were several fragments spliced together. Measured with wes_campp on that first cut (run 2026-11-12, `b2_eval.py`, kept as `work\b2\spliced_results_wes_campp.json`):
+
+| check (wes_campp, spliced cut, cosine, 2 s clean windows unless stated) | top-1 | chance |
+|---|---|---|
+| enrol -> held-out (the real task) | 15.1 % (311 windows, 17 children) | 5.9 % |
+| held-out -> enrol | 10.8 % | 5.9 % |
+| held-out first half -> held-out second half (same child, no splices in held-out blocks) | 74.1 % (158 windows) | 5.9 % |
+| enrol first half -> enrol second half | 57.1 % (191 windows, 26 children) | 3.8 % |
+| full pipeline, all s500 conditions pooled: EER / top-1 | 47.6 % / 9.9 % | - |
+
+Every child's enrolment centroid had cosine 0.80-0.97 with the centroid of ALL children's enrolment (they all looked alike), while the same child's held-out speech matched its own long unspliced segments (diagonal 0.85-0.97 when enrolment was rebuilt from segments >= 2 s read straight from the WAVs). Conclusion: the join artefacts, not the children's voices, dominated the embeddings. Fix (commit "cut windows inside VAD segments"): every enrolment, adult-pitch and test window is now cut INSIDE one VAD segment; a segment shorter than the window gives one window if >= 1 s (enrolment) or is skipped (a test window of length L needs a segment >= L). Consequence for B0: its ECAPA baseline (EER 26-39 %) enrolled on the same spliced audio, so it understates what ECAPA can do; the numbers below supersede it.
+
+After the fix: 440 enrolment windows (1-3 s), 473 raw-clip windows, 97 adult-pitch windows, 1652 test windows (87.9 min of audio). Fewer test windows than the first cut, because only whole windows inside a segment count.
+
 **Statistical caveat stated once for every table:** confidence intervals are 95 % Wilson intervals over windows, treating windows as independent. They are not: all windows come from 15 children and from 20-90 s of speech each, so the true uncertainty is wider than shown, above all for per-child figures.
