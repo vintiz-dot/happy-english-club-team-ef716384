@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { AlertCircle, AlertTriangle, CheckCircle2, Circle, PlusCircle, type LucideIcon } from "lucide-react";
 
 export type PaymentStatus = 'overpaid' | 'settled' | 'underpaid' | 'unpaid' | 'open' | 'settled_later';
 
@@ -16,7 +17,7 @@ export interface TuitionStatusInput {
  */
 export function getPaymentStatus(data: TuitionStatusInput): PaymentStatus {
   const { carryOutDebt, carryOutCredit, totalAmount, monthPayments, settledInMonth } = data;
-  
+
   if (carryOutCredit > 0) return 'overpaid';
   if (carryOutDebt === 0 && carryOutCredit === 0 && totalAmount > 0) return 'settled';
   if (carryOutDebt > 0 && settledInMonth) return 'settled_later';
@@ -47,4 +48,36 @@ export function getTuitionStatusBadge(status: PaymentStatus, settledInMonth?: st
     default:
       return <Badge variant="secondary">Open</Badge>;
   }
+}
+
+/**
+ * Ivory (A4.6) look for the same statuses, beside the old map (admin screens keep
+ * getTuitionStatusBadge until the staff area flips). Same words as the old badges;
+ * each state carries an icon and a word, never colour alone (DESIGN_SYSTEM s.14).
+ * Credit (overpaid) and open are not alarms: neutral.
+ */
+export const ivoryTuitionStatus: Record<PaymentStatus, { variant: "success" | "warning" | "destructive" | "secondary"; Icon: LucideIcon }> = {
+  overpaid: { variant: "secondary", Icon: PlusCircle },
+  settled: { variant: "success", Icon: CheckCircle2 },
+  settled_later: { variant: "success", Icon: CheckCircle2 },
+  underpaid: { variant: "warning", Icon: AlertTriangle },
+  unpaid: { variant: "destructive", Icon: AlertCircle },
+  open: { variant: "secondary", Icon: Circle },
+};
+
+export function getIvoryTuitionStatusBadge(status: PaymentStatus, settledInMonth?: string | null) {
+  const { variant, Icon } = ivoryTuitionStatus[status] ?? ivoryTuitionStatus.open;
+  const label =
+    status === 'overpaid' ? 'Overpaid'
+    : status === 'settled' ? 'Settled'
+    : status === 'settled_later' ? (settledInMonth ? `Settled in ${settledInMonth}` : 'Settled Later')
+    : status === 'underpaid' ? 'Underpaid'
+    : status === 'unpaid' ? 'Unpaid'
+    : 'Open';
+  return (
+    <Badge variant={variant} className="whitespace-nowrap">
+      <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+      {label}
+    </Badge>
+  );
 }
