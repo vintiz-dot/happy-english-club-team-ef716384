@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { ThemeProvider, useTheme } from "next-themes";
 import { useAuth } from "@/hooks/useAuth";
 import { IvoryContext } from "@/hooks/useIvory";
-import { BOOT_KEY, DEFAULT_THEME, isIvoryRoute, readThemeChoice, themeKey, type ThemeChoice } from "@/lib/ivoryScope";
+import { BOOT_KEY, DEFAULT_THEME, IVORY_ROUTES, ROLLOUT_COMPLETE, isIvoryRoute, readThemeChoice, themeKey, type ThemeChoice } from "@/lib/ivoryScope";
 
 /** Browser bar colour: the old navy outside the system, paper / deep ink inside it. */
 const THEME_COLOR = { legacy: "#1e3a8a", light: "#F7F2E9", dark: "#0A111E" } as const;
@@ -18,7 +18,9 @@ const THEME_COLOR = { legacy: "#1e3a8a", light: "#F7F2E9", dark: "#0A111E" } as 
  */
 export function IvoryScope({ children }: { children: ReactNode }) {
   const { pathname, search } = useLocation();
-  const ivory = isIvoryRoute(pathname, search);
+  // The role matters only for a route listed per role (/tuition: student and family).
+  const { role } = useAuth();
+  const ivory = isIvoryRoute(pathname, search, IVORY_ROUTES, ROLLOUT_COMPLETE, role);
 
   useLayoutEffect(() => {
     const de = document.documentElement;

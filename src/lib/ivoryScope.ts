@@ -30,12 +30,38 @@ export interface IvoryRoute {
    * migrated; "" means "no tab" (the default view). Omitted: any tab.
    */
   tab?: string;
+  /**
+   * For a route that several roles share but that belongs to a different area
+   * per role (`/tuition`: the student/parent view, and the admin's tuition
+   * list): the roles that get the system there. Omitted: every role. While
+   * the role is not known yet (null) such an entry does not match, so a staff
+   * member never sees the new look on a staff screen, even for a moment.
+   */
+  roles?: string[];
 }
 
 export const IVORY_ROUTES: IvoryRoute[] = [
   // A4.2 pilot, approved by the owner (D-12). Every tab of the dashboard.
   { path: "/student/dashboard" },
   { path: "/student" },
+  // R08, the student flip: every other route a student (or a parent viewing a
+  // child) reaches. These pages have no staff branch, so they are listed for
+  // every role.
+  { path: "/student/assignments" },
+  { path: "/student/journal" },
+  { path: "/student/resources" },
+  { path: "/student/my-work" },
+  { path: "/student/videos" },
+  { path: "/student/record" },
+  { path: "/student/language-support" },
+  { path: "/student/lessons" },
+  { path: "/student/lessons/:id" },
+  { path: "/student/defend-level" },
+  { path: "/student/vocabulary" },
+  { path: "/vocabulary" },
+  // Shared with the admin's tuition list (staff area, not flipped yet) and a
+  // teacher's "access denied": only the student / parent view is in the system.
+  { path: "/tuition", roles: ["student", "family"] },
 ];
 
 const trimSlash = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p);
@@ -52,10 +78,16 @@ export function isIvoryRoute(
   search = "",
   routes: IvoryRoute[] = IVORY_ROUTES,
   complete: boolean = ROLLOUT_COMPLETE,
+  role: string | null = null,
 ): boolean {
   if (complete) return true;
   const tab = new URLSearchParams(search).get("tab") ?? "";
-  return routes.some((r) => pathMatches(r.path, pathname) && (r.tab === undefined || r.tab === tab));
+  return routes.some(
+    (r) =>
+      pathMatches(r.path, pathname) &&
+      (r.tab === undefined || r.tab === tab) &&
+      (r.roles === undefined || (role !== null && r.roles.includes(role))),
+  );
 }
 
 /** Theme choice: Light until the rollout is complete (owner's default), then System. */
