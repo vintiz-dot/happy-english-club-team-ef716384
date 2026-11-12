@@ -323,11 +323,11 @@ export default function TeacherPayroll() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Class</TableHead>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="px-2 sm:px-4">Date</TableHead>
+                      <TableHead className="px-2 sm:px-4">Class</TableHead>
+                      <TableHead className="px-2 sm:px-4">Time</TableHead>
+                      <TableHead className="px-2 sm:px-4">Status</TableHead>
+                      <TableHead className="px-2 sm:px-4 text-right">Amount</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -340,19 +340,19 @@ export default function TeacherPayroll() {
                     ) : (
                       payrollData?.payrollResult?.sessionDetailsProjected?.map((session: any) => (
                         <TableRow key={session.id} className={session.status === "Scheduled" ? "opacity-60" : ""}>
-                          <TableCell>
+                          <TableCell className="px-2 sm:px-4">
                             {dayjs(session.date).format("MMM D, YYYY")}
                           </TableCell>
-                          <TableCell className="whitespace-normal break-words">{session.classes?.name || 'N/A'}</TableCell>
-                          <TableCell>
+                          <TableCell className="px-2 sm:px-4 whitespace-normal break-words">{session.classes?.name || 'N/A'}</TableCell>
+                          <TableCell className="px-2 sm:px-4">
                             {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="px-2 sm:px-4">
                             <Badge variant={session.status === "Held" ? "default" : "secondary"}>
                               {session.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap text-right tabular-nums">
+                          <TableCell className="px-2 sm:px-4 whitespace-nowrap text-right tabular-nums">
                             {session.amount.toLocaleString()} ₫
                           </TableCell>
                         </TableRow>

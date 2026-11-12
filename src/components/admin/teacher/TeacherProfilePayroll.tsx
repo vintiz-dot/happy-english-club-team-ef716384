@@ -237,11 +237,11 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="px-2 sm:px-4">Date</TableHead>
+                  <TableHead className="px-2 sm:px-4">Time</TableHead>
+                  <TableHead className="px-2 sm:px-4">Duration</TableHead>
+                  <TableHead className="px-2 sm:px-4">Status</TableHead>
+                  <TableHead className="px-2 sm:px-4 text-right">Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -249,19 +249,19 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, payRate, onMon
                   const amount = calculateSessionAmount(session);
                   return (
                     <TableRow key={session.id}>
-                      <TableCell>{new Date(session.date).toLocaleDateString()}</TableCell>
-                      <TableCell>
+                      <TableCell className="px-2 sm:px-4">{new Date(session.date).toLocaleDateString()}</TableCell>
+                      <TableCell className="px-2 sm:px-4">
                         {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-2 sm:px-4">
                         {(session.durationMinutes / 60).toFixed(1)}h
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-2 sm:px-4">
                         <Badge variant={session.status === "Held" ? "default" : "secondary"} className={session.status === "Held" ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf" : ""}>
                           {session.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-medium tabular-nums">
+                      <TableCell className="px-2 sm:px-4 whitespace-nowrap text-right font-medium tabular-nums">
                         {amount.toLocaleString()} ₫
                       </TableCell>
                     </TableRow>
