@@ -89,7 +89,7 @@ const ClassesTab = () => {
           subtitle={classes && !isLoading ? `${classes.length} class${classes.length === 1 ? "" : "es"}` : undefined}
         />
         {isLoading ? (
-          <p className="type-micro text-muted-foreground">Loading classes…</p>
+          <p className="text-hec-small text-hec-ink-soft">Loading classes…</p>
         ) : !classes || classes.length === 0 ? (
           <EmptyState
             icon={School}
@@ -104,18 +104,21 @@ const ClassesTab = () => {
               // breaks the markup and makes every click navigate away.
               <Card
                 key={cls.id}
-                className="surface-2 shadow-q1 lift hover:border-primary/40 transition-colors h-full flex flex-col"
+                className="flex h-full flex-col transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2"
               >
-                <Link to={`/admin/classes/${cls.id}`} className="flex-1 cursor-pointer">
+                <Link
+                  to={`/admin/classes/${cls.id}`}
+                  className="flex-1 cursor-pointer rounded-t-hec-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+                >
                   <CardHeader>
-                    <CardTitle className="type-h2">{cls.name}</CardTitle>
-                    <CardDescription className="flex items-center gap-4 mt-2 type-micro">
+                    <CardTitle className="whitespace-normal break-words">{cls.name}</CardTitle>
+                    <CardDescription className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-hec-small tabular-nums">
                       <span className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
+                        <Users className="h-4 w-4" aria-hidden />
                         {cls.activeEnrollmentCount} students
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
+                        <Clock className="h-4 w-4" aria-hidden />
                         {/* The lengths this class actually runs. Printing the
                             single per-class number here stated "90min" for a
                             class whose Wednesday is two hours. */}
@@ -125,7 +128,7 @@ const ClassesTab = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="type-body text-muted-foreground tabular-nums">
+                    <p className="whitespace-nowrap font-sans text-hec-body tabular-nums text-hec-ink">
                       {cls.session_rate_vnd?.toLocaleString("vi-VN")} ₫ / session
                     </p>
                   </CardContent>
