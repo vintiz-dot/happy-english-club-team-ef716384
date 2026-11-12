@@ -446,4 +446,78 @@ change_approval_status() RETURNS jsonb
 -- trigger zz_admin_grant_guard on user_roles; trigger zz_pay_adjustment_approval on payroll_adjustments (A-4): while enabled.
 ```
 
+---
+
+## (d) Edge functions and `src`, file by file (grouped by the build step that owns them)
+
+Rules (D2's, unchanged): a person-initiated write to a guarded table is made on the caller's own client; a guarded change is preview -> confirm with the token; a missing RPC is `503 guard_not_installed` with no write and no fallback; an exception after a committed change is not reported as a failed change.
+
+**Step 1a** (floors)
+- `src/lib/sessionGuard.ts`: `GuardPreview` gains `level_now`, `floor`; `evidenceList` appends the floor's causes under "Recorded, and later removed"; nothing else.
+- `src/components/admin/session-guard/EvidenceCards.tsx`: that card. No function changes: D2's functions pass the preview through.
+
+**Step 1b** (core and register)
+- `supabase/functions/_lib/session-guard.ts`: the code map gains EVERY new code of b.8 now (HC023, HC024, HC025, HC060-HC065, HC120, HC121; `not_installed` and the new refuse codes in the HC015 map), so no later step edits this file's map.
+- `supabase/functions/_lib/money-guard.ts` (new): `moneyPreview`, `moneyConfirm`, `refreshMoneyChange` (reads `refresh_pairs` as the caller, runs `refreshPairs` at most 25 pairs a minute, records `tuition_refreshed` / `tuition_refresh_failed`; what is left shows in the pending view and is resumed by the same call).
+- `supabase/functions/guarded-change-refresh/index.ts` (new, admin only): `{action:'refresh', override_id}`; service-only `{action:'log-refused'}`.
+- `supabase/functions/repair-attendance/index.ts`: insert on the caller's client; HC025 -> `409 attendance_requires_checked_path` + preview, nothing inserted; body may carry `ack {reason, token, confirm, correction_reason}` -> `money_change_checked('attendance','repair')`.
+- `supabase/functions/mark-attendance/index.ts`: admin caller -> the upsert (`:160-162`) and the Held flip (`:174-178`) on the caller's client; HC025 mapped, never retried on the service key. Teacher caller -> rule 6 of G-11 applied in the function from the lesson's date and the stored marks (no bill is read, no RPC is needed), then the service write as today. When the lesson's month is past and the D4 status RPC is missing: 503, nothing written (A-13).
+- `src/lib/moneyGuard.ts`, `src/components/admin/money-guard/{api.ts, useMoneyChange.ts, MoneyGuardDialog.tsx, ReachTable.tsx, MoneyChangesReview.tsx}` (new; the dialog reuses `Fields.tsx` unchanged).
+- `src/components/admin/PastAttendanceEditor.tsx`, `AttendanceRepairTool` (the screen behind `AutomationTab.tsx:142`): on the 409, open the dialog.
+
+**Step 2** (dated class fees)
+- `supabase/functions/_lib/class-fee.ts` (new, imports nothing): `classFeeOn(history, classId, date, fallback)`; a missing `class_fee_history` table (42P01 / PGRST205) falls back to `classes.session_rate_vnd`, the way `_lib/sibling-hold.ts:34` tolerates a missing column - so the function and the migration can ship in either order.
+- `calculate-tuition/index.ts:185,252,314,552`, `calculate-tuition-bulk/index.ts:155,306,416`, `_lib/projected-per-class.ts:22,61`: read the history once per call and price each lesson with `classFeeOn(..., s.date, ...)`. No other line changes. Gate: `fixtures/tuition-figures.golden.json` byte-identical with baseline rows, and with no history table.
+- `src/components/admin/class/ClassSettings.tsx`: the fee field becomes "Fee history" (list, "New fee from <month>"), through `('class_fee','set')`. `src/components/admin/class/ClassFeeHistory.tsx` (new).
+
+**Step 3A** (lessons)
+- `manage-session/index.ts`: `change-status` between Held and Scheduled -> preview `('session','unhold'|'hold')`; `kind` null -> plain update as the caller (as today); else `readAck()` + `money_change_checked`. `update`: `status` is no longer written; a teacher change the preview calls `reteach` -> `409 requires_checked_path, use_action:'set-teacher'`. New actions `set-teacher`, `set-time`, `set-staff`. `move`: a same-day time edit of a Held lesson outside the free week is `retime`, not `plain_update`. `create`: status always Scheduled; not started -> insert on the caller's client (the service key leaves this action); started -> preview / `('session','create')`. The public D2 actions and their RPC calls are untouched.
+- `bulk-cancel-sessions/index.ts`: HC060 on a chunk -> the whole batch is returned as `approval_required` with one request offered.
+- `schedule-sessions/index.ts:698-708`: HC020 on a Held time update -> `attention` + `log_session_automation_refused`.
+- `src/lib/lessonPayGuard.ts` (new: op labels and sentences), `SessionActionsModal.tsx`, `class/AttendanceDrawer.tsx` (teacher swap `:141-160`, assistant tick `:246`: try the plain write, on HC020 open the dialog), `class/SessionDetailDrawer.tsx`, `EditSessionModal.tsx`, `AddSessionModal.tsx`, `TeacherScheduleTransfer.tsx` (error wording only), `SessionGenerator.tsx`, `SessionGeneratorConfirm.tsx` (include-held removed).
+
+**Step 3B** (money inputs)
+- `update-enrollment-rate/index.ts`, `create-family/index.ts`, `manage-demo-student/index.ts` (report `demo_reset_needs_owner`), `admin-data-import/index.ts` (whitelist cut, `session_rate_vnd` stripped): as b.5 / G-20.
+- `src/lib/moneyInputs.ts` (new: entity and op wording). Screens moved to `useMoneyChange`: `BulkEnrollmentDateSetter`, `class/ClassEnrollments`, `ModifyEnrollmentModal` ("from this date" first), `discount/EditEnrollmentDiscountModal`, `EnrollmentRateEditor` (the in-place weekday write `:99-102` goes), `EnrollStudentDialog`, `StudentForm`, `EnrollmentRequestsManager`, the Create Family screen, `StudentsList` (deactivate), `discount/AssignDiscountModal`, `discount/StudentDiscountsTab`, `discount/EditDiscountModal`, `DiscountManager`, `staff/PayRateHistory`, `TeacherEditDrawer`, `ta/TAProfileDrawer`, `student/BillFreezePanel` (unfreeze), `SiblingDiscountCompute`, `pages/FamilyDetail`, `FamilyMembersManager`, `tabs/DataTab`, `src/lib/aiActions.ts` (wording).
+
+**Step 4** (approvals): `src/lib/approvals.ts`, `src/components/admin/approvals/{ApprovalInbox, ApprovalSettingsCard, PendingApprovalBadge}.tsx`; `useGuardedChange.ts` and `useMoneyChange.ts` gain `requestApproval()`; `CancelOverridesReview.tsx` gains tabs and shows asked-by / approved-by from the approval events; `payroll/PayrollMonthLock.tsx` handles HC060.
+
+Not touched by D4: calculate-payroll, close-payroll-month, confirm-tuition, the payment functions, `chat/**`, the Stars engine SQL, `ai_plan_check`. `types.ts` is regenerated by the conductor after the paste; new tables and RPCs are reached through the typed wrappers in the two `api.ts` files.
+
+---
+
+## (e) Two-admin approval (built OFF)
+
+The setting ships `enabled = false`; `change_approval_needed` then answers "not required" for everything.
+
+**Default threshold when switched on** - a change needs a second administrator when ANY is true, each read from the preview, none priced:
+
+| Reason | Rule |
+|---|---|
+| `tier3` | The change is T3 (a taught lesson whose money is settled is cancelled, deleted, moved or un-held; or a money change reaching a confirmed, adjusted or frozen bill of a past month). |
+| `closed_payroll` | It reaches a closed payroll month. |
+| `families` | Settled bills of **3 or more families** in reach. |
+| `paid` | **5,000,000 VND or more** already recorded on the bills in reach (highest recorded value, floor included). |
+| `unfreeze` | Unfreezing a bill. |
+| `pay_adjustment` | Carrying a payroll correction forward (`payroll_adjustments`) - the one screen that pays staff a free amount. |
+| `settings` | Turning approval off or loosening it; giving someone the admin role. |
+
+**Not splittable (R-12).** `families` and `paid` are counted over (1) the whole batch - `money_changes_checked_bulk` computes one impact for all its items, and D2's bulk is caught by the insert trigger - plus (2) the same person's applied T2+ changes of the last 24 hours, read from the two override tables. Fifteen single-family changes by one admin in an afternoon trip the line at the third. A batch that needs approval is ONE request holding the list; nothing in it is applied until it is approved.
+
+**How it works.**
+1. *Asking.* The preview says `approval.required`; the button reads "Send for approval". `request_change_approval` re-runs the plan as the requester under the same locks, checks token, reason, confirmation and correction reason, refuses when no approval is needed (a request is not a place to park a change) and when one is already waiting for the target (HC063), and stores what was asked with a fingerprint. Nothing else is written.
+2. *Waiting.* A badge on the target; the requester may withdraw; other changes to the target proceed under their own rules and make the request stale. Month close and bill confirmation are not blocked; the Payroll and review screens say "N changes are waiting for a second administrator".
+3. *Deciding.* `approval_request_preview` gives the other admin the request beside the plan recomputed now, as them, with their token. `approve_change_request`: an admin, **not the requester** (HC061; compared on `auth.uid()`, no exempt role), pending (HC062), not expired (HC064); under the locks the plan is recomputed - a different fingerprint writes a `stale` event and returns `{status:'stale'}`; the approver's token must match (HC011); an `approved` event is written, the flag `hec.change_request_ok` is set, and the SAME public checked function is called with the stored arguments. Its hook asks `_change_request_claim`, which accepts only a request approved in this transaction with this fingerprint. Approval and change are one transaction. Because the public function runs as the approver, D2's own columns (`canceled_by`, `actor_user_id` of a D2 row) name the approver; the request and its events name who asked; the review screen shows both (A-16). Money rows store the requester as `actor_user_id`.
+4. *Expiry.* 7 days; an expired request cannot be approved; "Ask again" pre-fills the form and takes a fresh preview.
+
+**Few admins.**
+- Cannot be switched on with fewer than two admins (HC065), nor - said on the settings card - before step 4 is installed.
+- **Way out when the other admin is away (A-17):** setting `solo_release_after_hours`, NULL (never) by default. When the owner sets it (say 48), the requester may apply their own request once it has waited that long undecided (`release_own_request`): recorded as `released_alone`, always in the review queue, shown first to the other admin on return. A delayed act by a named person, on the record; the alternative - switching the rule off from the SQL editor - leaves no trace in the approval tables and is all or nothing. The SQL statement is still printed on the status card for a school that falls to one admin.
+- Adding an admin while it is on is a request of kind `settings` (`grant_admin`), applied by the other admin's approval (A-18). Loosening or switching off: the same. Tightening and switching on: immediate.
+- Residual, stated: two logins held by one person before it was switched on; an admin password-reset tool, if one exists, makes a second login on the spot. The status card lists the admins for the owner to read on the day.
+- A missing settings row is HC050 `guard_broken` with the repair statement, not "approval required" (A-15).
+- The approver's work is one screen and one click; rejecting needs a sentence. No new notification system: a count on the admin overview.
+
+**Audit.** Requests and events are append-only, written only by the definer functions, readable by admins; the `applied` event lists the override ids. A T3 change that was approved still goes to the review queue.
+
 <!-- END -->
