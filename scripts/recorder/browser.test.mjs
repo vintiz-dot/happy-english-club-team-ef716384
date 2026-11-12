@@ -181,7 +181,14 @@ try {
     const startedAt = Date.parse(serverRec(row.id).started_at);
     const killedAt = Date.now();
     if (how === "reload") await page.reload();
-    else { const cdp = await ctx.newCDPSession(page); await cdp.send("Page.crash").catch(() => {}); await sleep(1500); }
+    else {
+      // Kill the renderer. Page.crash never answers (its target is gone), so do not wait on it.
+      const crashed = new Promise((r) => page.once("crash", () => r(true)));
+      const cdp = await ctx.newCDPSession(page);
+      cdp.send("Page.crash").catch(() => {});
+      results.crashEventSeen = await Promise.race([crashed, sleep(5000).then(() => false)]);
+      await page.close().catch(() => {});
+    }
     const p2 = how === "reload" ? page : (await newPage(ctx)).page;
     if (how === "reload") await p2.waitForFunction(() => window.harnessReady === true);
     const ids = await p2.evaluate(async () => { await setup({ uid: "22222222-2222-4222-8222-222222222222" }); await rec.prepare(); return rec.recover(); });
