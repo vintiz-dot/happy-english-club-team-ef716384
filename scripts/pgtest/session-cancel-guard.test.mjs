@@ -28,6 +28,19 @@ if (!auditFile || !cancelFile || !d1File || !d2File) {
   process.exit(2);
 }
 const sqlOf = (f) => readFileSync(f, 'utf8');
+// D-review-2 F-7: a fixture call that throws (because a mutant let an
+// earlier refusal through) is a FAIL line for its section, never a crash
+// that hides every later case.
+async function section(name, fn) {
+  try { await fn(); }
+  catch (e) {
+    ok(`section "${name}" ran to the end without an unexpected error`, false,
+       { code: e?.code, message: e?.message });
+    try { await db?.exec('RESET ROLE'); } catch { /* connection may be mid-transaction */ }
+    try { await db?.exec('ROLLBACK'); } catch { /* none open */ }
+  }
+}
+let db;
 
 // Real columns, names and nullability of src/integrations/supabase/types.ts
 // for every table the four migrations read.
@@ -184,7 +197,7 @@ async function makeDb({ withD1 = true } = {}) {
 }
 
 // ------------------------------------------------------------ preflight
-{
+await section("block 1", async () => {
   const bare = await makeDb({ withD1: false });
   let msg = null;
   try { await bare.exec(sqlOf(d2File)); } catch (e) { msg = e.message; }
@@ -195,8 +208,8 @@ async function makeDb({ withD1 = true } = {}) {
       (SELECT count(*)::int FROM pg_trigger WHERE tgname LIKE 'zz_session%') AS trg`)).rows[0];
   ok('d3   and installs nothing (no table, no trigger)', t.t === null && t.trg === 0, t);
   await bare.close();
-}
-{
+});
+await section("block 2", async () => {
   const v = await makeDb();
   await v.exec(`CREATE OR REPLACE FUNCTION public.session_recording_evidence(p_session_id uuid)
     RETURNS jsonb LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path = public AS $b$ SELECT '[]'::jsonb $b$;`);
@@ -206,9 +219,9 @@ async function makeDb({ withD1 = true } = {}) {
   ok('B-12 preflight refuses while session_recording_evidence is VOLATILE (A-2)',
      /session_recording_evidence must be STABLE/.test(msg ?? ''), msg);
   await v.close();
-}
+});
 
-const db = await makeDb();
+db = await makeDb();
 const fnDef = async (name) => (await db.query(`SELECT pg_get_functiondef(to_regprocedure($1)) d`, [name])).rows[0].d;
 const guardDefsBefore = [await fnDef('public.guard_cancelled_session_attendance()'),
                          await fnDef('public.set_attendance_excused_on_cancel()'),
@@ -236,6 +249,13 @@ async function as(uid, jwtRole, dbRole, sql, params = []) {
   }
 }
 const tryIt = async (fn) => { try { return { ok: await fn() }; } catch (e) { return { code: e.code, message: e.message, detail: e.detail }; } };
+// A fixture call that is expected to succeed, after a refusal test: a
+// throw becomes a FAIL line and the case goes on with an empty result.
+const must = async (label, fn) => {
+  const r = await tryIt(fn);
+  if (r.ok === undefined) { ok(`${label}: the fixture call succeeds`, false, r); return {}; }
+  return r.ok ?? {};
+};
 const asAdmin = (sql, params) => as(ADMIN, 'authenticated', 'authenticated', sql, params);
 const asService = (sql, params) => as(null, 'service_role', 'service_role', sql, params);
 const asSuper = (sql, params) => as(null, '', null, sql, params);
@@ -307,7 +327,7 @@ const startedToday = async () => { const c = await clock(0, -2); return mk({ whe
 const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ when: c, start: c.time, end: c.end_time }); };
 
 // --------------------------------------------------------------- mechanism
-{
+await section("block 3", async () => {
   ok('d1 txid_current() exists', (await db.query(`SELECT txid_current() > 0 AS ok`)).rows[0].ok === true);
   const before = (await asSuper(`SELECT count(*)::int n FROM session_cancel_override_events WHERE kind='guard_installed'`)).rows[0].n;
   let again = null;
@@ -349,10 +369,10 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   ok('d4   automation log: service_role only', g.ls && !g.la, g);
   ok('d4   override table: authenticated SELECT only; service_role has the house-rule GRANT ALL',
      g.tsel && !g.ti && g.tsi, g);
-}
+});
 
 // --------------------------------------------------------- bypass attempts
-{
+await section("d5/d6: no raw cancel, by anybody.", async () => {
   // d5/d6: no raw cancel, by anybody.
   const fut = await mk(), past = await mk({ when: PAST }), strong = await mk({ when: PAST, status: 'Held' });
   await att(strong.sid, 'Present', strong.teacher);
@@ -366,8 +386,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
      (await sess(fut.sid)).status === 'Scheduled' && (await sess(strong.sid)).status === 'Held' && (await nOverrides()) === 0);
   const r = await tryIt(() => as(fut.teacher, 'authenticated', 'authenticated', `UPDATE sessions SET status='Canceled' WHERE id=$1`, [fut.sid]));
   ok('d5   the class teacher (RLS allows the row) -> HC020', r.code === 'HC020', r);
-}
-{
+});
+await section("d7 + B-2: raw delete - the automation lane, and nobody else.", async () => {
   // d7 + B-2: raw delete - the automation lane, and nobody else.
   const a = await mk();
   ok('d7 service role deletes a future Scheduled NONE lesson (rebuild lane)',
@@ -391,8 +411,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   ok('d7 service role: future with homework set that day (SOFT) -> HC020', r.code === 'HC020', r);
   r = await tryIt(() => asSuper(`DELETE FROM classes WHERE id=$1`, [marked.cid]));
   ok('d7/A-17 deleting the class does not cascade into sessions (RESTRICT)', r.code === '23503' && !!(await sess(marked.sid)), r);
-}
-{
+});
+await section("d8-d12: the flag.", async () => {
   // d8-d12: the flag.
   const a = await mk(), b = await mk();
   let e = await script(null, '', null, `SELECT set_config('hec.session_change_ack', gen_random_uuid()::text, true);
@@ -436,8 +456,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
     UPDATE sessions SET status='Canceled' WHERE id='${c.sid}'`);
   ok('d9 replay: the flag names a real cancel override of this session from an earlier transaction -> HC020', e?.code === 'HC020', e);
   ok('d9   session still Scheduled', (await sess(c.sid)).status === 'Scheduled');
-}
-{
+});
+await section("d13: the audit tables, and TRUNCATE.", async () => {
   // d13: the audit tables, and TRUNCATE.
   const a = await mk();
   await cancelNow(a.sid);
@@ -471,8 +491,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   r = await tryIt(() => asSuper(`TRUNCATE classes CASCADE`));
   ok('d13/A-18 TRUNCATE classes CASCADE reaches the sessions statement trigger -> HC030', r.code === 'HC030', r);
   ok('d13   the override row is still there', (await overrides(a.sid)).length === 1);
-}
-{
+});
+await section("d14: trigger disabled -> the RPC refuses to work without its guard.", async () => {
   // d14: trigger disabled -> the RPC refuses to work without its guard.
   const a = await mk();
   const p = await preview(a.sid);
@@ -488,8 +508,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
      st2.truncate_trigger === 'O' && !!st2.installed_at, st2);
   const e = await tryIt(() => as(PARENT, 'authenticated', 'authenticated', `SELECT public.session_cancel_guard_status()`));
   ok('d14   status is admin-only', e.code === '42501', e);
-}
-{
+});
+await section("d15 + B-4: status flip then cancel.", async () => {
   // d15 + B-4: status flip then cancel.
   const a = await mk({ when: PAST, status: 'Held' });
   await att(a.sid, 'Present', a.teacher);
@@ -506,8 +526,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   await asAdmin(`UPDATE sessions SET status='Scheduled' WHERE id=$1`, [b.sid]);
   p = await preview(b.sid);
   ok('d15 an R-only lesson flipped back -> T1, still needs reason + confirm', p.tier === 1 && p.requires.confirm === true, p.tier);
-}
-{
+});
+await section("d16, d17, d18 + B-2/B-3: moves and re-classing.", async () => {
   // d16, d17, d18 + B-2/B-3: moves and re-classing.
   const past = await mk({ when: PAST });
   let r = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [past.sid, FUTURE.date]));
@@ -557,8 +577,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   ok('d18 class_id change by automation on a future NONE lesson -> allowed', r.ok !== undefined, r);
   r = await tryIt(() => asSuper(`UPDATE sessions SET status='Canceled', date=date+1 WHERE id=$1`, [pts.sid]));
   ok('d18 cancel + date change in one statement -> HC022', r.code === 'HC022', r);
-}
-{
+});
+await section("d19: evidence removed first -> documented residual, now flagged (B-4).", async () => {
   // d19: evidence removed first -> documented residual, now flagged (B-4).
   const a = await mk({ when: PAST, status: 'Held' });
   for (let i = 0; i < 2; i++) await att(a.sid, 'Present', a.teacher);
@@ -582,10 +602,10 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   await checked(b.sid, { token: pb.token, confirm: true });
   ok('B-4 a person-marked Present changed to Excused before the cancel is flagged too',
      (await overrides(b.sid))[0].erased_recently.some((x) => x.old_status === 'Present' && x.new_status === 'Excused'));
-}
+});
 
 // --------------------------------------------------------------------- RPC
-{
+await section("d20 wrong role.", async () => {
   // d20 wrong role.
   const a = await mk();
   const p = await preview(a.sid);
@@ -599,8 +619,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
     ok(`d20   preview too, for ${who}`, rp.code === '42501', rp);
   }
   ok('d20   nothing written', (await overrides(a.sid)).length === 0 && (await sess(a.sid)).status === 'Scheduled');
-}
-{
+});
+await section("d21 reasons.", async () => {
   // d21 reasons.
   const a = await mk();
   const p = await preview(a.sid);
@@ -610,12 +630,12 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
     const r = await tryIt(() => checked(a.sid, { token: p.token, reason }));
     ok(`d21 reason ${label} -> HC010`, r.code === 'HC010', r);
   }
-  const res = await checked(a.sid, { token: p.token, reason: '  Nghỉ lễ   Quốc khánh 2/9  ' });
+  const res = await must('d21', () => checked(a.sid, { token: p.token, reason: '  Nghỉ lễ   Quốc khánh 2/9  ' }));
   ok('d21 a 15+ character Vietnamese reason passes; stored cleaned',
      !!res.override_id && (await overrides(a.sid))[0].reason === 'Nghỉ lễ Quốc khánh 2/9' &&
      (await sess(a.sid)).canceled_reason === 'Nghỉ lễ Quốc khánh 2/9', (await overrides(a.sid))[0]?.reason);
-}
-{
+});
+await section("d22 tokens.", async () => {
   // d22 tokens.
   const a = await mk(), b = await mk();
   const pa = await preview(a.sid);
@@ -628,11 +648,11 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   ok('d22 admin A\'s token used by admin B -> HC011', r.code === 'HC011', r);
   r = await tryIt(() => checked(a.sid, { token: null }));
   ok('d22 no token -> HC011', r.code === 'HC011', r);
-  ok('d22 the right token works', !!(await checked(a.sid, { token: pa.token })).override_id);
+  ok('d22 the right token works', !!(await must('d22', () => checked(a.sid, { token: pa.token }))).override_id);
   r = await tryIt(() => checked(a.sid, { token: pa.token }));
   ok('d22 reused after the cancel -> HC015 already_canceled', r.code === 'HC015' && r.message === 'already_canceled', r);
-}
-{
+});
+await section("d23 + B-6 staleness.", async () => {
   // d23 + B-6 staleness.
   const a = await mk({ when: PAST, status: 'Held' });
   await att(a.sid, 'Absent', a.teacher);
@@ -647,7 +667,7 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   p = await preview(a.sid);
   await asSuper(`UPDATE attendance SET marked_at = now() - interval '1 minute' WHERE session_id=$1`, [a.sid]);
   ok('d23 not stale by noise: marked_at rewritten -> the token still works',
-     !!(await checked(a.sid, { token: p.token, confirm: true })).override_id);
+     !!(await must('d23', () => checked(a.sid, { token: p.token, confirm: true }))).override_id);
 
   const b = await mk({ when: PAST });
   const kb = await att(b.sid, 'Present', null);
@@ -664,8 +684,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   await asSuper(`UPDATE invoices SET confirmation_status='confirmed' WHERE student_id=$1`, [kb]);
   r = await tryIt(() => checked(b.sid, { token: p.token, confirm: true }));
   ok('B-6 a bill confirmed between preview and confirm stales the token', r.code === 'HC011', r);
-}
-{
+});
+await section("d24, d25, d33: tiers and correction mode.", async () => {
   // d24, d25, d33: tiers and correction mode.
   const t2 = await mk({ when: OLD, status: 'Held' });
   for (let i = 0; i < 2; i++) await att(t2.sid, 'Present', t2.teacher);
@@ -680,8 +700,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   ok('d24 T3 without correction_reason -> HC013', r.code === 'HC013', r);
   r = await tryIt(() => checked(t2.sid, { token: p.token, confirm: true, corr: 'short one' }));
   ok('d24 T3 with a short correction_reason -> HC013', r.code === 'HC013', r);
-  const res = await checked(t2.sid, { token: p.token, confirm: true, corr: 'Register was entered for the wrong class' });
-  const o = (await overrides(t2.sid))[0];
+  const res = await must('d33', () => checked(t2.sid, { token: p.token, confirm: true, corr: 'Register was entered for the wrong class' }));
+  const o = (await overrides(t2.sid))[0] ?? {};
   ok('d33 T3 row: correction_mode, both reasons, payroll_month_locked, review_required',
      o.correction_mode && o.correction_reason === 'Register was entered for the wrong class' && o.reason === R &&
      o.payroll_month_locked && o.review_required && res.tier === 3, o);
@@ -701,8 +721,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   p = await preview(t0.sid);
   ok('d25 T0 without confirm works', p.tier === 0 && p.requires.confirm === false && !!(await checked(t0.sid, { token: p.token })).override_id);
   ok('d25   T0 is not in the review queue', (await overrides(t0.sid))[0].review_required === false);
-}
-{
+});
+await section("d26, d27, d38: STRONG cancellable; evidence read BEFORE; row content.", async () => {
   // d26, d27, d38: STRONG cancellable; evidence read BEFORE; row content.
   const a = await mk({ when: PAST, status: 'Held' });
   const kids = [];
@@ -710,8 +730,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   await inv(kids[0], a.month, { recorded: 540000 });
   await inv(kids[1], a.month);
   const p = await preview(a.sid);
-  const res = await checked(a.sid, { token: p.token, confirm: true, corr: CORR });
-  const o = (await overrides(a.sid))[0];
+  const res = await must('d26', () => checked(a.sid, { token: p.token, confirm: true, corr: CORR }));
+  const o = (await overrides(a.sid))[0] ?? { evidence: {} };
   const marks = (await asSuper(`SELECT status FROM attendance WHERE session_id=$1`, [a.sid])).rows.map((x) => x.status);
   ok('d26 STRONG is cancellable (ruling 1): cancelled, every mark now Excused',
      (await sess(a.sid)).status === 'Canceled' && marks.length === 3 && marks.every((m) => m === 'Excused'), marks);
@@ -732,8 +752,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   ok('d39 after the cancel, a Present mark is still refused by 20261027090000 (23514)', r.code === '23514', r);
   const corr = await tryIt(() => checked(a.sid, { token: p.token, confirm: true, corr: 'x'.repeat(5) }));
   ok('d30 already cancelled -> HC015 already_canceled', corr.code === 'HC015', corr);
-}
-{
+});
+await section("settled: the restated rule agrees with D1 on the source month.", async () => {
   // settled: the restated rule agrees with D1 on the source month.
   const cases = [{ recorded: 1 }, { conf: 'confirmed' }, { conf: 'adjusted' }, { frozen: true }, { status: 'paid' },
     { status: 'partial' }, {}, { conf: 'needs_review', recorded: null }];
@@ -747,8 +767,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
     if (d1 === d2) agree++;
   }
   ok('B-3 session_month_tuition_settled agrees with D1 settled.tuition on 8 invoice states', agree === cases.length, agree);
-}
-{
+});
+await section("d28 atomicity, d31 moves, B-1, B-3 through the checked path.", async () => {
   // d28 atomicity, d31 moves, B-1, B-3 through the checked path.
   const a = await mk({ when: PAST, status: 'Held' });
   const k = await att(a.sid, 'Present', a.teacher);
@@ -763,9 +783,9 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
      p.destination?.month === FUTURE.month, p);
   r = await tryIt(() => move(a.sid, { date: FUTURE.date, start: '08:00', end: '09:30', token: p.token }));
   ok('d31 T2 move without confirm -> HC012', r.code === 'HC012', r);
-  const res = await move(a.sid, { date: FUTURE.date, start: '08:00', end: '09:30', token: p.token, confirm: true });
+  const res = await must('d31', () => move(a.sid, { date: FUTURE.date, start: '08:00', end: '09:30', token: p.token, confirm: true }));
   const s = await sess(a.sid);
-  const o = (await overrides(a.sid))[0];
+  const o = (await overrides(a.sid))[0] ?? { change: {} };
   ok('d31 checked move of a past lesson: new date/time, a move row with the change and destination flags',
      s.date !== null && o.action === 'move' && o.change.new_date === FUTURE.date && o.change.new_start_time === '08:00:00' &&
      typeof o.change.destination?.any === 'boolean' && o.review_required === true, o.change);
@@ -799,8 +819,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   p = await preview(d.sid, 'move', { date: lockDay.date, start_time: '17:30', end_time: '19:00' });
   ok('B-3 a STRONG lesson moved into a locked payroll month -> T3 (worse of source and destination)',
      p.tier === 3 && p.destination.payroll_month_locked === true && p.requires.correction_reason, [p.tier, p.destination]);
-}
-{
+});
+await section("d29 delete.", async () => {
   // d29 delete.
   const t0 = await mk();
   await att(t0.sid, 'Present', null);
@@ -814,18 +834,18 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   p = await preview(t1.sid, 'delete');
   let r = await tryIt(() => checked(t1.sid, { action: 'delete', token: p.token }));
   ok('d29 T1 delete without confirm -> HC012', r.code === 'HC012', r);
-  ok('d29 T1 delete with confirm works, review_required', !!(await checked(t1.sid, { action: 'delete', token: p.token, confirm: true })).override_id &&
-     (await overrides(t1.sid))[0].review_required === true);
+  ok('d29 T1 delete with confirm works, review_required', !!(await must('d29', () => checked(t1.sid, { action: 'delete', token: p.token, confirm: true }))).override_id &&
+     (await overrides(t1.sid))[0]?.review_required === true);
   const ev = await mk({ when: PAST, status: 'Held' });
   await att(ev.sid, 'Present', ev.teacher);
   p = await preview(ev.sid, 'delete');
   ok('d29 preview: delete with evidence -> allowed false, use_cancel', p.allowed === false && p.refuse_code === 'use_cancel');
   r = await tryIt(() => checked(ev.sid, { action: 'delete', token: p.token, confirm: true }));
   ok('d29 delete with evidence -> HC014', r.code === 'HC014', r);
-  await cancelNow(ev.sid);
+  await must('d29 cancel', () => cancelNow(ev.sid));
   p = await preview(ev.sid, 'delete');
   ok('d29 cancel-then-delete: after the cancel the lesson reads NONE (marks Excused, not Held)', p.level === 'NONE' && p.allowed, p.level);
-  await checked(ev.sid, { action: 'delete', token: p.token, confirm: true });
+  await must('d29 delete', () => checked(ev.sid, { action: 'delete', token: p.token, confirm: true }));
   const rows = await overrides(ev.sid);
   ok('d29   two audited steps, the first holding the STRONG evidence',
      rows.length === 2 && rows[0].action === 'cancel' && rows[0].evidence.level === 'STRONG' && rows[1].action === 'delete', rows.map((x) => x.action));
@@ -835,8 +855,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   ok('d30 NULL id -> 22004', r.code === '22004', r);
   r = await tryIt(() => checked(t1.sid, { action: 'move', token: 'x' }));
   ok('d30 cancel_session_checked with action move -> HC015 bad_action', r.code === 'HC015' && r.message === 'bad_action', r);
-}
-{
+});
+await section("d32 un-cancel.", async () => {
   // d32 un-cancel.
   const a = await mk({ when: PAST, status: 'Held' });
   const k = await att(a.sid, 'Present', a.teacher);
@@ -850,7 +870,7 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   ok('d32 preview: confirm not required, marks_excused_now 1', p.requires.confirm === false && p.after_cancel.marks_excused_now === 1, p.after_cancel);
   r = await tryIt(() => uncancel(a.sid, { token: p.token, reason: 'too short' }));
   ok('d32 short reason -> HC010', r.code === 'HC010', r);
-  await uncancel(a.sid, { token: p.token });
+  await must('d32', () => uncancel(a.sid, { token: p.token }));
   const s = await sess(a.sid);
   ok('d32 RPC -> Scheduled; canceled_* left as history', s.status === 'Scheduled' && s.canceled_reason === before.canceled_reason &&
      s.canceled_by === before.canceled_by && s.canceled_at !== null);
@@ -869,8 +889,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   r = await tryIt(() => uncancel(b.sid, { token: p.token }));
   ok('d32 un-cancel into an occupied slot -> 23505, nothing written',
      r.code === '23505' && (await overrides(b.sid)).filter((o) => o.action === 'uncancel').length === 0, r);
-}
-{
+});
+await section("d34 events.", async () => {
   // d34 events.
   const a = await mk({ when: PAST });
   const k = await att(a.sid, 'Present', null);
@@ -893,8 +913,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   ok('d34 unknown kind -> HC015', r.code === 'HC015', r);
   r = await tryIt(() => asAdmin(`SELECT public.record_session_override_event($1,'reviewed','{}')`, [randomUUID()]));
   ok('d34 unknown override -> P0002', r.code === 'P0002', r);
-}
-{
+});
+await section("d35 bulk + B-5 cap.", async () => {
   // d35 bulk + B-5 cap.
   const t0s = [await mk(), await mk(), await mk()];
   const t1 = await mk({ when: PAST });
@@ -928,8 +948,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   ok('B-5 51 items -> HC016 too_many (cap 50)', r.code === 'HC016', r);
   const r2 = await tryIt(() => as(t2b.teacher, 'authenticated', 'authenticated', `SELECT public.cancel_sessions_checked_bulk('[]'::jsonb,'x',gen_random_uuid(),'{}')`));
   ok('d35 bulk by a non-admin -> 42501', r2.code === '42501', r2);
-}
-{
+});
+await section("d36 views and the table are admin-only.", async () => {
   // d36 views and the table are admin-only.
   const a = await mk();
   await cancelNow(a.sid);
@@ -942,8 +962,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
      (await n(a.teacher, `SELECT count(*)::int n FROM session_cancel_review_queue`)) === 0 &&
      (await n(a.teacher, `SELECT count(*)::int n FROM session_cancel_override_events`)) === 0);
   ok('d36 a parent sees zero rows', (await n(PARENT, `SELECT count(*)::int n FROM session_cancel_review_queue`)) === 0);
-}
-{
+});
+await section("d37 lock order, structurally: the row lock is the first statement on", async () => {
   // d37 lock order, structurally: the row lock is the first statement on
   // sessions in the checked path, before the evidence read and the write.
   const def = await fnDef('public._session_change_apply(uuid,text,jsonb,text,text,boolean,text,jsonb,text,uuid,boolean)');
@@ -951,10 +971,10 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
     iUpd = def.indexOf("SET status = 'Canceled'");
   ok('d37 FOR UPDATE on the session precedes the evidence read, the audit insert and the write',
      iLock > 0 && iLock < iAssess && iAssess < iIns && iIns < iUpd, [iLock, iAssess, iIns, iUpd]);
-}
+});
 
 // -------------------------------------------------------- automatic paths
-{
+await section("d40 rebuild deletes, as the service role.", async () => {
   // d40 rebuild deletes, as the service role.
   const fut = await mk();
   ok('d40 rebuild: future Scheduled NONE -> deleted', (await tryIt(() => asService(`DELETE FROM sessions WHERE id=$1`, [fut.sid]))).ok && !(await sess(fut.sid)));
@@ -982,8 +1002,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   const held = await mk({ when: PAST, status: 'Held' });
   r = await tryIt(() => asService(`UPDATE sessions SET start_time='16:00', end_time='17:30' WHERE id=$1`, [held.sid]));
   ok('d42 include-held: time update on a past Held lesson (still started) -> succeeds', r.ok !== undefined, r);
-}
-{
+});
+await section("d43 stars engine shape, signed in as the chosen teacher.", async () => {
   // d43 stars engine shape, signed in as the chosen teacher.
   const a = await startedToday();
   let r = await tryIt(() => as(a.teacher, 'authenticated', null, `UPDATE sessions SET status='Held' WHERE id=$1 AND status='Scheduled'`, [a.sid]));
@@ -1014,8 +1034,8 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   r = await tryIt(() => asService(`INSERT INTO sessions(id,class_id,date,start_time,end_time,teacher_id,notes) VALUES ($1,$2,$3,'17:30','19:00',gen_random_uuid(),'imported note')
       ON CONFLICT (id) DO UPDATE SET notes = EXCLUDED.notes`, [c.sid, c.cid, c.date]));
   ok('d46 import upsert changing only notes -> updated', r.ok !== undefined && (await sess(c.sid)).notes === 'imported note', r);
-}
-{
+});
+await section("Rollout states (B-9): D1 function dropped after D2 -> every guarded ra", async () => {
   // Rollout states (B-9): D1 function dropped after D2 -> every guarded raw write raises.
   const x = await makeDb();
   await x.exec(sqlOf(d2File));
@@ -1028,10 +1048,145 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
   try { await x.query(`DELETE FROM sessions WHERE id=$1`, [sid]); } catch (e) { code = e.code; }
   ok('B-9 rollout: D1 function dropped after the guard -> even an automation-lane delete is refused (closed)', code !== null, code);
   await x.close();
-}
+});
+
+// ------------------------------------- revision 1 (D-review-2 findings)
+await section('R1 F-1 re-parented register (probe E2)', async () => {
+  const a = await mk({ when: PAST, status: 'Held' });
+  const other = await mk({ when: FAR, cid: a.cid });
+  const k1 = await att(a.sid, 'Present', a.teacher), k2 = await att(a.sid, 'Present', a.teacher);
+  await inv(k1, a.month, { recorded: 540000 });
+  const p0 = await preview(a.sid);
+  ok('F-1 E2 taught + paid lesson previews as T3, STRONG', p0.tier === 3 && p0.level === 'STRONG', [p0.tier, p0.level]);
+  const r = await tryIt(() => asAdmin(`UPDATE attendance SET session_id=$2 WHERE session_id=$1`, [a.sid, other.sid]));
+  ok('F-1 E2 the admin re-points the register at another lesson (still possible: refusing it is D4)', r.ok !== undefined, r);
+  const p1 = await preview(a.sid);
+  ok('F-1 preview after the re-parent: tier drops to 1 BUT review_required and erased_recently say why',
+     p1.tier === 1 && p1.review_required === true &&
+     p1.erased_recently.filter((x) => x.what === 'attendance_reparented').length === 2, [p1.tier, p1.review_required, p1.erased_recently]);
+  const res = await must('F-1', () => checked(a.sid, { token: p1.token, confirm: true }));
+  const o = (await overrides(a.sid))[0] ?? { erased_recently: [] };
+  ok('F-1 the cancel is stored review_required with both re-parented rows (students, destination lesson)',
+     res.review_required === true && o.review_required === true &&
+     o.erased_recently.filter((x) => x.what === 'attendance_reparented' && x.new_session_id === other.sid &&
+       [k1, k2].includes(x.student_id)).length === 2, o.erased_recently);
+  const q = (await asAdmin(`SELECT count(*)::int n FROM session_cancel_review_queue WHERE override_id=$1`, [o.id ?? randomUUID()])).rows[0].n;
+  ok('F-1 and it is in the review queue (closed: no unreviewed T1 cancel)', q === 1, q);
+  // A re-parent of a SEEDED row counts too (fail closed: the bill line moves with it).
+  const b = await mk({ when: PAST });
+  const other2 = await mk({ when: FAR, cid: b.cid });
+  await att(b.sid, 'Present', null);
+  await asAdmin(`UPDATE attendance SET session_id=$2 WHERE session_id=$1`, [b.sid, other2.sid]);
+  const pb = await preview(b.sid);
+  ok('F-1 a re-parented seeded row is counted as well', pb.review_required === true && pb.erased_recently.length === 1, pb.erased_recently);
+  // Control: an untouched lesson is not reviewed and says so in the preview.
+  const c = await mk();
+  const pc = await preview(c.sid);
+  ok('F-8.2 preview of an untouched future lesson: review_required false, erased_recently []',
+     pc.review_required === false && Array.isArray(pc.erased_recently) && pc.erased_recently.length === 0, pc);
+});
+await section('R1 F-4 a lesson id cannot change', async () => {
+  const a = await mk();
+  for (const [who, run] of [['admin', asAdmin], ['service role', asService], ['superuser', asSuper]]) {
+    const r = await tryIt(() => run(`UPDATE sessions SET id=gen_random_uuid() WHERE id=$1`, [a.sid]));
+    ok(`F-4 UPDATE sessions SET id by the ${who} -> HC020`, r.code === 'HC020' && /id_change/.test(r.detail ?? ''), r);
+  }
+  const held = await mk({ when: PAST, status: 'Held' });
+  await asAdmin(`UPDATE sessions SET status='Scheduled' WHERE id=$1`, [held.sid]);
+  const r = await tryIt(() => asAdmin(`UPDATE sessions SET id=gen_random_uuid() WHERE id=$1`, [held.sid]));
+  ok('F-4 probe E4: after a Held flip, the id change that would hide it -> HC020, lesson kept', r.code === 'HC020' && !!(await sess(held.sid)), r);
+});
+await section('R1 F-5 what a move lands on', async () => {
+  // G2: a blank future lesson moved onto a past day with points + a transcript of its class.
+  const a = await mk();
+  const day = await clock(-5);
+  await asSuper(`INSERT INTO point_transactions(student_id,class_id,points,type,date,created_by) VALUES (gen_random_uuid(),$1,5,'participation',$2,$3)`,
+    [a.cid, day.date, a.teacher]);
+  await asSuper(`INSERT INTO class_transcripts(class_id,uploaded_by,transcript_date,status) VALUES ($1,$2,$3,'analyzed')`, [a.cid, a.teacher, day.date]);
+  const p = await preview(a.sid, 'move', { date: day.date, start_time: '17:30', end_time: '19:00' });
+  ok('F-5 G2 preview: destination day evidence reported, confirm required, review_required',
+     p.destination?.day_evidence?.any === true && p.destination.day_evidence.points === 1 && p.destination.day_evidence.transcripts === 1 &&
+     p.requires.confirm === true && p.review_required === true, [p.tier, p.destination, p.review_required]);
+  const res = await must('F-5 G2', () => move(a.sid, { date: day.date, start: '17:30', end: '19:00', token: p.token, confirm: true }));
+  ok('F-5 G2 the checked move is stored review_required', res.review_required === true &&
+     (await overrides(a.sid))[0]?.review_required === true, res);
+  // Automation onto a FUTURE day that already has evidence: refused (B-3(c)).
+  const b = await mk();
+  const fday = await clock(12);
+  await mk({ when: fday, cid: b.cid, start: '08:00', end: '09:00', status: 'Scheduled' });
+  await asSuper(`INSERT INTO homeworks(class_id, created_by, created_at) VALUES ($1,$2,($3::date + time '12:00') AT TIME ZONE 'Asia/Ho_Chi_Minh')`,
+    [b.cid, b.teacher, fday.date]);
+  let r = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [b.sid, fday.date]));
+  ok('F-5 automation cannot move a lesson onto a day with homework of its class -> HC020', r.code === 'HC020', r);
+  const ctl = await mk();
+  r = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [ctl.sid, (await clock(13)).date]));
+  ok('F-5   control: the same move onto a clean day is still allowed', r.ok !== undefined, r);
+  const c = await mk();
+  const hday = await clock(-6);
+  await mk({ when: hday, cid: c.cid, start: '08:00', end: '09:00', status: 'Held' });
+  const pc = await preview(c.sid, 'move', { date: hday.date, start_time: '17:30', end_time: '19:00' });
+  ok('F-5 another Held lesson of the class that day counts as destination evidence',
+     pc.destination?.day_evidence?.other_lessons === 1 && pc.review_required === true, pc.destination);
+  // G3: checked move into a future month whose bill is paid -> reviewed.
+  const d = await mk();
+  const kid = await att(d.sid, 'Present', null);
+  const dest = await clock(100);
+  await inv(kid, dest.month, { recorded: 540000 });
+  const pd = await preview(d.sid, 'move', { date: dest.date, start_time: '17:30', end_time: '19:00' });
+  ok('F-5 G3 move into a paid destination month: destination.any, review_required in the preview',
+     pd.destination?.any === true && pd.review_required === true, [pd.tier, pd.destination]);
+  const rd = await must('F-5 G3', () => move(d.sid, { date: dest.date, start: '17:30', end: '19:00', token: pd.token, confirm: pd.requires.confirm }));
+  ok('F-5 G3 stored review_required; both months in refresh_pairs', rd.review_required === true &&
+     (rd.refresh_pairs ?? []).length === 2, rd);
+  // I5: un-cancel inside a settled month -> reviewed.
+  const e = await mk({ when: PAST });
+  const ek = await att(e.sid, 'Present', null);
+  await inv(ek, e.month, { recorded: 540000 });
+  await must('F-5 I5 cancel', () => cancelNow(e.sid));
+  const pe = await preview(e.sid, 'uncancel');
+  ok('F-5 I5 un-cancel in a settled month: review_required in the preview', pe.review_required === true, pe.settled_any);
+  const re = await must('F-5 I5', () => uncancel(e.sid, { token: pe.token, corr: pe.tier === 3 ? CORR : null }));
+  ok('F-5 I5 ... and stored', re.review_required === true, re);
+});
+await section('R1 F-7 surviving mutants', async () => {
+  // M08 (:554): an acknowledged un-cancel goes back to Scheduled only.
+  const a = await mk({ when: PAST, status: 'Canceled' });
+  const ins = (sid, action) => `INSERT INTO session_cancel_overrides(actor_user_id,session_id,class_id,teacher_id,session_date,action,via,tier,level,
+      settled,correction_mode,reason,confirmed,token,evidence,session_before,affected,invoices_before,refresh_pairs,payroll_month_locked,review_required)
+    SELECT '${ADMIN}', id, class_id, teacher_id, date, '${action}', 'single', 1, 'NONE', false, false, 'test reason here ok', true, 'x',
+           '{}', '{}', '[]', '[]', '[]', false, false FROM sessions WHERE id='${sid}' RETURNING id`;
+  let e = await script(null, '', null, `DO $x$ DECLARE v uuid; BEGIN ${ins(a.sid, 'uncancel')} INTO v;
+      PERFORM set_config('hec.session_change_ack', v::text, true); END $x$;
+    UPDATE sessions SET status='Held' WHERE id='${a.sid}'`);
+  ok('M08 acknowledged un-cancel written as Held -> HC020 (only back to Scheduled)', e?.code === 'HC020', e);
+  ok('M08   lesson still Canceled', (await sess(a.sid)).status === 'Canceled');
+  e = await script(null, '', null, `DO $x$ DECLARE v uuid; BEGIN ${ins(a.sid, 'uncancel')} INTO v;
+      PERFORM set_config('hec.session_change_ack', v::text, true); END $x$;
+    UPDATE sessions SET status='Scheduled' WHERE id='${a.sid}'`);
+  ok('M08   control: the same acknowledgement written as Scheduled is accepted', e === null && (await sess(a.sid)).status === 'Scheduled', e);
+  // M32 (:934): log_session_automation_refused refuses a caller with a uid even where the grant would allow it.
+  const r = await tryIt(() => as(ADMIN, 'service_role', 'service_role', `SELECT public.log_session_automation_refused($1,'x')`, [a.sid]));
+  ok('M32 log_session_automation_refused with a user uid on the service role -> 42501', r.code === '42501', r);
+  // M38 (:590): automation may not move a lesson OUT of a settled month into another month.
+  const src = await mk();
+  const k = await att(src.sid, 'Present', null);
+  await inv(k, src.month, { recorded: 540000 });
+  const destDay = await clock(80);
+  let m = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [src.sid, destDay.date]));
+  ok('M38 automation move of a NONE lesson out of a month whose bill is paid, into another month -> HC020',
+     m.code === 'HC020' && (await sess(src.sid)).date !== destDay.date, m);
+  const ctl = await mk();
+  await att(ctl.sid, 'Present', null);
+  m = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [ctl.sid, destDay.date]));
+  ok('M38   control: the same move with no settled bill is allowed', m.ok !== undefined, m);
+});
+await section('R1 F-9 insert guard is owner-only', async () => {
+  const def = await fnDef('public.session_cancel_audit_insert_guard()');
+  ok('F-9 the insert guard refuses any role that is not the table owner', /relowner/.test(def), def.slice(0, 120));
+});
 
 // --------------------------------------------------- timing (B-5)
-{
+await section("block 29", async () => {
   const N = 50, KIDS = 15;
   const items = [];
   for (let i = 0; i < N; i++) {
@@ -1050,7 +1205,7 @@ const startsLaterToday = async () => { const c = await clock(0, 2); return mk({ 
      WHERE s.id = ANY($1::uuid[]) AND a.status <> 'Excused'`, [items.map((i) => i.id)])).rows[0].n;
   ok('B-5   every mark on the 50 lessons is Excused, 50 override rows', ex === 0 &&
      (await asSuper(`SELECT count(*)::int n FROM session_cancel_overrides WHERE session_id = ANY($1::uuid[])`, [items.map((i) => i.id)])).rows[0].n === N);
-}
+});
 
 await db.close();
 console.log(`\n${pass} passed, ${fail} failed`);
