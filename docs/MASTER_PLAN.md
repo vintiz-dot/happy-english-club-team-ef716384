@@ -53,8 +53,8 @@ Filled by A0 into `docs/ENHANCEMENT_BASELINE.md`; headline figures copied here o
 |---|---|---|---|
 | `tsc --noEmit -p tsconfig.app.json` | exit 0, 3m21s (conductor, 9ba819f) | | conductor run 2026-11-11 |
 | `node scripts/pgtest/run.mjs` | 1611 assertions, 30 suites, 0 failed (conductor, 9ba819f) | | conductor run 2026-11-11 |
-| `bun test scripts/payrollCalculation.test.ts` | pending (bun is NOT installed on this machine; see D-3) | | |
-| production build, initial JS gzip | pending | | |
+| `npx --yes bun test scripts/payrollCalculation.test.ts` | 6 pass, 0 fail; all six scripts/*.test.ts: 28 pass, 0 fail (A0 agent, bun 1.4.4; not re-run by conductor) | | docs/ENHANCEMENT_BASELINE.md |
+| production build | initial JS 216.3 KiB gzip; total JS 1474.7 KiB; CSS 44.3 KiB; every Layout page also loads a 392 KiB chunk holding recharts + jsPDF + html2canvas | | docs/ENHANCEMENT_BASELINE.md |
 
 ## 5. Task table
 
@@ -68,8 +68,8 @@ Status: todo / running / review / PASS / FAIL / reverted / blocked-owner. Model 
 | D3 | Nudge UI + override review screen | sonnet / opus + fable wording | CancelSessionDialog, SessionActionsModal, EditSessionModal, DeleteSessionDialog, BulkSessionDelete, new review screen | todo | |
 | D4 | Other tuition-affecting actions | fable design, opus build / fable | docs/evidence/D4-*.md; migration; affected dialogs | todo | |
 | D5 | Invariant audit + regression tests + owner SQL | fable audit, sonnet/opus tests / fable | docs/evidence/D5-audit.md; scripts/pgtest/*; scripts/CHECK-past-cancellations-with-evidence.sql | todo | |
-| A0 | Baseline | sonnet (haiku captures) / fable | docs/ENHANCEMENT_BASELINE.md; docs/evidence/A0/ | running | |
-| A1 | Plan + critic | fable / fable critic | docs/evidence/A1-plan.md | todo | |
+| A0 | Baseline | sonnet (haiku captures) / fable | docs/ENHANCEMENT_BASELINE.md; docs/evidence/A0/ | PASS (sonnet, e4df152; conductor re-ran tsc + pgtest, viewed a screenshot, checked the PDF-import claim) | docs/ENHANCEMENT_BASELINE.md, docs/evidence/A0/ |
+| A1 | Plan + critic | fable / fable critic | docs/evidence/A1-plan.md | running (fable) | |
 | A2 | Teacher stability: flipbook, tooltips | opus / fable | TeacherBooks + viewer, SkillButton, LiveEngagementHUD, tooltips in TeacherLeaderboards/SmartUpload/Transcripts | todo | |
 | A3 | Speed | sonnet bundle, opus data / same-or-higher | set in A1 | todo | |
 | A4 | Design system + a11y + dark mode | fable system, opus first screens, sonnet rollout / fable | docs/DESIGN_SYSTEM.md, src/index.css, tailwind.config.ts, student dashboard | todo | HOLD at checkpoint |
@@ -152,10 +152,13 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 | Stream | Units | Done | What is done |
 |---|---|---|---|
 | D money integrity | 18.5 | 5.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
-| A overhaul | 12.0 | 0.6 | A0 about 60%. Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
+| A overhaul | 12.0 | 1.0 | A0 baseline. Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
 | B lesson monitor evaluation | 10.5 | 2.5 | vendor research, audio prep, harness about 70%. Left: B1, B2, B2b, B3, report |
 | C class recorder | 8.0 | 1.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **9.6** | **19%** |
+| **Total** | **51.0** | **10.0** | **20%** |
 
 Log: 2026-11-12 07:45 - 19%.
+Log: 2026-11-12 08:00 - 20% (A0 merged).
+
+- 2026-11-12 A0 baseline merged (sonnet, e4df152): 12 screens x 3 widths x light/dark through the fake client, harness kept at C:\Users\Dell\hec-tools\a0-harness\. Headlines: slowest at 4x CPU are admin Payroll (~21 s) and admin class sessions (~14 s) - dev-server numbers, comparable only against the same harness; at least one critical axe violation on every screen; parent view overflows horizontally at 375; 27 of 38 icon-only buttons unlabelled; 67 `select('*')` in src, 25 in functions. Weak spots: admin Tuition throws against the fake and admin Payroll shows no pay lines (layout cost only); no production-build runtime numbers. Conductor saw in the 375 student-dashboard screenshot a speech bubble covering the child's name - a visible defect for A4.
