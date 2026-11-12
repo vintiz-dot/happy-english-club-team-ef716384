@@ -20,7 +20,8 @@ export interface HeldAudio {
 
 export interface RecorderEvents {
   state: { state: RecorderState; recordingId: string | null };
-  level: { teacher: Level; room: Level; tMs: number };
+  /** clipping: full scale reached in the last 2 s, per track - show it on the meter (field finding: lapel at 0.0 dB). */
+  level: { teacher: Level; room: Level; tMs: number; clipping?: { teacher: boolean; room: boolean } };
   health: HealthEvent | { kind: "device_unplugged" | "device_restored" | "device_lost"; track: TrackRole; tMs: number }
     // C2 revision (B1): no audio is arriving / it is arriving again (gapMs: how long nothing came).
     | { kind: "capture_stalled" | "capture_resumed"; tMs: number; gapMs?: number; contextState?: string };

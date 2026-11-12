@@ -46,6 +46,10 @@ export interface CaptureSource {
   rebuild?(): Promise<boolean>;
   /** C2 revision (B1): the context's state changed (suspended / interrupted / closed / running). */
   onStateChange?: ((state: string) => void) | null;
+  /** Field finding (room mic ended at 54:51): the browser's device list changed (plugged / unplugged). */
+  onDeviceChange?: (() => void) | null;
+  /** Is this role's microphone track still live? (catches an `ended` the page never heard). Optional. */
+  trackLive?(role: TrackRole): boolean;
 }
 
 /** The real thing: one AudioContext, one worklet, two getUserMedia streams. */
@@ -62,7 +66,17 @@ export class BrowserCaptureSource implements CaptureSource {
    */
   private frameBase = 0;
 
-  private constructor(private g: AudioGraph) { this.wire(g); }
+  onDeviceChange: (() => void) | null = null;
+
+  private constructor(private g: AudioGraph) {
+    this.wire(g);
+    try { navigator.mediaDevices?.addEventListener?.("devicechange", () => this.onDeviceChange?.()); } catch { /* no mediaDevices */ }
+  }
+
+  trackLive(role: TrackRole): boolean {
+    const o = this.opened[role];
+    return !!o && o.track.readyState === "live";
+  }
 
   private wire(g: AudioGraph) {
     const base = this.frameBase;

@@ -28,6 +28,7 @@ export type RecorderErrorCode =
   | "stop_pending"           // Stop has not reached the server yet; it is retried
   | "not_durable"            // this browser cannot keep audio across a crash (no IndexedDB): do not record here
   | "local_store_failed"     // the browser would not store a chunk; it is held in memory and retried, or the track ends there
+  | "clipping"               // a microphone reaches full scale (0 dBFS): turn its gain down (a warning; nothing stops)
   | "internal";
 
 export type ServerRefusal =

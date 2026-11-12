@@ -42,7 +42,7 @@ import { Uploader, type UploadProgress } from "./uploader";
 import { buildManifest, countedChunks, manifestBytes, trackCounts } from "./manifest";
 import { HealthMonitor } from "./health";
 import { CLOCK_WARN_MS, plan, type WindowSettings, DEFAULT_WINDOW } from "./schedule";
-import { resolveProfile, type DeviceProfile } from "./devices";
+import { resolveDevice, resolveProfile, type DeviceProfile } from "./devices";
 import { backoffDelay } from "./backoff";
 
 export interface RecorderOptions {
@@ -70,8 +70,13 @@ export interface RecorderOptions {
   storageRefuseBytes?: number;
   /** While capturing, stop with a loud error below this much free storage (default 64 MB), before chunks are lost. */
   storageStopBytes?: number;
-  /** How long to try to get a lost microphone back before the track is closed. */
+  /**
+   * How long to try to get a lost microphone back before its track is closed
+   * (default: never - it is sought for the rest of the lesson; field finding).
+   */
   deviceRetryMs?: number;
+  /** After this long without the lost microphone, say so again (default 60 s). */
+  deviceLostAlertMs?: number;
   deviceRetryEveryMs?: number;
   /** Cross-tab single-uploader lock; default navigator.locks when present. */
   useLocks?: boolean;
@@ -115,6 +120,11 @@ interface Active {
   stopAt: number;
   lostSince: Partial<Record<TrackRole, number>>;
   lastReopenTry: Partial<Record<TrackRole, number>>;
+  lostAlerted?: Partial<Record<TrackRole, boolean>>;
+  reopening?: Partial<Record<TrackRole, boolean>>;
+  /** perfNow() of the last clipped batch per track (the meter's clipping warning). */
+  lastClipPerf?: Partial<Record<TrackRole, number>>;
+  clipAlertAt?: Partial<Record<TrackRole, number>>;
   opusSeqStartFrame: number;
   // B1 watchdog
   lastAudioPerf: number;
@@ -178,7 +188,7 @@ export class Recorder {
     this.o = {
       format: "flac", chunkMs: 30000, appVersion: "dev", userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "node",
       now: () => Date.now(), perfNow: () => performance.now(), autoTick: true, window: DEFAULT_WINDOW, storageWarnBytes: 4 * 1024 ** 3, storageRefuseBytes: 2 * 1024 ** 3,
-      storageStopBytes: 64 * 1024 ** 2, deviceRetryMs: 60000, deviceRetryEveryMs: 2000, useLocks: true, encoder: null as any,
+      storageStopBytes: 64 * 1024 ** 2, deviceRetryMs: Infinity, deviceLostAlertMs: 60000, deviceRetryEveryMs: 2000, useLocks: true, encoder: null as any,
       stallAfterMs: 3000, startTimeoutMs: 10000, preStartHoldMs: 120000, startLeadOkMs: 5000, stuckAfterMs: 14 * 86400000,
       memoryHoldBytes: 150 * 1024 ** 2, durable: true, ...opts,
     } as any;
@@ -196,6 +206,7 @@ export class Recorder {
     this.o.source.onTick = (f, t) => this.onAudioTick(f, t);
     this.o.source.onTrackEnded = (r) => this.onTrackEnded(r);
     if ("onStateChange" in this.o.source || this.o.source.rebuild) this.o.source.onStateChange = (s) => this.onContextState(s);
+    if ("onDeviceChange" in this.o.source) this.o.source.onDeviceChange = () => { void this.onDeviceChange(); };
   }
 
   // ------------------------------------------------------------ public
@@ -588,6 +599,7 @@ export class Recorder {
     this.lockRelease = null;
     this.o.source.onBatch = null; this.o.source.onTick = null; this.o.source.onTrackEnded = null;
     if (this.o.source.onStateChange !== undefined) this.o.source.onStateChange = null;
+    if (this.o.source.onDeviceChange !== undefined) this.o.source.onDeviceChange = null;
   }
 
   // ------------------------------------------------------------ ownership (M1)
@@ -640,7 +652,7 @@ export class Recorder {
         // A capture that cannot start before the window closes is over.
         if (now >= ms(rec.captureClosesAt)) this.serial(() => this.endCapture("manual"));
       }
-      if (a.capturing) { this.retryLostDevices(); this.watchdog(perf, sinceLast); }
+      if (a.capturing) { this.checkTracksLive(); this.retryLostDevices(); this.watchdog(perf, sinceLast); }
       if ((rec.phase === "armed" || a.capturing) && perf - this.lastServerPoll > 60000) {
         this.lastServerPoll = perf;
         void this.pollServer();
@@ -969,10 +981,24 @@ export class Recorder {
       this.events.emit("health", e);
       // Ruling (a), client side: a silent / dead microphone is said at once.
       // The chunks are still sent; nothing is deleted.
+      if (a?.capturing && e.kind === "clipping") {
+        // Field finding: the lapel peaked at 0.0 dBFS. Shown on the meter (level.clipping) and, at most every 30 s, as a warning.
+        const last = a.clipAlertAt?.[e.track] ?? -1e15;
+        if (perf - last > 30000) {
+          a.clipAlertAt = { ...(a.clipAlertAt ?? {}), [e.track]: perf };
+          this.events.emit("error", new RecorderError("clipping", `The ${e.track} microphone is CLIPPING (its peaks reach 0 dBFS, the sound is distorted): turn its gain or volume down`, { detail: e }));
+        }
+      }
       if (a?.capturing && (e.kind === "flat" || e.kind === "dead_mic" || e.kind === "silence"))
         this.events.emit("error", new RecorderError("mic_silent", `The ${e.track} microphone is silent${e.kind === "flat" ? " (no signal at all)" : ""}: check that it is switched on and not muted`, { detail: e }));
     }
-    if (perf - this.lastLevelAt > 100) { this.lastLevelAt = perf; this.events.emit("level", { teacher: this.health.last.teacher, room: this.health.last.room, tMs }); }
+    if (a) for (const t of ["teacher", "room"] as TrackRole[]) if (this.health.last[t].clipped > 0) a.lastClipPerf = { ...(a.lastClipPerf ?? {}), [t]: perf };
+    if (perf - this.lastLevelAt > 100) {
+      this.lastLevelAt = perf;
+      // clipping: a sample at full scale within the last 2 s, per track - the meter shows it.
+      const clipping = { teacher: perf - (a?.lastClipPerf?.teacher ?? -1e15) < 2000, room: perf - (a?.lastClipPerf?.room ?? -1e15) < 2000 };
+      this.events.emit("level", { teacher: this.health.last.teacher, room: this.health.last.room, tMs, clipping });
+    }
     if (!a || !a.capturing || !a.chunker) return;
     a.lastAudioPerf = perf;
     if (a.stalled) this.leaveStall(a, perf);
@@ -1213,16 +1239,59 @@ export class Recorder {
 
   // ------------------------------------------------------------ devices
 
+  /**
+   * A microphone stopped (its track `ended`, it left the device list, or it
+   * is no longer live). Field finding: the room S500 ended at 54:51 of a real
+   * lesson and nothing brought it back. Now: said loudly AT ONCE, the other
+   * microphone keeps recording (this track carries silence so both stay on
+   * one timeline), a gap marker is written, and the same device is sought
+   * again - by its id, then by its label (Windows gives a re-plugged device a
+   * new id) - for the rest of the lesson unless `deviceRetryMs` says otherwise.
+   */
   private onTrackEnded(role: TrackRole) {
     const a = this.active;
     if (!a || !a.capturing) return;
-    if (a.lostSince[role] !== undefined) return;
+    if (a.lostSince[role] !== undefined || a.chunker?.isClosed(role)) return;
     a.lostSince[role] = this.o.perfNow();
+    a.lastReopenTry[role] = -1e15;
+    a.lostAlerted = { ...(a.lostAlerted ?? {}), [role]: false };
     const tMs = a.chunker ? frameToMs(a.chunker.position, a.rec.sampleRate) : 0;
     a.rec.discontinuities.push({ t_ms: tMs, kind: "device_lost", wall_gap_ms: 0, track: role });
+    const other = role === "teacher" ? "room" : "teacher";
     this.events.emit("health", { kind: "device_unplugged", track: role, tMs });
-    this.events.emit("error", new RecorderError("device_unplugged", `The ${role} microphone was unplugged: plug it back in`, { detail: role }));
+    this.events.emit("error", new RecorderError("device_unplugged", `The ${role} microphone STOPPED: check its cable / USB plug. The ${other} microphone is still recording; the ${role} one is being looked for again.`, { detail: role }));
     void this.queueMarker("device_change", `${role} microphone lost`);
+    void this.queueMarker("gap", `${role} microphone stopped`);
+    this.retryLostDevices();
+  }
+
+  /** The device list changed: a recording microphone that left it is lost now; a lost one may be back. */
+  private async onDeviceChange() {
+    const a = this.active;
+    if (!a || !a.capturing) return;
+    const devs = await this.o.source.listDevices().catch(() => null);
+    if (!devs) return;
+    for (const t of a.rec.tracks) {
+      if (a.lostSince[t.track] !== undefined || a.chunker?.isClosed(t.track)) continue;
+      if (!devs.some((d) => d.deviceId === t.deviceId)) this.onTrackEnded(t.track);
+    }
+    for (const role of Object.keys(a.lostSince) as TrackRole[]) a.lastReopenTry[role] = -1e15;
+    this.retryLostDevices();
+  }
+
+  /** Reopen a lost microphone: the same id first, then the same device by its label (never another one). */
+  private async reacquire(a: Active, role: TrackRole, info: TrackInfo): Promise<TrackOpen> {
+    try { return await this.o.source.reopen(role, info.deviceId); }
+    catch (first) {
+      const devs = await this.o.source.listDevices();
+      const r = resolveDevice({ deviceId: info.deviceId, groupId: "", label: info.deviceLabel }, devs);
+      const other = a.rec.tracks.find((t) => t.track !== role);
+      if (r.status !== "ok" || r.device.deviceId === info.deviceId || r.device.deviceId === other?.deviceId) throw first;
+      const o = await this.o.source.reopen(role, r.device.deviceId);
+      info.deviceId = r.device.deviceId;
+      info.deviceHash = await sha256Hex(r.device.deviceId);
+      return o;
+    }
   }
 
   private retryLostDevices() {
@@ -1231,6 +1300,12 @@ export class Recorder {
     for (const role of Object.keys(a.lostSince) as TrackRole[]) {
       const since = a.lostSince[role]!;
       const lap = this.o.perfNow();
+      if (lap - since > this.o.deviceLostAlertMs && !a.lostAlerted?.[role]) {
+        a.lostAlerted = { ...(a.lostAlerted ?? {}), [role]: true };
+        const tMs = a.chunker ? frameToMs(a.chunker.position, a.rec.sampleRate) : 0;
+        this.events.emit("health", { kind: "device_lost", track: role, tMs });
+        this.events.emit("error", new RecorderError("device_lost", `The ${role} microphone has been gone for ${Math.round((lap - since) / 1000)} s: plug it back in - it is still being looked for, and recording resumes on it when it is found`));
+      }
       if (lap - since > this.o.deviceRetryMs) {
         delete a.lostSince[role];
         a.chunker?.closeTrack(role);
@@ -1243,18 +1318,25 @@ export class Recorder {
         if (a.chunker?.isClosed("teacher") && a.chunker?.isClosed("room")) this.serial(() => this.endCapture("device_lost"));
         continue;
       }
-      if (lap - (a.lastReopenTry[role] ?? -1e15) < this.o.deviceRetryEveryMs) continue;
+      // Every 2 s for the first minute, then every 10 s (a devicechange tries at once).
+      const every = lap - since > 60000 ? Math.max(this.o.deviceRetryEveryMs, 10000) : this.o.deviceRetryEveryMs;
+      if (lap - (a.lastReopenTry[role] ?? -1e15) < every) continue;
+      if (a.reopening?.[role]) continue;
       a.lastReopenTry[role] = lap;
       const info = a.rec.tracks.find((t) => t.track === role);
       if (!info) continue;
-      void this.o.source.reopen(role, info.deviceId).then(async (o) => {
+      a.reopening = { ...(a.reopening ?? {}), [role]: true };
+      void this.reacquire(a, role, info).then(async (o) => {
         if (a.lostSince[role] === undefined) return;
         delete a.lostSince[role];
         const tMs = a.chunker ? frameToMs(a.chunker.position, a.rec.sampleRate) : 0;
-        a.rec.discontinuities.push({ t_ms: tMs, kind: "device_restored", wall_gap_ms: Math.round(lap - since), track: role });
+        const gone = Math.round(this.o.perfNow() - since);
+        a.rec.discontinuities.push({ t_ms: tMs, kind: "device_restored", wall_gap_ms: gone, track: role });
         info.appliedSettings = o.applied; info.notHonoured = o.notHonoured;
+        info.deviceLabel = o.label || info.deviceLabel;
         this.events.emit("health", { kind: "device_restored", track: role, tMs });
         void this.queueMarker("device_change", `${role} microphone back`);
+        void this.queueMarker("gap", `${role} microphone back after ${Math.round(gone / 1000)} s`);
         // m2: the reopened microphone is read back and checked like the first time.
         this.events.emit("constraints", { track: role, requested: o.requested, applied: o.applied, notHonoured: o.notHonoured });
         if (o.notHonoured.some((x) => !x.startsWith("channelCount")))
@@ -1265,7 +1347,18 @@ export class Recorder {
         info.groupHash = await sha256Hex(o.groupId || "");
         if (a.rec.startedAtServer && this.o.backend.updateTrack)
           await this.o.backend.updateTrack(a.rec.id, role, { applied_settings: { ...o.applied, not_honoured: o.notHonoured } }).catch((e) => this.events.emit("error", toRecorderError(e)));
-      }).catch(() => { /* still gone; next try in 2 s */ });
+      }).catch(() => { /* still gone; tried again later */ })
+        .finally(() => { if (a.reopening) a.reopening[role] = false; });
+    }
+  }
+
+  /** A track that is no longer live although no `ended` reached the page. */
+  private checkTracksLive() {
+    const a = this.active;
+    if (!a || !a.capturing || !this.o.source.trackLive) return;
+    for (const t of a.rec.tracks) {
+      if (a.lostSince[t.track] !== undefined || a.chunker?.isClosed(t.track) || a.reopening?.[t.track]) continue;
+      if (!this.o.source.trackLive(t.track)) this.onTrackEnded(t.track);
     }
   }
 
