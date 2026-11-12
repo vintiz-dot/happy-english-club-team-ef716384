@@ -13,6 +13,7 @@ import { StudentTuitionReviewCard } from "./StudentTuitionReviewCard";
 import { Accordion } from "@/components/ui/accordion";
 import Layout from "@/components/Layout";
 import { useSearchParams } from "react-router-dom";
+import { useIvory } from "@/hooks/useIvory";
 
 export function TuitionReviewQueue() {
   const [searchParams] = useSearchParams();
@@ -20,6 +21,13 @@ export function TuitionReviewQueue() {
   const [selectedMonth, setSelectedMonth] = useState(initialMonth);
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
+  // Stat card label and figure (Ivory: a sans label; counts and amounts ink,
+  // sans, tabular - the Total Amount is the largest figure on the page).
+  const statLabel = iv("font-sans text-hec-small font-medium text-hec-ink-soft", "text-sm font-medium text-muted-foreground");
+  const statFigure = "whitespace-nowrap font-sans text-hec-h2 font-semibold tabular-nums text-hec-ink";
+  const statCaption = iv("mt-1 text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground mt-1");
 
   const { data: reviewData, isLoading } = useQuery({
     queryKey: ["tuition-review-queue", selectedMonth],
@@ -160,82 +168,82 @@ export function TuitionReviewQueue() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className={iv("space-y-6 pb-24", "space-y-6")}>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tuition Review Queue</h1>
-          <p className="text-muted-foreground">Review and confirm student tuition with discounts or anomalies</p>
+          <h1 className={iv("font-display text-hec-display font-medium text-hec-ink", "text-3xl font-bold tracking-tight")}>Tuition Review Queue</h1>
+          <p className={iv("text-hec-body text-hec-ink-soft", "text-muted-foreground")}>Review and confirm student tuition with discounts or anomalies</p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className={iv("flex flex-wrap items-center gap-4", "flex items-center gap-4")}>
           <MonthPicker value={selectedMonth} onChange={setSelectedMonth} />
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className={iv("grid gap-4 sm:grid-cols-2 lg:grid-cols-4", "grid gap-4 md:grid-cols-4")}>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Needs Review</CardTitle>
+              <CardTitle className={statLabel}>Needs Review</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.needsReview}</div>
-              <p className="text-xs text-muted-foreground mt-1">Students flagged</p>
+              <div className={iv(statFigure, "text-2xl font-bold")}>{stats.needsReview}</div>
+              <p className={statCaption}>Students flagged</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Auto-Approved</CardTitle>
+              <CardTitle className={statLabel}>Auto-Approved</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.autoApproved}</div>
-              <p className="text-xs text-muted-foreground mt-1">Matches expected</p>
+              <div className={iv(statFigure, "text-2xl font-bold text-green-600")}>{stats.autoApproved}</div>
+              <p className={statCaption}>Matches expected</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Difference</CardTitle>
+              <CardTitle className={statLabel}>Total Difference</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{formatVND(stats.totalDifference)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Expected vs Actual</p>
+              <div className={iv(statFigure, "text-2xl font-bold text-orange-600")}>{formatVND(stats.totalDifference)}</div>
+              <p className={statCaption}>Expected vs Actual</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Amount</CardTitle>
+              <CardTitle className={statLabel}>Total Amount</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatVND(stats.totalVND)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Needs review total</p>
+              <div className={iv("whitespace-nowrap border-t-2 border-hec-ink pt-2 font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink", "text-2xl font-bold")}>{formatVND(stats.totalVND)}</div>
+              <p className={statCaption}>Needs review total</p>
             </CardContent>
           </Card>
         </div>
 
         <Tabs defaultValue="needs_review" className="space-y-4">
-          <TabsList>
+          <TabsList className={iv("h-auto flex-wrap", "")}>
             <TabsTrigger value="needs_review" className="gap-2">
               <AlertCircle className="h-4 w-4" />
               Needs Review
-              {stats.needsReview > 0 && <Badge variant="destructive">{stats.needsReview}</Badge>}
+              {stats.needsReview > 0 && <Badge variant={ivory ? "warning" : "destructive"} className={iv("tabular-nums", "")}>{stats.needsReview}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="confirmed" className="gap-2">
               <CheckCircle className="h-4 w-4" />
               Confirmed
-              <Badge variant="outline">{confirmed.length}</Badge>
+              <Badge variant="outline" className={iv("tabular-nums", "")}>{confirmed.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="all" className="gap-2">
               <FileText className="h-4 w-4" />
               All
-              <Badge variant="outline">{reviewData?.length || 0}</Badge>
+              <Badge variant="outline" className={iv("tabular-nums", "")}>{reviewData?.length || 0}</Badge>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="needs_review" className="space-y-4">
             {needsReview.length === 0 ? (
               <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                  <p className="text-lg font-medium">All tuition reviewed!</p>
-                  <p className="text-sm">No students need review for this month.</p>
+                <CardContent className={iv("py-8 text-center text-hec-ink-soft", "py-8 text-center text-muted-foreground")}>
+                  <CheckCircle className={iv("mx-auto mb-4 h-12 w-12 text-hec-leaf", "h-12 w-12 mx-auto mb-4 text-green-500")} />
+                  <p className={iv("text-hec-h3 font-medium text-hec-ink", "text-lg font-medium")}>All tuition reviewed!</p>
+                  <p className={iv("text-hec-small", "text-sm")}>No students need review for this month.</p>
                 </CardContent>
               </Card>
             ) : (
@@ -243,9 +251,9 @@ export function TuitionReviewQueue() {
                 {Array.from(groupedByFlag.entries()).map(([flagType, invoices]) => (
                   <Card key={flagType}>
                     <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="text-lg">{getFlagLabel(flagType)}</CardTitle>
+                      <div className={iv("flex flex-wrap items-center justify-between gap-3", "flex items-center justify-between")}>
+                        <div className={iv("min-w-0", "")}>
+                          <CardTitle className={iv("", "text-lg")}>{getFlagLabel(flagType)}</CardTitle>
                           <CardDescription>{invoices.length} students</CardDescription>
                         </div>
                         <Button
@@ -305,9 +313,9 @@ export function TuitionReviewQueue() {
 
         {/* Bulk Actions Sticky Footer */}
         {selectedStudents.size > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 shadow-lg">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
-              <span className="text-sm font-medium">{selectedStudents.size} students selected</span>
+          <div className={iv("fixed inset-x-0 bottom-0 z-40 border-t border-hec-line bg-hec-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-hec-2", "fixed bottom-0 left-0 right-0 bg-background border-t p-4 shadow-lg")}>
+            <div className={iv("mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3", "max-w-7xl mx-auto flex items-center justify-between")}>
+              <span className={iv("text-hec-small font-medium tabular-nums text-hec-ink", "text-sm font-medium")}>{selectedStudents.size} students selected</span>
               <div className="flex gap-2">
                 <Button onClick={handleConfirmSelected} disabled={confirmMutation.isPending}>
                   {confirmMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
