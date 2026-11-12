@@ -8,7 +8,7 @@ Each fix is its own migration so the owner can approve, and the conductor apply,
 
 | Finding | Migration | Suite (`node scripts/pgtest/run.mjs`) | Code that ships with it |
 |---|---|---|---|
-| F-01 | `supabase/migrations/20261113100000_signup_role_from_server_only.sql` | `signup-role.test.mjs` (80) | `src/pages/Auth.tsx` (form offers Student / Family only); `student-create-migration-account` (upsert; needs a deploy) |
+| F-01 | `supabase/migrations/20261113100000_signup_role_from_server_only.sql` | `signup-role.test.mjs` (86) | `src/pages/Auth.tsx` (form offers Student / Family only); `student-create-migration-account` (upsert; needs a deploy) |
 | F-14 | `supabase/migrations/20261113110000_homework_bucket_scope.sql` | `homework-bucket-scope.test.mjs` (141) | none |
 | F-15 | `supabase/migrations/20261113120000_pause_enrollment_admin_only.sql` | `pause-enrollment.test.mjs` (37) | none |
 | F-16 | `supabase/migrations/20261113130000_classmate_rows_private.sql` | `classmate-rows.test.mjs` (77) | `src/lib/classSkillPoints.ts`, `RadarChartTab`, `PerformanceHeatmapTab`, `StudentAnalyticsModal` |
@@ -71,13 +71,13 @@ So after F-14 a just-registered account sees no child's data. Nothing else neede
 | The sign-up asked for | Before | After |
 |---|---|---|
 | `teacher` (any case / padding) | `user_roles`: **teacher**; `users.role`: teacher | **no role row**; `users.role`: student |
-| `admin` | student (downgraded) | **no role row** |
+| `admin` | student (downgraded) | student - unchanged (round 2) |
 | `family` | **family** | student |
 | `student`, nothing, `null` | student | student |
 | a value that is not a role (`"headmaster"`, a number, an object) | the sign-up fails with a database error | student |
 
-- **`teacher` and `admin` are never granted by a sign-up.** The account exists, can sign in, holds no role and passes no `has_role` test; an admin grants the role in Admin > Users, or the admin function that created the account inserts it a moment later.
-- **Why no row rather than `student`:** `create-teacher`, `create-teaching-assistant` and `manage-admin-users create` send the staff role as metadata and then insert the role themselves. With no row from the trigger they end with exactly the role they insert - for teachers and TAs that is byte-for-byte today's end state - and **no edge function has to be redeployed for the migration, in either order**.
+- **`teacher` and `admin` are never granted by a sign-up.** A request for `teacher` leaves the account with no role: it exists, can sign in and passes no `has_role` test; an admin grants the role in Admin > Users, or the admin function that created the account inserts it a moment later. A request for `admin` is answered with `student`, exactly as live answers it today (round 2, after review: real parents pick "Admin" on the form; see "Round 2" below).
+- **Why no row for `teacher` rather than `student`:** `create-teacher` and `create-teaching-assistant` send `teacher` as metadata and then insert the role themselves. With no row from the trigger they end with exactly `teacher` - byte-for-byte today's end state; `student` there would leave every new teacher and TA holding both. `manage-admin-users create` sends `admin` and inserts `admin`: it ends `{admin, student}`, as on live today. **No edge function has to be redeployed for the migration, in either order.**
 - **`family` from the form becomes `student`.** Safe, and the tested path: no live account holds `family`, and the app treats the two alike (`ProtectedRoute`, `ivoryScope`, `Dashboard`). `student` from the form is safe because an unlinked `student` reads no child's rows (above) once F-14 is applied. Until F-14 is applied, a new sign-up can still read homework files - F-14 is the fix for that, and the reason both are in this batch.
 - `public.users.role` (legacy, NOT NULL) is always `student` for a new account. Nothing in `src/` reads it; `calendar-events` reads it but is not called by the browser.
 - **Same root cause, same migration:** policy `"Only admins can manage custom_quests"` is `FOR ALL TO public USING (users.role = 'admin')` - the legacy column. 20260312152157 meant to replace it but dropped a policy named "...modify..." instead, so both stand. The 17 accounts above can insert, change and delete custom quests through it (0 rows live; quests are shown to children). The migration drops it; `"Only admins can modify custom_quests"` (has_role) stays.
@@ -93,7 +93,8 @@ Also changed in the browser: the form's picker offers Student and Family only, w
 | A stranger signing up as "Family" / "Student" | that role; reads every homework file (F-14) | student; reads nothing about any child once F-14 is applied |
 | A real parent signing up, then linked by an admin | student (or family) + link | student + link - the same as every family login today |
 | A teacher made by an admin | `{teacher}` | `{teacher}` |
-| An admin made by an admin | `{admin, student}` | `{admin}` (2 live admins already hold `admin` alone) |
+| An admin made by an admin | `{admin, student}` | `{admin, student}` |
+| A parent who picks "Admin" on the old form or a stale page | student | student |
 | A front-desk card account | `{student}` | `{student}` |
 | 17 accounts with legacy `users.role = admin` | may write `custom_quests` | may not |
 
@@ -102,13 +103,15 @@ Also changed in the browser: the form's picker offers Student and Family only, w
 | Risk | Test in `signup-role.test.mjs` |
 |---|---|
 | create-teacher / create-TA leave the account without a role | replays `createUser(role teacher)` + the function's insert -> exactly `{teacher}`, no error |
-| manage-admin-users create / bootstrap | `{admin}` / `{admin, student}`, and that admin can write custom quests |
+| manage-admin-users create / bootstrap | `{admin, student}` both, and that admin can write custom quests |
+| a parent who picked "Admin", before and after `linkToFamily` | `{student}`, not an admin, cannot write quests |
+| a stale page asking for `teacher`, then `linkToFamily` | no role - the one case left for Admin > Users |
 | front-desk card (`upsert`) | `{student}`, upsert does not fail |
 | demo student | delete + insert + users upsert -> `{student}` |
 | form + linkToFamily, form + link-student-user | `{student}` |
 | an account that asked for teacher, later linked by an admin to a child / to a teacher record / role changed in Admin > Users | `{student}` / `{teacher}` / `{teacher}` |
 | the "claim" account | its plain insert conflicts - recorded as broken before and after (not a regression); the code fix is an upsert |
-| sign-up with odd metadata (number, object, array, null, homoglyph, `"student,teacher"`, role in app_metadata, other spellings of the key) | never more than `student`; staff spellings give no role |
+| sign-up with odd metadata (number, object, array, null, homoglyph, `"student,teacher"`, role in app_metadata, other spellings of the key) | never more than `student`; spellings of `teacher` give no role, spellings of `admin` give `student` |
 | a role-less account grants itself a role | refused by RLS on `user_roles` |
 | existing accounts rewritten | every `users` / `user_roles` row compared before and after the paste |
 | legacy-admin account loses reading of quests | still reads; can no longer write; a real admin can |
@@ -123,7 +126,7 @@ Not tested here, and why: GoTrue itself (the suite inserts into `auth.users` as 
 
 ```sql
 -- P1  the function is the new one: expect t, t
-SELECT prosrc ~ 'v_requested IN \(''teacher'', ''admin''\)' AS new_body,
+SELECT prosrc ~ 'IF v_requested = ''teacher'' THEN' AS new_body,
        NOT has_function_privilege('authenticated', oid, 'EXECUTE') AS not_callable
   FROM pg_proc WHERE oid = 'public.handle_new_user()'::regprocedure;
 -- P2  the trigger is still there: expect 1 row, on_auth_user_created, enabled 'O'
@@ -133,16 +136,37 @@ SELECT policyname, cmd FROM pg_policies WHERE schemaname = 'public' AND tablenam
 -- P4  no account changed: expect the same numbers as before the paste (13 Nov: teacher 8, admin 3, family 0)
 SELECT role, count(*) FROM public.user_roles GROUP BY 1 ORDER BY 1;
 ```
-Then, by hand (the owner or the conductor with a throw-away mailbox): join on the form, confirm the mail, and check in Admin > Users that the account shows `student`; create a teacher in Admin > Teachers and check it shows `teacher` only.
+Then, by hand (the owner or the conductor with a throw-away mailbox): join on the form, confirm the mail, and check in Admin > Users that the account shows `student`; by a direct sign-up request with `role: "admin"` -> `student`, with `role: "teacher"` -> no role; create a teacher in Admin > Teachers and check it shows `teacher` only. Remove the test accounts afterwards.
 
-### The dashboard setting to consider: turn public sign-ups off
+### Round 2 (after the review, 13 Nov): what changed, and family self-registration walked end to end
 
-Supabase dashboard > Authentication > Sign In / Providers > "Allow new users to sign up" -> off (`disable_signup: true`).
+Owner fact: **new families do register themselves in the app, and public sign-up stays on.** So `handle_new_user` is the only control over what a self-made account holds, and its answer for each requested value has to be exactly right. My earlier recommendation to switch sign-ups off is withdrawn.
 
-- What it stops: `supabase.auth.signUp` - the "Join the club" form answers "Signups not allowed for this instance". A parent can no longer make an account alone and wait to be linked. That path was last used on 2026-05-13; since October new families get a front-desk card (6 accounts).
-- What keeps working: everything an admin does - `auth.admin.createUser` is not affected - so create-teacher, create-teaching-assistant, manage-admin-users, front-desk cards and their redemption, the demo student, the "claim" account; signing in; password reset.
-- Also remove the "Join the club" tab then, or it only shows an error.
-- **Recommended default: turn it off**, after this migration is applied (the migration is still needed: the setting can be switched back on by anyone with dashboard access, and the trigger is what decides the role).
+Change made (review, change 1): a request for `admin` gets `student`, as the live function gives today; only a request for `teacher` gets no role. As first built, a parent who picked "Admin" (17 live non-admin accounts carry that metadata, 14 of them linked) would have held no role, seen a blank page, and stayed on it after being linked to a family, because `linkToFamily` grants nothing. Suite: 86 assertions, including that parent before and after linking.
+
+Order (review, change 2): the build with the new form must be live BEFORE this migration - branch `release/s1-signup-form`. After it the only way to ask for `teacher` is a stale page or a hand-made request.
+
+**The walk, against the corrected migration** (code re-read on this branch; the database half is asserted by the suite):
+
+| Step | Code | What the parent meets |
+|---|---|---|
+| 1. Register | `Auth.tsx` "Join the club": email, password, "I am a" Student / Family -> `signUp({ options: { data: { role } } })` | "Account created!". Email confirmation is on, so no session yet; the confirmation mail arrives. Unchanged. |
+| 2. In the database | `handle_new_user` | `users` row (`student`) and one `user_roles` row: `student` - whether they chose Student or Family (or Admin from an old page). |
+| 3. First sign-in | `Dashboard.tsx:19-28` -> `/student/dashboard`; `StudentDashboard.tsx:350-361` (role student, no child) | The "new student" demo dashboard: a welcome page and the class catalogue. A page with content, not a blank one. |
+| 4. Unlinked, what they can read | every policy asks for a link (measured on live by the reviewer as an unlinked `student`) | 8 classes, avatars, announcements, 2 teacher rows, the payroll month list, their own account rows. No child, family, bill, payment, attendance, points or report. Homework files: 0 once F-14 is applied (being applied now). |
+| 5. Linking | the school, in Admin > Users: "link to family" (`linkToFamily` sets `families.primary_user_id`) or "link to student" (`link-student-user` sets `students.linked_user_id`) | Nothing for the parent to do. There is no self-service link for a self-made account (so today, not caused by this fix). |
+| 6. Children appear | `useShellQueries.ts:44-72`: the family whose `primary_user_id` is this account -> its active children; else children with this `linked_user_id`. Row access by `can_view_student`. | Next page load: the child's dashboard; with two or more children, the profile picker. Tuition, homework, attendance, lessons as for every existing family. |
+
+**What a newly registered parent sees, plainly, and what is lost compared with today.**
+
+- A parent who chooses **Student** (the form's default): nothing changes. `student` before, `student` after.
+- A parent who chooses **Family**: today they get the role `family` and land on `/family/dashboard` - before linking a line saying no students are linked yet, please contact the school; after linking, a parents' page listing their children. After the fix they get `student` and land on the student dashboard instead (step 3), then the same screens as the 31 active family logins, **all of which hold `student`; no live account holds `family`**. So no existing family loses anything, and a new one gets what every existing one has.
+- What that new "Family" parent does lose, compared with a new "Family" parent today:
+  1. the parents' page `/family/dashboard` as a landing (still reachable only by role `family`);
+  2. announcements addressed to "families" (`useAnnouncements.ts:121` shows them to role `family` only) - 0 such announcements are active on live;
+  3. the school's bank details: `bank_info` is readable by an admin, by role `family`, or by an account that is some child's `linked_user_id`. A parent linked as a family's primary login and holding `student` reads none. **This is already the state of 26 of the 31 active family primary logins** (counted on live): they cannot read the bank details row the tuition / invoice screens use (`StudentAccountInfo.tsx:53`, `fetchInvoiceData.ts:39`). Not caused by this fix, but a new "Family" parent now joins them rather than escaping it.
+- If the school wants the parents' page or the bank details for a family, the safe way is an admin setting the role to Family in Admin > Users **after** linking - never the form: an unlinked `family` account reads the bank details, and homework files until F-14 is in.
+- The better fix for item 3, for the owner to decide (not built here): let `bank_info` be read by any account that can view at least one child (`can_view_student`), which covers all 31 family logins at once and no unlinked account.
 
 ### Rollback
 
@@ -680,7 +704,8 @@ Rollback: redeploy the nine from `origin/main` with their previous `verify_jwt` 
 | # | Decision | Recommended default |
 |---|---|---|
 | 1 | Apply F-01, F-14, F-15 (three pastes) | Yes, today, in that order. No real family or teacher sees a difference. |
-| 2 | Turn off public sign-ups in Supabase Auth, and remove the "Join the club" tab | Yes. New families get a front-desk card, as they have since October. |
+| 2 | (withdrawn) Public sign-ups stay on - owner. The sign-up form build (`release/s1-signup-form`) goes live before the F-01 paste. | - |
+| 2b | 26 of 31 family primary logins cannot read the school's bank details (`bank_info` asks for role `family` or a child's own login). Let any account that can view a child read it? | Yes, as a small separate migration. |
 | 3 | F-16: a family can no longer open a classmate's skills, attendance and point history in the board pop-up (name and points stay) | Yes. Ship the browser change with the paste. |
 | 4 | F-21: creators lose control of rows outside their classes (live: only the former admin login is affected - 25 rows it can no longer read as a `student`) | Yes. |
 | 5 | F-02: the Vocabulary page stops working for visitors who are not signed in; four functions go behind the gateway check | Yes. |
