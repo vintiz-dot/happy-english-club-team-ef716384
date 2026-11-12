@@ -225,26 +225,26 @@ export function StudentLinkDialog({
 
           <div className="space-y-4 py-4">
             {currentUserId && currentUserEmail && (
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
-                <div className="flex items-center gap-3">
-                  <UserCheck className="h-5 w-5 text-green-600" />
-                  <div>
-                    <p className="text-sm font-medium">Currently linked user</p>
-                    <p className="text-sm text-muted-foreground">{currentUserEmail}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">ID: {currentUserId.substring(0, 8)}...</p>
+              <div className="flex flex-wrap items-start justify-between gap-3 rounded-hec-md border border-hec-leaf/30 bg-hec-leaf-tint p-4">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <UserCheck className="mt-0.5 h-5 w-5 shrink-0 text-hec-leaf" aria-hidden />
+                  <div className="min-w-0">
+                    <p className="text-hec-small font-medium text-hec-ink">Currently linked user</p>
+                    <p className="break-all text-hec-small text-hec-ink-soft">{currentUserEmail}</p>
+                    <p className="text-hec-caption text-hec-ink-soft">ID: {currentUserId.substring(0, 8)}...</p>
                   </div>
                 </div>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="destructive-quiet"
                   onClick={() => setShowUnlinkConfirm(true)}
                   disabled={unlinkMutation.isPending}
                 >
                   {unlinkMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                   ) : (
                     <>
-                      <Unlink className="h-4 w-4 mr-2" />
+                      <Unlink className="h-4 w-4" aria-hidden />
                       Unlink
                     </>
                   )}
@@ -252,11 +252,12 @@ export function StudentLinkDialog({
               </div>
             )}
 
-            <div className="space-y-3">
-              <Label>Search and Select User</Label>
+            <div className="space-y-2">
+              <Label htmlFor="student-link-search">Search and Select User</Label>
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hec-ink-faint" aria-hidden />
                 <Input
+                  id="student-link-search"
                   placeholder="Search by email or ID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -264,11 +265,11 @@ export function StudentLinkDialog({
                 />
               </div>
 
-              <ScrollArea className="h-[300px] border rounded-md">
-                <div className="p-2 space-y-1">
+              <ScrollArea className="h-[300px] rounded-hec-md border border-hec-line bg-hec-surface">
+                <div className="space-y-1 p-2">
                   {isLoading ? (
                     <div className="flex items-center justify-center p-8">
-                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <Loader2 className="h-6 w-6 animate-spin text-hec-ink-faint" aria-hidden />
                     </div>
                   ) : filteredUsers && filteredUsers.length > 0 ? (
                     filteredUsers.map((user) => (
@@ -276,34 +277,34 @@ export function StudentLinkDialog({
                         key={user.id}
                         onClick={() => setSelectedUserId(user.id)}
                         disabled={user.isLinked && !allowReassign}
-                        className={`w-full text-left p-3 rounded-md transition-colors ${
+                        aria-pressed={selectedUserId === user.id}
+                        className={`w-full min-h-hec-target rounded-hec-md border p-3 text-left transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${
                           selectedUserId === user.id
-                            ? 'bg-primary text-primary-foreground'
+                            ? 'border-hec-brass bg-hec-sunken text-hec-ink'
                             : user.isLinked && !allowReassign
-                            ? 'bg-muted/50 opacity-50 cursor-not-allowed'
-                            : 'hover:bg-accent'
+                            ? 'border-transparent bg-hec-sunken/60 text-hec-ink opacity-50 cursor-not-allowed'
+                            : 'border-transparent text-hec-ink hover:bg-hec-sunken'
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Mail className="h-3 w-3 flex-shrink-0" />
-                              <p className="text-sm font-medium truncate">{user.email}</p>
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-1 flex items-start gap-2">
+                              <Mail className="mt-1 h-3 w-3 shrink-0 text-hec-ink-soft" aria-hidden />
+                              <p className="min-w-0 break-all text-hec-small font-medium">{user.email}</p>
                             </div>
-                            <p className="text-xs opacity-70 truncate">ID: {user.id}</p>
+                            <p className="truncate text-hec-caption text-hec-ink-soft">ID: {user.id}</p>
                             {user.isLinked && (
-                              <p className="text-xs text-orange-500 mt-1 flex items-center gap-1">
-                                <AlertTriangle className="h-3 w-3" />
-                                Linked to: {user.linkedStudentName}
+                              <p className="mt-1 flex items-start gap-1 text-hec-caption text-hec-warn">
+                                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+                                <span className="min-w-0 break-words">Linked to: {user.linkedStudentName}</span>
                               </p>
                             )}
                           </div>
-                          <div className="flex flex-wrap gap-1 justify-end">
+                          <div className="flex flex-wrap justify-end gap-1">
                             {user.roles.map((role) => (
-                              <Badge 
-                                key={role} 
+                              <Badge
+                                key={role}
                                 variant={getRoleBadgeVariant(role)}
-                                className="text-xs"
                               >
                                 {role}
                               </Badge>
@@ -313,7 +314,7 @@ export function StudentLinkDialog({
                       </button>
                     ))
                   ) : (
-                    <div className="text-center p-8 text-muted-foreground">
+                    <div className="p-8 text-center text-hec-small text-hec-ink-soft">
                       {searchQuery ? 'No users found matching your search' : 'No users available'}
                     </div>
                   )}
@@ -321,8 +322,8 @@ export function StudentLinkDialog({
               </ScrollArea>
             </div>
 
-            <div className="space-y-3 pt-2 border-t">
-              <div className="flex items-center space-x-2">
+            <div className="space-y-2 border-t border-hec-line pt-2">
+              <div className="flex min-h-hec-target items-center gap-3">
                 <Checkbox
                   id="updateFamilyEmail"
                   checked={updateFamilyEmail}
@@ -330,13 +331,13 @@ export function StudentLinkDialog({
                 />
                 <Label
                   htmlFor="updateFamilyEmail"
-                  className="text-sm font-normal cursor-pointer"
+                  className="cursor-pointer py-2 text-hec-small font-normal text-hec-ink"
                 >
                   Update family email with linked user's email (if empty)
                 </Label>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex min-h-hec-target items-center gap-3">
                 <Checkbox
                   id="allowReassign"
                   checked={allowReassign}
@@ -344,7 +345,7 @@ export function StudentLinkDialog({
                 />
                 <Label
                   htmlFor="allowReassign"
-                  className="text-sm font-normal cursor-pointer"
+                  className="cursor-pointer py-2 text-hec-small font-normal text-hec-ink"
                 >
                   Allow reassigning user from another student
                 </Label>
@@ -358,12 +359,12 @@ export function StudentLinkDialog({
             >
               {linkMutation.isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                   Linking...
                 </>
               ) : (
                 <>
-                  <Link className="h-4 w-4 mr-2" />
+                  <Link className="h-4 w-4" aria-hidden />
                   Connect User
                 </>
               )}
@@ -383,8 +384,11 @@ export function StudentLinkDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => unlinkMutation.mutate()}>
+            <AlertDialogCancel>Keep the link</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90"
+              onClick={() => unlinkMutation.mutate()}
+            >
               Unlink User
             </AlertDialogAction>
           </AlertDialogFooter>
