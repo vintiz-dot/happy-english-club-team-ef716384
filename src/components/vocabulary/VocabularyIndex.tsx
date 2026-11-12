@@ -45,14 +45,19 @@ interface Props {
 const ITEMS_PER_PAGE = 30;
 
 const MASTERY_LABELS = ["New", "Seen", "Learning", "Familiar", "Known", "Mastered"];
+// Mastery is growth, not danger: neutral while learning, leaf once known.
+// The word and the stars carry the level; the colour only adds to it.
 const MASTERY_COLORS = [
-  "bg-slate-100 text-slate-500 dark:bg-[hsl(240_8%_16%)] dark:text-foreground/50",
-  "bg-red-50 text-red-600 dark:bg-[hsl(0_30%_14%)] dark:text-red-400/70",
-  "bg-orange-50 text-orange-600 dark:bg-[hsl(25_30%_14%)] dark:text-orange-400/70",
-  "bg-yellow-50 text-yellow-600 dark:bg-[hsl(45_30%_14%)] dark:text-yellow-400/70",
-  "bg-emerald-50 text-emerald-600 dark:bg-[hsl(155_25%_14%)] dark:text-emerald-400/70",
-  "bg-blue-50 text-blue-600 dark:bg-[hsl(265_25%_16%)] dark:text-blue-400/70",
+  "border-hec-line bg-hec-sunken text-hec-ink-soft",
+  "border-hec-line bg-hec-sunken text-hec-ink-soft",
+  "border-hec-line bg-hec-sunken text-hec-ink-soft",
+  "border-hec-line bg-hec-sunken text-hec-ink-soft",
+  "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
+  "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
 ];
+
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
 function speak(text: string, lang = "en-US", rate = 0.8) {
   speechSynthesis.cancel();
@@ -64,13 +69,13 @@ function speak(text: string, lang = "en-US", rate = 0.8) {
 
 function MasteryStars({ level }: { level: number }) {
   return (
-    <div className="flex items-center gap-0.5">
+    <div className="flex items-center gap-1">
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
           className={cn(
-            "w-3.5 h-3.5 transition-colors",
-            i < level ? "fill-amber-400/60 text-amber-400/60" : "fill-transparent text-[hsl(240_8%_22%)]",
+            "h-4 w-4",
+            i < level ? "fill-hec-brass text-hec-brass" : "fill-transparent text-hec-line-strong",
           )}
         />
       ))}
@@ -129,10 +134,10 @@ export function VocabularyIndex({ items, onDelete, onUpdate }: Props) {
 
   if (items.length === 0) {
     return (
-      <div className="text-center py-20 space-y-4">
-        <div className="text-6xl gemini-float">📚</div>
-        <h3 className="text-xl font-bold text-foreground">Your Word Bank is Empty</h3>
-        <p className="text-muted-foreground max-w-md mx-auto">
+      <div className="space-y-4 py-16 text-center">
+        <div className="text-6xl" aria-hidden="true">📚</div>
+        <h3 className="font-display text-hec-h2 font-medium text-hec-ink">Your Word Bank is Empty</h3>
+        <p className="mx-auto max-w-md text-hec-body text-hec-ink-soft">
           Use the <strong>Explore</strong> tab to look up a word, write your own examples, and save it here. 🚀
         </p>
       </div>
@@ -140,33 +145,38 @@ export function VocabularyIndex({ items, onDelete, onUpdate }: Props) {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white dark:bg-[hsl(240_8%_10%)] border border-slate-200/80 dark:border-[hsl(240_8%_16%)] p-4 rounded-2xl shadow-sm">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+      <div className="flex flex-col gap-4 rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative w-full lg:w-80 lg:shrink-0">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hec-ink-faint" />
           <Input
             placeholder="Search words..."
+            aria-label="Search words"
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
-            className="pl-9 h-10 rounded-xl bg-slate-50 border-slate-200 dark:bg-[hsl(240_8%_12%)] dark:border-[hsl(240_8%_18%)]"
+            className="pl-10"
           />
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline" className="text-sm">{processed.length} words</Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="tabular-nums">{processed.length} words</Badge>
           {[0, 1, 2, 3, 4, 5].map((level) => (
             <button
               key={level}
               onClick={() => { setFilterMastery(filterMastery === level ? null : level); setPage(1); }}
+              aria-pressed={filterMastery === level}
               className={cn(
-                "px-2 py-0.5 rounded-full text-xs font-medium transition-all border",
-                filterMastery === level ? MASTERY_COLORS[level] + " border-current" : "bg-transparent text-muted-foreground border-transparent hover:border-muted-foreground/30",
+                "inline-flex min-h-hec-target items-center rounded-full border px-3 text-hec-caption font-medium transition-colors duration-hec-1 ease-hec",
+                FOCUS,
+                filterMastery === level
+                  ? "border-hec-brass bg-hec-sunken text-hec-ink"
+                  : "border-transparent bg-transparent text-hec-ink-soft hover:border-hec-line-strong hover:text-hec-ink",
               )}
             >
               {MASTERY_LABELS[level]}
             </button>
           ))}
-          <Button variant="outline" size="sm" onClick={toggleSort} className="rounded-xl h-8 border-slate-200 hover:bg-slate-50 dark:border-[hsl(240_8%_18%)] dark:bg-transparent dark:hover:bg-[hsl(240_8%_14%)]">
+          <Button variant="outline" size="icon" onClick={toggleSort} aria-label="Sort order">
             {sortOrder === "asc" ? <ArrowDownAZ className="w-4 h-4" /> : <ArrowUpZA className="w-4 h-4" />}
           </Button>
         </div>
@@ -174,96 +184,97 @@ export function VocabularyIndex({ items, onDelete, onUpdate }: Props) {
 
       {/* Cards Grid */}
       {pageItems.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {pageItems.map((item) => (
             <Card
               key={item.id}
-              className="group overflow-hidden border border-slate-200 dark:border-[hsl(240_8%_16%)] shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-[hsl(240_8%_22%)] transition-all duration-300 rounded-2xl bg-white dark:bg-[hsl(240_8%_10%)]"
+              className="overflow-hidden"
             >
-              <div
-                className="relative h-36 w-full overflow-hidden bg-muted cursor-pointer"
-                onClick={() => setDetail(item)}
-                role="button"
-                aria-label={`Open ${item.word}`}
-              >
+              {/* The picture opens the word; the title sits below it on the card
+                  surface (no white text over a photo). The open target is a real
+                  button laid over the picture, so the Listen button is not nested in it. */}
+              <div className="relative h-36 w-full overflow-hidden bg-hec-sunken">
                 {item.imageUrl ? (
                   <img
                     src={item.imageUrl}
                     alt={item.word}
                     width={400}
                     height={144}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="h-full w-full object-cover"
                     loading="lazy"
                     decoding="async"
                   />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[hsl(265_20%_12%)] to-[hsl(220_15%_12%)]" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                ) : null}
+                <button
+                  type="button"
+                  className={cn(FOCUS, "absolute inset-0 h-full w-full cursor-pointer focus-visible:-outline-offset-2")}
+                  onClick={() => setDetail(item)}
+                  aria-label={`Open ${item.word}`}
+                />
                 <Button
                   size="icon"
-                  variant="ghost"
-                  className="absolute top-2 right-2 h-9 w-9 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-sm"
+                  variant="outline"
+                  className="absolute right-2 top-2 rounded-full"
                   onClick={(e) => { e.stopPropagation(); pronounceWord(item); }}
                   aria-label="Listen to word"
                 >
-                  <Volume2 className="w-4 h-4" />
+                  <Volume2 className="h-4 w-4" />
                 </Button>
-                <div className="absolute bottom-2 left-3 right-3">
-                  <h3 className="text-lg font-semibold text-white capitalize truncate drop-shadow-md">
+              </div>
+
+              <CardContent className="space-y-3 p-4">
+                <div className="min-w-0">
+                  <h3 className="break-words font-display text-hec-h2 font-medium capitalize text-hec-ink">
                     {item.word}
                   </h3>
-                  <span className="text-white/70 text-xs font-medium">
+                  <span className="text-hec-small text-hec-ink-soft">
                     {item.cefr ? `CEFR ${item.cefr}` : item.partOfSpeech}
                   </span>
                 </div>
-              </div>
-
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <MasteryStars level={item.masteryLevel} />
-                  <Badge variant="secondary" className={cn("text-[10px]", MASTERY_COLORS[item.masteryLevel])}>
+                  <Badge variant="secondary" className={MASTERY_COLORS[item.masteryLevel]}>
                     {MASTERY_LABELS[item.masteryLevel]}
                   </Badge>
                 </div>
 
                 {item.meaning && (
                   <div>
-                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Meaning</p>
-                    <p className="text-base font-bold text-foreground line-clamp-2">{item.meaning}</p>
+                    <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">Meaning</p>
+                    <p className="line-clamp-2 text-hec-body font-medium text-hec-ink">{item.meaning}</p>
                   </div>
                 )}
 
                 <div>
-                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Your example</p>
-                  <p className="text-sm text-muted-foreground italic line-clamp-2">
-                    {item.example ? `"${item.example}"` : <span className="opacity-60">No example yet.</span>}
+                  <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">Your example</p>
+                  <p className="line-clamp-2 text-hec-small italic text-hec-ink-soft">
+                    {item.example ? `"${item.example}"` : <span className="text-hec-ink-faint">No example yet.</span>}
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center justify-between gap-2 border-t border-hec-line pt-3">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-foreground/50 hover:text-foreground/80 hover:bg-transparent rounded-xl text-xs gap-1"
+                    className="text-hec-ink-soft"
                     onClick={() => pronounceWord(item)}
                   >
-                    <Volume2 className="w-3.5 h-3.5" /> Listen
+                    <Volume2 className="h-4 w-4" /> Listen
                   </Button>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-blue-600"
+                      className="text-hec-ink-soft"
                       onClick={() => setEditing(item)}
                       aria-label="Edit word"
                     >
-                      <Pencil className="w-3.5 h-3.5" />
+                      <Pencil className="h-4 w-4" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500" aria-label="Delete word">
-                          <Trash2 className="w-3.5 h-3.5" />
+                        <Button variant="destructive-quiet" size="icon" aria-label="Delete word">
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -272,8 +283,8 @@ export function VocabularyIndex({ items, onDelete, onUpdate }: Props) {
                           <AlertDialogDescription>This removes the word from your bank permanently.</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => onDelete(item.id)} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+                          <AlertDialogCancel>Keep the word</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => onDelete(item.id)} className="bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90">Delete the word</AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
@@ -284,8 +295,8 @@ export function VocabularyIndex({ items, onDelete, onUpdate }: Props) {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16">
-          <p className="text-muted-foreground">No words match your search.</p>
+        <div className="py-16 text-center">
+          <p className="text-hec-body text-hec-ink-soft">No words match your search.</p>
         </div>
       )}
 
@@ -293,11 +304,11 @@ export function VocabularyIndex({ items, onDelete, onUpdate }: Props) {
       {totalPages > 1 && (
         <div className="flex justify-center pt-4">
           <Pagination>
-            <PaginationContent className="bg-white dark:bg-[hsl(240_8%_10%)] border border-slate-200 dark:border-[hsl(240_8%_16%)] p-1.5 rounded-2xl shadow-sm">
+            <PaginationContent className="flex-wrap justify-center rounded-hec-lg border border-hec-line bg-hec-surface p-1 shadow-hec-1">
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  className={cn("min-h-hec-target", page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer")}
                 />
               </PaginationItem>
               {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -306,8 +317,8 @@ export function VocabularyIndex({ items, onDelete, onUpdate }: Props) {
                   const showEllipsis = idx > 0 && p - arr[idx - 1] > 1;
                   return (
                     <PaginationItem key={p}>
-                      {showEllipsis && <span className="px-2 text-muted-foreground">…</span>}
-                      <PaginationLink onClick={() => setPage(p)} isActive={page === p} className="cursor-pointer">
+                      {showEllipsis && <span className="px-2 text-hec-ink-faint">…</span>}
+                      <PaginationLink onClick={() => setPage(p)} isActive={page === p} className="min-h-hec-target min-w-hec-target cursor-pointer tabular-nums">
                         {p}
                       </PaginationLink>
                     </PaginationItem>
@@ -316,7 +327,7 @@ export function VocabularyIndex({ items, onDelete, onUpdate }: Props) {
               <PaginationItem>
                 <PaginationNext
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  className={cn("min-h-hec-target", page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer")}
                 />
               </PaginationItem>
             </PaginationContent>
@@ -380,27 +391,27 @@ function EditWordDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl bg-white dark:bg-[hsl(240_8%_10%)] border-slate-200 dark:border-[hsl(240_8%_18%)]">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="capitalize">Edit: {word.word}</DialogTitle>
+          <DialogTitle className="break-words capitalize">Edit: {word.word}</DialogTitle>
           <DialogDescription>
             Tweak your examples, change the image, or update the meaning.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Meaning</label>
-            <Textarea value={meaning} onChange={(e) => setMeaning(e.target.value)} rows={2} className="mt-1" />
+        <div className="min-w-0 space-y-6">
+          <div className="space-y-2">
+            <label htmlFor="edit-word-meaning" className="text-hec-small font-medium text-hec-ink">Meaning</label>
+            <Textarea id="edit-word-meaning" value={meaning} onChange={(e) => setMeaning(e.target.value)} rows={2} />
           </div>
 
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Pick an image</label>
+          <div className="min-w-0 space-y-2">
+            <p className="text-hec-small font-medium text-hec-ink">Pick an image</p>
             <ImageCarousel query={word.rootWord || word.word} pickedUrl={pickedUrl} onPick={handlePick} />
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Your examples</label>
+            <p className="text-hec-small font-medium text-hec-ink">Your examples</p>
             {examples.map((ex, i) => (
               <Textarea
                 key={i}
@@ -411,8 +422,8 @@ function EditWordDialog({
                   setExamples(next);
                 }}
                 placeholder={`Example ${i + 1}`}
+                aria-label={`Example ${i + 1}`}
                 rows={2}
-                className="rounded-lg text-sm"
               />
             ))}
           </div>
@@ -420,8 +431,8 @@ function EditWordDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-[hsl(265_40%_16%)] dark:hover:bg-[hsl(265_40%_20%)] dark:text-blue-200 dark:border-[hsl(265_40%_24%)]">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4 mr-1.5" />Save changes</>}
+          <Button onClick={handleSubmit} disabled={saving}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="h-4 w-4" />Save changes</>}
           </Button>
         </DialogFooter>
       </DialogContent>
