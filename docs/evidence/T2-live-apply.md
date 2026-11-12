@@ -1,6 +1,6 @@
 # T2 live apply (aswgmbefikhsnhogtryv)
 
-Where I am / next step: step 1 done; next step 2 apply migration.
+Where I am / next step: step 2 done; next step 3 verify migration.
 
 ## Step 0 - read
 Read T2-live-apply-brief.md, T2-class-recordings-access.md, T2-review.md, T2b-transcribe-gate.md from 7f8004e (detached HEAD).
@@ -11,3 +11,6 @@ Read T2-live-apply-brief.md, T2-class-recordings-access.md, T2-review.md, T2b-tr
 - P0: live `is_teacher_of_class` standing_tas = true, seven_day_window = true (the 20261111110000 version).
 - Counts: objects in `class-recordings` = 11; `class_transcripts` rows with audio = 11.
 - All as expected.
+
+## Step 2 - apply
+`apply_migration` name `class_recordings_scope`, query = the LF content of `supabase/migrations/20261112120000_class_recordings_scope.sql` at 7f8004e. Result: `{"success":true}`.
