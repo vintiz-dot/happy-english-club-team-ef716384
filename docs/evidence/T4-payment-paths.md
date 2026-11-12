@@ -146,7 +146,7 @@ Not done (minors left as reviewed): m3 delete-payment not one transaction; m5 `p
 
 | command | result |
 |---|---|
-| `node scripts/pgtest/run.mjs` | see the last commit message / below |
+| `node scripts/pgtest/run.mjs` | **3584 assertions across 41 suites, 0 failed** (invoice status 268, AI admin actions 79, mirrors 19) |
 | `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | exit 0 |
 | `node scripts/run-bun-tests.mjs` | 159 pass, 0 fail (12 files) |
 
