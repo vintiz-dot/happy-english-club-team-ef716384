@@ -183,7 +183,7 @@ function FacetFilter({ label, options, selected, onChange }: {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[280px] p-0">
+      <PopoverContent align="start" aria-label={`Filter by ${label.toLowerCase()}`} className="w-[280px] p-0">
         {/* Names carry accents; typing "binh" has to find "Bình". */}
         <Command filter={(value, search) => (value.includes(foldText(search)) ? 1 : 0)}>
           {options.length > 7 && <CommandInput placeholder={`Find a ${label.toLowerCase()}`} />}
@@ -258,7 +258,7 @@ function DateFilter({ from, to, onChange }: {
           <Calendar className="h-4 w-4" /> {label}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[280px] space-y-3">
+      <PopoverContent align="start" aria-label="Filter by lesson date" className="w-[280px] space-y-4">
         <div className="flex flex-wrap gap-2">
           {quick.map((q) => (
             <Button key={q.label} size="sm" variant="secondary" onClick={() => onChange(q.from, q.to)}>
@@ -362,7 +362,7 @@ function RecordsTable({ records, view, onOpen, onLinkChild, onSort, sortable }: 
               {columns.map((c) => (
                 <TableHead key={c.key} className={cn("h-auto whitespace-nowrap", compact ? "px-2" : "px-3")}>
                   {sortable ? (
-                    <button type="button" className="inline-flex min-h-hec-target items-center gap-1 rounded-hec-sm font-medium hover:text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring" onClick={() => onSort(c.key)}>
+                    <button type="button" className="inline-flex min-h-hec-target min-w-hec-target items-center gap-1 rounded-hec-sm font-medium hover:text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring" onClick={() => onSort(c.key)}>
                       {c.label}
                       {view.sort === c.key && (view.descending ? <ArrowDown className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />)}
                     </button>
@@ -910,7 +910,7 @@ export function StarsRecordsCenter({
                     <SlidersHorizontal className="h-4 w-4" /> Customize
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="end" className="w-[280px] space-y-4">
+                <PopoverContent align="end" aria-label="Customize the view" className="w-[280px] space-y-4">
                   <div>
                     <p className="mb-2 text-hec-small font-medium text-hec-ink">Columns</p>
                     <div className="grid grid-cols-2 gap-1">
