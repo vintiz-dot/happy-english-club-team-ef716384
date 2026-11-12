@@ -204,6 +204,7 @@ const SUITES = [
     file: "audit-clips.test.mjs",
     migrations: ["20261111090000_audit_voice_clips.sql", "20261111100000_audit_clips_youtube_links.sql"],
   },
+  { name: "audit eval proxy (TEMP)", file: "audit-eval.test.mjs", migrations: ["20261112110000_audit_eval_bucket.sql"] },
   {
     name: "ta standing assignments",
     file: "ta-standing.test.mjs",

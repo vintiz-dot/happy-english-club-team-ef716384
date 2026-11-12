@@ -250,3 +250,6 @@ verify_jwt = true
 
 [functions.parent-video-page]
 verify_jwt = false
+
+[functions.audit-eval-proxy]
+verify_jwt = true
