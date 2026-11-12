@@ -210,6 +210,7 @@ const SUITES = [
     file: "ta-standing.test.mjs",
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql"],
   },
+  { name: "recorder retention", file: "recorder-retention.test.mjs", migrations: [] },
   { name: "class recorder", file: "recorder.test.mjs", migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql"] },
   {
     name: "assistant absence",

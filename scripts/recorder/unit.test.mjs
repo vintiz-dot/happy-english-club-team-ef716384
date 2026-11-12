@@ -367,7 +367,7 @@ class FakeSource {
 const profile = { version: 1, installId: "inst-1", userId: TEACHER, teacher: { deviceId: "lapel-1", groupId: "g-lapel", label: "Microphone (2- USB Audio Device)" }, room: { deviceId: "s500-1", groupId: "g-s500", label: "Echo Cancelling Speakerphone (Anker PowerConf S500)" }, checks: {}, verifiedAt: null };
 
 function recorder(w, store, source, extra = {}) {
-  const r = new R.Recorder({ backend: w.backend, store, source, userId: TEACHER, installId: "inst-1", profile, chunkMs: 10000, now, autoTick: false, useLocks: false, ...extra });
+  const r = new R.Recorder({ backend: w.backend, store, source, userId: TEACHER, installId: "inst-1", profile, chunkMs: 10000, now, perfNow: now, autoTick: false, useLocks: false, ...extra });
   const errors = [], states = [];
   r.on("error", (e) => errors.push(e));
   r.on("state", (s) => states.push(s.state));
@@ -469,7 +469,8 @@ console.log("=== idempotent retries: a chunk is never duplicated ===");
   const again = await w.backend.registerChunk({ recording: row.id, track: c0.track, seq: c0.seq, byteSize: c0.byte_size, sha256: c0.sha256, tStartMs: c0.t_start_ms, tEndMs: c0.t_end_ms });
   ok("re-registering the same chunk returns the existing row", again.chunk_id === c0.id && again.already_registered && again.confirmed);
   await throwsLike("different bytes under the same number are refused by the server", () => w.backend.registerChunk({ recording: row.id, track: c0.track, seq: c0.seq, byteSize: c0.byte_size + 1, sha256: c0.sha256, tStartMs: c0.t_start_ms, tEndMs: c0.t_end_ms }), /conflicting_chunk|different audio/);
-  eq("a second upload of a stored object is 'already', not an overwrite", await w.backend.upload(c0.storage_path, new Uint8Array(5), "audio/flac"), "already");
+  await throwsLike("uploading over a confirmed chunk is refused (the policy only takes unconfirmed paths)", () => w.backend.upload(c0.storage_path, new Uint8Array(5), "audio/flac"), /row-level security/);
+  ok("and the stored bytes are unchanged", w.server.objects.get(`${FAKE_BUCKET}/${c0.storage_path}`).size === c0.byte_size);
   await r.stop(); await r.settle();
   eq("still completes", w.server.recordings.get(row.id).status, "complete");
 }

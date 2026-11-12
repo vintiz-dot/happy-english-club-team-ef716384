@@ -42,7 +42,7 @@ export function createFakeServer(opts = {}) {
   };
 
   s.addUser = (id, roles = ["teacher"]) => { s.users.set(id, { roles, token: `jwt-${id}` }); return `jwt-${id}`; };
-  s.addClass = (id, o = {}) => { s.classes.set(id, { switchOn: true, consentOk: true, teachers: new Set(o.teachers ?? []), ...o }); };
+  s.addClass = (id, o = {}) => { s.classes.set(id, { switchOn: true, consentOk: true, ...o, teachers: new Set(o.teachers ?? []) }); };
   /** start/end in epoch ms (the real schema keeps Hanoi date + times; the trigger converts). */
   s.addSession = (id, o) => { s.sessions.set(id, { id, status: "Scheduled", date: o.date ?? iso(o.start).slice(0, 10), ...o }); };
   s.failNext = (op, n = 1, error = { message: "Failed to fetch", offline: true }) => s.injections.push({ op, n, error });
