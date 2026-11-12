@@ -23,7 +23,7 @@ import { decodeFlac } from "./flac-decode.mjs";
 const arg = (k, d) => (process.argv.find((a) => a.startsWith(`--${k}=`)) ?? `=${d}`).split("=")[1];
 const run = arg("run", "formats");
 const minutes = Number(arg("minutes", run === "hidden" ? 11 : 32));
-const OUT = "C:\\Users\\Dell\\hec-tools\\c2-harness";
+const OUT = process.env.RECORDER_OUT ?? "C:\\Users\\Dell\\hec-tools\\c2-harness";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const T = "22222222-2222-4222-8222-222222222222";
 const out = { run, minutes, startedAt: new Date().toISOString() };
@@ -113,6 +113,43 @@ try {
       console.log(f, JSON.stringify(out[f]));
       save();
     }
+  }
+
+  if (run === "worker") {
+    // C2 revision M6: main-thread cost of FLAC per audio minute, encoder on the
+    // page (before) vs in the Worker (after), two pages side by side, 30 s chunks.
+    const pages = {};
+    for (const [i, mode] of ["inline", "worker"].entries()) {
+      const ctx = await browser.newContext({ permissions: ["microphone"] });
+      const page = await newPage(ctx);
+      const L = lesson(H.server, { lengthMs: (minutes + 20) * 60000, classId: `2222222${i}-1111-4111-8111-111111111111` });
+      await page.evaluate(async (inline) => { await setup({ uid: "22222222-2222-4222-8222-222222222222", format: "flac", chunkMs: 30000, inline }); await rec.prepare(); }, mode === "inline");
+      const cdp = await ctx.newCDPSession(page);
+      await cdp.send("Performance.enable");
+      const row = await page.evaluate(async (L) => rec.arm(L), L);
+      pages[mode] = { page, cdp, row };
+    }
+    await sleep(3000);
+    const m0 = {};
+    for (const k of Object.keys(pages)) m0[k] = Object.fromEntries((await pages[k].cdp.send("Performance.getMetrics")).metrics.map((m) => [m.name, m.value]));
+    const t0 = Date.now();
+    while (Date.now() - t0 < minutes * 60000) { await sleep(30000); console.log(`  ${((Date.now() - t0) / 60000).toFixed(1)} min`); }
+    for (const k of Object.keys(pages)) {
+      const m1 = Object.fromEntries((await pages[k].cdp.send("Performance.getMetrics")).metrics.map((m) => [m.name, m.value]));
+      const audioMin = (Date.now() - t0) / 60000;
+      const p = await pages[k].page.evaluate(() => ({ kind: rec.encoder.kind, long: window.longTasks.slice(), gaps: (rec.active?.rec.discontinuities ?? []).filter((d) => d.kind === "context_stall").length, enc: window.log.chunks.filter((c) => c.encodeMs != null).map((c) => c.encodeMs) }));
+      out[k] = {
+        encoder: p.kind,
+        mainThreadTaskSecPerAudioMin: +((m1.TaskDuration - m0[k].TaskDuration) / audioMin).toFixed(3),
+        scriptSecPerAudioMin: +((m1.ScriptDuration - m0[k].ScriptDuration) / audioMin).toFixed(3),
+        longTasksOver50ms: p.long.length, longTasksOver1s: p.long.filter((d) => d > 1000).length, longestTaskMs: Math.round(Math.max(0, ...p.long)),
+        falseGapMarkers: p.gaps,
+        encodeMsPerChunkMean: p.enc.length ? +(p.enc.reduce((a, b) => a + b, 0) / p.enc.length).toFixed(1) : null,
+      };
+      await pages[k].page.evaluate(() => rec.stop());
+      console.log(k, JSON.stringify(out[k]));
+    }
+    save();
   }
 
   if (run === "hidden") {

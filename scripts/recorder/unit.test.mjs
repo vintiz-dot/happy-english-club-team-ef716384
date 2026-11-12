@@ -168,9 +168,10 @@ console.log("=== FLAC and WAV encoders ===");
   ok("verbatim is about raw size", v.length > sine.length * 2 && v.length < sine.length * 2 * 1.01, `${v.length}`);
   ok("FLAC compresses a tone", R.encodeFlac(sine, sr).length < sine.length * 2 * 0.6);
   for (const rate of [44100, 16000, 22050, 12345]) ok(`FLAC at ${rate} Hz`, decodeFlac(R.encodeFlac(sine.subarray(0, 9000), rate)).sampleRate === rate);
-  // The byte floor: digital silence compresses to nothing, so the engine keeps it verbatim.
+  // Ruling (a): digital silence is sent as it compresses (the server flags it below_floor), never padded verbatim.
   const enc = R.encodePcmChunk("flac", silence, sr, 4000);
-  ok("silent FLAC chunk is kept above the 4000 B/s floor by going verbatim", enc.encoding === "verbatim" && enc.bytes.length >= 4000 * 2, `${enc.bytes.length} bytes`);
+  ok("ruling (a): a silent FLAC chunk is NOT inflated to verbatim to meet the floor", enc.encoding === "fixed" && enc.bytes.length < 4000 * 2 && enc.bytes.length >= 40, `${enc.bytes.length} bytes`);
+  ok("and it is still exactly the silence", sameInt16(decodeFlac(enc.bytes).samples, silence));
   ok("a normal chunk stays compressed", R.encodePcmChunk("flac", sine, sr, 4000).encoding === "fixed");
   const w = R.encodeWav(sine, sr);
   const dv = new DataView(w.buffer);
@@ -188,7 +189,8 @@ console.log("=== FLAC and WAV encoders ===");
   } else console.log("  (ffmpeg not found: the independent-decoder check was skipped)");
   // Real lesson audio, read in place (never copied into the repo): FLAC ratio at its native 16 kHz.
   const lesson = "C:\\Users\\Dell\\hec-audio-eval\\work\\wav16k\\lessons\\242 Lang Street Lane 19.wav";
-  if (existsSync(lesson)) {
+  // Real lesson audio only when asked for (RECORDER_REAL_AUDIO=1): by default every test is synthetic.
+  if (process.env.RECORDER_REAL_AUDIO === "1" && existsSync(lesson)) {
     const fd = openSync(lesson, "r"); const buf = Buffer.alloc(16000 * 2 * 60); readSync(fd, buf, 0, buf.length, 44 + 16000 * 2 * 600); closeSync(fd);
     const x = new Int16Array(buf.buffer, buf.byteOffset, buf.length / 2);
     const t = performance.now(); const f = R.encodeFlac(x, 16000); const encMs = performance.now() - t;
@@ -306,8 +308,10 @@ function world(o = {}) {
   const start = o.start ?? clock + 5 * 60000;
   server.addSession(sid, { class_id: CLASS, start, end: start + (o.lessonMs ?? 90 * 60000), teacher_id: TEACHER });
   const client = (uid) => makeClient((q) => server.handle(q, uid));
-  return { server, sid, client, backend: R.supabaseBackend(client(TEACHER)) };
+  const tc = client(TEACHER);
+  return { server, sid, client, tc, backend: R.supabaseBackend(tc) };
 }
+const E = (w, endTime = "18:30") => ({ sessionId: w.sid, classId: CLASS, date: "2026-11-12", startTime: "17:00", endTime });
 
 /** A capture source that plays two known signals, batch by batch, on the fake clock. */
 class FakeSource {
@@ -320,8 +324,14 @@ class FakeSource {
       { deviceId: "s500-1", groupId: "g-s500", label: "Echo Cancelling Speakerphone (Anker PowerConf S500)", kind: "audioinput" },
     ];
     this.dead = { teacher: false, room: false }; this.reopenFails = 0;
+    // B1: a dead / suspended context delivers nothing (no batches, no ticks, the frame count stands still).
+    this.stalled = false; this.resumeHeals = false; this.rebuildHeals = true; this.rebuilds = 0; this.resumes = 0;
+    this.onStateChange = null; this.onDeviceChange = null; this.clip = false;
   }
-  async resume() { return true; }
+  get contextStateNow() { return this.stalled ? "suspended" : "running"; }
+  // resumeLies: the context says "running" while nothing arrives (a dead worklet).
+  async resume() { this.resumes++; if (this.resumeHeals) this.stalled = false; return this.resumeLies ? true : !this.stalled; }
+  async rebuild() { this.rebuilds++; if (this.rebuildHeals) this.stalled = false; return !this.stalled; }
   async listDevices() { return this.devices; }
   async openTracks(ids) {
     this.open = true;
@@ -331,19 +341,28 @@ class FakeSource {
   }
   async reopen(role, id) {
     if (this.reopenFails-- > 0) throw new Error("NotFoundError");
-    this.dead[role] = false;
-    return (await this.openTracks({ teacher: this.devices[0].deviceId, room: this.devices[1].deviceId }))[role];
+    const d = this.devices.find((x) => x.deviceId === id);
+    if (!d) throw new Error(`NotFoundError: no device ${id}`);
+    this.dead[role] = false; this.reopenedWith = id;
+    return { role, deviceId: id, label: d.label, groupId: d.groupId, requested: R.buildConstraints(id, {}), notHonoured: [],
+      applied: { deviceId: id, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1, sampleRate: 48000, reopened: true } };
   }
   closeTracks() { this.open = false; }
   forward(on) { this.fwd = on; }
   timestamp() { return { contextTime: this.lastFrame / this.sampleRate, performanceNow: performance.now() }; }
   /** Play `seconds` of audio: 2048-frame batches, the clock moving with them. */
-  async play(seconds, rec, every = 40) {
+  async play(seconds, rec, every = 40, { advance = true } = {}) {
     const n = 2048, batches = Math.round((seconds * this.sampleRate) / n);
     for (let i = 0; i < batches; i++) {
-      clock += (n / this.sampleRate) * 1000;
+      if (advance) clock += (n / this.sampleRate) * 1000;
+      if (this.stalled) {
+        // Nothing from the audio side; the page's 1 s interval still runs.
+        if (i % 24 === 0) rec.tick();
+        if (i % every === 0) await rec.settle();
+        continue;
+      }
       if (this.fwd && this.open) {
-        const t = Float32Array.from({ length: n }, (_, k) => this.dead.teacher ? 0 : 0.3 * Math.sin((this.lastFrame + k) / 9) + (rnd() - 0.5) * 0.05);
+        const t = Float32Array.from({ length: n }, (_, k) => this.dead.teacher ? 0 : this.clip ? (k % 2 ? 1 : -1) : 0.3 * Math.sin((this.lastFrame + k) / 9) + (rnd() - 0.5) * 0.05);
         const r = Float32Array.from({ length: n }, (_, k) => this.dead.room ? 0 : 0.1 * Math.sin((this.lastFrame + k) / 23) + (rnd() - 0.5) * 0.02);
         this.played.teacher.push({ frame: this.lastFrame, x: t }); this.played.room.push({ frame: this.lastFrame, x: r });
         const f = this.lastFrame; this.lastFrame += n;
@@ -405,6 +424,11 @@ console.log("=== a lesson end to end: arm, capture, stop, finalize, complete ===
   await src.play(35, r);
   const mid = w.server.chunkRows(row.id);
   ok("chunks registered and confirmed during the lesson (uploads keep up)", mid.length >= 6 && mid.every((c) => c.confirmed_at), `${mid.length} rows`);
+  {
+    const loc = await store.listChunks(row.id);
+    let held = 0; for (const c of loc.filter((x) => x.state === "confirmed")) if (await store.getBytes(row.id, c.track, c.seq)) held++;
+    ok("M8: while a healthy recording runs, confirmed chunks still hold their bytes locally (deleted only after complete)", held === loc.filter((x) => x.state === "confirmed").length && held >= 6, `${held}`);
+  }
   await r.marker("roll_call_end");
   await r.stop();
   await r.settle();
@@ -413,10 +437,7 @@ console.log("=== a lesson end to end: arm, capture, stop, finalize, complete ===
   eq("stop reason recorded", fin.stop_reason, "manual");
   eq("local state", r.state, "complete");
   for (const track of ["teacher", "room"]) {
-    const { rows, samples } = await decodeTrack(w.server, row.id, track);
-    const t0 = (await store.getRecording(row.id)).tracks.find((t) => t.track === track);
-    const expected = src.expected(track, src.played[track][0].frame + (src.lastFrame - src.played[track][0].frame - samples.length - 0), samples.length);
-    void expected; void t0;
+    const { rows } = await decodeTrack(w.server, row.id, track);
     eq(`${track}: seq 0..n-1, contiguous`, rows.map((c) => c.seq), [...rows.keys()]);
     ok(`${track}: consecutive chunks share boundaries (no gap, no overlap)`, rows.every((c, i) => i === 0 || c.t_start_ms === rows[i - 1].t_end_ms));
     const sha = (await import("node:crypto")).createHash;
@@ -441,6 +462,10 @@ console.log("=== a lesson end to end: arm, capture, stop, finalize, complete ===
   ok("manifest room track says the S500's DSP cannot be switched off", man.tracks.find((t) => t.track === "room").room_device_dsp === "hardware, not disableable");
   ok("manifest hash is what the row holds", (await import("node:crypto")).createHash("sha256").update(w.server.objects.get(`${FAKE_BUCKET}/${fin.manifest_path}`).bytes).digest("hex") === fin.manifest_sha256);
   ok("local bytes deleted only now, after complete", (await store.bytesHeld(row.id)) === 0);
+  ok("M2: after complete the whole local copy is gone: recording row, chunk rows, markers (labels), manifest",
+    !(await store.getRecording(row.id)) && (await store.listChunks(row.id)).length === 0 && (await store.listMarkers(row.id)).length === 0 && !(await store.getManifest(row.id)));
+  eq("M2: the page still knows the last state in memory", (await r.current())?.phase, "complete");
+  eq("M8: the registrations reached the server oldest first, per track", ["teacher", "room"].map((t) => { const s = w.server.registrations.filter((x) => x.recording === row.id && x.track === t).map((x) => x.seq); return s.every((v, i) => v === i); }), [true, true]);
   eq("markers reached the table", w.server.markers.size, 2);
   ok("states went armed -> starting -> recording -> stopping -> uploading -> finalizing -> complete", ["armed", "starting", "recording", "stopping", "uploading", "complete"].every((s) => states.includes(s)), states.join(","));
   ok("no unexpected errors", errors.length === 0, errors.map((e) => e.message).join(" | "));
@@ -496,6 +521,8 @@ console.log("=== offline -> online, and late registration ===");
   const rows = w.server.chunkRows(row.id);
   ok("back online: every chunk registered and confirmed", rows.length === (await store.listChunks(row.id)).length && rows.every((c) => c.confirmed_at), `${rows.length}`);
   ok("45 s offline is within the tolerance: nothing late", rows.every((c) => !c.late));
+  eq("M8: a backlog is registered oldest first per track (a refusal can never leave a hole below a registered chunk)",
+    ["teacher", "room"].map((t) => w.server.registrations.filter((x) => x.recording === row.id && x.track === t).map((x) => x.seq).every((v, i, a) => i === 0 || v > a[i - 1])), [true, true]);
   // Now 12 minutes offline (more than chunk length + 10 min): those chunks are late.
   w.server.offline = true;
   await src.play(12 * 60 + 20, r, 400);
@@ -573,8 +600,10 @@ console.log("=== a microphone unplugged mid-recording ===");
   clock = Date.parse("2026-11-12T09:55:00.000Z");
   const w = world();
   const store = new R.MemoryStore(), src = new FakeSource();
-  const { r, errors } = recorder(w, store, src);
+  // This case keeps the old give-up-after-60 s option (the default is now: seek it all lesson).
+  const { r, errors } = recorder(w, store, src, { deviceRetryMs: 60000 });
   const health = []; r.on("health", (h) => health.push(h.kind + ":" + (h.track ?? "")));
+  const cons = []; r.on("constraints", (c) => cons.push(c.track));
   await r.prepare();
   const row = await r.arm({ sessionId: w.sid, classId: CLASS, date: "2026-11-12", startTime: "17:00", endTime: "18:30" });
   r.tick(); await r.settle();
@@ -583,6 +612,8 @@ console.log("=== a microphone unplugged mid-recording ===");
   await src.play(10, r);
   ok("unplugged reported, then restored after retries", health.includes("device_unplugged:teacher") && health.includes("device_restored:teacher"), health.join(","));
   ok("the UI got a device_unplugged error", errors.some((e) => e.code === "device_unplugged"));
+  ok("m2: the reopened microphone is read back again (a constraints event for it)", cons.filter((t) => t === "teacher").length >= 2, cons.join(","));
+  ok("m2: and its track row gets the new read-back", [...w.server.tracks.values()].some((t) => t.recording_id === row.id && t.track === "teacher" && t.applied_settings?.reopened === true));
   // Gone for good: the track closes after the retry window, the room carries on.
   src.dead.teacher = true; src.reopenFails = 1e9; src.onTrackEnded("teacher");
   await src.play(70, r, 100);
@@ -672,19 +703,29 @@ console.log("=== the server refuses: switch off, consent, not a teacher, cancell
     await a.r.prepare();
     const row = await a.r.arm({ sessionId: w.sid, classId: CLASS, date: "2026-11-12", startTime: "17:00", endTime: "17:01" });
     a.r.tick(); await a.r.settle();
-    await src.play(20, a.r);
-    await a.r.dispose();                       // the tab dies...
+    await src.play(8, a.r);
+    w.server.offline = true;                   // the last chunks never left the laptop...
+    await src.play(17, a.r);
+    await a.r.dispose();                       // ...the tab dies...
+    w.server.offline = false;
+    const pendingBefore = (await store.listChunks(row.id)).filter((c) => c.state !== "confirmed").length;
     clock += 30 * 60000;                       // ...and is opened again after the window
+    ok("M4 setup: chunks were still waiting on the laptop when the tab died", pendingBefore >= 2, String(pendingBefore));
     const b = recorder(w, store, new FakeSource());
     await b.r.prepare();
     await b.r.recover(); await b.r.settle();
     const loc = await store.getRecording(row.id);
     ok("a Stop after the window + late_after: the server abandons it, and the page reports that rather than pretending", loc.phase === "abandoned" && b.errors.some((e) => e.refusal === "stopped_after_window"), b.errors.map((e) => e.refusal).join(","));
-    eq("the row is abandoned; the local audio is kept", [w.server.recordings.get(row.id).status, (await store.bytesHeld(row.id)) > 0], ["abandoned", true]);
+    const rows = w.server.chunkRows(row.id);
+    const local = await store.listChunks(row.id);
+    ok("M4 / ruling (b): the late tab uploaded its chunks FIRST, then stopped: every local chunk is confirmed on the server",
+      rows.length === local.length && rows.length >= 4 && rows.every((c) => c.confirmed_at), `${rows.length} on the server, ${local.length} local`);
+    ok("M4: the Stop was sent only after the last upload", (() => { const i = w.server.calls.map((c) => c.key); const stop = i.lastIndexOf("update:class_recordings"); return stop > i.lastIndexOf("rpc:recorder_confirm_chunk"); })());
+    eq("the row is abandoned (the truth); the confirmed audio is freed locally, nothing unconfirmed is lost", [w.server.recordings.get(row.id).status, (await store.bytesHeld(row.id))], ["abandoned", 0]);
   }
 }
 
-console.log("=== uploader: refusals end a track, never leave a hole ===");
+console.log("=== ruling (a): below the byte floor is SENT, stored and flagged, never refused locally ===");
 {
   clock = Date.parse("2026-11-12T09:55:00.000Z");
   const w = world();
@@ -695,11 +736,915 @@ console.log("=== uploader: refusals end a track, never leave a hole ===");
   const row = await r.arm({ sessionId: w.sid, classId: CLASS, date: "2026-11-12", startTime: "17:00", endTime: "18:30" });
   r.tick(); await r.settle();
   await src.play(25, r);
-  const local = await store.listChunks(row.id);
-  ok("below the floor: refused locally before the server is asked, bytes kept", local.some((c) => c.state === "refused" && c.refusal === "below_byte_floor") && w.server.chunkRows(row.id).length === 0);
-  const rec = await store.getRecording(row.id);
-  ok("the track is ended at the first refusal", rec.tracks.every((t) => t.refusedFromSeq === 0));
+  const rows = w.server.chunkRows(row.id);
+  ok("every chunk reached the server and was confirmed, each flagged below_floor", rows.length >= 4 && rows.every((c) => c.confirmed_at && c.below_floor), `${rows.length}`);
+  const p = await r.uploadProgress(row.id);
+  ok("the page shows them as below the floor", p.belowFloor === rows.length && p.refused === 0, JSON.stringify({ b: p.belowFloor, r: p.refused }));
+  ok("no track was ended for it", (await store.getRecording(row.id)).tracks.every((t) => t.refusedFromSeq === undefined));
+  await r.stop(); await r.settle();
+  eq("and the recording completes (the server decides what counts)", w.server.recordings.get(row.id).status, "complete");
   void errors;
+}
+
+console.log("=== uploader: refusals end a track, never leave a hole ===");
+{
+  clock = Date.parse("2026-11-12T09:55:00.000Z");
+  const w = world();
+  const store = new R.MemoryStore(), src = new FakeSource();
+  const { r, errors } = recorder(w, store, src);
+  await r.prepare();
+  const row = await r.arm({ sessionId: w.sid, classId: CLASS, date: "2026-11-12", startTime: "17:00", endTime: "18:30" });
+  r.tick(); await r.settle();
+  // The server refuses the room track's chunk 1 for good (e.g. a conflicting row).
+  const orig = w.backend.registerChunk;
+  w.backend.registerChunk = async (a) => { if (a.track === "room" && a.seq === 1) throw { message: `Chunk 1 of the room track is already registered with different audio` }; return orig(a); };
+  await src.play(35, r);
+  w.backend.registerChunk = orig;
+  const room = w.server.chunkRows(row.id).filter((c) => c.track === "room").map((c) => c.seq);
+  eq("the room track ends at the refused chunk: only seq 0 registered, nothing above the hole", room, [0]);
+  const local = (await store.listChunks(row.id)).filter((c) => c.track === "room");
+  ok("the refused chunk and the ones after it are kept locally, marked refused", local.filter((c) => c.seq >= 1).every((c) => c.state === "refused") && local.length >= 3);
+  ok("the server's refusal was reported", errors.some((e) => e.refusal === "conflicting_chunk"));
+  await r.stop(); await r.settle();
+  eq("the part before it completes", w.server.recordings.get(row.id).status, "complete");
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// C2 revision: the review's reproductions, each now a case that must pass.
+
+const T0 = Date.parse("2026-11-12T09:55:00.000Z");
+const manifestOf = (w, id) => JSON.parse(new TextDecoder().decode(w.server.objects.get(`${FAKE_BUCKET}/${w.server.recordings.get(id).manifest_path}`).bytes));
+const ticks = async (r, n, stepMs = 5000) => { for (let i = 0; i < n; i++) { clock += stepMs; r.tick(); await r.settle(); } };
+const seqs = (w, id, track) => w.server.chunkRows(id).filter((c) => c.track === track).sort((a, b) => a.seq - b.seq).map((c) => c.seq);
+const contiguous = (a) => a.length > 0 && a.every((v, i) => v === i);
+async function started(o = {}, extra = {}) {
+  clock = T0;
+  const w = world(o);
+  const store = extra.store ?? new R.MemoryStore(), src = new FakeSource();
+  const h = recorder(w, store, src, extra.opts ?? {});
+  const health = []; h.r.on("health", (e) => health.push({ ...e, at: clock }));
+  await h.r.prepare();
+  const row = await h.r.arm(E(w, o.endTime));
+  return { w, store, src, ...h, health, row };
+}
+
+console.log("=== B1: a dead AudioContext is never shown as recording ===");
+{
+  // (P4) The context dies 12 s in: no batch, no tick. resume() does not help; re-making it does.
+  const { w, src, r, errors, states, health, row } = await started();
+  r.tick(); await r.settle();
+  await src.play(12, r);
+  const errsBefore = errors.length;
+  src.stalled = true; src.resumeHeals = false; src.rebuildHeals = false;
+  const diedAt = clock;
+  await src.play(5, r, 24);
+  const stall = health.find((h) => h.kind === "capture_stalled");
+  ok("B1: within 5 s a loud capture_stalled error and health event", !!stall && stall.at - diedAt <= 5000 && errors.slice(errsBefore).some((e) => e.code === "capture_stalled"), stall ? `${stall.at - diedAt} ms` : "none");
+  eq("B1: the state is `stalled`, never `recording`, while nothing arrives", r.state, "stalled");
+  ok("B1: it tried resume() and then re-made the context once", src.resumes >= 1 && src.rebuilds === 1, `${src.resumes} resumes, ${src.rebuilds} rebuilds`);
+  await src.play(10, r, 24);
+  ok("B1: and said loudly that the restart failed", errors.filter((e) => e.code === "capture_stalled").length >= 2);
+  eq("B1: still stalled, still not recording", [r.state, states.slice(states.lastIndexOf("stalled")).includes("recording")], ["stalled", false]);
+  src.resumeHeals = true;                          // e.g. the teacher clicked: the context runs again
+  await src.play(4, r, 24);
+  await src.play(12, r);
+  eq("B1: audio is back: recording again", r.state, "recording");
+  const back = health.find((h) => h.kind === "capture_resumed");
+  ok("B1: the resumed event says how long nothing came", back && back.gapMs >= 14000 && back.gapMs <= 22000, String(back?.gapMs));
+  await r.stop(); await r.settle();
+  eq("B1: it completes", w.server.recordings.get(row.id).status, "complete");
+  const man = manifestOf(w, row.id);
+  const gap = man.discontinuities.find((d) => d.kind === "context_stall");
+  ok("B1: the gap is in the manifest with the wall time that has no audio", gap && gap.wall_gap_ms >= 14000 && gap.wall_gap_ms <= 22000, JSON.stringify(man.discontinuities));
+  ok("B1: and a gap marker was stored", [...w.server.markers.values()].some((m) => m.recording_id === row.id && m.kind === "gap"));
+  ok("B1: logged once, not twice (watchdog and ledger agree)", man.discontinuities.filter((d) => d.kind === "context_stall").length === 1);
+  ok("B1: both tracks still contiguous", contiguous(seqs(w, row.id, "teacher")) && contiguous(seqs(w, row.id, "room")));
+}
+{
+  // The context reports it was suspended: stalled at once, and re-made.
+  const { src, r, errors, row, w } = await started();
+  r.tick(); await r.settle();
+  await src.play(8, r);
+  src.stalled = true; src.rebuildHeals = true;
+  src.onStateChange?.("suspended");
+  await r.settle();
+  ok("B1: a statechange to suspended is a stall at once (no 3 s wait)", errors.some((e) => e.code === "capture_stalled"));
+  await src.play(10, r);
+  ok("B1: re-making the context brought the audio back", src.rebuilds === 1 && r.state === "recording", `${src.rebuilds} ${r.state}`);
+  await r.stop(); await r.settle();
+  eq("B1: completes", w.server.recordings.get(row.id).status, "complete");
+}
+
+console.log("=== M6: a busy main thread is not a stall (no false gap markers) ===");
+{
+  const { src, r, errors, row, w } = await started();
+  r.tick(); await r.settle();
+  await src.play(10, r);
+  clock += 3600; r.tick();                                   // the page was blocked 3.6 s; the interval fired late
+  await src.play(3.6, r, 40, { advance: false });            // the audio that waited arrives in one burst
+  await src.play(12, r);
+  ok("M6: no capture_stalled error", !errors.some((e) => e.code === "capture_stalled"), errors.map((e) => e.code).join(","));
+  const cur = await r.current();
+  ok("M6: no context_stall discontinuity and no gap marker", !cur.discontinuities.some((d) => d.kind === "context_stall") && ![...w.server.markers.values()].some((m) => m.recording_id === row.id && m.kind === "gap"), JSON.stringify(cur.discontinuities));
+  await r.stop(); await r.settle();
+}
+
+console.log("=== M6: the Worker encoder keeps order and falls back without losing a chunk ===");
+{
+  const { createHash } = await import("node:crypto");
+  class FakeWorker {
+    constructor(dieAfter = Infinity) { this.onmessage = null; this.onerror = null; this.posted = 0; this.dieAfter = dieAfter; this.copies = 0; }
+    postMessage(m) {
+      this.posted++;
+      if (this.posted > this.dieAfter) { setTimeout(() => this.onerror?.({ message: "worker crashed" }), 1); return; }
+      this.copies += m.samples.length;
+      // Answers out of order (random delay), like a worker under load might.
+      setTimeout(() => {
+        const enc = R.encodePcmChunk(m.format, m.samples, m.sampleRate);
+        this.onmessage?.({ data: { id: m.id, ok: true, bytes: enc.bytes.buffer, encoding: enc.encoding, mime: enc.mime, ext: enc.ext, encodeMs: enc.encodeMs, sha256: createHash("sha256").update(enc.bytes).digest("hex") } });
+      }, 1 + Math.floor(rnd() * 8));
+    }
+    terminate() {}
+  }
+  const jobs = Array.from({ length: 6 }, (_, i) => Int16Array.from({ length: 48000 }, (_, k) => Math.round(3000 * Math.sin((k + i * 999) / (5 + i)))));
+  const want = await Promise.all(jobs.map((x) => R.inlineEncoder().encode("flac", x, 48000)));
+  const fw = new FakeWorker();
+  const enc = R.workerEncoder(() => fw);
+  const got = await Promise.all(jobs.map((x) => enc.encode("flac", x, 48000)));
+  ok("M6: worker results equal the inline encoder's, job by job, whatever order they came back in", got.every((g, i) => g.sha256 === want[i].sha256 && sameInt16(decodeFlac(g.bytes).samples, jobs[i])) && enc.kind === "worker");
+  ok("M6: the samples are copied to the worker, not taken from the page (a dead worker cannot lose them)", jobs.every((x) => x.length === 48000));
+  const why = [];
+  const dying = R.workerEncoder(() => new FakeWorker(2), (w) => why.push(w));
+  const got2 = await Promise.all(jobs.map((x) => dying.encode("flac", x, 48000)));
+  ok("M6: a worker that dies mid-way: every pending and later job is encoded on the page instead", got2.every((g, i) => g.sha256 === want[i].sha256) && dying.kind === "inline" && why.length === 1, why.join("|"));
+  const none = R.workerEncoder(() => { throw new Error("no Worker here"); }, (w) => why.push(w));
+  ok("M6: no Worker at all: inline, and said once", (await none.encode("flac", jobs[0], 48000)).sha256 === want[0].sha256 && none.kind === "inline" && why.length === 2);
+}
+
+console.log("=== B2: the laptop's clock jumps; the lesson does not ===");
+for (const jump of [3 * 3600000, -3 * 3600000]) {
+  let skew = 0;
+  const { w, src, r, errors, row } = await started({}, { opts: { now: () => clock + skew } });
+  const clocks = []; r.on("clock", (c) => clocks.push(c));
+  r.tick(); await r.settle();
+  await src.play(30, r);
+  skew = jump;                                        // Windows time sync corrects the clock mid-lesson
+  await src.play(40, r);
+  const sr = w.server.recordings.get(row.id);
+  eq(`B2 (${jump > 0 ? "+" : "-"}3 h): still recording - the jump did not end the lesson`, [r.state, sr.status, sr.stop_reason], ["recording", "recording", null]);
+  ok(`B2 (${jump > 0 ? "+" : "-"}3 h): every chunk registered and confirmed, none refused for its timing`,
+    w.server.chunkRows(row.id).every((c) => c.confirmed_at) && !errors.some((e) => ["ahead_of_server_clock", "after_stop", "after_window"].includes(e.refusal)), errors.map((e) => e.refusal ?? e.code).join(","));
+  ok(`B2 (${jump > 0 ? "+" : "-"}3 h): the jump was reported`, clocks.some((c) => Math.abs((c.jumpMs ?? 0) - jump) < 2000));
+  await r.stop(); await r.settle();
+  const fin = w.server.recordings.get(row.id);
+  eq(`B2 (${jump > 0 ? "+" : "-"}3 h): stopped by the teacher, completes`, [fin.status, fin.stop_reason], ["complete", "manual"]);
+  const man = manifestOf(w, row.id);
+  ok(`B2 (${jump > 0 ? "+" : "-"}3 h): the jump is in the manifest`, man.discontinuities.some((d) => d.kind === "clock_change" && Math.abs(d.wall_gap_ms - jump) < 2000), JSON.stringify(man.discontinuities));
+  ok(`B2 (${jump > 0 ? "+" : "-"}3 h): chunk timing untouched: contiguous, boundaries shared`, ["teacher", "room"].every((t) => { const rows = w.server.chunkRows(row.id).filter((c) => c.track === t).sort((a, b) => a.seq - b.seq); return contiguous(rows.map((c) => c.seq)) && rows.every((c, i) => i === 0 || c.t_start_ms === rows[i - 1].t_end_ms); }));
+}
+{
+  // A wall clock that is simply WRONG by 3 h from the start, and the scheduled stop still lands in the window.
+  const { w, src, r, row } = await started({ lessonMs: 60000 }, { opts: { now: () => clock + 3 * 3600000 } });
+  r.tick(); await r.settle();
+  await src.play(16 * 60 + 5, r, 400);
+  const fin = w.server.recordings.get(row.id);
+  eq("B2: a laptop 3 h wrong from boot still stops on the server's schedule, inside the window", [fin.stop_reason, fin.status], ["scheduled_end", "complete"]);
+}
+
+console.log("=== B3: a slow Start loses nothing the server counts ===");
+{
+  // (P1) The Start reaches the server at once; its ANSWER takes 25 s.
+  const { w, src, r, errors, row } = await started({}, { opts: { startTimeoutMs: 60000 } });
+  const held = []; const orig = w.backend.start;
+  w.backend.start = (...a) => { const p = orig(...a); return new Promise((res, rej) => held.push(() => p.then(res, rej))); };
+  r.tick(); await r.settle();
+  eq("B3: while the answer is out the state is `starting`", r.state, "starting");
+  await src.play(25, r);
+  const firstSend = r.active.firstSendFrame;
+  const localBefore = await r.o.store.listChunks(row.id);
+  ok("N-B1: nothing was registered yet, and nothing was dropped: the audio is already STORED on the laptop (chunks 0, 1 and 5-s segments)", w.server.chunkRows(row.id).length === 0 && localBefore.filter((c) => c.track === "teacher").length >= 2, String(localBefore.length));
+  ok("N-B1: the tab title never says RECORDING while the server has not confirmed", r.state === "starting");
+  held.shift()(); await r.settle();
+  await src.play(12, r);
+  eq("B3: the answer came: recording", r.state, "recording");
+  eq("B3: t = 0 is the frame of the first Start request", r.active.chunker.t0Frame, firstSend);
+  ok("B3: the chunks cut from the held audio (seq 0, 1 ...) were registered when it came", contiguous(seqs(w, row.id, "teacher")) && seqs(w, row.id, "teacher").length >= 3);
+  ok("B3: no refusal for timing", !errors.some((e) => ["ahead_of_server_clock", "after_stop", "after_window"].includes(e.refusal)), errors.map((e) => e.refusal ?? e.code).join(","));
+  await r.stop(); await r.settle();
+  eq("B3: completes", w.server.recordings.get(row.id).status, "complete");
+  const { samples } = await decodeTrack(w.server, row.id, "teacher");
+  ok("B3: the stored audio is exactly what was played from the first Start request on", sameInt16(samples, src.expected("teacher", firstSend, samples.length)) && samples.length >= 36 * 48000, `${samples.length}`);
+}
+{
+  // The Start itself travels 25 s (the server stamps started_at when it ARRIVES).
+  const { w, src, r, errors, row } = await started({}, { opts: { startTimeoutMs: 60000 } });
+  const held = []; const orig = w.backend.start;
+  w.backend.start = (...a) => new Promise((res, rej) => held.push(() => orig(...a).then(res, rej)));
+  r.tick(); await r.settle();
+  await src.play(25, r);
+  const firstSend = r.active.firstSendFrame;
+  held.shift()(); await r.settle();
+  await src.play(30, r);
+  ok("N-B1: the server's stamp came 25 s after capture began: said, and that ALL of it is kept", errors.some((e) => e.code === "start_delayed" && /All of it is kept/.test(e.message)));
+  const cur = await r.current();
+  ok("N-B1: the offset is in the manifest's record (pre_start, 25 s)", cur.discontinuities.some((d) => d.kind === "pre_start" && Math.abs(d.wall_gap_ms - 25000) < 1000) && Math.abs(cur.preStartMs - 25000) < 1000, JSON.stringify(cur.discontinuities));
+  eq("N-B1: t = 0 stays the first captured sample (nothing trimmed)", r.active.chunker.t0Frame, firstSend);
+  ok("N-B1: the server was told the offset", Math.abs((w.server.recordings.get(row.id).pre_start_ms ?? 0) - 25000) < 1000, String(w.server.recordings.get(row.id).pre_start_ms));
+  ok("B3: so no chunk is ahead of the server's clock, and nothing is refused after Stop", !errors.some((e) => ["ahead_of_server_clock", "after_stop", "after_window"].includes(e.refusal)), errors.map((e) => e.refusal ?? e.code).join(","));
+  await r.stop(); await r.settle();
+  eq("B3: completes (the review saw it stuck in uploading)", w.server.recordings.get(row.id).status, "complete");
+  ok("B3: everything after the server's start is there, contiguous", contiguous(seqs(w, row.id, "teacher")) && contiguous(seqs(w, row.id, "room")));
+  const { samples } = await decodeTrack(w.server, row.id, "teacher");
+  ok("N-B1: the server holds EVERY captured sample, from the first one (sample-exact)", sameInt16(samples, src.expected("teacher", firstSend, samples.length)) && samples.length >= 54 * 48000, `${samples.length}`);
+}
+{
+  // The first attempt lands and its answer never comes: timed out, sent again, the row read back.
+  const { w, src, r, errors, row } = await started({}, { opts: { startTimeoutMs: 10000 } });
+  const orig = w.backend.start; let n = 0;
+  w.backend.start = (...a) => { n++; const p = orig(...a); return n === 1 ? new Promise(() => {}) : p; };
+  r.tick(); await r.settle();
+  const firstSend = r.active.firstSendFrame;
+  await src.play(20, r);
+  ok("B3: a Start with no answer for 10 s is reported and sent again", errors.some((e) => e.code === "server_unavailable") && n >= 2, `${n} attempts`);
+  eq("B3: the second answer is used: recording, t = 0 still the first request", [r.state, r.active.chunker.t0Frame], ["recording", firstSend]);
+  await r.stop(); await r.settle();
+  eq("B3: completes", w.server.recordings.get(row.id).status, "complete");
+}
+let failedStart = null;
+{
+  // The server refuses the start after 12 s: explicit failed state, the audio kept here.
+  const { w, src, r, errors, states, row, store } = await started();
+  const held = [];
+  w.backend.start = () => new Promise((res, rej) => held.push(() => rej({ message: "Recording is switched off for this class", code: "42501" })));
+  r.tick(); await r.settle();
+  await src.play(12, r);
+  held.shift()(); await r.settle();
+  eq("B3: a refused start leaves an explicit failed state", r.state, "error");
+  ok("B3: with a clear error naming the refusal", errors.some((e) => e.code === "start_failed" && e.refusal === "switch_off"));
+  ok("B3: and the 12 s captured are kept on this laptop", (await store.bytesHeld(row.id)) > 0 && (await store.listChunks(row.id)).length >= 2);
+  eq("B3: nothing reached the server", w.server.chunkRows(row.id).length, 0);
+  void states;
+  failedStart = { w, store, id: row.id };
+}
+
+console.log("=== B4: a Stop is retried until the server answers ===");
+for (const [label, error] of [["a 503 gateway timeout", { message: "upstream request timeout", code: "503" }], ["an expired JWT", { message: "JWT expired", code: "PGRST301" }]]) {
+  const { w, src, r, errors, row, store } = await started();
+  const ups = []; r.on("upload", (p) => ups.push(p));
+  r.tick(); await r.settle();
+  await src.play(25, r);
+  w.server.failNext("update:class_recordings", 1, error);
+  await r.stop(); await r.settle();
+  eq(`B4 (${label}): after the failed Stop the server row is still recording`, w.server.recordings.get(row.id).status, "recording");
+  ok(`B4 (${label}): the page says the Stop has not reached the server yet`, errors.some((e) => e.code === "stop_pending") && ups.at(-1)?.stopPending === true && r.state === "uploading");
+  if (label.includes("JWT")) {
+    await ticks(r, 6);
+    ok("B4 (JWT): the session was refreshed through the injected client", w.tc.refreshed >= 1, String(w.tc.refreshed));
+  } else {
+    // ...and the tab is reloaded before the retry: the unfinished Stop is resumed.
+    await r.dispose();
+    const b = recorder(w, store, new FakeSource());
+    await b.r.prepare(); await b.r.recover(); await b.r.settle();
+    await ticks(b.r, 4);
+  }
+  const fin = w.server.recordings.get(row.id);
+  eq(`B4 (${label}): the Stop went through on a retry and the recording is complete`, [fin.status, fin.stop_reason], ["complete", "manual"]);
+}
+{
+  // A refusal the server STATED is final: reported, not retried forever.
+  const { w, src, r, errors, row } = await started();
+  const ups = []; r.on("upload", (p) => ups.push(p));
+  r.tick(); await r.settle();
+  await src.play(15, r);
+  const stops = () => w.server.calls.filter((c) => c.key === "update:class_recordings" && c.recording === row.id).length;
+  w.server.failNext("update:class_recordings", 1, { message: "You no longer teach this lesson: it cannot be recorded by you", code: "42501" });
+  await r.stop(); await r.settle();
+  const n0 = stops();
+  await ticks(r, 6);
+  ok("B4: a stated refusal (no longer teaching) is reported and not sent again", errors.some((e) => e.refusal === "no_longer_teaching") && stops() === n0 && ups.at(-1)?.stopRefused, `${n0} -> ${stops()}`);
+}
+
+console.log("=== M1: one laptop, two teachers ===");
+{
+  const { w, src, r, row, store } = await started();
+  r.tick(); await r.settle();
+  w.server.offline = true;
+  await src.play(27, r);                                  // A's chunks are queued here...
+  await r.dispose();                                       // ...and A's tab dies
+  w.server.offline = false;
+  const heldA = await store.bytesHeld(row.id);
+  const statesA = JSON.stringify((await store.listChunks(row.id)).map((c) => c.state));
+  const callsBefore = w.server.calls.length;
+  const B = new R.Recorder({ backend: R.supabaseBackend(w.client(OTHER)), store, source: new FakeSource(), userId: OTHER, installId: "i", profile, chunkMs: 10000, now, perfNow: now, autoTick: false, useLocks: false });
+  const recEv = []; B.on("recovered", (e) => recEv.push(e));
+  await B.prepare();
+  eq("M1: B's engine does not take A's recording", await B.recover(), []);
+  await ticks(B, 4);
+  ok("M1: it says another account has unsent audio here", recEv[0]?.othersPending?.recordings === 1 && recEv[0].othersPending.bytes > 0, JSON.stringify(recEv[0]?.othersPending));
+  ok("M1: B made no call at all about A's recording (no upload, register, stop, marker)", w.server.calls.slice(callsBefore).every((c) => c.recording !== row.id), JSON.stringify(w.server.calls.slice(callsBefore).filter((c) => c.recording === row.id)));
+  await throwsLike("M1: B cannot discard A's audio", () => B.discardLocal(row.id, "DISCARD"), /another account|not_your_recording/);
+  await throwsLike("M1: nor read its progress", () => B.uploadProgress(row.id), /another account|not_your_recording/);
+  await B.signOut();
+  ok("M1: B's sign-out leaves A's audio exactly as it was", (await store.bytesHeld(row.id)) === heldA && JSON.stringify((await store.listChunks(row.id)).map((c) => c.state)) === statesA);
+  const A2 = recorder(w, store, new FakeSource());
+  await A2.r.prepare();
+  eq("M1: when A signs in again A's queue resumes", await A2.r.recover(), [row.id]);
+  await A2.r.settle();
+  eq("M1: and finishes", [w.server.recordings.get(row.id).status, w.server.recordings.get(row.id).stop_reason], ["complete", "crash_recovered"]);
+  ok("M1: only A's account ever wrote A's rows", w.server.chunkRows(row.id).every((c) => c.registered_by === TEACHER));
+}
+
+console.log("=== M2: sign-out, abandoned, stuck and deleted audio ===");
+{
+  const { w, src, r, row, store } = await started();
+  r.tick(); await r.settle();
+  await src.play(25, r);                                  // confirmed as they go
+  w.server.offline = true;
+  await src.play(12, r);                                  // these stay on the laptop
+  await r.stop(); await r.settle();
+  const before = await store.listChunks(row.id);
+  const out = await r.signOut();
+  let confirmedHeld = 0, openHeld = 0;
+  for (const c of before) { const b = await store.getBytes(row.id, c.track, c.seq); if (c.state === "confirmed" && b) confirmedHeld++; if (c.state !== "confirmed" && b) openHeld++; }
+  ok("M2: on sign-out the audio the server has is deleted from this laptop", before.some((c) => c.state === "confirmed") && confirmedHeld === 0);
+  ok("M2: audio the server does not have is kept, and reported to the UI", openHeld === before.filter((c) => c.state !== "confirmed").length && openHeld > 0 && out.unsentRecordings === 1 && out.unsentBytes > 0, JSON.stringify(out));
+  w.server.offline = false;
+  const A2 = recorder(w, store, new FakeSource());
+  await A2.r.prepare(); await A2.r.recover(); await A2.r.settle(); await ticks(A2.r, 3);
+  eq("M2: signing in again finishes it", w.server.recordings.get(row.id).status, "complete");
+  ok("M2: and then nothing of it is left here", !(await store.getRecording(row.id)));
+}
+{
+  // The refused start above left audio the server never had. 15 days later it is reported, never deleted.
+  const { w, store, id } = failedStart;
+  const held = await store.bytesHeld(id);
+  clock += 15 * 86400000;
+  const h = recorder(w, store, new FakeSource());
+  const stuck = []; h.r.on("stuck", (e) => stuck.push(...e.recordings));
+  await h.r.prepare(); await h.r.recover();
+  ok("M2: audio stuck longer than 14 days is surfaced with its age and size", stuck.some((s) => s.recordingId === id && s.overLimit && s.bytes > 0 && s.ageMs > 14 * 86400000), JSON.stringify(stuck));
+  eq("M2: and it is not deleted by itself", await store.bytesHeld(id), held);
+  await throwsLike("M8: Discard needs the typed word: a lower-case 'discard' is refused", () => h.r.discardLocal(id, "discard"), /Type DISCARD/);
+  eq("M8: and nothing was thrown away", await store.bytesHeld(id), held);
+  w.server.recordings.get(id).status = "deleted";        // the server deleted it (retention / a deletion request)
+  const h2 = recorder(w, store, new FakeSource());
+  await h2.r.prepare(); await h2.r.recover();
+  ok("M2: a recording the server reports deleted is purged here too", !(await store.getRecording(id)) && (await store.bytesHeld(id)) === 0);
+}
+{
+  const { r, row, store } = await started();
+  const s2 = new R.MemoryStore();
+  await s2.putRecording({ ...(await store.getRecording(row.id)), id: "abandoned-1", phase: "abandoned", ownerUserId: TEACHER });
+  await s2.addChunk({ recordingId: "abandoned-1", track: "teacher", seq: 0, startFrame: 0, endFrame: 10, sampleRate: 48000, tStartMs: 0, tEndMs: 1, byteSize: 3, sha256: "a".repeat(64), mime: "audio/flac", ext: "flac", encoding: "fixed", state: "captured", attempts: 0, createdAt: clock }, new Uint8Array([1, 2, 3]));
+  const h = recorder(world(), s2, new FakeSource());
+  await h.r.prepare();
+  await h.r.discardLocal("abandoned-1", "DISCARD");
+  ok("M8: with the typed word DISCARD an abandoned recording's audio is thrown away", !(await s2.getRecording("abandoned-1")) && (await s2.bytesHeld("abandoned-1")) === 0);
+  void r;
+}
+
+console.log("=== M3: the browser refuses to store a chunk ===");
+class FlakyStore extends R.MemoryStore {
+  constructor() { super(); this.fail = new Map(); this.freed = 0; this.permanent = new Set(); }
+  async addChunk(meta, bytes) {
+    const k = `${meta.track}${meta.seq}`;
+    if (this.permanent.has(k)) throw new Error(`chunk ${k} already stored with different audio`);
+    const n = this.fail.get(k) ?? 0;
+    if (n > 0) { this.fail.set(k, n - 1); const e = new Error("The quota has been exceeded."); e.name = "QuotaExceededError"; throw e; }
+    return super.addChunk(meta, bytes);
+  }
+  async deleteConfirmedBytes(id) { const n = await super.deleteConfirmedBytes(id); this.freed += n; return n; }
+}
+{
+  // (P3) Quota for a while: space is made, the chunk is held in memory and stored later - no hole.
+  const store = new FlakyStore();
+  store.fail.set("teacher1", 5);
+  const { w, src, r, errors, row } = await started({}, { store });
+  r.tick(); await r.settle();
+  await src.play(45, r);
+  ok("M3: the quota error was reported", errors.some((e) => e.code === "quota"));
+  ok("M3: space was made by freeing audio the server had already confirmed", store.freed > 0, String(store.freed));
+  await r.stop(); await r.settle(); await ticks(r, 3);
+  eq("M3: no hole: every teacher chunk reached the server in order", contiguous(seqs(w, row.id, "teacher")) && seqs(w, row.id, "teacher").length === seqs(w, row.id, "room").length, true);
+  eq("M3: and it completes", w.server.recordings.get(row.id).status, "complete");
+}
+{
+  // A chunk that can never be stored: the track ends there, said loudly and in the manifest; the rest completes.
+  const store = new FlakyStore();
+  store.permanent.add("teacher1");
+  const { w, src, r, errors, row } = await started({}, { store });
+  r.tick(); await r.settle();
+  await src.play(35, r);
+  await r.stop(); await r.settle(); await ticks(r, 3);
+  ok("M3: reported as local_store_failed", errors.some((e) => e.code === "local_store_failed"));
+  eq("M3: the teacher track ends at the hole, the room track is whole", [seqs(w, row.id, "teacher"), contiguous(seqs(w, row.id, "room")) && seqs(w, row.id, "room").length >= 4], [[0], true]);
+  eq("M3: the recording completes over the part before the hole", w.server.recordings.get(row.id).status, "complete");
+  const man = manifestOf(w, row.id);
+  ok("M3: the hole is in the manifest", man.discontinuities.some((d) => d.kind === "local_store_failed" && d.track === "teacher" && d.t_ms === 10000) && man.tracks.find((t) => t.track === "teacher").chunk_count === 1, JSON.stringify(man.discontinuities));
+}
+{
+  // Memory full while the store keeps refusing: capture stops loudly; the held audio is stored later and completes.
+  const store = new FlakyStore();
+  store.fail.set("teacher1", 1e9);
+  const { w, src, r, errors, row } = await started({}, { store, opts: { memoryHoldBytes: 1 } });
+  r.tick(); await r.settle();
+  await src.play(25, r);
+  ok("M3: memory full: capture STOPPED with a loud error, before audio is lost", errors.some((e) => e.code === "quota" && /STOPPED/.test(e.message)) && r.state !== "recording", r.state);
+  eq("M3: and it does not complete while a chunk is only in memory", w.server.recordings.get(row.id).status === "complete", false);
+  store.fail.set("teacher1", 0);
+  await ticks(r, 4);
+  eq("M3: once the browser takes it, the held chunk is stored and sent: complete, no hole", [w.server.recordings.get(row.id).status, contiguous(seqs(w, row.id, "teacher"))], ["complete", true]);
+}
+{
+  // A chunk missing from the store on reload (lost before this revision, or a crash mid-write): never register over the hole.
+  const { w, src, r, row, store } = await started();
+  r.tick(); await r.settle();
+  w.server.offline = true;
+  await src.play(35, r);
+  await r.dispose();
+  for (const k of [...store.chunks.keys()]) if (k === `${row.id}|teacher|000001`) { store.chunks.delete(k); store.bytes.delete(k); }
+  w.server.offline = false;
+  const b = recorder(w, store, new FakeSource());
+  await b.r.prepare(); await b.r.recover(); await b.r.settle(); await ticks(b.r, 2);
+  eq("M3: chunk 2 is never registered while chunk 1 is missing: the teacher track ends at 1", seqs(w, row.id, "teacher"), [0]);
+  ok("M3: said so", b.errors.some((e) => e.code === "local_store_failed"));
+  eq("M3: and the recording completes", w.server.recordings.get(row.id).status, "complete");
+}
+
+console.log("=== ruling (a), client: a silent microphone is said at once, its chunks still sent ===");
+{
+  const { w, src, r, errors, row, store } = await started();
+  src.dead.teacher = true;                                 // the lapel transmitter is off: digital silence
+  r.tick(); await r.settle();
+  const startAt = clock;
+  await src.play(4, r);
+  const e = errors.find((x) => x.code === "mic_silent");
+  ok("ruling (a): 'the teacher microphone is silent' within 3 s", !!e && /teacher microphone is silent/.test(e.message) && clock - startAt <= 4500);
+  await src.play(25, r);
+  const t = w.server.chunkRows(row.id).filter((c) => c.track === "teacher");
+  ok("ruling (a): its chunks are still sent, stored and flagged below_floor", t.length >= 2 && t.every((c) => c.confirmed_at && c.below_floor));
+  ok("ruling (a): nothing was deleted locally before complete", (await store.listChunks(row.id)).every((c) => c.state !== "confirmed" || store.bytes.has(`${row.id}|${c.track}|${String(c.seq).padStart(6, "0")}`)));
+  await r.stop(); await r.settle();
+  eq("ruling (a): completes", w.server.recordings.get(row.id).status, "complete");
+}
+
+console.log("=== field finding: the room S500 stops at 54:51 of a real lesson - alert, keep the lapel, find it again ===");
+{
+  const { w, src, r, errors, row, health } = await started();
+  r.tick(); await r.settle();
+  await src.play(15, r);
+  const S500 = src.devices[1];
+  // The S500 drops off USB: its track ends and it leaves the device list.
+  src.dead.room = true;
+  src.devices = [src.devices[0]];
+  const at = clock, before = errors.length;
+  src.onTrackEnded("room");
+  const e = errors.slice(before).find((x) => x.code === "device_unplugged");
+  ok("field: the stop is said AT ONCE, loudly, and says the lapel is still recording", !!e && /room microphone STOPPED/.test(e.message) && /teacher microphone is still recording/.test(e.message) && health.some((h) => h.kind === "device_unplugged" && h.track === "room" && h.at === at), e?.message);
+  await src.play(90, r, 100);                                // gone for 90 s (longer than the old 60 s give-up)
+  eq("field: the recording carries on", r.state, "recording");
+  ok("field: after a minute it is said again, and it is still being sought (the track is not closed)", errors.some((x) => x.code === "device_lost" && /still being looked for/.test(x.message)) && !(await r.current()).tracks.find((t) => t.track === "room").closedAtFrame);
+  // Windows lists it again - under a NEW id, same label.
+  src.devices = [src.devices[0], { ...S500, deviceId: "s500-2", groupId: "g-s500-2" }];
+  src.onDeviceChange?.();
+  await r.settle();
+  await src.play(15, r);
+  ok("field: re-acquired by its label (new id), the right device and not the lapel", src.reopenedWith === "s500-2" && health.some((h) => h.kind === "device_restored" && h.track === "room"));
+  eq("field: the track now records from the new id", (await r.current()).tracks.find((t) => t.track === "room").deviceId, "s500-2");
+  await r.stop(); await r.settle();
+  eq("field: it completes", w.server.recordings.get(row.id).status, "complete");
+  ok("field: the lapel track never stopped: contiguous, as long as the room track", contiguous(seqs(w, row.id, "teacher")) && seqs(w, row.id, "teacher").length === seqs(w, row.id, "room").length && contiguous(seqs(w, row.id, "room")));
+  const man = manifestOf(w, row.id);
+  const lost = man.discontinuities.find((d) => d.kind === "device_lost" && d.track === "room"), back = man.discontinuities.find((d) => d.kind === "device_restored" && d.track === "room");
+  ok("field: the manifest says when the room microphone went and when it came back (a new segment)", lost && back && back.t_ms > lost.t_ms && back.wall_gap_ms >= 90000, JSON.stringify(man.discontinuities));
+  ok("field: gap markers at both ends", [...w.server.markers.values()].filter((m) => m.recording_id === row.id && m.kind === "gap" && /room microphone/.test(m.label ?? "")).length >= 2);
+}
+{
+  // The device leaves the list with no `ended` event reaching the page: the devicechange is enough.
+  const { src, r, errors, row, w } = await started();
+  r.tick(); await r.settle();
+  await src.play(8, r);
+  const S500 = src.devices[1];
+  src.dead.room = true;
+  src.devices = [src.devices[0]];
+  src.onDeviceChange?.();
+  await r.settle();
+  ok("field: a devicechange that removes a recording microphone is a stop, said at once", errors.some((x) => x.code === "device_unplugged" && /room/.test(x.message)));
+  src.devices = [src.devices[0], S500];
+  src.onDeviceChange?.();
+  await r.settle();
+  await src.play(5, r);
+  eq("field: plugged back with the same id: reopened by id at once", src.reopenedWith, "s500-1");
+  await r.stop(); await r.settle();
+  eq("field: completes", w.server.recordings.get(row.id).status, "complete");
+}
+{
+  // A track that is no longer live (no event at all) is noticed by the tick.
+  const { src, r, errors } = await started();
+  src.trackLive = (role) => !(role === "room" && src.dead.room);
+  r.tick(); await r.settle();
+  await src.play(6, r);
+  src.dead.room = true;
+  await src.play(2, r);
+  ok("field: a track that silently stopped being live is caught by the tick", errors.some((x) => x.code === "device_unplugged" && /room/.test(x.message)));
+  await r.stop(); await r.settle();
+}
+
+console.log("=== field finding: the lapel peaked at 0.0 dB - clipping on the meter ===");
+{
+  const { src, r, errors } = await started();
+  const levels = []; r.on("level", (l) => levels.push(l));
+  r.tick(); await r.settle();
+  await src.play(3, r);
+  ok("field: no clipping shown while it is fine", levels.length > 5 && levels.every((l) => !l.clipping?.teacher));
+  src.clip = true;
+  await src.play(3, r);
+  src.clip = false;
+  ok("field: clipping is on the meter for the teacher track, not the room", levels.some((l) => l.clipping?.teacher) && levels.every((l) => !l.clipping?.room));
+  ok("field: and a warning says to turn it down", errors.some((e) => e.code === "clipping" && /teacher microphone is CLIPPING/.test(e.message)));
+  await src.play(4, r);
+  ok("field: the meter clears again 2 s after the last clipped sample", !levels.at(-1).clipping.teacher);
+  await r.stop(); await r.settle();
+}
+
+console.log("=== M8: the read-back checksum, the manifest read-back, the server's late flag ===");
+{
+  const { w, src, r, errors, row, store } = await started();
+  w.server.corruptDownload(R.chunkPath(CLASS, row.id, "teacher", 1, "flac"));
+  const confirmedWith = []; const origConfirm = w.backend.confirmChunk;
+  w.backend.confirmChunk = (id, sha) => { confirmedWith.push(sha); return origConfirm(id, sha); };
+  r.tick(); await r.settle();
+  await src.play(35, r);
+  const bad = w.server.chunkRows(row.id).find((c) => c.track === "teacher" && c.seq === 1);
+  ok("M8: the page itself compares the read-back: it never asks the server to confirm bytes that did not round-trip",
+    confirmedWith.length >= 4 && confirmedWith.every((s) => w.server.chunkRows(row.id).some((c) => c.sha256 === s)) && !!bad, `${confirmedWith.length} confirms`);
+  const c1 = (await store.listChunks(row.id)).find((c) => c.track === "teacher" && c.seq === 1);
+  ok("M8: storage returned different bytes: the chunk is NOT confirmed", !w.server.chunkRows(row.id).find((c) => c.track === "teacher" && c.seq === 1).confirmed_at);
+  ok("M8: it is marked readback_mismatch locally and its bytes are kept", c1.state === "refused" && c1.refusal === "readback_mismatch" && !!(await store.getBytes(row.id, "teacher", 1)));
+  ok("M8: and the UI was told", errors.some((e) => e.refusal === "readback_mismatch"));
+  await r.stop(); await r.settle();
+  eq("M8: a recording with an unconfirmed chunk cannot complete; its local copy stays", [w.server.recordings.get(row.id).status, !!(await store.getRecording(row.id))], ["uploading", true]);
+}
+{
+  const { w, src, r, errors, row, store } = await started();
+  w.server.corruptDownload(R.manifestPath(CLASS, row.id));
+  r.tick(); await r.settle();
+  await src.play(15, r);
+  await r.stop(); await r.settle();
+  ok("M8: a manifest that does not read back is reported, and the recording is not completed on it", errors.some((e) => e.refusal === "readback_mismatch") && w.server.recordings.get(row.id).status === "uploading");
+  ok("M8: the local copy is kept", (await store.bytesHeld(row.id)) > 0);
+}
+{
+  const { w, src, r, row } = await started();
+  w.server.forceLate = true;                               // the server says late although the page registered at once
+  r.tick(); await r.settle();
+  await src.play(15, r);
+  const p = await r.uploadProgress(row.id);
+  ok("M8: the server's own late flag is taken, not the page's estimate", p.late > 0 && p.late === p.total, `${p.late}/${p.total}`);
+  w.server.forceLate = false;
+  await r.stop(); await r.settle();
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// C2 round 3: the second review's probes (P1-P13) and its six surviving
+// mutants (A-F), each as a permanent case.
+
+const realSleep = (ms) => new Promise((res) => setTimeout(res, ms));
+const countCodes = (errors) => { const m = {}; for (const e of errors) m[e.code] = (m[e.code] ?? 0) + 1; return m; };
+const teacherSeconds = (w, id) => Math.round(w.server.chunkRows(id).filter((c) => c.track === "teacher").reduce((n, c) => n + c.t_end_ms - c.t_start_ms, 0) / 1000);
+
+console.log("=== N-B1 (P2a): offline for the first 10 minutes - nothing captured is thrown away ===");
+{
+  const { w, src, r, errors, states, row, store } = await started();
+  w.server.offline = true;
+  r.tick(); await r.settle();
+  const t0 = clock;
+  await src.play(600, r, 200);
+  ok("N-B1: for 10 offline minutes the state is `starting`, never `recording`", r.state === "starting" && !states.includes("recording"), [...new Set(states)].join(","));
+  ok("N-B1: and the audio is STORED on the laptop meanwhile (10 s chunks: about 60 per track)", (await store.listChunks(row.id)).filter((c) => c.track === "teacher").length >= 59);
+  ok("N-B1: what the engine says is true: 'the audio IS being saved on this laptop'", errors.filter((e) => e.code === "server_unavailable").every((e) => /saved on this laptop|kept/.test(e.message)) && errors.some((e) => /IS being saved on this laptop/.test(e.message)));
+  ok("N-B1: the outage is not hundreds of errors (de-duplicated)", errors.length < 60, JSON.stringify(countCodes(errors)));
+  w.server.offline = false;
+  await src.play(60, r, 200);
+  eq("N-B1: back online: recording", r.state, "recording");
+  await r.stop(); await r.settle(); await ticks(r, 4);
+  eq("N-B1: it completes", w.server.recordings.get(row.id).status, "complete");
+  const played = Math.round((clock - t0) / 1000);
+  ok("N-B1: the server holds ALL of it (660 s), not the last 60 (the review's P2a)", teacherSeconds(w, row.id) >= 659 && teacherSeconds(w, row.id) <= played + 1, `${teacherSeconds(w, row.id)} of ${played}`);
+  ok("N-B1: the server knows how much came before its start", (w.server.recordings.get(row.id).pre_start_ms ?? 0) >= 599000, String(w.server.recordings.get(row.id).pre_start_ms));
+}
+
+console.log("=== N-B1 (P2b): offline for the whole capture window ===");
+{
+  const { w, src, r, errors, states, row, store } = await started({ lessonMs: 5 * 60000 }, { opts: {} });
+  w.server.offline = true;
+  r.tick(); await r.settle();
+  await src.play(21 * 60, r, 400);
+  ok("N-B1: a whole lesson without internet is never shown as `recording`", !states.includes("recording"), [...new Set(states)].join(","));
+  const kept = (await store.listChunks(row.id)).filter((c) => c.track === "teacher").reduce((n, c) => n + c.tEndMs - c.tStartMs, 0);
+  ok("N-B1: everything captured until the window closed is on the laptop (20 min)", kept >= 19.5 * 60000, `${Math.round(kept / 1000)} s`);
+  w.server.offline = false;
+  await ticks(r, 3);
+  const fin = errors.find((e) => e.code === "start_failed");
+  ok("N-B1: once online the truth is said: never started, and how much is kept (cannot be sent)", !!fin && /never started/.test(fin.message) && /kept on this laptop but cannot be sent/.test(fin.message) && Math.abs(fin.detail.keptMs - kept) < 1000, fin?.message);
+  ok("N-B1: and it is listed as audio not on the server", (await r.heldAudio()).some((h) => h.recordingId === row.id && h.bytes > 0));
+  ok("N-B1: the outage is not hundreds of errors", errors.length < 60, JSON.stringify(countCodes(errors)));
+}
+
+console.log("=== N-B2 (P3): an unclassified answer to Start is retried, capture goes on ===");
+for (const [label, e] of [["429 Too Many Requests", { message: "Too Many Requests", code: "429" }], ["PGRST116 no rows", { message: "JSON object requested, multiple (or no) rows returned", code: "PGRST116" }], ["409 conflict", { message: "Conflict", code: "409" }]]) {
+  const { w, src, r, errors, states, row } = await started();
+  w.server.failNext("update:class_recordings", 2, e);
+  r.tick(); await r.settle();
+  await src.play(30, r);
+  ok(`N-B2 (${label}): not final - the microphones stay open, no start_failed`, src.open && !errors.some((x) => x.code === "start_failed") && !states.includes("error"), errors.map((x) => x.code).join(","));
+  eq(`N-B2 (${label}): retried until the server started it`, [r.state, w.server.recordings.get(row.id).status], ["recording", "recording"]);
+  await r.stop(); await r.settle();
+  eq(`N-B2 (${label}): completes`, w.server.recordings.get(row.id).status, "complete");
+}
+{
+  const { w, src, r, errors } = await started();
+  w.server.failNext("update:class_recordings", 1, { message: "Recording is switched off for this class", code: "42501" });
+  r.tick(); await r.settle();
+  await src.play(3, r);
+  ok("N-B2: a refusal the server STATED (switched off) is final", errors.some((x) => x.code === "start_failed" && x.refusal === "switch_off") && r.state === "error" && !src.open);
+}
+
+console.log("=== N-B3 (P4): both microphones lost ===");
+{
+  const { w, src, r, errors, states, row, health } = await started();
+  r.tick(); await r.settle(); await src.play(12, r);
+  const devs = src.devices;
+  src.dead.room = true; src.dead.teacher = true; src.devices = [];
+  src.onTrackEnded("room"); src.onTrackEnded("teacher");
+  eq("N-B3: with no microphone at all the state is `stalled` (NOT RECORDING), at once", r.state, "stalled");
+  ok("N-B3: said loudly", errors.some((e) => e.code === "capture_stalled" && /both microphones are gone/.test(e.message)));
+  const n0 = w.server.chunkRows(row.id).length;
+  await src.play(60, r, 100);
+  eq("N-B3: still not recording a minute later", r.state, "stalled");
+  ok("N-B3: whatever was sent meanwhile is silence the server never counts (below_floor)", w.server.chunkRows(row.id).slice(n0).filter((c) => c.t_start_ms >= 13000).every((c) => c.below_floor));
+  src.devices = devs;
+  src.onDeviceChange?.(); await r.settle();
+  await src.play(5, r);
+  eq("N-B3: one microphone back: recording again", r.state, "recording");
+  ok("N-B3: both were sought and both came back", health.filter((h) => h.kind === "device_restored").length === 2);
+  await r.stop(); await r.settle();
+  eq("N-B3: completes", w.server.recordings.get(row.id).status, "complete");
+  void states;
+}
+
+console.log("=== N-M1 (P1): a second dead context in one lesson is re-made too ===");
+{
+  const { src, r, row, w } = await started();
+  r.tick(); await r.settle(); await src.play(8, r);
+  src.stalled = true; src.resumeHeals = false; src.rebuildHeals = true;
+  await src.play(10, r, 24); await src.play(6, r);
+  eq("N-M1: first death healed by a re-make", [r.state, src.rebuilds], ["recording", 1]);
+  await src.play(30, r);
+  src.stalled = true; src.resumeHeals = false; src.rebuildHeals = true;
+  await src.play(40, r, 24); await src.play(6, r);
+  eq("N-M1: the second death is re-made as well: recording", [r.state, src.rebuilds], ["recording", 2]);
+  await r.stop(); await r.settle();
+  eq("N-M1: completes", w.server.recordings.get(row.id).status, "complete");
+}
+
+console.log("=== mutant A: stall detection with slow ticks (a throttled hidden tab) ===");
+{
+  const { src, r, errors } = await started();
+  r.tick(); await r.settle(); await src.play(6, r);
+  src.stalled = true; src.resumeHeals = false; src.rebuildHeals = false;
+  const dead = clock;
+  let seen = null;
+  for (let i = 0; i < 10 && seen === null; i++) { clock += 2000; r.tick(); await r.settle(); if (errors.some((e) => e.code === "capture_stalled")) seen = clock - dead; }
+  ok("A: with ticks 2 s apart a dead context is still declared (deferred once, not for ever)", seen !== null && seen <= 8000, String(seen));
+  src.stalled = false; src.resumeHeals = true;
+  await src.play(3, r); await r.stop(); await r.settle();
+}
+
+console.log("=== mutant B: the context says running, but nothing arrives (a dead worklet) ===");
+{
+  const { src, r } = await started();
+  r.tick(); await r.settle(); await src.play(6, r);
+  src.stalled = true; src.resumeLies = true; src.resumeHeals = false; src.rebuildHeals = true;
+  await src.play(15, r, 24); await src.play(4, r);
+  ok("B: re-made although resume() said running", src.rebuilds >= 1 && r.state === "recording", `${src.rebuilds} ${r.state}`);
+  src.resumeLies = false;
+  await r.stop(); await r.settle();
+}
+
+console.log("=== N-M2 (P13): a stall longer than late_after - later chunks still count ===");
+{
+  const { src, r, row, w } = await started();
+  r.tick(); await r.settle(); await src.play(25, r);
+  src.stalled = true; src.resumeHeals = false; src.rebuildHeals = false;
+  await src.play(11 * 60, r, 24);
+  src.resumeHeals = true;
+  await src.play(65, r);
+  await r.stop(); await r.settle(); await ticks(r, 4);
+  const rows = w.server.chunkRows(row.id).filter((c) => c.track === "teacher").sort((a, b) => a.seq - b.seq);
+  const after = rows.filter((c) => !c.below_floor && c.t_start_ms > 11 * 60000);
+  ok("N-M2: the chunks recorded after the stall are not late (the gap is filled with silence)", after.length >= 5 && after.every((c) => !c.late), rows.filter((c) => c.late).map((c) => c.seq).join(","));
+  const man = manifestOf(w, row.id);
+  ok("N-M2: the manifest says how much was padded", man.discontinuities.some((d) => d.kind === "context_stall" && d.padded_ms >= 10 * 60000), JSON.stringify(man.discontinuities));
+  ok("N-M2: the padding is silence the server never counts", rows.filter((c) => c.t_start_ms >= 30000 && c.t_end_ms <= 11 * 60000).every((c) => c.below_floor));
+}
+
+console.log("=== N-M3 (P8): a slow answer to the clock measurement is not kept ===");
+{
+  clock = T0; const w = world(); const store = new R.MemoryStore(), src = new FakeSource();
+  const orig = w.backend.serverTime.bind(w.backend);
+  let slow = 0;
+  w.backend.serverTime = async () => { const iso = await orig(); clock += slow; return iso; };
+  const h = recorder(w, store, src);
+  await h.r.prepare();
+  slow = 40000; await h.r.measureClock(); slow = 0;
+  ok("N-M3: a 40 s round trip does not move the clock estimate", Math.abs(h.r.serverNow() - clock) < 1000, String(h.r.serverNow() - clock));
+  const row = await h.r.arm(E(w));
+  h.r.tick(); await h.r.settle(); await src.play(30, h.r);
+  ok("N-M3: so a fast start is not reported as late, nothing is shifted", !h.errors.some((e) => e.code === "start_delayed"), h.errors.map((e) => e.code).join(","));
+  await h.r.stop(); await h.r.settle();
+  eq("N-M3: completes", w.server.recordings.get(row.id).status, "complete");
+}
+
+console.log("=== N-M4 (P7) and mutant F: what an older engine left on the laptop ===");
+{
+  const { w, src, r, row, store } = await started();
+  r.tick(); await r.settle();
+  w.server.offline = true;
+  await src.play(25, r);
+  await r.dispose();
+  w.server.offline = false;
+  // As the previous engine stored it: no owner.
+  const old = await store.getRecording(row.id); delete old.ownerUserId; await store.putRecording(old);
+  const legacyDone = { ...old, id: crypto.randomUUID(), phase: "complete" };
+  await store.putRecording(legacyDone);
+  await store.putMarker({ recordingId: legacyDone.id, clientMarkerId: crypto.randomUUID(), kind: "student_name", tMs: 1000, label: "Nguyen Van A read aloud", studentId: null, sent: true, attempts: 0 });
+  const mineDone = { ...old, id: crypto.randomUUID(), phase: "complete", ownerUserId: TEACHER };
+  await store.putRecording(mineDone);
+  await store.putMarker({ recordingId: mineDone.id, clientMarkerId: crypto.randomUUID(), kind: "student_name", tMs: 1000, label: "Tran Thi B", studentId: null, sent: true, attempts: 0 });
+  const h2 = recorder(w, store, new FakeSource());
+  await h2.r.prepare();
+  const ids = await h2.r.recover(); await h2.r.settle(); await ticks(h2.r, 3);
+  ok("N-M4: an ownerless unfinished recording the server says is mine is adopted and finished", ids.includes(row.id) && w.server.recordings.get(row.id).status === "complete");
+  ok("N-M4: an ownerless COMPLETE leftover (labels) is purged whoever signs in", !(await store.getRecording(legacyDone.id)) && (await store.listMarkers(legacyDone.id)).length === 0);
+  ok("F: an own complete leftover from an older engine is purged on recover", !(await store.getRecording(mineDone.id)) && (await store.listMarkers(mineDone.id)).length === 0);
+}
+
+console.log("=== N-M5 (P5): a recording that completes with refused chunks ===");
+{
+  const { w, src, r, row, store } = await started();
+  r.tick(); await r.settle(); await src.play(25, r);
+  await r.marker("student_name", { label: "Nguyen Van A", studentId: null }).catch(() => null);
+  w.server.failNext("rpc:recorder_register_chunk", 1, { message: "This audio is from after Stop: refused" });
+  await src.play(22, r);
+  await r.stop(); await r.settle(); await ticks(r, 6);
+  eq("N-M5: it completes on the server", w.server.recordings.get(row.id).status, "complete");
+  ok("N-M5: no marker label and no manifest stay on the laptop", (await store.listMarkers(row.id)).every((m) => m.label === null && m.studentId === null) && !(await store.getManifest(row.id)));
+  const held = await r.heldAudio();
+  ok("N-M5: the refused audio is LISTED (not invisible)", held.some((h) => h.recordingId === row.id && h.bytes > 0), JSON.stringify(held));
+  const out = await r.signOut();
+  eq("N-M5: sign-out reports it", out.unsentRecordings, 1);
+  clock += 20 * 86400000;
+  const h2 = recorder(w, store, new FakeSource());
+  const stuck = []; h2.r.on("stuck", (e) => stuck.push(...e.recordings));
+  await h2.r.prepare(); await h2.r.recover();
+  ok("N-M5: 20 days later it is reported as stuck", stuck.some((s) => s.recordingId === row.id && s.overLimit));
+  await h2.r.discardLocal(row.id, "DISCARD");
+  ok("N-M5: and the typed Discard reaches it", !(await store.getRecording(row.id)) && (await store.bytesHeld(row.id)) === 0);
+}
+
+console.log("=== N-M6 (P9): an encoder that never answers ===");
+{
+  const hung = { kind: "worker", encode: () => new Promise(() => {}), close() {} };
+  const { w, src, r, errors, row, store } = await started({}, { opts: { encoder: hung, encodeTimeoutMs: 200 } });
+  r.tick(); await r.settle();
+  await src.play(12, r);
+  await realSleep(400); await r.settle();
+  await src.play(25, r);
+  ok("N-M6: the hung encoder is said and replaced (inline)", errors.some((e) => /did not answer/.test(e.message)));
+  ok("N-M6: chunks are stored and sent anyway", (await store.listChunks(row.id)).length >= 6 && w.server.chunkRows(row.id).filter((c) => c.confirmed_at).length >= 4);
+  const stopped = await Promise.race([r.stop().then(() => "returned"), realSleep(3000).then(() => "pending")]);
+  await r.settle();
+  eq("N-M6: Stop returns and the recording completes", [stopped, w.server.recordings.get(row.id).status], ["returned", "complete"]);
+}
+{
+  // The Worker encoder's own timeout.
+  const fw = { onmessage: null, onerror: null, postMessage() {}, terminate() {} };
+  const why = [];
+  const enc = R.workerEncoder(() => fw, (x) => why.push(x), { jobTimeoutMs: 100 });
+  const x = Int16Array.from({ length: 4800 }, (_, i) => i % 100);
+  const got = await enc.encode("flac", x, 48000);
+  ok("N-M6: a Worker job with no answer times out and is encoded inline", sameInt16(decodeFlac(got.bytes).samples, x) && enc.kind === "inline" && /did not answer/.test(why[0] ?? ""), why.join("|"));
+}
+
+console.log("=== N-M7 (P11): a re-open that never answers does not end the search ===");
+{
+  const { src, r, health } = await started({}, { opts: { reopenTimeoutMs: 100 } });
+  r.tick(); await r.settle(); await src.play(12, r);
+  const orig = src.reopen.bind(src); let hang = true;
+  src.reopen = (role, id) => (hang ? new Promise(() => {}) : orig(role, id));
+  src.dead.room = true; src.onTrackEnded("room");
+  await src.play(5, r, 100);
+  await realSleep(250);
+  hang = false;
+  for (let i = 0; i < 4 && !health.some((h) => h.kind === "device_restored"); i++) { await src.play(3, r); await realSleep(150); src.onDeviceChange?.(); await r.settle(); }
+  ok("N-M7: after a hung re-open the microphone is still found", health.some((h) => h.kind === "device_restored" && h.track === "room"));
+  await r.stop(); await r.settle();
+}
+
+console.log("=== N-M8 (P6): warnings are raised again in the next lesson on the same engine ===");
+{
+  const { w, src, r, errors, row } = await started();
+  src.dead.room = true;
+  r.tick(); await r.settle(); await src.play(12, r);
+  ok("N-M8: lesson 1: the dead room microphone is said", errors.some((e) => e.code === "mic_silent" && /room/.test(e.message)));
+  await r.stop(); await r.settle();
+  eq("N-M8: lesson 1 completes", w.server.recordings.get(row.id).status, "complete");
+  const sid2 = crypto.randomUUID();
+  w.server.addSession(sid2, { class_id: CLASS, start: clock + 4 * 60000, end: clock + 94 * 60000, teacher_id: TEACHER });
+  const n0 = errors.length;
+  await r.arm({ ...E(w), sessionId: sid2 });
+  r.tick(); await r.settle(); await src.play(5, r);
+  ok("N-M8: lesson 2 on the same engine, same dead microphone: said again", errors.slice(n0).some((e) => e.code === "mic_silent" && /room/.test(e.message)), errors.slice(n0).map((e) => e.code).join(","));
+  await r.stop(); await r.settle();
+}
+{
+  const H = new R.HealthMonitor({ sampleRate: 48000 });
+  const n = 2048, flat = () => new Float32Array(n), clip = () => Float32Array.from({ length: n }, (_, k) => (k % 2 ? 1 : -1));
+  for (let i = 0, t = 5400000; i < 400; i++, t += 42.67) H.push(clip(), flat(), t);
+  H.reset();
+  const ev = [];
+  for (let i = 0, t = 0; i < 300; i++, t += 42.67) ev.push(...H.push(clip(), flat(), t));
+  ok("N-M8: after reset() the monitor raises flat and clipping again at once", ev.some((e) => e.kind === "flat" && e.track === "room") && ev.some((e) => e.kind === "clipping" && e.track === "teacher"));
+}
+
+console.log("=== mutants C and D: the other microphone, and one loss reported twice ===");
+{
+  // C: both microphones have the same label (two identical receivers); the room one is lost for good.
+  clock = T0; const w = world(); const store = new R.MemoryStore(), src = new FakeSource();
+  src.devices[1] = { ...src.devices[1], label: src.devices[0].label };
+  const h = recorder(w, store, src);
+  const health = []; h.r.on("health", (e) => health.push(e));
+  await h.r.prepare(); await h.r.arm(E(w));
+  h.r.tick(); await h.r.settle(); await src.play(8, h.r);
+  src.devices = [src.devices[0]];
+  src.dead.room = true; src.onTrackEnded("room");
+  await src.play(20, h.r);
+  ok("C: the lost room microphone is never re-acquired as the teacher's own device (same label)", src.reopenedWith !== "lapel-1" && !health.some((x) => x.kind === "device_restored"), String(src.reopenedWith));
+  await h.r.stop(); await h.r.settle();
+}
+{
+  // D: an unplug fires `ended` and then a devicechange: one loss, one alert.
+  const { src, r, errors } = await started();
+  r.tick(); await r.settle(); await src.play(8, r);
+  src.dead.room = true;
+  src.devices = [src.devices[0]];
+  src.onTrackEnded("room");
+  src.onDeviceChange?.(); await r.settle();
+  src.onTrackEnded("room");                 // and the old stream's `ended` arrives once more
+  await src.play(3, r);
+  const cur = await r.current();
+  eq("D: one device_unplugged alert and one device_lost entry, not two", [errors.filter((e) => e.code === "device_unplugged").length, cur.discontinuities.filter((d) => d.kind === "device_lost" && d.track === "room").length], [1, 1]);
+  await r.stop(); await r.settle();
+}
+
+console.log("=== N-B1: audio that stops and comes back before the server answered is still not `recording` ===");
+{
+  const { w, src, r, states, row } = await started({}, { opts: { startTimeoutMs: 60000 } });
+  const held = []; const orig = w.backend.start;
+  w.backend.start = (...a) => { const p = orig(...a); return new Promise((res, rej) => held.push(() => p.then(res, rej))); };
+  r.tick(); await r.settle(); await src.play(6, r);
+  src.stalled = true; src.resumeHeals = false; src.rebuildHeals = true;
+  await src.play(8, r, 24); await src.play(4, r);
+  eq("N-B1: after the stall, still waiting for the server: `starting`, not `recording`", [r.state, states.includes("recording")], ["starting", false]);
+  held.shift()(); await r.settle(); await src.play(4, r);
+  eq("N-B1: and `recording` once it answers", r.state, "recording");
+  await r.stop(); await r.settle();
+  eq("completes", w.server.recordings.get(row.id).status, "complete");
+}
+
+console.log("=== mutant E (P12): the Stop landed, its answer was lost ===");
+{
+  const { w, src, r, errors, row } = await started();
+  r.tick(); await r.settle(); await src.play(25, r);
+  const stop = w.backend.stop.bind(w.backend), get = w.backend.getRecording.bind(w.backend);
+  let lose = 1, stops = 0;
+  w.backend.stop = async (...a) => { stops++; const row = await stop(...a); if (lose-- > 0) throw { message: "upstream request timeout", code: "503" }; return row; };
+  await r.stop(); await r.settle(); await ticks(r, 10);
+  eq("E: the engine reads the row back after a failed Stop: it sees the Stop landed and does not send it again", stops, 1);
+  eq("E: complete", w.server.recordings.get(row.id).status, "complete");
+  void errors; void get;
+}
+{
+  // P12 as the review ran it: the answer AND the next two read-backs are lost - still complete.
+  const { w, src, r, row, store } = await started();
+  r.tick(); await r.settle(); await src.play(25, r);
+  const stop = w.backend.stop.bind(w.backend), get = w.backend.getRecording.bind(w.backend);
+  let lose = 1, loseGet = 2;
+  w.backend.stop = async (...a) => { const row = await stop(...a); if (lose-- > 0) throw { message: "upstream request timeout", code: "503" }; return row; };
+  w.backend.getRecording = async (...a) => { if (lose < 1 && loseGet-- > 0) throw { message: "upstream request timeout", code: "503" }; return get(...a); };
+  await r.stop(); await r.settle(); await ticks(r, 40);
+  eq("P12: the Stop landed, its answer and two read-backs were lost: complete, local copy gone", [w.server.recordings.get(row.id).status, r.state, !!(await store.getRecording(row.id))], ["complete", "complete", false]);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

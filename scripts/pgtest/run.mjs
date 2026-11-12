@@ -231,6 +231,12 @@ const SUITES = [
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql"],
   },
   { name: "recorder retention", file: "recorder-retention.test.mjs", migrations: [] },
+  // The recorder engine (src/lib/recorder) against the contract-enforcing fake
+  // server: synthetic audio, no browser. Slow (minutes): it encodes real FLAC.
+  { name: "recorder engine", file: "../recorder/unit.test.mjs", migrations: [] },
+  { name: "recorder screens logic", file: "../recorder/ui.test.mjs", migrations: [] },
+  // The retention schedule (pg_cron / pg_net stand-ins: pglite has neither).
+  { name: "recorder cron", file: "recorder-cron.test.mjs", migrations: ["20261112101000_recorder_retention_cron.sql"] },
   // 20260717090000 first: the existing class-recordings bucket and its policy,
   // so the suite proves the recorder leaves them alone (C1 critic 2, N1).
   { name: "class recorder", file: "recorder.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql"] },

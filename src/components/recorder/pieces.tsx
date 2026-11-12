@@ -53,10 +53,11 @@ export function Notice({ tone, title, children, action, role }: { tone: Tone; ti
 }
 
 /** A level bar with its word ("Good", "Quiet"...). The bar is decoration; the word is the status. */
-export function LevelMeter({ label, level, device }: { label: string; level: Level | null; device?: string }) {
+export function LevelMeter({ label, level, device, clipping }: { label: string; level: Level | null; device?: string; clipping?: boolean }) {
   const db = level?.rmsDb ?? -120;
   const frac = meterFraction(db);
-  const w = levelWord(db, level?.clipped ?? 0);
+  // clipping: the engine says full scale was reached in the last 2 s (level.clipping) - shown even between peaks.
+  const w = clipping && level ? { word: "Too loud - clipping", tone: "error" as const } : levelWord(db, level?.clipped ?? 0);
   return (
     <div className="space-y-1.5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">

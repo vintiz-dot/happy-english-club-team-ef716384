@@ -37,10 +37,21 @@
  *   rec.on("recovered", ...)  rec.on("backup", ...)
  *
  *   // Other calls:
- *   rec.enableLocalBackup()          // from a click: also write every chunk to a folder
  *   rec.discardLocal(id, "DISCARD")  // typed confirmation, abandoned/complete only
  *   rec.swapMeasurement()            // the "roles look swapped" numbers, for the UI to ask
- *   rec.uploadProgress(id)
+ *   rec.uploadProgress(id)           // + stopPending / stopRefused / belowFloor / heldInMemory
+ *   rec.enableLocalBackup()          // REMOVED (C2 review M5): a no-op that answers false
+ *
+ *   // Added by the C2 revision (all additive):
+ *   //   state "stalled"   capturing but NO audio arrives: show "NOT RECORDING", never the red dot
+ *   //   state "error"     the server refused to start; the audio so far is kept on the laptop
+ *   //   health "capture_stalled" / "capture_resumed" (gapMs)
+ *   //   error codes capture_stalled, server_unavailable, mic_silent, start_delayed, start_failed,
+ *   //               stop_pending, not_durable, local_store_failed
+ *   //   rec.on("stuck", ({ recordings }) => ...)   own unsent audio older than 14 days (never auto-deleted)
+ *   //   rec.on("recovered", ({ recordingIds, othersPending }) => ...)  another account's unsent audio here
+ *   //   rec.othersPending()  rec.heldAudio()  rec.durable
+ *   //   await rec.signOut()  -> { unsentRecordings, unsentBytes }: frees confirmed audio, keeps the rest, disposes
  *
  *   Devices (the setup wizard): listInputs(), realInputs(), resolveProfile(),
  *   hintRole(), pairIsDistinct(), zeroLagCorrelation(), openBoth(), saveProfile(),
@@ -51,7 +62,14 @@
  *   - The supabase client is INJECTED and is the teacher's own session: no
  *     service role, RLS is the boundary. No signed URLs are made.
  *   - Register -> upload -> confirm per chunk; a chunk's local bytes are deleted
- *     only when the server confirmed it AND the recording reached `complete`.
+ *     only when the server confirmed it AND the recording reached `complete`
+ *     (then the whole local copy goes) - or on sign-out, or when the browser
+ *     runs out of space; audio the server does not have is never deleted
+ *     without the typed Discard.
+ *   - Each local recording belongs to the user who recorded it; another
+ *     user's engine never touches it.
+ *   - Lesson timing runs on the server's clock carried by the monotonic
+ *     clock, never on the laptop's wall clock.
  *   - Never falls back to the default microphone: exact deviceIds, or no arming.
  *   - Processing flags are requested OFF and READ BACK; what was not honoured is
  *     reported and stored with the track.
@@ -75,13 +93,16 @@ export { supabaseBackend, BUCKET, type RecorderBackend, type SupabaseLike } from
 export { Uploader, type UploadProgress } from "./uploader";
 export { Recorder, type RecorderOptions } from "./controller";
 export { BrowserCaptureSource, type CaptureSource } from "./captureSource";
-export type { RecorderEvents } from "./events";
+export { inlineEncoder, workerEncoder, type ChunkEncoder, type EncodedChunk, type WorkerLike } from "./encoderClient";
+export type { RecorderEvents, HeldAudio } from "./events";
 
 import { Recorder, type RecorderOptions } from "./controller";
 import { BrowserCaptureSource } from "./captureSource";
 import { supabaseBackend, type SupabaseLike, type RecorderBackend } from "./backend";
 import { openIdbStore, MemoryStore, type RecorderStore } from "./store";
 import { getInstallId, type DeviceProfile } from "./devices";
+import { workerEncoder, type ChunkEncoder } from "./encoderClient";
+import { RecorderError } from "./errors";
 
 export interface CreateRecorderOptions extends Partial<Omit<RecorderOptions, "backend" | "store" | "source" | "userId" | "installId" | "profile">> {
   /** The app's supabase client (signed in as the teacher), or a ready backend. */
@@ -93,15 +114,27 @@ export interface CreateRecorderOptions extends Partial<Omit<RecorderOptions, "ba
   sampleRate?: number;
 }
 
+/** The encoder Worker (M6). Vite bundles `./encodeWorker.ts` from this exact expression. */
+function defaultEncoder(onFallback: (why: string) => void): ChunkEncoder | undefined {
+  if (typeof Worker === "undefined") return undefined;
+  return workerEncoder(() => new Worker(new URL("./encodeWorker.ts", import.meta.url), { type: "module" }) as any, onFallback);
+}
+
 /** Build a recorder with the browser defaults. Call inside the teacher's click. */
 export async function createRecorder(o: CreateRecorderOptions): Promise<Recorder> {
   const backend = o.backend ?? (o.client ? supabaseBackend(o.client) : null);
   if (!backend) throw new Error("createRecorder needs a client or a backend");
   let store = o.store;
+  let durable = o.durable !== false;
   if (!store) {
+    // m1: without IndexedDB there is no crash safety. The engine still runs
+    // (a check screen needs it) but says so and refuses to arm.
     try { store = await openIdbStore(); }
-    catch { store = new MemoryStore(); }
+    catch { store = new MemoryStore(); durable = false; }
   }
   const source = await BrowserCaptureSource.create(o.sampleRate ?? 48000);
-  return new Recorder({ ...o, backend, store, source, userId: o.userId, installId: getInstallId(), profile: o.profile });
+  let rec: Recorder | null = null;
+  const encoder = o.encoder ?? defaultEncoder((why) => rec?.events.emit("error", new RecorderError("internal", `Audio is encoded on the page itself (${why}): it may slow the page`)));
+  rec = new Recorder({ ...o, backend, store, source, encoder, durable, userId: o.userId, installId: getInstallId(), profile: o.profile });
+  return rec;
 }

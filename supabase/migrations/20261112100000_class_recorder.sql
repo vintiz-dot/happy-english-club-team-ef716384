@@ -693,6 +693,13 @@ CREATE TABLE IF NOT EXISTS public.class_recordings (
   -- The server's clock at the start and stop transitions. ended_at is the
   -- real moment of Stop, never moved into the window.
   started_at            timestamptz,
+  -- C2 round 3 (N-B1): how much audio the page had already captured when the
+  -- server stamped started_at (a slow or offline Start). The chunks' timeline
+  -- starts at started_at - pre_start_ms (the first captured sample), so no
+  -- captured audio has to be thrown away. Stated once by the recorder, before
+  -- any chunk, never from before capture_opens_at. Audio from before
+  -- started_at is stored and listenable but NEVER evidence (the view).
+  pre_start_ms          bigint NOT NULL DEFAULT 0 CHECK (pre_start_ms >= 0),
   ended_at              timestamptz,
   stopped_by            uuid,
   stop_reason           text CHECK (stop_reason IS NULL OR stop_reason IN (
@@ -766,6 +773,11 @@ CREATE TABLE IF NOT EXISTS public.class_recording_chunks (
   -- What storage reported, read by the server at confirmation.
   stored_size   bigint,
   confirmed_at  timestamptz,
+  -- C2 review ruling (a): fewer bytes than the format's floor for its span
+  -- (digital silence, a dead microphone). Accepted and stored - the timeline
+  -- stays whole and nothing is lost - but never evidence: the view leaves it
+  -- out of every verified figure. Set by recorder_register_chunk only.
+  below_floor   boolean NOT NULL DEFAULT false,
   CONSTRAINT class_recording_chunks_span CHECK (t_end_ms > t_start_ms),
   -- Plain UNIQUE: this is the ON CONFLICT target of recorder_register_chunk.
   CONSTRAINT class_recording_chunks_once UNIQUE (recording_id, track, seq),
@@ -903,6 +915,7 @@ BEGIN
   NEW.evidence_min_fraction := v_set.evidence_min_fraction;
   NEW.delete_after := v_end + make_interval(days => v_set.retention_days);
   NEW.started_at := NULL; NEW.ended_at := NULL; NEW.stopped_by := NULL; NEW.stop_reason := NULL;
+  NEW.pre_start_ms := 0;
   NEW.stop_requested_at := NULL; NEW.stop_request_reason := NULL;
   NEW.manifest_path := NULL; NEW.manifest_sha256 := NULL;
   NEW.completed_at := NULL; NEW.abandoned_at := NULL; NEW.abandon_reason := NULL;
@@ -988,6 +1001,19 @@ BEGIN
      AND NOT EXISTS (SELECT 1 FROM public.recorder_device_profiles d
                      WHERE d.id = NEW.device_profile_id AND d.user_id = OLD.started_by) THEN
     RAISE EXCEPTION 'That device profile is not the recorder''s';
+  END IF;
+
+  -- C2 round 3 (N-B1): the pre-start audio is stated once, by the page,
+  -- while the recording is open, before any chunk is registered, and never
+  -- reaches back before the capture window opened (nor more than 30 min).
+  IF NEW.pre_start_ms IS DISTINCT FROM OLD.pre_start_ms THEN
+    IF OLD.pre_start_ms <> 0 OR OLD.started_at IS NULL OR OLD.status NOT IN ('recording', 'uploading')
+       OR NEW.pre_start_ms IS NULL OR NEW.pre_start_ms < 0
+       OR NEW.pre_start_ms > LEAST(1800000::bigint,
+            GREATEST(0, floor(extract(epoch FROM (OLD.started_at - OLD.capture_opens_at)) * 1000))::bigint)
+       OR EXISTS (SELECT 1 FROM public.class_recording_chunks c WHERE c.recording_id = OLD.id) THEN
+      RAISE EXCEPTION 'The audio before the server''s start can be stated once, before any chunk, and not from before the window opened';
+    END IF;
   END IF;
 
   -- Server-owned fields: whatever the client sent, keep ours.
@@ -1170,7 +1196,8 @@ BEGIN
         RAISE EXCEPTION 'Two chunks of one track overlap: the audio would be counted twice';
       END IF;
       -- No track holds more audio than the server saw being captured.
-      v_span_ms := floor(extract(epoch FROM (OLD.ended_at - OLD.started_at)) * 1000)::bigint;
+      -- (measured from the first captured sample: started_at - pre_start_ms)
+      v_span_ms := floor(extract(epoch FROM (OLD.ended_at - OLD.started_at)) * 1000)::bigint + OLD.pre_start_ms;
       IF EXISTS (
         SELECT 1 FROM public.class_recording_chunks c
         WHERE c.recording_id = OLD.id AND c.t_end_ms > v_span_ms + OLD.clock_tolerance_ms) THEN
@@ -1457,7 +1484,9 @@ CREATE TRIGGER class_recording_markers_before_insert
 --
 -- The span the page claims must be possible on the server's evidence:
 --   * no longer than one chunk (chunk_ms + tolerance);
---   * at least min_bytes_per_sec for the format (a 1-byte "90 minutes" is refused);
+--   * below min_bytes_per_sec for the format it is stored but flagged
+--     below_floor and never counted (ruling (a): a silent microphone keeps its
+--     timeline, it does not count as audio); under 40 bytes it is refused;
 --   * not ending later than the server's clock says capture could have got to
 --     (clock_timestamp() - started_at, + tolerance);
 --   * not after Stop (ended_at - started_at, + tolerance), once stopped;
@@ -1479,6 +1508,7 @@ DECLARE
   v_row public.class_recording_chunks%ROWTYPE;
   v_stop_ms bigint;
   v_elapsed_ms bigint;
+  v_origin timestamptz;  -- C2 round 3: the chunks' t = 0 (started_at - pre_start_ms)
 BEGIN
   SELECT * INTO v_rec FROM public.class_recordings WHERE id = p_recording FOR SHARE;
   IF NOT FOUND OR v_uid IS NULL OR v_rec.started_by <> v_uid THEN
@@ -1490,6 +1520,7 @@ BEGIN
   IF v_rec.started_at IS NULL THEN
     RAISE EXCEPTION 'The server did not see this recording start: no audio is accepted';
   END IF;
+  v_origin := v_rec.started_at - (v_rec.pre_start_ms * INTERVAL '1 millisecond');
   -- Still allowed to record this lesson (N5): a cover teacher taken off it,
   -- or an archived teacher, adds nothing more to it.
   IF NOT public.recorder__may_record(v_uid, v_rec.armed_session_id, v_rec.class_id) THEN
@@ -1509,7 +1540,7 @@ BEGIN
     RAISE EXCEPTION 'A chunk needs a number, a size, a SHA-256 and a time span';
   END IF;
   IF v_rec.stop_requested_at IS NOT NULL THEN
-    v_stop_ms := floor(extract(epoch FROM (v_rec.stop_requested_at - v_rec.started_at)) * 1000)::bigint + 60000;
+    v_stop_ms := floor(extract(epoch FROM (v_rec.stop_requested_at - v_origin)) * 1000)::bigint + 60000;
     IF p_t_start_ms > v_stop_ms THEN
       RAISE EXCEPTION 'Recording was asked to stop: audio captured after that is refused';
     END IF;
@@ -1517,19 +1548,21 @@ BEGIN
   IF p_t_end_ms - p_t_start_ms > v_rec.chunk_ms + v_rec.clock_tolerance_ms THEN
     RAISE EXCEPTION 'A chunk is at most % ms of audio: refused', v_rec.chunk_ms;
   END IF;
-  IF p_byte_size * 1000 < v_rec.min_bytes_per_sec::bigint * (p_t_end_ms - p_t_start_ms) THEN
-    RAISE EXCEPTION 'This chunk is too small to hold % ms of % audio (at least % bytes a second): refused',
-      p_t_end_ms - p_t_start_ms, v_rec.format, v_rec.min_bytes_per_sec;
+  -- Ruling (a): below the per-format floor is ACCEPTED and flagged below_floor
+  -- (never evidence, see the view). Only something too small to be an audio
+  -- file at all (a FLAC header alone is 42 bytes) is still refused.
+  IF p_byte_size < 40 THEN
+    RAISE EXCEPTION 'This chunk is too small to hold any audio (% bytes): refused', p_byte_size;
   END IF;
-  v_elapsed_ms := floor(extract(epoch FROM (clock_timestamp() - v_rec.started_at)) * 1000)::bigint;
+  v_elapsed_ms := floor(extract(epoch FROM (clock_timestamp() - v_origin)) * 1000)::bigint;
   IF p_t_end_ms > v_elapsed_ms + v_rec.clock_tolerance_ms THEN
     RAISE EXCEPTION 'This audio ends later than the server''s clock says capture has run (% ms): refused', v_elapsed_ms;
   END IF;
   IF v_rec.ended_at IS NOT NULL AND p_t_end_ms >
-     floor(extract(epoch FROM (v_rec.ended_at - v_rec.started_at)) * 1000)::bigint + v_rec.clock_tolerance_ms THEN
+     floor(extract(epoch FROM (v_rec.ended_at - v_origin)) * 1000)::bigint + v_rec.clock_tolerance_ms THEN
     RAISE EXCEPTION 'This audio is from after Stop: refused';
   END IF;
-  IF v_rec.started_at + (p_t_end_ms * INTERVAL '1 millisecond')
+  IF v_origin + (p_t_end_ms * INTERVAL '1 millisecond')
      > v_rec.capture_closes_at + (v_rec.clock_tolerance_ms * INTERVAL '1 millisecond') THEN
     RAISE EXCEPTION 'This audio is from after the lesson window: it is refused';
   END IF;
@@ -1540,9 +1573,10 @@ BEGIN
 
   -- registered_at is the server's clock at this call (N2), never the page's.
   INSERT INTO public.class_recording_chunks
-    (recording_id, track, seq, storage_path, byte_size, sha256, t_start_ms, t_end_ms, registered_by, registered_at)
+    (recording_id, track, seq, storage_path, byte_size, sha256, t_start_ms, t_end_ms, registered_by, registered_at, below_floor)
   VALUES (p_recording, p_track, p_seq, v_path, p_byte_size, lower(p_sha256), p_t_start_ms, p_t_end_ms, v_uid,
-          clock_timestamp())
+          clock_timestamp(),
+          p_byte_size * 1000 < v_rec.min_bytes_per_sec::bigint * (p_t_end_ms - p_t_start_ms))
   ON CONFLICT (recording_id, track, seq) DO NOTHING
   RETURNING id INTO v_new;
 
@@ -1559,7 +1593,8 @@ BEGIN
   RETURN jsonb_build_object(
     'chunk_id', v_row.id, 'storage_path', v_row.storage_path,
     'already_registered', v_new IS NULL, 'confirmed', v_row.confirmed_at IS NOT NULL,
-    'late', v_row.registered_at > v_rec.started_at
+    'below_floor', v_row.below_floor,
+    'late', v_row.registered_at > v_origin
                                   + ((v_row.t_end_ms + v_rec.late_after_ms) * INTERVAL '1 millisecond'));
 END;
 $$;
@@ -1813,7 +1848,10 @@ SELECT
   c.first_chunk_registered_at,
   c.last_chunk_registered_at,
   c.first_chunk_confirmed_at,
-  c.last_chunk_confirmed_at
+  c.last_chunk_confirmed_at,
+  -- Ruling (a): confirmed audio below the format's byte floor (silence),
+  -- longest track. Stored, listenable, never evidence.
+  COALESCE(m.below_floor_ms, 0)::bigint AS below_floor_ms
 FROM public.class_recordings r
 CROSS JOIN LATERAL (
   SELECT
@@ -1835,31 +1873,37 @@ LEFT JOIN LATERAL (
                    floor(t.live_bytes * 1000 / r.min_bytes_per_sec)::bigint)) AS verified_audio_ms,
          max(LEAST(t.lesson_ms, w.server_capture_ms,
                    floor(t.lesson_bytes * 1000 / r.min_bytes_per_sec)::bigint)) AS verified_lesson_ms,
-         count(*) AS tracks_with_audio
+         count(*) FILTER (WHERE t.claimed_ms > t.below_floor_ms) AS tracks_with_audio,
+         max(t.below_floor_ms) AS below_floor_ms
   FROM (
     SELECT k.track,
            sum(k.t_end_ms - k.t_start_ms)::bigint AS claimed_ms,
            sum(k.stored_size)::bigint AS stored_bytes,
            COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE o.live), 0)::bigint AS live_ms,
            COALESCE(sum(k.stored_size) FILTER (WHERE o.live), 0)::bigint AS live_bytes,
-           COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE NOT o.live), 0)::bigint AS late_ms,
+           COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE NOT o.live AND NOT k.below_floor), 0)::bigint AS late_ms,
+           COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE k.below_floor), 0)::bigint AS below_floor_ms,
            -- M2: only the part inside the scheduled lesson, its bytes pro rata.
            COALESCE(sum(o.in_lesson_ms) FILTER (WHERE o.live), 0)::bigint AS lesson_ms,
            COALESCE(sum(k.stored_size * o.in_lesson_ms / (k.t_end_ms - k.t_start_ms)) FILTER (WHERE o.live), 0)::bigint
              AS lesson_bytes
     FROM public.class_recording_chunks k
     CROSS JOIN LATERAL (
-      -- The lesson on the chunks' own timeline (ms after the server's Start),
-      -- rounded inwards.
-      SELECT ceil(extract(epoch FROM (r.scheduled_start - r.started_at)) * 1000)::bigint AS start_ms,
-             floor(extract(epoch FROM (r.scheduled_end - r.started_at)) * 1000)::bigint AS end_ms
+      -- The lesson on the chunks' own timeline (ms after their t = 0, the first
+      -- captured sample = started_at - pre_start_ms), rounded inwards, and never
+      -- before the server's Start (C2 round 3: pre-start audio is never evidence).
+      SELECT GREATEST(r.pre_start_ms, ceil(extract(epoch FROM (r.scheduled_start - r.started_at)) * 1000)::bigint + r.pre_start_ms) AS start_ms,
+             floor(extract(epoch FROM (r.scheduled_end - r.started_at)) * 1000)::bigint + r.pre_start_ms AS end_ms
     ) ls
     CROSS JOIN LATERAL (
       -- Live (N2, M1): the server registered the chunk AND confirmed its bytes
       -- in storage within late_after of the moment it claims to end.
-      SELECT COALESCE(k.registered_at <= r.started_at
+      -- Ruling (a): a below_floor chunk (silence) is never live.
+      SELECT COALESCE(NOT k.below_floor
+                      AND k.t_start_ms >= r.pre_start_ms   -- C2 round 3: nothing from before the server's Start
+                      AND k.registered_at <= r.started_at - (r.pre_start_ms * INTERVAL '1 millisecond')
                         + ((k.t_end_ms + r.late_after_ms) * INTERVAL '1 millisecond')
-                      AND k.confirmed_at <= r.started_at
+                      AND k.confirmed_at <= r.started_at - (r.pre_start_ms * INTERVAL '1 millisecond')
                         + ((k.t_end_ms + r.late_after_ms) * INTERVAL '1 millisecond'), false) AS live,
              COALESCE(GREATEST(0, LEAST(k.t_end_ms, ls.end_ms) - GREATEST(k.t_start_ms, ls.start_ms)), 0)::bigint
                AS in_lesson_ms
@@ -2019,7 +2063,7 @@ GRANT SELECT, INSERT                 ON public.class_recordings         TO authe
 GRANT UPDATE (status, session_id, class_id, armed_session_id, session_date, scheduled_start, scheduled_end,
               capture_opens_at, capture_closes_at, purpose, format, chunk_ms, max_duration_ms,
               min_bytes_per_sec, clock_tolerance_ms, late_after_ms, evidence_min_fraction, started_by,
-              device_profile_id, client_info, client_started_at, client_ended_at, stop_reason,
+              device_profile_id, client_info, client_started_at, client_ended_at, pre_start_ms, stop_reason,
               stop_requested_at, manifest_path, manifest_sha256, abandon_reason, delete_after)
                                      ON public.class_recordings         TO authenticated;
 GRANT SELECT, INSERT                 ON public.class_recording_tracks   TO authenticated;

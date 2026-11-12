@@ -19,6 +19,7 @@ export type RecorderState =
   | "armed"       // a server row exists, waiting for the capture window
   | "starting"    // capture running, waiting for the server to stamp started_at
   | "recording"
+  | "stalled"     // C2 revision (B1): capturing, but NO audio is arriving; the engine is trying to restart it
   | "stopping"
   | "uploading"   // capture over, chunks still going up
   | "finalizing"  // manifest + complete
@@ -61,8 +62,13 @@ export interface ChunkMeta {
   confirmedAt?: number;
   /** Main-thread milliseconds the encoder took (measurement). */
   encodeMs?: number;
-  /** When the server registered it (laptop clock). */
+  /** When the server registered it (server time, on the engine's monotonic clock). */
   registeredAt?: number;
+  /**
+   * Ruling (a): the server stored it but flagged it below the format's byte
+   * floor (digital silence / a dead microphone). Never evidence.
+   */
+  belowFloor?: boolean;
   /**
    * Registered later than its capture + tolerance (revision 2): it is still
    * uploaded and stored, but the server does not count it as evidence. The
@@ -81,8 +87,16 @@ export interface Anchor {
 
 export interface Discontinuity {
   t_ms: number;
-  kind: "context_stall" | "clock_change" | "device_lost" | "device_restored";
+  /**
+   * context_stall: audio stopped arriving for wall_gap_ms (the timeline is NOT padded).
+   * clock_change: the laptop's wall clock jumped by wall_gap_ms (timing does not use it).
+   * local_store_failed: the browser would not store this track's chunk at t_ms; the track ends there.
+   * pre_start_trimmed: the server stamped its start wall_gap_ms after the page asked; that audio is not part of the recording.
+   */
+  kind: "context_stall" | "clock_change" | "device_lost" | "device_restored" | "local_store_failed" | "pre_start_trimmed" | "pre_start";
   wall_gap_ms: number;
+  /** context_stall: how much of the gap was filled with silence (C2 round 3, N-M2). pre_start: wall_gap_ms is the audio before the server's Start. */
+  padded_ms?: number;
   track?: TrackRole;
 }
 
@@ -122,6 +136,12 @@ export type MarkerKind =
 /** The local copy of one recording (IndexedDB `recordings`). */
 export interface LocalRecording {
   id: string;
+  /**
+   * C2 revision (M1): the signed-in user who recorded it. Another user's
+   * engine never uploads, stops, lists or deletes it. (A row without one is
+   * treated as someone else's.)
+   */
+  ownerUserId?: string;
   classId: string;
   sessionId: string;
   format: RecorderFormat;
@@ -142,13 +162,21 @@ export interface LocalRecording {
   /** Revision 2 (late_after_ms, snapshot at arming). */
   lateAfterMs?: number;
   startedAtServer?: string;
+  /** C2 round 3 (N-B1): the server's time at the first captured sample (t = 0 of the chunks). */
+  firstSampleServer?: number;
+  /** Audio captured before the server stamped its start (ms), and whether the server has been told. */
+  preStartMs?: number;
+  preStartAcked?: boolean;
   clientStartedAt?: string;
   clientEndedAt?: string;
   stopReason?: StopReason;
   /** The stop transition still has to reach the server. */
   stopPending?: boolean;
-  /** The server refused the stop (revision 2: a Stop after the window is refused, not clamped). */
+  /** The server refused the stop for good (window closed, not yours...). Cleared by recover(). */
   stopRefused?: string;
+  /** C2 revision (B4): Stop attempts that failed transiently, and when to try again (server time). */
+  stopAttempts?: number;
+  stopNextAt?: number;
   serverOffsetAtStart?: number | null;
   serverOffsetAtEnd?: number | null;
   tracks: TrackInfo[];
@@ -193,6 +221,10 @@ export interface ServerRecording {
   manifest_path: string | null;
   manifest_sha256: string | null;
   abandon_reason?: string | null;
+  /** C2 round 3: the audio before the server's start (ms) on the chunks' timeline. */
+  pre_start_ms?: number;
+  /** Who recorded it (adopting an old engine's rows, N-M4). */
+  started_by?: string;
 }
 
 /** A lesson from `public.sessions` (Hanoi wall-clock). */

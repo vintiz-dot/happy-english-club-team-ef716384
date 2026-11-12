@@ -39,7 +39,11 @@ export interface TrackRow {
 }
 
 /** `late`: revision 2 - the server registered it outside the capture-time tolerance (not evidence). */
-export interface RegisterResult { chunk_id: string; storage_path: string; already_registered: boolean; confirmed: boolean; late?: boolean }
+export interface RegisterResult {
+  chunk_id: string; storage_path: string; already_registered: boolean; confirmed: boolean; late?: boolean;
+  /** Ruling (a): stored, but below the format's byte floor (silence): never evidence. */
+  below_floor?: boolean;
+}
 
 export interface RecorderBackend {
   serverTime(): Promise<string>;
@@ -60,6 +64,15 @@ export interface RecorderBackend {
   insertMarker(row: { recording_id: string; client_marker_id: string; kind: string; t_ms: number; label: string | null; student_id: string | null }): Promise<"stored" | "already">;
   upsertDeviceProfile(row: Record<string, unknown>): Promise<{ id: string }>;
   sessionStatus(sessionId: string): Promise<string | null>;
+  /**
+   * C2 revision (B4): ask the injected client to refresh its session (an
+   * expired JWT), so the call can be retried as the same teacher. Optional.
+   */
+  refreshAuth?(): Promise<boolean>;
+  /** C2 round 3 (N-B1): the audio captured before the server stamped its start, stated once before any chunk. Optional. */
+  setPreStart?(id: string, preStartMs: number): Promise<void>;
+  /** C2 revision (m2): a reopened microphone's read-back settings onto its track row. Optional. */
+  updateTrack?(id: string, track: TrackRole, patch: { applied_settings: Record<string, unknown> }): Promise<void>;
 }
 
 // ---------------------------------------------------------------- supabase-js
@@ -69,9 +82,11 @@ export interface SupabaseLike {
   rpc(fn: string, args?: Record<string, unknown>): PromiseLike<{ data: any; error: any }>;
   from(table: string): any;
   storage: { from(bucket: string): { upload(path: string, body: Blob | ArrayBuffer | Uint8Array, opts?: Record<string, unknown>): PromiseLike<{ data: any; error: any }>; download(path: string): PromiseLike<{ data: Blob | null; error: any }> } };
+  /** supabase-js has it; used only to refresh an expired session (C2 revision B4). */
+  auth?: { refreshSession?(): PromiseLike<{ data?: any; error: any }> } | any;
 }
 
-const REC_COLUMNS = "id,class_id,session_id,armed_session_id,session_date,scheduled_start,scheduled_end,capture_opens_at,capture_closes_at,status,format,chunk_ms,max_duration_ms,min_bytes_per_sec,clock_tolerance_ms,purpose,started_at,ended_at,stop_reason,stop_requested_at,stop_request_reason,late_after_ms,manifest_path,manifest_sha256,abandon_reason";
+const REC_COLUMNS = "id,class_id,session_id,armed_session_id,session_date,scheduled_start,scheduled_end,capture_opens_at,capture_closes_at,status,format,chunk_ms,max_duration_ms,min_bytes_per_sec,clock_tolerance_ms,purpose,started_at,ended_at,stop_reason,stop_requested_at,stop_request_reason,late_after_ms,manifest_path,manifest_sha256,abandon_reason,pre_start_ms,started_by";
 
 async function unwrap<T>(p: PromiseLike<{ data: T; error: any }>, what: string): Promise<T> {
   let r: { data: T; error: any };
@@ -152,6 +167,17 @@ export function supabaseBackend(client: SupabaseLike): RecorderBackend {
     async sessionStatus(sessionId) {
       const r = await unwrap(client.from("sessions").select("status").eq("id", sessionId).maybeSingle(), "session");
       return (r as any)?.status ?? null;
+    },
+    async refreshAuth() {
+      const auth = (client as any).auth;
+      if (!auth || typeof auth.refreshSession !== "function") return false;
+      try { const r = await auth.refreshSession(); return !r?.error; } catch { return false; }
+    },
+    async setPreStart(id, preStartMs) {
+      await unwrap(rec().update({ pre_start_ms: preStartMs }).eq("id", id).select("id").single(), "pre-start");
+    },
+    async updateTrack(id, track, patch) {
+      await unwrap(client.from("class_recording_tracks").update(patch).eq("recording_id", id).eq("track", track), "track settings");
     },
   };
 }

@@ -19,6 +19,16 @@ export type RecorderErrorCode =
   | "storage_low"            // free browser storage under the threshold
   | "another_tab"            // the recorder is already running in another tab
   | "clock_unknown"          // the server's time could not be read: do not arm
+  // ---- added by the C2 revision (additive)
+  | "capture_stalled"        // capturing, but no audio is arriving (context suspended / worklet dead): NOT recording
+  | "server_unavailable"     // a 5xx, gateway timeout or no answer: retried with backoff
+  | "mic_silent"             // a microphone delivers digital silence / nothing while the other is live
+  | "start_delayed"          // the server stamped the start late: the audio before its stamp is not part of the recording
+  | "start_failed"           // the server refused to start the recording; the audio captured so far is kept locally
+  | "stop_pending"           // Stop has not reached the server yet; it is retried
+  | "not_durable"            // this browser cannot keep audio across a crash (no IndexedDB): do not record here
+  | "local_store_failed"     // the browser would not store a chunk; it is held in memory and retried, or the track ends there
+  | "clipping"               // a microphone reaches full scale (0 dBFS): turn its gain down (a warning; nothing stops)
   | "internal";
 
 export type ServerRefusal =
@@ -114,13 +124,27 @@ export function looksOffline(err: unknown): boolean {
     || (err as any)?.name === "TypeError" && /fetch/i.test(m);
 }
 
+/**
+ * A gateway / server failure rather than an answer: 5xx, "upstream request
+ * timeout", a timed-out request. Never a refusal the database stated, so it
+ * is always worth retrying (C2 review B4: one 503 at Stop must not be final).
+ */
+export function looksUnavailable(err: unknown): boolean {
+  const e = err as any;
+  const status = String(e?.status ?? e?.statusCode ?? e?.code ?? "");
+  if (/^5\d\d$/.test(status)) return true;
+  const m = errMessage(err);
+  return /upstream request timeout|gateway time-?out|bad gateway|service unavailable|temporarily unavailable|timed out|request timeout|ECONNRESET|socket hang up|did not answer in time/i.test(m);
+}
+
 /** Normalise anything a backend call threw or returned as `error` into a RecorderError. */
 export function toRecorderError(err: unknown, fallback = "The server did not answer"): RecorderError {
   if (err instanceof RecorderError) return err;
   if (looksOffline(err)) return new RecorderError("offline", "No connection: it will be sent when the network is back", { retryable: true, detail: errMessage(err) });
   const msg = errMessage(err) || fallback;
   if ((err as any)?.name === "QuotaExceededError") return new RecorderError("quota", "The browser refused to store more audio", { detail: msg });
-  if (/jwt|not authenticated|sign in first/i.test(msg)) return new RecorderError("not_signed_in", "Sign in again to keep uploading", { detail: msg });
+  if (/jwt|not authenticated|sign in first/i.test(msg)) return new RecorderError("not_signed_in", "Sign in again to keep uploading", { detail: msg, retryable: true });
+  if (looksUnavailable(err)) return new RecorderError("server_unavailable", "The server did not answer properly: it is tried again", { detail: msg, retryable: true });
   const refusal = classifyRefusal(msg);
   return new RecorderError("server_refused", msg, { refusal, retryable: isTransientRefusal(refusal), detail: (err as any)?.code });
 }

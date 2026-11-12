@@ -38,6 +38,18 @@ export interface CaptureSource {
   startOpus?(chunkMs: number, onBlob: (b: OpusBlob) => void): void;
   stopOpus?(role?: TrackRole): Promise<void>;
   close(): Promise<void>;
+  /**
+   * C2 revision (B1): re-make the AudioContext with the microphones that are
+   * open, keeping the frame count going (a dead or suspended context). True
+   * when the new context runs. Optional.
+   */
+  rebuild?(): Promise<boolean>;
+  /** C2 revision (B1): the context's state changed (suspended / interrupted / closed / running). */
+  onStateChange?: ((state: string) => void) | null;
+  /** Field finding (room mic ended at 54:51): the browser's device list changed (plugged / unplugged). */
+  onDeviceChange?: (() => void) | null;
+  /** Is this role's microphone track still live? (catches an `ended` the page never heard). Optional. */
+  trackLive?(role: TrackRole): boolean;
 }
 
 /** The real thing: one AudioContext, one worklet, two getUserMedia streams. */
@@ -47,10 +59,30 @@ export class BrowserCaptureSource implements CaptureSource {
   onBatch: ((b: PcmBatch) => void) | null = null;
   onTick: ((frame: number, contextTime: number) => void) | null = null;
   onTrackEnded: ((role: TrackRole) => void) | null = null;
+  onStateChange: ((state: string) => void) | null = null;
+  /**
+   * Frames counted by contexts this source has already replaced: a new
+   * context's worklet counts from 0, the engine's timeline must not.
+   */
+  private frameBase = 0;
+
+  onDeviceChange: (() => void) | null = null;
 
   private constructor(private g: AudioGraph) {
-    g.onBatch = (b) => this.onBatch?.(b);
-    g.onTick = (f, t) => this.onTick?.(f, t);
+    this.wire(g);
+    try { navigator.mediaDevices?.addEventListener?.("devicechange", () => this.onDeviceChange?.()); } catch { /* no mediaDevices */ }
+  }
+
+  trackLive(role: TrackRole): boolean {
+    const o = this.opened[role];
+    return !!o && o.track.readyState === "live";
+  }
+
+  private wire(g: AudioGraph) {
+    const base = this.frameBase;
+    g.onBatch = (b) => this.onBatch?.(base ? { ...b, frame: b.frame + base } : b);
+    g.onTick = (f, t) => this.onTick?.(f + base, t);
+    g.onStateChange = (s) => { if (this.g === g) this.onStateChange?.(s); };
   }
 
   static async create(sampleRate = 48000): Promise<BrowserCaptureSource> {
@@ -59,7 +91,7 @@ export class BrowserCaptureSource implements CaptureSource {
 
   get sampleRate() { return this.g.sampleRate; }
   get contextState() { return this.g.state; }
-  get lastFrame() { return this.g.lastFrame; }
+  get lastFrame() { return this.g.lastFrame + this.frameBase; }
   get graph() { return this.g; }
   resume() { return this.g.resume(); }
   listDevices() { return listInputs(); }
@@ -85,9 +117,9 @@ export class BrowserCaptureSource implements CaptureSource {
       // one created while a microphone capture is live starts running. So
       // with the mics open, make a fresh context rather than give up.
       const old = this.g;
+      this.frameBase += old.lastFrame;
       const g = await AudioGraph.create(old.sampleRate);
-      g.onBatch = (b) => this.onBatch?.(b);
-      g.onTick = (f, t) => this.onTick?.(f, t);
+      this.wire(g);
       this.g = g;
       void old.close();
       this.rebuiltContext = true;
@@ -96,6 +128,30 @@ export class BrowserCaptureSource implements CaptureSource {
   }
   /** True when the context had to be re-made after the mics opened (no gesture). */
   rebuiltContext = false;
+  /** How many times rebuild() replaced a context mid-recording. */
+  rebuilds = 0;
+
+  /**
+   * B1: a context that stopped delivering audio is replaced by a new one,
+   * fed by the same open microphones; the frame count carries on from where
+   * the old one stopped (the missing wall time is recorded by the engine).
+   */
+  async rebuild(): Promise<boolean> {
+    const old = this.g;
+    const g = await AudioGraph.create(old.sampleRate);
+    this.frameBase += old.lastFrame;
+    this.wire(g);
+    this.g = g;
+    for (const r of ["teacher", "room"] as TrackRole[]) {
+      const o = this.opened[r];
+      if (o) { try { old.disconnect(r); } catch { /* */ } g.connect(r, o.stream); }
+    }
+    if (old.forwarding) g.forward(true);
+    void old.close();
+    this.rebuilds += 1;
+    if (g.state !== "running") await g.resume();
+    return g.state === "running";
+  }
 
   async reopen(role: TrackRole, deviceId: string) {
     const o = await openInput(role, deviceId);
