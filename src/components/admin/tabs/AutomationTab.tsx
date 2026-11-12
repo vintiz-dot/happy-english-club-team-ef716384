@@ -2,6 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SessionGenerator } from "@/components/admin/SessionGenerator";
 import { ScheduleStatusCard } from "@/components/admin/ScheduleStatusCard";
 import { BulkSessionDelete } from "@/components/admin/BulkSessionDelete";
+import CancelOverridesReview from "@/components/admin/session-guard/CancelOverridesReview";
 import { BulkEnrollmentDateSetter } from "@/components/admin/BulkEnrollmentDateSetter";
 import { BulkRebuildSessions } from "@/components/admin/BulkRebuildSessions";
 import { TuitionBulkDownload } from "@/components/admin/TuitionBulkDownload";
@@ -114,10 +115,17 @@ const AutomationTab = () => {
           </AdvancedSection>
 
           <AdvancedSection
-            title="Bulk Session Delete"
-            description="Remove sessions in bulk — destructive, double-check filters."
+            title="Bulk Session Cancel"
+            description="Check a date range, then cancel — lessons with evidence need your attention one by one."
           >
             <BulkSessionDelete />
+          </AdvancedSection>
+
+          <AdvancedSection
+            title="Cancellation overrides"
+            description="Who cancelled, deleted or moved a lesson that had evidence, why, and what still needs review."
+          >
+            <CancelOverridesReview />
           </AdvancedSection>
 
           <AdvancedSection

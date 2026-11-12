@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { dayjs, nowBangkok } from "@/lib/date";
@@ -19,6 +19,8 @@ import SessionDrawer from "@/components/admin/class/SessionDrawer";
 import AttendanceDrawer from "@/components/admin/class/AttendanceDrawer";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import { toast } from "sonner";
+import { GuardDialog } from "@/components/admin/session-guard/GuardDialog";
+import type { MoveChange } from "@/components/admin/session-guard/useGuardedChange";
 
 interface GlobalCalendarProps {
   role: "admin" | "teacher" | "student";
@@ -60,12 +62,6 @@ export interface CalendarSessionRow {
   attendance?: Array<{ student_id: string; status: string }> | null;
 }
 
-interface SessionSnapshot {
-  date: string;
-  start_time: string;
-  end_time: string;
-}
-
 const GlobalCalendar = ({
   role,
   classId,
@@ -74,7 +70,6 @@ const GlobalCalendar = ({
   onEditSession,
   onSelectSession,
 }: GlobalCalendarProps) => {
-  const queryClient = useQueryClient();
   const [selectedSession, setSelectedSession] = useState<any>(null);
   const { studentId } = useStudentProfile();
   const { user } = useAuth();
@@ -184,65 +179,40 @@ const GlobalCalendar = ({
     },
   });
 
-  /* ------------------------------------------------- reschedule with undo */
+  /* ------------------------------------------------- reschedule, checked */
 
-  const applyMove = useCallback(
-    async (sessionId: string, next: Partial<SessionSnapshot>) => {
-      const { error } = await supabase.from("sessions").update(next).eq("id", sessionId);
-      if (error) throw error;
-      await queryClient.invalidateQueries({ queryKey: ["calendar-sessions"] });
-    },
-    [queryClient],
-  );
+  // A drag never writes by itself. It opens the "Check before moving" dialog,
+  // which asks the server what the evidence says and needs a reason. The undo
+  // offered afterwards is another move and goes through the same check.
+  const [moveDialog, setMoveDialog] = useState<{
+    session: any;
+    change: MoveChange;
+    previous: MoveChange | null;
+  } | null>(null);
 
-  const rescheduleMutation = useMutation({
-    mutationFn: async ({
-      request,
-      previous,
-    }: {
-      request: RescheduleRequest;
-      previous: SessionSnapshot;
-    }) => {
-      const next: Partial<SessionSnapshot> = { date: request.date };
-      if (request.startTime) next.start_time = request.startTime;
-      if (request.endTime) next.end_time = request.endTime;
-      await applyMove(request.eventId, next);
-      return { request, previous };
-    },
-    onSuccess: ({ request, previous }) => {
-      // Replaces a native window.confirm() that used to interrupt the drag
-      // before it happened. Moving is cheap and reversible, so the move lands
-      // immediately and the safety net is an undo rather than a prompt.
-      const when = dayjs(request.date).format("ddd D MMM");
-      toast.success(`Moved to ${when}${request.startTime ? ` at ${request.startTime.slice(0, 5)}` : ""}`, {
-        action: {
-          label: "Undo",
-          onClick: () => {
-            applyMove(request.eventId, previous)
-              .then(() => toast.success("Move undone"))
-              .catch((e: Error) => toast.error(`Could not undo: ${e.message}`));
-          },
-        },
-      });
-    },
-    onError: (error: Error) => toast.error(`Could not reschedule: ${error.message}`),
-  });
+  const hm = (t?: string | null) => (t ? t.slice(0, 5) : "");
 
   const handleReschedule = useCallback(
     (request: RescheduleRequest) => {
       if (role !== "admin") return;
       const session = rawSessions.find((s: any) => s.id === request.eventId);
       if (!session) return;
-      rescheduleMutation.mutate({
-        request,
+      const change: MoveChange = {
+        date: request.date,
+        start_time: hm(request.startTime) || hm(session.start_time),
+        end_time: hm(request.endTime) || hm(session.end_time),
+      };
+      setMoveDialog({
+        session,
+        change,
         previous: {
           date: session.date,
-          start_time: session.start_time,
-          end_time: session.end_time,
+          start_time: hm(session.start_time),
+          end_time: hm(session.end_time),
         },
       });
     },
-    [role, rawSessions, rescheduleMutation],
+    [role, rawSessions],
   );
 
   /* ---------------------------------------------------------------- view */
@@ -315,6 +285,37 @@ const GlobalCalendar = ({
         onRangeChange={handleRangeChange}
         isAdmin={role === "admin"}
       />
+
+      {moveDialog && (
+        <GuardDialog
+          open
+          session={{
+            id: moveDialog.session.id,
+            date: moveDialog.session.date,
+            start_time: moveDialog.session.start_time,
+            end_time: moveDialog.session.end_time,
+            class_name: moveDialog.session.classes?.name,
+            teacher_name: moveDialog.session.teachers?.full_name,
+          }}
+          op="move"
+          change={moveDialog.change}
+          onClose={() => setMoveDialog(null)}
+          onDone={() => {
+            const { session, change, previous } = moveDialog;
+            const when = dayjs(change.date).format("ddd D MMM");
+            toast.success(`Moved to ${when} at ${change.start_time}`, {
+              action: previous
+                ? {
+                    label: "Undo",
+                    // Undoing is another checked move, not a silent write.
+                    onClick: () => setMoveDialog({ session, change: previous, previous: null }),
+                  }
+                : undefined,
+            });
+            void refetch();
+          }}
+        />
+      )}
 
       {selectedSession && !onSelectSession && role !== "student" && (
         <AttendanceDrawer
