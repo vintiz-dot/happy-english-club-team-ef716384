@@ -81,12 +81,12 @@ export default function TeacherPayrollCalendar({
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Calendar View</CardTitle>
+          <CardTitle className="text-hec-h2">Calendar View</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
+              <div key={day} className="py-2 text-center text-hec-caption font-medium text-hec-ink-soft">
                 {day}
               </div>
             ))}
@@ -105,14 +105,14 @@ export default function TeacherPayrollCalendar({
                   key={index}
                   onClick={() => dateSessions.length > 0 && handleDateClick(day)}
                   className={`
-                    min-h-[80px] p-2 border rounded-lg text-left transition-all
+                    min-h-[80px] min-w-0 p-1 sm:p-2 border border-hec-line rounded-hec-md text-left text-hec-ink transition-shadow duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring
                     ${!isSameMonth(day, month) ? "opacity-30" : ""}
-                    ${isToday(day) ? "border-primary border-2" : ""}
-                    ${dateSessions.length > 0 ? "hover:shadow-md cursor-pointer bg-muted/50" : ""}
+                    ${isToday(day) ? "border-hec-brass" : ""}
+                    ${dateSessions.length > 0 ? "hover:shadow-hec-2 cursor-pointer bg-hec-sunken" : ""}
                   `}
                   disabled={dateSessions.length === 0}
                 >
-                  <div className={`text-sm font-medium mb-1 ${isToday(day) ? "text-primary" : ""}`}>
+                  <div className={`mb-1 text-hec-small font-medium tabular-nums ${isToday(day) ? "text-hec-brass" : ""}`}>
                     {format(day, "d")}
                   </div>
                   
@@ -123,15 +123,15 @@ export default function TeacherPayrollCalendar({
                         return (
                           <div
                             key={session.id}
-                            className="text-xs p-1 rounded bg-background border"
+                            className="rounded-hec-sm border border-hec-line bg-hec-surface p-1 text-hec-caption"
                           >
-                            <div className="font-medium truncate">{session.classes.name}</div>
-                            <div className="text-muted-foreground">
+                            <div className="whitespace-normal break-words hyphens-none font-medium">{session.classes.name}</div>
+                            <div className="tabular-nums text-hec-ink-soft">
                               {session.start_time.slice(0, 5)}
                             </div>
                             <Badge
                               variant={displayStatus === "Held" ? "default" : "secondary"}
-                              className="text-[10px] px-1 py-0 mt-1"
+                              className="mt-1 px-1 py-0"
                             >
                               {displayStatus}
                             </Badge>
@@ -139,12 +139,12 @@ export default function TeacherPayrollCalendar({
                         );
                       })}
                       {dateSessions.length > 2 && (
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-hec-caption text-hec-ink-soft">
                           +{dateSessions.length - 2} more
                         </div>
                       )}
                       {totalEarned > 0 && (
-                        <div className="text-xs font-semibold text-success mt-1">
+                        <div className="mt-1 text-hec-caption font-semibold tabular-nums text-hec-ink">
                           {totalEarned.toLocaleString()} ₫
                         </div>
                       )}
