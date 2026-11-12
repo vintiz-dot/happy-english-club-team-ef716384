@@ -1940,6 +1940,7 @@ All colors MUST be HSL.
   --hec-radius-md: 0.875rem;
   --hec-radius-lg: 1.25rem;
   --hec-target: 3.5rem;         /* 56 px */
+  --radius: var(--hec-radius-lg); /* re-resolve the bridge for primitives inside */
 }
 
 /* ---- Reduced motion: inside the scope nothing runs longer than 0.01 s ---- */
