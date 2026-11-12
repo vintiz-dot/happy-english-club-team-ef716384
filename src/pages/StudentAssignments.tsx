@@ -13,12 +13,11 @@ import { useLoginChallenge } from "@/hooks/useLoginChallenge";
 import { GradeCelebration } from "@/components/student/GradeCelebration";
 import { getHomeworkStatus } from "@/lib/homeworkStatus";
 import { dayjs } from "@/lib/date";
-import { PageHero } from "@/components/quest/PageHero";
 import { PlaceholderCard } from "@/components/ui/loading";
-import { EmptyState } from "@/components/quest/EmptyState";
 import { PagedListControls, usePagedList } from "@/components/shared/PagedListControls";
 import { HomeworkCard } from "@/components/student/homework/HomeworkCard";
 import { cn } from "@/lib/utils";
+import { BADGE_NEUTRAL, BUTTON_SECONDARY, CARD, CARD_TITLE, LABEL } from "@/components/student/nova/ivory";
 
 /** Late homework older than this folds away, so a long-ago miss doesn't bury this week's work. */
 const OLD_MISS_DAYS = 30;
@@ -28,25 +27,24 @@ const dueTime = (a: any) => (a.due_date ? dayjs(a.due_date).valueOf() : Number.P
 function Section({ emoji, title, count, children }: { emoji: string; title: string; count?: number; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="flex items-center gap-2 px-1 text-lg font-black tracking-tight">
+      <h2 className="flex items-center gap-2 px-1 font-display text-hec-h2 font-medium text-hec-ink">
         <span aria-hidden>{emoji}</span>
         {title}
-        {count !== undefined && (
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-extrabold text-muted-foreground">{count}</span>
-        )}
+        {count !== undefined && <span className={BADGE_NEUTRAL}>{count}</span>}
       </h2>
       {children}
     </section>
   );
 }
 
-function PagedCards({ paged, onOpen }: { paged: ReturnType<typeof usePagedList<any>>; onOpen: (a: any) => void }) {
+/** `lead`: this list holds the first homework on the screen, which gets the one brass button (DS s.15). */
+function PagedCards({ paged, onOpen, lead = false }: { paged: ReturnType<typeof usePagedList<any>>; onOpen: (a: any) => void; lead?: boolean }) {
   return (
     <>
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
         {paged.slice.map((a: any, i: number) => (
           <div key={a.id} className="long-list-item min-w-0">
-            <HomeworkCard homework={a} index={i} onOpen={() => onOpen(a)} />
+            <HomeworkCard homework={a} index={lead && paged.page === 1 ? i : i + 1} ivory onOpen={() => onOpen(a)} />
           </div>
         ))}
       </div>
@@ -63,9 +61,9 @@ function PagedCards({ paged, onOpen }: { paged: ReturnType<typeof usePagedList<a
 
 function Stat({ value, label }: { value: number; label: string }) {
   return (
-    <div className="min-w-0 rounded-2xl bg-white/15 px-3 py-2 text-center ring-1 ring-white/20 backdrop-blur-sm">
-      <p className="text-2xl font-black leading-none tabular-nums">{value}</p>
-      <p className="mt-1 truncate text-[0.7rem] font-bold uppercase tracking-wide text-white/80">{label}</p>
+    <div className="min-w-0 rounded-hec-md border border-hec-line bg-hec-paper px-3 py-2 text-center">
+      <p className="font-sans text-hec-h2 font-semibold leading-none tabular-nums text-hec-ink">{value}</p>
+      <p className={cn(LABEL, "mt-1 whitespace-normal break-words")}>{label}</p>
     </div>
   );
 }
@@ -141,24 +139,22 @@ export default function StudentAssignments() {
   if (!studentId) {
     return (
       <Layout title="Homework">
-        <Card><CardContent className="py-12 text-center"><p className="text-muted-foreground">Please select a student profile</p></CardContent></Card>
+        <Card><CardContent className="py-12 text-center"><p className="text-hec-ink-soft">Please select a student profile</p></CardContent></Card>
       </Layout>
     );
   }
 
+  const heroTitle = todoCount === 0 && !isLoading ? "All done! 🎉" : "Let's do this! 💪";
+  const heroSubtitle = isLoading
+    ? "Finding your homework…"
+    : todoCount === 0
+      ? "You have nothing to do right now. Great job!"
+      : `You have ${todoCount} ${todoCount === 1 ? "thing" : "things"} to do.`;
   const hero = (
-    <PageHero
-      eyebrow="My homework"
-      title={todoCount === 0 && !isLoading ? "All done! 🎉" : "Let's do this! 💪"}
-      subtitle={
-        isLoading
-          ? "Finding your homework…"
-          : todoCount === 0
-            ? "You have nothing to do right now. Great job!"
-            : `You have ${todoCount} ${todoCount === 1 ? "thing" : "things"} to do.`
-      }
-      variant="aurora"
-    >
+    <section className={cn(CARD, "min-w-0")}>
+      <p className={LABEL}>My homework</p>
+      <h1 className="mt-2 font-display text-hec-h1 font-medium text-hec-ink [[data-hec-scale=young]_&]:font-bold">{heroTitle}</h1>
+      <p className="mt-1 max-w-2xl text-hec-body text-hec-ink-soft">{heroSubtitle}</p>
       {!isLoading && assignments.length > 0 && (
         <div className="mt-4 grid grid-cols-3 gap-2">
           <Stat value={todoCount} label="To do" />
@@ -166,7 +162,7 @@ export default function StudentAssignments() {
           <Stat value={groups.done.length} label="Done" />
         </div>
       )}
-    </PageHero>
+    </section>
   );
 
   if (isLoading) {
@@ -189,14 +185,14 @@ export default function StudentAssignments() {
         {hero}
 
         {assignments.length === 0 ? (
-          <EmptyState
-            icon={FileText}
-            title="No homework yet"
-            description="Your teachers haven't set any homework. Check back soon!"
-          />
+          <div className={cn(CARD, "flex flex-col items-center text-center")}>
+            <FileText className="h-6 w-6 text-hec-ink-soft" aria-hidden />
+            <p className={cn(CARD_TITLE, "mt-3")}>No homework yet</p>
+            <p className="mt-1 max-w-sm text-hec-body text-hec-ink-soft">Your teachers haven't set any homework. Check back soon!</p>
+          </div>
         ) : (
           <Tabs defaultValue={todoCount > 0 ? "todo" : "done"} className="w-full">
-            <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-2xl bg-muted/70 p-1.5">
+            <TabsList className="grid h-auto w-full grid-cols-3 gap-1 p-1">
               {[
                 { v: "todo", label: "To do", n: todoCount },
                 { v: "done", label: "Done", n: groups.done.length },
@@ -205,11 +201,11 @@ export default function StudentAssignments() {
                 <TabsTrigger
                   key={t.v}
                   value={t.v}
-                  className="min-h-[44px] gap-1.5 rounded-xl px-1 text-[0.9375rem] font-extrabold data-[state=active]:shadow-[0_2px_0_0_hsl(var(--border))]"
+                  className="min-h-hec-target gap-2 px-1 text-hec-body font-medium"
                 >
                   {t.label}
                   {t.n !== undefined && t.n > 0 && (
-                    <span className="rounded-full bg-primary px-1.5 py-px text-[0.7rem] font-black leading-4 text-primary-foreground">
+                    <span className="rounded-full bg-hec-action px-2 text-hec-caption font-medium tabular-nums text-hec-on-action">
                       {t.n}
                     </span>
                   )}
@@ -219,20 +215,20 @@ export default function StudentAssignments() {
 
             <TabsContent value="todo" className="mt-5 space-y-7">
               {todoCount === 0 && (
-                <div className="rounded-3xl border-2 border-b-[5px] border-emerald-200 bg-emerald-50 p-6 text-center dark:border-emerald-500/40 dark:bg-emerald-500/10">
-                  <p className="text-5xl" aria-hidden>🏆</p>
-                  <p className="mt-2 text-xl font-black">Nothing to do!</p>
-                  <p className="mt-1 text-[0.9375rem] text-muted-foreground">You've sent all your homework. Amazing!</p>
+                <div className="rounded-hec-lg border border-hec-leaf/30 bg-hec-leaf-tint p-6 text-center">
+                  <p className="text-hec-h1" aria-hidden>🏆</p>
+                  <p className="mt-2 font-display text-hec-h2 font-medium text-hec-leaf">Nothing to do!</p>
+                  <p className="mt-1 text-hec-body text-hec-ink-soft">You've sent all your homework. Amazing!</p>
                 </div>
               )}
               {groups.late.length > 0 && (
                 <Section emoji="⏰" title="Late — do these first" count={groups.late.length}>
-                  <PagedCards paged={latePaged} onOpen={open} />
+                  <PagedCards paged={latePaged} onOpen={open} lead />
                 </Section>
               )}
               {groups.next.length > 0 && (
                 <Section emoji="🎯" title="Coming up" count={groups.next.length}>
-                  <PagedCards paged={nextPaged} onOpen={open} />
+                  <PagedCards paged={nextPaged} onOpen={open} lead={groups.late.length === 0} />
                 </Section>
               )}
               {groups.oldMisses.length > 0 && (
@@ -241,13 +237,11 @@ export default function StudentAssignments() {
                     type="button"
                     onClick={() => setShowOldMisses((v) => !v)}
                     aria-expanded={showOldMisses}
-                    className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-border px-4 py-3 text-left"
+                    className={cn(BUTTON_SECONDARY, "w-full justify-between px-4 py-3 text-left")}
                   >
-                    <span className="min-w-0 text-[0.9375rem] font-extrabold">
+                    <span className="min-w-0">
                       📦 Older homework you missed
-                      <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-extrabold text-muted-foreground">
-                        {groups.oldMisses.length}
-                      </span>
+                      <span className={cn(BADGE_NEUTRAL, "ml-2")}>{groups.oldMisses.length}</span>
                     </span>
                     <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform", showOldMisses && "rotate-180")} />
                   </button>
@@ -258,10 +252,10 @@ export default function StudentAssignments() {
 
             <TabsContent value="done" className="mt-5 space-y-4">
               {groups.done.length === 0 ? (
-                <div className="rounded-3xl border-2 border-dashed border-border p-8 text-center">
-                  <p className="text-4xl" aria-hidden>📬</p>
-                  <p className="mt-2 text-lg font-black">Nothing sent yet</p>
-                  <p className="mt-1 text-[0.9375rem] text-muted-foreground">Homework you send will appear here.</p>
+                <div className={cn(CARD, "text-center")}>
+                  <p className="text-hec-h1" aria-hidden>📬</p>
+                  <p className={cn(CARD_TITLE, "mt-2")}>Nothing sent yet</p>
+                  <p className="mt-1 text-hec-body text-hec-ink-soft">Homework you send will appear here.</p>
                 </div>
               ) : (
                 <PagedCards paged={donePaged} onOpen={open} />

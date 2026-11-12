@@ -7,7 +7,7 @@
  * dashboard.
  */
 import { dayjs } from "@/lib/date";
-import type { HomeworkStatus } from "@/lib/homeworkStatus";
+import { ivoryStatusConfig, type HomeworkStatus } from "@/lib/homeworkStatus";
 
 export interface HomeworkLook {
   emoji: string;
@@ -73,6 +73,20 @@ export const homeworkLook: Record<HomeworkStatus, HomeworkLook> = {
     buttonClass: `${chunky} bg-emerald-500 hover:bg-emerald-500/95 [--ledge:theme(colors.emerald.700)]`,
     cta: "See feedback",
   },
+};
+
+/**
+ * "Ivory" design system (DESIGN_SYSTEM s.14-15): state badge + header wash per
+ * state, as token classes. Same words as `homeworkLook`; use inside an ivory
+ * scope (useIvory()).
+ */
+export const ivoryLook: Record<HomeworkStatus, { pillClass: string; washClass: string }> = {
+  overdue: { pillClass: ivoryStatusConfig.overdue.badgeClass, washClass: ivoryStatusConfig.overdue.panelClass },
+  "due-today": { pillClass: ivoryStatusConfig["due-today"].badgeClass, washClass: ivoryStatusConfig["due-today"].panelClass },
+  "due-soon": { pillClass: ivoryStatusConfig["due-soon"].badgeClass, washClass: ivoryStatusConfig["due-soon"].panelClass },
+  upcoming: { pillClass: ivoryStatusConfig.upcoming.badgeClass, washClass: ivoryStatusConfig.upcoming.panelClass },
+  submitted: { pillClass: ivoryStatusConfig.submitted.badgeClass, washClass: ivoryStatusConfig.submitted.panelClass },
+  graded: { pillClass: ivoryStatusConfig.graded.badgeClass, washClass: ivoryStatusConfig.graded.panelClass },
 };
 
 /** The class chip gets a steady colour per class, so "Starters A" is always teal. */

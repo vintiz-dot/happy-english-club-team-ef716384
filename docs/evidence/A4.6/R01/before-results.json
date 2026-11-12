@@ -1,0 +1,2459 @@
+{
+ "label": "before",
+ "runs": {
+  "hw-list-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "header:BUTTON \"Sign out\" 40x40",
+     "main:BUTTON \"Overdue reading log\" 307x28",
+     "main:BUTTON \"Unit 3 - Colours worksheet\" 307x28"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12.",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 3,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ":root",
+       ":root"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".text-rose-600",
+       ".bg-rose-500",
+       ".bg-amber-500"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-list-375-light.png",
+   "kb": 102
+  },
+  "hw-list-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "header:BUTTON \"Sign out\" 40x40",
+     "main:BUTTON \"Overdue reading log\" 307x28",
+     "main:BUTTON \"Unit 3 - Colours worksheet\" 307x28"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12.",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 3,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ":root",
+       ":root"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".text-rose-600",
+       ".bg-rose-500",
+       ".bg-amber-500"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-list-375-dark.png",
+   "kb": 102
+  },
+  "hw-list-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "header:BUTTON \"Sign Out\" 114x36",
+     "nav:BUTTON \"🏠 Home\" 90x32",
+     "nav:BUTTON \"📝 Homework\" 121x32",
+     "nav:BUTTON \"📚 Lessons\" 100x32",
+     "nav:BUTTON \"🎬 Record\" 95x32",
+     "nav:BUTTON \"📅 My Classes\" 120x32",
+     "nav:BUTTON \"📄 Reports\" 100x32",
+     "nav:BUTTON \"📖 Journal\" 98x32",
+     "nav:BUTTON \"💰 Tuition\" 95x32",
+     "nav:BUTTON \"🏆 Achievements\" 140x32",
+     "nav:BUTTON \"📚 Resources\" 115x32",
+     "nav:BUTTON \"✨ Vocabulary\" 122x32",
+     "nav:BUTTON \"🖼️ My Work\" 109x32",
+     "nav:BUTTON \"🎥 My Videos\" 118x32",
+     "nav:BUTTON \"🛡️ Defend My Level\" 158x32",
+     "nav:BUTTON \"Scroll navigation right\" 28x28",
+     "main:BUTTON \"Overdue reading log\" 460x28",
+     "main:BUTTON \"Unit 3 - Colours worksheet\" 460x28"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12.",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 3,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "div[role=\"region\"] > span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".text-rose-600",
+       ".bg-rose-500",
+       ".bg-amber-500"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-list-1280-light.png",
+   "kb": 211
+  },
+  "hw-list-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 22,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 3,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "header:BUTTON \"Sign Out\" 114x36",
+     "nav:BUTTON \"🏠 Home\" 90x32",
+     "nav:BUTTON \"📝 Homework\" 121x32",
+     "nav:BUTTON \"📚 Lessons\" 100x32",
+     "nav:BUTTON \"🎬 Record\" 95x32",
+     "nav:BUTTON \"📅 My Classes\" 120x32",
+     "nav:BUTTON \"📄 Reports\" 100x32",
+     "nav:BUTTON \"📖 Journal\" 98x32",
+     "nav:BUTTON \"💰 Tuition\" 95x32",
+     "nav:BUTTON \"🏆 Achievements\" 140x32",
+     "nav:BUTTON \"📚 Resources\" 115x32",
+     "nav:BUTTON \"✨ Vocabulary\" 122x32",
+     "nav:BUTTON \"🖼️ My Work\" 109x32",
+     "nav:BUTTON \"🎥 My Videos\" 118x32",
+     "nav:BUTTON \"🛡️ Defend My Level\" 158x32",
+     "nav:BUTTON \"Scroll navigation right\" 28x28",
+     "main:BUTTON \"Overdue reading log\" 460x28",
+     "main:BUTTON \"Unit 3 - Colours worksheet\" 460x28"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12.",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 3,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       "div[role=\"region\"] > span[aria-hidden=\"true\"]:nth-child(1)",
+       "span[aria-hidden=\"true\"]:nth-child(3)"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".text-rose-600",
+       ".bg-rose-500",
+       ".bg-amber-500"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-list-1280-dark.png",
+   "kb": 205
+  },
+  "hw-list-empty-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "header:BUTTON \"Sign out\" 40x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ":root",
+       ":root"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-list-empty-375-light.png",
+   "kb": 76
+  },
+  "hw-list-empty-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "header:BUTTON \"Sign out\" 40x40"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "before-hw-list-empty-375-dark.png",
+   "kb": 76
+  },
+  "hw-list-empty-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "header:BUTTON \"Sign Out\" 114x36",
+     "nav:BUTTON \"🏠 Home\" 90x32",
+     "nav:BUTTON \"📝 Homework\" 121x32",
+     "nav:BUTTON \"📚 Lessons\" 100x32",
+     "nav:BUTTON \"🎬 Record\" 95x32",
+     "nav:BUTTON \"📅 My Classes\" 120x32",
+     "nav:BUTTON \"📄 Reports\" 100x32",
+     "nav:BUTTON \"📖 Journal\" 98x32",
+     "nav:BUTTON \"💰 Tuition\" 95x32",
+     "nav:BUTTON \"🏆 Achievements\" 140x32",
+     "nav:BUTTON \"📚 Resources\" 115x32",
+     "nav:BUTTON \"✨ Vocabulary\" 122x32",
+     "nav:BUTTON \"🖼️ My Work\" 109x32",
+     "nav:BUTTON \"🎥 My Videos\" 118x32",
+     "nav:BUTTON \"🛡️ Defend My Level\" 158x32",
+     "nav:BUTTON \"Scroll navigation right\" 28x28"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ":root",
+       ":root"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-list-empty-1280-light.png",
+   "kb": 162
+  },
+  "hw-list-empty-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "header:BUTTON \"Sign Out\" 114x36",
+     "nav:BUTTON \"🏠 Home\" 90x32",
+     "nav:BUTTON \"📝 Homework\" 121x32",
+     "nav:BUTTON \"📚 Lessons\" 100x32",
+     "nav:BUTTON \"🎬 Record\" 95x32",
+     "nav:BUTTON \"📅 My Classes\" 120x32",
+     "nav:BUTTON \"📄 Reports\" 100x32",
+     "nav:BUTTON \"📖 Journal\" 98x32",
+     "nav:BUTTON \"💰 Tuition\" 95x32",
+     "nav:BUTTON \"🏆 Achievements\" 140x32",
+     "nav:BUTTON \"📚 Resources\" 115x32",
+     "nav:BUTTON \"✨ Vocabulary\" 122x32",
+     "nav:BUTTON \"🖼️ My Work\" 109x32",
+     "nav:BUTTON \"🎥 My Videos\" 118x32",
+     "nav:BUTTON \"🛡️ Defend My Level\" 158x32",
+     "nav:BUTTON \"Scroll navigation right\" 28x28"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "minor": 1,
+     "serious": 2,
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ":root",
+       ":root"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".right-2"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "ol"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-list-empty-1280-dark.png",
+   "kb": 162
+  },
+  "hw-done-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "header:BUTTON \"Sign out\" 40x40",
+     "main:BUTTON \"Sent last week\" 307x28",
+     "main:BUTTON \"Marked project\" 307x28"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".bg-sky-500",
+       ".bg-emerald-500"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-done-375-light.png",
+   "kb": 103
+  },
+  "hw-done-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "header:BUTTON \"Sign out\" 40x40",
+     "main:BUTTON \"Sent last week\" 307x28",
+     "main:BUTTON \"Marked project\" 307x28"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".bg-sky-500",
+       ".bg-emerald-500"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-done-375-dark.png",
+   "kb": 103
+  },
+  "hw-done-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "header:BUTTON \"Sign Out\" 114x36",
+     "nav:BUTTON \"🏠 Home\" 90x32",
+     "nav:BUTTON \"📝 Homework\" 121x32",
+     "nav:BUTTON \"📚 Lessons\" 100x32",
+     "nav:BUTTON \"🎬 Record\" 95x32",
+     "nav:BUTTON \"📅 My Classes\" 120x32",
+     "nav:BUTTON \"📄 Reports\" 100x32",
+     "nav:BUTTON \"📖 Journal\" 98x32",
+     "nav:BUTTON \"💰 Tuition\" 95x32",
+     "nav:BUTTON \"🏆 Achievements\" 140x32",
+     "nav:BUTTON \"📚 Resources\" 115x32",
+     "nav:BUTTON \"✨ Vocabulary\" 122x32",
+     "nav:BUTTON \"🖼️ My Work\" 109x32",
+     "nav:BUTTON \"🎥 My Videos\" 118x32",
+     "nav:BUTTON \"🛡️ Defend My Level\" 158x32",
+     "nav:BUTTON \"Scroll navigation right\" 28x28",
+     "main:BUTTON \"Sent last week\" 460x28",
+     "main:BUTTON \"Marked project\" 460x28"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".bg-sky-500",
+       ".bg-emerald-500"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-done-1280-light.png",
+   "kb": 211
+  },
+  "hw-done-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "header:BUTTON \"Sign Out\" 114x36",
+     "nav:BUTTON \"🏠 Home\" 90x32",
+     "nav:BUTTON \"📝 Homework\" 121x32",
+     "nav:BUTTON \"📚 Lessons\" 100x32",
+     "nav:BUTTON \"🎬 Record\" 95x32",
+     "nav:BUTTON \"📅 My Classes\" 120x32",
+     "nav:BUTTON \"📄 Reports\" 100x32",
+     "nav:BUTTON \"📖 Journal\" 98x32",
+     "nav:BUTTON \"💰 Tuition\" 95x32",
+     "nav:BUTTON \"🏆 Achievements\" 140x32",
+     "nav:BUTTON \"📚 Resources\" 115x32",
+     "nav:BUTTON \"✨ Vocabulary\" 122x32",
+     "nav:BUTTON \"🖼️ My Work\" 109x32",
+     "nav:BUTTON \"🎥 My Videos\" 118x32",
+     "nav:BUTTON \"🛡️ Defend My Level\" 158x32",
+     "nav:BUTTON \"Scroll navigation right\" 28x28",
+     "main:BUTTON \"Sent last week\" 460x28",
+     "main:BUTTON \"Marked project\" 460x28"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".bg-sky-500",
+       ".bg-emerald-500"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-done-1280-dark.png",
+   "kb": 211
+  },
+  "hw-calendar-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "header:BUTTON \"Sign out\" 40x40",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"Today\" 64x32",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"26\" 37x80",
+     "main:BUTTON \"27\" 37x80",
+     "main:BUTTON \"28\" 37x80",
+     "main:BUTTON \"29\" 37x80",
+     "main:BUTTON \"30\" 37x80",
+     "main:BUTTON \"31\" 37x80",
+     "main:BUTTON \"1\" 37x80",
+     "main:BUTTON \"2\" 37x80",
+     "main:BUTTON \"3\" 37x80",
+     "main:BUTTON \"4\" 37x80",
+     "main:BUTTON \"5\" 37x80",
+     "main:BUTTON \"6\" 37x80",
+     "main:BUTTON \"7\" 37x80",
+     "main:BUTTON \"8\" 37x80",
+     "main:BUTTON \"9\" 37x80",
+     "main:BUTTON \"10\" 37x80",
+     "main:BUTTON \"11\" 37x80",
+     "main:BUTTON \"12\" 37x80",
+     "main:BUTTON \"13\" 37x80",
+     "main:BUTTON \"14\" 37x80",
+     "main:BUTTON \"15\" 37x80",
+     "main:BUTTON \"16\" 37x80",
+     "main:BUTTON \"17\" 37x80",
+     "main:BUTTON \"18\" 37x80",
+     "main:BUTTON \"19\" 37x80",
+     "main:BUTTON \"20\" 37x80",
+     "main:BUTTON \"21\" 37x80",
+     "main:BUTTON \"22\" 37x80",
+     "main:BUTTON \"23\" 37x80",
+     "main:BUTTON \"24\" 37x80",
+     "main:BUTTON \"25\" 37x80",
+     "main:BUTTON \"26\" 37x80",
+     "main:BUTTON \"27\" 37x80",
+     "main:BUTTON \"28\" 37x80",
+     "main:BUTTON \"29\" 37x80",
+     "main:BUTTON \"30\" 37x80",
+     "main:BUTTON \"1\" 37x80",
+     "main:BUTTON \"2\" 37x80",
+     "main:BUTTON \"3\" 37x80",
+     "main:BUTTON \"4\" 37x80",
+     "main:BUTTON \"5\" 37x80",
+     "main:BUTTON \"6\" 37x80"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "18",
+     "19",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".w-8.p-0.h-8:nth-child(1)",
+       ".w-8.p-0.h-8:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 6,
+      "t": [
+       ".opacity-40.cursor-default.p-2:nth-child(1) > .text-right.mb-1 > .text-sm.font-m",
+       ".opacity-40.cursor-default.p-2:nth-child(2) > .text-right.mb-1 > .text-sm.font-m",
+       ".opacity-40.cursor-default.p-2:nth-child(3) > .text-right.mb-1 > .text-sm.font-m"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-calendar-375-light.png",
+   "kb": 112
+  },
+  "hw-calendar-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "header:BUTTON \"Sign out\" 40x40",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"Today\" 64x32",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"26\" 37x80",
+     "main:BUTTON \"27\" 37x80",
+     "main:BUTTON \"28\" 37x80",
+     "main:BUTTON \"29\" 37x80",
+     "main:BUTTON \"30\" 37x80",
+     "main:BUTTON \"31\" 37x80",
+     "main:BUTTON \"1\" 37x80",
+     "main:BUTTON \"2\" 37x80",
+     "main:BUTTON \"3\" 37x80",
+     "main:BUTTON \"4\" 37x80",
+     "main:BUTTON \"5\" 37x80",
+     "main:BUTTON \"6\" 37x80",
+     "main:BUTTON \"7\" 37x80",
+     "main:BUTTON \"8\" 37x80",
+     "main:BUTTON \"9\" 37x80",
+     "main:BUTTON \"10\" 37x80",
+     "main:BUTTON \"11\" 37x80",
+     "main:BUTTON \"12\" 37x80",
+     "main:BUTTON \"13\" 37x80",
+     "main:BUTTON \"14\" 37x80",
+     "main:BUTTON \"15\" 37x80",
+     "main:BUTTON \"16\" 37x80",
+     "main:BUTTON \"17\" 37x80",
+     "main:BUTTON \"18\" 37x80",
+     "main:BUTTON \"19\" 37x80",
+     "main:BUTTON \"20\" 37x80",
+     "main:BUTTON \"21\" 37x80",
+     "main:BUTTON \"22\" 37x80",
+     "main:BUTTON \"23\" 37x80",
+     "main:BUTTON \"24\" 37x80",
+     "main:BUTTON \"25\" 37x80",
+     "main:BUTTON \"26\" 37x80",
+     "main:BUTTON \"27\" 37x80",
+     "main:BUTTON \"28\" 37x80",
+     "main:BUTTON \"29\" 37x80",
+     "main:BUTTON \"30\" 37x80",
+     "main:BUTTON \"1\" 37x80",
+     "main:BUTTON \"2\" 37x80",
+     "main:BUTTON \"3\" 37x80",
+     "main:BUTTON \"4\" 37x80",
+     "main:BUTTON \"5\" 37x80",
+     "main:BUTTON \"6\" 37x80"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "18",
+     "19",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".w-8.p-0.h-8:nth-child(1)",
+       ".w-8.p-0.h-8:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 6,
+      "t": [
+       ".opacity-40.cursor-default.p-2:nth-child(1) > .text-right.mb-1 > .text-sm.font-m",
+       ".opacity-40.cursor-default.p-2:nth-child(2) > .text-right.mb-1 > .text-sm.font-m",
+       ".opacity-40.cursor-default.p-2:nth-child(3) > .text-right.mb-1 > .text-sm.font-m"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-calendar-375-dark.png",
+   "kb": 113
+  },
+  "hw-calendar-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "header:BUTTON \"Sign Out\" 114x36",
+     "nav:BUTTON \"🏠 Home\" 90x32",
+     "nav:BUTTON \"📝 Homework\" 121x32",
+     "nav:BUTTON \"📚 Lessons\" 100x32",
+     "nav:BUTTON \"🎬 Record\" 95x32",
+     "nav:BUTTON \"📅 My Classes\" 120x32",
+     "nav:BUTTON \"📄 Reports\" 100x32",
+     "nav:BUTTON \"📖 Journal\" 98x32",
+     "nav:BUTTON \"💰 Tuition\" 95x32",
+     "nav:BUTTON \"🏆 Achievements\" 140x32",
+     "nav:BUTTON \"📚 Resources\" 115x32",
+     "nav:BUTTON \"✨ Vocabulary\" 122x32",
+     "nav:BUTTON \"🖼️ My Work\" 109x32",
+     "nav:BUTTON \"🎥 My Videos\" 118x32",
+     "nav:BUTTON \"🛡️ Defend My Level\" 158x32",
+     "nav:BUTTON \"Scroll navigation right\" 28x28",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"Today\" 64x32",
+     "main:BUTTON \"\" 32x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "18",
+     "19",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".w-8.p-0.h-8:nth-child(1)",
+       ".w-8.p-0.h-8:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 6,
+      "t": [
+       ".opacity-40.cursor-default.p-2:nth-child(1) > .text-right.mb-1 > .text-sm.font-m",
+       ".opacity-40.cursor-default.p-2:nth-child(2) > .text-right.mb-1 > .text-sm.font-m",
+       ".opacity-40.cursor-default.p-2:nth-child(3) > .text-right.mb-1 > .text-sm.font-m"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-calendar-1280-light.png",
+   "kb": 210
+  },
+  "hw-calendar-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "header:BUTTON \"Sign Out\" 114x36",
+     "nav:BUTTON \"🏠 Home\" 90x32",
+     "nav:BUTTON \"📝 Homework\" 121x32",
+     "nav:BUTTON \"📚 Lessons\" 100x32",
+     "nav:BUTTON \"🎬 Record\" 95x32",
+     "nav:BUTTON \"📅 My Classes\" 120x32",
+     "nav:BUTTON \"📄 Reports\" 100x32",
+     "nav:BUTTON \"📖 Journal\" 98x32",
+     "nav:BUTTON \"💰 Tuition\" 95x32",
+     "nav:BUTTON \"🏆 Achievements\" 140x32",
+     "nav:BUTTON \"📚 Resources\" 115x32",
+     "nav:BUTTON \"✨ Vocabulary\" 122x32",
+     "nav:BUTTON \"🖼️ My Work\" 109x32",
+     "nav:BUTTON \"🎥 My Videos\" 118x32",
+     "nav:BUTTON \"🛡️ Defend My Level\" 158x32",
+     "nav:BUTTON \"Scroll navigation right\" 28x28",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"Today\" 64x32",
+     "main:BUTTON \"\" 32x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "18",
+     "19",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".w-8.p-0.h-8:nth-child(1)",
+       ".w-8.p-0.h-8:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 6,
+      "t": [
+       ".opacity-40.cursor-default.p-2:nth-child(1) > .text-right.mb-1 > .text-sm.font-m",
+       ".opacity-40.cursor-default.p-2:nth-child(2) > .text-right.mb-1 > .text-sm.font-m",
+       ".opacity-40.cursor-default.p-2:nth-child(3) > .text-right.mb-1 > .text-sm.font-m"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-calendar-1280-dark.png",
+   "kb": 210
+  },
+  "hw-detail-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Download PDF\" 150x40"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12.",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".text-rose-600",
+       ".bg-rose-500",
+       ".bg-amber-500"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-detail-375-light.png",
+   "kb": 35
+  },
+  "hw-detail-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Download PDF\" 150x40",
+     "other:INPUT \"\" 1x1"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12.",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".text-rose-600",
+       ".bg-rose-500",
+       ".bg-amber-500"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-detail-375-dark.png",
+   "kb": 37
+  },
+  "hw-detail-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Download PDF\" 153x41",
+     "other:INPUT \"\" 1x1"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12.",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".text-rose-600",
+       ".bg-rose-500",
+       ".bg-amber-500"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-detail-1280-light.png",
+   "kb": 112
+  },
+  "hw-detail-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Download PDF\" 153x41",
+     "other:INPUT \"\" 1x1"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12.",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "3",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".text-rose-600",
+       ".bg-rose-500",
+       ".bg-amber-500"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-detail-1280-dark.png",
+   "kb": 112
+  },
+  "hw-detail-graded-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Download PDF\" 150x40",
+     "other:BUTTON \"poster.png\" 118x36"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".bg-sky-500",
+       ".bg-emerald-500"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-detail-graded-375-light.png",
+   "kb": 41
+  },
+  "hw-detail-graded-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Download PDF\" 150x40",
+     "other:BUTTON \"poster.png\" 118x36"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".bg-sky-500",
+       ".bg-emerald-500"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-detail-graded-375-dark.png",
+   "kb": 41
+  },
+  "hw-detail-graded-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Download PDF\" 150x40",
+     "other:BUTTON \"poster.png\" 118x36"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".bg-sky-500",
+       ".bg-emerald-500"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-detail-graded-1280-light.png",
+   "kb": 113
+  },
+  "hw-detail-graded-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Download PDF\" 150x40",
+     "other:BUTTON \"poster.png\" 118x36"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".bg-sky-500",
+       ".bg-emerald-500"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-detail-graded-1280-dark.png",
+   "kb": 115
+  },
+  "hw-detail-sent-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Download PDF\" 150x40",
+     "other:BUTTON \"bold\" 34x34",
+     "other:BUTTON \"italic\" 34x34",
+     "other:BUTTON \"underline\" 34x34",
+     "other:BUTTON \"list: ordered\" 34x34",
+     "other:BUTTON \"list: bullet\" 34x34",
+     "other:BUTTON \"clean\" 34x34",
+     "other:INPUT \"\" 1x1"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".bg-sky-500",
+       ".hover\\:bg-emerald-500\\/95"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-detail-sent-375-light.png",
+   "kb": 37
+  },
+  "hw-detail-sent-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Download PDF\" 150x40",
+     "other:BUTTON \"bold\" 34x34",
+     "other:BUTTON \"italic\" 34x34",
+     "other:BUTTON \"underline\" 34x34",
+     "other:BUTTON \"list: ordered\" 34x34",
+     "other:BUTTON \"list: bullet\" 34x34",
+     "other:BUTTON \"clean\" 34x34",
+     "other:INPUT \"\" 1x1"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".bg-sky-500",
+       ".hover\\:bg-emerald-500\\/95"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-detail-sent-375-dark.png",
+   "kb": 37
+  },
+  "hw-detail-sent-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Download PDF\" 150x40",
+     "other:BUTTON \"bold\" 34x34",
+     "other:BUTTON \"italic\" 34x34",
+     "other:BUTTON \"underline\" 34x34",
+     "other:BUTTON \"list: ordered\" 34x34",
+     "other:BUTTON \"list: bullet\" 34x34",
+     "other:BUTTON \"clean\" 34x34",
+     "other:INPUT \"\" 1x1"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".bg-sky-500",
+       ".hover\\:bg-emerald-500\\/95"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-detail-sent-1280-light.png",
+   "kb": 111
+  },
+  "hw-detail-sent-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:daily_login_rewards:insert": 1,
+     "from:daily_login_rewards:select": 5,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:point_transactions:insert": 1,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 3,
+     "from:student_login_streaks:upsert": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2,
+     "rpc:get_student_homeworks:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Download PDF\" 150x40",
+     "other:BUTTON \"bold\" 34x34",
+     "other:BUTTON \"italic\" 34x34",
+     "other:BUTTON \"underline\" 34x34",
+     "other:BUTTON \"list: ordered\" 34x34",
+     "other:BUTTON \"list: bullet\" 34x34",
+     "other:BUTTON \"clean\" 34x34",
+     "other:INPUT \"\" 1x1"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3",
+     "3",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".hover\\:bg-emerald-500\\/95",
+       ".bg-sky-500"
+      ]
+     }
+    ]
+   },
+   "shot": "before-hw-detail-sent-1280-dark.png",
+   "kb": 112
+  }
+ }
+}
