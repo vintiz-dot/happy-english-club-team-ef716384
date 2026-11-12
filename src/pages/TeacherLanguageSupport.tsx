@@ -24,14 +24,14 @@ export default function TeacherLanguageSupport() {
 
   return (
     <Layout title="Language Support">
-      <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-5">
-        <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center shadow-md">
-            <Languages className="h-6 w-6 text-white" />
+      <div className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1">
+            <Languages className="h-6 w-6 text-hec-ink-soft" />
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">Language Support</h1>
-            <p className="text-sm text-muted-foreground">
+          <div className="min-w-0 flex-1">
+            <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Language Support</h1>
+            <p className="text-hec-small text-hec-ink-soft">
               Turn sentences into pictures for Grade 1–3 readers, then choose which of your classes can read them.
             </p>
           </div>
@@ -40,16 +40,16 @@ export default function TeacherLanguageSupport() {
           </Button>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-[18rem_1fr]">
+        <div className="grid gap-6 md:grid-cols-[18rem_1fr]">
           <aside className={cn("space-y-2", showEditor && "hidden md:block")}>
-            {isLoading && <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</p>}
+            {isLoading && <p className="flex items-center gap-2 text-hec-small text-hec-ink-soft"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</p>}
             {error && (
-              <p className="text-sm text-destructive rounded-lg border border-destructive/40 p-3">
+              <p className="rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-3 text-hec-small text-hec-danger">
                 Language Support is not switched on yet. Ask the school's admin to apply the latest database update.
               </p>
             )}
             {!isLoading && !error && sets.length === 0 && (
-              <p className="text-sm text-muted-foreground rounded-lg border border-dashed p-4">
+              <p className="rounded-hec-md border border-dashed border-hec-line-strong p-4 text-hec-small text-hec-ink-soft">
                 You have no sets yet. Press <strong>New set</strong> to make your first.
               </p>
             )}
@@ -60,12 +60,15 @@ export default function TeacherLanguageSupport() {
                   key={s.id}
                   type="button"
                   onClick={() => setSelected(s.id)}
-                  className={cn("w-full text-left rounded-xl border p-3 hover:bg-accent transition", selected === s.id && "border-primary ring-1 ring-primary")}
+                  className={cn(
+                    "min-h-hec-target w-full rounded-hec-lg border border-hec-line bg-hec-surface p-3 text-left shadow-hec-1 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+                    selected === s.id && "border-hec-brass bg-hec-sunken/60",
+                  )}
                 >
-                  <div className="font-medium truncate">{s.title}</div>
-                  <div className="text-xs text-muted-foreground">{s.sentences.length} sentence{s.sentences.length === 1 ? "" : "s"}</div>
-                  <div className="flex flex-wrap gap-1 mt-1.5">
-                    {on.length ? on.map((n) => <Badge key={n} variant="secondary" className="text-[11px]">{n}</Badge>) : <Badge variant="outline" className="text-[11px]">Not on for any class</Badge>}
+                  <div className="truncate text-hec-body font-medium text-hec-ink">{s.title}</div>
+                  <div className="text-hec-caption tabular-nums text-hec-ink-soft">{s.sentences.length} sentence{s.sentences.length === 1 ? "" : "s"}</div>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {on.length ? on.map((n) => <Badge key={n} variant="secondary" className="whitespace-normal break-words">{n}</Badge>) : <Badge variant="outline">Not on for any class</Badge>}
                   </div>
                 </button>
               );
@@ -84,7 +87,7 @@ export default function TeacherLanguageSupport() {
                 />
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
+              <div className="rounded-hec-lg border border-dashed border-hec-line-strong p-12 text-center text-hec-body text-hec-ink-soft">
                 Choose a set, or make a new one.
               </div>
             )}
