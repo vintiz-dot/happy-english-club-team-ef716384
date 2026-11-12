@@ -1,5 +1,5 @@
 {
- "when": "2026-11-12T00:40:56.463Z",
+ "when": "2026-11-12T00:42:47.835Z",
  "base": "vite dev server, fake client (NOT production)",
  "screens": {
   "student-dashboard": {
@@ -3317,6 +3317,391 @@
       9599
      ],
      "requests": 27
+    }
+   }
+  },
+  "student-leaderboard": {
+   "route": "/student/dashboard?tab=achievements",
+   "role": "student",
+   "boardStyle": null,
+   "runs": {
+    "375-light": {
+     "fmrMs": 2227.5,
+     "requests": 30,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:get_student_homeworks": 2,
+      "function:calculate-tuition": 1,
+      "from:notifications": 1,
+      "from:enrollments": 4,
+      "from:profiles": 1,
+      "from:student_login_streaks": 1,
+      "from:class_monitors": 1,
+      "from:student_points": 1,
+      "from:attendance": 1,
+      "from:language_support_set_classes": 1,
+      "from:daily_login_rewards": 2,
+      "from:sessions": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 1333,
+     "path": "/student/dashboard?tab=achievements",
+     "idleMs": 2357.300000011921,
+     "errors": [],
+     "axe": {
+      "rules": 3,
+      "nodes": 4,
+      "byImpact": {
+       "critical": 1,
+       "moderate": 1,
+       "serious": 1
+      },
+      "top": [
+       "button-name(critical,2)",
+       "page-has-heading-one(moderate,1)",
+       "scrollable-region-focusable(serious,1)"
+      ]
+     },
+     "shot": "student-leaderboard-375-light.png",
+     "fmrMedianMs": 2152,
+     "idleMedianMs": 2296,
+     "fmrAll": [
+      2228,
+      2152,
+      1935
+     ],
+     "idleAll": [
+      2357,
+      2296,
+      2092
+     ],
+     "requestsAll": [
+      30,
+      30,
+      30
+     ]
+    },
+    "375-dark": {
+     "fmrMs": 2054.699999988079,
+     "requests": 30,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:get_student_homeworks": 2,
+      "function:calculate-tuition": 1,
+      "from:notifications": 1,
+      "from:enrollments": 4,
+      "from:profiles": 1,
+      "from:student_login_streaks": 1,
+      "from:class_monitors": 1,
+      "from:student_points": 1,
+      "from:attendance": 1,
+      "from:language_support_set_classes": 1,
+      "from:daily_login_rewards": 2,
+      "from:sessions": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 1333,
+     "path": "/student/dashboard?tab=achievements",
+     "idleMs": 2172,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 11,
+      "byImpact": {
+       "critical": 1,
+       "serious": 2,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,2)",
+       "color-contrast(serious,7)",
+       "page-has-heading-one(moderate,1)",
+       "scrollable-region-focusable(serious,1)"
+      ]
+     },
+     "shot": "student-leaderboard-375-dark.png",
+     "fmrMedianMs": 2055,
+     "idleMedianMs": 2172,
+     "fmrAll": [
+      2055
+     ],
+     "idleAll": [
+      2172
+     ],
+     "requestsAll": [
+      30
+     ]
+    },
+    "768-light": {
+     "fmrMs": 1605,
+     "requests": 30,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:get_student_homeworks": 2,
+      "function:calculate-tuition": 1,
+      "from:notifications": 1,
+      "from:enrollments": 4,
+      "from:profiles": 1,
+      "from:student_login_streaks": 1,
+      "from:class_monitors": 1,
+      "from:student_points": 1,
+      "from:attendance": 1,
+      "from:language_support_set_classes": 1,
+      "from:daily_login_rewards": 2,
+      "from:sessions": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 1557,
+     "path": "/student/dashboard?tab=achievements",
+     "idleMs": 2150.7999999523163,
+     "errors": [],
+     "axe": {
+      "rules": 3,
+      "nodes": 3,
+      "byImpact": {
+       "critical": 1,
+       "moderate": 1,
+       "serious": 1
+      },
+      "top": [
+       "button-name(critical,1)",
+       "heading-order(moderate,1)",
+       "scrollable-region-focusable(serious,1)"
+      ]
+     },
+     "shot": "student-leaderboard-768-light.png",
+     "fmrMedianMs": 1656,
+     "idleMedianMs": 2168,
+     "fmrAll": [
+      1605,
+      1839,
+      1656
+     ],
+     "idleAll": [
+      2151,
+      2446,
+      2168
+     ],
+     "requestsAll": [
+      30,
+      30,
+      30
+     ]
+    },
+    "768-dark": {
+     "fmrMs": 1586.9000000357628,
+     "requests": 30,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:get_student_homeworks": 2,
+      "function:calculate-tuition": 1,
+      "from:notifications": 1,
+      "from:enrollments": 4,
+      "from:profiles": 1,
+      "from:student_login_streaks": 1,
+      "from:class_monitors": 1,
+      "from:student_points": 1,
+      "from:attendance": 1,
+      "from:language_support_set_classes": 1,
+      "from:daily_login_rewards": 2,
+      "from:sessions": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 1557,
+     "path": "/student/dashboard?tab=achievements",
+     "idleMs": 2184.699999988079,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 13,
+      "byImpact": {
+       "critical": 1,
+       "serious": 2,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,1)",
+       "color-contrast(serious,10)",
+       "heading-order(moderate,1)",
+       "scrollable-region-focusable(serious,1)"
+      ]
+     },
+     "shot": "student-leaderboard-768-dark.png",
+     "fmrMedianMs": 1587,
+     "idleMedianMs": 2185,
+     "fmrAll": [
+      1587
+     ],
+     "idleAll": [
+      2185
+     ],
+     "requestsAll": [
+      30
+     ]
+    },
+    "1280-light": {
+     "fmrMs": 1581.6000000238419,
+     "requests": 30,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:get_student_homeworks": 2,
+      "function:calculate-tuition": 1,
+      "from:notifications": 1,
+      "from:enrollments": 4,
+      "from:profiles": 1,
+      "from:student_login_streaks": 1,
+      "from:class_monitors": 1,
+      "from:student_points": 1,
+      "from:attendance": 1,
+      "from:language_support_set_classes": 1,
+      "from:daily_login_rewards": 2,
+      "from:sessions": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 1557,
+     "path": "/student/dashboard?tab=achievements",
+     "idleMs": 2114.300000011921,
+     "errors": [],
+     "axe": {
+      "rules": 3,
+      "nodes": 3,
+      "byImpact": {
+       "critical": 1,
+       "moderate": 1,
+       "serious": 1
+      },
+      "top": [
+       "button-name(critical,1)",
+       "heading-order(moderate,1)",
+       "scrollable-region-focusable(serious,1)"
+      ]
+     },
+     "shot": "student-leaderboard-1280-light.png",
+     "fmrMedianMs": 2006,
+     "idleMedianMs": 2602,
+     "fmrAll": [
+      1582,
+      2168,
+      2006
+     ],
+     "idleAll": [
+      2114,
+      2811,
+      2602
+     ],
+     "requestsAll": [
+      30,
+      30,
+      30
+     ]
+    },
+    "1280-dark": {
+     "fmrMs": 1883.699999988079,
+     "requests": 30,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 5,
+      "rpc:get_student_homeworks": 2,
+      "function:calculate-tuition": 1,
+      "from:notifications": 1,
+      "from:enrollments": 4,
+      "from:profiles": 1,
+      "from:student_login_streaks": 1,
+      "from:class_monitors": 1,
+      "from:student_points": 1,
+      "from:attendance": 1,
+      "from:language_support_set_classes": 1,
+      "from:daily_login_rewards": 2,
+      "from:sessions": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 1557,
+     "path": "/student/dashboard?tab=achievements",
+     "idleMs": 2450.800000011921,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 16,
+      "byImpact": {
+       "critical": 1,
+       "serious": 2,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,1)",
+       "color-contrast(serious,13)",
+       "heading-order(moderate,1)",
+       "scrollable-region-focusable(serious,1)"
+      ]
+     },
+     "shot": "student-leaderboard-1280-dark.png",
+     "fmrMedianMs": 1884,
+     "idleMedianMs": 2451,
+     "fmrAll": [
+      1884
+     ],
+     "idleAll": [
+      2451
+     ],
+     "requestsAll": [
+      30
+     ]
+    },
+    "375-light-cpu4x": {
+     "fmrMedianMs": 10592,
+     "idleMedianMs": 11199,
+     "fmrAll": [
+      10914,
+      9963,
+      10592
+     ],
+     "idleAll": [
+      11796,
+      10544,
+      11199
+     ],
+     "requests": 30
     }
    }
   }
