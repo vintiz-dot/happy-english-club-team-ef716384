@@ -1,6 +1,6 @@
 # T2 - class-recordings bucket access
 
-Where I am / next step: migration, suite, mutants, probes and rollback written. Next: rerun suite + mutant 2, recorder suite, full run, record totals.
+Where I am / next step: DONE. Handed to the reviewer; nothing applied, deployed or pushed.
 
 ## Part 1 - facts
 
@@ -39,7 +39,7 @@ Where I am / next step: migration, suite, mutants, probes and rollback written. 
 
 ## Part 2 - the fix: `supabase/migrations/20261112120000_class_recordings_scope.sql`
 
-sha256 (LF, as committed): see "Fingerprint" below.
+sha256: see "Fingerprint" at the end.
 
 - Preflight: refuses if storage.objects has no RLS, or `class_transcripts.audio_storage_path` is missing.
 - `public.class_recordings_staff_can(_name text)` - SQL, STABLE, SECURITY DEFINER, `search_path = public`, EXECUTE revoked from PUBLIC/anon, granted to authenticated. False when: no uid, NULL name, caller lacks role `teacher`, name is not exactly `<uuid>/<one segment>`. Otherwise `is_teacher_of_class(auth.uid(), first segment::uuid)` (the cast only runs after the regex matched). Each branch coalesced to false.
@@ -157,4 +157,10 @@ COMMIT;
 - F2 (no caller check in transcribe-lesson-audio) stays open: a function change.
 
 ## Runs
-(filled in below)
+- `class-recordings-scope.test.mjs`: 89 passed, 0 failed.
+- `recorder.test.mjs` (unchanged inputs): 398 passed, 0 failed.
+- Mutants: 8/8 caught (mutant 2 after the column-free UPDATE case was added).
+- Full `node scripts/pgtest/run.mjs`: 2854 assertions across 37 suites, 0 suite(s) failed.
+
+## Fingerprint
+`sha256(supabase/migrations/20261112120000_class_recordings_scope.sql)` = `92044de34449dbe0f9dab64bb5665ef65f7d3189a74b874a9342c72ec46cde84` (LF line endings, as in the index: `i/lf w/lf`).
