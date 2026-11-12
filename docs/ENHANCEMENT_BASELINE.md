@@ -5,9 +5,9 @@ Measured, not changed: no source file was modified. Every "After" cell is empty 
 ## Where I am / next step
 
 - Part 1 (tsc, pgtest, bun tests, build and bundle, static counts): complete.
-- Part 2 measured: student dashboard, admin Tuition, admin Attendance, admin class sessions, admin schedule (5 of 12).
-- Not yet measured: teacher dashboard, 3 class boards, student leaderboard, parent view, admin Payroll.
-- Next step: measure teacher-dashboard, board-*, student-leaderboard, parent-view, admin-payroll one at a time
+- Part 2 measured: all 12 screens/variants: student dashboard, admin Tuition, admin Attendance, admin class sessions, admin schedule, teacher dashboard, Star Board, High Scores, Night League (via /teacher/leaderboards with the class style forced), student leaderboard, parent view, admin Payroll.
+- Not yet measured: nothing from the brief's list. Fidelity gaps: admin Tuition throws 'reading name' at 375 against the fake (screen partly empty); the three display boards are only the plain podium at 375 and I did not confirm by eye that 768/1280 show the chosen style; parent view has a 375 horizontal overflow (decorative glow divs, a flex row at right=383); admin Payroll got an empty calculate-payroll answer so it shows no pay lines.
+- Next step: A0 is done; re-run measure.mjs after each task for the After column.
 - Caveats: every Part 2 number is a dev-server number through a fake client; the fake returns `{}` for edge functions other than admin-unlock and calculate-tuition, so admin screens show real layout but thin data (see request kinds). Below 768 px the app itself falls back from the three display boards to the plain podium.
 - Harness (outside the repo): `C:\Users\Dell\hec-tools\a0-harness\`. Run `node C:\Users\Dell\hec-tools\a0-harness\measure.mjs <repoRoot> <outDir> [screen-id,...]` (needs node_modules linked in the repo and Chrome installed; deploys the fake client into the git-ignored `<repo>/.claude/a0-preview/`, starts Vite on 5191, writes results.json + screenshots to outDir), then `node finalize.mjs <repoRoot> <outDir>` merges into `docs/evidence/A0` and regenerates the Part 2 tables. `static-counts.mjs`, `bundle.mjs`, `libs-in-chunks.mjs` give sections 1d/1e.
 
@@ -167,7 +167,9 @@ Page errors seen (375 light): admin-tuition: Cannot read properties of undefined
 
 ## Not measured
 
-- admin Tuition (fixture gap, see top), teacher dashboard, Star Board / High Scores / Night League boards, student leaderboard, parent view, admin Payroll: not run (task paused).
-- Production-build runtime timings (would hit the live Supabase project).
-- Real-network / real-device timings; Lighthouse.
+- Production-build runtime timings (would hit the live Supabase project). Sizes are static.
+- Real-network / real-device timings; Lighthouse; INP.
 - framer-motion chunk location (minified, no name hits).
+- Data-heavy states: the fake returns thin data for edge functions (calculate-payroll empty, calculate-tuition one canned shape), so admin Payroll shows no pay lines and admin Tuition throws a null-name error at 375. Treat those two as layout cost only.
+- Boards below 768 px render the podium fallback by design, so Star Board / High Scores / Night League numbers at 375 are podium numbers.
+- Student leaderboard measured as the Achievements tab of the student dashboard.
