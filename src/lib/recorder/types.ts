@@ -167,8 +167,14 @@ export interface LocalRecording {
   /** Audio captured before the server stamped its start (ms), and whether the server has been told. */
   preStartMs?: number;
   preStartAcked?: boolean;
-  /** C2 round 4 (R3-B1): stated refusals of pre_start_ms; at 3 the recording is given up, said plainly. */
-  preStartRefusals?: number;
+  /**
+   * C2 round 5 (R4-1): failed attempts to state pre_start_ms that were NOT a
+   * refusal the server stated (429, "no rows", a timeout...), and when to try
+   * again (server time). Retried with backoff for as long as it takes; only
+   * the trigger's own refusal ends the recording.
+   */
+  preStartAttempts?: number;
+  preStartNextAt?: number;
   /** C2 round 4 (owner ruling): when this laptop learnt the server gave the recording up; its unsent audio is deleted 14 days later. */
   abandonedAt?: number;
   clientStartedAt?: string;

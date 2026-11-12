@@ -1692,11 +1692,63 @@ console.log("=== R3-B1: one pre-start limit, shared with the migration ===");
   await src.play(30, r);
   ok("R3-B1: while the server will not take the offset the state is never `recording`", !states.includes("recording"), states.join(","));
   const e = errors.find((x) => x.code === "start_failed" && /CANNOT be sent/.test(x.message));
-  ok("R3-B1: after three refusals: 'cannot be sent', recording stopped, the microphones closed", !!e && r.state === "error" && !src.open, e?.message);
+  ok("R4-1: the server's STATED refusal: 'cannot be sent', recording stopped, the microphones closed", !!e && r.state === "error" && !src.open, e?.message);
+  ok("R4-1: the message says why, that it is final, and to use the backup", !!e && /the server refused it/.test(e.message) && /backup recorder/.test(e.message) && /kept on this laptop for 14 days/.test(e.message), e?.message);
   ok("R3-B1: no 'kept and sent' claim was made", !errors.some((x) => /kept and sent/.test(x.message)));
   eq("R3-B1: the server row is given up, not left `recording`", w.server.recordings.get(row.id).status, "abandoned");
-  ok("R3-B1: the audio is kept on the laptop and listed", (await r.heldAudio()).some((h) => h.recordingId === row.id && h.bytes > 0));
+  const h = (await r.heldAudio()).find((x) => x.recordingId === row.id);
+  ok("R4-1: the audio is not dropped: kept on the laptop, listed, with its deletion date (the unsent-audio rule)", !!h && h.bytes > 0 && !!h.deleteAt, JSON.stringify(h && { bytes: h.bytes, deleteAt: h.deleteAt }));
   void store;
+}
+
+console.log("=== R4-1: only a refusal the server STATES ends a recording at the pre-start statement ===");
+{
+  // The migration's text and the engine's classification are one (a reworded RAISE would otherwise turn final into retry, or back).
+  const sql = readFileSync(resolve(repo, "supabase/migrations/20261112100000_class_recorder.sql"), "utf8");
+  const m = sql.match(/RAISE EXCEPTION '(The audio before the server''s start can be stated once[^']*(?:''[^']*)*)'/);
+  ok("R4-1: the trigger's pre-start text is found in the migration", !!m);
+  eq("R4-1: ...and is classified as its own stated refusal", R.classifyRefusal((m?.[1] ?? "").replace(/''/g, "'")), "pre_start_refused");
+  for (const t of ["Too Many Requests", "JSON object requested, multiple (or no) rows returned", "upstream request timeout", "something nobody expected"])
+    ok(`R4-1: '${t}' is not a stated pre-start refusal`, R.classifyRefusal(t) !== "pre_start_refused");
+}
+const unclassified = [
+  ["429 x 8", { message: "Too Many Requests", code: "429" }],
+  ["'no rows' x 8 (the session briefly anonymous)", { message: "JSON object requested, multiple (or no) rows returned", code: "PGRST116", details: "The result contains 0 rows" }],
+  ["a timeout x 8", { message: "upstream request timeout", status: 504 }],
+  ["an unclassified answer x 8", { message: "Internal weirdness", code: "XX000" }],
+];
+for (const [label, answer] of unclassified) {
+  const { w, src, r, errors, states, row, store } = await started();
+  const orig = w.backend.setPreStart.bind(w.backend); let n = 0; const calls = [];
+  w.backend.setPreStart = async (id, ms) => { calls.push(clock); if (n++ < 8) throw answer; return orig(id, ms); };
+  const st = w.backend.start.bind(w.backend);
+  w.backend.start = async (...a) => { clock += 400; return st(...a); };   // any real Start takes some time: pre_start_ms > 0
+  r.tick(); await r.settle();
+  await src.play(40, r);
+  ok(`R4-1 ${label}: after 40 s still capturing (starting, no red dot), microphones open`, r.state === "starting" && src.open && !states.includes("error"), `${r.state} ${src.open}`);
+  ok(`R4-1 ${label}: never "cannot be sent", nothing abandoned`, !errors.some((e) => e.code === "start_failed") && w.server.recordings.get(row.id).status === "recording", errors.filter((e) => e.code === "start_failed").map((e) => e.message).join(" | "));
+  ok(`R4-1 ${label}: every chunk is kept on this laptop meanwhile`, (await store.listChunks(row.id)).filter((c) => c.track === "teacher").reduce((k, c) => k + c.tEndMs - c.tStartMs, 0) >= 38000);
+  await src.play(5 * 60, r, 200);
+  const gaps = calls.slice(1).map((t, i) => t - calls[i]);
+  ok(`R4-1 ${label}: retried with backoff (gaps grow, none above 60 s)`, gaps.length >= 8 && gaps[gaps.length - 1] > gaps[0] && Math.max(...gaps) <= 61000, JSON.stringify(gaps.map((g) => Math.round(g / 1000))));
+  eq(`R4-1 ${label}: then accepted: recording`, r.state, "recording");
+  eq(`R4-1 ${label}: the offset the engine stated is the one on the server`, w.server.recordings.get(row.id).pre_start_ms, (await store.getRecording(row.id))?.preStartMs);
+  ok(`R4-1 ${label}: what was said while waiting was a retry, not a refusal`, errors.some((e) => e.code === "server_unavailable" && /asked again/.test(e.message)) && !errors.some((e) => e.code === "server_refused" && e.refusal === "pre_start_refused"));
+  await r.stop(); await r.settle(); await ticks(r, 30, 5000);
+  eq(`R4-1 ${label}: Stop completes`, w.server.recordings.get(row.id).status, "complete");
+  ok(`R4-1 ${label}: all of it is on the server`, teacherSeconds(w, row.id) >= 5 * 60 + 39, String(teacherSeconds(w, row.id)));
+}
+{
+  // A stated refusal after a run of unclassified answers is still final at once (and only then).
+  const { w, src, r, errors, row } = await started();
+  let n = 0;
+  w.backend.setPreStart = async () => { n++; if (n < 5) throw { message: "Too Many Requests", code: "429" }; throw { message: "The audio before the server's start can be stated once, before any chunk, and not from before the window opened", code: "P0001" }; };
+  const st = w.backend.start.bind(w.backend);
+  w.backend.start = async (...a) => { clock += 400; return st(...a); };
+  r.tick(); await r.settle();
+  await src.play(60, r, 200);
+  eq("R4-1: four 429s then the stated refusal: final at the stated one (5 calls)", n, 5);
+  ok("R4-1: ...'cannot be sent' only then, the microphones closed, the audio held", r.state === "error" && !src.open && errors.filter((e) => e.code === "start_failed").length === 1 && (await r.heldAudio()).some((h) => h.recordingId === row.id && h.bytes > 0));
 }
 
 console.log("=== R3-M1: filled silence is stated exactly and never counts ===");

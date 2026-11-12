@@ -17,6 +17,8 @@ import { Suspense, lazy } from "react";
 import { lazyRetry } from "./lib/lazyRetry";
 import { AppLoader } from "./components/AppLoader";
 const AnnouncementRenderer = lazyRetry(() => import("./components/announcements/AnnouncementRenderer").then((m) => ({ default: m.AnnouncementRenderer })));
+// The class recorder's "Ready for today" outlives pages and reloads (C2 round 5, R4-2); renders nothing.
+const RecorderBoot = lazyRetry(() => import("./components/recorder/RecorderBoot").then((m) => ({ default: m.RecorderBoot })));
 import { AuthProvider } from "@/hooks/useAuth";
 import { IvoryScope } from "@/components/theme/IvoryScope";
 
@@ -102,6 +104,7 @@ function AppContent() {
             <IvoryScope>
             <ProfilePicker />
             <Suspense fallback={null}><AnnouncementRenderer /></Suspense>
+            <Suspense fallback={null}><RecorderBoot /></Suspense>
             <StartupGuard>
               <Suspense fallback={<AppLoader />}>
                 <Routes>
