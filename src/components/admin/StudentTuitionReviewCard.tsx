@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import {  ChevronDown, CheckCircle, Edit, FileText, Loader2 } from "lucide-react";
 import { EnrollmentRateEditor } from "./EnrollmentRateEditor";
 import { Textarea } from "@/components/ui/textarea";
+import { useIvory } from "@/hooks/useIvory";
 
 interface StudentTuitionReviewCardProps {
   invoice: any;
@@ -29,6 +30,8 @@ export function StudentTuitionReviewCard({
   const [notes, setNotes] = useState(invoice.confirmation_notes || "");
   const [showNotes, setShowNotes] = useState(false);
   const queryClient = useQueryClient();
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
 
   const confirmMutation = useMutation({
     mutationFn: async () => {
@@ -84,8 +87,16 @@ export function StudentTuitionReviewCard({
       adjusted: { variant: "secondary", label: "Adjusted" },
       auto_approved: { variant: "outline", label: "Auto-Approved" },
     };
+    // Ivory: "Needs Review" is a warning (check this), "Confirmed" is done;
+    // same labels, same lookup.
+    const ivoryVariants: Record<string, any> = {
+      needs_review: "warning",
+      confirmed: "success",
+      adjusted: "secondary",
+      auto_approved: "secondary",
+    };
     const config = variants[status] || variants.needs_review;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return <Badge variant={ivory ? ivoryVariants[status] || ivoryVariants.needs_review : config.variant}>{config.label}</Badge>;
   };
 
   const getFlagBadge = (flag: any) => {
@@ -97,6 +108,12 @@ export function StudentTuitionReviewCard({
       low_tuition: "bg-red-500/10 text-red-500 border-red-500/20",
       enrollment_discount: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
     };
+    if (ivory) {
+      // A flag is a label: a low tuition or a rate override asks for a check
+      // (warning); the rest are neutral. Same label text.
+      const warn = flag.type === "low_tuition" || flag.type === "rate_override";
+      return <Badge variant={warn ? "warning" : "secondary"}>{flag.label}</Badge>;
+    }
     return (
       <Badge variant="outline" className={colors[flag.type] || ""}>
         {flag.label}
@@ -111,27 +128,29 @@ export function StudentTuitionReviewCard({
     : 0;
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={iv("", "hover:shadow-md transition-shadow")}>
       <CardContent className="p-4">
-        <div className="flex items-start gap-4">
+        <div className={iv("flex items-start gap-3", "flex items-start gap-4")}>
           <Checkbox
             checked={isSelected}
             onCheckedChange={onToggleSelect}
             className="mt-1"
+            aria-label={`Select ${student?.full_name || "student"}`}
           />
 
-          <div className="flex-1 space-y-3">
+          <div className={iv("min-w-0 flex-1 space-y-3", "flex-1 space-y-3")}>
             {/* Header */}
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="font-semibold text-lg">{student?.full_name || "Unknown Student"}</h3>
-                <div className="flex items-center gap-2 mt-1">
+            <div className={iv("flex flex-wrap items-start justify-between gap-3", "flex items-start justify-between")}>
+              <div className={iv("min-w-0", "")}>
+                <h3 className={iv("whitespace-normal break-words hyphens-none text-balance text-hec-h3 font-semibold text-hec-ink", "font-semibold text-lg")}>{student?.full_name || "Unknown Student"}</h3>
+                <div className={iv("mt-2 flex flex-wrap items-center gap-2", "flex items-center gap-2 mt-1")}>
                   {getStatusBadge(invoice.confirmation_status)}
-                  <span className="text-sm text-muted-foreground">
+                  {/* Ivory: the invoice total is this card's one total - ink, sans, tabular. */}
+                  <span className={iv("whitespace-nowrap font-sans text-hec-body font-semibold tabular-nums text-hec-ink", "text-sm text-muted-foreground")}>
                     {formatVND(invoice.total_amount)}
                   </span>
                   {discountPercent > 0 && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant={ivory ? "secondary" : "outline"} className={iv("tabular-nums", "text-xs")}>
                       -{discountPercent}% discount
                     </Badge>
                   )}
@@ -141,10 +160,12 @@ export function StudentTuitionReviewCard({
               <div className="flex gap-2">
                 {invoice.confirmation_status === "needs_review" && (
                   <Button
-                    size="sm"
+                    size={ivory ? "icon" : "sm"}
                     variant="default"
                     onClick={() => confirmMutation.mutate()}
                     disabled={confirmMutation.isPending}
+                    aria-label="Confirm tuition"
+                    title={ivory ? "Confirm tuition" : undefined}
                   >
                     {confirmMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -154,9 +175,11 @@ export function StudentTuitionReviewCard({
                   </Button>
                 )}
                 <Button
-                  size="sm"
+                  size={ivory ? "icon" : "sm"}
                   variant="outline"
                   onClick={() => setIsEditingRate(true)}
+                  aria-label="Edit rates"
+                  title={ivory ? "Edit rates" : undefined}
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -184,30 +207,30 @@ export function StudentTuitionReviewCard({
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-3 mt-3">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Base Amount:</span>
-                    <span className="ml-2 font-medium">{formatVND(invoice.base_amount)}</span>
+                <div className={iv("grid grid-cols-1 gap-x-6 gap-y-2 text-hec-small sm:grid-cols-2", "grid grid-cols-2 gap-4 text-sm")}>
+                  <div className={iv("flex items-baseline justify-between gap-4", "")}>
+                    <span className={iv("min-w-0 text-hec-ink-soft", "text-muted-foreground")}>Base Amount:</span>
+                    <span className={iv("shrink-0 whitespace-nowrap font-sans font-medium tabular-nums text-hec-ink", "ml-2 font-medium")}>{formatVND(invoice.base_amount)}</span>
                   </div>
-                  <div>
-                    <span className="text-muted-foreground">Discount:</span>
-                    <span className="ml-2 font-medium">{formatVND(invoice.discount_amount)}</span>
+                  <div className={iv("flex items-baseline justify-between gap-4", "")}>
+                    <span className={iv("min-w-0 text-hec-ink-soft", "text-muted-foreground")}>Discount:</span>
+                    <span className={iv("shrink-0 whitespace-nowrap font-sans font-medium tabular-nums text-hec-ink", "ml-2 font-medium")}>{formatVND(invoice.discount_amount)}</span>
                   </div>
-                  <div>
-                    <span className="text-muted-foreground">Total Due:</span>
-                    <span className="ml-2 font-medium">{formatVND(invoice.total_amount)}</span>
+                  <div className={iv("flex items-baseline justify-between gap-4", "")}>
+                    <span className={iv("min-w-0 text-hec-ink-soft", "text-muted-foreground")}>Total Due:</span>
+                    <span className={iv("shrink-0 whitespace-nowrap font-sans font-medium tabular-nums text-hec-ink", "ml-2 font-medium")}>{formatVND(invoice.total_amount)}</span>
                   </div>
-                  <div>
-                    <span className="text-muted-foreground">Paid:</span>
-                    <span className="ml-2 font-medium">{formatVND(invoice.paid_amount || 0)}</span>
+                  <div className={iv("flex items-baseline justify-between gap-4", "")}>
+                    <span className={iv("min-w-0 text-hec-ink-soft", "text-muted-foreground")}>Paid:</span>
+                    <span className={iv("shrink-0 whitespace-nowrap font-sans font-medium tabular-nums text-hec-ink", "ml-2 font-medium")}>{formatVND(invoice.paid_amount || 0)}</span>
                   </div>
                 </div>
 
                 {/* Possible Reasons for Anomalies */}
                 {reviewFlags.some((f) => f.type === "low_tuition") && (
-                  <div className="p-3 bg-muted rounded-lg">
-                    <h4 className="font-medium text-sm mb-2">Possible Reasons for Low Tuition:</h4>
-                    <ul className="text-xs space-y-1 text-muted-foreground">
+                  <div className={iv("rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4", "p-3 bg-muted rounded-lg")}>
+                    <h4 className={iv("mb-2 text-hec-small font-semibold text-hec-warn", "font-medium text-sm mb-2")}>Possible Reasons for Low Tuition:</h4>
+                    <ul className={iv("space-y-1 text-hec-small text-hec-ink", "text-xs space-y-1 text-muted-foreground")}>
                       {reviewFlags
                         .find((f) => f.type === "low_tuition")
                         ?.details?.possibleReasons?.map((reason: string, idx: number) => (
