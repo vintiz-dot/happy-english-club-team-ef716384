@@ -36,66 +36,156 @@ interface ChildSummary {
   lessons: Array<{ lesson_date: string; title: string | null; summary: string | null; homework: string | null }>;
 }
 
-function useChildren(userId?: string) {
-  return useQuery<ChildSummary[]>({
-    queryKey: ["family-children", userId],
-    enabled: !!userId,
-    queryFn: async () => {
-      // RLS: a family user's students select returns exactly their children.
-      const { data: kids } = await (supabase as any)
-        .from("students")
-        .select("id, full_name, avatar_url")
-        .eq("is_active", true)
-        .order("full_name");
-      const children = (kids || []) as any[];
-      const since = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+// BEGIN fetchChildren
+/** PostgREST returns at most this many rows per request unless told otherwise. */
+const POSTGREST_ROW_CAP = 1000;
 
-      return Promise.all(
-        children.map(async (kid): Promise<ChildSummary> => {
-          const [profile, points, att, enr] = await Promise.all([
-            (supabase as any)
-              .from("student_learning_profiles")
-              .select("summary, cefr_estimate")
-              .eq("student_id", kid.id).maybeSingle(),
-            (supabase as any)
-              .from("student_points")
-              .select("total_points").eq("student_id", kid.id).maybeSingle(),
-            (supabase as any)
-              .from("attendance")
-              .select("status").eq("student_id", kid.id).gte("date", since),
-            (supabase as any)
-              .from("enrollments").select("class_id").eq("student_id", kid.id),
-          ]);
+/** Original shape: five requests per child. Kept verbatim as the fallback. */
+async function fetchChildrenPerChild(client: any, children: any[], since: string): Promise<ChildSummary[]> {
+  return Promise.all(
+    children.map(async (kid): Promise<ChildSummary> => {
+      const [profile, points, att, enr] = await Promise.all([
+        (client as any)
+          .from("student_learning_profiles")
+          .select("summary, cefr_estimate")
+          .eq("student_id", kid.id).maybeSingle(),
+        (client as any)
+          .from("student_points")
+          .select("total_points").eq("student_id", kid.id).maybeSingle(),
+        (client as any)
+          .from("attendance")
+          .select("status").eq("student_id", kid.id).gte("date", since),
+        (client as any)
+          .from("enrollments").select("class_id").eq("student_id", kid.id),
+      ]);
 
-          const classIds = [...new Set(((enr.data || []) as any[]).map((r) => r.class_id))];
-          let lessons: ChildSummary["lessons"] = [];
-          if (classIds.length) {
-            const { data: ov } = await (supabase as any)
+      const classIds = [...new Set(((enr.data || []) as any[]).map((r) => r.class_id))];
+      let lessons: ChildSummary["lessons"] = [];
+      if (classIds.length) {
+        const { data: ov } = await (client as any)
+          .from("lesson_overviews")
+          .select("lesson_date, title, summary, homework")
+          .in("class_id", classIds)
+          .order("lesson_date", { ascending: false })
+          .limit(3);
+        lessons = ov || [];
+      }
+
+      const attRows = (att.data || []) as any[];
+      return {
+        id: kid.id,
+        full_name: kid.full_name,
+        avatar_url: kid.avatar_url,
+        cefr: profile.data?.cefr_estimate ?? null,
+        journey: profile.data?.summary ?? null,
+        total_points: points.data?.total_points ?? 0,
+        attendance: {
+          present: attRows.filter((a) => a.status === "Present" || a.status === "Late").length,
+          total: attRows.length,
+        },
+        lessons,
+      };
+    }),
+  );
+}
+
+/**
+ * One request per table (.in("student_id", ids)) instead of one per child.
+ * Same tables, same column lists, same caller client (RLS unchanged).
+ * lesson_overviews stays one request per distinct class set: its .limit(3)
+ * is per child, so it cannot be batched without changing which rows return.
+ * Returns null (caller falls back to the per-child path) when a batched
+ * request errored or came back as long as PostgREST's row cap allows.
+ */
+async function fetchChildrenBatched(client: any, children: any[], since: string): Promise<ChildSummary[] | null> {
+  const ids = children.map((k) => k.id);
+  const [profiles, points, att, enr] = await Promise.all([
+    (client as any).from("student_learning_profiles").select("student_id, summary, cefr_estimate").in("student_id", ids),
+    (client as any).from("student_points").select("student_id, total_points").in("student_id", ids),
+    (client as any).from("attendance").select("student_id, status").in("student_id", ids).gte("date", since),
+    (client as any).from("enrollments").select("student_id, class_id").in("student_id", ids),
+  ]);
+  for (const r of [profiles, points, att, enr]) {
+    if (r.error || !Array.isArray(r.data) || r.data.length >= POSTGREST_ROW_CAP) return null;
+  }
+
+  const group = (rows: any[]) => {
+    const m = new Map<string, any[]>();
+    for (const r of rows) {
+      const l = m.get(r.student_id);
+      if (l) l.push(r); else m.set(r.student_id, [r]);
+    }
+    return m;
+  };
+  const profBy = group(profiles.data), ptsBy = group(points.data), attBy = group(att.data), enrBy = group(enr.data);
+  // .maybeSingle() yields no data for zero rows AND for more than one row.
+  const single = (m: Map<string, any[]>, id: string) => {
+    const l = m.get(id);
+    return l && l.length === 1 ? l[0] : null;
+  };
+
+  // One lesson_overviews request per distinct class set, shared by children with that set.
+  const lessonsBySet = new Map<string, Promise<ChildSummary["lessons"]>>();
+  return Promise.all(
+    children.map(async (kid): Promise<ChildSummary> => {
+      const classIds = [...new Set((enrBy.get(kid.id) || []).map((r) => r.class_id))];
+      let lessons: ChildSummary["lessons"] = [];
+      if (classIds.length) {
+        const key = JSON.stringify([...classIds].sort());
+        let p = lessonsBySet.get(key);
+        if (!p) {
+          p = (async () => {
+            const { data: ov } = await (client as any)
               .from("lesson_overviews")
               .select("lesson_date, title, summary, homework")
               .in("class_id", classIds)
               .order("lesson_date", { ascending: false })
               .limit(3);
-            lessons = ov || [];
-          }
+            return ov || [];
+          })();
+          lessonsBySet.set(key, p);
+        }
+        lessons = [...(await p)];
+      }
+      const profile = single(profBy, kid.id);
+      const pts = single(ptsBy, kid.id);
+      const attRows = attBy.get(kid.id) || [];
+      return {
+        id: kid.id,
+        full_name: kid.full_name,
+        avatar_url: kid.avatar_url,
+        cefr: profile?.cefr_estimate ?? null,
+        journey: profile?.summary ?? null,
+        total_points: pts?.total_points ?? 0,
+        attendance: {
+          present: attRows.filter((a) => a.status === "Present" || a.status === "Late").length,
+          total: attRows.length,
+        },
+        lessons,
+      };
+    }),
+  );
+}
 
-          const attRows = (att.data || []) as any[];
-          return {
-            id: kid.id,
-            full_name: kid.full_name,
-            avatar_url: kid.avatar_url,
-            cefr: profile.data?.cefr_estimate ?? null,
-            journey: profile.data?.summary ?? null,
-            total_points: points.data?.total_points ?? 0,
-            attendance: {
-              present: attRows.filter((a) => a.status === "Present" || a.status === "Late").length,
-              total: attRows.length,
-            },
-            lessons,
-          };
-        }),
-      );
-    },
+export async function fetchChildren(client: any): Promise<ChildSummary[]> {
+  // RLS: a family user's students select returns exactly their children.
+  const { data: kids } = await (client as any)
+    .from("students")
+    .select("id, full_name, avatar_url")
+    .eq("is_active", true)
+    .order("full_name");
+  const children = (kids || []) as any[];
+  const since = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+  if (!children.length) return [];
+  return (await fetchChildrenBatched(client, children, since)) ?? fetchChildrenPerChild(client, children, since);
+}
+// END fetchChildren
+
+function useChildren(userId?: string) {
+  return useQuery<ChildSummary[]>({
+    queryKey: ["family-children", userId],
+    enabled: !!userId,
+    queryFn: () => fetchChildren(supabase),
   });
 }
 
