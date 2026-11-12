@@ -1,8 +1,9 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/lib/avatars";
 import { Star, Zap } from "lucide-react";
 import { getLevelTitle } from "@/lib/levelUtils";
+import { reducedMotion } from "@/components/student/nova/ivory";
 
 interface LevelProgressRingProps {
   avatarUrl?: string | null;
@@ -13,6 +14,13 @@ interface LevelProgressRingProps {
   progress: number;
   totalXp: number;
   size?: "sm" | "md" | "lg";
+  /**
+   * "Ivory" design system look (student dashboard, A4.2): brass arc on a
+   * sunken track, initials in the sans, no glow, no orbiting sparkles, the
+   * level and its title in the flow under the ring. Off by default, so the
+   * other screens that use this ring are unchanged.
+   */
+  ivory?: boolean;
 }
 
 export function LevelProgressRing({
@@ -23,8 +31,10 @@ export function LevelProgressRing({
   nextLevelXp,
   progress,
   totalXp,
-  size = "lg"
+  size = "lg",
+  ivory = false,
 }: LevelProgressRingProps) {
+  const reduceMotion = reducedMotion(useReducedMotion());
   const dimensions = {
     sm: { ring: 80, avatar: 60, stroke: 3, badge: "text-xs px-2 py-0.5" },
     md: { ring: 110, avatar: 84, stroke: 4, badge: "text-sm px-3 py-1" },
@@ -35,6 +45,59 @@ export function LevelProgressRing({
   const radius = (ring - stroke * 2) / 2;
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference - (progress / 100) * circumference;
+
+  if (ivory) {
+    const initials = name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <div className="relative" style={{ width: ring, height: ring }}>
+          <svg width={ring} height={ring} className="-rotate-90" aria-hidden>
+            <circle
+              cx={ring / 2}
+              cy={ring / 2}
+              r={radius}
+              fill="none"
+              className="stroke-hec-sunken"
+              strokeWidth={stroke}
+            />
+            <motion.circle
+              cx={ring / 2}
+              cy={ring / 2}
+              r={radius}
+              fill="none"
+              className="stroke-hec-brass"
+              strokeWidth={stroke}
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              initial={reduceMotion ? false : { strokeDashoffset: circumference }}
+              animate={{ strokeDashoffset: dashOffset }}
+              transition={reduceMotion ? { duration: 0 } : { duration: 0.42, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+            />
+          </svg>
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{ width: avatar, height: avatar }}
+          >
+            <Avatar className="h-full w-full border border-hec-line" style={{ width: avatar, height: avatar }}>
+              <AvatarImage src={getAvatarUrl(avatarUrl) || undefined} alt={name} className="object-cover" />
+              <AvatarFallback className="bg-hec-surface font-sans text-hec-h2 font-semibold text-hec-ink">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          {/* Total XP */}
+          <span className="absolute -right-3 -top-1 inline-flex items-center gap-1 rounded-full border border-hec-line bg-hec-surface px-2 py-0.5 text-hec-caption font-medium tabular-nums text-hec-ink shadow-hec-1">
+            <Zap className="h-3 w-3 text-hec-ink-soft" aria-hidden />
+            {totalXp}
+          </span>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-full bg-hec-action px-3 py-0.5 text-hec-caption font-semibold tabular-nums text-hec-on-action">
+          LV {level}
+        </span>
+        <span className="text-center text-hec-small text-hec-ink-soft">{getLevelTitle(level)}</span>
+      </div>
+    );
+  }
 
   return (
     <motion.div 

@@ -1181,6 +1181,87 @@ await section('R1 F-7 surviving mutants', async () => {
   m = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [ctl.sid, destDay.date]));
   ok('M38   control: the same move with no settled bill is allowed', m.ok !== undefined, m);
 });
+// ------------------------------------- D-review-3 ship fixes
+await section('S3 F-10 a mark re-pointed at another CHILD is erased evidence', async () => {
+  const a = await mk({ when: PAST, status: 'Held' });
+  const k1 = await att(a.sid, 'Present', a.teacher), k2 = await att(a.sid, 'Present', a.teacher);
+  await inv(k1, a.month, { recorded: 540000 }); await inv(k2, a.month, { recorded: 540000 });
+  const swapTo = randomUUID();
+  await must('F-10 swap', () => asAdmin(`UPDATE attendance SET student_id=$2 WHERE session_id=$1 AND student_id=$3`, [a.sid, swapTo, k1]));
+  const p = await preview(a.sid);
+  const e = (p.erased_recently ?? []).filter((x) => x.what === 'attendance_reparented');
+  ok('F-10 V5: after UPDATE attendance SET student_id = <another child>: review_required, erased lists the swap (old and new child)',
+     p.review_required === true && e.length === 1 && e[0].student_id === k1 && e[0].new_student_id === swapTo &&
+     e[0].new_session_id === a.sid, [p.tier, p.review_required, p.erased_recently]);
+  ok('F-10   counted once (not also as an ordinary attendance erasure)',
+     (p.erased_recently ?? []).filter((x) => x.what === 'attendance').length === 0, p.erased_recently);
+  const res = await must('F-10 cancel', () => checked(a.sid, { token: p.token, confirm: true, corr: p.tier === 3 ? CORR : null }));
+  ok('F-10   the cancel is stored review_required with the swap in erased_recently',
+     res.review_required === true && ((await overrides(a.sid))[0]?.erased_recently ?? []).some((x) => x.new_student_id === swapTo), res);
+});
+
+// F-12: one case per destination-day family, each the ONLY reason the move
+// is judged (future -> future, no bills, no other evidence), so dropping
+// that one condition changes an assertion (mutants S05, S06, S08, S12, S14, S15).
+await section('S3 F-12 destination-day rules, each alone', async () => {
+  const families = [
+    ['points (S14)', 'points', async (cid, t, d) => asSuper(`INSERT INTO point_transactions(student_id,class_id,points,type,date,created_by)
+        VALUES (gen_random_uuid(),$1,5,'participation',$2,$3)`, [cid, d, t])],
+    ['transcripts (S15)', 'transcripts', async (cid, t, d) => asSuper(`INSERT INTO class_transcripts(class_id,uploaded_by,transcript_date,status)
+        VALUES ($1,$2,$3,'analyzed')`, [cid, t, d])],
+    ['homework (S13, S05, S06)', 'homeworks', async (cid, t, d) => asSuper(`INSERT INTO homeworks(class_id, created_by, created_at)
+        VALUES ($1,$2,($3::date + time '12:00') AT TIME ZONE 'Asia/Ho_Chi_Minh')`, [cid, t, d])],
+    ['another lesson with a person\'s mark (S12)', 'other_lessons', async (cid, t, d) => {
+      const o = await mk({ when: { date: d }, cid, start: '08:00', end: '09:00' });
+      await att(o.sid, 'Present', t);
+    }],
+  ];
+  let n = 0;
+  for (const [label, key, seed] of families) {
+    const s = await mk();
+    const day = await clock(14 + n++);
+    await seed(s.cid, s.teacher, day.date);
+    const change = { date: day.date, start_time: '17:30', end_time: '19:00' };
+    const p = await preview(s.sid, 'move', change);
+    ok(`F-12 ${label}: day_evidence.${key} = 1 and nothing else (not started, no settled month)`,
+       p.destination?.day_evidence?.[key] === 1 && p.destination.day_evidence.any === true &&
+       p.destination.started === false && p.destination.any === false && p.started === false, p.destination);
+    ok(`F-12 ${label}: the day alone raises the tier to 1 (confirm required) - S05`,
+       p.tier === 1 && p.requires.confirm === true, [p.tier, p.requires]);
+    ok(`F-12 ${label}: the day alone puts the move on review - S06`, p.review_required === true, p.review_required);
+    const r = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [s.sid, day.date]));
+    ok(`F-12 ${label}: automation cannot move the lesson onto that day -> HC020`, r.code === 'HC020', r);
+    const res = await must(`F-12 ${label}`, () => move(s.sid, { date: day.date, start: '17:30', end: '19:00', token: p.token, confirm: true }));
+    ok(`F-12 ${label}: the checked move is stored review_required`, res.review_required === true, res);
+  }
+  // Control: the same move onto a clean future day is tier 0, not reviewed.
+  const c = await mk();
+  // (a day of an open payroll month: another case locks a later month's payroll)
+  const cday = await clock(13);
+  const pc = await preview(c.sid, 'move', { date: cday.date, start_time: '17:30', end_time: '19:00' });
+  ok('F-12 control: a clean future day -> tier 0, review_required false', pc.tier === 0 && pc.review_required === false &&
+     pc.destination?.day_evidence?.any === false, [pc.tier, pc.review_required, pc.destination]);
+  // S08: a move onto a STARTED destination with nothing else on that day.
+  const st = await mk();
+  const past = await clock(-9);
+  const ps = await preview(st.sid, 'move', { date: past.date, start_time: '17:30', end_time: '19:00' });
+  ok('F-12 S08 a blank future lesson moved onto a clean PAST day: destination started, no day evidence, tier 1, review_required',
+     ps.destination?.started === true && ps.destination.day_evidence?.any === false && ps.destination.any === false &&
+     ps.level === 'NONE' && ps.tier === 1 && ps.review_required === true, [ps.tier, ps.level, ps.destination, ps.review_required]);
+});
+
+await section('S3 F-7 a refused automation delete is visible in the guard status', async () => {
+  const st = await startedToday();
+  const r = await tryIt(() => asService(`DELETE FROM sessions WHERE id=$1`, [st.sid]));
+  ok('F-7 the rebuild\'s delete of a lesson that already started -> HC020, lesson kept', r.code === 'HC020' && !!(await sess(st.sid)), r);
+  const s0 = (await asAdmin(`SELECT public.session_cancel_guard_status() r`)).rows[0].r;
+  await must('F-7 log', () => asService(`SELECT public.log_session_automation_refused($1,'schedule-sessions') r`, [st.sid]));
+  const s1 = (await asAdmin(`SELECT public.session_cancel_guard_status() r`)).rows[0].r;
+  ok('F-7 session_cancel_guard_status counts it: automation_refused_30d + 1, automation_refused_last set',
+     typeof s0.automation_refused_30d === 'number' && s1.automation_refused_30d === s0.automation_refused_30d + 1 &&
+     !!s1.automation_refused_last, [s0.automation_refused_30d, s1.automation_refused_30d, s1.automation_refused_last]);
+});
+
 await section('R1 F-9 insert guard is owner-only', async () => {
   const def = await fnDef('public.session_cancel_audit_insert_guard()');
   ok('F-9 the insert guard refuses any role that is not the table owner', /relowner/.test(def), def.slice(0, 120));
