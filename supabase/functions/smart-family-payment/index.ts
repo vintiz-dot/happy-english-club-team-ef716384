@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
+import { invoicePaidLabel, paidLabel } from '../_lib/invoice-status.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -264,7 +265,7 @@ Deno.serve(async (req) => {
         // Update or create invoice
         const { data: invoice } = await supabase
           .from('invoices')
-          .select('id, paid_amount, total_amount, recorded_payment')
+          .select('id, paid_amount, total_amount, recorded_payment, carry_in_debt, carry_in_credit')
           .eq('student_id', sibling.id)
           .eq('month', month)
           .single();
@@ -276,7 +277,10 @@ Deno.serve(async (req) => {
             .from('invoices')
             .update({
               paid_amount: newPaid,
-              status: newPaid >= invoice.total_amount ? 'paid' : 'partial',
+              // The month's own money against what the month asks for.
+              // paid_amount is cumulative: compared with one month's total
+              // it called nearly every part payment "paid".
+              status: invoicePaidLabel(invoice, newRecorded),
               recorded_payment: newRecorded
             })
             .eq('id', invoice.id);
@@ -291,7 +295,9 @@ Deno.serve(async (req) => {
             total_amount: sibData.totalAmount ?? 0,
             paid_amount: applied,
             recorded_payment: applied,
-            status: applied >= (sibData.totalAmount ?? 0) ? 'paid' : 'partial',
+            // No bill row yet, so nothing is recorded for the month and the
+            // calculator's closing balance IS the month's payable.
+            status: paidLabel(applied, sibling.debt - sibling.credit),
           });
         }
 

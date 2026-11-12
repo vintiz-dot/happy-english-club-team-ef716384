@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
+import { invoicePaidLabel } from '../_lib/invoice-status.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -88,15 +89,22 @@ Deno.serve(async (req) => {
     console.log('Processing family payment:', { familyId, amount, allocationMode });
 
     // Get open invoices for selected students
-    const { data: invoices, error: invoiceError } = await supabase
+    const { data: monthInvoices, error: invoiceError } = await supabase
       .from('invoices')
       .select('*, students(full_name)')
       .in('student_id', selectedStudentIds)
       .eq('month', month)
-      .neq('status', 'paid')
       .order('month', { ascending: true });
 
     if (invoiceError) throw invoiceError;
+
+    // "Open" is judged from the bill's own money, not from the stored
+    // status label: a label can be stale (an override, a payment edited
+    // since), and a bill wrongly labelled paid would be left out of the
+    // allocation while the ledger entry was still posted. A bill that IS
+    // paid stays out, as before - including one covered partly by credit
+    // carried in, where total - recorded alone would still look owed.
+    const invoices = (monthInvoices ?? []).filter((inv) => invoicePaidLabel(inv) !== 'paid');
 
     // Calculate allocations based on mode
     let allocations: Array<{ studentId: string; amount: number; invoices: any[] }> = [];
@@ -259,7 +267,7 @@ Deno.serve(async (req) => {
           .from('invoices')
           .update({
             recorded_payment: newPaid,
-            status: newPaid >= inv.total_amount ? 'paid' : 'partial'
+            status: invoicePaidLabel(inv, newPaid)
           })
           .eq('id', inv.id);
         
