@@ -439,7 +439,12 @@ export function StudentAuditPanel({
       </div>
 
       {/* ------------------------------------------------- the months */}
-      <div className="overflow-x-auto rounded-hec-lg border border-hec-line bg-hec-surface">
+      <div
+        tabIndex={0}
+        role="region"
+        aria-label="Months on record"
+        className="overflow-x-auto rounded-hec-lg border border-hec-line bg-hec-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+      >
         <table className="w-full min-w-[640px] text-left">
           <thead>
             <tr className="border-b border-hec-line text-hec-caption uppercase tracking-wider text-hec-ink-soft">
