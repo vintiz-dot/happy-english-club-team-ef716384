@@ -2,11 +2,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
 import ClassSelector from "@/components/schedule/ClassSelector";
 import type { TeacherPayrollSession } from "@/lib/teacherPayrollView";
-
-const TIMEZONE = "Asia/Bangkok";
 
 /** The shape ClassSelector reads. */
 interface Session {
@@ -63,16 +60,11 @@ export default function TeacherPayrollCalendar({
     return sessions.filter((s) => s.date === key);
   };
 
-  const getSessionStatus = (session: Session) => {
-    const sessionDateTime = new Date(`${session.date}T${session.start_time}`);
-    const nowBangkok = toZonedTime(new Date(), TIMEZONE);
-    
-    if (sessionDateTime > nowBangkok) {
-      return "Scheduled";
-    }
-    
-    return session.status;
-  };
+  // The status the function priced the lesson on. It used to be switched to
+  // "Scheduled" for any lesson after the browser's clock, so a Held lesson
+  // dated ahead showed Scheduled beside the money calculate-payroll pays
+  // for it.
+  const getSessionStatus = (session: Session) => session.status;
 
   const handleDateClick = (date: Date) => {
     const dateSessions = getSessionsForDate(date);
