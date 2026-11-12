@@ -11,7 +11,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, CircleDot, Flag, ListChecks, Loader2, Mic, Settings2, Square, Users } from "lucide-react";
+import { Flag, ListChecks, Loader2, Mic, Settings2, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +27,8 @@ import { useRecorderDeps } from "./RecorderDeps";
 import type { RecorderLike } from "./engine";
 import { fetchClassSwitch, fetchEnrolled, fetchRecorderSettings, fetchTodayLessons } from "./data";
 import { LevelMeter, MicTick, Notice, Status } from "./pieces";
-import { registerSignOutHook } from "./signOutGuard";
+import { NotRecordedNotice, RecordingBar } from "./RecordingBar";
+import { adopt, attachScreen, detachScreen, sessionFor, setLessonLabel } from "./session";
 
 // `stalled` is a capturing state: Stop stays, the screen must not be left (C2 review 2, item 1).
 const CAPTURING: RecorderState[] = ["starting", "recording", "stalled"];
@@ -75,6 +76,9 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   const [discardWord, setDiscardWord] = useState("");
   const [startingSince, setStartingSince] = useState<number | null>(null);
   const [notDurable, setNotDurable] = useState(false);
+  // C3-b: the page prepares by itself (uploads of earlier audio resume without a click); arming waits for the click.
+  const [clicked, setClicked] = useState(false);
+  const autoPrep = useRef(false);
   const [unplugged, setUnplugged] = useState<Set<TrackRole>>(new Set());
   const [lost, setLost] = useState<Set<TrackRole>>(new Set());
   const [stopAsked, setStopAsked] = useState<string | null>(null);
@@ -103,31 +107,31 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   const capturingRef = useRef(false);
   capturingRef.current = capturing;
 
-  // The app's sign-out asks this screen first: refused while a lesson is captured;
-  // otherwise the engine frees what the server has and keeps (and reports) the rest.
-  useEffect(() => registerSignOutHook(async () => {
-    const r = rec.current;
-    if (!r) return true;
-    if (capturingRef.current) { window.alert("A lesson is being recorded. Stop it before signing out."); return false; }
-    const held = await r.heldAudio().catch(() => [] as HeldAudio[]);
-    if (held.length && !window.confirm(`${held.length} recording${held.length === 1 ? " has" : "s have"} not reached the school server yet. They stay on this laptop and are sent when you sign in here again. Sign out now?`)) return false;
-    await r.signOut().catch(() => null);
-    rec.current = null;
-    return true;
-  }), []);
-
-  useEffect(() => () => { void rec.current?.dispose(); }, []);
+  // C2 review 3 (C3-a): the engine lives in ./session, above the router. This
+  // screen attaches to it while mounted; leaving the page (any in-app link)
+  // detaches it and, while it is busy, the session draws a recording bar with
+  // Stop on every page. The sign-out guard lives there too (any page).
+  const offs = useRef<(() => void)[]>([]);
+  useEffect(() => {
+    const have = sessionFor(userId);
+    if (have) { rec.current = have; wire(have); setState(have.state); attachScreen(); }
+    return () => { for (const off of offs.current) off(); offs.current = []; if (rec.current) detachScreen(); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const active = state === "armed" || capturing || SAVING.includes(state);
   useEffect(() => { onActiveChange?.(active); }, [active]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const showError = useCallback((e: RecorderError) => {
     const d: any = e.detail;
     const track = (d === "teacher" || d === "room") ? d as TrackRole : (d?.track === "teacher" || d?.track === "room") ? d.track as TrackRole : /room/.test(e.message) ? "room" : /teacher/.test(e.message) ? "teacher" : null;
+    // While the page prepares by itself (no click yet) the "one click needed" for sound is not an error to show.
+    if (autoPrep.current && e.code === "audio_context_suspended") return;
     setBoard((b) => boardAdd(b, { code: e.code, refusal: e.refusal ?? null, message: e.message, track }, Date.now(), capturingRef.current));
   }, []);
   const clearErrors = (codes: RecorderError["code"][], track?: TrackRole | null) => setBoard((b) => boardClear(b, codes, track));
 
-  const wire = (r: RecorderLike) => {
+  const wire = (r0: RecorderLike) => {
+    // Every listener is removed when the screen goes (the engine may outlive it).
+    const r = { on: ((k: any, fn: any) => { offs.current.push(r0.on(k, fn)); }) as unknown as RecorderLike["on"] };
     r.on("state", ({ state: s }) => {
       setState(s);
       if (s === "recording" || s === "starting") setStartedAt((v) => v ?? now());
@@ -169,13 +173,16 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
     engine.saveProfile(p); setProfile(p);
   }, [speed]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const ready = async () => {
-    setBusy(true); setBoard([]);
+  const ready = async (byClick = true) => {
+    setBusy(true);
+    if (byClick) { setBoard([]); setClicked(true); }
     try {
       let r = rec.current;
       if (!r) {
         r = await engine.createRecorder({ client, userId, profile });
         rec.current = r;
+        adopt(userId, r);
+        attachScreen();
         wire(r);
       }
       const p = await r.prepare();
@@ -195,7 +202,8 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   const devicesOk = devices?.status === "ok";
   useEffect(() => {
     const r = rec.current;
-    if (!r || !lesson || !switchOn || !devicesOk || busy || notDurable) return;
+    // Armed only after the teacher's "Ready for today" (the page also prepares by itself, for uploads).
+    if (!r || !lesson || !switchOn || !devicesOk || busy || notDurable || !clicked) return;
     if (armedFor === lesson.sessionId) return;
     if (phase !== "arming" && phase !== "capturing") return;
     // `error` (the server refused to start) may arm the NEXT lesson; armedFor stops a retry of this one.
@@ -206,7 +214,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
     setStartedAt(null); setMarks([]); setUpload(null); setUnplugged(new Set()); setLost(new Set()); setStopAsked(null); setBoard([]); setClipping({ teacher: false, room: false });
     r.arm({ sessionId: lesson.sessionId, classId: lesson.classId, className: lesson.className, date: lesson.date, startTime: lesson.startTime, endTime: lesson.endTime, status: lesson.status ?? undefined }, { stopAt })
       .catch((e: RecorderError) => showError(e));
-  }, [lesson, switchOn, devicesOk, phase, armedFor, busy, state, notDurable]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lesson, switchOn, devicesOk, phase, armedFor, busy, state, notDurable, clicked]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addMarker = async (kind: MarkerKind, text: string, studentId?: string) => {
     const r = rec.current;
@@ -223,6 +231,16 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
     try { await rec.current?.stop("manual"); } catch (e) { showError(e as RecorderError); }
   };
 
+  // C3-b: prepare and recover by themselves when the page opens (uploads of
+  // earlier audio need no click and resume even on a day without a lesson);
+  // arming still waits for "Ready for today".
+  useEffect(() => {
+    if (rec.current || !profile || lessons.isLoading) return;
+    autoPrep.current = true;
+    void ready(false).finally(() => { autoPrep.current = false; });
+  }, [profile, lessons.isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (lesson) setLessonLabel(lesson.className); }, [lesson?.className]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ------------------------------------------------------------ render
 
   if (lessons.isLoading || settings.isLoading) {
@@ -232,28 +250,9 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   // The red dot only for `recording` (C2 review 2, items 1-2): `starting` saves on this
   // laptop while the server has not confirmed; `stalled` is NOT recording.
   const startingLong = state === "starting" && startingSince !== null && tick - startingSince > 5000;
-  const loud = state === "stalled" || startingLong;
   const banner = capturing ? (
-    <div
-      className={cn("fixed inset-x-0 bottom-0 z-50 border-t-4 bg-foreground text-background shadow-lg", state === "recording" ? "border-destructive" : "border-warning")}
-      role={loud ? "alert" : "status"}
-      aria-live={loud ? "assertive" : "polite"}
-      aria-label={state === "recording" ? "Recording in progress" : state === "stalled" ? "Not recording" : "Waiting for the school server"}
-    >
-      <div className="max-w-3xl mx-auto flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-        <span className="inline-flex items-center gap-2 text-lg font-bold break-words min-w-0">
-          {state === "recording"
-            ? <CircleDot className="h-6 w-6 shrink-0 text-destructive fill-destructive motion-safe:animate-pulse" aria-hidden />
-            : <AlertTriangle className="h-6 w-6 shrink-0 text-warning" aria-hidden />}
-          {state === "recording" ? "Recording" : state === "stalled" ? "NOT RECORDING - restarting the audio" : startingLong ? "Saving on this laptop - the school server has not confirmed yet" : "Starting..."}
-        </span>
-        <span className="tabular-nums text-lg">{startedAt ? clock(tick - startedAt) : "00:00"}</span>
-        <span className="min-w-0 break-words">{lesson?.className}</span>
-        <Button className="ml-auto min-h-11 text-base bg-background text-foreground hover:bg-background/90 font-semibold" onClick={() => setConfirmStop(true)}>
-          <Square className="h-4 w-4 mr-2" aria-hidden /> Stop
-        </Button>
-      </div>
-    </div>
+    <RecordingBar state={state} startingLong={startingLong} elapsed={startedAt ? clock(tick - startedAt) : "00:00"} className={lesson?.className}
+      bothMicsGone={unplugged.size + lost.size >= 2} onStop={() => setConfirmStop(true)} />
   ) : null;
 
   const shown = boardShow(board, tick);
@@ -303,6 +302,24 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
     </div>
   ) : null;
 
+  const discardDialog = (
+    <AlertDialog open={!!discardFor} onOpenChange={(o) => { if (!o) { setDiscardFor(null); setDiscardWord(""); } }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Throw this audio away?</AlertDialogTitle>
+          <AlertDialogDescription>
+            It never reached the school server, so this cannot be undone. Type DISCARD to confirm.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <Input value={discardWord} onChange={(e) => setDiscardWord(e.target.value)} aria-label="Type DISCARD to confirm" className="min-h-11" autoComplete="off" />
+        <AlertDialogFooter>
+          <AlertDialogCancel className="min-h-11">Keep it</AlertDialogCancel>
+          <AlertDialogAction className="min-h-11" disabled={discardWord !== "DISCARD"} onClick={() => void discard()}>Discard</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   if (!profile) {
     return (
       <Notice tone="info" title="Set up the microphones first" action={<Button size="lg" className="min-h-12 text-base" onClick={onSetup}><Settings2 className="h-5 w-5 mr-2" aria-hidden /> Set up the microphones</Button>}>
@@ -315,7 +332,11 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
     return (
       <div className="space-y-4">
         <Notice tone="info" title="No more lessons to record today">The recorder shows your next lesson here on the day.</Notice>
+        {/* C3-b: earlier unsent audio still goes up today (the page prepared by itself), and what is stuck is shown. */}
         {upload && upload.pending > 0 ? uploadStatus(upload, online).map((l) => <Status key={l.text} line={l} live />) : null}
+        {errorBox}
+        {heldBox}
+        {discardDialog}
       </div>
     );
   }
@@ -361,7 +382,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
             ) : null}
           </section>
 
-          {state === "idle" ? (
+          {!clicked && !capturing && !SAVING.includes(state) ? (
             <div className="space-y-2">
               <Button size="lg" className="min-h-14 w-full sm:w-auto text-lg px-8" onClick={() => void ready()} disabled={busy}>
                 {busy ? <Loader2 className="h-5 w-5 mr-2 motion-safe:animate-spin" aria-hidden /> : <Mic className="h-5 w-5 mr-2" aria-hidden />}
@@ -371,7 +392,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
             </div>
           ) : null}
 
-          {(state === "ready" || state === "armed") && lesson ? (
+          {clicked && (state === "ready" || state === "armed") && lesson ? (
             <Status
               live
               line={{ tone: "ok", text: state === "armed"
@@ -430,9 +451,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
             <Notice tone="ok" title="Saved" role="status">The whole recording is on the school's server. You can close this page.</Notice>
           ) : null}
           {state === "error" ? (
-            <Notice tone="error" title="This lesson is not being recorded" role="alert">
-              {board.find((b) => b.code === "start_failed")?.view.body ?? "The school server did not start the recording. What was captured is kept on this laptop."}
-            </Notice>
+            <NotRecordedNotice body={board.find((b) => b.code === "start_failed")?.view.body} />
           ) : null}
           {state === "abandoned" && !board.length ? (
             <Notice tone="warn" title="This recording did not finish" role="status">Anything recorded is kept on this laptop. An admin can see what happened.</Notice>
@@ -442,21 +461,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
 
       {banner}
 
-      <AlertDialog open={!!discardFor} onOpenChange={(o) => { if (!o) { setDiscardFor(null); setDiscardWord(""); } }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Throw this audio away?</AlertDialogTitle>
-            <AlertDialogDescription>
-              It never reached the school server, so this cannot be undone. Type DISCARD to confirm.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <Input value={discardWord} onChange={(e) => setDiscardWord(e.target.value)} aria-label="Type DISCARD to confirm" className="min-h-11" autoComplete="off" />
-          <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-11">Keep it</AlertDialogCancel>
-            <AlertDialogAction className="min-h-11" disabled={discardWord !== "DISCARD"} onClick={() => void discard()}>Discard</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {discardDialog}
 
       <AlertDialog open={confirmStop} onOpenChange={setConfirmStop}>
         <AlertDialogContent>
