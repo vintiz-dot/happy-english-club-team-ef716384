@@ -1,5 +1,5 @@
 {
- "when": "2026-11-12T00:44:43.231Z",
+ "when": "2026-11-12T00:46:13.003Z",
  "base": "vite dev server, fake client (NOT production)",
  "screens": {
   "student-dashboard": {
@@ -4080,6 +4080,344 @@
       4622
      ],
      "requests": 10
+    }
+   }
+  },
+  "admin-payroll": {
+   "route": "/admin?tab=payroll",
+   "role": "admin",
+   "boardStyle": null,
+   "runs": {
+    "375-light": {
+     "fmrMs": 2647,
+     "requests": 18,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "function:admin-unlock": 1,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "function:calculate-payroll": 1,
+      "from:payroll_periods": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 536,
+     "path": "/admin?tab=payroll",
+     "idleMs": 2652.899999976158,
+     "errors": [],
+     "axe": {
+      "rules": 1,
+      "nodes": 3,
+      "byImpact": {
+       "critical": 1
+      },
+      "top": [
+       "button-name(critical,3)"
+      ]
+     },
+     "shot": "admin-payroll-375-light.png",
+     "fmrMedianMs": 3537,
+     "idleMedianMs": 3545,
+     "fmrAll": [
+      2647,
+      3569,
+      3537
+     ],
+     "idleAll": [
+      2653,
+      3574,
+      3545
+     ],
+     "requestsAll": [
+      18,
+      18,
+      18
+     ]
+    },
+    "375-dark": {
+     "fmrMs": 3363.399999976158,
+     "requests": 18,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "function:admin-unlock": 1,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "function:calculate-payroll": 1,
+      "from:payroll_periods": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 536,
+     "path": "/admin?tab=payroll",
+     "idleMs": 3368,
+     "errors": [],
+     "axe": {
+      "rules": 2,
+      "nodes": 9,
+      "byImpact": {
+       "critical": 1,
+       "serious": 1
+      },
+      "top": [
+       "button-name(critical,3)",
+       "color-contrast(serious,6)"
+      ]
+     },
+     "shot": "admin-payroll-375-dark.png",
+     "fmrMedianMs": 3363,
+     "idleMedianMs": 3368,
+     "fmrAll": [
+      3363
+     ],
+     "idleAll": [
+      3368
+     ],
+     "requestsAll": [
+      18
+     ]
+    },
+    "768-light": {
+     "fmrMs": 3031.800000011921,
+     "requests": 18,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "function:admin-unlock": 1,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "function:calculate-payroll": 1,
+      "from:payroll_periods": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 824,
+     "path": "/admin?tab=payroll",
+     "idleMs": 3141.300000011921,
+     "errors": [],
+     "axe": {
+      "rules": 3,
+      "nodes": 7,
+      "byImpact": {
+       "critical": 1,
+       "serious": 2
+      },
+      "top": [
+       "button-name(critical,4)",
+       "list(serious,1)",
+       "listitem(serious,2)"
+      ]
+     },
+     "shot": "admin-payroll-768-light.png",
+     "fmrMedianMs": 3032,
+     "idleMedianMs": 3141,
+     "fmrAll": [
+      3032,
+      3101,
+      2946
+     ],
+     "idleAll": [
+      3141,
+      3283,
+      3129
+     ],
+     "requestsAll": [
+      18,
+      18,
+      18
+     ]
+    },
+    "768-dark": {
+     "fmrMs": 3052.100000023842,
+     "requests": 18,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "function:admin-unlock": 1,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "function:calculate-payroll": 1,
+      "from:payroll_periods": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 824,
+     "path": "/admin?tab=payroll",
+     "idleMs": 3225,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 37,
+      "byImpact": {
+       "critical": 1,
+       "serious": 3
+      },
+      "top": [
+       "button-name(critical,4)",
+       "color-contrast(serious,30)",
+       "list(serious,1)",
+       "listitem(serious,2)"
+      ]
+     },
+     "shot": "admin-payroll-768-dark.png",
+     "fmrMedianMs": 3052,
+     "idleMedianMs": 3225,
+     "fmrAll": [
+      3052
+     ],
+     "idleAll": [
+      3225
+     ],
+     "requestsAll": [
+      18
+     ]
+    },
+    "1280-light": {
+     "fmrMs": 3371.399999976158,
+     "requests": 18,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "function:admin-unlock": 1,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "function:calculate-payroll": 1,
+      "from:payroll_periods": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 839,
+     "path": "/admin?tab=payroll",
+     "idleMs": 3535.300000011921,
+     "errors": [],
+     "axe": {
+      "rules": 3,
+      "nodes": 6,
+      "byImpact": {
+       "critical": 1,
+       "serious": 2
+      },
+      "top": [
+       "button-name(critical,3)",
+       "list(serious,1)",
+       "listitem(serious,2)"
+      ]
+     },
+     "shot": "admin-payroll-1280-light.png",
+     "fmrMedianMs": 3026,
+     "idleMedianMs": 3218,
+     "fmrAll": [
+      3371,
+      3000,
+      3026
+     ],
+     "idleAll": [
+      3535,
+      3205,
+      3218
+     ],
+     "requestsAll": [
+      18,
+      18,
+      18
+     ]
+    },
+    "1280-dark": {
+     "fmrMs": 3524.899999976158,
+     "requests": 18,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "function:admin-unlock": 1,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "rpc:ai_actions_list": 1,
+      "function:calculate-payroll": 1,
+      "from:payroll_periods": 1,
+      "from:profiles": 1,
+      "from:teachers": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 839,
+     "path": "/admin?tab=payroll",
+     "idleMs": 3631.399999976158,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 32,
+      "byImpact": {
+       "critical": 1,
+       "serious": 3
+      },
+      "top": [
+       "button-name(critical,3)",
+       "color-contrast(serious,26)",
+       "list(serious,1)",
+       "listitem(serious,2)"
+      ]
+     },
+     "shot": "admin-payroll-1280-dark.png",
+     "fmrMedianMs": 3525,
+     "idleMedianMs": 3631,
+     "fmrAll": [
+      3525
+     ],
+     "idleAll": [
+      3631
+     ],
+     "requestsAll": [
+      18
+     ]
+    },
+    "375-light-cpu4x": {
+     "fmrMedianMs": 21231,
+     "idleMedianMs": 21317,
+     "fmrAll": [
+      18026,
+      21231,
+      23034
+     ],
+     "idleAll": [
+      18121,
+      21317,
+      23074
+     ],
+     "requests": 18
     }
    }
   }
