@@ -291,7 +291,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
       {stuck.map((h) => (
         <Notice key={h.recordingId} tone="warn" title={`Audio from ${h.sessionDate} has not reached the school server`} role="status"
           action={<Button variant="outline" className="min-h-11" onClick={() => { setDiscardFor(h); setDiscardWord(""); }}>Discard it...</Button>}>
-          {`It has been on this laptop for ${Math.floor(h.ageMs / 86_400_000)} days (${Math.round(h.bytes / 1e6)} MB). It is kept until someone discards it. Ask an admin before you do.`}
+          {`It has been on this laptop for ${Math.floor(h.ageMs / 86_400_000)} days (${Math.round(h.bytes / 1e6)} MB). ${h.deleteAt ? `The server gave this recording up, so it can never be sent: it is deleted from this laptop by itself on ${new Date(h.deleteAt).toLocaleDateString()}.` : "It is sent as soon as the server can take it."} Discarding it earlier: ask an admin first.`}
         </Notice>
       ))}
       {others ? (
