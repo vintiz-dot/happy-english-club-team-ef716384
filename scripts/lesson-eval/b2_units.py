@@ -65,6 +65,7 @@ def main() -> int:
                     help="time (default): re-split each child's clean speech by time, see code")
     ap.add_argument("--enrol-frac", type=float, default=0.6)
     ap.add_argument("--min-split", type=float, default=50.0)
+    ap.add_argument("--merge-gap", type=float, default=0.8, help="join same-set segments across pauses shorter than this")
     a = ap.parse_args()
     out = safe_out(a.out)
     rng = np.random.default_rng(a.seed)
@@ -96,6 +97,29 @@ def main() -> int:
             segs[(code, "enrol")], segs[(code, "heldout")] = en, ho
             print(f"{code}: time split enrol {sum(float(r['dur']) for r in en):.1f} s / "
                   f"test {sum(float(r['dur']) for r in ho):.1f} s", flush=True)
+    if a.merge_gap > 0:
+        # Merge VAD segments of the same set separated by a pause < merge_gap s into one
+        # utterance, keeping the pause (contiguous audio, no splice), unless an
+        # adult-pitch segment lies in between. silero cut the speech into short pieces;
+        # windows that must fit inside one piece were nearly all 1-2 s.
+        adult = {}
+        for (code, s), rows in segs.items():
+            if s == "excluded":
+                for r in rows:
+                    adult.setdefault((code, r["clip"]), []).append((float(r["start"]), float(r["end"])))
+        for key in [k for k in segs if k[1] in ("enrol", "heldout")]:
+            rows = sorted(segs[key], key=lambda r: (int(r["clip"]), float(r["start"])))
+            out = []
+            for r in rows:
+                if out and out[-1]["clip"] == r["clip"]:
+                    gs, ge = float(out[-1]["end"]), float(r["start"])
+                    blocked = any(s < ge and e > gs for s, e in adult.get((key[0], r["clip"]), []))
+                    if 0 <= ge - gs < a.merge_gap and not blocked:
+                        out[-1] = {**out[-1], "end": r["end"],
+                                   "dur": str(float(out[-1]["dur"]) + float(r["dur"]))}
+                        continue
+                out.append(dict(r))
+            segs[key] = out
     cache = {}
 
     def wav(code, clip):

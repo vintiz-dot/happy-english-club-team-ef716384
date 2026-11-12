@@ -48,14 +48,19 @@ LEN = {1.0: "<1.5 s", 2.0: "1.5-3 s", 4.0: "3-6 s", 8.0: ">6 s"}
 
 
 class Data:
-    def __init__(self, model: str):
+    def __init__(self, model: str, min_enrol_s: float = 30.0):
+        """min_enrol_s: a child is enrolled only with at least this much enrolment speech
+        (thin voiceprints became hubs that attracted most wrong answers)."""
         d = np.load(VP / f"{model}.embeddings.npz", allow_pickle=False)
         self.model = model
         self.E = idlib.l2n(d["emb"])
         for k in ("kind", "code", "cond"):
             setattr(self, k, d[k].astype(str))
         self.L, self.pos, self.idx = d["L"], d["pos"], d["idx"]
-        self.codes = sorted(set(self.code[self.kind == "enrol"]))
+        en = self.kind == "enrol"
+        tot = {c: float(d["dur"][en & (self.code == c)].sum()) for c in set(self.code[en])}
+        self.codes = sorted(c for c, s in tot.items() if s >= min_enrol_s)
+        self.not_enrolled_thin = sorted(c for c, s in tot.items() if s < min_enrol_s)
         self.held = sorted(set(self.code[self.kind == "test"]))
         self.cost = {k: float(d[k]) for k in ("load_s", "embed_s", "audio_s")}
 
@@ -213,12 +218,15 @@ def main() -> int:
                     "vad-20-mean-casnorm,vad-40-mean-casnorm")
     ap.add_argument("--cluster-config", default="", help="config for the aggregation run (default: best by EER)")
     ap.add_argument("--shuffles", type=int, default=5)
+    ap.add_argument("--min-enrol-s", type=float, default=30.0)
     ap.add_argument("--json", type=Path, default=OUT / "results.json")
     a = ap.parse_args()
     res = {}
     for model in a.models.split(","):
-        D = Data(model)
-        R = {"cost": D.cost, "configs": {}, "contamination": contamination(D)}
+        D = Data(model, a.min_enrol_s)
+        R = {"cost": D.cost, "configs": {}, "contamination": contamination(D), "gallery": D.codes,
+             "not_enrolled_thin": D.not_enrolled_thin, "min_enrol_s": a.min_enrol_s}
+        print(f"{model}: gallery {len(D.codes)}, not enrolled (thin) {D.not_enrolled_thin}", flush=True)
         best = None
         for name in a.configs.split(","):
             cfg = parse_cfg(name)
