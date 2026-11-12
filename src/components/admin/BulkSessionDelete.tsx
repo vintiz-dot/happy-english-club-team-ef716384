@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,12 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, Ban, CheckCircle2, Loader2, Trash2 } from "lucide-react";
-import { callFn } from "@/components/admin/session-guard/api";
+import { AlertTriangle, Ban, CheckCircle2, Loader2, RotateCcw, Trash2 } from "lucide-react";
+import { callFn, manageSession } from "@/components/admin/session-guard/api";
 import { ConfirmTick, ReasonField, TypedDateField } from "@/components/admin/session-guard/Fields";
 import {
   bulkAckProblem,
   bulkAckReady,
+  bulkRowIndex,
   bulkCounts,
   buildBulkConfirm,
   checkReason,
@@ -26,7 +27,9 @@ import {
   longDate,
   normaliseBulkPreview,
   normaliseBulkResult,
+  OUTCOME_UNKNOWN_TEXT,
   REASON_MIN,
+  UNKNOWN_OUTCOME_CODES,
   type BulkAck,
   type BulkPreview,
   type BulkResult,
@@ -58,6 +61,11 @@ export function BulkSessionDelete() {
   const [acks, setAcks] = useState<Record<string, BulkAck>>({});
   const [result, setResult] = useState<BulkResult | null>(null);
   const [error, setError] = useState<GuardErrorBody | null>(null);
+  /** Which step the error came from: a confirm without a clear answer may have changed lessons. */
+  const [errorStep, setErrorStep] = useState<"preview" | "confirm" | null>(null);
+  /** The checked rows, kept after the confirm so every result line can name its lesson. */
+  const [rowsById, setRowsById] = useState<Record<string, BulkRow>>({});
+  const inFlight = useRef(false);
 
   const { data: classes } = useQuery({
     queryKey: ["classes"],
@@ -89,49 +97,70 @@ export function BulkSessionDelete() {
     setPreview(null);
     setResult(null);
     setError(null);
+    setErrorStep(null);
     setBatchReason("");
     setAcks({});
   };
 
   const handlePreview = async () => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setError(null);
+    setErrorStep(null);
     setResult(null);
     setBusy("preview");
-    const res = await callFn("bulk-cancel-sessions", { step: "preview", ...criteria() });
-    setBusy(null);
-    if (!res.ok) {
-      setPreview(null);
-      setError(res.error);
-      return;
+    try {
+      const res = await callFn("bulk-cancel-sessions", { step: "preview", ...criteria() });
+      if (!res.ok) {
+        setPreview(null);
+        setError(res.error);
+        setErrorStep("preview");
+        return;
+      }
+      const p = normaliseBulkPreview(res.data);
+      setPreview(p);
+      setRowsById(bulkRowIndex(p));
+      setAcks({});
+      setBatchReason("");
+    } finally {
+      inFlight.current = false;
+      setBusy(null);
     }
-    setPreview(normaliseBulkPreview(res.data));
-    setAcks({});
-    setBatchReason("");
   };
 
   const handleConfirm = async () => {
-    if (!preview) return;
+    if (!preview || inFlight.current) return;
     const body = buildBulkConfirm(preview, acks);
     if (body.items.length + body.held_items.length === 0) return;
+    inFlight.current = true;
     setError(null);
+    setErrorStep(null);
     setBusy("confirm");
-    const res = await callFn("bulk-cancel-sessions", {
-      step: "confirm",
-      batch_id: preview.batch_id,
-      reason: cleanReason(batchReason),
-      items: body.items,
-      ...(body.include_held ? { include_held: true, held_items: body.held_items } : {}),
-      ...criteria(),
-    });
-    setBusy(null);
-    void qc.invalidateQueries({ predicate: (q) => isSessionRelatedQuery(q.queryKey) });
-    if (!res.ok) {
-      // Nothing is assumed done: the error stays on screen, the review stays open.
-      setError(res.error);
-      return;
+    try {
+      const res = await callFn("bulk-cancel-sessions", {
+        step: "confirm",
+        batch_id: preview.batch_id,
+        reason: cleanReason(batchReason),
+        items: body.items,
+        ...(body.include_held ? { include_held: true, held_items: body.held_items } : {}),
+        ...criteria(),
+      });
+      void qc.invalidateQueries({ predicate: (q) => isSessionRelatedQuery(q.queryKey) });
+      if (!res.ok) {
+        // Nothing is assumed done: the error stays on screen. A confirm without a
+        // clear answer is said to be unknown, and the preview is dropped so the
+        // same tokens are not sent again: the admin checks the range afresh.
+        setError(res.error);
+        setErrorStep("confirm");
+        if (UNKNOWN_OUTCOME_CODES.has(res.error.code)) setPreview(null);
+        return;
+      }
+      setResult(normaliseBulkResult(res.data));
+      setPreview(null);
+    } finally {
+      inFlight.current = false;
+      setBusy(null);
     }
-    setResult(normaliseBulkResult(res.data));
-    setPreview(null);
   };
 
   const setAck = (id: string, patch: Partial<BulkAck>) => setAcks((a) => ({ ...a, [id]: { ...emptyAck(), ...a[id], ...patch } }));
@@ -208,9 +237,13 @@ export function BulkSessionDelete() {
           <div role="alert" className="space-y-1 rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm">
             <p className="flex items-center gap-2 font-semibold">
               <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
-              Nothing was changed by this step
+              {errorStep === "confirm" && UNKNOWN_OUTCOME_CODES.has(error.code) ? "Not confirmed" : "Nothing was changed by this step"}
             </p>
-            <p className="break-words">{errorText(error.code, error.message)}</p>
+            <p className="break-words">
+              {errorStep === "confirm" && UNKNOWN_OUTCOME_CODES.has(error.code)
+                ? `${OUTCOME_UNKNOWN_TEXT} For a batch: check these lessons again; any already cancelled are no longer listed.`
+                : errorText(error.code, error.message)}
+            </p>
             <p className="text-xs text-muted-foreground">Code: {error.code}</p>
           </div>
         )}
@@ -326,7 +359,15 @@ export function BulkSessionDelete() {
           </div>
         )}
 
-        {result && <BulkResultView result={result} className={className} onAgain={reset} />}
+        {result && (
+          <BulkResultView
+            result={result}
+            rows={rowsById}
+            className={className}
+            onAgain={reset}
+            onRefreshed={() => void qc.invalidateQueries({ predicate: (q) => isSessionRelatedQuery(q.queryKey) })}
+          />
+        )}
 
         {!preview && !result && (
           <Button size="lg" className="min-h-12 w-full sm:w-auto" onClick={() => void handlePreview()} disabled={!datesOk || busy !== null}>
@@ -402,46 +443,106 @@ function AckRow({ row, ack, className, disabled, onChange }: { row: BulkRow; ack
   );
 }
 
-function BulkResultView({ result, className, onAgain }: { result: BulkResult; className: (id?: string) => string; onAgain: () => void }) {
+type RetryState = Record<string, { busy: boolean; ok?: boolean; code?: string }>;
+
+function BulkResultView({
+  result,
+  rows,
+  className,
+  onAgain,
+  onRefreshed,
+}: {
+  result: BulkResult;
+  rows: Record<string, BulkRow>;
+  className: (id?: string) => string;
+  onAgain: () => void;
+  onRefreshed: () => void;
+}) {
+  const [retry, setRetry] = useState<RetryState>({});
+  const busyIds = useRef(new Set<string>());
+  /** "12 Nov 2026, 09:00 - Starters 2", or "A lesson" when the preview did not list it. */
+  const lesson = (id: string) => {
+    const r = rows[id];
+    return r ? `${longDate(r.date)}, ${hm(r.start_time)} - ${className(r.class_id)}` : "A lesson";
+  };
+  const reviewCount = result.done.filter((d) => d.review_required).length;
+
+  // The contract's retry: manage-session refresh-tuition with the lesson's override id.
+  const retryOne = async (id: string, overrideId: string) => {
+    if (busyIds.current.has(id)) return;
+    busyIds.current.add(id);
+    setRetry((s) => ({ ...s, [id]: { busy: true } }));
+    const res = await manageSession<{ tuition?: { status?: string } }>("refresh-tuition", { override_id: overrideId });
+    busyIds.current.delete(id);
+    const ok = res.ok && res.data?.tuition?.status === "refreshed";
+    setRetry((s) => ({ ...s, [id]: { busy: false, ok, code: res.ok ? (ok ? undefined : "not_refreshed") : res.error.code } }));
+    onRefreshed();
+  };
+
   return (
-    <div className="space-y-4" role="status">
-      <p className="flex items-start gap-2 text-sm">
+    <div className="space-y-4">
+      <p className="flex items-start gap-2 text-sm" role="status">
         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
         <span>
           <strong>{result.done.length}</strong> {result.done.length === 1 ? "lesson was" : "lessons were"} cancelled.
           {result.refused.length ? ` ${result.refused.length} ${result.refused.length === 1 ? "was" : "were"} refused and left as they are.` : ""}
-          {result.notAttempted.length ? ` ${result.notAttempted.length} ${result.notAttempted.length === 1 ? "was" : "were"} not attempted.` : ""}
+          {result.notAttempted.length ? ` ${result.notAttempted.length} ${result.notAttempted.length === 1 ? "was" : "were"} not attempted and left as they are.` : ""}
+          {result.leftAlone ? ` ${result.leftAlone} with evidence ${result.leftAlone === 1 ? "was" : "were"} not included and left as they are.` : ""}
         </span>
       </p>
       {result.stopped && (
         <div role="alert" className="rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm">
           <p className="font-semibold">The batch stopped part-way.</p>
-          <p className="break-words">{errorText(result.stopped.code, result.stopped.message)} Lessons already cancelled stay cancelled; the rest were not changed.</p>
-        </div>
-      )}
-      {result.tuitionFailed.length > 0 && (
-        <div role="alert" className="rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm">
-          <p className="font-semibold">
-            {result.tuitionFailed.length} {result.tuitionFailed.length === 1 ? "bill was" : "bills were"} not recalculated.
+          <p className="break-words">
+            {errorText(result.stopped.code, result.stopped.message)} The lessons listed as cancelled below stay cancelled; the ones listed as not attempted were not changed.
           </p>
-          <p>Open Tuition and recalculate those families, or cancel again from a single lesson to use its retry.</p>
         </div>
       )}
-      {result.refused.length > 0 && (
-        <section aria-labelledby="bulk-res-refused" className="space-y-1">
-          <h3 id="bulk-res-refused" className="text-sm font-semibold">Refused</h3>
-          <ul className="space-y-1 text-sm">
-            {result.refused.map((r) => (
-              <li key={r.id} className="break-words rounded-lg border border-border p-2">
-                {errorText(r.code)} <span className="text-xs text-muted-foreground">(code: {r.code ?? "unknown"})</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+      {(result.tuitionFailed.length > 0 || result.tuitionRetry.length > 0) && (
+        <div role="alert" className="space-y-2 rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm">
+          <p className="font-semibold">
+            {result.tuitionFailed.length > 0
+              ? `${result.tuitionFailed.length} ${result.tuitionFailed.length === 1 ? "bill was" : "bills were"} not recalculated.`
+              : "Some bills were not confirmed as recalculated."}
+          </p>
+          <p>Until they are, those families may be shown a bill that still includes a cancelled lesson.</p>
+          {result.tuitionRetry.length > 0 ? (
+            <ul className="space-y-2">
+              {result.tuitionRetry.map((t) => {
+                const st = retry[t.id];
+                return (
+                  <li key={t.id} className="flex flex-col gap-2 rounded-lg border border-border bg-background p-2 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="min-w-0 break-words">
+                      {lesson(t.id)}
+                      {st?.ok ? <span className="block text-xs font-medium">Bills refreshed.</span> : null}
+                      {st && !st.busy && !st.ok ? <span className="block text-xs font-medium">Retry failed: {errorText(st.code)}</span> : null}
+                    </span>
+                    {!st?.ok && (
+                      <Button
+                        variant="outline"
+                        className="min-h-11 shrink-0 border-destructive text-foreground hover:bg-destructive/10 hover:text-foreground [&_svg]:text-destructive"
+                        disabled={!!st?.busy}
+                        onClick={() => void retryOne(t.id, t.override_id)}
+                      >
+                        {st?.busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <RotateCcw aria-hidden="true" />}
+                        Retry the bill refresh
+                      </Button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p>The server did not say which lessons these bills belong to. Open Tuition and recalculate those families.</p>
+          )}
+        </div>
       )}
+      <ResultList id="bulk-res-done" title={`Cancelled (${result.done.length})`} items={result.done.map((d) => ({ id: d.id, text: lesson(d.id), note: d.review_required ? "Recorded for review" : undefined }))} />
+      <ResultList id="bulk-res-refused" title={`Refused - not changed (${result.refused.length})`} items={result.refused.map((r) => ({ id: r.id, text: lesson(r.id), note: `${errorText(r.code)} (code: ${r.code ?? "unknown"})` }))} />
+      <ResultList id="bulk-res-not" title={`Not attempted - not changed (${result.notAttempted.length})`} items={result.notAttempted.map((r) => ({ id: r.id, text: lesson(r.id), note: r.code ? `code: ${r.code}` : undefined }))} />
       {result.done.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          {result.done.filter((d) => d.review_required).length > 0 ? `${result.done.filter((d) => d.review_required).length} went to review. ` : ""}
+          {reviewCount > 0 ? `${reviewCount} ${reviewCount === 1 ? "is" : "are"} recorded for review. ` : ""}
           Every cancellation is recorded with your name and reason.
         </p>
       )}
@@ -451,3 +552,23 @@ function BulkResultView({ result, className, onAgain }: { result: BulkResult; cl
     </div>
   );
 }
+
+function ResultList({ id, title, items }: { id: string; title: string; items: Array<{ id: string; text: string; note?: string }> }) {
+  if (!items.length) return null;
+  return (
+    <section aria-labelledby={id} className="space-y-1">
+      <h3 id={id} className="text-sm font-semibold">
+        {title}
+      </h3>
+      <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
+        {items.map((it) => (
+          <li key={it.id} className="break-words rounded-lg border border-border p-2">
+            {it.text}
+            {it.note ? <span className="block text-xs text-muted-foreground">{it.note}</span> : null}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+

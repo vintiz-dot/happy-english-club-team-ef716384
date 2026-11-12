@@ -3,6 +3,7 @@ import {
   actionLabel,
   buildBulkConfirm,
   bulkAckReady,
+  bulkRowIndex,
   canSubmit,
   checkReason,
   COPY,
@@ -90,6 +91,22 @@ test("typed date: wrong, partial, short year and impossible dates never match", 
     expect(typedDateMatches(bad, "2026-11-12")).toBe(false);
   }
   expect(typedDateMatches("31/02/2026", "2026-02-28")).toBe(false);
+});
+test("typed date: calendar edges, read as plain dates (no UTC shift in UTC+7)", () => {
+  expect(typedDateMatches("29/02/2028", "2028-02-29")).toBe(true);
+  expect(typedDateMatches("29/02/2027", "2027-03-01")).toBe(false); // not a date, never rolled over
+  expect(typedDateMatches("31/12/2026", "2026-12-31")).toBe(true);
+  expect(typedDateMatches("01/01/2027", "2026-12-31")).toBe(false);
+  expect(typedDateMatches("1/1/2027", "2027-01-01")).toBe(true);
+  // a timestamp from the server is read by its calendar part, not converted
+  expect(typedDateMatches("01/01/2027", "2027-01-01T00:30:00+07:00")).toBe(true);
+  expect(typedDateMatches("31/12/2026", "2027-01-01T00:30:00+07:00")).toBe(false);
+  expect(typedDateMatches(" 12 / 11 / 2026 ", "2026-11-12")).toBe(true);
+  expect(typedDateMatches("12/11/26", "2026-11-12")).toBe(false);
+  expect(typedDateMatches("12/11/2026 x", "2026-11-12")).toBe(false);
+  expect(typedDateMatches("", "2026-11-12")).toBe(false);
+  expect(typedDateMatches("12/11/2026", "")).toBe(false);
+  expect(lessonDateForTyping("2027-01-01T00:30:00+07:00")).toBe("01/01/2027");
 });
 test("typed date: a leading zero or not, the same lesson", () => {
   expect(typedDateMatches("05/09/2026", "2026-09-05")).toBe(true);
@@ -369,6 +386,31 @@ test("bulk result: both response shapes normalise", () => {
   expect(a.refused[0].code).toBe("token_stale");
   expect(a.stopped?.code).toBe("retry");
   expect(normaliseBulkResult({ done: [{ id: "1" }] }).done.length).toBe(1);
+});
+test("bulk result: per-lesson bill retry targets and evidence lessons left alone", () => {
+  const r = normaliseBulkResult({
+    canceled: [{ id: "1", override_id: "o1" }, { id: "2", override_id: "o2" }, { id: "3", override_id: "o3" }],
+    needs_ack: [{ id: "9" }],
+    held_ignored: 2,
+    tuition: {
+      status: "failed",
+      per_session: [
+        { id: "1", override_id: "o1", status: "refreshed" },
+        { id: "2", override_id: "o2", status: "failed", failed: [{ student_id: "s", month: "2026-11" }] },
+        { id: "3", override_id: "o3", status: "none" },
+        { id: "4", status: "failed" }, // no override id: cannot be retried from here
+      ],
+      failed: [{ student_id: "s", month: "2026-11" }],
+    },
+  });
+  expect(r.tuitionRetry).toEqual([{ id: "2", override_id: "o2" }]);
+  expect(r.leftAlone).toBe(3);
+  expect(normaliseBulkResult({}).tuitionRetry).toEqual([]);
+});
+test("bulk: rows are indexed so each result line names its lesson", () => {
+  const b = normaliseBulkPreview({ batch_id: "b", plain: [row("1")], needs_ack: [row("2")], refused: [row("3")] });
+  expect(Object.keys(bulkRowIndex(b)).sort()).toEqual(["1", "2", "3"]);
+  expect(bulkRowIndex(null)).toEqual({});
 });
 
 /* review screen */

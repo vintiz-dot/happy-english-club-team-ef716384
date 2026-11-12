@@ -220,6 +220,7 @@ export const ERROR_TEXT: Record<string, string> = {
   network: "Could not reach the server. Check your connection, then reload the lesson to see whether anything was changed.",
   relay: "The server could not run this request (the function did not answer). Reload the lesson to see whether anything was changed.",
   function_missing: "The server function for this change is not deployed yet. Nothing was changed.",
+  not_refreshed: "The server answered, but did not confirm that every bill was recalculated. Try again in a minute.",
   http_error: "The server answered with an error the app does not recognise. Reload the lesson to see whether anything was changed.",
 };
 
@@ -815,20 +816,37 @@ export type BulkResult = {
   notAttempted: Array<{ id: string; code?: string }>;
   stopped: { code?: string; message?: string } | null;
   tuitionFailed: any[];
+  /** Lessons whose bill refresh failed, each with the override id the retry needs. */
+  tuitionRetry: Array<{ id: string; override_id: string }>;
+  /** Evidence lessons the server left alone (not ticked in, or sent without include_held). */
+  leftAlone: number;
   partial: boolean;
 };
 
 /** Normalise bulk-cancel (`canceled`) and bulk-delete (`done`) responses. */
 export function normaliseBulkResult(r: any): BulkResult {
   const arr = (x: any) => (Array.isArray(x) ? x : []);
+  const perSession = arr(r?.tuition?.per_session);
   return {
     done: arr(r?.canceled ?? r?.done),
     refused: arr(r?.refused),
     notAttempted: arr(r?.not_attempted),
     stopped: r?.stopped ?? null,
     tuitionFailed: arr(r?.tuition?.failed),
+    tuitionRetry: perSession
+      .filter((s: any) => s && s.override_id && s.status !== "refreshed" && s.status !== "none")
+      .map((s: any) => ({ id: String(s.id ?? ""), override_id: String(s.override_id) })),
+    leftAlone: arr(r?.needs_ack).length + (Number.isFinite(Number(r?.held_ignored)) ? Number(r?.held_ignored) : 0),
     partial: !!r?.partial || !!r?.stopped,
   };
+}
+
+/** Index of the preview's rows by id, so a result can name each lesson (date, time, class). */
+export function bulkRowIndex(b: BulkPreview | null | undefined): Record<string, BulkRow> {
+  const out: Record<string, BulkRow> = {};
+  if (!b) return out;
+  for (const r of [...b.plain, ...b.needs_ack, ...b.refused]) out[r.id] = r;
+  return out;
 }
 
 /* --------------------------------------------------------- query refresh */
