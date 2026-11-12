@@ -217,6 +217,11 @@ export default function TeacherPayroll() {
             {!view.perSessionAvailable && " Lessons were corrected after it closed, so per-lesson amounts are not shown."}
           </p>
         )}
+        {view?.monthLocked && !view.closed && (
+          <p className="text-hec-small text-hec-ink-soft">
+            This month is closed, but nothing was recorded for you when it closed: the figures below are calculated now, not what was paid.
+          </p>
+        )}
 
         {!view?.found ? (
           <Card>

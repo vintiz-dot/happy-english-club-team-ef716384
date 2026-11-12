@@ -196,7 +196,9 @@ console.log("=== nothing on these screens can price a lesson ===");
   }
   const page = readFileSync(resolve(repo, "src/pages/TeacherPayroll.tsx"), "utf8");
   ok("TeacherPayroll no longer queries cancelled sessions itself", !/\.eq\("status",\s*"Canceled"\)/.test(page));
+  ok("TeacherPayroll notes a closed month with no frozen line beside the live figure", /monthLocked && !view\.closed/.test(page));
   const profile = readFileSync(resolve(repo, "src/components/admin/teacher/TeacherProfilePayroll.tsx"), "utf8");
+  ok("TeacherProfilePayroll does the same", /monthLocked && !payrollData\.closed/.test(profile));
   ok("TeacherProfilePayroll no longer queries sessions itself", !/\.from\("sessions"\)/.test(profile));
 }
 

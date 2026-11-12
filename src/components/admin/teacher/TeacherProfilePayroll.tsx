@@ -94,6 +94,11 @@ export function TeacherProfilePayroll({ teacherId, selectedMonth, onMonthChange 
                 Month closed: this is what it was paid at. Corrections since are on the Payroll tab.
               </p>
             )}
+            {payrollData?.monthLocked && !payrollData.closed && (
+              <p className="text-hec-small text-hec-ink-soft">
+                Month closed with no line for this teacher: this figure is calculated now, not what was paid.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
