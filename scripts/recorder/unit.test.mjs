@@ -189,7 +189,8 @@ console.log("=== FLAC and WAV encoders ===");
   } else console.log("  (ffmpeg not found: the independent-decoder check was skipped)");
   // Real lesson audio, read in place (never copied into the repo): FLAC ratio at its native 16 kHz.
   const lesson = "C:\\Users\\Dell\\hec-audio-eval\\work\\wav16k\\lessons\\242 Lang Street Lane 19.wav";
-  if (existsSync(lesson)) {
+  // Real lesson audio only when asked for (RECORDER_REAL_AUDIO=1): by default every test is synthetic.
+  if (process.env.RECORDER_REAL_AUDIO === "1" && existsSync(lesson)) {
     const fd = openSync(lesson, "r"); const buf = Buffer.alloc(16000 * 2 * 60); readSync(fd, buf, 0, buf.length, 44 + 16000 * 2 * 600); closeSync(fd);
     const x = new Int16Array(buf.buffer, buf.byteOffset, buf.length / 2);
     const t = performance.now(); const f = R.encodeFlac(x, 16000); const encMs = performance.now() - t;
