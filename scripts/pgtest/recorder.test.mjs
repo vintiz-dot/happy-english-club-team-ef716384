@@ -907,14 +907,28 @@ await db.exec(`
   CREATE ROLE mig_owner NOBYPASSRLS;
   GRANT USAGE ON SCHEMA storage, auth TO mig_owner;
   GRANT SELECT ON storage.objects TO mig_owner;
+  ALTER TABLE public.recorder_settings OWNER TO mig_owner;
+  ALTER TABLE public.class_recording_settings OWNER TO mig_owner;
+  ALTER TABLE public.recorder_child_consents OWNER TO mig_owner;
+  ALTER TABLE public.recorder_device_profiles OWNER TO mig_owner;
+  ALTER TABLE public.class_recordings OWNER TO mig_owner;
+  ALTER TABLE public.class_recording_tracks OWNER TO mig_owner;
+  ALTER TABLE public.class_recording_chunks OWNER TO mig_owner;
+  ALTER TABLE public.class_recording_markers OWNER TO mig_owner;
+  ALTER TABLE public.recorder_audit_log OWNER TO mig_owner;
   ALTER FUNCTION public.recorder__recording_before_update() OWNER TO mig_owner;
   ALTER FUNCTION public.recorder__recording_before_delete() OWNER TO mig_owner;
   ALTER FUNCTION public.recorder_confirm_chunk(uuid, text) OWNER TO mig_owner;
 `);
 refused("an owner that cannot see storage cannot mark audio deleted: it raises (rL's files are all there)", await tryAs(null, () => db.query(
-  `SELECT public.recorder_mark_audio_deleted($1)`, [rL.id]), "service_role"), /row-level security/);
+  `SELECT public.recorder_mark_audio_deleted($1)`, [rL.id]), "service_role"), /row-level security policy for table "objects"/);
 refused("and the row cannot be removed either", await tryAs(null, () => db.query(
-  `DELETE FROM public.class_recordings WHERE id=$1`, [rS.id]), "service_role"), /row-level security/);
+  `DELETE FROM public.class_recordings WHERE id=$1`, [rS.id]), "service_role"), /row-level security policy for table "objects"/);
+{
+  const open = (await one(`SELECT id FROM public.class_recording_chunks WHERE recording_id=$1 AND confirmed_at IS NULL LIMIT 1`, [rW.id])).id;
+  refused("nor can a chunk be confirmed: storage's answer is not 'no file'", await tryAs(T1, () => db.query(
+    `SELECT public.recorder_confirm_chunk($1, $2)`, [open, SHA("a")])), /row-level security policy for table "objects"/);
+}
 eq("both rows are still there", (await one(`SELECT count(*)::int n FROM public.class_recordings WHERE id IN ($1,$2)`, [rL.id, rS.id])).n, 2);
 
 console.log(`\n${pass} passed, ${fail} failed`);
