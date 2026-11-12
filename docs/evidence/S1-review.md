@@ -2,13 +2,41 @@
 
 Reviewed commit: e3c039f (`worktree-agent-ab290c3d49fd33671`) against `claude/hec-conductor-setup-efbaa5`. Review only: no product code changed, nothing applied, deployed or pushed. Live (`aswgmbefikhsnhogtryv`) was read read-only: catalog, md5 of function bodies, aggregate counts. No row about a person, no secret.
 
-**Where I am / next step:** F-01, F-14, F-15 (APPLY) and F-16 (APPLY, browser first) written up. Next: F-21.
+**Where I am / next step:** F-14 APPLY, F-15 APPLY, F-01 APPLY WITH CHANGES (revised after the owner said family self-registration stays), F-16 APPLY browser-first: written up. Next: F-21, F-02, the brief.
 
 Method used throughout for "what can this kind of account read on live": one read-only transaction, `set_config('request.jwt.claims', ...)` with the id of an account of that kind picked inside the query (never printed), `SET LOCAL ROLE authenticated`, then `count(*)` of every table / view in `public` the role may select and of `storage.objects` per bucket. Counts only.
 
 ---
 
-## F-01 - `20261113100000_signup_role_from_server_only.sql` - verdict: APPLY
+## F-01 - `20261113100000_signup_role_from_server_only.sql` - verdict: APPLY WITH CHANGES (two, listed here; do not paste the file as it stands)
+
+The owner has since said that families registering themselves on the app is a real, needed flow and public sign-up stays on. Judged against that, the fix as built closes the hole but degrades that flow in one case, so:
+
+**Change 1 (migration, one condition).** Withhold a role only for a request of `teacher`. A request of `admin` must get `student`, exactly as the live function does today.
+- `supabase/migrations/20261113100000_signup_role_from_server_only.sql:86`: `IF v_requested IN ('teacher', 'admin') THEN` becomes `IF v_requested = 'teacher' THEN`; reword the header (:14-19, :28-37) and the WARNING to match.
+- Why: on live, 24 of 76 accounts were created with metadata `admin` and only 3 accounts are admins; 17 non-admin accounts carry it, 14 of them linked to a family or child; 9 such accounts were created since March 2026 (4 in July). Real parents pick "Admin" on the form. Today they get `student` and everything works. As built they would get no role: a blank page after sign-in (`Dashboard.tsx:19-28` and `ProtectedRoute.tsx:24,63` render nothing without a role), and it stays blank after the admin links them with "link to family", because `manage-admin-users` `linkToFamily` (:597-612) grants no role.
+- Security is unchanged by this: `admin` is still never granted by a sign-up, and `student` on an unlinked account opens nothing (measured below). It also makes `manage-admin-users create` end as `{admin, student}`, which is what it produces on live today, so the change removes a behaviour difference rather than adding one.
+- `teacher` stays "no row": granting `student` there would leave every admin-created teacher and TA with `{student, teacher}`, a state no live staff account has.
+- With it: update `scripts/pgtest/signup-role.test.mjs` (the "asks for admin" cases expect `{student}`; `manage-admin-users create` expects `{admin, student}`; add "form says Admin, then linkToFamily -> `{student}`") and the tables in `S1-security-fixes.md`. The function md5 changes; the brief's pre-check md5 (`b2979d90...`) does not.
+
+**Change 2 (order).** Deploy the browser build that carries `src/pages/Auth.tsx` from commit `a51434f` (the form offers Student and Family only) and confirm it is live BEFORE pasting. It is harmless against the old database. After it, the only way to ask for `teacher` is a stale page or a hand-made request.
+
+Not blocking, but do soon: `linkToFamily` should give `student` to an account that holds no role (as `link-student-user:304-314` already does), and a signed-in account with no role should see a sentence ("the school has not finished setting up this account") instead of a blank page. Until then an admin clears such an account in one click in Admin > Users (set role).
+
+### Family self-registration, end to end, after the fix (with the two changes)
+
+| Step | Code | What happens |
+|---|---|---|
+| 1. "Join the club" | `Auth.tsx:172-183` | `signUp({ data: { role } })`, role = `student` (default, `:55`) or `family`. Email confirmation is on (76 of 76 confirmed), so there is no session yet and `/dashboard` sends them back to sign-in. Unchanged. |
+| 2. Database | `handle_new_user` | `user_roles`: `student`, whichever of Student / Family / Admin was asked for. Nothing in the flow reads the role back from metadata except `assignment-calendar` (branch choice only, RLS-bounded). |
+| 3. First sign-in | `Dashboard.tsx:23` -> `StudentDashboard.tsx:350-361` | role `student`, no child: the "new student" demo dashboard (welcome tour, class catalogue). This is the designed landing for a self-made account. |
+| 4. What they can read before linking | measured on live as an unlinked `student` account | 8 classes, 10 avatars, 4 announcements, 2 teacher rows (F-17), the payroll month list (F-20), their own account rows. No student, family, enrollment, invoice, payment, attendance, points, report or profile row. Homework files: 99 today, 0 once F-14 is applied. |
+| 5. Linking | Admin > Users: `FamilyLinkDialog` -> `linkToFamily` (sets `families.primary_user_id`), or `StudentLinkDialog` -> `link-student-user` (sets `students.linked_user_id`) | There is no self-service link for a self-made account: access codes belong to front-desk accounts, and the catalogue's "request to join" needs a student record that does not exist yet (the insert fails on an empty id - so today, not caused by this fix). The school links. Unchanged. |
+| 6. After linking | `useShellQueries.ts:47-68`, `can_view_student` | The children appear through `primary_user_id` / `linked_user_id`; with two or more, the profile picker. This is how families exist on live: 32 family logins, 31 holding `student` and 1 banned with none; **0 accounts hold `family`**. |
+
+So: a new parent can register, sign in, see nothing about any child, be linked by the school, and then reach their children. Nothing in that path depends on the role coming from sign-up metadata.
+
+One visible difference, for the owner to know: a parent who picks "Family" used to get the role `family` and land on `/family/dashboard` ("No students are linked to your family account yet - please contact the school", and after linking a parents' page listing all children). Now they get `student` and the same screens every existing family login uses. No live account is on the `family` path, so nothing anyone uses today changes; but that page is no longer reached by new sign-ups. If the school wants it, the safe way is for an admin to set the role to Family in Admin > Users after linking - not to grant it from the form (an unlinked `family` account also reads the school's bank details, and homework files until F-14).
 
 ### a. Does it close the finding
 
@@ -50,7 +78,7 @@ What is NOT closed, by design, and the owner must act on: the migration changes 
 | demo student | `manage-demo-student` deletes and inserts `student` | unchanged |
 | "claim" second login | see below | unchanged by the migration |
 
-One real gap, small: an account that asked for `teacher` or `admin` on the form now holds NO role, and `ProtectedRoute.tsx:24,63` renders nothing for a role-less account (blank page, no message). `link-student-user:304-314` gives such an account `student` when an admin links it to a child, but `manage-admin-users` `linkToFamily` (:597-612) sets `families.primary_user_id` and grants nothing, so that parent stays on a blank page until an admin sets the role in Admin > Users. The new form no longer offers those choices, so this needs a stale cached form; historically 24 of 76 accounts were created with metadata `admin` and 9 with `teacher`, so parents did pick them. The form was last used in May. Turning public sign-up off (owner decision) removes the path. Not a reason to hold the migration.
+One real gap, small: an account that asked for `teacher` or `admin` on the form now holds NO role, and `ProtectedRoute.tsx:24,63` renders nothing for a role-less account (blank page, no message). `link-student-user:304-314` gives such an account `student` when an admin links it to a child, but `manage-admin-users` `linkToFamily` (:597-612) sets `families.primary_user_id` and grants nothing, so that parent stays on a blank page until an admin sets the role in Admin > Users. Historically 24 of 76 accounts were created with metadata `admin` and 9 with `teacher`, so people did pick them. With sign-up staying on, this is the reason for Change 1 and Change 2 at the top of this section: after them the gap is left only for a request of `teacher` from a stale page.
 
 `student-create-migration-account`: claim verified. The function creates the account with metadata `student`, the trigger inserts `student`, the function's plain insert then violates `UNIQUE (user_id, role)` and the function deletes the account it made. Live: 0 accounts carry `migrated_from_user_id`. The change is one line, an upsert on `user_id,role` (a plain constraint, so the upsert is valid). It makes a dormant feature start working: deploy it separately and deliberately, not as part of "F-01 applied".
 
@@ -65,7 +93,7 @@ One real gap, small: an account that asked for `teacher` or `admin` on the form 
 
 1. Look at the two record-less `teacher` accounts first (`scripts/CHECK-unlinked-accounts.sql`, read-only, ids and dates only). They are the only accounts through which F-01 may already have been used.
 2. Apply F-14 the same day; until then a new sign-up still reads 99 homework files.
-3. Turn public sign-up off, or accept the blank-page case above.
+3. Public sign-up stays on (owner). The implementer's recommendation to switch it off, and step 4 of the brief's F-01 item, no longer apply; `handle_new_user` is then the only control, which is why its behaviour for each requested value has to be exactly right.
 
 ### Migration timestamp
 
