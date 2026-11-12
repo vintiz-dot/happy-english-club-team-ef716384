@@ -4,7 +4,7 @@ Reviewed commit: 36c6af1 (`worktree-agent-ab1ade20b08d798c9`) against `claude/he
 
 Where this file lives: my session runs in the conductor's own worktree, so I did NOT detach its HEAD. The reviewed commit was read and tested in a separate checkout (`.claude/worktrees/t1r2`, detached at 36c6af1); this file is committed on `claude/hec-conductor-setup-efbaa5`, one file, nothing else staged.
 
-**Where I am / next step:** sections 1-6 written. Next: 7 (suites, running), 8 (stopped-on list), verdict.
+**Where I am / next step:** complete - verdict at the end (PASS WITH CHANGES, no blocker). Section 7 sits after section 8 because the suites finished last.
 
 ## 1. History risk - measured on LIVE (12 Nov 2026, read-only, counts only)
 
@@ -138,3 +138,44 @@ Small inconsistency: calculate-tuition never replaces an admin's `credit`; the f
 | 5 | T3's suite asserts the new fields absent | **No - already resolved** | `worktree-agent-a34c3c84114092f37` is now built ON this commit (36c6af1 is its ancestor; 132c0fd "suite updated to the new calculator answers") and asserts `carry.payable` and `siblingUnresolved` present (`tuition-prior-balance.test.mjs:218-232`). Merge T1 r2 first, then T3. Note T3 r2 changes `calculate-tuition-bulk/index.ts` again (paging): if T3 ships in the same release, deploy the bulk function from the T3 commit, once. |
 
 None of the five blocks. Items 1-3 are real money-handling defects that predate T1 and deserve their own reviewed change each; this release neither widens nor hides them, except the lost hint in item 3.
+
+## 7. Suites, run by me at 36c6af1 (separate checkout, node_modules linked by junction and the link removed with `cmd /c rmdir` afterwards; the real folder is intact)
+
+| command | result |
+|---|---|
+| `node scripts/pgtest/run.mjs` | **3148 assertions across 39 suites, 0 suite(s) failed** - the implementer's total exactly |
+| in that run | invoice status 187/0, family payment month 6/0, dated enrollment discounts 22/0, cancelled lessons 25/0, session held evidence 143/0, session cancel guard 266/0, session guard functions 135/0, shared-module mirrors 13/0, edge functions typecheck 5/0, app typecheck 3/0 |
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json --listFiles` | exit 0, 0 `error TS`, 877 files under `src/` loaded (not an empty check) |
+
+Not run: a mutation pass (round 1's surviving mutant has its test now, `invoice-status.test.mjs` m-3 case); nothing against the deployed functions.
+
+Live reads made (all aggregates, `SELECT` only): label transition counts, by month; carry consistency; settlements by type; guard before/after; column defaults and trigger list of `invoices`.
+
+---
+
+# VERDICT: PASS WITH CHANGES
+
+No blocker. The changes are conditions on the release and follow-ups, not code that must change first.
+
+## Findings
+
+MAJOR: none.
+
+MINOR
+- R2-m1. `payable <= 0` with money recorded reads `partial`, and with nothing recorded reads `issued` (section 2). 11 + 4 live bills. Consistent with every other writer; misleading to a person. Own change with the dialogs.
+- R2-m2. Six zero-charge bills go `paid -> issued` (section 1). Harmless; optional one-line narrowing.
+- R2-m3. family-payment's `owed` ignores carry-in (section 5): credit-covered bill charged again, carried-in debt cannot be paid, zero allocation rows. Pre-existing, function not mounted. Fix before mounting.
+- R2-m4. Payment functions overwrite an admin's `credit` label; calculate-tuition does not (section 5). 0 live.
+- R2-m5. Label race: a concurrent calculation can write `partial` over a just-saved `paid` (section 4). Self-heals.
+- R2-m6. Payment functions read-then-write `recorded_payment` (section 4): two simultaneous payments on one bill can lose one. Pre-existing; needs an atomic increment.
+- R2-m7. `PaymentIntegrityRepair` is mounted and rewrites labels by the cumulative rule (section 8, 4a). Do not press Repair until it is changed.
+- R2-m8. Evidence wording: "no zero-amount allocation rows are created" holds for a paid bill only; and the AGENTS.md sentence "the payment dialogs and `ai_action_apply` state the same rule" is accurate.
+
+## Conditions on the release
+1. Deploy all seven functions in one sitting, calculate-tuition first: **calculate-tuition, smart-family-payment, family-payment, settle-bill, delete-payment, confirm-tuition, calculate-tuition-bulk**. Each needs `_lib/invoice-status.ts` uploaded with it (a function deployed without it fails at boot). delete-payment matters most after calculate-tuition: it does not recalculate, so the old copy would leave a cumulative-rule label standing. If T3 ships in the same release, take calculate-tuition-bulk from the T3 commit.
+2. One publish for the queue heading (`TuitionReviewQueue.tsx:146`); order relative to the functions does not matter.
+3. No migration.
+4. Tell the owner before the deploy: about 445 old bills will change label as they are opened (413 issued -> paid/partial, 13 partial -> paid, 10 drafts, 9 downgrades of which 6 are zero-charge bills and 3 already show a debt); no amount changes; do not use Payment Integrity Repair; a hand-set `paid` still does not stick; deleting a payment does not take it off the bill.
+5. After the deploy, read-only: re-run the section 1 transition count once a few tuition screens have been opened - `paid -> issued` must stay at 6 or fall, never rise; `audit_log` must show no `recorded_payment` lowered by the service role.
+
+**Where I am / next step:** review complete; nothing left to do.
