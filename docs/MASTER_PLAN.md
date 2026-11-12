@@ -64,7 +64,7 @@ Status: todo / running / review / PASS / FAIL / reverted / blocked-owner. Model 
 |---|---|---|---|---|---|
 | D0 | Inventory of cancel / owe-changing paths | sonnet / fable | docs/evidence/D0-inventory.md | PASS (conductor spot-check) | docs/evidence/D0-inventory.md, 480ad48; 6 claims re-read in code by conductor |
 | D1 | Evidence model design; `session_held_evidence` | fable design, opus build / fable | docs/evidence/D1-evidence-model.md; supabase/migrations/2026111209*_session_held_evidence.sql; scripts/pgtest/session-evidence.test.mjs | PASS (fable review 2, 8b9d1a2, no findings; suite 143/0) | docs/evidence/D1-evidence-model.md, 61ce962 |
-| D2 | Guard: trigger + `cancel_session_checked` + threat model | fable design, opus build / fable | docs/evidence/D2-*.md; guard migration; manage-session; bulk-cancel-sessions; pgtest | SQL revision 1 + edge functions merged (opus, db1641a: guard suite 239/0, functions suite 81/0); final fable review 3 running; conductor full run in progress | docs/evidence/D2-guard-design.md, D2-threat-model.md |
+| D2 | Guard: trigger + `cancel_session_checked` + threat model | fable design, opus build / fable | docs/evidence/D2-*.md; guard migration; manage-session; bulk-cancel-sessions; pgtest | review 3: SQL PASS, functions PASS WITH CHANGES, SHIP: YES AFTER FIXES (fable, a26ccdf); ship fixes running (opus) | docs/evidence/D2-guard-design.md, D2-threat-model.md |
 | D3 | Nudge UI + override review screen | sonnet / opus + fable wording | CancelSessionDialog, SessionActionsModal, EditSessionModal, DeleteSessionDialog, BulkSessionDelete, new review screen | running (sonnet) | |
 | D4 | Other tuition-affecting actions | fable design, opus build / fable | docs/evidence/D4-*.md; migration; affected dialogs | todo | |
 | D5 | Invariant audit + regression tests + owner SQL | fable audit, sonnet/opus tests / fable | docs/evidence/D5-audit.md; scripts/pgtest/*; scripts/CHECK-past-cancellations-with-evidence.sql | todo | |
@@ -151,12 +151,12 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 
 | Stream | Units | Done | What is done |
 |---|---|---|---|
-| D money integrity | 18.5 | 7.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
+| D money integrity | 18.5 | 8.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
 | A overhaul | 12.0 | 5.2 | A0, A1, A2.1 diagnosis, A3.1, A3.2, A3.3, A4.1 (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
 | B lesson monitor evaluation | 10.5 | 3.7 | vendor research, audio prep, harness, vendor proxy built (deploy running). Left: B1, B2, B2b, B3, report |
 | C class recorder | 8.0 | 1.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **17.4** | **34%** |
+| **Total** | **51.0** | **18.4** | **36%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -223,3 +223,9 @@ Log: 2026-11-12 - 34% (A3.2 and A2.1 merged).
 - 2026-11-12 LIVE CHANGE under D-9/D-10 (sonnet agent, evidence docs/evidence/B-proxy-deploy.md): migration `20261112110000_audit_eval_bucket.sql` APPLIED to project aswgmbefikhsnhogtryv (private bucket `audit-eval`, tables audit_eval_runs / settings with RLS, caps 400 calls and 600 min per run, 2000 min global, enabled); edge function `audit-eval-proxy` DEPLOYED v1, verify_jwt on. Probes: no Authorization -> 401; publishable key -> 401 from the admin gate; runs table 0 rows before and after. Weak spot: the deployed code was compared with the repo by reading, not by a byte diff. Model ids: gemini-3.8-flash and whisper-1 match ids already used by analyze-video-submission; the gpt-4o-transcribe family ids are used nowhere else and are unproven until a real call. TEARDOWN when the evaluation ends: scripts/lesson-eval/teardown_audit_eval.md (first owner action).
 - The driver now has `--login` (owner types the admin email and password in their own terminal; token in memory only). Conductor opened a terminal tab running the sign-in check (`--login --whoami`) for the owner to complete.
 - A3.2 agent stopped by the conductor: its work was merged, but it kept waking on its own background builds and re-sending the same report.
+Log: 2026-11-12 - 36% (D review 3 merged).
+
+- 2026-11-12 D review 3 merged (fresh fable, a26ccdf): SQL PASS (0/0/3); functions PASS WITH CHANGES (0 blocker, 2 major, 9 minor); SHIP: YES AFTER FIXES. No bypass, nothing fails open; review-2 F-1 closed. Majors: F-1 the preview calls calculate-tuition, which rewrites each bill's `confirmation_status` and `status` (calculate-tuition/index.ts:575-607, read by the conductor: every call upserts auto_approved|needs_review and "issued") - so merely opening the dialog un-confirms bills, lowers the guard's own tier from 3 to 2, can create invoice rows for a far month, and spends the 30-a-minute budget; F-2 deleting the admin gate leaves the function suite green (the gate itself works when probed). Mutation: functions 27 mutants, 7 survived; SQL 18, 6 survived.
+- CONDUCTOR RULINGS on review 3: all fixes adopted. The preview becomes read-only: it shows the STORED bills and no "after" figure; the new bill appears after the change, from the standard refresh. Ship order as the review recommends: apply 20261112090000 -> deploy both functions (guarded actions answer 503, no write) -> apply 20261112091000 immediately -> push the dialogs. Nothing ships until the fixes pass and the dialogs are merged.
+- PRE-EXISTING FINDING for D5 and the owner (not introduced by this work, not changed): calculate-tuition sets `confirmation_status` to auto_approved/needs_review and `status` to "issued" on EVERY call. If nothing else restores them, any screen or job that recalculates a bill silently un-confirms a bill an admin confirmed and marks a paid bill "issued". Whether a trigger or a later step puts them back was not established; D5 audits it.
+- Deferred, owner should know (review-2 F-3 / review-3 F-11): if someone first re-dates a point row and unlinks a transcript, a taught, paid lesson can then be cancelled at the lowest tier without review. Only audited today; closed in D4.
