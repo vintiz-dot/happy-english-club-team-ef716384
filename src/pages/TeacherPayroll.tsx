@@ -226,22 +226,24 @@ export default function TeacherPayroll() {
 
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={prevMonth}>
+            <Button variant="outline" size="icon" onClick={prevMonth} aria-label="Previous month" className="min-h-hec-target min-w-hec-target">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <div className="text-lg font-semibold min-w-[200px] text-center">
+            <div className="min-w-[200px] text-center font-display text-hec-h2 font-medium text-hec-ink">
               {dayjs(month).format("MMMM YYYY")}
             </div>
             <Button 
               variant="outline" 
               size="icon" 
               onClick={nextMonth}
+              aria-label="Next month"
+              className="min-h-hec-target min-w-hec-target"
               disabled={dayjs(month).add(1, "month").format("YYYY-MM") > currentMonth}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <Button onClick={exportPayroll} variant="outline" size="sm">
+          <Button onClick={exportPayroll} variant="outline" size="sm" className="min-h-hec-target">
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>
@@ -250,54 +252,54 @@ export default function TeacherPayroll() {
         {!payrollData?.payrollResult ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">
+              <p className="text-hec-ink-soft">
                 Unable to load payroll data for {dayjs(month).format("MMMM YYYY")}
               </p>
             </CardContent>
           </Card>
         ) : (
           <>
-            <div className="grid gap-4 md:grid-cols-5">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Card>
                 <CardHeader className="pb-2">
                   <CardDescription>Held Sessions</CardDescription>
-                  <CardTitle className="text-3xl">{heldSessionsCount}</CardTitle>
+                  <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">{heldSessionsCount}</CardTitle>
                 </CardHeader>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
                   <CardDescription>Total Hours</CardDescription>
-                  <CardTitle className="text-3xl">{totalHours.toFixed(1)}</CardTitle>
+                  <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">{totalHours.toFixed(1)}</CardTitle>
                 </CardHeader>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
                   <CardDescription>Amount Earned</CardDescription>
-                  <CardTitle className="text-3xl">{totalEarned.toLocaleString()} ₫</CardTitle>
+                  <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">{totalEarned.toLocaleString()} ₫</CardTitle>
                 </CardHeader>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
                   <CardDescription>Projected Total</CardDescription>
-                  <CardTitle className="text-3xl text-primary">
+                  <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">
                     {totalProjected.toLocaleString()} ₫
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="text-xs text-muted-foreground">
+                <CardContent className="text-hec-small tabular-nums text-hec-ink-soft">
                   +{projectedEarnings.toLocaleString()} ₫ from {scheduledSessionsCount} scheduled
                 </CardContent>
               </Card>
-              <Card className="border-orange-500/30 bg-orange-50 dark:bg-orange-950/20">
+              <Card className="border-hec-warn/30 bg-hec-warn-tint">
                 <CardHeader className="pb-2">
-                  <CardDescription className="flex items-center gap-1 text-orange-600">
+                  <CardDescription className="flex items-center gap-1 font-medium text-hec-warn">
                     <TrendingDown className="h-3 w-3" />
                     Lost Income
                   </CardDescription>
-                  <CardTitle className="text-3xl text-orange-600">
+                  <CardTitle className="whitespace-nowrap font-sans text-3xl font-semibold tabular-nums text-hec-ink">
                     {(lostIncome?.totalLostAmount || 0).toLocaleString()} ₫
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="text-xs text-muted-foreground">
+                <CardContent className="text-hec-small tabular-nums text-hec-ink-soft">
                   {lostIncome?.sessionCount || 0} cancelled ({lostIncome?.quantityLabel ?? "0 h"})
                 </CardContent>
               </Card>
@@ -312,7 +314,7 @@ export default function TeacherPayroll() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Session Details</CardTitle>
+                <CardTitle className="text-hec-h2">Session Details</CardTitle>
                 <CardDescription>
                   Sessions during {dayjs(month).format("MMMM YYYY")}
                 </CardDescription>
@@ -321,36 +323,36 @@ export default function TeacherPayroll() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Class</TableHead>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="px-2 sm:px-4">Date</TableHead>
+                      <TableHead className="px-2 sm:px-4">Class</TableHead>
+                      <TableHead className="px-2 sm:px-4">Time</TableHead>
+                      <TableHead className="px-2 sm:px-4">Status</TableHead>
+                      <TableHead className="px-2 sm:px-4 text-right">Amount</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {payrollData?.payrollResult?.sessionDetailsProjected?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={5} className="text-center py-8 text-hec-ink-soft">
                           No sessions scheduled for this month
                         </TableCell>
                       </TableRow>
                     ) : (
                       payrollData?.payrollResult?.sessionDetailsProjected?.map((session: any) => (
-                        <TableRow key={session.id} className={session.status === "Scheduled" ? "opacity-60" : ""}>
-                          <TableCell>
+                        <TableRow key={session.id} className={session.status === "Scheduled" ? "text-hec-ink-soft" : ""}>
+                          <TableCell className="px-2 sm:px-4">
                             {dayjs(session.date).format("MMM D, YYYY")}
                           </TableCell>
-                          <TableCell>{session.classes?.name || 'N/A'}</TableCell>
-                          <TableCell>
+                          <TableCell className="px-2 sm:px-4 whitespace-normal break-words">{session.classes?.name || 'N/A'}</TableCell>
+                          <TableCell className="px-2 sm:px-4">
                             {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="px-2 sm:px-4">
                             <Badge variant={session.status === "Held" ? "default" : "secondary"}>
                               {session.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="px-2 sm:px-4 whitespace-nowrap text-right tabular-nums">
                             {session.amount.toLocaleString()} ₫
                           </TableCell>
                         </TableRow>

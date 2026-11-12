@@ -443,7 +443,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
         {/* Staff pay is already charged to each class from its sessions.
             A shared template for the same money would charge it twice. */}
         {form.allocation_mode !== "none" && /salary|payroll|wage/i.test(form.category) && (
-          <p className="mt-1 text-xs text-amber-600">
+          <p className="mt-1 text-hec-small text-hec-warn">
             This looks like staff pay, which the Payroll tab already charges to each class from its
             sessions. Charging it again here would charge it twice — set “Who pays for this?” to school-wide
             unless this is someone the payroll does not cover.
@@ -509,17 +509,17 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
           />
         </div>
       </div>
-      <div className="flex items-center justify-between rounded-xl border p-3">
+      <div className="flex items-center justify-between gap-3 rounded-hec-md border border-hec-line p-3">
         <div>
           <Label className="text-sm">Active</Label>
-          <p className="text-xs text-muted-foreground">Inactive templates are skipped during apply.</p>
+          <p className="text-hec-caption text-hec-ink-soft">Inactive templates are skipped during apply.</p>
         </div>
         <Switch
           checked={form.is_active}
           onCheckedChange={(v) => setForm((f) => ({ ...f, is_active: v }))}
         />
       </div>
-      <div className="space-y-2 rounded-xl border p-3">
+      <div className="space-y-2 rounded-hec-md border border-hec-line p-3">
         <Label className="text-sm">Who pays for this?</Label>
         <Select
           value={form.allocation_mode}
@@ -532,7 +532,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
             ))}
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-hec-caption text-hec-ink-soft">
           {ALLOCATION_MODES.find((m) => m.value === form.allocation_mode)?.hint}
         </p>
 
@@ -591,11 +591,11 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="bg-gradient-to-br from-sky-500/10 via-cyan-500/5 to-indigo-500/10 border-b">
+      <CardHeader className="border-b border-hec-line">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Repeat className="h-5 w-5 text-sky-500" />
+              <Repeat className="h-5 w-5 shrink-0 text-hec-ink-soft" />
               Recurring Expenditures
             </CardTitle>
             <CardDescription>
@@ -603,7 +603,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
               classes that ran so the class report shows what a class really costs.
             </CardDescription>
           </div>
-          <Button onClick={openNew} className="gap-2">
+          <Button onClick={openNew} className="min-h-hec-target gap-2">
             <Plus className="h-4 w-4" />
             New Template
           </Button>
@@ -613,26 +613,26 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
       <CardContent className="space-y-4 pt-5">
         {/* "Apply for this month" CTA */}
         <div
-          className={`rounded-2xl border-2 ${
-            dueThisMonth.length > 0 ? "border-amber-400/40 bg-amber-50/50 dark:bg-amber-950/20" : "border-emerald-400/40 bg-emerald-50/50 dark:bg-emerald-950/20"
+          className={`rounded-hec-md border ${
+            dueThisMonth.length > 0 ? "border-hec-warn/30 bg-hec-warn-tint" : "border-hec-leaf/30 bg-hec-leaf-tint"
           } p-4 flex items-start sm:items-center justify-between gap-3 flex-wrap`}
         >
-          <div className="flex items-start gap-3">
+          <div className="flex min-w-0 items-start gap-3">
             {dueThisMonth.length > 0 ? (
-              <Sparkles className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+              <Sparkles className="h-5 w-5 text-hec-warn mt-0.5 shrink-0" />
             ) : (
-              <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+              <CheckCircle2 className="h-5 w-5 text-hec-leaf mt-0.5 shrink-0" />
             )}
-            <div>
-              <p className="font-bold text-sm">
+            <div className="min-w-0">
+              <p className="text-hec-small font-semibold text-hec-ink">
                 {dueThisMonth.length > 0
                   ? `${dueThisMonth.length} recurring expense${dueThisMonth.length === 1 ? "" : "s"} pending for ${dayjs(monthStartIso).format("MMMM YYYY")}`
                   : `All recurring expenses applied for ${dayjs(monthStartIso).format("MMMM YYYY")}`}
               </p>
               {dueThisMonth.length > 0 && (
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="mt-1 text-hec-small text-hec-ink-soft">
                   Total:{" "}
-                  <span className="font-bold tabular-nums">
+                  <span className="whitespace-nowrap font-bold tabular-nums text-hec-ink">
                     {fmtVND(dueThisMonth.reduce((s, t) => s + t.amount, 0))}
                   </span>{" "}
                   · {dueThisMonth.map((t) => t.category).join(", ")}
@@ -644,7 +644,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
             <Button
               onClick={() => applyMutation.mutate({ automatic: false })}
               disabled={applyMutation.isPending}
-              className="gap-2 bg-amber-500 hover:bg-amber-400 text-white shrink-0"
+              className="min-h-hec-target gap-2 shrink-0"
             >
               {applyMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -660,54 +660,54 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
 
         {/* Template list */}
         {isLoading ? (
-          <div className="py-8 text-center text-muted-foreground">
+          <div className="py-8 text-center text-hec-ink-soft">
             <Loader2 className="h-5 w-5 animate-spin mx-auto" />
           </div>
         ) : templates.length === 0 ? (
-          <div className="text-center py-10 text-muted-foreground">
+          <div className="text-center py-10 text-hec-ink-soft">
             <Repeat className="h-10 w-10 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No recurring templates yet.</p>
-            <p className="text-xs mt-1">Create one for rent, electricity or internet and it books itself every month.</p>
+            <p className="text-hec-small">No recurring templates yet.</p>
+            <p className="mt-1 text-hec-caption">Create one for rent, electricity or internet and it books itself every month.</p>
           </div>
         ) : (
-          <div className="rounded-2xl border divide-y">
+          <div className="rounded-hec-lg border border-hec-line divide-y divide-hec-line">
             {templates.map((t) => {
               const applied = appliedThisMonth.has(t.id);
               return (
-                <div key={t.id} className="flex items-center gap-3 p-3 sm:p-4">
+                <div key={t.id} className="flex items-start gap-3 p-3 sm:p-4">
                   <div
-                    className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    className={`h-10 w-10 rounded-hec-md flex items-center justify-center shrink-0 ${
                       t.is_active
-                        ? "bg-sky-500/15 text-sky-600 dark:text-sky-300"
-                        : "bg-muted text-muted-foreground"
+                        ? "bg-hec-sunken text-hec-ink"
+                        : "bg-hec-sunken text-hec-ink-faint"
                     }`}
                   >
                     <Repeat className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-sm sm:text-[15px] truncate">{t.category}</span>
+                      <span className="min-w-0 break-words text-hec-small font-semibold text-hec-ink">{t.category}</span>
                       {!t.is_active && (
-                        <Badge variant="outline" className="text-[10px] h-5">Inactive</Badge>
+                        <Badge variant="outline">Inactive</Badge>
                       )}
-                      <Badge variant="outline" className="text-[10px] h-5">
+                      <Badge variant="outline">
                         {describeAllocation(t.allocation_mode)}
                       </Badge>
                       {applied && (
-                        <Badge className="bg-emerald-500 text-white text-[10px] h-5">
+                        <Badge className="whitespace-nowrap border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">
                           <CheckCircle2 className="h-3 w-3 mr-0.5" />
                           Applied this month
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      <span className="font-semibold tabular-nums text-foreground">{fmtVND(t.amount)}</span>
+                    <p className="mt-1 text-hec-small text-hec-ink-soft">
+                      <span className="whitespace-nowrap font-semibold tabular-nums text-hec-ink">{fmtVND(t.amount)}</span>
                       {" · "}Day {t.day_of_month}
                       {t.memo ? ` · ${t.memo}` : ""}
                     </p>
                   </div>
                   <div className="shrink-0 flex gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => openEdit(t)} className="h-9 w-9">
+                    <Button size="icon" variant="ghost" onClick={() => openEdit(t)} className="min-h-hec-target min-w-hec-target" aria-label={`Edit ${t.category}`}>
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button
@@ -716,7 +716,8 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
                       onClick={() => {
                         if (confirm(`Delete "${t.category}" template?`)) deleteMutation.mutate(t.id);
                       }}
-                      className="h-9 w-9 text-destructive"
+                      className="min-h-hec-target min-w-hec-target text-hec-danger"
+                      aria-label={`Delete ${t.category}`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -734,7 +735,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
           side={isMobile ? "bottom" : "right"}
           className={
             isMobile
-              ? "h-[88vh] rounded-t-2xl overflow-y-auto p-5 pb-safe"
+              ? "h-[88vh] rounded-t-hec-lg overflow-y-auto p-4 pb-safe"
               : "w-[440px] sm:max-w-[440px] overflow-y-auto p-6"
           }
         >

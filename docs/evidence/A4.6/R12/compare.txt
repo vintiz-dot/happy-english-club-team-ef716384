@@ -1,0 +1,73 @@
+fin-recurring-1280-dark: req eq | nums eq (17) | axe 1/3 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 6 serif/non-tab 3 ["15.000.000 ₫|ui-sans-serif","2.350.000 ₫|ui-sans-serif","3.500.000 ₫|ui-sans-serif"]
+fin-recurring-1280-light: req eq | nums eq (17) | axe 1/3 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 6 serif/non-tab 3 ["15.000.000 ₫|ui-sans-serif","2.350.000 ₫|ui-sans-serif","3.500.000 ₫|ui-sans-serif"]
+fin-recurring-375-dark: req eq | nums eq (17) | axe 1/1 -> 1/0 [button-name] | over false | smallMain 0 | money 6 serif/non-tab 3 ["15.000.000 ₫|ui-sans-serif","2.350.000 ₫|ui-sans-serif","3.500.000 ₫|ui-sans-serif"]
+fin-recurring-375-light: req eq | nums eq (17) | axe 1/1 -> 1/0 [button-name] | over false | smallMain 0 | money 6 serif/non-tab 3 ["15.000.000 ₫|ui-sans-serif","2.350.000 ₫|ui-sans-serif","3.500.000 ₫|ui-sans-serif"]
+fin-recurring-list-1280-dark: req eq | nums eq (17) | axe 1/3 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 6 serif/non-tab 3 ["15.000.000 ₫|ui-sans-serif","2.350.000 ₫|ui-sans-serif","3.500.000 ₫|ui-sans-serif"]
+fin-recurring-list-1280-light: req eq | nums eq (17) | axe 1/3 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 6 serif/non-tab 3 ["15.000.000 ₫|ui-sans-serif","2.350.000 ₫|ui-sans-serif","3.500.000 ₫|ui-sans-serif"]
+fin-recurring-list-375-dark: req eq | nums eq (17) | axe 1/1 -> 1/0 [button-name] | over false | smallMain 0 | money 6 serif/non-tab 3 ["15.000.000 ₫|ui-sans-serif","2.350.000 ₫|ui-sans-serif","3.500.000 ₫|ui-sans-serif"]
+fin-recurring-list-375-light: req eq | nums eq (17) | axe 1/1 -> 1/0 [button-name] | over false | smallMain 0 | money 6 serif/non-tab 3 ["15.000.000 ₫|ui-sans-serif","2.350.000 ₫|ui-sans-serif","3.500.000 ₫|ui-sans-serif"]
+fin-recurring-sheet-1280-dark: req eq | nums eq (17) | axe 2/1 -> 2/0 [button-name,label] | over false | smallMain 0 | money 6 serif/non-tab 3 ["15.000.000 ₫|ui-sans-serif","2.350.000 ₫|ui-sans-serif","3.500.000 ₫|ui-sans-serif"]
+fin-recurring-sheet-1280-light: req eq | nums eq (17) | axe 2/1 -> 2/0 [button-name,label] | over false | smallMain 0 | money 6 serif/non-tab 3 ["15.000.000 ₫|ui-sans-serif","2.350.000 ₫|ui-sans-serif","3.500.000 ₫|ui-sans-serif"]
+fin-recurring-sheet-375-dark: req eq | nums eq (17) | axe 2/1 -> 2/0 [button-name,label] | over false | smallMain 0 | money 6 serif/non-tab 3 ["15.000.000 ₫|ui-sans-serif","2.350.000 ₫|ui-sans-serif","3.500.000 ₫|ui-sans-serif"]
+fin-recurring-sheet-375-light: req eq | nums eq (17) | axe 2/1 -> 2/0 [button-name,label] | over false | smallMain 0 | money 6 serif/non-tab 3 ["15.000.000 ₫|ui-sans-serif","2.350.000 ₫|ui-sans-serif","3.500.000 ₫|ui-sans-serif"]
+fin-summary-1280-dark: req eq | nums eq (21) | axe 1/2 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 14 serif/non-tab 0
+fin-summary-1280-light: req eq | nums eq (21) | axe 1/2 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 14 serif/non-tab 0
+fin-summary-375-dark: req eq | nums eq (21) | axe 1/0 -> 1/0 [button-name] | over false | smallMain 0 | money 14 serif/non-tab 0
+fin-summary-375-light: req eq | nums eq (21) | axe 1/0 -> 1/0 [button-name] | over false | smallMain 0 | money 14 serif/non-tab 0
+fin-summary-closed-1280-dark: req eq | nums eq (21) | axe 1/2 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 14 serif/non-tab 0
+fin-summary-closed-1280-light: req eq | nums eq (21) | axe 1/2 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 14 serif/non-tab 0
+fin-summary-closed-375-dark: req eq | nums eq (21) | axe 1/0 -> 1/0 [button-name] | over false | smallMain 0 | money 14 serif/non-tab 0
+fin-summary-closed-375-light: req eq | nums eq (21) | axe 1/0 -> 1/0 [button-name] | over false | smallMain 0 | money 14 serif/non-tab 0
+fin-summary-costs-1280-dark: req eq | nums eq (21) | axe 1/2 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 14 serif/non-tab 0
+fin-summary-costs-1280-light: req eq | nums eq (21) | axe 1/2 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 14 serif/non-tab 0
+fin-summary-costs-375-dark: req eq | nums eq (21) | axe 1/0 -> 1/0 [button-name] | over false | smallMain 0 | money 14 serif/non-tab 0
+fin-summary-costs-375-light: req eq | nums eq (21) | axe 1/0 -> 1/0 [button-name] | over false | smallMain 0 | money 14 serif/non-tab 0
+pay-closed-1280-dark: req eq | nums eq (47) | axe 1/3 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 19 serif/non-tab 15 ["2,440,000 ₫|ui-serif","5,230,000 ₫|ui-serif","5,230,000 ₫|ui-serif"]
+pay-closed-1280-light: req eq | nums eq (47) | axe 1/3 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 19 serif/non-tab 15 ["2,440,000 ₫|ui-serif","5,230,000 ₫|ui-serif","5,230,000 ₫|ui-serif"]
+pay-closed-375-dark: req eq | nums eq (47) | axe 1/2 -> 1/1 [button-name,scrollable-region-focusable] | over false | smallMain 0 | money 19 serif/non-tab 15 ["2,440,000 ₫|ui-serif","5,230,000 ₫|ui-serif","5,230,000 ₫|ui-serif"]
+pay-closed-375-light: req eq | nums eq (47) | axe 1/2 -> 1/1 [button-name,scrollable-region-focusable] | over false | smallMain 0 | money 19 serif/non-tab 15 ["2,440,000 ₫|ui-serif","5,230,000 ₫|ui-serif","5,230,000 ₫|ui-serif"]
+pay-open-1280-dark: req eq | nums eq (41) | axe 1/3 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 18 serif/non-tab 15 ["2,440,000 ₫|ui-serif","5,230,000 ₫|ui-serif","5,230,000 ₫|ui-serif"]
+pay-open-1280-light: req eq | nums eq (41) | axe 1/3 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 18 serif/non-tab 15 ["2,440,000 ₫|ui-serif","5,230,000 ₫|ui-serif","5,230,000 ₫|ui-serif"]
+pay-open-375-dark: req eq | nums eq (41) | axe 1/2 -> 1/1 [button-name,scrollable-region-focusable] | over false | smallMain 0 | money 18 serif/non-tab 15 ["2,440,000 ₫|ui-serif","5,230,000 ₫|ui-serif","5,230,000 ₫|ui-serif"]
+pay-open-375-light: req eq | nums eq (41) | axe 1/2 -> 1/1 [button-name,scrollable-region-focusable] | over false | smallMain 0 | money 18 serif/non-tab 15 ["2,440,000 ₫|ui-serif","5,230,000 ₫|ui-serif","5,230,000 ₫|ui-serif"]
+pay-reopen-1280-dark: req eq | nums eq (48) | axe 1/3 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 19 serif/non-tab 15 ["2,440,000 ₫|ui-serif","5,230,000 ₫|ui-serif","5,230,000 ₫|ui-serif"]
+pay-reopen-1280-light: req eq | nums eq (48) | axe 1/3 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 19 serif/non-tab 15 ["2,440,000 ₫|ui-serif","5,230,000 ₫|ui-serif","5,230,000 ₫|ui-serif"]
+pay-reopen-375-dark: req eq | nums eq (48) | axe 1/2 -> 1/1 [button-name,scrollable-region-focusable] | over false | smallMain 0 | money 19 serif/non-tab 15 ["2,440,000 ₫|ui-serif","5,230,000 ₫|ui-serif","5,230,000 ₫|ui-serif"]
+pay-reopen-375-light: req eq | nums eq (48) | axe 1/2 -> 1/1 [button-name,scrollable-region-focusable] | over false | smallMain 0 | money 19 serif/non-tab 15 ["2,440,000 ₫|ui-serif","5,230,000 ₫|ui-serif","5,230,000 ₫|ui-serif"]
+t-payroll-1280-dark: req eq | nums eq (118) | axe 1/3 -> 0/2 [list,listitem] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-1280-light: req eq | nums eq (118) | axe 1/3 -> 0/2 [list,listitem] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-375-dark: req eq | nums eq (118) | axe 1/2 -> 0/1 [scrollable-region-focusable] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-375-light: req eq | nums eq (118) | axe 1/2 -> 0/1 [scrollable-region-focusable] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-cal-1280-dark: req eq | nums eq (118) | axe 1/3 -> 0/2 [list,listitem] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-cal-1280-light: req eq | nums eq (118) | axe 1/3 -> 0/2 [list,listitem] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-cal-375-dark: req eq | nums eq (118) | axe 1/2 -> 0/1 [scrollable-region-focusable] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-cal-375-light: req eq | nums eq (118) | axe 1/2 -> 0/1 [scrollable-region-focusable] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-closed-1280-dark: req eq | nums eq (118) | axe 1/3 -> 0/2 [list,listitem] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-closed-1280-light: req eq | nums eq (118) | axe 1/3 -> 0/2 [list,listitem] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-closed-375-dark: req eq | nums eq (118) | axe 1/2 -> 0/1 [scrollable-region-focusable] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-closed-375-light: req eq | nums eq (118) | axe 1/2 -> 0/1 [scrollable-region-focusable] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-figs-1280-dark: req eq | nums eq (118) | axe 1/3 -> 0/2 [list,listitem] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-figs-1280-light: req eq | nums eq (118) | axe 1/3 -> 0/2 [list,listitem] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-figs-375-dark: req eq | nums eq (118) | axe 1/2 -> 0/1 [scrollable-region-focusable] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-figs-375-light: req eq | nums eq (118) | axe 1/2 -> 0/1 [scrollable-region-focusable] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-figs-closed-1280-dark: req eq | nums eq (118) | axe 1/3 -> 0/2 [list,listitem] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-figs-closed-1280-light: req eq | nums eq (118) | axe 1/3 -> 0/2 [list,listitem] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-figs-closed-375-dark: req eq | nums eq (118) | axe 1/2 -> 0/1 [scrollable-region-focusable] | over false | smallMain 0 | money 17 serif/non-tab 0
+t-payroll-figs-closed-375-light: req eq | nums eq (118) | axe 1/2 -> 0/1 [scrollable-region-focusable] | over false | smallMain 0 | money 17 serif/non-tab 0
+tp-payrate-1280-dark: req eq | nums eq (10) | axe 0/1 -> 0/1 [color-contrast] | over false | smallMain 0 | money 6 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payrate-1280-light: req eq | nums eq (10) | axe 0/1 -> 0/1 [color-contrast] | over false | smallMain 0 | money 6 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payrate-375-dark: req eq | nums eq (10) | axe 0/1 -> 0/0 [] | over false | smallMain 0 | money 6 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payrate-375-light: req eq | nums eq (10) | axe 0/1 -> 0/0 [] | over false | smallMain 0 | money 6 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payrate-backdated-1280-dark: req eq | nums eq (10) | axe 0/1 -> 0/0 [] | over false | smallMain 0 | money 6 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payrate-backdated-1280-light: req eq | nums eq (10) | axe 0/1 -> 0/1 [color-contrast] | over false | smallMain 0 | money 6 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payrate-backdated-375-dark: req eq | nums eq (10) | axe 0/1 -> 0/0 [] | over false | smallMain 0 | money 6 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payrate-backdated-375-light: req eq | nums eq (10) | axe 0/1 -> 0/0 [] | over false | smallMain 0 | money 6 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payroll-1280-dark: req eq | nums eq (60) | axe 1/3 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 12 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payroll-1280-light: req eq | nums eq (60) | axe 1/3 -> 1/3 [button-name,color-contrast,list,listitem] | over false | smallMain 0 | money 12 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payroll-375-dark: req eq | nums eq (60) | axe 1/2 -> 1/1 [button-name,scrollable-region-focusable] | over false | smallMain 8 | money 12 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payroll-375-light: req eq | nums eq (60) | axe 1/2 -> 1/2 [button-name,color-contrast,scrollable-region-focusable] | over false | smallMain 8 | money 12 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payroll-classes-1280-dark: req eq | nums eq (60) | axe 1/3 -> 1/2 [button-name,list,listitem] | over false | smallMain 0 | money 12 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payroll-classes-1280-light: req eq | nums eq (60) | axe 1/3 -> 1/3 [button-name,color-contrast,list,listitem] | over false | smallMain 0 | money 12 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payroll-classes-375-dark: req eq | nums eq (60) | axe 1/2 -> 1/1 [button-name,scrollable-region-focusable] | over false | smallMain 8 | money 12 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+tp-payroll-classes-375-light: req eq | nums eq (60) | axe 1/2 -> 1/2 [button-name,color-contrast,scrollable-region-focusable] | over false | smallMain 8 | money 12 serif/non-tab 1 ["250,000 ₫ / session|ui-sans-serif"]
+ALL requests equal: true; ALL numbers equal: true

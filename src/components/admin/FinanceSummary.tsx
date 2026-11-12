@@ -70,12 +70,12 @@ export function FinanceSummary() {
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-bold flex items-center gap-2">
+            <h2 className="flex flex-wrap items-center gap-2 font-display text-hec-h1 font-medium text-hec-ink">
               Finance Summary
               {data?.isClosed && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Badge variant="outline" className="gap-1 border-emerald-300 text-emerald-700 dark:text-emerald-300">
+                    <Badge variant="outline" className="gap-1 border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">
                       <Lock className="h-3 w-3" />
                       Closed
                     </Badge>
@@ -91,7 +91,7 @@ export function FinanceSummary() {
               {data?.drift?.hasMaterialDrift && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Badge variant="outline" className="gap-1 border-amber-300 text-amber-700 dark:text-amber-300">
+                    <Badge variant="outline" className="gap-1 border-hec-warn/30 bg-hec-warn-tint text-hec-warn">
                       <AlertTriangle className="h-3 w-3" />
                       Drift
                     </Badge>
@@ -105,7 +105,7 @@ export function FinanceSummary() {
                       {Math.abs(data.drift.collectedDelta) > 0 && (
                         <p>Collected: {data.drift.collectedDelta > 0 ? "+" : ""}{formatVND(data.drift.collectedDelta)}</p>
                       )}
-                      <p className="text-muted-foreground">
+                      <p className="opacity-80">
                         Sessions/attendance/payments were edited after this month closed.
                       </p>
                     </div>
@@ -113,19 +113,19 @@ export function FinanceSummary() {
                 </Tooltip>
               )}
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-hec-small text-hec-ink-soft">
               {showingMode === "snapshot"
                 ? "Showing audit-grade snapshot. Toggle to live to inspect drift."
                 : "Showing live values — every session add/cancel is reflected immediately."}
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {data?.isClosed && (
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1.5"
+                className="min-h-hec-target gap-2"
                 onClick={() => setShowLiveOnClosed((v) => !v)}
               >
                 {showLiveOnClosed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -182,17 +182,17 @@ export function FinanceSummary() {
         </div>
 
         {/* Secondary: costs + net */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Billed (this month)</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="font-sans text-hec-small font-medium text-hec-ink-soft">Billed (this month)</CardTitle>
+              <DollarSign className="h-4 w-4 text-hec-ink-soft" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="whitespace-nowrap font-sans text-2xl font-bold tabular-nums text-hec-ink">
                 {isLoading ? "..." : formatVND(displayed.totalTuitionThisMonth)}
               </div>
-              <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
+              <div className="mt-1 space-y-1 text-hec-small tabular-nums text-hec-ink-soft">
                 <p>Gross: {isLoading ? "..." : formatVND(displayed.grossTuition)}</p>
                 <p>Discounts: {isLoading ? "..." : `−${formatVND(displayed.totalDiscounts)}`}</p>
               </div>
@@ -201,18 +201,18 @@ export function FinanceSummary() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Teacher Salary</CardTitle>
-              <TrendingDown className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="font-sans text-hec-small font-medium text-hec-ink-soft">Teacher Salary</CardTitle>
+              <TrendingDown className="h-4 w-4 text-hec-ink-soft" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="whitespace-nowrap font-sans text-2xl font-bold tabular-nums text-hec-ink">
                 {isLoading ? "..." : formatVND(data?.totalSalaryActual ?? 0)}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-hec-small tabular-nums text-hec-ink-soft">
                 Projected: {isLoading ? "..." : formatVND(data?.totalSalaryProjected ?? 0)}
               </p>
               {data?.payrollUnavailable && (
-                <p className="mt-1 text-xs text-amber-600">
+                <p className="mt-1 text-hec-small text-hec-warn">
                   Payroll could not be calculated. Showing what was booked to expenditures.
                 </p>
               )}
@@ -240,18 +240,18 @@ export function FinanceSummary() {
               actual spend was zero. */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Expenditures</CardTitle>
-              <Receipt className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="font-sans text-hec-small font-medium text-hec-ink-soft">Expenditures</CardTitle>
+              <Receipt className="h-4 w-4 text-hec-ink-soft" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="whitespace-nowrap font-sans text-2xl font-bold tabular-nums text-hec-ink">
                 {isLoading ? "..." : formatVND(data?.operatingExpenditures ?? 0)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-hec-small text-hec-ink-soft">
                 Operating costs • subtracted from net
               </p>
               {(data?.payrollExpenditures ?? 0) > 0 && (
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="mt-1 text-hec-small tabular-nums text-hec-ink-soft">
                   + {formatVND(data?.payrollExpenditures ?? 0)} payroll booked here, counted once
                   under Teacher Salary
                 </p>
@@ -261,14 +261,14 @@ export function FinanceSummary() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Excused Loss</CardTitle>
-              <CalendarX className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="font-sans text-hec-small font-medium text-hec-ink-soft">Excused Loss</CardTitle>
+              <CalendarX className="h-4 w-4 text-hec-ink-soft" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600">
+              <div className="whitespace-nowrap font-sans text-2xl font-bold tabular-nums text-hec-ink">
                 {isLoading ? "..." : formatVND(data?.excusedLoss ?? 0)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-hec-small text-hec-ink-soft">
                 Revenue forgone to excused absences • not a cost
               </p>
             </CardContent>
@@ -276,18 +276,18 @@ export function FinanceSummary() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="font-sans text-hec-small font-medium text-hec-ink-soft">Net Profit</CardTitle>
+              <TrendingUp className="h-4 w-4 text-hec-ink-soft" />
             </CardHeader>
             <CardContent>
               <div
-                className={`text-2xl font-bold ${
-                  (data?.netActual ?? 0) < 0 ? "text-destructive" : "text-emerald-600"
+                className={`whitespace-nowrap font-sans text-2xl font-bold tabular-nums ${
+                  (data?.netActual ?? 0) < 0 ? "text-hec-danger" : "text-hec-ink"
                 }`}
               >
                 {isLoading ? "..." : formatVND(data?.netActual ?? 0)}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-hec-small tabular-nums text-hec-ink-soft">
                 Projected: {isLoading ? "..." : formatVND(data?.netProjected ?? 0)}
               </p>
               <p className="mt-1">
@@ -317,22 +317,22 @@ function MetricCard({
   sub?: string;
   tone: "primary" | "emerald" | "amber" | "destructive";
 }) {
+  // Tone colours the icon only: the amount stays ink (DS s.14), no gradient.
   const toneClasses: Record<string, string> = {
-    primary: "from-primary/15 to-primary/5 text-primary",
-    emerald: "from-emerald-500/15 to-emerald-500/5 text-emerald-600 dark:text-emerald-400",
-    amber: "from-amber-500/15 to-amber-500/5 text-amber-600 dark:text-amber-400",
-    destructive: "from-red-500/15 to-red-500/5 text-red-600 dark:text-red-400",
+    primary: "text-hec-ink-soft",
+    emerald: "text-hec-leaf",
+    amber: "text-hec-warn",
+    destructive: "text-hec-danger",
   };
   return (
-    <Card className="relative overflow-hidden">
-      <div className={`absolute inset-0 bg-gradient-to-br pointer-events-none ${toneClasses[tone].split(" ").slice(0, 2).join(" ")}`} />
-      <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-        <Icon className={`h-4 w-4 ${toneClasses[tone].split(" ").slice(2).join(" ")}`} />
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+        <CardTitle className="min-w-0 font-sans text-hec-small font-medium text-hec-ink-soft">{label}</CardTitle>
+        <Icon className={`h-4 w-4 shrink-0 ${toneClasses[tone]}`} />
       </CardHeader>
-      <CardContent className="relative">
-        <div className="text-2xl font-bold tabular-nums">{value}</div>
-        {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
+      <CardContent>
+        <div className="whitespace-nowrap font-sans text-2xl font-bold tabular-nums text-hec-ink">{value}</div>
+        {sub && <p className="mt-1 text-hec-small tabular-nums text-hec-ink-soft">{sub}</p>}
       </CardContent>
     </Card>
   );
