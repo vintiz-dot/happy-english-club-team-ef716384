@@ -43,7 +43,8 @@ export default function TeacherRecorder() {
         ) : null}
         {/* Kept mounted (hidden) while another view shows, so a recording carries on. */}
         <div hidden={view !== "daily"}>
-          <DailyRecorder key={key} userId={user.id} onSetup={() => { if (!active) setView("setup"); }} onActiveChange={setActive} />
+          {/* Keyed by the user too: another teacher signing in gets a new engine (C2 review 2, M1). */}
+          <DailyRecorder key={`${key}-${user.id}`} userId={user.id} onSetup={() => { if (!active) setView("setup"); }} onActiveChange={setActive} />
         </div>
       </div>
     </Layout>
