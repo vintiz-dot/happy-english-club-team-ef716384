@@ -1,6 +1,14 @@
 # B1 transcripts: runs and scoring
 
-**Where I am / next step:** vendor_batch.py written and dry-run verified; next: fake-server test, then b1_score.py.
+**Where I am / next step:** Parts 1 and 2 built, tested and committed; first Azure numbers scored; local faster-whisper slice running (result folds into the tables when `b1_score.py` is re-run). NEXT: the owner runs `vendor_batch.py --login`, then `b1_score.py --evidence docs\evidence\B1-transcripts.md`; the teacher then marks the pack in `work\teacher-check\b1\`.
+
+## Method and limits (read first)
+
+- Nothing here is word accuracy: there is no human reference for any audio, and the synthetic mixes carry no text reference (`mix.py` stores RTTM turns and turn tables, not transcripts). Only speaker structure of the mixes has ground truth. Every agreement figure is agreement between systems, not accuracy.
+- Agreement = difflib matching blocks over normalised words (score.py normaliser), 2*matched/(len A + len B). Two systems compared over the shorter file's duration.
+- Wall-clock figures include upload and proxy overhead and were measured on a shared CPU: not benchmarks.
+- Run ids on the server are `b1-<vendor>-<mode>`; result files are `result_<runid>.<set>.json` (set = synth, clips, L1..L4). L1 = the 139-minute recording, L2 = the 84.5-minute one, L3 = the 76.7-minute one, L4 = L1's 16 kHz / 32 kbps compressed twin (same first 20 minutes).
+- First real numbers (below): Azure fast-multilingual, 2 synthetic pieces (both 0 % overlap, room-degraded). It reports 5 speakers for a 3-speaker mix and 5 for a 5-speaker mix; with at least 5 s of speech 4 and 3 are left. DER 0.35 and 0.56 with a 0.25 s collar (pooled 0.49: miss 0.23, false alarm 0.01, confusion 0.25). Two files are far too few to conclude anything; they prove the pipeline.
 
 ## Part 1 status (vendor_batch.py written)
 
