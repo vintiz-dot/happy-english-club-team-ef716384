@@ -1,4 +1,4 @@
-import { LogOut, Monitor, Moon, Sun } from "lucide-react";
+import { LogOut, Monitor, Moon, Sun, UserRound } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +10,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { initialsOf } from "@/hooks/useIdentity";
 import { useThemeChoice } from "@/components/theme/IvoryScope";
 import type { ThemeChoice } from "@/lib/ivoryScope";
 
@@ -50,8 +49,10 @@ export function UserMenu({
         {/* Initials are decoration here; the label above says who it is. */}
         <Avatar aria-hidden="true" className="h-8 w-8 border border-hec-line">
           <AvatarImage src={avatarUrl || undefined} alt="" />
-          <AvatarFallback className="bg-hec-sunken text-hec-caption font-medium text-hec-ink">
-            {initialsOf(name) || "?"}
+          {/* An icon, not initials: visible letters that are not in the button's label fail
+              WCAG 2.5.3 (label in name). The name is in the label and in the menu. */}
+          <AvatarFallback className="bg-hec-sunken text-hec-ink">
+            <UserRound className="h-4 w-4" />
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>

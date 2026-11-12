@@ -274,7 +274,8 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           ivory
             ? "hidden md:flex flex-col border-r border-hec-line bg-hec-surface sticky top-0 h-screen"
             : "hidden md:flex flex-col border-r border-border/60 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55 transition-all duration-300 sticky top-0 h-screen",
-          sidebarOpen ? (ivory ? "w-60" : "w-56") : ivory ? "w-[4.5rem]" : "w-16"
+          // Same widths in both looks: the page (and a display board scaled to it) keeps its size.
+          sidebarOpen ? "w-56" : "w-16"
         )}
       >
         {/* Sidebar Header */}
@@ -514,6 +515,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
               <ProfileSwitcher />
               <NotificationBell />
               <ChangePassword />
+              {ivory && <UserMenu name={userName} role={role} avatarUrl={avatarUrl} onSignOut={signOut} />}
             </>
           }
         />
