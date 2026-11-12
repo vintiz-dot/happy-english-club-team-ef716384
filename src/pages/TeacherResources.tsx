@@ -47,6 +47,7 @@ import {
 import { ResourceUploadDialog } from "@/components/resources/ResourceUploadDialog";
 import { BLOOMS_LEVELS, PYP_THEMES, getFileTypeInfo } from "@/lib/resourceConstants";
 import { toast } from "sonner";
+import { openHttpUrl } from "@/lib/safeUrl";
 
 export default function TeacherResources() {
   const { data: resources = [], isLoading } = useTeacherResources();
@@ -107,7 +108,7 @@ export default function TeacherResources() {
 
   const handleDownload = async (resource: Resource) => {
     if (resource.external_url) {
-      window.open(resource.external_url, "_blank", "noopener");
+      openHttpUrl(resource.external_url);
       return;
     }
     if (!resource.storage_key) return;
