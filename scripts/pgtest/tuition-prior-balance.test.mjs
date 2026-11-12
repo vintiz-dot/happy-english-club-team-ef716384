@@ -216,6 +216,29 @@ ok(row('sibling-other').differs.length === 0, 'the other child is unaffected');
 // Neither calculator returns a payable or a signed balance.
 ok(!('payable' in bw.carry) && !('finalPayable' in bw) && !('balance' in bw) && !('payable' in sw.carry) && !('finalPayable' in sw), 'no payable / balance field in either response');
 
+// --- what the admin tuition list now shows: src/lib/tuitionRows.ts over the REAL answers.
+{
+  const out = await build({ entryPoints: [resolve('src/lib/tuitionRows.ts')], bundle: true, format: 'esm', platform: 'node', write: false, logLevel: 'silent' });
+  const file = join(dir, 'tuitionRows.mjs');
+  writeFileSync(file, out.outputFiles[0].text);
+  const rows = await import(pathToFileURL(file).href);
+  for (const c of CASES) {
+    const b = bulk.find((r) => r.studentId === id(c.n));
+    const f = rows.tuitionFigures(b);
+    ok(f.state === 'ready', `${c.key}: the list has figures`);
+    // Each figure on the row is the function's own number, untouched.
+    ok(f.charge === b.totalAmount && f.paid === b.payments.monthPayments && f.base === b.baseAmount && f.discount === b.totalDiscount, `${c.key}: charge, paid, base, discount are the function's`);
+    const cin = rows.carriedIn(f), cout = rows.carriedOut(f);
+    ok((cin.kind === 'owed' && cin.amount === b.carry.carryInDebt) || (cin.kind === 'credit' && cin.amount === b.carry.carryInCredit) || (cin.kind === 'none' && b.carry.carryInDebt === 0 && b.carry.carryInCredit === 0), `${c.key}: Prior Bal. is the function's carry-in`);
+    ok((cout.kind === 'owed' && cout.amount === b.carry.carryOutDebt) || (cout.kind === 'credit' && cout.amount === b.carry.carryOutCredit) || (cout.kind === 'none' && b.carry.carryOutDebt === 0 && b.carry.carryOutCredit === 0), `${c.key}: Balance is the function's carry-out`);
+    ok(statusOf(rows.tuitionStatusInput(f)) === row(c.key).calculator.status, `${c.key}: the status is judged on the function's figures`);
+  }
+  // The single calculator DOES say when a family discount is unresolved: nothing of that bill is shown.
+  const pending = rows.tuitionFigures(sw);
+  ok(pending.state === 'pending' && pending.charge === null && rows.carriedOut(pending).kind === 'pending', 'an answer marked unresolved shows no figure');
+  ok(rows.tuitionFigures({ studentId: id(1), error: true }).state === 'unavailable' && rows.tuitionFigures(undefined).state === 'unavailable', 'an error row or no answer shows no figure');
+}
+
 // --- the whole-school history in one request: past the row cap, the browser's sum is short.
 {
   const many = Array.from({ length: 60 }, (_, i) => id(1000 + i));
