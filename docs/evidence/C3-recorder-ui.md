@@ -1,6 +1,6 @@
-﻿# C3 - Class recorder screens
+# C3 - Class recorder screens
 
-**Where I am / next step:** screens built and committed; screenshots + axe run in progress; then the real-engine e2e.
+**Where I am / next step:** DONE. All checks below green. Open: the Layout nav line (request below), the engine requests, and the hardware checks.
 
 Nothing here touched the live project: no sign-in, no Supabase call, no deploy, no migration. The engine (`src/lib/recorder/**`), the migration, `src/components/ui/**`, Layout, `index.css` and the tailwind config are unchanged. No new npm dependency. No audio in the repo (the wizard's preview clips are a synthetic tone made in memory; the e2e reads the C2 lesson WAV in place through `scripts/recorder/harness.mjs`).
 
@@ -38,4 +38,82 @@ Nothing here touched the live project: no sign-in, no Supabase call, no deploy, 
 
 ## Checks
 
-(filled in below as they run)
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: **exit 0**, 0 `error TS`; with `--listFiles` it loaded 877 files under `src/` including the recorder screens (so the clean result is real, not an empty solution-file run).
+- `npx --yes bun test scripts/recorderUi.test.ts`: **23 pass, 0 fail, 204 expect() calls**.
+- Preview: `C:\Users\Dell\hec-tools\c3-harness\` (copied from a46-harness), port 5353, Vite with `@/integrations/supabase/client` aliased to a fake client (made-up names) and the screens given a scripted FAKE engine through `RecorderDepsProvider` (`preview/fake-engine.ts`: every state, upload status, unplug, swap verdict, permission). `node shoot.mjs <repo> <out>`. Reduced motion emulated. 24 states x 375 and 1280 = **48 screenshots** in `docs/evidence/C3/` (largest 145 KB).
+- **axe (axe-core, all impacts): 0 violations on all 48.** Earlier runs found colour-contrast on the red recording bar, the destructive buttons and the Bluetooth badge (the theme's `destructive`/`destructive-foreground` pair fails AA) - fixed by using `foreground`/`background` with a red border/dot; and a doubled title (see engine notes). Small targets (< 44 px): 0 except the shadcn Dialog close "x" (16 px) in two dialogs - `src/components/ui/dialog.tsx` is out of bounds; Escape and the Cancel button (44 px) do the same.
+- No horizontal overflow at 375 on any state. Long class names and long Vietnamese names wrap (fixture "Nguyen Hoang Phuong Thao Nguyen", a 60-character class name).
+
+| shot | axe | small targets | overflow | KB |
+|---|---|---|---|---|
+| wizard-1-start-375 | 0 | 0 | False | 44 |
+| wizard-1-start-1280 | 0 | 0 | False | 49 |
+| wizard-1-warnings-375 | 0 | 0 | False | 50 |
+| wizard-1-warnings-1280 | 0 | 0 | False | 54 |
+| wizard-2-devices-375 | 0 | 0 | False | 93 |
+| wizard-2-devices-1280 | 0 | 0 | False | 102 |
+| wizard-2-bluetooth-375 | 0 | 0 | False | 124 |
+| wizard-2-bluetooth-1280 | 0 | 0 | False | 134 |
+| wizard-3-meters-375 | 0 | 0 | False | 44 |
+| wizard-3-meters-1280 | 0 | 0 | False | 51 |
+| wizard-3-swapped-375 | 0 | 0 | False | 55 |
+| wizard-3-swapped-1280 | 0 | 0 | False | 62 |
+| wizard-4-playback-375 | 0 | 0 | False | 34 |
+| wizard-4-playback-1280 | 0 | 0 | False | 36 |
+| wizard-5-upload-375 | 0 | 0 | False | 31 |
+| wizard-5-upload-1280 | 0 | 0 | False | 36 |
+| wizard-6-save-375 | 0 | 0 | False | 36 |
+| wizard-6-save-1280 | 0 | 0 | False | 40 |
+| daily-before-375 | 0 | 0 | False | 37 |
+| daily-before-1280 | 0 | 0 | False | 38 |
+| daily-armed-375 | 0 | 0 | False | 36 |
+| daily-armed-1280 | 0 | 0 | False | 37 |
+| daily-recording-375 | 0 | 0 | False | 69 |
+| daily-recording-1280 | 0 | 0 | False | 69 |
+| daily-stop-confirm-375 | 0 | 0 | False | 62 |
+| daily-stop-confirm-1280 | 0 | 0 | False | 73 |
+| daily-offline-375 | 0 | 0 | False | 68 |
+| daily-offline-1280 | 0 | 0 | False | 69 |
+| daily-late-offline-375 | 0 | 0 | False | 69 |
+| daily-late-offline-1280 | 0 | 0 | False | 70 |
+| daily-unplugged-375 | 0 | 0 | False | 76 |
+| daily-unplugged-1280 | 0 | 0 | False | 80 |
+| daily-saved-375 | 0 | 0 | False | 37 |
+| daily-saved-1280 | 0 | 0 | False | 39 |
+| daily-switch-off-375 | 0 | 0 | False | 29 |
+| daily-switch-off-1280 | 0 | 0 | False | 33 |
+| admin-off-375 | 0 | 0 | False | 102 |
+| admin-off-1280 | 0 | 0 | False | 111 |
+| admin-on-375 | 0 | 0 | False | 110 |
+| admin-on-1280 | 0 | 0 | False | 118 |
+| admin-turning-on-consent-missing-375 | 0 | 1 | False | 121 |
+| admin-turning-on-consent-missing-1280 | 0 | 1 | False | 145 |
+| admin-recordings-375 | 0 | 0 | False | 95 |
+| admin-recordings-1280 | 0 | 0 | False | 102 |
+| admin-deletion-request-375 | 0 | 1 | False | 94 |
+| admin-deletion-request-1280 | 0 | 1 | False | 105 |
+| admin-audit-375 | 0 | 0 | False | 59 |
+| admin-audit-1280 | 0 | 0 | False | 63 |
+
+Caveat: full-page screenshots draw the fixed recording bar where the viewport was, mid-page; in the browser it stays pinned to the bottom. Dialog shots may catch the 150 ms fade.
+
+### End-to-end with the REAL engine (`node e2e.mjs`)
+
+Chromium 145 (`scripts/recorder/harness.mjs` `launch`: `--use-fake-ui-for-media-stream --use-fake-device-for-media-stream`, the C2 lesson WAV read in place), the real `createRecorder` + `BrowserCaptureSource` + uploader, `supabaseBackend` over the C2 contract-enforcing fake recorder server (`scripts/recorder/fake-recorder-server.mjs`, served by a Vite middleware at `POST /fake`). A lesson starting in 1 minute (capture window already open), 2.5 min long, chunks 10 s. Driven only through the screen: Ready for today -> armed -> recording by itself -> Roll-call start, Activity, a name chip, Roll-call end -> Stop -> confirm -> Saved. **14 passed, 0 failed** (`docs/evidence/C3/c3-e2e.json`): tab title "● RECORDING - Class recorder" while recording and back after; both meters live; the Stop confirm ("The lesson has 3 minutes left."); one recording `complete`, `stop_reason = manual`; every chunk of both tracks confirmed; the four teacher markers on the server and in the manifest (the name chip with the child's id); the manifest stored with both tracks, `frames_captured == frames_written`; the device profile upserted; no page errors.
+An earlier run on the heavily loaded machine also produced engine-written `gap` ("context stalled N s") and `device_change` markers (both fake inputs dropped at 43 s and came back at 52 s) and still completed - the screen showed the unplug and the restore. The test now ignores the engine's own marker kinds when comparing the teacher's.
+
+## Requests to the engine (C2) - not edited here, worked around
+
+1. **Tab title is the engine's.** `controller.ts` `setState` writes "● RECORDING - " / "◌ ARMED - " into `document.title`. The screen therefore only sets the base title and never prefixes (a first version did, and the e2e caught "● RECORDING - ● Recording - ..."). Request: document this in `index.ts` (or make it an option), since a UI owning `document.title` is the usual expectation.
+2. **No upload-speed probe.** `recorder_can_upload` allows only registered chunk paths of an open recording, so the wizard cannot send a test object; speed is measured from `chunk` events (register -> confirm). Request (if wanted): an engine helper `measureUpload(chunks)` or a `registeredAt`/`uploadMs` split per chunk (the current `confirmedAt - registeredAt` includes queueing and the read-back).
+3. **Wizard probe.** The wizard builds its probe from public pieces (`BrowserCaptureSource`, `measure`, `swapVerdict`, `encodeWav`); the engine's own `HealthMonitor` swap window (60 s, from the start of a recording) does not fit a 10-second check, so `swapVerdict` is called on the probe's own per-batch diffs with the same speech threshold (-40 dB) and minimum 20 windows. A first-class `openProbe()` in the engine would keep the two in one place.
+4. **Discard of an abandoned recording** (`discardLocal` with "DISCARD") is NOT offered on this screen yet; an abandoned recording shows "Anything recorded is kept on this laptop". Kept out deliberately to avoid a destructive control in a teacher's daily view; suggest putting it in an admin-guided support step.
+5. **Level events only while capturing.** Before capture the daily screen can show only the ticks from `prepare()` (resolved, not opened); live meters there would need the mics open early. Left as is.
+
+## Not in the database, said plainly
+
+- The consent wording TEXT is not stored, only its version (`recorder_settings.consent_wording_version`). C1 asked for the text next to the version; the panel shows the version and says the text is the school's form for that version. Owner question Q1 (wording) is still open.
+
+## What needs the real S500 and lapel (cannot be verified here)
+
+Chrome's fake devices are two inputs playing the same file, so these are untested by me: (1) the real labels and whether `hintRole`/`isS500Label`/`isBluetoothLabel` recognise them (the S500 on Bluetooth shows "Hands-Free AG Audio" on Windows - assumed from Windows naming, not seen); (2) the swap warning on a real pair (the fake engine scripts it; the real probe path ran only in typecheck); (3) the 10-second playback quality and that the S500's firmware DSP is audible/acceptable; (4) the meters' "Quiet/Good/Too loud" thresholds against real levels; (5) unplugging a real USB device mid-lesson and the "plug it back in" path; (6) whether the AnkerWork app exposes those switches at all; (7) the Windows Sound steps' exact wording on the school laptop's Windows build; (8) battery API on the school laptop (Chrome exposes `getBattery`; Edge too); (9) upload speed on the school uplink; plus C2's own owner checks 1-14.
