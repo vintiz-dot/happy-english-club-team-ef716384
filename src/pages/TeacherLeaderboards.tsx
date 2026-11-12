@@ -170,13 +170,20 @@ export default function TeacherLeaderboards() {
                 <span className="hidden sm:inline">Standard</span>
               </Button>
               <Tooltip>
+                {/* A disabled button gets no pointer or focus events, so its reason could
+                    not be shown. The wrapper takes hover, tap and (while disabled) Tab. */}
                 <TooltipTrigger asChild>
+                  <span
+                    tabIndex={canUseLiveMode ? undefined : 0}
+                    className="flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  >
                   <Button
                     variant={viewMode === "live" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => canUseLiveMode && setViewMode("live")}
                     className="rounded-none gap-1.5"
                     disabled={!canUseLiveMode}
+                    aria-label={canUseLiveMode && remainingTime ? `Live, ${remainingTime} left` : "Live"}
                   >
                     <Zap className="h-4 w-4" />
                     <span className="hidden sm:inline">Live</span>
@@ -187,6 +194,7 @@ export default function TeacherLeaderboards() {
                       </span>
                     )}
                   </Button>
+                  </span>
                 </TooltipTrigger>
                 {!canUseLiveMode && (
                   <TooltipContent>

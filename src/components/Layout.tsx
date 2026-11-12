@@ -125,7 +125,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
         <AmbientBackground intensity="bold" />
         <header className="sticky top-0 z-50 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55 shadow-sm">
           <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 md:gap-3">
+            <div className="flex shrink-0 items-center gap-2 md:gap-3">
               {/* Conic aurora ring around the brand mark */}
               <div className="h-9 w-9 md:h-11 md:w-11 rounded-full p-[2px] bg-[conic-gradient(from_140deg,#3b82f6,#22d3ee,#facc15,#3b82f6)] shadow-[0_0_16px_-4px_rgba(59,130,246,0.5)]">
                 <div className="h-full w-full rounded-full overflow-hidden bg-card">
@@ -137,9 +137,12 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                 <p className="text-xs text-muted-foreground hidden md:block">Happy English Club</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 md:gap-4">
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 md:gap-4">
               <PWAInstallButton variant="outline" />
-              <ProfileSwitcher />
+              {/* A long child name shrinks and truncates so the controls to its right stay on screen. */}
+              <div className="min-w-0 [&>button]:max-w-full [&>button>span]:min-w-0 [&>button>span]:truncate">
+                <ProfileSwitcher />
+              </div>
               <NotificationBell />
               {userName && (
                 <Component
@@ -151,7 +154,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                       }
                     : {})}
                   className={cn(
-                    "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full glass-sm text-left",
+                    "hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full glass-sm text-left",
                     isAdmin && "transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   )}
                 >
