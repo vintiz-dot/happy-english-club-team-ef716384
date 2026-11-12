@@ -2,6 +2,12 @@
 
 Evaluation tooling for workstream B (`docs/MASTER_PLAN.md`). Evidence: `docs/evidence/B0-harness.md`.
 
+## B1 vendor batch: the owner's one command (TEMPORARY, with the audit-eval proxy)
+
+    C:\Users\Dell\hec-audio-eval\.venv\Scripts\python.exe scripts\lesson-eval\vendor_batch.py --login
+
+Type it in your own terminal from the repo folder (a direct python command: the laptop's PowerShell blocks .ps1 files). It asks for the admin email and password once (hidden, kept in memory only), prints the plan (systems, audio minutes, estimated USD) and waits for you to type `YES`. It then runs 7 systems one after another over the synthetic mixes, the held-out clips and 20 minutes of each lesson, skips any system that errors, and ends with a table of pieces ok / failed / minutes / first error. Run it again to retry: saved answers are never re-sent. Add `--dry-run` to see the plan with no network; `--systems`, `--inputs`, `--max-total-minutes 1200` narrow or cap it. Afterwards: `python scripts\lesson-eval\b1_score.py` writes the tables to `work\b1\`.
+
 ## Data rules (enforced by the code, not only by convention)
 
 - The audio is children's voices. It lives only in `C:\Users\Dell\hec-audio-eval\` (override with `HEC_EVAL_ROOT`). Every output defaults to `<root>\work\`; `common.safe_out()` exits 3 if an output path is inside any git repository.

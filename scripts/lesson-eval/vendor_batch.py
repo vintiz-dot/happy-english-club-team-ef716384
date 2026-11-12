@@ -61,6 +61,7 @@ LESSON_SETS = ["L1", "L2", "L3", "L4"]
 ALL_INPUTS = ["synth", "clips"] + LESSON_SETS
 LESSON_MINUTES = 20.0
 PIECE_MIN, OVERLAP_S = 10.0, 20.0
+LESSON_PIECE_MIN = 10.5  # 20 min = two pieces (0-630 s, 610-1200 s), not two plus a 40 s tail
 
 
 def system_name(vendor: str, mode: str) -> str:
@@ -141,16 +142,18 @@ def build_inputs(names: list[str]) -> list[dict]:
                 sys.exit(f"no source recording found for {n} (see derive_lesson_map / work\\vendor\\_inputs\\lesson_map.json)")
             cut = cut_lesson(paths[n], n, LESSON_MINUTES)
             ns = SimpleNamespace(lesson=str(cut), lesson_code=n, clips=None, synth=None, piece_minutes=PIECE_MIN)
-            argv = ["--lesson", str(cut), "--lesson-code", n]
-        sets.append({"name": n, "argv": argv + ["--tag", n], "srcs": vendor_run.sources(ns)})
+            ns.piece_minutes = LESSON_PIECE_MIN
+            argv = ["--lesson", str(cut), "--lesson-code", n, "--piece-minutes", str(LESSON_PIECE_MIN)]
+        sets.append({"name": n, "argv": argv + ["--tag", n], "srcs": vendor_run.sources(ns),
+                     "piece_min": ns.piece_minutes})
     return sets
 
 
-def piece_seconds(src: dict) -> list[tuple[str, float]]:
+def piece_seconds(src: dict, piece_min: float = PIECE_MIN) -> list[tuple[str, float]]:
     """[(object name, seconds)] each piece of one source would send."""
     if src["kind"] == "join":
         return [(vendor_run.piece_object(src, 0, "flac"), src["duration"])]
-    spans = vendor_run.plan_pieces(src["duration"], PIECE_MIN * 60, OVERLAP_S)
+    spans = vendor_run.plan_pieces(src["duration"], piece_min * 60, OVERLAP_S)
     return [(vendor_run.piece_object(src, k, "flac"), e - s) for k, (s, e) in enumerate(spans)]
 
 
@@ -165,7 +168,7 @@ def plan(systems: list[tuple], inputs: list[dict]) -> list[dict]:
         tot = pend = 0.0
         for st in inputs:
             for src in st["srcs"]:
-                for obj, secs in piece_seconds(src):
+                for obj, secs in piece_seconds(src, st.get("piece_min", PIECE_MIN)):
                     tot += secs / 60
                     if not vendor_run.piece_done(system_dir(vendor, mode), obj):
                         pend += secs / 60
