@@ -968,6 +968,37 @@ console.log("=== ruling (a): silence below the byte floor is stored, flagged, ne
     { was_completed: true, recording_ran_evidence: false, too_short: true, v: 2_400_000, vl: 2_400_000, l: 0, bf: 3_480_000, tracks_with_audio: 1 });
 }
 
+console.log("=== C2 round 3 (N-B1): audio from before the server's Start is kept, on its own timeline, never evidence ===");
+{
+  const s = await sessAt(C1, t1, -60, 30);
+  const r = await arm(T1, s, { chunk_ms: 60000 });
+  const setPre = (uid, ms) => tryAs(uid, () => db.query(`UPDATE public.class_recordings SET pre_start_ms = $2 WHERE id=$1`, [r.id, ms]));
+  refused("pre_start_ms cannot be stated while the recording is only armed", await setPre(T1, 1000), /stated once/);
+  await setStatus(T1, r.id, "recording");
+  await addTrack(T1, r.id);
+  await travel(r.id, 1);
+  refused("nor reach back before the capture window opened", await setPre(T1, 365 * 86400000), /stated once/);
+  eq("the page states it once: 2 minutes were captured before the server's stamp", await setPre(T1, 120_000), null);
+  refused("and cannot change it afterwards", await setPre(T1, 60_000), /stated once/);
+  eq("it is stored", (await one(`SELECT pre_start_ms::int p FROM public.class_recordings WHERE id=$1`, [r.id])).p, 120_000);
+  // The chunks' t = 0 is the first captured sample, 2 minutes before started_at: 3 minutes of audio exist already.
+  for (let i = 0; i < 3; i++) await chunkUp(T1, r.id, "teacher", i, 120_000, i * 60_000, (i + 1) * 60_000);
+  refused("but not audio past what the server's clock allows from that first sample", await tryReg(T1, r.id, "teacher", 3, 120_000, SHA("a"), 180_000, 240_000), /server's clock/);
+  for (let i = 3; i < 50; i++) { await travel(r.id, 1); await chunkUp(T1, r.id, "teacher", i, 120_000, i * 60_000, (i + 1) * 60_000); }
+  await setStatus(T1, r.id, "uploading");
+  await put(T1, manifestOf(r.id), 300);
+  await as(T1, () => db.query(`UPDATE public.class_recording_tracks SET chunk_count = 50 WHERE recording_id=$1`, [r.id]));
+  eq("a recording whose audio began before the server's Start completes (span measured from the first sample)", await completeRec(T1, r.id), null);
+  eq("the two pre-start minutes are stored but never evidence: 48 live minutes count, not 50",
+    (await one(`SELECT was_completed, recording_ran_evidence, verified_audio_ms::int v, verified_lesson_ms::int vl FROM public.recorder_session_evidence WHERE recording_id=$1`, [r.id])),
+    { was_completed: true, recording_ran_evidence: true, v: 2_880_000, vl: 2_880_000 });
+  const s2 = await sessAt(C1, t1, -60, 30);
+  const r2 = await arm(T1, s2, { chunk_ms: 60000 });
+  await setStatus(T1, r2.id, "recording"); await addTrack(T1, r2.id); await travel(r2.id, 2);
+  await chunkUp(T1, r2.id, "teacher", 0, 120_000, 0, 60_000);
+  refused("pre_start_ms cannot be stated once a chunk is registered", await tryAs(T1, () => db.query(`UPDATE public.class_recordings SET pre_start_ms = 1000 WHERE id=$1`, [r2.id])), /stated once/);
+}
+
 console.log("=== evidence is what reached the server LIVE (C1 critic 2, N2) ===");
 eq("the late allowance is snapshot at arming: 10 minutes", (await one(
   `SELECT late_after_ms FROM public.class_recordings WHERE id=$1`, [rL.id])).late_after_ms, 600_000);
