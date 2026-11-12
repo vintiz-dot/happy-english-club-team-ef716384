@@ -520,4 +520,92 @@ The setting ships `enabled = false`; `change_approval_needed` then answers "not 
 
 **Audit.** Requests and events are append-only, written only by the definer functions, readable by admins; the `applied` event lists the override ids. A T3 change that was approved still goes to the review queue.
 
+---
+
+## (f) Test plan (R-11, R-13)
+
+### f.1 What D2 already decided, and D4 keeps
+
+- D2 section 11: **no existing suite is given a guard migration and no existing test file is edited.** `cancelled-lessons.test.mjs:57,78,82,84,90` and `class-overhead.test.mjs:251,259,418,905` do raw cancels that the guard refuses; they stay green because the guard is absent from their database. D4 follows the same rule: every existing entry of `run.mjs` keeps its file and its migration list, byte for byte. They also remain the proof of the pre-D4 objects, which is what a rollback returns to.
+- D2-build B-9: `stars-sync-engine`, `stars-sync-homework` and `ta-standing` cannot take D1 + D2 because their preludes lack `class_transcripts`, `payroll_periods`, `invoices`, `auth.role()` and D1's preflight refuses. `session-cancel-guard.test.mjs:25` reads exactly four migration paths from its arguments. So "load D4 into the existing suites" (revision 1) cannot run. Everything D4 tests is in NEW files with their own preludes.
+- A suite that loads nothing passes with nothing (the project's own note). Each new `run.mjs` entry carries `expect: <n>`; the runner (one small change by the conductor in step 0) fails a suite that reports FEWER assertions than its pinned number. The numbers below are floors from the case lists; the implementer pins the real count at merge.
+
+### f.2 New suites
+
+| Suite | Prelude and migrations | Covers | Floor |
+|---|---|---|---|
+| `d4-prelude.mjs` (shared module, not a suite) | D2's prelude copied once (with a test that it still equals the `PRELUDE` string in `session-cancel-guard.test.mjs`, so it cannot drift), plus: `point_transactions` / `class_transcripts` / `homeworks` policies, `enrollments` with the real RPC migration `20261106100001`, `discount_*`, `families`, `students`, `staff_pay_rates` (`20261021090000`), payroll lock (`20261021093000`), freeze (`20261106120000`), `session_participants`, `user_roles`. **Budget: two days**, the largest single piece of test work; it is step 0. | - | - |
+| `d4-floors.test.mjs` | audit, cancelled-lesson guard, D1, D2, file 1 | G-8, G-9, G-10; the F-11 probe; R-6 cases; the carry-over below | 120 |
+| `d4-d2-carryover.test.mjs` | the same | **Every case of the 266-assertion D2 suite, re-run with file 1 installed**, from a COPY of that file whose only edits are the token version and nothing else (file 1 changes no D2 verdict: un-hold, teacher and time edits are still unguarded until file 4). A companion check asserts the copy's case labels equal the original's. Includes D2's case 29 (cancel, then delete, two calls). | 266 |
+| `d4-register.test.mjs` | + file 2 | G-11's seven rules, G-12, the checked path, tokens, bulk, the floor-fed tier | 110 |
+| `d4-class-fee.test.mjs` | + file 3, and the bundled calculate-tuition / bulk (the way `invoice-status.test.mjs` bundles them) | golden figures identical with baseline rows and with no table; a row from next month moves no stored bill; a past-dated row is T1-T3 | 40 |
+| `d4-lesson-pay.test.mjs` | + file 4 | G-1 to G-7; D2's cases 15, 42, 43 re-stated with their NEW expected results, each listed in the header as "D2 said allowed; D4 says ..." | 110 |
+| `d4-money-inputs.test.mjs` | + file 5 | G-13 to G-21, b.5's writers | 140 |
+| `d4-reach-oracle.test.mjs` | all, + bundled calculate-tuition and calculate-payroll | f.4 | 60 |
+| `d4-approvals.test.mjs` | all six | (e), off and on | 70 |
+| `d4-stars-interplay.test.mjs` | `d4-prelude` + the Stars tables + the four real Stars migrations + D1, D2, files 1, 2, 4 | the real engine: a mark, a withdrawal that restores, one that deletes, one that un-holds (open month, locked month), a late record on an old billed lesson (`service_retro_mark`, no abort). If the union prelude cannot satisfy both preflights within the budget (one day), the fallback is stated in the suite header: the engine's statements are EXTRACTED from the migration text at run time by pattern (not copied, so they cannot drift) and run on the service lane. | 30 |
+| `d4-functions-register.test.mjs`, `-lessons`, `-inputs` (three files, one per step) | per step | the functions driven with requests over D2's PostgREST stand-in; every guarded write asserted to be on the caller's client | 40 / 60 / 60 |
+| `d4-deployed-functions.test.mjs` (R-10) | D1, D2, files 1-6 | `manage-session` and `bulk-cancel-sessions` **as deployed today** (read from the D-release commit with `git show`, bundled) against the new SQL: preview, cancel, delete, move, un-cancel, bulk preview and confirm all behave as before; Held -> Scheduled now answers 409 (closed, expected) | 30 |
+| `d4-rollback.test.mjs` | f.7 | - | 12 |
+| `money-guard-lib.test.mjs` | none | `src/lib/moneyGuard.ts`, `lessonPayGuard.ts`, `moneyInputs.ts`, `approvals.ts` | 40 |
+
+### f.3 Cases that fail without each guard (the ones the review found missing are marked +)
+
+- **G-8 / R-6:** the review-3 V7 probe ends at tier 3, `level_now NONE`, two causes, reviewed, HC013 without a correction reason. One case per family removed alone. + A CHILD's write on `homework_submissions` (and a parent's, and a no-role user's) leaves NO floor row. + D1 made to raise: the floor is the row's own level, never more. + A cancel writes no floor; cancel then delete works (case 29). + A register saved on the wrong lesson, corrected inside the week: floor STRONG, cause names the teacher. + Two taught lessons bulk-cancelled in one transaction after their points were deleted: both have a floor (`hec.floor_seen` keyed per lesson). + Keep for `homeworks` and for `homework_submissions`, each alone. Column sweep generated from `information_schema` over the five tables.
+- **G-9 / R-1:** + reset `recorded_payment` to 0 raw, then preview an enrolment end in that month: tier unchanged (T2). + raw `confirmation_status -> auto_approved`: still T3. + raw `status -> issued`. + the calculator's own `confirmed -> needs_review`: still T3. + bill deleted: floor row survives. + D2's cancel of a lesson in that month is still T3. The floor trigger never changes `NEW` (row compared before and after, with and without the trigger).
+- **G-10:** HC024 on all four lanes; HC025 for an admin and a teacher; the sync's restore passes.
+- **G-11:** + a real PostgREST-shaped upsert (`INSERT ... ON CONFLICT (session_id, student_id) DO UPDATE`) of an unchanged register in a T2 month passes; + the same with Present -> Absent passes; + **confirmed current month, lesson today, teacher marks Excused: allowed**; lesson 8 days old, past paid month, admin raw: HC025; via `set_marks`: changed, row written; teacher, lesson in a past month: HC025 with no bill field in the error; teacher, lesson 8 days old in the current month, Absent -> Excused of a seeded row: allowed; a person's Present -> Excused after 8 days: admin T1, teacher refused; D2's cancel excuse-all in a past paid month still works; + service lane, old lesson, billed month: write succeeds AND one `service_retro_mark` event.
+- **G-12:** + `repair` rows for last term as an admin through the function: 409, zero rows; with the ack: rows and an override; rows for this week: inserted directly; the function's insert is on the caller's client.
+- **G-13 to G-21:** as revision 1's list, plus + `UPDATE discount_assignments SET student_id` -> HC121; + class DELETE with an enrolment -> HC121; + student DELETE on the service lane, and with only a person's mark as history; + one "service is refused" case PER trigger; + an enrolment `transfer` (two rows and deleted marks under one acknowledgement) cannot change a second, unrelated enrolment of the same child inside that transaction; + the trigger's tier above the override's -> HC011; + mirror-column edit for a teacher with a baseline row: allowed; + `sibling_percent_override` on a family with a paid past year: HC120; linking a new child: allowed; + create-family with a start date last month: nothing created without the ack, one override with it; + deactivation with a confirmed current bill.
+- **G-1 to G-7:** as revision 1, plus + service lane un-hold of a started lesson with a flips row AND a remaining Present mark: kept Held; + no flips row, started, service: kept Held; + `audit_log` has no row for a kept lesson; + teacher change inside the week in an open month: allowed, no override; + a person's hold with marks in a LOCKED month: HC020.
+- **Approvals:** as revision 1, plus + 15 single-family bulk items: required, one request; + three single changes by one admin within 24 hours: the third requires approval; + settings row deleted: HC050; + `release_own_request` before the delay: refused; after: applied, `released_alone`, in the queue.
+
+### f.4 The two oracles
+
+`d4-reach-oracle.test.mjs` does not trust the reach rules. Tuition: a family of **two children with a sibling discount** (R-8a) and bills over five months in every state; about fifty edits (every enrolment, discount, fee, family-link and register op, a backdated lesson, each aimed at each month; one once-per-month and one per-lesson discount across a "from this date" split); for each: record the guard's tier, perform the edit on the owner lane, run the real calculate-tuition for both children over every month, diff every stored bill. **If any bill of a past month, or any signed-off bill, of EITHER child moved, the tier was at least 1 and the (child, month) is in `refresh_pairs`.** Pay (+): change a rate, a teacher, a lesson's times and an assistant behind the guard's back; run the bundled calculate-payroll for an open and a locked month; whenever a figure or `live` moved, the tier was at least 1.
+
+### f.5 Static checks
+
+Evidence sources (every table in D1's text has a keep trigger or a written exemption; `authenticated` cannot write the `stars_*` helper tables); service-key writers of the guarded tables against an allow-list with reasons (the four register writers of b.3 are on it; `repair-attendance` is not); raw writers in `src/**` (every one named in (a) is gone); `_caller_lane` on six kinds of caller; + `src/lib/mcp/**` scanned for writes to the guarded tables.
+
+### f.6 Mutants and the fingerprint
+
+Mutation list: revision 1's seventy, re-pointed at the new objects, plus: floor written for a caller D1 refuses; D1 error stored as STRONG; floor written at a cancel; delete of a cancelled lesson reads the effective level; bill floor not read by `tuition_month_state`; not read by the lesson guard's settled; bill floor trigger skips `recorded_payment`; G-11 INSERT branch without the existing-row test; the one-week rule removed, and applied only to admins; teacher rule reads the bill; `service_retro_mark` not written; `discount_identity` dropped; "service refused" one mutant PER trigger; reach not widened to the family; fee resolver uses the newest row regardless of date; fee row not required to be the first of a month; `refresh_pairs` of a fee row includes months before its date; approval impact per item instead of per batch; 24-hour sum dropped; `zz_session_override_approval` dropped. Each must turn a named assertion red; survivors are reported, not hidden.
+
+Fingerprint: `guard-fingerprint.mjs` takes a baseline list and a new list (it already picks objects by diffing the catalog); trigger entries gain `md5(pg_get_triggerdef(oid))`. D4 output: `docs/evidence/D4-release-fingerprint.sql` / `.expected.json`, regenerated per step. `--check-unchanged`: of the 66 D-release objects, exactly two (`_session_change_assess`, `_session_erased_recently`) may differ, and (after file 6) `session_cancel_overrides` may show one more trigger; the other 64 are byte-identical. On the live database the old `.sql` is pasted again after each D4 paste and compared the same way.
+
+### f.7 Rollback (R-13)
+
+One script per file under `scripts/`, pasted by the owner, each `DROP TRIGGER IF EXISTS` for that file's triggers and nothing else (tables, rows and functions stay; with the triggers gone the checked functions refuse to work, HC050 - still closed, as D2 section 12):
+
+| Script | Drops | Then |
+|---|---|---|
+| `ROLLBACK-d4-6-approvals.sql` | the three approval triggers; sets nothing | approvals read as off |
+| `ROLLBACK-d4-5-money-inputs.sql` | the nine triggers of file 5 | redeploy the previous functions of step 3B to get the old screens' behaviour back |
+| `ROLLBACK-d4-4-lesson-pay.sql` | `zz2_session_pay_guard`, `zz_session_insert_guard`, `zz_session_staff_guard` | redeploy `manage-session` of before 3A |
+| `ROLLBACK-d4-3-class-fee.sql` | the two fee guard triggers; first `UPDATE classes SET session_rate_vnd = class_fee_on(id, today)` (the mirror is brought level so the previous calculators, which read the mirror, price as the history did today) | redeploy the previous calculators only if the resolver itself is at fault |
+| `ROLLBACK-d4-2-register.sql` | `zz_attendance_money_guard` | redeploy the previous `mark-attendance` and `repair-attendance` |
+| `ROLLBACK-d4-1-floors.sql` | the six keep / floor triggers | **paste `20261112091000_session_cancel_guard.sql` again**: it restores the two replaced function bodies (it is idempotent and D4 changed no signature) |
+
+`d4-rollback.test.mjs`: install everything, run the six scripts in that order, re-paste the D2 file, and assert the D-release fingerprint is **66 of 66** again; then that a raw write D4 refused now passes and that D2's cancel still needs its checked path.
+For the owner, in the release note: "If teachers cannot save today's register, paste script 2. If cancelling a lesson fails with an error that mentions the floor or `guard_broken`, paste script 1 and then the D2 file. Nothing is lost by either; tell the conductor."
+D2's own rollback script, named in its design section 12, is not in `scripts/`; the D4 release writes it (two `DROP TRIGGER`s) so the set is complete.
+
+---
+
+## (g) Deliberately not guarded
+
+| Not guarded | Why |
+|---|---|
+| A teacher correcting points, transcripts, homework | Classroom work. The floor records; nothing asks. |
+| Anything within a week of the lesson; anything in the current month that no admin signed off | The school's daily work (b.0). Audited by the existing triggers; a T0 row when done from the admin screens. |
+| The service lane on the register | Refusing there aborts a sync page or a teacher's register. It is RECORDED (R-7). Prevention for a teacher's old mark is in `mark-attendance`; an admin's and the repair tool's are in the database. |
+| Payments, ledger tools, and lowering a bill's labels as such | Their own workstream (T). D4 makes lowering harmless to the tiers (G-9) and guards only unfreezing. |
+| A move into the past taking the backdated-lesson tier (A-7) | D2 already makes it reasoned and reviewed; raising it means replacing a third live function. |
+| Undo of one's own change at a lower tier (A-22) | Dated fees removed its main case. |
+| `sessions.rate_override_vnd`, notes, names | Read by neither calculator. |
+| Lessons whose evidence was removed before D4 | No floor exists. `scripts/d4-floor-backfill.sql` (optional, owner-run, INSERT-only into the new table) builds floors for register and status erasures from `audit_log` back to when the audit trigger was applied; points and transcripts had no audit and cannot be recovered. The release note says so. |
+| Recorder deletions (workstream C) | Contract: the code that deletes or expires a recording calls `_session_evidence_keep` first; the evidence-source check fails until it does. |
+| `normalizeFutureHeld` | Q9 unchanged. G-1's lane makes a later repair safe; it does not switch it on. |
+
 <!-- END -->
