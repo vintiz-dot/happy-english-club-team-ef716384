@@ -101,7 +101,7 @@ export function ClassVideoWall({ classId, className, studentId }: { classId: str
                   aria-label={v.hearted ? "Remove heart" : "Send a heart"}
                 >
                   <Heart className={`h-5 w-5 ${v.hearted ? "fill-current text-hec-brass" : "text-hec-ink-soft"}`} />
-                  {v.hearts > 0 && <span className="tabular-nums">{v.hearts}</span>}
+                  {v.hearts > 0 && <span className="tabular-nums" aria-hidden="true">{v.hearts}</span>}
                 </button>
               </div>
             </div>
