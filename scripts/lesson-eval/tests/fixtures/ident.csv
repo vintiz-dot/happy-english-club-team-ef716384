@@ -1,0 +1,7 @@
+turn_id,true_code,pred_code,score
+t1,S01,S01,0.9
+t2,S01,S01,0.8
+t3,S02,S02,0.85
+t4,S02,S01,0.6
+t5,S77,S02,0.7
+t6,S02,,
