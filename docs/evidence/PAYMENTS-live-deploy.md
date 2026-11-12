@@ -76,5 +76,6 @@ Uploaded as `<function>/index.ts` + `_lib/<file>.ts`, entrypoint `<function>/ind
 
 | # | function | version | files against a9cbbe53 | probe A | probe B |
 |---|---|---|---|---|---|
+| 1 | calculate-tuition | 4 -> 5, ACTIVE, verify_jwt true (ezbr 94f8e79d) | 7 of 7 identical, byte for byte (index, rate-limit, auth, sibling-state, tuition-session, enrollment-discounts, invoice-status); file set exactly the manifest's | 401 gateway | 401 `{"error":"Unauthorized"}` from the function (23:53:17 UTC) |
 
-**Where I am / next step:** Step A passed. Next: step B, deploy 1 of 7 (calculate-tuition). Nothing deployed yet; the seven are v4.
+**Where I am / next step:** 1 of 7 live at v5 (calculate-tuition). Next: deploy 2 of 7 (calculate-tuition-bulk). The other six are v4.
