@@ -1101,6 +1101,8 @@ export class Recorder {
   private async sendPreStart(rec: LocalRecording): Promise<boolean> {
     if (rec.preStartAcked || !rec.preStartMs) return true;
     if (!this.o.backend.setPreStart) { rec.preStartAcked = true; await this.saveRec(rec); return true; }
+    // Given up already (a stated refusal): never asked again, never said twice.
+    if (rec.phase === "abandoned") return false;
     // R4-1: an answer that was not a stated refusal is retried with backoff.
     if ((rec.preStartNextAt ?? 0) > this.serverNow()) return false;
     try {

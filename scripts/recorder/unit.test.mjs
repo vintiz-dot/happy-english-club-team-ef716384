@@ -1695,6 +1695,7 @@ console.log("=== R3-B1: one pre-start limit, shared with the migration ===");
   ok("R4-1: the server's STATED refusal: 'cannot be sent', recording stopped, the microphones closed", !!e && r.state === "error" && !src.open, e?.message);
   ok("R4-1: the message says why, that it is final, and to use the backup", !!e && /the server refused it/.test(e.message) && /backup recorder/.test(e.message) && /kept on this laptop for 14 days/.test(e.message), e?.message);
   ok("R3-B1: no 'kept and sent' claim was made", !errors.some((x) => /kept and sent/.test(x.message)));
+  eq("R4-1: 'cannot be sent' is said once (the given-up row is not asked again)", errors.filter((x) => x.code === "start_failed").length, 1);
   eq("R3-B1: the server row is given up, not left `recording`", w.server.recordings.get(row.id).status, "abandoned");
   const h = (await r.heldAudio()).find((x) => x.recordingId === row.id);
   ok("R4-1: the audio is not dropped: kept on the laptop, listed, with its deletion date (the unsent-audio rule)", !!h && h.bytes > 0 && !!h.deleteAt, JSON.stringify(h && { bytes: h.bytes, deleteAt: h.deleteAt }));
@@ -1730,7 +1731,7 @@ for (const [label, answer] of unclassified) {
   ok(`R4-1 ${label}: every chunk is kept on this laptop meanwhile`, (await store.listChunks(row.id)).filter((c) => c.track === "teacher").reduce((k, c) => k + c.tEndMs - c.tStartMs, 0) >= 38000);
   await src.play(5 * 60, r, 200);
   const gaps = calls.slice(1).map((t, i) => t - calls[i]);
-  ok(`R4-1 ${label}: retried with backoff (gaps grow, none above 60 s)`, gaps.length >= 8 && gaps[gaps.length - 1] > gaps[0] && Math.max(...gaps) <= 61000, JSON.stringify(gaps.map((g) => Math.round(g / 1000))));
+  ok(`R4-1 ${label}: retried with backoff (gaps grow, none above 60 s + one drive pass)`, gaps.length >= 8 && gaps[gaps.length - 1] > gaps[0] && Math.max(...gaps) <= 60000 + 10000, JSON.stringify(gaps.map((g) => Math.round(g / 1000))));
   eq(`R4-1 ${label}: then accepted: recording`, r.state, "recording");
   eq(`R4-1 ${label}: the offset the engine stated is the one on the server`, w.server.recordings.get(row.id).pre_start_ms, (await store.getRecording(row.id))?.preStartMs);
   ok(`R4-1 ${label}: what was said while waiting was a retry, not a refusal`, errors.some((e) => e.code === "server_unavailable" && /asked again/.test(e.message)) && !errors.some((e) => e.code === "server_refused" && e.refusal === "pre_start_refused"));
