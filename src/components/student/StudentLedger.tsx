@@ -15,9 +15,9 @@ interface StudentLedgerProps {
 }
 
 const typeConfig = {
-  convert_to_cash: { icon: ArrowDownToLine, label: "Withdrawal", color: "text-blue-500" },
-  spend_cash: { icon: ShoppingBag, label: "Spend", color: "text-red-500" },
-  deposit_cash: { icon: ArrowUpFromLine, label: "Deposit", color: "text-green-500" },
+  convert_to_cash: { icon: ArrowDownToLine, label: "Withdrawal", color: "text-hec-ink-soft" },
+  spend_cash: { icon: ShoppingBag, label: "Spend", color: "text-hec-ink-soft" },
+  deposit_cash: { icon: ArrowUpFromLine, label: "Deposit", color: "text-hec-ink-soft" },
 };
 
 const statusConfig = {
@@ -54,7 +54,7 @@ export function StudentLedger({ open, onOpenChange, studentId, classId }: Studen
           {isLoading ? (
             <Loading size="sm" />
           ) : transactions.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">No transactions yet</p>
+            <p className="py-8 text-center text-hec-body text-hec-ink-soft">No transactions yet</p>
           ) : (
             <div className="space-y-2">
               {transactions.map((tx: any) => {
@@ -65,31 +65,31 @@ export function StudentLedger({ open, onOpenChange, studentId, classId }: Studen
                 return (
                   <div
                     key={tx.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+                    className="flex items-start gap-3 rounded-hec-md border border-hec-line bg-hec-surface p-3"
                   >
-                    <div className={`p-2 rounded-full bg-muted ${typeInfo.color}`}>
-                      <Icon className="h-4 w-4" />
+                    <div className={`shrink-0 rounded-full bg-hec-sunken p-2 ${typeInfo.color}`}>
+                      <Icon className="h-4 w-4" aria-hidden />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{typeInfo.label}</p>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-hec-small font-medium text-hec-ink">{typeInfo.label}</p>
+                      <p className="truncate text-hec-caption text-hec-ink-soft">
                         {tx.note || format(new Date(tx.created_at), "MMM d, yyyy h:mm a")}
                       </p>
                     </div>
-                    <div className="text-right space-y-1">
+                    <div className="shrink-0 space-y-1 text-right">
                       <div className="flex items-center gap-2 justify-end">
                         {tx.points_impact !== 0 && (
-                          <span className={`text-xs font-bold ${tx.points_impact > 0 ? "text-green-600" : "text-red-500"}`}>
+                          <span className="whitespace-nowrap text-hec-caption font-semibold tabular-nums text-hec-ink">
                             {tx.points_impact > 0 ? "+" : ""}{tx.points_impact} pts
                           </span>
                         )}
                         {tx.cash_impact !== 0 && (
-                          <span className={`text-xs font-bold ${tx.cash_impact > 0 ? "text-green-600" : "text-red-500"}`}>
+                          <span className="whitespace-nowrap text-hec-caption font-semibold tabular-nums text-hec-ink">
                             {tx.cash_impact > 0 ? "+" : ""}{tx.cash_impact} 💵
                           </span>
                         )}
                       </div>
-                      <Badge variant={statusInfo.variant} className="text-[10px] px-1.5 py-0">
+                      <Badge variant={statusInfo.variant} className="whitespace-nowrap">
                         {statusInfo.label}
                       </Badge>
                     </div>
