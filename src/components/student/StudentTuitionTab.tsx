@@ -405,7 +405,7 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
                           </Badge>
                         )}
                       </div>
-                      <p className={cn(ivory ? "text-hec-caption tabular-nums text-hec-ink-soft" : "text-xs text-muted-foreground")}>
+                      <p className={cn(ivory ? "text-hec-caption tabular-nums text-hec-ink" : "text-xs text-muted-foreground")}>
                         {classItem.sessions_count} sessions × {formatVND(classItem.session_rate_vnd)}
                       </p>
                     </div>
