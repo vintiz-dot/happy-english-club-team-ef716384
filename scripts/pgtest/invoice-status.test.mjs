@@ -1448,7 +1448,6 @@ console.log('\nT4 - scripts/CHECK-payment-paths.sql counts what each fault touch
   `);
   await reset(); world(); inFamilyOf();
   await seedBill(SEP, 400000, 400000, 'paid'); await calc();                 // October: a real debt the old formula calls 0
-  await seedBill('2026-07', 400000, 800000, 'paid');                          // (an earlier overpayment, to make a credit-covered month)
   await db.exec(`
     INSERT INTO public.payment_deletions (payment_id, snapshot) VALUES (gen_random_uuid(), '{"payment_data":{"family_id":"${FAMILY}","amount":150000}}');
     INSERT INTO public.ledger_entries (tx_id, tx_key, debit, credit) VALUES ('00000000-0000-4000-8000-00000000aaaa', 'payment-reversal-x-1', 150000, 0);
@@ -1460,7 +1459,7 @@ console.log('\nT4 - scripts/CHECK-payment-paths.sql counts what each fault touch
   const before = await counts();
   let res = null, err = null;
   try { res = await db.exec(sql); } catch (e) { err = e.message; }
-  ok('all nine statements run', err === null && res?.length === 9, err ?? res?.length);
+  ok('all eight statements run', err === null && res?.length === 8, err ?? res?.length);
   const row = (i) => res?.[i]?.rows?.[0] ?? {};
   ok('1: the deleted family payment and the one-legged reversal are counted',
      Number(row(0).family_payments_deleted) === 1 && Number(row(0).family_payments_deleted_vnd) === 150000 && Number(row(0).unbalanced_reversals) === 1, row(0));
@@ -1468,7 +1467,7 @@ console.log('\nT4 - scripts/CHECK-payment-paths.sql counts what each fault touch
   ok('2b: the old write-off is listed, and does not count on a bill after T4',
      res?.[2]?.rows?.[0]?.settlement_type === 'discount' && Number(res?.[2]?.rows?.[0]?.counts_on_bill_after_t4) === 0, res?.[2]?.rows);
   ok('3: stored label -> T4 label pairs are listed', (res?.[3]?.rows ?? []).length >= 1, res?.[3]?.rows);
-  ok('7: the referral bonus is counted', Number(row(8).referral_bonuses) === 1, row(8));
+  ok('7: the referral bonus is counted', Number(row(7).referral_bonuses) === 1, row(7));
   ok('no column carries a name or an id', res.every((x) => x.fields.every((f) => !/name|(^|_)id$/i.test(f.name))), res.map((x) => x.fields.map((f) => f.name)));
   ok('running it changed nothing', same(await counts(), before));
 }
