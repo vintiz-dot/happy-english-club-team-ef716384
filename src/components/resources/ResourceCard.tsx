@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { getFileTypeInfo, BLOOMS_LEVELS, PYP_THEMES } from "@/lib/resourceConstants";
 import { getResourceSignedUrl, type Resource } from "@/hooks/useResources";
 import { toast } from "sonner";
+import { openHttpUrl } from "@/lib/safeUrl";
 
 interface Props {
   resource: Resource;
@@ -28,7 +29,7 @@ export function ResourceCard({ resource, compact = false, classNameMap }: Props)
 
   const openLink = () => {
     if (resource.external_url) {
-      window.open(resource.external_url, "_blank", "noopener");
+      openHttpUrl(resource.external_url);
     }
   };
 

@@ -3,6 +3,12 @@
  * Uses OpenAI DALL·E 3 to generate a vocabulary illustration.
  * Returns { imageUrl: string } with OpenAI's temporary URL.
  */
+import { requireSpender, STAFF_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
+
+// A signed-in account holding the teacher or admin role, and no more than 10 calls per
+// account in each window: DALL-E 3, the dearest call here; staff only.
+const GATE: SpendGate = { name: "image-generate", roles: STAFF_ROLES, limit: 10, windowMs: 10 * 60_000 };
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -17,6 +23,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Who is asking, before anything is read or spent (audit F-02).
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
 
   try {
     const { word } = await req.json();

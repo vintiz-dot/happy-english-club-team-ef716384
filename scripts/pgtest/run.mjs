@@ -249,6 +249,41 @@ const SUITES = [
   // the recorder pasted after it to prove its preflight still accepts.
   { name: "transcribe gate", file: "transcribe-gate.test.mjs", migrations: [] },
   { name: "class recordings scope", file: "class-recordings-scope.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112120000_class_recordings_scope.sql", "20261112100000_class_recorder.sql"] },
+  // S1 security fixes (docs/evidence/S1-security-fixes.md). One migration
+  // per finding, each pasted on top of the state production is in.
+  // F-01: a sign-up never gets a role because the browser asked for it.
+  {
+    name: "signup role (F-01)",
+    file: "signup-role.test.mjs",
+    migrations: ["20260312152157_350b3a18-08dd-4115-afc0-a78b318339eb.sql", "20261113100000_signup_role_from_server_only.sql"],
+  },
+  // F-14: the homework bucket. The 36 production policies come from
+  // docs/evidence/S1-F14-rollback.sql, which is both the "before" and the
+  // rollback under test.
+  {
+    name: "homework bucket (F-14)",
+    file: "homework-bucket-scope.test.mjs",
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113110000_homework_bucket_scope.sql"],
+  },
+  // F-15: pause_enrollment asks for an admin. The "before" is the live
+  // function, kept as the rollback block in the evidence file.
+  { name: "pause enrollment (F-15)", file: "pause-enrollment.test.mjs", migrations: ["20261113120000_pause_enrollment_admin_only.sql"] },
+  // F-16: classmates' rows. The four production policies come from
+  // docs/evidence/S1-F16-rollback.sql ("before" and rollback under test).
+  {
+    name: "classmate rows (F-16)",
+    file: "classmate-rows.test.mjs",
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113130000_classmate_rows_private.sql"],
+  },
+  // F-21: creator-owned write policies, and what a stored link may be.
+  {
+    name: "creator rows (F-21)",
+    file: "creator-rows.test.mjs",
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql"],
+  },
+  // F-02: the nine AI / speech / image-search functions, handler by handler:
+  // no session, wrong role, right role, the per-account limit.
+  { name: "ai spend gate (F-02)", file: "ai-gate.test.mjs", migrations: [] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SKILL_ICONS } from "@/lib/skillConfig";
 import { useIvory } from "@/hooks/useIvory";
+import { fetchClassSkillPoints } from "@/lib/classSkillPoints";
 
 interface PerformanceHeatmapTabProps {
   studentId: string;
@@ -101,22 +102,17 @@ export function PerformanceHeatmapTab({
   const { data: classSkillTotals, isLoading: loadingClassTotals } = useQuery({
     queryKey: ["class-skill-totals", classId, selectedMonth],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("skill_assessments")
-        .select("student_id, skill, score, students!inner(full_name)")
-        .eq("class_id", classId)
-        .gte("date", monthStartStr)
-        .lte("date", monthEndStr);
-      if (error) throw error;
+      // Per-student totals with a name, not rows: classmates' assessment rows
+      // (and the teacher's comments on them) are private.
+      const data = await fetchClassSkillPoints(classId, monthStartStr, monthEndStr);
 
       const totals: Record<string, Record<string, { total: number; studentName: string }>> = {};
-      data?.forEach((entry: any) => {
+      data.forEach((entry) => {
         const skill = entry.skill;
         const sid = entry.student_id;
-        const studentName = entry.students?.full_name || "Unknown";
         if (!totals[skill]) totals[skill] = {};
-        if (!totals[skill][sid]) totals[skill][sid] = { total: 0, studentName };
-        totals[skill][sid].total += entry.score;
+        if (!totals[skill][sid]) totals[skill][sid] = { total: 0, studentName: entry.student_name };
+        totals[skill][sid].total += entry.total;
       });
       return totals;
     },

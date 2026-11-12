@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, FileImage, MessageSquareHeart, Link2, Users, ExternalLink } from "lucide-react";
+import { safeHttpUrl } from "@/lib/safeUrl";
 
 export function MyWorkGallery() {
   const { user } = useAuth();
@@ -77,7 +78,7 @@ export function MyWorkGallery() {
             </a>
           ) : w.external_url ? (
             <a
-              href={w.external_url}
+              href={safeHttpUrl(w.external_url)}
               target="_blank"
               rel="noreferrer"
               className="flex h-44 min-h-hec-target w-full flex-col items-center justify-center gap-2 bg-hec-sunken hover:bg-hec-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"

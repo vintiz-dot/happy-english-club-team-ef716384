@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { dayjs } from "@/lib/date";
 import { useIvory } from "@/hooks/useIvory";
+import { fetchClassSkillPoints } from "@/lib/classSkillPoints";
 
 const SKILL_COLORS: Record<string, string> = {
   reading: "hsl(210, 100%, 60%)",
@@ -169,17 +170,13 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
   const { data: classHighest } = useQuery({
     queryKey: ["class-skill-highest", classId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("skill_assessments")
-        .select("skill, score, student_id")
-        .eq("class_id", classId);
+      // Per-student totals, not rows: classmates' assessment rows are private.
+      const data = await fetchClassSkillPoints(classId);
 
-      if (error) throw error;
-      
       // Group by student_id and skill, then find the highest total per skill
       const studentSkillTotals: Record<string, Record<string, number>> = {};
-      
-      data?.forEach((entry) => {
+
+      data.forEach((entry) => {
         if (!studentSkillTotals[entry.student_id]) {
           studentSkillTotals[entry.student_id] = {};
           SKILLS.forEach(skill => {
@@ -187,7 +184,7 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
           });
         }
         if (studentSkillTotals[entry.student_id][entry.skill] !== undefined) {
-          studentSkillTotals[entry.student_id][entry.skill] += entry.score;
+          studentSkillTotals[entry.student_id][entry.skill] += entry.total;
         }
       });
       

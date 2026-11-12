@@ -1,5 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+import { requireSpender, type SpendGate } from "../_lib/ai-gate.ts";
+
+// A signed-in account holding a role, and no more than 90 calls per
+// account in each window: Sapling per checked sentence.
+const GATE: SpendGate = { name: "sapling-grammar", limit: 90, windowMs: 5 * 60_000 };
+
 // Declared here rather than in ../_shared/cors.ts: that folder does not exist
 // in this project (shared helpers live in ../_lib/), so the old import made
 // the whole function un-deployable.
@@ -13,6 +19,10 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
+  // Who is asking, before anything is read or spent (audit F-02).
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
 
   try {
     const { sentence } = await req.json();

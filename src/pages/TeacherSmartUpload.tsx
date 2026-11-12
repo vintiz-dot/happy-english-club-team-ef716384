@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { safeHttpUrl } from "@/lib/safeUrl";
 
 interface ClassOption { id: string; name: string }
 interface StudentOption { id: string; full_name: string; linked_user_id?: string | null }
@@ -963,7 +964,7 @@ export default function TeacherSmartUpload() {
                         </a>
                       ) : w.external_url ? (
                         <a
-                          href={w.external_url}
+                          href={safeHttpUrl(w.external_url)}
                           target="_blank"
                           rel="noreferrer"
                           className="h-20 w-20 rounded-xl border bg-violet-500/5 flex flex-col items-center justify-center gap-1 shrink-0 hover:bg-violet-500/10"
