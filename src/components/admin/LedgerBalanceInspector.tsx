@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { functionErrorMessage } from "@/lib/functionError";
 import { toast } from "sonner";
 import { FileText, Undo2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -183,7 +184,8 @@ export function LedgerBalanceInspector() {
         body: { paymentId, deleteReason }
       });
 
-      if (error) throw error;
+      // The function's own sentence, not "non-2xx status code".
+        if (error) throw new Error(await functionErrorMessage(error));
 
       toast.success("Payment reversed successfully");
       setReversingPayment(null);

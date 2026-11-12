@@ -8,7 +8,9 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:bun": "node scripts/run-bun-tests.mjs",
+    "test:pg": "node scripts/pgtest/run.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

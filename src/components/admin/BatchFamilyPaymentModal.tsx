@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { functionErrorMessage } from "@/lib/functionError";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -283,7 +284,8 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
           },
         });
 
-        if (error) throw error;
+        // The function's own sentence, not "non-2xx status code".
+        if (error) throw new Error(await functionErrorMessage(error));
 
         newResults.push({
           familyId: family.familyId,

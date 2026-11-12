@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
+import { CHANGED_SINCE_LOADED, setRecordedPayment } from "@/lib/recordedPaymentWrite";
 
 interface QuickPayPanelProps {
   month: string;
@@ -110,6 +112,8 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
 
     let successCount = 0;
     let failCount = 0;
+    const savedIds = new Set<string>();
+    const conflicts: string[] = [];
 
     try {
       for (const item of selectedRows) {
@@ -122,40 +126,33 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         const invoiceId = String((item as any).id ?? "");
         const isPersistedInvoice = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(invoiceId);
 
-        let newStatus: string;
-        if (newTotalPaid >= payable && payable > 0) newStatus = "paid";
-        else if (newTotalPaid > 0) newStatus = "partial";
-        else newStatus = "issued";
+        // The one rule (src/lib/invoiceStatus.ts); undefined keeps an admin's 'credit'.
+        const newStatus = labelForPayment((item as any).status, newTotalPaid, payable, monthCharged(item as any));
 
         try {
-          if (!isPersistedInvoice) {
-            const { error } = await supabase.from("invoices").upsert([{
-              student_id: item.student_id,
-              month,
+          // Saved only if the bill still holds what this screen showed
+          // (compare-and-set, src/lib/recordedPaymentWrite.ts).
+          const saved = await setRecordedPayment(supabase, {
+            invoiceId: isPersistedInvoice ? invoiceId : null,
+            studentId: item.student_id,
+            month,
+            expected: alreadyPaid,
+            next: newTotalPaid,
+            fields: {
+              ...(newStatus ? { status: newStatus } : {}),
+              ...(isPersistedInvoice ? { updated_at: new Date().toISOString(), updated_by: user?.id } : {}),
+            },
+            newRow: {
               base_amount: (item as any).base_amount || 0,
               discount_amount: (item as any).discount_amount || 0,
               total_amount: (item as any).total_amount || 0,
-              recorded_payment: enteredAmount,
               paid_amount: 0,
-              status: newStatus as any,
               carry_in_credit: (item as any).carry_in_credit || 0,
               carry_in_debt: (item as any).carry_in_debt || 0,
               created_by: user?.id,
-            }], { onConflict: "student_id,month" });
-            if (error) throw error;
-
-          } else {
-            const { error } = await supabase
-              .from("invoices")
-              .update({
-                recorded_payment: newTotalPaid,
-                status: newStatus as any,
-                updated_at: new Date().toISOString(),
-                updated_by: user?.id,
-              })
-              .eq("id", invoiceId);
-            if (error) throw error;
-          }
+            },
+          });
+          if (!saved.ok) { conflicts.push((item.students as any)?.full_name || "a student"); failCount++; continue; }
 
           await supabase.from("audit_log").insert({
             entity: "invoice",
@@ -175,6 +172,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
           });
 
           successCount++;
+          savedIds.add(item.student_id);
           setCompletedIds((prev) => new Set(prev).add(item.student_id));
         } catch (err) {
           console.error(`QuickPay failed for ${(item.students as any)?.full_name}:`, err);
@@ -186,16 +184,14 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
       queryClient.setQueryData(["admin-tuition-live", month], (old: any[] | undefined) => {
         if (!old) return old;
         return old.map((row) => {
-          if (skipped.has(row.student_id)) return row;
+          if (skipped.has(row.student_id) || !savedIds.has(row.student_id)) return row; // only what was really saved
           const amt = getEntryAmount(row);
           if (amt <= 0) return row;
           const newRecorded = (row.recorded_payment ?? 0) + amt;
           const fp = row.finalPayable ?? 0;
           const debt = Math.max(0, fp - newRecorded);
           const credit = Math.max(0, newRecorded - fp);
-          let status = row.status;
-          if (newRecorded >= fp && fp > 0) status = "paid";
-          else if (newRecorded > 0) status = "partial";
+          const status = labelForPayment(row.status, newRecorded, fp, monthCharged(row)) ?? row.status;
           return {
             ...row,
             recorded_payment: newRecorded,
@@ -213,6 +209,10 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         toast.success(`Recorded ${successCount} payment${successCount === 1 ? "" : "s"} totalling ${fmt(totalToCollect)}`);
       } else {
         toast.warning(`${successCount} succeeded, ${failCount} failed`);
+      }
+      if (conflicts.length > 0) {
+        // conflict: those bills changed since the list was loaded; nothing was written to them
+        toast.error(`${conflicts.join(", ")}: ${CHANGED_SINCE_LOADED}`);
       }
 
       setOverrides({});

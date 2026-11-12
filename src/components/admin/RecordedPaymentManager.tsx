@@ -14,6 +14,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/ui/loading";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { labelAfterPayment } from "@/lib/invoiceStatus";
+import { setRecordedPayment } from "@/lib/recordedPaymentWrite";
 
 interface Invoice {
   id: string;
@@ -102,17 +104,27 @@ export function RecordedPaymentManager() {
       if (!invoice) throw new Error("Invoice not found");
 
       const oldValue = invoice.recorded_payment || 0;
+      // The label follows the money by the one rule (it was left as it was,
+      // and this screen prints it); an admin's 'credit' is kept.
+      const label = labelAfterPayment(invoice, newValue);
 
-      // Update the invoice
-      const { error: updateError } = await supabase
-        .from("invoices")
-        .update({ 
-          recorded_payment: newValue,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", editingInvoice.id);
-
-      if (updateError) throw updateError;
+      // Saved only if the bill still holds what this screen showed
+      // (compare-and-set, src/lib/recordedPaymentWrite.ts): a payment saved
+      // meanwhile from another screen is never overwritten.
+      const saved = await setRecordedPayment(supabase, {
+        invoiceId: editingInvoice.id,
+        studentId: invoice.student_id,
+        month: invoice.month,
+        expected: oldValue,
+        next: newValue,
+        fields: { ...(label ? { status: label } : {}), updated_at: new Date().toISOString() },
+      });
+      if (!saved.ok) {
+        // conflict: nothing written; reload the list so the admin sees the bill as it is
+        toast.error(saved.message);
+        loadInvoices();
+        return;
+      }
 
       // Log the change to audit log
       const { data: { user } } = await supabase.auth.getUser();
@@ -158,17 +170,23 @@ export function RecordedPaymentManager() {
       if (!invoice) throw new Error("Invoice not found");
 
       const newValue = 0; // Reset to 0 on reversal
+      const label = labelAfterPayment(invoice, newValue);
 
-      // Update the invoice
-      const { error: updateError } = await supabase
-        .from("invoices")
-        .update({ 
-          recorded_payment: newValue,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", reversingInvoice.id);
-
-      if (updateError) throw updateError;
+      // Compare-and-set on what this screen showed (src/lib/recordedPaymentWrite.ts).
+      const saved = await setRecordedPayment(supabase, {
+        invoiceId: reversingInvoice.id,
+        studentId: invoice.student_id,
+        month: invoice.month,
+        expected: invoice.recorded_payment || 0,
+        next: newValue,
+        fields: { ...(label ? { status: label } : {}), updated_at: new Date().toISOString() },
+      });
+      if (!saved.ok) {
+        // conflict: nothing written; reload the list so the admin sees the bill as it is
+        toast.error(saved.message);
+        loadInvoices();
+        return;
+      }
 
       // Log the reversal
       const { data: { user } } = await supabase.auth.getUser();

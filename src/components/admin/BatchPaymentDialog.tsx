@@ -16,6 +16,8 @@ import { getPaymentStatus, getTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/lib/avatars";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
+import { CHANGED_SINCE_LOADED, setRecordedPayment } from "@/lib/recordedPaymentWrite";
 
 interface BatchPaymentDialogProps {
   open: boolean;
@@ -83,6 +85,8 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
       const { data: { user } } = await supabase.auth.getUser();
       let successCount = 0;
       let failCount = 0;
+      const savedIds = new Set<string>();
+      const conflicts: string[] = [];
 
       for (const item of validEntries) {
         const enteredAmount = parseInt(entries[item.student_id] || "0") || 0;
@@ -93,40 +97,33 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
         const payable = item.finalPayable ?? 0;
         const isPlaceholder = !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(String(item.id ?? ""));
 
-        let newStatus: string;
-        if (newTotalPaid >= payable && payable > 0) newStatus = "paid";
-        else if (newTotalPaid > 0) newStatus = "partial";
-        else newStatus = "issued";
+        // The one rule (src/lib/invoiceStatus.ts); undefined keeps an admin's 'credit'.
+        const newStatus = labelForPayment((item as any).status, newTotalPaid, payable, monthCharged(item as any));
 
         try {
-          if (isPlaceholder) {
-            const { error } = await supabase.from("invoices").upsert([{
-              student_id: item.student_id,
-              month,
+          // Saved only if the bill still holds what this screen showed
+          // (compare-and-set, src/lib/recordedPaymentWrite.ts).
+          const saved = await setRecordedPayment(supabase, {
+            invoiceId: isPlaceholder ? null : item.id,
+            studentId: item.student_id,
+            month,
+            expected: alreadyPaid,
+            next: newTotalPaid,
+            fields: {
+              ...(newStatus ? { status: newStatus } : {}),
+              ...(isPlaceholder ? {} : { updated_at: new Date().toISOString(), updated_by: user?.id }),
+            },
+            newRow: {
               base_amount: item.base_amount || 0,
               discount_amount: item.discount_amount || 0,
               total_amount: item.total_amount || 0,
-              recorded_payment: enteredAmount,
               paid_amount: 0,
-              status: newStatus as any,
               carry_in_credit: item.carry_in_credit || 0,
               carry_in_debt: item.carry_in_debt || 0,
               created_by: user?.id,
-            }], { onConflict: "student_id,month" });
-            if (error) throw error;
-
-          } else {
-            const { error } = await supabase
-              .from("invoices")
-              .update({
-                recorded_payment: newTotalPaid,
-                status: newStatus as any,
-                updated_at: new Date().toISOString(),
-                updated_by: user?.id,
-              })
-              .eq("id", item.id);
-            if (error) throw error;
-          }
+            },
+          });
+          if (!saved.ok) { conflicts.push(item.students?.full_name || "a student"); failCount++; continue; }
 
           await supabase.from("audit_log").insert({
             entity: "invoice",
@@ -148,6 +145,7 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
           });
 
           successCount++;
+          savedIds.add(item.student_id);
           setCompleted((prev) => [...prev, item.student_id]);
         } catch (err) {
           console.error(`Failed for ${item.students?.full_name}:`, err);
@@ -159,15 +157,14 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
       queryClient.setQueryData(["admin-tuition-live", month], (old: any[] | undefined) => {
         if (!old) return old;
         return old.map((row: any) => {
+          if (!savedIds.has(row.student_id)) return row; // only what was really saved
           const amt = parseInt(entries[row.student_id] || "0") || 0;
           if (amt <= 0) return row;
           const newRecorded = (row.recorded_payment ?? 0) + amt;
           const fp = row.finalPayable ?? 0;
           const debt = Math.max(0, fp - newRecorded);
           const credit = Math.max(0, newRecorded - fp);
-          let status = row.status;
-          if (newRecorded >= fp && fp > 0) status = "paid";
-          else if (newRecorded > 0) status = "partial";
+          const status = labelForPayment(row.status, newRecorded, fp, monthCharged(row)) ?? row.status;
           return { ...row, recorded_payment: newRecorded, balance: debt > 0 ? debt : -credit, carry_out_debt: debt, carry_out_credit: credit, status };
         });
       });
@@ -178,6 +175,10 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
         toast.success(`Recorded payments for ${successCount} student${successCount > 1 ? 's' : ''}`);
       } else {
         toast.warning(`${successCount} succeeded, ${failCount} failed`);
+      }
+      if (conflicts.length > 0) {
+        // conflict: those bills changed since the list was loaded; nothing was written to them
+        toast.error(`${conflicts.join(", ")}: ${CHANGED_SINCE_LOADED}`);
       }
 
       onSuccess?.();

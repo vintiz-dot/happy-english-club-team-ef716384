@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { functionErrorMessage } from "@/lib/functionError";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Users, ArrowDown, Check, AlertCircle, Loader2, Wallet, ChevronDown, ChevronUp } from "lucide-react";
@@ -255,7 +256,8 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
 
       const { data, error } = await supabase.functions.invoke("smart-family-payment", { body: payload });
 
-      if (error) throw error;
+      // The function's own sentence, not "non-2xx status code".
+        if (error) throw new Error(await functionErrorMessage(error));
 
       toast.success(`Smart payment processed for ${data.allocations?.length || 0} students`);
 

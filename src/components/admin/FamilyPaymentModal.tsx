@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { functionErrorMessage } from "@/lib/functionError";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Users, AlertCircle } from "lucide-react";
@@ -234,7 +235,8 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
 
       const { error } = await supabase.functions.invoke("family-payment", { body: payload });
 
-      if (error) throw error;
+      // The function's own sentence, not "non-2xx status code".
+        if (error) throw new Error(await functionErrorMessage(error));
 
       toast.success(`Family payment posted for ${selectedSiblings.size} students`);
 

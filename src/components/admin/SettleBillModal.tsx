@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { functionErrorMessage } from "@/lib/functionError";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
@@ -56,7 +57,7 @@ export function SettleBillModal({
 
     setLoading(true);
     try {
-      const { error } = await supabase.functions.invoke("settle-bill", {
+      const { data, error } = await supabase.functions.invoke("settle-bill", {
         body: {
           studentId,
           month,
@@ -68,18 +69,21 @@ export function SettleBillModal({
         },
       });
 
-      if (error) {
-        // Unwrap the function's JSON body — "non-2xx status code" alone is
-        // useless to the admin reading the toast.
-        let detail = error.message;
-        try {
-          const body = await (error as any).context?.json?.();
-          if (body?.error) detail = body.error;
-        } catch { /* keep the generic message */ }
-        throw new Error(detail);
-      }
+      // The function's own sentence, not "non-2xx status code".
+      if (error) throw new Error(await functionErrorMessage(error));
 
-      toast.success("Bill settled successfully");
+      // Say what was actually settled: the function caps a write-off at the
+      // balance and at the month's own charge.
+      const settled = Number(data?.amount ?? 0);
+      const asked = parseInt(amount) || 0;
+      toast.success(
+        settled < asked
+          ? `Settled ${settled.toLocaleString()} VND of the ${asked.toLocaleString()} asked (capped at what this month allows)`
+          : `Settled ${settled.toLocaleString()} VND`,
+      );
+      if (data?.billRefreshed === false) {
+        toast.warning("Settled, but the bill could not be recalculated yet; it will show the change when its tuition is next opened");
+      }
 
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["student-tuition", studentId] });
