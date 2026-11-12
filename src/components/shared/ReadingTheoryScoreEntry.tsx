@@ -209,7 +209,7 @@ export function ReadingTheoryScoreEntry({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 text-teal-600" />
+            <GraduationCap className="h-5 w-5 text-hec-ink-soft" aria-hidden />
             Reading Theory Score Entry
           </DialogTitle>
           <DialogDescription>
@@ -237,33 +237,33 @@ export function ReadingTheoryScoreEntry({
 
           {/* Students List */}
           <div className="flex-1 flex flex-col min-h-0">
-            <div className="grid grid-cols-[1fr,80px,100px,60px] gap-2 px-2 py-2 bg-muted/50 rounded-t-lg text-sm font-medium text-muted-foreground">
-              <span>Student</span>
+            <div className="grid grid-cols-[minmax(0,1fr),88px,44px] sm:grid-cols-[minmax(0,1fr),80px,100px,60px] gap-2 px-3 py-2 bg-hec-sunken border border-b-0 border-hec-line rounded-t-hec-md text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
+              <span className="col-span-full sm:col-span-1">Student</span>
               <span className="text-center">Current</span>
               <span className="text-center">New Score</span>
               <span className="text-center">Diff</span>
             </div>
 
-            <ScrollArea className="h-[60vh] border rounded-b-lg">
+            <ScrollArea className="h-[60vh] border border-hec-line rounded-b-hec-md">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-6 w-6 animate-spin text-hec-ink-soft" />
                 </div>
               ) : studentsWithScores.length === 0 ? (
-                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                <div className="flex items-center justify-center py-8 text-hec-body text-hec-ink-soft">
                   No students enrolled in this class
                 </div>
               ) : (
-                <div className="divide-y">
+                <div className="divide-y divide-hec-line">
                   {studentsWithScores.map((student) => {
                     const diff = getDifference(student.currentScore, student.newScore);
                     return (
                       <div
                         key={student.id}
-                        className="grid grid-cols-[1fr,80px,100px,60px] gap-2 px-2 py-3 items-center hover:bg-accent/30"
+                        className="grid grid-cols-[minmax(0,1fr),88px,44px] sm:grid-cols-[minmax(0,1fr),80px,100px,60px] gap-2 px-3 py-3 items-center hover:bg-hec-sunken/60"
                       >
                         {/* Student Info */}
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="col-span-full sm:col-span-1 flex items-center gap-2 min-w-0">
                           <Avatar className="h-8 w-8 flex-shrink-0">
                             <AvatarImage
                               src={getAvatarUrl(student.avatarUrl) || getRandomAvatarUrl(student.id)}
@@ -273,11 +273,11 @@ export function ReadingTheoryScoreEntry({
                               {student.name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm font-medium truncate">{student.name}</span>
+                          <span className="min-w-0 whitespace-normal break-words hyphens-none text-hec-small font-medium text-hec-ink">{student.name}</span>
                         </div>
 
                         {/* Current Score */}
-                        <div className="text-center text-sm text-muted-foreground font-mono">
+                        <div className="text-center text-hec-small text-hec-ink-soft font-sans tabular-nums">
                           {student.currentScore}
                         </div>
 
@@ -288,7 +288,8 @@ export function ReadingTheoryScoreEntry({
                             value={student.newScore}
                             onChange={(e) => handleScoreChange(student.id, e.target.value)}
                             placeholder={student.currentScore.toString()}
-                            className="h-9 w-20 text-center font-mono"
+                            aria-label={`New score for ${student.name}`}
+                            className="h-9 w-20 px-1 text-center font-sans tabular-nums"
                             min={0}
                           />
                         </div>
@@ -297,10 +298,10 @@ export function ReadingTheoryScoreEntry({
                         <div className="text-center">
                           {diff !== null && (
                             <span
-                              className={`text-sm font-bold ${
+                              className={`font-sans text-hec-small font-semibold tabular-nums ${
                                 diff > 0
-                                  ? "text-green-600 dark:text-green-400"
-                                  : "text-red-600 dark:text-red-400"
+                                  ? "text-hec-leaf"
+                                  : "text-hec-danger"
                               }`}
                             >
                               {diff > 0 ? "+" : ""}{diff}
@@ -317,8 +318,8 @@ export function ReadingTheoryScoreEntry({
 
           {/* Summary */}
           {changedStudents.length > 0 && (
-            <div className="p-3 rounded-lg bg-teal-500/10 border border-teal-500/20">
-              <span className="text-sm text-teal-700 dark:text-teal-300">
+            <div className="p-3 rounded-hec-md bg-hec-sunken border border-hec-line">
+              <span className="text-hec-small text-hec-ink">
                 {changedStudents.length} student{changedStudents.length !== 1 ? "s" : ""} will be updated
               </span>
             </div>
@@ -328,7 +329,7 @@ export function ReadingTheoryScoreEntry({
           <Button
             onClick={() => submitMutation.mutate()}
             disabled={submitMutation.isPending || changedStudents.length === 0 || !selectedReason}
-            className="w-full h-12 bg-teal-600 hover:bg-teal-700 text-white"
+            className="w-full h-12"
           >
             {submitMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />

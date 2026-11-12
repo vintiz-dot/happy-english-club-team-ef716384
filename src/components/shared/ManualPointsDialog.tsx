@@ -234,13 +234,13 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
         side={isMobile ? "bottom" : "right"}
         className={
           isMobile
-            ? "h-[92vh] rounded-t-2xl overflow-y-auto p-5"
+            ? "h-[92vh] rounded-t-hec-lg overflow-y-auto p-5"
             : "w-[480px] sm:max-w-[480px] overflow-y-auto p-6"
         }
       >
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-primary" />
+            <Trophy className="h-5 w-5 text-hec-ink-soft" aria-hidden />
             Manual Point Addition
           </SheetTitle>
           <SheetDescription>
@@ -289,14 +289,15 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
                   key={cat.key}
                   type="button"
                   onClick={() => handleCategoryChange(cat.key as CategoryType)}
-                  className={`p-3 rounded-lg border text-left transition-all ${
+                  aria-pressed={category === cat.key}
+                  className={`min-h-hec-target p-3 rounded-hec-md border text-left transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${
                     category === cat.key
-                      ? "border-primary bg-primary/10 ring-1 ring-primary"
-                      : "border-border hover:bg-accent/50"
+                      ? "border-hec-brass bg-hec-sunken"
+                      : "border-hec-line-strong bg-hec-raised hover:bg-hec-sunken"
                   }`}
                 >
-                  <div className="font-medium text-sm">{cat.label}</div>
-                  <div className="text-xs text-muted-foreground">{cat.desc}</div>
+                  <div className="font-medium text-hec-small text-hec-ink">{cat.label}</div>
+                  <div className="text-hec-caption text-hec-ink-soft">{cat.desc}</div>
                 </button>
               ))}
             </div>
@@ -319,14 +320,15 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
                         setSelectedSkill(key);
                         setSelectedSubTag("");
                       }}
-                      className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-all ${
+                      aria-pressed={selectedSkill === key}
+                      className={`flex min-h-hec-target flex-col items-center gap-2 p-3 rounded-hec-md border text-hec-ink transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${
                         selectedSkill === key
-                          ? "border-primary bg-primary/10 ring-1 ring-primary"
-                          : "border-border hover:bg-accent/50"
+                          ? "border-hec-brass bg-hec-sunken"
+                          : "border-hec-line-strong bg-hec-raised hover:bg-hec-sunken"
                       }`}
                     >
-                      <Icon className="h-5 w-5" />
-                      <span className="text-sm font-medium">{config.label}</span>
+                      <Icon className="h-5 w-5" aria-hidden />
+                      <span className="text-hec-small font-medium">{config.label}</span>
                     </button>
                   );
                 })}
@@ -377,7 +379,7 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
                       </SelectItem>
                     ))
                   ) : (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
+                    <div className="p-4 text-center text-hec-small text-hec-ink-soft">
                       No homework assignments found for this class
                     </div>
                   )}
@@ -418,8 +420,8 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
                 onClick={() => setPointsQuick(-10)}
                 className="h-14 flex flex-col"
               >
-                <Minus className="h-4 w-4 text-destructive" />
-                <span className="text-xs mt-1">-10</span>
+                <Minus className="h-4 w-4 text-hec-danger" aria-hidden />
+                <span className="font-sans text-hec-caption tabular-nums mt-1">-10</span>
               </Button>
               <Button
                 type="button"
@@ -428,8 +430,8 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
                 onClick={() => setPointsQuick(-1)}
                 className="h-14 flex flex-col"
               >
-                <Minus className="h-4 w-4 text-destructive" />
-                <span className="text-xs mt-1">-1</span>
+                <Minus className="h-4 w-4 text-hec-danger" aria-hidden />
+                <span className="font-sans text-hec-caption tabular-nums mt-1">-1</span>
               </Button>
               <Button
                 type="button"
@@ -438,8 +440,8 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
                 onClick={() => setPointsQuick(1)}
                 className="h-14 flex flex-col"
               >
-                <Plus className="h-4 w-4 text-green-600" />
-                <span className="text-xs mt-1">+1</span>
+                <Plus className="h-4 w-4 text-hec-leaf" aria-hidden />
+                <span className="font-sans text-hec-caption tabular-nums mt-1">+1</span>
               </Button>
               <Button
                 type="button"
@@ -448,8 +450,8 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
                 onClick={() => setPointsQuick(10)}
                 className="h-14 flex flex-col"
               >
-                <Plus className="h-4 w-4 text-green-600" />
-                <span className="text-xs mt-1">+10</span>
+                <Plus className="h-4 w-4 text-hec-leaf" aria-hidden />
+                <span className="font-sans text-hec-caption tabular-nums mt-1">+10</span>
               </Button>
             </div>
             <Input
@@ -457,7 +459,7 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
               value={points}
               onChange={(e) => setPoints(e.target.value)}
               placeholder="Or enter custom amount"
-              className="h-12 text-center text-lg font-semibold"
+              className="h-12 text-center font-sans text-hec-body font-semibold tabular-nums"
             />
           </div>
 

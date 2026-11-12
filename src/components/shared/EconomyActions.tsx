@@ -132,10 +132,10 @@ export function EconomyActions({ classId, pendingTransactions }: EconomyActionsP
   return (
     <div className="space-y-2">
       {pendingTransactions.map((tx) => (
-        <div key={tx.id} className="flex items-center gap-2 p-2 rounded-lg bg-warning/10 border border-warning/30 text-xs">
-          <div className="flex-1 min-w-0">
-            <span className="font-medium">{tx.student_name}</span>
-            <span className="text-muted-foreground ml-1">
+        <div key={tx.id} className="flex items-start gap-2 p-3 rounded-hec-md bg-hec-warn-tint border border-hec-warn/30 text-hec-small text-hec-ink">
+          <div className="flex-1 min-w-0 self-center">
+            <span className="whitespace-normal break-words hyphens-none font-medium text-hec-ink">{tx.student_name}</span>
+            <span className="text-hec-ink-soft ml-1 font-sans tabular-nums">
               {tx.type === "convert_to_cash" ? `withdraw ${tx.cash_impact} cash` : 
                tx.type === "deposit_cash" ? `deposit ${Math.abs(tx.cash_impact)} cash` :
                `spend ${Math.abs(tx.cash_impact)} cash`}
@@ -144,20 +144,22 @@ export function EconomyActions({ classId, pendingTransactions }: EconomyActionsP
           <Button
             size="icon"
             variant="ghost"
-            className="h-6 w-6 text-green-600 hover:bg-green-100"
+            className="shrink-0 text-hec-leaf"
             onClick={() => processMutation.mutate({ txId: tx.id, status: "approved" })}
             disabled={processMutation.isPending}
+            aria-label={`Approve request from ${tx.student_name}`}
           >
-            <Check className="h-3.5 w-3.5" />
+            <Check className="h-4 w-4" aria-hidden />
           </Button>
           <Button
             size="icon"
             variant="ghost"
-            className="h-6 w-6 text-red-500 hover:bg-red-100"
+            className="shrink-0 text-hec-danger"
             onClick={() => processMutation.mutate({ txId: tx.id, status: "rejected" })}
             disabled={processMutation.isPending}
+            aria-label={`Reject request from ${tx.student_name}`}
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4" aria-hidden />
           </Button>
         </div>
       ))}
@@ -224,11 +226,12 @@ export function LogSpendButton({ studentId, classId, studentName, cashOnHand }: 
       <Button
         size="icon"
         variant="ghost"
-        className="h-6 w-6 text-red-500 hover:bg-red-100"
+        className="text-hec-danger"
         onClick={(e) => { e.stopPropagation(); setOpen(true); }}
         title="Log Spend"
+        aria-label={`Log Spend for ${studentName}`}
       >
-        <Minus className="h-3.5 w-3.5" />
+        <Minus className="h-4 w-4" aria-hidden />
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -237,7 +240,7 @@ export function LogSpendButton({ studentId, classId, studentName, cashOnHand }: 
             <DialogTitle>Log Spend — {studentName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Cash on hand: <strong>{cashOnHand}</strong></p>
+            <p className="text-hec-small text-hec-ink-soft">Cash on hand: <strong className="font-sans font-semibold tabular-nums text-hec-ink">{cashOnHand}</strong></p>
             <Input
               type="number"
               min={1}

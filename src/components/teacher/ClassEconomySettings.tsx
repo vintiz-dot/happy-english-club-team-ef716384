@@ -69,7 +69,7 @@ export function ClassEconomySettings({ classId }: ClassEconomySettingsProps) {
     return (
       <Card>
         <CardContent className="py-8 flex justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <Loader2 className="h-6 w-6 animate-spin text-hec-ink-soft" />
         </CardContent>
       </Card>
     );
@@ -79,7 +79,7 @@ export function ClassEconomySettings({ classId }: ClassEconomySettingsProps) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Coins className="h-5 w-5 text-amber-500" />
+          <Coins className="h-5 w-5 text-hec-brass" aria-hidden />
           Classroom Economy
         </CardTitle>
         <CardDescription>
@@ -88,12 +88,12 @@ export function ClassEconomySettings({ classId }: ClassEconomySettingsProps) {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Toggle */}
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <Label htmlFor="economy-toggle" className="text-base font-medium">
+        <div className="flex items-center justify-between gap-4 rounded-hec-md border border-hec-line p-4">
+          <div className="min-w-0 space-y-1">
+            <Label htmlFor="economy-toggle" className="text-hec-body font-medium text-hec-ink">
               Enable Economy Mode
             </Label>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-hec-small text-hec-ink-soft">
               Points accumulate indefinitely and students can convert them to virtual cash
             </p>
           </div>
@@ -106,10 +106,10 @@ export function ClassEconomySettings({ classId }: ClassEconomySettingsProps) {
 
         {/* Rate setting - only shown when economy is on */}
         {economyMode && (
-          <div className="rounded-lg border p-4 space-y-4 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+          <div className="rounded-hec-md border border-hec-line p-4 space-y-4 animate-in fade-in-0 slide-in-from-top-2 duration-hec-2">
             <div className="flex items-center gap-2">
-              <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
-              <Label htmlFor="rate" className="text-base font-medium">
+              <ArrowRightLeft className="h-4 w-4 text-hec-ink-soft" aria-hidden />
+              <Label htmlFor="rate" className="text-hec-body font-medium text-hec-ink">
                 Conversion Rate
               </Label>
             </div>
@@ -120,14 +120,14 @@ export function ClassEconomySettings({ classId }: ClassEconomySettingsProps) {
                 min={1}
                 value={pointsToCashRate}
                 onChange={(e) => setPointsToCashRate(Number(e.target.value) || 1)}
-                className="w-24"
+                className="w-24 font-sans tabular-nums"
               />
-              <span className="text-sm text-muted-foreground">
+              <span className="text-hec-small text-hec-ink-soft">
                 points = 1 cash
               </span>
             </div>
-            <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-md p-3">
-              <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <div className="flex items-start gap-2 text-hec-caption text-hec-ink-soft bg-hec-sunken rounded-hec-sm p-3">
+              <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden />
               <span>
                 Students with {pointsToCashRate} points can withdraw 1 cash unit.
                 Monthly point resets are disabled when economy mode is active.

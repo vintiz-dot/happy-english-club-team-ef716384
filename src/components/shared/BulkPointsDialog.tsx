@@ -209,7 +209,7 @@ export function BulkPointsDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
+            <Users className="h-5 w-5 text-hec-ink-soft" aria-hidden />
             Add Points to {selectedStudents.length} Students
           </DialogTitle>
           <DialogDescription>
@@ -223,14 +223,14 @@ export function BulkPointsDialog({
             <Label className="text-base font-semibold">
               Selected Students ({selectedStudents.length})
             </Label>
-            <ScrollArea className="h-24 rounded-lg border p-3 bg-muted/50">
+            <ScrollArea className="h-24 rounded-hec-md border border-hec-line p-3 bg-hec-sunken">
               <div className="flex flex-wrap gap-2">
                 {selectedStudents.map((student) => (
                   <div
                     key={student.id}
-                    className="flex items-center gap-2 bg-background rounded-full px-3 py-1.5 border shadow-sm"
+                    className="flex max-w-full items-center gap-2 bg-hec-raised rounded-hec-lg px-3 py-1 border border-hec-line"
                   >
-                    <Avatar className="h-6 w-6">
+                    <Avatar className="h-6 w-6 shrink-0">
                       <AvatarImage
                         src={getAvatarUrl(student.avatarUrl) || getRandomAvatarUrl(student.id)}
                         alt={student.name}
@@ -239,7 +239,7 @@ export function BulkPointsDialog({
                         {student.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium">{student.name}</span>
+                    <span className="min-w-0 whitespace-normal break-words hyphens-none text-hec-small font-medium text-hec-ink">{student.name}</span>
                   </div>
                 ))}
               </div>
@@ -261,14 +261,15 @@ export function BulkPointsDialog({
                   key={cat.key}
                   type="button"
                   onClick={() => handleCategoryChange(cat.key as CategoryType)}
-                  className={`p-3 rounded-lg border text-left transition-all ${
+                  aria-pressed={category === cat.key}
+                  className={`min-h-hec-target p-3 rounded-hec-md border text-left transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${
                     category === cat.key
-                      ? "border-primary bg-primary/10 ring-1 ring-primary"
-                      : "border-border hover:bg-accent/50"
+                      ? "border-hec-brass bg-hec-sunken"
+                      : "border-hec-line-strong bg-hec-raised hover:bg-hec-sunken"
                   }`}
                 >
-                  <div className="font-medium text-sm">{cat.label}</div>
-                  <div className="text-xs text-muted-foreground">{cat.desc}</div>
+                  <div className="font-medium text-hec-small text-hec-ink">{cat.label}</div>
+                  <div className="text-hec-caption text-hec-ink-soft">{cat.desc}</div>
                 </button>
               ))}
             </div>
@@ -291,14 +292,15 @@ export function BulkPointsDialog({
                         setSelectedSkill(key);
                         setSelectedSubTag("");
                       }}
-                      className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-all ${
+                      aria-pressed={selectedSkill === key}
+                      className={`flex min-h-hec-target flex-col items-center gap-2 p-3 rounded-hec-md border text-hec-ink transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${
                         selectedSkill === key
-                          ? "border-primary bg-primary/10 ring-1 ring-primary"
-                          : "border-border hover:bg-accent/50"
+                          ? "border-hec-brass bg-hec-sunken"
+                          : "border-hec-line-strong bg-hec-raised hover:bg-hec-sunken"
                       }`}
                     >
-                      <Icon className="h-5 w-5" />
-                      <span className="text-sm font-medium">{config.label}</span>
+                      <Icon className="h-5 w-5" aria-hidden />
+                      <span className="text-hec-small font-medium">{config.label}</span>
                     </button>
                   );
                 })}
@@ -349,7 +351,7 @@ export function BulkPointsDialog({
                       </SelectItem>
                     ))
                   ) : (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
+                    <div className="p-4 text-center text-hec-small text-hec-ink-soft">
                       No homework assignments found
                     </div>
                   )}
@@ -390,8 +392,8 @@ export function BulkPointsDialog({
                 onClick={() => setPointsQuick(-10)}
                 className="h-14 flex flex-col"
               >
-                <Minus className="h-4 w-4 text-destructive" />
-                <span className="text-xs mt-1">-10</span>
+                <Minus className="h-4 w-4 text-hec-danger" aria-hidden />
+                <span className="font-sans text-hec-caption tabular-nums mt-1">-10</span>
               </Button>
               <Button
                 type="button"
@@ -400,8 +402,8 @@ export function BulkPointsDialog({
                 onClick={() => setPointsQuick(-1)}
                 className="h-14 flex flex-col"
               >
-                <Minus className="h-4 w-4 text-destructive" />
-                <span className="text-xs mt-1">-1</span>
+                <Minus className="h-4 w-4 text-hec-danger" aria-hidden />
+                <span className="font-sans text-hec-caption tabular-nums mt-1">-1</span>
               </Button>
               <Button
                 type="button"
@@ -410,8 +412,8 @@ export function BulkPointsDialog({
                 onClick={() => setPointsQuick(1)}
                 className="h-14 flex flex-col"
               >
-                <Plus className="h-4 w-4 text-green-600" />
-                <span className="text-xs mt-1">+1</span>
+                <Plus className="h-4 w-4 text-hec-leaf" aria-hidden />
+                <span className="font-sans text-hec-caption tabular-nums mt-1">+1</span>
               </Button>
               <Button
                 type="button"
@@ -420,8 +422,8 @@ export function BulkPointsDialog({
                 onClick={() => setPointsQuick(10)}
                 className="h-14 flex flex-col"
               >
-                <Plus className="h-4 w-4 text-green-600" />
-                <span className="text-xs mt-1">+10</span>
+                <Plus className="h-4 w-4 text-hec-leaf" aria-hidden />
+                <span className="font-sans text-hec-caption tabular-nums mt-1">+10</span>
               </Button>
             </div>
             <Input
@@ -429,7 +431,7 @@ export function BulkPointsDialog({
               value={points}
               onChange={(e) => setPoints(e.target.value)}
               placeholder="Or enter custom amount"
-              className="h-12 text-center text-lg font-semibold"
+              className="h-12 text-center font-sans text-hec-body font-semibold tabular-nums"
             />
           </div>
 
