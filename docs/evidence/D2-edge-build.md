@@ -1,6 +1,6 @@
 # D2 edge build
 
-Where I am / next step: SQL revision 1 and both functions done; function suite 81/0, guard suite 239/0, edge type check 5/5. Full run in progress (results below once pasted). Next: paste totals, remove the node_modules link, report.
+Where I am / next step: FINISHED. Revision 1 + both functions + tests; full run 2265/34/0; node_modules link removed. Next belongs to the conductor: review, then D3 builds the dialogs from "Contract for the dialogs (D3)". Nothing applied or deployed.
 
 Written and tested only. NOTHING applied or deployed: no Supabase/MCP tool, no live database. Every change to cancellation behaviour waits for the owner.
 
@@ -51,7 +51,12 @@ Written and tested only. NOTHING applied or deployed: no Supabase/MCP tool, no l
 
 ## Full run
 
-(pending)
+```
+node scripts/pgtest/run.mjs
+-> 2265 assertions across 34 suites, 0 suite(s) failed   (exit 0)
+   baseline 2157 / 33 / 0; +27 in "session cancel guard" (212 -> 239), +81 new "session guard functions";
+   every other suite at its baseline count; no assertion removed, weakened or failing.
+```
 
 ## Contract for the dialogs (D3)
 
