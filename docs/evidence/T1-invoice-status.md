@@ -115,3 +115,24 @@ writes: [{"mode":"upsert","payload":{...,"paid_amount":0,"recorded_payment":0,..
 ```
 
 That erases the month's recorded payment on a bill that was paid 400,000. Fixed below by failing the call (fail closed); listed for the owner because past damage of this kind would look like a payment that vanished.
+
+---
+
+## Part 2 - the rule (written before the code)
+
+**Where I am / next step:** rule written; next: `_lib/invoice-status.ts` + the call in calculate-tuition, then the suite.
+
+calculate-tuition keeps deciding every FIGURE exactly as before. What changes is only which of three label columns it writes when a bill row already exists: `status`, `confirmation_status`, `review_flags`.
+
+1. **No bill yet** (first calculation): unchanged. `status: issued`, `confirmation_status: auto_approved | needs_review`, `review_flags` as computed.
+2. **`status` on an existing bill is not this function's to change.** It is left out of the save, so whatever a payment function, the settle flow or an admin stored (`paid`, `partial`, `credit`, `issued`) stands. One exception, kept from today: a `draft` (or empty) status still becomes `issued`, because calculating a bill is what issues it. No status is derived from payments here: the payment paths use four different rules (facts, b), so there is no single rule to reuse, and writing a fifth would be a second calculation.
+3. **`confirmed` / `adjusted`, figures unchanged** (base, discount and total all equal to the stored ones): `confirmation_status` is left out of the save. Confirmed stays confirmed; `confirmed_at`, `confirmed_by`, `confirmation_notes` are never written by this function.
+4. **`confirmed` / `adjusted`, a charged figure changed**: the new figures are saved (as today), `confirmation_status` becomes `needs_review` (existing vocabulary; no new value, no migration), and `review_flags` gains one entry
+   `{ type: "changed_after_confirmation", label: "Changed after confirmation", details: { previousStatus, confirmedAt, confirmedBy, confirmed: {base_amount, discount_amount, total_amount}, current: {...}, difference, changedAt } }`.
+   The review card already prints one badge per flag label, so the admin sees it without a screen change; `confirmed_at` / `confirmed_by` stay on the row.
+5. **While that bill waits for the admin** (`needs_review` carrying that flag): it stays `needs_review` and the flag is carried forward, `confirmed` still the figures the admin confirmed, `current` following the bill. It does not go back to `auto_approved`, and the figures returning to the confirmed ones does not re-confirm it: only confirm-tuition (an admin) sets `confirmed`.
+6. **Every other existing bill** (`auto_approved`, `needs_review` without that flag, empty): recomputed exactly as today.
+7. **Fail closed.** If the current bill cannot be read, the call fails and nothing is saved (before: it saved `recorded_payment: 0`).
+8. Frozen bills: the function reports the saved figures, so rule 3 applies - a frozen confirmed bill stays confirmed, and the trigger still keeps its figures. Sibling-preview and unresolved-discount calls still write nothing. calculate-tuition-bulk writes no invoice and needs no change.
+
+"Charged figure" means `base_amount`, `discount_amount`, `total_amount`. Payments and carry balances are not what an admin confirms and move for other reasons (a payment in an earlier month), so they do not un-confirm a bill.
