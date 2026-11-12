@@ -1,5 +1,5 @@
 {
- "when": "2026-11-12T00:39:06.445Z",
+ "when": "2026-11-12T00:40:56.463Z",
  "base": "vite dev server, fake client (NOT production)",
  "screens": {
   "student-dashboard": {
@@ -2937,6 +2937,384 @@
       6937,
       11207,
       10743
+     ],
+     "requests": 27
+    }
+   }
+  },
+  "board-nightleague": {
+   "route": "/teacher/leaderboards",
+   "role": "teacher",
+   "boardStyle": "night",
+   "runs": {
+    "375-light": {
+     "fmrMs": 2294.300000011921,
+     "requests": 27,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "from:teachers": 3,
+      "from:profiles": 1,
+      "from:sessions": 3,
+      "from:classes": 3,
+      "from:notifications": 1,
+      "from:class_monitors": 1,
+      "from:enrollments": 1,
+      "from:student_points": 1,
+      "from:point_transactions": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 275,
+     "path": "/teacher/leaderboards",
+     "idleMs": 2340.699999988079,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 15,
+      "byImpact": {
+       "critical": 2,
+       "serious": 1,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,5)",
+       "color-contrast(serious,3)",
+       "heading-order(moderate,1)",
+       "image-alt(critical,6)"
+      ]
+     },
+     "shot": "board-nightleague-375-light.png",
+     "fmrMedianMs": 2294,
+     "idleMedianMs": 2341,
+     "fmrAll": [
+      2294,
+      2097,
+      2384
+     ],
+     "idleAll": [
+      2341,
+      2120,
+      2444
+     ],
+     "requestsAll": [
+      27,
+      27,
+      27
+     ]
+    },
+    "375-dark": {
+     "fmrMs": 2503.199999988079,
+     "requests": 27,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "from:teachers": 3,
+      "from:profiles": 1,
+      "from:sessions": 3,
+      "from:classes": 3,
+      "from:notifications": 1,
+      "from:class_monitors": 1,
+      "from:enrollments": 1,
+      "from:student_points": 1,
+      "from:point_transactions": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 275,
+     "path": "/teacher/leaderboards",
+     "idleMs": 2545.300000011921,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 16,
+      "byImpact": {
+       "critical": 2,
+       "serious": 1,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,5)",
+       "color-contrast(serious,4)",
+       "heading-order(moderate,1)",
+       "image-alt(critical,6)"
+      ]
+     },
+     "shot": "board-nightleague-375-dark.png",
+     "fmrMedianMs": 2503,
+     "idleMedianMs": 2545,
+     "fmrAll": [
+      2503
+     ],
+     "idleAll": [
+      2545
+     ],
+     "requestsAll": [
+      27
+     ]
+    },
+    "768-light": {
+     "fmrMs": 1732.2999999523163,
+     "requests": 27,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "from:teachers": 3,
+      "from:profiles": 1,
+      "from:sessions": 3,
+      "from:classes": 3,
+      "from:notifications": 1,
+      "from:class_monitors": 1,
+      "from:enrollments": 1,
+      "from:student_points": 1,
+      "from:point_transactions": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 1034,
+     "path": "/teacher/leaderboards",
+     "idleMs": 2093.199999988079,
+     "errors": [],
+     "axe": {
+      "rules": 8,
+      "nodes": 15,
+      "byImpact": {
+       "critical": 1,
+       "moderate": 4,
+       "serious": 3
+      },
+      "top": [
+       "button-name(critical,4)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)",
+       "landmark-main-is-top-level(moderate,1)",
+       "landmark-no-duplicate-main(moderate,1)",
+       "landmark-unique(moderate,1)"
+      ]
+     },
+     "shot": "board-nightleague-768-light.png",
+     "fmrMedianMs": 1590,
+     "idleMedianMs": 1967,
+     "fmrAll": [
+      1732,
+      1590,
+      1502
+     ],
+     "idleAll": [
+      2093,
+      1924,
+      1967
+     ],
+     "requestsAll": [
+      27,
+      27,
+      27
+     ]
+    },
+    "768-dark": {
+     "fmrMs": 1639.7000000476837,
+     "requests": 27,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "from:teachers": 3,
+      "from:profiles": 1,
+      "from:sessions": 3,
+      "from:classes": 3,
+      "from:notifications": 1,
+      "from:class_monitors": 1,
+      "from:enrollments": 1,
+      "from:student_points": 1,
+      "from:point_transactions": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 1034,
+     "path": "/teacher/leaderboards",
+     "idleMs": 2075.5,
+     "errors": [],
+     "axe": {
+      "rules": 9,
+      "nodes": 31,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 4
+      },
+      "top": [
+       "button-name(critical,4)",
+       "color-contrast(serious,16)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)",
+       "landmark-main-is-top-level(moderate,1)",
+       "landmark-no-duplicate-main(moderate,1)"
+      ]
+     },
+     "shot": "board-nightleague-768-dark.png",
+     "fmrMedianMs": 1640,
+     "idleMedianMs": 2076,
+     "fmrAll": [
+      1640
+     ],
+     "idleAll": [
+      2076
+     ],
+     "requestsAll": [
+      27
+     ]
+    },
+    "1280-light": {
+     "fmrMs": 1519.4000000357628,
+     "requests": 27,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "from:teachers": 3,
+      "from:profiles": 1,
+      "from:sessions": 3,
+      "from:classes": 3,
+      "from:notifications": 1,
+      "from:class_monitors": 1,
+      "from:enrollments": 1,
+      "from:student_points": 1,
+      "from:point_transactions": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 1049,
+     "path": "/teacher/leaderboards",
+     "idleMs": 1967.5,
+     "errors": [],
+     "axe": {
+      "rules": 9,
+      "nodes": 15,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 4
+      },
+      "top": [
+       "button-name(critical,3)",
+       "color-contrast(serious,1)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)",
+       "landmark-main-is-top-level(moderate,1)",
+       "landmark-no-duplicate-main(moderate,1)"
+      ]
+     },
+     "shot": "board-nightleague-1280-light.png",
+     "fmrMedianMs": 1758,
+     "idleMedianMs": 2109,
+     "fmrAll": [
+      1519,
+      1768,
+      1758
+     ],
+     "idleAll": [
+      1968,
+      2109,
+      2123
+     ],
+     "requestsAll": [
+      27,
+      27,
+      27
+     ]
+    },
+    "1280-dark": {
+     "fmrMs": 1905.5,
+     "requests": 27,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "from:teachers": 3,
+      "from:profiles": 1,
+      "from:sessions": 3,
+      "from:classes": 3,
+      "from:notifications": 1,
+      "from:class_monitors": 1,
+      "from:enrollments": 1,
+      "from:student_points": 1,
+      "from:point_transactions": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 1049,
+     "path": "/teacher/leaderboards",
+     "idleMs": 2350.399999976158,
+     "errors": [],
+     "axe": {
+      "rules": 9,
+      "nodes": 33,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 4
+      },
+      "top": [
+       "button-name(critical,3)",
+       "color-contrast(serious,19)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,4)",
+       "landmark-main-is-top-level(moderate,1)",
+       "landmark-no-duplicate-main(moderate,1)"
+      ]
+     },
+     "shot": "board-nightleague-1280-dark.png",
+     "fmrMedianMs": 1906,
+     "idleMedianMs": 2350,
+     "fmrAll": [
+      1906
+     ],
+     "idleAll": [
+      2350
+     ],
+     "requestsAll": [
+      27
+     ]
+    },
+    "375-light-cpu4x": {
+     "fmrMedianMs": 10747,
+     "idleMedianMs": 9599,
+     "fmrAll": [
+      10747,
+      12907,
+      9377
+     ],
+     "idleAll": [
+      9249,
+      11156,
+      9599
      ],
      "requests": 27
     }
