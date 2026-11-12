@@ -15,6 +15,8 @@ import {
 } from "recharts";
 import { dayjs } from "@/lib/date";
 import { useIvory } from "@/hooks/useIvory";
+import { fetchClassSkillFigures } from "@/lib/classSkillPoints";
+import { useAuth } from "@/hooks/useAuth";
 
 const SKILL_COLORS: Record<string, string> = {
   reading: "hsl(210, 100%, 60%)",
@@ -54,6 +56,8 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
   // Opened from the teacher/admin class board too (not migrated yet): old classes there.
   // Series colours (skills, class best/avg/you) are chart palette and stay in both.
   const ivory = useIvory();
+  const { role: viewerRole } = useAuth();
+  const viewerIsStaff = viewerRole === "teacher" || viewerRole === "admin";
   const iv = (n: string, o: string) => (ivory ? n : o);
   const INK = "hsl(var(--hec-ink))";
   const INK_SOFT = "hsl(var(--hec-ink-soft))";
@@ -167,56 +171,30 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
 
   // Fetch class highest for each skill (compare vs the best, not average)
   const { data: classHighest } = useQuery({
-    queryKey: ["class-skill-highest", classId],
+    queryKey: ["class-skill-highest", classId, viewerIsStaff],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("skill_assessments")
-        .select("skill, score, student_id")
-        .eq("class_id", classId);
+      // A summary per skill, not rows and not classmates' totals: those are
+      // private to each child's family (src/lib/classSkillPoints.ts).
+      const figures = await fetchClassSkillFigures(classId, { staff: viewerIsStaff });
 
-      if (error) throw error;
-      
-      // Group by student_id and skill, then find the highest total per skill
-      const studentSkillTotals: Record<string, Record<string, number>> = {};
-      
-      data?.forEach((entry) => {
-        if (!studentSkillTotals[entry.student_id]) {
-          studentSkillTotals[entry.student_id] = {};
-          SKILLS.forEach(skill => {
-            studentSkillTotals[entry.student_id][skill] = 0;
-          });
-        }
-        if (studentSkillTotals[entry.student_id][entry.skill] !== undefined) {
-          studentSkillTotals[entry.student_id][entry.skill] += entry.score;
-        }
-      });
-      
-      // Find max per skill across all students
       const maxPerSkill: Record<string, number> = {};
+      const sumPerSkill: Record<string, number> = {};
       SKILLS.forEach(skill => {
-        maxPerSkill[skill] = 0;
-        Object.values(studentSkillTotals).forEach(studentSkills => {
-          if (studentSkills[skill] > maxPerSkill[skill]) {
-            maxPerSkill[skill] = studentSkills[skill];
-          }
-        });
+        maxPerSkill[skill] = figures.bySkill[skill]?.best ?? 0;
+        sumPerSkill[skill] = figures.bySkill[skill]?.total ?? 0;
       });
-      
-      return { maxPerSkill, studentSkillTotals };
+
+      return { maxPerSkill, sumPerSkill, studentCount: figures.classStudents };
     },
   });
 
-  // Calculate class average from the same data
-  const classAverage = classHighest?.studentSkillTotals
+  // Class average: each skill's sum over every child with any assessment.
+  const classAverage = classHighest
     ? (() => {
-        const studentCount = Object.keys(classHighest.studentSkillTotals).length || 1;
+        const studentCount = classHighest.studentCount || 1;
         const avgPerSkill: Record<string, number> = {};
         SKILLS.forEach(skill => {
-          const total = Object.values(classHighest.studentSkillTotals).reduce(
-            (sum, studentSkills) => sum + studentSkills[skill],
-            0
-          );
-          avgPerSkill[skill] = Math.round(total / studentCount);
+          avgPerSkill[skill] = Math.round(classHighest.sumPerSkill[skill] / studentCount);
         });
         return avgPerSkill;
       })()

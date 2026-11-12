@@ -97,6 +97,23 @@ export function StudentAnalyticsModal({ open, onOpenChange, student, classId, se
     enabled: open && !!user,
   });
 
+  // May this viewer see past the header? The database decides: a student's
+  // row is readable by that child's own family, the class's staff and admins,
+  // and by nobody else (a classmate's row is not - migration 20261113130000).
+  // The header above the tabs is what the leaderboard already showed.
+  const { data: canSeeDetails } = useQuery({
+    queryKey: ["analytics-detail-access", student?.id, user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("students").select("id").eq("id", student!.id).maybeSingle();
+      // Unknown is not "no": on an error the tabs still open and show
+      // whatever the row policies allow, which for a classmate is nothing.
+      if (error) return true;
+      return !!data;
+    },
+    enabled: open && !!user && !!student,
+  });
+  const detailsPrivate = canSeeDetails === false;
+
   if (!student) return null;
 
   const levelInfo = calculateLevel(student.totalPoints);
@@ -251,6 +268,11 @@ export function StudentAnalyticsModal({ open, onOpenChange, student, classId, se
 
               {/* Tabs Section */}
               <div className={iv("p-4 sm:p-6", "p-6")}>
+                {detailsPrivate ? (
+                  <p className={iv("text-center text-hec-small text-hec-ink-soft py-6", "text-center text-sm text-muted-foreground py-6")}>
+                    {student.name.split(" ")[0]}'s points are shown above. Skills, attendance and history are private to each student and their family.
+                  </p>
+                ) : (
                 <Tabs defaultValue="attributes" className="w-full">
                   <TabsList className="grid w-full grid-cols-4 mb-6">
                     <TabsTrigger value="attributes" className="flex items-center gap-2">
@@ -296,6 +318,7 @@ export function StudentAnalyticsModal({ open, onOpenChange, student, classId, se
                     />
                   </TabsContent>
                 </Tabs>
+                )}
               </div>
             </motion.div>
           </DialogContent>
