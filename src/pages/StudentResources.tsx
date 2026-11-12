@@ -79,21 +79,21 @@ export default function StudentResources() {
         {/* ---- Header ---- */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-500 flex items-center justify-center shadow-lg">
-              <Sparkles className="h-6 w-6 text-white" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-hec-lg bg-hec-sunken">
+              <Sparkles className="h-6 w-6 text-hec-brass" />
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-sky-600 dark:from-blue-400 dark:to-sky-400">
+          <h1 className="font-display text-hec-display font-medium text-hec-ink">
             My Resources
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-hec-small text-hec-ink-soft">
             {totalItems} thing{totalItems !== 1 ? "s" : ""} to explore! 🎉
           </p>
         </div>
 
         {/* ---- Search ---- */}
         <div className="relative max-w-lg mx-auto">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-hec-ink-soft" />
           <Input
             placeholder="🔍 Search for resources..."
             value={query}
@@ -101,7 +101,7 @@ export default function StudentResources() {
               setQuery(e.target.value);
               setPage(1);
             }}
-            className="pl-12 h-12 text-base rounded-xl border-2 focus-visible:border-blue-400"
+            className="min-h-hec-target pl-12"
           />
         </div>
 
@@ -111,10 +111,10 @@ export default function StudentResources() {
             <button
               onClick={() => { setClassFilter(null); setPage(1); }}
               className={cn(
-                "px-4 py-2 rounded-full text-sm font-bold transition-all",
+                "min-h-hec-target max-w-full rounded-full border px-4 py-2 text-hec-small font-medium transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
                 !classFilter
-                  ? "bg-gradient-to-r from-blue-500 to-sky-500 text-white shadow-md scale-105"
-                  : "bg-muted hover:bg-muted/80 text-muted-foreground",
+                  ? "border-hec-action bg-hec-action text-hec-on-action"
+                  : "border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken",
               )}
             >
               ✨ All
@@ -124,10 +124,10 @@ export default function StudentResources() {
                 key={c.id}
                 onClick={() => { setClassFilter(c.id); setPage(1); }}
                 className={cn(
-                  "px-4 py-2 rounded-full text-sm font-bold transition-all",
+                  "min-h-hec-target max-w-full whitespace-normal break-words rounded-full border px-4 py-2 text-hec-small font-medium transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
                   classFilter === c.id
-                    ? "bg-gradient-to-r from-blue-500 to-sky-500 text-white shadow-md scale-105"
-                    : "bg-muted hover:bg-muted/80 text-muted-foreground",
+                    ? "border-hec-action bg-hec-action text-hec-on-action"
+                    : "border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken",
                 )}
               >
                 {c.name}
@@ -139,12 +139,12 @@ export default function StudentResources() {
         {/* ---- Cards Grid ---- */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-10 w-10 animate-spin text-blue-400" />
+            <Loader2 className="h-10 w-10 animate-spin text-hec-ink-soft" />
           </div>
         ) : paged.length === 0 ? (
           <div className="text-center py-16 space-y-4">
             <div className="text-6xl">📚</div>
-            <p className="text-lg font-semibold text-muted-foreground">
+            <p className="text-hec-h3 text-hec-ink-soft">
               {resources.length === 0 ? "No resources yet!" : "Nothing found — try a different search!"}
             </p>
           </div>
@@ -168,12 +168,12 @@ export default function StudentResources() {
               size="lg"
               disabled={currentPage <= 1}
               onClick={() => setPage((p) => p - 1)}
-              className="gap-2 rounded-xl h-12 px-6 font-bold"
+              className="min-h-hec-target gap-2 px-6"
             >
               <ChevronLeft className="h-5 w-5" />
               Back
             </Button>
-            <span className="text-sm font-semibold text-muted-foreground tabular-nums px-3 py-2 bg-muted rounded-lg">
+            <span className="rounded-hec-sm bg-hec-sunken px-3 py-2 text-hec-small font-medium tabular-nums text-hec-ink-soft">
               {currentPage} / {totalPages}
             </span>
             <Button
@@ -181,7 +181,7 @@ export default function StudentResources() {
               size="lg"
               disabled={currentPage >= totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="gap-2 rounded-xl h-12 px-6 font-bold"
+              className="min-h-hec-target gap-2 px-6"
             >
               Next
               <ChevronRight className="h-5 w-5" />

@@ -16,10 +16,10 @@ interface ActionCardProps {
 }
 
 const TONES: Record<NonNullable<ActionCardProps["tone"]>, string> = {
-  default: "text-muted-foreground bg-muted",
-  primary: "text-blue-700 dark:text-blue-300 bg-blue-500/15",
-  warning: "text-amber-700 dark:text-amber-300 bg-amber-500/15",
-  success: "text-emerald-700 dark:text-emerald-300 bg-emerald-500/15",
+  default: "bg-hec-sunken text-hec-ink-soft",
+  primary: "bg-hec-sunken text-hec-brass",
+  warning: "bg-hec-warn-tint text-hec-warn",
+  success: "bg-hec-leaf-tint text-hec-leaf",
 };
 
 /**
@@ -39,24 +39,24 @@ export function ActionCard({
 }: ActionCardProps) {
   const Inner = (
     <>
-      <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shrink-0", TONES[tone])}>
+      <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-hec-md", TONES[tone])}>
         <Icon className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-semibold text-sm sm:text-[15px] truncate">{title}</span>
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="min-w-0 whitespace-normal break-words text-hec-small font-semibold text-hec-ink sm:text-hec-body">{title}</span>
           {badge}
         </div>
         {description && (
-          <div className="type-micro text-muted-foreground line-clamp-2 mt-0.5">{description}</div>
+          <div className="mt-0.5 line-clamp-2 text-hec-caption text-hec-ink-soft">{description}</div>
         )}
       </div>
-      {rightSlot ?? <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />}
+      {rightSlot ?? <ChevronRight className="h-4 w-4 shrink-0 text-hec-ink-faint" />}
     </>
   );
 
   const baseClass = cn(
-    "group flex items-center gap-3 w-full rounded-2xl px-3 py-3 sm:px-4 sm:py-3.5 surface-2 ring-1 ring-border/40 lift focus-premium tap-44 text-left",
+    "group flex min-h-hec-target w-full items-center gap-3 rounded-hec-lg border border-hec-line bg-hec-surface px-3 py-3 text-left shadow-hec-1 transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring sm:px-4 sm:py-3.5",
     className
   );
 
