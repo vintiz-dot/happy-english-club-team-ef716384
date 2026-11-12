@@ -17,12 +17,11 @@ import { useIvory } from "@/hooks/useIvory";
 import { fetchBulkTuition, liveTuitionItem } from "@/hooks/useLiveTuitionData";
 import { siblingRetryDelayMs } from "@/lib/siblingRetry";
 import {
-  carriedIn,
   carriedOut,
   figurePlaceholder,
-  figureText,
   largestFirst,
   tuitionFigures,
+  tuitionRowCells,
   tuitionStatusInput,
 } from "@/lib/tuitionRows";
 
@@ -52,7 +51,7 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
   // way the Finance tab fetches it. This page reads no invoice row and works
   // nothing out: see src/lib/tuitionRows.ts for why. The key sits under
   // "admin-tuition-live" so a payment recorded from here refreshes the list.
-  const { data: tuitionData, isLoading, isError } = useQuery({
+  const { data: tuitionData, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ["admin-tuition-live", month, "everyone"],
     queryFn: async () => {
       const monthStart = `${month}-01`;
@@ -207,9 +206,20 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
     return <p className={iv("text-hec-body text-hec-ink-soft", "text-muted-foreground")}>Loading tuition data...</p>;
   }
 
-  // No answer from the calculator: say so. There is no other source to fall back on.
+  // No answer from the calculator: say so, and offer to ask again. There is
+  // no other source to fall back on. (Markup as the Finance tab's.)
   if (isError) {
-    return <p className={iv("text-hec-body text-hec-ink-soft", "text-muted-foreground")}>Tuition could not be calculated. Reload the page to try again.</p>;
+    return (
+      <div className={iv("flex flex-wrap items-center justify-between gap-3 rounded-hec-lg border border-hec-danger/30 bg-hec-danger-tint p-4", "rounded-xl border border-destructive/40 bg-destructive/5 p-4 flex flex-wrap items-center justify-between gap-3")}>
+        <div className={iv("min-w-0", "")}>
+          <p className={iv("font-semibold text-hec-danger", "font-semibold text-destructive")}>Couldn't load tuition</p>
+          <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>Tuition could not be calculated. No figures are shown until it can.</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+          {isFetching ? "Retrying…" : "Retry"}
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -284,6 +294,7 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
                     key={item.id}
                     item={item}
                     statusBadge={getStatusBadge(item)}
+                    refreshing={isFetching}
                     onRecordPay={() => setPaymentItem(item)}
                     onView={() => navigate(`/students/${item.student_id}`)}
                   />
@@ -308,11 +319,13 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
 function TuitionStudentRow({
   item,
   statusBadge,
+  refreshing,
   onRecordPay,
   onView,
 }: {
   item: any;
   statusBadge: React.ReactNode;
+  refreshing: boolean;
   onRecordPay: () => void;
   onView: () => void;
 }) {
@@ -321,13 +334,11 @@ function TuitionStudentRow({
   const iv = (n: string, o: string) => (ivory ? n : o);
   const studentName = (item.students as any)?.full_name ?? "—";
   const classNames = (item as any).classes?.map((c: any) => c.name).join(", ") || "No class";
-  // What the calculator carried in and out of the month, worded - never a
-  // number made here. `figures.state` is "pending" or "unavailable" while
-  // there is nothing to show, and the cells then say so.
-  const figures = item.figures;
-  const prior = carriedIn(figures);
-  const balance = carriedOut(figures);
-  const noFigure = figurePlaceholder(figures.state);
+  // Every money cell of the row, as words, from the calculator's figures
+  // (src/lib/tuitionRows.ts, tested in scripts/tuitionRows.test.ts). Nothing
+  // is worked out here. `item.finalPayable` is read only for an answer from
+  // a function too old to send carry.payable.
+  const cells = tuitionRowCells(item.figures, fmt, item.finalPayable);
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -347,11 +358,11 @@ function TuitionStudentRow({
             {/* Right side: balance + chevron */}
             <div className="text-right shrink-0">
               <p className={ivory
-                ? `whitespace-nowrap font-sans text-hec-body font-semibold tabular-nums ${balance.amount === null ? "text-hec-ink-soft" : "text-hec-ink"}`
+                ? `whitespace-nowrap font-sans text-hec-body font-semibold tabular-nums ${cells.headerBalance.tone === "quiet" ? "text-hec-ink-soft" : "text-hec-ink"}`
                 : `text-sm font-bold tabular-nums ${
-                balance.kind === "owed" ? "text-destructive" : balance.kind === "credit" ? "text-emerald-600" : "text-muted-foreground"
+                cells.headerBalance.tone === "owed" ? "text-destructive" : cells.headerBalance.tone === "credit" ? "text-emerald-600" : "text-muted-foreground"
               }`}>
-                {balance.kind === "owed" ? fmt(balance.amount) : balance.kind === "credit" ? `+${fmt(balance.amount)}` : balance.kind === "none" ? "Settled" : noFigure}
+                {cells.headerBalance.text}
               </p>
               <p className={iv("text-hec-caption text-hec-ink-soft", "text-[10px] text-muted-foreground")}>Balance</p>
             </div>
@@ -364,25 +375,17 @@ function TuitionStudentRow({
           <div className={iv("space-y-4 border-t border-hec-line p-4", "border-t px-3 sm:px-4 py-3 space-y-3")}>
             {/* Finance breakdown grid */}
             <div className={iv("grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-6", "grid grid-cols-3 sm:grid-cols-6 gap-y-3 gap-x-2 text-center")}>
-              <FinanceCell ivory={ivory} label="Base" value={figureText(figures, figures.base, fmt)} />
-              <FinanceCell ivory={ivory} label="Discount" value={figures.discount === null ? noFigure : figures.discount > 0 ? `−${fmt(figures.discount)}` : "—"} accent={figures.discount !== null && figures.discount > 0 ? "green" : undefined} />
-              <FinanceCell ivory={ivory} label="Prior Bal." value={prior.kind === "owed" ? fmt(prior.amount) : prior.kind === "credit" ? `+${fmt(prior.amount)}` : prior.kind === "none" ? "—" : noFigure} accent={prior.kind === "owed" ? "red" : prior.kind === "credit" ? "green" : undefined} />
-              {/* The Finance tab's Payable for this row (useLiveTuitionData). */}
-              <FinanceCell ivory={ivory} label="Payable" value={figureText(figures, item.finalPayable ?? null, fmt)} bold />
-              <FinanceCell ivory={ivory} label="Paid" value={figureText(figures, figures.paid, fmt)} accent="blue" />
-              <FinanceCell
-                ivory={ivory}
-                total
-                label="Balance"
-                value={balance.kind === "owed" ? fmt(balance.amount) : balance.kind === "credit" ? `+${fmt(balance.amount)}` : balance.kind === "none" ? "0 ₫" : noFigure}
-                accent={balance.kind === "owed" ? "red" : balance.kind === "credit" ? "green" : undefined}
-                bold
-              />
+              <FinanceCell ivory={ivory} label="Base" value={cells.base.text} />
+              <FinanceCell ivory={ivory} label="Discount" value={cells.discount.text} accent={cells.discount.accent} />
+              <FinanceCell ivory={ivory} label="Prior Bal." value={cells.prior.text} accent={cells.prior.accent} />
+              <FinanceCell ivory={ivory} label="Payable" value={cells.payable.text} bold />
+              <FinanceCell ivory={ivory} label="Paid" value={cells.paid.text} accent={cells.paid.accent} />
+              <FinanceCell ivory={ivory} total label="Balance" value={cells.balance.text} accent={cells.balance.accent} bold />
             </div>
 
             {/* Actions */}
             <div className={iv("flex flex-wrap gap-2", "flex gap-2 pt-1")}>
-              <Button size="sm" onClick={onRecordPay} disabled={figures.state !== "ready"} className="flex-1 sm:flex-none gap-1.5">
+              <Button size="sm" onClick={onRecordPay} disabled={!cells.canRecordPay || refreshing} className="flex-1 sm:flex-none gap-1.5">
                 <CreditCard className="h-3.5 w-3.5" />
                 Record Pay
               </Button>

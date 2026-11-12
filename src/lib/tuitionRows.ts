@@ -201,3 +201,73 @@ export function largestFirst(a: number | null, b: number | null): number {
   if (b === null) return -1;
   return a > b ? -1 : a < b ? 1 : 0;
 }
+
+/**
+ * The function's own `carry.payable`, whatever else the answer says, or null
+ * when the function (one deployed before 12 Nov 2026) did not send it.
+ */
+export function payableFromFunction(result: TuitionFunctionResult | null | undefined): number | null {
+  return amount(result?.carry?.payable);
+}
+
+export interface TuitionCell {
+  text: string;
+  accent?: "green" | "red" | "blue";
+}
+
+/** Everything one row of the admin tuition list says about money, as words. */
+export interface TuitionRowCells {
+  /** The balance in the row's header: "Settled" when nothing is owed either way. */
+  headerBalance: { text: string; tone: "owed" | "credit" | "quiet" };
+  base: TuitionCell;
+  discount: TuitionCell;
+  prior: TuitionCell;
+  payable: TuitionCell;
+  paid: TuitionCell;
+  balance: TuitionCell;
+  /** A payment may be recorded only against a row whose figures are the function's. */
+  canRecordPay: boolean;
+}
+
+/**
+ * The cells of one row. `format` is the screen's money formatter.
+ *
+ * `olderFunctionPayable` is used only when the function sent no
+ * `carry.payable` (see src/lib/liveTuitionItem.ts); it is never looked at
+ * for a row that is pending or unavailable.
+ */
+export function tuitionRowCells(
+  f: TuitionFigures,
+  format: (n: number) => string,
+  olderFunctionPayable?: number | null,
+): TuitionRowCells {
+  const none = figurePlaceholder(f.state);
+  const carriedCell = (c: CarriedAmount, nothing: string): TuitionCell =>
+    c.kind === "owed"
+      ? { text: format(c.amount), accent: "red" }
+      : c.kind === "credit"
+        ? { text: `+${format(c.amount)}`, accent: "green" }
+        : { text: c.kind === "none" ? nothing : none };
+  const out = carriedOut(f);
+  const payable = f.state === "ready" ? (f.payable ?? amount(olderFunctionPayable)) : null;
+  return {
+    headerBalance:
+      out.kind === "owed"
+        ? { text: format(out.amount), tone: "owed" }
+        : out.kind === "credit"
+          ? { text: `+${format(out.amount)}`, tone: "credit" }
+          : { text: out.kind === "none" ? "Settled" : none, tone: "quiet" },
+    base: { text: figureText(f, f.base, format) },
+    discount:
+      f.discount === null
+        ? { text: none }
+        : f.discount > 0
+          ? { text: `−${format(f.discount)}`, accent: "green" }
+          : { text: "—" },
+    prior: carriedCell(carriedIn(f), "—"),
+    payable: { text: payable === null ? none : format(payable) },
+    paid: { text: figureText(f, f.paid, format), accent: "blue" },
+    balance: carriedCell(out, format(0)),
+    canRecordPay: f.state === "ready",
+  };
+}
