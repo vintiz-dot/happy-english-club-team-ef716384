@@ -10,9 +10,14 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { useIvory } from "@/hooks/useIvory";
 
 const KBD_CLASS =
   "ml-1 hidden lg:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground";
+const KBD_CLASS_IVORY =
+  "ml-1 hidden h-6 select-none items-center gap-1 rounded-hec-sm border border-hec-line bg-hec-sunken px-1.5 font-mono text-hec-caption font-medium text-hec-ink-soft lg:inline-flex";
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 import {
   CommandDialog,
   CommandEmpty,
@@ -119,6 +124,8 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // Staff shell: ivory on a listed route (src/lib/ivoryScope.ts), today's look elsewhere.
+  const ivory = useIvory();
 
   const tab = searchParams.get("tab");
   const crumbs = useMemo(() => buildCrumbs(location.pathname, tab), [location.pathname, tab]);
@@ -142,7 +149,7 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
 
   return (
     <>
-      <header className="hidden md:flex sticky top-0 z-40 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55 px-6 py-3 items-center justify-between gap-4 shadow-q1">
+      <header className={ivory ? "sticky top-0 z-40 hidden min-h-14 items-center justify-between gap-4 border-b border-hec-line bg-hec-paper px-6 py-1 md:flex" : "hidden md:flex sticky top-0 z-40 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55 px-6 py-3 items-center justify-between gap-4 shadow-q1"}>
         <div className="flex items-center gap-4 min-w-0">
           <Breadcrumb>
             <BreadcrumbList>
@@ -157,18 +164,31 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
                     <span key={`${c.label}-${idx}`} className="contents">
                       <BreadcrumbItem>
                         {c.href && !isLast ? (
-                          <BreadcrumbLink
-                            className="cursor-pointer hover:text-foreground transition-colors"
-                            onClick={() => navigate(c.href!)}
-                          >
-                            {c.label}
-                          </BreadcrumbLink>
+                          ivory ? (
+                            // A real button (the old <a> had no href, so no keyboard): same handler, 44 px.
+                            <BreadcrumbLink asChild>
+                              <button
+                                type="button"
+                                className={`inline-flex min-h-hec-target items-center rounded-hec-sm px-1 text-hec-small text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink ${FOCUS}`}
+                                onClick={() => navigate(c.href!)}
+                              >
+                                {c.label}
+                              </button>
+                            </BreadcrumbLink>
+                          ) : (
+                            <BreadcrumbLink
+                              className="cursor-pointer hover:text-foreground transition-colors"
+                              onClick={() => navigate(c.href!)}
+                            >
+                              {c.label}
+                            </BreadcrumbLink>
+                          )
                         ) : (
-                          <BreadcrumbPage className="font-semibold text-foreground">{c.label}</BreadcrumbPage>
+                          <BreadcrumbPage className={ivory ? "text-hec-small font-medium text-hec-ink" : "font-semibold text-foreground"}>{c.label}</BreadcrumbPage>
                         )}
                       </BreadcrumbItem>
                       {!isLast && (
-                        <BreadcrumbSeparator>
+                        <BreadcrumbSeparator className={ivory ? "text-hec-ink-faint" : undefined}>
                           <ChevronRight className="h-3.5 w-3.5" />
                         </BreadcrumbSeparator>
                       )}
@@ -184,16 +204,17 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
           <Button
             variant="outline"
             size="sm"
-            className="h-9 gap-2 text-muted-foreground"
+            className={ivory ? "gap-2 text-hec-ink-soft" : "h-9 gap-2 text-muted-foreground"}
             onClick={() => setPaletteOpen(true)}
+            aria-label={ivory ? "Quick jump" : undefined}
           >
             <Search className="h-3.5 w-3.5" />
             <span className="hidden lg:inline">Quick jump…</span>
-            <kbd className={KBD_CLASS}>⌘K</kbd>
+            <kbd className={ivory ? KBD_CLASS_IVORY : KBD_CLASS}>⌘K</kbd>
           </Button>
           {rightSlot}
         </div>
-        <div className="hairline-gradient absolute inset-x-0 bottom-0 h-px" />
+        {!ivory && <div className="hairline-gradient absolute inset-x-0 bottom-0 h-px" />}
       </header>
 
       <CommandDialog open={paletteOpen} onOpenChange={setPaletteOpen}>
@@ -242,9 +263,10 @@ function PaletteItem({
   label: string;
   onSelect: () => void;
 }) {
+  const ivory = useIvory();
   return (
-    <CommandItem onSelect={onSelect} className="gap-2">
-      <Icon className="h-4 w-4 text-muted-foreground" />
+    <CommandItem onSelect={onSelect} className={ivory ? "min-h-hec-target gap-2" : "gap-2"}>
+      <Icon className={ivory ? "h-4 w-4 shrink-0 text-hec-ink-soft" : "h-4 w-4 text-muted-foreground"} />
       <span>{label}</span>
     </CommandItem>
   );
