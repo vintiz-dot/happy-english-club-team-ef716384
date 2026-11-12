@@ -98,9 +98,9 @@ export function ClassVideoWall({ classId, className, studentId }: { classId: str
                   onClick={() => !v.mine && heart.mutate(v.id)}
                   disabled={v.mine}
                   className="flex min-h-hec-target min-w-hec-target shrink-0 items-center justify-center gap-1 rounded-hec-md text-hec-small text-hec-ink disabled:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
-                  aria-label={`${v.hearted ? "Remove heart" : "Send a heart"}${v.hearts > 0 ? ` (${v.hearts})` : ""}`}
                 >
-                  <Heart className={`h-5 w-5 ${v.hearted ? "fill-current text-hec-brass" : "text-hec-ink-soft"}`} />
+                  <span className="sr-only">{v.hearted ? "Remove heart" : "Send a heart"}</span>
+                  <Heart aria-hidden="true" className={`h-5 w-5 ${v.hearted ? "fill-current text-hec-brass" : "text-hec-ink-soft"}`} />
                   {v.hearts > 0 && <span className="tabular-nums">{v.hearts}</span>}
                 </button>
               </div>
