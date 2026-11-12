@@ -1,0 +1,2770 @@
+{
+ "when": "2026-11-12T03:49:37.678Z",
+ "base": "vite dev server + fake Supabase client + local stand-in book (NOT production, NOT the real book hosts)",
+ "cpu": "4x (CDP Emulation.setCPUThrottlingRate)",
+ "network": "Fast 3G-like (CDP Network.emulateNetworkConditions latency 562.5 ms, 180 KB/s down, 84 KB/s up) applied after the app shell has loaded, plus a 562 ms delay on every book.html request",
+ "checks": [
+  {
+   "id": "M6.static.TeacherSmartUpload:1051",
+   "size": "",
+   "status": "PASS",
+   "value": {
+    "file": "src/pages/TeacherSmartUpload.tsx",
+    "line": 1051,
+    "needle": "Draft personalized feedback with AI"
+   },
+   "detail": "src/pages/TeacherSmartUpload.tsx:1051 hint is no longer a native title="
+  },
+  {
+   "id": "M6.static.TeacherTranscripts:911",
+   "size": "",
+   "status": "PASS",
+   "value": {
+    "file": "src/pages/TeacherTranscripts.tsx",
+    "line": 911,
+    "needle": "This run was cut off"
+   },
+   "detail": "src/pages/TeacherTranscripts.tsx:911 hint is no longer a native title="
+  },
+  {
+   "id": "M6.static.TeacherTranscripts:995",
+   "size": "",
+   "status": "PASS",
+   "value": {
+    "file": "src/pages/TeacherTranscripts.tsx",
+    "line": 995,
+    "needle": "Re-run Whisper transcription"
+   },
+   "detail": "src/pages/TeacherTranscripts.tsx:995 hint is no longer a native title="
+  },
+  {
+   "id": "M6.static.TeacherTranscripts:1015",
+   "size": "",
+   "status": "PASS",
+   "value": {
+    "file": "src/pages/TeacherTranscripts.tsx",
+    "line": 1015,
+    "needle": "Re-run analysis on the stored transcript"
+   },
+   "detail": "src/pages/TeacherTranscripts.tsx:1015 hint is no longer a native title="
+  },
+  {
+   "id": "M6.static.TeacherTranscripts:0",
+   "size": "",
+   "status": "PASS",
+   "value": {
+    "file": "src/pages/TeacherTranscripts.tsx",
+    "line": 0,
+    "needle": "title=\"Remove\""
+   },
+   "detail": "\"title=\"Remove\"\" no longer in src/pages/TeacherTranscripts.tsx"
+  },
+  {
+   "id": "M6.static.TeacherTranscripts:1575",
+   "size": "",
+   "status": "PASS",
+   "value": {
+    "file": "src/pages/TeacherTranscripts.tsx",
+    "line": 1575,
+    "needle": "Correct this feedback"
+   },
+   "detail": "src/pages/TeacherTranscripts.tsx:1575 hint is no longer a native title="
+  },
+  {
+   "id": "M1.select-book",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": 2,
+   "detail": "loads so far 2 (first book + the deliberate switch to book B)"
+  },
+  {
+   "id": "M9.parent-cost",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "longtasks": 3,
+    "longMs": 274,
+    "frames": 997,
+    "p95": 17,
+    "max": 300,
+    "over50": 7
+   },
+   "detail": "50 turns in 17419 ms wall: parent long tasks 3 (274 ms), rAF frames 997, p95 17 ms, max 300 ms, frames >50 ms 7"
+  },
+  {
+   "id": "M9.parent-heap",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "before": 11966476,
+    "after": 12022036
+   },
+   "detail": "parent JS heap after GC 11.4 -> 11.5 MiB over 50 turns"
+  },
+  {
+   "id": "M4.history",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "added": 47,
+    "page": 51,
+    "loads": 0
+   },
+   "detail": "50 turns added 47 entries to the TAB's history (history.length 3 -> 50; Chrome caps history.length at 50); book on page 51; extra loads during turns 0"
+  },
+  {
+   "id": "M9.parent-heap-3runs",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": [
+    11966476,
+    12022036,
+    12066632,
+    12096200
+   ],
+   "detail": "parent JS heap after GC across 3 x 50 turns: 11.4 -> 11.5 -> 11.5 -> 11.5 MiB; book page now 51"
+  },
+  {
+   "id": "M1.token-refresh",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "loads": 1,
+    "page": [
+     51,
+     1
+    ],
+    "book": [
+     "Stand-in book B (Phonics)",
+     "Stand-in book A (Unit 5)"
+    ]
+   },
+   "detail": "TOKEN_REFRESHED: +1 iframe load(s); page 51 -> 1; book \"Stand-in book B (Phonics)\" -> \"Stand-in book A (Unit 5)\""
+  },
+  {
+   "id": "M2.fullscreen-kept",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "before": "DIV (holds the book)",
+    "after": null
+   },
+   "detail": "fullscreenElement before DIV (holds the book) -> after TOKEN_REFRESHED none"
+  },
+  {
+   "id": "M4.back-after-reload",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "url": [
+     "http://127.0.0.1:5321/teacher/books",
+     "http://127.0.0.1:5321/teacher/books"
+    ],
+    "page": [
+     1,
+     1
+    ]
+   },
+   "detail": "browser Back right after the reload: app URL unchanged; book page 1 -> 1; loads now 3"
+  },
+  {
+   "id": "M1.visibility",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "loads": 1,
+    "page": [
+     11,
+     1
+    ],
+    "book": [
+     "Stand-in book B (Phonics)",
+     "Stand-in book A (Unit 5)"
+    ]
+   },
+   "detail": "hidden->visible (fake emits SIGNED_IN as auth-js does): +1 load(s); page 11 -> 1; book \"Stand-in book B (Phonics)\" -> \"Stand-in book A (Unit 5)\""
+  },
+  {
+   "id": "M3.tab-switch",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "loads": 1,
+    "page": [
+     11,
+     1
+    ]
+   },
+   "detail": "Presenter -> Settings -> Presenter: +1 load(s); page 11 -> 1"
+  },
+  {
+   "id": "M3.title-edit",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "d": 1,
+    "page": [
+     11,
+     1
+    ],
+    "book": [
+     "Stand-in book B (Phonics)",
+     "Book (edited)"
+    ]
+   },
+   "detail": "title-only edit path: +1 load(s) (tab round trip alone +1, so the edit itself adds 0); page 11 -> 1"
+  },
+  {
+   "id": "M3.url-edit",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "d": 1,
+    "page": [
+     11,
+     1
+    ],
+    "book": [
+     "Book (edited)",
+     "Book (edited)"
+    ]
+   },
+   "detail": "URL edit path: +1 load(s) (tab round trip alone +1; a URL change is a legitimate reload, expected exactly 1 after the fix)"
+  },
+  {
+   "id": "M4.back",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "url": [
+     "http://127.0.0.1:5321/teacher/books",
+     "http://127.0.0.1:5321/teacher/books"
+    ],
+    "page": [
+     6,
+     5
+    ],
+    "historyLength": 50
+   },
+   "detail": "browser Back from book page 6: app URL unchanged; book page 6 -> 5"
+  },
+  {
+   "id": "M5.control.SkillButton-popover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): SkillButton-popover visible"
+  },
+  {
+   "id": "M5.control.StudentActionPopover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): StudentActionPopover visible"
+  },
+  {
+   "id": "M5.control.ui-popover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-popover visible"
+  },
+  {
+   "id": "M5.control.ui-select",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-select visible"
+  },
+  {
+   "id": "M5.control.ui-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-dialog visible"
+  },
+  {
+   "id": "M5.control.ui-dropdown-menu",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-dropdown-menu visible"
+  },
+  {
+   "id": "M5.control.ui-alert-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-alert-dialog visible"
+  },
+  {
+   "id": "M5.control.ui-sheet",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-sheet visible"
+  },
+  {
+   "id": "M5.control.ui-tooltip",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-tooltip visible"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-enter",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "steps": 24,
+    "openBefore": true,
+    "fsOn": true,
+    "stillInDom": true,
+    "visFs": true,
+    "where": "inside the fullscreen element"
+   },
+   "detail": "tooltip open by keyboard (24 Tabs, visible true) then fullscreen on: tooltip still open, inside the fullscreen element, visible true"
+  },
+  {
+   "id": "M5.SkillButton-popover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: SkillButton-popover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.StudentActionPopover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: StudentActionPopover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-popover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-popover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-select opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-dialog opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-dropdown-menu",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-dropdown-menu opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-alert-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-alert-dialog opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-sheet",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-sheet opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-tooltip",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-tooltip opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-exit",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "v0": true,
+    "v1": false,
+    "d1": true,
+    "conn": true
+   },
+   "detail": "tooltip open in fullscreen (visible true), fullscreen ends: still open, connected true, visible false"
+  },
+  {
+   "id": "M5.TeacherBooks.classroom-tools-sheet",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "fsOn": "DIV (holds the book)",
+    "sheetVis": true
+   },
+   "detail": "fullscreen DIV (holds the book); classroom tools sheet visible=true"
+  },
+  {
+   "id": "M5.TeacherBooks.tool-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "text": "Starters 1 (Mon-Wed)",
+    "inFs": true,
+    "hit": true
+   },
+   "detail": "Select in a tool panel: first option \"Starters 1 (Mon-Wed)\" inside fullscreen=true, hit-testable=true"
+  },
+  {
+   "id": "M6.HUD-chip-last-engaged.hover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": true,
+   "detail": "hover: hint visible=true"
+  },
+  {
+   "id": "M6.HUD-chip-last-engaged.keyboard",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "steps": 3,
+    "hover": true,
+    "keyboardReached": true,
+    "keyboard": true,
+    "tap": true
+   },
+   "detail": "keyboard: reached after 3 Tab(s), hint visible=true"
+  },
+  {
+   "id": "M6.HUD-chip-last-engaged.tap",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": true,
+   "detail": "tap: hint visible=true"
+  },
+  {
+   "id": "M6.ui-tooltip-primitive.hover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": true,
+   "detail": "hover: hint visible=true"
+  },
+  {
+   "id": "M6.ui-tooltip-primitive.keyboard",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "steps": 24,
+    "hover": true,
+    "keyboardReached": true,
+    "keyboard": true,
+    "tap": true
+   },
+   "detail": "keyboard: reached after 24 Tab(s), hint visible=true"
+  },
+  {
+   "id": "M6.ui-tooltip-primitive.tap",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": true,
+   "detail": "tap: hint visible=true"
+  },
+  {
+   "id": "M6.Leaderboards-live.state",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "disabled": true,
+    "pe": "none",
+    "name": "Live"
+   },
+   "detail": "Live button disabled=true, pointer-events=none, visible name \"Live\""
+  },
+  {
+   "id": "M6.Leaderboards-live-reason.hover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": true,
+   "detail": "hover: hint visible=true"
+  },
+  {
+   "id": "M6.Leaderboards-live-reason.keyboard",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "steps": 21,
+    "hover": true,
+    "keyboardReached": true,
+    "keyboard": true,
+    "tap": true
+   },
+   "detail": "keyboard: reached after 21 Tab(s), hint visible=true"
+  },
+  {
+   "id": "M6.Leaderboards-live-reason.tap",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": true,
+   "detail": "tap: hint visible=true"
+  },
+  {
+   "id": "M6.Books-back-button.hover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": false,
+   "detail": "hover: DOM hint visible=false (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)"
+  },
+  {
+   "id": "M6.Books-back-button.keyboard",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "steps": 1,
+    "hover": false,
+    "keyboardReached": true,
+    "keyboard": false
+   },
+   "detail": "keyboard: reached after 1 Tab(s), hint visible=false (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)"
+  },
+  {
+   "id": "M6.Books-back-button.tap",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": null,
+   "detail": "tap: not run - a tap activates this control (navigates / opens a tab); there is no hint to see first"
+  },
+  {
+   "id": "M6.Books-open-in-tab.hover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": false,
+   "detail": "hover: DOM hint visible=false (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)"
+  },
+  {
+   "id": "M6.Books-open-in-tab.keyboard",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "steps": 6,
+    "hover": false,
+    "keyboardReached": true,
+    "keyboard": false
+   },
+   "detail": "keyboard: reached after 6 Tab(s), hint visible=false (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)"
+  },
+  {
+   "id": "M6.Books-open-in-tab.tap",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": null,
+   "detail": "tap: not run - a tap activates this control (navigates / opens a tab); there is no hint to see first"
+  },
+  {
+   "id": "M8.media",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "hoverNone": true,
+    "coarse": true
+   },
+   "detail": "(hover: none)=true, (pointer: coarse)=true"
+  },
+  {
+   "id": "M8.HUD-chips",
+   "size": "1024x768 touch",
+   "status": "PASS",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.SkillButton-popover",
+   "size": "1024x768 touch",
+   "status": "PASS",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.RadialSkillMenu-all-stages",
+   "size": "1024x768 touch",
+   "status": "PASS",
+   "value": {
+    "total": 19,
+    "small": []
+   },
+   "detail": "0 of 19 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.StudentActionPopover",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.media",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "hoverNone": false,
+    "coarse": false
+   },
+   "detail": "(hover: none)=false, (pointer: coarse)=false"
+  },
+  {
+   "id": "M8.HUD-chips",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 6,
+    "small": [
+     {
+      "label": "Nguyên",
+      "w": 73,
+      "h": 26
+     },
+     {
+      "label": "Hân+2",
+      "w": 73,
+      "h": 26
+     },
+     {
+      "label": "Anh+2",
+      "w": 73,
+      "h": 26
+     },
+     {
+      "label": "Khôi",
+      "w": 55,
+      "h": 26
+     },
+     {
+      "label": "Châu+2",
+      "w": 79,
+      "h": 26
+     },
+     {
+      "label": "Bảo",
+      "w": 51,
+      "h": 26
+     }
+    ]
+   },
+   "detail": "6 of 6 interactive targets under 44x44: \"Nguyên\" 73x26, \"Hân+2\" 73x26, \"Anh+2\" 73x26, \"Khôi\" 55x26, \"Châu+2\" 79x26, \"Bảo\" 51x26"
+  },
+  {
+   "id": "M8.SkillButton-popover",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": [
+     {
+      "label": "+1",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "+2",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "+3",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "+5",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "+10",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "Custom points for Speaki",
+      "w": 48,
+      "h": 40
+     },
+     {
+      "label": "BUTTON",
+      "w": 32,
+      "h": 40
+     }
+    ]
+   },
+   "detail": "7 of 7 interactive targets under 44x44: \"+1\" 40x40, \"+2\" 40x40, \"+3\" 40x40, \"+5\" 40x40, \"+10\" 40x40, \"Custom points for Speaki\" 48x40, ..."
+  },
+  {
+   "id": "M8.RadialSkillMenu-all-stages",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 19,
+    "small": [
+     {
+      "label": "← Back",
+      "w": 62,
+      "h": 32
+     },
+     {
+      "label": "Not Paying Attention",
+      "w": 479,
+      "h": 34
+     },
+     {
+      "label": "Disrupting Class",
+      "w": 479,
+      "h": 34
+     },
+     {
+      "label": "Missing Homework",
+      "w": 479,
+      "h": 34
+     },
+     {
+      "label": "Late to Class",
+      "w": 489,
+      "h": 35
+     },
+     {
+      "label": "Other",
+      "w": 479,
+      "h": 34
+     },
+     {
+      "label": "← Back",
+      "w": 62,
+      "h": 32
+     }
+    ]
+   },
+   "detail": "7 of 19 interactive targets under 44x44: \"← Back\" 62x32, \"Not Paying Attention\" 479x34, \"Disrupting Class\" 479x34, \"Missing Homework\" 479x34, \"Late to Class\" 489x35, \"Other\" 479x34, ..."
+  },
+  {
+   "id": "M8.StudentActionPopover",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": [
+     {
+      "label": "Present",
+      "w": 101,
+      "h": 32
+     },
+     {
+      "label": "Late",
+      "w": 101,
+      "h": 32
+     },
+     {
+      "label": "Absent",
+      "w": 101,
+      "h": 32
+     }
+    ]
+   },
+   "detail": "3 of 7 interactive targets under 44x44: \"Present\" 101x32, \"Late\" 101x32, \"Absent\" 101x32"
+  },
+  {
+   "id": "M7.attendance-subscription-filter",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": [
+    {
+     "channel": "hud-c-0001",
+     "table": "point_transactions",
+     "event": "INSERT",
+     "filter": "class_id=eq.c-0001"
+    },
+    {
+     "channel": "hud-c-0001",
+     "table": "attendance",
+     "event": "*",
+     "filter": null
+    }
+   ],
+   "detail": "HUD realtime subscriptions: point_transactions(INSERT) filter=class_id=eq.c-0001; attendance(*) filter=NONE"
+  },
+  {
+   "id": "M7.unrelated-single",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": [
+    {
+     "delivered": 1,
+     "commits": 0,
+     "requests": 4
+    },
+    {
+     "delivered": 1,
+     "commits": 0,
+     "requests": 4
+    },
+    {
+     "delivered": 1,
+     "commits": 0,
+     "requests": 4
+    }
+   ],
+   "detail": "each unrelated attendance event (another class's session): delivered to 1/1/1 HUD handler(s), HUD commits 0/0/0, HUD queries 4/4/4"
+  },
+  {
+   "id": "M7.unrelated-burst",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "commits": 0,
+    "requests": 4
+   },
+   "detail": "5 unrelated attendance events in ~1 s: HUD commits 0, HUD queries 4 (gate: <= 1 commit and <= 1 refetch = 4 queries per 2 s)"
+  },
+  {
+   "id": "M7.related-control",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "commits": 0,
+    "requests": 4
+   },
+   "detail": "control: a point for THIS class -> HUD commits 0, queries 4"
+  },
+  {
+   "id": "M7.open-popover-kept",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "focused": "Present",
+    "open": true,
+    "sameFocus": true,
+    "connected": true,
+    "commits": 2,
+    "requests": 4
+   },
+   "detail": "open StudentActionPopover (focus on \"Present\") across an unrelated event (+2 commits, +4 queries): still open=true, focus kept=true, focused node connected=true"
+  },
+  {
+   "id": "M7.idle-minute",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "commits": 18,
+    "requests": 4
+   },
+   "detail": "61 s idle: HUD commits 18, HUD queries 4 (30 s tick at LiveEngagementHUD.tsx:46-49, 60 s refetchInterval at :54)"
+  },
+  {
+   "id": "N.SkillButton-popover.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>button",
+    "rect": [
+     185,
+     158,
+     40,
+     40
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>button; rect 185,158,40,40"
+  },
+  {
+   "id": "N.StudentActionPopover.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>div>div>p",
+    "rect": [
+     61,
+     505,
+     183,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>div>div>p; rect 61,505,183,20"
+  },
+  {
+   "id": "N.ui-popover.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>p",
+    "rect": [
+     17,
+     559,
+     254,
+     24
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>p; rect 17,559,254,24"
+  },
+  {
+   "id": "N.ui-select.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span",
+    "rect": [
+     167,
+     553,
+     106,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span; rect 167,553,106,20"
+  },
+  {
+   "id": "N.ui-dialog.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     281,
+     391,
+     462,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 281,391,462,20"
+  },
+  {
+   "id": "N.ui-dropdown-menu.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=menu]>div[role=menuitem]",
+    "rect": [
+     385,
+     547,
+     118,
+     32
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=menu]>div[role=menuitem]; rect 385,547,118,32"
+  },
+  {
+   "id": "N.ui-alert-dialog.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=alertdialog]>p",
+    "rect": [
+     281,
+     340,
+     462,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=alertdialog]>p; rect 281,340,462,20"
+  },
+  {
+   "id": "N.ui-sheet.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     665,
+     53,
+     334,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 665,53,334,20"
+  },
+  {
+   "id": "N.ui-tooltip.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div",
+    "rect": [
+     722,
+     464,
+     107,
+     28
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div; rect 722,464,107,28"
+  },
+  {
+   "id": "CT.click-through",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "taps": [
+     "speaking:1",
+     "speaking:7"
+    ],
+    "writes": [
+     "from:skill_assessments:insert",
+     "from:point_transactions:insert",
+     "from:point_transactions:insert"
+    ]
+   },
+   "detail": "onTap calls [speaking:1, speaking:7]; fake-client writes [from:skill_assessments:insert, from:point_transactions:insert, from:point_transactions:insert]"
+  },
+  {
+   "id": "CT.click-through.taps",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": [
+    "speaking:1",
+    "speaking:7"
+   ],
+   "detail": "SkillButton onTap calls [\"speaking:1\",\"speaking:7\"] (expected speaking:1, speaking:7)"
+  },
+  {
+   "id": "M1.select-book",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": 2,
+   "detail": "loads so far 2 (first book + the deliberate switch to book B)"
+  },
+  {
+   "id": "M9.parent-cost",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "longtasks": 6,
+    "longMs": 413,
+    "frames": 792,
+    "p95": 33,
+    "max": 283,
+    "over50": 18
+   },
+   "detail": "50 turns in 14708 ms wall: parent long tasks 6 (413 ms), rAF frames 792, p95 33 ms, max 283 ms, frames >50 ms 18"
+  },
+  {
+   "id": "M9.parent-heap",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "before": 11965588,
+    "after": 12018568
+   },
+   "detail": "parent JS heap after GC 11.4 -> 11.5 MiB over 50 turns"
+  },
+  {
+   "id": "M4.history",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "added": 47,
+    "page": 51,
+    "loads": 0
+   },
+   "detail": "50 turns added 47 entries to the TAB's history (history.length 3 -> 50; Chrome caps history.length at 50); book on page 51; extra loads during turns 0"
+  },
+  {
+   "id": "M1.token-refresh",
+   "size": "768x1024",
+   "status": "FAIL",
+   "value": {
+    "loads": 1,
+    "page": [
+     51,
+     1
+    ],
+    "book": [
+     "Stand-in book B (Phonics)",
+     "Stand-in book A (Unit 5)"
+    ]
+   },
+   "detail": "TOKEN_REFRESHED: +1 iframe load(s); page 51 -> 1; book \"Stand-in book B (Phonics)\" -> \"Stand-in book A (Unit 5)\""
+  },
+  {
+   "id": "M2.fullscreen-kept",
+   "size": "768x1024",
+   "status": "FAIL",
+   "value": {
+    "before": "DIV (holds the book)",
+    "after": null
+   },
+   "detail": "fullscreenElement before DIV (holds the book) -> after TOKEN_REFRESHED none"
+  },
+  {
+   "id": "M4.back-after-reload",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "url": [
+     "http://127.0.0.1:5321/teacher/books",
+     "http://127.0.0.1:5321/teacher/books"
+    ],
+    "page": [
+     1,
+     1
+    ]
+   },
+   "detail": "browser Back right after the reload: app URL unchanged; book page 1 -> 1; loads now 3"
+  },
+  {
+   "id": "M1.visibility",
+   "size": "768x1024",
+   "status": "FAIL",
+   "value": {
+    "loads": 1,
+    "page": [
+     11,
+     1
+    ],
+    "book": [
+     "Stand-in book B (Phonics)",
+     "Stand-in book A (Unit 5)"
+    ]
+   },
+   "detail": "hidden->visible (fake emits SIGNED_IN as auth-js does): +1 load(s); page 11 -> 1; book \"Stand-in book B (Phonics)\" -> \"Stand-in book A (Unit 5)\""
+  },
+  {
+   "id": "M3.tab-switch",
+   "size": "768x1024",
+   "status": "FAIL",
+   "value": {
+    "loads": 1,
+    "page": [
+     11,
+     1
+    ]
+   },
+   "detail": "Presenter -> Settings -> Presenter: +1 load(s); page 11 -> 1"
+  },
+  {
+   "id": "M3.title-edit",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "d": 1,
+    "page": [
+     11,
+     1
+    ],
+    "book": [
+     "Stand-in book B (Phonics)",
+     "Book (edited)"
+    ]
+   },
+   "detail": "title-only edit path: +1 load(s) (tab round trip alone +1, so the edit itself adds 0); page 11 -> 1"
+  },
+  {
+   "id": "M3.url-edit",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "d": 1,
+    "page": [
+     11,
+     1
+    ],
+    "book": [
+     "Book (edited)",
+     "Book (edited)"
+    ]
+   },
+   "detail": "URL edit path: +1 load(s) (tab round trip alone +1; a URL change is a legitimate reload, expected exactly 1 after the fix)"
+  },
+  {
+   "id": "M4.back",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "url": [
+     "http://127.0.0.1:5321/teacher/books",
+     "http://127.0.0.1:5321/teacher/books"
+    ],
+    "page": [
+     6,
+     5
+    ],
+    "historyLength": 50
+   },
+   "detail": "browser Back from book page 6: app URL unchanged; book page 6 -> 5"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-enter",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "steps": 24,
+    "openBefore": true,
+    "fsOn": true,
+    "stillInDom": true,
+    "visFs": true,
+    "where": "inside the fullscreen element"
+   },
+   "detail": "tooltip open by keyboard (24 Tabs, visible true) then fullscreen on: tooltip still open, inside the fullscreen element, visible true"
+  },
+  {
+   "id": "M5.SkillButton-popover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: SkillButton-popover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.StudentActionPopover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: StudentActionPopover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-popover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-popover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-select",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-select opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-dialog",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-dialog opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-dropdown-menu",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-dropdown-menu opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-alert-dialog",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-alert-dialog opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-sheet",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-sheet opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-tooltip",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-tooltip opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-exit",
+   "size": "768x1024",
+   "status": "FAIL",
+   "value": {
+    "v0": true,
+    "v1": false,
+    "d1": true,
+    "conn": true
+   },
+   "detail": "tooltip open in fullscreen (visible true), fullscreen ends: still open, connected true, visible false"
+  },
+  {
+   "id": "M5.TeacherBooks.classroom-tools-sheet",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "fsOn": "DIV (holds the book)",
+    "sheetVis": true
+   },
+   "detail": "fullscreen DIV (holds the book); classroom tools sheet visible=true"
+  },
+  {
+   "id": "M5.TeacherBooks.tool-select",
+   "size": "768x1024",
+   "status": "NOTMEASURED",
+   "value": null,
+   "detail": "no Select found in the open tools sheet"
+  },
+  {
+   "id": "M6.HUD-chip-last-engaged.hover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": true,
+   "detail": "hover: hint visible=true"
+  },
+  {
+   "id": "M6.HUD-chip-last-engaged.keyboard",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "steps": 3,
+    "hover": true,
+    "keyboardReached": true,
+    "keyboard": true,
+    "tap": true
+   },
+   "detail": "keyboard: reached after 3 Tab(s), hint visible=true"
+  },
+  {
+   "id": "M6.HUD-chip-last-engaged.tap",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": true,
+   "detail": "tap: hint visible=true"
+  },
+  {
+   "id": "M6.ui-tooltip-primitive.hover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": true,
+   "detail": "hover: hint visible=true"
+  },
+  {
+   "id": "M6.ui-tooltip-primitive.keyboard",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "steps": 24,
+    "hover": true,
+    "keyboardReached": true,
+    "keyboard": true,
+    "tap": true
+   },
+   "detail": "keyboard: reached after 24 Tab(s), hint visible=true"
+  },
+  {
+   "id": "M6.ui-tooltip-primitive.tap",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": true,
+   "detail": "tap: hint visible=true"
+  },
+  {
+   "id": "M6.Leaderboards-live.state",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "disabled": true,
+    "pe": "none",
+    "name": "Live"
+   },
+   "detail": "Live button disabled=true, pointer-events=none, visible name \"Live\""
+  },
+  {
+   "id": "M6.Leaderboards-live-reason.hover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": true,
+   "detail": "hover: hint visible=true"
+  },
+  {
+   "id": "M6.Leaderboards-live-reason.keyboard",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "steps": 21,
+    "hover": true,
+    "keyboardReached": true,
+    "keyboard": true,
+    "tap": true
+   },
+   "detail": "keyboard: reached after 21 Tab(s), hint visible=true"
+  },
+  {
+   "id": "M6.Leaderboards-live-reason.tap",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": true,
+   "detail": "tap: hint visible=true"
+  },
+  {
+   "id": "M6.Books-back-button.hover",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": false,
+   "detail": "hover: DOM hint visible=false (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)"
+  },
+  {
+   "id": "M6.Books-back-button.keyboard",
+   "size": "768x1024",
+   "status": "FAIL",
+   "value": {
+    "steps": 1,
+    "hover": false,
+    "keyboardReached": true,
+    "keyboard": false
+   },
+   "detail": "keyboard: reached after 1 Tab(s), hint visible=false (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)"
+  },
+  {
+   "id": "M6.Books-back-button.tap",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": null,
+   "detail": "tap: not run - a tap activates this control (navigates / opens a tab); there is no hint to see first"
+  },
+  {
+   "id": "M6.Books-open-in-tab.hover",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": false,
+   "detail": "hover: DOM hint visible=false (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)"
+  },
+  {
+   "id": "M6.Books-open-in-tab.keyboard",
+   "size": "768x1024",
+   "status": "FAIL",
+   "value": {
+    "steps": 6,
+    "hover": false,
+    "keyboardReached": true,
+    "keyboard": false
+   },
+   "detail": "keyboard: reached after 6 Tab(s), hint visible=false (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)"
+  },
+  {
+   "id": "M6.Books-open-in-tab.tap",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": null,
+   "detail": "tap: not run - a tap activates this control (navigates / opens a tab); there is no hint to see first"
+  },
+  {
+   "id": "M8.media",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "hoverNone": true,
+    "coarse": true
+   },
+   "detail": "(hover: none)=true, (pointer: coarse)=true"
+  },
+  {
+   "id": "M8.HUD-chips",
+   "size": "768x1024 touch",
+   "status": "PASS",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.SkillButton-popover",
+   "size": "768x1024 touch",
+   "status": "PASS",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.RadialSkillMenu-all-stages",
+   "size": "768x1024 touch",
+   "status": "PASS",
+   "value": {
+    "total": 19,
+    "small": []
+   },
+   "detail": "0 of 19 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.StudentActionPopover",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.media",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "hoverNone": false,
+    "coarse": false
+   },
+   "detail": "(hover: none)=false, (pointer: coarse)=false"
+  },
+  {
+   "id": "M8.HUD-chips",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 6,
+    "small": [
+     {
+      "label": "Nguyên",
+      "w": 73,
+      "h": 26
+     },
+     {
+      "label": "Hân+2",
+      "w": 73,
+      "h": 26
+     },
+     {
+      "label": "Anh+2",
+      "w": 73,
+      "h": 26
+     },
+     {
+      "label": "Khôi",
+      "w": 55,
+      "h": 26
+     },
+     {
+      "label": "Châu+2",
+      "w": 79,
+      "h": 26
+     },
+     {
+      "label": "Bảo",
+      "w": 51,
+      "h": 26
+     }
+    ]
+   },
+   "detail": "6 of 6 interactive targets under 44x44: \"Nguyên\" 73x26, \"Hân+2\" 73x26, \"Anh+2\" 73x26, \"Khôi\" 55x26, \"Châu+2\" 79x26, \"Bảo\" 51x26"
+  },
+  {
+   "id": "M8.SkillButton-popover",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": [
+     {
+      "label": "+1",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "+2",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "+3",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "+5",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "+10",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "Custom points for Speaki",
+      "w": 48,
+      "h": 40
+     },
+     {
+      "label": "BUTTON",
+      "w": 32,
+      "h": 40
+     }
+    ]
+   },
+   "detail": "7 of 7 interactive targets under 44x44: \"+1\" 40x40, \"+2\" 40x40, \"+3\" 40x40, \"+5\" 40x40, \"+10\" 40x40, \"Custom points for Speaki\" 48x40, ..."
+  },
+  {
+   "id": "M8.RadialSkillMenu-all-stages",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 19,
+    "small": [
+     {
+      "label": "← Back",
+      "w": 62,
+      "h": 32
+     },
+     {
+      "label": "Not Paying Attention",
+      "w": 351,
+      "h": 34
+     },
+     {
+      "label": "Disrupting Class",
+      "w": 351,
+      "h": 34
+     },
+     {
+      "label": "Missing Homework",
+      "w": 351,
+      "h": 34
+     },
+     {
+      "label": "Late to Class",
+      "w": 358,
+      "h": 35
+     },
+     {
+      "label": "Other",
+      "w": 351,
+      "h": 34
+     },
+     {
+      "label": "← Back",
+      "w": 62,
+      "h": 32
+     }
+    ]
+   },
+   "detail": "7 of 19 interactive targets under 44x44: \"← Back\" 62x32, \"Not Paying Attention\" 351x34, \"Disrupting Class\" 351x34, \"Missing Homework\" 351x34, \"Late to Class\" 358x35, \"Other\" 351x34, ..."
+  },
+  {
+   "id": "M8.StudentActionPopover",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": [
+     {
+      "label": "Present",
+      "w": 101,
+      "h": 32
+     },
+     {
+      "label": "Late",
+      "w": 101,
+      "h": 32
+     },
+     {
+      "label": "Absent",
+      "w": 101,
+      "h": 32
+     }
+    ]
+   },
+   "detail": "3 of 7 interactive targets under 44x44: \"Present\" 101x32, \"Late\" 101x32, \"Absent\" 101x32"
+  },
+  {
+   "id": "N.SkillButton-popover.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>button",
+    "rect": [
+     185,
+     158,
+     40,
+     40
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>button; rect 185,158,40,40"
+  },
+  {
+   "id": "N.StudentActionPopover.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>div>div>p",
+    "rect": [
+     61,
+     505,
+     183,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>div>div>p; rect 61,505,183,20"
+  },
+  {
+   "id": "N.ui-popover.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>p",
+    "rect": [
+     17,
+     559,
+     254,
+     24
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>p; rect 17,559,254,24"
+  },
+  {
+   "id": "N.ui-select.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span",
+    "rect": [
+     167,
+     553,
+     106,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span; rect 167,553,106,20"
+  },
+  {
+   "id": "N.ui-dialog.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     153,
+     519,
+     462,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 153,519,462,20"
+  },
+  {
+   "id": "N.ui-dropdown-menu.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=menu]>div[role=menuitem]",
+    "rect": [
+     385,
+     547,
+     118,
+     32
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=menu]>div[role=menuitem]; rect 385,547,118,32"
+  },
+  {
+   "id": "N.ui-alert-dialog.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=alertdialog]>p",
+    "rect": [
+     153,
+     468,
+     462,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=alertdialog]>p; rect 153,468,462,20"
+  },
+  {
+   "id": "N.ui-sheet.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     409,
+     53,
+     334,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 409,53,334,20"
+  },
+  {
+   "id": "N.ui-tooltip.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div",
+    "rect": [
+     12,
+     516,
+     107,
+     28
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div; rect 12,516,107,28"
+  },
+  {
+   "id": "M1.select-book",
+   "size": "375x812",
+   "status": "INFO",
+   "value": 2,
+   "detail": "loads so far 2 (first book + the deliberate switch to book B)"
+  },
+  {
+   "id": "M9.parent-cost",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "longtasks": 6,
+    "longMs": 549,
+    "frames": 724,
+    "p95": 50,
+    "max": 350,
+    "over50": 38
+   },
+   "detail": "50 turns in 17867 ms wall: parent long tasks 6 (549 ms), rAF frames 724, p95 50 ms, max 350 ms, frames >50 ms 38"
+  },
+  {
+   "id": "M9.parent-heap",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "before": 11973656,
+    "after": 12021196
+   },
+   "detail": "parent JS heap after GC 11.4 -> 11.5 MiB over 50 turns"
+  },
+  {
+   "id": "M4.history",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "added": 47,
+    "page": 51,
+    "loads": 0
+   },
+   "detail": "50 turns added 47 entries to the TAB's history (history.length 3 -> 50; Chrome caps history.length at 50); book on page 51; extra loads during turns 0"
+  },
+  {
+   "id": "M1.token-refresh",
+   "size": "375x812",
+   "status": "FAIL",
+   "value": {
+    "loads": 1,
+    "page": [
+     51,
+     1
+    ],
+    "book": [
+     "Stand-in book B (Phonics)",
+     "Stand-in book A (Unit 5)"
+    ]
+   },
+   "detail": "TOKEN_REFRESHED: +1 iframe load(s); page 51 -> 1; book \"Stand-in book B (Phonics)\" -> \"Stand-in book A (Unit 5)\""
+  },
+  {
+   "id": "M2.fullscreen-kept",
+   "size": "375x812",
+   "status": "FAIL",
+   "value": {
+    "before": "DIV (holds the book)",
+    "after": null
+   },
+   "detail": "fullscreenElement before DIV (holds the book) -> after TOKEN_REFRESHED none"
+  },
+  {
+   "id": "M4.back-after-reload",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "url": [
+     "http://127.0.0.1:5321/teacher/books",
+     "http://127.0.0.1:5321/teacher/books"
+    ],
+    "page": [
+     1,
+     1
+    ]
+   },
+   "detail": "browser Back right after the reload: app URL unchanged; book page 1 -> 1; loads now 3"
+  },
+  {
+   "id": "M1.visibility",
+   "size": "375x812",
+   "status": "FAIL",
+   "value": {
+    "loads": 1,
+    "page": [
+     11,
+     1
+    ],
+    "book": [
+     "Stand-in book B (Phonics)",
+     "Stand-in book A (Unit 5)"
+    ]
+   },
+   "detail": "hidden->visible (fake emits SIGNED_IN as auth-js does): +1 load(s); page 11 -> 1; book \"Stand-in book B (Phonics)\" -> \"Stand-in book A (Unit 5)\""
+  },
+  {
+   "id": "M3.tab-switch",
+   "size": "375x812",
+   "status": "FAIL",
+   "value": {
+    "loads": 1,
+    "page": [
+     11,
+     1
+    ]
+   },
+   "detail": "Presenter -> Settings -> Presenter: +1 load(s); page 11 -> 1"
+  },
+  {
+   "id": "M3.title-edit",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "d": 1,
+    "page": [
+     11,
+     1
+    ],
+    "book": [
+     "Stand-in book B (Phonics)",
+     "Book (edited)"
+    ]
+   },
+   "detail": "title-only edit path: +1 load(s) (tab round trip alone +1, so the edit itself adds 0); page 11 -> 1"
+  },
+  {
+   "id": "M3.url-edit",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "d": 1,
+    "page": [
+     11,
+     1
+    ],
+    "book": [
+     "Book (edited)",
+     "Book (edited)"
+    ]
+   },
+   "detail": "URL edit path: +1 load(s) (tab round trip alone +1; a URL change is a legitimate reload, expected exactly 1 after the fix)"
+  },
+  {
+   "id": "M4.back",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "url": [
+     "http://127.0.0.1:5321/teacher/books",
+     "http://127.0.0.1:5321/teacher/books"
+    ],
+    "page": [
+     6,
+     5
+    ],
+    "historyLength": 50
+   },
+   "detail": "browser Back from book page 6: app URL unchanged; book page 6 -> 5"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-enter",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "steps": 24,
+    "openBefore": true,
+    "fsOn": true,
+    "stillInDom": true,
+    "visFs": true,
+    "where": "inside the fullscreen element"
+   },
+   "detail": "tooltip open by keyboard (24 Tabs, visible true) then fullscreen on: tooltip still open, inside the fullscreen element, visible true"
+  },
+  {
+   "id": "M5.SkillButton-popover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: SkillButton-popover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.StudentActionPopover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: StudentActionPopover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-popover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-popover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-select",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-select opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-dialog",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-dialog opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-dropdown-menu",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-dropdown-menu opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-alert-dialog",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-alert-dialog opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-sheet",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-sheet opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-tooltip",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-tooltip opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-exit",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "v0": true,
+    "v1": true,
+    "d1": true,
+    "conn": true
+   },
+   "detail": "tooltip open in fullscreen (visible true), fullscreen ends: still open, connected true, visible true"
+  },
+  {
+   "id": "M5.TeacherBooks.classroom-tools-sheet",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "fsOn": "DIV (holds the book)",
+    "sheetVis": true
+   },
+   "detail": "fullscreen DIV (holds the book); classroom tools sheet visible=true"
+  },
+  {
+   "id": "M5.TeacherBooks.tool-select",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "text": "Starters 1 (Mon-Wed)",
+    "inFs": true,
+    "hit": true
+   },
+   "detail": "Select in a tool panel: first option \"Starters 1 (Mon-Wed)\" inside fullscreen=true, hit-testable=true"
+  },
+  {
+   "id": "M6.HUD-chip-last-engaged.hover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": true,
+   "detail": "hover: hint visible=true"
+  },
+  {
+   "id": "M6.HUD-chip-last-engaged.keyboard",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "steps": 3,
+    "hover": true,
+    "keyboardReached": true,
+    "keyboard": true,
+    "tap": true
+   },
+   "detail": "keyboard: reached after 3 Tab(s), hint visible=true"
+  },
+  {
+   "id": "M6.HUD-chip-last-engaged.tap",
+   "size": "375x812",
+   "status": "PASS",
+   "value": true,
+   "detail": "tap: hint visible=true"
+  },
+  {
+   "id": "M6.ui-tooltip-primitive.hover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": true,
+   "detail": "hover: hint visible=true"
+  },
+  {
+   "id": "M6.ui-tooltip-primitive.keyboard",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "steps": 24,
+    "hover": true,
+    "keyboardReached": true,
+    "keyboard": true,
+    "tap": true
+   },
+   "detail": "keyboard: reached after 24 Tab(s), hint visible=true"
+  },
+  {
+   "id": "M6.ui-tooltip-primitive.tap",
+   "size": "375x812",
+   "status": "PASS",
+   "value": true,
+   "detail": "tap: hint visible=true"
+  },
+  {
+   "id": "M6.Leaderboards-live.state",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "disabled": true,
+    "pe": "none",
+    "name": "Live"
+   },
+   "detail": "Live button disabled=true, pointer-events=none, visible name \"Live\""
+  },
+  {
+   "id": "M6.Leaderboards-live-reason.hover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": true,
+   "detail": "hover: hint visible=true"
+  },
+  {
+   "id": "M6.Leaderboards-live-reason.keyboard",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "steps": 5,
+    "hover": true,
+    "keyboardReached": true,
+    "keyboard": true,
+    "tap": true
+   },
+   "detail": "keyboard: reached after 5 Tab(s), hint visible=true"
+  },
+  {
+   "id": "M6.Leaderboards-live-reason.tap",
+   "size": "375x812",
+   "status": "PASS",
+   "value": true,
+   "detail": "tap: hint visible=true"
+  },
+  {
+   "id": "M6.Books-back-button.hover",
+   "size": "375x812",
+   "status": "INFO",
+   "value": false,
+   "detail": "hover: DOM hint visible=false (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)"
+  },
+  {
+   "id": "M6.Books-back-button.keyboard",
+   "size": "375x812",
+   "status": "FAIL",
+   "value": {
+    "steps": 1,
+    "hover": false,
+    "keyboardReached": true,
+    "keyboard": false
+   },
+   "detail": "keyboard: reached after 1 Tab(s), hint visible=false (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)"
+  },
+  {
+   "id": "M6.Books-back-button.tap",
+   "size": "375x812",
+   "status": "INFO",
+   "value": null,
+   "detail": "tap: not run - a tap activates this control (navigates / opens a tab); there is no hint to see first"
+  },
+  {
+   "id": "M6.Books-open-in-tab.hover",
+   "size": "375x812",
+   "status": "INFO",
+   "value": false,
+   "detail": "hover: DOM hint visible=false (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)"
+  },
+  {
+   "id": "M6.Books-open-in-tab.keyboard",
+   "size": "375x812",
+   "status": "FAIL",
+   "value": {
+    "steps": 6,
+    "hover": false,
+    "keyboardReached": true,
+    "keyboard": false
+   },
+   "detail": "keyboard: reached after 6 Tab(s), hint visible=false (native title=: no DOM hint; a browser may still draw its own title bubble on mouse hover)"
+  },
+  {
+   "id": "M6.Books-open-in-tab.tap",
+   "size": "375x812",
+   "status": "INFO",
+   "value": null,
+   "detail": "tap: not run - a tap activates this control (navigates / opens a tab); there is no hint to see first"
+  },
+  {
+   "id": "M8.media",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "hoverNone": true,
+    "coarse": true
+   },
+   "detail": "(hover: none)=true, (pointer: coarse)=true"
+  },
+  {
+   "id": "M8.HUD-chips",
+   "size": "375x812 touch",
+   "status": "PASS",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.SkillButton-popover",
+   "size": "375x812 touch",
+   "status": "PASS",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.RadialSkillMenu-all-stages",
+   "size": "375x812 touch",
+   "status": "PASS",
+   "value": {
+    "total": 19,
+    "small": []
+   },
+   "detail": "0 of 19 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.StudentActionPopover",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.media",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "hoverNone": false,
+    "coarse": false
+   },
+   "detail": "(hover: none)=false, (pointer: coarse)=false"
+  },
+  {
+   "id": "M8.HUD-chips",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 6,
+    "small": [
+     {
+      "label": "Nguyên",
+      "w": 73,
+      "h": 26
+     },
+     {
+      "label": "Hân+2",
+      "w": 73,
+      "h": 26
+     },
+     {
+      "label": "Anh+2",
+      "w": 73,
+      "h": 26
+     },
+     {
+      "label": "Khôi",
+      "w": 55,
+      "h": 26
+     },
+     {
+      "label": "Châu+2",
+      "w": 79,
+      "h": 26
+     },
+     {
+      "label": "Bảo",
+      "w": 51,
+      "h": 26
+     }
+    ]
+   },
+   "detail": "6 of 6 interactive targets under 44x44: \"Nguyên\" 73x26, \"Hân+2\" 73x26, \"Anh+2\" 73x26, \"Khôi\" 55x26, \"Châu+2\" 79x26, \"Bảo\" 51x26"
+  },
+  {
+   "id": "M8.SkillButton-popover",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": [
+     {
+      "label": "+1",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "+2",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "+3",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "+5",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "+10",
+      "w": 40,
+      "h": 40
+     },
+     {
+      "label": "Custom points for Speaki",
+      "w": 48,
+      "h": 40
+     },
+     {
+      "label": "BUTTON",
+      "w": 32,
+      "h": 40
+     }
+    ]
+   },
+   "detail": "7 of 7 interactive targets under 44x44: \"+1\" 40x40, \"+2\" 40x40, \"+3\" 40x40, \"+5\" 40x40, \"+10\" 40x40, \"Custom points for Speaki\" 48x40, ..."
+  },
+  {
+   "id": "M8.RadialSkillMenu-all-stages",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 19,
+    "small": [
+     {
+      "label": "← Back",
+      "w": 62,
+      "h": 32
+     },
+     {
+      "label": "Not Paying Attention",
+      "w": 155,
+      "h": 34
+     },
+     {
+      "label": "Disrupting Class",
+      "w": 155,
+      "h": 34
+     },
+     {
+      "label": "Missing Homework",
+      "w": 155,
+      "h": 34
+     },
+     {
+      "label": "Late to Class",
+      "w": 158,
+      "h": 35
+     },
+     {
+      "label": "Other",
+      "w": 155,
+      "h": 34
+     },
+     {
+      "label": "← Back",
+      "w": 62,
+      "h": 32
+     }
+    ]
+   },
+   "detail": "7 of 19 interactive targets under 44x44: \"← Back\" 62x32, \"Not Paying Attention\" 155x34, \"Disrupting Class\" 155x34, \"Missing Homework\" 155x34, \"Late to Class\" 158x35, \"Other\" 155x34, ..."
+  },
+  {
+   "id": "M8.StudentActionPopover",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": [
+     {
+      "label": "Present",
+      "w": 101,
+      "h": 32
+     },
+     {
+      "label": "Late",
+      "w": 101,
+      "h": 32
+     },
+     {
+      "label": "Absent",
+      "w": 101,
+      "h": 32
+     }
+    ]
+   },
+   "detail": "3 of 7 interactive targets under 44x44: \"Present\" 101x32, \"Late\" 101x32, \"Absent\" 101x32"
+  },
+  {
+   "id": "N.SkillButton-popover.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>button",
+    "rect": [
+     185,
+     190,
+     40,
+     40
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>button; rect 185,190,40,40"
+  },
+  {
+   "id": "N.StudentActionPopover.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>div>div>p",
+    "rect": [
+     61,
+     537,
+     183,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>div>div>p; rect 61,537,183,20"
+  },
+  {
+   "id": "N.ui-popover.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>p",
+    "rect": [
+     17,
+     591,
+     254,
+     24
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>p; rect 17,591,254,24"
+  },
+  {
+   "id": "N.ui-select.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span",
+    "rect": [
+     167,
+     585,
+     106,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span; rect 167,585,106,20"
+  },
+  {
+   "id": "N.ui-dialog.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     25,
+     413,
+     325,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 25,413,325,20"
+  },
+  {
+   "id": "N.ui-dropdown-menu.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=menu]>div[role=menuitem]",
+    "rect": [
+     98,
+     615,
+     118,
+     32
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=menu]>div[role=menuitem]; rect 98,615,118,32"
+  },
+  {
+   "id": "N.ui-alert-dialog.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=alertdialog]>p",
+    "rect": [
+     25,
+     358,
+     325,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=alertdialog]>p; rect 25,358,325,20"
+  },
+  {
+   "id": "N.ui-sheet.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     119,
+     53,
+     231,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 119,53,231,20"
+  },
+  {
+   "id": "N.ui-tooltip.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div",
+    "rect": [
+     106,
+     584,
+     107,
+     28
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div; rect 106,584,107,28"
+  }
+ ]
+}

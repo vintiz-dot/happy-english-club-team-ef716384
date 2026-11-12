@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 export default {
   darkMode: ["class"],
@@ -92,6 +93,83 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
           glass: "hsla(var(--sidebar-glass))",
         },
+        // "Ivory" design system (docs/DESIGN_SYSTEM.md). The variables exist
+        // only inside [data-hec-theme="ivory"]; use these names only there.
+        hec: {
+          paper: "hsl(var(--hec-paper) / <alpha-value>)",
+          surface: "hsl(var(--hec-surface) / <alpha-value>)",
+          raised: "hsl(var(--hec-raised) / <alpha-value>)",
+          sunken: "hsl(var(--hec-sunken) / <alpha-value>)",
+          honey: "hsl(var(--hec-honey) / <alpha-value>)",
+          ink: {
+            DEFAULT: "hsl(var(--hec-ink) / <alpha-value>)",
+            soft: "hsl(var(--hec-ink-soft) / <alpha-value>)",
+            faint: "hsl(var(--hec-ink-faint) / <alpha-value>)",
+          },
+          line: {
+            DEFAULT: "hsl(var(--hec-line) / <alpha-value>)",
+            strong: "hsl(var(--hec-line-strong) / <alpha-value>)",
+          },
+          brass: {
+            DEFAULT: "hsl(var(--hec-brass) / <alpha-value>)",
+            fill: "hsl(var(--hec-brass-fill) / <alpha-value>)",
+          },
+          "on-brass": "hsl(var(--hec-on-brass) / <alpha-value>)",
+          action: "hsl(var(--hec-action) / <alpha-value>)",
+          "on-action": "hsl(var(--hec-on-action) / <alpha-value>)",
+          leaf: {
+            DEFAULT: "hsl(var(--hec-leaf) / <alpha-value>)",
+            tint: "hsl(var(--hec-leaf-tint) / <alpha-value>)",
+          },
+          warn: {
+            DEFAULT: "hsl(var(--hec-warn) / <alpha-value>)",
+            tint: "hsl(var(--hec-warn-tint) / <alpha-value>)",
+          },
+          danger: {
+            DEFAULT: "hsl(var(--hec-danger) / <alpha-value>)",
+            fill: "hsl(var(--hec-danger-fill) / <alpha-value>)",
+            tint: "hsl(var(--hec-danger-tint) / <alpha-value>)",
+          },
+          "on-danger": "hsl(var(--hec-on-danger) / <alpha-value>)",
+          ring: "hsl(var(--hec-ring) / <alpha-value>)",
+          logo: "hsl(var(--hec-logo) / <alpha-value>)",
+          scrim: "hsl(var(--hec-scrim) / <alpha-value>)",
+        },
+      },
+      fontFamily: {
+        // System stacks, no web font. The fallback after the comma is what an
+        // element outside the scope would get.
+        display: ["var(--hec-font-display, ui-serif, serif)"],
+        serif: ["var(--hec-font-display, ui-serif, serif)"],
+      },
+      fontSize: {
+        "hec-display": ["var(--hec-text-display)", { lineHeight: "var(--hec-leading-display)", letterSpacing: "-0.01em" }],
+        "hec-h1": ["var(--hec-text-h1)", { lineHeight: "var(--hec-leading-h1)", letterSpacing: "-0.005em" }],
+        "hec-h2": ["var(--hec-text-h2)", { lineHeight: "var(--hec-leading-h2)" }],
+        "hec-h3": ["var(--hec-text-h3)", { lineHeight: "var(--hec-leading-h3)" }],
+        "hec-body": ["var(--hec-text-body)", { lineHeight: "var(--hec-leading-body)" }],
+        "hec-small": ["var(--hec-text-small)", { lineHeight: "var(--hec-leading-small)" }],
+        "hec-caption": ["var(--hec-text-caption)", { lineHeight: "var(--hec-leading-caption)" }],
+      },
+      boxShadow: {
+        "hec-1": "var(--hec-shadow-1)",
+        "hec-2": "var(--hec-shadow-2)",
+        "hec-3": "var(--hec-shadow-3)",
+      },
+      minHeight: {
+        "hec-target": "var(--hec-target)",
+      },
+      minWidth: {
+        "hec-target": "var(--hec-target)",
+      },
+      transitionDuration: {
+        "hec-1": "var(--hec-dur-1)",
+        "hec-2": "var(--hec-dur-2)",
+        "hec-3": "var(--hec-dur-3)",
+      },
+      transitionTimingFunction: {
+        hec: "var(--hec-ease)",
+        "hec-in-out": "var(--hec-ease-in-out)",
       },
       backdropBlur: {
         xs: "2px",
@@ -112,6 +190,9 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "hec-sm": "var(--hec-radius-sm)",
+        "hec-md": "var(--hec-radius-md)",
+        "hec-lg": "var(--hec-radius-lg)",
       },
       keyframes: {
         "accordion-down": {
@@ -130,28 +211,42 @@ export default {
             height: "0",
           },
         },
+        // `scale` (the individual property), not `transform`: it composes with
+        // the element's own transform, so a dialog centred with
+        // translate(-50%,-50%) stays centred while it opens. With `transform`
+        // here the keyframes replaced the centring for 0.4 s and every dialog
+        // jumped on open (A4.6).
         "spring-in": {
           "0%": {
-            transform: "scale(0.95)",
+            scale: "0.95",
             opacity: "0",
           },
           "50%": {
-            transform: "scale(1.02)",
+            scale: "1.02",
           },
           "100%": {
-            transform: "scale(1)",
+            scale: "1",
             opacity: "1",
           },
         },
         "spring-out": {
           "0%": {
-            transform: "scale(1)",
+            scale: "1",
             opacity: "1",
           },
           "100%": {
-            transform: "scale(0.95)",
+            scale: "0.95",
             opacity: "0",
           },
+        },
+        // Ivory entrance (DESIGN_SYSTEM s.9): opacity and an 8 px rise, no overshoot.
+        "hec-in": {
+          "0%": { opacity: "0", translate: "0 8px" },
+          "100%": { opacity: "1", translate: "0 0" },
+        },
+        "hec-out": {
+          "0%": { opacity: "1", translate: "0 0" },
+          "100%": { opacity: "0", translate: "0 8px" },
         },
         "bounce-subtle": {
           "0%, 100%": {
@@ -243,6 +338,8 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "spring-in": "spring-in 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
         "spring-out": "spring-out 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+        "hec-in": "hec-in var(--hec-dur-3, 420ms) var(--hec-ease, ease-out) both",
+        "hec-out": "hec-out var(--hec-dur-2, 240ms) var(--hec-ease, ease-out) both",
         "bounce-subtle": "bounce-subtle 0.6s ease-in-out",
         "float-gentle": "float-gentle 3s ease-in-out infinite",
         "shimmer": "shimmer 2s linear infinite",
@@ -254,5 +351,11 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    // `young:` - the Grades 1-3 scale (DESIGN_SYSTEM s.4): data-hec-scale="young" on the element or an ancestor.
+    plugin(({ addVariant }) => {
+      addVariant("young", ['&[data-hec-scale="young"]', '[data-hec-scale="young"] &']);
+    }),
+  ],
 } satisfies Config;
