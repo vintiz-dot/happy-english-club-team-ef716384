@@ -234,37 +234,18 @@ try {
   // ------------------------------------------------------------------
   if (want("noclick")) {
     console.log("=== arm and start without a click (permission already granted) ===");
-    for (const policy of [null, "document-user-activation-required"]) {
-      const b = policy ? await launch({ headless: !headed, extraArgs: [`--autoplay-policy=${policy}`] }) : browser;
+    // Measured by the page at load: no evaluate() before it finishes (evaluate carries a user gesture).
+    for (const [label, opts] of [["headless, Playwright default", { headless: true }], ["headed, --autoplay-policy=document-user-activation-required", { headless: false, extraArgs: ["--autoplay-policy=document-user-activation-required"] }], ["headed, Chrome default policy", { headless: false }]]) {
+      const b = await launch(opts);
       const ctx = await b.newContext({ permissions: ["microphone"] });
       const page = await ctx.newPage();
-      await page.goto(H.url);
-      await page.waitForFunction(() => window.harnessReady === true);
-      const r = await page.evaluate(async () => {
-        const out = {};
-        out.permission = (await navigator.permissions.query({ name: "microphone" })).state;
-        out.userActivation = navigator.userActivation?.hasBeenActive ?? null;
-        const ac = new AudioContext();
-        out.contextBeforeGum = ac.state;
-        await ac.resume().catch(() => {});
-        await new Promise((r) => setTimeout(r, 300));
-        out.contextAfterResumeNoGesture = ac.state;
-        try { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); out.gumNoGesture = "ok"; window.__s = s; } catch (e) { out.gumNoGesture = e.name; }
-        const ac2 = new AudioContext();
-        await ac2.resume().catch(() => {});
-        await new Promise((r) => setTimeout(r, 300));
-        out.contextCreatedWhileCapturing = ac2.state;
-        out.contextFirstAfterCapture = ac.state;
-        try { const mr = new MediaRecorder(window.__s, { mimeType: "audio/webm;codecs=opus" }); mr.start(1000); await new Promise((r) => setTimeout(r, 1500)); out.mediaRecorderNoGesture = mr.state; mr.stop(); } catch (e) { out.mediaRecorderNoGesture = e.name; }
-        out.trackProcessor = typeof window.MediaStreamTrackProcessor;
-        return out;
-      });
-      info(`no-click (${policy ?? "Playwright default launch"})`, r);
-      await ctx.close();
-      if (policy) await b.close();
+      await page.goto(H.url + "noclick");
+      await page.waitForFunction(() => !!window.__noclick, null, { timeout: 20000 }).catch(() => {});
+      const r = await page.evaluate(() => window.__noclick ?? null);
+      info(`no-click (${label})`, r);
+      await b.close();
     }
-  }
-} finally {
+  }} finally {
   mkdirSync(OUT, { recursive: true });
   writeFileSync(`${OUT}\\browser-results.json`, JSON.stringify(results, null, 2));
   await browser.close().catch(() => {});

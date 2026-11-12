@@ -87,6 +87,30 @@ window.compareTrack = async (track, objects) => {
 window.harnessReady = true;
 </script>`;
 
+// Measured at LOAD, by the page itself: Playwright's evaluate() runs with a
+// user gesture, which would itself unlock audio and spoil the measurement.
+const NOCLICK = `<!doctype html><meta charset="utf-8"><title>no click</title><script>
+(async () => {
+  const out = { activationAtLoad: navigator.userActivation ? navigator.userActivation.hasBeenActive : null };
+  try { out.permission = (await navigator.permissions.query({ name: "microphone" })).state; } catch (e) { out.permission = String(e); }
+  const ac = new AudioContext();
+  out.contextAtCreate = ac.state;
+  ac.resume().catch(() => {});
+  await new Promise((r) => setTimeout(r, 500));
+  out.contextAfterResumeNoGesture = ac.state;
+  try { window.__s = await navigator.mediaDevices.getUserMedia({ audio: true }); out.getUserMediaNoGesture = "ok"; } catch (e) { out.getUserMediaNoGesture = e.name; }
+  await new Promise((r) => setTimeout(r, 500));
+  out.firstContextAfterCapture = ac.state;
+  const ac2 = new AudioContext(); ac2.resume().catch(() => {});
+  await new Promise((r) => setTimeout(r, 500));
+  out.contextCreatedWhileCapturing = ac2.state;
+  try { const mr = new MediaRecorder(window.__s, { mimeType: "audio/webm;codecs=opus" }); let n = 0; mr.ondataavailable = (e) => { n += e.data.size; }; mr.start(500); await new Promise((r) => setTimeout(r, 1600)); out.mediaRecorderNoGesture = mr.state + ", " + n + " bytes"; mr.stop(); } catch (e) { out.mediaRecorderNoGesture = e.name; }
+  out.mediaStreamTrackProcessor = typeof MediaStreamTrackProcessor;
+  out.activationAtEnd = navigator.userActivation ? navigator.userActivation.hasBeenActive : null;
+  window.__noclick = out;
+})();
+</script>`;
+
 export async function startHarness() {
   const server = createFakeServer();
   const recorderJs = await bundleRecorder({ platform: "browser" });
@@ -104,7 +128,7 @@ export async function startHarness() {
         res.end(JSON.stringify(out));
         return;
       }
-      const types = { "/": ["text/html", PAGE], "/recorder.js": ["text/javascript", recorderJs], "/fake-client.js": ["text/javascript", clientJs] };
+      const types = { "/": ["text/html", PAGE], "/noclick": ["text/html", NOCLICK], "/recorder.js": ["text/javascript", recorderJs], "/fake-client.js": ["text/javascript", clientJs] };
       const t = types[req.url.split("?")[0]];
       if (!t) { res.writeHead(404); res.end(); return; }
       res.writeHead(200, { "content-type": t[0], "cache-control": "no-store" });
