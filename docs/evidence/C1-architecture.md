@@ -37,6 +37,8 @@ How to read the confidence marks:
 |---|---|---|
 | `node scripts/pgtest/run.mjs` | 1611 assertions, 30 suites, 0 failed | 1802 assertions, 31 suites, 0 failed (1611 + the 191 new; no existing suite changed its count) |
 | `recorder.test.mjs` alone | - | 191 passed, 0 failed |
+| Rev. 1: `node scripts/pgtest/run.mjs` | 2157 assertions, 33 suites, 0 failed | 2250 assertions, 33 suites, 0 failed (recorder 191 -> 284; no other count changed) |
+| Rev. 1: `recorder.test.mjs` alone | 191 passed | 284 passed, 0 failed; mutation run in `docs/evidence/C1-revision.md` |
 
 The migration applies twice without error in the harness **[tested]**. It has not been run against any real database; the harness prelude is a dozen tables (`scripts/pgtest/run.mjs:15-17`), so "applying is still the proof".
 
