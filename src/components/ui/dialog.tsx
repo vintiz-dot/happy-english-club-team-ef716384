@@ -3,6 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useFullscreenContainer } from "@/hooks/useFullscreenContainer";
 
 const Dialog = DialogPrimitive.Root;
 
@@ -30,8 +31,11 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
+>(({ className, children, ...props }, ref) => {
+  // into the fullscreen element while there is one, else document.body (as before)
+  const container = useFullscreenContainer();
+  return (
+  <DialogPortal container={container}>
     <DialogOverlay />
       <DialogPrimitive.Content
         ref={ref}
@@ -48,7 +52,8 @@ const DialogContent = React.forwardRef<
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPortal>
-));
+  );
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

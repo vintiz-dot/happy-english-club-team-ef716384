@@ -3,6 +3,7 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useFullscreenContainer } from "@/hooks/useFullscreenContainer";
 
 const Select = SelectPrimitive.Root;
 
@@ -66,7 +67,9 @@ const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   SelectContentProps
 >(({ className, children, position = "popper", container, ...props }, ref) => {
-  const portalContainer = container ?? (document.fullscreenElement as HTMLElement) ?? undefined;
+  // subscribed, not read once: a value read when this wrapper last rendered went stale on fullscreen
+  const fullscreen = useFullscreenContainer();
+  const portalContainer = container ?? fullscreen;
   return (
     <SelectPrimitive.Portal container={portalContainer}>
       <SelectPrimitive.Content

@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { useFullscreenContainer } from "@/hooks/useFullscreenContainer";
 
 const Sheet = SheetPrimitive.Root;
 
@@ -55,7 +56,8 @@ interface SheetContentProps
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
   ({ side = "right", className, children, container, ...props }, ref) => {
-    const fs = typeof document !== "undefined" ? (document.fullscreenElement as HTMLElement | null) : null;
+    // subscribed, not read once: a value read when this wrapper last rendered went stale on fullscreen
+    const fs = useFullscreenContainer();
     // Never re-parent into a class screen: it lives inside this sheet, and
     // moving the sheet into it remounts the screen and drops fullscreen.
     const portalContainer = container ?? (fs && !fs.closest("[data-class-screen]") ? fs : undefined);
