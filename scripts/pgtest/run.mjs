@@ -214,6 +214,9 @@ const SUITES = [
   // 20260717090000 first: the existing class-recordings bucket and its policy,
   // so the suite proves the recorder leaves them alone (C1 critic 2, N1).
   { name: "class recorder", file: "recorder.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql"] },
+  // Teacher Transcripts' audio scoped to the class's own staff (D-14), with
+  // the recorder pasted after it to prove its preflight still accepts.
+  { name: "class recordings scope", file: "class-recordings-scope.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112120000_class_recordings_scope.sql", "20261112100000_class_recorder.sql"] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
