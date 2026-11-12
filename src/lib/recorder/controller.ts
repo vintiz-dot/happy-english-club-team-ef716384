@@ -77,6 +77,10 @@ export interface RecorderOptions {
   deviceRetryMs?: number;
   /** After this long without the lost microphone, say so again (default 60 s). */
   deviceLostAlertMs?: number;
+  /** N-M3: a clock measurement with a slower round trip than this is not kept (default 2 s). */
+  clockMaxRttMs?: number;
+  /** N-M7: a re-open of a lost microphone that has not answered after this long is given up and tried again (default 10 s). */
+  reopenTimeoutMs?: number;
   deviceRetryEveryMs?: number;
   /** Cross-tab single-uploader lock; default navigator.locks when present. */
   useLocks?: boolean;
@@ -121,6 +125,12 @@ interface Active {
   lostSince: Partial<Record<TrackRole, number>>;
   lastReopenTry: Partial<Record<TrackRole, number>>;
   lostAlerted?: Partial<Record<TrackRole, boolean>>;
+  /** N-B3: every microphone is lost: NOT recording. */
+  noMics?: boolean;
+  /** N-M1: when the context was last re-made (one per 30 s, as often as needed). */
+  lastRebuildAt?: number;
+  /** N-B2: backoff before the next Start attempt. */
+  startRetryMs?: number;
   reopening?: Partial<Record<TrackRole, boolean>>;
   /** perfNow() of the last clipped batch per track (the meter's clipping warning). */
   lastClipPerf?: Partial<Record<TrackRole, number>>;
@@ -142,6 +152,8 @@ interface Active {
 const ms = (iso: string) => Date.parse(iso);
 /** The scheduled stop is sent this long before capture_closes_at, so it lands inside the window. */
 export const STOP_MARGIN_MS = 5000;
+/** Start refusals the server actually stated: final. Anything else is retried (N-B2). */
+const FINAL_START_REFUSALS: ServerRefusal[] = ["window_closed", "switch_off", "consent_missing", "session_canceled", "not_teacher", "no_longer_teaching", "already_live", "recording_closed", "not_your_recording", "session_invalid"];
 /** Stop refusals the server actually stated: final. Anything else is retried (B4). */
 const FINAL_STOP_REFUSALS: ServerRefusal[] = ["window_closed", "recording_closed", "not_your_recording", "no_longer_teaching"];
 
@@ -162,6 +174,7 @@ export class Recorder {
   private lastUploadKick = -1e15;
   private lastParkedTry = -1e15;
   private lastAuthRefresh = -1e15;
+  private lastClockErrorAt = -1e15;
   private interval: any = null;
   private work: Promise<unknown> = Promise.resolve();
   /** Chunk storing runs on its own queue, so a control step can wait for it. */
@@ -188,7 +201,7 @@ export class Recorder {
     this.o = {
       format: "flac", chunkMs: 30000, appVersion: "dev", userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "node",
       now: () => Date.now(), perfNow: () => performance.now(), autoTick: true, window: DEFAULT_WINDOW, storageWarnBytes: 4 * 1024 ** 3, storageRefuseBytes: 2 * 1024 ** 3,
-      storageStopBytes: 64 * 1024 ** 2, deviceRetryMs: Infinity, deviceLostAlertMs: 60000, deviceRetryEveryMs: 2000, useLocks: true, encoder: null as any,
+      storageStopBytes: 64 * 1024 ** 2, deviceRetryMs: Infinity, deviceLostAlertMs: 60000, reopenTimeoutMs: 10000, clockMaxRttMs: 2000, deviceRetryEveryMs: 2000, useLocks: true, encoder: null as any,
       stallAfterMs: 3000, startTimeoutMs: 10000, preStartHoldMs: 120000, startLeadOkMs: 5000, stuckAfterMs: 14 * 86400000,
       memoryHoldBytes: 150 * 1024 ** 2, durable: true, ...opts,
     } as any;
@@ -325,7 +338,7 @@ export class Recorder {
   /** A marker on the recording's own timeline (roll call, activity, a child's name chip...). */
   async marker(kind: MarkerKind, opts: { label?: string | null; studentId?: string | null; tMs?: number } = {}): Promise<MarkerRecord> {
     const a = this.active;
-    if (!a || !a.rec.startedAtServer || !a.chunker) throw new RecorderError("internal", "Markers can be added while recording");
+    if (!a || !a.chunker?.started) throw new RecorderError("internal", "Markers can be added while recording");
     const m: MarkerRecord = {
       recordingId: a.rec.id, clientMarkerId: randomUuid(), kind,
       tMs: opts.tMs ?? frameToMs(a.chunker.position, a.rec.sampleRate),
@@ -416,6 +429,14 @@ export class Recorder {
     try {
       let rec = await this.o.store.getRecording(recordingId);
       if (!rec || !this.isMine(rec)) return;   // M1: never another account's recording
+      // N-B1: a capture stopped before the server answered its Start.
+      if (!rec.startedAtServer && (rec.phase === "stopped" || rec.phase === "finalized")) {
+        if (!(await this.lateStart(rec))) return;
+        rec = (await this.o.store.getRecording(recordingId))!;
+      }
+      if (!rec.startedAtServer) return;
+      // N-B1: where the server's start sits on the timeline, before any chunk is registered.
+      if (!(await this.sendPreStart(rec))) return;
       if (rec.stopPending && !rec.stopRefused) {
         // Ruling (b) / M4: a Stop this late would abandon the row and with it
         // every pending upload. Upload what can be uploaded FIRST.
@@ -648,7 +669,7 @@ export class Recorder {
           a.startInFlight = false;
           this.events.emit("error", new RecorderError("server_unavailable", `The server has not answered the start for ${Math.round(this.o.startTimeoutMs / 1000)} s: the audio is kept and the start is sent again`, { retryable: true }));
         }
-        if (!a.startInFlight && a.startSentAt !== null && perf - a.startSentAt > 2000) this.startP = this.sendStart();
+        if (!a.startInFlight && a.startSentAt !== null && perf - a.startSentAt > (a.startRetryMs ?? 2000)) this.startP = this.sendStart();
         // A capture that cannot start before the window closes is over.
         if (now >= ms(rec.captureClosesAt)) this.serial(() => this.endCapture("manual"));
       }
@@ -725,8 +746,11 @@ export class Recorder {
     try { running = await this.o.source.resume(); } catch { running = false; }
     if (!a.stalled || !a.capturing) return;
     const stuckFor = this.o.perfNow() - a.stallSince;
-    if ((!running || stuckFor > 2 * this.o.stallAfterMs) && !a.rebuilt && this.o.source.rebuild) {
+    // N-M1: a context may die more than once in a lesson: re-made again each
+    // time, at most once per 30 s ("running" but silent counts: a dead worklet).
+    if ((!running || stuckFor > 2 * this.o.stallAfterMs) && this.o.source.rebuild && this.o.perfNow() - (a.lastRebuildAt ?? -1e15) >= 30000) {
       a.rebuilt = true;
+      a.lastRebuildAt = this.o.perfNow();
       try {
         const ok = await this.o.source.rebuild();
         if (!ok) this.events.emit("error", new RecorderError("capture_stalled", "The audio could not be restarted: reload the page (the audio recorded so far is kept)", { detail: { contextState: this.o.source.contextState } }));
@@ -739,13 +763,39 @@ export class Recorder {
   /** Audio arrived again after a stall: record the gap, back to recording. */
   private leaveStall(a: Active, perf: number) {
     a.stalled = false;
+    a.rebuilt = false;
     const gap = Math.round(perf - a.stallSince);
     const tMs = a.chunker ? frameToMs(a.chunker.position, a.rec.sampleRate) : 0;
-    a.rec.discontinuities.push({ t_ms: tMs, kind: "context_stall", wall_gap_ms: gap });
-    if (a.ledgerBase !== null) a.ledgerBase += gap;
+    // N-M2: the gap is filled with silence on both tracks, so the audio
+    // timeline stays on the server's clock and the chunks after it are not
+    // "late" (the silence is stored below the byte floor: never evidence).
+    const padded = this.padSilence(a, gap);
+    a.rec.discontinuities.push({ t_ms: tMs, kind: "context_stall", wall_gap_ms: gap, padded_ms: padded });
+    if (a.ledgerBase !== null) a.ledgerBase += gap;   // the ledger counts delivered frames only
     void this.queueMarker("gap", `no audio for ${Math.round(gap / 1000)} s`);
     this.events.emit("health", { kind: "capture_resumed", tMs, gapMs: gap });
-    this.setState(a.rec.startedAtServer ? "recording" : "starting");
+    this.setState(this.capturingState(a));
+  }
+
+  /** Silence pushed onto the timeline for a gap (at most 30 min), 1 s at a time. Returns the ms padded. */
+  private padSilence(a: Active, gapMs: number): number {
+    const ch = a.chunker;
+    if (!ch?.started || a.rec.format === "opus-webm" || gapMs < 1000) return 0;
+    const sr = a.rec.sampleRate;
+    let left = Math.round((Math.min(gapMs, 30 * 60000) * sr) / 1000);
+    const total = left;
+    const block = new Int16Array(sr);
+    // Frame numbers continue from the chunker's position (the chunker only
+    // compares them with t0, which is behind us).
+    let f = (ch.t0Frame ?? 0) + ch.position;
+    while (left > 0) {
+      const n = Math.min(left, sr);
+      const z = n === sr ? block : block.subarray(0, n);
+      ch.push(f, z, z);
+      f += n; left -= n;
+    }
+    for (const t of a.rec.tracks) t.framesCaptured = ch.captured[t.track];
+    return Math.round((total * 1000) / sr);
   }
 
   /**
@@ -838,10 +888,21 @@ export class Recorder {
     }
     a.chunker = new Chunker(rec.sampleRate, rec.chunkMs, (c) => this.onRawChunk(c), rec.format === "opus-webm" ? undefined : (s) => this.onSegment(s));
     a.capturing = true;
-    a.pre = rec.format === "opus-webm" ? null : [];
-    a.preFrames = 0; a.preDroppedFrames = 0;
+    a.pre = null; a.preFrames = 0; a.preDroppedFrames = 0;
     a.lastAudioPerf = this.o.perfNow();
-    this.health.resetSwap();
+    // N-M8: a new lesson starts with a clean health monitor (a fault that
+    // carried over from the last lesson is raised again).
+    this.health.reset();
+    // C2 round 3 (N-B1): t = 0 is the FIRST captured sample, now - not the
+    // server's stamp. Every chunk and 5-s segment goes to IndexedDB at once,
+    // whatever the server says or when; its start is recorded later as an
+    // offset (pre_start_ms). No captured audio is ever thrown away.
+    if (rec.format !== "opus-webm") {
+      a.chunker.setT0(this.o.source.lastFrame);
+      rec.firstSampleServer = this.serverNow();
+      rec.phase = "capturing";
+      await this.saveRec(rec);
+    }
     this.o.source.forward(true);
     this.setState("starting");
     // Not awaited: a Start that hangs must not hold up the control queue
@@ -850,12 +911,14 @@ export class Recorder {
   }
 
   /**
-   * Ask the server to start (B3). The audio from the FIRST request on is held
-   * in memory until the answer comes, then cut into chunks from t = 0, so a
-   * slow or retried start loses nothing that the server counts as recorded.
-   * Each attempt has a timeout (tick()); a late answer to an older attempt is
-   * still used; after a failed attempt the row is read back, because the
-   * start may have landed and only its answer been lost.
+   * Ask the server to start. The audio is already being stored from the first
+   * sample (beginCapture); the server's stamp only fixes where its clock
+   * meets that timeline (pre_start_ms). Each attempt has a timeout (tick());
+   * a late answer to an older attempt is still used; after a failed attempt
+   * the row is read back, because the start may have landed and only its
+   * answer been lost. N-B2: only a refusal the server STATED is final;
+   * anything else (429, 409, "no rows", an unknown text) is retried with
+   * backoff while capture goes on.
    */
   private async sendStart() {
     const a = this.active;
@@ -863,7 +926,7 @@ export class Recorder {
     a.startInFlight = true;
     const attempt = ++a.startAttempt;
     a.startSentAt = this.o.perfNow();
-    if (a.firstSendFrame === null) { a.firstSendFrame = this.o.source.lastFrame; a.firstSendServer = this.serverNow(); }
+    if (a.firstSendFrame === null) { a.firstSendFrame = this.o.source.lastFrame; a.firstSendServer = a.rec.firstSampleServer ?? this.serverNow(); }
     const clientIso = new Date(this.o.now()).toISOString();
     let row: ServerRecording | null = null;
     let failure: unknown = null;
@@ -880,93 +943,148 @@ export class Recorder {
     if (!a.capturing) return;
     const err = toRecorderError(failure ?? new Error("The server did not start the recording"));
     if (attempt !== a.startAttempt && (err.retryable || err.code === "offline")) return; // a newer attempt is on its way
-    const transient = err.code === "offline" || err.code === "server_unavailable" || err.code === "not_signed_in" || err.refusal === "too_early" || err.retryable;
-    if (transient) {
+    if (!(err.refusal && FINAL_START_REFUSALS.includes(err.refusal))) {
       a.startErrors += 1;
+      a.startRetryMs = Math.min(30000, 2000 * 2 ** Math.min(4, a.startErrors - 1));
       if (err.code === "not_signed_in") await this.refreshAuth();
-      this.events.emit("error", err);
-      if (a.startErrors === 1 || a.startErrors % 5 === 0)
-        this.events.emit("error", new RecorderError("server_unavailable", "The server has not confirmed the start yet: the audio is kept and the start is tried again", { retryable: true, detail: { attempts: a.startErrors } }));
-      return; // tick() tries again; the held audio stays
+      // De-duplicated: the first failure, then every fifth (a long outage is hundreds).
+      if (a.startErrors === 1 || a.startErrors % 5 === 0) {
+        this.events.emit("error", err);
+        this.events.emit("error", new RecorderError("server_unavailable", `The school server has not confirmed the start yet (${err.message}). The audio IS being saved on this laptop and will be sent once it does; the start is tried again.`, { retryable: true, detail: { attempts: a.startErrors, keptMs: this.capturedMs(a) } }));
+      }
+      return; // tick() tries again; capture goes on
     }
     await this.startFailed(a, err);
   }
 
+  /** Audio captured so far in this capture (ms, per track). */
+  private capturedMs(a: Active): number { return a.chunker?.started ? frameToMs(a.chunker.position, a.rec.sampleRate) : 0; }
+
   /** The server's answer: anchor t = 0, cut the held audio, describe the tracks. */
   private async adoptStart(a: Active, row: ServerRecording) {
     if (a.rec.startedAtServer || !a.chunker) return;
-    const sr = a.rec.sampleRate;
-    const S = ms(row.started_at!);
-    const lead = a.firstSendServer === null ? 0 : S - a.firstSendServer;
     const chunker = a.chunker;
-    let t0 = a.firstSendFrame ?? this.o.source.lastFrame;
-    if (a.rec.format === "opus-webm") t0 = this.o.source.lastFrame;   // MediaRecorder starts now
-    else if (lead > this.o.startLeadOkMs) {
-      // The server stamped its start much later than the page asked (the
-      // request travelled slowly). Its t = 0 is its stamp: audio from before
-      // it cannot be part of the recording (it would be "ahead of the
-      // server's clock" and later "after Stop"). Say so; keep everything after.
-      t0 = Math.min(this.o.source.lastFrame, t0 + Math.round((lead * sr) / 1000));
-      a.rec.discontinuities.push({ t_ms: 0, kind: "pre_start_trimmed", wall_gap_ms: Math.round(lead) });
-      this.events.emit("error", new RecorderError("start_delayed", `The server started the recording ${Math.round(lead / 1000)} s after it was asked: those ${Math.round(lead / 1000)} s before its start are not part of the recording; everything after is`, { detail: { leadMs: Math.round(lead) } }));
+    if (a.rec.format === "opus-webm") {
+      // MediaRecorder starts now: the opus timeline begins at the answer.
+      chunker.reset();
+      chunker.setT0(this.o.source.lastFrame);
+      a.rec.firstSampleServer = this.serverNow();
     }
-    const heldFrom = a.pre && a.pre.length ? a.pre[0].frame : t0;
-    if (a.pre && t0 < heldFrom) {
-      // More was held than memory allowed: the oldest held audio was let go.
-      const lostMs = Math.round(((heldFrom - t0) * 1000) / sr);
-      a.rec.discontinuities.push({ t_ms: 0, kind: "pre_start_trimmed", wall_gap_ms: lostMs });
-      this.events.emit("error", new RecorderError("start_delayed", `The start took so long that the first ${Math.round(lostMs / 1000)} s could not be held: the recording begins after them`, { detail: { lostMs } }));
-      t0 = heldFrom;
-    }
-    a.rec.startedAtServer = row.started_at!;
-    a.rec.clientStartedAt = new Date(this.o.now()).toISOString();
-    a.rec.serverStatus = row.status;
-    a.rec.phase = "capturing";
-    a.rec.serverOffsetAtStart = this.offsetMs;
-    const ts = this.o.source.timestamp();
-    a.rec.anchors.push({ t_ms: 0, context_time: ts.contextTime, performance_now: ts.performanceNow, date_now: this.o.now(), server_offset_ms: this.offsetMs });
     a.stopAt = Math.min(a.stopAt, ms(row.capture_closes_at) - STOP_MARGIN_MS);
-    chunker.reset();
-    chunker.setT0(t0);
-    const held = a.pre ?? [];
-    a.pre = null; a.preFrames = 0;
-    for (const b of held) chunker.push(b.frame, b.t, b.r);
-    for (const t of a.rec.tracks) t.framesCaptured = chunker.captured[t.track];
+    await this.adoptServerStart(a.rec, row);
     if (row.format === "opus-webm" && this.o.source.startOpus) {
       a.opusSeqStartFrame = chunker.t0Frame ?? 0;
       this.o.source.startOpus(a.rec.chunkMs, (b) => this.onOpusBlob(b));
     }
-    await this.saveRec(a.rec);
-    for (const t of a.rec.tracks) {
+    if (a.capturing) this.setState(this.capturingState(a));
+    void this.drive(a.rec.id);
+  }
+
+  /**
+   * The server's start, against the timeline that began at the first
+   * captured sample: pre_start_ms = server stamp - first sample (server
+   * time), never reaching back before capture_opens_at. Everything captured
+   * is kept and sent; the part before the server's start is never evidence
+   * (the server's rule). Tracks described.
+   */
+  private async adoptServerStart(rec: LocalRecording, row: ServerRecording) {
+    const S = ms(row.started_at!);
+    const first = rec.firstSampleServer ?? S;
+    const maxBack = Math.max(0, S - ms(rec.captureOpensAt));
+    const pre = Math.max(0, Math.min(Math.round(S - first), maxBack));
+    rec.startedAtServer = row.started_at!;
+    rec.clientStartedAt = rec.clientStartedAt ?? new Date(this.o.now()).toISOString();
+    rec.serverStatus = row.status;
+    rec.serverOffsetAtStart = this.offsetMs;
+    rec.preStartMs = pre;
+    rec.preStartAcked = pre === 0;
+    if (pre > this.o.startLeadOkMs) {
+      rec.discontinuities.push({ t_ms: 0, kind: "pre_start", wall_gap_ms: pre });
+      this.events.emit("error", new RecorderError("start_delayed", `The school server started the recording ${Math.round(pre / 1000)} s after this laptop began recording. All of it is kept and sent; those first ${Math.round(pre / 1000)} s do not count as evidence that the lesson was recorded.`, { detail: { preStartMs: pre } }));
+    }
+    const ts = this.o.source.timestamp();
+    rec.anchors.push({ t_ms: 0, context_time: ts.contextTime, performance_now: ts.performanceNow, date_now: this.o.now(), server_offset_ms: this.offsetMs });
+    await this.saveRec(rec);
+    for (const t of rec.tracks) {
       await this.o.backend.ensureTrack({
-        recording_id: a.rec.id, track: t.track, device_label: t.deviceLabel, device_hash: t.deviceHash, sample_rate: a.rec.sampleRate,
-        channel_count: 1, codec: a.rec.format === "opus-webm" ? "opus" : a.rec.format === "flac" ? "flac" : "pcm_s16le",
-        bitrate: a.rec.format === "opus-webm" ? 128000 : null, applied_settings: { ...t.appliedSettings, not_honoured: t.notHonoured },
+        recording_id: rec.id, track: t.track, device_label: t.deviceLabel, device_hash: t.deviceHash, sample_rate: rec.sampleRate,
+        channel_count: 1, codec: rec.format === "opus-webm" ? "opus" : rec.format === "flac" ? "flac" : "pcm_s16le",
+        bitrate: rec.format === "opus-webm" ? 128000 : null, applied_settings: { ...t.appliedSettings, not_honoured: t.notHonoured },
       }).catch((e) => this.events.emit("error", toRecorderError(e)));
     }
-    if (a.capturing) this.setState(a.stalled ? "stalled" : "recording");
-    void this.drive(a.rec.id);
+  }
+
+  /** N-B1: tell the server where its start sits on the chunks' timeline, before any chunk. */
+  private async sendPreStart(rec: LocalRecording): Promise<boolean> {
+    if (rec.preStartAcked || !rec.preStartMs) return true;
+    if (!this.o.backend.setPreStart) { rec.preStartAcked = true; await this.saveRec(rec); return true; }
+    try {
+      await this.o.backend.setPreStart(rec.id, rec.preStartMs);
+      rec.preStartAcked = true;
+    } catch (e) {
+      const err = toRecorderError(e);
+      const row = err.code === "offline" ? null : await this.o.backend.getRecording(rec.id).catch(() => null);
+      if (row && (row as any).pre_start_ms === rec.preStartMs) rec.preStartAcked = true;
+      else { this.events.emit("error", err); return false; }
+    }
+    await this.saveRec(rec);
+    return true;
+  }
+
+  /**
+   * A capture that ended (window closed, a reload) before the server started
+   * it: start it now if the server still can, then the usual Stop. Its audio
+   * was stored from the first sample, so all of it can still be sent.
+   * Returns false while that is not possible yet.
+   */
+  private async lateStart(rec: LocalRecording): Promise<boolean> {
+    let row: ServerRecording | null;
+    try { row = await this.o.backend.getRecording(rec.id); } catch { return false; }
+    if (row && row.started_at && (row.status === "recording" || row.status === "uploading")) { await this.adoptServerStart(rec, row); return true; }
+    if (row && row.status === "armed") {
+      try {
+        const r = await this.o.backend.start(rec.id, rec.clientStartedAt ?? new Date(this.o.now()).toISOString());
+        if (r.started_at) { await this.adoptServerStart(rec, r); return true; }
+      } catch (e) {
+        const err = toRecorderError(e);
+        if (!(err.refusal && FINAL_START_REFUSALS.includes(err.refusal))) return false;
+        await this.startNeverPossible(rec, err.message);
+        return false;
+      }
+      return false;
+    }
+    if (row && row.status !== "armed") { await this.startNeverPossible(rec, `the recording is ${row.status} on the server`); return false; }
+    return false;
+  }
+
+  private async startNeverPossible(rec: LocalRecording, why: string) {
+    rec.phase = "abandoned"; rec.stopPending = false;
+    await this.o.backend.abandon(rec.id, "the window closed before the server saw the start").catch(() => null);
+    rec.serverStatus = "abandoned";
+    await this.saveRec(rec);
+    const kept = Math.round((await this.o.store.listChunks(rec.id)).filter((c) => c.track === "teacher").reduce((n, c) => n + c.tEndMs - c.tStartMs, 0) / 1000);
+    this.events.emit("error", new RecorderError("start_failed", `The school server never started this recording (${why}). The ${kept} s recorded are kept on this laptop but cannot be sent; they stay until someone discards them.`, { detail: { keptMs: kept * 1000 } }));
+    if (this.active?.rec.id === rec.id) this.setState("error");
+  }
+
+  /** What a capture shows: never `recording` while no audio is being kept (N-B3). */
+  private capturingState(a: Active): RecorderState {
+    if (a.stalled || a.noMics) return "stalled";
+    return a.rec.startedAtServer ? "recording" : "starting";
   }
 
   /** The server will not take this recording: explicit failed state, the held audio kept locally. */
   private async startFailed(a: Active, err: RecorderError) {
     a.capturing = false;
     this.o.source.forward(false);
+    if (a.chunker?.started) a.chunker.flush();   // everything captured is stored (never thrown away)
     this.o.source.closeTracks();
-    // Keep what was captured: cut the held audio into local chunks (they can
-    // never be uploaded - the server did not start - but nothing is thrown away).
-    if (a.chunker && a.pre && a.pre.length) {
-      a.chunker.reset();
-      a.chunker.setT0(a.pre[0].frame);
-      for (const b of a.pre) a.chunker.push(b.frame, b.t, b.r);
-      a.chunker.flush();
-    }
-    a.pre = null;
     await this.io;
     if (err.refusal === "window_closed") await this.o.backend.abandon(a.rec.id, "the window closed before capture started").catch(() => null);
     a.rec.phase = "abandoned"; a.rec.serverStatus = "abandoned";
     await this.saveRec(a.rec);
-    this.events.emit("error", new RecorderError("start_failed", `The server did not start the recording: ${err.message}. The audio captured so far is kept on this laptop.`, { refusal: err.refusal, detail: err.detail }));
+    const kept = Math.round((await this.o.store.listChunks(a.rec.id)).filter((c) => c.track === "teacher").reduce((n, c) => n + c.tEndMs - c.tStartMs, 0) / 1000);
+    this.events.emit("error", new RecorderError("start_failed", `NOT RECORDED on the server: ${err.message}. The ${kept} s captured before that are kept on this laptop (they cannot be sent); recording has stopped.`, { refusal: err.refusal, detail: { keptMs: kept * 1000 } }));
     this.setState("error");
     this.releaseWakeLock();
   }
@@ -1007,15 +1125,6 @@ export class Recorder {
     const t16 = new Int16Array(n), r16 = new Int16Array(n);
     floatToInt16(b.teacher, t16);
     floatToInt16(b.room, r16);
-    if (!a.chunker.started) {
-      // B3: the Start is not answered yet: hold the audio (never drop it silently).
-      if (!a.pre) a.pre = [];
-      a.pre.push({ frame: b.frame, t: t16, r: r16 });
-      a.preFrames += n;
-      const cap = Math.round((this.o.preStartHoldMs * a.rec.sampleRate) / 1000);
-      while (a.preFrames > cap && a.pre.length > 1) { const x = a.pre.shift()!; a.preFrames -= x.t.length; a.preDroppedFrames += x.t.length; }
-      return;
-    }
     a.chunker.push(b.frame, t16, r16);
     for (const t of a.rec.tracks) t.framesCaptured = a.chunker.captured[t.track];
   }
@@ -1183,14 +1292,20 @@ export class Recorder {
     this.o.source.closeTracks();
     await this.io; // every chunk stored (or held in memory)
     const rec = a.rec;
-    if (!rec.startedAtServer) {
-      // The server never saw the start: nothing it would accept was captured.
-      // The held audio is kept locally (startFailed cuts it into chunks).
-      await this.startFailed(a, new RecorderError("server_refused", "the recording was stopped before the server saw the start", { refusal: "not_started" }));
+    if (!rec.startedAtServer && rec.format === "opus-webm") {
+      // Opus records only from the server's answer: nothing was captured.
       await this.o.backend.abandon(rec.id, "stopped before the server saw the start").catch(() => null);
+      rec.phase = "abandoned"; rec.serverStatus = "abandoned";
+      await this.saveRec(rec);
       this.setState("abandoned");
+      this.releaseWakeLock();
       return;
     }
+    // N-B1: stopped before the server answered the Start: the audio is all
+    // stored; driveOnce starts the recording late (if the server still can)
+    // and then stops it, or says plainly that it never can.
+    if (!rec.startedAtServer)
+      this.events.emit("error", new RecorderError("server_unavailable", `Stopped before the school server confirmed the start. The ${Math.round(this.capturedMs(a) / 1000)} s recorded are kept on this laptop and will be sent if the server still accepts this recording.`, { retryable: true }));
     rec.phase = "stopped";
     rec.stopReason = reason;
     rec.stopPending = true;
@@ -1262,6 +1377,15 @@ export class Recorder {
     this.events.emit("error", new RecorderError("device_unplugged", `The ${role} microphone STOPPED: check its cable / USB plug. The ${other} microphone is still recording; the ${role} one is being looked for again.`, { detail: role }));
     void this.queueMarker("device_change", `${role} microphone lost`);
     void this.queueMarker("gap", `${role} microphone stopped`);
+    // N-B3: with EVERY microphone gone nothing is being recorded, whatever the
+    // worklet still delivers (zeros): a distinct, loud state, never `recording`.
+    const open = a.rec.tracks.filter((t) => !a.chunker?.isClosed(t.track));
+    if (open.length && open.every((t) => a.lostSince[t.track] !== undefined) && !a.noMics) {
+      a.noMics = true;
+      this.setState("stalled");
+      this.events.emit("health", { kind: "capture_stalled", tMs, contextState: "no microphone" });
+      this.events.emit("error", new RecorderError("capture_stalled", "NOT RECORDING: both microphones are gone (a USB hub or the laptop's USB power?). Plug them back in - both are being looked for, and recording resumes by itself when one is found. Nothing recorded meanwhile counts.", { detail: { contextState: "no microphone" } }));
+    }
     this.retryLostDevices();
   }
 
@@ -1326,7 +1450,12 @@ export class Recorder {
       const info = a.rec.tracks.find((t) => t.track === role);
       if (!info) continue;
       a.reopening = { ...(a.reopening ?? {}), [role]: true };
-      void this.reacquire(a, role, info).then(async (o) => {
+      // N-M7: a re-open that never answers (getUserMedia has no timeout) must not end the search.
+      const attempt = new Promise<TrackOpen>((ok, no) => {
+        const t = setTimeout(() => no(new Error("the microphone did not answer in 10 s")), this.o.reopenTimeoutMs);
+        this.reacquire(a, role, info).then((o) => { clearTimeout(t); ok(o); }, (e) => { clearTimeout(t); no(e); });
+      });
+      void attempt.then(async (o) => {
         if (a.lostSince[role] === undefined) return;
         delete a.lostSince[role];
         const tMs = a.chunker ? frameToMs(a.chunker.position, a.rec.sampleRate) : 0;
@@ -1335,6 +1464,11 @@ export class Recorder {
         info.appliedSettings = o.applied; info.notHonoured = o.notHonoured;
         info.deviceLabel = o.label || info.deviceLabel;
         this.events.emit("health", { kind: "device_restored", track: role, tMs });
+        if (a.noMics) {
+          a.noMics = false;
+          this.events.emit("health", { kind: "capture_resumed", tMs, gapMs: gone });
+          if (a.capturing) this.setState(this.capturingState(a));
+        }
         void this.queueMarker("device_change", `${role} microphone back`);
         void this.queueMarker("gap", `${role} microphone back after ${Math.round(gone / 1000)} s`);
         // m2: the reopened microphone is read back and checked like the first time.
@@ -1363,7 +1497,7 @@ export class Recorder {
   }
 
   private async queueMarker(kind: MarkerKind, label: string) {
-    try { if (this.active?.rec.startedAtServer) await this.marker(kind, { label }); } catch { /* best effort */ }
+    try { if (this.active?.chunker?.started) await this.marker(kind, { label }); } catch { /* best effort */ }
   }
 
   private async sendMarkers(rec: LocalRecording) {
@@ -1476,11 +1610,19 @@ export class Recorder {
       // The server's time is taken to be at the request's midpoint; carried to gotP on the monotonic clock.
       const server = Date.parse(iso) + rttMs / 2;
       if (!Number.isFinite(server)) throw new Error(`unreadable server time ${iso}`);
+      // N-M3: a slow round trip says little about when the server answered
+      // (up to rtt/2 wrong). Keep a measurement only when the trip was fast;
+      // otherwise keep the one we have and try again in a minute. With none
+      // yet, take it provisionally and re-measure soon.
+      if (rttMs > this.o.clockMaxRttMs && this.serverAt !== null) {
+        this.lastOffsetAt = gotP - 9 * 60000;
+        return this.offsetMs;
+      }
       const before = this.serverAt === null ? null : this.serverNow();
       this.serverAt = server; this.perfAt = gotP;
       const offsetMs = Math.round(server - this.o.now());
       this.offsetMs = offsetMs;
-      this.lastOffsetAt = gotP;
+      this.lastOffsetAt = rttMs > this.o.clockMaxRttMs ? gotP - 9 * 60000 : gotP;
       const a = this.active;
       if (before !== null && Math.abs(server - before) > 5000 && a && (a.capturing || a.rec.phase === "stopped")) {
         // The monotonic estimate itself was off (a sleep the clock did not count): logged, now corrected.
@@ -1489,7 +1631,12 @@ export class Recorder {
       this.events.emit("clock", { offsetMs, rttMs, warning: Math.abs(offsetMs) > CLOCK_WARN_MS });
     } catch (e) {
       this.lastOffsetAt = this.o.perfNow() - 9 * 60000; // retry in a minute
-      this.events.emit("error", new RecorderError("clock_unknown", "The server's time could not be read", { detail: String((e as any)?.message ?? e) }));
+      // De-duplicated: said once, then at most every 10 minutes (an outage is many retries).
+      const p = this.o.perfNow();
+      if (p - this.lastClockErrorAt > 10 * 60000) {
+        this.lastClockErrorAt = p;
+        this.events.emit("error", new RecorderError("clock_unknown", "The server's time could not be read", { detail: String((e as any)?.message ?? e) }));
+      }
     }
     return this.offsetMs;
   }
