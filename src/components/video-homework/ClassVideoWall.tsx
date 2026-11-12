@@ -33,7 +33,7 @@ function Poster({ path }: { path: string | null }) {
       live = false;
     };
   }, [path]);
-  return url ? <img src={url} alt="" className="h-full w-full object-cover" /> : <div className="h-full w-full bg-gradient-to-br from-rose-200 to-sky-200 dark:from-rose-900 dark:to-sky-900" />;
+  return url ? <img src={url} alt="" className="h-full w-full object-cover" /> : <div className="h-full w-full bg-hec-sunken" />;
 }
 
 export function ClassVideoWall({ classId, className, studentId }: { classId: string; className?: string; studentId: string }) {
@@ -67,41 +67,41 @@ export function ClassVideoWall({ classId, className, studentId }: { classId: str
   if (isError || data.length === 0) return null;
 
   return (
-    <Card className="shadow-md">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">🌟 {className ? `${className} videos` : "Class videos"}</CardTitle>
+    <Card>
+      <CardHeader>
+        <CardTitle>🌟 {className ? `${className} videos` : "Class videos"}</CardTitle>
         <CardDescription>Videos your classmates chose to share. Send them a heart!</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {data.map((v) => (
-            <div key={v.id} className="rounded-xl border overflow-hidden">
-              <div className="relative aspect-video bg-black">
+            <div key={v.id} className="overflow-hidden rounded-hec-md border border-hec-line">
+              <div className="relative aspect-video bg-hec-sunken">
                 {playing === v.id ? (
                   <SignedVideo path={v.video_path} autoPlay className="h-full w-full object-contain" />
                 ) : (
-                  <button type="button" onClick={() => setPlaying(v.id)} className="absolute inset-0" aria-label={`Play ${v.student_name}'s video`}>
+                  <button type="button" onClick={() => setPlaying(v.id)} className="absolute inset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-hec-ring" aria-label={`Play ${v.student_name}'s video`}>
                     <Poster path={v.poster_path} />
                     <span className="absolute inset-0 flex items-center justify-center">
-                      <span className="rounded-full bg-black/50 p-3"><Play className="h-6 w-6 text-white fill-white" /></span>
+                      <span className="rounded-full bg-hec-action/80 p-3"><Play className="h-6 w-6 fill-current text-hec-on-action" /></span>
                     </span>
                   </button>
                 )}
               </div>
-              <div className="flex items-center justify-between gap-2 p-2.5">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{v.mine ? "You" : v.student_name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{v.homework_title} · {dayjs(v.submitted_at).format("MMM D")}</p>
+              <div className="flex items-start justify-between gap-2 p-3">
+                <div className="min-w-0 flex-1">
+                  <p className="whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{v.mine ? "You" : v.student_name}</p>
+                  <p className="break-words text-hec-small text-hec-ink-soft">{v.homework_title} · {dayjs(v.submitted_at).format("MMM D")}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => !v.mine && heart.mutate(v.id)}
                   disabled={v.mine}
-                  className="flex items-center gap-1 text-sm shrink-0 disabled:opacity-70"
+                  className="flex min-h-hec-target min-w-hec-target shrink-0 items-center justify-center gap-1 rounded-hec-md text-hec-small text-hec-ink disabled:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                   aria-label={v.hearted ? "Remove heart" : "Send a heart"}
                 >
-                  <Heart className={`h-5 w-5 ${v.hearted ? "fill-rose-500 text-rose-500" : "text-muted-foreground"}`} />
-                  {v.hearts > 0 && <span>{v.hearts}</span>}
+                  <Heart className={`h-5 w-5 ${v.hearted ? "fill-current text-hec-brass" : "text-hec-ink-soft"}`} />
+                  {v.hearts > 0 && <span className="tabular-nums">{v.hearts}</span>}
                 </button>
               </div>
             </div>

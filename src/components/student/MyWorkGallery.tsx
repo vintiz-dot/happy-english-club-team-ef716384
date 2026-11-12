@@ -50,7 +50,7 @@ export function MyWorkGallery() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-10">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <Loader2 className="h-5 w-5 animate-spin text-hec-ink-faint" />
       </div>
     );
   }
@@ -58,9 +58,9 @@ export function MyWorkGallery() {
   if (!data?.length) {
     return (
       <div className="text-center py-12 space-y-2">
-        <FileImage className="h-10 w-10 mx-auto text-muted-foreground/50" />
-        <p className="text-sm font-semibold">No work published yet</p>
-        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+        <FileImage className="h-10 w-10 mx-auto text-hec-ink-faint" />
+        <p className="text-hec-body font-medium text-hec-ink">No work published yet</p>
+        <p className="text-hec-small text-hec-ink-soft max-w-sm mx-auto">
           When your teacher shares your classwork — yours or your team's — it appears here with their notes.
         </p>
       </div>
@@ -70,7 +70,7 @@ export function MyWorkGallery() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {data.map((w: any) => (
-        <Card key={w.id} className="overflow-hidden rounded-2xl">
+        <Card key={w.id} className="overflow-hidden">
           {w.url ? (
             <a href={w.url} target="_blank" rel="noreferrer">
               <img src={w.url} alt="My work" loading="lazy" className="h-44 w-full object-cover" />
@@ -80,35 +80,35 @@ export function MyWorkGallery() {
               href={w.external_url}
               target="_blank"
               rel="noreferrer"
-              className="h-44 w-full bg-gradient-to-br from-violet-500/10 to-indigo-500/5 flex flex-col items-center justify-center gap-2 hover:from-violet-500/15"
+              className="flex h-44 min-h-hec-target w-full flex-col items-center justify-center gap-2 bg-hec-sunken hover:bg-hec-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
             >
-              <Link2 className="h-9 w-9 text-violet-500" />
-              <span className="text-xs font-semibold text-violet-600 flex items-center gap-1">
+              <Link2 className="h-9 w-9 text-hec-ink-soft" />
+              <span className="flex items-center gap-1 text-hec-small font-medium text-hec-brass">
                 Open link <ExternalLink className="h-3 w-3" />
               </span>
             </a>
           ) : (
-            <div className="h-44 w-full bg-muted flex items-center justify-center">
-              <FileImage className="h-8 w-8 text-muted-foreground" />
+            <div className="flex h-44 w-full items-center justify-center bg-hec-sunken">
+              <FileImage className="h-8 w-8 text-hec-ink-faint" />
             </div>
           )}
-          <CardContent className="p-3 space-y-2">
+          <CardContent className="space-y-2 p-3 pt-3 sm:p-3 sm:pt-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <Badge variant="outline" className="text-[10px] uppercase">{w.workflow}</Badge>
+                <Badge variant="outline" className="uppercase">{w.workflow}</Badge>
                 {w.is_teamwork && (
-                  <Badge className="bg-cyan-500/15 text-cyan-700 border-cyan-500/30 gap-1 text-[10px]">
+                  <Badge variant="secondary">
                     <Users className="h-3 w-3" />team
                   </Badge>
                 )}
               </div>
-              <span className="text-[11px] text-muted-foreground shrink-0">
+              <span className="shrink-0 text-hec-caption tabular-nums text-hec-ink-soft">
                 {new Date(w.approved_at || w.created_at).toLocaleDateString()}
               </span>
             </div>
             {w.teacher_notes && (
-              <p className="text-xs text-muted-foreground flex gap-1.5">
-                <MessageSquareHeart className="h-3.5 w-3.5 text-pink-500 shrink-0 mt-0.5" />
+              <p className="flex gap-1.5 text-hec-small text-hec-ink-soft">
+                <MessageSquareHeart className="h-3.5 w-3.5 text-hec-ink-soft shrink-0 mt-0.5" />
                 {w.teacher_notes}
               </p>
             )}
