@@ -145,10 +145,9 @@ const fsState = (page) => page.evaluate(() => (document.fullscreenElement ? (doc
 async function hintVisible(page, text) {
   return page.evaluate((text) => {
     const fsEl = document.fullscreenElement;
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-      if (!n.textContent || !n.textContent.includes(text)) continue;
-      const el = n.parentElement; if (!el) continue;
+    // deepest elements whose text contains `text` ("+{pts}" renders as two text nodes, so match elements)
+    const cands = [...document.body.querySelectorAll('*')].filter((e) => e.tagName !== 'SCRIPT' && e.tagName !== 'STYLE' && (e.textContent || '').includes(text) && ![...e.children].some((c) => (c.textContent || '').includes(text)));
+    for (const el of cands) {
       const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
       if (r.width < 4 || r.height < 4 || cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) === 0) continue;
       if (fsEl && !fsEl.contains(el)) continue;
@@ -338,7 +337,7 @@ async function overlays(size) {
       if (!on) { record(`M5.${o.id}`, S, 'NOTMEASURED', null, 'fullscreen could not be entered'); continue; }
       await o.open(page); await sleep(800);
       const inDom = await textInDom(page, o.text); const vis = await hintVisible(page, o.text);
-      const where = await page.evaluate((t) => { const fs = document.fullscreenElement; let best = null; const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); for (let n = w.nextNode(); n; n = w.nextNode()) if (n.textContent.includes(t)) { best = n.parentElement; } if (!best) return 'not in DOM'; return fs && fs.contains(best) ? 'inside fullscreen element' : 'portalled outside the fullscreen element (' + (best.closest('body > *')?.tagName || '?') + ' child of body)'; }, o.text);
+      const where = await page.evaluate((t) => { const fs = document.fullscreenElement; const all = [...document.body.querySelectorAll('*')].filter((e) => (e.textContent || '').includes(t) && ![...e.children].some((c) => (c.textContent || '').includes(t))); const best = all[all.length - 1]; if (!best) return 'not in DOM'; return fs && fs.contains(best) ? 'inside fullscreen element' : 'portalled outside the fullscreen element (' + (best.closest('body > *')?.tagName || '?') + ' child of body)'; }, o.text);
       gate(`M5.${o.id}`, S, vis, { inDom, vis, where }, `in fullscreen: ${o.id} opened=${inDom}, ${where}, visible=${vis}`);
       await closeOverlay(page);
       if (o.id === 'ui-tooltip') await page.locator('#lab-tip-trigger').blur().catch(() => {});
