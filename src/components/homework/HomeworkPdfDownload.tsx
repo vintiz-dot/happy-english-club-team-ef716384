@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { logPdfEvent, newExportId } from "@/lib/pdfExportLog";
@@ -54,6 +54,52 @@ function pickRenderScale(measuredHpx: number, isMobile: boolean): number {
 
 export function HomeworkPdfDownload({ homework, className: classNameProp, teacherName, variant = "button" }: HomeworkPdfDownloadProps) {
   const [generating, setGenerating] = useState(false);
+  // On phones the finished PDF waits here for a SECOND tap. iOS Safari only
+  // lets a page open a file, a new tab or the share sheet straight from a
+  // tap; by the time the PDF is built (network, html2canvas) that tap has
+  // expired, so opening it automatically is blocked or navigates the whole
+  // app away to a blob with no way back in the installed app.
+  const [ready, setReady] = useState<{ url: string; blob: Blob; fileName: string } | null>(null);
+  const readyRef = useRef<typeof ready>(null);
+  readyRef.current = ready;
+  useEffect(() => () => {
+    if (readyRef.current) URL.revokeObjectURL(readyRef.current.url);
+  }, []);
+
+  // Runs synchronously inside the tap, so the browser allows it.
+  const openReady = () => {
+    const r = readyRef.current;
+    if (!r) return;
+    try {
+      const file = new File([r.blob], r.fileName, { type: "application/pdf" });
+      const nav = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean };
+      if (typeof nav.share === "function" && nav.canShare?.({ files: [file] })) {
+        // The share sheet has "Save to Files" and "Print"; works in Safari,
+        // in the installed app and in in-app browsers that support it.
+        nav.share({ files: [file], title: homework.title }).catch((err: any) => {
+          if (err?.name === "AbortError") return; // closed the sheet: keep the button
+          openInTab(r);
+        });
+        return;
+      }
+    } catch {
+      /* File or share not available: fall through */
+    }
+    openInTab(r);
+  };
+
+  const openInTab = (r: { url: string; fileName: string }) => {
+    const opened = window.open(r.url, "_blank");
+    if (opened) return;
+    const a = document.createElement("a");
+    a.href = r.url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.download = r.fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
 
   const generate = async () => {
     setGenerating(true);
@@ -288,18 +334,19 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
       log("info", "export.saved", { fileName, totalMs: total, pages: pageIndex, sizeBytes: blob.size, mobile });
 
       if (mobile) {
-        // iOS Safari is unreliable with synthetic <a download> after long
-        // async chains. Open the PDF in a new tab so the user can use the
-        // system "Save to Files" / share sheet — no gesture loss.
-        const opened = window.open(blobUrl, "_blank");
-        if (!opened) {
-          // Popup blocked — fall back to in-tab navigation, which Safari
-          // also handles via the PDF viewer + share sheet.
-          window.location.href = blobUrl;
-        }
-        toast.success(`PDF ready (${pageIndex} ${pageIndex === 1 ? "page" : "pages"}) — tap the share icon to save`);
-        // Revoke after a delay so the new tab has time to load.
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+        // Keep the PDF and ask for one more tap (see `ready` above). Never
+        // navigate this tab to the blob: in the installed app that leaves
+        // the child on a PDF with no way back.
+        if (readyRef.current) URL.revokeObjectURL(readyRef.current.url);
+        setReady({ url: blobUrl, blob, fileName });
+        toast.success(`PDF ready (${pageIndex} ${pageIndex === 1 ? "page" : "pages"}) - tap Open PDF`);
+        // Forget it after a while so the memory is freed.
+        setTimeout(() => {
+          if (readyRef.current?.url === blobUrl) {
+            URL.revokeObjectURL(blobUrl);
+            setReady(null);
+          }
+        }, 5 * 60_000);
       } else {
         const a = document.createElement("a");
         a.href = blobUrl;
@@ -320,9 +367,11 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
     }
   };
 
+  const onPress = ready ? openReady : generate;
+
   if (variant === "icon") {
     return (
-      <Button variant="ghost" size="icon" onClick={generate} disabled={generating} title="Download as PDF">
+      <Button variant="ghost" size="icon" onClick={onPress} disabled={generating} title={ready ? "Open PDF" : "Download as PDF"} aria-label={ready ? "Open PDF" : "Download as PDF"}>
         {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
       </Button>
     );
@@ -333,13 +382,13 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
     return (
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); generate(); }}
+        onClick={(e) => { e.stopPropagation(); onPress(); }}
         disabled={generating}
-        aria-label="Download as PDF"
+        aria-label={ready ? "Open PDF" : "Download as PDF"}
         className="flex h-12 min-w-[3rem] items-center justify-center gap-1.5 rounded-2xl border-2 border-b-4 border-border bg-card px-3 text-sm font-extrabold text-foreground active:translate-y-[2px] active:border-b-2 transition-[transform] duration-100 disabled:opacity-60"
       >
         {generating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
-        <span>PDF</span>
+        <span>{ready ? "Open" : "PDF"}</span>
       </button>
     );
   }
@@ -347,13 +396,13 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
   if (variant === "pill-compact") {
     return (
       <Button
-        onClick={generate}
+        onClick={onPress}
         disabled={generating}
         size="sm"
         className="h-8 rounded-full gap-1.5 px-3 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm font-semibold text-xs"
       >
         {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-        PDF
+        {ready ? "Open" : "PDF"}
       </Button>
     );
   }
@@ -361,20 +410,20 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
   if (variant === "pill") {
     return (
       <Button
-        onClick={generate}
+        onClick={onPress}
         disabled={generating}
         className="h-10 min-h-[40px] rounded-full gap-2 px-4 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md font-semibold"
       >
         {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-        {generating ? "Generating..." : "Download PDF"}
+        {generating ? "Generating..." : ready ? "Open PDF" : "Download PDF"}
       </Button>
     );
   }
 
   return (
-    <Button variant="outline" size="sm" onClick={generate} disabled={generating} className="gap-2">
+    <Button variant="outline" size="sm" onClick={onPress} disabled={generating} className="gap-2">
       {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-      {generating ? "Generating..." : "Download PDF"}
+      {generating ? "Generating..." : ready ? "Open PDF" : "Download PDF"}
     </Button>
   );
 }
