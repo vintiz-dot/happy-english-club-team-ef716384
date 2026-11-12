@@ -20,7 +20,14 @@
 --   class_recording_markers      roll call, activities, tap-a-name chips.
 --   recorder_audit_log           append-only: who switched, armed, started, stopped.
 --   recorder_session_evidence    view: the contract workstream D reads.
---   class-recordings (bucket)    private. {class}/{recording}/{track}/{seq}.{ext}
+--   class-recorder-audio (bucket) private, the recorder's OWN. {class}/{recording}/{track}/{seq}.{ext}
+--
+-- WHAT THIS DOES NOT TOUCH: the bucket `class-recordings` and its policy
+-- "staff_manage_class_recordings" (20260717090000, Teacher Transcripts' lesson
+-- audio upload). This file never inserts, updates or alters that bucket or any
+-- policy on it. A preflight at the top refuses to install if the recorder's
+-- bucket already exists with other settings, or if any storage policy that is
+-- not the recorder's could reach it (C1 critic 2, N1).
 --
 -- RULES IT HOLDS (each one is tested in scripts/pgtest/recorder.test.mjs)
 --   1. A recording cannot be created unless the class switch is on, the consent
@@ -46,8 +53,16 @@
 --      is refused. A chunk's claimed span must fit the server's clock, the
 --      lesson window and a minimum plausible size for its format.
 --   5. The evidence (`recorder_session_evidence`) rests on what the server saw:
---      server timestamps, confirmed stored objects and their sizes. The laptop's
---      times are kept, as claims. `counts_as_held_evidence` is the strict flag.
+--      server timestamps, confirmed stored objects and their sizes, and WHEN
+--      each chunk reached the server. The laptop's times are kept, as claims.
+--      `recording_ran_evidence` is the strict flag: a recording ran, live, for
+--      at least the configured fraction of the lesson. It is NOT proof that
+--      children attended (an empty room records the same).
+--      A chunk registered more than `late_after` after the moment it claims to
+--      end is stored but late, and counts for nothing. A Stop after the window
+--      (+ late_after) is not a Stop: the recording is abandoned.
+--      Retention, deletion and stop-request columns are the server's: a person
+--      who asks for early deletion takes the evidence with the audio.
 --   6. The audit log cannot be updated, deleted or truncated by anyone.
 --   7. A recording row is never deleted while its audio is still in storage,
 --      and the functions that look at storage refuse when they cannot see it.
@@ -60,6 +75,48 @@
 -- Safe to run twice.
 
 BEGIN;
+
+-- Locks on enrollments / sessions / classes / students (triggers, foreign
+-- keys) are held until COMMIT: queue for 5 s at most, then fail and retry
+-- outside lesson hours rather than block the register.
+SET LOCAL lock_timeout = '5s';
+
+-- ================================================================ preflight
+-- Refuse to install, before anything is created, when the recorder's audio
+-- could be reached by something this file does not control.
+DO $preflight$
+DECLARE
+  v_bucket record;
+  v_bad text;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                 WHERE n.nspname = 'storage' AND c.relname = 'objects' AND c.relrowsecurity) THEN
+    RAISE EXCEPTION 'Refusing to install the class recorder: row level security is not enabled on storage.objects';
+  END IF;
+  SELECT b.public, b.file_size_limit, b.allowed_mime_types INTO v_bucket
+    FROM storage.buckets b WHERE b.id = 'class-recorder-audio';
+  IF FOUND AND (v_bucket.public IS DISTINCT FROM false
+                OR v_bucket.file_size_limit IS DISTINCT FROM 8388608::bigint
+                OR v_bucket.allowed_mime_types IS DISTINCT FROM
+                   ARRAY['audio/webm', 'audio/flac', 'audio/x-flac', 'audio/wav', 'audio/x-wav', 'application/json']::text[]) THEN
+    RAISE EXCEPTION 'Refusing to install the class recorder: a bucket "class-recorder-audio" already exists with other settings (public %, limit %, types %)',
+      v_bucket.public, v_bucket.file_size_limit, v_bucket.allowed_mime_types;
+  END IF;
+  -- Any permissive policy on storage.objects other than the recorder's two
+  -- that is not scoped by bucket_id (it would reach every bucket), or that
+  -- names the recorder's bucket.
+  SELECT string_agg(p.policyname, ', ' ORDER BY p.policyname) INTO v_bad
+    FROM pg_policies p
+   WHERE p.schemaname = 'storage' AND p.tablename = 'objects'
+     AND p.permissive = 'PERMISSIVE'
+     AND p.policyname NOT IN ('class_recorder_audio_insert', 'class_recorder_audio_select')
+     AND (concat_ws(' ', p.qual, p.with_check) NOT LIKE '%bucket_id%'
+          OR concat_ws(' ', p.qual, p.with_check) LIKE '%class-recorder-audio%');
+  IF v_bad IS NOT NULL THEN
+    RAISE EXCEPTION 'Refusing to install the class recorder: storage policies that could reach its bucket: %', v_bad;
+  END IF;
+END
+$preflight$;
 
 -- ================================================================ settings
 -- Plausibility floors (bytes per second of audio, per track). A chunk smaller
@@ -88,11 +145,23 @@ CREATE TABLE IF NOT EXISTS public.recorder_settings (
   -- (network latency between the page starting capture and the server
   -- stamping started_at).
   clock_tolerance_seconds    integer NOT NULL DEFAULT 15 CHECK (clock_tolerance_seconds BETWEEN 1 AND 60),
-  -- A completed recording counts as evidence that the lesson was held only
-  -- when the audio the server can vouch for covers at least this fraction of
-  -- the scheduled lesson.
-  held_evidence_min_fraction numeric(3,2) NOT NULL DEFAULT 0.50
-                               CHECK (held_evidence_min_fraction BETWEEN 0.10 AND 1.00),
+  -- A chunk is LIVE when it reaches the server (is registered) no later than
+  -- this long after the moment it claims to end, on the server's clock:
+  -- registered_at <= started_at + t_end_ms + late_after. Equivalently, its
+  -- claimed capture start + one chunk length + late_after. A late chunk is
+  -- stored and can be listened to, but counts for nothing in the evidence.
+  -- Default 10 minutes: long enough for the page's offline queue to drain
+  -- after a classroom Wi-Fi drop, a router restart or a lid closed and
+  -- reopened (30-second chunks of about 60 kB each upload in seconds once the
+  -- network is back); short enough that audio cannot be produced after the
+  -- lesson and passed off as live. The same allowance applies to Stop: a Stop
+  -- later than the window's close + late_after abandons the recording.
+  late_after_minutes         integer NOT NULL DEFAULT 10 CHECK (late_after_minutes BETWEEN 1 AND 30),
+  -- A completed recording counts as evidence that a recording RAN (not that
+  -- children were there) only when the live audio the server can vouch for
+  -- covers at least this fraction of the scheduled lesson.
+  evidence_min_fraction      numeric(3,2) NOT NULL DEFAULT 0.50
+                               CHECK (evidence_min_fraction BETWEEN 0.10 AND 1.00),
   min_bytes_per_sec_opus     integer NOT NULL DEFAULT 2000  CHECK (min_bytes_per_sec_opus BETWEEN 500 AND 16000),
   min_bytes_per_sec_flac     integer NOT NULL DEFAULT 4000  CHECK (min_bytes_per_sec_flac BETWEEN 1000 AND 96000),
   min_bytes_per_sec_wav      integer NOT NULL DEFAULT 15000 CHECK (min_bytes_per_sec_wav BETWEEN 8000 AND 96000),
@@ -155,6 +224,25 @@ AS $function$
 $function$;
 
 REVOKE ALL ON FUNCTION public.recorder__teaches_session(uuid, uuid, uuid) FROM PUBLIC, anon, authenticated;
+
+-- May this person record THIS lesson, now: an admin, a standing teacher of
+-- the class, or the teacher of this very session. Asked at arming, again at
+-- Start and again for every chunk, so a teacher taken off the lesson (or
+-- archived) stops being able to add audio to it at once. Internal.
+CREATE OR REPLACE FUNCTION public.recorder__may_record(p_user uuid, p_session uuid, p_class uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+  SELECT p_user IS NOT NULL AND p_class IS NOT NULL AND (
+    COALESCE(public.has_role(p_user, 'admin'::public.app_role), false)
+    OR public.recorder_is_class_teacher(p_user, p_class)
+    OR public.recorder__teaches_session(p_user, p_session, p_class));
+$function$;
+
+REVOKE ALL ON FUNCTION public.recorder__may_record(uuid, uuid, uuid) FROM PUBLIC, anon, authenticated;
 
 -- The class as a whole (its switch, its missing-consent count, switching it
 -- off): an admin, a standing teacher, or the teacher of one of its lessons
@@ -367,9 +455,14 @@ BEGIN
   UPDATE public.class_recordings
      SET status = 'abandoned', abandon_reason = 'switch_off'
    WHERE class_id = p_class AND status = 'armed';
+  -- stop_requested_at is the server's (C1 critic 2, N4): the update trigger
+  -- takes it from a non-admin only while this transaction-local flag says
+  -- the server is asking. Nothing an API caller sends can set it.
+  PERFORM set_config('recorder.server_write', 'stop:switch_off', true);
   UPDATE public.class_recordings
      SET stop_requested_at = now()
    WHERE class_id = p_class AND status = 'recording' AND stop_requested_at IS NULL;
+  PERFORM set_config('recorder.server_write', '', true);
 
   PERFORM public.recorder__audit(p_action, p_class, NULL, NULL, NULL, p_detail);
 END;
@@ -587,7 +680,8 @@ CREATE TABLE IF NOT EXISTS public.class_recordings (
   -- reinterpret an old recording.
   min_bytes_per_sec     integer NOT NULL CHECK (min_bytes_per_sec > 0),
   clock_tolerance_ms    integer NOT NULL CHECK (clock_tolerance_ms > 0),
-  held_min_fraction     numeric(3,2) NOT NULL CHECK (held_min_fraction > 0 AND held_min_fraction <= 1),
+  late_after_ms         integer NOT NULL CHECK (late_after_ms > 0),
+  evidence_min_fraction numeric(3,2) NOT NULL CHECK (evidence_min_fraction > 0 AND evidence_min_fraction <= 1),
   started_by            uuid NOT NULL,
   device_profile_id     uuid REFERENCES public.recorder_device_profiles(id) ON DELETE SET NULL,
   client_info           jsonb NOT NULL DEFAULT '{}'::jsonb,
@@ -595,14 +689,18 @@ CREATE TABLE IF NOT EXISTS public.class_recordings (
   -- The laptop's claims, kept for information. Never evidence.
   client_started_at     timestamptz,
   client_ended_at       timestamptz,
-  -- The server's clock at the start and stop transitions.
+  -- The server's clock at the start and stop transitions. ended_at is the
+  -- real moment of Stop, never moved into the window.
   started_at            timestamptz,
   ended_at              timestamptz,
   stopped_by            uuid,
   stop_reason           text CHECK (stop_reason IS NULL OR stop_reason IN (
                           'manual', 'scheduled_end', 'session_canceled', 'switch_off',
                           'device_lost', 'crash_recovered', 'admin')),
+  -- Server-owned: set by the switch-off and cancellation paths, or by an admin.
   stop_requested_at     timestamptz,
+  stop_request_reason   text CHECK (stop_request_reason IS NULL OR stop_request_reason IN (
+                          'switch_off', 'session_canceled', 'admin')),
   manifest_path         text,
   manifest_sha256       text CHECK (manifest_sha256 IS NULL OR manifest_sha256 ~ '^[0-9a-f]{64}$'),
   completed_at          timestamptz,
@@ -745,9 +843,7 @@ BEGIN
 
   -- May record THIS lesson: an admin, a standing teacher of the class, or the
   -- teacher of this very session.
-  IF NOT (COALESCE(public.has_role(v_uid, 'admin'::public.app_role), false)
-          OR public.recorder_is_class_teacher(v_uid, v_sess.class_id)
-          OR public.recorder__teaches_session(v_uid, v_sess.id, v_sess.class_id)) THEN
+  IF NOT public.recorder__may_record(v_uid, v_sess.id, v_sess.class_id) THEN
     RAISE EXCEPTION 'Only a teacher of this class can record it'
       USING ERRCODE = 'insufficient_privilege';
   END IF;
@@ -802,10 +898,12 @@ BEGIN
     WHEN 'flac' THEN v_set.min_bytes_per_sec_flac
     ELSE v_set.min_bytes_per_sec_wav END;
   NEW.clock_tolerance_ms := v_set.clock_tolerance_seconds * 1000;
-  NEW.held_min_fraction := v_set.held_evidence_min_fraction;
+  NEW.late_after_ms := v_set.late_after_minutes * 60000;
+  NEW.evidence_min_fraction := v_set.evidence_min_fraction;
   NEW.delete_after := v_end + make_interval(days => v_set.retention_days);
   NEW.started_at := NULL; NEW.ended_at := NULL; NEW.stopped_by := NULL; NEW.stop_reason := NULL;
-  NEW.stop_requested_at := NULL; NEW.manifest_path := NULL; NEW.manifest_sha256 := NULL;
+  NEW.stop_requested_at := NULL; NEW.stop_request_reason := NULL;
+  NEW.manifest_path := NULL; NEW.manifest_sha256 := NULL;
   NEW.completed_at := NULL; NEW.abandoned_at := NULL; NEW.abandon_reason := NULL;
   NEW.deletion_requested_at := NULL; NEW.deletion_requested_by := NULL; NEW.deletion_reason := NULL;
   NEW.audio_deleted_at := NULL;
@@ -840,9 +938,17 @@ DECLARE
   v_uid uuid := auth.uid();
   -- No user at all is the retention job (service role); it may do what an admin may.
   v_admin boolean := v_uid IS NULL OR COALESCE(public.has_role(v_uid, 'admin'::public.app_role), false);
+  -- An admin PERSON (not the service role).
+  v_person_admin boolean := v_uid IS NOT NULL AND COALESCE(public.has_role(v_uid, 'admin'::public.app_role), false);
   v_now timestamptz := now();
   v_asked_stop_reason text := NEW.stop_reason;
   v_span_ms bigint;
+  -- Set only by this file's own functions, transaction-local, never by an API
+  -- caller: 'stop:<reason>' (switch-off, cancellation) or 'delete:<recording>'
+  -- (recorder_request_deletion).
+  v_flag text := COALESCE(current_setting('recorder.server_write', true), '');
+  v_server_stop text := CASE WHEN v_flag IN ('stop:switch_off', 'stop:session_canceled') THEN substr(v_flag, 6) END;
+  v_server_delete boolean := v_flag = 'delete:' || OLD.id::text;
 BEGIN
   IF NEW.id IS DISTINCT FROM OLD.id
      OR NEW.class_id IS DISTINCT FROM OLD.class_id
@@ -857,7 +963,8 @@ BEGIN
      OR NEW.max_duration_ms IS DISTINCT FROM OLD.max_duration_ms
      OR NEW.min_bytes_per_sec IS DISTINCT FROM OLD.min_bytes_per_sec
      OR NEW.clock_tolerance_ms IS DISTINCT FROM OLD.clock_tolerance_ms
-     OR NEW.held_min_fraction IS DISTINCT FROM OLD.held_min_fraction
+     OR NEW.late_after_ms IS DISTINCT FROM OLD.late_after_ms
+     OR NEW.evidence_min_fraction IS DISTINCT FROM OLD.evidence_min_fraction
      OR NEW.purpose IS DISTINCT FROM OLD.purpose
      OR NEW.format IS DISTINCT FROM OLD.format
      OR NEW.chunk_ms IS DISTINCT FROM OLD.chunk_ms
@@ -888,19 +995,29 @@ BEGIN
   NEW.abandoned_at := OLD.abandoned_at;
   NEW.audio_deleted_at := OLD.audio_deleted_at;
   NEW.updated_at := v_now;
-  -- A stop request is never taken back, and it is stamped by the server.
+  -- A stop request is the server's (N4): made by the switch-off or the
+  -- cancellation path (flag), or by an admin; stamped with the server's clock
+  -- and the reason; never taken back. What a recorder writes here is ignored.
   IF OLD.stop_requested_at IS NOT NULL THEN
     NEW.stop_requested_at := OLD.stop_requested_at;
-  ELSIF NEW.stop_requested_at IS NOT NULL THEN
+    NEW.stop_request_reason := OLD.stop_request_reason;
+  ELSIF NEW.stop_requested_at IS NOT NULL AND v_server_stop IS NOT NULL THEN
     NEW.stop_requested_at := v_now;
+    NEW.stop_request_reason := v_server_stop;
+  ELSIF NEW.stop_requested_at IS NOT NULL AND v_admin THEN
+    NEW.stop_requested_at := v_now;
+    NEW.stop_request_reason := 'admin';
+  ELSE
+    NEW.stop_requested_at := NULL;
+    NEW.stop_request_reason := NULL;
   END IF;
-  -- A deletion request is stamped with who really made it and when; once made
-  -- it stands.
+  -- A deletion request is made only through recorder_request_deletion (flag),
+  -- stamped with who really made it and when; once made it stands (N3).
   IF OLD.deletion_requested_at IS NOT NULL THEN
     NEW.deletion_requested_at := OLD.deletion_requested_at;
     NEW.deletion_requested_by := OLD.deletion_requested_by;
     NEW.deletion_reason := OLD.deletion_reason;
-  ELSIF NEW.deletion_requested_at IS NOT NULL THEN
+  ELSIF NEW.deletion_requested_at IS NOT NULL AND v_server_delete THEN
     IF btrim(COALESCE(NEW.deletion_reason, '')) = '' THEN
       RAISE EXCEPTION 'Say why this recording should be deleted';
     END IF;
@@ -908,12 +1025,25 @@ BEGIN
     NEW.deletion_requested_by := v_uid;
     NEW.deletion_reason := btrim(NEW.deletion_reason);
   ELSE
+    NEW.deletion_requested_at := NULL;
     NEW.deletion_requested_by := NULL;
     NEW.deletion_reason := NULL;
   END IF;
-  -- Anyone who can touch the row may shorten its life; only an admin extends it.
-  IF NEW.delete_after IS NULL OR (NEW.delete_after > OLD.delete_after AND NOT v_admin) THEN
+  -- Retention is the server's (N3). A deletion request may only bring it
+  -- forward; an admin (a person, logged) may move it either way; nobody else
+  -- changes it at all. An admin bringing it forward IS an early deletion by a
+  -- person, and is recorded as a deletion request, so it ends the evidence
+  -- exactly as recorder_request_deletion does.
+  IF NEW.delete_after IS NULL THEN
     NEW.delete_after := OLD.delete_after;
+  ELSIF v_server_delete THEN
+    NEW.delete_after := LEAST(OLD.delete_after, NEW.delete_after);
+  ELSIF NOT v_person_admin THEN
+    NEW.delete_after := OLD.delete_after;
+  ELSIF NEW.delete_after < OLD.delete_after AND OLD.deletion_requested_at IS NULL THEN
+    NEW.deletion_requested_at := v_now;
+    NEW.deletion_requested_by := v_uid;
+    NEW.deletion_reason := 'retention brought forward by an admin';
   END IF;
   IF OLD.status IN ('complete', 'abandoned', 'deleted') THEN
     NEW.manifest_path := OLD.manifest_path;
@@ -945,21 +1075,39 @@ BEGIN
       IF v_now >= OLD.capture_closes_at THEN
         RAISE EXCEPTION 'The lesson window is over: this recording can no longer start';
       END IF;
+      -- The person who armed it must still be allowed to record this lesson
+      -- (a cover teacher taken off it, or an archived teacher, is not: N5).
+      IF NOT public.recorder__may_record(OLD.started_by, OLD.armed_session_id, OLD.class_id) THEN
+        RAISE EXCEPTION 'You no longer teach this lesson: it cannot be recorded by you'
+          USING ERRCODE = 'insufficient_privilege';
+      END IF;
       NEW.started_at := v_now;
 
     ELSIF NEW.status = 'uploading' THEN
-      NEW.ended_at := LEAST(v_now, OLD.capture_closes_at);
+      -- The real moment of Stop, on the server's clock. Never moved into the
+      -- window (C1 critic 2, N2): a Stop that arrives after the window has
+      -- closed (+ late_after, the same allowance an offline queue gets) is
+      -- not the end of a live recording, so the recording is abandoned - its
+      -- audio stays stored for listening, and it is never evidence.
+      NEW.ended_at := v_now;
       NEW.stopped_by := v_uid;
       -- What the page may say about why it stopped; the server-side reasons
-      -- only when the server asked it to stop, 'admin' only from an admin.
+      -- only when the server asked it to stop for that reason, 'admin' only
+      -- from an admin.
       NEW.stop_reason := CASE
         WHEN v_asked_stop_reason IN ('manual', 'scheduled_end', 'device_lost', 'crash_recovered')
           THEN v_asked_stop_reason
-        WHEN v_asked_stop_reason IN ('switch_off', 'session_canceled') AND OLD.stop_requested_at IS NOT NULL
+        WHEN v_asked_stop_reason IN ('switch_off', 'session_canceled')
+             AND OLD.stop_request_reason = v_asked_stop_reason
           THEN v_asked_stop_reason
-        WHEN v_asked_stop_reason = 'admin' AND v_uid IS NOT NULL AND v_admin
+        WHEN v_asked_stop_reason = 'admin' AND v_person_admin
           THEN 'admin'
         ELSE 'manual' END;
+      IF v_now > OLD.capture_closes_at + (OLD.late_after_ms * INTERVAL '1 millisecond') THEN
+        NEW.status := 'abandoned';
+        NEW.abandoned_at := v_now;
+        NEW.abandon_reason := 'stopped after the lesson window';
+      END IF;
 
     ELSIF NEW.status = 'complete' THEN
       IF NEW.manifest_path IS DISTINCT FROM (OLD.class_id::text || '/' || OLD.id::text || '/manifest.json')
@@ -970,7 +1118,7 @@ BEGIN
         RAISE EXCEPTION 'A recording the server did not see start and stop cannot be complete';
       END IF;
       IF NOT EXISTS (SELECT 1 FROM storage.objects o
-                     WHERE o.bucket_id = 'class-recordings' AND o.name = NEW.manifest_path) THEN
+                     WHERE o.bucket_id = 'class-recorder-audio' AND o.name = NEW.manifest_path) THEN
         RAISE EXCEPTION 'The manifest is not in storage yet';
       END IF;
       IF EXISTS (SELECT 1 FROM public.class_recording_chunks c
@@ -997,7 +1145,7 @@ BEGIN
         SELECT 1 FROM public.class_recording_chunks c
         WHERE c.recording_id = OLD.id
           AND NOT EXISTS (SELECT 1 FROM storage.objects o
-                          WHERE o.bucket_id = 'class-recordings' AND o.name = c.storage_path
+                          WHERE o.bucket_id = 'class-recorder-audio' AND o.name = c.storage_path
                             AND NULLIF(o.metadata ->> 'size', '')::bigint = c.stored_size)) THEN
         RAISE EXCEPTION 'A confirmed chunk is no longer in storage at the size it was confirmed with';
       END IF;
@@ -1023,7 +1171,8 @@ BEGIN
       NEW.abandoned_at := v_now;
       NEW.abandon_reason := COALESCE(NULLIF(btrim(NEW.abandon_reason), ''), 'unspecified');
       IF OLD.started_at IS NOT NULL AND OLD.ended_at IS NULL THEN
-        NEW.ended_at := LEAST(v_now, OLD.capture_closes_at);
+        NEW.ended_at := v_now;
+        NEW.stopped_by := v_uid;
       END IF;
 
     ELSIF NEW.status = 'deleted' THEN
@@ -1032,9 +1181,15 @@ BEGIN
           USING ERRCODE = 'insufficient_privilege';
       END IF;
       IF EXISTS (SELECT 1 FROM storage.objects o
-                 WHERE o.bucket_id = 'class-recordings'
+                 WHERE o.bucket_id = 'class-recorder-audio'
                    AND o.name LIKE OLD.class_id::text || '/' || OLD.id::text || '/%') THEN
         RAISE EXCEPTION 'Audio is still in storage: remove the files first';
+      END IF;
+      -- Only at its deletion date: an earlier deletion goes through a request
+      -- (which brings the date forward and is attributed), so a 'deleted' row
+      -- without a request is always retention's (N3).
+      IF OLD.delete_after > v_now THEN
+        RAISE EXCEPTION 'This recording is not due for deletion until %: ask for its deletion first', OLD.delete_after;
       END IF;
       NEW.audio_deleted_at := v_now;
     END IF;
@@ -1066,7 +1221,7 @@ BEGIN
     RAISE EXCEPTION 'A recording row is kept until its audio has been removed (status is %)', OLD.status;
   END IF;
   IF EXISTS (SELECT 1 FROM storage.objects o
-             WHERE o.bucket_id = 'class-recordings'
+             WHERE o.bucket_id = 'class-recorder-audio'
                AND o.name LIKE OLD.class_id::text || '/' || OLD.id::text || '/%') THEN
     RAISE EXCEPTION 'Audio is still in storage: the recording row is kept';
   END IF;
@@ -1175,9 +1330,11 @@ BEGIN
   UPDATE public.class_recordings
      SET status = 'abandoned', abandon_reason = 'session_canceled'
    WHERE armed_session_id = NEW.id AND status = 'armed';
+  PERFORM set_config('recorder.server_write', 'stop:session_canceled', true);
   UPDATE public.class_recordings
      SET stop_requested_at = now()
    WHERE armed_session_id = NEW.id AND status = 'recording' AND stop_requested_at IS NULL;
+  PERFORM set_config('recorder.server_write', '', true);
   RETURN NULL;
 END;
 $$;
@@ -1312,6 +1469,12 @@ BEGIN
   IF v_rec.started_at IS NULL THEN
     RAISE EXCEPTION 'The server did not see this recording start: no audio is accepted';
   END IF;
+  -- Still allowed to record this lesson (N5): a cover teacher taken off it,
+  -- or an archived teacher, adds nothing more to it.
+  IF NOT public.recorder__may_record(v_uid, v_rec.armed_session_id, v_rec.class_id) THEN
+    RAISE EXCEPTION 'You no longer teach this lesson: no more audio is accepted from you'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
   IF p_track IS NULL OR p_track NOT IN ('teacher', 'room') THEN
     RAISE EXCEPTION 'The track is teacher or room';
   END IF;
@@ -1354,9 +1517,11 @@ BEGIN
          || lpad(p_seq::text, 6, '0') || '.'
          || CASE v_rec.format WHEN 'opus-webm' THEN 'webm' WHEN 'flac' THEN 'flac' ELSE 'wav' END;
 
+  -- registered_at is the server's clock at this call (N2), never the page's.
   INSERT INTO public.class_recording_chunks
-    (recording_id, track, seq, storage_path, byte_size, sha256, t_start_ms, t_end_ms, registered_by)
-  VALUES (p_recording, p_track, p_seq, v_path, p_byte_size, lower(p_sha256), p_t_start_ms, p_t_end_ms, v_uid)
+    (recording_id, track, seq, storage_path, byte_size, sha256, t_start_ms, t_end_ms, registered_by, registered_at)
+  VALUES (p_recording, p_track, p_seq, v_path, p_byte_size, lower(p_sha256), p_t_start_ms, p_t_end_ms, v_uid,
+          clock_timestamp())
   ON CONFLICT (recording_id, track, seq) DO NOTHING
   RETURNING id INTO v_new;
 
@@ -1367,9 +1532,14 @@ BEGIN
     RAISE EXCEPTION 'Chunk % of the % track is already registered with different audio', p_seq, p_track;
   END IF;
 
+  -- 'late': it reached the server more than late_after after the moment it
+  -- claims to end. Stored, listenable, never evidence. (The first
+  -- registration decides; registering again does not refresh it.)
   RETURN jsonb_build_object(
     'chunk_id', v_row.id, 'storage_path', v_row.storage_path,
-    'already_registered', v_new IS NULL, 'confirmed', v_row.confirmed_at IS NOT NULL);
+    'already_registered', v_new IS NULL, 'confirmed', v_row.confirmed_at IS NOT NULL,
+    'late', v_row.registered_at > v_rec.started_at
+                                  + ((v_row.t_end_ms + v_rec.late_after_ms) * INTERVAL '1 millisecond'));
 END;
 $$;
 
@@ -1409,7 +1579,7 @@ BEGIN
   END IF;
   SELECT NULLIF(o.metadata ->> 'size', '')::bigint INTO v_size
   FROM storage.objects o
-  WHERE o.bucket_id = 'class-recordings' AND o.name = v_row.storage_path;
+  WHERE o.bucket_id = 'class-recorder-audio' AND o.name = v_row.storage_path;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'The file is not in storage: keep the local copy';
   END IF;
@@ -1453,12 +1623,17 @@ BEGIN
        SET status = 'abandoned', abandon_reason = 'deletion requested'
      WHERE id = p_recording;
   END IF;
-  -- The update trigger stamps who asked and when.
+  -- The update trigger stamps who asked and when; it takes the request and
+  -- the earlier date only with this flag (N3). An early deletion asked for
+  -- by a person ends the recording's evidence status (see the view), and the
+  -- request is in the append-only audit log.
+  PERFORM set_config('recorder.server_write', 'delete:' || p_recording::text, true);
   UPDATE public.class_recordings
      SET deletion_requested_at = now(),
          deletion_reason = btrim(p_reason),
          delete_after = LEAST(delete_after, now())
    WHERE id = p_recording;
+  PERFORM set_config('recorder.server_write', '', true);
 END;
 $$;
 
@@ -1530,14 +1705,31 @@ GRANT EXECUTE ON FUNCTION public.recorder_mark_audio_deleted(uuid) TO authentica
 --
 --   was_completed            technical: it reached 'complete' (all chunks
 --                            confirmed, manifest stored, spans consistent).
---                            Stays true after retention deletes the audio.
---   counts_as_held_evidence  STRICT - what D reads. Completed, AND the audio the
---                            server can vouch for, inside the scheduled lesson,
---                            covers at least held_min_fraction of it.
+--                            Stays true after the audio is deleted.
+--   recording_ran_evidence   STRICT - what D reads. "A recording was made": a
+--                            recording RAN, live, for at least
+--                            evidence_min_fraction of the scheduled lesson,
+--                            verified by the server. All of:
+--                              * completed (every chunk confirmed in storage);
+--                              * stopped no later than the window's close +
+--                                late_after (a later Stop abandons it anyway);
+--                              * nobody asked for its early deletion (an
+--                                admin bringing the date forward is a request);
+--                              * LIVE verified audio inside the lesson >= the
+--                                threshold. Live = registered by the server no
+--                                later than late_after after the moment the
+--                                chunk claims to end.
+--                            After deletion by RETENTION it stays true: a
+--                            tombstone "a recording ran", with
+--                            audio_deleted_at. It is NOT proof that children
+--                            attended or that the lesson was taught: an empty
+--                            room, or a laptop left running, records the same.
 --   claimed_audio_ms         the laptop's chunk spans (longest track). A claim.
+--   late_audio_ms            confirmed audio that reached the server late
+--                            (longest track). Stored, never evidence.
 --   server_capture_ms        ended_at - started_at, both server-stamped.
---   verified_audio_ms        per track LEAST(claimed, server_capture_ms,
---                            stored bytes / format floor), longest track.
+--   verified_audio_ms        per track LEAST(live claimed, server_capture_ms,
+--                            live stored bytes / format floor), longest track.
 --   verified_lesson_ms       LEAST(verified_audio_ms, server-seen overlap with
 --                            the scheduled lesson).
 CREATE OR REPLACE VIEW public.recorder_session_evidence
@@ -1550,10 +1742,22 @@ SELECT
   r.status,
   r.purpose,
   r.completed_at IS NOT NULL AS was_completed,
-  COALESCE(r.completed_at IS NOT NULL AND m.tracks_with_audio > 0
-           AND LEAST(m.verified_audio_ms, w.lesson_overlap_ms) >= w.held_threshold_ms, false)
-    AS counts_as_held_evidence,
-  NOT COALESCE(LEAST(m.verified_audio_ms, w.lesson_overlap_ms) >= w.held_threshold_ms, false) AS too_short,
+  COALESCE(r.completed_at IS NOT NULL
+           AND r.deletion_requested_at IS NULL
+           AND r.ended_at <= r.capture_closes_at + (r.late_after_ms * INTERVAL '1 millisecond')
+           AND m.tracks_with_audio > 0
+           AND LEAST(m.verified_audio_ms, w.lesson_overlap_ms) >= w.evidence_threshold_ms, false)
+    AS recording_ran_evidence,
+  NOT COALESCE(LEAST(m.verified_audio_ms, w.lesson_overlap_ms) >= w.evidence_threshold_ms, false) AS too_short,
+  r.audio_deleted_at,
+  (r.status = 'deleted' AND r.deletion_requested_at IS NULL) AS deleted_by_retention,
+  r.deletion_requested_at,
+  r.deletion_requested_by,
+  r.stop_requested_at,
+  r.stop_request_reason,
+  r.stop_reason,
+  r.stopped_by,
+  r.abandon_reason,
   r.started_by,
   r.armed_at,
   r.started_at,
@@ -1565,8 +1769,10 @@ SELECT
   r.scheduled_end,
   w.server_capture_ms,
   w.lesson_overlap_ms,
-  w.held_threshold_ms,
+  w.evidence_threshold_ms,
+  r.late_after_ms,
   COALESCE(m.claimed_audio_ms, 0)::bigint AS claimed_audio_ms,
+  COALESCE(m.late_audio_ms, 0)::bigint AS late_audio_ms,
   COALESCE(m.stored_bytes, 0)::bigint AS stored_bytes,
   COALESCE(m.verified_audio_ms, 0)::bigint AS verified_audio_ms,
   LEAST(COALESCE(m.verified_audio_ms, 0), w.lesson_overlap_ms)::bigint AS verified_lesson_ms,
@@ -1585,18 +1791,28 @@ CROSS JOIN LATERAL (
          THEN GREATEST(0, floor(extract(epoch FROM (LEAST(r.ended_at, r.scheduled_end)
                                                     - GREATEST(r.started_at, r.scheduled_start))) * 1000))::bigint
          ELSE 0::bigint END AS lesson_overlap_ms,
-    ceil(r.held_min_fraction * extract(epoch FROM (r.scheduled_end - r.scheduled_start)) * 1000)::bigint
-      AS held_threshold_ms
+    ceil(r.evidence_min_fraction * extract(epoch FROM (r.scheduled_end - r.scheduled_start)) * 1000)::bigint
+      AS evidence_threshold_ms
 ) w
 LEFT JOIN LATERAL (
   SELECT max(t.claimed_ms) AS claimed_audio_ms,
+         max(t.late_ms) AS late_audio_ms,
          sum(t.stored_bytes) AS stored_bytes,
-         max(LEAST(t.claimed_ms, w.server_capture_ms,
-                   floor(t.stored_bytes * 1000 / r.min_bytes_per_sec)::bigint)) AS verified_audio_ms,
+         max(LEAST(t.live_ms, w.server_capture_ms,
+                   floor(t.live_bytes * 1000 / r.min_bytes_per_sec)::bigint)) AS verified_audio_ms,
          count(*) AS tracks_with_audio
   FROM (
-    SELECT k.track, sum(k.t_end_ms - k.t_start_ms)::bigint AS claimed_ms, sum(k.stored_size)::bigint AS stored_bytes
+    SELECT k.track,
+           sum(k.t_end_ms - k.t_start_ms)::bigint AS claimed_ms,
+           sum(k.stored_size)::bigint AS stored_bytes,
+           COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE o.live), 0)::bigint AS live_ms,
+           COALESCE(sum(k.stored_size) FILTER (WHERE o.live), 0)::bigint AS live_bytes,
+           COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE NOT o.live), 0)::bigint AS late_ms
     FROM public.class_recording_chunks k
+    CROSS JOIN LATERAL (
+      SELECT COALESCE(k.registered_at <= r.started_at
+                        + ((k.t_end_ms + r.late_after_ms) * INTERVAL '1 millisecond'), false) AS live
+    ) o
     WHERE k.recording_id = r.id AND k.confirmed_at IS NOT NULL AND k.stored_size IS NOT NULL
     GROUP BY k.track
   ) t
@@ -1742,7 +1958,19 @@ GRANT SELECT, UPDATE                 ON public.recorder_settings        TO authe
 GRANT SELECT                         ON public.class_recording_settings TO authenticated;
 GRANT SELECT                         ON public.recorder_child_consents  TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.recorder_device_profiles TO authenticated;
-GRANT SELECT, INSERT, UPDATE         ON public.class_recordings         TO authenticated;
+GRANT SELECT, INSERT                 ON public.class_recordings         TO authenticated;
+-- UPDATE column by column (N3): the server-stamped columns (start, stop,
+-- completion, abandonment, deletion, the stop request's reason, updated_at)
+-- are not writable by a signed-in caller at all. The immutable ones stay in
+-- the list only so the trigger can refuse them with its own message.
+-- stop_requested_at and delete_after are listed for admins; the trigger
+-- ignores them from anyone else.
+GRANT UPDATE (status, session_id, class_id, armed_session_id, session_date, scheduled_start, scheduled_end,
+              capture_opens_at, capture_closes_at, purpose, format, chunk_ms, max_duration_ms,
+              min_bytes_per_sec, clock_tolerance_ms, late_after_ms, evidence_min_fraction, started_by,
+              device_profile_id, client_info, client_started_at, client_ended_at, stop_reason,
+              stop_requested_at, manifest_path, manifest_sha256, abandon_reason, delete_after)
+                                     ON public.class_recordings         TO authenticated;
 GRANT SELECT, INSERT, UPDATE         ON public.class_recording_tracks   TO authenticated;
 GRANT SELECT                         ON public.class_recording_chunks   TO authenticated;
 GRANT SELECT, INSERT, DELETE         ON public.class_recording_markers  TO authenticated;
@@ -1761,15 +1989,15 @@ GRANT ALL ON public.recorder_audit_log       TO service_role;
 GRANT SELECT ON public.recorder_session_evidence TO service_role;
 
 -- ================================================================ storage
--- 8 MB a file: a 60-second chunk of 48 kHz 16-bit mono PCM is 5.8 MB (and
--- tracks are capped at 48 kHz).
+-- The recorder's OWN bucket (C1 critic 2, N1). `class-recordings` belongs to
+-- Teacher Transcripts and is left exactly as it is. 8 MB a file: a 60-second
+-- chunk of 48 kHz 16-bit mono PCM is 5.8 MB (and tracks are capped at 48 kHz).
+-- DO NOTHING: if the bucket is already there, the preflight has checked that
+-- its settings are exactly these.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES ('class-recordings', 'class-recordings', false, 8388608,
+VALUES ('class-recorder-audio', 'class-recorder-audio', false, 8388608,
         ARRAY['audio/webm', 'audio/flac', 'audio/x-flac', 'audio/wav', 'audio/x-wav', 'application/json'])
-ON CONFLICT (id) DO UPDATE
-  SET public = false,
-      file_size_limit = EXCLUDED.file_size_limit,
-      allowed_mime_types = EXCLUDED.allowed_mime_types;
+ON CONFLICT (id) DO NOTHING;
 
 -- {class}/{recording}/manifest.json or {class}/{recording}/{track}/{000000}.{ext}.
 -- A path that is anything else is a "no", never an error inside a policy.
@@ -1852,21 +2080,24 @@ REVOKE ALL ON FUNCTION public.recorder_can_read_object(text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.recorder_can_upload(text) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.recorder_can_read_object(text) TO authenticated, service_role;
 
-DROP POLICY IF EXISTS class_recordings_storage_insert ON storage.objects;
-CREATE POLICY class_recordings_storage_insert ON storage.objects
+-- The recorder's two policies, on its own bucket only. The preflight at the
+-- top has refused any other policy that could reach this bucket.
+DROP POLICY IF EXISTS class_recorder_audio_insert ON storage.objects;
+CREATE POLICY class_recorder_audio_insert ON storage.objects
   FOR INSERT TO authenticated
-  WITH CHECK (bucket_id = 'class-recordings' AND public.recorder_can_upload(name));
+  WITH CHECK (bucket_id = 'class-recorder-audio' AND public.recorder_can_upload(name));
 
-DROP POLICY IF EXISTS class_recordings_storage_select ON storage.objects;
-CREATE POLICY class_recordings_storage_select ON storage.objects
+DROP POLICY IF EXISTS class_recorder_audio_select ON storage.objects;
+CREATE POLICY class_recorder_audio_select ON storage.objects
   FOR SELECT TO authenticated
-  USING (bucket_id = 'class-recordings' AND public.recorder_can_read_object(name));
+  USING (bucket_id = 'class-recorder-audio' AND public.recorder_can_read_object(name));
 
 -- No UPDATE policy: a stored file is never overwritten. No DELETE policy
 -- either: files are removed only by the retention edge function (service
--- role, at 03:00 or on an admin's "delete now"), which lists, removes, checks
--- and then marks the recording deleted - so a removal is always logged and a
--- 'complete' row never points at files someone removed by hand.
-DROP POLICY IF EXISTS class_recordings_storage_delete ON storage.objects;
+-- role), which removes only what recorder_retention_due lists, checks, and
+-- then marks the recording deleted - which the update trigger refuses before
+-- its deletion date. So a removal is always logged, an early one is always an
+-- attributed request, and a 'complete' row never points at files someone
+-- removed by hand.
 
 COMMIT;
