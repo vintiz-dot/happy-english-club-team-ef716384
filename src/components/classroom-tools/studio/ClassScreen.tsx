@@ -22,6 +22,7 @@ import {
 import { createPortal } from "react-dom";
 import { Minimize2, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import { QuietButton } from "./StudioKit";
 
 /**
@@ -79,6 +80,7 @@ export function ClassScreen({
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
   const container = useContext(ClassScreenContainerContext);
+  const ivory = useIvory();
 
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -134,12 +136,15 @@ export function ClassScreen({
       {...{ [CLASS_SCREEN_ATTR]: "" }}
       onPointerDown={(e) => e.stopPropagation()}
       className={cn(
-        "studio-surface pointer-events-auto fixed inset-0 z-[120] flex flex-col",
-        "animate-in fade-in duration-200",
+        ivory
+          ? "pointer-events-auto fixed inset-0 z-[120] flex flex-col bg-hec-paper text-hec-ink"
+          : "studio-surface pointer-events-auto fixed inset-0 z-[120] flex flex-col",
+        ivory ? "animate-in fade-in duration-hec-2 ease-hec" : "animate-in fade-in duration-200",
       )}
     >
-      <div className="flex items-center justify-between gap-4 px-6 py-4 sm:px-10">
-        <h2 className="studio-title truncate text-2xl sm:text-3xl">{title}</h2>
+      <div className={ivory ? "flex items-start justify-between gap-4 px-6 py-4 sm:px-10" : "flex items-center justify-between gap-4 px-6 py-4 sm:px-10"}>
+        {/* The title can carry a class name ("<class> — teams"): it wraps, never cut (DESIGN_SYSTEM s.13). */}
+        <h2 className={ivory ? "min-w-0 whitespace-normal break-words text-balance font-display text-hec-h1 font-medium text-hec-ink hyphens-none" : "studio-title truncate text-2xl sm:text-3xl"}>{title}</h2>
         <QuietButton onClick={close} size="md" aria-label="Leave class screen">
           <Minimize2 className="h-4 w-4" aria-hidden />
           Exit
