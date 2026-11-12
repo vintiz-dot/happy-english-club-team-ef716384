@@ -9,6 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FileCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { invoicePaidLabel } from "@/lib/invoiceStatus";
+
+// What this screen can set and have it stick. paid / partial / issued are
+// worked out from the month's own money by the one rule every writer uses
+// (src/lib/invoiceStatus.ts): a hand-set one was replaced by the next payment
+// or calculation, so offering them only misled. 'credit' is the one label an
+// admin sets that every writer keeps; "follow" takes it off again.
+const FOLLOW = "follow";
 
 interface Student {
   id: string;
@@ -67,10 +75,22 @@ export function InvoiceStatusManager() {
 
     setLoading(true);
     try {
+      let target: string = newStatus;
+      if (newStatus === FOLLOW) {
+        const { data: inv, error: readError } = await supabase
+          .from("invoices")
+          .select("base_amount, total_amount, recorded_payment, carry_in_debt, carry_in_credit")
+          .eq("student_id", selectedStudent)
+          .eq("month", month)
+          .maybeSingle();
+        if (readError) throw readError;
+        if (!inv) throw new Error("No bill for this student and month");
+        target = invoicePaidLabel(inv);
+      }
       const { error } = await supabase
         .from("invoices")
         .update({
-          status: newStatus as any,
+          status: target as any,
           updated_at: new Date().toISOString(),
         })
         .eq("student_id", selectedStudent)
@@ -87,13 +107,13 @@ export function InvoiceStatusManager() {
           student_id: selectedStudent,
           month,
           from_status: currentStatus,
-          to_status: newStatus,
+          to_status: target,
           reason,
         },
       });
 
       toast.success("Invoice status updated");
-      setCurrentStatus(newStatus);
+      setCurrentStatus(target);
       setReason("");
     } catch (error: any) {
       toast.error(error.message);
@@ -110,7 +130,7 @@ export function InvoiceStatusManager() {
           Invoice Status Manager
         </CardTitle>
         <CardDescription>
-          Override invoice status for a specific student and month
+          Mark a bill as credit, or let its label follow its payments again
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -155,12 +175,14 @@ export function InvoiceStatusManager() {
               <SelectValue placeholder="Select new status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="issued">Issued</SelectItem>
-              <SelectItem value="partial">Partial</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="credit">Credit (kept by every payment and calculation)</SelectItem>
+              <SelectItem value={FOLLOW}>Follow the payments (paid / partial / issued, worked out)</SelectItem>
             </SelectContent>
           </Select>
+          <p className="text-sm text-muted-foreground">
+            Paid, partial and issued are worked out from what was paid in the month against what it asks for,
+            and are re-worked at every payment and recalculation, so they cannot be set by hand here.
+          </p>
         </div>
 
         <div className="space-y-2">

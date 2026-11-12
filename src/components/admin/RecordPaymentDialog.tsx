@@ -13,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getPaymentStatus, getTuitionStatusBadge, getIvoryTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { useIvory } from "@/hooks/useIvory";
 
 interface RecordPaymentDialogProps {
@@ -89,15 +90,9 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Determine new status (must be a valid invoice_status enum value)
-      let newStatus: "draft" | "issued" | "paid" | "partial" | "credit";
-      if (newTotalPaid >= payable && payable > 0) {
-        newStatus = "paid";
-      } else if (newTotalPaid > 0) {
-        newStatus = "partial";
-      } else {
-        newStatus = "issued";
-      }
+      // The label is the one rule (src/lib/invoiceStatus.ts, mirror of the
+      // edge functions' copy); undefined leaves an admin's 'credit' alone.
+      const newStatus = labelForPayment(item?.status, newTotalPaid, payable, monthCharged(item ?? {}));
 
       if (isPlaceholder) {
         // Create invoice since none exists (upsert guards against a row
@@ -110,7 +105,7 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
           total_amount: item.total_amount || 0,
           recorded_payment: newTotalPaid,
           paid_amount: 0,
-          status: newStatus,
+          ...(newStatus ? { status: newStatus } : {}),
           carry_in_credit: item.carry_in_credit || 0,
           carry_in_debt: item.carry_in_debt || 0,
           created_by: user?.id,
@@ -123,7 +118,7 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
           .from("invoices")
           .update({
             recorded_payment: newTotalPaid,
-            status: newStatus as "draft" | "issued" | "paid" | "partial" | "credit",
+            ...(newStatus ? { status: newStatus } : {}),
             updated_at: new Date().toISOString(),
             updated_by: user?.id,
           })
@@ -159,10 +154,8 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
           const fp = row.finalPayable ?? 0;
           const debt = Math.max(0, fp - newTotalPaid);
           const credit = Math.max(0, newTotalPaid - fp);
-          let status = row.status;
-          if (newTotalPaid >= fp && fp > 0) status = "paid";
-          else if (newTotalPaid > 0) status = "partial";
-          return { 
+          const status = labelForPayment(row.status, newTotalPaid, fp, monthCharged(row)) ?? row.status;
+          return {
             ...row, 
             recorded_payment: newTotalPaid, 
             balance: debt > 0 ? debt : -credit, 

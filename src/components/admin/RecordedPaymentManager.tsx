@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/ui/loading";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { labelAfterPayment } from "@/lib/invoiceStatus";
 
 interface Invoice {
   id: string;
@@ -102,12 +103,16 @@ export function RecordedPaymentManager() {
       if (!invoice) throw new Error("Invoice not found");
 
       const oldValue = invoice.recorded_payment || 0;
+      // The label follows the money by the one rule (it was left as it was,
+      // and this screen prints it); an admin's 'credit' is kept.
+      const label = labelAfterPayment(invoice, newValue);
 
       // Update the invoice
       const { error: updateError } = await supabase
         .from("invoices")
         .update({ 
           recorded_payment: newValue,
+          ...(label ? { status: label } : {}),
           updated_at: new Date().toISOString()
         })
         .eq("id", editingInvoice.id);
@@ -158,12 +163,14 @@ export function RecordedPaymentManager() {
       if (!invoice) throw new Error("Invoice not found");
 
       const newValue = 0; // Reset to 0 on reversal
+      const label = labelAfterPayment(invoice, newValue);
 
       // Update the invoice
       const { error: updateError } = await supabase
         .from("invoices")
         .update({ 
           recorded_payment: newValue,
+          ...(label ? { status: label } : {}),
           updated_at: new Date().toISOString()
         })
         .eq("id", reversingInvoice.id);

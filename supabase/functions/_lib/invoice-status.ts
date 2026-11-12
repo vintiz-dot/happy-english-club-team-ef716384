@@ -132,8 +132,18 @@ export function invoicePaidLabel(row: BillRow, recordedPayment: unknown = row?.r
  * payment path (calculate-tuition keeps it too, below).
  */
 export function labelAfterPayment(row: BillRow, recordedPayment: unknown = row?.recorded_payment): PaidLabel | undefined {
-  if (row?.status === "credit") return undefined;
-  return invoicePaidLabel(row, recordedPayment);
+  return labelForPayment(row?.status, recordedPayment, monthPayable(row), monthCharged(row));
+}
+
+/** The same, from figures a screen already holds (its payable is the calculator's carry.payable). */
+export function labelForPayment(
+  storedStatus: unknown,
+  recordedPayment: unknown,
+  payable: unknown,
+  charged: unknown,
+): PaidLabel | undefined {
+  if (storedStatus === "credit") return undefined;
+  return paidLabel(recordedPayment, payable, charged);
 }
 
 // ---------------------------------------------------------- settle bill

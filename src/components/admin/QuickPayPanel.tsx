@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
 import { useIvory } from "@/hooks/useIvory";
 
 interface QuickPayPanelProps {
@@ -125,10 +126,8 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         const invoiceId = String((item as any).id ?? "");
         const isPersistedInvoice = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(invoiceId);
 
-        let newStatus: string;
-        if (newTotalPaid >= payable && payable > 0) newStatus = "paid";
-        else if (newTotalPaid > 0) newStatus = "partial";
-        else newStatus = "issued";
+        // The one rule (src/lib/invoiceStatus.ts); undefined keeps an admin's 'credit'.
+        const newStatus = labelForPayment((item as any).status, newTotalPaid, payable, monthCharged(item as any));
 
         try {
           if (!isPersistedInvoice) {
@@ -140,7 +139,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
               total_amount: (item as any).total_amount || 0,
               recorded_payment: enteredAmount,
               paid_amount: 0,
-              status: newStatus as any,
+              ...(newStatus ? { status: newStatus as any } : {}),
               carry_in_credit: (item as any).carry_in_credit || 0,
               carry_in_debt: (item as any).carry_in_debt || 0,
               created_by: user?.id,
@@ -152,7 +151,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
               .from("invoices")
               .update({
                 recorded_payment: newTotalPaid,
-                status: newStatus as any,
+                ...(newStatus ? { status: newStatus as any } : {}),
                 updated_at: new Date().toISOString(),
                 updated_by: user?.id,
               })
@@ -196,9 +195,7 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
           const fp = row.finalPayable ?? 0;
           const debt = Math.max(0, fp - newRecorded);
           const credit = Math.max(0, newRecorded - fp);
-          let status = row.status;
-          if (newRecorded >= fp && fp > 0) status = "paid";
-          else if (newRecorded > 0) status = "partial";
+          const status = labelForPayment(row.status, newRecorded, fp, monthCharged(row)) ?? row.status;
           return {
             ...row,
             recorded_payment: newRecorded,

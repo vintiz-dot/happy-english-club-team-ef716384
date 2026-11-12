@@ -30,6 +30,9 @@ const MIRRORED = [
   ["src/lib/payHistory.ts", "supabase/functions/_lib/pay-history.ts"],
   ["src/lib/payrollSessions.ts", "supabase/functions/_lib/payroll-sessions.ts"],
   ["src/lib/videoHomework.ts", "supabase/functions/_lib/video-homework.ts"],
+  // T4: the invoices.status rule. The admin payment screens write the label
+  // with the edge functions' rule, never one of their own.
+  ["src/lib/invoiceStatus.ts", "supabase/functions/_lib/invoice-status.ts"],
 ];
 
 /**
