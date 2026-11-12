@@ -1,4 +1,4 @@
--- ROLLBACK of D4 step 1a (supabase/migrations/20261113100000_d4_floors.sql).
+-- ROLLBACK of D4 step 1a (supabase/migrations/20261114090000_d4_floors.sql).
 --
 -- WHEN: cancelling, moving or deleting a lesson fails with an error that
 -- mentions the floor or guard_broken, or a teacher's register / a bill
@@ -7,14 +7,14 @@
 --
 -- TWO PASTES, in this order, in the Supabase SQL editor:
 --   1. this file   - drops the seven floor / keep trigger objects of
---                    20261113100000 and nothing else. The floor tables,
+--                    20261114090000 and nothing else. The floor tables,
 --                    their rows, their own guards and the functions stay
 --                    (history is kept; nothing reads the floors once
 --                    step 2 has run).
 --   2. supabase/migrations/20261112091000_session_cancel_guard.sql, again,
 --                    unchanged. It is idempotent and D4 changed no
 --                    signature: it puts back the two D2 bodies that
---                    20261113100000 replaced (_session_change_assess,
+--                    20261114090000 replaced (_session_change_assess,
 --                    _session_erased_recently), byte for byte. It also adds
 --                    one more guard_installed event row (expected).
 -- Then run docs/evidence/D-release-fingerprint.sql: all 66 objects match

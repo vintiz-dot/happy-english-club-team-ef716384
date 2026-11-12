@@ -30,7 +30,7 @@ export const AUDIT = '20261009130000_audit_every_admin_action.sql';
 export const CANCEL = '20261027090000_cancelled_lesson_attendance_guard.sql';
 export const D1 = '20261112090000_session_held_evidence.sql';
 export const D2 = '20261112091000_session_cancel_guard.sql';
-export const FLOORS = '20261113100000_d4_floors.sql';
+export const FLOORS = '20261114090000_d4_floors.sql';
 export const ROLLBACK_FLOORS = resolve(repo, 'scripts', 'ROLLBACK-d4-1-floors.sql');
 
 // ------------------------------------------------------------ D2 (copy)

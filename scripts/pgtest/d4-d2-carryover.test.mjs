@@ -1,6 +1,6 @@
 // D4 CARRY-OVER (docs/evidence/D4-design.md f.2, R-11): a COPY of
 // scripts/pgtest/session-cancel-guard.test.mjs - every case of the D2 suite -
-// re-run with D4 file 1 (20261113100000_d4_floors.sql) installed after D2.
+// re-run with D4 file 1 (20261114090000_d4_floors.sql) installed after D2.
 // The original file is not edited and keeps running without file 1.
 //
 //   node scripts/pgtest/d4-d2-carryover.test.mjs \
@@ -8,7 +8,7 @@
 //     supabase/migrations/20261027090000_cancelled_lesson_attendance_guard.sql \
 //     supabase/migrations/20261112090000_session_held_evidence.sql \
 //     supabase/migrations/20261112091000_session_cancel_guard.sql \
-//     supabase/migrations/20261113100000_d4_floors.sql
+//     supabase/migrations/20261114090000_d4_floors.sql
 //
 // ALLOWED EDITS - each tagged in the code with its id; the companion check at
 // the end asserts that every other section and every untagged line between
@@ -62,7 +62,7 @@ const ok = (name, value, extra) => {
 // [D4 edit E0]
 const [auditFile, cancelFile, d1File, d2File, floorsFile] = process.argv.slice(2);
 if (!auditFile || !cancelFile || !d1File || !d2File || !floorsFile) {
-  console.error('usage: d4-d2-carryover.test.mjs <20261009130000> <20261027090000> <20261112090000> <20261112091000> <20261113100000>');
+  console.error('usage: d4-d2-carryover.test.mjs <20261009130000> <20261027090000> <20261112090000> <20261112091000> <20261114090000>');
   process.exit(2);
 }
 const sqlOf = (f) => readFileSync(f, 'utf8');

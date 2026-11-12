@@ -6,7 +6,7 @@
 //     supabase/migrations/20261027090000_cancelled_lesson_attendance_guard.sql \
 //     supabase/migrations/20261112090000_session_held_evidence.sql \
 //     supabase/migrations/20261112091000_session_cancel_guard.sql \
-//     supabase/migrations/20261113100000_d4_floors.sql \
+//     supabase/migrations/20261114090000_d4_floors.sql \
 //     supabase/migrations/20261106120000_invoice_tuition_freeze.sql
 //
 // Spec: docs/evidence/D4-design.md revision 2 b.2, c.1, f.3 ("G-8 / R-6",

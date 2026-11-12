@@ -39,7 +39,7 @@ const AUDIT = '20261009130000_audit_every_admin_action.sql';
 const CANCEL = '20261027090000_cancelled_lesson_attendance_guard.sql';
 const D1 = '20261112090000_session_held_evidence.sql';
 const D2 = '20261112091000_session_cancel_guard.sql';
-const D4_FILES = ['20261113100000_d4_floors.sql'];   // each D4 step appends its file here
+const D4_FILES = ['20261114090000_d4_floors.sql'];   // each D4 step appends its file here
 const ROLES = ['anon', 'authenticated', 'service_role'];
 
 const RELEASES = {

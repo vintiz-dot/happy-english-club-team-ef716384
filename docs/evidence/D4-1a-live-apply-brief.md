@@ -2,7 +2,7 @@
 
 Not authorised by this file. The conductor runs this only after the independent review of step 1a and the owner's go-ahead. Live project id: `aswgmbefikhsnhogtryv`. This is a school's production database with real children and real money. Do EXACTLY these steps, in this order, and nothing else. If any check differs from what is expected, STOP immediately, change nothing further, and report.
 
-What step 1a is: ONE migration, `supabase/migrations/20261113100000_d4_floors.sql`. No edge function changes (the deployed `manage-session` v4 and `bulk-cancel-sessions` v4 pass the new preview fields through unchanged; proven by `scripts/pgtest/d4-deployed-functions.test.mjs`, which drives exactly those sources from c43a82f). The `src` change (`src/lib/sessionGuard.ts`, `EvidenceCards.tsx`) ships with the next Cloudflare deploy and reads the new fields when present; it can ship before or after the paste.
+What step 1a is: ONE migration, `supabase/migrations/20261114090000_d4_floors.sql`. No edge function changes (the deployed `manage-session` v4 and `bulk-cancel-sessions` v4 pass the new preview fields through unchanged; proven by `scripts/pgtest/d4-deployed-functions.test.mjs`, which drives exactly those sources from c43a82f). The `src` change (`src/lib/sessionGuard.ts`, `EvidenceCards.tsx`) ships with the next Cloudflare deploy and reads the new fields when present; it can ship before or after the paste.
 
 ## Rules
 
@@ -26,7 +26,7 @@ What step 1a is: ONE migration, `supabase/migrations/20261113100000_d4_floors.sq
 
 ## Step 2 - apply
 
-`apply_migration` name `d4_floors`, query = the exact LF content of `supabase/migrations/20261113100000_d4_floors.sql`. If it raises, STOP and report the message verbatim (its preflight installs nothing when it refuses; the database is as in step 1).
+`apply_migration` name `d4_floors`, query = the exact LF content of `supabase/migrations/20261114090000_d4_floors.sql`. If it raises, STOP and report the message verbatim (its preflight installs nothing when it refuses; the database is as in step 1).
 
 ## Step 3 - fingerprint (the important one)
 
