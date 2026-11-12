@@ -1236,7 +1236,8 @@ await section('S3 F-12 destination-day rules, each alone', async () => {
   }
   // Control: the same move onto a clean future day is tier 0, not reviewed.
   const c = await mk();
-  const cday = await clock(19);
+  // (a day of an open payroll month: another case locks a later month's payroll)
+  const cday = await clock(13);
   const pc = await preview(c.sid, 'move', { date: cday.date, start_time: '17:30', end_time: '19:00' });
   ok('F-12 control: a clean future day -> tier 0, review_required false', pc.tier === 0 && pc.review_required === false &&
      pc.destination?.day_evidence?.any === false, [pc.tier, pc.review_required, pc.destination]);

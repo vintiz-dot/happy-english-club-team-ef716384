@@ -104,9 +104,16 @@ Render by `message_key`; `message` is a fallback only. Never cache a preview acr
 | `misconfigured` | 503 | `sessionGuard.error.misconfigured` | function lacks SUPABASE_ANON_KEY |
 | `unexpected` | 500 | `sessionGuard.error.unexpected` | anything else |
 
+> **Revised by the ship fixes (docs/evidence/D-ship-fixes.md, D-review-3).** The preview is READ-ONLY: it calls neither calculate-tuition nor calculate-payroll and writes nothing. `consequences` (`C` below) carries the STORED bills. Added codes: `rate_limited` (429), `outside_criteria` (bulk refused row). `create` on a taken slot is now `409 slot_taken`. Bulk-delete confirm takes the same `items` / `include_held` / `held_items` shape as bulk cancel.
+
+| code | HTTP | wording key | when / what the dialog does |
+|---|---|---|---|
+| `rate_limited` | 429 | `sessionGuard.error.rate_limited` | manage-session: more than 50 actions a minute by this admin (a preview + confirm is two). Body also has `retryAfter` (seconds). Nothing changed; wait. |
+| `outside_criteria` | - (row in `refused`) | `sessionGuard.error.outside_criteria` | bulk confirm: this lesson is not inside the dates / class / teacher the request states; it was not sent. |
+
 ### manage-session: preview (all single dialogs)
 
-Request `{ "action": "preview", "data": { "id": "<uuid>", "op": "cancel"|"delete"|"move"|"uncancel", "change"?: { "date": "YYYY-MM-DD", "start_time": "HH:MM", "end_time": "HH:MM" }, "figures"?: false } }` (`change` required for `move`).
+Request `{ "action": "preview", "data": { "id": "<uuid>", "op": "cancel"|"delete"|"move"|"uncancel", "change"?: { "date": "YYYY-MM-DD", "start_time": "HH:MM", "end_time": "HH:MM" } } }` (`change` required for `move`). `figures` is accepted and ignored (a preview never fetches figures).
 
 Response 200 `{ "ok": true, "preview": P, "consequences": C }`.
 
@@ -114,7 +121,19 @@ Response 200 `{ "ok": true, "preview": P, "consequences": C }`.
 
 Dialog rules: branch on `allowed`/`refuse_code` first (not on a later RPC error - check order, D2-build.md gap 7). Ask for confirmation when `requires.confirm`; ask for a correction reason when `requires.correction_reason`; say "this goes to review" when `review_required`; show `erased_recently` entries as "removed before this cancel".
 
-`C` = `{ "tuition": [ { "student_id", "month", "fetched": bool, "before"?: { totalAmount, baseAmount, totalDiscount, sessionCount, tuitionFrozen, siblingUnresolved, invoiceSaved, carry { carryInCredit, carryInDebt, carryOutCredit, carryOutDebt, status } }, "after": { "fetched": false, "reason": "not_available_before_the_change" }, "error"? } ], "payroll": { "fetched": true, "month", "teacher_id", "response": <calculate-payroll body> } | { "fetched": false, "reason": "lesson_not_held"|"calculate_payroll_failed", "error"? } }`, or `{ "fetched": false, "reason": "not_requested" }` with `figures: false`. Show figures exactly as given; a `fetched: false` row is shown as "could not be fetched", never estimated.
+`C` (final, D-ship-fixes) - built from `P` alone, no other read, no arithmetic:
+
+```jsonc
+{ "source": "stored",
+  "affected_students": [ { "student_id", "month", "mark": { "status", "marked_by_person" } | null } ],
+  "invoices_before":   [ { "student_id", "month",
+                           "bill": { "total_amount", "discount_amount", "recorded_payment",
+                                     "confirmation_status", "status", "tuition_frozen" } | null } ],
+  "after":    { "available": false, "reason": "worked out after the change" },
+  "pay_line": { "available": false, "reason": "not fetched in a preview: calculate-payroll saves the month summary when it runs" } }
+```
+
+One `affected_students` and one `invoices_before` entry per (student, month) in `P.refresh_pairs` (a move across months lists the destination month too). `bill: null` = no bill is saved for that child and month (say "no bill yet", never 0). `mark: null` = the child has no mark on this lesson. Show the bill fields exactly as given; `recorded_payment` is what was paid in that month (never `paid_amount`). The after-figures come from the confirm step's `tuition.results[].response`. The token covers every field of `bill` (plus the bill id and base): a bill that changes between preview and confirm gives `409 token_stale`, whose body now carries `preview` AND `consequences` (fresh) - show them, ask again.
 
 ### manage-session: confirm actions (single)
 
@@ -138,19 +157,27 @@ Success 200:
                "failed": [ { "student_id", "month", "error" } ], "event_recorded": bool, "event_error"? } }
 ```
 
-`tuition.status: "failed"` means the change IS made and some bills are not recalculated: show a blocking "Retry" that calls `refresh-tuition` with `result.override_id` (response `{ ok, override_id, tuition }`).
+`tuition.status: "failed"` means the change IS made and some bills are not recalculated: show a blocking "Retry" that calls `refresh-tuition` with `result.override_id` (response `{ ok, override_id, tuition }`). A failure that happened after the database committed the change (a network error while refreshing or writing the event) is ALSO a 200 with `tuition.status: "failed"` (one `failed` entry with `student_id: null`); it is never reported as a failed change. If a confirm still answers 5xx, re-open the preview before telling the admin it failed (`already_canceled` / `not_canceled` there means it did go through). `tuition.failed[].error` is a raw English string (or `"sibling_unresolved"`): show the wording key `sessionGuard.tuition.refresh_failed`, not the string. `result.review_required` is the authority after a confirm; the preview's `review_required` is a forecast.
+
+Un-cancel: the register stays Excused after an un-cancel (marks are not restored); `P.after_cancel.marks_excused_now` says how many. The dialog says so and links to the register.
 
 ### Bulk cancel (bulk-cancel-sessions)
 
-Preview: `{ "step": "preview", "date_from", "date_to" (both required, 0-62 days), "class_id"?, "teacher_id"? }` -> `{ ok: true, success: true, batch_id, plain: [Row], needs_ack: [Row + { level, settled_any, requires, review_required, evidence, affected, invoices_before }], refused: [Row + { refuse_code }], preview_failed: [{ id, code, message_key }] }`; `Row = { id, date, start_time, end_time, status, class_id, teacher_id, tier, token }`. Non-cancelled lessons only; > 500 -> `too_many`.
+Preview (read-only, no calculate-tuition): `{ "step": "preview", "date_from", "date_to" (both required, 0-62 days), "class_id"?, "teacher_id"? }` -> `{ ok: true, success: true, batch_id, plain: [Row], needs_ack: [Row + { level, settled_any, requires, review_required, evidence, affected, invoices_before, consequences: C }], refused: [Row + { refuse_code }], preview_failed: [{ id, code, message_key }] }`; `Row = { id, date, start_time, end_time, status, class_id, teacher_id, tier, token }`; `C` is the same block as the single preview. Non-cancelled lessons only; > 500 -> `too_many`. The dialog should make the admin pick a class or a teacher (the API allows the whole school, capped at 500).
 
-Confirm: `{ "step": "confirm", "batch_id" (from the preview), "reason" (batch reason, required), "items": [{ id, token }] (the plain rows), "include_held"?: true, "held_items"?: [{ id, token, confirm: true, reason? (required by SQL for tier 2/3), correction_reason? (tier 3) }] , "date_from"?, "date_to"?, "class_id"?, "teacher_id"? }` (criteria only for the audit row). `held_items` without `include_held: true` are ignored (`held_ignored: n`).
+Confirm: `{ "step": "confirm", "batch_id" (from the preview), "reason" (batch reason, required), "items": [{ id, token }] (the plain rows; any other field is stripped), "include_held"?: true, "held_items"?: [{ id, token, confirm: true, reason? (required by SQL for tier 2/3), correction_reason? (tier 3) }] , "date_from"?, "date_to"?, "class_id"?, "teacher_id"? }`. Send the same criteria as the preview: every criterion sent is ENFORCED - a lesson outside it is refused `outside_criteria` and not sent. `held_items` without `include_held: true` are ignored (`held_ignored: n`).
 
-Response 200: `{ ok, success, partial, batch_id, canceled: [{ id, override_id, tier, review_required }], refused: [{ id, code, message_key, sqlstate }], not_attempted: [{ id, code }], needs_ack: [{ id, tier, level, settled_any, requires, review_required, evidence, token }], held_ignored, stopped: null | { code, message_key, message }, tuition: { status, per_session: [{ id, override_id, status, failed, event_recorded }], failed } }`. `ok: false` + `stopped` = a chunk failed (done chunks stand). The dialog lists `refused` with their wording and offers `needs_ack` for one-by-one acknowledgement (each with its own reason, confirm, correction reason).
+Response 200: `{ ok, success, partial, batch_id, canceled: [{ id, override_id, tier, review_required }], refused: [{ id, code, message_key, sqlstate }], not_attempted: [{ id, code }], needs_ack: [{ id, tier, level, settled_any, requires, review_required, evidence, token, consequences: C }], held_ignored, stopped: null | { code, message_key, message }, tuition: { status, per_session: [{ id, override_id, status, failed, event_recorded }], failed } }`. `ok: false` + `stopped` = a chunk failed (done chunks stand); `not_attempted` lessons were not sent - their tokens stay good unless something changed (a confirm then answers `token_stale` per lesson). The dialog lists `refused` with their wording and offers `needs_ack` for one-by-one acknowledgement (each with its own reason, confirm, correction reason).
+
+Retrying failed refreshes after a bulk: one manage-session `refresh-tuition` per `tuition.per_session[].override_id` whose `status` is `failed`, paced (calculate-tuition allows 30 calls a minute for every caller together; a lesson of 12 children is 12 calls). A bulk of more than ~2 lessons will usually leave some `failed` on its first pass; that is expected and visible, not an error. Overrides older than 10 minutes without a `tuition_refreshed` event are listed by the view `session_cancel_tuition_pending` - show it on the admin's sessions page.
 
 ### Bulk delete (manage-session `bulk-delete`)
 
-Preview `{ action: "bulk-delete", data: { step: "preview", from_date, to_date, class_id? | teacher_id? (one required), hard_delete: bool } }` -> `{ ok, op: "delete"|"cancel", batch_id, plain, needs_ack, refused, preview_failed }` (same rows as bulk cancel; hard delete includes cancelled lessons; evidence lessons are in `refused` with `use_cancel`). Confirm `{ step: "confirm", ..same criteria.., reason, batch_id, items: [{ id, token, confirm?, reason?, correction_reason? }] }` -> `{ ok, partial, op, batch_id, done: [{ id, override_id, tier, review_required }], refused, not_attempted, stopped, tuition }`. Hard delete is one RPC per lesson (not atomic); soft goes in chunks of 50.
+Preview `{ action: "bulk-delete", data: { step: "preview", from_date, to_date, class_id? | teacher_id? (one required), hard_delete: bool } }` -> `{ ok, op: "delete"|"cancel", batch_id, plain, needs_ack, refused, preview_failed }` (same rows as bulk cancel, `needs_ack` with `consequences`; hard delete includes cancelled lessons; evidence lessons are in `refused` with `use_cancel`). Confirm - SAME SHAPE AS BULK CANCEL (D-ship-fixes F-4): `{ step: "confirm", ..same criteria (enforced, outside_criteria).., reason, batch_id, items: [{ id, token }], include_held?: true, held_items?: [{ id, token, confirm: true, reason?, correction_reason? }] }` -> `{ ok, partial, op, batch_id, done: [{ id, override_id, tier, review_required }], refused, not_attempted, held_ignored, stopped, tuition }`. A past or started lesson without evidence is tier 1 even for a hard delete: it goes in `held_items` with `confirm: true`. Hard delete is one RPC per lesson (not atomic); soft goes in chunks of 50.
+
+Teachers: every checked RPC is admin-only, so a teacher cannot cancel, delete or move a lesson; the calendar must not offer dragging to non-admins (a teacher's drag is refused by the database, HC020).
+
+`create`: a taken slot is `409 slot_taken` (was `500 unexpected`).
 
 ### UI call sites that break against the new functions (ship functions and dialogs together)
 
