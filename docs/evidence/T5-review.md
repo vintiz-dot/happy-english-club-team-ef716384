@@ -2,7 +2,7 @@
 
 Reviewed: `worktree-agent-ac4c6ea6c6844f5e3` at b1b8a9d against `claude/hec-conductor-setup-efbaa5`. Review only: no product code changed, nothing deployed or pushed, no database access.
 
-**Where I am / next step:** sections 1-6 written from reading the code; handler mutations run. Next: full suites (running), view-mapping mutations, sections 7-8, verdict.
+**Where I am / next step:** complete - verdict PASS at the end.
 
 `fn` = `supabase/functions/calculate-payroll/index.ts`, `view` = `src/lib/teacherPayrollView.ts`.
 
@@ -74,3 +74,44 @@ Checked against the 6465f08 sources.
 | 6 | `payrollData[0]` = a TA's pay under an archived teacher's name | yes: handler test reproduces it on the base function | yes, twice (by-id pick + narrowing). `TeacherProfileOverview.tsx:21` still reads `[0]` and is fixed only by the redeploy | SHOWN to admins only |
 
 None of the six touched what anyone was PAID: payroll_lines are written by close-payroll-month from calculate-payroll's totals, which are byte-for-byte unchanged. The one place where pay may differ from what an admin intended is item 4 seen from the other side: admins can type an override on a lesson (`AddSessionModal.tsx:120`, `EditSessionModal.tsx:62`) and it has never paid. That is not caused or changed by T5; it is owner question 2.
+
+## 7. Suites and mutations (run by the reviewer)
+
+- `node scripts/pgtest/run.mjs`: 3630 assertions, 43 suites, 0 failed (teacher payroll view 59/0, teacher payroll function 81/0, payroll screen rows 69/0, shared-module mirrors 13/0, payroll month locking 55/0, edge functions typecheck 5/0, app typecheck 3/0).
+- `npx --yes bun test scripts/payrollCalculation.test.ts`: 6 pass, 0 fail.
+- `tsc --noEmit -p tsconfig.app.json`: exit 0.
+- node_modules junction removed with `cmd //c rmdir`; the real folder is intact; working tree clean.
+
+Mutations, all mine (the implementer's two not repeated). Handler mutants were written outside the repo and passed to the test by path; view mutants were written in place and the original bytes restored and verified.
+
+| Mutant | Result |
+|---|---|
+| M1 gate: body `teacherId` wins over the JWT's teacher | caught (8) |
+| M2 gate: a teacher also gets the TA loop | caught (4) |
+| M5 gate: teacher role with no teachers row falls through to everyone | caught (10) |
+| M7 gate: admin TA narrowing inverted | caught (5) |
+| M3 `rateVnd` from today's rate | caught (2) |
+| M4 lost income at today's rate | caught (2) |
+| M6 lost income added into `totalAmountActual` | caught (7) |
+| V1 view: fall back to `payrollData[0]` | caught (2) |
+| V2 view: recomputed amounts shown in a drifted closed month | caught (5) |
+| V3 view: missing amount becomes 0 | caught (2) |
+| V4 view: still-to-come against the frozen actual | caught (3) |
+| V5 view: missing lost income becomes 0 | caught (1) |
+| V6 view: closed month shows live as earned | caught (3) |
+| V7 view: day totals include unpaid lessons | caught (4) |
+| V8 view: partial day sum when an amount is missing | caught (3) |
+
+15 of 15 caught, 0 survived.
+
+## 8. Owner questions - recommended defaults
+
+1. Closed month corrected after closing: keep what T5 does - show the paid totals, withhold per-lesson amounts, say why. A teacher's page should never carry two answers; the correction reaches them as an adjustment in a later month. Does not block.
+2. `rate_override_vnd`: default NO, it does not affect pay (unchanged, and what has always been paid). But admins can still type it on a lesson, so either remove/relabel that input or decide it should pay and change the function with tests. Before deciding, the owner should count lessons with an override set. Does not block T5; it is the only item where PAID could differ from what an admin intended.
+3. `TAProfileDrawer`, `OperationalReports`, `ClassCalendarEnhanced`: a follow-up task, admin-facing display only, none writes pay. Do `TAProfileDrawer` first - it counts lessons the TA was absent from. Does not block.
+
+Added by this review: a TA's dashboard shows 0K earned/projected because the function answers TAs 403 (section 3). Pre-existing; follow-up.
+
+## Verdict: PASS
+
+No blockers, no majors inside T5. Minors m1-m5 are optional. Deploy: `calculate-payroll` only, no migration. Either order is safe; function FIRST is better - the old screens ignore the new fields, the new screens then never show "Figure unavailable", and `TeacherProfileOverview`'s `[0]` is corrected by the function alone.
