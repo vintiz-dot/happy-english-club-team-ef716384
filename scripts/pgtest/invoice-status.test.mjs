@@ -710,8 +710,15 @@ console.log('\nRound 2 - ONE rule for the paid label, and every writer agrees wi
   for (const f of ['RecordPaymentDialog.tsx', 'QuickPayPanel.tsx', 'BatchPaymentDialog.tsx']) {
     ok(`  ${f} writes by this rule (recorded vs payable; paid / partial / issued)`, dialogRule.test(src(`src/components/admin/${f}`)));
   }
-  ok('  the dialogs\' payable is charge + carry-in debt - carry-in credit (useLiveTuitionData)',
-     /finalPayable:[^\n]*carryInDebt[^\n]*-[^\n]*carryInCredit/.test(src('src/hooks/useLiveTuitionData.ts')));
+  // The row the dialogs read moved to src/lib/liveTuitionItem.ts (T3 round 2):
+  // the function's own carry.payable (monthPayable, above), and for a
+  // function too old to send it, the same sum over the function's figures.
+  // scripts/tuitionRows.test.ts checks both by value.
+  const liveItem = src('src/lib/liveTuitionItem.ts');
+  ok('  the dialogs\' payable is the function\'s carry.payable (liveTuitionItem)',
+     /finalPayable:\s*payableFromFunction\(/.test(liveItem));
+  ok('  and for an older function, charge + carry-in debt - carry-in credit',
+     /\?\?[\s\S]{0,120}data\.totalAmount \+ \(data\.carry\?\.carryInDebt \?\? 0\) - \(data\.carry\?\.carryInCredit \?\? 0\)/.test(liveItem));
   const aiSql = src('supabase/migrations/20261107090000_ai_assisted_admin_actions.sql');
   ok('  ai_action_apply / undo write by this rule too',
      /v_payable := coalesce\(inv\.total_amount, 0\) \+ coalesce\(inv\.carry_in_debt, 0\) - coalesce\(inv\.carry_in_credit, 0\)/.test(aiSql)
