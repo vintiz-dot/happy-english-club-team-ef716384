@@ -118,3 +118,13 @@ Every old disagreement on a rate change is upward (the overpaying direction) whe
 2. `sessions.rate_override_vnd` is ignored by calculate-payroll (so by actual pay); the admin profile used to show it applied. If overrides are meant to pay, that is a function change to decide.
 3. Not fixed here (recorded in 1): `TAProfileDrawer` earnings (counts lessons a TA was absent from, today's rate), `OperationalReports` saved-payroll and fallback pricing, `ClassCalendarEnhanced` cost.
 4. TAs have no own pay page; the function answers them 403.
+
+## Review minors (T5-review.md at 634bd87)
+
+1. The cancelled-lessons read (Lost Income) no longer throws: `readCancelled` catches an error answer or a thrown request, logs it, and returns null; that row then has no `lostIncome` and the screen shows "Figure unavailable". Same for TAs (whose read used to ignore its error and report 0). Test: with the read failing (error and throw), admin open/closed, teacher and service-role answers are byte-identical to the normal run minus `lostIncome`, writes identical, and close-payroll-month (bundled, calling the function through `functions.invoke`) still locks October and books the same `payroll_lines` and `expenditures`. Mutation (restoring the throwing read) fails the section.
+2. A closed month corrected after the close withholds the per-lesson rate and basis with the amount, so the CSV prints neither.
+3. A locked month in which the person has no frozen line: both screens say the figure is calculated now, not what was paid (`monthLocked` in the view).
+4. Calendar badge is the function's status; the "after now -> Scheduled" switch is gone.
+Owner defaults: per-lesson amounts stay withheld; the session "Price Override (VND)" inputs (AddSessionModal, EditSessionModal) are labelled "not used for staff pay" - wording only.
+
+Suites after the minors: run.mjs 3680 assertions / 43 suites / 0 failed (teacher payroll view 67, function 123); bun payroll 6/0; app tsc clean.
