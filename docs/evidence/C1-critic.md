@@ -68,6 +68,26 @@ Probes ran in a throwaway `.probe/` harness that copies the suite's PRELUDE verb
 - Why: room audio of children in the corridor/break 15+ minutes outside the window the parents were told about is accepted and stored. The server is the only boundary a modified page cannot cross; here it is 4x wider than the product rule.
 - Fix: arming may stay early (it is just a row), but `armed -> recording` must clamp `started_at >= scheduled_start - pre_roll_minutes` (refuse earlier), and `recorder_register_chunk` must refuse audio whose server-time position falls before `scheduled_start - pre_roll` or after `scheduled_end + grace_minutes` (compute from `started_at` + `t_ms`, and see F1(a) for tying `t_ms` to the server clock). If an overrun allowance is wanted, it is `grace_minutes`, one number.
 
+### F6 MAJOR - the "no file left" guard on `deleted` fails OPEN when the function owner cannot see `storage.objects` rows; then the row can be hard-deleted and the audio is orphaned with nothing pointing at it
+
+- Where: `recorder__recording_before_update`, `deleted` branch (:780-784): `IF EXISTS (SELECT 1 FROM storage.objects ...)`. The function is SECURITY DEFINER, so it reads as its owner (whoever pasted the migration). If that role is subject to RLS on `storage.objects` (Supabase enables RLS there; policies here are `TO authenticated`), the query silently returns no rows, `EXISTS` is false and the guard passes. The builder's caveat is right, and it is fail-open. The `complete` branch (:743) and `recorder_confirm_chunk` (:1066-1071) have the same blindness but fail CLOSED (absence -> refusal).
+- Probe (executed): `recorder__recording_before_update` owned by `mig_owner NOBYPASSRLS` with SELECT on storage.objects; a recording completed earlier with 2 files in storage.
+  ```
+  FAILOPEN: complete with a non-bypass owner: {"err":"The manifest is not in storage yet"}     <- closed side
+  files of r2 in storage: 2
+  FAILOPEN: service role marks r2 deleted with its files still present: {"ok":[{"d":true}]}
+  FAILOPEN: row now: [{"status":"deleted","gone":true}]
+  FAILOPEN: files still there: 2
+  FAILOPEN: row can now be hard-deleted: {"ok":[]}
+  FAILOPEN: orphaned files left: 2
+  ```
+- Whether the owner on production bypasses RLS was NOT checked (no live database). The guard's correctness depends on an unasserted property of the pasting role.
+- Fail-closed form (executed): give the function `SET row_security = off`. Postgres then raises instead of filtering when the owner does not bypass RLS:
+  ```
+  FIX: with row_security=off and a non-bypass owner, mark deleted: {"err":"query would be affected by row-level security policy for table \"objects\""}
+  ```
+  Put `SET row_security = off` on `recorder__recording_before_update` and `recorder_confirm_chunk` (both read storage.objects), and add a suite case that re-owns the function to a NOBYPASSRLS role and expects the refusal. Separately, `recorder__recording_before_delete` (:801-811) should re-check storage too (same form), so a row is never removed while a file exists, whatever path got it to `deleted`.
+
 ## Must fix before C2 builds on it
 (in progress)
 
