@@ -62,3 +62,15 @@ PY scripts\lesson-eval\score.py preserve --ref annotated.tsv --hyp sysA=work\res
 - Learner-error slice: verbatim reference with `{spoken=>correct}` marks, e.g. `he {go=>goes} home`, `I like {=>the} dog`.
 
 The normaliser, DER and threshold rules are documented in `score.py --help`.
+
+## Signing in for the vendor run (the owner types this in their own terminal)
+
+`vendor_run.py` needs the admin's access token. It signs in itself and keeps the token in memory only (never printed, never written; refreshed automatically if a run outlasts it). Type, in your own terminal, from the repo folder:
+
+    C:\Users\Dell\hec-audio-eval\.venv\Scripts\python.exe scripts\lesson-eval\vendor_run.py --login --vendor azure --mode fast-multilingual --synth seed7_ov00_s500 --max-minutes 10
+
+It asks for the admin email, then the password (hidden). Check the sign-in alone first (calls nothing else; prints only "signed in" and the expiry):
+
+    C:\Users\Dell\hec-audio-eval\.venv\Scripts\python.exe scripts\lesson-eval\vendor_run.py --login --whoami
+
+A non-admin account is refused by the proxy (HTTP 403); the script says so in plain words. `HEC_ADMIN_JWT` still works as before; without it, on a terminal, the script prompts as if `--login` were given.

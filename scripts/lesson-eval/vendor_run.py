@@ -16,7 +16,9 @@ Inputs (choose one):
 
 Rules this script keeps:
   * The admin's access token is read from the environment variable
-    HEC_ADMIN_JWT at run time. It is never written to disk and never printed.
+    HEC_ADMIN_JWT, or (--login, or no HEC_ADMIN_JWT on a terminal) obtained by
+    signing in with a hidden email/password prompt and refreshed in memory.
+    It is never written to disk and never printed. --whoami only signs in.
   * Nothing is written inside a git repository (common.safe_out exits 3).
     Output: <HEC_EVAL_ROOT>/work/vendor/<vendor>/<mode>/.
   * Only codes leave this machine. Original file names stay in a local
@@ -262,11 +264,74 @@ def supabase_conf() -> tuple[str, str]:
     return url.rstrip("/"), key
 
 
-def jwt() -> str:
-    t = os.environ.get("HEC_ADMIN_JWT", "").strip()
-    if not t:
-        sys.exit("Set HEC_ADMIN_JWT to the admin's access token for this session (it is not saved)")
-    return t
+class Session:
+    """The admin's access token, kept in memory only.
+
+    Either HEC_ADMIN_JWT (as before; no refresh) or a hidden email/password
+    prompt (--login). The password and tokens are never printed or written;
+    the password is dropped as soon as the first sign-in has answered.
+    """
+
+    def __init__(self, url: str, key: str):
+        self.url, self.key = url, key
+        self._token = ""
+        self._refresh = ""
+        self._exp = 0.0
+
+    def _take(self, st: int, raw: bytes) -> None:
+        try:
+            d = json.loads(raw)
+        except ValueError:
+            d = {}
+        if st != 200 or not d.get("access_token"):
+            # Our own words; the auth server's body is not echoed.
+            sys.exit(f"sign-in failed (HTTP {st}): check the email and password")
+        self._token = d["access_token"]
+        self._refresh = d.get("refresh_token") or ""
+        self._exp = float(d.get("expires_at") or (time.time() + float(d.get("expires_in") or 3600)))
+
+    def sign_in(self) -> None:
+        import getpass
+        email = input("Admin email: ").strip()
+        password = getpass.getpass("Password (hidden): ")
+        st, raw = http("POST", f"{self.url}/auth/v1/token?grant_type=password",
+                       {"apikey": self.key, "Content-Type": "application/json"},
+                       json.dumps({"email": email, "password": password}).encode())
+        del password
+        self._take(st, raw)
+
+    def from_env(self) -> bool:
+        t = os.environ.get("HEC_ADMIN_JWT", "").strip()
+        if t:
+            self._token = t
+            self._exp = float("inf")
+        return bool(t)
+
+    def token(self) -> str:
+        if self._refresh and time.time() > self._exp - 90:
+            st, raw = http("POST", f"{self.url}/auth/v1/token?grant_type=refresh_token",
+                           {"apikey": self.key, "Content-Type": "application/json"},
+                           json.dumps({"refresh_token": self._refresh}).encode())
+            self._take(st, raw)
+        return self._token
+
+    def expires_at(self) -> str:
+        return datetime.fromtimestamp(self._exp, timezone.utc).isoformat(timespec="seconds")
+
+
+def open_session(url: str, key: str, login: bool) -> Session:
+    s = Session(url, key)
+    if login:
+        s.sign_in()
+    elif not s.from_env():
+        if sys.stdin.isatty():
+            s.sign_in()
+        else:
+            sys.exit("Set HEC_ADMIN_JWT to the admin's access token for this session (it is not saved), or use --login")
+    return s
+
+
+NOT_ADMIN = "This login is not an admin account: the proxy answered 403. Sign in with the admin's own email."
 
 
 def http(method: str, url: str, headers: dict, body: bytes | None, timeout: float = 170) -> tuple[int, bytes]:
@@ -344,16 +409,28 @@ def main(argv=None) -> int:
     ap.add_argument("--delete-remote", action="store_true")
     ap.add_argument("--all", action="store_true", help="with --delete-remote: every object in the bucket")
     ap.add_argument("--out", default=None, help="default <root>/work/vendor/<vendor>/<mode>")
+    ap.add_argument("--login", action="store_true",
+                    help="prompt for the admin's email and password (hidden) and sign in; the token stays in memory")
+    ap.add_argument("--whoami", action="store_true",
+                    help="sign in, print only 'signed in' and the token expiry, call nothing else")
     a = ap.parse_args(argv)
+
+    if a.whoami:
+        url, key = supabase_conf()
+        sess = open_session(url, key, a.login)
+        sess.token()
+        print("signed in")
+        print(f"token expires at {sess.expires_at()}")
+        return 0
 
     if a.delete_remote and a.all:
         url, key = supabase_conf()
-        token = jwt()
-        objs = list_all(url, key, token)
+        sess = open_session(url, key, a.login)
+        objs = list_all(url, key, sess.token())
         if a.dry_run:
             print(f"would delete {len(objs)} object(s)")
             return 0
-        delete_remote(url, key, token, objs)
+        delete_remote(url, key, sess.token(), objs)
         return 0
 
     if not a.vendor or a.mode not in MODES.get(a.vendor, []):
@@ -373,10 +450,10 @@ def main(argv=None) -> int:
     (out_dir / f"{run_id}.map.json").write_text(json.dumps(
         [{k: s.get(k) for k in ("file_id", "code_dir", "source_name", "segments")} for s in srcs], indent=1), encoding="utf-8")
 
-    url = key = token = None
+    url = key = sess = None
     if not a.dry_run:
         url, key = supabase_conf()
-        token = jwt()
+        sess = open_session(url, key, a.login)
 
     t_start = time.time()
     sent_s = 0.0
@@ -400,7 +477,7 @@ def main(argv=None) -> int:
                 stopped = True
                 break
             if not state["pieces"].get(obj, {}).get("uploaded"):
-                upload(url, key, token, obj, local)
+                upload(url, key, sess.token(), obj, local)
                 state["pieces"].setdefault(obj, {})["uploaded"] = True
                 state_path.write_text(json.dumps(state, indent=1), encoding="utf-8")
             body = {"run_id": run_id, "vendor": a.vendor, "mode": a.mode, "object_path": obj, "audio_seconds": secs}
@@ -409,7 +486,7 @@ def main(argv=None) -> int:
                 body["options"] = opts
             for attempt in range(4):
                 st, raw = http("POST", f"{url}/functions/v1/{FUNCTION}",
-                               {**auth_headers(key, token), "Content-Type": "application/json"}, json.dumps(body).encode())
+                               {**auth_headers(key, sess.token()), "Content-Type": "application/json"}, json.dumps(body).encode())
                 try:
                     res = json.loads(raw)
                 except ValueError:
@@ -424,6 +501,8 @@ def main(argv=None) -> int:
                 print(f"{obj}: HTTP {st} {str(res.get('error', ''))[:160]}")
                 if st == 429:
                     print("server cap reached; stopping")
+                if st == 403:
+                    print(NOT_ADMIN)
                 stopped = True
                 break
             piece_json.parent.mkdir(parents=True, exist_ok=True)
@@ -457,7 +536,7 @@ def main(argv=None) -> int:
     print(f"wrote {res_path} ({len(files_out)} file(s)){' - INCOMPLETE, run again to resume' if stopped else ''}")
 
     if a.delete_remote:
-        delete_remote(url, key, token, [o for o, s in state["pieces"].items() if s.get("uploaded")])
+        delete_remote(url, key, sess.token(), [o for o, s in state["pieces"].items() if s.get("uploaded")])
     return 1 if stopped else 0
 
 
