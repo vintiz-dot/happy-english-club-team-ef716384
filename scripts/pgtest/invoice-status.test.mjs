@@ -126,11 +126,14 @@ for (const f of files) await db.exec(readFileSync(f, 'utf8'));
 let fixture = {};
 let invoiceWrites = [];
 let failInvoiceRead = false;
+let failPriorRead = false;              // only the read of the OTHER months (.neq('month', ...))
 let failNextFullUpsert = false;
+let beforeNextUpsert = null;            // runs once, between a calculation's read and its save
+let memoryWrites = [];
 const JSONB = new Set(['review_flags', 'class_breakdown']);
 
 function invoiceQuery() {
-  let mode = 'select', cols = '*', payload = null, conflict = '', order = '';
+  let mode = 'select', cols = '*', payload = null, conflict = '', order = '', limit = '';
   const where = [], params = [];
   const p = (v) => { params.push(v); return `$${params.length}`; };
   const value = (k, v) => (JSONB.has(k) ? `${p(v == null ? null : JSON.stringify(v))}::jsonb` : p(v));
@@ -139,14 +142,21 @@ function invoiceQuery() {
     try {
       if (mode === 'select') {
         if (failInvoiceRead) return { data: null, error: { message: 'synthetic invoice read failure' } };
-        return { data: (await db.query(`SELECT ${cols} FROM public.invoices${w}${order}`, params)).rows, error: null };
+        if (failPriorRead && where.some((c) => c.includes('<>'))) return { data: null, error: { message: 'synthetic read failure (other months)' } };
+        return { data: (await db.query(`SELECT ${cols} FROM public.invoices${w}${order}${limit}`, params)).rows, error: null };
       }
       const keys = Object.keys(payload);
+      if (mode === 'insert') {
+        invoiceWrites.push({ mode, payload });
+        await db.query(`INSERT INTO public.invoices (${keys.join(', ')}) VALUES (${keys.map((k) => value(k, payload[k])).join(', ')})`, params);
+        return { data: null, error: null };
+      }
       if (mode === 'upsert') {
         if (failNextFullUpsert && keys.includes('carry_in_credit')) {
           failNextFullUpsert = false;
           return { data: null, error: { message: 'synthetic: column does not exist' } };
         }
+        if (beforeNextUpsert) { const f = beforeNextUpsert; beforeNextUpsert = null; await f(); }
         invoiceWrites.push({ mode, payload });
         const vals = keys.map((k) => value(k, payload[k]));
         await db.query(
@@ -172,12 +182,16 @@ function invoiceQuery() {
     }
   }
   const q = {
-    select(c = '*') { if (mode === 'select') cols = c; return q; },
+    // An embedded relation (`*, students(full_name)`) is PostgREST's; the table here has no names to give.
+    select(c = '*') { if (mode === 'select') cols = c.replace(/,\s*\w+\([^)]*\)/g, ''); return q; },
     eq(k, v) { where.push(`${k} = ${p(v)}`); return q; },
     neq(k, v) { where.push(`${k} <> ${p(v)}`); return q; },
+    lte(k, v) { where.push(`${k} <= ${p(v)}`); return q; },
     in(k, vs) { where.push(vs.length ? `${k} IN (${vs.map((v) => p(v)).join(', ')})` : 'false'); return q; },
     order(k, o = {}) { order = ` ORDER BY ${k} ${o.ascending === false ? 'DESC' : 'ASC'}`; return q; },
+    limit(n) { limit = ` LIMIT ${Number(n)}`; return q; },
     upsert(v, o = {}) { mode = 'upsert'; payload = Array.isArray(v) ? v[0] : v; conflict = o.onConflict; return q; },
+    insert(v) { mode = 'insert'; payload = Array.isArray(v) ? v[0] : v; return q; },
     update(v) { mode = 'update'; payload = v; return q; },
     maybeSingle() { return run().then((r) => ({ data: r.data?.[0] ?? null, error: r.error })); },
     single() { return run().then((r) => ({ data: r.data?.[0] ?? null, error: r.error })); },
@@ -189,14 +203,18 @@ function invoiceQuery() {
 function memoryQuery(table) {
   let rows = fixture[table] || [];
   const q = {
-    select() { return q; }, order() { return q; }, or() { return q; },
-    eq(k, v) { rows = rows.filter((r) => r[k] === v); return q; },
+    select() { return q; }, order() { return q; }, or() { return q; }, limit() { return q; },
+    // A filter on an embedded relation ('ledger_accounts.student_id') is left to the fixture.
+    eq(k, v) { if (!k.includes('.')) rows = rows.filter((r) => r[k] === v); return q; },
     neq(k, v) { rows = rows.filter((r) => r[k] !== v); return q; },
     in(k, vs) { rows = rows.filter((r) => vs.includes(r[k])); return q; },
     gte(k, v) { rows = rows.filter((r) => r[k] >= v); return q; },
     lt(k, v) { rows = rows.filter((r) => r[k] < v); return q; },
     lte(k, v) { rows = rows.filter((r) => r[k] <= v); return q; },
-    insert() { return Promise.resolve({ error: null }); },
+    like(k, pattern) { const head = pattern.replace(/%$/, ''); rows = rows.filter((r) => String(r[k] ?? '').startsWith(head)); return q; },
+    insert(v) { memoryWrites.push({ table, op: 'insert', value: v }); return Promise.resolve({ error: null }); },
+    upsert(v) { memoryWrites.push({ table, op: 'upsert', value: v }); return Promise.resolve({ error: null }); },
+    delete() { memoryWrites.push({ table, op: 'delete' }); return q; },
     single() { return Promise.resolve({ data: rows[0], error: null }); },
     maybeSingle() { return Promise.resolve({ data: rows[0] || null, error: null }); },
     then(done) { return Promise.resolve({ data: rows, error: null }).then(done); },
@@ -213,6 +231,7 @@ globalThis.__t1Zod = z;
 globalThis.__t1Gate = { isServiceRole: false, roles: new Set(['admin']), userId: ADMIN };
 globalThis.__t1Sibling = async () => { throw new Error('Unexpected family calculation'); };
 globalThis.__t1Client = () => ({
+  auth: { getUser: async () => ({ data: { user: { id: ADMIN } }, error: null }) },
   from: (table) => (table === 'invoices' ? invoiceQuery() : memoryQuery(table)),
   functions: { invoke: async (name, { body }) => {
     const res = await handlers[name](post(body));
@@ -225,7 +244,8 @@ globalThis.__t1Client = () => ({
 const out = mkdtempSync(join(tmpdir(), 't1-invoice-status-'));
 const libDir = resolve(repo, 'supabase', 'functions', '_lib');
 globalThis.Deno = { env: { get: () => 'synthetic-test-only' }, serve: (h) => { handlers.current = h; } };
-for (const name of ['calculate-tuition', 'calculate-tuition-bulk', 'confirm-tuition']) {
+for (const name of ['calculate-tuition', 'calculate-tuition-bulk', 'confirm-tuition',
+  'family-payment', 'smart-family-payment', 'settle-bill', 'delete-payment', 'modify-payment']) {
   const entry = name === 'calculate-tuition' && altSource
     ? resolve(altSource) : resolve(repo, 'supabase', 'functions', name, 'index.ts');
   const bundle = await build({
@@ -257,8 +277,13 @@ const OCT = ['2026-10-07', '2026-10-14', '2026-10-21', '2026-10-28'];
 function world(opts = {}) {
   const classes = { id: CA, name: 'Class A', session_rate_vnd: 100000 };
   fixture = {
-    students: [{ id: S1, family_id: null, families: null }],
+    students: [{ id: S1, family_id: null, families: null, full_name: 'Child One', is_active: true }],
     classes: [classes],
+    // What the payment functions look up besides invoices.
+    user_roles: [{ user_id: ADMIN, role: 'admin' }],
+    families: [{ id: FAMILY, name: 'Family' }],
+    ledger_accounts: ['AR', 'CASH', 'BANK', 'REVENUE', 'CREDIT', 'DISCOUNT'].map((code) => ({ id: `acc-${code}`, student_id: S1, code })),
+    payments: [], ledger_entries: [],
     enrollments: [{ student_id: S1, class_id: CA, discount_type: opts.discount ? 'percent' : null,
       discount_value: opts.discount ?? null, discount_cadence: opts.discount ? 'monthly' : null,
       rate_override_vnd: null, start_date: '2026-09-01', end_date: null, allowed_days: null }],
@@ -269,7 +294,8 @@ function world(opts = {}) {
 }
 async function reset() {
   await db.exec('DELETE FROM public.invoices; DELETE FROM public.audit_log;');
-  invoiceWrites = []; failInvoiceRead = false; failNextFullUpsert = false;
+  invoiceWrites = []; memoryWrites = []; failInvoiceRead = false; failPriorRead = false;
+  failNextFullUpsert = false; beforeNextUpsert = null;
   globalThis.__t1Gate = { isServiceRole: false, roles: new Set(['admin']), userId: ADMIN };
   globalThis.__t1Sibling = async () => { throw new Error('Unexpected family calculation'); };
 }
@@ -461,6 +487,7 @@ console.log('\nA confirmed bill whose figures change goes back to review, saying
   const c2 = await confirm([b.id]);
   b = await bill();
   ok('the admin confirms again -> confirmed', c2.status === 200 && b?.confirmation_status === 'confirmed', brief(b));
+  ok('  and confirm-tuition itself takes the flag off (no "changed" badge on a confirmed bill)', !changedFlag(b), b?.review_flags);
   await calc(); b = await bill();
   ok('  and the next recalculation keeps it confirmed, with the old flag gone',
      b?.confirmation_status === 'confirmed' && !changedFlag(b), brief(b));
@@ -594,10 +621,18 @@ console.log('\nWhat the cancellation guard\'s "settled" test sees after a recalc
   let s = await settledBy();
   ok('confirmed, unpaid, recalculated twice: still settled by confirmation', s?.by_confirmation === true && s?.paid_in === false, s);
   await reset(); world(); await calc();
-  await db.query(`UPDATE public.invoices SET status = 'paid' WHERE student_id = $1`, [S1]);  // settle-bill: status without recorded_payment
+  await pay((await bill()).id, 150000, 'partial');
+  await calc(); await calc();
+  s = await settledBy();
+  ok('part paid, recalculated twice: settled by payment AND by status (partial)', s?.by_status === true && s?.paid_in === true, s);
+  // Round 2: the label follows the month's money. A 'paid' with nothing
+  // recorded (what the cumulative rule used to write) is not kept alive.
+  await reset(); world(); await calc();
+  await db.query(`UPDATE public.invoices SET status = 'paid' WHERE student_id = $1`, [S1]);
   await calc();
   s = await settledBy();
-  ok('settled by discount (status paid, no recorded payment), recalculated: still settled by status', s?.by_status === true, s);
+  ok('a "paid" label with no payment recorded is corrected to issued at the next calculation (not settled by status)',
+     s?.by_status === false && (await bill())?.status === 'issued', { s, bill: brief(await bill()) });
 }
 
 // ================================================== the owner's check SQL
@@ -724,6 +759,7 @@ console.log('\nFigures: byte-identical to the function before T1');
     ['split, second term has no discount', '2026-11', async () => { split(); fixture.enrollments[1].discount_type = null; }],
   ];
   const produced = {};
+  const payableChecks = [];
   for (const [name, month, setup] of CASES) {
     await reset(); await setup();
     const first = await calc(S1, month);
@@ -732,6 +768,18 @@ console.log('\nFigures: byte-identical to the function before T1');
     const stored2 = figures(await bill(S1, month));
     const others = (await db.query(
       `SELECT month, ${FIGURES.join(', ')} FROM public.invoices WHERE student_id = $1 AND month <> $2 ORDER BY month`, [S1, month])).rows;
+    // Round 2 added ONE field to the response, carry.payable. It is taken
+    // out before the comparison (the golden predates it) and checked on its
+    // own: it must be what every screen added up from the same response.
+    const b1 = await bulk([S1], month);
+    const row = b1.body.results?.[0];
+    for (const r of [first, second]) {
+      const c = r.body.carry;
+      payableChecks.push([name, c?.payable === r.body.totalAmount + c?.carryInDebt - c?.carryInCredit
+        && row?.carry?.payable === c?.payable && row?.siblingUnresolved === false && r.body.siblingUnresolved === false,
+        { single: c, bulk: row?.carry }]);
+      if (c) delete c.payable;
+    }
     produced[name] = JSON.parse(JSON.stringify({ month, first, stored1, second, stored2, others }));
   }
   if (writeGolden) {
@@ -749,6 +797,10 @@ console.log('\nFigures: byte-identical to the function before T1');
     ok(`${name}: the saved figures are identical (base, discount, total, payments, carry, class breakdown)`,
        n.stored1 !== null && same(n.stored1, g.stored1) && same(n.stored2, g.stored2) && same(n.others, g.others),
        { now: n.stored2, then: g.stored2 });
+  }
+  if (!altSource) {
+    ok(`carry.payable = charge + carry-in debt - carry-in credit on all ${CASES.length} fixtures, single = bulk, nothing flagged unresolved`,
+       payableChecks.length === CASES.length * 2 && payableChecks.every((c) => c[1]), payableChecks.filter((c) => !c[1]));
   }
 }
 
