@@ -19,6 +19,9 @@ import { format } from "date-fns";
 import { AlertTriangle } from "lucide-react";
 import { SessionTASelector } from "@/components/admin/SessionTASelector";
 import { SessionTimeFields } from "@/components/admin/SessionTimeFields";
+import { GuardDialog } from "@/components/admin/session-guard/GuardDialog";
+import { manageSession } from "@/components/admin/session-guard/api";
+import { errorText } from "@/lib/sessionGuard";
 import { configuredLengths, expectedLengthFor, parseWeeklySlots } from "@/lib/classSchedule";
 
 interface EditSessionModalProps {
@@ -34,6 +37,7 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
   const [notes, setNotes] = useState(session.notes || "");
   const [selectedTAIds, setSelectedTAIds] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
 
   const { data: teachers } = useQuery({
     queryKey: ["teachers-active-list"],
@@ -99,12 +103,29 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
 
   const isPast = new Date(session.date) < new Date();
 
+  const timeChanged =
+    startTime !== (session.start_time || "").slice(0, 5) || endTime !== (session.end_time || "").slice(0, 5);
+  const moveChange = { date: String(session.date).slice(0, 10), start_time: startTime, end_time: endTime };
+
+  /** Step 1 of Save: a time change goes through the checked "move" dialog first. */
   const handleSave = async () => {
     if (!startTime || !endTime) {
       toast.error("Please provide start and end times");
       return;
     }
+    if (endTime <= startTime) {
+      toast.error("The end time must be after the start time");
+      return;
+    }
+    if (timeChanged) {
+      setMoveOpen(true);
+      return;
+    }
+    await saveRest();
+  };
 
+  /** Teacher, notes and assistants. Times never go through here. */
+  const saveRest = async () => {
     setProcessing(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -117,20 +138,16 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
         notes: session.notes,
       };
 
-      // Update session
-      const { error } = await supabase
-        .from("sessions")
-        .update({
-          start_time: `${startTime}:00`,
-          end_time: `${endTime}:00`,
-          teacher_id: teacherId || session.teacher_id,
-          notes: notes || null,
-          updated_at: new Date().toISOString(),
-          updated_by: user?.id,
-        })
-        .eq("id", session.id);
-
-      if (error) throw error;
+      // Teacher and notes go through manage-session `update` (as the signed-in
+      // admin). The lesson's date and times are NOT written here: a time change
+      // was already made by the checked "move" step.
+      const fields: Record<string, unknown> = {};
+      if (teacherId && teacherId !== session.teacher_id) fields.teacher_id = teacherId;
+      if ((notes || null) !== (session.notes || null)) fields.notes = notes || null;
+      if (Object.keys(fields).length > 0) {
+        const res = await manageSession("update", { id: session.id, ...fields });
+        if (!res.ok) throw new Error(errorText(res.error.code, res.error.message));
+      }
 
       // Update session participants (TAs).
       //
@@ -197,6 +214,23 @@ export const EditSessionModal = ({ session, onClose, onSuccess }: EditSessionMod
       setProcessing(false);
     }
   };
+
+  // A time change is checked first. Keeping the lesson as it is returns to this form.
+  if (moveOpen) {
+    return (
+      <GuardDialog
+        open
+        session={session}
+        op="move"
+        change={moveChange}
+        onClose={() => setMoveOpen(false)}
+        onDone={() => {
+          setMoveOpen(false);
+          void saveRest();
+        }}
+      />
+    );
+  }
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
