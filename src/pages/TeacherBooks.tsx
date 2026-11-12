@@ -8,6 +8,7 @@ import { ClassroomToolsLauncher } from "@/components/classroom-tools/ClassroomTo
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -80,6 +81,9 @@ export default function TeacherBooks() {
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [selectedBookId, setSelectedBookId] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  // Once the books have loaded, a background reload must never swap the page for the spinner
+  // (that unmounts the book iframe and the lesson loses its place).
+  const hasLoadedRef = useRef(false);
   
   // Fullscreen & Presentation State
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -168,17 +172,19 @@ export default function TeacherBooks() {
     }
   }, [formUrl]);
 
-  // Load teacher entity & flipbooks
+  // Load teacher entity & flipbooks. Keyed on the user's id, not the user object: a token
+  // refresh or tab refocus hands out a new object for the same person.
+  const userId = user?.id;
   useEffect(() => {
     async function loadData() {
-      if (!user) return;
+      if (!userId) return;
       try {
-        setLoading(true);
+        if (!hasLoadedRef.current) setLoading(true);
         // Get teacher profile
         const { data: teacherData, error: teacherError } = await supabase
           .from("teachers")
           .select("id")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .maybeSingle();
 
         if (teacherError) throw teacherError;
@@ -197,7 +203,10 @@ export default function TeacherBooks() {
 
           setFlipbooks(booksData || []);
           if (booksData && booksData.length > 0) {
-            setSelectedBookId(booksData[0].id);
+            // keep the book the teacher chose if it still exists
+            setSelectedBookId((prev) =>
+              booksData.some((b) => b.id === prev) ? prev : booksData[0].id
+            );
           }
         }
 
@@ -219,12 +228,13 @@ export default function TeacherBooks() {
           variant: "destructive",
         });
       } finally {
+        hasLoadedRef.current = true;
         setLoading(false);
       }
     }
 
     loadData();
-  }, [user, toast]);
+  }, [userId, toast]);
 
   // Sync fullscreen change with state
   useEffect(() => {
@@ -408,7 +418,7 @@ export default function TeacherBooks() {
   const activeBook = flipbooks.find(b => b.id === selectedBookId);
 
   // Return loading screen
-  if (loading) {
+  if (loading && !hasLoadedRef.current) {
     return (
       <Layout title="Flipbooks & Presentations" hideNavigation={true}>
         <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
@@ -428,18 +438,24 @@ export default function TeacherBooks() {
           {/* Back and Title Bar */}
           <div className="flex items-center justify-between border-b pb-4 shrink-0">
             <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full shadow-sm hover:bg-muted"
-              // The embedded flipbook iframe pushes its internal page turns
-              // into browser history, so history.back() traps the teacher on
-              // this page. Navigate explicitly instead.
-              onClick={() => navigate("/teacher/dashboard")}
-              title="Return to LMS"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full shadow-sm hover:bg-muted"
+                  // The embedded flipbook iframe pushes its internal page turns
+                  // into browser history, so history.back() traps the teacher on
+                  // this page. Navigate explicitly instead.
+                  onClick={() => navigate("/teacher/dashboard")}
+                  title="Return to LMS"
+                  aria-label="Return to LMS"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Return to LMS</TooltipContent>
+            </Tooltip>
             <div>
               <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent flex items-center gap-2">
                 <BookOpen className="h-6 w-6 text-blue-600" />
@@ -472,7 +488,11 @@ export default function TeacherBooks() {
         </div>
 
         {/* Tab 1: Presenter Mode */}
-        <TabsContent value="present" className="flex-1 flex flex-col gap-4 min-h-0 focus-visible:outline-none">
+        <TabsContent
+          value="present"
+          forceMount
+          className="flex-1 flex flex-col gap-4 min-h-0 focus-visible:outline-none data-[state=inactive]:hidden"
+        >
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-card/65 backdrop-blur-md border rounded-2xl p-4 shadow-sm shrink-0">
             <div className="flex flex-1 items-center gap-3">
               <Label htmlFor="active-book-select" className="text-sm font-semibold shrink-0">
@@ -507,15 +527,21 @@ export default function TeacherBooks() {
                   <Maximize2 className="h-4 w-4" />
                   Present Fullscreen
                 </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-xl border hover:bg-muted"
-                  onClick={() => window.open(activeBook.url, "_blank")}
-                  title="Open directly in tab"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-xl border hover:bg-muted"
+                      onClick={() => window.open(activeBook.url, "_blank")}
+                      title="Open directly in tab"
+                      aria-label="Open directly in tab"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Open directly in tab</TooltipContent>
+                </Tooltip>
               </div>
             )}
           </div>
