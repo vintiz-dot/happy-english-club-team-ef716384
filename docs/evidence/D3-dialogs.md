@@ -1,3 +1,3 @@
 # D3 dialogs
 
-Where I am / next step: all components + callers written (WIP commits); running tsc, then harness at C:SERSDELLHEC-TOOLS-HARNESS (PORT 5343) FOR SCREENSHOTS + AXE.
+Where I am / next step: F-1 adapter done (30 tests pass); harness works (none-future OK); next: full screenshot run, tsc proof, grep for direct writes, final notes.
