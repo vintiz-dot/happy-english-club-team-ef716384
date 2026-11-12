@@ -219,6 +219,14 @@ await S.endSession();
   ok("R4-2: a sign-out that bypassed the guard clears it too", S.readyFor("t-b", DATE) === null);
 }
 {
+  // A second tab: the engine there cannot take the recorder (prepare refuses): nothing is armed from it.
+  store.m.clear(); T = H("09:45");
+  S.pressReady("t-a", DATE);
+  const r = armRec("idle"); r.prepare = async () => { throw { code: "another_tab", message: "The recorder is open in another tab" }; };
+  await S.boot({ userId: "t-a", createRecorder: async () => r, day: day([L("s1", "10:00", "11:00")]) }); await flush();
+  ok("R4-2 second tab: boot gives up (the other tab arms), nothing armed here", r.arms.length === 0 && r.disposed === 1 && S.sessionState() === null);
+}
+{
   // Sign-out through the guard clears Ready, with or without an engine.
   store.m.clear();
   S.followUser("t-a");

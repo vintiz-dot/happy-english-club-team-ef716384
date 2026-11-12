@@ -269,12 +269,12 @@ export async function armTick(): Promise<void> {
     const phase = lessonPhase(lesson, now, d.w);
     if (phase !== "arming" && phase !== "capturing") return;
     // Microphones and sound are checked again before arming, not trusted from the morning.
-    if ((s.devicesOk === false || s.contextRunning === false) && now - d.prepareAt > 30_000) {
+    if ((s.devicesOk !== true || s.contextRunning !== true) && now - d.prepareAt > 30_000) {
       d.prepareAt = now;
       try { const p = await s.rec.prepare(); s.contextRunning = p.contextRunning; s.devicesOk = p.devices.status === "ok"; } catch { /* said by the engine */ }
     }
     if (s.devicesOk === false) { d.problem = "a microphone is not plugged in"; return; }
-    if (s.contextRunning === false) return;               // the bar asks for the click
+    if (s.devicesOk !== true || s.contextRunning !== true) return;              // the bar asks for the click
     if (!CAN_ARM.includes(s.state) || now < d.retryAt) return;
     const next = nextAfter(lesson, d.lessons ?? [], d.w);
     const stopAt = next ? lessonTimes(next, d.w).start : undefined;
@@ -400,7 +400,11 @@ export async function boot(deps: BootDeps): Promise<void> {
       try {
         const p = await rec.prepare();
         setPrepared({ contextRunning: p.contextRunning, devicesOk: p.devices.status === "ok" });
-      } catch { /* another tab holds the recorder, or no microphone: the screen says which */ }
+      } catch {
+        // Another tab holds the recorder (it arms there), or this browser cannot: nothing is armed from this tab.
+        await endSession();
+        return;
+      }
       await rec.recover().catch(() => null);
       startDay(deps.day);
     } catch { /* the engine could not be made here; the recorder page says why */ }
