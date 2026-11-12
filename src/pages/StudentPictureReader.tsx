@@ -20,23 +20,23 @@ export default function StudentPictureReader() {
 
   return (
     <Layout title="Picture Reader">
-      <div className="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
+      <div className="max-w-3xl mx-auto p-4 md:p-6 pb-24 space-y-5">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center shadow-md">
-            <Languages className="h-7 w-7 text-white" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-hec-md border border-hec-line bg-hec-sunken">
+            <Languages className="h-7 w-7 text-hec-ink-soft" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Picture Reader</h1>
-            <p className="text-sm text-muted-foreground">Read with pictures · Đọc cùng hình ảnh</p>
+          <div className="min-w-0">
+            <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Picture Reader</h1>
+            <p className="text-hec-small text-hec-ink-soft">Read with pictures · Đọc cùng hình ảnh</p>
           </div>
         </div>
 
         {open ? (
           <Reader set={open} onBack={() => setOpen(null)} />
         ) : isLoading ? (
-          <p className="text-muted-foreground">Loading…</p>
+          <p className="text-hec-body text-hec-ink-soft">Loading…</p>
         ) : sets.length === 0 ? (
-          <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
+          <div className="rounded-hec-lg border border-dashed border-hec-line-strong bg-hec-surface p-10 text-center text-hec-body text-hec-ink-soft">
             <div className="text-5xl mb-2">📖</div>
             Your teacher has not shared a picture story yet.
           </div>
@@ -47,10 +47,10 @@ export default function StudentPictureReader() {
                 <button
                   type="button"
                   onClick={() => setOpen(s)}
-                  className="w-full text-left rounded-2xl border-2 p-4 hover:bg-accent hover:border-primary transition min-h-[5.5rem]"
+                  className="min-h-[5.5rem] w-full rounded-hec-lg border border-hec-line bg-hec-surface p-4 text-left shadow-hec-1 transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                 >
-                  <div className="text-lg font-bold">{s.title}</div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="break-words text-hec-h3 font-medium text-hec-ink">{s.title}</div>
+                  <div className="text-hec-small text-hec-ink-soft">
                     {s.sentences.length} sentence{s.sentences.length === 1 ? "" : "s"} · {s.class_names.join(", ")}
                   </div>
                 </button>
@@ -58,7 +58,7 @@ export default function StudentPictureReader() {
             ))}
           </ul>
         )}
-        <p className="text-[11px] text-muted-foreground text-center">{ATTRIBUTION}</p>
+        <p className="text-center text-hec-caption text-hec-ink-soft">{ATTRIBUTION}</p>
       </div>
     </Layout>
   );
@@ -71,20 +71,20 @@ function Reader({ set, onBack }: { set: ChildSet; onBack: () => void }) {
   useEffect(() => () => { if (typeof window !== "undefined") window.speechSynthesis?.cancel(); }, []);
 
   if (!sentence) {
-    return <Button variant="outline" onClick={onBack}>← Back</Button>;
+    return <Button variant="secondary" onClick={onBack}>← Back</Button>;
   }
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={onBack}>← All stories</Button>
-        <span className="text-sm text-muted-foreground">{i + 1} / {total}</span>
+        <Button variant="quiet" onClick={onBack}>← All stories</Button>
+        <span className="text-hec-small tabular-nums text-hec-ink-soft">{i + 1} / {total}</span>
       </div>
-      {set.description && <p className="text-muted-foreground">{set.description}</p>}
-      <div className="rounded-3xl border-2 bg-card p-5 md:p-8 min-h-[14rem] flex items-center">
+      {set.description && <p className="text-hec-body text-hec-ink-soft">{set.description}</p>}
+      <div className="flex min-h-[14rem] items-center rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 sm:p-6 md:p-8">
         <PictureStrip cells={sentence.cells} mode="reader" onCellClick={(cell) => speak(cell.text)} />
       </div>
       <div className="flex gap-2">
-        <Button size="lg" variant="outline" className="h-14 flex-1 text-base" disabled={i === 0} onClick={() => setI(i - 1)}>
+        <Button size="lg" variant="secondary" className="h-14 flex-1 text-base" disabled={i === 0} onClick={() => setI(i - 1)}>
           <ChevronLeft className="h-5 w-5 mr-1" /> Back
         </Button>
         <Button size="lg" variant="secondary" className="h-14 flex-1 text-base" onClick={() => speak(sentence.text)}>
@@ -94,7 +94,7 @@ function Reader({ set, onBack }: { set: ChildSet; onBack: () => void }) {
           Next <ChevronRight className="h-5 w-5 ml-1" />
         </Button>
       </div>
-      {i >= total - 1 && <p className="text-center text-lg">🎉 The end!</p>}
+      {i >= total - 1 && <p className="text-center text-hec-h3 text-hec-ink">🎉 The end!</p>}
     </div>
   );
 }

@@ -20,6 +20,8 @@ import { SignedVideo } from "./SignedVideo";
 import { ShareVideoButton } from "./ShareVideoButton";
 import { VIDEO_BUCKET, extFor, videoDb, type RecordedTake } from "@/lib/video/recorder";
 import { withRetry } from "@/lib/video/kidVideo";
+import { useIvory } from "@/hooks/useIvory";
+import { cn } from "@/lib/utils";
 
 interface VideoHomeworkState {
   submission_type: string;
@@ -67,6 +69,7 @@ export default function VideoHomeworkSubmission({
   kid = false,
 }: { homeworkId: string; studentId: string; onSuccess?: () => void; kid?: boolean }) {
   const qc = useQueryClient();
+  const ivory = useIvory();
   const { data: state, isLoading } = useVideoHomework(homeworkId, studentId);
   const [recording, setRecording] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -204,20 +207,20 @@ export default function VideoHomeworkSubmission({
   const cue = strip(state.prompt).slice(0, 300) || state.looking_for?.summary || state.title;
 
   return (
-    <div className="space-y-4 p-4 border rounded-lg">
+    <div className={cn("space-y-4", ivory ? "rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1" : "p-4 border rounded-lg")}>
       {sub?.status !== "approved" && state.looking_for?.criteria?.length ? (
-        <div className="rounded-xl bg-muted/40 p-3">
-          <p className="text-xs font-semibold text-muted-foreground mb-1">⭐ Your teacher is looking for</p>
-          <ul className="text-sm space-y-0.5">
+        <div className={ivory ? "rounded-hec-md bg-hec-sunken p-3" : "rounded-xl bg-muted/40 p-3"}>
+          <p className={ivory ? "mb-1 text-hec-small font-medium text-hec-ink-soft" : "text-xs font-semibold text-muted-foreground mb-1"}>⭐ Your teacher is looking for</p>
+          <ul className={ivory ? "space-y-0.5 text-hec-body text-hec-ink" : "text-sm space-y-0.5"}>
             {state.looking_for.criteria.map((c) => <li key={c}>• {c}</li>)}
           </ul>
         </div>
       ) : null}
 
       {sub?.status === "returned" && sub.teacher_note && (
-        <div className="rounded-xl border border-sky-300/60 bg-sky-50 dark:bg-sky-950/30 p-3">
-          <p className="text-xs font-semibold text-sky-700 dark:text-sky-300 mb-1">👩‍🏫 A note from your teacher</p>
-          <p className="text-sm">{sub.teacher_note}</p>
+        <div className={ivory ? "rounded-hec-md border border-hec-line bg-hec-sunken p-3" : "rounded-xl border border-sky-300/60 bg-sky-50 dark:bg-sky-950/30 p-3"}>
+          <p className={ivory ? "mb-1 text-hec-small font-medium text-hec-ink-soft" : "text-xs font-semibold text-sky-700 dark:text-sky-300 mb-1"}>👩‍🏫 A note from your teacher</p>
+          <p className={ivory ? "text-hec-body text-hec-ink" : "text-sm"}>{sub.teacher_note}</p>
         </div>
       )}
 
@@ -225,14 +228,14 @@ export default function VideoHomeworkSubmission({
 
       {sub && !showRecorder && (
         <div className="space-y-2">
-          <SignedVideo path={sub.video_path} className="w-full rounded-2xl bg-black aspect-video" />
+          <SignedVideo path={sub.video_path} className={ivory ? "w-full rounded-hec-md bg-hec-sunken aspect-video" : "w-full rounded-2xl bg-black aspect-video"} />
           {sub.status === "approved" && (
             <ShareVideoButton path={sub.video_path} title={state.title} className="w-full h-11" />
           )}
           {sub.status !== "approved" && (
-            <div className="flex items-center justify-between gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 p-3">
-              <p className={kid ? "text-base" : "text-sm"}>📬 Sent! Your teacher will watch it soon.{kid && <span className="block text-xs text-muted-foreground">Đã gửi! Cô giáo sẽ xem sớm.</span>}</p>
-              <Button variant="outline" size="sm" onClick={() => setRecording(true)}>
+            <div className={ivory ? "flex flex-wrap items-center justify-between gap-2 rounded-hec-md border border-hec-leaf/30 bg-hec-leaf-tint p-3" : "flex items-center justify-between gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 p-3"}>
+              <p className={ivory ? "min-w-0 text-hec-body text-hec-ink" : kid ? "text-base" : "text-sm"}>📬 Sent! Your teacher will watch it soon.{kid && <span className={ivory ? "block text-hec-small text-hec-ink-soft" : "block text-xs text-muted-foreground"}>Đã gửi! Cô giáo sẽ xem sớm.</span>}</p>
+              <Button variant={ivory ? "secondary" : "outline"} size="sm" onClick={() => setRecording(true)}>
                 <RefreshCw className="h-4 w-4 mr-1.5" /> Record again
               </Button>
             </div>
@@ -252,10 +255,10 @@ export default function VideoHomeworkSubmission({
       )}
       {send.isPending && <Progress value={progress} className="h-2" />}
 
-      <div className="flex items-center justify-between gap-3 border-t pt-3">
-        <Label htmlFor={`share-${homeworkId}`} className="text-sm font-normal">
+      <div className={cn("flex items-center justify-between gap-3 pt-3", ivory ? "border-t border-hec-line" : "border-t")}>
+        <Label htmlFor={`share-${homeworkId}`} className={ivory ? "text-hec-body font-normal text-hec-ink" : "text-sm font-normal"}>
           Show my video to my class after my teacher checks it
-          <span className="block text-xs text-muted-foreground">Only your classmates and their families. Never your score.</span>
+          <span className={ivory ? "block text-hec-small text-hec-ink-soft" : "block text-xs text-muted-foreground"}>Only your classmates and their families. Never your score.</span>
         </Label>
         <Switch
           id={`share-${homeworkId}`}

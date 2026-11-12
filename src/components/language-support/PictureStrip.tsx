@@ -5,6 +5,7 @@
  * tap says the word aloud).
  */
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import type { Cell } from "@/lib/languageSupport/strip";
 
 interface Props {
@@ -15,6 +16,7 @@ interface Props {
 }
 
 function Pictures({ cell, size }: { cell: Cell; size: number }) {
+  const ivory = useIvory();
   const repeat = Math.max(1, cell.repeat ?? 1);
   // A plural with no count overlaps its copies: "several", not "exactly three".
   const overlap = cell.indefinite ? size * 0.38 : 0;
@@ -33,13 +35,13 @@ function Pictures({ cell, size }: { cell: Cell; size: number }) {
         />
       ))}
       {cell.negated && (
-        <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full text-red-600 opacity-90" aria-label="not">
+        <svg viewBox="0 0 100 100" className={cn("absolute inset-0 h-full w-full opacity-90", ivory ? "text-hec-danger" : "text-red-600")} aria-label="not">
           <line x1="12" y1="12" x2="88" y2="88" stroke="currentColor" strokeWidth="9" strokeLinecap="round" />
           <line x1="88" y1="12" x2="12" y2="88" stroke="currentColor" strokeWidth="9" strokeLinecap="round" />
         </svg>
       )}
       {cell.count ? (
-        <span className="absolute -bottom-1 -right-1 rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
+        <span className={cn("absolute -bottom-1 -right-1 rounded-full px-2 py-0.5 font-bold", ivory ? "bg-hec-action text-hec-caption text-hec-on-action tabular-nums" : "bg-primary text-xs text-primary-foreground")}>
           {cell.count}
         </span>
       ) : null}
@@ -49,6 +51,7 @@ function Pictures({ cell, size }: { cell: Cell; size: number }) {
 
 export function PictureStrip({ cells, mode = "teacher", onCellClick }: Props) {
   const reader = mode === "reader";
+  const ivory = useIvory();
   const size = reader ? 96 : 64;
   return (
     <div className={cn("flex flex-wrap items-end", reader ? "gap-x-3 gap-y-5" : "gap-x-2 gap-y-3")}>
@@ -64,8 +67,9 @@ export function PictureStrip({ cells, mode = "teacher", onCellClick }: Props) {
             <span
               className={cn(
                 "leading-tight",
-                reader ? "text-2xl font-semibold" : "text-sm",
-                !hasPicture && (reader ? "text-2xl text-foreground/80" : "text-muted-foreground"),
+                ivory
+                  ? [reader ? "text-hec-h2 font-medium text-hec-ink" : "text-hec-small text-hec-ink", !hasPicture && "text-hec-ink-soft"]
+                  : [reader ? "text-2xl font-semibold" : "text-sm", !hasPicture && (reader ? "text-2xl text-foreground/80" : "text-muted-foreground")],
               )}
             >
               {cell.text}
@@ -73,10 +77,13 @@ export function PictureStrip({ cells, mode = "teacher", onCellClick }: Props) {
           </>
         );
         const className = cn(
-          "flex flex-col items-center gap-1 rounded-xl px-1.5 py-1",
+          "flex flex-col items-center gap-1 px-1.5 py-1",
+          ivory ? "rounded-hec-md" : "rounded-xl",
           hasPicture && "min-w-[3rem]",
-          needsLook && "ring-2 ring-amber-400 bg-amber-50 dark:bg-amber-950/30",
-          clickable && "cursor-pointer transition hover:bg-accent focus-visible:outline focus-visible:outline-2",
+          needsLook && (ivory ? "ring-2 ring-hec-warn bg-hec-warn-tint" : "ring-2 ring-amber-400 bg-amber-50 dark:bg-amber-950/30"),
+          clickable && (ivory
+            ? "min-h-hec-target cursor-pointer transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+            : "cursor-pointer transition hover:bg-accent focus-visible:outline focus-visible:outline-2"),
         );
         return clickable ? (
           <button

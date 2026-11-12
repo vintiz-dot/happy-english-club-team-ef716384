@@ -80,49 +80,49 @@ export default function StudentRecord() {
 
   return (
     <Layout title="Record my video">
-      <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-5">
+      <div className="max-w-2xl mx-auto p-4 md:p-6 pb-24 space-y-5">
         <div className="flex items-center gap-3">
-          <div className="h-14 w-14 rounded-3xl bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center shadow-md text-3xl">🎥</div>
-          <div>
-            <h1 className="text-2xl font-bold">Record my video</h1>
-            <p className="text-sm text-muted-foreground">Quay video của em</p>
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-hec-md border border-hec-line bg-hec-sunken text-3xl">🎥</div>
+          <div className="min-w-0">
+            <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Record my video</h1>
+            <p className="text-hec-small text-hec-ink-soft">Quay video của em</p>
           </div>
         </div>
 
         {open ? (
           <div className="space-y-3">
             {tasks.length > 1 && (
-              <Button variant="ghost" onClick={() => setOpenId(null)}><ChevronLeft className="h-4 w-4 mr-1" /> All my videos</Button>
+              <Button variant="quiet" onClick={() => setOpenId(null)}><ChevronLeft className="h-4 w-4 mr-1" /> All my videos</Button>
             )}
-            <h2 className="text-xl font-bold">{open.title}</h2>
+            <h2 className="break-words font-display text-hec-h2 font-medium text-hec-ink">{open.title}</h2>
             {studentId && <VideoHomeworkSubmission homeworkId={open.id} studentId={studentId} kid />}
           </div>
         ) : isLoading || waiting ? (
-          <p className="text-muted-foreground">Looking for your videos…</p>
+          <p className="text-hec-body text-hec-ink-soft">Looking for your videos…</p>
         ) : tasks.length === 0 ? (
-          <div className="rounded-3xl border-2 border-dashed p-10 text-center">
+          <div className="rounded-hec-lg border border-dashed border-hec-line-strong bg-hec-surface p-10 text-center">
             <div className="text-5xl mb-2">🎉</div>
-            <p className="text-lg font-semibold">No videos to record right now!</p>
-            <p className="text-sm text-muted-foreground">Chưa có video nào cần quay.</p>
+            <p className="text-hec-h3 font-medium text-hec-ink">No videos to record right now!</p>
+            <p className="text-hec-small text-hec-ink-soft">Chưa có video nào cần quay.</p>
             <Button asChild variant="outline" className="mt-4"><Link to="/student/videos">See my videos</Link></Button>
           </div>
         ) : (
           <>
             {todo.length > 0 && (
               <section className="space-y-3">
-                <h2 className="font-semibold">To record · Cần quay</h2>
+                <h2 className="text-hec-body font-medium text-hec-ink">To record · Cần quay</h2>
                 {todo.map((t) => <TaskButton key={t.id} task={t} onOpen={() => setOpenId(t.id)} />)}
               </section>
             )}
             {rest.length > 0 && (
               <section className="space-y-3">
-                <h2 className="font-semibold text-muted-foreground">Sent · Đã gửi</h2>
+                <h2 className="text-hec-body font-medium text-hec-ink-soft">Sent · Đã gửi</h2>
                 {rest.map((t) => <TaskButton key={t.id} task={t} onOpen={() => setOpenId(t.id)} />)}
               </section>
             )}
           </>
         )}
-        <p className="text-xs text-center text-muted-foreground">
+        <p className="text-center text-hec-caption text-hec-ink-soft">
           Your teacher watches every video first. Cô giáo sẽ xem video trước khi ai khác nhìn thấy.
         </p>
       </div>
@@ -136,19 +136,19 @@ function TaskButton({ task, onOpen }: { task: Task; onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
-      className="w-full text-left rounded-3xl border-2 p-4 hover:bg-accent hover:border-primary transition flex items-center gap-4 min-h-[5.5rem]"
+      className="flex min-h-[5.5rem] w-full items-center gap-4 rounded-hec-lg border border-hec-line bg-hec-surface p-4 text-left shadow-hec-1 transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
     >
-      <span className="text-4xl">{task.status === "approved" ? "⭐" : done ? "📬" : task.status === "returned" ? "🔁" : "🎬"}</span>
+      <span className="shrink-0 text-4xl">{task.status === "approved" ? "⭐" : done ? "📬" : task.status === "returned" ? "🔁" : "🎬"}</span>
       <span className="flex-1 min-w-0">
-        <span className="block text-lg font-bold truncate">{task.title}</span>
-        <span className="block text-sm text-muted-foreground">
+        <span className="block break-words text-hec-h3 font-medium text-hec-ink">{task.title}</span>
+        <span className="block text-hec-small text-hec-ink-soft">
           {task.status === "approved" && "Your teacher watched it · Cô đã xem"}
           {task.status === "sent" && "With your teacher · Đã gửi cô giáo"}
           {task.status === "returned" && "Please record again · Hãy quay lại nhé"}
           {task.status === "todo" && (task.due ? `Due ${dayjs(task.due).format("ddd D MMM")}` : "Ready when you are")}
         </span>
       </span>
-      {done ? <CheckCircle2 className="h-6 w-6 text-emerald-600" /> : task.due && dayjs(task.due).isBefore(dayjs(), "day") ? <Clock className="h-6 w-6 text-amber-600" /> : <Video className="h-6 w-6 text-primary" />}
+      {done ? <CheckCircle2 className="h-6 w-6 shrink-0 text-hec-leaf" /> : task.due && dayjs(task.due).isBefore(dayjs(), "day") ? <Clock className="h-6 w-6 shrink-0 text-hec-warn" /> : <Video className="h-6 w-6 shrink-0 text-hec-ink-soft" />}
     </button>
   );
 }
