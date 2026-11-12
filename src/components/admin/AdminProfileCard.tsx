@@ -101,7 +101,7 @@ export function AdminProfileCard() {
 
       <CardContent className="space-y-5">
         {/* ------------------------------------------------- who you are */}
-        <div className="flex items-center gap-4 rounded-xl border bg-muted/30 p-4">
+        <div className="flex flex-wrap items-center gap-4 rounded-hec-md border border-hec-line bg-hec-sunken/60 p-4">
           <Avatar className="h-14 w-14 ring-2 ring-background">
             <AvatarImage src={identity?.avatarUrl ?? undefined} alt={displayName} />
             <AvatarFallback className="text-base font-semibold">
@@ -111,7 +111,7 @@ export function AdminProfileCard() {
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="truncate text-lg font-semibold">{displayName}</p>
+              <p className="min-w-0 whitespace-normal break-words text-hec-h3 font-semibold text-hec-ink">{displayName}</p>
               {role && (
                 <Badge variant="secondary" className="gap-1 capitalize">
                   <ShieldCheck className="h-3 w-3" aria-hidden />
@@ -120,7 +120,7 @@ export function AdminProfileCard() {
               )}
             </div>
             {identity?.email && (
-              <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+              <p className="mt-1 flex items-center gap-2 truncate text-hec-small text-hec-ink-soft">
                 <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden />
                 {identity.email}
               </p>
@@ -137,7 +137,7 @@ export function AdminProfileCard() {
 
         {/* --------------------------------------------- set your name */}
         {unnamed && !save.isSuccess && (
-          <p className="rounded-lg border border-amber-400/40 bg-amber-50 p-3 text-sm dark:bg-amber-950/30">
+          <p className="rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 text-hec-small text-hec-ink">
             You have not set a name yet, so <strong>{displayName}</strong> is a guess
             from your email address. Set your real name — it is what the Activity
             record will show beside everything you change.
@@ -146,7 +146,7 @@ export function AdminProfileCard() {
 
         {editing && (
           <form
-            className="space-y-3 rounded-xl border p-4"
+            className="space-y-3 rounded-hec-md border border-hec-line p-4"
             onSubmit={(e) => {
               e.preventDefault();
               save.mutate(name);
@@ -162,7 +162,7 @@ export function AdminProfileCard() {
                 onChange={(e) => setName(e.target.value)}
                 disabled={save.isPending}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-hec-caption text-hec-ink-soft">
                 Shown in the header, and beside every change you make in Activity.
               </p>
             </div>
@@ -190,7 +190,7 @@ export function AdminProfileCard() {
         )}
 
         {/* ------------------------------------------------ the point of it */}
-        <p className="flex items-start gap-2 text-sm text-muted-foreground">
+        <p className="flex items-start gap-2 text-hec-small text-hec-ink-soft">
           <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span>
             Everything you change is recorded in the database under this account.
