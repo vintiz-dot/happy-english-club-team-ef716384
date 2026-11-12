@@ -202,29 +202,56 @@ function invoiceQuery() {
   return q;
 }
 
+// T4: tables whose inserts land in the fixture, so a later read sees them
+// (a settlement counts on the bill; a payment's ledger legs are reversed).
+const KEEPS_INSERTS = new Set(['settlements', 'ledger_entries', 'payments', 'payment_allocations']);
+let failTables = new Set();             // T4: a read of these tables answers with an error
+let insertSeq = 0;
 function memoryQuery(table) {
   let rows = fixture[table] || [];
   // PostgREST rows always carry their id; calculate-tuition-bulk pages by it.
   rows.forEach((r, i) => { if (r.id == null) r.id = `${table}-${String(i).padStart(6, '0')}`; });
+  // The two embeds the payment functions read: a ledger leg's account, a payment's allocations.
+  if (table === 'ledger_entries') rows.forEach((r) => {
+    if (!r.ledger_accounts) { const a = (fixture.ledger_accounts || []).find((x) => x.id === r.account_id); if (a) r.ledger_accounts = { student_id: a.student_id, code: a.code }; }
+  });
+  if (table === 'payments') rows.forEach((r) => {
+    if (!r.payment_allocations) r.payment_allocations = (fixture.payment_allocations || []).filter((x) => x.parent_payment_id === r.id);
+  });
   let orderKey = null, lim = Infinity;
   const page = () => { const out = orderKey ? [...rows].sort((a, b) => (String(a[orderKey]) < String(b[orderKey]) ? -1 : String(a[orderKey]) > String(b[orderKey]) ? 1 : 0)) : rows; return out.slice(0, lim); };
+  const failed = () => failTables.has(table);
+  const keep = (v) => {
+    if (!KEEPS_INSERTS.has(table)) return;
+    fixture[table] = fixture[table] || [];
+    for (const r of Array.isArray(v) ? v : [v]) {
+      fixture[table].push({ id: `${table}-ins-${String(++insertSeq).padStart(6, '0')}`, created_at: new Date().toISOString(), ...r });
+    }
+  };
+  const like = (pattern) => new RegExp(`^${pattern.split('%').map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*')}$`);
   const q = {
     select() { return q; }, order(k) { orderKey = k; return q; }, or() { return q; }, limit(n) { lim = n; return q; },
     gt(k, v) { rows = rows.filter((r) => String(r[k]) > String(v)); return q; },
-    // A filter on an embedded relation ('ledger_accounts.student_id') is left to the fixture.
-    eq(k, v) { if (!k.includes('.')) rows = rows.filter((r) => r[k] === v); return q; },
+    // A filter on an embedded relation ('ledger_accounts.student_id') reads the embed.
+    eq(k, v) {
+      if (k.includes('.')) { const [rel, col] = k.split('.'); rows = rows.filter((r) => r[rel]?.[col] === v); } else rows = rows.filter((r) => r[k] === v);
+      return q;
+    },
     neq(k, v) { rows = rows.filter((r) => r[k] !== v); return q; },
     in(k, vs) { rows = rows.filter((r) => vs.includes(r[k])); return q; },
     gte(k, v) { rows = rows.filter((r) => r[k] >= v); return q; },
     lt(k, v) { rows = rows.filter((r) => r[k] < v); return q; },
     lte(k, v) { rows = rows.filter((r) => r[k] <= v); return q; },
-    like(k, pattern) { const head = pattern.replace(/%$/, ''); rows = rows.filter((r) => String(r[k] ?? '').startsWith(head)); return q; },
-    insert(v) { memoryWrites.push({ table, op: 'insert', value: v }); return Promise.resolve({ error: null }); },
+    is(k, v) { rows = rows.filter((r) => (r[k] ?? null) === v); return q; },
+    like(k, pattern) { const re = like(pattern); rows = rows.filter((r) => re.test(String(r[k] ?? ''))); return q; },
+    insert(v) { memoryWrites.push({ table, op: 'insert', value: v }); keep(v); return Promise.resolve({ error: null }); },
     upsert(v) { memoryWrites.push({ table, op: 'upsert', value: v }); return Promise.resolve({ error: null }); },
     delete() { memoryWrites.push({ table, op: 'delete' }); return q; },
-    single() { return Promise.resolve({ data: rows[0], error: null }); },
-    maybeSingle() { return Promise.resolve({ data: rows[0] || null, error: null }); },
-    then(done) { return Promise.resolve({ data: page(), error: null }).then(done); },
+    single() { return Promise.resolve(failed() ? { data: null, error: { message: `synthetic ${table} read failure` } } : { data: rows[0], error: null }); },
+    maybeSingle() { return Promise.resolve(failed() ? { data: null, error: { message: `synthetic ${table} read failure` } } : { data: rows[0] || null, error: null }); },
+    then(done, bad) {
+      return Promise.resolve(failed() ? { data: null, error: { message: `synthetic ${table} read failure` } } : { data: page(), error: null }).then(done, bad);
+    },
   };
   return q;
 }
@@ -302,7 +329,7 @@ function world(opts = {}) {
 async function reset() {
   await db.exec('DELETE FROM public.invoices; DELETE FROM public.audit_log;');
   invoiceWrites = []; memoryWrites = []; failInvoiceRead = false; failPriorRead = false;
-  failNextFullUpsert = false; beforeNextUpsert = null;
+  failNextFullUpsert = false; beforeNextUpsert = null; failTables = new Set();
   globalThis.__t1Gate = { isServiceRole: false, roles: new Set(['admin']), userId: ADMIN };
   globalThis.__t1Sibling = async () => { throw new Error('Unexpected family calculation'); };
 }
@@ -1084,6 +1111,310 @@ console.log('\nRound 2 - carry.payable and siblingUnresolved (T3)');
   await reset(); world();
   many = await bulk();
   ok('a child in no family: siblingUnresolved false', many.body.results?.[0]?.siblingUnresolved === false);
+}
+
+// =====================================================================
+// T4 - the payment paths (docs/evidence/T4-payment-paths.md). Every case
+// below failed against the functions at 6465f08 (see the evidence file).
+// =====================================================================
+const t4Lib = join(out, 'invoice-status.t4.mjs');
+writeFileSync(t4Lib, (await build({ entryPoints: [join(libDir, 'invoice-status.ts')], bundle: true, format: 'esm', write: false })).outputFiles[0].text);
+const T4 = await import(pathToFileURL(t4Lib).href);
+const settleAs = (type, amount, month = MONTH, extra = {}) =>
+  call('settle-bill', { studentId: S1, month, settlementType: type, amount, reason: 'hardship', ...extra });
+const reversalOf = (id) => (fixture.ledger_entries || []).filter((e) => String(e.tx_key || '').startsWith(`payment-reversal-${id}-`));
+const balances = (legs) => legs.reduce((s, e) => s + Number(e.debit || 0) - Number(e.credit || 0), 0) === 0;
+const familyPayments = () => (fixture.payments || []).filter((p) => p.family_id === FAMILY && !p.parent_payment_id);
+const delPay = (paymentId) => call('delete-payment', { paymentId, deleteReason: 'entered twice' });
+
+console.log('\nT4 fault 1 - deleting a payment takes it off the bill');
+{
+  await withHistory();
+  let r = await smartPay(400000); await calc();
+  const [parent] = familyPayments();
+  ok('(setup: a Smart Family Payment of 400,000 paid October)', r.status === 200 && (await bill())?.recorded_payment === 400000 && !!parent, money(await bill()));
+  r = await delPay(parent?.id);
+  let b = await bill();
+  console.log(`    smart-family-payment deleted => ${r.status} ${JSON.stringify(r.body)} ; bill ${JSON.stringify(money(b))}`);
+  ok('deleting it takes the 400,000 off October: recorded 0, 400,000 owed, issued (was: the money stayed on the bill)',
+     r.status === 200 && b?.recorded_payment === 0 && b?.carry_out_debt === 400000 && b?.status === 'issued', { r: r.body, b: money(b) });
+  const rev = reversalOf(parent?.id);
+  ok('  both legs of its ledger transaction are reversed and the reversal balances (was: nothing found under "payment-<id>")',
+     rev.length === 2 && balances(rev) && rev.some((e) => e.account_id === 'acc-AR' && e.debit === 400000), rev);
+  ok('  the payment row is deleted and the deletion recorded',
+     memoryWrites.some((w) => w.table === 'payments' && w.op === 'delete') && memoryWrites.some((w) => w.table === 'payment_deletions'));
+  await calc();
+  ok('  the recalculation agrees', (await bill())?.status === 'issued' && (await bill())?.recorded_payment === 0);
+  r = await delPay(parent?.id);
+  ok('  asked again (the row was still there): refused, the bill is not lowered twice',
+     r.status === 409 && (await bill())?.recorded_payment === 0 && reversalOf(parent?.id).length === 2, { r: r.body, rev: reversalOf(parent?.id).length });
+
+  await withHistory();
+  await smartPay(150000); await smartPay(250000); await calc();
+  const [first, second] = familyPayments();
+  r = await delPay(first?.id); b = await bill();
+  ok('two payments on one bill, the first deleted: 250,000 stays, partial',
+     r.status === 200 && b?.recorded_payment === 250000 && b?.status === 'partial' && b?.carry_out_debt === 150000, { r: r.body, b: money(b) });
+  ok('  the other payment\'s ledger is untouched', reversalOf(second?.id).length === 0);
+
+  // Family Payment (family-payment-<id>-... keys)
+  await withHistory();
+  r = await familyPay(400000); await calc();
+  const [fp] = familyPayments();
+  r = await delPay(fp?.id); b = await bill();
+  ok('a Family Payment deleted: off the bill too (was: nothing found)', r.status === 200 && b?.recorded_payment === 0 && b?.status === 'issued', { r: r.body, b: money(b) });
+
+  // A legacy single payment, key payment-<id> on one leg, both legs under one tx_id.
+  await withHistory();
+  await editRecorded(MONTH, 400000); await calc();
+  fixture.payments = [{ id: PAY_ID, student_id: S1, parent_payment_id: null, family_id: null, amount: 400000 }];
+  fixture.ledger_entries = [
+    { id: 'le-1', tx_id: 'tx-legacy', tx_key: `payment-${PAY_ID}`, account_id: 'acc-CASH', debit: 400000, credit: 0, month: MONTH },
+    { id: 'le-2', tx_id: 'tx-legacy', tx_key: null, account_id: 'acc-AR', debit: 0, credit: 400000, month: MONTH },
+  ];
+  r = await delPay(PAY_ID); b = await bill();
+  ok('a single payment (key on the cash leg only): its AR leg is found by the transaction, and the bill is lowered (was: unchanged)',
+     r.status === 200 && b?.recorded_payment === 0 && reversalOf(PAY_ID).length === 2 && balances(reversalOf(PAY_ID)), { r: r.body, b: money(b), rev: reversalOf(PAY_ID) });
+
+  // Never below what the bill still records.
+  await withHistory();
+  await smartPay(400000); await editRecorded(MONTH, 100000); await calc();
+  const [cut] = familyPayments();
+  r = await delPay(cut?.id); b = await bill();
+  ok('a bill already edited down to 100,000: lowered to 0, never below', r.status === 200 && b?.recorded_payment === 0, { r: r.body, b: money(b) });
+
+  // An admin's credit label stays.
+  await withHistory();
+  await smartPay(400000);
+  await db.query(`UPDATE public.invoices SET status = 'credit' WHERE student_id = $1 AND month = $2`, [S1, MONTH]);
+  const [cr] = familyPayments();
+  r = await delPay(cr?.id);
+  ok('  an admin-set credit label is kept', r.status === 200 && (await bill())?.status === 'credit' && (await bill())?.recorded_payment === 0, money(await bill()));
+
+  // Refusals: a modified payment, a payment with no ledger.
+  await withHistory();
+  await editRecorded(MONTH, 400000);
+  fixture.payments = [
+    { id: PAY_ID, student_id: S1, parent_payment_id: null, family_id: null, amount: 400000 },
+    { id: 'child-of-modify', student_id: S1, parent_payment_id: PAY_ID, family_id: null, amount: -400000 },
+  ];
+  fixture.ledger_entries = [
+    { id: 'le-1', tx_id: 'tx-a', tx_key: `payment-${PAY_ID}`, account_id: 'acc-CASH', debit: 400000, credit: 0, month: MONTH },
+    { id: 'le-2', tx_id: 'tx-a', tx_key: null, account_id: 'acc-AR', debit: 0, credit: 400000, month: MONTH },
+  ];
+  memoryWrites = [];
+  r = await delPay(PAY_ID);
+  ok('a payment that modify-payment has changed: refused, nothing reversed or deleted',
+     r.status === 409 && (await bill())?.recorded_payment === 400000 && !memoryWrites.some((w) => w.table === 'ledger_entries' || w.table === 'payments'), { r: r.body, memoryWrites });
+  fixture.payments = [{ id: PAY_ID, student_id: S1, parent_payment_id: null, family_id: null, amount: 400000 }];
+  fixture.ledger_entries = [];
+  memoryWrites = [];
+  r = await delPay(PAY_ID);
+  ok('a payment with no ledger entries: refused (nothing says which bill holds it), nothing deleted',
+     r.status === 409 && (await bill())?.recorded_payment === 400000 && !memoryWrites.some((w) => w.table === 'payments'), { r: r.body });
+}
+
+console.log('\nT4 fault 2 - Settle Bill: the balance is the bill\'s own, and a write-off counts on the bill');
+{
+  await withHistory();
+  memoryWrites = [];
+  let r = await settleAs('discount', 400000);
+  let b = await bill();
+  console.log(`    write-off, family with a paid September => ${r.status} ${JSON.stringify(r.body)} ; bill ${JSON.stringify(money(b))}`);
+  ok('a family with a paid September, October unpaid: a 400,000 write-off is accepted against a balance of 400,000 (was: refused, "balance: 0")',
+     r.status === 200 && r.body.amount === 400000 && r.body.beforeBalance === 400000 && r.body.afterBalance === 0, r.body);
+  ok('  the bill carries it: charge 0, nothing owed (was: the debt stayed on the bill)', b?.total_amount === 0 && b?.carry_out_debt === 0, money(b));
+  ok('  and it reads paid - nothing is left to pay (was: issued)', b?.status === 'paid', money(b));
+  const one = await calc(); const many = await bulk();
+  ok('  both calculators show it as one discount line, "Settle Bill write-off", and agree',
+     one.body.totalAmount === 0 && one.body.discounts?.some((d) => d.name === 'Settle Bill write-off' && d.amount === 400000)
+       && many.body.results?.[0]?.totalAmount === 0 && many.body.results?.[0]?.totalDiscount === one.body.totalDiscount,
+     { one: one.body.discounts, many: many.body.results?.[0] });
+  ok('  the ledger pair and the settlements row were written',
+     memoryWrites.filter((w) => w.table === 'ledger_entries').length === 1 && (fixture.settlements || []).length === 1);
+  r = await settleAs('discount', 100000);
+  ok('  a second write-off of the same month: refused, nothing left to write off', r.status === 400 && (fixture.settlements || []).length === 1, r.body);
+
+  await reset(); world(); await calc();
+  r = await settleAs('discount', 100000); b = await bill();
+  ok('a write-off IN PART: 300,000 still owed, issued', r.status === 200 && b?.total_amount === 300000 && b?.carry_out_debt === 300000 && b?.status === 'issued', money(b));
+  await editRecorded(MONTH, 300000); await calc(); b = await bill();
+  ok('  the rest paid: paid', b?.status === 'paid' && b?.carry_out_debt === 0, money(b));
+
+  await reset(); world();
+  await seedBill(SEP, 400000, 100000, 'partial');            // 300,000 owed from September
+  await calc();
+  r = await settleAs('discount', 700000); b = await bill();
+  ok('700,000 owed (300,000 of it from September): the write-off on October is capped at October\'s 400,000 charge',
+     r.status === 200 && r.body.amount === 400000 && b?.total_amount === 0 && b?.carry_out_debt === 300000 && b?.status === 'issued', { r: r.body, b: money(b) });
+
+  await reset(); world();
+  await db.query(`INSERT INTO public.invoices (student_id, month, base_amount, discount_amount, total_amount, recorded_payment, status, tuition_frozen)
+    VALUES ($1, $2, 900000, 90000, 810000, 0, 'issued', true)`, [S1, MONTH]);
+  memoryWrites = [];
+  r = await settleAs('discount', 100000);
+  ok('a frozen bill: refused before anything is posted (its charge cannot change, so a write-off would never show)',
+     r.status === 409 && !memoryWrites.some((w) => w.table === 'ledger_entries' || w.table === 'settlements') && (await bill())?.total_amount === 810000, r.body);
+
+  await reset(); world(); inFamilyOf();
+  globalThis.__t1Sibling = async () => [{ family_id: FAMILY, status: 'unresolved', winner_student_id: null, winner_class_id: null, sibling_percent: 0, reason: 'busy' }];
+  memoryWrites = [];
+  r = await settleAs('discount', 100000);
+  ok('the family discount still being decided: refused, nothing posted', r.status === 409 && !memoryWrites.some((w) => w.table === 'ledger_entries'), r.body);
+
+  await reset(); world();
+  fixture.settlements = [{ id: 'old-1', student_id: S1, month: MONTH, settlement_type: 'discount', amount: 100000, created_at: '2026-10-07T03:00:00.000Z' }];
+  r = await calc();
+  ok('a write-off made before the change (7 Oct) does not reprice the bill on its next view', r.body.totalAmount === 400000, r.body.discounts);
+
+  await reset(); world(); await calc();
+  await confirm([(await bill()).id]);
+  await settleAs('discount', 100000); b = await bill();
+  ok('a confirmed bill written off goes back to review with the before/after flag',
+     b?.confirmation_status === 'needs_review' && changedFlag(b)?.details?.difference === -100000, brief(b));
+
+  // Voluntary contribution: a credit that is not there.
+  await withHistory();
+  await editRecorded(MONTH, 300000); await calc();
+  b = await bill();
+  r = await settleAs('voluntary_contribution', 300000, MONTH, { consentGiven: true });
+  console.log(`    contribution, 100,000 still owed, cumulative paid ${b?.paid_amount} => ${r.status} ${JSON.stringify(r.body)}`);
+  ok('a contribution where the family OWES 100,000: refused (was: a 300,000 "credit" read from cumulative paid_amount)',
+     b?.carry_out_debt === 100000 && r.status === 400 && /No credit balance/.test(r.body.error), { r: r.body, b: money(b) });
+  await reset(); world();
+  await seedBill(SEP, 400000, 650000, 'paid'); await calc();
+  await editRecorded(MONTH, 400000); await calc();
+  r = await settleAs('voluntary_contribution', 900000, MONTH, { consentGiven: true });
+  ok('  a real 250,000 credit: converted, capped at 250,000', r.status === 200 && r.body.amount === 250000 && r.body.beforeBalance === -250000, r.body);
+
+  // Fail closed on the new read.
+  await reset(); world(); await calc();
+  const before = await bill();
+  failTables.add('settlements'); invoiceWrites = [];
+  const s = await calc(); const m = await bulk();
+  failTables.delete('settlements');
+  ok('the month\'s settlements cannot be read: both calculators fail, nothing is written',
+     s.status === 400 && m.status === 400 && !m.body.results && invoiceWrites.length === 0 && same(await bill(), before), { s: s.body, m: m.body });
+}
+
+console.log('\nT4 fault 5 - nothing left to pay reads paid');
+{
+  const rows = [
+    // recorded, total, base, carry-in debt, carry-in credit, expected
+    [400000, 400000, 400000, 0, 0, 'paid'], [399999, 400000, 400000, 0, 0, 'partial'], [0, 400000, 400000, 0, 0, 'issued'],
+    [500000, 400000, 400000, 0, 0, 'paid'],
+    [400000, 400000, 400000, 300000, 0, 'partial'], [700000, 400000, 400000, 300000, 0, 'paid'],
+    [0, 400000, 400000, 0, 400000, 'paid'], [0, 400000, 400000, 0, 650000, 'paid'],      // credit covers the month (was issued)
+    [50000, 400000, 400000, 0, 650000, 'paid'],                                          // covered and paid again (was partial)
+    [0, 0, 400000, 0, 0, 'paid'],                                                         // a charge written off in full (was issued)
+    [0, 0, 0, 0, 0, 'issued'], [0, 0, 0, 0, 100000, 'issued'],                            // no lessons, nothing paid
+    [100000, 0, 0, 0, 0, 'paid'], [300000, 0, 0, 300000, 0, 'paid'], [100000, 0, 0, 300000, 0, 'partial'], [0, 0, 0, 300000, 0, 'issued'],
+  ];
+  const got = rows.map(([r, t, base, d, c]) => T4.invoicePaidLabel({ total_amount: t, base_amount: base, carry_in_debt: d, carry_in_credit: c, recorded_payment: r }));
+  ok('the rule, case by case', rows.every((x, i) => got[i] === x[5]), rows.map((x, i) => [x, got[i]]).filter(([x, g]) => g !== x[5]));
+
+  await reset(); world(); inFamilyOf();
+  await seedBill(SEP, 400000, 800000, 'paid');
+  await calc();
+  ok('through calculate-tuition: credit carried in covers October, nothing recorded: paid (was issued)', (await bill())?.status === 'paid', money(await bill()));
+  await editRecorded(MONTH, 50000); await calc();
+  ok('  and paid again on top: paid (was partial)', (await bill())?.status === 'paid' && (await bill())?.carry_out_credit === 450000, money(await bill()));
+  await reset(); world();
+  await calc(S1, '2026-12');
+  ok('  a month with no lessons and nothing paid: still issued', (await bill(S1, '2026-12'))?.status === 'issued');
+
+  // The SQL twin used by ai_action_apply / ai_action_undo.
+  const mig = join(repo, 'supabase', 'migrations', '20261113090000_invoice_paid_label.sql');
+  let sqlOk = false, sqlErr = null;
+  if (existsSync(mig)) {
+    try {
+      await db.exec(readFileSync(mig, 'utf8'));
+      const grid = [];
+      for (const r of [0, 1, 100000, 400000, 700000]) for (const pv of [-250000, 0, 1, 400000, 700000]) for (const ch of [0, 400000]) grid.push([r, pv, ch]);
+      const says = await Promise.all(grid.map(async ([r, pv, ch]) => (await db.query(
+        'SELECT public.invoice_paid_label($1::bigint, $2::bigint, $3::bigint, $3::bigint)::text AS l', [r, pv, ch])).rows[0].l));
+      sqlOk = grid.every(([r, pv, ch], i) => T4.paidLabel(r, pv, ch) === says[i]);
+      if (!sqlOk) sqlErr = grid.map((g, i) => [g, says[i], T4.paidLabel(...g)]).filter((x) => x[1] !== x[2]);
+    } catch (e) { sqlErr = e.message; }
+  }
+  ok('  public.invoice_paid_label (SQL, for ai_action_apply / undo) agrees with the helper on a grid', sqlOk, sqlErr);
+}
+
+console.log('\nT4 faults 3 and 4 - the browser writes the label by the same rule (a registered mirror), and nowhere restates it');
+{
+  const src = (rel) => readFileSync(join(repo, rel), 'utf8');
+  const mirror = join(repo, 'src', 'lib', 'invoiceStatus.ts');
+  ok('src/lib/invoiceStatus.ts exists and is registered with the lib in mirrors.test.mjs',
+     existsSync(mirror) && /\["src\/lib\/invoiceStatus\.ts",\s*"supabase\/functions\/_lib\/invoice-status\.ts"\]/.test(src('scripts/pgtest/mirrors.test.mjs')));
+  let same3 = false;
+  if (existsSync(mirror)) {
+    const f = join(out, 'invoice-status.src.mjs');
+    writeFileSync(f, (await build({ entryPoints: [mirror], bundle: true, format: 'esm', write: false })).outputFiles[0].text);
+    const S = await import(pathToFileURL(f).href);
+    const grid = [];
+    for (const r of [0, 1, 400000, 700000]) for (const pv of [-1, 0, 400000]) for (const ch of [0, 1]) grid.push([r, pv, ch]);
+    same3 = grid.every((g) => S.paidLabel(...g) === T4.paidLabel(...g));
+  }
+  ok('  and the browser copy answers as the functions\' copy on a grid', same3);
+  const writers = ['RecordPaymentDialog.tsx', 'QuickPayPanel.tsx', 'BatchPaymentDialog.tsx', 'RecordedPaymentManager.tsx', 'PaymentIntegrityRepair.tsx'];
+  for (const f of writers) {
+    const t = src(`src/components/admin/${f}`);
+    ok(`  ${f}: takes the label from @/lib/invoiceStatus and states no rule of its own`,
+       /from "@\/lib\/invoiceStatus"/.test(t)
+         && !/>=\s*(payable|fp)\s*&&\s*(payable|fp)\s*>\s*0/.test(t)
+         && !/(newStatus|status|expectedStatus|correctStatus)\s*=\s*['"](paid|partial|draft|issued)['"]/.test(t)
+         && !/paid_amount\s*===\s*0|total_amount\s*-\s*invoice\.paid_amount/.test(t));
+  }
+  const ism = src('src/components/admin/InvoiceStatusManager.tsx');
+  ok('  InvoiceStatusManager offers only what sticks: credit, and "follow the payments" (the rule)',
+     /value="credit"/.test(ism) && !/SelectItem value="(draft|issued|partial|paid)"/.test(ism) && /from "@\/lib\/invoiceStatus"/.test(ism));
+}
+
+console.log('\nT4 fault 6 - family-payment owes what the month asks for, carry included');
+{
+  await reset(); world(); inFamilyOf();
+  await seedBill(SEP, 400000, 500000, 'paid');                // 100,000 credit into October
+  await calc();
+  let r = await familyPay(300000); await calc();
+  let b = await bill();
+  ok('100,000 credit carried in, 300,000 paid: 300,000 recorded, paid, nothing over (as before)', r.status === 200 && b?.recorded_payment === 300000 && b?.status === 'paid', money(b));
+  await reset(); world(); inFamilyOf();
+  await seedBill(SEP, 400000, 500000, 'paid'); await calc();
+  memoryWrites = [];
+  r = await familyPay(400000);
+  ok('100,000 credit carried in, 400,000 offered: refused before anything is written - 100,000 more than is owed and no leftover choice (was: all 400,000 put on the bill)',
+     r.status === 400 && (await bill())?.recorded_payment === 0 && !memoryWrites.some((w) => w.table === 'ledger_entries' || w.table === 'payments'), { r: r.body, b: money(await bill()) });
+
+  await reset(); world(); inFamilyOf();
+  await seedBill(SEP, 400000, 100000, 'partial');             // 300,000 debt into October
+  await calc(); await editRecorded(MONTH, 400000); await calc();
+  memoryWrites = [];
+  r = await familyPay(300000); await calc();
+  b = await bill();
+  ok('300,000 carried in, October\'s 400,000 already paid: the family\'s 300,000 goes on the bill and settles it (was: 0 applied, a zero allocation row)',
+     r.status === 200 && b?.recorded_payment === 700000 && b?.status === 'paid' && b?.carry_out_debt === 0
+       && !memoryWrites.some((w) => w.table === 'payment_allocations' && Number(w.value?.allocated_amount) === 0), { r: r.body, b: money(b) });
+
+  await withHistory();
+  r = await call('family-payment', { month: MONTH, familyId: FAMILY, selectedStudentIds: [S1], amount: 500000, method: 'Cash',
+    occurredAt: '2026-10-20T10:00:00.000Z', allocationMode: 'manual', manualAllocations: [{ studentId: S1, amount: 500000 }] });
+  await calc(); b = await bill();
+  ok('manual split of 500,000 on a 400,000 bill: the bill records what the ledger records, 500,000, 100,000 credit (was: 400,000 on the bill, 500,000 in the ledger)',
+     r.status === 200 && b?.recorded_payment === 500000 && b?.carry_out_credit === 100000, { r: r.body, b: money(b) });
+}
+
+console.log('\nT4 fault 7 - a pricing read that fails, fails the calculation');
+{
+  for (const table of ['referral_bonuses', 'discount_assignments']) {
+    await reset(); world(); await calc();
+    const before = await bill();
+    failTables.add(table); invoiceWrites = [];
+    const s = await calc(); const m = await bulk();
+    failTables.delete(table);
+    ok(`${table} cannot be read: calculate-tuition 400, nothing written (was: priced without them and saved)`,
+       s.status === 400 && invoiceWrites.length === 0 && same(await bill(), before), s.body);
+    ok(`  calculate-tuition-bulk 400, no results${table === "referral_bonuses" ? " (was: 200, priced without them)" : ""}`, m.status === 400 && !m.body.results, m.body);
+  }
 }
 
 // ================================================== the owner's check SQL

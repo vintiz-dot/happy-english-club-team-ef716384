@@ -330,6 +330,23 @@ console.log("=== recording tuition ===");
   await db.query("DELETE FROM public.monthly_finance_snapshots");
   ok("reopened, the undo works and the empty bill goes", (await undo(r3.action_id)).ok
     && (await one("SELECT count(*)::int AS n FROM public.invoices WHERE student_id = $1 AND month = $2", [lan, M1])).n === 0);
+
+  // T4: the label is the one rule (_lib/invoice-status.ts), through
+  // public.invoice_paid_label (migration 20261113090000): a month whose
+  // charge is covered by credit carried in, paid again on top, reads paid.
+  const saved = await one("SELECT recorded_payment, carry_in_credit FROM public.invoices WHERE student_id = $1 AND month = $2", [lan, M0]);
+  await db.query("UPDATE public.invoices SET recorded_payment = 0, carry_in_credit = 1000000 WHERE student_id = $1 AND month = $2", [lan, M0]);
+  const r4 = await apply(pay(50000));
+  inv = await one("SELECT recorded_payment, status FROM public.invoices WHERE student_id = $1 AND month = $2", [lan, M0]);
+  eq("T4: credit covers the month, 50.000 paid on top: paid (was partial)", [inv.recorded_payment, inv.status], [50000, "paid"]);
+  ok("T4: undone, nothing recorded and the credit still covers it: paid (was issued)", (await undo(r4.action_id)).ok
+    && (await one("SELECT status FROM public.invoices WHERE student_id = $1 AND month = $2", [lan, M0])).status === "paid");
+  await db.query("UPDATE public.invoices SET recorded_payment = $3, carry_in_credit = $4, status = 'issued' WHERE student_id = $1 AND month = $2",
+    [lan, M0, saved.recorded_payment, saved.carry_in_credit]);
+  const def = (await one("SELECT pg_get_functiondef('public.ai_action_apply(uuid, text, jsonb)'::regprocedure) AS d")).d
+    + (await one("SELECT pg_get_functiondef('public.ai_action_undo(uuid)'::regprocedure) AS d")).d;
+  ok("T4: ai_action_apply / undo state no label rule of their own any more",
+     (def.match(/public\.invoice_paid_label\(/g) || []).length === 2 && !/THEN 'paid'/.test(def));
 }
 
 console.log("=== families ===");
