@@ -24,7 +24,7 @@ export default function Vocabulary() {
   return (
     <Layout title="Smart Vocabulary">
       <ClassSelectorModal userId={user?.id} />
-      <div className="mx-auto max-w-3xl space-y-8 py-8">
+      <div className="mx-auto max-w-3xl space-y-8">
         {/* Header */}
         <div className="space-y-2 text-center">
           <h1 className="font-display text-hec-display font-medium text-hec-ink">

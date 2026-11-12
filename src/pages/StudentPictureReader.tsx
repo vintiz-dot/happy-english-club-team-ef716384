@@ -20,7 +20,7 @@ export default function StudentPictureReader() {
 
   return (
     <Layout title="Picture Reader">
-      <div className="max-w-3xl mx-auto p-4 md:p-6 pb-24 space-y-5">
+      <div className="max-w-3xl mx-auto space-y-5">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-hec-md border border-hec-line bg-hec-sunken">
             <Languages className="h-7 w-7 text-hec-ink-soft" />
