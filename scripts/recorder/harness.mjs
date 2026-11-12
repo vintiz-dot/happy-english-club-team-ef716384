@@ -17,7 +17,8 @@ import { bundleRecorder, repo } from "./load-recorder.mjs";
 import { createFakeServer } from "./fake-recorder-server.mjs";
 
 export const PORT = Number(process.env.RECORDER_PORT ?? 5352);
-export const WAV = process.env.RECORDER_WAV ?? "C:\\Users\\Dell\\hec-audio-eval\\work\\wav16k\\lessons\\242 Lang Street Lane 19.wav";
+// Synthetic by default (make it with scripts/recorder/make-synthetic-wav.mjs); a real recording only if RECORDER_WAV names one.
+export const WAV = process.env.RECORDER_WAV ?? "C:\Users\Dell\hec-tools\c2r-harness\synthetic.wav";
 const PW_DIR = process.env.PLAYWRIGHT_DIR ?? "C:\\Users\\Dell\\hec-tools\\a0-harness";
 const CHROME = process.env.CHROME_EXE ?? "C:/Users/Dell/AppData/Local/ms-playwright/chromium-1208/chrome-win64/chrome.exe";
 
