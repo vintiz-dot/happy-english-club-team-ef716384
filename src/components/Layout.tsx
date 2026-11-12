@@ -139,10 +139,10 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
               </div>
               {/* On a phone the switcher takes its own full-width row under the bar,
                   so the name has room to wrap; from sm it sits inline (DESIGN_SYSTEM s.13). */}
-              <div className="order-last w-full empty:hidden sm:order-none sm:ml-auto sm:w-auto sm:max-w-xs [&>button]:h-auto [&>button]:w-full [&>button]:justify-start [&>button]:whitespace-normal [&>button]:py-2 [&>button]:text-left [&>button>span]:min-w-0 [&>button>span]:flex-1 [&>button>span]:break-words">
+              <div className="order-last w-full empty:hidden sm:order-none sm:flex sm:w-auto sm:min-w-0 sm:flex-1 sm:justify-end [&>button]:h-auto sm:[&>button]:w-auto sm:[&>button]:max-w-xs [&>button]:w-full [&>button]:justify-start [&>button]:whitespace-normal [&>button]:py-2 [&>button]:text-left [&>button>span]:min-w-0 [&>button>span]:flex-1 [&>button>span]:break-words">
                 <ProfileSwitcher />
               </div>
-              <div className="ml-auto flex shrink-0 items-center gap-2 sm:ml-0">
+              <div className="ml-auto flex shrink-0 items-center gap-2">
                 <PWAInstallButton variant="outline" />
                 <NotificationBell />
                 <ChangePassword />

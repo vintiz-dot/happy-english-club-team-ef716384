@@ -41,12 +41,14 @@ export function UserMenu({
 }) {
   const [choice, setChoice] = useThemeChoice();
   return (
-    <DropdownMenu>
+    // modal={false}: the page behind stays in the accessibility tree (no aria-hidden over focusable content).
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger
         aria-label={name ? `Account menu, signed in as ${name}` : "Account menu"}
         className={`inline-flex min-h-hec-target min-w-hec-target shrink-0 items-center justify-center rounded-full text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken ${FOCUS}`}
       >
-        <Avatar className="h-8 w-8 border border-hec-line">
+        {/* Initials are decoration here; the label above says who it is. */}
+        <Avatar aria-hidden="true" className="h-8 w-8 border border-hec-line">
           <AvatarImage src={avatarUrl || undefined} alt="" />
           <AvatarFallback className="bg-hec-sunken text-hec-caption font-medium text-hec-ink">
             {initialsOf(name) || "?"}
