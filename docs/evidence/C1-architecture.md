@@ -2,6 +2,14 @@
 
 Task C1 of `docs/MASTER_PLAN.md`. Author: Fable 5.2, 2026-11-11. Branch `worktree-agent-acf51c46cb0eb722c`.
 
+## Revision 4 (2026-11-12) - after the C2 review (`docs/evidence/C2-review.md`), ruling (a) and the cron gap
+
+Still never applied, edited in place (one change only); one new migration. Evidence: `docs/evidence/C2-revision.md`. This list supersedes any sentence below that says otherwise.
+
+- **Ruling (a), silence.** `class_recording_chunks.below_floor boolean NOT NULL DEFAULT false`. `recorder_register_chunk` no longer refuses a chunk below the format's byte floor: it stores it with `below_floor = true` (and returns `below_floor` in its JSON); only a chunk under 40 bytes (it cannot be an audio file) is refused, "too small to hold any audio". A below-floor chunk is never `live`, so it never counts toward `verified_audio_ms`, `verified_lesson_ms` or `recording_ran_evidence`, is not `late_audio_ms` either, and a track with only below-floor chunks is not in `tracks_with_audio`. New last view column `below_floor_ms` (longest track). The page no longer pads silence to VERBATIM FLAC to get over the floor.
+- **Cron (M7).** `supabase/migrations/20261112101000_recorder_retention_cron.sql`: `recorder-retention` nightly at 20:00 UTC (03:00 Hanoi) via pg_cron + pg_net with the runner token read from `schedule_runner` at run time; `recorder-expire-stale` hourly in SQL. Each skipped with a NOTICE where pg_cron / pg_net / the runner table is missing; idempotent.
+- **m8.** `recorder-retention` handles at most 25 recordings and 100 s per run and reports `remaining`.
+
 ## Revision 3 (2026-11-12) - after C1 critic 3 (`docs/evidence/C1-critic-3.md`)
 
 Still never applied, edited in place. Evidence, mutation run, contract note and post-apply probes: `docs/evidence/C1-revision-3.md`. This list supersedes any sentence below that says otherwise.
