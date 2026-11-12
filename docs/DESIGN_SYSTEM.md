@@ -1,6 +1,6 @@
 # HEC Design System - "Ivory"
 
-Where I am / next step: sections 1-3 written (principles, scope, palette + contrast); next = sections 4-12 (type ... names), then states, recipes, rollout map.
+Where I am / next step: all sections written; next = verify every class in the doc compiles, final build + evidence file, then remove this line.
 
 Status: tokens exist and are inert. Nothing uses them until an element carries `data-hec-theme="ivory"`. The first screen to do so is the student dashboard (task A4.2); the rest of the app waits for the owner's approval at the design checkpoint.
 
@@ -338,3 +338,242 @@ The pattern (test string: `Nguyễn Hoàng Phương Thảo Nguyên`):
 - What sits beside a name (amount, badge, button) is `shrink-0`; an amount is also `whitespace-nowrap`. The name gives way by wrapping; the number never does.
 - Line height at least 1.5 for a name in body text, 1.25 in display size.
 - Where a single line is forced by the design (a bottom-nav label, a chip), put a short label there, not a name.
+
+## 14. State colours, money and destructive actions
+
+| State | Text / icon | Panel | Solid | Means |
+|---|---|---|---|---|
+| Success | `text-hec-leaf` | `bg-hec-leaf-tint border-hec-leaf/30` | - | done, paid, present, grew |
+| Warning | `text-hec-warn` | `bg-hec-warn-tint border-hec-warn/30` | - | due soon, check this, unresolved |
+| Danger | `text-hec-danger` | `bg-hec-danger-tint border-hec-danger/30` | `bg-hec-danger-fill text-hec-on-danger` | overdue, failed, cancelled, cannot be undone |
+
+Rules that hold on every screen:
+
+- Colour is never the only signal: a state always has an icon and a word ("Overdue", "Paid", "Cancelled").
+- Brass is never a state. Amber (`warn`) and brass are different hues and different jobs; do not use `warn` to decorate a star or a trophy (that is brass), and do not use brass to warn.
+- Red appears only for danger. No red hearts, no red "new" dots, no red brand flourishes.
+- Leaf is the only green. No second green, no teal.
+
+### Money
+
+A person must be able to find the amount they owe in one second and trust it.
+
+- Amounts are ink, sans, `tabular-nums`, `whitespace-nowrap`, right-aligned in a column. Never brass, never serif, never animated, never count-up.
+- The total is the largest number on the screen and is the only thing under a 2 px ink rule.
+- Red on an amount means exactly one thing: overdue or owed after a failure, and the word says so. Green on an amount means exactly one thing: fully paid, and the word says so. A discount is ink with a minus sign and its label, not green.
+- An unresolved figure (sibling discount still being worked out) is shown as a warning panel with words, never as a number that may change silently.
+- The figures themselves come from `calculate-tuition` / `calculate-payroll` and are displayed as given. A restyle changes classes, never a figure, a rounding or a currency format.
+
+Money total row:
+
+```html
+<dl class="space-y-2 text-hec-body text-hec-ink">
+  <div class="flex items-baseline justify-between gap-4">
+    <dt class="min-w-0 text-hec-ink-soft">Tuition, November</dt>
+    <dd class="shrink-0 whitespace-nowrap tabular-nums">1.400.000 ₫</dd>
+  </div>
+  <div class="flex items-baseline justify-between gap-4">
+    <dt class="min-w-0 text-hec-ink-soft">Sibling discount</dt>
+    <dd class="shrink-0 whitespace-nowrap tabular-nums">-150.000 ₫</dd>
+  </div>
+  <div class="flex items-baseline justify-between gap-4 border-t-2 border-hec-ink pt-3">
+    <dt class="min-w-0 font-semibold">Total due</dt>
+    <dd class="shrink-0 whitespace-nowrap text-hec-h1 font-semibold tabular-nums">1.250.000 ₫</dd>
+  </div>
+</dl>
+<!-- overdue: add under the total -->
+<p class="mt-2 flex items-center gap-2 text-hec-small font-medium text-hec-danger"><!-- alert icon --> Overdue since 5 November</p>
+```
+
+### Destructive confirm dialog
+
+For cancelling a lesson, deleting a record, reversing a payment, removing a child from a class.
+
+```html
+<div class="fixed inset-0 z-50 bg-hec-scrim/60"></div>
+<div role="alertdialog" aria-labelledby="t" aria-describedby="d" data-hec-theme="ivory"
+     class="fixed inset-x-4 top-1/2 z-50 mx-auto max-h-[85dvh] max-w-md -translate-y-1/2 overflow-y-auto rounded-hec-lg border border-hec-line bg-hec-raised p-6 text-hec-ink shadow-hec-3">
+  <h2 id="t" class="font-display text-hec-h2 font-medium">Cancel Tuesday's lesson?</h2>
+  <p id="d" class="mt-2 text-hec-body text-hec-ink-soft">Flyers A, Tuesday 12 November, 17:30. This cannot be undone.</p>
+  <div class="mt-4 rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-4 text-hec-small text-hec-ink">
+    <p class="font-medium text-hec-danger">What will change</p>
+    <ul class="mt-2 space-y-1">
+      <li>12 families will not be charged for this lesson.</li>
+      <li>The teacher will not be paid for it.</li>
+    </ul>
+  </div>
+  <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+    <button class="... secondary button ...">Keep the lesson</button>
+    <button class="... destructive button ...">Cancel the lesson</button>
+  </div>
+</div>
+```
+
+- The title is a question that names the thing. The body says what it is and that it cannot be undone. The panel lists the consequences, money first, in sentences with numbers.
+- Two buttons, each labelled with what it does: verb + object. Never "OK", "Yes", "Confirm", "Continue". **Never "Cancel" as the way out of a dialog about cancelling** - "Keep the lesson" / "Cancel the lesson", "Keep the payment" / "Delete the payment".
+- The destructive button is the only red fill on the screen; the safe one is the secondary (outline) button. No brass, no primary ink button in this dialog.
+- Focus starts on the safe button. Escape and the scrim do the safe thing. Enter does not trigger the destructive button unless it has focus.
+- At 375 the buttons stack full width with the safe one at the bottom, under the thumb (`flex-col-reverse` with the safe button first in the markup); from `sm` they sit in a row, destructive on the right.
+- While it runs the destructive button says what is happening ("Cancelling...") and is disabled; the dialog does not close until the server answers; a failure is shown inside the dialog in `text-hec-danger`, in words.
+- The control that opens the dialog is the destructive-quiet button (below), never a red fill sitting in a list.
+- The session dialogs (`CancelSessionDialog`, `SessionActionsModal`, `EditSessionModal`, `DeleteSessionDialog`, `BulkSessionDelete`) are owned by workstream D and are not restyled until D3 is merged; this recipe is what they take then.
+
+## 15. Component recipes
+
+Class strings use only the tokens of this system plus layout utilities. Inside the scope the shared primitives already follow through the bridge; these are the strings for anything written or re-classed by hand.
+
+**Focus** (referred to as `FOCUS` below): `focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring`
+
+**Card**
+- Standard: `rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 sm:p-6`
+- If the whole card is a link: add `transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2` + `FOCUS`
+- Young: replace `bg-hec-surface` with `bg-hec-honey`
+- Card title: `font-display text-hec-h2 font-medium text-hec-ink`; card caption: `text-hec-small text-hec-ink-soft`
+
+**Button** - base, on every variant: `inline-flex min-h-hec-target min-w-hec-target items-center justify-center gap-2 rounded-hec-md px-6 text-hec-body font-medium transition-colors duration-hec-1 ease-hec disabled:cursor-not-allowed disabled:opacity-50` + `FOCUS`
+
+| Variant | Add | When |
+|---|---|---|
+| Primary | `bg-hec-action text-hec-on-action hover:bg-hec-action/90 active:bg-hec-action/80` | the main action of a screen or dialog |
+| Brass (hero) | `bg-hec-brass-fill text-hec-on-brass hover:bg-hec-brass-fill/90` | at most one per screen, and only where the screen exists for that one act ("Start today's homework"). Not in dialogs, not in lists |
+| Secondary | `border border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken` | the other choice; the safe choice in a destructive dialog |
+| Quiet | `text-hec-ink hover:bg-hec-sunken` | low-weight actions, icon buttons, toolbar items |
+| Link | `min-w-0 px-0 text-hec-brass underline-offset-4 hover:underline` | navigation that reads as text |
+| Destructive | `bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90` | only inside a confirm dialog, only one |
+| Destructive quiet | `border border-hec-danger bg-transparent text-hec-danger hover:bg-hec-danger-tint` | the control that opens a destructive confirm |
+
+Icon-only button: base without `px-6`, with `aria-label`; icon `h-5 w-5`. Loading: keep the width, swap the label for a verb in progress, set `disabled`.
+
+**Input**
+- Field: `min-h-hec-target w-full rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 text-hec-body text-hec-ink placeholder:text-hec-ink-faint aria-[invalid=true]:border-hec-danger disabled:bg-hec-sunken disabled:opacity-50` + `FOCUS`
+- Label (always visible, above the field): `text-hec-small font-medium text-hec-ink`
+- Help: `text-hec-caption text-hec-ink-soft`; error (with an icon, linked by `aria-describedby`): `text-hec-caption text-hec-danger`
+- A placeholder is an example, never the label.
+
+**Nav bar**
+- Bottom nav (phone): `fixed inset-x-0 bottom-0 z-40 flex border-t border-hec-line bg-hec-surface pb-[env(safe-area-inset-bottom)] shadow-hec-2`
+- Item: `flex min-h-hec-target min-w-hec-target flex-1 flex-col items-center justify-center gap-1 text-hec-caption text-hec-ink-soft aria-[current=page]:font-medium aria-[current=page]:text-hec-ink` + `FOCUS`
+- Active mark, inside the active item above the icon: `h-0.5 w-6 rounded-full bg-hec-brass` (the brass line is the only fill; no pill, no gradient tile behind the icon)
+- Top bar: `sticky top-0 z-40 flex min-h-14 items-center gap-3 border-b border-hec-line bg-hec-paper px-4`
+- At most five items; labels are one short word and are always shown.
+
+**Dialog**
+- Scrim: `fixed inset-0 z-50 bg-hec-scrim/60`
+- Panel: `fixed inset-x-4 top-1/2 z-50 mx-auto max-h-[85dvh] max-w-md -translate-y-1/2 overflow-y-auto rounded-hec-lg border border-hec-line bg-hec-raised p-6 text-hec-ink shadow-hec-3`
+- Title: `font-display text-hec-h2 font-medium text-hec-ink`; body: `mt-2 text-hec-body text-hec-ink-soft`
+- Footer: `mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end`
+- Enter: opacity 0 to 1 and 8 px up, `duration-hec-3 ease-hec`. Close button: quiet icon button, 44 px, top right, `aria-label="Close"`.
+
+**Tooltip / popover**
+- Tooltip: `rounded-hec-sm bg-hec-action px-3 py-2 text-hec-caption text-hec-on-action shadow-hec-2` - one short line, never the only place a piece of information lives (a phone has no hover).
+- Popover / menu: `rounded-hec-md border border-hec-line bg-hec-raised p-4 text-hec-ink shadow-hec-2`
+- Menu item: `flex min-h-hec-target items-center gap-2 rounded-hec-sm px-3 text-hec-body text-hec-ink hover:bg-hec-sunken` + `FOCUS`
+
+**Table / list row**
+- List container: `rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1`
+- Row: `flex min-h-hec-target items-start gap-3 border-b border-hec-line px-4 py-3 last:border-b-0`; if the row is a link add `hover:bg-hec-sunken/60` + `FOCUS`
+- Row title: the name pattern of section 13; row meta: `text-hec-small text-hec-ink-soft`
+- Table header cell: `px-4 py-3 text-left text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft`
+- Table cell: `px-4 py-3 text-hec-small text-hec-ink`; numeric cell: add `text-right tabular-nums whitespace-nowrap`
+- No zebra stripes; hairlines only. Below `sm` a table is rendered as list rows (label above value), not scrolled sideways.
+
+**Badge** - base: `inline-flex items-center gap-1 rounded-full border px-3 py-1 text-hec-caption font-medium`
+
+| Variant | Add |
+|---|---|
+| Neutral | `border-hec-line bg-hec-sunken text-hec-ink-soft` |
+| Success | `border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf` |
+| Warning | `border-hec-warn/30 bg-hec-warn-tint text-hec-warn` |
+| Danger | `border-hec-danger/30 bg-hec-danger-tint text-hec-danger` |
+| Brass (level, rank, reward) | `border-hec-brass/40 bg-transparent text-hec-brass` |
+
+A badge is a label, not a button; it has no hover. A state badge carries a word, and an icon where there is room.
+
+**Progress** - track: `h-2 rounded-full bg-hec-sunken`; fill: `h-2 rounded-full bg-hec-brass` (XP, level) or `bg-hec-leaf` (completion). Always with the number in text next to it.
+
+## 16. Do / don't
+
+| Do | Don't |
+|---|---|
+| One brass thing in view: a link, the active tab, a progress fill | Brass headings, brass borders on cards, brass and a brass-fill button together in one card |
+| Solid ivory surfaces with a hairline and `shadow-hec-1` | Gradients, glass, `backdrop-blur`, glows, coloured shadows |
+| Serif for the few headings, sans for everything read or counted | Serif body text, serif numbers, serif in buttons or inputs |
+| Let a name wrap to two or three lines | `truncate`, `line-clamp`, initials instead of the name |
+| Say it in words and add the colour | Rely on red or green alone |
+| "Keep the lesson" / "Cancel the lesson" | "Cancel" / "OK" |
+| `hec-*` classes only, no `dark:` prefix (the tokens carry both themes) | `bg-white`, `text-slate-600`, `dark:bg-slate-900`, a hex value in a class or a style |
+| `min-h-hec-target` on everything pressable | A 32 px icon button; two targets touching |
+| One slow fade or 8 px rise | Bounce, wiggle, float, confetti on load, anything looping |
+| Leaf only for success and growth | Raw logo green as text; green as a second accent |
+| Emoji only inside the child's own content or a reward moment in the young scale | Emoji as icons in navigation, buttons or headings |
+
+## 17. Excluded: the three display boards
+
+Star Board, High Scores and Night League (`src/components/leaderboard/`, read `src/components/leaderboard/AGENTS.md` first) are themed canvases made to be projected on a classroom wall. Each has its own palette, type and motion, written as hex values and `--studio-*` / board-local variables, and that is deliberate.
+
+- They are not tokenised and not restyled. The 277 hex literals and the hard-coded palette classes in those files are not rollout work.
+- They never carry `data-hec-theme`. When the attribute moves to `<html>`, each board's root must opt out, because the bridge would otherwise change the `--background` / `--primary` / `--border` names under it. The opt-out is part of the rollout step that moves the attribute, not of this task; the simplest form is to keep the attribute on the app shell (`Layout`) instead of `<html>` for routes that render a board. Decide it then, with the pixel diff of the three boards as the gate (0 changed pixels).
+- `restPaging` / `useRestPaging` and everything else about how the boards load stay as they are.
+- The frame around a board (the app's nav, a dialog opened from it) does follow the system.
+
+Also outside the system, for the same reason (their own medium): PDF templates, printed reports (`#hec-print-report`), charts' series colours (a chart palette is a separate piece of work), and the recorder and audit-clips screens until their owners release them.
+
+## 18. Rollout mapping: hard-coded class to token
+
+For the class-for-class batches (A4.6). Applies to `bg-`, `text-`, `border-`, `ring-`, `divide-`, `fill-`, `stroke-` alike. Shades are grouped: map by the row, not by the exact number. **Delete the paired `dark:` class** every time: the token carries both themes.
+
+Mechanical (haiku may do these; verified by screenshot):
+
+| Hard-coded | Token | Note |
+|---|---|---|
+| `bg-white` | `bg-hec-surface` | `bg-hec-raised` if it is a dialog, popover or input |
+| `bg-slate-50`, `bg-gray-50`, `bg-zinc-50` | `bg-hec-paper` | |
+| `bg-slate-100`, `bg-gray-100`, `bg-slate-200` | `bg-hec-sunken` | |
+| `bg-slate-800/900/950`, `bg-gray-900`, `bg-black` (as a surface) | `bg-hec-action` with `text-hec-on-action` | if it was a dark-mode surface (`dark:bg-slate-900`), delete it instead |
+| `text-slate-900/800`, `text-gray-900/800`, `text-black` | `text-hec-ink` | |
+| `text-slate-700/600`, `text-gray-700/600` | `text-hec-ink-soft` | |
+| `text-slate-500/400`, `text-gray-500/400` | `text-hec-ink-faint` | |
+| `border-slate-200/100`, `border-gray-200` | `border-hec-line` | |
+| `border-slate-300/400`, `border-gray-300` | `border-hec-line-strong` if it edges a control, else `border-hec-line` | |
+| `text-red-*`, `text-rose-*` | `text-hec-danger` | |
+| `bg-red-50/100`, `bg-rose-50/100`, `bg-red-500/10` | `bg-hec-danger-tint` | |
+| `bg-red-500/600/700`, `bg-rose-600` | `bg-hec-danger-fill` with `text-hec-on-danger` | |
+| `border-red-*`, `border-rose-*` | `border-hec-danger/30` | |
+| `text-green-*`, `text-emerald-*`, `text-lime-*`, `text-teal-*` | `text-hec-leaf` | |
+| `bg-green-50/100`, `bg-emerald-50/100`, `bg-emerald-500/10`, `bg-emerald-500/15` | `bg-hec-leaf-tint` | |
+| `bg-green-500/600`, `bg-emerald-500/600` | `bg-hec-leaf` with `text-hec-paper` | |
+| `border-emerald-*`, `border-green-*` (any opacity) | `border-hec-leaf/30` | |
+| `text-white` on an ink or blue fill | `text-hec-on-action` | on a red fill `text-hec-on-danger`; on brass `text-hec-on-brass` |
+| `text-white/80`, `text-white/70` | `text-hec-on-action/80` | only on `bg-hec-action` |
+| `shadow-sm`, `shadow`, `shadow-md` | `shadow-hec-1` | |
+| `shadow-lg`, `shadow-xl` | `shadow-hec-2` | |
+| `shadow-2xl`, `shadow-premium*`, `shadow-q*` | `shadow-hec-3` on dialogs, else `shadow-hec-2` | |
+| `rounded-md`, `rounded-lg` | `rounded-hec-md` | |
+| `rounded-xl`, `rounded-2xl`, `rounded-3xl` | `rounded-hec-lg` | `rounded-full` stays |
+| `backdrop-blur-*`, `bg-white/10`, `bg-*-glass`, `glass-panel` | remove; use the solid surface of the row above | |
+| `focus:ring-*`, `focus-visible:ring-*`, `focus:outline-none` | the `FOCUS` string | |
+| `duration-200/300`, `ease-out`, `ease-in-out` | `duration-hec-1` / `duration-hec-2`, `ease-hec` | |
+| `truncate`, `line-clamp-*` on a name | the name pattern, section 13 | on other text: leave, and list the site for review |
+
+Needs a decision per use (sonnet, not haiku): what the colour meant.
+
+| Hard-coded | If it meant... | Token |
+|---|---|---|
+| `text-amber-*`, `text-yellow-*`, `text-orange-*` | a warning, due soon, pending | `text-hec-warn` |
+| | a star, trophy, XP, level, reward | `text-hec-brass` |
+| `bg-amber-50/100`, `bg-amber-500/10`, `bg-amber-950/30`, `bg-yellow-50` | a warning panel | `bg-hec-warn-tint` (+ `border-hec-warn/30`) |
+| | warmth on a child's card | `bg-hec-honey` (young scale only), else `bg-hec-surface` |
+| `border-amber-*` | warning | `border-hec-warn/30` |
+| | reward | `border-hec-brass/40` |
+| `bg-amber-500`, `bg-yellow-400` (solid) | a reward chip | brass badge (section 15) |
+| `text-blue-*`, `text-indigo-*`, `text-violet-*`, `text-purple-*`, `text-sky-*`, `text-cyan-*` | a link or something pressable | `text-hec-brass` |
+| | information, an icon, a category colour | `text-hec-ink-soft` |
+| `bg-blue-50/100`, `bg-violet-50`, `bg-indigo-50`, `bg-sky-50` | an info panel, a selected row | `bg-hec-sunken` |
+| `bg-blue-500/600`, `bg-violet-600`, `bg-indigo-600` | a button | primary: `bg-hec-action text-hec-on-action` |
+| `border-blue-*`, `border-violet-*` | selected | `border-hec-brass` |
+| | plain edge | `border-hec-line` |
+| `from-*` / `via-*` / `to-*` with `bg-gradient-to-*` | a button or hero | remove the gradient: `bg-hec-action` (button) or `bg-hec-surface` (card). There are no gradients in the system |
+| `text-pink-*`, `text-fuchsia-*`, `bg-pink-*` | decoration | remove the colour: `text-hec-ink-soft` / `bg-hec-sunken` |
+| `text-aurora`, `bg-aurora`, `bg-citrus`, `bg-glacier`, `bg-mint`, `bg-night` | emphasis | `text-hec-ink` / `bg-hec-surface`; a hero uses type size, not colour |
+
+Category colours (subjects, teams, calendar classes) where several things must be told apart are not covered by one accent. Until a category palette is designed, leave those sites as they are and list them; do not map five categories onto brass.
