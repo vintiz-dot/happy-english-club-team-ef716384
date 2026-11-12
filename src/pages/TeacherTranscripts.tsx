@@ -1427,7 +1427,7 @@ export default function TeacherTranscripts() {
                         return (
                           <div
                             key={s.id}
-                            className={`flex items-start gap-3 rounded-hec-md border p-3 ${
+                            className={`flex flex-wrap items-start gap-3 rounded-hec-md border p-3 ${
                               s.status === "applied" ? "border-hec-leaf/30 bg-hec-leaf-tint"
                               : s.status === "dismissed" ? "border-hec-line bg-hec-sunken/60"
                               : "border-hec-line bg-hec-surface"
@@ -1442,7 +1442,7 @@ export default function TeacherTranscripts() {
                             >
                               {s.points > 0 ? `+${s.points}` : s.points}
                             </span>
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1 basis-48">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="min-w-0 whitespace-normal break-words hyphens-none text-hec-small font-semibold text-hec-ink">
                                   {s.students?.full_name || (
@@ -1528,7 +1528,7 @@ export default function TeacherTranscripts() {
                               initial={{ width: 0 }}
                               animate={{ width: `${(share / maxShare) * 100}%` }}
                               transition={{ duration: 0.5, delay: i * 0.04 }}
-                              className={`h-full rounded-full ${isQuiet ? "bg-hec-warn" : "bg-hec-brass"}`}
+                              className={`h-full rounded-full ${isQuiet ? "bg-hec-warn" : "bg-hec-leaf"}`}
                             />
                           </div>
                           <span className="w-12 shrink-0 text-right text-hec-caption tabular-nums text-hec-ink-soft">
