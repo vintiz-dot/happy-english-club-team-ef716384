@@ -247,9 +247,9 @@ export const COPY = {
   stalePrompt: "Read what is different below, then confirm again. Nothing was changed.",
   reviewNote: "This change goes to review: another administrator will look at it.",
   erasedNote: "Marks were removed before this change",
-  consequenceNotFetched: "could not be worked out - check Tuition after cancelling",
+  consequenceNotFetched: "not available",
   payrollNotFetched: "could not be worked out - check Payroll after the change",
-  afterNotAvailable: "worked out after the change - check Tuition",
+  afterNotAvailable: "worked out after the change",
 };
 
 /* --------------------------------------------------------------- reasons */
@@ -456,28 +456,80 @@ export interface ConsequenceRow {
   frozen: boolean;
 }
 
-export function consequenceRows(c: Consequences | null | undefined): ConsequenceRow[] {
-  const list = c?.tuition ?? [];
-  return list.map((t, i) => {
+/**
+ * THE ONE ADAPTER for the stored bills in a preview (D-review-3 F-1: the
+ * preview no longer calls calculate-tuition; it carries the saved bills as
+ * they stand, and no "after" figure). If the server renames a field, change
+ * it here and nowhere else.
+ *
+ * Assumed field names (docs/evidence/D3-dialogs.md): the list is read from
+ * consequences.invoices_before, else consequences.bills, else
+ * preview.invoices_before, else the older consequences.tuition[].before.
+ * Each bill: student_id, month, total_amount, discount_amount,
+ * recorded_payment, status, confirmation_status, tuition_frozen.
+ * Anything missing is rendered as "not available", never as a number.
+ */
+export interface StoredBill {
+  studentId: string;
+  month: string;
+  total: number | null;
+  discount: number | null;
+  recordedPayment: number | null;
+  status: string | null;
+  confirmation: string | null;
+  frozen: boolean;
+}
+
+const numOrNull = (v: any): number | null => (v === null || v === undefined || v === "" || Number.isNaN(Number(v)) ? null : Number(v));
+
+export function readStoredBills(c: Consequences | null | undefined, preview?: GuardPreview | null): StoredBill[] {
+  const anyC: any = c ?? {};
+  const list: any[] | null = Array.isArray(anyC.invoices_before) ? anyC.invoices_before : Array.isArray(anyC.bills) ? anyC.bills : Array.isArray(preview?.invoices_before) ? preview!.invoices_before! : null;
+  if (list) {
+    return list.map((b) => ({
+      studentId: String(b?.student_id ?? ""),
+      month: String(b?.month ?? ""),
+      total: numOrNull(b?.total_amount ?? b?.totalAmount),
+      discount: numOrNull(b?.discount_amount ?? b?.totalDiscount),
+      recordedPayment: numOrNull(b?.recorded_payment),
+      status: b?.status ?? null,
+      confirmation: b?.confirmation_status ?? null,
+      frozen: !!(b?.tuition_frozen ?? b?.tuitionFrozen),
+    }));
+  }
+  // Older shape: calculate-tuition snapshots.
+  return (anyC.tuition ?? []).map((t: TuitionFigure) => ({
+    studentId: t.student_id,
+    month: t.month,
+    total: t.fetched ? numOrNull(t.before?.totalAmount) : null,
+    discount: t.fetched ? numOrNull(t.before?.totalDiscount) : null,
+    recordedPayment: null,
+    status: null,
+    confirmation: null,
+    frozen: !!t.before?.tuitionFrozen,
+  }));
+}
+
+export function consequenceRows(c: Consequences | null | undefined, preview?: GuardPreview | null): ConsequenceRow[] {
+  return readStoredBills(c, preview).map((b, i) => {
     const notes: string[] = [];
-    const frozen = !!t.before?.tuitionFrozen;
-    if (frozen) notes.push("This bill is frozen and will not change");
-    if (t.before?.siblingUnresolved) notes.push("Its sibling discount is not settled yet");
-    if (t.before && t.before.invoiceSaved === false) notes.push("No saved bill yet for this month");
-    const fetched = !!t.fetched && !!t.before && t.before.totalAmount !== undefined && t.before.totalAmount !== null;
+    if (b.frozen) notes.push("This bill is frozen and will not change");
+    const state = [b.status, b.confirmation].filter(Boolean).join(", ");
+    const fetched = b.total !== null;
     return {
-      key: `${t.student_id}-${t.month}-${i}`,
-      studentId: t.student_id,
-      month: t.month,
+      key: `${b.studentId}-${b.month}-${i}`,
+      studentId: b.studentId,
+      month: b.month,
       fetched,
-      nowText: fetched ? formatVnd(t.before!.totalAmount) : COPY.consequenceNotFetched,
-      // The after-figure is never available before the change (contract); it comes back from the confirm step.
-      afterText: frozen ? "unchanged (frozen)" : COPY.afterNotAvailable,
+      nowText: fetched ? `Current bill for ${b.month}: ${formatVnd(b.total)}${state ? ` (${state})` : ""}` : "Current bill: not available",
+      afterText: b.frozen ? "unchanged (frozen)" : COPY.afterNotAvailable,
       notes,
-      frozen,
+      frozen: b.frozen,
     };
   });
 }
+
+export const NEW_BILL_LINE = "The new bill is worked out after the lesson is cancelled and shown here.";
 
 export interface TotalsRow {
   bills: number;

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   consequenceRows,
+  NEW_BILL_LINE,
   payrollLine,
   totalsRow,
   type Consequences,
@@ -28,12 +29,12 @@ export function useStudentNames(ids: string[]) {
 }
 
 export function ConsequenceTable({ preview, consequences }: { preview: GuardPreview; consequences: Consequences | null }) {
-  const rows = consequenceRows(consequences);
+  const rows = consequenceRows(consequences, preview);
   const names = useStudentNames(rows.map((r) => r.studentId));
   const totals = totalsRow(rows);
   const pay = payrollLine(consequences);
   const kids = preview.affected?.length ?? 0;
-  const requested = consequences && consequences.reason !== "not_requested";
+  const requested = consequences?.reason !== "not_requested";
 
   return (
     <section aria-labelledby="sg-conseq-h" className="space-y-3">
@@ -48,12 +49,11 @@ export function ConsequenceTable({ preview, consequences }: { preview: GuardPrev
       {requested && rows.length > 0 && (
         <div className="overflow-hidden rounded-xl border border-border">
           <table className="w-full text-sm">
-            <caption className="sr-only">Each affected child's bill: now, and after the change</caption>
+            <caption className="sr-only">Each affected child's saved bill as it stands</caption>
             <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
                 <th scope="col" className="px-3 py-2 font-medium">Child and month</th>
-                <th scope="col" className="px-3 py-2 font-medium">Bill now</th>
-                <th scope="col" className="px-3 py-2 font-medium">After</th>
+                <th scope="col" className="px-3 py-2 font-medium">Bill as it stands</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -71,13 +71,12 @@ export function ConsequenceTable({ preview, consequences }: { preview: GuardPrev
                       </span>
                     ))}
                   </td>
-                  <td className="px-3 py-2 text-muted-foreground break-words">{r.afterText}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr className="bg-muted/50">
-                <th scope="row" colSpan={3} className="px-3 py-2 text-left font-medium break-words">
+                <th scope="row" colSpan={2} className="px-3 py-2 text-left font-medium break-words">
                   Total: {totals.sentence}
                 </th>
               </tr>
@@ -85,6 +84,7 @@ export function ConsequenceTable({ preview, consequences }: { preview: GuardPrev
           </table>
         </div>
       )}
+      {requested && rows.length > 0 && <p className="text-sm text-muted-foreground">{NEW_BILL_LINE}</p>}
       {requested && rows.length === 0 && <p className="text-sm text-muted-foreground">No family bill depends on this lesson.</p>}
       {!requested && <p className="text-sm text-muted-foreground">Bill figures were not requested for this check. Check Tuition after the change.</p>}
 

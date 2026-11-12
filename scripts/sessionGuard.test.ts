@@ -177,19 +177,18 @@ test("stale diff names what changed", () => {
   expect(stalePreviewDiff(a, base()).length).toBe(1); // generic sentence
 });
 
-/* consequences: formatting, no arithmetic */
-test("consequence rows echo the returned figure and never invent an after figure", () => {
+/* consequences: stored bills, formatting, no arithmetic */
+test("stored bills are shown exactly as returned; no after figure is invented", () => {
   const rows = consequenceRows({
-    tuition: [
-      { student_id: "a", month: "2026-11", fetched: true, before: { totalAmount: 1200000 }, after: { fetched: false, reason: "not_available_before_the_change" } },
-      { student_id: "b", month: "2026-11", fetched: false, error: "boom" },
-      { student_id: "c", month: "2026-11", fetched: true, before: { totalAmount: 900000, tuitionFrozen: true } },
+    invoices_before: [
+      { student_id: "a", month: "2026-11", total_amount: 1200000, status: "paid", confirmation_status: "confirmed" },
+      { student_id: "b", month: "2026-11", total_amount: null },
+      { student_id: "c", month: "2026-11", total_amount: 900000, tuition_frozen: true },
     ],
-  });
-  expect(rows[0].nowText).toBe(formatVnd(1200000));
-  expect(rows[0].afterText).toContain("check Tuition");
-  expect(rows[1].nowText).toBe("could not be worked out - check Tuition after cancelling");
-  expect(rows[1].nowText).not.toMatch(/\d/);
+  } as any);
+  expect(rows[0].nowText).toBe(`Current bill for 2026-11: ${formatVnd(1200000)} (paid, confirmed)`);
+  expect(rows[1].nowText).toBe("Current bill: not available");
+  expect(rows[1].nowText).not.toMatch(/d/);
   expect(rows[2].frozen).toBe(true);
   expect(rows[2].notes[0]).toContain("will not change");
   const t = totalsRow(rows);
@@ -197,6 +196,13 @@ test("consequence rows echo the returned figure and never invent an after figure
   expect(t.frozen).toBe(1);
   expect(t.notFetched).toBe(1);
   expect(t.sentence).not.toContain("₫");
+});
+test("adapter: preview.invoices_before and the older tuition[] shape both read", () => {
+  expect(consequenceRows(null, base({ invoices_before: [{ student_id: "a", month: "2026-11", total_amount: 5 }] }))[0].fetched).toBe(true);
+  const old = consequenceRows({ tuition: [{ student_id: "a", month: "2026-11", fetched: true, before: { totalAmount: 7 } }, { student_id: "b", month: "2026-11", fetched: false }] });
+  expect(old[0].fetched).toBe(true);
+  expect(old[1].nowText).toBe("Current bill: not available");
+  expect(consequenceRows({ fetched: false, reason: "not_requested" }, base())).toEqual([]);
 });
 test("figures not requested produce no rows", () => {
   expect(consequenceRows({ fetched: false, reason: "not_requested" })).toEqual([]);
