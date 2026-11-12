@@ -128,8 +128,8 @@ export function VideoRubricEditor({ homeworkId, onClose }: { homeworkId: string 
 
             {criteria.map((c, i) => (
               <div key={i} className={ivory ? "space-y-2 rounded-hec-md border border-hec-line p-3" : "rounded-lg border p-3 space-y-2"}>
-                <div className="flex gap-2">
-                  <Input value={c.label} onChange={(e) => set(i, { label: e.target.value })} placeholder="Label" aria-label={ivory ? "Criterion label" : undefined} className={ivory ? "min-w-0 font-medium" : "h-9 font-medium"} />
+                <div className={ivory ? "flex flex-wrap gap-2" : "flex gap-2"}>
+                  <Input value={c.label} onChange={(e) => set(i, { label: e.target.value })} placeholder="Label" aria-label={ivory ? "Criterion label" : undefined} className={ivory ? "min-w-0 flex-1 basis-full font-medium sm:basis-0" : "h-9 font-medium"} />
                   <select
                     value={c.weight}
                     onChange={(e) => set(i, { weight: Number(e.target.value) })}

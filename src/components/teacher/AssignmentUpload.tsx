@@ -305,7 +305,7 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
                 value={formData.class_id}
                 onValueChange={(value) => setFormData({ ...formData, class_id: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger id={ivory ? "class" : undefined}>
                   <SelectValue placeholder="Select a class" />
                 </SelectTrigger>
                 <SelectContent>
@@ -320,12 +320,12 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Type</Label>
+                <Label htmlFor={ivory ? "assignment-type" : undefined}>Type</Label>
                 <Select
                   value={formData.submission_type}
                   onValueChange={(value) => setFormData({ ...formData, submission_type: value })}
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id={ivory ? "assignment-type" : undefined}><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="standard">📝 Written / file</SelectItem>
                     <SelectItem value="video">🎥 Video (recorded in the app)</SelectItem>
@@ -334,12 +334,12 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
               </div>
               {formData.submission_type === "video" && (
                 <div className="space-y-2">
-                  <Label>Longest video</Label>
+                  <Label htmlFor={ivory ? "assignment-video-length" : undefined}>Longest video</Label>
                   <Select
                     value={formData.video_minutes}
                     onValueChange={(value) => setFormData({ ...formData, video_minutes: value })}
                   >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id={ivory ? "assignment-video-length" : undefined}><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {["1", "2", "3", "4", "5"].map((m) => (
                         <SelectItem key={m} value={m}>{m === "1" ? "1 minute" : `${m} minutes`}</SelectItem>
@@ -370,6 +370,8 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
               <Label htmlFor="description">Description</Label>
               <Suspense fallback={<div className={ivory ? "flex h-40 items-center justify-center gap-2 rounded-hec-md border border-hec-line-strong text-hec-small text-hec-ink-soft" : "h-40 border rounded-md flex items-center justify-center text-muted-foreground"}><Loader2 className={ivory ? "h-5 w-5 animate-spin" : "h-5 w-5 animate-spin mr-2"} />Loading editor...</div>}>
                 <ReactQuill
+                  // Ivory: Quill's own toolbar strokes are grey on any background; token colours keep them readable in dark.
+                  className={ivory ? "rounded-hec-md bg-hec-raised text-hec-ink [&_.ql-toolbar]:rounded-t-hec-md [&_.ql-toolbar]:border-hec-line-strong [&_.ql-container]:rounded-b-hec-md [&_.ql-container]:border-hec-line-strong [&_.ql-stroke]:stroke-hec-ink-soft [&_.ql-fill]:fill-hec-ink-soft [&_.ql-picker]:text-hec-ink-soft [&_.ql-editor.ql-blank::before]:text-hec-ink-faint" : undefined}
                   theme="snow"
                   value={formData.description}
                   onChange={(value) => setFormData({ ...formData, description: value })}
