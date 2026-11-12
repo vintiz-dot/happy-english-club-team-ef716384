@@ -223,6 +223,6 @@ Behavioural check for the owner: in Tuition review, confirm one child's bill; op
 | the same with `T1_HANDLER_SOURCE=<736264c copy> T1_WRITE_GOLDEN=1` | 77 passed, 31 failed; Figures section 0 failed; golden rewritten = committed golden (line endings only) |
 | `node .probe/mutate.mjs` (17 mutations + control) | 15 caught, 2 survived (table in 6) |
 | `node scripts/pgtest/run.mjs` (full), suites that touch tuition | family payment month 6/0, dated enrollment discounts 22/0, invoice status 108/0, cancelled lessons 25/0, session held evidence 143/0, session cancel guard 266/0, session guard functions 135/0, shared-module mirrors 13/0, edge functions typecheck 5/0 - the same totals the author recorded |
-| the rest of that full run | FULLRUN_REST |
+| the rest of that full run | all passing: **2873 assertions across 37 suites, 0 suite(s) failed** (the total the author predicted but had not observed in one run) |
 
-**Where I am / next step:** verdict and all findings written and committed. Only remaining: the full `run.mjs` was at 30 of 38 suites, 0 failed so far (log in .probe/full.log); replace FULLRUN_REST with its final line, remove .probe files and the node_modules junction (`cmd //c rmdir node_modules`), hand back.
+**Where I am / next step:** review complete; nothing left to do.
