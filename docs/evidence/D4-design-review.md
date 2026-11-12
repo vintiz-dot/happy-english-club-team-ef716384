@@ -2,7 +2,7 @@
 
 Reviewed: `docs/evidence/D4-design.md` at c21c415 (conductor branch). Review only: no code, no push, no deploy, no database access. Nothing below was executed; every claim about code cites a file I read in this checkout.
 
-**Where I am / next step:** sections 1-2 written. Next: sections 3-5.
+**Where I am / next step:** COMPLETE - sections 0-8, the required and advised lists, what could not be assessed, and the verdict (BUILD WITH THE REQUIRED CHANGES). Next step is not mine: the conductor rules on R-1 to R-14 and the designer revises.
 
 Finding ids: **R-n** = required change (blocker for the build as designed), **A-n** = advised. Each has a scenario and the smallest change.
 
@@ -188,3 +188,96 @@ Also specify before it can be turned on:
 - **T3 is wider than (e) says.** With the floor, "settled" is judged over every child, and months are paid in advance, so nearly every cancel of a lesson that ever had a register is T3. The load estimate ("a handful a month") should be re-stated after R-6 and R-8.
 
 **Thresholds for a small school:** T3, closed payroll month and unfreeze as fixed lines - agreed. Three families - agreed once batches count as one (R-12). 5,000,000 VND - the design's own example fee is 150,000 to 170,000 a lesson, so roughly 1.2 to 1.4 million a child a month; 5,000,000 is three to four months of one child, a sensible line for "one family, but a lot". Loosening the rule needing the other admin - agreed. Add `payroll_adjustments` (A-4).
+
+---
+
+## 6. Operability for a non-technical owner and a few staff
+
+Extra work for an honest correction, as designed (a "dialog" = open, type a reason of 15+ characters, tick, confirm: three actions; T3 adds a second reason and a later review click):
+
+| Correction | As designed | After the required changes |
+|---|---|---|
+| Absent marked instead of Present, last week | 0 (both are charged; no line crossed) | 0 |
+| Present marked instead of Excused, last week, same month, bill not confirmed | 0 | 0 |
+| The same, bill already confirmed | admin: one dialog (T2); teacher: refused | 0 inside 7 days (R-8) |
+| The same, last month, after the 7th | paid: one dialog; confirmed: T3 dialog + review; approval ON: + a second admin. Teacher: refused, told to ask an admin. | same - this is the intended friction |
+| Moving a lesson | D2's rule, unchanged | same |
+| Changing the time of a lesson already Held (same day) | was 0, now one dialog; T3 in a closed month | same |
+| A cover teacher recorded after the register was taken | one dialog every time (T1), T3 in a closed month | A-19: free while the payroll month is open and the lesson ended 7 days ago or less, the rule G-6 already gives assistants; it is audited |
+| A child who joined mid-month | 0 (T0; two invisible calls) | 0 |
+| A child who started on the 28th, entered on the 13th of the next month | one dialog (T1) from the enrolment screen; from Create Family: a 500 with the family half-created | one dialog in both places (R-3) |
+| A fee typo (1,500,000 for 150,000) | the typo AND its fix are each T2/T3 with a second reason; approval ON: a second admin for each, while bills calculate at the wrong fee | dated fees: fix the row dated today, T0 (R-9). A-22 meanwhile: undoing your own change within 30 minutes, back to the stored `row_before`, is T1. |
+| Editing a teacher's rate in the staff form | HC120, no dialog | dialog (R-3) |
+| Deactivating a child with a confirmed bill | raw error | dialog (R-3) |
+
+Where staff are stuck at 8 pm with no way forward, as designed: (1) the unwired writers of R-3 (the message says "open it again", and there is nothing to open); (2) a teacher marking an absence in a month whose bills are confirmed (R-8); (3) approval ON with the other admin away (A-17); (4) the window between the migrations and the UI push (closed by design; do it in one sitting, outside teaching hours, as (h) says).
+
+Refusal texts that do not yet say what to do next (b.4): HC120 on a screen with no dialog ("Change this from the enrolment / discount / staff-rate screen, with a reason" per entity); HC020 for the new kinds (one sentence per kind: "Change the teacher of a held lesson from the lesson's Actions menu, with a reason"); HC063; HC061 should name who can approve. The rest are fine.
+
+---
+
+## 7. Build risk
+
+- **R-10 (ordering against the live 66 objects).** M1 replaces about fourteen live objects in place. Add to the preflight: for every D2 function it replaces, the md5 of the live body equals the value in `D-release-fingerprint.expected.json`, else refuse to install (someone pasted something else; do not write over it). Public RPC signatures unchanged, proved by driving the functions as they are deployed today against prelude + M1. Every D4 file ends with `NOTIFY pgrst, 'reload schema'` like D1 and D2; (c) does not say so, and without it the new RPCs answer "not installed".
+- **R-11 (the test plan cannot run as written).** See C-2. Name the suites that really get D4 loaded and budget the prelude work (D1's preflight needs about a dozen tables and `auth.role()`); `cancelled-lessons` and `class-overhead` keep running without the guard, and what they protect is re-asserted through the checked path, as D2 did. State the expected assertion count per suite so a suite that silently loaded nothing is seen (the project's own notes: "a green check can mean it checked nothing").
+- **R-13 (no rollback).** D2 has section 12 and `scripts/ROLLBACK-session-cancel-guard.sql`. D4 has nothing, and it changes the busiest tables of the school (`attendance`, `enrollments`). Required: one script per migration that drops the new triggers only (tables and rows stay), plus re-pasting `20261112091000` to restore the D2 bodies; a pgtest case that applies D4, runs the rollback, and gets the D-release fingerprint 66/66 again; and the sentence for the owner saying which symptom means "roll back M2" (teachers cannot save a register).
+- **Idempotency.** `DROP CONSTRAINT IF EXISTS` then `ADD` is right (the live name is the default `session_cancel_overrides_action_check`). The drop of the 11-argument `_session_change_apply` must be `IF EXISTS`. The prelude's create-only-if-missing stubs are right. A second paste of M1 after M3 is safe as described.
+- **GRANTs.** Follow the house rule and the live file. Missing from (c): grants on the two new views of M2 and on `change_approval_queue`; `REVOKE ... FROM PUBLIC` on every new function before the grants (D2 does this in one block).
+- **Trigger interplay.** Checked on paper: the cancel's excuse-all (depth 2) passes G-10 / G-11 and still feeds the keep; the enrollment seed passes by depth; the sync runs on the service lane and its `hold` is allowed. Not safe: `auto_end_enrollments_on_deactivation` (R-3). Not covered by any case: two money triggers on one statement (an enrollment `transfer` writes two enrollment rows and deletes marks under one acknowledgement that is not consumed) - add a case that a SECOND, unrelated enrollment of the same child cannot be changed inside that window by anything the RPC calls.
+- **`ai_plan_check` re-created by copy in M2 (A-21).** It is a live function outside the D fingerprint, and the project's notes say a fix to the AI-actions SQL is waiting on another branch. Whichever is pasted second reverts the other. Smaller: do not re-create it. `ai_action_apply` runs as the admin, so the trigger refuses the write and the whole action rolls back (all or none, as today); `src/lib/aiActions.ts` words HC120. The card loses the early warning, nothing is weakened.
+- **Guards with no test that fails without them:** the upsert shape of a register save (R-4); a discount row re-pointed (R-5); G-18 on the service lane and for the "has a person's mark" condition alone; the class DELETE guard; "service is refused" per table (mutant 40 is one mutant for eight triggers - make it one per trigger); G-1's "no flips row and started" on the SERVICE lane (mutant 10 covers the locked month only); the keep for `homeworks` and `homework_submissions` (mutants 17-19 cover three of five tables); `hec.floor_seen` keyed wrongly (bulk-cancel two taught lessons in one transaction, both must have a floor); the pay side has no oracle at all - `payroll_reach` is asserted against itself. Add a small pay oracle: change a rate, a teacher, a time and an assistant behind the guard's back, run the bundled calculate-payroll for an open and a locked month, and require tier >= 1 whenever a figure or `live` moved.
+- **Are the two tracks disjoint?** Nearly, not fully. Shared in fact: `d4-functions.test.mjs` ("the A half", "the B half" - one file, two people: split it in two); the error-code maps in `_lib/session-guard.ts` and `src/lib/sessionGuard.ts` (track A's files, but HC120 / HC121 / HC025 are needed by B's first test); `Fields.tsx` / `GuardDialog.tsx` (A edits them while B builds on their layout); `mark-attendance` (A) calling `attendance_change_allowed` (B's SQL) and `PastAttendanceEditor` (B) reading `mark-attendance`'s 409 body (A); the `stars-sync-*` suites (A) loading M2 (B); both tracks put a `zz_` trigger on `attendance` and nobody owns the combined case until step D. Smallest change: step 0 also lands the code maps, the two 409 bodies as a written contract, and one combined "both attendance triggers" suite stub that A and B each add cases to in their own `describe` file.
+
+---
+
+## 8. The owner questions and the defaults
+
+| # | Designer's default | Verdict |
+|---|---|---|
+| 1 | Approval built, left OFF | Agree (owner decision). It must not be switched on before R-12 and A-17 exist; say so on the settings card. |
+| 2 | 5,000,000 VND | Agree as the starting figure (about three to four months of one child at the fees the design quotes), counted per batch and per actor per day (R-12). |
+| 3 | Month grace of 7 days | Agree. Add the per-lesson 7 days for register marks (R-8), so the rule staff learn is one number: "a week". |
+| 4 | Teachers cannot make old-month Excused changes | Agree, with the rule keyed to the lesson's age, not the bill's state (A-3, R-8): no teacher ever learns whether a family's bill is confirmed, and today's register always works. |
+| 5 | Build "from this date" for rates and discounts | Agree. It is the existing dated-enrollment pattern. Make it the default choice on the screens (A-14). |
+| 6 | Dated class fees as a follow-up; D4 only asks for a reason | **Disagree.** Build dated class fees inside D4, or refuse-and-offer-freeze meanwhile, and never refresh past months after a fee change (R-9). A guard that asks why and then re-prices paid months is worse than the silent version: it has the owner's signature on it. |
+| 7 | Retire "include held lessons" | Agree. The service lane is refused anyway; the one-at-a-time path exists. |
+| 8 | Close the import for lessons, registers, enrolments, discounts on a live system | Agree, and go one step further: remove those tables from the whitelist outright (the dry run can still count them) instead of testing "payments has a row", and drop `classes.session_rate_vnd` from what an import may change. |
+| 9 | Sibling and family links unguarded, audit only | **Better default: guard them, with a reach that needs no knowledge of the sibling module.** calculate-tuition reads `families.sibling_percent_override` at calculation time (`calculate-tuition/index.ts:113`), so editing it is the same in-place, undated re-pricing as P13. Rule (R-14): a change to `families.sibling_percent_override`, `students.family_id` or `students.sibling_discount_from` has the reach "every child of the old and the new family, every month"; T0 while none of those months is past or signed off, so linking a new family is free; otherwise the checked path with a reason. Keep `audit_families`. |
+| 10 | A request waits 7 days | Agree. |
+
+---
+
+## REQUIRED changes to the design (blockers)
+
+1. **R-1** A floor for bill state (`invoice_state_floor`), read by `tuition_month_state` and by D2's settled test; lowering a label no longer lowers the tier.
+2. **R-2** `repair-attendance` writes with the admin's JWT; G-11 binds it; add to (d), f.2, mutants.
+3. **R-3** Wire or fix `create-family`, `manage-demo-student`, student deactivation (`auto_end_enrollments_on_deactivation`), `TeacherForm` / `TeachingAssistantForm`; narrow the mirror guard's reach.
+4. **R-4** G-11's INSERT branch treats an existing row as OLD (PostgREST upsert); tests drive a real upsert.
+5. **R-5** A discount or bonus row cannot change child (HC121).
+6. **R-6** The keep never asks D1 as the caller (a child can raise a permanent STRONG floor today); a cancelled lesson stays deletable as D2 and the owner decided.
+7. **R-7** Service-lane register writes that cross the billable line in a tier 1+ month are recorded and queued; correct the "closed" claim in (h).
+8. **R-8** Register marks are free for 7 days after the lesson on every lane, whatever the bill's state; **R-8a** the oracle uses a two-child family.
+9. **R-9** Class fee: dated fees in D4, or refuse-and-freeze meanwhile; D4 never refreshes past months after a fee change.
+10. **R-10** Public RPC signatures unchanged and proved against the deployed functions; preflight md5 of every live object replaced; `NOTIFY pgrst`.
+11. **R-11** A test plan that can run: prelude work budgeted, `cancelled-lessons` / `class-overhead` left without the guard, expected counts stated.
+12. **R-12** Approval impact per batch and per actor per day (may be built with step C; approval must not be switchable on without it).
+13. **R-13** Rollback scripts and a test that the D-release fingerprint is 66/66 again after them.
+14. **R-14** Family and sibling fields guarded with the over-inclusive reach.
+
+## Advised changes
+
+A-1 owner-lane passes leave an event row; list live cron jobs before the paste. A-2 one `session_effective_level` function. A-3 teacher rule by lesson age (no bill-state leak). A-4 `payroll_adjustments` among the approval reasons. A-5 `reteach` on a started lesson past the window; a person's `hold` in a locked month is T1. A-6 a person's Present/Late switched to Excused after 7 days needs an admin's reason in any month. A-7 a move into the past takes the higher of D2's and G-7's tier. A-8 the trigger compares its tier with the override's. A-9 G-1's flips-row lane also requires that no Present/Late mark by a person remains. A-10 wording of the "Removed since" card. A-11 backfill floor rows from `audit_log` (insert-only). A-12 keep sorts lessons by id. A-13 `mark-attendance` answers 503 for a past-month mark when the RPC is missing. A-14 "from this date" is the default on screens; oracle case for discounts across a terms split. A-15 a missing approval settings row is `guard_broken`, not "approval required". A-16 who is stored as `canceled_by` on an approved change. A-17 `solo_release_after_hours` (off by default) as the way out of a two-admin deadlock. A-18 say how an admin is added while approval is on. A-19 teacher change free for 7 days in an open month. A-20 grants on the new views and `REVOKE FROM PUBLIC` on every new function. A-21 do not re-create `ai_plan_check`. A-22 undo of your own change within 30 minutes at T1. Correct P12's mention of the dropped `excuse_attendance_outside_enrollment` trigger.
+
+## What I could not assess
+
+- Nothing was executed: no suite, no probe. Every scenario is reasoned from the files cited; R-4 (BEFORE INSERT fires before the conflict) is standard Postgres behaviour and should be the first thing the implementer proves in pglite.
+- The live database: policies, hand-made cron jobs, whether bills are in practice confirmed every month (R-8's weight depends on it), real fee levels behind the 5,000,000 figure.
+- Whether an already assigned sibling month is re-decided when a sibling's enrollment or the family link changes (I read only the calculator's select at `:113`, not `compute-sibling-discounts` or `sibling-state.ts`). R-8a and R-14 are written to be right either way.
+- Whether a child's own write can in fact clear `homework_submissions.graded_at` (a later integrity migration may protect the column). R-6 does not depend on it: any caller D1 refuses has the same effect, and the fix is the same.
+- `D-review-1/2/3`, `D2-threat-model`, `D2-build`, `D2-edge-build`, `D3-dialogs`, `D3-review`, `D-ship-fixes`, `bulk-cancel-sessions`, `_lib/session-guard.ts` and `src/lib/sessionGuard.ts` were read by outline and by the passages D4 depends on, not line by line; the first 180 lines and the RPC bodies (lines 740-1170) of `20261112091000`, and most of `20261112090000`, were not re-read. A contradiction with a detail in those parts could have been missed.
+- `src/lib/mcp/**` tools and whether any writes a guarded table as the caller (they would meet HC120 with no dialog).
+- The React side of (d) beyond the files grepped.
+
+## Verdict
+
+**BUILD WITH THE REQUIRED CHANGES.** The structure is right and is D2's own: one classifier, one override row, the same flag and token, tiers from stored facts, nothing priced in SQL, approval inside the only functions that can write an override. No finding needs a different architecture. But as written it would (a) leave the tier lowerable through bill labels and the repair tool, (b) stop ordinary register saves and several ordinary admin screens on the day it is pasted, (c) let a child's homework edit lock lessons at the strongest level for good, and (d) make D4 itself the thing that re-prices paid months after a fee change. R-1 to R-11 and R-13, R-14 go into the design before step 0; R-12 before approval can be switched on.
