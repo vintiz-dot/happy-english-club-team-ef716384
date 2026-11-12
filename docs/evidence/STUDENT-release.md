@@ -44,7 +44,7 @@ The changes are what assembly needed (staff batches left out, recorder wiring re
 | exclude | 104 | recorder (`src/lib/recorder/**` 23, `src/components/recorder/**` 8, `pages/TeacherRecorder.tsx`, `lib/recorderUi.ts`, `scripts/recorder/**`, `scripts/recorderUi.test.ts`, 5 pgtest suites), `components/CommandPalette.tsx` (its only change is the "Class recorder" entry), `scripts/lesson-eval/**` (41), everything under `supabase/` (config.toml, 3 migrations, `recorder-retention`, `audit-eval-proxy`, the edit to `transcribe-lesson-audio`), `docs/pc2/INBOX.md`, `.gitignore` (audio ignores for lesson-eval), `docs/MASTER_PLAN.md`, `docs/ENHANCEMENT_BASELINE.md`, `docs/LESSON_MONITOR_TEACHER_CHECK.md` |
 | evidence left on the conductor branch | 1376 | screenshots and notes under `docs/evidence/**` (A0, A2.3, A3.1, A4, A4.6 PNGs, C3, D3, R09/R11/R12): kept off main to keep it light, as the D and tuition releases did |
 
-**Staff batches do not ride along.** The task allowed it only if they render exactly as origin/main with `useIvory()` false. They do not: 18 of the 33 files have no `useIvory()` at all and use `hec-*` classes directly (e.g. `FinanceSummary`, `PayrollMonthLock`, `TeacherPayroll`, `ClassCalendarEnhanced`, `SessionDetailDrawer`, `PastAttendanceEditor`), and outside the scope those classes have no CSS variables behind them. The rollout plan says the same (section 1: "do not push a batch to main before its area's flip"). Leaving them out needed nothing else: no shipped file imports anything those 33 files add (`tsc` is clean without them).
+**Staff batches do not ride along.** The task allowed it only if they render exactly as origin/main with `useIvory()` false. They do not: 19 of the 33 files have no `useIvory()` at all and use `hec-*` classes directly (e.g. `FinanceSummary`, `PayrollMonthLock`, `TeacherPayroll`, `ClassCalendarEnhanced`, `SessionDetailDrawer`, `PastAttendanceEditor`), and outside the scope those classes have no CSS variables behind them. The rollout plan says the same (section 1: "do not push a batch to main before its area's flip"). Leaving them out needed nothing else: no shipped file imports anything those 33 files add (`tsc` is clean without them).
 
 Note on R08's "other areas are pixel-identical" proof: its baseline was the conductor branch (fccf777), which already contained R09/R11/R12, so it proves the flip changed nothing there, not that the tree equals origin/main. The comparison with origin/main is 1c below.
 
@@ -78,8 +78,9 @@ What DOES change on un-migrated screens (all deliberate, none a blocker):
 | 5 | `tailwind-merge` learns the `hec-*` class groups (`lib/utils.ts`); `font-serif` / `font-display` families defined | global | no: neither class nor any `hec-*` class is used on an un-migrated screen (0 uses of `font-serif` / `font-display` on origin/main) |
 | 6 | empty `class=""` where a legacy element had no class (`cn(ivory && ...)`) | a few cross-area elements | no |
 
-Two edges, neither a blocker:
+Three edges, none a blocker:
 - **A student who types `/schedule`** (no link leads there; "My Classes" goes to the dashboard tab) gets the old page with the new student bar, and that bar has no legacy branch any more, so it is unstyled there. R08 chose this; acceptable until the staff flip lists `/schedule`.
+- **A cold load of `/tuition`** (reload, or opening the installed app on that page): `StartupGuard` waits for the session but not for the role, so for the moment the role query takes (one request) a student or parent sees the old header around the page, then the new look. This is the cost of rule 1d (never ivory while the role is unknown) and it is what keeps an admin from ever seeing a flash of the new look. Every other student route is listed for all roles and is ivory from the first paint.
 - `IVORY_ROUTES` lists `/student`, which has no route: the Not Found page there is drawn with the ivory tokens. Harmless (A4.2, already approved).
 
 ### 1d. `/tuition` by role
@@ -90,7 +91,7 @@ Two edges, neither a blocker:
 
 ### 1e. Homework PDF on phones
 
-0f372a6 is an ancestor of origin/main. The release's `HomeworkPdfDownload.tsx` differs from origin/main in exactly three places: the `useIvory` import, `const ivory = useIvory()`, and two `className` ternaries (the `chunky` and `pill` buttons) whose legacy branches are the old strings. `ready` / `readyRef`, `openReady`, `onPress = ready ? openReady : generate`, the toast "PDF ready ... tap Open PDF" and the labels are untouched. **Two-tap behaviour intact.**
+0f372a6 is an ancestor of origin/main. The release's `HomeworkPdfDownload.tsx` differs from origin/main only in the `useIvory` import, `const ivory = useIvory()`, and two `className` ternaries (the `chunky` and `pill` buttons) whose legacy branches are the old strings. `ready` / `readyRef`, `openReady`, `onPress = ready ? openReady : generate`, the toast "PDF ready ... tap Open PDF" and the labels are untouched. **Two-tap behaviour intact.**
 
 ### 1f. Known leftovers
 
@@ -109,7 +110,7 @@ Two edges, neither a blocker:
 - `src/pages/Tuition.tsx`: finding 4.
 - `scripts/pgtest/run.mjs`: origin/main's. `ivory-scope.test.mjs` is not registered in the runner on the conductor branch either; it is run on its own (`node scripts/pgtest/ivory-scope.test.mjs`). Worth registering later.
 
-No shipped file imports recorder code: `grep -rn "ecorder" src` on the release tree finds only the video-homework `VideoRecorder`.
+No shipped file imports recorder code: `grep -rn "ecorder" src` on the release tree finds only video homework (`VideoRecorder`, `@/lib/video/recorder`, both on origin/main).
 
 ## 3. Leak check
 
