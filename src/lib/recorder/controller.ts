@@ -46,6 +46,8 @@ export interface RecorderOptions {
   userAgent?: string;
   /** Laptop clock (tests inject). */
   now?: () => number;
+  /** Monotonic wall time for stall detection (default performance.now; tests inject). */
+  perfNow?: () => number;
   /** Start/stop the 1 s fallback interval (tests may drive tick() themselves). */
   autoTick?: boolean;
   window?: WindowSettings;
@@ -107,7 +109,7 @@ export class Recorder {
   constructor(opts: RecorderOptions) {
     this.o = {
       format: "flac", chunkMs: 30000, appVersion: "dev", userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "node",
-      now: () => Date.now(), autoTick: true, window: DEFAULT_WINDOW, storageWarnBytes: 4 * 1024 ** 3, storageRefuseBytes: 2 * 1024 ** 3,
+      now: () => Date.now(), perfNow: () => performance.now(), autoTick: true, window: DEFAULT_WINDOW, storageWarnBytes: 4 * 1024 ** 3, storageRefuseBytes: 2 * 1024 ** 3,
       deviceRetryMs: 60000, deviceRetryEveryMs: 2000, useLocks: true, ...opts,
     } as any;
     this.uploader = new Uploader(this.o.store, this.o.backend, {
@@ -179,7 +181,7 @@ export class Recorder {
     }
     const rec = local && local.id === row.id ? local : this.newLocal(row);
     rec.serverStatus = row.status;
-    await this.o.store.putRecording(rec);
+    await this.saveRec(rec);
     const planned = plan(entry, this.o.window);
     this.active = {
       rec, chunker: null, capturing: false, startSentAt: null, startInFlight: false,
@@ -210,7 +212,7 @@ export class Recorder {
         // Armed, nothing recorded: give the row up.
         await this.o.backend.abandon(a.rec.id, reason === "manual" ? "stopped before the lesson" : reason).catch((e) => this.events.emit("error", toRecorderError(e)));
         a.rec.phase = "abandoned"; a.rec.serverStatus = "abandoned";
-        await this.o.store.putRecording(a.rec);
+        await this.saveRec(a.rec);
         this.setState("abandoned");
         this.releaseWakeLock();
       }
@@ -252,7 +254,7 @@ export class Recorder {
         rec.phase = "stopped"; rec.stopReason = "crash_recovered"; rec.stopPending = true;
         rec.clientEndedAt = new Date(this.o.now()).toISOString();
         rec.updatedAt = this.o.now();
-        await this.o.store.putRecording(rec);
+        await this.saveRec(rec);
       }
       if (rec.phase === "armed") {
         const row = await this.o.backend.getRecording(rec.id).catch(() => null);
@@ -265,7 +267,7 @@ export class Recorder {
           abandoned = !!(await this.o.backend.abandon(rec.id, row.status === "armed" ? "never started" : "the tab closed before any audio was saved").catch(() => null));
         }
         rec.phase = "abandoned"; rec.serverStatus = abandoned ? "abandoned" : (row?.status ?? rec.serverStatus);
-        await this.o.store.putRecording(rec);
+        await this.saveRec(rec);
         continue;
       }
       if (rec.phase === "stopped" || rec.phase === "finalized") { ids.push(rec.id); void this.drive(rec.id); }
@@ -295,7 +297,7 @@ export class Recorder {
         try {
           const row = await this.o.backend.stop(rec.id, rec.stopReason ?? "manual", rec.clientEndedAt ?? new Date(this.o.now()).toISOString());
           rec.serverStatus = row.status; rec.stopPending = false;
-          await this.o.store.putRecording(rec);
+          await this.saveRec(rec);
         } catch (e) {
           const err = toRecorderError(e);
           if (err.code !== "offline") {
@@ -309,7 +311,7 @@ export class Recorder {
             } else if (!err.retryable) {
               rec.stopRefused = err.message;
             }
-            await this.o.store.putRecording(rec);
+            await this.saveRec(rec);
             if (rec.phase === "abandoned" && this.active?.rec.id === rec.id) this.setState("abandoned");
           }
           this.events.emit("error", err);
@@ -323,7 +325,7 @@ export class Recorder {
         const row = await this.o.backend.getRecording(rec.id).catch(() => null);
         if (row && (row.status === "abandoned" || row.status === "deleted")) {
           rec.serverStatus = row.status; rec.phase = "abandoned";
-          await this.o.store.putRecording(rec);
+          await this.saveRec(rec);
           if (this.active?.rec.id === rec.id) this.setState("abandoned");
         }
       }
@@ -389,7 +391,7 @@ export class Recorder {
 
   private onAudioTick(_frame: number, ctxTime: number) {
     // Context stall detection (sleep / lid): performance.now ran on, the context did not.
-    const perf = performance.now();
+    const perf = this.o.perfNow();
     if (this.active?.capturing && this.lastTickPerf) {
       const wall = perf - this.lastTickPerf, audio = (ctxTime - this.lastTickCtx) * 1000;
       if (wall - audio > 1000) {
@@ -521,7 +523,7 @@ export class Recorder {
         a.opusSeqStartFrame = chunker.t0Frame ?? 0;
         this.o.source.startOpus(a.rec.chunkMs, (b) => this.onOpusBlob(b));
       }
-      await this.o.store.putRecording(a.rec);
+      await this.saveRec(a.rec);
       for (const t of a.rec.tracks) {
         await this.o.backend.ensureTrack({
           recording_id: a.rec.id, track: t.track, device_label: t.deviceLabel, device_hash: t.deviceHash, sample_rate: a.rec.sampleRate,
@@ -543,7 +545,7 @@ export class Recorder {
         chunker.reset();
         if (err.refusal === "window_closed") await this.o.backend.abandon(a.rec.id, "the window closed before capture started").catch(() => null);
         a.rec.phase = "abandoned"; a.rec.serverStatus = "abandoned";
-        await this.o.store.putRecording(a.rec);
+        await this.saveRec(a.rec);
         this.setState("abandoned");
         this.releaseWakeLock();
       }
@@ -630,7 +632,7 @@ export class Recorder {
     const t = rec.tracks.find((x) => x.track === meta.track);
     if (t) t.framesWritten = Math.max(t.framesWritten, meta.endFrame);
     rec.updatedAt = this.o.now();
-    await this.o.store.putRecording(rec);
+    await this.saveRec(rec);
     this.events.emit("chunk", meta);
     if (this.backupDir) void this.backup(rec, `${meta.track}/${String(meta.seq).padStart(6, "0")}.${meta.ext}`, bytes);
     void this.drive(rec.id);
@@ -655,7 +657,7 @@ export class Recorder {
       // The server never saw the start: nothing it would accept was captured.
       await this.o.backend.abandon(rec.id, "stopped before the server saw the start").catch(() => null);
       rec.phase = "abandoned"; rec.serverStatus = "abandoned";
-      await this.o.store.putRecording(rec);
+      await this.saveRec(rec);
       this.setState("abandoned");
       this.releaseWakeLock();
       return;
@@ -666,7 +668,7 @@ export class Recorder {
     rec.clientEndedAt = new Date(this.o.now()).toISOString();
     rec.serverOffsetAtEnd = this.offsetMs;
     rec.updatedAt = this.o.now();
-    await this.o.store.putRecording(rec);
+    await this.saveRec(rec);
     this.releaseWakeLock();
     this.setState("uploading");
     await this.drive(rec.id);
@@ -800,7 +802,7 @@ export class Recorder {
       saved = { bytes, sha256: sha };
     }
     rec.phase = "finalized"; rec.manifestSha256 = saved.sha256;
-    await this.o.store.putRecording(rec);
+    await this.saveRec(rec);
     const path = manifestPath(rec.classId, rec.id);
     await this.o.backend.upload(path, saved.bytes, "application/json");
     const back = await this.o.backend.download(path);
@@ -813,11 +815,29 @@ export class Recorder {
     rec.serverStatus = row.status;
     if (row.status === "complete") {
       rec.phase = "complete";
-      await this.o.store.putRecording(rec);
+      await this.saveRec(rec);
       // Only now: the server confirmed every chunk AND the recording is complete.
       await this.o.store.deleteConfirmedBytes(rec.id);
       if (this.active?.rec.id === rec.id) this.setState("complete");
     }
+  }
+
+  /**
+   * Save the controller's copy of a recording WITHOUT undoing what the
+   * uploader wrote meanwhile (a track ended by a permanent refusal): those
+   * fields are merged in, never overwritten, and copied back into memory.
+   */
+  private async saveRec(rec: LocalRecording): Promise<void> {
+    const stored = await this.o.store.getRecording(rec.id);
+    if (stored) {
+      for (const t of rec.tracks) {
+        const s = stored.tracks.find((x) => x.track === t.track);
+        if (s?.refusedFromSeq !== undefined && (t.refusedFromSeq === undefined || s.refusedFromSeq < t.refusedFromSeq)) {
+          t.refusedFromSeq = s.refusedFromSeq; t.refusedReason = s.refusedReason;
+        }
+      }
+    }
+    await this.o.store.putRecording(rec);
   }
 
   // ------------------------------------------------------------ server
@@ -847,7 +867,7 @@ export class Recorder {
       // Switched off / consent withdrawn while armed: nothing was recorded.
       if (a.capturing) await this.endCapture("switch_off");
       a.rec.phase = "abandoned"; a.rec.serverStatus = "abandoned";
-      await this.o.store.putRecording(a.rec);
+      await this.saveRec(a.rec);
       this.setState("abandoned");
       this.releaseWakeLock();
       return;
