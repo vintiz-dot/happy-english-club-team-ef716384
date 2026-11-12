@@ -256,6 +256,12 @@ const SUITES = [
     file: "classmate-rows.test.mjs",
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113130000_classmate_rows_private.sql"],
   },
+  // F-21: creator-owned write policies, and what a stored link may be.
+  {
+    name: "creator rows (F-21)",
+    file: "creator-rows.test.mjs",
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql"],
+  },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
