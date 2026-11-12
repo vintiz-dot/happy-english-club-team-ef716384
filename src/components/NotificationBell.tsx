@@ -10,10 +10,16 @@ import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useIvory } from "@/hooks/useIvory";
+
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
 export default function NotificationBell() {
   const { studentId } = useStudentProfile();
   const { user, role } = useAuth();
+  // Shell, every area: ivory on a listed route (src/lib/ivoryScope.ts), today's classes elsewhere.
+  const ivory = useIvory();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -147,25 +153,31 @@ export default function NotificationBell() {
           aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
         >
           <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-            >
-              {unreadCount}
-            </Badge>
-          )}
+          {unreadCount > 0 &&
+            (ivory ? (
+              // The count is ink, not red: red is only for danger (DESIGN_SYSTEM s.14).
+              <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-hec-action px-1 text-hec-caption font-semibold leading-none tabular-nums text-hec-on-action">
+                {unreadCount}
+              </span>
+            ) : (
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+              >
+                {unreadCount}
+              </Badge>
+            ))}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 md:w-96" align="end">
         <div className="space-y-3">
-          <div className="flex items-center justify-between sticky top-0 bg-popover pb-2 border-b">
-            <h4 className="font-semibold text-base">Notifications</h4>
+          <div className={ivory ? "sticky top-0 flex items-center justify-between gap-2 border-b border-hec-line bg-hec-raised pb-2" : "flex items-center justify-between sticky top-0 bg-popover pb-2 border-b"}>
+            <h4 className={ivory ? "font-display text-hec-h3 font-medium text-hec-ink" : "font-semibold text-base"}>Notifications</h4>
             {unreadCount > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 text-xs"
+                className={ivory ? undefined : "h-8 text-xs"}
                 onClick={() => markAllAsReadMutation.mutate()}
               >
                 Mark all read
@@ -176,8 +188,64 @@ export default function NotificationBell() {
           <ScrollArea className="h-[min(70vh,500px)]">
             {notifications.length === 0 ? (
               <div className="text-center py-12 px-4">
-                <Bell className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-                <p className="text-sm text-muted-foreground">No notifications yet</p>
+                <Bell className={ivory ? "mx-auto mb-3 h-12 w-12 text-hec-ink-faint" : "h-12 w-12 mx-auto mb-3 text-muted-foreground/50"} />
+                <p className={ivory ? "text-hec-small text-hec-ink-soft" : "text-sm text-muted-foreground"}>No notifications yet</p>
+              </div>
+            ) : ivory ? (
+              <div className="space-y-2 pr-2">
+                {notifications.map((notification: any) => {
+                  const metadata = notification.metadata || {};
+                  // Same row, same handler as below; a <button> so it is reachable by keyboard.
+                  return (
+                    <button
+                      key={notification.id}
+                      type="button"
+                      className={`flex w-full min-h-hec-target items-start gap-3 rounded-hec-md border p-3 text-left transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken ${FOCUS} ${
+                        notification.is_read ? "border-transparent" : "border-hec-line bg-hec-surface"
+                      }`}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <span className="shrink-0 rounded-full bg-hec-sunken p-2 text-hec-ink-soft">
+                        <Bell className="h-4 w-4" />
+                      </span>
+
+                      <span className="block min-w-0 flex-1 space-y-1">
+                        <span className="block text-hec-small font-semibold text-hec-ink line-clamp-2">
+                          {notification.title}
+                        </span>
+                        {notification.message && (
+                          <span className="block text-hec-caption text-hec-ink-soft line-clamp-2">
+                            {notification.message}
+                          </span>
+                        )}
+                        {metadata.student_name && (
+                          <span className="block break-words text-hec-caption font-medium text-hec-ink">
+                            👤 {metadata.student_name}
+                          </span>
+                        )}
+                        {metadata.class_name && (
+                          <span className="block break-words text-hec-caption font-medium text-hec-ink">
+                            📚 {metadata.class_name}
+                          </span>
+                        )}
+                        {metadata.homework_title && (
+                          <span className="block text-hec-caption font-medium text-hec-ink-soft">
+                            📝 {metadata.homework_title}
+                          </span>
+                        )}
+                        <span className="block text-hec-caption text-hec-ink-soft">
+                          {formatDistanceToNow(new Date(notification.created_at), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                      </span>
+
+                      {!notification.is_read && (
+                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-hec-brass" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             ) : (
               <div className="space-y-2 pr-2">
