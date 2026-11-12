@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Volume2 } from "lucide-react";
+import { ChevronsUp, Volume2 } from "lucide-react";
 
 interface Props {
   word: string;
@@ -38,6 +38,10 @@ export function WordChip({ word, isHighlighted, isActive, onClick }: Props) {
           : "border-hec-line-strong bg-hec-raised text-hec-ink-soft hover:bg-hec-sunken hover:text-hec-ink",
       )}
     >
+      {/* The harder-word mark is not colour alone (WCAG 1.4.1): a small up-chevron, named for a screen reader. */}
+      {isHighlighted && !isActive && (
+        <ChevronsUp role="img" aria-label="harder word" className="-ml-1 h-4 w-4 shrink-0" />
+      )}
       {word}
       <Volume2
         className="h-4 w-4 text-hec-ink-faint opacity-0 transition-opacity duration-hec-1 group-hover:opacity-100"
