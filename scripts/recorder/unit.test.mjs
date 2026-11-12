@@ -1600,10 +1600,26 @@ console.log("=== mutants C and D: the other microphone, and one loss reported tw
   src.devices = [src.devices[0]];
   src.onTrackEnded("room");
   src.onDeviceChange?.(); await r.settle();
+  src.onTrackEnded("room");                 // and the old stream's `ended` arrives once more
   await src.play(3, r);
   const cur = await r.current();
   eq("D: one device_unplugged alert and one device_lost entry, not two", [errors.filter((e) => e.code === "device_unplugged").length, cur.discontinuities.filter((d) => d.kind === "device_lost" && d.track === "room").length], [1, 1]);
   await r.stop(); await r.settle();
+}
+
+console.log("=== N-B1: audio that stops and comes back before the server answered is still not `recording` ===");
+{
+  const { w, src, r, states, row } = await started({}, { opts: { startTimeoutMs: 60000 } });
+  const held = []; const orig = w.backend.start;
+  w.backend.start = (...a) => { const p = orig(...a); return new Promise((res, rej) => held.push(() => p.then(res, rej))); };
+  r.tick(); await r.settle(); await src.play(6, r);
+  src.stalled = true; src.resumeHeals = false; src.rebuildHeals = true;
+  await src.play(8, r, 24); await src.play(4, r);
+  eq("N-B1: after the stall, still waiting for the server: `starting`, not `recording`", [r.state, states.includes("recording")], ["starting", false]);
+  held.shift()(); await r.settle(); await src.play(4, r);
+  eq("N-B1: and `recording` once it answers", r.state, "recording");
+  await r.stop(); await r.settle();
+  eq("completes", w.server.recordings.get(row.id).status, "complete");
 }
 
 console.log("=== mutant E (P12): the Stop landed, its answer was lost ===");
