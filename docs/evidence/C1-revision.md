@@ -33,7 +33,10 @@ Not done, by design: the critic's (e) "server hashes the object" needs an edge f
 
 ## Commands and totals
 
-(filled in below as runs complete)
+- Baseline on this branch before any change: `node scripts/pgtest/recorder.test.mjs supabase/migrations/20261111110000_ta_standing_assignments_and_homework_upload.sql supabase/migrations/20261112100000_class_recorder.sql` -> `191 passed, 0 failed`.
+- After: same command -> `284 passed, 0 failed`. The migration is applied twice at the start and a third time over live data near the end, without error.
+- After: `node scripts/pgtest/run.mjs` -> `2250 assertions across 33 suites, 0 suite(s) failed` (baseline 2157 across 33; 2157 - 191 + 284 = 2250: the only count that changed is the recorder suite; every other suite has its baseline count and passes; app and edge-function typechecks included).
+- Every old recorder assertion is kept. Where the rule changed, the assertion changed with it: e.g. "start time held to the arming time" is now "the start time is the server's", "hard limit end + overrun" is now the window check, "two tracks are 30 s" now reads `verified_audio_ms`, the bucket has two policies, and "a child who joins blocks the next recording with the switch on" is now made through an enrolment that skips the trigger, because a normal enrolment now switches the class off (F9).
 
 ## Contract for D1
 
