@@ -61,6 +61,10 @@ def main() -> int:
     ap.add_argument("--segments", type=Path, default=WORK / "split" / "segments.csv")
     ap.add_argument("--out", type=Path, default=WORK / "b2" / "units.npz")
     ap.add_argument("--seed", type=int, default=11)
+    ap.add_argument("--resplit", choices=["none", "time"], default="time",
+                    help="time (default): re-split each child's clean speech by time, see code")
+    ap.add_argument("--enrol-frac", type=float, default=0.6)
+    ap.add_argument("--min-split", type=float, default=50.0)
     a = ap.parse_args()
     out = safe_out(a.out)
     rng = np.random.default_rng(a.seed)
@@ -72,6 +76,26 @@ def main() -> int:
                 continue
             segs.setdefault((r["code"], r["set"]), []).append(r)
             clips.setdefault(r["code"], set()).add(r["clip"])
+    if a.resplit == "time":
+        # split.py gave the long contiguous 5 s blocks to HELD-OUT and left enrolment
+        # the short fragments between them (measured: enrol->enrol 19 % top-1, held-out
+        # ->held-out 78 %). A time split gives both sides whole utterances: the first
+        # --enrol-frac of a child's clean speech enrols, the rest (a later part of the
+        # recording, disjoint) is test. Children under --min-split s stay enrol-only.
+        for code in list(clips):
+            rows = sorted(segs.pop((code, "enrol"), []) + segs.pop((code, "heldout"), []),
+                          key=lambda r: (int(r["clip"]), float(r["start"])))
+            total = sum(float(r["dur"]) for r in rows)
+            if total < a.min_split:
+                segs[(code, "enrol")] = rows
+                continue
+            cum, en, ho = 0.0, [], []
+            for r in rows:
+                (en if cum < a.enrol_frac * total else ho).append(r)
+                cum += float(r["dur"])
+            segs[(code, "enrol")], segs[(code, "heldout")] = en, ho
+            print(f"{code}: time split enrol {sum(float(r['dur']) for r in en):.1f} s / "
+                  f"test {sum(float(r['dur']) for r in ho):.1f} s", flush=True)
     cache = {}
 
     def wav(code, clip):
