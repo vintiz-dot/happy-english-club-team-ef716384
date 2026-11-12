@@ -144,3 +144,18 @@ Migration timestamp blocks (so parallel writers never collide): D = 202611120900
 - CONDUCTOR RULINGS on review 1: all eight required changes are adopted as part of the D2 spec. On change 2 the fail-closed option is taken: a signed-in person never gets the raw delete/move lane (that lane is for automation with no auth.uid() only); a person always goes through the checked path with a reason. D1 gets its one revision (A-1 fixed, A-2/A-3/A-6 fixed, tests added to kill the two surviving mutants). Out of D2's scope and recorded for D4: D0 paths S7, S15-S17, S19, S24, S25, O15, O16 and F-1 (Held -> Scheduled, raw attendance edits, time/teacher edits of Held lessons).
 - 2026-11-12 D1 revision + D2 SQL guard merged (opus, b95cd12): 20261112090000 revised in place, new 20261112091000_session_cancel_guard.sql (NEITHER applied), session-cancel-guard.test.mjs. Conductor full run on the merged branch: 2157 assertions across 33 suites, 0 failed (was 1925/32). Builder found and fixed a real defect in the first build: the evidence function's access gate let through a caller with no uid and no role (NULL logic). Reported not built: re-runs of stars-sync-engine / stars-sync-homework / ta-standing with D1+D2 loaded (their fixtures lack tables D1's preflight needs); evidence dated on a move's destination day; two-connection locking checked from code order only. Review 2 (fresh fable) running; it stopped once on the usage limit with its placeholder committed and was resumed 07:31.
 - 2026-11-12 Q8 / F-1. Owner, verbatim: "yes fix normalizefutureheld too". Done: `.gte('date', today)` -> `.gt('date', today)`, pushed alone to main. Edge-functions type check 5/5. WHILE FIXING, the conductor found F-1 has never fired: the same select filters the DATE column with `.like('date', 'YYYY-MM%')`, which Postgres rejects. Live probe of the REST API with the publishable key (limit=0, no rows): `date=like.2026-11%` -> 42883 "operator does not exist: date ~~ unknown"; control `date=gte.2026-11-01` -> 401 (valid query, no grant). supabase-js returns data = null on that error, so the function returns [] and resets nothing. So no taught lesson was ever un-Held by this path, and equally no wrongly-Held future lesson was ever normalised. The LIKE was deliberately NOT repaired (that would switch on a reset that has never run - owner decision, Q9). NOT redeployed: the deployed behaviour is identical before and after (a no-op either way), and deploying this 856-line function by hand costs usage for no effect; it goes out with the next schedule-sessions deploy.
+
+## 11. Progress meter (owner asked for a percentage after each run)
+
+Units are rough effort weights; a unit counts as done only when merged AND checked by the conductor. Reviews and gates are counted, because they are real work. Total 51.
+
+| Stream | Units | Done | What is done |
+|---|---|---|---|
+| D money integrity | 18.5 | 5.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
+| A overhaul | 12.0 | 0.6 | A0 about 60%. Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
+| B lesson monitor evaluation | 10.5 | 2.5 | vendor research, audio prep, harness about 70%. Left: B1, B2, B2b, B3, report |
+| C class recorder | 8.0 | 1.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
+| Final gates and report | 2.0 | 0 | |
+| **Total** | **51.0** | **9.6** | **19%** |
+
+Log: 2026-11-12 07:45 - 19%.
