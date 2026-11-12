@@ -325,7 +325,7 @@ class FakeSource {
     this.dead = { teacher: false, room: false }; this.reopenFails = 0;
     // B1: a dead / suspended context delivers nothing (no batches, no ticks, the frame count stands still).
     this.stalled = false; this.resumeHeals = false; this.rebuildHeals = true; this.rebuilds = 0; this.resumes = 0;
-    this.onStateChange = null;
+    this.onStateChange = null; this.onDeviceChange = null; this.clip = false;
   }
   get contextStateNow() { return this.stalled ? "suspended" : "running"; }
   async resume() { this.resumes++; if (this.resumeHeals) this.stalled = false; return !this.stalled; }
@@ -339,9 +339,11 @@ class FakeSource {
   }
   async reopen(role, id) {
     if (this.reopenFails-- > 0) throw new Error("NotFoundError");
-    this.dead[role] = false;
-    const o = (await this.openTracks({ teacher: this.devices[0].deviceId, room: this.devices[1].deviceId }))[role];
-    return { ...o, applied: { ...o.applied, reopened: true } };
+    const d = this.devices.find((x) => x.deviceId === id);
+    if (!d) throw new Error(`NotFoundError: no device ${id}`);
+    this.dead[role] = false; this.reopenedWith = id;
+    return { role, deviceId: id, label: d.label, groupId: d.groupId, requested: R.buildConstraints(id, {}), notHonoured: [],
+      applied: { deviceId: id, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1, sampleRate: 48000, reopened: true } };
   }
   closeTracks() { this.open = false; }
   forward(on) { this.fwd = on; }
@@ -358,7 +360,7 @@ class FakeSource {
         continue;
       }
       if (this.fwd && this.open) {
-        const t = Float32Array.from({ length: n }, (_, k) => this.dead.teacher ? 0 : 0.3 * Math.sin((this.lastFrame + k) / 9) + (rnd() - 0.5) * 0.05);
+        const t = Float32Array.from({ length: n }, (_, k) => this.dead.teacher ? 0 : this.clip ? (k % 2 ? 1 : -1) : 0.3 * Math.sin((this.lastFrame + k) / 9) + (rnd() - 0.5) * 0.05);
         const r = Float32Array.from({ length: n }, (_, k) => this.dead.room ? 0 : 0.1 * Math.sin((this.lastFrame + k) / 23) + (rnd() - 0.5) * 0.02);
         this.played.teacher.push({ frame: this.lastFrame, x: t }); this.played.room.push({ frame: this.lastFrame, x: r });
         const f = this.lastFrame; this.lastFrame += n;
@@ -596,7 +598,8 @@ console.log("=== a microphone unplugged mid-recording ===");
   clock = Date.parse("2026-11-12T09:55:00.000Z");
   const w = world();
   const store = new R.MemoryStore(), src = new FakeSource();
-  const { r, errors } = recorder(w, store, src);
+  // This case keeps the old give-up-after-60 s option (the default is now: seek it all lesson).
+  const { r, errors } = recorder(w, store, src, { deviceRetryMs: 60000 });
   const health = []; r.on("health", (h) => health.push(h.kind + ":" + (h.track ?? "")));
   const cons = []; r.on("constraints", (c) => cons.push(c.track));
   await r.prepare();
@@ -1176,6 +1179,85 @@ console.log("=== ruling (a), client: a silent microphone is said at once, its ch
   ok("ruling (a): nothing was deleted locally before complete", (await store.listChunks(row.id)).every((c) => c.state !== "confirmed" || store.bytes.has(`${row.id}|${c.track}|${String(c.seq).padStart(6, "0")}`)));
   await r.stop(); await r.settle();
   eq("ruling (a): completes", w.server.recordings.get(row.id).status, "complete");
+}
+
+console.log("=== field finding: the room S500 stops at 54:51 of a real lesson - alert, keep the lapel, find it again ===");
+{
+  const { w, src, r, errors, row, health } = await started();
+  r.tick(); await r.settle();
+  await src.play(15, r);
+  const S500 = src.devices[1];
+  // The S500 drops off USB: its track ends and it leaves the device list.
+  src.dead.room = true;
+  src.devices = [src.devices[0]];
+  const at = clock, before = errors.length;
+  src.onTrackEnded("room");
+  const e = errors.slice(before).find((x) => x.code === "device_unplugged");
+  ok("field: the stop is said AT ONCE, loudly, and says the lapel is still recording", !!e && /room microphone STOPPED/.test(e.message) && /teacher microphone is still recording/.test(e.message) && health.some((h) => h.kind === "device_unplugged" && h.track === "room" && h.at === at), e?.message);
+  await src.play(90, r, 100);                                // gone for 90 s (longer than the old 60 s give-up)
+  eq("field: the recording carries on", r.state, "recording");
+  ok("field: after a minute it is said again, and it is still being sought (the track is not closed)", errors.some((x) => x.code === "device_lost" && /still being looked for/.test(x.message)) && !(await r.current()).tracks.find((t) => t.track === "room").closedAtFrame);
+  // Windows lists it again - under a NEW id, same label.
+  src.devices = [src.devices[0], { ...S500, deviceId: "s500-2", groupId: "g-s500-2" }];
+  src.onDeviceChange?.();
+  await r.settle();
+  await src.play(15, r);
+  ok("field: re-acquired by its label (new id), the right device and not the lapel", src.reopenedWith === "s500-2" && health.some((h) => h.kind === "device_restored" && h.track === "room"));
+  eq("field: the track now records from the new id", (await r.current()).tracks.find((t) => t.track === "room").deviceId, "s500-2");
+  await r.stop(); await r.settle();
+  eq("field: it completes", w.server.recordings.get(row.id).status, "complete");
+  ok("field: the lapel track never stopped: contiguous, as long as the room track", contiguous(seqs(w, row.id, "teacher")) && seqs(w, row.id, "teacher").length === seqs(w, row.id, "room").length && contiguous(seqs(w, row.id, "room")));
+  const man = manifestOf(w, row.id);
+  const lost = man.discontinuities.find((d) => d.kind === "device_lost" && d.track === "room"), back = man.discontinuities.find((d) => d.kind === "device_restored" && d.track === "room");
+  ok("field: the manifest says when the room microphone went and when it came back (a new segment)", lost && back && back.t_ms > lost.t_ms && back.wall_gap_ms >= 90000, JSON.stringify(man.discontinuities));
+  ok("field: gap markers at both ends", [...w.server.markers.values()].filter((m) => m.recording_id === row.id && m.kind === "gap" && /room microphone/.test(m.label ?? "")).length >= 2);
+}
+{
+  // The device leaves the list with no `ended` event reaching the page: the devicechange is enough.
+  const { src, r, errors, row, w } = await started();
+  r.tick(); await r.settle();
+  await src.play(8, r);
+  const S500 = src.devices[1];
+  src.dead.room = true;
+  src.devices = [src.devices[0]];
+  src.onDeviceChange?.();
+  await r.settle();
+  ok("field: a devicechange that removes a recording microphone is a stop, said at once", errors.some((x) => x.code === "device_unplugged" && /room/.test(x.message)));
+  src.devices = [src.devices[0], S500];
+  src.onDeviceChange?.();
+  await r.settle();
+  await src.play(5, r);
+  eq("field: plugged back with the same id: reopened by id at once", src.reopenedWith, "s500-1");
+  await r.stop(); await r.settle();
+  eq("field: completes", w.server.recordings.get(row.id).status, "complete");
+}
+{
+  // A track that is no longer live (no event at all) is noticed by the tick.
+  const { src, r, errors } = await started();
+  src.trackLive = (role) => !(role === "room" && src.dead.room);
+  r.tick(); await r.settle();
+  await src.play(6, r);
+  src.dead.room = true;
+  await src.play(2, r);
+  ok("field: a track that silently stopped being live is caught by the tick", errors.some((x) => x.code === "device_unplugged" && /room/.test(x.message)));
+  await r.stop(); await r.settle();
+}
+
+console.log("=== field finding: the lapel peaked at 0.0 dB - clipping on the meter ===");
+{
+  const { src, r, errors } = await started();
+  const levels = []; r.on("level", (l) => levels.push(l));
+  r.tick(); await r.settle();
+  await src.play(3, r);
+  ok("field: no clipping shown while it is fine", levels.length > 5 && levels.every((l) => !l.clipping?.teacher));
+  src.clip = true;
+  await src.play(3, r);
+  src.clip = false;
+  ok("field: clipping is on the meter for the teacher track, not the room", levels.some((l) => l.clipping?.teacher) && levels.every((l) => !l.clipping?.room));
+  ok("field: and a warning says to turn it down", errors.some((e) => e.code === "clipping" && /teacher microphone is CLIPPING/.test(e.message)));
+  await src.play(4, r);
+  ok("field: the meter clears again 2 s after the last clipped sample", !levels.at(-1).clipping.teacher);
+  await r.stop(); await r.settle();
 }
 
 console.log("=== M8: the read-back checksum, the manifest read-back, the server's late flag ===");
