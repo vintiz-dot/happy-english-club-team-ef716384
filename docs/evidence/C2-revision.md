@@ -1,7 +1,18 @@
 # C2 revision - capture core fixes after the C2 review (FAIL)
 
-**Where I am / next step:** engine + server + cron written; unit 318/0, recorder SQL 406/0, retention 37/0, cron 22/0, app typecheck clean. Next: browser suite, mutation run, full pgtest run, write-up.
+**Where I am / next step:** engine, server change and cron written and tested (see Test totals). Next: mutation run, measurement, full pgtest run.
+
+Branch `worktree-agent-a4803c8e10a251526`, reset to `claude/hec-conductor-setup-efbaa5` (d0d18b7) first. Nothing applied, deployed or pointed at the live project; no audio in the repo (the lesson WAV is read in place by the browser harness); no new dependency. Files touched: `src/lib/recorder/**`, `scripts/recorder/**`, `supabase/functions/recorder-retention/index.ts`, `scripts/pgtest/recorder-retention.test.mjs`, `supabase/migrations/20261112100000_class_recorder.sql` (in place, ruling (a) only), `scripts/pgtest/recorder.test.mjs`, NEW `supabase/migrations/20261112101000_recorder_retention_cron.sql` + `scripts/pgtest/recorder-cron.test.mjs`, `scripts/pgtest/run.mjs` (one suite registered), `docs/evidence/C1-architecture.md` (Revision 4 changelog), this file. Not touched: `src/components/recorder/**`, `src/pages/TeacherRecorder.tsx`.
 
 ## API changes for C3
 
-(filled in at the end)
+Everything is ADDITIVE; no existing call, event or field changed shape. What C3 must know:
+
+1. **New states.** `RecorderState` gains `"stalled"` (capturing, but NO audio is arriving: render "NOT RECORDING", never the red dot; the engine is restarting the audio) and `"error"` now used (the server refused to start; the audio captured so far is kept locally). A screen with an exhaustive `Record<RecorderState, ...>` map needs the two entries (tsc will say so).
+2. **New error codes** (`RecorderErrorCode`): `capture_stalled`, `server_unavailable` (5xx / gateway timeout / no answer, retried), `mic_silent` ("the teacher microphone is silent" - ruling (a)), `start_delayed`, `start_failed`, `stop_pending` (Stop not on the server yet, retried), `not_durable` (no IndexedDB: `arm()` refuses), `local_store_failed`. `not_signed_in` is now `retryable: true` (the engine refreshes the session itself).
+3. **New events / fields.** `health` adds `{ kind: "capture_stalled" | "capture_resumed", tMs, gapMs?, contextState? }`; `clock` adds `jumpMs?`; `recovered` adds `othersPending?: { recordings, bytes }` ("another teacher has unsent audio on this laptop - they must sign in to send it"); new event `stuck: { recordings: HeldAudio[] }` (own unsent audio older than 14 days, kept until the typed Discard). `UploadProgress` adds `belowFloor?`, `stopPending?`, `stopRefused?`, `heldInMemory?`. `ChunkMeta.belowFloor?`, `LocalRecording.ownerUserId?`, `Discontinuity.kind` adds `local_store_failed`, `pre_start_trimmed`.
+4. **New methods.** `rec.signOut()` -> `{ unsentRecordings, unsentBytes }` (frees audio the server has, keeps the rest, disposes the engine; refuses while capturing) - call it BEFORE the app signs out and warn if `unsentRecordings > 0`. `rec.othersPending()`, `rec.heldAudio()`, `rec.durable`.
+5. **Behaviour C3 will see.** `enableLocalBackup()` still exists but is a no-op answering `false` (M5): do not offer the folder backup. After `complete` the local copy is purged: `current()` then returns the last in-memory state, `discardLocal` is not needed for it. `uploadProgress(id)` and `discardLocal(id)` throw `not_your_recording` for another account's recording. A Discard needs exactly `"DISCARD"`.
+6. **New options** (all optional): `encoder`, `stallAfterMs`, `startTimeoutMs`, `preStartHoldMs`, `startLeadOkMs`, `stuckAfterMs`, `memoryHoldBytes`, `storageStopBytes`, `durable`. `now` is now a label clock only; elapsed time uses `perfNow`.
+
+(filled in below as results come)
