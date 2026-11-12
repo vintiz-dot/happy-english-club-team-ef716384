@@ -1,6 +1,6 @@
 # T2 live apply (aswgmbefikhsnhogtryv)
 
-Where I am / next step: step 3 done; next step 4 deploy transcribe-lesson-audio.
+Where I am / next step: step 4 done; next step 5 verify deploy.
 
 ## Step 0 - read
 Read T2-live-apply-brief.md, T2-class-recordings-access.md, T2-review.md, T2b-transcribe-gate.md from 7f8004e (detached HEAD).
@@ -30,3 +30,6 @@ Read T2-live-apply-brief.md, T2-class-recordings-access.md, T2-review.md, T2b-tr
 - P3: 0. P6: 0.
 - Objects in bucket 11 (step 1: 11); rows with audio 11 (step 1: 11).
 - Note: sha256 of the LF fix blob at 7f8004e is `f01a227a...c652`, not the `92044de3...` in T2-class-recordings-access.md "Fingerprint" (that fingerprint predates folding in R1, the two-segment clause; the file was not re-fingerprinted). The md5 checks above are what verify the live state.
+
+## Step 4 - deploy
+`deploy_edge_function` transcribe-lesson-audio, verify_jwt true, entrypoint `transcribe-lesson-audio/index.ts`, files `transcribe-lesson-audio/index.ts`, `_lib/auth.ts` (imports only esm.sh supabase-js), `_lib/text.ts` (imports nothing) - the LF blobs at 7f8004e; the function dir has no deno.json. Result: status ACTIVE, version 4, verify_jwt true, ezbr_sha256 `698cb157d461852739ff0b49f9eaa55313cc202090c6b8274d5b151cfa614caf`.
