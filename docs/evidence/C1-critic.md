@@ -88,6 +88,38 @@ Probes ran in a throwaway `.probe/` harness that copies the suite's PRELUDE verb
   ```
   Put `SET row_security = off` on `recorder__recording_before_update` and `recorder_confirm_chunk` (both read storage.objects), and add a suite case that re-owns the function to a NOBYPASSRLS role and expects the refusal. Separately, `recorder__recording_before_delete` (:801-811) should re-check storage too (same form), so a row is never removed while a file exists, whatever path got it to `deleted`.
 
+### F7 MAJOR (test quality) - mutation run: 19 of 21 applied mutations caught; both survivors are in the access rule; the six holes above have no test at all
+
+Executed: `.probe/mut.mjs` wrote a mutated copy of the migration (CRLF-aware string replace) and ran the real suite against it: `node scripts/pgtest/recorder.test.mjs <TA mig> .probe/m_class_recorder.sql`. CAUGHT = at least one FAIL or a non-zero exit.
+
+| Mutation | Result |
+|---|---|
+| switch `DEFAULT true` | CAUGHT (crash after "nor can an admin") |
+| arm ignores the switch | CAUGHT (189/2) |
+| arm ignores per-child consent | CAUGHT (189/2) |
+| CHECK "ON needs consent" removed | CAUGHT (189/2) |
+| audit trigger allows DELETE | CAUGHT (188/3) |
+| audit TRUNCATE trigger moved off the table | CAUGHT (only because the second paste collided; no TRUNCATE assertion would have failed by itself - the owner-TRUNCATE case passes on `/append-only/` from... the moved trigger is gone, so it was the re-paste that failed) |
+| storage SELECT policy = bucket only | CAUGHT (186/5) |
+| storage read lets TAs in via `is_teacher_of_class` | CAUGHT (190/1) |
+| **archived teacher (`is_active=false`) still a teacher** | **SURVIVED (191/0)** - no inactive-teacher case |
+| **cover tier widened from 60 days to 3650 days ahead** | **SURVIVED (191/0)** - no cover-teacher case at all (see F2) |
+| cancelled lesson can be armed | CAUGHT (187/4) |
+| ended lesson can be armed | CAUGHT (187/4) |
+| `class_recordings` readable by every signed-in user | CAUGHT (185/6) |
+| tracks/chunks/markers readable by anyone | CAUGHT (186/5) |
+| confirmed chunk can be re-uploaded | CAUGHT (188/3) |
+| `deleted` allowed while files remain | CAUGHT (186/5) |
+| consent withdrawal does not switch off | CAUGHT (184/7) |
+| anon gets SELECT on `class_recordings` | CAUGHT (190/1) |
+| teachers read per-child consent | CAUGHT (188/3) |
+| chunk span unbounded by the window | CAUGHT (indirectly: a later assertion crashed) |
+| stop request may be cleared | CAUGHT (190/1) |
+
+Two controls (per-child wording version; client nulls `session_id`) could not be mutated because the guard does not exist - F3, F4. Untested behaviours the probes above exploited: F1 (no minimum span / claimed ms), F2 (cover teacher), F3, F4, F5 (window wider than product), F6 (owner without BYPASSRLS).
+
+Other test-quality notes (read, not executed): roles ARE really switched (`SET LOCAL ROLE` + `test.uid`, :124-131) - good. But (a) every storage function runs as the pglite superuser, so the suite can never see F6; (b) the PRELUDE's `enrollments`, `sessions`, `teachers` are cut-down stand-ins (:40-57), so a column renamed in production would not fail here; (c) the "TA reads nothing" case passes because the TA has no `teachers` row - no case covers a person who is both a TA of class A and a teacher of class B; (d) the "audio from after the lesson window" case uses 9 000 000 ms, nowhere near the edge.
+
 ## Must fix before C2 builds on it
 (in progress)
 
