@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { formatVND } from "@/hooks/useStudentMonthFinance";
 import { useStudentSnapshotTimeline } from "@/hooks/useMonthlyFinanceSnapshots";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 
 export interface PriorBalanceItem {
   type: 'charge' | 'payment' | 'canceled';
@@ -52,9 +53,14 @@ function formatClosedAt(iso: string): string {
 // Anything larger surfaces a drift indicator.
 const DRIFT_TOLERANCE_VND = 1;
 
+const FOCUS = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
+
 export function PriorBalanceBreakdown({ breakdown, studentId }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const { data: snapshots = [] } = useStudentSnapshotTimeline(studentId);
+  // Admin student page only (staff area not flipped yet): old classes unless the route is ivory.
+  // Ivory: every amount ink and tabular (DS s.14); the sign says which way it went.
+  const ivory = useIvory();
 
   // Merge live breakdown rows with snapshots so the UI displays one row
   // per month. Snapshots are canonical when present; live values are only
@@ -101,7 +107,7 @@ export function PriorBalanceBreakdown({ breakdown, studentId }: Props) {
 
   if (merged.length === 0) {
     return (
-      <p className="text-xs text-muted-foreground mt-2">
+      <p className={cn(ivory ? "mt-2 text-hec-caption text-hec-ink-soft" : "text-xs text-muted-foreground mt-2")}>
         No prior balance history
       </p>
     );
@@ -123,26 +129,26 @@ export function PriorBalanceBreakdown({ breakdown, studentId }: Props) {
   return (
     <TooltipProvider>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mt-2 transition-colors">
+        <CollapsibleTrigger className={cn(ivory ? `mt-2 inline-flex min-h-hec-target items-center gap-1 rounded-hec-sm text-hec-caption font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink ${FOCUS}` : "flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mt-2 transition-colors")}>
           <ChevronRight
             className={cn(
-              "h-3 w-3 transition-transform duration-200",
+              ivory ? "h-4 w-4 shrink-0 transition-transform duration-hec-2 ease-hec" : "h-3 w-3 transition-transform duration-200",
               isOpen && "rotate-90"
             )}
           />
           View History
           {driftCount > 0 && (
-            <span className="ml-1 inline-flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400">
+            <span className={cn(ivory ? "ml-1 inline-flex items-center gap-0.5 text-hec-caption text-hec-warn" : "ml-1 inline-flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400")}>
               <AlertTriangle className="h-3 w-3" />
               {driftCount} drift
             </span>
           )}
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="mt-3 border-t border-border/50 pt-3">
-            <table className="w-full text-xs">
+          <div className={cn(ivory ? "mt-3 overflow-x-auto border-t border-hec-line pt-3" : "mt-3 border-t border-border/50 pt-3")}>
+            <table className={cn(ivory ? "w-full text-hec-caption text-hec-ink" : "w-full text-xs")}>
               <thead>
-                <tr className="border-b border-border/50 text-muted-foreground">
+                <tr className={cn(ivory ? "border-b border-hec-line text-hec-ink-soft" : "border-b border-border/50 text-muted-foreground")}>
                   <th className="text-left py-1.5 font-medium">Month</th>
                   <th className="text-right py-1.5 font-medium">Charged</th>
                   <th className="text-right py-1.5 font-medium">Paid</th>
@@ -156,20 +162,20 @@ export function PriorBalanceBreakdown({ breakdown, studentId }: Props) {
                     .reduce((sum, x) => sum + x.netBalance, 0);
 
                   return (
-                    <tr key={m.month} className="border-b border-border/30">
+                    <tr key={m.month} className={cn(ivory ? "border-b border-hec-line" : "border-b border-border/30")}>
                       <td className="py-1.5">
                         <div className="flex items-center gap-1">
-                          <span>{formatShortMonth(m.month)}</span>
+                          <span className={cn(ivory && "whitespace-nowrap")}>{formatShortMonth(m.month)}</span>
                           {m.snap && (
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Lock className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                                <Lock className={cn(ivory ? "h-3 w-3 shrink-0 text-hec-ink-soft" : "h-3 w-3 text-emerald-600 dark:text-emerald-400")} />
                               </TooltipTrigger>
                               <TooltipContent>
                                 <div className="text-xs space-y-0.5">
                                   <p className="font-semibold">Closed {formatClosedAt(m.snap.closed_at)}</p>
                                   <p>Version {m.snap.version}</p>
-                                  {m.snap.close_reason && <p className="text-muted-foreground">{m.snap.close_reason}</p>}
+                                  {m.snap.close_reason && <p className={cn(ivory ? "text-hec-on-action/80" : "text-muted-foreground")}>{m.snap.close_reason}</p>}
                                 </div>
                               </TooltipContent>
                             </Tooltip>
@@ -177,7 +183,7 @@ export function PriorBalanceBreakdown({ breakdown, studentId }: Props) {
                           {m.hasDrift && (
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <AlertTriangle className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                                <AlertTriangle className={cn(ivory ? "h-3 w-3 shrink-0 text-hec-warn" : "h-3 w-3 text-amber-600 dark:text-amber-400")} />
                               </TooltipTrigger>
                               <TooltipContent>
                                 <div className="text-xs space-y-0.5 max-w-[260px]">
@@ -194,7 +200,7 @@ export function PriorBalanceBreakdown({ breakdown, studentId }: Props) {
                                       {formatVND(m.driftPayments)}
                                     </p>
                                   )}
-                                  <p className="text-muted-foreground">
+                                  <p className={cn(ivory ? "text-hec-on-action/80" : "text-muted-foreground")}>
                                     Past sessions/attendance/payments were edited after this month closed.
                                   </p>
                                 </div>
@@ -203,17 +209,17 @@ export function PriorBalanceBreakdown({ breakdown, studentId }: Props) {
                           )}
                         </div>
                       </td>
-                      <td className="text-right text-red-600 dark:text-red-400 tabular-nums">
+                      <td className={cn(ivory ? "whitespace-nowrap py-1.5 text-right tabular-nums" : "text-right text-red-600 dark:text-red-400 tabular-nums")}>
                         {formatVND(m.charges)}
                       </td>
-                      <td className="text-right text-green-600 dark:text-green-400 tabular-nums">
+                      <td className={cn(ivory ? "whitespace-nowrap py-1.5 text-right tabular-nums" : "text-right text-green-600 dark:text-green-400 tabular-nums")}>
                         {formatVND(m.payments)}
                       </td>
-                      <td className={cn(
+                      <td className={cn(ivory ? "whitespace-nowrap py-1.5 text-right font-medium tabular-nums" : cn(
                         "text-right font-medium tabular-nums",
                         runningBalance > 0 && "text-green-600 dark:text-green-400",
                         runningBalance < 0 && "text-red-600 dark:text-red-400"
-                      )}>
+                      ))}>
                         {runningBalance > 0 ? '+' : ''}{formatVND(runningBalance)}
                       </td>
                     </tr>
@@ -221,27 +227,27 @@ export function PriorBalanceBreakdown({ breakdown, studentId }: Props) {
                 })}
               </tbody>
               <tfoot>
-                <tr className="font-semibold bg-muted/30">
+                <tr className={cn(ivory ? "bg-hec-sunken/60 font-semibold" : "font-semibold bg-muted/30")}>
                   <td className="py-2">Total</td>
-                  <td className="text-right text-red-600 dark:text-red-400 tabular-nums">
+                  <td className={cn(ivory ? "whitespace-nowrap text-right tabular-nums" : "text-right text-red-600 dark:text-red-400 tabular-nums")}>
                     {formatVND(summary.totalPriorCharges)}
                   </td>
-                  <td className="text-right text-green-600 dark:text-green-400 tabular-nums">
+                  <td className={cn(ivory ? "whitespace-nowrap text-right tabular-nums" : "text-right text-green-600 dark:text-green-400 tabular-nums")}>
                     {formatVND(summary.totalPriorPayments)}
                   </td>
-                  <td className={cn(
+                  <td className={cn(ivory ? "whitespace-nowrap text-right tabular-nums" : cn(
                     "text-right tabular-nums",
                     netCarryIn > 0 && "text-green-600 dark:text-green-400",
                     netCarryIn < 0 && "text-red-600 dark:text-red-400"
-                  )}>
+                  ))}>
                     {netCarryIn > 0 ? '+' : ''}{formatVND(netCarryIn)}
                   </td>
                 </tr>
               </tfoot>
             </table>
             {driftCount > 0 && (
-              <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-400 flex items-start gap-1.5">
-                <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+              <p className={cn(ivory ? "mt-2 flex items-start gap-1.5 rounded-hec-sm border border-hec-warn/30 bg-hec-warn-tint p-2 text-hec-caption text-hec-ink" : "mt-2 text-[11px] text-amber-700 dark:text-amber-400 flex items-start gap-1.5")}>
+                <AlertTriangle className={cn("h-3 w-3 mt-0.5 shrink-0", ivory && "text-hec-warn")} />
                 <span>
                   {driftCount} closed month{driftCount === 1 ? "" : "s"} now disagree with a live recompute.
                   This indicates retroactive edits to attendance, sessions, or payments after the month was
