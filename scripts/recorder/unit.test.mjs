@@ -698,9 +698,14 @@ console.log("=== the server refuses: switch off, consent, not a teacher, cancell
     await a.r.prepare();
     const row = await a.r.arm({ sessionId: w.sid, classId: CLASS, date: "2026-11-12", startTime: "17:00", endTime: "17:01" });
     a.r.tick(); await a.r.settle();
-    await src.play(20, a.r);
-    await a.r.dispose();                       // the tab dies...
+    await src.play(8, a.r);
+    w.server.offline = true;                   // the last chunks never left the laptop...
+    await src.play(17, a.r);
+    await a.r.dispose();                       // ...the tab dies...
+    w.server.offline = false;
+    const pendingBefore = (await store.listChunks(row.id)).filter((c) => c.state !== "confirmed").length;
     clock += 30 * 60000;                       // ...and is opened again after the window
+    ok("M4 setup: chunks were still waiting on the laptop when the tab died", pendingBefore >= 2, String(pendingBefore));
     const b = recorder(w, store, new FakeSource());
     await b.r.prepare();
     await b.r.recover(); await b.r.settle();
