@@ -410,3 +410,15 @@ P0 from the review still applies before deploying calculate-tuition (the five la
 - R2-2. **Should a Settle Bill write-off count on the bill** (reduce what is owed and be able to make it paid), and should Settle Bill work for families with history? Recommended default: yes to both, as its own change with its own review, because it moves balances.
 - R2-3. **Should deleting a payment take the money off the bill's recorded payment?** Recommended default: yes, as its own change; until then admins reverse it in Recorded Payment Manager.
 - Round-1 question 2 is answered by this round (the label is re-derived).
+
+## Round 2 verification
+
+| command | result |
+|---|---|
+| `node scripts/pgtest/invoice-status.test.mjs <4 migrations>` | **187 passed, 0 failed** (108 in round 1; golden comparison unchanged and passing, golden file untouched) |
+| `node scripts/pgtest/edge-functions.test.mjs` | 5 passed, 0 failed (100 files loaded of 100) |
+| `node scripts/pgtest/run.mjs` (full, run on the final code; only docs committed after it started) | **3148 assertions across 39 suites, 0 suite(s) failed** |
+
+In that full run: family payment month 6, dated enrollment discounts 22, invoice status 187, cancelled lessons 25, session held evidence 143, session cancel guard 266, session guard functions 135, shared-module mirrors 13, edge functions typecheck 5, app typecheck 3. No other suite's file was edited in either round.
+
+Not done: no run against the live database or deployed functions; no mutation run in round 2 (the review's surviving mutant M3 now has its test, m-3); the T3 branch was not merged here.
