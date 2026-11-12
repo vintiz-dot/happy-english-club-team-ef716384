@@ -1,0 +1,179 @@
+{
+ "open": {
+  "blockedRequests": 0,
+  "errors": [],
+  "newVersionToast": false,
+  "tools": [
+   [
+    "timer",
+    "Timer Counts down where the whole room can see it. Class screen 05:00 PAUSED 1m 3m 5m 10m 15m Start Custom length…"
+   ],
+   [
+    "dice",
+    "Dice One die or two, big enough to read from the back row. Class screen One die Two dice Three Roll!"
+   ],
+   [
+    "number",
+    "Pick a number A random number — for turns, pages or questions. Class screen ? Up to In steps of Pick a number"
+   ],
+   [
+    "music",
+    "Background music Music that composes itself and never repeats. Calm Tests and quiet work Energetic Games and tidy-up Space Focus and creativity Volume 50 Bass -12 Treble -5 Speakers Stereo Mono Play calm"
+   ],
+   [
+    "spinner",
+    "Spinner One name, chosen where everyone can see it happen. Class screen Maya Sam Ari Noor Quinn Jude Spin Edit names (6)"
+   ],
+   [
+    "coin",
+    "Coin Heads or tails — who goes first, which team starts. ? READY Flip the coin"
+   ],
+   [
+    "voice",
+    "Voice level Set the expectation once; leave it on the board. Class screen Talk Normal voices are fine Silent Whisper Talk"
+   ],
+   [
+    "chime",
+    "Chime A soft bell for attention — no shouting required. The timer rings this same bell when it runs out."
+   ],
+   [
+    "noise",
+    "Noise meter Live room volume from the microphone. Nothing is recorded. Class screen Mic off Start listening"
+   ],
+   [
+    "teams",
+    "Team maker Shuffles the class into even teams — a new mix every time. Class screen Class Starters 1 (Mon-Wed) Split by Number of teams Team size Number of teams 2 3 4 5 6 6 students · ~3 each Mix teams Your teams will appear here."
+   ],
+   [
+    "attendance",
+    "Attendance Your sessions for the day — tap one to mark it. Today Nothing scheduled on this day."
+   ],
+   [
+    "board",
+    ""
+   ],
+   [
+    "assistant",
+    "Ask AI Lesson ideas, quick explanations, anything about your own classes. Hi! I'm the HEC assistant. Ask me about your lessons, classes, attendance and students. I can only see your own classes — and I can't change anything. What are my lessons today? Who was absent this week? Who has gone quiet in my classes? Summarise my last lesson Draft parent feedback for a student Read-only · private to you · sees only your classes · AI can make mistakes"
+   ]
+  ]
+ },
+ "block1": {
+  "blockedRequests": 1,
+  "errors": [],
+  "newVersionToast": false,
+  "tools": [
+   [
+    "timer",
+    "Timer Counts down where the whole room can see it. Class screen 05:00 PAUSED 1m 3m 5m 10m 15m Start Custom length…"
+   ],
+   [
+    "dice",
+    "Dice One die or two, big enough to read from the back row. Class screen One die Two dice Three Roll!"
+   ],
+   [
+    "number",
+    "Pick a number A random number — for turns, pages or questions. Class screen ? Up to In steps of Pick a number"
+   ],
+   [
+    "music",
+    "Background music Music that composes itself and never repeats. Calm Tests and quiet work Energetic Games and tidy-up Space Focus and creativity Volume 50 Bass -12 Treble -5 Speakers Stereo Mono Play calm"
+   ],
+   [
+    "spinner",
+    "Spinner One name, chosen where everyone can see it happen. Class screen Maya Sam Ari Noor Quinn Jude Spin Edit names (6)"
+   ],
+   [
+    "coin",
+    "Coin Heads or tails — who goes first, which team starts. ? READY Flip the coin"
+   ],
+   [
+    "voice",
+    "Voice level Set the expectation once; leave it on the board. Class screen Talk Normal voices are fine Silent Whisper Talk"
+   ],
+   [
+    "chime",
+    "Chime A soft bell for attention — no shouting required. The timer rings this same bell when it runs out."
+   ],
+   [
+    "noise",
+    "Noise meter Live room volume from the microphone. Nothing is recorded. Class screen Mic off Start listening"
+   ],
+   [
+    "teams",
+    "Team maker Shuffles the class into even teams — a new mix every time. Class screen Class Starters 1 (Mon-Wed) Split by Number of teams Team size Number of teams 2 3 4 5 6 6 students · ~3 each Mix teams Your teams will appear here."
+   ],
+   [
+    "attendance",
+    "Attendance Your sessions for the day — tap one to mark it. Today Nothing scheduled on this day."
+   ],
+   [
+    "board",
+    "Leaderboard This month's points, and live awards while a lesson is running. Class screen New window Add Points Starters 1 (Mon-Wed) Month Live Leaderboard Award points New window November 2026 Select all Starters 1 (Mon-Wed) November 2026 · All points All Book Bolt Flame Aa Words Reveal U Lv 1 Unknown 0 1 Tie! U Lv 1 Unknown 0 1 Tie! U Lv 1 Unknown 0 1 Tie! Climbing up! Everyone else 1–2 of 3 1 U Unknown 0 Ready, set, go! 1 U Unknown 0 Ready, set, go! Big Climber U Unknown 14 this week Keep it up! U Unknown 8 in a row Champions Nobody yet Book Nobody yet Bolt Nobody yet Flame Nobody yet Aa Words"
+   ],
+   [
+    "assistant",
+    "Ask AI Lesson ideas, quick explanations, anything about your own classes. Hi! I'm the HEC assistant. Ask me about your lessons, classes, attendance and students. I can only see your own classes — and I can't change anything. What are my lessons today? Who was absent this week? Who has gone quiet in my classes? Summarise my last lesson Draft parent feedback for a student Read-only · private to you · sees only your classes · AI can make mistakes"
+   ]
+  ]
+ },
+ "block2": {
+  "blockedRequests": 4,
+  "errors": [],
+  "newVersionToast": true,
+  "tools": [
+   [
+    "timer",
+    "Timer Counts down where the whole room can see it. Class screen 05:00 PAUSED 1m 3m 5m 10m 15m Start Custom length…"
+   ],
+   [
+    "dice",
+    "Dice One die or two, big enough to read from the back row. Class screen One die Two dice Three Roll!"
+   ],
+   [
+    "number",
+    "Pick a number A random number — for turns, pages or questions. Class screen ? Up to In steps of Pick a number"
+   ],
+   [
+    "music",
+    "Background music Music that composes itself and never repeats. Calm Tests and quiet work Energetic Games and tidy-up Space Focus and creativity Volume 50 Bass -12 Treble -5 Speakers Stereo Mono Play calm"
+   ],
+   [
+    "spinner",
+    ""
+   ],
+   [
+    "coin",
+    "Coin Heads or tails — who goes first, which team starts. ? READY Flip the coin"
+   ],
+   [
+    "voice",
+    "Voice level Set the expectation once; leave it on the board. Class screen Talk Normal voices are fine Silent Whisper Talk"
+   ],
+   [
+    "chime",
+    "Chime A soft bell for attention — no shouting required. The timer rings this same bell when it runs out."
+   ],
+   [
+    "noise",
+    "Noise meter Live room volume from the microphone. Nothing is recorded. Class screen Mic off Start listening"
+   ],
+   [
+    "teams",
+    ""
+   ],
+   [
+    "attendance",
+    "Attendance Your sessions for the day — tap one to mark it. Today Nothing scheduled on this day."
+   ],
+   [
+    "board",
+    "Leaderboard This month's points, and live awards while a lesson is running. Class screen New window Add Points Starters 1 (Mon-Wed) Month Live Leaderboard Award points New window November 2026 Select all Starters 1 (Mon-Wed) November 2026 · All points All Book Bolt Flame Aa Words Reveal U Lv 1 Unknown 0 1 Tie! U Lv 1 Unknown 0 1 Tie! U Lv 1 Unknown 0 1 Tie! Climbing up! Everyone else 3–3 of 3 1 U Unknown 0 Ready, set, go! Big Climber U Unknown 14 this week Keep it up! U Unknown 8 in a row Champions Nobody yet Book Nobody yet Bolt Nobody yet Flame Nobody yet Aa Words"
+   ],
+   [
+    "assistant",
+    "Ask AI Lesson ideas, quick explanations, anything about your own classes. Hi! I'm the HEC assistant. Ask me about your lessons, classes, attendance and students. I can only see your own classes — and I can't change anything. What are my lessons today? Who was absent this week? Who has gone quiet in my classes? Summarise my last lesson Draft parent feedback for a student Read-only · private to you · sees only your classes · AI can make mistakes"
+   ]
+  ]
+ }
+}

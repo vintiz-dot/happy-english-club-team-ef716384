@@ -1,0 +1,1650 @@
+{
+ "label": "after",
+ "when": "2026-11-12T03:40:39.718Z",
+ "base": "vite dev server :5342, fake client (NOT production)",
+ "runs": {
+  "dashboard-375-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/3",
+     "100",
+     "15",
+     "16",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2",
+     "20",
+     "20",
+     "20",
+     "20/36",
+     "9"
+    ],
+    "mainText": "Home Homework Lessons Record More 🎉 1 🌅 Good Morning, Nguyễn Minh Anh Rookie Explorer · Lv 1 Hey Nguyễn! All homework done! You rock! ⭐ NM 20 LV 1 Rookie Explorer PROGRESS TO LEVEL 2 20 / 100 XP Edit profile DAY STREAK 0 TOTAL XP 20 CLASSES THIS WEEK 2 OPEN QUESTS 0 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 1/3 completed 20/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! Next classes Schedule Class Nov 16 • 17:30 +15 XP Class Nov 18 • 17:30 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      105,
+      135,
+      237,
+      35
+     ],
+     "scrollW": 237,
+     "clientW": 237,
+     "font": "ui-serif, \"Palatino Linotype\", \"Noto Ser",
+     "size": "28.3px"
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     }
+    ],
+    "scoped": {
+     "byImpact": {},
+     "rules": []
+    }
+   },
+   "shot": "after-student-dashboard-375-light.png",
+   "shotKB": 57
+  },
+  "dashboard-375-dark": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/3",
+     "100",
+     "15",
+     "16",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2",
+     "20",
+     "20",
+     "20",
+     "20/36",
+     "9"
+    ],
+    "mainText": "Home Homework Lessons Record More 🎉 1 🌅 Good Morning, Nguyễn Minh Anh Rookie Explorer · Lv 1 Hey Nguyễn! All homework done! You rock! ⭐ NM 20 LV 1 Rookie Explorer PROGRESS TO LEVEL 2 20 / 100 XP Edit profile DAY STREAK 0 TOTAL XP 20 CLASSES THIS WEEK 2 OPEN QUESTS 0 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 1/3 completed 20/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! Next classes Schedule Class Nov 16 • 17:30 +15 XP Class Nov 18 • 17:30 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      105,
+      135,
+      237,
+      35
+     ],
+     "scrollW": 237,
+     "clientW": 237,
+     "font": "ui-serif, \"Palatino Linotype\", \"Noto Ser",
+     "size": "28.3px"
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     }
+    ],
+    "scoped": {
+     "byImpact": {},
+     "rules": []
+    }
+   },
+   "shot": "after-student-dashboard-375-dark.png",
+   "shotKB": 57
+  },
+  "dashboard-1280-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 170x36",
+     "header:button \"Sign Out\" 114x36"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/3",
+     "100",
+     "15",
+     "16",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2",
+     "2",
+     "20",
+     "20",
+     "20",
+     "20/36",
+     "9"
+    ],
+    "mainText": "Dashboard Homework Lessons Record My Classes Reports Journal Tuition Achievements Resources Vocabulary My Work My Videos Defend My Level 🎉 1 🌅 Good Morning, Nguyễn Minh Anh Rookie Explorer · Lv 1 Hey Nguyễn! All homework done! You rock! ⭐ NM 20 LV 1 Rookie Explorer PROGRESS TO LEVEL 2 20 / 100 XP Edit profile DAY STREAK 0 TOTAL XP 20 CLASSES THIS WEEK 2 OPEN QUESTS 0 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 1/3 completed 20/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned UPCOMING ADVENTURES 2 Classes this week ACTIVE QUESTS 0 Homework to complete BALANCE 0 ₫ November - tap to view My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! Next classes Schedule Class Nov 16 • 17:30 +15 XP Class Nov 18 • 17:30 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      121,
+      242,
+      678,
+      50
+     ],
+     "scrollW": 678,
+     "clientW": 678,
+     "font": "ui-serif, \"Palatino Linotype\", \"Noto Ser",
+     "size": "40px"
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers"
+      ]
+     }
+    ],
+    "scoped": {
+     "byImpact": {},
+     "rules": []
+    }
+   },
+   "shot": "after-student-dashboard-1280-light.png",
+   "shotKB": 90
+  },
+  "dashboard-1280-dark": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 170x36",
+     "header:button \"Sign Out\" 114x36"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/3",
+     "100",
+     "15",
+     "16",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2",
+     "2",
+     "20",
+     "20",
+     "20",
+     "20/36",
+     "9"
+    ],
+    "mainText": "Dashboard Homework Lessons Record My Classes Reports Journal Tuition Achievements Resources Vocabulary My Work My Videos Defend My Level 🎉 1 🌅 Good Morning, Nguyễn Minh Anh Rookie Explorer · Lv 1 Hey Nguyễn! All homework done! You rock! ⭐ NM 20 LV 1 Rookie Explorer PROGRESS TO LEVEL 2 20 / 100 XP Edit profile DAY STREAK 0 TOTAL XP 20 CLASSES THIS WEEK 2 OPEN QUESTS 0 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 1/3 completed 20/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned UPCOMING ADVENTURES 2 Classes this week ACTIVE QUESTS 0 Homework to complete BALANCE 0 ₫ November - tap to view My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! Next classes Schedule Class Nov 16 • 17:30 +15 XP Class Nov 18 • 17:30 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      121,
+      242,
+      678,
+      50
+     ],
+     "scrollW": 678,
+     "clientW": 678,
+     "font": "ui-serif, \"Palatino Linotype\", \"Noto Ser",
+     "size": "40px"
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "targets": [
+       ".md\\:block | Element has insufficient color contrast of 4.32 (foreground color: #737b8c, background color: #11141d, font si",
+       ".text-\\[10px\\] | Element has insufficient color contrast of 4.24 (foreground color: #737b8c, background color: #15161c, font si"
+      ]
+     }
+    ],
+    "scoped": {
+     "byImpact": {},
+     "rules": []
+    }
+   },
+   "shot": "after-student-dashboard-1280-dark.png",
+   "shotKB": 89
+  },
+  "leaderboard-375-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+5",
+     "+50",
+     "+50",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-100",
+     "0",
+     "0/18",
+     "1",
+     "1",
+     "100",
+     "20",
+     "5",
+     "5",
+     "5"
+    ],
+    "mainText": "Home Homework Lessons Record More Achievements 0/18 earned Tap an earned badge to feature it! ⭐ Your Profile Card NM Nguyễn Minh Anh Rookie Explorer LV 1 20 Total XP 1 Level 0 Streak Happy English Club ✨ Share Profile Card How to Earn XP! Level up by doing awesome things! 🌟 Daily Activities ✅ Daily Check-In Visit your homework page (automatic!) +1 XP 🎓 Class Participation 🗣️ Speaking Answer questions, good pronunciation +1-10 XP 👂 Listening Follow instructions, active listening +1-10 XP 📖 Reading Read aloud with expression +1-10 XP ✏️ Writing Neat handwriting, creative writing +1-10 XP 📚 Homework 📝 Complete Homework Turn in your assignments (max 100 pts) +1-100 XP ⏰ Early Submission Submit before due date +5 XP bonus ⭐ Good Behaviors 🎯 Focus Points Stay on task, no distractions +1-10 XP 🤝 Teamwork Help classmates, collaborate +1-10 XP 🔥 Attendance Bonus 🏆 5-Class Streak Attend 5 consecutive classes +50 Focus XP 📕 Reading & Theory 📊 Quizzes & Exercises Complete theory work (no limit!) Unlimited 💡 Pro Tips! Check your homework page every day to earn your daily XP! Attend all your scheduled classes to build up your attendance streak! Participate in class - speaking and listening earns points! Every 5 classes you attend in a row = +50 Focus XP bonus!",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      153,
+      408,
+      165,
+      62
+     ],
+     "scrollW": 165,
+     "clientW": 165,
+     "font": "ui-serif, \"Palatino Linotype\", \"Noto Ser",
+     "size": "24px"
+    }
+   },
+   "requests": {
+    "count": 30,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 4,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "page-has-heading-one",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       "html | Page must have a level-one heading"
+      ]
+     }
+    ],
+    "scoped": {
+     "byImpact": {},
+     "rules": []
+    }
+   },
+   "shot": "after-student-leaderboard-375-light.png",
+   "shotKB": 47
+  },
+  "leaderboard-375-dark": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+5",
+     "+50",
+     "+50",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-100",
+     "0",
+     "0/18",
+     "1",
+     "1",
+     "100",
+     "20",
+     "5",
+     "5",
+     "5"
+    ],
+    "mainText": "Home Homework Lessons Record More Achievements 0/18 earned Tap an earned badge to feature it! ⭐ Your Profile Card NM Nguyễn Minh Anh Rookie Explorer LV 1 20 Total XP 1 Level 0 Streak Happy English Club ✨ Share Profile Card How to Earn XP! Level up by doing awesome things! 🌟 Daily Activities ✅ Daily Check-In Visit your homework page (automatic!) +1 XP 🎓 Class Participation 🗣️ Speaking Answer questions, good pronunciation +1-10 XP 👂 Listening Follow instructions, active listening +1-10 XP 📖 Reading Read aloud with expression +1-10 XP ✏️ Writing Neat handwriting, creative writing +1-10 XP 📚 Homework 📝 Complete Homework Turn in your assignments (max 100 pts) +1-100 XP ⏰ Early Submission Submit before due date +5 XP bonus ⭐ Good Behaviors 🎯 Focus Points Stay on task, no distractions +1-10 XP 🤝 Teamwork Help classmates, collaborate +1-10 XP 🔥 Attendance Bonus 🏆 5-Class Streak Attend 5 consecutive classes +50 Focus XP 📕 Reading & Theory 📊 Quizzes & Exercises Complete theory work (no limit!) Unlimited 💡 Pro Tips! Check your homework page every day to earn your daily XP! Attend all your scheduled classes to build up your attendance streak! Participate in class - speaking and listening earns points! Every 5 classes you attend in a row = +50 Focus XP bonus!",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      153,
+      408,
+      165,
+      62
+     ],
+     "scrollW": 165,
+     "clientW": 165,
+     "font": "ui-serif, \"Palatino Linotype\", \"Noto Ser",
+     "size": "24px"
+    }
+   },
+   "requests": {
+    "count": 30,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 4,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "page-has-heading-one",
+      "impact": "moderate",
+      "n": 1,
+      "targets": [
+       "html | Page must have a level-one heading"
+      ]
+     }
+    ],
+    "scoped": {
+     "byImpact": {},
+     "rules": []
+    }
+   },
+   "shot": "after-student-leaderboard-375-dark.png",
+   "shotKB": 46
+  },
+  "leaderboard-1280-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 170x36",
+     "header:button \"Sign Out\" 114x36"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+5",
+     "+50",
+     "+50",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-100",
+     "0",
+     "0/18",
+     "1",
+     "1",
+     "100",
+     "20",
+     "5",
+     "5",
+     "5"
+    ],
+    "mainText": "Dashboard Homework Lessons Record My Classes Reports Journal Tuition Achievements Resources Vocabulary My Work My Videos Defend My Level Achievements 0/18 earned Tap an earned badge to feature it! ⭐ Your Profile Card NM Nguyễn Minh Anh Rookie Explorer LV 1 20 Total XP 1 Level 0 Streak Happy English Club ✨ Share Profile Card How to Earn XP! Level up by doing awesome things! 🌟 Daily Activities ✅ Daily Check-In Visit your homework page (automatic!) +1 XP 🎓 Class Participation 🗣️ Speaking Answer questions, good pronunciation +1-10 XP 👂 Listening Follow instructions, active listening +1-10 XP 📖 Reading Read aloud with expression +1-10 XP ✏️ Writing Neat handwriting, creative writing +1-10 XP 📚 Homework 📝 Complete Homework Turn in your assignments (max 100 pts) +1-100 XP ⏰ Early Submission Submit before due date +5 XP bonus ⭐ Good Behaviors 🎯 Focus Points Stay on task, no distractions +1-10 XP 🤝 Teamwork Help classmates, collaborate +1-10 XP 🔥 Attendance Bonus 🏆 5-Class Streak Attend 5 consecutive classes +50 Focus XP 📕 Reading & Theory 📊 Quizzes & Exercises Complete theory work (no limit!) Unlimited 💡 Pro Tips! Check your homework page every day to earn your daily XP! Attend all your scheduled classes to build up your attendance streak! Participate in class - speaking and listening earns points! Every 5 classes you attend in a row = +50 Focus XP bonus!",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      161,
+      507,
+      1054,
+      31
+     ],
+     "scrollW": 1054,
+     "clientW": 1054,
+     "font": "ui-serif, \"Palatino Linotype\", \"Noto Ser",
+     "size": "24px"
+    }
+   },
+   "requests": {
+    "count": 30,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 4,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers"
+      ]
+     }
+    ],
+    "scoped": {
+     "byImpact": {},
+     "rules": []
+    }
+   },
+   "shot": "after-student-leaderboard-1280-light.png",
+   "shotKB": 70
+  },
+  "leaderboard-1280-dark": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 170x36",
+     "header:button \"Sign Out\" 114x36"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+1",
+     "+5",
+     "+50",
+     "+50",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-10",
+     "-100",
+     "0",
+     "0/18",
+     "1",
+     "1",
+     "100",
+     "20",
+     "5",
+     "5",
+     "5"
+    ],
+    "mainText": "Dashboard Homework Lessons Record My Classes Reports Journal Tuition Achievements Resources Vocabulary My Work My Videos Defend My Level Achievements 0/18 earned Tap an earned badge to feature it! ⭐ Your Profile Card NM Nguyễn Minh Anh Rookie Explorer LV 1 20 Total XP 1 Level 0 Streak Happy English Club ✨ Share Profile Card How to Earn XP! Level up by doing awesome things! 🌟 Daily Activities ✅ Daily Check-In Visit your homework page (automatic!) +1 XP 🎓 Class Participation 🗣️ Speaking Answer questions, good pronunciation +1-10 XP 👂 Listening Follow instructions, active listening +1-10 XP 📖 Reading Read aloud with expression +1-10 XP ✏️ Writing Neat handwriting, creative writing +1-10 XP 📚 Homework 📝 Complete Homework Turn in your assignments (max 100 pts) +1-100 XP ⏰ Early Submission Submit before due date +5 XP bonus ⭐ Good Behaviors 🎯 Focus Points Stay on task, no distractions +1-10 XP 🤝 Teamwork Help classmates, collaborate +1-10 XP 🔥 Attendance Bonus 🏆 5-Class Streak Attend 5 consecutive classes +50 Focus XP 📕 Reading & Theory 📊 Quizzes & Exercises Complete theory work (no limit!) Unlimited 💡 Pro Tips! Check your homework page every day to earn your daily XP! Attend all your scheduled classes to build up your attendance streak! Participate in class - speaking and listening earns points! Every 5 classes you attend in a row = +50 Focus XP bonus!",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      161,
+      507,
+      1054,
+      31
+     ],
+     "scrollW": 1054,
+     "clientW": 1054,
+     "font": "ui-serif, \"Palatino Linotype\", \"Noto Ser",
+     "size": "24px"
+    }
+   },
+   "requests": {
+    "count": 30,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 4,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "targets": [
+       ".md\\:block | Element has insufficient color contrast of 4.32 (foreground color: #737b8c, background color: #11141d, font si",
+       ".text-\\[10px\\] | Element has insufficient color contrast of 4.24 (foreground color: #737b8c, background color: #15161c, font si"
+      ]
+     }
+    ],
+    "scoped": {
+     "byImpact": {},
+     "rules": []
+    }
+   },
+   "shot": "after-student-leaderboard-1280-dark.png",
+   "shotKB": 69
+  },
+  "long-375-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "100",
+     "12",
+     "15",
+     "17",
+     "18:00",
+     "18:00",
+     "18:00",
+     "19",
+     "2",
+     "2/3",
+     "3",
+     "35/36",
+     "56",
+     "56",
+     "56",
+     "9"
+    ],
+    "mainText": "Home Homework Lessons Record More 🎉 1 🌅 Good Morning, Nguyễn Hoàng Phương Thảo Nguyên Rookie Explorer · Lv 1 Hey Nguyễn! All homework done! You rock! ⭐ NH 56 LV 1 Rookie Explorer PROGRESS TO LEVEL 2 56 / 100 XP Edit profile DAY STREAK 0 TOTAL XP 56 CLASSES THIS WEEK 3 OPEN QUESTS 0 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 2/3 completed 35/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! Next classes Schedule Class Nov 12 • 18:00 Today! +15 XP Class Nov 17 • 18:00 +15 XP Class Nov 19 • 18:00 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      105,
+      135,
+      237,
+      106
+     ],
+     "scrollW": 237,
+     "clientW": 237,
+     "font": "ui-serif, \"Palatino Linotype\", \"Noto Ser",
+     "size": "28.3px"
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     }
+    ],
+    "scoped": {
+     "byImpact": {},
+     "rules": []
+    }
+   },
+   "shot": "after-long-375-light.png",
+   "shotKB": 61
+  },
+  "long-320-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 320,
+    "clientWidth": 320,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "100",
+     "12",
+     "15",
+     "17",
+     "18:00",
+     "18:00",
+     "18:00",
+     "19",
+     "2",
+     "2/3",
+     "3",
+     "35/36",
+     "56",
+     "56",
+     "56",
+     "9"
+    ],
+    "mainText": "Home Homework Lessons Record More 🎉 1 🌅 Good Morning, Nguyễn Hoàng Phương Thảo Nguyên Rookie Explorer · Lv 1 Hey Nguyễn! All homework done! You rock! ⭐ NH 56 LV 1 Rookie Explorer PROGRESS TO LEVEL 2 56 / 100 XP Edit profile DAY STREAK 0 TOTAL XP 56 CLASSES THIS WEEK 3 OPEN QUESTS 0 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 2/3 completed 35/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! Next classes Schedule Class Nov 12 • 18:00 Today! +15 XP Class Nov 17 • 18:00 +15 XP Class Nov 19 • 18:00 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      105,
+      135,
+      182,
+      140
+     ],
+     "scrollW": 182,
+     "clientW": 182,
+     "font": "ui-serif, \"Palatino Linotype\", \"Noto Ser",
+     "size": "28px"
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     }
+    ],
+    "scoped": {
+     "byImpact": {},
+     "rules": []
+    }
+   },
+   "shot": "after-long-320-light.png",
+   "shotKB": 52
+  },
+  "young-375-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "1",
+     "1",
+     "1",
+     "1",
+     "100",
+     "12",
+     "15",
+     "17",
+     "18:00",
+     "18:00",
+     "18:00",
+     "19",
+     "2",
+     "2/3",
+     "3",
+     "35/36",
+     "59",
+     "59",
+     "59",
+     "9"
+    ],
+    "mainText": "Home Homework Lessons Record More 🎉 1 🌅 Good Morning, Lê Bảo Ngọc Rookie Explorer · Lv 1 Hey Lê! All homework done! You rock! ⭐ LB 59 LV 1 Rookie Explorer PROGRESS TO LEVEL 2 59 / 100 XP Edit profile DAY STREAK 0 TOTAL XP 59 CLASSES THIS WEEK 3 OPEN QUESTS 0 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 2/3 completed 35/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view My Homework See all 🎉 All Quests Complete! You're all caught up. Great job! Next classes Schedule Class Nov 12 • 18:00 Today! +15 XP Class Nov 17 • 18:00 +15 XP Class Nov 19 • 18:00 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      113,
+      138,
+      229,
+      41
+     ],
+     "scrollW": 229,
+     "clientW": 229,
+     "font": "ui-serif, \"Palatino Linotype\", \"Noto Ser",
+     "size": "32.9px"
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     }
+    ],
+    "scoped": {
+     "byImpact": {},
+     "rules": []
+    }
+   },
+   "shot": "after-young-375-light.png",
+   "shotKB": 58
+  },
+  "homework-375-light": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "0/3",
+     "0/36",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "100",
+     "15",
+     "16",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "20",
+     "20",
+     "3",
+     "4",
+     "9"
+    ],
+    "mainText": "Home Homework Lessons Record More 💪 1 🌅 Good Morning, Nguyễn Minh Anh Rookie Explorer · Lv 1 Hey Nguyễn! You've got this! Let's finish that homework! NM 20 LV 1 Rookie Explorer PROGRESS TO LEVEL 2 20 / 100 XP Edit profile DAY STREAK 0 TOTAL XP 20 CLASSES THIS WEEK 2 OPEN QUESTS 2 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 0/3 completed 0/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view My Homework See all Starters 1 (Mon-Wed) 📝 To do Unit 3 - Colours worksheet Due Sunday Start Movers 2 (Tue-Thu) 📝 To do Unit 4 - My Day (speaking) Due Sunday Start Next classes Schedule Class Nov 16 • 17:30 +15 XP Class Nov 18 • 17:30 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      105,
+      135,
+      237,
+      35
+     ],
+     "scrollW": 237,
+     "clientW": 237,
+     "font": "ui-serif, \"Palatino Linotype\", \"Noto Ser",
+     "size": "28.3px"
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     }
+    ],
+    "scoped": {
+     "byImpact": {},
+     "rules": []
+    }
+   },
+   "shot": "after-homework-375-light.png",
+   "shotKB": 57
+  },
+  "homework-375-dark": {
+   "errors": [],
+   "probe": {
+    "overflow": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "smallTargets": [
+     "header:button \"\" 40x40",
+     "header:button \"Change Password\" 42x36",
+     "header:button \"\" 40x40"
+    ],
+    "clipped": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "0/18",
+     "0/3",
+     "0/36",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "100",
+     "15",
+     "16",
+     "17:30",
+     "17:30",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "20",
+     "20",
+     "3",
+     "4",
+     "9"
+    ],
+    "mainText": "Home Homework Lessons Record More 💪 1 🌅 Good Morning, Nguyễn Minh Anh Rookie Explorer · Lv 1 Hey Nguyễn! You've got this! Let's finish that homework! NM 20 LV 1 Rookie Explorer PROGRESS TO LEVEL 2 20 / 100 XP Edit profile DAY STREAK 0 TOTAL XP 20 CLASSES THIS WEEK 2 OPEN QUESTS 2 This Week Nov 9 – Nov 15 0 0/0 Classes 0 0/0 Homework 0 0 XP Earned 0 0 Streak Daily Streak Start your streak today! 🚀 0 days M • T • W • T • F • S • S • Best streak 0 days Daily Challenges 0/3 completed 0/36 XP ✅ Daily Check-In Log in and check your homework page +1 XP 📚 Homework Hero Complete 1 homework +20 XP 🎓 Class Champion Attend a class session +15 XP Achievements 0/18 earned BALANCE 0 ₫ November - tap to view My Homework See all Starters 1 (Mon-Wed) 📝 To do Unit 3 - Colours worksheet Due Sunday Start Movers 2 (Tue-Thu) 📝 To do Unit 4 - My Day (speaking) Due Sunday Start Next classes Schedule Class Nov 16 • 17:30 +15 XP Class Nov 18 • 17:30 +15 XP Class Champions Climb the leaderboard and earn XP! Jump back in 📅 My Classes Timetable 📚 Quests Homework ✨ Lessons What we did 🧠 Vocabulary Word bank 🛡️ My Level Defend it 💰 Tuition Payments",
+    "name": {
+     "found": true,
+     "covered": 0,
+     "total": 15,
+     "rect": [
+      105,
+      135,
+      237,
+      35
+     ],
+     "scrollW": 237,
+     "clientW": 237,
+     "font": "ui-serif, \"Palatino Linotype\", \"Noto Ser",
+     "size": "28.3px"
+    }
+   },
+   "requests": {
+    "count": 33,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 3,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 2,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 5,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "targets": [
+       ".hover\\:glass-sm | Element does not have inner text that is visible to screen readers",
+       ".sm\\:hidden | Element does not have inner text that is visible to screen readers"
+      ]
+     }
+    ],
+    "scoped": {
+     "byImpact": {},
+     "rules": []
+    }
+   },
+   "shot": "after-homework-375-dark.png",
+   "shotKB": 56
+  },
+  "motion-reduced-375-light": {
+   "errors": [],
+   "motion": {
+    "cssAnimLongest": {
+     "other": {
+      "ms": 0.01,
+      "el": "DIV.gemini-glow-1 absolute -top-36 -right-32 h-[30rem] w-[30rem]"
+     },
+     "header": {
+      "ms": 0.01,
+      "el": "H1.text-base md:text-xl font-bold text-shimmer"
+     }
+    },
+    "cssTransLongest": {
+     "other": {
+      "ms": 0.01,
+      "el": "DIV."
+     },
+     "header": {
+      "ms": 0.01,
+      "el": "HEADER.sticky top-0 z-50 bg-card/70 backdrop-blur-xl supports-[back"
+     },
+     "nav": {
+      "ms": 0.01,
+      "el": "NAV.fixed inset-x-0 bottom-0 z-[100] border-t border-hec-line bg"
+     },
+     "main": {
+      "ms": 0.01,
+      "el": "MAIN.container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 "
+     }
+    },
+    "waapi": [],
+    "jsStyleAnimating": {},
+    "fromLoad": {}
+   }
+  },
+  "motion-reduced-375-dark": {
+   "errors": [],
+   "motion": {
+    "cssAnimLongest": {
+     "other": {
+      "ms": 0.01,
+      "el": "DIV.gemini-glow-1 absolute -top-36 -right-32 h-[30rem] w-[30rem]"
+     },
+     "header": {
+      "ms": 0.01,
+      "el": "H1.text-base md:text-xl font-bold text-shimmer"
+     }
+    },
+    "cssTransLongest": {
+     "other": {
+      "ms": 0.01,
+      "el": "DIV."
+     },
+     "header": {
+      "ms": 0.01,
+      "el": "HEADER.sticky top-0 z-50 bg-card/70 backdrop-blur-xl supports-[back"
+     },
+     "nav": {
+      "ms": 0.01,
+      "el": "NAV.fixed inset-x-0 bottom-0 z-[100] border-t border-hec-line bg"
+     },
+     "main": {
+      "ms": 0.01,
+      "el": "MAIN.container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 "
+     }
+    },
+    "waapi": [],
+    "jsStyleAnimating": {},
+    "fromLoad": {
+     "main": [
+      "DIV.h-2 rounded-full bg-hec-brass x11"
+     ]
+    }
+   }
+  },
+  "motion-normal-375-light": {
+   "errors": [],
+   "motion": {
+    "cssAnimLongest": {
+     "other": {
+      "ms": 14000,
+      "el": "DIV.gemini-glow-2 absolute -bottom-44 -left-36 h-[34rem] w-[34re"
+     },
+     "header": {
+      "ms": 6000,
+      "el": "H1.text-base md:text-xl font-bold text-shimmer"
+     }
+    },
+    "cssTransLongest": {
+     "other": {
+      "ms": 200,
+      "el": "DIV."
+     },
+     "header": {
+      "ms": 200,
+      "el": "HEADER.sticky top-0 z-50 bg-card/70 backdrop-blur-xl supports-[back"
+     },
+     "nav": {
+      "ms": 200,
+      "el": "NAV.fixed inset-x-0 bottom-0 z-[100] border-t border-hec-line bg"
+     },
+     "main": {
+      "ms": 200,
+      "el": "MAIN.container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 "
+     }
+    },
+    "waapi": [
+     {
+      "where": "other",
+      "dur": 25000,
+      "it": null,
+      "el": "BODY."
+     },
+     {
+      "where": "other",
+      "dur": 10000,
+      "it": null,
+      "el": "DIV.gemini-glow-1 absolute -top-36 -right-32 h-[30rem]"
+     },
+     {
+      "where": "other",
+      "dur": 14000,
+      "it": null,
+      "el": "DIV.gemini-glow-2 absolute -bottom-44 -left-36 h-[34re"
+     },
+     {
+      "where": "other",
+      "dur": 12000,
+      "it": null,
+      "el": "DIV.gemini-glow-3 absolute top-1/3 left-1/2 -translate"
+     }
+    ],
+    "jsStyleAnimating": {},
+    "fromLoad": {
+     "main": [
+      "DIV.h-2 rounded-full bg-hec-brass x8"
+     ]
+    }
+   }
+  }
+ }
+}

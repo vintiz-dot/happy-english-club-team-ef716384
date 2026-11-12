@@ -1,0 +1,1049 @@
+{
+ "when": "2026-11-12T04:23:00.449Z",
+ "base": "vite dev server + fake Supabase client + local stand-in book (NOT production, NOT the real book hosts)",
+ "cpu": "4x (CDP Emulation.setCPUThrottlingRate)",
+ "network": "Fast 3G-like (CDP Network.emulateNetworkConditions latency 562.5 ms, 180 KB/s down, 84 KB/s up) applied after the app shell has loaded, plus a 562 ms delay on every book.html request",
+ "checks": [
+  {
+   "id": "M5.control.SkillButton-popover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): SkillButton-popover visible"
+  },
+  {
+   "id": "M5.control.StudentActionPopover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): StudentActionPopover visible"
+  },
+  {
+   "id": "M5.control.ui-popover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-popover visible"
+  },
+  {
+   "id": "M5.control.ui-select",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-select visible"
+  },
+  {
+   "id": "M5.control.ui-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-dialog visible"
+  },
+  {
+   "id": "M5.control.ui-dropdown-menu",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-dropdown-menu visible"
+  },
+  {
+   "id": "M5.control.ui-alert-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-alert-dialog visible"
+  },
+  {
+   "id": "M5.control.ui-sheet",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-sheet visible"
+  },
+  {
+   "id": "M5.control.ui-tooltip",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": true,
+   "detail": "not fullscreen (control): ui-tooltip visible"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-enter",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "steps": 24,
+    "openBefore": true,
+    "fsOn": true,
+    "stillInDom": true,
+    "visFs": true,
+    "where": "inside the fullscreen element"
+   },
+   "detail": "tooltip open by keyboard (24 Tabs, visible true) then fullscreen on: tooltip still open, inside the fullscreen element, visible true"
+  },
+  {
+   "id": "M5.SkillButton-popover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: SkillButton-popover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.StudentActionPopover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: StudentActionPopover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-popover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-popover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-select opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-dialog opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-dropdown-menu",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-dropdown-menu opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-alert-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-alert-dialog opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-sheet",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-sheet opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-tooltip",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-tooltip opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-exit",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "v0": true,
+    "v1": true,
+    "d1": true,
+    "conn": true,
+    "dbg": {
+     "parent": "BODY",
+     "rect": [
+      722,
+      522,
+      107,
+      28
+     ],
+     "opacity": "1",
+     "state": "instant-open",
+     "wrapperTransform": "translate(722px, 522px)",
+     "hit": "DIV",
+     "focusOnTrigger": true,
+     "viewport": [
+      1024,
+      768
+     ]
+    }
+   },
+   "detail": "tooltip open in fullscreen (visible true), fullscreen ends: still open, connected true, visible true"
+  },
+  {
+   "id": "M5.TeacherBooks.classroom-tools-sheet",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "fsOn": "DIV (holds the book)",
+    "sheetVis": true
+   },
+   "detail": "fullscreen DIV (holds the book); classroom tools sheet visible=true"
+  },
+  {
+   "id": "M5.TeacherBooks.tool-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "text": "Starters 1 (Mon-Wed)",
+    "inFs": true,
+    "hit": true
+   },
+   "detail": "Select in a tool panel: first option \"Starters 1 (Mon-Wed)\" inside fullscreen=true, hit-testable=true"
+  },
+  {
+   "id": "N.SkillButton-popover.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>button",
+    "rect": [
+     185,
+     158,
+     40,
+     40
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>button; rect 185,158,40,40"
+  },
+  {
+   "id": "N.StudentActionPopover.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>div>div>p",
+    "rect": [
+     61,
+     505,
+     183,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>div>div>p; rect 61,505,183,20"
+  },
+  {
+   "id": "N.ui-popover.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>p",
+    "rect": [
+     17,
+     559,
+     254,
+     24
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>p; rect 17,559,254,24"
+  },
+  {
+   "id": "N.ui-select.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span",
+    "rect": [
+     167,
+     553,
+     106,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span; rect 167,553,106,20"
+  },
+  {
+   "id": "N.ui-dialog.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     281,
+     391,
+     462,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 281,391,462,20"
+  },
+  {
+   "id": "N.ui-dropdown-menu.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=menu]>div[role=menuitem]",
+    "rect": [
+     385,
+     547,
+     118,
+     32
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=menu]>div[role=menuitem]; rect 385,547,118,32"
+  },
+  {
+   "id": "N.ui-alert-dialog.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=alertdialog]>p",
+    "rect": [
+     281,
+     340,
+     462,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=alertdialog]>p; rect 281,340,462,20"
+  },
+  {
+   "id": "N.ui-sheet.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     665,
+     53,
+     334,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 665,53,334,20"
+  },
+  {
+   "id": "N.ui-tooltip.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div",
+    "rect": [
+     722,
+     464,
+     107,
+     28
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div; rect 722,464,107,28"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-enter",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "steps": 24,
+    "openBefore": true,
+    "fsOn": true,
+    "stillInDom": true,
+    "visFs": true,
+    "where": "inside the fullscreen element"
+   },
+   "detail": "tooltip open by keyboard (24 Tabs, visible true) then fullscreen on: tooltip still open, inside the fullscreen element, visible true"
+  },
+  {
+   "id": "M5.SkillButton-popover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: SkillButton-popover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.StudentActionPopover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: StudentActionPopover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-popover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-popover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-select",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-select opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-dialog",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-dialog opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-dropdown-menu",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-dropdown-menu opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-alert-dialog",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-alert-dialog opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-sheet",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-sheet opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-tooltip",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-tooltip opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-exit",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "v0": true,
+    "v1": true,
+    "d1": true,
+    "conn": true,
+    "dbg": {
+     "parent": "BODY",
+     "rect": [
+      12,
+      578,
+      107,
+      28
+     ],
+     "opacity": "1",
+     "state": "instant-open",
+     "wrapperTransform": "translate(12px, 578px)",
+     "hit": "DIV",
+     "focusOnTrigger": true,
+     "viewport": [
+      768,
+      1024
+     ]
+    }
+   },
+   "detail": "tooltip open in fullscreen (visible true), fullscreen ends: still open, connected true, visible true"
+  },
+  {
+   "id": "M5.TeacherBooks.classroom-tools-sheet",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "fsOn": "DIV (holds the book)",
+    "sheetVis": true
+   },
+   "detail": "fullscreen DIV (holds the book); classroom tools sheet visible=true"
+  },
+  {
+   "id": "M5.TeacherBooks.tool-select",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "text": "Starters 1 (Mon-Wed)",
+    "inFs": true,
+    "hit": true
+   },
+   "detail": "Select in a tool panel: first option \"Starters 1 (Mon-Wed)\" inside fullscreen=true, hit-testable=true"
+  },
+  {
+   "id": "N.SkillButton-popover.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>button",
+    "rect": [
+     185,
+     158,
+     40,
+     40
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>button; rect 185,158,40,40"
+  },
+  {
+   "id": "N.StudentActionPopover.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>div>div>p",
+    "rect": [
+     61,
+     505,
+     183,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>div>div>p; rect 61,505,183,20"
+  },
+  {
+   "id": "N.ui-popover.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>p",
+    "rect": [
+     17,
+     559,
+     254,
+     24
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>p; rect 17,559,254,24"
+  },
+  {
+   "id": "N.ui-select.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span",
+    "rect": [
+     167,
+     553,
+     106,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span; rect 167,553,106,20"
+  },
+  {
+   "id": "N.ui-dialog.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     153,
+     519,
+     462,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 153,519,462,20"
+  },
+  {
+   "id": "N.ui-dropdown-menu.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=menu]>div[role=menuitem]",
+    "rect": [
+     385,
+     547,
+     118,
+     32
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=menu]>div[role=menuitem]; rect 385,547,118,32"
+  },
+  {
+   "id": "N.ui-alert-dialog.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=alertdialog]>p",
+    "rect": [
+     153,
+     468,
+     462,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=alertdialog]>p; rect 153,468,462,20"
+  },
+  {
+   "id": "N.ui-sheet.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     409,
+     53,
+     334,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 409,53,334,20"
+  },
+  {
+   "id": "N.ui-tooltip.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div",
+    "rect": [
+     12,
+     516,
+     107,
+     28
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div; rect 12,516,107,28"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-enter",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "steps": 24,
+    "openBefore": true,
+    "fsOn": true,
+    "stillInDom": true,
+    "visFs": true,
+    "where": "inside the fullscreen element"
+   },
+   "detail": "tooltip open by keyboard (24 Tabs, visible true) then fullscreen on: tooltip still open, inside the fullscreen element, visible true"
+  },
+  {
+   "id": "M5.SkillButton-popover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: SkillButton-popover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.StudentActionPopover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: StudentActionPopover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-popover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-popover opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-select",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-select opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-dialog",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-dialog opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-dropdown-menu",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-dropdown-menu opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-alert-dialog",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-alert-dialog opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-sheet",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-sheet opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.ui-tooltip",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "inDom": true,
+    "vis": true,
+    "where": "inside fullscreen element"
+   },
+   "detail": "in fullscreen: ui-tooltip opened=true, inside fullscreen element, visible=true"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-exit",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "v0": true,
+    "v1": true,
+    "d1": true,
+    "conn": true,
+    "dbg": {
+     "parent": "BODY",
+     "rect": [
+      106,
+      684,
+      107,
+      28
+     ],
+     "opacity": "1",
+     "state": "instant-open",
+     "wrapperTransform": "translate(106px, 684px)",
+     "hit": "DIV",
+     "focusOnTrigger": true,
+     "viewport": [
+      375,
+      812
+     ]
+    }
+   },
+   "detail": "tooltip open in fullscreen (visible true), fullscreen ends: still open, connected true, visible true"
+  },
+  {
+   "id": "M5.TeacherBooks.classroom-tools-sheet",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "fsOn": "DIV (holds the book)",
+    "sheetVis": true
+   },
+   "detail": "fullscreen DIV (holds the book); classroom tools sheet visible=true"
+  },
+  {
+   "id": "M5.TeacherBooks.tool-select",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "text": "Starters 1 (Mon-Wed)",
+    "inFs": true,
+    "hit": true
+   },
+   "detail": "Select in a tool panel: first option \"Starters 1 (Mon-Wed)\" inside fullscreen=true, hit-testable=true"
+  },
+  {
+   "id": "N.SkillButton-popover.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>button",
+    "rect": [
+     185,
+     190,
+     40,
+     40
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>button; rect 185,190,40,40"
+  },
+  {
+   "id": "N.StudentActionPopover.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>div>div>p",
+    "rect": [
+     61,
+     537,
+     183,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>div>div>p; rect 61,537,183,20"
+  },
+  {
+   "id": "N.ui-popover.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>p",
+    "rect": [
+     17,
+     591,
+     254,
+     24
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>p; rect 17,591,254,24"
+  },
+  {
+   "id": "N.ui-select.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span",
+    "rect": [
+     167,
+     585,
+     106,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span; rect 167,585,106,20"
+  },
+  {
+   "id": "N.ui-dialog.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     25,
+     413,
+     325,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 25,413,325,20"
+  },
+  {
+   "id": "N.ui-dropdown-menu.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=menu]>div[role=menuitem]",
+    "rect": [
+     98,
+     615,
+     118,
+     32
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=menu]>div[role=menuitem]; rect 98,615,118,32"
+  },
+  {
+   "id": "N.ui-alert-dialog.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=alertdialog]>p",
+    "rect": [
+     25,
+     358,
+     325,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=alertdialog]>p; rect 25,358,325,20"
+  },
+  {
+   "id": "N.ui-sheet.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     119,
+     53,
+     231,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 119,53,231,20"
+  },
+  {
+   "id": "N.ui-tooltip.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div",
+    "rect": [
+     106,
+     584,
+     107,
+     28
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div; rect 106,584,107,28"
+  }
+ ]
+}

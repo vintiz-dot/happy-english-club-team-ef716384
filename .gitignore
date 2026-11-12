@@ -56,3 +56,25 @@ dist-ssr
 # it would put the same migration in the tree twice and invite someone to
 # edit the wrong one.
 MIGRATIONS-TO-PASTE.sql
+
+# Children's audio, video, transcripts and voice data never enter the repo
+# (evaluation data lives in C:\Users\Dell\hec-audio-eval, outside it).
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.ogg
+*.opus
+*.webm
+*.mp4
+*.mov
+*.mkv
+*.rttm
+*.vtt
+*.srt
+*.npy
+*.npz
+*.pt
+*.onnx
+*.embeddings.json
+hec-audio-eval/
