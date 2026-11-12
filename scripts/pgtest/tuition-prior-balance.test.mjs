@@ -276,6 +276,44 @@ ok(bulk.find((r) => r.studentId === id(8)).carry.payable === 0, 'paid on October
   ok(short === 10, `at 1,000 rows per request the browser's sum is wrong for ${short} of 60 students (they read as owing nothing)`);
   const perStudent = await call('calculate-tuition', { studentId: many[59], month: MONTH });
   ok(perStudent.carry.carryInDebt === 2000000, 'calculate-tuition reads one student at a time and is not short');
+
+  // The BULK calculator - the one the lists read - under the same cap, and under far smaller ones.
+  // Until T3 round 2 it read each table in one request: at 1,000 rows it lost the same 10 students' arrears.
+  rowCap = Infinity; requests = [];
+  const free = (await call('calculate-tuition-bulk', { studentIds: many, month: MONTH })).results;
+  const freeRequests = requests.length;
+  ok(free.length === 60 && free.every((r) => r.carry.carryInDebt === 2000000 && r.carry.payable === 2000000), 'bulk, no cap: 60 students each carry in 2,000,000');
+  for (const cap of [1000, 37, 7]) {
+    rowCap = cap; requests = [];
+    const capped60 = (await call('calculate-tuition-bulk', { studentIds: many, month: MONTH })).results;
+    ok(capped60.length === 60 && capped60.every((r) => r.carry.carryInDebt === 2000000 && r.carry.carryOutDebt === 2000000),
+      `bulk at ${cap} rows per request: all 60 students' arrears come back (2,000,000 each)`);
+    assert.deepEqual(capped60, free, `bulk at ${cap} rows per request answers exactly as with no cap`); passed += 1;
+    ok(requests.filter((t) => t === 'invoices').length >= Math.ceil(1200 / cap), `and it took ${requests.length} requests instead of ${freeRequests}: the history was read in pages`);
+  }
+
+  // Attendance is the second read a cap can cut: a lesson with no attendance row is not billable,
+  // so a short read charged the last students of a batch 0 for the month.
+  const school = Array.from({ length: 150 }, (_, i) => id(2000 + i));
+  source = { ...fixture, students: school.map((sid) => ({ id: sid, family_id: null, families: null })),
+    enrollments: school.map((sid) => ({ student_id: sid, class_id: CLASS, start_date: '2025-01-01', end_date: null, allowed_days: null })),
+    attendance: school.flatMap((sid) => sessions.map((ses) => ({ session_id: ses.id, student_id: sid, status: 'Present' }))), invoices: [] };
+  ok(source.attendance.length === 1200, '150 students x 8 lessons = 1,200 attendance rows');
+  rowCap = Infinity;
+  const free150 = (await call('calculate-tuition-bulk', { studentIds: school, month: MONTH })).results;
+  ok(free150.length === 150 && free150.every((r) => r.totalAmount === FULL), 'bulk, no cap: 150 students each charged 1,440,000');
+  for (const cap of [1000, 37]) {
+    rowCap = cap;
+    const capped150 = (await call('calculate-tuition-bulk', { studentIds: school, month: MONTH })).results;
+    ok(capped150.length === 150 && capped150.every((r) => r.totalAmount === FULL && r.carry.carryOutDebt === FULL && r.carry.payable === FULL),
+      `bulk at ${cap} rows per request: all 150 students are charged 1,440,000 (nobody reads as 0)`);
+    assert.deepEqual(capped150, free150, `bulk at ${cap} rows per request answers exactly as with no cap (150 students)`); passed += 1;
+  }
+
+  // And the fifteen cases themselves, three rows at a time: every figure, flag and "settled in" month as before.
+  source = fixture; rowCap = 3;
+  const cases3 = (await call('calculate-tuition-bulk', { studentIds: ids, month: MONTH })).results;
+  assert.deepEqual(cases3, bulk, 'the fifteen cases at 3 rows per request answer exactly as with no cap'); passed += 1;
   rowCap = Infinity; source = fixture;
 }
 
