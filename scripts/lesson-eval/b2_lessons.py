@@ -58,9 +58,12 @@ CENTER = True  # set by --no-center
 
 
 def vad_chunks(x: np.ndarray) -> list[tuple[float, float]]:
-    """Silero VAD regions cut into chunks of <= CHUNK s (>= 0.5 s), never across a pause."""
-    from split import vad_segments
-    regs, _ = vad_segments(x)
+    """Energy-VAD regions (margin 6 dB) cut into chunks of <= CHUNK s (>= 0.5 s), never
+    across a pause. Silero (threshold 0.5) missed 27-90 % of the children's speech in
+    the s500 mixes, silero 0.3 missed 10-74 %, energy 6 dB 8-28 % (measured with
+    score.der_file, collar 0.25 s, one-speaker hypothesis)."""
+    from split import energy_vad
+    regs = energy_vad(x, SR, margin_db=6.0)
     out = []
     for s, e in regs:
         n = max(1, int(round((e - s) / CHUNK)))
