@@ -12,7 +12,7 @@ import { SrsReviewDeck } from "@/components/student/SrsReviewDeck";
 
 // Labels are always shown (DS s.15: nav labels are always visible); at 375 the
 // icon steps aside so four labels fit, and a two-word label may wrap.
-const TRIGGER = "relative min-w-0 flex-1 gap-2 whitespace-normal px-2 text-center sm:px-3";
+const TRIGGER = "relative min-w-0 flex-1 gap-2 whitespace-normal px-2 text-center sm:whitespace-nowrap sm:px-3";
 const TRIGGER_ICON = "hidden h-4 w-4 shrink-0 sm:block";
 
 export default function Vocabulary() {
