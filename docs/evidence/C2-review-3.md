@@ -1,10 +1,12 @@
+VERDICT: PASS WITH CHANGES (two mandatory changes before a real class: R3-B1, C3-a)
+
 # C2 review 3 - third review of the capture engine (round 3) and the C3 screens
 
 Reviewed commit: bb70791 (`worktree-agent-a4803c8e10a251526`), against d449acc (what review 2 failed) and `claude/hec-conductor-setup-efbaa5`.
 Code read and run in the separate detached worktree `.claude/worktrees/c2r2` (moved to bb70791); this file is committed on `claude/hec-conductor-setup-efbaa5`. The conductor's worktree was not detached.
 Review only: no product code changed, nothing deployed, pushed or applied to any database.
 
-**Where I am / next step:** sections 3 and 6 written. Next: sections 1-2 (probes running), 4 (mutants running), 5, 7, verdict.
+**Where I am / next step:** DONE. Verdict PASS WITH CHANGES (two mandatory changes: R3-B1, C3-a); sections 1-7, the verdict and the hardware checks are below.
 
 A correction to review 2 first. I wrote there that no real audio was read. That was wrong for the unit suite itself: at d449acc `scripts/recorder/unit.test.mjs:191` read one minute of a real lesson WAV in place, unconditionally, for a FLAC ratio check, and I ran that suite eight times (once, six mutants, one control). Nothing was copied, stored or committed, and my own probes were synthetic, but the statement was not true and I did not check it. In this review every run has `RECORDER_REAL_AUDIO` unset.
 
@@ -78,6 +80,46 @@ Line by line:
 - **R3-2 (minor): `recorder_session_evidence` should expose `pre_start_ms`** (see above).
 - **R3-3 (minor): the 9 new SQL assertions (406 -> 415) cover**: armed refused, beyond-window refused (with 365 days, which also trips the 30-min cap, so neither bound is tested on its own), stated once, stored, three pre-start chunks accepted, ahead-of-clock from the new origin, completes, "48 of 50 minutes count", refused after a chunk. **Not covered**: another teacher (not `started_by`) setting it; a value just over `started_at - capture_opens_at` with the cap not in play; the cap itself; a chunk that straddles `started_at` (it is not live - right, untested); `late` for post-start chunks after a long pre-start; the state `uploading`. The trigger reads correctly on each of these; they have no test that could fail.
 
+## 4. Suites and mutations, run here
+
+Suites (c2r2 at bb70791, `RECORDER_REAL_AUDIO` unset, `node_modules` as a junction, removed at the end with `cmd //c rmdir node_modules`):
+
+| Suite | Result here | Claim |
+|---|---|---|
+| `tsc --noEmit -p tsconfig.app.json` (alone) | exit 0 | exit 0 |
+| `node scripts/pgtest/run.mjs` | **3627 assertions across 42 suites, 0 suite(s) failed**, exit 0 | 3627 / 42 / 0 |
+| - recorder engine (`unit.test.mjs`, now inside run.mjs) | 406 / 0 (and 11 more full runs under the mutants) | 406 / 0 |
+| - recorder screens logic (`ui.test.mjs`) | 30 / 0 | 30 / 0 |
+| - class recorder SQL (`recorder.test.mjs`) | 415 / 0 | 415 / 0 |
+| - recorder retention / recorder cron / app typecheck / edge functions typecheck | 37/0, 22/0, 3/0, 5/0 | same |
+| `browser.test.mjs` | NOT RUN (a headless Chromium for many real-time recordings). Read only. | 62 assertions |
+
+Mutations: throwaway copies in my scratchpad (outside the repo), one change each, the unit suite against each via `RECORDER_SRC`.
+
+My six from review 2 - **6 of 6 CAUGHT** (each 405/1, by the case the author added):
+
+| # | Mutant | Result | Caught by |
+|---|---|---|---|
+| A | late-tick deferral taken every time | CAUGHT | "A: with ticks 2 s apart a dead context is still declared" |
+| B | re-made only when `resume()` says not running | CAUGHT | "B: re-made although resume() said running" |
+| C | label fallback may open the other track's device | CAUGHT | "C: ... never re-acquired as the teacher's own device (same label)" |
+| D | a loss not ignored when already lost | CAUGHT | "D: one device_unplugged alert and one device_lost entry, not two" |
+| E | no read-back after a failed Stop | CAUGHT | "E: ... sees the Stop landed and does not send it again" |
+| F | `recover()` leaves complete leftovers | CAUGHT | "F: an own complete leftover ... is purged on recover" |
+
+Six new ones in the changed code - **2 caught, 4 survived**:
+
+| # | Area | Mutant | Result | What it means |
+|---|---|---|---|---|
+| N1 | pre-start accounting | `uploader.ts`: chunks may be registered before the server was told `pre_start_ms` (the `preStartAcked !== false` gate removed) | **SURVIVED 406/0** | The gate is a second line behind `driveOnce` (which returns before the uploader when the statement fails), so nothing changes today; but nothing would notice if `driveOnce`'s order changed and chunks went out on the wrong timeline. |
+| N2 | pre-start accounting | `driveOnce`: a capture stopped before the server answered is never started late | CAUGHT 405/1 | "N-B1: once online the truth is said ..." |
+| N3 | retry classification | `consent_missing` taken out of `FINAL_START_REFUSALS` (a class without consent: the Start is retried and the capture goes on for the whole window) | **SURVIVED 406/0** | Only `switch_off` is tested as final. Each name in that list is a decision that recording must STOP; each needs its case - `consent_missing` and `session_canceled` above all. |
+| N4 | double loss / N-B3 | `leaveStall` ignores `noMics` (a context stall ending while both microphones are gone says `recording`) | **SURVIVED 406/0** | The two faults together are untested; `capturingState()` is right, nothing holds it there. |
+| N5 | silence fill | the 30-minute cap on `padSilence` removed | **SURVIVED 406/0** | No test has a stall over 30 minutes; a laptop asleep for hours would synthesise hours of zeros on wake. |
+| N6 | screens | `recorderUi.ts`: `clipping` outranks `capture_stalled` on the board | CAUGHT 28/2 (`ui.test.mjs`) | The pure screen logic is tested. The components are not: removing `"stalled"` from `CAPTURING` in `DailyRecorder.tsx` (the Stop bar vanishing) is seen by no suite - nothing renders the .tsx. |
+
+A side effect of N3 worth its own line - **R3-M2 (privacy)**: since N-B1, audio is stored from the first sample, before the server has said yes. When the server's answer is a stated "no" - recording switched off, consent missing, lesson cancelled - what was captured is KEPT on the laptop until someone types DISCARD (Q8: 189 s, `phase abandoned`, listed). For "the network was down" keeping is right. For "the school has said this class must not be recorded" it is not: that audio should be deleted at once, and said so. The same applies to a switch-off that arrives mid-lesson for the part the server will never take.
+
 ## 5. The C3 screens (read, not rendered: `src/components/recorder/DailyRecorder.tsx`, `signOutGuard.ts`, `src/pages/TeacherRecorder.tsx`, `src/lib/recorderUi.ts`)
 
 The 14 items of review 2:
@@ -119,3 +161,39 @@ My recommendation: **yes while the server can still take it, no once it cannot.*
 - Real-audio references left in the tests: `unit.test.mjs:191-193` (a path string; read only when `RECORDER_REAL_AUDIO=1`), comments in `harness.mjs` / `browser.test.mjs`. `harness.mjs:21` now defaults to a synthetic WAV OUTSIDE the repo (`C:/Users/Dell/hec-tools/c2r-harness/synthetic.wav`), made by `scripts/recorder/make-synthetic-wav.mjs` (read: harmonic tones + noise from a seeded generator, no input file).
 - The default path of every suite is synthetic: unit (the `FakeSource` sine + noise), pgtest (SQL only), ui (no audio), browser (the synthetic WAV unless `RECORDER_WAV` names another file).
 - The implementer's note is accurate: before the guard, the unit suite read the lesson file in place. So did mine in review 2 (above).
+
+## Verdict
+
+**PASS WITH CHANGES.** The three blockers of review 2 are closed, the eight majors are closed (N-M2 with a reservation), my six surviving mutants are all caught now, the migration change cannot be used to fake evidence, and every suite is green as claimed. Two changes are mandatory before any real class; neither is a redesign, and I do not need to see the engine again if each lands with the test named.
+
+Must fix before a real class:
+1. **R3-B1** - the 30-minute cap on `pre_start_ms` (`20261112100000_class_recorder.sql:1012`) that the engine and the test fake do not know: a Start more than 30 minutes after capture began leaves the whole lesson on the laptop, the Stop unsent, the red dot on and "kept and sent" on screen (Q1). Remove the cap or teach all three; a refused pre-start must end in a plain "cannot be sent", not an endless retry. Tests: SQL at 30 min + 1 ms; engine at 31 minutes offline with the fake enforcing the SQL's rule.
+2. **C3-a** - leaving the recorder page by an in-app link disposes the engine: the recording stops silently, the microphones stay open. Block the route while active or hold the engine above the router; `dispose()` while capturing must end the capture properly. Test: a render or router-level test that navigation while `active` is refused.
+
+Majors (before unsupervised use):
+- **R3-M1** filled silence inside a mixed chunk counts as recorded audio (Q3: 73 of 262 s); state the padded total and subtract it in the view.
+- **R3-M2** audio captured before a stated "no" (switch-off, consent, cancellation) is kept instead of deleted.
+- **C3-b** no "Ready" / recover / held-audio notices on a day without a lesson.
+- **R3-M3** tests for the four survivors (N1, N3, N4, N5), the untested bounds of the new trigger (section 3, R3-3), and one render test of the recorder screen (`stalled` keeps Stop; `starting` has no red dot).
+
+Minors: `pre_start_ms` re-sent on every pass; `recorder_session_evidence` should expose `pre_start_ms`; the sign-out guard only on the recorder page (C3-c); bar wording for "both microphones gone" (C3-d); an ownerless unfinished row the server does not know cannot be discarded; the hung Worker is not terminated.
+
+## Real-hardware checks for the owner, before a real class
+
+On the school laptop, the real S500 and lapel receiver, Chrome or Edge, a test lesson with no children:
+1. First render: open `/teacher/recorder`, run the microphone setup, press "Ready for today"; watch a whole short lesson arm, start, record and reach "Saved". Nobody has seen these screens in a browser yet.
+2. Read-back on the real pair: echo cancellation / noise suppression / auto gain reported OFF for both; native sample rates; both labels written down.
+3. Wi-Fi off from before the window opens for 10 minutes, then on: bar says "Saving on this laptop - the school server has not confirmed yet" (no red dot), then "Recording"; afterwards the admin panel shows the whole lesson including the first 10 minutes. Repeat with 35 minutes off once R3-B1 is fixed.
+4. Close the lid for 1 minute, and separately let Windows sleep for 12 minutes, mid-recording: "NOT RECORDING" on return, recovery by itself, a gap in the recording of about the right length, and the chunks after it not marked late.
+5. Pull the S500's USB plug for 10 s, then 2 minutes, then re-plug into a DIFFERENT port: "Room microphone ... unplugged" at once, the lapel keeps recording, the S500 comes back by itself. Same for the lapel receiver.
+6. Pull BOTH (or the hub): "NOT RECORDING" with the Stop button still there; both come back by themselves.
+7. Leave the laptop recording for a full 90 minutes with the recorder tab hidden behind the lesson material: no stall, both tracks whole. Then the S500 "54:51" question: does it survive the hour (USB selective suspend off in the Windows power plan)?
+8. During a recording click another menu item of the app (attendance): until C3-a is fixed this ends the recording - confirm the fix refuses it.
+9. Speak loudly into the lapel: the meter shows "Too loud - clipping"; set the receiver gain so normal speech does not. Mute the lapel: "... is silent" within seconds, and it clears when unmuted.
+10. Press Stop with the Wi-Fi off, then turn it on: "Not stopped on the server yet", then "Saved".
+11. Clap test at minute 1 and near the end: the two tracks stay aligned (offset under 20 ms, growth under 10 ms).
+12. Two back-to-back lessons on one "Ready": the second arms and records; a microphone that was dead in the first is reported again in the second.
+13. A second teacher signs in on the same browser profile: sees "another teacher has unsent audio" if there is any, cannot touch it; sign-out during a recording is refused.
+14. After a complete lesson: DevTools > Application > IndexedDB `hec-recorder` holds nothing of it.
+15. After the migrations are pasted: one admin POST to `recorder-retention`; `select jobname from cron.job where jobname like 'recorder-%'` shows two jobs; next morning the nightly call answered 200.
+16. Disk: BitLocker on; under 2 GB free the page refuses to arm.
