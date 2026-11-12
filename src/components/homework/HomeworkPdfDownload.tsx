@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { logPdfEvent, newExportId } from "@/lib/pdfExportLog";
 import { cleanRichHtml } from "@/lib/richText";
+import { useIvory } from "@/hooks/useIvory";
 
 interface HomeworkPdfDownloadProps {
   homework: {
@@ -54,6 +55,9 @@ function pickRenderScale(measuredHpx: number, isMobile: boolean): number {
 
 export function HomeworkPdfDownload({ homework, className: classNameProp, teacherName, variant = "button" }: HomeworkPdfDownloadProps) {
   const [generating, setGenerating] = useState(false);
+  // Only the button's height follows the design system (44 px target); the
+  // dialog that uses it is also opened from a teacher tool, which keeps 40 px.
+  const ivory = useIvory();
   // On phones the finished PDF waits here for a SECOND tap. iOS Safari only
   // lets a page open a file, a new tab or the share sheet straight from a
   // tap; by the time the PDF is built (network, html2canvas) that tap has
@@ -412,7 +416,9 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
       <Button
         onClick={onPress}
         disabled={generating}
-        className="h-10 min-h-[40px] rounded-full gap-2 px-4 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md font-semibold"
+        className={ivory
+          ? "min-h-hec-target h-11 rounded-full gap-2 px-4 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md font-semibold"
+          : "h-10 min-h-[40px] rounded-full gap-2 px-4 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md font-semibold"}
       >
         {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
         {generating ? "Generating..." : ready ? "Open PDF" : "Download PDF"}
