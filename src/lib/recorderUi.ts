@@ -155,6 +155,11 @@ export interface UploadLike {
   offline: boolean;
   late: number;
   lateMs: number;
+  // C2 revision fields (optional: an older engine does not send them)
+  stopPending?: boolean;
+  stopRefused?: string | null;
+  heldInMemory?: number;
+  belowFloor?: number;
 }
 
 export interface StatusLine { tone: Tone; text: string }
@@ -181,6 +186,10 @@ export function uploadStatus(p: UploadLike | null, online = true): StatusLine[] 
   if (p && p.refused > 0) {
     out.push({ tone: "error", text: `The server would not take ${p.refused} ${p.refused === 1 ? "piece" : "pieces"}. They are kept on this laptop.` });
   }
+  if (p?.stopPending) out.push({ tone: "warn", text: "Not stopped on the server yet - it is tried again. Keep this page open." });
+  if (p?.stopRefused) out.push({ tone: "error", text: `The server did not accept the Stop: ${p.stopRefused}` });
+  if (p && (p.heldInMemory ?? 0) > 0) out.push({ tone: "error", text: `${p.heldInMemory} ${p.heldInMemory === 1 ? "piece is" : "pieces are"} only in memory (the laptop would not store them). Keep this page open.` });
+  if (p && (p.belowFloor ?? 0) > 0) out.push({ tone: "warn", text: `${p.belowFloor} ${p.belowFloor === 1 ? "piece was" : "pieces were"} silent - saved, but they do not count as lesson time.` });
   return out;
 }
 
@@ -223,10 +232,40 @@ const ACTION_LABEL: Record<ErrorAction, string | null> = {
 
 const view = (tone: Tone, title: string, body: string, action: ErrorAction): ErrorView => ({ tone, title, body, action, actionLabel: ACTION_LABEL[action] });
 
-/** Every engine error, in plain words with ONE action. `track` names the microphone when it is known. */
-export function errorView(code: RecorderErrorCode, refusal?: ServerRefusal | null, track?: TrackRole | null): ErrorView {
+/**
+ * Every engine error, in plain words with ONE action. `track` names the
+ * microphone when it is known. While `capturing`, no view offers Reload:
+ * reloading mid-lesson ends the recording.
+ */
+export function errorView(code: RecorderErrorCode, refusal?: ServerRefusal | null, track?: TrackRole | null, opts: { capturing?: boolean; message?: string } = {}): ErrorView {
+  const v = baseErrorView(code, refusal, track, opts.message);
+  if (opts.capturing && (v.action === "reload" || v.action === "sign_in")) return { ...v, body: v.body.replace(/^Reload the page\. /, "Do not reload while recording. "), action: "none", actionLabel: null };
+  return v;
+}
+
+function baseErrorView(code: RecorderErrorCode, refusal?: ServerRefusal | null, track?: TrackRole | null, message?: string): ErrorView {
   const mic = track ? trackName(track) : "A microphone";
   switch (code) {
+    case "capture_stalled":
+      return view("error", "NOT RECORDING", message && /both microphones/.test(message)
+        ? "Both microphones are gone. Plug them back in - recording resumes by itself when one is found. Keep Stop for the end of the lesson."
+        : "No sound is reaching the recorder. It is restarting the audio by itself. If this stays for a minute, check the laptop's sound and the cables.", "none");
+    case "mic_silent":
+      return view("warn", `${mic} is silent`, "Check that it is switched on, charged and not muted. Recording continues; silent minutes do not count.", "none");
+    case "clipping":
+      return view("warn", `${mic} is too loud`, "The sound is distorted. Turn its gain or volume down a little.", "none");
+    case "server_unavailable":
+      return view("warn", "Waiting for the school server", "The audio is being saved on this laptop and is sent when the server answers. Keep this page open.", "none");
+    case "start_delayed":
+      return view("info", "The school server started late", "Everything recorded is kept and sent. The first minutes before the server answered do not count as lesson time.", "none");
+    case "start_failed":
+      return view("error", "This lesson is not being recorded", message ?? "The server did not start the recording. What was captured is kept on this laptop.", "ask_admin");
+    case "stop_pending":
+      return view("warn", "Not stopped on the server yet", "The Stop is sent again by itself. Keep this page open until it says Saved.", "none");
+    case "local_store_failed":
+      return view("error", "The laptop could not save a piece of audio", "Recording continues. Free some disk space; the piece is kept in memory meanwhile.", "free_space");
+    case "not_durable":
+      return view("error", "This browser cannot keep recordings safely", "Use Google Chrome or Microsoft Edge in a normal (not private) window, then press Ready for today.", "none");
     case "permission_denied":
       return view("error", "The browser is not allowed to use the microphones", "Click the microphone icon at the right of the address bar, choose Allow, then press the button.", "allow_mic");
     case "device_missing":
@@ -238,7 +277,7 @@ export function errorView(code: RecorderErrorCode, refusal?: ServerRefusal | nul
     case "device_unplugged":
       return view("error", `${mic} was unplugged`, "Plug it back in now. The recording continues; the gap is marked.", "plug_in");
     case "device_lost":
-      return view("warn", `${mic} did not come back`, "The lesson continues with the other microphone. Check the cable after class.", "none");
+      return view("warn", `${mic} is still missing`, "Plug it back in - the recorder is still looking for it and picks it up by itself. The other microphone carries on.", "plug_in");
     case "constraint_not_honoured":
       return view("info", "The browser kept a sound setting on", "Recording works. The setting is noted with the recording.", "none");
     case "audio_context_suspended":
@@ -262,6 +301,55 @@ export function errorView(code: RecorderErrorCode, refusal?: ServerRefusal | nul
     default:
       return view("error", "Something went wrong", "Reload the page. Anything already recorded stays on this laptop.", "reload");
   }
+}
+
+// ---------------------------------------------------------------- the error board
+//
+// C2 review 2 (items 6, 9): one error slot let a clipping warning (every 30 s)
+// replace a standing "microphone unplugged" or "NOT RECORDING", and a long
+// outage emitted hundreds of offline / server_unavailable / clock_unknown.
+// The board keeps ONE entry per (code, track), ordered by priority, counts
+// repeats instead of stacking them, and lets the screen clear an entry when
+// the engine says the fault is over (device_restored, health "recovered",
+// capture_resumed).
+
+export interface BoardEntry { key: string; code: RecorderErrorCode; track: TrackRole | null; view: ErrorView; count: number; firstAt: number; lastAt: number }
+
+/** Lower is shown first. */
+export function errorPriority(code: RecorderErrorCode): number {
+  switch (code) {
+    case "capture_stalled": case "start_failed": case "not_durable": return 0;
+    case "device_unplugged": case "device_lost": case "device_missing": case "permission_denied": return 1;
+    case "mic_silent": case "quota": case "local_store_failed": return 2;
+    case "server_unavailable": case "start_delayed": case "stop_pending": case "not_signed_in": case "clock_unknown": case "server_refused": return 3;
+    case "clipping": return 5;
+    default: return 4;
+  }
+}
+
+/** Codes that are never shown on the board (the upload line or the meter says them). */
+const QUIET: RecorderErrorCode[] = ["offline", "constraint_not_honoured"];
+
+export function boardAdd(board: BoardEntry[], e: { code: RecorderErrorCode; refusal?: ServerRefusal | null; message?: string; track?: TrackRole | null }, now: number, capturing = false): BoardEntry[] {
+  if (QUIET.includes(e.code)) return board;
+  const track = e.track ?? null;
+  const key = `${e.code}|${e.refusal ?? ""}|${track ?? ""}`;
+  const v = errorView(e.code, e.refusal ?? null, track, { capturing, message: e.message });
+  const have = board.find((b) => b.key === key);
+  const next = have
+    ? board.map((b) => (b.key === key ? { ...b, view: v, count: b.count + 1, lastAt: now } : b))
+    : [...board, { key, code: e.code, track, view: v, count: 1, firstAt: now, lastAt: now }];
+  return next.sort((a, b) => errorPriority(a.code) - errorPriority(b.code) || b.lastAt - a.lastAt);
+}
+
+/** Clear the entries a fault's end answers (by code, and by track when given). */
+export function boardClear(board: BoardEntry[], codes: RecorderErrorCode[], track?: TrackRole | null): BoardEntry[] {
+  return board.filter((b) => !(codes.includes(b.code) && (track === undefined || track === null || b.track === track || b.track === null)));
+}
+
+/** What the screen shows: the top entries (a warning that clears itself goes after 60 s). */
+export function boardShow(board: BoardEntry[], now: number, max = 3): BoardEntry[] {
+  return board.filter((b) => !(b.code === "clipping" && now - b.lastAt > 60_000)).slice(0, max);
 }
 
 export function refusalView(r: ServerRefusal): ErrorView {
