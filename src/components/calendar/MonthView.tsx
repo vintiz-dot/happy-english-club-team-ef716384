@@ -181,13 +181,17 @@ function EventChip({ event, onSelect, draggable, compact, colorFor }: ChipProps)
         aria-hidden
         className={cn("absolute inset-y-0 left-0 w-[3px]", ivory ? "rounded-l-hec-sm" : "rounded-l-[5px]", color.rail)}
       />
-      <span className={ivory ? cn("shrink-0 text-hec-caption font-semibold leading-none tabular-nums", color.text) : "shrink-0 text-[10px] font-semibold tabular-nums opacity-70"}>
+      {/* Ivory: the visible pieces are hidden from assistive tech because the
+          button's aria-label already says all of it, in reading order (axe
+          label-content-name-mismatch). */}
+      <span aria-hidden={ivory || undefined} className={ivory ? cn("shrink-0 text-hec-caption font-semibold leading-none tabular-nums", color.text) : "shrink-0 text-[10px] font-semibold tabular-nums opacity-70"}>
         {formatTime(event.start_time)}
       </span>
       {/* The chip is one line of a fixed height (CHIP_H, measured layout):
           the name is cut here and given whole in the label, the day view
           and the "+N more" list. */}
       <span
+        aria-hidden={ivory || undefined}
         className={cn(
           ivory ? "truncate text-hec-caption font-medium leading-none" : "truncate text-[11px] font-medium leading-none",
           color.text,
@@ -196,7 +200,7 @@ function EventChip({ event, onSelect, draggable, compact, colorFor }: ChipProps)
       >
         {event.class_name}
       </span>
-      <span className="ml-auto flex shrink-0 items-center gap-1">
+      <span aria-hidden={ivory || undefined} className="ml-auto flex shrink-0 items-center gap-1">
         {variance && (
           <AlertTriangle
             className={ivory ? "h-3 w-3 text-hec-warn" : "h-3 w-3 text-warning"}

@@ -50,8 +50,9 @@ export default function MiniCalendar({
       className={cn(
         ivory
           ? // Seven 44 px days need 308 px; on a phone the panel takes the
-            // width between the 16 px gutters instead of hanging off the edge.
-            "rounded-hec-lg border border-hec-line bg-hec-raised p-3 text-hec-ink shadow-hec-2 max-sm:fixed max-sm:inset-x-4 sm:w-[332px]"
+            // width between the 16 px gutters, just under the top bar, instead
+            // of hanging off the right edge.
+            "rounded-hec-lg border border-hec-line bg-hec-raised p-3 text-hec-ink shadow-hec-2 max-sm:fixed max-sm:inset-x-4 max-sm:top-16 sm:w-[332px]"
           : cn("glass-sm rounded-2xl p-3 w-[240px]", "shadow-xl border border-border/50"),
         className
       )}
