@@ -10,11 +10,11 @@
  *      The `pointsAwarded` flag (tracked in point_transactions) prevents
  *      point-farming. Students can still practice any word for mastery,
  *      but repeat correct answers earn 0 pts.
- *   4. Engaging visual feedback: confetti burst for correct answers,
- *      gentle encouraging cues for wrong answers.
+ *   4. Visual feedback: the right answer turns leaf with a check mark,
+ *      gentle encouraging cues for wrong answers (A4.6: no confetti).
  */
 
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   Volume2, RotateCcw, Brain, Sparkles, Award, CheckCircle2,
   XCircle, Trophy, ArrowRight, Loader2,
@@ -36,6 +36,11 @@ interface Props {
   wordsForReview: VocabularyWord[];
   onUpdateMastery: (id: string, correct: boolean) => void;
 }
+
+const FOCUS = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
+
+/** A whole-card choice on the start screen (DS s.15 card that is a control). */
+const PICK_CARD = `flex w-full min-h-hec-target items-center justify-between gap-4 rounded-hec-lg border border-hec-line bg-hec-surface p-4 text-left shadow-hec-1 transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2 sm:p-6 ${FOCUS}`;
 
 type SessionState = "idle" | "active" | "feedback" | "complete";
 
@@ -117,58 +122,6 @@ function buildOptions(
   ];
 
   return shuffle(options);
-}
-
-// ─── Confetti Component ──────────────────────────────────────────────────
-
-function ConfettiBurst() {
-  const particles = useMemo(
-    () =>
-      Array.from({ length: 30 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        delay: Math.random() * 0.3,
-        color: ["#8b5cf6", "#06b6d4", "#f59e0b", "#ef4444", "#10b981", "#ec4899"][
-          Math.floor(Math.random() * 6)
-        ],
-        size: 4 + Math.random() * 6,
-        rotation: Math.random() * 360,
-      })),
-    [],
-  );
-
-  return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      {particles.map((p) => (
-        <motion.div
-          key={p.id}
-          initial={{
-            x: `${p.x}vw`,
-            y: "-10%",
-            rotate: 0,
-            opacity: 1,
-          }}
-          animate={{
-            y: "110vh",
-            rotate: p.rotation + 720,
-            opacity: [1, 1, 0.8, 0],
-          }}
-          transition={{
-            duration: 2 + Math.random(),
-            delay: p.delay,
-            ease: "easeIn",
-          }}
-          className="absolute"
-          style={{
-            width: p.size,
-            height: p.size,
-            backgroundColor: p.color,
-            borderRadius: Math.random() > 0.5 ? "50%" : "2px",
-          }}
-        />
-      ))}
-    </div>
-  );
 }
 
 // ─── Component ───────────────────────────────────────────────────────────
@@ -349,10 +302,10 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
 
     if (totalCount === 0) {
       return (
-        <div className="text-center py-20 space-y-4">
-          <div className="text-6xl gemini-float">🧠</div>
-          <h3 className="text-xl font-bold">No Words to Practice</h3>
-          <p className="text-muted-foreground max-w-md mx-auto">
+        <div className="space-y-4 py-16 text-center">
+          <div className="text-6xl" aria-hidden="true">🧠</div>
+          <h3 className="font-display text-hec-h2 font-medium text-hec-ink">No Words to Practice</h3>
+          <p className="mx-auto max-w-md text-hec-body text-hec-ink-soft">
             Add words to your vocabulary bank first, then come back to practice
             them!
           </p>
@@ -361,68 +314,66 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
     }
 
     return (
-      <div className="max-w-lg mx-auto space-y-6 py-8">
-        <div className="text-center space-y-2">
-          <div className="text-5xl mb-4 gemini-float">🎯</div>
-          <h2 className="text-2xl font-bold text-foreground">
+      <div className="mx-auto max-w-lg space-y-6 py-8">
+        <div className="space-y-2 text-center">
+          <div className="mb-4 text-5xl" aria-hidden="true">🎯</div>
+          <h2 className="font-display text-hec-h1 font-medium text-hec-ink">
             Multiple Choice Quiz
           </h2>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-hec-small text-hec-ink-soft">
             Test your knowledge! Pick the correct definition for each word.
           </p>
         </div>
 
         {/* Session Options */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           {dueCount > 0 && (
-            <Card
-              className="border border-blue-200 dark:border-[hsl(265_30%_18%)] bg-blue-50/40 dark:bg-[hsl(265_20%_11%)] cursor-pointer hover:border-blue-300 dark:hover:border-[hsl(265_30%_24%)] transition-all duration-200 rounded-2xl"
+            <button
+              type="button"
+              className={PICK_CARD}
               onClick={() => startSession(wordsForReview)}
             >
-              <CardContent className="p-5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-blue-100/60 dark:bg-[hsl(265_30%_16%)] flex items-center justify-center">
-                    <Brain className="w-5 h-5 text-blue-600 dark:text-blue-400/80" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-foreground">
-                      Words Due for Review
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Spaced repetition — review these now!
-                    </p>
-                  </div>
-                </div>
-                <Badge className="bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 text-sm px-3">
-                  {dueCount}
-                </Badge>
-              </CardContent>
-            </Card>
+              <span className="flex min-w-0 items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hec-md bg-hec-sunken">
+                  <Brain className="w-5 h-5 text-hec-brass" aria-hidden="true" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-semibold text-hec-ink">
+                    Words Due for Review
+                  </span>
+                  <span className="block text-hec-small text-hec-ink-soft">
+                    Spaced repetition — review these now!
+                  </span>
+                </span>
+              </span>
+              <span className="inline-flex shrink-0 items-center rounded-full border border-hec-warn/30 bg-hec-warn-tint px-3 py-1 text-hec-caption font-medium tabular-nums text-hec-warn">
+                {dueCount}
+              </span>
+            </button>
           )}
 
-          <Card
-            className="border border-slate-200 dark:border-[hsl(240_8%_16%)] bg-white dark:bg-[hsl(240_8%_10%)] cursor-pointer hover:border-slate-300 dark:hover:border-[hsl(240_8%_22%)] transition-all duration-200 rounded-2xl shadow-sm"
+          <button
+            type="button"
+            className={PICK_CARD}
             onClick={() => startSession(words)}
           >
-            <CardContent className="p-5 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-[hsl(220_15%_14%)] flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400/70" />
-                </div>
-                <div>
-                  <p className="font-bold text-foreground">
-                    Practice All Words
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Random selection from your entire bank
-                  </p>
-                </div>
-              </div>
-              <Badge variant="secondary" className="text-sm px-3 bg-slate-100 dark:bg-[hsl(240_8%_16%)] text-slate-700 dark:text-foreground/60">
-                {totalCount}
-              </Badge>
-            </CardContent>
-          </Card>
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hec-md bg-hec-sunken">
+                <Sparkles className="w-5 h-5 text-hec-brass" aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <span className="block font-semibold text-hec-ink">
+                  Practice All Words
+                </span>
+                <span className="block text-hec-small text-hec-ink-soft">
+                  Random selection from your entire bank
+                </span>
+              </span>
+            </span>
+            <span className="inline-flex shrink-0 items-center rounded-full border border-hec-line bg-hec-sunken px-3 py-1 text-hec-caption font-medium tabular-nums text-hec-ink-soft">
+              {totalCount}
+            </span>
+          </button>
         </div>
       </div>
     );
@@ -433,53 +384,54 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
     const total = results.correct + results.wrong;
     const pct = total > 0 ? Math.round((results.correct / total) * 100) : 0;
     return (
-      <div className="max-w-md mx-auto text-center py-16 space-y-6">
+      <div className="mx-auto max-w-md space-y-6 py-16 text-center">
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 200, damping: 15 }}
-          className="text-7xl gemini-float"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+          className="text-7xl"
+          aria-hidden="true"
         >
           {pct >= 80 ? "🏆" : pct >= 50 ? "💪" : "📚"}
         </motion.div>
-        <h2 className="text-2xl font-bold">Session Complete!</h2>
-        <div className="flex justify-center gap-8">
+        <h2 className="font-display text-hec-h1 font-medium text-hec-ink">Session Complete!</h2>
+        <div className="flex flex-wrap justify-center gap-8">
           <div className="text-center">
-            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400/70">
+            <p className="text-hec-h1 font-semibold tabular-nums text-hec-leaf">
               {results.correct}
             </p>
-            <p className="text-sm text-muted-foreground">Correct</p>
+            <p className="text-hec-small text-hec-ink-soft">Correct</p>
           </div>
           <div className="text-center">
-            <p className="text-3xl font-bold text-red-500 dark:text-red-400/60">
+            <p className="text-hec-h1 font-semibold tabular-nums text-hec-warn">
               {results.wrong}
             </p>
-            <p className="text-sm text-muted-foreground">To Review</p>
+            <p className="text-hec-small text-hec-ink-soft">To Review</p>
           </div>
           {results.points > 0 && (
             <div className="text-center">
-              <p className="text-3xl font-bold text-amber-600 dark:text-amber-400/70 flex items-center justify-center gap-1">
-                <Award className="w-7 h-7" /> {results.points}
+              <p className="flex items-center justify-center gap-1 text-hec-h1 font-semibold tabular-nums text-hec-brass">
+                <Award className="w-6 h-6" aria-hidden="true" /> {results.points}
               </p>
-              <p className="text-sm text-muted-foreground">Points earned</p>
+              <p className="text-hec-small text-hec-ink-soft">Points earned</p>
             </div>
           )}
         </div>
-        <Progress value={pct} className="h-3 rounded-full" />
-        <p className="text-muted-foreground">
+        <Progress value={pct} aria-label="Score" className="h-2 rounded-full bg-hec-sunken" />
+        <p className="text-hec-body text-hec-ink-soft">
           {pct >= 80
             ? "Outstanding! You're mastering these words! 🌟"
             : pct >= 50
               ? "Good effort! Keep practicing and you'll get there! 💪"
               : "Every practice session makes you stronger. Don't give up! 🚀"}
         </p>
-        <div className="flex gap-3 justify-center">
+        <div className="flex justify-center gap-3">
           <Button
             variant="outline"
             onClick={() => setSession("idle")}
-            className="rounded-xl border-slate-200 dark:border-[hsl(240_8%_18%)] bg-transparent hover:bg-slate-50 dark:hover:bg-[hsl(240_8%_14%)]"
+            className="w-full sm:w-auto"
           >
-            <RotateCcw className="w-4 h-4 mr-2" /> New Session
+            <RotateCcw className="w-4 h-4" aria-hidden="true" /> New Session
           </Button>
         </div>
       </div>
@@ -494,14 +446,11 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
     isInFeedback && selectedIdx !== null && options[selectedIdx]?.isCorrect;
 
   return (
-    <div className="max-w-lg mx-auto py-6 space-y-6">
-      {/* Confetti */}
-      {showConfetti && <ConfettiBurst />}
-
+    <div className="mx-auto max-w-lg space-y-6 py-6">
       {/* Progress */}
       <div className="flex items-center gap-3">
-        <Progress value={progress} className="flex-1 h-2 rounded-full" />
-        <span className="text-sm text-muted-foreground font-medium whitespace-nowrap">
+        <Progress value={progress} aria-label="Quiz progress" className="h-2 flex-1 rounded-full bg-hec-sunken" />
+        <span className="whitespace-nowrap text-hec-small font-medium tabular-nums text-hec-ink-soft">
           {currentIdx + 1} / {deck.length}
         </span>
       </div>
@@ -510,17 +459,17 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
       <AnimatePresence mode="wait">
         <motion.div
           key={currentCard.id}
-          initial={{ opacity: 0, x: 50 }}
+          initial={{ opacity: 0, x: 8 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -50 }}
-          transition={{ duration: 0.3 }}
+          exit={{ opacity: 0, x: -8 }}
+          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
         >
-          <Card className="border border-slate-200 dark:border-[hsl(240_8%_16%)] shadow-md dark:shadow-none rounded-2xl overflow-hidden bg-white dark:bg-[hsl(240_8%_10%)]">
-            <CardContent className="p-6 sm:p-8 space-y-6">
+          <Card className="overflow-hidden">
+            <CardContent className="space-y-6 p-4 sm:p-6">
               {/* Word display */}
-              <div className="text-center space-y-3">
+              <div className="space-y-3 text-center">
                 {currentCard.imageUrl && (
-                  <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-md mx-auto">
+                  <div className="mx-auto h-20 w-20 overflow-hidden rounded-hec-lg shadow-hec-1">
                     <img
                       src={currentCard.imageUrl}
                       alt=""
@@ -529,30 +478,26 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
                   </div>
                 )}
 
-                <p className="text-sm text-muted-foreground font-medium">
+                <p className="text-hec-small font-medium text-hec-ink-soft">
                   What does this word mean?
                 </p>
-                <h2 className="text-4xl font-bold tracking-tight text-foreground/90 text-center capitalize">
+                <h2 className="break-words text-center font-display text-hec-display font-medium capitalize text-hec-ink">
                   {currentCard.word}
                 </h2>
                 {currentCard.cefr && (
-                  <Badge
-                    variant="outline"
-                    className="text-xs font-bold mx-auto"
-                  >
+                  <Badge variant="brass">
                     CEFR {currentCard.cefr}
                   </Badge>
                 )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-foreground/50 gap-1"
                   onClick={(e) => {
                     e.stopPropagation();
                     speak(currentCard.word, "en-US", 0.65);
                   }}
                 >
-                  <Volume2 className="w-4 h-4" /> Listen
+                  <Volume2 className="w-4 h-4" aria-hidden="true" /> Listen
                 </Button>
               </div>
 
@@ -568,58 +513,58 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
                   return (
                     <motion.button
                       key={`${currentCard.id}-${idx}`}
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.08 }}
+                      transition={{ delay: idx * 0.08, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
                       onClick={() => handleOptionClick(idx)}
                       disabled={isInFeedback}
                       className={cn(
-                        "w-full text-left p-4 rounded-xl border transition-all duration-200 flex items-start gap-3",
+                        `flex min-h-hec-target w-full items-start gap-3 rounded-hec-md border p-4 text-left transition-colors duration-hec-1 ease-hec ${FOCUS}`,
                         // Default state
                         !isInFeedback &&
-                          "border-slate-200 dark:border-[hsl(240_8%_18%)] bg-white dark:bg-[hsl(240_8%_10%)] hover:border-slate-300 dark:hover:border-[hsl(240_8%_24%)] hover:bg-slate-50 dark:hover:bg-[hsl(240_8%_13%)] cursor-pointer active:scale-[0.99] shadow-sm",
+                          "cursor-pointer border-hec-line-strong bg-hec-raised hover:bg-hec-sunken",
                         // Correct answer highlight
                         showCorrectHighlight &&
-                          "border-emerald-500/40 bg-emerald-50/50 dark:bg-[hsl(155_20%_10%)]",
+                          "border-hec-leaf/30 bg-hec-leaf-tint",
                         // Wrong answer highlight
                         showWrongHighlight &&
-                          "border-red-500/40 bg-red-50/50 dark:bg-[hsl(0_20%_10%)]",
+                          "border-hec-danger/30 bg-hec-danger-tint",
                         // Non-selected in feedback mode
                         isInFeedback &&
                           !showCorrectHighlight &&
                           !showWrongHighlight &&
-                          "opacity-40 border-slate-200 dark:border-[hsl(240_8%_16%)]",
+                          "border-hec-line bg-hec-raised opacity-50",
                       )}
                     >
                       {/* Option label (A, B, C, D) */}
                       <span
                         className={cn(
-                          "shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors",
+                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-hec-small font-semibold transition-colors duration-hec-1 ease-hec",
                           showCorrectHighlight
-                            ? "bg-emerald-600/60 text-white"
+                            ? "bg-hec-leaf text-hec-paper"
                             : showWrongHighlight
-                              ? "bg-red-600/60 text-white"
-                              : "bg-slate-100 dark:bg-[hsl(240_8%_16%)] text-slate-500 dark:text-foreground/50",
+                              ? "bg-hec-danger-fill text-hec-on-danger"
+                              : "bg-hec-sunken text-hec-ink-soft",
                         )}
                       >
                         {showCorrectHighlight ? (
-                          <CheckCircle2 className="w-5 h-5" />
+                          <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
                         ) : showWrongHighlight ? (
-                          <XCircle className="w-5 h-5" />
+                          <XCircle className="w-5 h-5" aria-hidden="true" />
                         ) : (
                           String.fromCharCode(65 + idx) // A, B, C, D
                         )}
                       </span>
                       <span
                         className={cn(
-                          "text-base font-medium pt-0.5 leading-snug",
+                          "min-w-0 break-words pt-1 text-hec-body font-medium",
                            showCorrectHighlight &&
-                             "text-emerald-700 dark:text-emerald-300/80",
+                             "text-hec-leaf",
                            showWrongHighlight &&
-                             "text-red-700 dark:text-red-300/80",
+                             "text-hec-danger",
                            !showCorrectHighlight &&
                              !showWrongHighlight &&
-                             "text-foreground/70",
+                             "text-hec-ink",
                         )}
                       >
                         {opt.text}
@@ -632,24 +577,25 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
               {/* Feedback Message */}
               {isInFeedback && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
                   className="space-y-4"
                 >
                   <div
                     className={cn(
-                      "rounded-xl p-4 text-center",
+                      "rounded-hec-md border p-4 text-center",
                       wasCorrect
-                        ? "bg-emerald-50/50 border border-emerald-200 dark:bg-[hsl(155_15%_10%)] dark:border-[hsl(155_20%_16%)]"
-                        : "bg-orange-50/50 border border-orange-200 dark:bg-[hsl(25_15%_10%)] dark:border-[hsl(25_20%_16%)]",
+                        ? "border-hec-leaf/30 bg-hec-leaf-tint"
+                        : "border-hec-warn/30 bg-hec-warn-tint",
                     )}
                   >
                     <p
                       className={cn(
-                        "text-lg font-bold",
+                        "text-hec-h3 font-semibold",
                         wasCorrect
-                          ? "text-emerald-700 dark:text-emerald-400/80"
-                          : "text-orange-700 dark:text-orange-400/80",
+                          ? "text-hec-leaf"
+                          : "text-hec-warn",
                       )}
                     >
                       {wasCorrect
@@ -661,7 +607,7 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
                           ]}
                     </p>
                     {!wasCorrect && currentCard.example && (
-                      <p className="text-sm text-muted-foreground mt-1 italic">
+                      <p className="mt-1 text-hec-small italic text-hec-ink-soft">
                         "{currentCard.example}"
                       </p>
                     )}
@@ -671,12 +617,12 @@ export function VocabularyPractice({ words, wordsForReview, onUpdateMastery }: P
                   <Button
                     onClick={advance}
                     disabled={recording}
-                    className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white dark:bg-[hsl(265_40%_16%)] dark:hover:bg-[hsl(265_40%_20%)] dark:text-blue-200 dark:border dark:border-[hsl(265_40%_24%)] font-medium text-sm shadow-sm"
+                    className="w-full"
                   >
                     {recording ? (
-                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
                     ) : (
-                      <ArrowRight className="w-5 h-5 mr-2" />
+                      <ArrowRight className="w-5 h-5" aria-hidden="true" />
                     )}
                     {currentIdx + 1 >= deck.length ? "See Results" : "Next Word"}
                   </Button>
