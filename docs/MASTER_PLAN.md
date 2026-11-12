@@ -152,11 +152,11 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 | Stream | Units | Done | What is done |
 |---|---|---|---|
 | D money integrity | 18.5 | 7.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
-| A overhaul | 12.0 | 4.0 | A0 baseline, A1 plan, A3.1, A3.3, A4.1 design system (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
+| A overhaul | 12.0 | 5.2 | A0, A1, A2.1 diagnosis, A3.1, A3.2, A3.3, A4.1 (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
 | B lesson monitor evaluation | 10.5 | 3.7 | vendor research, audio prep, harness, vendor proxy built (deploy running). Left: B1, B2, B2b, B3, report |
 | C class recorder | 8.0 | 1.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **16.2** | **32%** |
+| **Total** | **51.0** | **17.4** | **34%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -215,3 +215,7 @@ Log: 2026-11-12 - 32% (vendor proxy merged).
 
 - 2026-11-12 `audit-eval-proxy` merged (opus, acc789c): admin-only (service role refused), audio read only from the private `audit-eval` bucket by code-only object names, one piece per call, caps in SQL (400 calls and 600 min per run, 2000 min global, kill switch), logs ids and durations only, nothing stored but a runs row without text. Vendors: Azure fast transcription (multilingual and en-US + vi-VN, diarization, word timestamps); OpenAI gpt-transcribe, gpt-4o-transcribe, gpt-4o-transcribe-diarize, whisper-1; Gemini with speaker labels (uploaded file deleted after each call). Google Chirp 3 stubbed (would need the audio in a Google bucket). Agent's full run 2336/34/0 incl. its suite 179/0. Conductor read the gate, input handling and logging lines. UNVERIFIED until a real call: every vendor response shape and several request parameters. Deploy delegated to a sonnet agent with exact steps (pre-checks, apply 20261112110000, deploy, byte-diff the deployed code against the repo, anonymous refusals) under D-9/D-10.
 - OWNER STEP needed for the vendor comparison: the proxy only accepts a signed-in ADMIN, and the conductor may not enter passwords. The driver gets a `--login` option so the owner types their admin email and password into their OWN terminal (hidden input, token kept in memory only). One command, listed when ready.
+Log: 2026-11-12 - 34% (A3.2 and A2.1 merged).
+
+- 2026-11-12 A3.2 merged (sonnet, 0a383fe): entry JS 217.7 -> 162.7 KiB gzip (target <=190); initial CSS 44.3 -> 41.0 KiB; preconnect added. Conductor read the diff (three small edits) and checked that every file importing react-quill also imports the quill stylesheet (0 without). Not produced: editor screenshots and the announcement DOM snapshot - to be confirmed in the G5 pass and a browser check.
+- 2026-11-12 A2.1 diagnosis merged (opus, aaf064c): scripted check `scripts/a11y-teacher/teacher-stability.mjs` (171 checks, 70 FAIL on the baseline, exits 1). CONFIRMED: a token refresh or tab refocus reloads the book, sends it back to page 1, switches the selection back to the first book and drops fullscreen (H1); Presenter -> Settings -> Presenter reloads it (H2); popover, dialog, dropdown, SkillButton and StudentActionPopover are INVISIBLE in fullscreen, and so are select and tooltip because they read the fullscreen element only at render (H5, H8); tooltips never open on tap and native title hints show nothing on touch or keyboard (H6, H7); 4 refetches per unrelated attendance event in the HUD (H9). REFUTED: title edits reloading the book; HUD re-renders; most 44px target worries. Not measured: the real book provider's iframe (a local stand-in was used), real auth events, real tab switching. A2.2 (sonnet) and A2.3 (opus) launched from its briefs.
