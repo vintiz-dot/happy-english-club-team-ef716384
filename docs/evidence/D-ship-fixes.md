@@ -104,4 +104,13 @@ After the apply (read-only):
 
 ## Verification
 
-(filled in below)
+```
+node scripts/pgtest/session-guard-functions.test.mjs <the 4 migrations>   -> 134 passed, 0 failed (was 81); +1 assertion after (F27 pin), see below
+node scripts/pgtest/session-cancel-guard.test.mjs   <the 4 migrations>    -> 266 passed, 0 failed (was 239)
+node scripts/pgtest/edge-functions.test.mjs                               -> 5 passed, 0 failed (98 of 98 files loaded)
+```
+
+Mutation re-run (scratch copies only, runner `scratchpad/mut.mjs`; a run stops at its first FAIL line; runs that died with 0xC0000142 or ENOENT when the session restarted / two runs shared a temp file were re-run alone):
+
+- Functions, the review's 27: **27 caught, 0 survived** (F01, F02 by the F-2 gate case; F03 by the Scheduled <-> Held case; F19, F21, F22, F25 by their new cases; F27 survived once - the preview no longer passes through `tuitionSnapshot` - and is caught after the added assertion "the refresh result never copies paid_amount"). Plus 7 new mutants of this round (preview calls calculate-tuition / calculate-payroll again, bill matched across months, criteria not enforced, F-9 undone, 23505 mapping removed, 429 without code): **7 caught**.
+- SQL, the review's 18: **18 caught, 0 survived** (S05, S06 by "F-12 ... the day alone"; S08 by "F-12 S08"; S12, S14, S15 caught - S14/S15 already by the G2 counts assertion, S12 by the other-lesson case; S11 still only by the source-text assertion). Plus 3 new: token without discount (X01) **caught by the functions suite** (the guard suite has no bill-edit-after-preview case for the discount), F-10 undone (X02) caught, guard status count removed (X03) - see below.
