@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -15,6 +16,26 @@ interface EmptyStateProps {
  * Replaces the various "no data" paragraphs scattered through the app.
  */
 export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
+  const ivory = useIvory();
+  if (ivory) {
+    return (
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center rounded-hec-lg border border-hec-line bg-hec-surface px-6 py-12 text-center",
+          className
+        )}
+      >
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-hec-lg bg-hec-sunken text-hec-ink-soft">
+          <Icon className="h-6 w-6" />
+        </div>
+        <p className="mb-1 font-display text-hec-h2 font-medium text-hec-ink">{title}</p>
+        {description && (
+          <p className="max-w-sm text-hec-body text-hec-ink-soft">{description}</p>
+        )}
+        {action && <div className="mt-5">{action}</div>}
+      </div>
+    );
+  }
   return (
     <div
       className={cn(
