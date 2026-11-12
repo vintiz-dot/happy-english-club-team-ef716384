@@ -63,8 +63,8 @@ Status: todo / running / review / PASS / FAIL / reverted / blocked-owner. Model 
 | Id | Task | Model (impl / review) | Files owned | Status | Evidence |
 |---|---|---|---|---|---|
 | D0 | Inventory of cancel / owe-changing paths | sonnet / fable | docs/evidence/D0-inventory.md | PASS (conductor spot-check) | docs/evidence/D0-inventory.md, 480ad48; 6 claims re-read in code by conductor |
-| D1 | Evidence model design; `session_held_evidence` | fable design, opus build / fable | docs/evidence/D1-evidence-model.md; supabase/migrations/2026111209*_session_held_evidence.sql; scripts/pgtest/session-evidence.test.mjs | revision 1 merged (opus, b95cd12): suite 143/0; fable review 2 running | docs/evidence/D1-evidence-model.md, 61ce962 |
-| D2 | Guard: trigger + `cancel_session_checked` + threat model | fable design, opus build / fable | docs/evidence/D2-*.md; guard migration; manage-session; bulk-cancel-sessions; pgtest | SQL guard built and merged (opus, b95cd12): suite 212/0, conductor full run 2157/33/0; fable review 2 running; edge functions + UI not started | docs/evidence/D2-guard-design.md, D2-threat-model.md |
+| D1 | Evidence model design; `session_held_evidence` | fable design, opus build / fable | docs/evidence/D1-evidence-model.md; supabase/migrations/2026111209*_session_held_evidence.sql; scripts/pgtest/session-evidence.test.mjs | PASS (fable review 2, 8b9d1a2, no findings; suite 143/0) | docs/evidence/D1-evidence-model.md, 61ce962 |
+| D2 | Guard: trigger + `cancel_session_checked` + threat model | fable design, opus build / fable | docs/evidence/D2-*.md; guard migration; manage-session; bulk-cancel-sessions; pgtest | SQL guard: review 2 PASS WITH CHANGES (2 major, 7 minor, no executed bypass of the checked path); revision + edge functions running (opus) | docs/evidence/D2-guard-design.md, D2-threat-model.md |
 | D3 | Nudge UI + override review screen | sonnet / opus + fable wording | CancelSessionDialog, SessionActionsModal, EditSessionModal, DeleteSessionDialog, BulkSessionDelete, new review screen | todo | |
 | D4 | Other tuition-affecting actions | fable design, opus build / fable | docs/evidence/D4-*.md; migration; affected dialogs | todo | |
 | D5 | Invariant audit + regression tests + owner SQL | fable audit, sonnet/opus tests / fable | docs/evidence/D5-audit.md; scripts/pgtest/*; scripts/CHECK-past-cancellations-with-evidence.sql | todo | |
@@ -151,14 +151,18 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 
 | Stream | Units | Done | What is done |
 |---|---|---|---|
-| D money integrity | 18.5 | 5.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
+| D money integrity | 18.5 | 6.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
 | A overhaul | 12.0 | 1.0 | A0 baseline. Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
 | B lesson monitor evaluation | 10.5 | 2.5 | vendor research, audio prep, harness about 70%. Left: B1, B2, B2b, B3, report |
 | C class recorder | 8.0 | 1.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **10.0** | **20%** |
+| **Total** | **51.0** | **11.0** | **22%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
 
 - 2026-11-12 A0 baseline merged (sonnet, e4df152): 12 screens x 3 widths x light/dark through the fake client, harness kept at C:\Users\Dell\hec-tools\a0-harness\. Headlines: slowest at 4x CPU are admin Payroll (~21 s) and admin class sessions (~14 s) - dev-server numbers, comparable only against the same harness; at least one critical axe violation on every screen; parent view overflows horizontally at 375; 27 of 38 icon-only buttons unlabelled; 67 `select('*')` in src, 25 in functions. Weak spots: admin Tuition throws against the fake and admin Payroll shows no pay lines (layout cost only); no production-build runtime numbers. Conductor saw in the 375 student-dashboard screenshot a speech bubble covering the child's name - a visible defect for A4.
+Log: 2026-11-12 - 22% (D review 2 merged; D1 PASS).
+
+- 2026-11-12 D review 2 merged (fresh fable, 8b9d1a2). D1: PASS, no findings. D2 SQL guard: PASS WITH CHANGES, 0 blocker / 2 major / 7 minor; no executed way to cancel, un-cancel, delete, re-class or date-move a started or evidence lesson outside the checked path; nothing fails open; no existing object changed. Mutation: 43 mutants, 32 caught by FAIL lines, 8 only by a suite crash, 3 survived (one a real untested condition: raw move out of a settled month). Majors: F-1 an admin's raw `UPDATE attendance SET session_id = <other lesson>` strips a taught, paid lesson of its evidence so a later cancel is tier T1 with no review; F-2 until the edge functions are rewired, manage-session still writes with the service key and so takes the automation lane.
+- CONDUCTOR RULINGS on review 2: F-1 IS a bypass of correction mode and must be fixed before anything is handed to the owner (re-parenting attendance to another session is refused or counted by `_session_erased_recently`; fail closed). F-2 is closed by the edge-function task, which must call the checked RPCs with the ADMIN'S OWN JWT, never the service key, for every person-initiated change. Also required in the revision: a session's primary key cannot be changed; destination evidence and a settled destination month put a move on the reviewed path; tests that kill the three surviving mutants; fixture calls wrapped so a failure is a FAIL line, not a crash; the 11 contract gaps filled. Deferred with a note: deleting points/transcripts before a cancel is only audited (D4); wiring the recorder view into `session_recording_evidence` happens when the recorder migration ships (C).
