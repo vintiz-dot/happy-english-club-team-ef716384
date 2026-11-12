@@ -198,7 +198,7 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
           </div>
 
           <Select value={show} onValueChange={(v) => setShow(v as typeof show)}>
-            <SelectTrigger className="w-[150px]" aria-label="Show">
+            <SelectTrigger className="w-full sm:w-[180px]" aria-label="Show">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -209,7 +209,7 @@ export function StudentAuditRoster({ onPrint }: { onPrint?: (audit: StudentAudit
           </Select>
 
           <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-            <SelectTrigger className="w-[160px]" aria-label="Sort">
+            <SelectTrigger className="w-full sm:w-[200px]" aria-label="Sort">
               <ArrowDownUp className="mr-2 h-4 w-4 shrink-0" aria-hidden />
               <SelectValue />
             </SelectTrigger>
