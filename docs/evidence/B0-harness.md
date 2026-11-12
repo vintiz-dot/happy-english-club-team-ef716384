@@ -148,3 +148,20 @@ Checks: re-run of ov15_s500 into a second folder -> all three WAVs byte-identica
 | pyannote.audio | not installed | models gated on Hugging Face; needs a token (requirement recorded, none requested) |
 
 Smoke (`smoke_local.py --wav ...\S01_clip1.wav`, first 30 s, 8 threads; timings only): whisper-small int8 load 35.9 s (first download included), transcribe 44.9 s = RTF 1.50, 42 words, mean word confidence 0.84. ECAPA load 10.8 s, 10 x 3 s windows embedded in 9.8 s = RTF 0.33, 192-dim; embeddings not saved. Models cached under `C:\Users\Dell\hec-audio-eval\models\`.
+
+## 7. First identification run: ECAPA, oracle turns, by threshold (2026-11-12)
+
+`ident_ecapa.py --mixes work\mix\seed7_ov00_s500 --mixes ...ov05_s500 --mixes ...ov15_s500 --mixes ...ov05_none --open 3 --seed 7` (9 min 57 s on CPU), then `score.py ident --table work\ident\<set>.ident.csv --thresholds 0.2,...,0.7`.
+Setup: SpeechBrain ECAPA (VoxCeleb, adult-trained), voiceprint = mean of 3 s window embeddings over up to 60 s of ENROL speech. **23 children enrolled** (every child with >= 20 s enrol speech, minus the open set); **open set S05, S07, S15** (seeded) have held-out turns but no voiceprint, so their only correct answer is UNKNOWN. Turn boundaries are the ground truth (identification only, no diarization). Each source segment is scored once (mix reuse removed). Voiceprints: 23 files of 192 floats in `work\voiceprints\` (delete with `delete_voiceprints.py --yes`). This is a baseline for the harness, not the B2 result.
+
+| set | unique turns (enrolled / open) | EER | T=0.5: acc / false-accept / false-reject / unknown | T=0.7: acc / FA / FR / unknown | recommended "UNKNOWN below T" at 1 % FA |
+|---|---|---|---|---|---|
+| ov00_s500 | 100 (89 / 11) | 0.391 | 0.48 / 0.16 / 0.24 / 0.38 | 0.21 / 0.01 / 0.63 / 0.88 | T = 0.709: acc 0.21, unknown 0.88 - insufficient evidence (FA upper bound 5.4 %) |
+| ov05_s500 | 100 (80 / 20) | 0.360 | 0.40 / 0.18 / 0.21 / 0.46 | 0.27 / 0.02 / 0.55 / 0.89 | T = 0.715: acc 0.28, unknown 0.90 - insufficient |
+| ov15_s500 | 118 (107 / 11) | 0.263 | 0.40 / 0.18 / 0.09 / 0.46 | 0.14 / 0.02 / 0.42 / 0.92 | T = 0.738: acc 0.11, unknown 0.97 - insufficient |
+| ov05_none (no degradation) | 120 (104 / 16) | 0.353 | 0.62 / 0.14 / 0.18 / 0.25 | 0.53 / 0.00 / 0.42 / 0.60 | T = 0.696: acc 0.53, unknown 0.58 - insufficient |
+
+What this says (aggregate only):
+- The scorer works end to end on real voices: per-threshold accuracy, false-accept (wrong child shown), false-reject, unknown rate, EER, and a fail-closed threshold rule that flags too little evidence (about 300 independent turns with no false accept are needed to show 1 %; each set has 100-120).
+- An off-the-shelf adult-trained ECAPA with 20-60 s enrolment is weak on these children: EER 26-39 %. At a threshold low enough to name most children it shows a wrong child on 14-18 % of turns; at the 1 % false-accept point it names only 11-53 % and leaves the rest UNKNOWN. Room/S500 degradation costs a lot (accuracy at T=0.5: 0.62 clean vs 0.40-0.48 degraded). Under the hard rule (low confidence stays UNKNOWN), this baseline would mostly say UNKNOWN - B2 should try more enrolment audio, child-adapted or other embedding models, and turn-length effects.
+- The EER differences between sets are within noise at ~100 turns; do not rank them.
