@@ -129,6 +129,8 @@ let failInvoiceRead = false;
 let failPriorRead = false;              // only the read of the OTHER months (.neq('month', ...))
 let failNextFullUpsert = false;
 let beforeNextUpsert = null;            // runs once, between a calculation's read and its save
+let beforeNextInvoiceWrite = null;      // T4 r2: { mode: 'update' | 'insert', fn } - runs once before that write
+let beforeNextMemoryInsert = null;      // T4 r2: { table, fn } - runs once before that insert
 let memoryWrites = [];
 const JSONB = new Set(['review_flags', 'class_breakdown']);
 
@@ -144,6 +146,10 @@ function invoiceQuery() {
         if (failInvoiceRead) return { data: null, error: { message: 'synthetic invoice read failure' } };
         if (failPriorRead && where.some((c) => c.includes('<>'))) return { data: null, error: { message: 'synthetic read failure (other months)' } };
         return { data: (await db.query(`SELECT ${cols} FROM public.invoices${w}${order}${limit}`, params)).rows, error: null };
+      }
+      // T4 r2: another writer lands between this writer's read and its write.
+      if (beforeNextInvoiceWrite && beforeNextInvoiceWrite.mode === mode) {
+        const f = beforeNextInvoiceWrite.fn; beforeNextInvoiceWrite = null; await f();
       }
       const keys = Object.keys(payload);
       if (mode === 'insert') {
@@ -244,7 +250,23 @@ function memoryQuery(table) {
     lte(k, v) { rows = rows.filter((r) => r[k] <= v); return q; },
     is(k, v) { rows = rows.filter((r) => (r[k] ?? null) === v); return q; },
     like(k, pattern) { const re = like(pattern); rows = rows.filter((r) => re.test(String(r[k] ?? ''))); return q; },
-    insert(v) { memoryWrites.push({ table, op: 'insert', value: v }); keep(v); return Promise.resolve({ error: null }); },
+    insert(v) {
+      const go = () => {
+        // ledger_entries.tx_key is UNIQUE on live: a second reversal of the same leg fails whole.
+        if (table === 'ledger_entries') {
+          const keys = new Set((fixture.ledger_entries || []).map((e) => e.tx_key).filter(Boolean));
+          if ((Array.isArray(v) ? v : [v]).some((r) => r.tx_key && keys.has(r.tx_key))) {
+            return { error: { message: 'duplicate key value violates unique constraint "ledger_entries_tx_key_key"', code: '23505' } };
+          }
+        }
+        memoryWrites.push({ table, op: 'insert', value: v }); keep(v); return { error: null };
+      };
+      if (beforeNextMemoryInsert && beforeNextMemoryInsert.table === table) {
+        const f = beforeNextMemoryInsert.fn; beforeNextMemoryInsert = null;
+        return Promise.resolve(f()).then(go);
+      }
+      return Promise.resolve(go());
+    },
     upsert(v) { memoryWrites.push({ table, op: 'upsert', value: v }); return Promise.resolve({ error: null }); },
     delete() { memoryWrites.push({ table, op: 'delete' }); return q; },
     single() { return Promise.resolve(failed() ? { data: null, error: { message: `synthetic ${table} read failure` } } : { data: rows[0], error: null }); },
@@ -330,6 +352,7 @@ async function reset() {
   await db.exec('DELETE FROM public.invoices; DELETE FROM public.audit_log;');
   invoiceWrites = []; memoryWrites = []; failInvoiceRead = false; failPriorRead = false;
   failNextFullUpsert = false; beforeNextUpsert = null; failTables = new Set();
+  beforeNextInvoiceWrite = null; beforeNextMemoryInsert = null;
   globalThis.__t1Gate = { isServiceRole: false, roles: new Set(['admin']), userId: ADMIN };
   globalThis.__t1Sibling = async () => { throw new Error('Unexpected family calculation'); };
 }
@@ -1451,6 +1474,148 @@ console.log('\nT4 fault 7 - a pricing read that fails, fails the calculation');
        s.status === 400 && invoiceWrites.length === 0 && same(await bill(), before), s.body);
     ok(`  calculate-tuition-bulk 400, no results${table === "referral_bonuses" ? " (was: 200, priced without them)" : ""}`, m.status === 400 && !m.body.results, m.body);
   }
+}
+
+// =====================================================================
+// T4 round 2 (docs/evidence/T4-review.md): two writers on one bill at the
+// same moment never lose a payment (R2-m6), and the three mutations the
+// review left alive.
+// =====================================================================
+console.log('\nT4 r2 - two payments on one bill at the same moment: neither is lost');
+{
+  const writeLib = join(repo, 'src', 'lib', 'recordedPaymentWrite.ts');
+  let W = null;
+  if (existsSync(writeLib)) {
+    const f = join(out, 'recorded-payment-write.src.mjs');
+    writeFileSync(f, (await build({ entryPoints: [writeLib], bundle: true, format: 'esm', write: false })).outputFiles[0].text);
+    W = await import(pathToFileURL(f).href);
+  }
+  ok('src/lib/recordedPaymentWrite.ts exists and is registered as a mirror of _lib/recorded-payment-write.ts',
+     !!W && /\["src\/lib\/recordedPaymentWrite\.ts",\s*"supabase\/functions\/_lib\/recorded-payment-write\.ts"\]/.test(readFileSync(join(repo, 'scripts/pgtest/mirrors.test.mjs'), 'utf8')));
+  const client = globalThis.__t1Client();
+  // What a dialog saves: what the screen showed + what was typed, with the rule's label.
+  const dialogSave = (row, screenShowed, typed) => W.setRecordedPayment(client, {
+    invoiceId: row?.id ?? null, studentId: S1, month: MONTH, expected: screenShowed, next: screenShowed + typed,
+    fields: { status: T4.invoicePaidLabel(row ?? { total_amount: 400000, base_amount: 400000 }, screenShowed + typed) },
+    newRow: { base_amount: 400000, discount_amount: 0, total_amount: 400000, paid_amount: 0 } });
+
+  if (W) {
+    // Two admins, two screens loaded at 0. B saves 200,000 while A is saving 400,000.
+    await reset(); world(); await calc();
+    let b = await bill();
+    beforeNextInvoiceWrite = { mode: 'update', fn: async () => { const rb = await dialogSave(b, 0, 200000); if (!rb.ok) throw new Error('B should have saved'); } };
+    let ra = await dialogSave(b, 0, 400000);
+    b = await bill();
+    ok('dialogs (Record / QuickPay / Batch) and Recorded Payment Manager: A\'s save with the stale 0 writes NOTHING and says so; B\'s 200,000 stands (was: A\'s 400,000 replaced it)',
+       ra.ok === false && ra.conflict === true && b?.recorded_payment === 200000, { ra, b: money(b) });
+    ra = await dialogSave(b, 200000, 400000); b = await bill();
+    ok('  A reloads (200,000) and saves again: 600,000, both payments, label paid', ra.ok && b?.recorded_payment === 600000 && b?.status === 'paid', money(b));
+    // No bill yet on either screen: B's payment creates it while A is saving.
+    await reset(); world();
+    beforeNextInvoiceWrite = { mode: 'insert', fn: async () => { await dialogSave(null, 0, 200000); } };
+    ra = await dialogSave(null, 0, 400000); b = await bill();
+    ok('  no bill yet: B\'s payment creates it first - A writes nothing, B\'s 200,000 stands (was: A\'s upsert overwrote it)',
+       ra.ok === false && b?.recorded_payment === 200000, { ra, b: money(b) });
+    const src = (rel) => readFileSync(join(repo, rel), 'utf8');
+    for (const f of ['RecordPaymentDialog.tsx', 'QuickPayPanel.tsx', 'BatchPaymentDialog.tsx', 'RecordedPaymentManager.tsx']) {
+      const t = src(`src/components/admin/${f}`);
+      ok(`  ${f} writes recorded_payment only through setRecordedPayment and handles a conflict`,
+         /from "@\/lib\/recordedPaymentWrite"/.test(t) && /setRecordedPayment\(/.test(t) && /conflict/.test(t)
+           && !/\.(update|upsert)\(\s*\[?\s*\{[^}]*recorded_payment/.test(t));
+    }
+  }
+
+  // smart-family-payment: a second Smart Family Payment lands between this one's read and its write.
+  await withHistory();
+  beforeNextInvoiceWrite = { mode: 'update', fn: async () => { await smartPay(100000); } };
+  let r = await smartPay(400000);
+  let b = await bill();
+  console.log(`    two smart family payments at once => ${r.status} ; bill ${JSON.stringify(money(b))}`);
+  ok('smart-family-payment, two at once (100,000 and 400,000): the bill holds 500,000 - neither lost (was: one replaced the other)',
+     r.status === 200 && b?.recorded_payment === 500000 && b?.status === 'paid' && b?.carry_out_credit === 100000, { r: r.body, b: money(b) });
+
+  // family-payment: the same, two Family Payments.
+  await withHistory();
+  const manual = (amount) => call('family-payment', { month: MONTH, familyId: FAMILY, selectedStudentIds: [S1], amount, method: 'Cash',
+    occurredAt: '2026-10-20T10:00:00.000Z', allocationMode: 'manual', manualAllocations: [{ studentId: S1, amount }] });
+  beforeNextInvoiceWrite = { mode: 'update', fn: async () => { await manual(100000); } };
+  r = await manual(250000);
+  b = await bill();
+  ok('family-payment, two at once (100,000 and 250,000): 350,000 recorded, partial (was: one lost)',
+     r.status === 200 && b?.recorded_payment === 350000 && b?.status === 'partial', { r: r.body, b: money(b) });
+
+  // delete-payment: a payment lands on the bill while another one is being deleted.
+  await withHistory();
+  await smartPay(400000);
+  const [doomed] = familyPayments();
+  beforeNextInvoiceWrite = { mode: 'update', fn: async () => { await db.query(
+    'UPDATE public.invoices SET recorded_payment = recorded_payment + 100000 WHERE student_id = $1 AND month = $2', [S1, MONTH]); } };
+  r = await delPay(doomed?.id);
+  b = await bill();
+  ok('delete-payment while a 100,000 payment lands: 400,000 comes off, the 100,000 stays, partial (was: the 100,000 was overwritten)',
+     r.status === 200 && b?.recorded_payment === 100000 && b?.status === 'partial', { r: r.body, b: money(b) });
+
+  // settle-bill writes no recorded_payment: a payment landing mid-settlement survives.
+  await reset(); world(); await calc();
+  beforeNextMemoryInsert = { table: 'settlements', fn: async () => { await db.query(
+    'UPDATE public.invoices SET recorded_payment = recorded_payment + 100000 WHERE student_id = $1 AND month = $2', [S1, MONTH]); } };
+  r = await settleAs('discount', 400000);
+  b = await bill();
+  ok('settle-bill while a 100,000 payment lands: the payment stays on the bill (100,000 credit after the 400,000 write-off), paid',
+     r.status === 200 && b?.recorded_payment === 100000 && b?.carry_out_credit === 100000 && b?.status === 'paid', { r: r.body, b: money(b) });
+
+  const fnSrc = (f) => readFileSync(join(repo, 'supabase', 'functions', f, 'index.ts'), 'utf8');
+  ok('  smart-family-payment, family-payment, delete-payment write recorded_payment only through addToRecordedPayment / setRecordedPayment',
+     ['smart-family-payment', 'family-payment', 'delete-payment'].every((f) => /recorded-payment-write\.ts/.test(fnSrc(f))
+       && !/\.update\(\{[^}]*recorded_payment:/.test(fnSrc(f))));
+}
+
+console.log('\nT4 r2 - the mutations the review left alive');
+{
+  // d2: a payment with a leftover (unapplied cash) deleted - only the allocation comes off the bill.
+  await withHistory();
+  await smartPay(500000);                              // 400,000 on October, 100,000 left over as unapplied cash
+  const [p] = familyPayments();
+  const legs = (fixture.ledger_entries || []).filter((e) => String(e.tx_key || '').includes(p?.id));
+  ok('(setup: a 500,000 Smart Family Payment - 400,000 on the bill, a smart-family-credit leftover of 100,000)',
+     (await bill())?.recorded_payment === 400000 && legs.some((e) => e.tx_key.startsWith(`smart-family-credit-${p?.id}`)), legs.map((e) => e.tx_key));
+  let r = await delPay(p?.id); let b = await bill();
+  const rev = reversalOf(p?.id);
+  ok('deleting a payment WITH a leftover: 400,000 off the bill (the leftover was never on it), all four legs reversed, balanced',
+     r.status === 200 && b?.recorded_payment === 0 && rev.length === 4 && balances(rev), { r: r.body, b: money(b), rev: rev.length });
+
+  // d4: a retry when the bill still holds enough - only "already reversed" can stop it.
+  await withHistory();
+  await smartPay(400000);
+  const [q] = familyPayments();
+  r = await delPay(q?.id);
+  await editRecorded(MONTH, 400000);                   // another 400,000 recorded since
+  memoryWrites = [];
+  r = await delPay(q?.id);
+  ok('asked again after a success while the bill holds 400,000 of OTHER money: refused as already reversed, nothing written',
+     r.status === 409 && /already been reversed/.test(r.body.error) && (await bill())?.recorded_payment === 400000
+       && !memoryWrites.some((w) => w.table === 'ledger_entries' || w.table === 'payments'), { r: r.body, b: money(await bill()) });
+
+  // m2: allocation transactions that give no bill amount - refused, not reversed and deleted silently.
+  await withHistory();
+  await editRecorded(MONTH, 400000);
+  fixture.payments = [{ id: PAY_ID, student_id: S1, parent_payment_id: null, family_id: null, amount: 400000 }];
+  fixture.ledger_entries = [
+    { id: 'le-1', tx_id: 'tx-nm', tx_key: `payment-${PAY_ID}`, account_id: 'acc-CASH', debit: 400000, credit: 0, month: null },
+    { id: 'le-2', tx_id: 'tx-nm', tx_key: null, account_id: 'acc-AR', debit: 0, credit: 400000, month: null },
+  ];
+  memoryWrites = [];
+  r = await delPay(PAY_ID);
+  ok('a payment whose allocation legs name no month (no bill to take it off): refused, nothing reversed or deleted',
+     r.status === 409 && !memoryWrites.some((w) => w.table === 'ledger_entries' || w.table === 'payments'), r.body);
+
+  // h4 is gone by construction: the write-off filter is the ledger key, applied once (settledWriteOff);
+  // the two "old settle-bill" cases above fail if it is dropped.
+  ok('the write-off filter is applied in one place: neither calculator filters settlements by key or date in its query',
+     ['calculate-tuition', 'calculate-tuition-bulk'].every((f) => {
+       const t = readFileSync(join(repo, 'supabase', 'functions', f, 'index.ts'), 'utf8');
+       return !/settlement-writeoff/.test(t) && !/gte\(["']created_at/.test(t) && /settledWriteOff\(/.test(t);
+     }));
 }
 
 console.log('\nT4 - scripts/CHECK-payment-paths.sql counts what each fault touches, aggregates only, and writes nothing');
