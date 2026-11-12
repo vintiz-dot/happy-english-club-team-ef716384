@@ -6,7 +6,7 @@ Where I am / next step: DONE. Reviewer wrote this file only; nothing applied, de
 
 Reviewed at dedd193: `supabase/migrations/20261112120000_class_recordings_scope.sql` (sha256 as in the evidence file, unchanged by me).
 
-Counts: 0 BLOCKER, 1 MAJOR, 5 MINOR.
+Counts: 0 BLOCKER, 1 MAJOR, 6 MINOR.
 
 ## Apply recommendation
 The storage policies are correct and close the hole; every probe below agrees. One change should be folded in before the paste because it is one clause and nothing is applied yet: R1 (the new CHECK looks at the first path segment only, and `..` walks out of it). With R1 folded in, the author's suite must be re-run and the fingerprint re-taken.
@@ -51,6 +51,8 @@ The lasting fix belongs in the function as well (refuse a path that is not `<tr.
 - M4 - cost. The helper cannot be inlined (SECURITY DEFINER) and runs `has_role` + the five EXISTS of `is_teacher_of_class` once per visible-bucket row. In pglite: 6005 rows of this bucket listed by a teacher in 46 s (about 7 ms a row; pglite is slow, real Postgres will be a small fraction). Rows of other buckets are not charged: the plan filters `bucket_id` by index first (`Recheck Cond: (bucket_id = 'class-recordings')`, then `Filter: (class_recordings_staff_can(name) OR has_role(...))`). Live has 11 objects and the page never lists. Nothing to do now; if the bucket reaches thousands and something lists it, evaluate per class instead of per row.
 - M5 - what the teacher sees when refused. The class picker offers a teacher every class they EVER had a session in (`TeacherTranscripts.tsx:66-69`, no date filter) and offers a TA every active class RLS shows them (:76-77). Picking one they are not currently on used to fail at the row insert, leaving an orphan file; it now fails at the upload with storage's "new row violates row-level security policy" in the toast (:369). Same people refused, no orphan, less friendly wording. A follow-up could filter the picker.
 
+- M6 - three suite gaps (`scripts/pgtest/class-recordings-scope.test.mjs:153-160`), from my mutants 2, 6 and 9. Add: as teacher B, `DELETE FROM storage.objects` with no WHERE must leave class A's objects (count them as superuser inside the same transaction); as teacher B, a column-free `UPDATE storage.objects SET metadata = '{}'` must touch 0 of class A's rows; a class-A transcript row with the class id in upper case is accepted. Tests only; not needed before apply.
+
 Noted, not this migration's: `is_teacher_of_class(any user, any class)` is executable by every signed-in user (`20260719014455:3`), a wider oracle than the new helper, which only ever answers about the caller. F2 (no caller check in `transcribe-lesson-audio/index.ts:407-458`) stands as reported; with R1 open it does not add a leak (the function returns nothing and writes into the row it was pointed at).
 
 ## Who can do what after the fix (probe output; S select, I insert under that class, U update, D delete)
@@ -85,7 +87,38 @@ Renames: A's teacher moving A's file to B's folder REFUSED (WITH CHECK); B's tea
 7. Live apply. One transaction: a paste with an error forced just before COMMIT left the old policy exactly in place and no helper (`policies unchanged: true | helper exists: 0`). Other sessions see the old policy until COMMIT and the five new ones after; there is no moment with none and none with a wider one. Locks: ACCESS EXCLUSIVE on `storage.objects` (DROP/CREATE POLICY) and on `public.class_transcripts` (DROP/ADD CONSTRAINT; NOT VALID, so no table scan), both for milliseconds, under `lock_timeout = 5s`: if an upload is mid-transaction the paste fails whole and can be repeated. P1-P6 are SELECTs only.
 
 ## Mutants (mine; `.probe/` copy of the migration, the author's suite)
-MUTANT_TABLE
+Baseline (unmodified file): 89 passed, 0 failed.
+
+| # | mutant | result |
+|---|---|---|
+| 1 | UPDATE policy's WITH CHECK left out | 89/0 - EQUIVALENT (Postgres then uses USING as the check); not a gap |
+| 2 | DELETE policy: any teacher, whole bucket | 89/0 - SURVIVED |
+| 3 | SELECT policy: any teacher, whole bucket | CAUGHT (22 fail) |
+| 4 | admin policy without `bucket_id` (admins reach every bucket through it) | CAUGHT (scoped-by-bucket assertion; the recorder's preflight then refuses to install) |
+| 5 | staff SELECT `TO public` | CAUGHT (1 fail, roles assertion) |
+| 6 | UPDATE policy's USING: any teacher, whole bucket (WITH CHECK kept) | 89/0 - SURVIVED |
+| 7 | constraint added without NOT VALID | CAUGHT (the paste fails on the planted old row) |
+| 8 | REVOKE from PUBLIC, anon removed | CAUGHT (1 fail) |
+| 9 | constraint without `lower()` | 89/0 - SURVIVED |
+
+Caught 5, equivalent 1, survived 3. See M6: 2 and 6 survive for one reason - the suite's `can()` deletes and updates `WHERE id = $1`, and a WHERE that reads a column makes Postgres apply the SELECT policy to the row first, so a weak DELETE or UPDATE-USING hides behind the correct SELECT. The real file is right on both (my column-free DELETE as B's teacher removed only B's own objects), and the storage API always addresses objects by name, so in production the SELECT policy would mask such a weakness too; but nothing in the suite would notice a later edit that weakens them.
+
+## R1 fix validated
+The migration with only the CHECK body replaced as in R1: the author's suite 89 passed, 0 failed (nothing it asserts depends on the looser check). The proposed check on its own, class A's row:
+```
+null                      accepted
+"<A>/f.mp3"               accepted
+"<A-UPPER>/f.mp3"         accepted
+"<A>/a b (1).Voice Memo"  accepted
+"<A>/.."                  accepted   fetch asks for: /          (bucket root, not an object)
+"<A>/../<B>/f.mp3"        refused    fetch asks for: /<B>/f.mp3
+"<A>/%2e%2e/<B>/f.mp3"    refused    fetch asks for: /<B>/f.mp3
+"<A>/..\<B>\f.mp3"        refused    fetch asks for: /<B>/f.mp3
+"<A>/sub/f.mp3"           refused
+"<A>"  "<A>/"  ""         refused
+"<B>/f.mp3"  "/<A>/f.mp3" refused
+```
+When scripting the edit, note the body contains `$'`: JavaScript's `String.replace` expands that in a replacement string (it cost me one false failure). Edit the file by hand or pass a function.
 
 ## Probes to add (read-only)
 ```sql
