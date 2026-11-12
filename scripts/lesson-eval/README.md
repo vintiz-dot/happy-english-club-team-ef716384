@@ -62,3 +62,25 @@ PY scripts\lesson-eval\score.py preserve --ref annotated.tsv --hyp sysA=work\res
 - Learner-error slice: verbatim reference with `{spoken=>correct}` marks, e.g. `he {go=>goes} home`, `I like {=>the} dog`.
 
 The normaliser, DER and threshold rules are documented in `score.py --help`.
+
+## Speaker identification (B2, `docs/evidence/B2-identification.md`)
+
+All outputs stay under `work\`; embeddings and lesson-cluster voiceprints under `work\voiceprints\b2\`
+(`delete_voiceprints.py --yes` removes them); unit audio `work\b2\units.npz` and teacher samples
+`work\teacher-check\` go with `delete_all_derived.py --yes`. Ungated models only; no token.
+
+```powershell
+PY scripts\lesson-eval\fetch_models.py                 # sherpa-onnx embedding + segmentation ONNX into models\sherpa
+PY scripts\lesson-eval\b2_units.py --seed 11           # time re-split, windows inside utterances, 1/2/4/8 s x clean/s500/overlap
+PY scripts\lesson-eval\b2_embed.py --model ecapa --threads 2       # also wes_campp, 3ds_campp, titanet_l (wes_r34lm, 3ds_eres2v2)
+PY scripts\lesson-eval\b2_eval.py --models ecapa --json work\b2\results_ecapa.json   # closed + leave-one-out open set, thresholds
+PY scripts\lesson-eval\b2_report.py --diag-model ecapa > work\b2\report.md          # Markdown tables, codes only
+PY scripts\lesson-eval\b2_lessons.py tune --engine own --diar-model 3ds_campp --thresholds=-0.1,0.0,0.1,0.2,0.3
+PY scripts\lesson-eval\b2_lessons.py run --lessons L1,L2,L3 --minutes 20 --diar-model 3ds_campp --diar-threshold 0.1 `
+   --id-model ecapa --id-config vad-all-k3-asnorm --threshold 4.7264
+PY -m pytest scripts\lesson-eval\tests -q -p no:cacheprovider
+```
+
+`b2_lessons.py run` writes `work\teacher-check\check_sheet.csv` (cluster, suggestion or UNKNOWN, score, blank
+teacher answer) and one 10-20 s WAV per cluster, by code only. Every suggestion is a guess for a teacher to
+confirm; nothing is linked.
