@@ -6,6 +6,7 @@ import { requireRole, callerOwnsStudent } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts } from "../_lib/enrollment-discounts.ts";
+import { invoiceLabelFields } from "../_lib/invoice-status.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -138,7 +139,9 @@ Deno.serve(async (req) => {
         .order("month", { ascending: true }),
       supabase
         .from("invoices")
-        .select("recorded_payment, tuition_frozen, base_amount, discount_amount, total_amount")
+        .select(
+          "recorded_payment, tuition_frozen, base_amount, discount_amount, total_amount, status, confirmation_status, review_flags, confirmed_at, confirmed_by",
+        )
         .eq("student_id", studentId)
         .eq("month", month)
         .maybeSingle(),
@@ -148,6 +151,11 @@ Deno.serve(async (req) => {
     if (studentError) throw studentError;
     const { data: enrollments, error: enrollErr } = enrollmentsRes;
     if (enrollErr) throw enrollErr;
+    // The month's own bill carries this month's payment and the labels an
+    // admin or a payment put on it. If it cannot be read, stop: carrying on
+    // as if there were no bill would save recorded_payment 0 over a payment
+    // and reset a confirmed or paid bill.
+    if (currentInvoiceRes.error) throw new Error("Unable to read the current tuition invoice");
     const discountAssignments = discountAssignmentsRes.data;
     const referralBonuses = referralBonusesRes.data;
 
@@ -572,8 +580,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Determine confirmation status - simple logic
-    const confirmationStatus = reviewFlags.length === 0 ? "auto_approved" : "needs_review";
+    // Which labels this save may write. A recalculation must not un-confirm
+    // or un-pay a bill: see _lib/invoice-status.ts. No figure is decided here.
+    const savedAt = new Date().toISOString();
+    const labelFields = invoiceLabelFields(
+      currentInvoiceRes.data ?? null,
+      { base_amount: baseAmount, discount_amount: totalDiscount, total_amount: totalAmount },
+      reviewFlags,
+      savedAt,
+    );
 
     const invoicePayloadExtended: any = {
       student_id: studentId,
@@ -587,11 +602,9 @@ Deno.serve(async (req) => {
       carry_in_debt: carryInDebt,
       carry_out_credit: carryOutCredit,
       carry_out_debt: carryOutDebt,
-      confirmation_status: confirmationStatus,
-      review_flags: reviewFlags,
       class_breakdown: classBreakdown, // Per-class tuition breakdown
-      status: "issued",
-      updated_at: new Date().toISOString(),
+      ...labelFields, // review_flags always; status / confirmation_status only when this save may set them
+      updated_at: savedAt,
     };
 
     // Never save a bill while the family discount is still being decided:
@@ -623,8 +636,8 @@ Deno.serve(async (req) => {
           base_amount: baseAmount,
           discount_amount: totalDiscount,
           total_amount: totalAmount,
-          status: "issued",
-          updated_at: new Date().toISOString(),
+          ...(labelFields.status ? { status: labelFields.status } : {}),
+          updated_at: savedAt,
         },
         { onConflict: "student_id,month" },
       );
