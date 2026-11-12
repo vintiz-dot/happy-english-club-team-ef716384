@@ -4,6 +4,7 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useOverlayContainer } from "@/hooks/useFullscreenContainer";
+import { useIvory } from "@/hooks/useIvory";
 
 const Select = SelectPrimitive.Root;
 
@@ -14,21 +15,27 @@ const SelectValue = SelectPrimitive.Value;
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => {
+  const ivory = useIvory();
+  return (
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      ivory
+        ? // Ivory field recipe; the chosen value wraps instead of being cut (it is often a name).
+          "flex min-h-hec-target w-full items-center justify-between gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 py-2 text-left text-hec-body text-hec-ink data-[placeholder]:text-hec-ink-faint disabled:cursor-not-allowed disabled:bg-hec-sunken disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring [&>span]:min-w-0 [&>span]:break-words"
+        : "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
       className,
     )}
     {...props}
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 opacity-50" />
+      <ChevronDown className={ivory ? "h-4 w-4 shrink-0 text-hec-ink-soft" : "h-4 w-4 opacity-50"} />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
-));
+  );
+});
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 
 const SelectScrollUpButton = React.forwardRef<
@@ -70,12 +77,16 @@ const SelectContent = React.forwardRef<
   // subscribed, not read once: a value read when this wrapper last rendered went stale on fullscreen
   const [fullscreen, contentRef] = useOverlayContainer(ref);
   const portalContainer = container ?? fullscreen;
+  const ivory = useIvory();
   return (
     <SelectPrimitive.Portal container={portalContainer}>
       <SelectPrimitive.Content
         ref={contentRef}
         className={cn(
-          "glass relative z-[110] max-h-96 min-w-[8rem] overflow-hidden rounded-xl text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+          ivory
+            ? "relative z-[110] max-h-96 min-w-[8rem] overflow-hidden rounded-hec-md border border-hec-line bg-hec-raised text-hec-ink shadow-hec-2"
+            : "glass relative z-[110] max-h-96 min-w-[8rem] overflow-hidden rounded-xl text-popover-foreground shadow-lg",
+          "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
           position === "popper" &&
             "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           className,
@@ -111,11 +122,15 @@ SelectLabel.displayName = SelectPrimitive.Label.displayName;
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => {
+  const ivory = useIvory();
+  return (
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-warmGray focus:text-royalGreen dark:focus:bg-warmGray-dark dark:focus:text-royalGreen-light",
+      ivory
+        ? "relative flex min-h-hec-target w-full cursor-default select-none items-center rounded-hec-sm py-2 pl-8 pr-3 text-hec-body text-hec-ink outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-hec-sunken data-[state=checked]:font-medium"
+        : "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-warmGray focus:text-royalGreen dark:focus:bg-warmGray-dark dark:focus:text-royalGreen-light",
       className,
     )}
     {...props}
@@ -128,7 +143,8 @@ const SelectItem = React.forwardRef<
 
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
-));
+  );
+});
 SelectItem.displayName = SelectPrimitive.Item.displayName;
 
 const SelectSeparator = React.forwardRef<

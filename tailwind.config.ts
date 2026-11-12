@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 export default {
   darkMode: ["class"],
@@ -210,28 +211,42 @@ export default {
             height: "0",
           },
         },
+        // `scale` (the individual property), not `transform`: it composes with
+        // the element's own transform, so a dialog centred with
+        // translate(-50%,-50%) stays centred while it opens. With `transform`
+        // here the keyframes replaced the centring for 0.4 s and every dialog
+        // jumped on open (A4.6).
         "spring-in": {
           "0%": {
-            transform: "scale(0.95)",
+            scale: "0.95",
             opacity: "0",
           },
           "50%": {
-            transform: "scale(1.02)",
+            scale: "1.02",
           },
           "100%": {
-            transform: "scale(1)",
+            scale: "1",
             opacity: "1",
           },
         },
         "spring-out": {
           "0%": {
-            transform: "scale(1)",
+            scale: "1",
             opacity: "1",
           },
           "100%": {
-            transform: "scale(0.95)",
+            scale: "0.95",
             opacity: "0",
           },
+        },
+        // Ivory entrance (DESIGN_SYSTEM s.9): opacity and an 8 px rise, no overshoot.
+        "hec-in": {
+          "0%": { opacity: "0", translate: "0 8px" },
+          "100%": { opacity: "1", translate: "0 0" },
+        },
+        "hec-out": {
+          "0%": { opacity: "1", translate: "0 0" },
+          "100%": { opacity: "0", translate: "0 8px" },
         },
         "bounce-subtle": {
           "0%, 100%": {
@@ -323,6 +338,8 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "spring-in": "spring-in 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
         "spring-out": "spring-out 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+        "hec-in": "hec-in var(--hec-dur-3, 420ms) var(--hec-ease, ease-out) both",
+        "hec-out": "hec-out var(--hec-dur-2, 240ms) var(--hec-ease, ease-out) both",
         "bounce-subtle": "bounce-subtle 0.6s ease-in-out",
         "float-gentle": "float-gentle 3s ease-in-out infinite",
         "shimmer": "shimmer 2s linear infinite",
@@ -334,5 +351,11 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    // `young:` - the Grades 1-3 scale (DESIGN_SYSTEM s.4): data-hec-scale="young" on the element or an ancestor.
+    plugin(({ addVariant }) => {
+      addVariant("young", ['&[data-hec-scale="young"]', '[data-hec-scale="young"] &']);
+    }),
+  ],
 } satisfies Config;

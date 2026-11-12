@@ -6,9 +6,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Home, BookOpen, CalendarDays, MoreHorizontal, NotebookPen, DollarSign, Trophy, Zap, FileText, FolderOpen, Sparkles, FileImage, BookOpenCheck, Scale, Video, Languages, ChevronLeft, ChevronRight } from "lucide-react";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import { useSetsForStudent } from "@/hooks/useLanguageSupport";
+import { useIvory } from "@/hooks/useIvory";
 
 const allNavItems = [
-  { id: "dashboard", label: "Dashboard", emoji: "🏠", path: "/student/dashboard", icon: Home, primary: true },
+  // "Home" everywhere: one short word fits five tabs across at 375 (DESIGN_SYSTEM s.15).
+  { id: "dashboard", label: "Home", emoji: "🏠", path: "/student/dashboard", icon: Home, primary: true },
   { id: "homework", label: "Homework", emoji: "📝", path: "/student/assignments", icon: BookOpen, primary: true },
   { id: "lessons", label: "Lessons", emoji: "📚", path: "/student/lessons", icon: BookOpenCheck, primary: true },
   { id: "record", label: "Record", emoji: "🎬", path: "/student/record", icon: Video, primary: true },
@@ -84,11 +86,9 @@ export function StudentNavBar() {
   const moreItems = navItems.filter(i => !i.primary);
   const isMoreActive = moreItems.some(i => isActive(i.path, i.id));
 
-  // "Ivory" design system (A4.2): only the student dashboard carries it at the
-  // checkpoint, so the bar takes the new look on that route and keeps its old
-  // look on every other student screen.
-  const ivory =
-    location.pathname === "/student/dashboard" || location.pathname === "/student" || location.pathname === "/student/";
+  // "Ivory" design system: the bar takes the new look on every route listed in
+  // src/lib/ivoryScope.ts and keeps its old look elsewhere (A4.6).
+  const ivory = useIvory();
   const IVORY_FOCUS =
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
@@ -157,7 +157,7 @@ export function StudentNavBar() {
                   {active && <span aria-hidden className="absolute left-1/2 top-0 h-0.5 w-6 -translate-x-1/2 rounded-full bg-hec-brass" />}
                   <Icon className="h-5 w-5" aria-hidden />
                   {/* One short word per tab (DESIGN_SYSTEM section 15): "Dashboard" does not fit five across at 375. */}
-                  <span className="whitespace-nowrap">{item.id === "dashboard" ? "Home" : item.label}</span>
+                  <span className="whitespace-nowrap">{item.label}</span>
                 </button>
               );
             })}

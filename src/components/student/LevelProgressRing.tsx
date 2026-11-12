@@ -94,7 +94,7 @@ export function LevelProgressRing({
         <span className="inline-flex items-center gap-1 rounded-full bg-hec-action px-3 py-0.5 text-hec-caption font-semibold tabular-nums text-hec-on-action">
           LV {level}
         </span>
-        <span className="text-center text-hec-small text-hec-ink-soft">{getLevelTitle(level)}</span>
+        {/* The level's title is shown once, in the hero's badge beside the name (A4.6). */}
       </div>
     );
   }
