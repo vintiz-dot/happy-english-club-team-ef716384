@@ -600,6 +600,64 @@ console.log('\nWhat the cancellation guard\'s "settled" test sees after a recalc
   ok('settled by discount (status paid, no recorded payment), recalculated: still settled by status', s?.by_status === true, s);
 }
 
+// ================================================== the owner's check SQL
+console.log('\nscripts/CHECK-invoice-status-resets.sql finds bills the old behaviour reset, and writes nothing');
+{
+  const sql = readFileSync(join(repo, 'scripts', 'CHECK-invoice-status-resets.sql'), 'utf8');
+  const code = sql.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n').replace(/'[^']*'/g, "''");
+  ok('the file is SELECT statements only',
+     !/\b(insert|update|delete|alter|drop|create|truncate|grant|revoke|call|do)\b/i.test(code)
+       && code.split(';').filter((s) => s.trim()).every((s) => /^\s*select\b/i.test(s)));
+  await reset(); world();
+  await calc();
+  const b = await bill();
+  await confirm([b.id]);
+  await pay(b.id, 400000, 'paid');
+  // What calculate-tuition did before T1, written the way it wrote it
+  // (service role, so no actor): labels reset, figures untouched...
+  await db.query(`UPDATE public.invoices SET confirmation_status = 'auto_approved', status = 'issued' WHERE id = $1`, [b.id]);
+  // ...and what it saved when the read of the bill failed.
+  await db.query(`UPDATE public.invoices SET recorded_payment = 0 WHERE id = $1`, [b.id]);
+  await db.query(`UPDATE public.invoices SET recorded_payment = 400000 WHERE id = $1`, [b.id]);
+  const counts = async () => (await db.query(
+    `SELECT (SELECT count(*) FROM public.invoices)::int i, (SELECT count(*) FROM public.audit_log)::int a,
+            (SELECT md5(string_agg(t::text, '|' ORDER BY id)) FROM public.invoices t) h`)).rows[0];
+  const before = await counts();
+  let res = null, err = null;
+  try { res = await db.exec(sql); } catch (e) { err = e.message; }
+  ok('all eleven statements run', err === null && res?.length === 11, err ?? res?.length);
+  const r = (i) => res?.[i]?.rows ?? [];
+  ok('0: the audit columns and the invoices audit trigger are reported present',
+     Number(r(0)[0]?.audit_columns_present_of_2) === 2 && Number(r(0)[0]?.invoices_audit_trigger) === 1, r(0));
+  ok('1: one bill confirmed then reset, one with a payment but "issued"',
+     Number(r(1)[0]?.confirmed_then_reset) === 1 && Number(r(1)[0]?.payment_but_issued) === 1 && Number(r(1)[0]?.both) === 1, r(1));
+  ok('1b: the same per month', r(2)[0]?.month === MONTH && Number(r(2)[0]?.confirmed_then_reset) === 1, r(2));
+  ok('2 and 3: that bill, by id and month', r(3)[0]?.invoice_id === b.id && r(3)[0]?.month === MONTH && r(4)[0]?.invoice_id === b.id
+     && r(4)[0]?.would_be_by_month_rule === 'paid', { two: r(3), three: r(4) });
+  ok('4: the audit trail shows the reset, with no figure change',
+     Number(r(5)[0]?.resets) === 1 && Number(r(5)[0]?.resets_with_no_figure_change) === 1
+       && r(6)[0]?.invoice_id === b.id && r(6)[0]?.was === 'confirmed' && r(6)[0]?.figures_changed_in_that_save === false, { c: r(5), rows: r(6) });
+  ok('5: and paid -> issued by the service role', Number(r(7)[0]?.resets) === 1 && r(8)[0]?.was === 'paid', { c: r(7), rows: r(8) });
+  ok('6: and the payment that was lowered to 0 (400,000)',
+     Number(r(9)[0]?.times) === 1 && Number(r(9)[0]?.total_lowered_vnd) === 400000 && Number(r(10)[0]?.recorded_before) === 400000, { c: r(9), rows: r(10) });
+  ok('no row selected carries a name', res.every((x) => x.fields.every((f) => !/name/i.test(f.name))));
+  ok('running it changed nothing (invoices and audit_log identical)', same(await counts(), before));
+
+  // A healthy database: after the fix, the same file reports nothing.
+  await reset(); world();
+  await calc(); const h = await bill();
+  await confirm([h.id]); await pay(h.id, 400000, 'paid');
+  await calc(); mark(0, 'Excused'); await calc(); await confirm([h.id]); await calc();
+  res = await db.exec(sql);
+  ok('after the fix a confirmed, paid, recalculated and re-confirmed bill appears in none of them',
+     Number(res[1].rows[0].confirmed_then_reset) === 0 && Number(res[1].rows[0].payment_but_issued) === 0
+       && res[3].rows.length === 0 && res[4].rows.length === 0 && Number(res[7].rows[0].resets) === 0 && Number(res[9].rows[0].times) === 0,
+     { one: res[1].rows, four: res[5].rows, six: res[9].rows });
+  ok('  its honest move to needs_review (figures changed) is the only thing query 4 lists',
+     Number(res[5].rows[0].resets) === 1 && res[6].rows[0]?.figures_changed_in_that_save === true
+       && res[6].rows[0]?.confirmation_today === 'confirmed', res[6].rows);
+}
+
 // ============================================ the figures have not moved
 console.log('\nFigures: byte-identical to the function before T1');
 {
