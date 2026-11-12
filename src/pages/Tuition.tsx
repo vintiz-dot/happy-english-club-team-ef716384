@@ -101,7 +101,8 @@ export default function Tuition() {
 
   return (
     <Layout title="Tuition">
-      <div className="space-y-6">
+      {/* Same reading width as Homework (max-w-5xl), so a 1280 screen does not stretch the figures apart. */}
+      <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <MonthPicker value={month} onChange={setMonth} maxMonth={currentMonth} />
           {tuitionData && studentId && <InvoiceDownloadButton studentId={studentId} month={month} />}
