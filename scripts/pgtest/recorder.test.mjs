@@ -1016,6 +1016,197 @@ const finish = async (id, n, uid = T1) => {
     ["abandoned", 360_000, false, false]);
 }
 
+console.log("=== the BYTES must reach storage live too (C1 critic 3, M1) ===");
+{
+  // The critic's probe N2a: a 95-minute lesson, every chunk registered as it
+  // ends (none late), not one byte uploaded; Stop; three days later the
+  // "audio" is uploaded to the registered paths and confirmed; complete.
+  const s = await sessAt(C1, t1, -1, 94);
+  const r = await arm(T1, s, { chunk_ms: 60000 });
+  await setStatus(T1, r.id, "recording");
+  await addTrack(T1, r.id);
+  const lateFlags = [];
+  for (let i = 0; i < 50; i++) {
+    await travel(r.id, 1, true);
+    lateFlags.push((await reg(T1, r.id, "teacher", i, 120_000, SHA("a"), i * 60_000, (i + 1) * 60_000)).late);
+  }
+  eq("the critic's probe: 50 minutes registered on time, none late, not a byte uploaded", lateFlags.some((x) => x), false);
+  eq("a Stop at 50 minutes, nothing uploaded yet", await setStatus(T1, r.id, "uploading"), null);
+  await travel(r.id, 3 * 24 * 60, true);
+  let errs = 0;
+  for (const k of await q(`SELECT id, storage_path, byte_size FROM public.class_recording_chunks WHERE recording_id=$1 ORDER BY seq`, [r.id])) {
+    if (await put(T1, k.storage_path, Number(k.byte_size))) errs++;
+    if (await confirm(T1, k.id, SHA("a"))) errs++;
+  }
+  eq("the bytes uploaded and confirmed three days later are stored", errs, 0);
+  eq("and it completes", await finish(r.id, 50), null);
+  eq("but the critic's probe is closed: registered on time, uploaded days later is NO evidence, and all of it is late audio (M1)",
+    await evidenceOf(r.id).then((e) => [e.was_completed, e.recording_ran_evidence, e.v, e.l, e.th]), [true, false, 0, 3_000_000, 2_850_000]);
+}
+{
+  // The bound itself: confirmed 9 minutes after the chunk's end is live, 11 is late.
+  const s = await sessAt(C1, t1, -1, 89);
+  const r = await arm(T1, s, { chunk_ms: 60000 });
+  await setStatus(T1, r.id, "recording");
+  await addTrack(T1, r.id);
+  await travel(r.id, 1, true);
+  const a = await reg(T1, r.id, "teacher", 0, 120_000, SHA("a"), 0, 60_000);
+  await travel(r.id, 1, true);
+  const b = await reg(T1, r.id, "teacher", 1, 120_000, SHA("a"), 60_000, 120_000);
+  eq("two chunks registered as they end", [a.late, b.late], [false, false]);
+  await travel(r.id, 8, true);
+  await setStatus(T1, r.id, "uploading");
+  await put(T1, a.storage_path, 120_000); await confirm(T1, a.chunk_id, SHA("a"));
+  await travel(r.id, 3, true);
+  await put(T1, b.storage_path, 120_000); await confirm(T1, b.chunk_id, SHA("a"));
+  eq("bytes confirmed 9 minutes after the chunk's end count as live; 11 minutes after, late (M1)",
+    await evidenceOf(r.id).then((e) => [e.v, e.l]), [60_000, 60_000]);
+  // The registration bound still stands on its own (a state the API cannot
+  // reach: registered late, confirmed early), set by hand.
+  await raw(`UPDATE public.class_recording_chunks SET registered_at = confirmed_at + interval '2 minutes' WHERE id=$1`, [a.chunk_id]);
+  eq("a chunk the server registered 11 minutes after its end is late, whenever its bytes came (N2 bound, by hand)",
+    await evidenceOf(r.id).then((e) => [e.v, e.l]), [0, 120_000]);
+  await setStatus(T1, r.id, "abandoned", `, abandon_reason = 'test'`);
+}
+
+console.log("=== only audio INSIDE the lesson counts toward half of it (C1 critic 3, M2) ===");
+// A lesson of `lessonMin` minutes starting `preMin` minutes after the server's
+// Start (set exactly, so the boundaries are exact), with one-minute chunks at
+// the given minutes of the recording's timeline, each registered and confirmed
+// within 5 minutes of its end (live). Stopped at `stopMin`.
+const lessonEvidence = (id) => one(
+  `SELECT was_completed, recording_ran_evidence, verified_audio_ms::int v, verified_lesson_ms::int vl,
+          evidence_threshold_ms::int th, lesson_overlap_ms::int lo
+     FROM public.recorder_session_evidence WHERE recording_id=$1`, [id]);
+const windowRec = async (preMin, lessonMin, minutes, stopMin, beforeFinish) => {
+  const s = await sessAt(C1, t1, -1, lessonMin - 1);
+  const r = await arm(T1, s, { chunk_ms: 60000 });
+  await setStatus(T1, r.id, "recording");
+  await addTrack(T1, r.id);
+  await raw(`UPDATE public.class_recordings
+                SET scheduled_start = started_at + make_interval(secs => $2::float8 * 60),
+                    scheduled_end = started_at + make_interval(secs => ($2::float8 + $3::float8) * 60),
+                    capture_opens_at = started_at + make_interval(secs => ($2::float8 - 5) * 60),
+                    capture_closes_at = started_at + make_interval(secs => ($2::float8 + $3::float8 + 10) * 60)
+              WHERE id=$1`, [r.id, preMin, lessonMin]);
+  let seq = 0;
+  for (let at = 0; at < stopMin; ) {
+    const step = Math.min(5, stopMin - at);
+    await travel(r.id, step, true);
+    for (const m of minutes) if (m >= at && m + 1 <= at + step) {
+      await chunkUp(T1, r.id, "teacher", seq++, 120_000, m * 60_000, (m + 1) * 60_000);
+    }
+    at += step;
+  }
+  const stop = await setStatus(T1, r.id, "uploading");
+  if (stop) throw new Error(stop);
+  if (beforeFinish) await beforeFinish(r);
+  const done = await finish(r.id, seq);
+  if (done) throw new Error(done);
+  return r;
+};
+const range = (a, b) => Array.from({ length: b - a }, (_, i) => a + i);
+{
+  // The critic's probe N2b: 60-minute lesson; audio for the 5 minutes of
+  // pre-roll, the first 15 lesson minutes, and the 10 minutes of grace.
+  const r = await windowRec(5, 60, [...range(0, 20), ...range(65, 75)], 75, async (rr) => {
+    // C1 critic 3, survivor 1: the owner's manifest under ANOTHER class's prefix.
+    refused("the owner cannot upload a manifest under another class's prefix with their own recording id",
+      await put(T1, `${C2}/${rr.id}/manifest.json`, 300), /row-level security/);
+    refused("nor a chunk", await put(T1, `${C2}/${rr.id}/teacher/000000.webm`, 120_000), /row-level security/);
+  });
+  eq("the critic's probe: 15 of 60 lesson minutes (plus pre-roll and grace) is NOT evidence; only the 15 lesson minutes are lesson audio (M2)",
+    await lessonEvidence(r.id), { was_completed: true, recording_ran_evidence: false, v: 1_800_000, vl: 900_000, th: 1_800_000, lo: 3_600_000 });
+}
+{
+  const r = await windowRec(5, 60, range(5, 35), 65);
+  eq("exactly half the lesson, all inside it, is evidence (M2 boundary)",
+    await lessonEvidence(r.id).then((e) => [e.recording_ran_evidence, e.vl, e.th]), [true, 1_800_000, 1_800_000]);
+  // C1 critic 3, survivor 3: the server-seen overlap with the lesson caps it.
+  // A state the API cannot reach (the chunks run past Stop), set by hand.
+  const was = (await one(`SELECT ended_at::text e FROM public.class_recordings WHERE id=$1`, [r.id])).e;
+  await raw(`UPDATE public.class_recordings SET ended_at = scheduled_start + interval '27 minutes' WHERE id=$1`, [r.id]);
+  eq("and it is never more than the server saw run inside the lesson: Stop 27 minutes in caps it at 27 (overlap cap)",
+    await lessonEvidence(r.id).then((e) => [e.recording_ran_evidence, e.vl, e.lo]), [false, 1_620_000, 1_620_000]);
+  await raw(`UPDATE public.class_recordings SET ended_at = $2::timestamptz WHERE id=$1`, [r.id, was]);
+}
+{
+  // The lesson starts 4.5 minutes in: the chunk of minute 4 holds 30 s of it.
+  const r = await windowRec(4.5, 60, range(4, 34), 65);
+  eq("a chunk straddling the lesson's start counts only its part inside: 29.5 of 60 minutes is not half (M2)",
+    await lessonEvidence(r.id).then((e) => [e.recording_ran_evidence, e.v, e.vl, e.th]), [false, 1_800_000, 1_770_000, 1_800_000]);
+  // The byte floor uses only the straddling chunk's bytes inside the lesson
+  // (pro rata). Half the floor in every chunk, by hand: 29 x 60 000 + 30 000 B.
+  await q(`UPDATE public.class_recording_chunks SET stored_size = 60000 WHERE recording_id=$1`, [r.id]);
+  eq("and only that part's share of its bytes counts toward the byte floor (M2, pro rata)",
+    (await lessonEvidence(r.id)).vl, 885_000);
+  await q(`UPDATE public.class_recording_chunks SET stored_size = byte_size WHERE recording_id=$1`, [r.id]);
+}
+{
+  // The lesson ends 64.5 minutes in: the chunk of minute 64 holds 30 s of it;
+  // minute 65 is grace.
+  const r = await windowRec(4.5, 60, range(35, 66), 66);
+  eq("a chunk straddling the lesson's end counts only its part inside, grace not at all: 29.5 of 60 is not half (M2)",
+    await lessonEvidence(r.id).then((e) => [e.recording_ran_evidence, e.v, e.vl]), [false, 1_860_000, 1_770_000]);
+}
+
+console.log("=== a deleted recording's files are read by nobody, not an admin (C1 critic 3, survivor 2) ===");
+{
+  const r = await windowRec(5, 10, range(5, 15), 15);
+  const name = `${C1}/${r.id}/teacher/000000.webm`;
+  eq("control: an admin reads a complete recording's file", (await rowsAs(ADMIN, `SELECT 1 FROM storage.objects WHERE name=$1`, [name])).length, 1);
+  await raw(`UPDATE public.class_recordings SET status = 'deleted', audio_deleted_at = now() WHERE id=$1`, [r.id]);
+  eq("marked deleted, a file still left in storage is not readable by an admin", (await rowsAs(ADMIN, `SELECT 1 FROM storage.objects WHERE name=$1`, [name])).length, 0);
+  eq("nor by the class teacher", (await rowsAs(T1, `SELECT 1 FROM storage.objects WHERE name=$1`, [name])).length, 0);
+}
+
+console.log("=== the page cannot speak with the server's voice (C1 critic 3, m1-m3) ===");
+{
+  const s = await sessAt(C1, t1, -1, 89);
+  const r = await arm(T1, s);
+  await setStatus(T1, r.id, "recording");
+  eq("m1: the critic's probe - the recorder presets abandon_reason on an open row: accepted as a call",
+    await tryAs(T1, () => db.query(`UPDATE public.class_recordings SET abandon_reason = 'session_canceled' WHERE id=$1`, [r.id])), null);
+  eq("but nothing is preset", (await one(`SELECT abandon_reason FROM public.class_recordings WHERE id=$1`, [r.id])).abandon_reason, null);
+  await setStatus(T1, r.id, "abandoned", `, abandon_reason = ' Session_Canceled '`);
+  eq("m1: abandoning with a server reason the server did not give is 'unspecified'",
+    (await one(`SELECT status, abandon_reason FROM public.class_recordings WHERE id=$1`, [r.id])), { status: "abandoned", abandon_reason: "unspecified" });
+  const s2b = await sessAt(C1, t1, -1, 89);
+  const r2 = await arm(T1, s2b);
+  await setStatus(T1, r2.id, "recording");
+  await setStatus(T1, r2.id, "abandoned", `, abandon_reason = 'the laptop died'`);
+  eq("m1: the page's own words are kept", (await one(`SELECT abandon_reason FROM public.class_recordings WHERE id=$1`, [r2.id])).abandon_reason, "the laptop died");
+  const s3b = await sessAt(C1, t1, -1, 89);
+  const r3 = await arm(T1, s3b);
+  await setStatus(T1, r3.id, "recording");
+  eq("m1: the server's own path still gives its reason",
+    await tryAs(T1, () => db.query(`SELECT public.recorder_request_deletion($1, 'wrong room')`, [r3.id])), null);
+  eq("('deletion requested')", (await one(`SELECT abandon_reason FROM public.class_recordings WHERE id=$1`, [r3.id])).abandon_reason, "deletion requested");
+
+  refused("m2: the recorder cannot move a track to another recording",
+    await tryAs(T1, () => db.query(`UPDATE public.class_recording_tracks SET recording_id = $2 WHERE recording_id=$1`, [r3.id, r2.id])), /permission denied/);
+  refused("m2: nor rename it", await tryAs(T1, () => db.query(`UPDATE public.class_recording_tracks SET track = 'room' WHERE recording_id=$1`, [r3.id])), /permission denied/);
+  refused("m2: nor re-date it", await tryAs(T1, () => db.query(`UPDATE public.class_recording_tracks SET created_at = now() WHERE recording_id=$1`, [r3.id])), /permission denied/);
+
+  const s4b = await sessAt(C1, t1, -1, 89);
+  const r4 = await arm(T1, s4b);
+  await setStatus(T1, r4.id, "recording");
+  await addTrack(T1, r4.id);
+  eq("m2: but it still describes its track", await tryAs(T1, () => db.query(
+    `UPDATE public.class_recording_tracks SET device_label = 'lapel', chunk_count = 0 WHERE recording_id=$1`, [r4.id])), null);
+  await setStatus(T1, r4.id, "uploading");
+  const before = (await one(`SELECT delete_after::text d FROM public.class_recordings WHERE id=$1`, [r4.id])).d;
+  eq("m3: the critic's probe - the recorder forges the deletion flag and moves delete_after: accepted as a call",
+    await tryAs(T1, async () => {
+      await db.query(`SELECT set_config('recorder.server_write', $1, true)`, [`delete:${r4.id}`]);
+      await db.query(`UPDATE public.class_recordings SET delete_after = now() - interval '1 day' WHERE id=$1`, [r4.id]);
+    }), null);
+  eq("m3: but without a stamped request the date does not move", (await one(
+    `SELECT delete_after::text d, deletion_requested_at FROM public.class_recordings WHERE id=$1`, [r4.id])),
+    { d: before, deletion_requested_at: null });
+  await setStatus(T1, r4.id, "abandoned", `, abandon_reason = 'test'`);
+}
+
 console.log("=== deletion: retention keeps a tombstone, a person's early deletion ends the evidence (N3) ===");
 {
   const rT = await liveRec(10, 6);
