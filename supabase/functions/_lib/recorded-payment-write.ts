@@ -35,7 +35,8 @@ const num = (v: unknown): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
-export type SetResult = { ok: true } | { ok: false; conflict: true; message: string };
+// ok false = conflict: nothing was written, and message says so for the admin.
+export type SetResult = { ok: boolean; conflict?: boolean; message?: string };
 
 /**
  * Set a bill's recorded payment to `next`, only if it still holds `expected`.

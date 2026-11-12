@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { getPaymentStatus, getTuitionStatusBadge, getIvoryTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
 import { labelForPayment, monthCharged } from "@/lib/invoiceStatus";
+import { setRecordedPayment } from "@/lib/recordedPaymentWrite";
 import { useIvory } from "@/hooks/useIvory";
 
 interface RecordPaymentDialogProps {
@@ -94,36 +95,35 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
       // edge functions' copy); undefined leaves an admin's 'credit' alone.
       const newStatus = labelForPayment(item?.status, newTotalPaid, payable, monthCharged(item ?? {}));
 
-      if (isPlaceholder) {
-        // Create invoice since none exists (upsert guards against a row
-        // created concurrently by the tuition calculator)
-        const { error } = await supabase.from("invoices").upsert([{
-          student_id: item.student_id,
-          month,
+      // Saved only if the bill still holds what this screen showed
+      // (compare-and-set, src/lib/recordedPaymentWrite.ts): a payment saved
+      // meanwhile from another screen is never overwritten.
+      const saved = await setRecordedPayment(supabase, {
+        invoiceId: isPlaceholder ? null : item.id,
+        studentId: item.student_id,
+        month,
+        expected: alreadyPaid,
+        next: newTotalPaid,
+        fields: {
+          ...(newStatus ? { status: newStatus } : {}),
+          ...(isPlaceholder ? {} : { updated_at: new Date().toISOString(), updated_by: user?.id }),
+        },
+        newRow: {
           base_amount: item.base_amount || 0,
           discount_amount: item.discount_amount || 0,
           total_amount: item.total_amount || 0,
-          recorded_payment: newTotalPaid,
           paid_amount: 0,
-          ...(newStatus ? { status: newStatus } : {}),
           carry_in_credit: item.carry_in_credit || 0,
           carry_in_debt: item.carry_in_debt || 0,
           created_by: user?.id,
-        }], { onConflict: "student_id,month" });
-        if (error) throw error;
-      } else {
-
-        // Update existing recorded_payment
-        const { error } = await supabase
-          .from("invoices")
-          .update({
-            recorded_payment: newTotalPaid,
-            ...(newStatus ? { status: newStatus } : {}),
-            updated_at: new Date().toISOString(),
-            updated_by: user?.id,
-          })
-          .eq("id", item.id);
-        if (error) throw error;
+        },
+      });
+      if (!saved.ok) {
+        // conflict: nothing written; reload so the admin sees the bill as it is
+        toast.error(saved.message);
+        queryClient.invalidateQueries({ queryKey: ["admin-tuition-live", month] });
+        queryClient.invalidateQueries({ queryKey: ["student-tuition", item.student_id, month] });
+        return;
       }
 
       // Audit log

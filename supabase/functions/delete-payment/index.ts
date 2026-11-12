@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { labelAfterPayment } from '../_lib/invoice-status.ts';
+import { addToRecordedPayment } from '../_lib/recorded-payment-write.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -186,6 +187,14 @@ Deno.serve(async (req) => {
       }
       bills.push({ invoice, studentId, month, amount });
     }
+    // Allocation transactions that put nothing on any bill (e.g. a leg with
+    // no month): reversing and deleting would leave the bill as it is with no
+    // trace of why. Refuse instead.
+    if ([...kindOfTx.values()].includes('allocation') && bills.length === 0) {
+      return respond({
+        error: 'This payment\'s ledger entries do not say which bill it was put on. Nothing was changed; correct the bill in Recorded Payment Manager.',
+      }, 409);
+    }
 
     // 4. Reverse every leg (one insert: all of it or none of it).
     const reversalTxIds: string[] = [];
@@ -211,23 +220,28 @@ Deno.serve(async (req) => {
     // 5. Take it off the bills.
     const billChanges: Array<{ studentId: string; month: string; taken: number; recordedBefore: number; recordedAfter: number }> = [];
     for (const { invoice, studentId, month, amount } of bills) {
-      const recorded = Number(invoice.recorded_payment ?? 0);
       const taken = amount;
-      const newRecorded = recorded - taken;
-      const label = labelAfterPayment(invoice, newRecorded);
-      const { error: updError } = await supabase
-        .from('invoices')
-        .update({
-          recorded_payment: newRecorded,
-          paid_amount: Math.max(0, Number(invoice.paid_amount ?? 0) - taken),
-          ...(label ? { status: label } : {}),
-          updated_at: new Date().toISOString(),
-          updated_by: user.id,
-        })
-        .eq('id', invoice.id);
-      if (updError) throw new Error(`Ledger reversed, but the ${month} bill could not be updated: ${updError.message}`);
-      billChanges.push({ studentId, month, taken, recordedBefore: recorded, recordedAfter: newRecorded });
-      console.log(`[delete-payment] ${month}: recorded ${recorded} -> ${newRecorded}`);
+      // Compare-and-set on the value read (_lib/recorded-payment-write.ts): a
+      // payment landing meanwhile is re-read and kept; the fresh bill must
+      // still hold what this payment put there.
+      let result;
+      try {
+        result = await addToRecordedPayment(supabase, invoice, -taken, (fresh, newRecorded) => {
+          const label = labelAfterPayment(fresh, newRecorded);
+          return {
+            paid_amount: Math.max(0, Number(fresh.paid_amount ?? 0) - taken),
+            ...(label ? { status: label } : {}),
+            updated_at: new Date().toISOString(),
+            updated_by: user.id,
+          };
+        }, (fresh) => (Number(fresh.recorded_payment ?? 0) < taken
+          ? `the ${month} bill now records less than this payment put there`
+          : null));
+      } catch (e) {
+        throw new Error(`Ledger reversed, but the ${month} bill could not be updated: ${(e as Error).message}`);
+      }
+      billChanges.push({ studentId, month, taken, recordedBefore: result.before, recordedAfter: result.after });
+      console.log(`[delete-payment] ${month}: recorded ${result.before} -> ${result.after}`);
     }
 
     // 6. Deletion history, then the payment row

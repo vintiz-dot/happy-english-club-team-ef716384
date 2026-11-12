@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
 import { labelAfterPayment, monthPayable } from '../_lib/invoice-status.ts';
+import { addToRecordedPayment } from '../_lib/recorded-payment-write.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -284,17 +285,16 @@ Deno.serve(async (req) => {
         const last = k === allocation.invoices.length - 1;
         const applied = last ? studentRemaining : Math.min(studentRemaining, owedOn(inv));
         if (applied <= 0) continue;
-        const newPaid = (inv.recorded_payment || 0) + applied;
-        const label = labelAfterPayment(inv, newPaid);
-
-        const { error: invErr } = await supabase
-          .from('invoices')
-          .update({
-            recorded_payment: newPaid,
-            ...(label ? { status: label } : {}),
-          })
-          .eq('id', inv.id);
-        if (invErr) throw new Error(`Payment posted to the ledger but the bill could not be updated: ${invErr.message}`);
+        // Compare-and-set on the value read (_lib/recorded-payment-write.ts):
+        // another payment landing in between is re-read and kept.
+        try {
+          await addToRecordedPayment(supabase, inv, applied, (fresh, newRecorded) => {
+            const label = labelAfterPayment(fresh, newRecorded);
+            return label ? { status: label } : {};
+          });
+        } catch (e) {
+          throw new Error(`Payment posted to the ledger but the bill could not be updated: ${(e as Error).message}`);
+        }
 
         studentRemaining -= applied;
       }
