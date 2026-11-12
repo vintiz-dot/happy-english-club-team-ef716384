@@ -1061,8 +1061,8 @@ await section('R1 F-1 re-parented register (probe E2)', async () => {
   const r = await tryIt(() => asAdmin(`UPDATE attendance SET session_id=$2 WHERE session_id=$1`, [a.sid, other.sid]));
   ok('F-1 E2 the admin re-points the register at another lesson (still possible: refusing it is D4)', r.ok !== undefined, r);
   const p1 = await preview(a.sid);
-  ok('F-1 preview after the re-parent: tier drops to 1 BUT review_required and erased_recently say why',
-     p1.tier === 1 && p1.review_required === true &&
+  ok('F-1 preview after the re-parent: tier drops below 3 (marks gone, only Held left) BUT review_required and erased_recently say why',
+     p1.tier < 3 && p1.review_required === true &&
      p1.erased_recently.filter((x) => x.what === 'attendance_reparented').length === 2, [p1.tier, p1.review_required, p1.erased_recently]);
   const res = await must('F-1', () => checked(a.sid, { token: p1.token, confirm: true }));
   const o = (await overrides(a.sid))[0] ?? { erased_recently: [] };

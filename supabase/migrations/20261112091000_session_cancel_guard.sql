@@ -594,7 +594,15 @@ RETURNS boolean LANGUAGE sql IMMUTABLE SET search_path = public AS $fn$
     OR (p_action = 'move' AND (COALESCE((a -> 'destination' ->> 'started')::boolean, true)
                                OR COALESCE((a -> 'destination' ->> 'any')::boolean, true)
                                OR COALESCE((a -> 'destination' -> 'day_evidence' ->> 'any')::boolean, true)))
-    OR (p_action = 'uncancel' AND COALESCE((a ->> 'settled_any')::boolean, true))
+    -- After a cancel every mark is Excused, so D1's "settled" (billable rows
+    -- only) reads false; judge an un-cancel by the bills of EVERY child on
+    -- the register instead (same settled test as session_month_tuition_settled).
+    OR (p_action = 'uncancel' AND (COALESCE((a ->> 'settled_any')::boolean, true)
+         OR EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(a -> 'invoices_before', '[]'::jsonb)) i
+                     WHERE COALESCE((i ->> 'recorded_payment')::numeric, 0) > 0
+                        OR i ->> 'status' IN ('paid', 'partial')
+                        OR i ->> 'confirmation_status' IN ('confirmed', 'adjusted')
+                        OR COALESCE((i ->> 'tuition_frozen')::boolean, false))))
     OR jsonb_array_length(COALESCE(p_erased, '[]'::jsonb)) > 0,
     true)
 $fn$;
