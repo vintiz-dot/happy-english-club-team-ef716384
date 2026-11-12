@@ -24,6 +24,12 @@
 -- showed them a charge of 0 for the month; the new page shows the
 -- calculator's charge, as the Finance tab always has.
 --
+-- WHAT IT DOES NOT SHOW. Figures on /tuition also move for a bill whose saved
+-- total is out of date (a lesson marked since the bill was last worked out);
+-- that needs the calculator, not SQL, and is not listed here. Nor can this
+-- query see a row cap: it runs inside the database, where there is none.
+-- If the editor shows only the first 100 rows, the count rows are among them.
+--
 -- HOW TO READ THE RESULT. Rows come in this order:
 --   1. kind = 'count: carry-in'    one per month: bills checked, bills differing
 --   2. kind = 'count: no bill row' one per month: enrolled students without a bill
