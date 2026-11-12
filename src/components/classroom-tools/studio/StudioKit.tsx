@@ -359,7 +359,7 @@ export function StudioSlider({
           <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-hec-sunken">
             <SliderPrimitive.Range className="absolute h-full rounded-full bg-hec-action" />
           </SliderPrimitive.Track>
-          <SliderPrimitive.Thumb className={cn("block h-5 w-5 rounded-full border-2 border-hec-action bg-hec-raised shadow-hec-1", FOCUS)} />
+          <SliderPrimitive.Thumb aria-label={label} className={cn("block h-5 w-5 rounded-full border-2 border-hec-action bg-hec-raised shadow-hec-1", FOCUS)} />
         </SliderPrimitive.Root>
         <span className="w-10 shrink-0 text-right text-hec-small font-semibold tabular-nums text-hec-ink">
           {format ? format(value) : value}

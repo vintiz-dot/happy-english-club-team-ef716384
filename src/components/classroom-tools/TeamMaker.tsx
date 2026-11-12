@@ -294,7 +294,7 @@ export function TeamMaker() {
             <div>
               <span className={label}>Class</span>
               <Select value={classId} onValueChange={setClassId} disabled={classesLoading}>
-                <SelectTrigger className={ivory ? undefined :"h-11 rounded-2xl border-studio bg-studio-stage text-sm font-semibold text-ink focus:ring-0 focus:ring-offset-0"}>
+                <SelectTrigger aria-label={ivory ? "Class" : undefined} className={ivory ? undefined : "h-11 rounded-2xl border-studio bg-studio-stage text-sm font-semibold text-ink focus:ring-0 focus:ring-offset-0"}>
                   <SelectValue placeholder={classesLoading ? "Loading…" : "Pick a class"} />
                 </SelectTrigger>
                 <SelectContent>

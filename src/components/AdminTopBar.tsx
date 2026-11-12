@@ -206,10 +206,10 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
             size="sm"
             className={ivory ? "gap-2 text-hec-ink-soft" : "h-9 gap-2 text-muted-foreground"}
             onClick={() => setPaletteOpen(true)}
-            aria-label={ivory ? "Quick jump" : undefined}
           >
             <Search className="h-3.5 w-3.5" />
-            <span className="hidden lg:inline">Quick jump…</span>
+            {/* Ivory: the words stay for screen readers below lg, so the button always has a name. */}
+            <span className={ivory ? "sr-only lg:not-sr-only" : "hidden lg:inline"}>Quick jump…</span>
             <kbd className={ivory ? KBD_CLASS_IVORY : KBD_CLASS}>⌘K</kbd>
           </Button>
           {rightSlot}
