@@ -59,3 +59,21 @@ export function getStatusColorClass(displayStatus: SessionStatus, isPast: boolea
   if (isPast) return "bg-orange-200 dark:bg-orange-900"; // Needs attention
   return "bg-green-200 dark:bg-green-900"; // Future scheduled
 }
+
+/**
+ * The same map in the "Ivory" system (docs/DESIGN_SYSTEM.md s.14), for
+ * screens on a listed route. Same statuses, same meanings, same arguments as
+ * getStatusColorClass; only the colours differ. Red is cancellation, amber is
+ * the one state that needs someone to act (a past lesson still Scheduled);
+ * held, holiday and future lessons are quiet surfaces, told apart by their
+ * words. The old map above stays for screens not yet migrated.
+ */
+export function getStatusColorClassIvory(displayStatus: SessionStatus, isPast: boolean): string {
+  if (displayStatus === "Canceled") return "bg-hec-danger-tint";
+  if (displayStatus === "Holiday") return "bg-hec-sunken";
+  if (displayStatus === "Held") return "bg-hec-sunken";
+
+  // Scheduled
+  if (isPast) return "bg-hec-warn-tint"; // Needs attention
+  return "bg-hec-surface"; // Future scheduled
+}
