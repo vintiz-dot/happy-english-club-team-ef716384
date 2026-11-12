@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreditCard, Eye, Award, Percent } from "lucide-react";
 import { getPaymentStatus, getTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { getAvatarUrl } from "@/lib/avatars";
+import { useIvory } from "@/hooks/useIvory";
 
 interface TuitionStudentTableProps {
   items: any[];
@@ -42,18 +43,20 @@ export function TuitionStudentTable({
   onToggleAll,
 }: TuitionStudentTableProps) {
   const navigate = useNavigate();
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
 
   const allSelected = items.length > 0 && selectedIds.size === items.length;
 
   return (
-    <div className="rounded-xl border surface-2 shadow-q1 overflow-hidden">
+    <div className={iv("overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1", "rounded-xl border surface-2 shadow-q1 overflow-hidden")}>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/40 hover:bg-muted/40">
+            <TableRow className={iv("hover:bg-transparent", "bg-muted/40 hover:bg-muted/40")}>
               {selectionMode && (
                 <TableHead className="w-10">
-                  <Checkbox checked={allSelected} onCheckedChange={onToggleAll} />
+                  <Checkbox checked={allSelected} onCheckedChange={onToggleAll} aria-label="Select all" />
                 </TableHead>
               )}
               <TableHead className="w-[260px]">Student</TableHead>
@@ -82,7 +85,7 @@ export function TuitionStudentTable({
               return (
                 <TableRow
                   key={item.id}
-                  className={`hover:bg-muted/30 transition-colors ${isSelected ? "bg-primary/5" : ""}`}
+                  className={ivory ? (isSelected ? "bg-hec-sunken" : "hover:bg-hec-sunken/60") : `hover:bg-muted/30 transition-colors ${isSelected ? "bg-primary/5" : ""}`}
                   data-status={status}
                 >
                   {selectionMode && (
@@ -90,59 +93,62 @@ export function TuitionStudentTable({
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => onToggleSelect(item.student_id)}
+                        aria-label={`Select ${studentName}`}
                       />
                     </TableCell>
                   )}
                   <TableCell>
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Avatar className="h-8 w-8 ring-1 ring-background shrink-0">
+                    <div className={iv("flex min-w-0 items-start gap-3", "flex items-center gap-3 min-w-0")}>
+                      <Avatar className={iv("h-8 w-8 shrink-0", "h-8 w-8 ring-1 ring-background shrink-0")}>
                         <AvatarImage
                           src={getAvatarUrl((item.students as any)?.avatar_url) || undefined}
                           alt={studentName}
                           className="object-cover"
                         />
-                        <AvatarFallback className="bg-primary/10 text-primary font-medium text-xs">
+                        <AvatarFallback className={iv("bg-hec-sunken text-hec-caption font-medium text-hec-ink-soft", "bg-primary/10 text-primary font-medium text-xs")}>
                           {studentName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-medium truncate">{studentName}</span>
+                        <div className={iv("flex flex-wrap items-center gap-2", "flex items-center gap-1.5 flex-wrap")}>
+                          <span className={iv("whitespace-normal break-words hyphens-none text-balance font-medium text-hec-ink", "font-medium truncate")}>{studentName}</span>
                           {(item.students as any)?.is_active === false && (
                             <Badge
-                              variant="outline"
-                              className="h-4 px-1 text-[10px] border-muted-foreground/40 text-muted-foreground"
+                              variant={ivory ? "secondary" : "outline"}
+                              className={iv("", "h-4 px-1 text-[10px] border-muted-foreground/40 text-muted-foreground")}
                               title="No longer enrolled — shown because they were active during this month"
                             >
                               Inactive
                             </Badge>
                           )}
                           {item.hasDiscount && (
-                            <Badge variant="outline" className="h-4 px-1 gap-0.5 text-[10px] border-blue-300 text-blue-700">
-                              <Percent className="h-2.5 w-2.5" />
+                            <Badge variant={ivory ? "secondary" : "outline"} className={iv("px-2", "h-4 px-1 gap-0.5 text-[10px] border-blue-300 text-blue-700")} title={ivory ? "Discount" : undefined}>
+                              <Percent className={iv("h-3.5 w-3.5", "h-2.5 w-2.5")} aria-label={ivory ? "Discount" : undefined} />
                             </Badge>
                           )}
                           {item.hasSiblings && (
-                            <Badge variant="outline" className="h-4 px-1 gap-0.5 text-[10px] border-amber-300 text-amber-700">
-                              <Award className="h-2.5 w-2.5" />
+                            <Badge variant={ivory ? "secondary" : "outline"} className={iv("px-2", "h-4 px-1 gap-0.5 text-[10px] border-amber-300 text-amber-700")} title={ivory ? "Sibling" : undefined}>
+                              <Award className={iv("h-3.5 w-3.5", "h-2.5 w-2.5")} aria-label={ivory ? "Sibling" : undefined} />
                             </Badge>
                           )}
                         </div>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="type-micro text-muted-foreground truncate max-w-[200px]">
+                  <TableCell className={iv("max-w-[200px] whitespace-normal break-words text-hec-small text-hec-ink-soft", "type-micro text-muted-foreground truncate max-w-[200px]")}>
                     {classNames}
                   </TableCell>
                   <TableCell>{getTuitionStatusBadge(status, item.settled_in_month)}</TableCell>
-                  <TableCell className="text-right tabular-nums font-medium">
+                  <TableCell className={iv("whitespace-nowrap text-right font-sans font-medium tabular-nums text-hec-ink", "text-right tabular-nums font-medium")}>
                     {fmt(item.finalPayable)}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums text-blue-600 dark:text-blue-400">
+                  <TableCell className={iv("whitespace-nowrap text-right font-sans tabular-nums text-hec-ink", "text-right tabular-nums text-blue-600 dark:text-blue-400")}>
                     {fmt(item.recorded_payment ?? 0)}
                   </TableCell>
                   <TableCell
-                    className={`text-right tabular-nums font-semibold ${
+                    className={ivory
+                      ? `whitespace-nowrap text-right font-sans font-semibold tabular-nums ${balance === 0 ? "text-hec-ink-soft" : "text-hec-ink"}`
+                      : `text-right tabular-nums font-semibold ${
                       balance > 0
                         ? "text-destructive"
                         : balance < 0
@@ -153,24 +159,26 @@ export function TuitionStudentTable({
                     {balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "—"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="inline-flex items-center gap-1">
+                    <div className={iv("inline-flex items-center gap-2", "inline-flex items-center gap-1")}>
                       <Button
-                        size="sm"
+                        size={ivory ? "icon" : "sm"}
                         variant="ghost"
-                        className="h-8 px-2 gap-1"
+                        className={iv("", "h-8 px-2 gap-1")}
                         onClick={() => onRecordPay(item)}
                         title="Record payment"
+                        aria-label="Record payment"
                       >
-                        <CreditCard className="h-3.5 w-3.5" />
+                        <CreditCard className={iv("h-5 w-5", "h-3.5 w-3.5")} />
                       </Button>
                       <Button
-                        size="sm"
+                        size={ivory ? "icon" : "sm"}
                         variant="ghost"
-                        className="h-8 px-2 gap-1"
+                        className={iv("", "h-8 px-2 gap-1")}
                         onClick={() => navigate(`/students/${item.student_id}`)}
                         title="View student"
+                        aria-label="View student"
                       >
-                        <Eye className="h-3.5 w-3.5" />
+                        <Eye className={iv("h-5 w-5", "h-3.5 w-3.5")} />
                       </Button>
                     </div>
                   </TableCell>
