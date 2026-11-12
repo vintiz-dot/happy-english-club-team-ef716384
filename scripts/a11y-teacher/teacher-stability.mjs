@@ -354,7 +354,9 @@ async function overlays(size) {
       await page.evaluate(() => document.exitFullscreen()).catch(() => {}); await sleep(900);
       const v1 = await hintVisible(page, 'Lab tooltip text'); const d1 = await textInDom(page, 'Lab tooltip text');
       const conn = await page.evaluate(() => { const n = [...document.querySelectorAll('[data-radix-popper-content-wrapper]')].find((e) => e.textContent.includes('Lab tooltip text')); return n ? n.isConnected : null; });
-      gate('M5.H8.tooltip-open-across-exit', S, !d1 || v1, { v0, v1, d1, conn }, `tooltip open in fullscreen (visible ${v0}), fullscreen ends: ${d1 ? 'still open, connected ' + conn + ', visible ' + v1 : 'closed itself'}`);
+      // A2.3 diagnostics: where the open tooltip is after fullscreen ends, and what covers its centre
+      const dbg = await page.evaluate(() => { const n = [...document.querySelectorAll('[data-radix-popper-content-wrapper]')].find((e) => e.textContent.includes('Lab tooltip text')); if (!n) return null; const c = n.firstElementChild || n; const r = c.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return { parent: n.parentElement?.tagName + (n.parentElement?.id ? '#' + n.parentElement.id : ''), rect: [r.left, r.top, r.width, r.height].map(Math.round), opacity: getComputedStyle(c).opacity, state: c.getAttribute('data-state'), wrapperTransform: n.style.transform, hit: hit ? hit.tagName + (hit.id ? '#' + hit.id : '') : null, focusOnTrigger: document.activeElement?.id === 'lab-tip-trigger', viewport: [innerWidth, innerHeight] }; });
+      gate('M5.H8.tooltip-open-across-exit', S, !d1 || v1, { v0, v1, d1, conn, dbg }, `tooltip open in fullscreen (visible ${v0}), fullscreen ends: ${d1 ? 'still open, connected ' + conn + ', visible ' + v1 : 'closed itself'}`);
     }
     if (page.__errors?.length) record('page-errors.lab', S, 'INFO', page.__errors.slice(0, 5), `${page.__errors.length} page error(s): ${page.__errors[0]}`);
   } catch (e) {
