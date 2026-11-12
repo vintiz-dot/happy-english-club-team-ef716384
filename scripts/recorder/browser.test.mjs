@@ -252,7 +252,9 @@ try {
     const page = await ctx.newPage();
     const L = lesson(H.server);
     await page.goto(`${H.url}autostart?l=${encodeURIComponent(JSON.stringify(L))}`);
-    await sleep(45000); // no evaluate until it is over: evaluate would count as a gesture
+    await sleep(25000); // no evaluate until it is over: evaluate would count as a gesture
+    // Wait on the SERVER, not the page, so no gesture reaches it.
+    await waitFor(() => [...H.server.recordings.values()].some((x) => x.armed_session_id === L.sessionId && x.status === "complete"), 150000, 1000);
     const r = await page.evaluate(() => window.__auto);
     info("autostart", r);
     const fin = r.recordingId && serverRec(r.recordingId);
