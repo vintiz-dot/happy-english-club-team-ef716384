@@ -266,13 +266,13 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
 
   const statusColor = (status: string) => {
     const colors: Record<string, string> = {
-      pending: "bg-yellow-100 text-yellow-800",
-      submitted: "bg-blue-100 text-blue-800",
-      graded: "bg-green-100 text-green-800",
-      not_submitted: "bg-gray-100 text-gray-800",
-      Not_Submitted: "bg-gray-100 text-gray-800",
+      pending: "border-hec-warn/30 bg-hec-warn-tint text-hec-warn",
+      submitted: "border-hec-line bg-hec-sunken text-hec-ink",
+      graded: "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
+      not_submitted: "border-hec-line bg-hec-sunken text-hec-ink-soft",
+      Not_Submitted: "border-hec-line bg-hec-sunken text-hec-ink-soft",
     };
-    return colors[status] || "bg-gray-100";
+    return colors[status] || "border-hec-line bg-hec-sunken text-hec-ink-soft";
   };
 
   const openGradeView = (item: any) => {
@@ -294,24 +294,25 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
 
   return (
     <Dialog open={!!homeworkId} onOpenChange={handleClose}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="max-w-2xl overflow-hidden flex flex-col gap-0 p-0">
         {/* ---- HEADER ---- */}
-        <div className="px-4 pt-5 pb-3 sm:px-6 border-b shrink-0">
+        <div className="shrink-0 border-b border-hec-line px-4 pb-3 pt-6 sm:px-6">
           <DialogHeader>
             {view === "grade" ? (
               <>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 shrink-0"
+                    size="icon"
+                    className="shrink-0"
                     onClick={() => setView("list")}
+                    aria-label="Back to the list"
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                   <div className="min-w-0">
-                    <DialogTitle className="text-base truncate">Grade Assignment</DialogTitle>
-                    <DialogDescription className="truncate">
+                    <DialogTitle>Grade Assignment</DialogTitle>
+                    <DialogDescription className="whitespace-normal break-words hyphens-none text-balance">
                       {selectedSubmission?.student.full_name}
                       {!selectedSubmission?.submission && " (Offline)"}
                     </DialogDescription>
@@ -328,37 +329,37 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
         </div>
 
         {/* ---- SCROLLABLE CONTENT ---- */}
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 -webkit-overflow-scrolling-touch">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 -webkit-overflow-scrolling-touch">
           {view === "list" ? (
             /* ===== STUDENT LIST VIEW ===== */
             <div className="space-y-3">
               {studentsWithSubmissions.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">No enrolled students</p>
+                <p className="py-8 text-center text-hec-body text-hec-ink-soft">No enrolled students</p>
               ) : (
                 studentsWithSubmissions.map((item: any) => (
                   <div
                     key={item.student.id}
-                    className="border rounded-xl p-3 sm:p-4 space-y-3 hover:bg-muted/50 transition-colors"
+                    className="space-y-3 rounded-hec-md border border-hec-line bg-hec-surface p-4"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm sm:text-base truncate">{item.student.full_name}</p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{item.student.full_name}</p>
                         {item.submission ? (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-hec-small text-hec-ink-soft tabular-nums">
                             Submitted {dayjs(item.submission.submitted_at).format("MMM D, h:mm A")}
                           </p>
                         ) : (
-                          <p className="text-xs text-muted-foreground">Not submitted</p>
+                          <p className="text-hec-small text-hec-ink-soft">Not submitted</p>
                         )}
                       </div>
-                      <Badge className={`${statusColor(item.submission?.status || "not_submitted")} shrink-0 text-[10px] sm:text-xs`}>
+                      <Badge className={`${statusColor(item.submission?.status || "not_submitted")} shrink-0`}>
                         {item.submission?.status || "Not Submitted"}
                       </Badge>
                     </div>
 
                     {item.submission?.submission_text && (
-                      <div className="bg-muted/50 p-2.5 rounded-lg">
-                        <p className="text-xs sm:text-sm whitespace-pre-wrap line-clamp-3">{item.submission.submission_text}</p>
+                      <div className="rounded-hec-md bg-hec-sunken p-3">
+                        <p className="whitespace-pre-wrap line-clamp-3 text-hec-small text-hec-ink">{item.submission.submission_text}</p>
                       </div>
                     )}
 
@@ -366,7 +367,6 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 text-xs"
                         onClick={() => downloadFile(item.submission.storage_key, item.submission.file_name)}
                       >
                         <Download className="h-3.5 w-3.5 mr-1.5" />
@@ -375,10 +375,10 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                     )}
 
                     {item.submission?.status === "graded" && (
-                      <div className="space-y-1 border-t pt-2">
-                        <p className="text-xs sm:text-sm font-medium">Grade: {item.submission.grade}</p>
+                      <div className="space-y-1 border-t border-hec-line pt-3">
+                        <p className="text-hec-small font-medium text-hec-ink">Grade: {item.submission.grade}</p>
                         {item.submission.teacher_feedback && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">
+                          <p className="line-clamp-2 text-hec-small text-hec-ink-soft">
                             Feedback: {item.submission.teacher_feedback}
                           </p>
                         )}
@@ -389,7 +389,7 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                       <Button
                         variant={item.submission?.status === "graded" ? "outline" : "default"}
                         size="sm"
-                        className="flex-1 h-9 text-xs sm:text-sm"
+                        className="flex-1"
                         onClick={() => openGradeView(item)}
                       >
                         {item.submission?.status === "graded" ? "Update Grade" : "Grade"}
@@ -398,7 +398,7 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                         <Button
                           variant="secondary"
                           size="sm"
-                          className="flex-1 h-9 text-xs sm:text-sm"
+                          className="flex-1"
                           onClick={() => openGradeView(item)}
                         >
                           Grade Offline
@@ -423,24 +423,24 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
             /* ===== GRADING FORM VIEW ===== */
             <div className="space-y-4">
               {homework?.body && (
-                <div className="space-y-1.5 pb-3 mb-3 border-b">
-                  <Label className="text-sm font-semibold">Assignment Instructions</Label>
+                <div className="mb-4 space-y-2 border-b border-hec-line pb-4">
+                  <Label className="text-hec-small font-semibold text-hec-ink">Assignment Instructions</Label>
                   <div 
-                    className="p-3 bg-muted/50 rounded-lg prose prose-sm max-w-none text-xs sm:text-sm [&_p]:text-muted-foreground [&_strong]:text-foreground [&_em]:text-foreground [&_ul]:text-muted-foreground [&_ol]:text-muted-foreground [&_li]:text-muted-foreground"
+                    className="prose prose-sm max-w-none rounded-hec-md bg-hec-sunken p-3 text-hec-small text-hec-ink-soft [&_p]:text-hec-ink-soft [&_strong]:text-hec-ink [&_em]:text-hec-ink [&_ul]:text-hec-ink-soft [&_ol]:text-hec-ink-soft [&_li]:text-hec-ink-soft"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(homework.body) }}
                   />
                 </div>
               )}
 
-              <div className="space-y-1.5 pb-3 mb-3 border-b">
-                <Label className="text-sm font-semibold">Student Submission</Label>
+              <div className="mb-4 space-y-2 border-b border-hec-line pb-4">
+                <Label className="text-hec-small font-semibold text-hec-ink">Student Submission</Label>
                 {selectedSubmission?.submission?.submission_text ? (
                   <div 
-                    className="p-3 bg-background border rounded-lg prose prose-sm max-w-none text-xs sm:text-sm [&_p]:text-foreground [&_strong]:text-foreground [&_em]:text-foreground [&_ul]:text-foreground [&_ol]:text-foreground [&_li]:text-foreground"
+                    className="prose prose-sm max-w-none rounded-hec-md border border-hec-line bg-hec-surface p-3 text-hec-small text-hec-ink [&_p]:text-hec-ink [&_strong]:text-hec-ink [&_em]:text-hec-ink [&_ul]:text-hec-ink [&_ol]:text-hec-ink [&_li]:text-hec-ink"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedSubmission.submission.submission_text) }}
                   />
                 ) : (
-                  <div className="p-3 bg-muted/30 border border-dashed rounded-lg text-muted-foreground text-xs sm:text-sm">
+                  <div className="rounded-hec-md border border-dashed border-hec-line-strong bg-hec-sunken p-3 text-hec-small text-hec-ink-soft">
                     {selectedSubmission?.submission ? "No text submission provided" : "Grading offline submission — no online submission found"}
                   </div>
                 )}
@@ -448,7 +448,7 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 text-xs mt-2"
+                    className="mt-2"
                     onClick={() => downloadFile(selectedSubmission.submission.storage_key, selectedSubmission.submission.file_name)}
                   >
                     <Download className="h-3.5 w-3.5 mr-1.5" />
@@ -457,8 +457,8 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                 )}
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="grade" className="text-sm">Grade</Label>
+              <div className="space-y-2">
+                <Label htmlFor="grade" className="text-hec-small font-medium text-hec-ink">Grade</Label>
                 <Select
                   value={GRADE_PRESETS.some(p => p.value === grade) ? grade : "__custom"}
                   onValueChange={(val) => {
@@ -470,7 +470,7 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                     }
                   }}
                 >
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger aria-label="Grade preset">
                     <SelectValue placeholder="Select a grade..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -486,12 +486,12 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                   value={grade}
                   onChange={(e) => setGrade(e.target.value)}
                   placeholder="Or type a custom grade..."
-                  className="h-10 mt-1"
+                  className="mt-2"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="points" className="text-sm">Points (0-100)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="points" className="text-hec-small font-medium text-hec-ink">Points (0-100)</Label>
                 <Input
                   id="points"
                   type="number"
@@ -501,22 +501,21 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                   value={points}
                   onChange={(e) => setPoints(e.target.value)}
                   placeholder="Max 100 points"
-                  className="h-10"
+                  className="tabular-nums"
                 />
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
+                <p className="text-hec-caption text-hec-ink-soft">
                   Homework points (max 100) for leaderboard
                 </p>
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="feedback" className="text-sm">Feedback (Optional)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="feedback" className="text-hec-small font-medium text-hec-ink">Feedback (Optional)</Label>
                 <Textarea
                   id="feedback"
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   placeholder="Provide feedback for the student..."
                   rows={3}
-                  className="text-sm"
                 />
               </div>
 
@@ -525,15 +524,15 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                 <Button
                   onClick={handleGradeSubmit}
                   disabled={!grade || gradeMutation.isPending}
-                  className="w-full h-11 font-semibold"
+                  className="w-full"
                 >
                   Submit Grade
                 </Button>
 
                 <Button
-                  variant="outline"
+                  variant="destructive-quiet"
                   size="sm"
-                  className="w-full text-destructive hover:text-destructive h-9 text-xs"
+                  className="w-full"
                   onClick={() => {
                     if (selectedSubmission?.student?.id) {
                       reverseEarlyBonusMutation.mutate({
