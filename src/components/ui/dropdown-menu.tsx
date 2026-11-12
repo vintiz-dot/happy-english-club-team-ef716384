@@ -3,6 +3,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronRight, Circle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useOverlayContainer } from "@/hooks/useFullscreenContainer";
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 
@@ -55,10 +56,13 @@ DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayNam
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
+>(({ className, sideOffset = 4, ...props }, ref) => {
+  // into the fullscreen element while there is one, else document.body (as before)
+  const [container, contentRef] = useOverlayContainer(ref);
+  return (
+  <DropdownMenuPrimitive.Portal container={container}>
   <DropdownMenuPrimitive.Content
-    ref={ref}
+    ref={contentRef}
     sideOffset={sideOffset}
     className={cn(
       "glass z-[100] min-w-[8rem] overflow-hidden rounded-xl p-1 text-popover-foreground shadow-xl data-[state=open]:animate-spring-in data-[state=closed]:animate-spring-out",
@@ -67,7 +71,8 @@ const DropdownMenuContent = React.forwardRef<
     {...props}
   />
   </DropdownMenuPrimitive.Portal>
-));
+  );
+});
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
 
 const DropdownMenuItem = React.forwardRef<

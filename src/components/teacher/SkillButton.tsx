@@ -92,7 +92,8 @@ export function SkillButton({
               value={customValue}
               onChange={(e) => setCustomValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleCustomSubmit(); }}
-              className="w-12 h-10 text-center text-sm font-bold p-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              aria-label={`Custom points for ${label}`}
+              className="w-12 h-10 [@media(hover:none)]:h-11 text-center text-sm font-bold p-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <Button
               variant="outline"

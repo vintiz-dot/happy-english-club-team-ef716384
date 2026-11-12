@@ -3,6 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useOverlayContainer } from "@/hooks/useFullscreenContainer";
 
 const Dialog = DialogPrimitive.Root;
 
@@ -30,11 +31,14 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
+>(({ className, children, ...props }, ref) => {
+  // into the fullscreen element while there is one, else document.body (as before)
+  const [container, contentRef] = useOverlayContainer(ref);
+  return (
+  <DialogPortal container={container}>
     <DialogOverlay />
       <DialogPrimitive.Content
-        ref={ref}
+        ref={contentRef}
         className={cn(
           "glass-premium fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg max-h-[85vh] overflow-y-auto translate-x-[-50%] translate-y-[-50%] gap-4 p-6 shadow-2xl data-[state=open]:animate-spring-in data-[state=closed]:animate-spring-out sm:rounded-2xl",
           className,
@@ -48,7 +52,8 @@ const DialogContent = React.forwardRef<
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPortal>
-));
+  );
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

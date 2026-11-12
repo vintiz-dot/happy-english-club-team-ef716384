@@ -21,6 +21,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
@@ -903,15 +904,27 @@ export default function TeacherTranscripts() {
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium truncate">{t.title || "Untitled lesson"}</p>
                     {isStalled(t) ? (
-                      <span title="This run was cut off — open it and hit Retry">
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                      </span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" aria-hidden="true" />
+                            <span className="sr-only">This run was cut off — open it and hit Retry</span>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>This run was cut off — open it and hit Retry</TooltipContent>
+                      </Tooltip>
                     ) : t.status === "processing" ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500 shrink-0" />
                     ) : t.status === "failed" ? (
-                      <span title={t.error_message || "Analysis failed"}>
-                        <AlertTriangle className="h-3.5 w-3.5 text-red-500 shrink-0" />
-                      </span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <AlertTriangle className="h-3.5 w-3.5 text-red-500 shrink-0" aria-hidden="true" />
+                            <span className="sr-only">{t.error_message || "Analysis failed"}</span>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">{t.error_message || "Analysis failed"}</TooltipContent>
+                      </Tooltip>
                     ) : (
                       <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40">ready</Badge>
                     )}
@@ -962,13 +975,14 @@ export default function TeacherTranscripts() {
 
                 <div className="flex items-center justify-end gap-2">
                   {selected.source_format === "audio" && selected.status !== "analyzed" && (
+                    <Tooltip>
+                    <TooltipTrigger asChild>
                     <Button
                       variant="outline"
                       size="sm"
                       className="gap-1.5 text-cyan-700 dark:text-cyan-300 border-cyan-500/40"
                       disabled={retryTranscriptionMutation.isPending}
                       onClick={() => retryTranscriptionMutation.mutate(selected.id)}
-                      title="Re-run Whisper transcription from the stored recording — no re-upload needed"
                     >
                       {retryTranscriptionMutation.isPending ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -977,14 +991,18 @@ export default function TeacherTranscripts() {
                       )}
                       Retry transcription
                     </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Re-run Whisper transcription from the stored recording — no re-upload needed</TooltipContent>
+                    </Tooltip>
                   )}
+                  <Tooltip>
+                  <TooltipTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
                     className="gap-1.5"
                     disabled={reanalyzeMutation.isPending || selected.status === "processing"}
                     onClick={() => reanalyzeMutation.mutate(selected.id)}
-                    title="Re-run analysis on the stored transcript text — useful after a matching fix or if 0 students matched"
                   >
                     {reanalyzeMutation.isPending ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -993,6 +1011,9 @@ export default function TeacherTranscripts() {
                     )}
                     Re-analyze
                   </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Re-run analysis on the stored transcript text — useful after a matching fix or if 0 students matched</TooltipContent>
+                  </Tooltip>
                 </div>
 
                 {selected.summary && (
@@ -1341,13 +1362,18 @@ export default function TeacherTranscripts() {
                                 <ImageIcon className="h-5 w-5 text-muted-foreground" />
                               </div>
                             )}
+                            <Tooltip>
+                            <TooltipTrigger asChild>
                             <button
                               onClick={() => deleteResourceMutation.mutate(r)}
                               className="absolute top-1 right-1 rounded-md bg-black/60 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="Remove"
+                              aria-label="Remove"
                             >
                               <XCircle className="h-3.5 w-3.5" />
                             </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove</TooltipContent>
+                            </Tooltip>
                           </div>
                         ))}
                       </div>
@@ -1542,9 +1568,11 @@ export default function TeacherTranscripts() {
                               </Badge>
                             )}
                             {editingMetricId !== m.id && (
+                              <Tooltip>
+                              <TooltipTrigger asChild>
                               <Button
                                 variant="ghost" size="icon" className="h-6 w-6"
-                                title="Correct this feedback"
+                                aria-label="Correct this feedback"
                                 onClick={() => {
                                   setMetricDraft({
                                     contribution: m.contribution ?? "",
@@ -1556,6 +1584,9 @@ export default function TeacherTranscripts() {
                               >
                                 <Pencil className="h-3 w-3" />
                               </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Correct this feedback</TooltipContent>
+                              </Tooltip>
                             )}
                           </div>
                         </div>

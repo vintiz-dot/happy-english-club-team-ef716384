@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger, DialogDescription } 
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { LiveEngagementHUD } from "@/components/teacher/LiveEngagementHUD";
 import { SkillButton } from "@/components/teacher/SkillButton";
 import { RadialSkillMenu } from "@/components/teacher/RadialSkillMenu";
@@ -79,6 +80,10 @@ function LabBody() {
           <DropdownMenuTrigger asChild><button id="lab-menu-trigger" type="button">Open menu</button></DropdownMenuTrigger>
           <DropdownMenuContent><DropdownMenuItem>Lab menu item</DropdownMenuItem></DropdownMenuContent>
         </DropdownMenu>
+        <AlertDialog>
+          <AlertDialogTrigger asChild><button id="lab-alert-trigger" type="button">Open alert dialog</button></AlertDialogTrigger>
+          <AlertDialogContent><AlertDialogTitle>Lab alert</AlertDialogTitle><AlertDialogDescription>lab alert body</AlertDialogDescription><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction>OK</AlertDialogAction></AlertDialogContent>
+        </AlertDialog>
         <LabSheet />
         <Tooltip>
           <TooltipTrigger asChild><button id="lab-tip-trigger" type="button">Tooltip trigger</button></TooltipTrigger>

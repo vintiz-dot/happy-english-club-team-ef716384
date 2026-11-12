@@ -7,12 +7,13 @@
  * totals, attendance state, and an engagement-balance meter. Every chip
  * opens the StudentActionPopover for zero-reload micro-actions.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StudentActionPopover } from "@/components/shared/StudentActionPopover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Activity, Radio, MoonStar } from "lucide-react";
@@ -32,6 +33,10 @@ interface HudStudent {
 }
 
 const QUIET_MINUTES = 10;
+// The attendance subscription is school-wide (its payload does not say which class a
+// session belongs to without another query), so its refreshes are coalesced: at most
+// one per ATTENDANCE_COALESCE_MS, however many marks arrive.
+const ATTENDANCE_COALESCE_MS = 2_000;
 
 function minutesSince(iso: string | null): number | null {
   if (!iso) return null;
@@ -110,22 +115,34 @@ export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHisto
   });
 
   // Realtime: any point/attendance event in this class refreshes the HUD.
+  const attendanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!classId) return;
+    const refresh = () => queryClient.invalidateQueries({ queryKey: ["live-hud", classId] });
+    // first event starts a window; later events in it ride on the same refresh
+    const refreshSoon = () => {
+      if (attendanceTimer.current) return;
+      attendanceTimer.current = setTimeout(() => {
+        attendanceTimer.current = null;
+        refresh();
+      }, ATTENDANCE_COALESCE_MS);
+    };
     const channel = supabase
       .channel(`hud-${classId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "point_transactions", filter: `class_id=eq.${classId}` },
-        () => queryClient.invalidateQueries({ queryKey: ["live-hud", classId] }),
+        refresh,
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "attendance" },
-        () => queryClient.invalidateQueries({ queryKey: ["live-hud", classId] }),
+        refreshSoon,
       )
       .subscribe();
     return () => {
+      if (attendanceTimer.current) clearTimeout(attendanceTimer.current);
+      attendanceTimer.current = null;
       supabase.removeChannel(channel);
     };
   }, [classId, queryClient]);
@@ -194,6 +211,12 @@ export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHisto
               : mins <= 5 ? "hot"
               : mins <= QUIET_MINUTES ? "warm"
               : "cold";
+            const hint =
+              isAbsent ? "Absent today"
+              : mins === null ? "No activity yet this lesson"
+              : `Last engaged ${mins} min ago · ${s.pointsToday} pts today`;
+            // the hint is a tooltip (hover, keyboard focus, and a tap on touch screens),
+            // not a title= that only a mouse could ever show
             const chip = (
               <button
                 className={cn(
@@ -204,11 +227,6 @@ export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHisto
                   recency === "none" && "border-dashed border-muted-foreground/40 text-muted-foreground",
                   recency === "absent" && "border-muted bg-muted/40 text-muted-foreground/60 line-through",
                 )}
-                title={
-                  isAbsent ? "Absent today"
-                  : mins === null ? "No activity yet this lesson"
-                  : `Last engaged ${mins} min ago · ${s.pointsToday} pts today`
-                }
               >
                 <span
                   className={cn(
@@ -228,16 +246,18 @@ export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHisto
               </button>
             );
             return (
-              <StudentActionPopover
-                key={s.id}
-                studentId={s.id}
-                studentName={s.name}
-                classId={classId}
-                canManagePoints={canManagePoints}
-                onViewHistory={() => onViewHistory?.(s.id, s.name)}
-              >
-                {chip}
-              </StudentActionPopover>
+              <Tooltip key={s.id}>
+                <StudentActionPopover
+                  studentId={s.id}
+                  studentName={s.name}
+                  classId={classId}
+                  canManagePoints={canManagePoints}
+                  onViewHistory={() => onViewHistory?.(s.id, s.name)}
+                >
+                  <TooltipTrigger asChild>{chip}</TooltipTrigger>
+                </StudentActionPopover>
+                <TooltipContent side="top">{hint}</TooltipContent>
+              </Tooltip>
             );
           })}
         </div>
