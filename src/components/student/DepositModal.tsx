@@ -152,8 +152,9 @@ export function DepositModal({ open, onOpenChange, studentId, classId, cashOnHan
           ) : (
             <>
               <div className="space-y-2">
-                <Label>Cash to deposit</Label>
+                <Label htmlFor="deposit-cash-amount">Cash to deposit</Label>
                 <Input
+                  id="deposit-cash-amount"
                   type="number"
                   min={1}
                   max={maxDepositable}
