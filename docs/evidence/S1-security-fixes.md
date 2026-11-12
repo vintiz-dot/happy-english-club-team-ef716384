@@ -1,6 +1,6 @@
 # S1 security fixes (F-01, F-14, F-15, F-16, F-21, F-02)
 
-**Where I am / next step:** 13 Nov 2026. COMPLETE for this batch: F-01, F-14, F-15, F-16, F-21 (five migrations) and F-02 (nine functions) are built, tested and written up below. `node scripts/pgtest/run.mjs`: 4198 assertions across 47 suites, 0 failed (it includes the app type check, `tsc --noEmit -p tsconfig.app.json`, and the edge-function type check). The exact steps for applying are in `docs/evidence/S1-live-apply-brief.md`. Next step is the owner's: the decisions table at the end. Then the conductor applies each migration and deploys the nine functions.
+**Where I am / next step:** 13 Nov 2026, ROUND 2 COMPLETE (after `docs/evidence/S1-review.md`). F-14 and F-15: approved as built, being applied by another agent, files untouched. F-01: corrected - a request for `admin` gets `student` as on live, only `teacher` gets no role; family self-registration walked end to end (F-01 section, "Round 2"). New: `20261113150000` (class skill figures as a nameless summary), three clean browser release branches from `origin/main`, the F-02 deploy steps, and a per-account fix for the two teacher accounts with no record - all under "Round 2" at the end of this file. Apply steps: `docs/evidence/S1-live-apply-brief.md`. Nothing applied, deployed or pushed by me. Next step is the owner's: the round-2 decisions table at the very end.
 
 Build and test only. **Nothing here has been applied to live, deployed or pushed.** The live database was read read-only (catalog, aggregate counts). No row about a person was selected; no secret was read.
 
@@ -8,10 +8,11 @@ Each fix is its own migration so the owner can approve, and the conductor apply,
 
 | Finding | Migration | Suite (`node scripts/pgtest/run.mjs`) | Code that ships with it |
 |---|---|---|---|
-| F-01 | `supabase/migrations/20261113100000_signup_role_from_server_only.sql` | `signup-role.test.mjs` (86) | `src/pages/Auth.tsx` (form offers Student / Family only); `student-create-migration-account` (upsert; needs a deploy) |
+| F-01 | `supabase/migrations/20261113100000_signup_role_from_server_only.sql` | `signup-role.test.mjs` (98), `signup-form.test.mjs` (4) | `src/pages/Auth.tsx` (form offers Student / Family only); `student-create-migration-account` (upsert; needs a deploy) |
 | F-14 | `supabase/migrations/20261113110000_homework_bucket_scope.sql` | `homework-bucket-scope.test.mjs` (141) | none |
 | F-15 | `supabase/migrations/20261113120000_pause_enrollment_admin_only.sql` | `pause-enrollment.test.mjs` (37) | none |
 | F-16 | `supabase/migrations/20261113130000_classmate_rows_private.sql` | `classmate-rows.test.mjs` (77) | `src/lib/classSkillPoints.ts`, `RadarChartTab`, `PerformanceHeatmapTab`, `StudentAnalyticsModal` |
+| F-16, review | `supabase/migrations/20261113150000_class_skill_summary_without_names.sql` | `classmate-rows.test.mjs` with the third file (111) | the same four files (round-2 version) |
 | F-21 | `supabase/migrations/20261113140000_creator_rows_need_class_staff.sql` | `creator-rows.test.mjs` (123) | `src/lib/safeUrl.ts` and the five places a stored link is rendered |
 | F-02 | none (edge functions) | `ai-gate.test.mjs` (250) | `_lib/ai-gate.ts`, the nine functions, `supabase/config.toml` |
 
@@ -784,3 +785,40 @@ GRANT EXECUTE ON FUNCTION public.get_class_skill_points(uuid, date, date) TO aut
 DROP FUNCTION IF EXISTS public.get_class_skill_summary(uuid, date, date);
 COMMIT;
 ```
+
+### The browser builds that must be live before their migrations (three clean branches from `origin/main` 705dea85; not pushed)
+
+Each was cut from `origin/main`, contains only the files listed, and passed `tsc --noEmit -p tsconfig.app.json` and `vite build` on that branch. Every file taken is identical on `origin/main` and on the commit the security change was written against (checked with `git diff origin/main 6703938 -- <files>`: empty), so nothing unshipped rides along - no design batch, no other work.
+
+| Branch | Tip | Files | Must be live before |
+|---|---|---|---|
+| `release/s1-signup-form` | `6707d97d` | `src/pages/Auth.tsx` (the picker offers Student and Family; a line telling staff the school creates their login), `scripts/pgtest/signup-form.test.mjs` (new), `scripts/pgtest/run.mjs` (registers it) | F-01 `20261113100000` |
+| `release/s1-f16-browser` | `7f9d562f` | `src/lib/classSkillPoints.ts` (new), `src/components/student/analytics/RadarChartTab.tsx`, `src/components/student/analytics/PerformanceHeatmapTab.tsx`, `src/components/student/StudentAnalyticsModal.tsx` | F-16 `20261113130000` and `20261113150000` |
+| `release/s1-f21-browser` | `3d5c8193` | `src/lib/safeUrl.ts` (new), `src/components/resources/ResourceCard.tsx`, `src/components/student/MyWorkGallery.tsx`, `src/pages/StudentLessonDetail.tsx`, `src/pages/TeacherResources.tsx`, `src/pages/TeacherSmartUpload.tsx` | F-21 `20261113140000` |
+
+Against today's database each is invisible: the form simply lacks two options; the skill panels fall back to the query they use now and the pop-up's row probe still finds a classmate (old policy), so the tabs stay; the link helper only refuses a link that is not http(s), and all 41 stored links are. The three touch different files and can be merged in any order or together.
+
+`release/s1-f16-browser` carries the round-2 version of the panels (summary first), so one browser deploy covers both F-16 migrations.
+
+### F-02 deploy steps
+
+Rewritten in `docs/evidence/S1-live-apply-brief.md` as the review asked: for each of the nine functions snapshot the live function, compare it with the pre-gate base (`6703938`), then deploy; `get-speech-token` last and outside lesson hours; the full file list per function (its `index.ts`, `_lib/ai-gate.ts`, `_lib/auth.ts`, `_lib/rate-limit.ts` - the whole import closure, re-checked: each `index.ts` has one relative import, `ai-gate.ts` two, the other two none). The saved snapshot, not `origin/main`, is the rollback.
+
+### The two `teacher` accounts with no teacher record
+
+No migration here changes an existing account, so these two (created 2025-10-16 and 2026-03-23) keep what any teacher-role account reads. The reviewer measured it as one of them: 41 learning profiles, 217 student-work files, the staff list, the lesson-resources and resources buckets, and the 99 homework files until F-14 is in. If either is not a member of staff, F-01 is still open for that account.
+
+- `scripts/CHECK-unlinked-accounts.sql` (unchanged; read-only) lists them under "1 teacher role, no teacher or assistant record": account id, creation date, last sign-in date. No email, name or phone.
+- `scripts/FIX-remove-unbacked-teacher-role.sql`: one statement per account, for the owner to approve with the account's id pasted in. A removes the `teacher` role; B (commented) turns it into `student` for a parent the school knows. Both carry the guard "has no teacher and no assistant record", so on a real teacher or TA they change 0 rows; as shipped the id is all zeros and nothing happens. The audit trigger on `user_roles` records the change. Tested in `signup-role.test.mjs`: real teacher 0 rows, TA 0 rows, self-made teacher 1 row and nothing else touched, repeat 0 rows, B's duplicate-key refusal.
+- If the account IS staff, do neither: link or create their teacher record.
+
+### Owner decisions after round 2
+
+| # | Decision | Recommended default |
+|---|---|---|
+| A | The two `teacher` accounts with no teacher record: look each up; for one that is not staff, approve statement A of the FIX script with its id | Do this first; it is the only way F-01 can already have been used. |
+| B | Class skill figures for families as a nameless summary (`20261113150000`), instead of classmates' totals by name | Yes, pasted straight after F-16. The top three then shows points, not first names, to families. |
+| C | Families get no class figures where fewer than three children were assessed in the period | Yes (a "best" over two children is the other child's score). |
+| D | New parents who pick "Family" get `student` and the same screens as every existing family; the parents' page is reached only if an admin sets the role after linking | Accept. |
+| E | 26 of 31 family logins cannot read the school's bank details (`bank_info`) - found while walking registration, not caused by it | Fix in a small separate migration (readable by any account that can view a child). |
+| F | An account with no role sees a blank page; `linkToFamily` grants no role (review, "not blocking") | Small follow-ups: a sentence instead of the blank page; `linkToFamily` gives `student` to a role-less account. |

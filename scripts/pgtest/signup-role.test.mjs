@@ -338,6 +338,43 @@ console.log("=== scripts/CHECK-unlinked-accounts.sql ===");
   ok("the file contains no write statement", !/\b(insert|update|delete|alter|drop|truncate|grant|revoke)\b/i.test(sql.replace(/--.*$/gm, "")));
 }
 
+console.log("=== scripts/FIX-remove-unbacked-teacher-role.sql (the accounts no migration changes) ===");
+{
+  const file = readFileSync(new URL("../FIX-remove-unbacked-teacher-role.sql", import.meta.url), "utf8").replace(/\r/g, "");
+  const ZERO = "00000000-0000-0000-0000-000000000000";
+  const live = file.split("\n").filter((l) => !l.startsWith("--")).join("\n").trim();
+  const A = (id) => live.replaceAll(ZERO, id);
+  const bLines = file.split("\n").filter((l) => /^-- +(UPDATE public|SET role|WHERE ur|AND (ur|NOT)|RETURNING ur)/.test(l)).map((l) => l.slice(3));
+  const B = (id) => bLines.join("\n").replaceAll(ZERO, id);
+  ok("the file holds exactly one live statement (A) and one commented alternative (B)",
+    (live.match(/;/g) || []).length === 1 && /^DELETE FROM public\.user_roles/.test(live) && bLines.length === 7 && /^UPDATE public\.user_roles/.test(bLines[0]));
+  ok("as shipped (the all-zero id) it changes nothing", (await q(A(ZERO))).length === 0);
+  const all0 = (await one(`SELECT count(*)::int n FROM public.user_roles`)).n;
+  // The pre-fix self-made teacher: role teacher, no record.
+  ok("before: the self-made teacher holds teacher", await has(oldTeacher.id, "teacher"));
+  const real = await q(A(createdTeacherId));
+  eq("A on a teacher who has a teacher record: 0 rows, role kept", [real.length, await rolesOf(createdTeacherId)], [0, ["teacher"]]);
+  const ta = (await one(`SELECT user_id FROM public.teaching_assistants LIMIT 1`)).user_id;
+  eq("A on a TA (assistant record): 0 rows, role kept", [(await q(A(ta))).length, await rolesOf(ta)], [0, ["teacher"]]);
+  const gone = await q(A(oldTeacher.id));
+  eq("A on the self-made teacher: one row, the teacher role is gone, nothing else touched",
+    [gone.length, gone[0]?.removed_role, await rolesOf(oldTeacher.id), (await one(`SELECT count(*)::int n FROM public.user_roles`)).n], [1, "teacher", [], all0 - 1]);
+  eq("  ...running it again: 0 rows", (await q(A(oldTeacher.id))).length, 0);
+  // B: the same kind of account, made a student instead.
+  await q(`ALTER TABLE auth.users DISABLE TRIGGER on_auth_user_created`);
+  const P1 = randomUUID(), P2 = randomUUID();
+  await q(`INSERT INTO auth.users (id) VALUES ($1), ($2)`, [P1, P2]);
+  await q(`ALTER TABLE auth.users ENABLE TRIGGER on_auth_user_created`);
+  await q(`INSERT INTO public.user_roles (user_id, role) VALUES ($1,'teacher'), ($2,'teacher'), ($2,'student')`, [P1, P2]);
+  const made = await q(B(P1));
+  eq("B on a self-made teacher: now a student, and only a student", [made.length, made[0]?.new_role, await rolesOf(P1)], [1, "student", ["student"]]);
+  eq("B on a real teacher: 0 rows", (await q(B(createdTeacherId))).length, 0);
+  let dup = null; try { await q(B(P2)); } catch (e) { dup = e.message; }
+  ok("B on an account that already holds student too: refused by the unique key, nothing changed", dup !== null && /duplicate key|unique/.test(dup) && (await rolesOf(P2)).join() === "student,teacher", dup ?? "ran");
+  eq("  ...A works for that one", [(await q(A(P2))).length, await rolesOf(P2)], [1, ["student"]]);
+  ok("neither statement names any account: the id is all zeros until the owner puts one in", !/[1-9a-f]{8}-[0-9a-f]{4}/.test(file));
+}
+
 console.log("=== the rollback in docs/evidence/S1-security-fixes.md ===");
 {
   const ev = readFileSync(new URL("../../docs/evidence/S1-security-fixes.md", import.meta.url), "utf8");
