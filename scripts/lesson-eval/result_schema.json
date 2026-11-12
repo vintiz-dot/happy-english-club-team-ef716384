@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hec-lesson-eval/1",
+  "title": "Lesson-eval system result",
+  "description": "One run of one system (vendor or local) over a set of audio files. Every B1/B2 system writes this; score.py reads it. Stored under work\\results\\ only - it holds children's transcripts.",
+  "type": "object",
+  "required": ["schema", "system", "files"],
+  "properties": {
+    "schema": {"const": "hec-lesson-eval/1"},
+    "system": {
+      "type": "object",
+      "required": ["name", "kind"],
+      "properties": {
+        "name": {"type": "string", "description": "e.g. faster-whisper, azure-speech"},
+        "kind": {"enum": ["local", "vendor"]},
+        "version": {"type": "string"},
+        "model": {"type": "string"},
+        "settings": {"type": "object", "description": "language, beam, VAD, diarization options, retention/logging settings for vendors"}
+      }
+    },
+    "run": {
+      "type": "object",
+      "properties": {
+        "started_at": {"type": "string", "format": "date-time"},
+        "wall_s": {"type": "number"},
+        "audio_s": {"type": "number"},
+        "hardware": {"type": "string", "description": "path or id of the hardware.py record"}
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file_id"],
+        "properties": {
+          "file_id": {"type": "string", "description": "WAV stem, e.g. S01_clip1 or mix_7_05_000; matches RTTM file ids and reference TSV ids"},
+          "audio": {"type": "string", "description": "path relative to work\\"},
+          "duration_s": {"type": "number"},
+          "language": {"type": "string"},
+          "words": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["w", "start", "end"],
+              "properties": {
+                "w": {"type": "string"},
+                "start": {"type": "number"},
+                "end": {"type": "number"},
+                "conf": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+                "speaker": {"type": ["string", "null"], "description": "system's anonymous label (spk0...), never a child code"},
+                "lang": {"enum": ["en", "vi", null]}
+              }
+            }
+          },
+          "turns": {
+            "type": "array",
+            "description": "optional diarization turns; to-rttm uses these when present, else merges words by speaker",
+            "items": {
+              "type": "object",
+              "required": ["start", "end", "speaker"],
+              "properties": {
+                "start": {"type": "number"},
+                "end": {"type": "number"},
+                "speaker": {"type": "string"},
+                "id_suggestion": {
+                  "type": ["object", "null"],
+                  "description": "a SUGGESTION only: code + score; a teacher confirms. Below the chosen threshold it must be shown as UNKNOWN.",
+                  "required": ["code", "score"],
+                  "properties": {"code": {"type": "string"}, "score": {"type": "number"}}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

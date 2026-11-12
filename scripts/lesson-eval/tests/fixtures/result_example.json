@@ -1,0 +1,17 @@
+{
+  "schema": "hec-lesson-eval/1",
+  "system": {"name": "example", "kind": "local", "version": "0", "model": "none", "settings": {}},
+  "run": {"started_at": "2026-11-11T00:00:00Z", "wall_s": 1.0, "audio_s": 4.0},
+  "files": [
+    {
+      "file_id": "f1",
+      "duration_s": 4.0,
+      "words": [
+        {"w": "hello", "start": 0.0, "end": 0.5, "conf": 0.9, "speaker": "spk0", "lang": "en"},
+        {"w": "there", "start": 0.6, "end": 1.0, "conf": 0.8, "speaker": "spk0", "lang": "en"},
+        {"w": "xin", "start": 2.0, "end": 2.3, "conf": null, "speaker": "spk1", "lang": "vi"},
+        {"w": "chào", "start": 2.3, "end": 2.8, "conf": 0.7, "speaker": "spk1", "lang": "vi"}
+      ]
+    }
+  ]
+}

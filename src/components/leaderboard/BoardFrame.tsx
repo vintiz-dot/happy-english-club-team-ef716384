@@ -113,6 +113,9 @@ export function BoardFrame({
   return (
     <div
       ref={hostRef}
+      // Opts the board out of the "Ivory" design system (src/index.css):
+      // a display board keeps its own canvas look on every screen.
+      data-hec-board=""
       className={cn(
         "relative w-full overflow-hidden",
         fullscreen ? "h-full" : "",

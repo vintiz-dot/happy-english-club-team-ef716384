@@ -4,6 +4,11 @@ import { Check, ChevronRight, Circle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useOverlayContainer } from "@/hooks/useFullscreenContainer";
+import { useIvory } from "@/hooks/useIvory";
+
+// Ivory menu item (DESIGN_SYSTEM s.15): 44 px, body text, sunken wash on hover / keyboard focus.
+const IVORY_ITEM =
+  "relative flex min-h-hec-target cursor-default select-none items-center gap-2 rounded-hec-sm px-3 text-hec-body text-hec-ink outline-none transition-colors duration-hec-1 ease-hec data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-hec-sunken focus:bg-hec-sunken data-[highlighted]:bg-hec-sunken";
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 
@@ -59,13 +64,16 @@ const DropdownMenuContent = React.forwardRef<
 >(({ className, sideOffset = 4, ...props }, ref) => {
   // into the fullscreen element while there is one, else document.body (as before)
   const [container, contentRef] = useOverlayContainer(ref);
+  const ivory = useIvory();
   return (
   <DropdownMenuPrimitive.Portal container={container}>
   <DropdownMenuPrimitive.Content
     ref={contentRef}
     sideOffset={sideOffset}
     className={cn(
-      "glass z-[100] min-w-[8rem] overflow-hidden rounded-xl p-1 text-popover-foreground shadow-xl data-[state=open]:animate-spring-in data-[state=closed]:animate-spring-out",
+      ivory
+        ? "z-[100] min-w-[8rem] overflow-hidden rounded-hec-md border border-hec-line bg-hec-raised p-1 text-hec-ink shadow-hec-2 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+        : "glass z-[100] min-w-[8rem] overflow-hidden rounded-xl p-1 text-popover-foreground shadow-xl data-[state=open]:animate-spring-in data-[state=closed]:animate-spring-out",
       className,
     )}
     {...props}
@@ -80,17 +88,22 @@ const DropdownMenuItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     inset?: boolean;
   }
->(({ className, inset, ...props }, ref) => (
+>(({ className, inset, ...props }, ref) => {
+  const ivory = useIvory();
+  return (
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-lg px-2 py-1.5 text-sm outline-none transition-all duration-200 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-warmGray hover:text-royalGreen focus:bg-warmGray focus:text-royalGreen dark:hover:bg-warmGray-dark dark:hover:text-royalGreen-light dark:focus:bg-warmGray-dark dark:focus:text-royalGreen-light hover:scale-[1.01]",
+      ivory
+        ? IVORY_ITEM
+        : "relative flex cursor-default select-none items-center rounded-lg px-2 py-1.5 text-sm outline-none transition-all duration-200 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-warmGray hover:text-royalGreen focus:bg-warmGray focus:text-royalGreen dark:hover:bg-warmGray-dark dark:hover:text-royalGreen-light dark:focus:bg-warmGray-dark dark:focus:text-royalGreen-light hover:scale-[1.01]",
       inset && "pl-8",
       className,
     )}
     {...props}
   />
-));
+  );
+});
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 
 const DropdownMenuCheckboxItem = React.forwardRef<
@@ -119,23 +132,28 @@ DropdownMenuCheckboxItem.displayName = DropdownMenuPrimitive.CheckboxItem.displa
 const DropdownMenuRadioItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.RadioItem>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.RadioItem>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => {
+  const ivory = useIvory();
+  return (
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground",
+      ivory
+        ? `${IVORY_ITEM} pl-9 data-[state=checked]:font-medium`
+        : "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground",
       className,
     )}
     {...props}
   >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+    <span className={ivory ? "absolute left-3 flex h-4 w-4 items-center justify-center text-hec-brass" : "absolute left-2 flex h-3.5 w-3.5 items-center justify-center"}>
       <DropdownMenuPrimitive.ItemIndicator>
         <Circle className="h-2 w-2 fill-current" />
       </DropdownMenuPrimitive.ItemIndicator>
     </span>
     {children}
   </DropdownMenuPrimitive.RadioItem>
-));
+  );
+});
 DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName;
 
 const DropdownMenuLabel = React.forwardRef<
@@ -155,9 +173,12 @@ DropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName;
 const DropdownMenuSeparator = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>
->(({ className, ...props }, ref) => (
-  <DropdownMenuPrimitive.Separator ref={ref} className={cn("-mx-1 my-1 h-px bg-muted", className)} {...props} />
-));
+>(({ className, ...props }, ref) => {
+  const ivory = useIvory();
+  return (
+    <DropdownMenuPrimitive.Separator ref={ref} className={cn(ivory ? "-mx-1 my-1 h-px bg-hec-line" : "-mx-1 my-1 h-px bg-muted", className)} {...props} />
+  );
+});
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
 
 const DropdownMenuShortcut = ({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) => {

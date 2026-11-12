@@ -1,0 +1,140 @@
+{
+ "label": "after",
+ "when": "2026-11-12T04:01:15.371Z",
+ "base": "vite dev server :5342, fake client (NOT production)",
+ "runs": {
+  "motion-reduced-375-light": {
+   "errors": [],
+   "motion": {
+    "cssAnimLongest": {
+     "other": {
+      "ms": 0.01,
+      "el": "DIV.gemini-glow-1 absolute -top-36 -right-32 h-[30rem] w-[30rem]"
+     },
+     "header": {
+      "ms": 0.01,
+      "el": "H1.text-base md:text-xl font-bold text-shimmer"
+     }
+    },
+    "cssTransLongest": {
+     "other": {
+      "ms": 0.01,
+      "el": "DIV."
+     },
+     "header": {
+      "ms": 0.01,
+      "el": "HEADER.sticky top-0 z-50 bg-card/70 backdrop-blur-xl supports-[back"
+     },
+     "nav": {
+      "ms": 0.01,
+      "el": "NAV.fixed inset-x-0 bottom-0 z-[100] border-t border-hec-line bg"
+     },
+     "main": {
+      "ms": 0.01,
+      "el": "MAIN.container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 "
+     }
+    },
+    "waapi": [],
+    "jsStyleAnimating": {},
+    "fromLoad": {}
+   }
+  },
+  "motion-reduced-375-dark": {
+   "errors": [],
+   "motion": {
+    "cssAnimLongest": {
+     "other": {
+      "ms": 0.01,
+      "el": "DIV.gemini-glow-1 absolute -top-36 -right-32 h-[30rem] w-[30rem]"
+     },
+     "header": {
+      "ms": 0.01,
+      "el": "H1.text-base md:text-xl font-bold text-shimmer"
+     }
+    },
+    "cssTransLongest": {
+     "other": {
+      "ms": 0.01,
+      "el": "DIV."
+     },
+     "header": {
+      "ms": 0.01,
+      "el": "HEADER.sticky top-0 z-50 bg-card/70 backdrop-blur-xl supports-[back"
+     },
+     "nav": {
+      "ms": 0.01,
+      "el": "NAV.fixed inset-x-0 bottom-0 z-[100] border-t border-hec-line bg"
+     },
+     "main": {
+      "ms": 0.01,
+      "el": "MAIN.container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 "
+     }
+    },
+    "waapi": [],
+    "jsStyleAnimating": {},
+    "fromLoad": {}
+   }
+  },
+  "motion-normal-375-light": {
+   "errors": [],
+   "motion": {
+    "cssAnimLongest": {
+     "other": {
+      "ms": 14000,
+      "el": "DIV.gemini-glow-2 absolute -bottom-44 -left-36 h-[34rem] w-[34re"
+     },
+     "header": {
+      "ms": 6000,
+      "el": "H1.text-base md:text-xl font-bold text-shimmer"
+     }
+    },
+    "cssTransLongest": {
+     "other": {
+      "ms": 200,
+      "el": "DIV."
+     },
+     "header": {
+      "ms": 200,
+      "el": "HEADER.sticky top-0 z-50 bg-card/70 backdrop-blur-xl supports-[back"
+     },
+     "nav": {
+      "ms": 200,
+      "el": "NAV.fixed inset-x-0 bottom-0 z-[100] border-t border-hec-line bg"
+     },
+     "main": {
+      "ms": 200,
+      "el": "MAIN.container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 "
+     }
+    },
+    "waapi": [
+     {
+      "where": "other",
+      "dur": 25000,
+      "it": null,
+      "el": "BODY."
+     },
+     {
+      "where": "other",
+      "dur": 10000,
+      "it": null,
+      "el": "DIV.gemini-glow-1 absolute -top-36 -right-32 h-[30rem]"
+     },
+     {
+      "where": "other",
+      "dur": 14000,
+      "it": null,
+      "el": "DIV.gemini-glow-2 absolute -bottom-44 -left-36 h-[34re"
+     },
+     {
+      "where": "other",
+      "dur": 12000,
+      "it": null,
+      "el": "DIV.gemini-glow-3 absolute top-1/3 left-1/2 -translate"
+     }
+    ],
+    "jsStyleAnimating": {},
+    "fromLoad": {}
+   }
+  }
+ }
+}
