@@ -22,6 +22,14 @@ import { awardPoints } from "@/lib/pointsHelper";
 import { SKILL_CONFIG, BEHAVIOR_CONFIG, CORRECTION_CONFIG } from "@/lib/skillConfig";
 import { soundManager } from "@/lib/soundManager";
 import { ReadingTheoryScoreEntry } from "./ReadingTheoryScoreEntry";
+import { useIvory } from "@/hooks/useIvory";
+
+// Ivory class strings (DS s.15): label above field, a 44 px choice that shows its selection with a brass edge.
+const LABEL_IVORY = "text-hec-small font-semibold text-hec-ink";
+const CHOICE_IVORY =
+  "min-h-hec-target p-3 rounded-hec-md border transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
+const CHOICE_ON_IVORY = "border-hec-brass bg-hec-sunken";
+const CHOICE_OFF_IVORY = "border-hec-line-strong bg-hec-raised hover:bg-hec-sunken";
 
 interface SelectedStudent {
   id: string;
@@ -55,6 +63,7 @@ export function BulkPointsDialog({
   const [points, setPoints] = useState("");
   const [notes, setNotes] = useState("");
   const queryClient = useQueryClient();
+  const ivory = useIvory();
 
   // Fetch active homework for the class
   const { data: homeworks, isLoading: homeworksLoading } = useQuery({
@@ -209,7 +218,7 @@ export function BulkPointsDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
+            <Users className={ivory ? "h-5 w-5 shrink-0 text-hec-ink-soft" : "h-5 w-5 text-primary"} />
             Add Points to {selectedStudents.length} Students
           </DialogTitle>
           <DialogDescription>
@@ -220,15 +229,15 @@ export function BulkPointsDialog({
         <div className="space-y-6 py-4">
           {/* Selected Students Preview */}
           <div className="space-y-2">
-            <Label className="text-base font-semibold">
+            <Label className={ivory ? LABEL_IVORY : "text-base font-semibold"}>
               Selected Students ({selectedStudents.length})
             </Label>
-            <ScrollArea className="h-24 rounded-lg border p-3 bg-muted/50">
+            <ScrollArea className={ivory ? "h-24 rounded-hec-md border border-hec-line p-3 bg-hec-sunken" : "h-24 rounded-lg border p-3 bg-muted/50"}>
               <div className="flex flex-wrap gap-2">
                 {selectedStudents.map((student) => (
                   <div
                     key={student.id}
-                    className="flex items-center gap-2 bg-background rounded-full px-3 py-1.5 border shadow-sm"
+                    className={ivory ? "flex min-w-0 items-center gap-2 rounded-full border border-hec-line bg-hec-surface px-3 py-1" : "flex items-center gap-2 bg-background rounded-full px-3 py-1.5 border shadow-sm"}
                   >
                     <Avatar className="h-6 w-6">
                       <AvatarImage
@@ -239,7 +248,7 @@ export function BulkPointsDialog({
                         {student.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium">{student.name}</span>
+                    <span className={ivory ? "min-w-0 break-words hyphens-none text-hec-small font-medium text-hec-ink" : "text-sm font-medium"}>{student.name}</span>
                   </div>
                 ))}
               </div>
@@ -248,7 +257,7 @@ export function BulkPointsDialog({
 
           {/* Category Selection */}
           <div className="space-y-3">
-            <Label className="text-base font-semibold">Category *</Label>
+            <Label className={ivory ? LABEL_IVORY : "text-base font-semibold"}>Category *</Label>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               {[
                 { key: "skill", label: "Skill", desc: "Speaking, Listening, etc." },
@@ -261,14 +270,17 @@ export function BulkPointsDialog({
                   key={cat.key}
                   type="button"
                   onClick={() => handleCategoryChange(cat.key as CategoryType)}
-                  className={`p-3 rounded-lg border text-left transition-all ${
+                  aria-pressed={ivory ? category === cat.key : undefined}
+                  className={ivory
+                    ? `${CHOICE_IVORY} text-left ${category === cat.key ? CHOICE_ON_IVORY : CHOICE_OFF_IVORY}`
+                    : `p-3 rounded-lg border text-left transition-all ${
                     category === cat.key
                       ? "border-primary bg-primary/10 ring-1 ring-primary"
                       : "border-border hover:bg-accent/50"
                   }`}
                 >
-                  <div className="font-medium text-sm">{cat.label}</div>
-                  <div className="text-xs text-muted-foreground">{cat.desc}</div>
+                  <div className={ivory ? "text-hec-small font-semibold text-hec-ink" : "font-medium text-sm"}>{cat.label}</div>
+                  <div className={ivory ? "text-hec-caption text-hec-ink-soft" : "text-xs text-muted-foreground"}>{cat.desc}</div>
                 </button>
               ))}
             </div>
@@ -277,7 +289,7 @@ export function BulkPointsDialog({
           {/* Skill/Behavior Selection */}
           {(category === "skill" || category === "behavior") && (
             <div className="space-y-2">
-              <Label className="text-base font-semibold">
+              <Label className={ivory ? LABEL_IVORY : "text-base font-semibold"}>
                 {category === "skill" ? "Skill" : "Behavior"} *
               </Label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -291,14 +303,17 @@ export function BulkPointsDialog({
                         setSelectedSkill(key);
                         setSelectedSubTag("");
                       }}
-                      className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-all ${
+                      aria-pressed={ivory ? selectedSkill === key : undefined}
+                      className={ivory
+                        ? `${CHOICE_IVORY} flex flex-col items-center gap-2 ${selectedSkill === key ? CHOICE_ON_IVORY : CHOICE_OFF_IVORY}`
+                        : `flex flex-col items-center gap-2 p-3 rounded-lg border transition-all ${
                         selectedSkill === key
                           ? "border-primary bg-primary/10 ring-1 ring-primary"
                           : "border-border hover:bg-accent/50"
                       }`}
                     >
-                      <Icon className="h-5 w-5" />
-                      <span className="text-sm font-medium">{config.label}</span>
+                      <Icon className={ivory ? "h-5 w-5 text-hec-ink-soft" : "h-5 w-5"} />
+                      <span className={ivory ? "text-hec-small font-medium text-hec-ink" : "text-sm font-medium"}>{config.label}</span>
                     </button>
                   );
                 })}
@@ -309,7 +324,7 @@ export function BulkPointsDialog({
           {/* Sub-tag Selection */}
           {skillConfig && skillConfig.subTags.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-base font-semibold">
+              <Label className={ivory ? LABEL_IVORY : "text-base font-semibold"}>
                 Reason (optional)
               </Label>
               <Select value={selectedSubTag} onValueChange={setSelectedSubTag}>
@@ -330,7 +345,7 @@ export function BulkPointsDialog({
           {/* Homework Selection */}
           {category === "homework" && (
             <div className="space-y-2">
-              <Label htmlFor="bulk-hw" className="text-base font-semibold">
+              <Label htmlFor="bulk-hw" className={ivory ? LABEL_IVORY : "text-base font-semibold"}>
                 Homework Assignment *
               </Label>
               <Select value={selectedHomework} onValueChange={setSelectedHomework}>
@@ -349,7 +364,7 @@ export function BulkPointsDialog({
                       </SelectItem>
                     ))
                   ) : (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
+                    <div className={ivory ? "p-4 text-center text-hec-small text-hec-ink-soft" : "p-4 text-center text-sm text-muted-foreground"}>
                       No homework assignments found
                     </div>
                   )}
@@ -361,7 +376,7 @@ export function BulkPointsDialog({
           {/* Correction Reason */}
           {category === "correction" && (
             <div className="space-y-2">
-              <Label className="text-base font-semibold">
+              <Label className={ivory ? LABEL_IVORY : "text-base font-semibold"}>
                 Correction Reason *
               </Label>
               <Select value={selectedCorrection} onValueChange={setSelectedCorrection}>
@@ -381,47 +396,47 @@ export function BulkPointsDialog({
 
           {/* Points Amount */}
           <div className="space-y-3">
-            <Label className="text-base font-semibold">Points Amount *</Label>
+            <Label className={ivory ? LABEL_IVORY : "text-base font-semibold"}>Points Amount *</Label>
             <div className="grid grid-cols-4 gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="lg"
                 onClick={() => setPointsQuick(-10)}
-                className="h-14 flex flex-col"
+                className={ivory ? "h-14 flex flex-col gap-1" : "h-14 flex flex-col"}
               >
-                <Minus className="h-4 w-4 text-destructive" />
-                <span className="text-xs mt-1">-10</span>
+                <Minus className={ivory ? "h-4 w-4 text-hec-danger" : "h-4 w-4 text-destructive"} />
+                <span className={ivory ? "text-hec-small font-semibold tabular-nums" : "text-xs mt-1"}>-10</span>
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 size="lg"
                 onClick={() => setPointsQuick(-1)}
-                className="h-14 flex flex-col"
+                className={ivory ? "h-14 flex flex-col gap-1" : "h-14 flex flex-col"}
               >
-                <Minus className="h-4 w-4 text-destructive" />
-                <span className="text-xs mt-1">-1</span>
+                <Minus className={ivory ? "h-4 w-4 text-hec-danger" : "h-4 w-4 text-destructive"} />
+                <span className={ivory ? "text-hec-small font-semibold tabular-nums" : "text-xs mt-1"}>-1</span>
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 size="lg"
                 onClick={() => setPointsQuick(1)}
-                className="h-14 flex flex-col"
+                className={ivory ? "h-14 flex flex-col gap-1" : "h-14 flex flex-col"}
               >
-                <Plus className="h-4 w-4 text-green-600" />
-                <span className="text-xs mt-1">+1</span>
+                <Plus className={ivory ? "h-4 w-4 text-hec-leaf" : "h-4 w-4 text-green-600"} />
+                <span className={ivory ? "text-hec-small font-semibold tabular-nums" : "text-xs mt-1"}>+1</span>
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 size="lg"
                 onClick={() => setPointsQuick(10)}
-                className="h-14 flex flex-col"
+                className={ivory ? "h-14 flex flex-col gap-1" : "h-14 flex flex-col"}
               >
-                <Plus className="h-4 w-4 text-green-600" />
-                <span className="text-xs mt-1">+10</span>
+                <Plus className={ivory ? "h-4 w-4 text-hec-leaf" : "h-4 w-4 text-green-600"} />
+                <span className={ivory ? "text-hec-small font-semibold tabular-nums" : "text-xs mt-1"}>+10</span>
               </Button>
             </div>
             <Input
@@ -429,13 +444,14 @@ export function BulkPointsDialog({
               value={points}
               onChange={(e) => setPoints(e.target.value)}
               placeholder="Or enter custom amount"
-              className="h-12 text-center text-lg font-semibold"
+              aria-label={ivory ? "Points amount" : undefined}
+              className={ivory ? "h-12 text-center text-hec-h3 font-semibold tabular-nums" : "h-12 text-center text-lg font-semibold"}
             />
           </div>
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="bulk-notes" className="text-base font-semibold">
+            <Label htmlFor="bulk-notes" className={ivory ? LABEL_IVORY : "text-base font-semibold"}>
               Additional Notes
             </Label>
             <Textarea
