@@ -148,7 +148,9 @@ async function hintVisible(page, text) {
   return page.evaluate((text) => {
     const fsEl = document.fullscreenElement;
     // deepest elements whose text contains `text` ("+{pts}" renders as two text nodes, so match elements)
-    const cands = [...document.body.querySelectorAll('*')].filter((e) => e.tagName !== 'SCRIPT' && e.tagName !== 'STYLE' && (e.textContent || '').includes(text) && ![...e.children].some((c) => (c.textContent || '').includes(text)));
+    // (an element also counts when its OWN text nodes hold the text: Radix tooltips repeat it in a 1px a11y child)
+    const own = (e) => [...e.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('');
+    const cands = [...document.body.querySelectorAll('*')].filter((e) => e.tagName !== 'SCRIPT' && e.tagName !== 'STYLE' && (e.textContent || '').includes(text) && (own(e).includes(text) || ![...e.children].some((c) => (c.textContent || '').includes(text))));
     for (const el of cands) {
       const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
       if (r.width < 4 || r.height < 4 || cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) === 0) continue;
