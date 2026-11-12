@@ -142,18 +142,21 @@ async function attempt(uid, sql, params = [], role = "authenticated") {
     await db.query(`SELECT set_config('test.uid', $1, true)`, [uid ?? ""]);
     await db.exec(`SET LOCAL ROLE ${role}`);
     const r = await db.query(sql, params);
-    return { rows: r.rows, err: null };
-  } catch (e) { return { rows: [], err: e.message }; }
+    return { rows: r.rows, n: r.affectedRows ?? r.rows.length, err: null };
+  } catch (e) { return { rows: [], n: 0, err: e.message }; }
   finally { await db.exec("ROLLBACK"); }
 }
 // What `who` can do to object `id` (and inserting `newName`): four booleans.
+// No RETURNING on the writes: RETURNING makes Postgres apply the SELECT
+// policies to the new row as well, which would hide a weak UPDATE / INSERT
+// check behind the SELECT one.
 const can = async (who, id, newName, role = "authenticated") => {
   const uid = who;
   const sel = await attempt(uid, `SELECT id FROM storage.objects WHERE id = $1`, [id], role);
-  const upd = await attempt(uid, `UPDATE storage.objects SET metadata = '{"size":1}' WHERE id = $1 RETURNING id`, [id], role);
-  const del = await attempt(uid, `DELETE FROM storage.objects WHERE id = $1 RETURNING id`, [id], role);
-  const ins = await attempt(uid, `INSERT INTO storage.objects (bucket_id, name, owner) VALUES ($1,$2,auth.uid()) RETURNING id`, [BUCKET, newName], role);
-  return { select: sel.rows.length === 1, update: upd.rows.length === 1, delete: del.rows.length === 1, insert: ins.err === null && ins.rows.length === 1 };
+  const upd = await attempt(uid, `UPDATE storage.objects SET metadata = '{"size":1}' WHERE id = $1`, [id], role);
+  const del = await attempt(uid, `DELETE FROM storage.objects WHERE id = $1`, [id], role);
+  const ins = await attempt(uid, `INSERT INTO storage.objects (bucket_id, name, owner) VALUES ($1,$2,auth.uid())`, [BUCKET, newName], role);
+  return { select: sel.rows.length === 1, update: upd.err === null && upd.n === 1, delete: del.err === null && del.n === 1, insert: ins.err === null && ins.n === 1 };
 };
 const ALL = { select: true, update: true, delete: true, insert: true };
 const NONE = { select: false, update: false, delete: false, insert: false };
@@ -223,18 +226,20 @@ eq("teacher A has nothing on class B's audio", await can(TEA, objB, appPath(CB))
 console.log("=== planting and moving ===");
 {
   const r = await attempt(TEB, `INSERT INTO storage.objects (bucket_id, name) VALUES ($1,$2)`, [BUCKET, appPath(CA)]);
-  ok("teacher B cannot upload under class A's folder", r.err !== null && /row-level security/.test(r.err), r.err ?? "allowed");
-  const mv = await attempt(TEA, `UPDATE storage.objects SET name = $2 WHERE id = $1 RETURNING id`, [objA, appPath(CB)]);
-  ok("teacher A cannot move class A's file into class B's folder", mv.err !== null, mv.err ?? "allowed");
-  const mv2 = await attempt(TEB, `UPDATE storage.objects SET name = $2 WHERE id = $1 RETURNING id`, [objB, appPath(CA)]);
-  ok("teacher B cannot move a class B file into class A's folder", mv2.err !== null, mv2.err ?? "allowed");
-  const mv3 = await attempt(TEA, `UPDATE storage.objects SET name = $2 WHERE id = $1 RETURNING id`, [objA, appPath(CA)]);
-  ok("teacher A can rename within class A's folder", mv3.err === null && mv3.rows.length === 1, mv3.err ?? "");
+  ok("teacher B cannot upload under class A's folder (no RETURNING)", r.err !== null && /row-level security/.test(r.err), r.err ?? "allowed");
+  const mv = await attempt(TEA, `UPDATE storage.objects SET name = $2 WHERE id = $1`, [objA, appPath(CB)]);
+  ok("teacher A cannot move class A's file into class B's folder", mv.err !== null, mv.err ?? `allowed (${mv.n} row)`);
+  const mv2 = await attempt(TEB, `UPDATE storage.objects SET name = $2 WHERE id = $1`, [objB, appPath(CA)]);
+  ok("teacher B cannot move a class B file into class A's folder", mv2.err !== null, mv2.err ?? `allowed (${mv2.n} row)`);
+  const mvOdd = await attempt(TEA, `UPDATE storage.objects SET name = $2 WHERE id = $1`, [objA, `${CA}/sub/hidden.mp3`]);
+  ok("teacher A cannot move class A's file to a shape only admins can see", mvOdd.err !== null, mvOdd.err ?? `allowed (${mvOdd.n} row)`);
+  const mv3 = await attempt(TEA, `UPDATE storage.objects SET name = $2 WHERE id = $1`, [objA, appPath(CA)]);
+  ok("teacher A can rename within class A's folder", mv3.err === null && mv3.n === 1, mv3.err ?? "");
   const up = await attempt(TEB, `INSERT INTO storage.objects (bucket_id, name) VALUES ($1,$2)
-                                  ON CONFLICT (bucket_id, name) DO UPDATE SET metadata = '{"x":1}' RETURNING id`,
+                                  ON CONFLICT (bucket_id, name) DO UPDATE SET metadata = '{"x":1}'`,
                            [BUCKET, (await one(`SELECT name FROM storage.objects WHERE id = $1`, [objA])).name]);
   ok("teacher B cannot upsert over class A's file", up.err !== null, up.err ?? "allowed");
-  const other = await attempt(TEA, `INSERT INTO storage.objects (bucket_id, name) VALUES ('homework', $1) RETURNING id`, [appPath(CA)]);
+  const other = await attempt(TEA, `INSERT INTO storage.objects (bucket_id, name) VALUES ('homework', $1)`, [appPath(CA)]);
   ok("these policies do not reach another bucket: teacher A cannot write class A's path into 'homework'", other.err !== null, other.err ?? "allowed");
 }
 
