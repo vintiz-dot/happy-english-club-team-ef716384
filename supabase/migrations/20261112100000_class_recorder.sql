@@ -766,6 +766,11 @@ CREATE TABLE IF NOT EXISTS public.class_recording_chunks (
   -- What storage reported, read by the server at confirmation.
   stored_size   bigint,
   confirmed_at  timestamptz,
+  -- C2 review ruling (a): fewer bytes than the format's floor for its span
+  -- (digital silence, a dead microphone). Accepted and stored - the timeline
+  -- stays whole and nothing is lost - but never evidence: the view leaves it
+  -- out of every verified figure. Set by recorder_register_chunk only.
+  below_floor   boolean NOT NULL DEFAULT false,
   CONSTRAINT class_recording_chunks_span CHECK (t_end_ms > t_start_ms),
   -- Plain UNIQUE: this is the ON CONFLICT target of recorder_register_chunk.
   CONSTRAINT class_recording_chunks_once UNIQUE (recording_id, track, seq),
@@ -1457,7 +1462,9 @@ CREATE TRIGGER class_recording_markers_before_insert
 --
 -- The span the page claims must be possible on the server's evidence:
 --   * no longer than one chunk (chunk_ms + tolerance);
---   * at least min_bytes_per_sec for the format (a 1-byte "90 minutes" is refused);
+--   * below min_bytes_per_sec for the format it is stored but flagged
+--     below_floor and never counted (ruling (a): a silent microphone keeps its
+--     timeline, it does not count as audio); under 40 bytes it is refused;
 --   * not ending later than the server's clock says capture could have got to
 --     (clock_timestamp() - started_at, + tolerance);
 --   * not after Stop (ended_at - started_at, + tolerance), once stopped;
@@ -1517,9 +1524,11 @@ BEGIN
   IF p_t_end_ms - p_t_start_ms > v_rec.chunk_ms + v_rec.clock_tolerance_ms THEN
     RAISE EXCEPTION 'A chunk is at most % ms of audio: refused', v_rec.chunk_ms;
   END IF;
-  IF p_byte_size * 1000 < v_rec.min_bytes_per_sec::bigint * (p_t_end_ms - p_t_start_ms) THEN
-    RAISE EXCEPTION 'This chunk is too small to hold % ms of % audio (at least % bytes a second): refused',
-      p_t_end_ms - p_t_start_ms, v_rec.format, v_rec.min_bytes_per_sec;
+  -- Ruling (a): below the per-format floor is ACCEPTED and flagged below_floor
+  -- (never evidence, see the view). Only something too small to be an audio
+  -- file at all (a FLAC header alone is 42 bytes) is still refused.
+  IF p_byte_size < 40 THEN
+    RAISE EXCEPTION 'This chunk is too small to hold any audio (% bytes): refused', p_byte_size;
   END IF;
   v_elapsed_ms := floor(extract(epoch FROM (clock_timestamp() - v_rec.started_at)) * 1000)::bigint;
   IF p_t_end_ms > v_elapsed_ms + v_rec.clock_tolerance_ms THEN
@@ -1540,9 +1549,10 @@ BEGIN
 
   -- registered_at is the server's clock at this call (N2), never the page's.
   INSERT INTO public.class_recording_chunks
-    (recording_id, track, seq, storage_path, byte_size, sha256, t_start_ms, t_end_ms, registered_by, registered_at)
+    (recording_id, track, seq, storage_path, byte_size, sha256, t_start_ms, t_end_ms, registered_by, registered_at, below_floor)
   VALUES (p_recording, p_track, p_seq, v_path, p_byte_size, lower(p_sha256), p_t_start_ms, p_t_end_ms, v_uid,
-          clock_timestamp())
+          clock_timestamp(),
+          p_byte_size * 1000 < v_rec.min_bytes_per_sec::bigint * (p_t_end_ms - p_t_start_ms))
   ON CONFLICT (recording_id, track, seq) DO NOTHING
   RETURNING id INTO v_new;
 
@@ -1559,6 +1569,7 @@ BEGIN
   RETURN jsonb_build_object(
     'chunk_id', v_row.id, 'storage_path', v_row.storage_path,
     'already_registered', v_new IS NULL, 'confirmed', v_row.confirmed_at IS NOT NULL,
+    'below_floor', v_row.below_floor,
     'late', v_row.registered_at > v_rec.started_at
                                   + ((v_row.t_end_ms + v_rec.late_after_ms) * INTERVAL '1 millisecond'));
 END;
@@ -1813,7 +1824,10 @@ SELECT
   c.first_chunk_registered_at,
   c.last_chunk_registered_at,
   c.first_chunk_confirmed_at,
-  c.last_chunk_confirmed_at
+  c.last_chunk_confirmed_at,
+  -- Ruling (a): confirmed audio below the format's byte floor (silence),
+  -- longest track. Stored, listenable, never evidence.
+  COALESCE(m.below_floor_ms, 0)::bigint AS below_floor_ms
 FROM public.class_recordings r
 CROSS JOIN LATERAL (
   SELECT
@@ -1835,14 +1849,16 @@ LEFT JOIN LATERAL (
                    floor(t.live_bytes * 1000 / r.min_bytes_per_sec)::bigint)) AS verified_audio_ms,
          max(LEAST(t.lesson_ms, w.server_capture_ms,
                    floor(t.lesson_bytes * 1000 / r.min_bytes_per_sec)::bigint)) AS verified_lesson_ms,
-         count(*) AS tracks_with_audio
+         count(*) FILTER (WHERE t.claimed_ms > t.below_floor_ms) AS tracks_with_audio,
+         max(t.below_floor_ms) AS below_floor_ms
   FROM (
     SELECT k.track,
            sum(k.t_end_ms - k.t_start_ms)::bigint AS claimed_ms,
            sum(k.stored_size)::bigint AS stored_bytes,
            COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE o.live), 0)::bigint AS live_ms,
            COALESCE(sum(k.stored_size) FILTER (WHERE o.live), 0)::bigint AS live_bytes,
-           COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE NOT o.live), 0)::bigint AS late_ms,
+           COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE NOT o.live AND NOT k.below_floor), 0)::bigint AS late_ms,
+           COALESCE(sum(k.t_end_ms - k.t_start_ms) FILTER (WHERE k.below_floor), 0)::bigint AS below_floor_ms,
            -- M2: only the part inside the scheduled lesson, its bytes pro rata.
            COALESCE(sum(o.in_lesson_ms) FILTER (WHERE o.live), 0)::bigint AS lesson_ms,
            COALESCE(sum(k.stored_size * o.in_lesson_ms / (k.t_end_ms - k.t_start_ms)) FILTER (WHERE o.live), 0)::bigint
@@ -1857,7 +1873,9 @@ LEFT JOIN LATERAL (
     CROSS JOIN LATERAL (
       -- Live (N2, M1): the server registered the chunk AND confirmed its bytes
       -- in storage within late_after of the moment it claims to end.
-      SELECT COALESCE(k.registered_at <= r.started_at
+      -- Ruling (a): a below_floor chunk (silence) is never live.
+      SELECT COALESCE(NOT k.below_floor
+                      AND k.registered_at <= r.started_at
                         + ((k.t_end_ms + r.late_after_ms) * INTERVAL '1 millisecond')
                       AND k.confirmed_at <= r.started_at
                         + ((k.t_end_ms + r.late_after_ms) * INTERVAL '1 millisecond'), false) AS live,
