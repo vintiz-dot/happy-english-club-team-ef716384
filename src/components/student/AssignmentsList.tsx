@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Calendar, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import HomeworkSubmission from "./HomeworkSubmission";
+import { useIvory } from "@/hooks/useIvory";
+import { getHomeworkStatus, ivoryStatusConfig } from "@/lib/homeworkStatus";
+import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface AssignmentsListProps {
@@ -16,6 +19,8 @@ interface AssignmentsListProps {
 
 export default function AssignmentsList({ studentId }: AssignmentsListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // "Ivory" design system on a listed route; today's classes elsewhere (this list is on the `/` page).
+  const ivory = useIvory();
 
   const { data: assignments, isLoading } = useQuery({
     queryKey: ["student-assignments", studentId],
@@ -50,13 +55,14 @@ export default function AssignmentsList({ studentId }: AssignmentsListProps) {
           <CardTitle>Assignments</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-muted-foreground py-8">No assignments yet</p>
+          <p className={cn("text-center py-8", ivory ? "text-hec-ink-soft" : "text-muted-foreground")}>No assignments yet</p>
         </CardContent>
       </Card>
     );
   }
 
   const getCardStatusClass = (assignment: any) => {
+    if (ivory) return cn("border", ivoryStatusConfig[getHomeworkStatus(assignment)].panelClass);
     const now = new Date();
     const dueDate = assignment.due_date ? new Date(assignment.due_date) : null;
     const submission = assignment.submission;
@@ -98,7 +104,7 @@ export default function AssignmentsList({ studentId }: AssignmentsListProps) {
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                   {assignment.submission?.status === "graded" && assignment.submission.grade && (
-                    <Badge variant="default" className="bg-emerald-600">
+                    <Badge variant="default" className={ivory ? undefined : "bg-emerald-600"}>
                       {assignment.submission.grade}
                     </Badge>
                   )}
