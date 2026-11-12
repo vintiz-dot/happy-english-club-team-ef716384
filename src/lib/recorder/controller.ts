@@ -98,7 +98,8 @@ export class Recorder {
   private wakeLock: any = null;
   private backupDir: any = null;
   private lockRelease: (() => void) | null = null;
-  private driving = new Set<string>();
+  private driving = new Map<string, Promise<void>>();
+  private driveAgain = new Set<string>();
   private lastTickPerf = 0;
   private lastTickCtx = 0;
   private disposed = false;
@@ -274,9 +275,19 @@ export class Recorder {
   }
 
   /** Upload and finish everything that can be finished now. Safe to call any time. */
-  async drive(recordingId: string): Promise<void> {
-    if (this.driving.has(recordingId)) return;
-    this.driving.add(recordingId);
+  drive(recordingId: string): Promise<void> {
+    const have = this.driving.get(recordingId);
+    if (have) { this.driveAgain.add(recordingId); return have; }
+    const p = this.driveOnce(recordingId).finally(() => {
+      this.driving.delete(recordingId);
+      // Something arrived while that pass ran (a new chunk): one more pass.
+      if (this.driveAgain.delete(recordingId)) void this.drive(recordingId);
+    });
+    this.driving.set(recordingId, p);
+    return p;
+  }
+
+  private async driveOnce(recordingId: string): Promise<void> {
     try {
       let rec = await this.o.store.getRecording(recordingId);
       if (!rec) return;
@@ -322,8 +333,6 @@ export class Recorder {
       }
     } catch (e) {
       this.events.emit("error", toRecorderError(e));
-    } finally {
-      this.driving.delete(recordingId);
     }
   }
 
@@ -356,7 +365,10 @@ export class Recorder {
 
   /** Resolves when queued control steps and chunk writes have run (tests; a "Saving..." spinner). */
   async settle(): Promise<void> {
-    for (let i = 0; i < 5; i++) { await this.work; await this.io; }
+    for (let i = 0; i < 8; i++) {
+      await this.work; await this.io;
+      await Promise.all([...this.driving.values()]);
+    }
   }
 
   /** The local copy of the current recording (for the UI's details panel). */

@@ -150,8 +150,10 @@ export class Uploader {
         const v = checkChunkLocally(c.byteSize, c.tStartMs, c.tEndMs, {
           chunkMs: rec.chunkMs, minBytesPerSec: rec.minBytesPerSec, clockToleranceMs: rec.clockToleranceMs, windowMs,
         });
-        if (!v.ok) {
-          await this.refuse(rec, c, v.refusal === "bad_span" ? "span_too_long" : v.refusal, true);
+        if (v.ok === false) {
+          // (strict is off in this repo, so the union is not narrowed: read it explicitly.)
+          const refusal = (v as { refusal: "span_too_long" | "below_byte_floor" | "after_window" | "bad_span" }).refusal;
+          await this.refuse(rec, c, refusal === "bad_span" ? "span_too_long" : refusal, true);
           return true;
         }
         const r = await this.backend.registerChunk({ recording: rec.id, track: c.track, seq: c.seq, byteSize: c.byteSize, sha256: c.sha256, tStartMs: c.tStartMs, tEndMs: c.tEndMs });
