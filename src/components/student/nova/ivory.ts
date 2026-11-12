@@ -38,6 +38,20 @@ export const BUTTON_QUIET = `${BUTTON} text-hec-ink hover:bg-hec-sunken`;
 export const BUTTON_BRASS = `${BUTTON} bg-hec-brass-fill text-hec-on-brass hover:bg-hec-brass-fill/90`;
 
 /**
+ * framer-motion's useReducedMotion() can answer null on the very first render,
+ * which is exactly when `initial` is read. Fall back to the media query so a
+ * reduced-motion device never sees the first frame animate.
+ */
+export function reducedMotion(fromHook: boolean | null): boolean {
+  if (fromHook != null) return fromHook;
+  try {
+    return typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * One quiet entrance: opacity and an 8 px rise, 240 ms, the system's easing
  * (section 9). Under reduced motion there is no entrance at all.
  * Pass the result of framer-motion's useReducedMotion().

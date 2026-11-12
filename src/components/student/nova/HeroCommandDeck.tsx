@@ -14,7 +14,7 @@ import { LevelProgressRing } from "@/components/student/LevelProgressRing";
 import { MascotCompanion } from "@/components/student/MascotCompanion";
 import { cn } from "@/lib/utils";
 import { Edit, Zap, Flame, Star, Trophy } from "lucide-react";
-import { BADGE_NEUTRAL, BADGE_BRASS, FOCUS, LABEL, WARM_CARD } from "./ivory";
+import { BADGE_NEUTRAL, BADGE_BRASS, FOCUS, LABEL, WARM_CARD, reducedMotion } from "./ivory";
 
 interface Vital {
   icon: React.ElementType;
@@ -46,7 +46,7 @@ export function HeroCommandDeck({
   levelTitle, level, currentXp, nextLevelXp, progress, totalXp,
   streak, pendingHomework, classesThisWeek, isMonitor, onEditProfile,
 }: Props) {
-  const reduce = useReducedMotion();
+  const reduce = reducedMotion(useReducedMotion());
   // Where the mascot's message is drawn: a row under the name, in the flow.
   const [messageSlot, setMessageSlot] = useState<HTMLDivElement | null>(null);
 

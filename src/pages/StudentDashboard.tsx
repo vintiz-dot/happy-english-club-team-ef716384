@@ -41,7 +41,7 @@ import { HeroCommandDeck } from "@/components/student/nova/HeroCommandDeck";
 import { NovaStatCard } from "@/components/student/nova/NovaStatCard";
 import { QuickActionDock, type DockAction } from "@/components/student/nova/QuickActionDock";
 import { SectionHeading } from "@/components/student/nova/SectionHeading";
-import { BUTTON_QUIET, CARD, CARD_TITLE } from "@/components/student/nova/ivory";
+import { BUTTON_QUIET, CARD, CARD_TITLE, reducedMotion } from "@/components/student/nova/ivory";
 import { cn } from "@/lib/utils";
 
 // Animation variants. "Ivory" design system: the page arrives once, as one
@@ -112,7 +112,7 @@ export default function StudentDashboard() {
   const tabFromUrl = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(tabFromUrl || "dashboard");
   const greeting = useMemo(() => getGreeting(), []);
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = reducedMotion(useReducedMotion());
 
   // Sync tab with URL
   useEffect(() => {

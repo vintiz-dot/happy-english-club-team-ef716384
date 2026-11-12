@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/lib/avatars";
 import { Star, Zap } from "lucide-react";
 import { getLevelTitle } from "@/lib/levelUtils";
+import { reducedMotion } from "@/components/student/nova/ivory";
 
 interface LevelProgressRingProps {
   avatarUrl?: string | null;
@@ -33,7 +34,7 @@ export function LevelProgressRing({
   size = "lg",
   ivory = false,
 }: LevelProgressRingProps) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = reducedMotion(useReducedMotion());
   const dimensions = {
     sm: { ring: 80, avatar: 60, stroke: 3, badge: "text-xs px-2 py-0.5" },
     md: { ring: 110, avatar: 84, stroke: 4, badge: "text-sm px-3 py-1" },
