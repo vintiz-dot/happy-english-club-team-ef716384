@@ -109,3 +109,82 @@ G-8: "If D1 cannot be read from inside the trigger (the caller is someone D1 ref
 - **Cost:** one D1 call (about a dozen indexed reads) per lesson per transaction, only when a person's mark, a positive participation row, a transcript or a homework row is changed or removed on a STARTED lesson; skipped when the floor is already STRONG. A cancel now costs two D1 calls instead of one (assess, then the keep): fine at the 50-item bulk cap. Storage: one row per lesson that ever lost evidence, causes capped at 20. Acceptable.
 - **Locks, A-12:** the attendance keep runs under the session row lock the existing guard already takes, so its floor upsert is serialised. The point / transcript / homework keeps take no session lock and may upsert floor rows for two lessons of one class-day in row order; two concurrent deletes can deadlock. Sort the lessons by id inside the keep.
 - **One rule, A-2:** put `max(level now, floor)` in one function (`session_effective_level(session_id, d1 jsonb)`) used by assess, by `use_cancel` and by the automation lane, and say in D1's header that D5's owner SQL must call it, not D1 alone.
+
+---
+
+## 3. The money-change guard (reach -> tier)
+
+**Is reach computed in the database, in the transaction of the write, from server-side facts?** Yes, twice: `_money_change_plan` under the advisory lock and the target row locks, and again by each table's trigger at the moment of the write (`tuition_reach` / `payroll_reach` are STABLE definer functions reading tables only; nothing from the client decides). The bills the reach reads are not locked, hence A-8. The facts themselves are the weak part: R-1.
+
+**Can the preview be stale at confirm?** Not usefully: the token covers the args, the tier, `md5(row_before)` and a fingerprint of the reached bills and their states, and is recomputed under the locks (HC011). A T0 change needs no token, which is right.
+
+**Does it fail closed when reach cannot be computed?** As specified, yes: any error in `tuition_month_state` is tier 3, a NULL is 3, an unknown lane is a person. Three places where the design chooses open, to be decided knowingly:
+1. A past month with no bill row and no lesson of the child's class is T0. Fine.
+2. `mark-attendance` treats a missing `attendance_change_allowed` as "behave as before". PostgREST also answers PGRST202 for a few seconds after a paste, before its schema cache reloads. A-13: when the RPC is missing and the lesson's month is past, answer 503 and write nothing.
+3. The reach of an enrollment or discount write is the row's OWN child. Ending child A's enrollment can change the family's sibling winner and so child B's bill for the same months; B is in neither the tier nor `refresh_pairs`. I could not establish from the files read whether an already assigned month is re-decided (see "Could not assess"). **R-8a:** the oracle (f.3) uses a family of TWO children with a sibling discount and asserts over both children's bills; if it goes red, the reach of enrollment and discount ops becomes "every child of the family".
+
+### R-8 (blocker) "Confirmed in the current month = T2" plus "teachers are refused at T1+" stops the daily register
+
+b.0: the current month is T0 unless the bill is confirmed, adjusted or frozen, then T2. G-11: a teacher is refused at T1 or more; an admin needs the dialog.
+- Scenario: the admin confirms November's bills on the 3rd (the design itself expects "the week bills are confirmed"). On the 10th a child is ill. The teacher opens today's register and switches that child from the seeded Present to Excused: HC025, "ask an administrator" - for today's lesson, every day until December. The admin then types a 15-character reason for each ordinary absence, which is exactly the "ok ok ok" habit b.0 says it wants to avoid. `stars_sync_resolve_conflict` is refused the same way.
+- Smallest change: a register mark is register work while the lesson is recent. G-11 does not apply to a lesson that ended 7 days ago or less (the same 7 days G-6 already uses for assistants), on any lane, whatever the bill's state; T1 of the invoice-status rules already flags a confirmed bill that moves (`needs_review`, `changed_after_confirmation`). After 7 days: a teacher is refused (by the lesson's age, not the bill - A-3), an admin gets the tier of the table. f.2: "confirmed current month, lesson today, teacher marks Excused -> allowed".
+
+### R-9 (blocker) G-14 turns a silent, lazy re-pricing of history into a reasoned, immediate one - done by D4 itself
+
+Today a class-fee change re-prices an unfrozen past bill "the next time it is opened". With G-14 the admin gives a reason, and then the standard refresh runs calculate-tuition for every `(child, month)` in `refresh_pairs` - which f.3 requires to contain every past month that moves. So one honest fee rise:
+- asks for T2 or T3 (past months are paid in advance, many confirmed): reason, tick, second reason, review queue, and a second admin when approval is on (`tier3`, `families`, `paid` all fire). That is the opposite of "an honest future fee rise passes without friction";
+- then re-prices every unfrozen past bill of the class in one go, flips confirmed bills to `needs_review`, and leaves paid families owing a difference for months they settled. The money rule is "never rewrite historical invoices"; the design's own text says G-14 "does not stop" this;
+- and cannot finish: a class of 12 over 10 months is 120 calculator calls against a limit of 30 a minute (review-3 F-8 already found the bulk refresh mostly fails on its first pass).
+
+Is the answer effective-dated rows? Yes, and it matches what the project already has: `staff_pay_rates(effective_from)` with one resolver (`payHistory` / `pay-history`, a mirrored pair) and `class_schedule_versions(effective_from)`. A `class_fee_history(class_id, effective_from, session_rate_vnd)` with a "fee on the lesson's date" resolver in calculate-tuition is the same shape; the first row is dated before the class's first lesson so no existing figure moves (the golden file proves it). It is NOT the enrollment pattern (splitting rows): a class fee is one value for many children.
+
+Smallest change to D4, in order of preference:
+1. Build dated class fees as part of D4 (a step B0 before B1; it touches calculate-tuition and its bulk and projected readers, so it needs its own golden-figure gate). G-14 then guards only a row whose `effective_from` is in a past month - the pay-rate rule, word for word - and an honest rise from next month is T0.
+2. If it stays a follow-up: G-14 refuses (does not merely ask) while any unfrozen past bill of the class is paid, confirmed or adjusted, and the dialog offers the way forward as a button, "Freeze these N past bills, then change the fee" (freezing is the existing, protective write; one reasoned batch). `refresh_pairs` for `class_rate` holds the current month onward only; past months are listed, never refreshed by D4.
+Either way the owner is told in plain words not to change a class fee before this ships.
+
+### Dated terms for enrollments (`set_terms_from`): right, with two conditions
+
+Consistent with `change_enrollment_days` and the rule in `supabase/AGENTS.md`. A-14: (1) the screens offer "from this date" as the default and the whole-span `set_rate` / `set_discount` only as "correct a mistake for the whole enrolment" - otherwise staff will keep choosing the in-place edit and meeting T2/T3; (2) `supabase/AGENTS.md` says a weekday split "preserves a discount rather than creating another" because identical terms are grouped once; a terms split makes the two halves differ on purpose, so the oracle needs a case with a once-per-month and a per-lesson discount across the split date.
+
+---
+
+## 4. Fail-closed, and the existing guards
+
+Weakened or routed around:
+- **The live session guard.** Not weakened in logic. Three things to pin: (1) C-1 / R-6, the delete of a cancelled lesson; (2) M1 replaces `_session_change_apply` with a new signature and drops the old one while the LIVE `manage-session` v4 and `bulk-cancel-sessions` v4 are still deployed. The design says the four public wrappers "pass one more argument". **R-10:** state that the public signatures of `cancel_session_checked`, `move_session_checked`, `uncancel_session_checked`, `cancel_sessions_checked_bulk` and `session_change_preview` are unchanged, and add a test that drives the CURRENT functions (as the release commit has them) against prelude + M1; (3) G-1 makes the trigger modify `NEW` for the first time. It runs last (`zz_`), so no later BEFORE trigger sees a stale value; say so, and assert `audit_log` gets no row for the kept lesson.
+- **Closed-payroll trigger:** untouched. `reteach` / `retime` / `restaff` in a locked month never write `payroll_lines`. Good.
+- **Frozen bills:** strengthened (G-16). Under R-9 option 2 the freeze becomes a tool; unfreezing those bills later is T2/T3, which is the intended direction.
+- **Invoice-status rules:** D4 writes no label and its refresh is the standard calculate-tuition call. The R-1 floor trigger must be BEFORE and must never change `NEW`, so `_lib/invoice-status.ts` keeps deciding the labels.
+- **The two-step:** kept for T1+. The approval hook sits inside the apply with `COALESCE(required, true)`. That is closed, but it means a damaged settings row or a failing `change_approval_needed` stops every checked change in the school while approval is "off". A-15: a missing settings row raises HC050 `guard_broken` with the repair statement, instead of reading as "approval required".
+
+Does the design itself rewrite history?
+- Migrations: no `UPDATE` of an existing row, no backfill; the two `ALTER TABLE`s touch the override table's shape only. Good.
+- At run time: the G-14 refresh (R-9). The G-9 residue refresh re-prices the bill of a child whose mark was swapped away before D4; that corrects a bill that is already wrong and is recorded - accepted.
+- `reteach` sets `is_manual = true` and `manual_reason` on the lesson. Harmless for a Held lesson (the rebuild only touches future Scheduled ones); say it in the build note so nobody reads it as a schedule change.
+- `('attendance','set_marks')` writes `marked_by = the admin`. D1 then reads those rows as a person's register (STRONG). An admin correcting last month's mark from the office creates "a person recorded the child as there". Accepted by D1's rule (an admin's mark counts), but the dialog should say "this is recorded as your mark".
+
+Owner lane (C-3), A-1: keep it, but (1) each pass on the owner lane that a person would have needed a reason for inserts one event row (`owner_lane`, table, id) - a trigger can insert without raising - so the review screen shows it; (2) the release note lists the pg_cron jobs found on live before the paste (the D0 "unknown").
+
+---
+
+## 5. Two-admin approval (built OFF)
+
+- **Can the requester edit the request after approval?** No. There is no "approved, not yet applied" state: approving IS applying, in one transaction, and both tables are append-only. Good.
+- **Is what is approved bound to the exact change?** Yes: the request stores the checked function's arguments (reason included) and a fingerprint; the approver's call recomputes the plan under the locks and compares; `_change_request_claim` accepts only this request, this fingerprint, this transaction. A different change cannot ride on it. One inconsistency to settle, A-16: the override stores `actor_user_id = A`, but the write runs as B, so `sessions.canceled_by` / `updated_by` and `audit_log.actor` say B. Write the requester into `canceled_by`, or say in the review screen that the audit row shows the approver.
+- **Expiry:** 7 days, fixed at request, staleness checked at approval anyway. Fine.
+- **What a waiting request blocks:** only a second request for the same target (HC063). Month close and confirmation are not blocked. Agreed. HC063's text must say what to do: "open it and approve, reject, or ask the requester to withdraw".
+
+### R-12 (required before approval may be switched ON; cheap to specify now) The amount and family lines can be split
+
+Impact is computed per plan, and a bulk is "one request per item".
+- Scenario: BulkEnrollmentDateSetter over a class of 15 children from 15 families, each with paid past bills. Each item is one enrollment: `families = 1`, `paid_vnd` about one child's months. No item reaches 3 families or 5,000,000 VND. The one tool the `families` line was written for never trips it. By hand the same works for discounts, one child and one month at a time.
+- Smallest change: (1) `money_changes_checked_bulk` and the session bulk compute ONE impact over the whole batch (distinct families, summed payments) and every item inherits "approval required"; one request per batch, which the approver reads as a list; (2) `change_approval_needed` adds the same actor's applied T2+ changes of the last 24 hours to `families` and `paid_vnd`. Test: 15 single-family items -> required.
+
+Also specify before it can be turned on:
+- **Deadlock.** Two admins, one away for two weeks: every T3, closed-month and unfreeze change stops, and the only way out is one statement in the SQL editor that switches the whole rule off. For a non-technical owner at 8 pm that is the wrong shape: it is all or nothing and leaves no trace in the approval tables. A-17: a setting `solo_release_after_hours` (NULL = never, the default). When set, the requester may apply their own request once it has waited that long with no decision; the override is stored with `approved_by NULL`, `released_alone = true`, is always in the review queue, and the absent admin sees it first on return. A delayed, recorded act by a named person is not a bypass; switching the guard off from SQL is closer to one.
+- **Granting the admin role while ON** "needs the other admin", but no checked function for it exists in the RPC list (`rpc` names "which checked function this will run"). As designed, adding an admin while approval is on is possible only from the SQL editor. Say that, or add `grant_admin_checked`. A-18.
+- **Resetting the other admin's password** through an admin tool is a second account under one person's control made on the spot. Out of scope as stated, but `zz_admin_grant_guard` covers only `user_roles`; list any admin password-reset function as a residual the owner reads on the day it is switched on.
+- **T3 is wider than (e) says.** With the floor, "settled" is judged over every child, and months are paid in advance, so nearly every cancel of a lesson that ever had a register is T3. The load estimate ("a handful a month") should be re-stated after R-6 and R-8.
+
+**Thresholds for a small school:** T3, closed payroll month and unfreeze as fixed lines - agreed. Three families - agreed once batches count as one (R-12). 5,000,000 VND - the design's own example fee is 150,000 to 170,000 a lesson, so roughly 1.2 to 1.4 million a child a month; 5,000,000 is three to four months of one child, a sensible line for "one family, but a lot". Loosening the rule needing the other admin - agreed. Add `payroll_adjustments` (A-4).
