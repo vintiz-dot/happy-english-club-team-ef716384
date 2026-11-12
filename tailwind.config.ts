@@ -92,6 +92,83 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
           glass: "hsla(var(--sidebar-glass))",
         },
+        // "Ivory" design system (docs/DESIGN_SYSTEM.md). The variables exist
+        // only inside [data-hec-theme="ivory"]; use these names only there.
+        hec: {
+          paper: "hsl(var(--hec-paper) / <alpha-value>)",
+          surface: "hsl(var(--hec-surface) / <alpha-value>)",
+          raised: "hsl(var(--hec-raised) / <alpha-value>)",
+          sunken: "hsl(var(--hec-sunken) / <alpha-value>)",
+          honey: "hsl(var(--hec-honey) / <alpha-value>)",
+          ink: {
+            DEFAULT: "hsl(var(--hec-ink) / <alpha-value>)",
+            soft: "hsl(var(--hec-ink-soft) / <alpha-value>)",
+            faint: "hsl(var(--hec-ink-faint) / <alpha-value>)",
+          },
+          line: {
+            DEFAULT: "hsl(var(--hec-line) / <alpha-value>)",
+            strong: "hsl(var(--hec-line-strong) / <alpha-value>)",
+          },
+          brass: {
+            DEFAULT: "hsl(var(--hec-brass) / <alpha-value>)",
+            fill: "hsl(var(--hec-brass-fill) / <alpha-value>)",
+          },
+          "on-brass": "hsl(var(--hec-on-brass) / <alpha-value>)",
+          action: "hsl(var(--hec-action) / <alpha-value>)",
+          "on-action": "hsl(var(--hec-on-action) / <alpha-value>)",
+          leaf: {
+            DEFAULT: "hsl(var(--hec-leaf) / <alpha-value>)",
+            tint: "hsl(var(--hec-leaf-tint) / <alpha-value>)",
+          },
+          warn: {
+            DEFAULT: "hsl(var(--hec-warn) / <alpha-value>)",
+            tint: "hsl(var(--hec-warn-tint) / <alpha-value>)",
+          },
+          danger: {
+            DEFAULT: "hsl(var(--hec-danger) / <alpha-value>)",
+            fill: "hsl(var(--hec-danger-fill) / <alpha-value>)",
+            tint: "hsl(var(--hec-danger-tint) / <alpha-value>)",
+          },
+          "on-danger": "hsl(var(--hec-on-danger) / <alpha-value>)",
+          ring: "hsl(var(--hec-ring) / <alpha-value>)",
+          logo: "hsl(var(--hec-logo) / <alpha-value>)",
+          scrim: "hsl(var(--hec-scrim) / <alpha-value>)",
+        },
+      },
+      fontFamily: {
+        // System stacks, no web font. The fallback after the comma is what an
+        // element outside the scope would get.
+        display: ["var(--hec-font-display, ui-serif, Georgia, serif)"],
+        serif: ["var(--hec-font-display, ui-serif, Georgia, serif)"],
+      },
+      fontSize: {
+        "hec-display": ["var(--hec-text-display)", { lineHeight: "var(--hec-leading-display)", letterSpacing: "-0.01em" }],
+        "hec-h1": ["var(--hec-text-h1)", { lineHeight: "var(--hec-leading-h1)", letterSpacing: "-0.005em" }],
+        "hec-h2": ["var(--hec-text-h2)", { lineHeight: "var(--hec-leading-h2)" }],
+        "hec-h3": ["var(--hec-text-h3)", { lineHeight: "var(--hec-leading-h3)" }],
+        "hec-body": ["var(--hec-text-body)", { lineHeight: "var(--hec-leading-body)" }],
+        "hec-small": ["var(--hec-text-small)", { lineHeight: "var(--hec-leading-small)" }],
+        "hec-caption": ["var(--hec-text-caption)", { lineHeight: "var(--hec-leading-caption)" }],
+      },
+      boxShadow: {
+        "hec-1": "var(--hec-shadow-1)",
+        "hec-2": "var(--hec-shadow-2)",
+        "hec-3": "var(--hec-shadow-3)",
+      },
+      minHeight: {
+        "hec-target": "var(--hec-target)",
+      },
+      minWidth: {
+        "hec-target": "var(--hec-target)",
+      },
+      transitionDuration: {
+        "hec-1": "var(--hec-dur-1)",
+        "hec-2": "var(--hec-dur-2)",
+        "hec-3": "var(--hec-dur-3)",
+      },
+      transitionTimingFunction: {
+        hec: "var(--hec-ease)",
+        "hec-in-out": "var(--hec-ease-in-out)",
       },
       backdropBlur: {
         xs: "2px",
@@ -112,6 +189,9 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "hec-sm": "var(--hec-radius-sm)",
+        "hec-md": "var(--hec-radius-md)",
+        "hec-lg": "var(--hec-radius-lg)",
       },
       keyframes: {
         "accordion-down": {
