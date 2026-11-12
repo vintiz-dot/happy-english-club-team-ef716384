@@ -1,7 +1,7 @@
 /**
  * StudentActionPopover — the live-teaching command center.
  *
- * Opens on any student element mid-class: an aurora identity band with the
+ * Opens on any student element mid-class: an identity band with the
  * student's live stats, followed by zero-reload micro-actions —
  * attendance (Present / Late / Absent), Quick Award +5, the full
  * skill/behavior grid, and Flag-for-Review (error log + auto flashcard).
@@ -61,15 +61,18 @@ const panelMotion = {
   transition: { duration: 0.15 },
 };
 
-/** Tone gradients for the skill/behavior tiles, keyed by skill id. */
-const SKILL_TONES: Record<string, string> = {
-  speaking: "from-blue-500/15 to-sky-500/5 hover:ring-blue-500/40 text-blue-600 dark:text-blue-300",
-  listening: "from-violet-500/15 to-purple-500/5 hover:ring-violet-500/40 text-violet-600 dark:text-violet-300",
-  reading: "from-emerald-500/15 to-teal-500/5 hover:ring-emerald-500/40 text-emerald-600 dark:text-emerald-300",
-  writing: "from-amber-500/15 to-orange-500/5 hover:ring-amber-500/40 text-amber-600 dark:text-amber-300",
-  focus: "from-cyan-500/15 to-sky-500/5 hover:ring-cyan-500/40 text-cyan-600 dark:text-cyan-300",
-  teamwork: "from-pink-500/15 to-rose-500/5 hover:ring-pink-500/40 text-pink-600 dark:text-pink-300",
-};
+/** DESIGN_SYSTEM s.10: the one focus ring. */
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
+
+/** The three attendance buttons: a state panel colour, an icon and the word (s.14). */
+const ATTENDANCE_BUTTON = cn(
+  "flex min-h-hec-target items-center justify-center gap-1 rounded-hec-md border px-2 text-hec-small font-medium",
+  "transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken disabled:opacity-50",
+  FOCUS,
+);
+
+const SECTION_LABEL = "text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft";
 
 export function StudentActionPopover({
   studentId,
@@ -239,15 +242,15 @@ export function StudentActionPopover({
 
   const attendanceChip = () => {
     const s = (live?.attendanceStatus || "").toLowerCase();
-    const base = "flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold backdrop-blur-sm";
+    const base = "inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3 py-1 text-hec-caption font-medium";
     if (s === "present")
-      return <span className={`${base} bg-emerald-400/25 text-emerald-100 ring-1 ring-emerald-300/40`}><CheckCircle2 className="h-3 w-3" />Present</span>;
+      return <span className={`${base} border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf`}><CheckCircle2 className="h-3 w-3" aria-hidden />Present</span>;
     if (s === "late")
-      return <span className={`${base} bg-amber-400/25 text-amber-100 ring-1 ring-amber-300/40`}><Clock className="h-3 w-3" />Late</span>;
+      return <span className={`${base} border-hec-warn/30 bg-hec-warn-tint text-hec-warn`}><Clock className="h-3 w-3" aria-hidden />Late</span>;
     if (s === "absent")
-      return <span className={`${base} bg-rose-400/25 text-rose-100 ring-1 ring-rose-300/40`}><XCircle className="h-3 w-3" />Absent</span>;
+      return <span className={`${base} border-hec-danger/30 bg-hec-danger-tint text-hec-danger`}><XCircle className="h-3 w-3" aria-hidden />Absent</span>;
     if (live?.sessionId)
-      return <span className={`${base} bg-white/15 text-white/80 ring-1 ring-white/25`}>Unmarked</span>;
+      return <span className={`${base} border-hec-line bg-hec-raised text-hec-ink-soft`}>Unmarked</span>;
     return null;
   };
 
@@ -258,102 +261,103 @@ export function StudentActionPopover({
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent className="w-[21rem] p-0 overflow-hidden" align="center" sideOffset={6}>
-        {/* Aurora identity band */}
-        <div className="relative overflow-hidden bg-aurora hero-sheen px-3.5 pt-3 pb-2.5 text-white">
-          <div className="nova-grid-light absolute inset-0 pointer-events-none" />
-          <div className="relative flex items-center gap-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm text-sm font-black ring-1 ring-white/30">
+        {/* Identity band: who this is, today's numbers, attendance state */}
+        <div className="border-b border-hec-line bg-hec-sunken px-4 py-3 text-hec-ink">
+          <div className="flex items-start gap-3">
+            <div
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-hec-line bg-hec-raised text-hec-small font-semibold text-hec-ink-soft"
+              aria-hidden
+            >
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold drop-shadow-sm">{studentName}</p>
-              <div className="mt-0.5 flex items-center gap-2 text-[11px] text-white/80">
+              <p className="whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{studentName}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-hec-caption text-hec-ink-soft">
                 {live && (
                   <>
-                    <span className="flex items-center gap-1">
-                      <Zap className="h-3 w-3 text-amber-300" />
-                      <span className="font-bold text-white">{live.pointsToday}</span> today
+                    <span className="flex items-center gap-1 whitespace-nowrap">
+                      <Zap className="h-3.5 w-3.5 text-hec-brass" aria-hidden />
+                      <span className="font-sans font-semibold tabular-nums text-hec-ink">{live.pointsToday}</span> today
                     </span>
-                    <span>
-                      <span className="font-bold text-white">{live.pointsMonth}</span> this month
+                    <span className="whitespace-nowrap">
+                      <span className="font-sans font-semibold tabular-nums text-hec-ink">{live.pointsMonth}</span> this month
                     </span>
                   </>
                 )}
               </div>
             </div>
             {liveLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-white/80 shrink-0" />
+              <Loader2 className="h-4 w-4 animate-spin text-hec-ink-soft shrink-0" />
             ) : (
               attendanceChip()
             )}
           </div>
-          <div className="hairline-gradient absolute inset-x-0 bottom-0 h-px" />
         </div>
 
         <AnimatePresence mode="wait" initial={false}>
           {panel === "main" && (
-            <motion.div key="main" {...panelMotion} className="p-2.5 space-y-2">
+            <motion.div key="main" {...panelMotion} className="p-3 space-y-3">
               {/* Attendance micro-actions */}
               {canManagePoints && live?.sessionId && (
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     disabled={isBusy}
                     onClick={() => attendanceMutation.mutate("Present")}
-                    className="flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold text-white bg-gradient-to-br from-emerald-500 to-teal-600 shadow-[0_4px_12px_-4px_rgba(16,185,129,0.6)] transition-transform hover:scale-[1.04] active:scale-95 disabled:opacity-50"
+                    className={cn(ATTENDANCE_BUTTON, "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf")}
                   >
-                    <CheckCircle2 className="h-3.5 w-3.5" />Present
+                    <CheckCircle2 className="h-4 w-4" aria-hidden />Present
                   </button>
                   <button
                     disabled={isBusy}
                     onClick={() => attendanceMutation.mutate("Late")}
-                    className="flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold text-white bg-gradient-to-br from-amber-400 to-orange-500 shadow-[0_4px_12px_-4px_rgba(245,158,11,0.6)] transition-transform hover:scale-[1.04] active:scale-95 disabled:opacity-50"
+                    className={cn(ATTENDANCE_BUTTON, "border-hec-warn/30 bg-hec-warn-tint text-hec-warn")}
                   >
-                    <Clock className="h-3.5 w-3.5" />Late
+                    <Clock className="h-4 w-4" aria-hidden />Late
                   </button>
                   <button
                     disabled={isBusy}
                     onClick={() => attendanceMutation.mutate("Absent")}
-                    className="flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold text-white bg-gradient-to-br from-rose-500 to-red-600 shadow-[0_4px_12px_-4px_rgba(244,63,94,0.6)] transition-transform hover:scale-[1.04] active:scale-95 disabled:opacity-50"
+                    className={cn(ATTENDANCE_BUTTON, "border-hec-danger/30 bg-hec-danger-tint text-hec-danger")}
                   >
-                    <XCircle className="h-3.5 w-3.5" />Absent
+                    <XCircle className="h-4 w-4" aria-hidden />Absent
                   </button>
                 </div>
               )}
 
               {/* Action tiles */}
               {canManagePoints && (
-                <div className="grid grid-cols-2 gap-1.5">
+                <div className="grid grid-cols-2 gap-2">
                   <ActionTile
-                    icon={<Zap className="h-4 w-4" />}
+                    icon={<Zap className="h-5 w-5" aria-hidden />}
                     label="Quick +5"
                     sub="Instant award"
-                    tone="from-amber-500/15 to-yellow-500/5 text-amber-600 dark:text-amber-300 hover:ring-amber-500/40"
+                    tone="text-hec-brass"
                     disabled={isBusy}
                     onClick={() =>
                       awardPointsMutation.mutate({ skill: "participation", points: 5, notes: "Quick award +5" })
                     }
                   />
                   <ActionTile
-                    icon={<Trophy className="h-4 w-4" />}
+                    icon={<Trophy className="h-5 w-5" aria-hidden />}
                     label="Skills"
                     sub="+1 per skill"
-                    tone="from-blue-500/15 to-sky-500/5 text-blue-600 dark:text-blue-300 hover:ring-blue-500/40"
+                    tone="text-hec-ink-soft"
                     disabled={isBusy}
                     onClick={() => setPanel("skills")}
                   />
                   <ActionTile
-                    icon={<Flag className="h-4 w-4" />}
+                    icon={<Flag className="h-5 w-5" aria-hidden />}
                     label="Flag error"
                     sub="Log + flashcard"
-                    tone="from-orange-500/15 to-rose-500/5 text-orange-600 dark:text-orange-300 hover:ring-orange-500/40"
+                    tone="text-hec-warn"
                     disabled={isBusy}
                     onClick={() => setPanel("flag")}
                   />
                   <ActionTile
-                    icon={<History className="h-4 w-4" />}
+                    icon={<History className="h-5 w-5" aria-hidden />}
                     label="History"
                     sub="Point timeline"
-                    tone="from-slate-500/15 to-slate-400/5 text-slate-600 dark:text-slate-300 hover:ring-slate-500/40"
+                    tone="text-hec-ink-soft"
                     onClick={() => {
                       setOpen(false);
                       onViewHistory();
@@ -370,21 +374,21 @@ export function StudentActionPopover({
                     onViewHistory();
                   }}
                 >
-                  <History className="h-4 w-4 text-muted-foreground" />
+                  <History className="h-4 w-4 text-hec-ink-soft" aria-hidden />
                   View History
                 </Button>
               )}
 
               {/* Recent errors preview — instant teaching context */}
               {live && live.recentErrors.length > 0 && (
-                <div className="rounded-xl bg-muted/40 px-2.5 py-2 space-y-1">
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-bold flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3 text-orange-500" />
+                <div className="rounded-hec-md border border-hec-line bg-hec-sunken px-3 py-2 space-y-1">
+                  <p className={cn(SECTION_LABEL, "flex items-center gap-1")}>
+                    <AlertTriangle className="h-3.5 w-3.5 text-hec-warn" aria-hidden />
                     Recent errors
                   </p>
                   {live.recentErrors.map((e, i) => (
-                    <p key={i} className="text-xs text-muted-foreground truncate" title={e.error_text}>
-                      <span className="text-orange-500 font-semibold">{e.error_type}:</span> {e.error_text}
+                    <p key={i} className="text-hec-small text-hec-ink-soft truncate" title={e.error_text}>
+                      <span className="text-hec-warn font-medium">{e.error_type}:</span> {e.error_text}
                     </p>
                   ))}
                 </div>
@@ -396,22 +400,21 @@ export function StudentActionPopover({
             <motion.div key="skills" {...panelMotion} className="p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <Button variant="ghost" size="sm" className="gap-1 -ml-2 h-7" onClick={() => setPanel("main")}>
-                  <ChevronLeft className="h-4 w-4" />Back
+                  <ChevronLeft className="h-4 w-4" aria-hidden />Back
                 </Button>
-                {awardPointsMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                {awardPointsMutation.isPending && <Loader2 className="h-4 w-4 animate-spin text-hec-ink-soft" />}
               </div>
 
-              <div className="space-y-1.5">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-bold">Skills (+1)</p>
-                <div className="grid grid-cols-2 gap-1.5">
+              <div className="space-y-2">
+                <p className={SECTION_LABEL}>Skills (+1)</p>
+                <div className="grid grid-cols-2 gap-2">
                   {Object.entries(SKILL_CONFIG).map(([key, config]) => {
                     const Icon = config.icon;
                     return (
                       <SkillTile
                         key={key}
-                        icon={<Icon className="h-4 w-4" />}
+                        icon={<Icon className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />}
                         label={config.label}
-                        tone={SKILL_TONES[key] ?? SKILL_TONES.speaking}
                         disabled={isBusy}
                         onClick={() => awardPointsMutation.mutate({ skill: key })}
                       />
@@ -420,17 +423,16 @@ export function StudentActionPopover({
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-bold">Behaviors (+1)</p>
-                <div className="grid grid-cols-2 gap-1.5">
+              <div className="space-y-2">
+                <p className={SECTION_LABEL}>Behaviors (+1)</p>
+                <div className="grid grid-cols-2 gap-2">
                   {Object.entries(BEHAVIOR_CONFIG).map(([key, config]) => {
                     const Icon = config.icon;
                     return (
                       <SkillTile
                         key={key}
-                        icon={<Icon className="h-4 w-4" />}
+                        icon={<Icon className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />}
                         label={config.label}
-                        tone={SKILL_TONES[key] ?? SKILL_TONES.focus}
                         disabled={isBusy}
                         onClick={() => awardPointsMutation.mutate({ skill: key })}
                       />
@@ -439,17 +441,21 @@ export function StudentActionPopover({
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-bold">Corrections (-1)</p>
-                <div className="grid grid-cols-1 gap-1.5">
+              <div className="space-y-2">
+                <p className={SECTION_LABEL}>Corrections (-1)</p>
+                <div className="grid grid-cols-1 gap-2">
                   {CORRECTION_CONFIG.subTags.slice(0, 3).map((tag) => (
                     <button
                       key={tag.value}
                       disabled={isBusy}
                       onClick={() => awardPointsMutation.mutate({ skill: "correction", subTag: tag.value })}
-                      className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-rose-500/10 to-red-500/5 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-300 ring-1 ring-transparent hover:ring-rose-500/40 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+                      className={cn(
+                        "flex min-h-hec-target items-center gap-2 rounded-hec-md border border-hec-danger bg-transparent px-3 text-left text-hec-small font-medium text-hec-danger",
+                        "transition-colors duration-hec-1 ease-hec hover:bg-hec-danger-tint disabled:opacity-50",
+                        FOCUS,
+                      )}
                     >
-                      <CORRECTION_CONFIG.icon className="h-3.5 w-3.5" />
+                      <CORRECTION_CONFIG.icon className="h-4 w-4 shrink-0" aria-hidden />
                       {tag.label}
                     </button>
                   ))}
@@ -459,29 +465,31 @@ export function StudentActionPopover({
           )}
 
           {panel === "flag" && (
-            <motion.div key="flag" {...panelMotion} className="p-3 space-y-2">
-              <div className="flex items-center justify-between">
+            <motion.div key="flag" {...panelMotion} className="p-3 space-y-3">
+              <div className="flex items-center justify-between gap-2">
                 <Button variant="ghost" size="sm" className="gap-1 -ml-2 h-7" onClick={() => setPanel("main")}>
-                  <ChevronLeft className="h-4 w-4" />Back
+                  <ChevronLeft className="h-4 w-4" aria-hidden />Back
                 </Button>
-                <p className="text-xs font-medium text-muted-foreground">Flag for review</p>
+                <p className="text-hec-small font-medium text-hec-ink-soft">Flag for review</p>
               </div>
               <Textarea
                 placeholder={`What did ${studentName} say/write? e.g. "He go to school yesterday"`}
                 value={flagText}
                 onChange={(e) => setFlagText(e.target.value)}
-                className="min-h-[64px] text-sm rounded-xl"
+                className="min-h-[64px]"
               />
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-2">
                 {["grammar", "vocabulary", "pronunciation", "spelling"].map((t) => (
                   <button
                     key={t}
                     onClick={() => setFlagType(t)}
+                    aria-pressed={flagType === t}
                     className={cn(
-                      "h-7 rounded-full px-3 text-xs font-semibold capitalize transition-all",
+                      "min-h-hec-target rounded-full border px-4 text-hec-small font-medium capitalize transition-colors duration-hec-1 ease-hec",
+                      FOCUS,
                       flagType === t
-                        ? "bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-[0_4px_12px_-4px_rgba(249,115,22,0.6)]"
-                        : "bg-muted/60 text-muted-foreground hover:bg-muted",
+                        ? "border-hec-action bg-hec-action text-hec-on-action"
+                        : "border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken",
                     )}
                   >
                     {t}
@@ -489,14 +497,14 @@ export function StudentActionPopover({
                 ))}
               </div>
               <Button
-                className="w-full gap-2 rounded-xl text-white bg-gradient-to-r from-orange-500 via-rose-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 shadow-[0_6px_18px_-6px_rgba(249,115,22,0.6)]"
+                className="w-full gap-2 h-auto whitespace-normal py-2"
                 disabled={!flagText.trim() || flagMutation.isPending}
                 onClick={() => flagMutation.mutate()}
               >
                 {flagMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Flag className="h-4 w-4" />
+                  <Flag className="h-4 w-4" aria-hidden />
                 )}
                 Log error & create flashcard
               </Button>
@@ -523,28 +531,27 @@ function ActionTile({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2.5 rounded-xl bg-gradient-to-br px-3 py-2.5 text-left ring-1 ring-transparent",
-        "transition-all duration-150 hover:scale-[1.03] active:scale-95 disabled:opacity-50",
-        tone,
+        "flex min-h-hec-target items-start gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 py-2 text-left",
+        "transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken disabled:opacity-50",
+        FOCUS,
       )}
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/70 dark:bg-white/10 shadow-q1">
+      <span className={cn("mt-0.5 flex shrink-0 items-center justify-center", tone)}>
         {icon}
       </span>
       <span className="min-w-0">
-        <span className="block text-xs font-bold leading-tight text-foreground">{label}</span>
-        <span className="block text-[10px] text-muted-foreground leading-tight">{sub}</span>
+        <span className="block text-hec-small font-medium text-hec-ink">{label}</span>
+        <span className="block text-hec-caption text-hec-ink-soft">{sub}</span>
       </span>
     </button>
   );
 }
 
 function SkillTile({
-  icon, label, tone, onClick, disabled,
+  icon, label, onClick, disabled,
 }: {
   icon: React.ReactNode;
   label: string;
-  tone: string;
   onClick: () => void;
   disabled?: boolean;
 }) {
@@ -553,9 +560,9 @@ function SkillTile({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 rounded-xl bg-gradient-to-br px-3 py-2 text-xs font-semibold ring-1 ring-transparent",
-        "transition-all duration-150 hover:scale-[1.03] active:scale-95 disabled:opacity-50",
-        tone,
+        "flex min-h-hec-target items-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 text-left text-hec-small font-medium text-hec-ink",
+        "transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken disabled:opacity-50",
+        FOCUS,
       )}
     >
       {icon}
