@@ -36,7 +36,30 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return chunks;
 }
 
-// Fetch with chunked .in() to handle large arrays
+// Rows asked for per request. PostgREST answers with at most its own
+// `max-rows` (1,000 unless the project changed it) and does not say when it
+// stopped short, so the size asked for is never trusted: see fetchChunked.
+const PAGE_SIZE = 1000;
+
+// Every multi-row read of this function goes through here, and every one is
+// read TO THE END.
+//
+// It used to be one request per 200 ids. A request that matched more rows
+// than the server's cap came back short with no error: the invoices of the
+// last students in a batch went missing, so their arrears read as nothing
+// owed, and so did attendance, which made their lessons unbillable and the
+// month's charge 0.
+//
+// Now each read is paged by key: rows in `id` order, the next page starting
+// after the last id received, until a page comes back empty. Stopping on an
+// EMPTY page rather than a short one is what makes it hold for any cap - a
+// page shorter than PAGE_SIZE may simply be the server's limit. Paging by key
+// rather than by offset means a row inserted or deleted between two pages
+// cannot make another row appear twice or not at all; a bill counted twice
+// would be a wrong balance.
+//
+// So every `select` passed here must include `id`, and no caller may add its
+// own `.order()` - sort in memory afterwards if the order matters.
 async function fetchChunked<T>(
   supabase: any,
   table: string,
@@ -49,11 +72,20 @@ async function fetchChunked<T>(
   const chunks_ = chunk(inValues, 200);
   const results: T[] = [];
   for (const ch of chunks_) {
-    let q = supabase.from(table).select(select).in(inColumn, ch);
-    if (extraFilters) q = extraFilters(q);
-    const { data, error } = await q;
-    if (error) throw error;
-    if (data) results.push(...data);
+    let after: string | null = null;
+    for (;;) {
+      let q = supabase.from(table).select(select).in(inColumn, ch);
+      if (extraFilters) q = extraFilters(q);
+      if (after !== null) q = q.gt("id", after);
+      const { data, error } = await q.order("id", { ascending: true }).limit(PAGE_SIZE);
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      results.push(...data);
+      const last = (data[data.length - 1] as any)?.id;
+      // Without an id there is no "after": refuse rather than loop or stop short.
+      if (last === undefined || last === null) throw new Error(`Paged read of ${table} returned a row without id`);
+      after = String(last);
+    }
   }
   return results;
 }
@@ -96,7 +128,7 @@ Deno.serve(async (req) => {
     // 2. All enrollments for these students
     const allEnrollments: any[] = await fetchChunked(
       supabase, "enrollments",
-      "student_id, class_id, discount_type, discount_value, discount_cadence, start_date, end_date, rate_override_vnd, allowed_days",
+      "id, student_id, class_id, discount_type, discount_value, discount_cadence, start_date, end_date, rate_override_vnd, allowed_days",
       "student_id", studentIds
     );
 
@@ -144,7 +176,7 @@ Deno.serve(async (req) => {
     const allAttendance: any[] = allSessionIds.length > 0
       ? await fetchChunked(
           supabase, "attendance",
-          "session_id, student_id, status",
+          "id, session_id, student_id, status",
           "session_id", allSessionIds,
           (q: any) => q.in("student_id", studentIds)
         )
@@ -160,7 +192,7 @@ Deno.serve(async (req) => {
     // 7. Discount assignments
     const allDiscountAssignments: any[] = await fetchChunked(
       supabase, "discount_assignments",
-      "student_id, discount_definitions(*)",
+      "id, student_id, discount_definitions(*)",
       "student_id", studentIds,
       (q: any) => q.lte("effective_from", nextMonthStart).or(`effective_to.is.null,effective_to.gte.${startDate}`)
     );
@@ -176,7 +208,7 @@ Deno.serve(async (req) => {
     try {
       allReferralBonuses = await fetchChunked(
         supabase, "referral_bonuses",
-        "student_id, type, value",
+        "id, student_id, type, value",
         "student_id", studentIds,
         (q: any) => q.lte("effective_from", nextMonthStart).or(`effective_to.is.null,effective_to.gte.${startDate}`)
       );
@@ -199,10 +231,13 @@ Deno.serve(async (req) => {
     // 10. Other invoices (all months != current) for all students
     const allOtherInvoices: any[] = await fetchChunked(
       supabase, "invoices",
-      "student_id, total_amount, month, recorded_payment",
+      "id, student_id, total_amount, month, recorded_payment",
       "student_id", studentIds,
-      (q: any) => q.neq("month", month).order("month", { ascending: true })
+      (q: any) => q.neq("month", month)
     );
+    // Oldest first: the "settled in a later month" walk below reads each
+    // student's later bills in month order. (The read itself is in id order.)
+    allOtherInvoices.sort((a, b) => (a.month < b.month ? -1 : a.month > b.month ? 1 : 0));
     const priorInvoicesByStudent = new Map<string, any[]>();
     const futureInvoicesByStudent = new Map<string, any[]>();
     for (const inv of allOtherInvoices) {

@@ -84,8 +84,13 @@ let rowCap = Infinity; // PostgREST returns at most `max-rows` (1000 by default)
 let source = fixture;
 const client = () => ({ from(table) {
   let rows = source[table] || [];
+  // PostgREST rows always carry their id; calculate-tuition-bulk pages by it.
+  rows.forEach((r, i) => { if (r.id == null) r.id = `${table}-${String(i).padStart(6, '0')}`; });
+  let orderKey = null, lim = Infinity;
+  const page = () => { const out = orderKey ? [...rows].sort((a, b) => (String(a[orderKey]) < String(b[orderKey]) ? -1 : String(a[orderKey]) > String(b[orderKey]) ? 1 : 0)) : rows; return out.slice(0, Math.min(lim, rowCap)); };
   const q = {
-    select() { return q; }, order() { return q; },
+    select() { return q; }, order(k) { orderKey = k; return q; }, limit(n) { lim = n; return q; },
+    gt(k, v) { rows = rows.filter((r) => String(r[k]) > String(v)); return q; },
     eq(k, v) { rows = rows.filter((r) => r[k] === v); return q; },
     neq(k, v) { rows = rows.filter((r) => r[k] !== v); return q; },
     in(k, vs) { rows = rows.filter((r) => vs.includes(r[k])); return q; },
@@ -96,11 +101,12 @@ const client = () => ({ from(table) {
     single() { return Promise.resolve({ data: rows[0], error: null }); },
     maybeSingle() { return Promise.resolve({ data: rows[0] || null, error: null }); },
     upsert(row) { writes.push(row); return Promise.resolve({ error: null }); },
-    then(done) { return Promise.resolve({ data: rows.slice(0, rowCap), error: null }).then(done); },
+    then(done) { requests.push(table); return Promise.resolve({ data: page(), error: null }).then(done); },
   };
   return q;
 } });
 let writes = [];
+let requests = [];
 globalThis.__tuitionClient = client;
 // The family discount for FAMILY is "unresolved": compute-sibling-discounts is busy.
 globalThis.__siblingStates = (familyIds) => familyIds.map((family_id) => ({ family_id, status: 'unresolved', winner_student_id: null, winner_class_id: null,
