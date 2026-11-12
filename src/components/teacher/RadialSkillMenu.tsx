@@ -68,7 +68,7 @@ export function RadialSkillMenu({ onSkillTap, onClose, onReadingTheoryClick }: R
           </Button>
           <span className="text-hec-small font-medium text-hec-ink-soft">Select Reason</span>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {CORRECTION_OPTIONS.map((option) => (
             <Button
               key={option.value}

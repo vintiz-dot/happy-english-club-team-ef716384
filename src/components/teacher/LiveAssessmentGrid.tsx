@@ -585,10 +585,12 @@ function SmartSkillPanel({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="rounded-hec-lg border border-hec-line bg-hec-raised text-hec-ink shadow-hec-2 overflow-hidden">
+          {/* max-h = PANEL_H_ESTIMATE (280): the position above is worked out for that height, so a taller
+              panel (a long name, three rows of tiles at 320) scrolls inside instead of leaving the screen */}
+          <div className="flex max-h-[280px] flex-col rounded-hec-lg border border-hec-line bg-hec-raised text-hec-ink shadow-hec-2 overflow-hidden">
             {/* Drag handle bar — drag from anywhere in the header */}
             <div
-              className="flex items-start gap-3 px-3 sm:px-4 py-2 border-b border-hec-line cursor-grab active:cursor-grabbing select-none touch-none"
+              className="flex shrink-0 items-start gap-3 px-3 sm:px-4 py-2 border-b border-hec-line cursor-grab active:cursor-grabbing select-none touch-none"
               onMouseDown={(e) => {
                 if ((e.target as HTMLElement).closest("button")) return;
                 startDrag(e.clientX, e.clientY);
@@ -663,7 +665,7 @@ function SmartSkillPanel({
             </div>
 
             {/* Body — non-draggable so taps land on the skill buttons */}
-            <div className="[&>div]:rounded-none [&>div]:border-0 [&>div]:shadow-none">
+            <div className="min-h-0 overflow-y-auto [&>div]:rounded-none [&>div]:border-0 [&>div]:shadow-none">
               <RadialSkillMenu
                 onSkillTap={onSkillTap}
                 onClose={onClose}
