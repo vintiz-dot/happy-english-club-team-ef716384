@@ -216,9 +216,9 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
           <div className="space-y-4">
             {tuitionMonth.field}
             <Tabs value={mode} onValueChange={(v) => setMode(v as any)} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="payment">Record Payment</TabsTrigger>
-                <TabsTrigger value="correction">Correction / Refund</TabsTrigger>
+              <TabsList className={iv("grid h-auto w-full grid-cols-2", "grid w-full grid-cols-2")}>
+                <TabsTrigger value="payment" className={ivory ? "whitespace-normal text-center" : undefined}>Record Payment</TabsTrigger>
+                <TabsTrigger value="correction" className={ivory ? "whitespace-normal text-center" : undefined}>Correction / Refund</TabsTrigger>
               </TabsList>
             </Tabs>
 
