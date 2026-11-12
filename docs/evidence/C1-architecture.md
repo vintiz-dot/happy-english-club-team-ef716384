@@ -432,10 +432,11 @@ What it proves and what it does not - D should grade accordingly:
 | # | Threat / failure | What stops or limits it | Where |
 |---|---|---|---|
 | 1 | Wrong class recorded | The class is copied from the session by the trigger; the client's `class_id` is ignored. The page shows class name and time in the indicator. A teacher can still pick the wrong session of their own; then: request deletion | trigger **[tested]**; 6.6 |
-| 2 | Recording outside lesson time | Arming only from 20 min before start until the end, on the server clock. Hard limit end + 30 min: later audio is refused at registration | trigger, `recorder_register_chunk` **[tested]** |
+| 2 | Recording outside lesson time | Arming from 20 min before start until the end; capture only from start - 5 min (refused earlier); audio after end + grace (10 min) + 15 s refused at registration; all on the server clock (rev. 1) | trigger, `recorder_register_chunk` **[tested]** |
 | 3 | Recording a class whose switch is off | Impossible to create the row: no row / off / no confirmation / old wording / a child without consent -> refused, for teachers, admins and the service role alike. Without the row no chunk registers and no file uploads | trigger **[tested]** |
 | 4 | Switch turned on without consent | CHECK constraint; only an admin via the function; needs the current wording version, a note, and every child's consent | **[tested]** |
-| 5 | A teacher reads another class's audio | Table RLS and the bucket's SELECT policy both ask `recorder_can_read_class` | **[tested]** rows and files |
+| 5 | A teacher reads another class's audio, or a cover teacher the class's archive | Table RLS and the bucket's SELECT policy both ask `recorder_can_listen` for THAT recording; a cover hears only their own lesson, and nothing from a future booking (rev. 1) | **[tested]** rows and files |
+| 5a | Fabricated "lesson recorded" evidence | Server timestamps, byte floor, server-clock bound per chunk, re-check of stored objects at complete, `counts_as_held_evidence` threshold (rev. 1) | **[tested]** |
 | 6 | A teaching assistant reads or records | Not in `recorder_is_class_teacher` | **[tested]** |
 | 7 | Families or students | No policy names them; they read no table, no file, not even the settings | **[tested]** |
 | 8 | Signed-URL leakage | None are created (6.4). Residual: an admin with the dashboard can make one; that is the owner's own account | rule for C2/C3 |
@@ -446,7 +447,7 @@ What it proves and what it does not - D should grade accordingly:
 | 13 | Upload to an arbitrary path (filling the bucket, planting a file) | INSERT policy accepts only a registered chunk's path or the manifest; 8 MB cap; MIME allow-list | **[tested]** |
 | 14 | Laptop clock wrong or changed mid-lesson | Permission uses the server clock; positions use the audio clock; claimed times are clamped; a change is recorded as a discontinuity | **[tested]** clamp; 5.3 |
 | 15 | Tab crash / browser closed | At most 5 s lost; recovery on next open; recording finishes as `crash_recovered`; or is abandoned after 14 days and swept | 1.3; **[tested]** sweep |
-| 16 | Session cancelled or deleted mid-recording | Page stops on next poll; recording survives a deleted session row | **[tested]** SET NULL |
+| 16 | Session cancelled or deleted mid-recording | Cancel: trigger abandons armed, asks running to stop; recording survives a deleted session row; the recorder itself cannot detach it (rev. 1) | **[tested]** |
 | 17 | Consent withdrawn mid-lesson | Class switched off at once; armed recordings abandoned; running ones told to stop; later audio refused | **[tested]** |
 | 18 | Tampering with the audit trail | Append-only for every role; no API role can write a line | **[tested]** |
 | 19 | Audio outliving its retention | `delete_after` on every row, capped at 180 days by a CHECK; nightly job; row cannot claim "deleted" while a file remains | **[tested]** |
@@ -457,7 +458,7 @@ What it proves and what it does not - D should grade accordingly:
 
 ### Assumptions the migration makes about production (verify when pasting)
 
-1. **The function owner can see `storage.objects`.** `recorder_confirm_chunk` and the two completeness checks are SECURITY DEFINER and read `storage.objects`. If the owner role could not see those rows, confirm and complete would fail closed (harmless), BUT the "no file left" check before `deleted` would pass wrongly. Before first use run: `SELECT rolbypassrls FROM pg_roles WHERE rolname = 'postgres';` (expect true) and, after the first test recording, `SELECT count(*) FROM storage.objects WHERE bucket_id = 'class-recordings';` in the SQL editor (expect the chunk count). Independently of this, `recorder-retention` must list the prefix itself and find it empty before marking (6.5 step 3).
+1. **The function owner can see `storage.objects`.** `recorder_confirm_chunk`, the update trigger (complete / deleted) and the delete trigger are SECURITY DEFINER and read `storage.objects`. Rev. 1: all three carry `SET row_security = off`, so if the owner could not see those rows every one of them RAISES - confirm, complete, mark-deleted and row deletion all stop, visibly; nothing passes wrongly **[tested]** with a NOBYPASSRLS owner. If that happens on production, the fix is to paste as a role that bypasses RLS. Before first use run: `SELECT rolbypassrls FROM pg_roles WHERE rolname = 'postgres';` (expect true) and, after the first test recording, `SELECT count(*) FROM storage.objects WHERE bucket_id = 'class-recordings';` in the SQL editor (expect the chunk count). Independently of this, `recorder-retention` must list the prefix itself and find it empty before marking (6.5 step 3).
 2. **`storage.objects.metadata->>'size'` is the stored byte count** for standard uploads. If it is absent, confirm fails closed and nothing is ever deleted locally - visible at once in C2's first end-to-end test.
 3. **Views support `security_invoker`** (Postgres 15+). The repo already uses it (`supabase/migrations/20251015032433_a3bf1d5d-5647-462c-a0e4-9ea171b8a096.sql:7`).
 4. **`teachers.is_active`, `enrollments.start_date/end_date`, `sessions.date/start_time/end_time/status`, `classes.default_teacher_id/schedule_template`** exist as in `src/integrations/supabase/types.ts` (`:5340`, `:1470-1473`, `:3601-3609`, `:1015`, `:1024`).
@@ -473,7 +474,8 @@ What it proves and what it does not - D should grade accordingly:
 | Q1 | What exactly did parents agree to? The consent wording must cover: audio recording of lessons, both microphones, storage in the school's own system, who may listen (the class teacher and admins), how long (30 days), and that it may be used for a speech evaluation. It is versioned (`v1-2026-11`); the switch refuses to turn on under any other version. | Owner writes or approves the text before any class is switched on. Not started without it. |
 | Q2 | A class where one child's parents have not consented or have refused. | The class is not recorded (built this way). The alternative - record and "exclude" the child - is not technically real for a room microphone. |
 | Q3 | When a parent withdraws: delete the past recordings their child is in automatically, or have an admin choose? | Automatically, all of them, logged. (Built: an admin requests each; C3 can make it one button.) |
-| Q4 | May a cover teacher (one lesson with the class in the last 7 days) listen to the class's other recordings? | Leave as built for the capture phase (they can, for those 7 days), revisit before any playback screen exists - today there is no screen that plays audio at all. |
+| Q4 | May a cover teacher listen to the class's other recordings? | Decided by the conductor's ruling on critic F2 (rev. 1): no. A cover teacher hears only the lesson they covered. |
+| Q4a | Held-evidence threshold: what share of the scheduled lesson must the verified audio cover? | 0.50 (`held_evidence_min_fraction`, 0.10-1.00). |
 | Q5 | Retention: 30 days from the lesson. Storage cost follows from it (about 30 GB held for 5 lessons a day in Opus, about 100 GB in FLAC). | 30 days. |
 | Q6 | Teaching assistants: no access of any kind. | No. |
 | Q7 | Is one click a day ("Ready for today") acceptable, or must the laptop record with nobody touching it after a reboot? | One click a day. Zero-touch would need the measurement in 1.4 and possibly a desktop wrapper. |
