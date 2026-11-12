@@ -14,8 +14,26 @@ import { getPaymentStatus, getTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { RecordPaymentDialog } from "@/components/admin/RecordPaymentDialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useIvory } from "@/hooks/useIvory";
+import { fetchBulkTuition, liveTuitionItem } from "@/hooks/useLiveTuitionData";
+import { siblingRetryDelayMs } from "@/lib/siblingRetry";
+import {
+  carriedIn,
+  carriedOut,
+  figurePlaceholder,
+  figureText,
+  largestFirst,
+  tuitionFigures,
+  tuitionStatusInput,
+} from "@/lib/tuitionRows";
 
 const fmt = (n: number) => n.toLocaleString("vi-VN") + " ₫";
+
+// The status is judged on the calculator's carry-out; a row without figures
+// has no status and matches no status filter.
+const statusOf = (item: any) => {
+  const input = tuitionStatusInput(item.figures);
+  return input ? getPaymentStatus(input) : null;
+};
 
 interface AdminTuitionListProps {
   month: string;
@@ -30,8 +48,12 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
   const ivory = useIvory();
   const iv = (n: string, o: string) => (ivory ? n : o);
 
-  const { data: tuitionData, isLoading } = useQuery({
-    queryKey: ["admin-tuition-list", month],
+  // Every money figure on this page is calculate-tuition-bulk's, fetched the
+  // way the Finance tab fetches it. This page reads no invoice row and works
+  // nothing out: see src/lib/tuitionRows.ts for why. The key sits under
+  // "admin-tuition-live" so a payment recorded from here refreshes the list.
+  const { data: tuitionData, isLoading, isError } = useQuery({
+    queryKey: ["admin-tuition-live", month, "everyone"],
     queryFn: async () => {
       const monthStart = `${month}-01`;
       const monthEnd = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0))
@@ -51,12 +73,6 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
         .in("student_id", allStudentIds)
         .lte("start_date", monthEnd)
         .or(`end_date.is.null,end_date.gte.${monthStart}`);
-
-      const { data: invoices } = await supabase
-        .from("invoices")
-        .select("*")
-        .eq("month", month)
-        .in("student_id", allStudentIds);
 
       const { data: discounts } = await supabase
         .from("discount_assignments")
@@ -88,85 +104,41 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
         studentClasses.set(e.student_id, existing);
       });
 
-      const invoiceMap = new Map(invoices?.map((inv) => [inv.student_id, inv]) || []);
-
-      const { data: priorInvoices } = await supabase
-        .from("invoices")
-        .select("student_id, total_amount, recorded_payment")
-        .lt("month", month)
-        .in("student_id", allStudentIds);
-
-      const priorBalanceMap = new Map<string, number>();
-      priorInvoices?.forEach((inv) => {
-        const currentBalance = priorBalanceMap.get(inv.student_id) || 0;
-        priorBalanceMap.set(inv.student_id, currentBalance + (inv.recorded_payment || 0) - (inv.total_amount || 0));
-      });
+      const answers = await fetchBulkTuition(allStudentIds, month);
 
       return allStudents.map((student) => {
-        const invoice = invoiceMap.get(student.id);
-        const currentCharges = invoice?.total_amount || 0;
-        const recordedPayment = invoice?.recorded_payment || 0;
-
-        // Carry-in is DERIVED here rather than read from invoices.carry_in_*.
-        //
-        // Those columns are a snapshot taken the last time calculate-tuition
-        // ran for this student and month, and nothing ever refreshes them:
-        // recording a payment against March does not touch April's row, and
-        // the payment dialogs write the old value straight back. Worse, a
-        // student with no invoice row for this month read as carry 0, so
-        // arrears vanished from this page entirely.
-        //
-        // priorBalance below is the same sum the edge function computes -
-        // payments minus charges across every earlier month - so this page
-        // now agrees with the Finance tab, which calls calculate-tuition-bulk
-        // and gets the figure computed fresh.
-        const priorBalance = priorBalanceMap.get(student.id) || 0;
-        const carryInCredit = priorBalance > 0 ? priorBalance : 0;
-        const carryInDebt = priorBalance < 0 ? -priorBalance : 0;
-
-        const finalPayable = currentCharges + carryInDebt - carryInCredit;
-        const carryOutCredit = Math.max(0, recordedPayment - finalPayable);
-        const carryOutDebt = Math.max(0, finalPayable - recordedPayment);
-
-        return {
-          id: invoice?.id || `placeholder-${student.id}`,
-          student_id: student.id,
-          month,
-          base_amount: invoice?.base_amount || 0,
-          discount_amount: invoice?.discount_amount || 0,
-          total_amount: currentCharges,
-          paid_amount: invoice?.paid_amount || 0,
-          recorded_payment: recordedPayment,
-          status: invoice?.status || "open",
-          students: student,
+        const answer = answers.get(student.id);
+        const figures = tuitionFigures(answer);
+        const badges = {
+          classes: studentClasses.get(student.id) || [],
           hasDiscount: studentDiscounts.has(student.id),
           hasSiblings: siblingStudents.has(student.id),
-          priorBalance,
-          finalPayable,
-          balance: finalPayable - recordedPayment,
-          classes: studentClasses.get(student.id) || [],
-          // Computed from the derived carry above, for the same reason: the
-          // stored carry_out_* are as stale as the carry_in_* they came from,
-          // and these drive the status badge and the page's filters.
-          carry_out_credit: carryOutCredit,
-          carry_out_debt: carryOutDebt,
-          carry_in_credit: carryInCredit,
-          carry_in_debt: carryInDebt,
         };
+        // A row with figures is the Finance tab's row, so Record Pay gets
+        // exactly what it gets there. A row without them carries no figure
+        // at all - nothing for a dialog to read as 0 - and cannot be paid
+        // from here until the calculator answers.
+        const row =
+          figures.state === "ready"
+            ? liveTuitionItem(student, answer, month, badges)
+            : { id: `placeholder-${student.id}`, student_id: student.id, month, students: student, ...badges };
+        return { ...row, figures };
       });
     },
+    // Family discount still being worked out elsewhere: ask again by itself,
+    // with the same bounded backoff as the other calculate-tuition screens.
+    refetchInterval: (query) =>
+      siblingRetryDelayMs(
+        query.state.data?.some((row: any) => row.figures.state === "pending") ? "unresolved" : null,
+        Math.max(0, query.state.dataUpdateCount - 1),
+      ),
   });
 
   const filterChips = useMemo(() => {
     if (!tuitionData) return [];
     const withDiscount = tuitionData.filter((i: any) => i.hasDiscount).length;
     const withSiblings = tuitionData.filter((i: any) => i.hasSiblings).length;
-    const getStatus = (item: any) => getPaymentStatus({
-      carryOutDebt: item.carry_out_debt ?? 0,
-      carryOutCredit: item.carry_out_credit ?? 0,
-      totalAmount: item.total_amount ?? 0,
-      monthPayments: item.recorded_payment ?? 0,
-    });
+    const getStatus = statusOf;
     const overpaid = tuitionData.filter((i: any) => getStatus(i) === 'overpaid').length;
     const settled = tuitionData.filter((i: any) => getStatus(i) === 'settled').length;
     const underpaid = tuitionData.filter((i: any) => getStatus(i) === 'underpaid').length;
@@ -186,12 +158,7 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
 
   const filteredAndSortedData = useMemo(() => {
     if (!tuitionData) return [];
-    const getStatus = (item: any) => getPaymentStatus({
-      carryOutDebt: item.carry_out_debt ?? 0,
-      carryOutCredit: item.carry_out_credit ?? 0,
-      totalAmount: item.total_amount ?? 0,
-      monthPayments: item.recorded_payment ?? 0,
-    });
+    const getStatus = statusOf;
 
     let filtered = tuitionData;
     if (activeFilter !== "all") {
@@ -219,9 +186,9 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
         case "name":
           return ((a.students as any)?.full_name || "").localeCompare((b.students as any)?.full_name || "");
         case "balance":
-          return Math.abs(b.balance) - Math.abs(a.balance);
+          return largestFirst(carriedOut(a.figures).amount, carriedOut(b.figures).amount);
         case "total":
-          return b.total_amount - a.total_amount;
+          return largestFirst(a.figures.charge, b.figures.charge);
         case "class":
           return ((a as any).classes?.[0]?.name || "").localeCompare((b as any).classes?.[0]?.name || "");
         default:
@@ -231,18 +198,18 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
   }, [tuitionData, sortBy, activeFilter, confirmationFilter]);
 
   const getStatusBadge = (item: any) => {
-    const status = getPaymentStatus({
-      carryOutDebt: item.carry_out_debt ?? 0,
-      carryOutCredit: item.carry_out_credit ?? 0,
-      totalAmount: item.total_amount ?? 0,
-      monthPayments: item.recorded_payment ?? 0,
-      settledInMonth: item.settled_in_month,
-    });
-    return getTuitionStatusBadge(status, item.settled_in_month);
+    const input = tuitionStatusInput(item.figures);
+    if (!input) return <Badge variant="secondary">{figurePlaceholder(item.figures.state)}</Badge>;
+    return getTuitionStatusBadge(getPaymentStatus(input), input.settledInMonth);
   };
 
   if (isLoading) {
     return <p className={iv("text-hec-body text-hec-ink-soft", "text-muted-foreground")}>Loading tuition data...</p>;
+  }
+
+  // No answer from the calculator: say so. There is no other source to fall back on.
+  if (isError) {
+    return <p className={iv("text-hec-body text-hec-ink-soft", "text-muted-foreground")}>Tuition could not be calculated. Reload the page to try again.</p>;
   }
 
   return (
@@ -312,20 +279,11 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
           ) : (
             <div className="space-y-3">
               {filteredAndSortedData.map((item) => {
-                const statusResult = getPaymentStatus({
-                  carryOutDebt: item.carry_out_debt ?? 0,
-                  carryOutCredit: item.carry_out_credit ?? 0,
-                  totalAmount: item.total_amount ?? 0,
-                  monthPayments: item.recorded_payment ?? 0,
-                });
-                const priorNet = (item.carry_in_debt || 0) - (item.carry_in_credit || 0);
-
                 return (
                   <TuitionStudentRow
                     key={item.id}
                     item={item}
                     statusBadge={getStatusBadge(item)}
-                    priorNet={priorNet}
                     onRecordPay={() => setPaymentItem(item)}
                     onView={() => navigate(`/students/${item.student_id}`)}
                   />
@@ -350,13 +308,11 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
 function TuitionStudentRow({
   item,
   statusBadge,
-  priorNet,
   onRecordPay,
   onView,
 }: {
   item: any;
   statusBadge: React.ReactNode;
-  priorNet: number;
   onRecordPay: () => void;
   onView: () => void;
 }) {
@@ -365,7 +321,13 @@ function TuitionStudentRow({
   const iv = (n: string, o: string) => (ivory ? n : o);
   const studentName = (item.students as any)?.full_name ?? "—";
   const classNames = (item as any).classes?.map((c: any) => c.name).join(", ") || "No class";
-  const balance = item.balance ?? 0;
+  // What the calculator carried in and out of the month, worded - never a
+  // number made here. `figures.state` is "pending" or "unavailable" while
+  // there is nothing to show, and the cells then say so.
+  const figures = item.figures;
+  const prior = carriedIn(figures);
+  const balance = carriedOut(figures);
+  const noFigure = figurePlaceholder(figures.state);
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -385,11 +347,11 @@ function TuitionStudentRow({
             {/* Right side: balance + chevron */}
             <div className="text-right shrink-0">
               <p className={ivory
-                ? `whitespace-nowrap font-sans text-hec-body font-semibold tabular-nums ${balance === 0 ? "text-hec-ink-soft" : "text-hec-ink"}`
+                ? `whitespace-nowrap font-sans text-hec-body font-semibold tabular-nums ${balance.amount === null ? "text-hec-ink-soft" : "text-hec-ink"}`
                 : `text-sm font-bold tabular-nums ${
-                balance > 0 ? "text-destructive" : balance < 0 ? "text-emerald-600" : "text-muted-foreground"
+                balance.kind === "owed" ? "text-destructive" : balance.kind === "credit" ? "text-emerald-600" : "text-muted-foreground"
               }`}>
-                {balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "Settled"}
+                {balance.kind === "owed" ? fmt(balance.amount) : balance.kind === "credit" ? `+${fmt(balance.amount)}` : balance.kind === "none" ? "Settled" : noFigure}
               </p>
               <p className={iv("text-hec-caption text-hec-ink-soft", "text-[10px] text-muted-foreground")}>Balance</p>
             </div>
@@ -402,24 +364,25 @@ function TuitionStudentRow({
           <div className={iv("space-y-4 border-t border-hec-line p-4", "border-t px-3 sm:px-4 py-3 space-y-3")}>
             {/* Finance breakdown grid */}
             <div className={iv("grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-6", "grid grid-cols-3 sm:grid-cols-6 gap-y-3 gap-x-2 text-center")}>
-              <FinanceCell ivory={ivory} label="Base" value={fmt(item.base_amount)} />
-              <FinanceCell ivory={ivory} label="Discount" value={item.discount_amount > 0 ? `−${fmt(item.discount_amount)}` : "—"} accent={item.discount_amount > 0 ? "green" : undefined} />
-              <FinanceCell ivory={ivory} label="Prior Bal." value={priorNet === 0 ? "—" : priorNet > 0 ? fmt(priorNet) : `+${fmt(Math.abs(priorNet))}`} accent={priorNet > 0 ? "red" : priorNet < 0 ? "green" : undefined} />
-              <FinanceCell ivory={ivory} label="Payable" value={fmt(item.finalPayable)} bold />
-              <FinanceCell ivory={ivory} label="Paid" value={fmt(item.recorded_payment ?? item.paid_amount)} accent="blue" />
+              <FinanceCell ivory={ivory} label="Base" value={figureText(figures, figures.base, fmt)} />
+              <FinanceCell ivory={ivory} label="Discount" value={figures.discount === null ? noFigure : figures.discount > 0 ? `−${fmt(figures.discount)}` : "—"} accent={figures.discount !== null && figures.discount > 0 ? "green" : undefined} />
+              <FinanceCell ivory={ivory} label="Prior Bal." value={prior.kind === "owed" ? fmt(prior.amount) : prior.kind === "credit" ? `+${fmt(prior.amount)}` : prior.kind === "none" ? "—" : noFigure} accent={prior.kind === "owed" ? "red" : prior.kind === "credit" ? "green" : undefined} />
+              {/* The Finance tab's Payable for this row (useLiveTuitionData). */}
+              <FinanceCell ivory={ivory} label="Payable" value={figureText(figures, item.finalPayable ?? null, fmt)} bold />
+              <FinanceCell ivory={ivory} label="Paid" value={figureText(figures, figures.paid, fmt)} accent="blue" />
               <FinanceCell
                 ivory={ivory}
                 total
                 label="Balance"
-                value={balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "0 ₫"}
-                accent={balance > 0 ? "red" : balance < 0 ? "green" : undefined}
+                value={balance.kind === "owed" ? fmt(balance.amount) : balance.kind === "credit" ? `+${fmt(balance.amount)}` : balance.kind === "none" ? "0 ₫" : noFigure}
+                accent={balance.kind === "owed" ? "red" : balance.kind === "credit" ? "green" : undefined}
                 bold
               />
             </div>
 
             {/* Actions */}
             <div className={iv("flex flex-wrap gap-2", "flex gap-2 pt-1")}>
-              <Button size="sm" onClick={onRecordPay} className="flex-1 sm:flex-none gap-1.5">
+              <Button size="sm" onClick={onRecordPay} disabled={figures.state !== "ready"} className="flex-1 sm:flex-none gap-1.5">
                 <CreditCard className="h-3.5 w-3.5" />
                 Record Pay
               </Button>
