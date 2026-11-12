@@ -1,6 +1,6 @@
 # T2 live apply (aswgmbefikhsnhogtryv)
 
-Where I am / next step: step 4 done; next step 5 verify deploy.
+Where I am / next step: DONE. All six steps passed; nothing pushed.
 
 ## Step 0 - read
 Read T2-live-apply-brief.md, T2-class-recordings-access.md, T2-review.md, T2b-transcribe-gate.md from 7f8004e (detached HEAD).
@@ -33,3 +33,14 @@ Read T2-live-apply-brief.md, T2-class-recordings-access.md, T2-review.md, T2b-tr
 
 ## Step 4 - deploy
 `deploy_edge_function` transcribe-lesson-audio, verify_jwt true, entrypoint `transcribe-lesson-audio/index.ts`, files `transcribe-lesson-audio/index.ts`, `_lib/auth.ts` (imports only esm.sh supabase-js), `_lib/text.ts` (imports nothing) - the LF blobs at 7f8004e; the function dir has no deno.json. Result: status ACTIVE, version 4, verify_jwt true, ezbr_sha256 `698cb157d461852739ff0b49f9eaa55313cc202090c6b8274d5b151cfa614caf`.
+
+## Step 5 - verify the deploy
+- `get_edge_function`: version 4, ACTIVE, verify_jwt true; files index.ts, _lib/text.ts, _lib/auth.ts. Gate lines in the returned index.ts, each found verbatim (exactly once) in the 7f8004e blob: `requireRole(req, sb, ["admin", "teacher"], corsHeaders)` + `if (gate instanceof Response) return gate;` (blob line 427, before the row read in the handler and before any download); `callerHoldsClass(sb, gate, tr.class_id)` with the 403 message; the body `audio_storage_path` check (400); the `audioParts` two-part check (`length !== 2`, first part = class_id lowercased, no empty / `.` / `..` / `%` / backslash part) with its 403. Result: identical. The box-drawing comment lines (the only non-ASCII-heavy lines) also match the blob byte for byte; the rest read identical to the blob; _lib files read identical.
+- Probes (publishable key from .env, not printed): POST `{"transcript_id":"00000000-0000-0000-0000-000000000000"}` with the anon key -> 401, body `{"error":"Unauthorized"}` (the function's own requireRole reply; was 404 before). POST without Authorization -> 401.
+
+## Step 6 - nothing else changed (read-only)
+- Objects in `class-recordings`: 11 (before 11). Transcript rows with audio: 11 (before 11).
+- Bucket `class-recorder-audio`: does not exist (0). No storage policy (new or other) mentions `class-recorder-audio` (0). New policies: 5.
+- Nothing pushed. node_modules junction removed; throwaway probe script deleted.
+
+LIVE AND VERIFIED
