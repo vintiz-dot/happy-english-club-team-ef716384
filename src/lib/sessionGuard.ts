@@ -488,7 +488,7 @@ const FLOOR_WHAT: Record<string, (c: FloorCause) => string> = {
   points: () => "Points awarded that day were removed or moved to another day",
   transcript: () => "A class transcript was removed, unlinked or moved to another day",
   homework: () => "Homework set that day, or a grade given that day, was removed or changed",
-  session_status: () => "The lesson was taken off Held, or moved to another day",
+  session_status: () => "The lesson was taken off Held, or moved to another day or a later time",
 };
 
 const FLOOR_WHO: Record<string, string> = {
