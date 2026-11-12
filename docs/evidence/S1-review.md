@@ -2,7 +2,7 @@
 
 Reviewed commit: e3c039f (`worktree-agent-ab290c3d49fd33671`) against `claude/hec-conductor-setup-efbaa5`. Review only: no product code changed, nothing applied, deployed or pushed. Live (`aswgmbefikhsnhogtryv`) was read read-only: catalog, md5 of function bodies, aggregate counts. No row about a person, no secret.
 
-**Where I am / next step:** F-01, F-14, F-15 written up (all three: APPLY). Next: F-16.
+**Where I am / next step:** F-01, F-14, F-15 (APPLY) and F-16 (APPLY, browser first) written up. Next: F-21.
 
 Method used throughout for "what can this kind of account read on live": one read-only transaction, `set_config('request.jwt.claims', ...)` with the id of an account of that kind picked inside the query (never printed), `SET LOCAL ROLE authenticated`, then `count(*)` of every table / view in `public` the role may select and of `storage.objects` per bucket. Counts only.
 
@@ -145,3 +145,49 @@ Note kept from the implementer, and it matters: do not paste `20261111110000_ta_
 - Was it used by a non-admin: 8 pause windows on live, all by one account (4 Jul - 9 Aug), which holds only `student` today. Its 792 audit rows (40 kinds of action, 12 Oct 2025 - 10 Oct 2026) are admin work: the former shared admin login. I agree with the implementer's reading. Note for the owner: that login can no longer pause - correct, it is not an admin - so whoever pauses now must use a real admin login.
 - Migration: one transaction, preflight, `CREATE OR REPLACE`, grants restated (anon / PUBLIC revoked, authenticated granted), no row written. Suite run by me: 37 passed. Mutations caught: check reduced to "has a uid" (9 fail); `admin` -> `teacher` (7); one line of the body changed (3, including "the only difference from the live body").
 - Rollback block: the live body; the suite asserts its md5 equals live.
+
+Full run by me on e3c039f: `node scripts/pgtest/run.mjs` -> 4198 assertions across 47 suites, 0 failed (includes `app typecheck` 3/0, i.e. `tsc --noEmit -p tsconfig.app.json`, and `edge functions typecheck` 5/0). Same numbers as the implementer reports.
+
+---
+
+## F-16 - `20261113130000_classmate_rows_private.sql` - verdict: APPLY, browser build first
+
+### a. Does it close the finding
+
+Yes for rows. Measured on live as a real family primary login (two children; counts only), rows it can read today about children outside its family: `students` 12 full rows, `attendance` 1260, `skill_assessments` 604, `point_transactions` 1480 - and, in every other table with a `student_id` column, only `student_points` 135 (month totals, kept on purpose) and `class_monitors` 1 (who the monitor is). Nothing else: invoices, payments, enrollments, learning profiles, CEFR, homework submissions all 0. So the four tables the migration narrows are the whole leak, and each new policy is `is_family_student(<child>, auth.uid()) AND <the old test>`, which cannot return a row the old one did not.
+
+Other ways to the same rows after the fix:
+- Other policies on the four tables (all listed from live): admin, staff of class, `can_view_student` family policies, own record. None is class-wide for a family. The only live policy calling `can_view_classmate` is the one being replaced, so the guard passes.
+- `enrollments` "Users can view permitted enrollments" (`can_view_enrollment`): admin, class staff, own family (incl. sibling path). No classmates. Confirmed by the measurement (0).
+- `class-leaderboard` (LIVE copy fetched, v4): service role, checks the caller, returns id, name, avatar and point totals only. That is the intended board.
+- New `get_class_skill_points`: **returns every classmate's per-skill total with id and name to every family of the class.** No comments, dates or rows - but it is the same figure the classmate pop-up's skills chart drew, one RPC call away. The panels use it only for "class best", "class average" and the top three. It is narrower than today, so it does not block applying, but it does not match the line the pop-up now shows ("Skills ... are private"). Owner decision below; a later version should return only best / average / top-three.
+
+### b. Does anyone lose something they should keep (name and points on every board)
+
+| Screen | Source, verified | After |
+|---|---|---|
+| Family / child class board (Star Board, High Scores, Night League, podium): `StudentClassLeaderboard.tsx:101`, mounted in `StudentDashboard.tsx:664` and `StudentOverviewTab.tsx:153` | edge function `class-leaderboard`; `canReadLedger={false}` (:204) so no `point_transactions` read | names, avatars, points unchanged |
+| Staff boards: `ClassLeaderboardShared` (teacher pages, admin `StudentDetail` - route admin only), `ProjectedBoard`, `/board-window/:classId` (teacher / admin route), `LeaderboardTool` | staff policies (`can_view_student_in_class`, `is_teacher_of_class`, admin) | unchanged |
+| Calendar (`GlobalCalendar.tsx:150-170`, `StudentScheduleCalendar`) | own child's enrollments and attendance, by `student_id` | unchanged |
+| Student dashboard, parent dashboard (`StudentDashboard.tsx:164,293`, `FamilyDashboard.tsx:54-111`), heat-map, points chart | every query filters by the own child's id; family policies (`can_view_student`) still cover them | unchanged |
+| In-app assistant | `studentFor` / `classFor` refuse other children before any query; `chat-assistant` suite green in my run | unchanged |
+| Classmate pop-up (`StudentAnalyticsModal`) | reads the four tables by the tapped child's id | header only (name, avatar, level, points from the board's own data) and the private line |
+| Own child's pop-up: class best / average / top three | `get_class_skill_points` | same figures (suite compares figure for figure) |
+
+No family-facing query embeds `students(...)` on a class-wide read except the two panels that were converted; I searched every `students(` embed and every `.from("students" | "attendance" | "point_transactions" | "skill_assessments" | "student_points")` outside the admin and teacher trees. The compare picker in `PerformanceHeatmapTab.tsx:90` lists classmates from `enrollments`, which a family could never read for other families, so it already offered only siblings.
+
+### What ships with it, and the order
+
+Browser build: commit `0123c4f` - `src/lib/classSkillPoints.ts` (new), `src/components/student/analytics/RadarChartTab.tsx`, `src/components/student/analytics/PerformanceHeatmapTab.tsx`, `src/components/student/StudentAnalyticsModal.tsx`.
+
+- Browser first, database old: the RPC is missing, `fetchClassSkillPoints` falls back to the old query; the pop-up's row probe finds the classmate's row (old policy), so the tabs show as today. Nothing visible changes. **This is the order to use.**
+- Database first, browser old: a classmate's pop-up opens four empty tabs, and - worse, because it looks right - the own-child pop-up computes "class best", "class average" and "top three" from the only rows it can still read, the family's own, so a child is shown as best in class. Wrong figures, no error. It lasts until the new build is deployed and each open tab is reloaded (navigation is network-first in `public/service-worker.js`, so a reload is enough).
+
+The implementer's "either order" is true for errors but not for what the screen says; the brief's "ship the browser build with it" should read "deploy the browser build, confirm it is live, then paste".
+
+### c. The migration
+
+- One transaction, preflight, guard, idempotent, no row written; both functions `SECURITY DEFINER`, `STABLE`, `search_path = public`, EXECUTE revoked from PUBLIC / anon, granted to `authenticated`.
+- Live pre-checks hold: the four old policies exist under their names; md5 of `can_view_classmate` `ffe7e1f8...`, `can_view_student` `53f2d327...`, `can_view_enrollment` `3bbba012...`, `is_student_enrolled_in_class` `e8d7b359...` equal the brief's values.
+- Rollback `S1-F16-rollback.sql`: its four policies fingerprinted against live `pg_policies` (name, command, roles, USING): 4 of 4 identical.
+- Suite run by me: 77 passed. Mutations caught: family test removed from the three `student_id` policies (11 fail); `is_family_student` made always true (10); `get_class_skill_points` opened to anyone (4).
