@@ -217,6 +217,18 @@ def sources(args) -> list[dict]:
     return out
 
 
+def piece_object(src: dict, k: int, container: str) -> str:
+    """The code-only object name of piece k of `src` (what leaves this PC)."""
+    if src["kind"] == "join":
+        return f"{src['code_dir']}/{src['piece_name']}.{container}"
+    return f"{src['code_dir']}/{src.get('piece_prefix', 'p')}{k + 1:04d}.{container}"
+
+
+def piece_done(out_dir: Path, obj: str) -> bool:
+    """True if the answer for this object is already saved (resume rule)."""
+    return (out_dir / "pieces" / f"{obj.replace('/', '_')}.json").exists()
+
+
 def write_piece(src: dict, k: int, span: tuple[float, float], out_dir: Path, container: str) -> tuple[str, Path, float]:
     """Cut piece k to a local 16 kHz mono file; return (object path, local file, seconds)."""
     import numpy as np
@@ -236,7 +248,7 @@ def write_piece(src: dict, k: int, span: tuple[float, float], out_dir: Path, con
         x, sr = common.read_wav(Path(src["path"]), span[0], span[1] - span[0])
         if sr != SR:
             sys.exit(f"{src['file_id']}: expected {SR} Hz audio (run extract.py first)")
-    obj = f"{src['code_dir']}/{name}"
+    obj = piece_object(src, k, container)
     if not PATH_RE.fullmatch(obj):
         sys.exit(f"internal: {obj} is not a code-only object name")
     local = common.safe_out(out_dir / "_pieces" / obj)
@@ -345,6 +357,14 @@ def http(method: str, url: str, headers: dict, body: bytes | None, timeout: floa
         return 0, json.dumps({"error": f"network: {type(e).__name__}"}).encode()
 
 
+def short_code(res: dict) -> str:
+    """A short, key-safe label for a failed call: our function's own error
+    words (never a vendor body) plus the vendor's status number, if any."""
+    code = re.sub(r"[^A-Za-z0-9 _:.\-]", "", str(res.get("error", "")))[:60].strip()
+    vs = res.get("vendor_status")
+    return f"{code} (vendor {vs})" if isinstance(vs, int) else code
+
+
 def auth_headers(key: str, token: str) -> dict:
     return {"apikey": key, "Authorization": f"Bearer {token}"}
 
@@ -389,7 +409,9 @@ def delete_remote(url, key, token, objs: list[str]) -> None:
 
 # ------------------------------------------------------------------ main
 
-def main(argv=None) -> int:
+def main(argv=None, session=None, report=None) -> int:
+    """`session` (an open Session) lets vendor_batch sign in once; `report`
+    (a dict) collects ok / cached / errors / sent_s for the caller."""
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--vendor", choices=sorted(MODES))
     ap.add_argument("--mode")
@@ -402,6 +424,8 @@ def main(argv=None) -> int:
     ap.add_argument("--overlap-seconds", type=float, default=20.0)
     ap.add_argument("--container", choices=["flac", "wav"], default="flac",
                     help="flac (default) fits every vendor's limits for a 10-min piece; wav is ~19 MB per 10 min")
+    ap.add_argument("--tag", default=None,
+                    help="suffix for this invocation's result/map file (letters, digits, _), so several input sets share one run id")
     ap.add_argument("--max-minutes", type=float, default=None, help="stop before sending more audio than this")
     ap.add_argument("--max-speakers", type=int, default=None)
     ap.add_argument("--language", choices=["en", "vi"], default=None)
@@ -437,6 +461,11 @@ def main(argv=None) -> int:
         ap.error(f"--vendor/--mode must be one of {MODES}")
     if a.piece_minutes * 60 + a.overlap_seconds > MAX_PIECE_S or a.overlap_seconds * 2 >= a.piece_minutes * 60:
         ap.error("pieces must be under 20 minutes and the overlap less than half a piece")
+    if a.tag is not None and not re.fullmatch(r"[A-Za-z0-9_]{1,24}", a.tag):
+        ap.error("--tag must be letters, digits and _ (24 at most)")
+    suffix = f".{a.tag}" if a.tag else ""
+    rep_ = report if report is not None else {}
+    rep_.update({"ok": 0, "cached": 0, "errors": [], "sent_s": 0.0, "minutes_ok": 0.0})
     run_id = a.run_id or f"{a.vendor}-{a.mode}-{datetime.now():%Y%m%d}".replace(".", "")
     if not RUN_RE.fullmatch(run_id):
         ap.error("--run-id must be letters, digits, - and _ (48 at most)")
@@ -447,13 +476,13 @@ def main(argv=None) -> int:
     srcs = sources(a)
 
     # Local map of codes to source files: it never leaves this machine.
-    (out_dir / f"{run_id}.map.json").write_text(json.dumps(
+    (out_dir / f"{run_id}{suffix}.map.json").write_text(json.dumps(
         [{k: s.get(k) for k in ("file_id", "code_dir", "source_name", "segments")} for s in srcs], indent=1), encoding="utf-8")
 
     url = key = sess = None
     if not a.dry_run:
         url, key = supabase_conf()
-        sess = open_session(url, key, a.login)
+        sess = session or open_session(url, key, a.login)
 
     t_start = time.time()
     sent_s = 0.0
@@ -466,7 +495,11 @@ def main(argv=None) -> int:
             obj, local, secs = write_piece(src, k, span, out_dir, a.container)
             piece_json = out_dir / "pieces" / f"{obj.replace('/', '_')}.json"
             if piece_json.exists():
-                answers.append(json.loads(piece_json.read_text(encoding="utf-8"))["file"])
+                cached = json.loads(piece_json.read_text(encoding="utf-8"))
+                answers.append(cached["file"])
+                rep_["cached"] += 1
+                if not state.get("system") and cached.get("system"):
+                    state["system"] = cached["system"]
                 continue
             if a.dry_run:
                 print(f"[dry-run] {obj}  {secs:7.1f} s  ({local.stat().st_size / 1e6:.1f} MB)")
@@ -484,6 +517,7 @@ def main(argv=None) -> int:
             opts = {k: v for k, v in (("max_speakers", a.max_speakers), ("language", a.language)) if v is not None}
             if opts:
                 body["options"] = opts
+            t_call = time.time()
             for attempt in range(4):
                 st, raw = http("POST", f"{url}/functions/v1/{FUNCTION}",
                                {**auth_headers(key, sess.token()), "Content-Type": "application/json"}, json.dumps(body).encode())
@@ -496,15 +530,20 @@ def main(argv=None) -> int:
                     break
                 time.sleep(5 * 2 ** attempt)
             sent_s += secs
+            rep_["sent_s"] += secs
             if st != 200:
                 # Our function's own words only; it never forwards vendor bodies.
                 print(f"{obj}: HTTP {st} {str(res.get('error', ''))[:160]}")
+                rep_["errors"].append({"obj": obj, "status": st, "code": short_code(res)})
                 if st == 429:
                     print("server cap reached; stopping")
                 if st == 403:
                     print(NOT_ADMIN)
                 stopped = True
                 break
+            res["client_ms"] = int((time.time() - t_call) * 1000)  # proxy + vendor + retries, upload excluded
+            rep_["ok"] += 1
+            rep_["minutes_ok"] += secs / 60
             piece_json.parent.mkdir(parents=True, exist_ok=True)
             piece_json.write_text(json.dumps(res, ensure_ascii=False), encoding="utf-8")
             state["pieces"][obj]["done"] = True
@@ -531,7 +570,7 @@ def main(argv=None) -> int:
               "run": {"started_at": datetime.fromtimestamp(t_start, timezone.utc).isoformat(), "wall_s": round(time.time() - t_start, 1),
                       "audio_s": round(sum(f["duration_s"] for f in files_out), 1)},
               "files": files_out}
-    res_path = common.safe_out(out_dir / f"result_{run_id}.json")
+    res_path = common.safe_out(out_dir / f"result_{run_id}{suffix}.json")
     res_path.write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"wrote {res_path} ({len(files_out)} file(s)){' - INCOMPLETE, run again to resume' if stopped else ''}")
 
