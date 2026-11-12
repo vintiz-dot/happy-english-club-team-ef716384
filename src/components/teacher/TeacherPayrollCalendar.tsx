@@ -105,7 +105,7 @@ export default function TeacherPayrollCalendar({
                   key={index}
                   onClick={() => dateSessions.length > 0 && handleDateClick(day)}
                   className={`
-                    min-h-[80px] min-w-0 p-1 sm:p-2 border border-hec-line rounded-hec-md text-left text-hec-ink transition-shadow duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring
+                    flex flex-col justify-start min-h-[80px] min-w-0 p-1 sm:p-2 border border-hec-line rounded-hec-md text-left text-hec-ink transition-shadow duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring
                     ${!isSameMonth(day, month) ? "opacity-30" : ""}
                     ${isToday(day) ? "border-hec-brass" : ""}
                     ${dateSessions.length > 0 ? "hover:shadow-hec-2 cursor-pointer bg-hec-sunken" : ""}
