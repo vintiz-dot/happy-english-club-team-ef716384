@@ -188,14 +188,14 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
 
   const banner = capturing ? (
     <div
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-destructive bg-destructive text-destructive-foreground shadow-lg"
+      className="fixed inset-x-0 bottom-0 z-50 border-t-4 border-destructive bg-foreground text-background shadow-lg"
       role="status"
       aria-live="polite"
       aria-label="Recording in progress"
     >
       <div className="max-w-3xl mx-auto flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
         <span className="inline-flex items-center gap-2 text-lg font-bold">
-          <CircleDot className="h-5 w-5 motion-safe:animate-pulse" aria-hidden />
+          <CircleDot className="h-6 w-6 text-destructive fill-destructive motion-safe:animate-pulse" aria-hidden />
           {state === "starting" ? "Starting to record" : "Recording"}
         </span>
         <span className="tabular-nums text-lg">{startedAt ? clock(tick - startedAt) : "00:00"}</span>
@@ -359,7 +359,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="min-h-11">Keep recording</AlertDialogCancel>
-            <AlertDialogAction className="min-h-11 bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => void stop()}>Stop recording</AlertDialogAction>
+            <AlertDialogAction className="min-h-11 bg-foreground text-background hover:bg-foreground/90" onClick={() => void stop()}>Stop recording</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

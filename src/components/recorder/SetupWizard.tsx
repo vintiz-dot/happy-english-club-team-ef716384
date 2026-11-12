@@ -200,7 +200,7 @@ export function SetupWizard({ userId, onDone, onCancel }: { userId: string; onDo
                         <span className="flex flex-wrap gap-1.5">
                           {r.s500 ? <Badge variant="secondary">Looks like the Anker S500</Badge> : null}
                           {r.hint === "teacher" ? <Badge variant="secondary">Looks like a lapel receiver</Badge> : null}
-                          {r.bluetooth ? <Badge variant="destructive">Bluetooth - use USB instead</Badge> : null}
+                          {r.bluetooth ? <Badge variant="outline" className="border-destructive text-foreground">Bluetooth - use USB instead</Badge> : null}
                           {r.builtIn ? <Badge variant="outline">The laptop's own microphone</Badge> : null}
                         </span>
                       </span>

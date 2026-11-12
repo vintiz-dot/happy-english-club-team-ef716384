@@ -224,7 +224,7 @@ function ClassCard({ cls, gaps, enrolledCount, wording, who, onChanged }: {
           {serverSaid ? <Notice tone="error" title="The server said no" role="alert">{serverSaid}</Notice> : null}
           <DialogFooter className="gap-2">
             <Button variant="outline" className="min-h-11" onClick={() => setOpenOff(false)}>Cancel</Button>
-            <Button variant="destructive" className="min-h-11" disabled={switchOff.isPending} onClick={() => switchOff.mutate()}>Switch off</Button>
+            <Button className="min-h-11 bg-foreground text-background hover:bg-foreground/90" disabled={switchOff.isPending} onClick={() => switchOff.mutate()}>Switch off</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -308,7 +308,7 @@ function RecordingItem({ r, className, by, onChanged }: { r: RecordingRow; class
           {err ? <Notice tone="error" title="The server said no" role="alert">{err}</Notice> : null}
           <DialogFooter className="gap-2">
             <Button variant="outline" className="min-h-11" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button variant="destructive" className="min-h-11" disabled={!validReason(reason) || m.isPending} onClick={() => m.mutate()}>Request deletion</Button>
+            <Button className="min-h-11 bg-foreground text-background hover:bg-foreground/90" disabled={!validReason(reason) || m.isPending} onClick={() => m.mutate()}><Trash2 className="h-4 w-4 mr-2" aria-hidden /> Request deletion</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
