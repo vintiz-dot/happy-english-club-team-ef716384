@@ -15,4 +15,75 @@ Everything is ADDITIVE; no existing call, event or field changed shape. What C3 
 5. **Behaviour C3 will see.** `enableLocalBackup()` still exists but is a no-op answering `false` (M5): do not offer the folder backup. After `complete` the local copy is purged: `current()` then returns the last in-memory state, `discardLocal` is not needed for it. `uploadProgress(id)` and `discardLocal(id)` throw `not_your_recording` for another account's recording. A Discard needs exactly `"DISCARD"`.
 6. **New options** (all optional): `encoder`, `stallAfterMs`, `startTimeoutMs`, `preStartHoldMs`, `startLeadOkMs`, `stuckAfterMs`, `memoryHoldBytes`, `storageStopBytes`, `durable`. `now` is now a label clock only; elapsed time uses `perfNow`.
 
-(filled in below as results come)
+## How each blocker and major was closed
+
+| # | Fix (where) | Proof (unit case, `scripts/recorder/unit.test.mjs`, unless named) |
+|---|---|---|
+| B1 dead context | `controller.ts` watchdog in `tick()`: no PCM batch for `stallAfterMs` (3 s, monotonic clock) while capturing -> state `stalled`, health `capture_stalled`, error `capture_stalled` ("NOT RECORDING ..."), tab title "⚠ NOT RECORDING"; `resume()` every 2 s, and the context RE-MADE once (`BrowserCaptureSource.rebuild()`: new AudioContext + worklet, the open microphones re-attached, the frame count carried on via `frameBase`). `statechange` to anything but `running` = a stall at once. When audio returns: `capture_resumed` with `gapMs`, a `context_stall` discontinuity (wall gap) in the manifest and a `gap` marker. A tick that itself came late (busy page) defers the verdict once. | "B1: within 5 s ..." (3.1 s), "the state is `stalled`, never `recording`", "tried resume() and then re-made the context once", gap 17.1 s in the manifest, logged once, contiguous, completes; statechange case. Browser (real Chromium): `ctx.suspend()` and `ctx.close()` mid-recording -> stalled at once, title NOT RECORDING, back to recording (resume / a new context), gap in the manifest, contiguous, complete. |
+| B2 clock jumps | `serverNow()` = server time at the last measurement + `perfNow()` elapsed (`measureClock` stores `serverAt`/`perfAt`); every interval, backoff and chunk timestamp uses it or `perfNow`; `Date.now()` only labels. `checkWallClock` in `tick()`: wall vs monotonic differ > 5 s -> `clock` event with `jumpMs`, a `clock_change` discontinuity, a re-measure. Uploader runs on `serverNow()` (a wall jump back can no longer push retries 3 h away). | "+3 h" and "-3 h" mid-lesson: still recording, no timing refusal, jump reported and in the manifest, chunks contiguous, completes `manual`; a laptop 3 h wrong from boot still stops `scheduled_end` inside the window. |
+| B3 slow start | Audio from the FIRST Start request on is held in memory (`pre`, up to 2 min) and cut into chunks only when the answer comes, from t0 = that request's frame; nothing is dropped silently. Start is not on the control queue (a hung Start blocks nothing), times out after 10 s, is re-sent, and after any failure the row is read back (the Start may have landed). If the server's `started_at` is > 5 s after the request, t0 is re-anchored to the stamp (audio before the server's own start cannot be part of the recording: it would be refused "ahead of clock" / "after Stop") and that is said: `start_delayed` + `pre_start_trimmed`. A refused Start -> state `error`, `start_failed` with the refusal, the held audio stored locally. | answer held 25 s: held, registered on arrival, t0 = first request, decodes sample-exact, completes; request travels 25 s: reported, re-anchored, no refusal, completes (the review saw it stuck); no answer at all: timed out, re-sent, completes; refused: `error`, audio kept. |
+| B4 Stop | `sendStop`: only a refusal the server STATED (`window_closed`, `recording_closed`, `not_your_recording`, `no_longer_teaching`) is final; 5xx / gateway timeout (new `server_unavailable`), `not_signed_in` (session refreshed via the injected client's `auth.refreshSession`, new optional `backend.refreshAuth`), unknown -> backoff to 60 s, `stop_pending` error, `UploadProgress.stopPending`. The row is read back after every failure. `recover()` clears an old `stopRefused` and resumes an unfinished Stop. | 503 then reload -> complete; expired JWT -> refreshed -> complete; a stated refusal is reported and not re-sent. |
+| M1 ownership | `LocalRecording.ownerUserId`; `recover`, `kickUploads`, `drive`, `arm`'s local lookup, `uploadProgress`, `discardLocal`, `signOut`, `heldAudio` see only the signed-in user's; `othersPending()` and `recovered.othersPending`. | A's queued audio + B signs in: B returns nothing, makes NO server call about A's recording, cannot discard or read it, B's sign-out leaves it byte-identical; A signs in again -> resumes and completes. |
+| M2 purge | After `complete` the whole local copy is purged (bytes, chunk rows, markers/labels, manifest); `signOut()` frees confirmed audio and keeps (and reports) the rest; an abandoned recording frees confirmed bytes and forgets marker labels; a row the server reports `deleted` is purged; own unsent audio older than 14 days -> `stuck` event. Unconfirmed audio is never deleted without the typed DISCARD (decision). | after complete nothing left; sign-out frees confirmed, keeps unconfirmed and reports it, next sign-in completes; 15 days later `stuck` with age and size, not deleted; deleted on the server -> purged. |
+| M3 quota | `storeChunk`: on a quota error the bytes of chunks the SERVER confirmed are freed first, then retried; still failing -> the chunk is held in memory (later chunks of its track behind it, order kept) and retried every 5 s; over `memoryHoldBytes` (150 MB) capture STOPS loudly; finalize waits while a chunk is only in memory; a write that can never succeed ("different audio", m4: not retried) is a hole: track ends there (`refusedFromSeq`), `local_store_failed` discontinuity in the manifest. Uploader: never registers k+1 while k is missing locally (held -> waits; gone -> the track ends at k). Storage < `storageStopBytes` (64 MB) while capturing -> stop loudly before the browser refuses. | quota for 5 attempts: reported, confirmed audio freed, no hole, completes; permanent failure: track ends at 1, in the manifest, completes; memory full: STOPPED, does not complete until stored, then complete with no hole; a chunk missing on reload: never registered over. |
+| M4 late tab | `driveOnce`: when a Stop would come after `capture_closes_at + late_after`, `uploader.run()` FIRST, Stop only when nothing is pending (or halted, or 6 h later); then the honest `stopped_after_window`, confirmed bytes freed. | the late-reopened case: every chunk confirmed on the server, the Stop sent after the last confirm, row abandoned, local confirmed audio freed. |
+| M5 backup | Removed: `enableLocalBackup()` is a no-op answering false (`backup` event `off`); no folder writes anywhere. | by reading; no write path left (`grep showDirectoryPicker` = none). |
+| M6 Worker | `encodeWorker.ts` + `encoderClient.ts` (`workerEncoder`, `inlineEncoder`): FLAC + SHA-256 in a dedicated Worker, created by `createRecorder` as `new Worker(new URL("./encodeWorker.ts", import.meta.url), { type: "module" })` (Vite bundles it); samples COPIED (a dead worker loses nothing: pending jobs re-run inline, `onFallback` once). The old tick-delivery stall test is gone (it produced the false markers); gaps come from the watchdog and a ledger (frames vs monotonic time, minimum over 5 s - a burst of late batches does not count). | worker results equal inline, out-of-order answers kept in order, dying worker falls back, no Worker -> inline; a 3.6 s main-thread block + burst -> no stall, no gap marker. Browser: encoder `worker`, longest main-thread task 180 ms. Measurement below. |
+| M7 cron | `20261112101000_recorder_retention_cron.sql` (see C1 Revision 4). | `scripts/pgtest/recorder-cron.test.mjs` 22/0. |
+| M8 | cases for the five survivors and the two "caught by one incidental assertion" | mutation table below. |
+| Ruling (a) server | `below_floor` (C1 Revision 4) | `recorder.test.mjs` +8 (406/0); 4 SQL mutations, 4 caught. |
+| Ruling (a) client | verbatim padding removed (`encodePcmChunk`), byte floor not a local refusal any more (`below_byte_floor` kept in TRACK_ENDING only for an old server), `belowFloor` per chunk and in progress, `mic_silent` error on `flat` (2 s), `dead_mic` (10 s), `silence` (30 s). | dead lapel: "the teacher microphone is silent" within 3 s, chunks sent and flagged, nothing deleted, completes; floor above raw PCM: all sent and flagged, completes. |
+
+Minors: m1 `createRecorder` marks a MemoryStore fallback `durable: false` -> `not_durable` at prepare, `arm()` refuses. m2 reopened mic: `constraints` event, `constraint_not_honoured`, `same_device_twice` by groupId, track row updated (`backend.updateTrack`). m3 audio before the Start answer is in memory, not in 5-s segments: a crash in that window loses it (left: the server had not started, and after the answer segments resume at once). m4 done (above). m5 done (`perfNow`). m6 left: the edge function cannot import from `src/`; a test ties the three. m7 runbook line below. m8 done (25 recordings / 100 s per run, `remaining`; retention 37/0). m9 done (local refusals call `onError`).
+
+## M6 measurement (main thread per audio minute, before / after)
+
+`node scripts/recorder/measure.mjs --run=worker --minutes=4`: two FLAC pages side by side in one Chromium, 30 s chunks, the same fake inputs; one forced inline (the old main-thread encoder), one with the Worker. Machine heavily loaded (5 unit suites running). JSON: `C:\Users\Dell\hec-tools\c2r-harness\measure-worker.json`.
+
+| | before (inline) | after (Worker) |
+|---|---|---|
+| CDP TaskDuration, s per audio minute (renderer, includes worker tasks) | 8.95 | 9.12 |
+| CDP ScriptDuration, s per audio minute (main thread script) | 2.99 | **1.33** |
+| long tasks > 1 s on the main thread | 6 | **0** |
+| longest main-thread task | 2 820 ms | **817 ms** |
+| `context_stall` discontinuities in 4 minutes | 47 | 1 |
+| encoder ms per 30 s chunk (mean) | 668 | 658 (now off the page) |
+
+Reading: the CPU spent is the same (it moved, it did not shrink); what changes is that the page is never blocked for more than ~0.8 s, so lesson UI in the same tab no longer freezes 1-3 s twice a minute. The inline page's 47 stall markers under that load are not all false (Chrome's fake inputs are software-clocked and fall behind when the CPU is starved - C2 measured 14 % slow audio); the one on the Worker page cannot be told apart either. The review's specific false marker (a delayed tick read as a stall) is gone by construction and has its unit case.
+
+## Mutation run
+
+`.probe/mut.mjs` (throwaway, deleted): each mutant a copy of `src/lib/recorder` under `.probe/m/<n>/`, `unit.test.mjs` run against it via `RECORDER_SRC`. CAUGHT = a FAIL or a non-zero exit.
+
+MUTATION_TABLE
+
+## Test totals
+
+TOTALS
+
+## Real-hardware checks for the owner (replaces C2-capture-core's list)
+
+1. Both devices listed in Chrome on the school laptop; write the exact labels (they feed `hintRole` and the label fallback).
+2. Read-back on the real pair: EC / NS / AGC / voiceIsolation `false` for the S500 and the lapel receiver? `channelCount`? native `sampleRate`?
+3. Zero-touch start on that laptop's Chrome/Edge (no click; context re-made after the mics open), installed-PWA and plain tab.
+4. **B1 on real hardware:** close the lid for 1 minute mid-recording, and separately put the laptop to sleep: the page must show NOT RECORDING (state `stalled`) while it is down, come back by itself (or say "reload the page"), and the manifest must carry a `context_stall` gap of about the time it was down.
+5. **B1:** unplug the S500's USB while recording and re-plug (Windows may restart the audio service): watch for `stalled` -> `capture_resumed`, or the device path (`device_unplugged` / `device_restored`).
+6. Hidden-tab integrity, 100 minutes, minimised behind a full-screen app: no `capture_stalled`, `frames_captured == frames_written` on both tracks. (A stall while hidden may only be noticed after ~2 minutes if Chrome throttles the 1 s interval - check what the page says on return.)
+7. **B2:** during a lesson, change the Windows clock by +1 h and back (Settings -> Time -> set manually): recording continues, a `clock_change` is in the manifest, the lesson stops on the school's schedule.
+8. **B3/B4:** on the school Wi-Fi, start a lesson with the network unplugged for the first 30 s, and later pull it during Stop: the page says "starting"/"not stopped on the server yet", and both finish once the network is back.
+9. Clap test at minute 1 and minute 95: inter-track offset < 20 ms, growth < 10 ms.
+10. **M6:** the browser's task manager while recording on the school laptop: the recorder tab's main thread stays responsive (no 1-3 s freezes); `encodeMs` per chunk in the chunk events.
+11. Real FLAC bytes per second for a normal lesson AND a silent room / muted lapel: the silent track now shows `mic_silent` within seconds and its chunks are `below_floor` (stored, not evidence).
+12. Unplug the lapel receiver for 10 s and plug back: `device_unplugged` -> `device_restored`; > 60 s: `device_lost`, the lesson continues on one track; the reopened mic's settings read back again.
+13. Roles swapped on purpose: `roles_maybe_swapped` in the first minute.
+14. **M1/M2:** two teacher accounts on the same browser profile: B sees "another account has unsent audio", A's audio is untouched, A finishes it on next sign-in; after a complete lesson, DevTools -> Application -> IndexedDB `hec-recorder` holds nothing of it.
+15. **M3:** fill the disk until under ~2 GB free: arming refuses; during a lesson the page stops loudly before the browser refuses (`storageStopBytes`).
+16. Uplink AND downlink at lesson time (every chunk is uploaded and downloaded again for the read-back: ~0.75 Mbit/s each way for two FLAC tracks) - m7, one line for the runbook.
+17. `powercfg /requests` (elevated) during a hidden-tab recording; Windows "Audio enhancements" off for both devices.
+18. After the first test lesson: one admin POST to `recorder-retention` (end to end), and after the cron migration: `select jobname, schedule from cron.job where jobname like 'recorder-%'` shows both jobs; after the first night `select status_code from net._http_response order by created desc limit 1` is 200 (404 = function not deployed).
+
+## Not done / for the conductor
+
+- `scripts/recorder/unit.test.mjs` (now ~15 min on a loaded machine) is still not in `run.mjs` (C2's request 6 stands).
+- The cron job cannot be executed locally against real pg_cron / pg_net; the gateway accepting the anon key and the function being deployed are post-apply checks (item 18).
+- Post-apply probe counts change: one column (`class_recording_chunks.below_floor`), one view column (`below_floor_ms`), no function added; the cron migration adds two `cron.job` rows and nothing else.
