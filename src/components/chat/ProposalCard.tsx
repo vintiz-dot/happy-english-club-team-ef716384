@@ -18,32 +18,32 @@ interface ProposalCardProps {
 
 export function ProposalCard({ proposal, busy, onConfirm, onChange, onCancel }: ProposalCardProps) {
   return (
-    <div className="rounded-2xl border border-violet-300/70 bg-violet-50/70 dark:bg-violet-950/30 dark:border-violet-800 p-3 space-y-2">
-      <p className="text-xs font-semibold flex items-center gap-1.5">
-        <ClipboardCheck className="h-3.5 w-3.5 text-violet-600" />
+    <div className="space-y-2 rounded-hec-lg border border-hec-line bg-hec-surface p-4 text-hec-ink shadow-hec-1">
+      <p className="flex items-center gap-2 text-hec-caption font-medium text-hec-ink">
+        <ClipboardCheck className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
         You asked me to:
       </p>
-      <ul className="text-sm space-y-1 list-disc pl-5">
+      <ul className="list-disc space-y-1 pl-5 text-hec-small text-hec-ink">
         {proposal.summary.map((line) => (
-          <li key={line}>{line}</li>
+          <li key={line} className="break-words">{line}</li>
         ))}
       </ul>
       {proposal.warnings.length > 0 && (
-        <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 ring-1 ring-amber-200 dark:ring-amber-900 px-2.5 py-2 space-y-1">
+        <div className="space-y-1 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint px-3 py-2">
           {proposal.warnings.map((w) => (
-            <p key={w} className="text-xs text-amber-900 dark:text-amber-200 flex gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-px" />
+            <p key={w} className="flex gap-2 text-hec-caption text-hec-ink">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-hec-warn" aria-hidden />
               {w}
             </p>
           ))}
         </div>
       )}
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-hec-caption text-hec-ink-soft">
         Nothing has changed yet. Confirm saves all of it together, and you can undo it in one click.
       </p>
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" onClick={onConfirm} disabled={busy} className="bg-violet-600 hover:bg-violet-700 text-white">
-          {busy && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+        <Button size="sm" onClick={onConfirm} disabled={busy}>
+          {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
           Confirm
         </Button>
         <Button size="sm" variant="outline" onClick={onChange} disabled={busy}>
