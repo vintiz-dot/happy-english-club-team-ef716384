@@ -40,7 +40,7 @@ export function ReasonField({ label, value, onChange, min, disabled, help }: Rea
       <p id={`${id}-help`} className="text-xs text-muted-foreground">
         {help ?? `Say what actually happened. At least ${min} characters; stock phrases are not accepted.`}
       </p>
-      <p id={`${id}-count`} role="status" aria-live="polite" className={cn("text-xs", touched && !check.ok ? "font-medium text-destructive" : "text-muted-foreground")}>
+      <p id={`${id}-count`} role="status" aria-live="polite" className={cn("text-xs", touched && !check.ok ? "font-semibold text-foreground" : "text-muted-foreground")}>
         {touched ? check.message : `0 of ${min} characters`}
       </p>
     </div>
@@ -83,7 +83,7 @@ export function TypedDateField({ lessonDate, value, onChange, disabled }: TypedD
       <p id={`${id}-hint`} className="text-xs text-muted-foreground">
         {TYPED_DATE_HINT} Look at the lesson's date at the top of this window and type it yourself.
       </p>
-      <p id={`${id}-state`} role="status" aria-live="polite" className={cn("text-xs", touched && !ok ? "font-medium text-destructive" : "text-muted-foreground")}>
+      <p id={`${id}-state`} role="status" aria-live="polite" className={cn("text-xs", touched && !ok ? "font-semibold text-foreground" : "text-muted-foreground")}>
         {!touched ? "Not typed yet." : ok ? "Date matches." : "That is not this lesson's date."}
       </p>
     </div>

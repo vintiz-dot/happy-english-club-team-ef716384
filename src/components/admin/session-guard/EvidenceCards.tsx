@@ -46,7 +46,7 @@ export function EvidenceCards({ preview }: { preview: GuardPreview }) {
               <span
                 className={cn(
                   "mt-0.5 shrink-0 rounded-md border px-2 py-0.5 text-xs font-medium",
-                  e.strength === "Strong" ? "border-destructive/50 text-destructive" : "border-border text-muted-foreground",
+                  e.strength === "Strong" ? "border-destructive/50 text-foreground" : "border-border text-muted-foreground",
                 )}
               >
                 {e.strength}

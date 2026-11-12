@@ -270,7 +270,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
                   <Button
                     variant="outline"
                     size="lg"
-                    className="min-h-12 w-full border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto"
+                    className="min-h-12 w-full border-destructive text-foreground hover:bg-destructive/10 hover:text-foreground [&_svg]:text-destructive sm:w-auto"
                     disabled={!canGo || busy || phase === "loading" || phase === "failed" || !!blockingError}
                     aria-describedby={missing.length ? "sg-missing" : undefined}
                     onClick={() => void g.submit(form)}
@@ -342,7 +342,7 @@ function DoneBody({ op, success, retrying, retryError, onRetry }: { op: GuardOp;
                   <span className="min-w-0 break-words">
                     {names?.[r.student_id] ?? "Child"} <span className="text-muted-foreground">({r.month})</span>
                   </span>
-                  <span className={r.ok ? "shrink-0 text-muted-foreground" : "shrink-0 font-semibold text-destructive"}>{r.ok ? "Bill refreshed" : "Not refreshed"}</span>
+                  <span className={r.ok ? "shrink-0 text-muted-foreground" : "shrink-0 font-semibold"}>{r.ok ? "Bill refreshed" : "Not refreshed"}</span>
                 </li>
               ))}
             </ul>
@@ -358,7 +358,7 @@ function DoneBody({ op, success, retrying, retryError, onRetry }: { op: GuardOp;
               </p>
               <p>Until they are, those families may be shown a bill that still includes this lesson.</p>
               {retryError && <p className="font-medium">Retry failed: {errorText(retryError)}</p>}
-              <Button variant="outline" className="min-h-11 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={onRetry} disabled={retrying || !success.result?.override_id}>
+              <Button variant="outline" className="min-h-11 border-destructive text-foreground hover:bg-destructive/10 hover:text-foreground [&_svg]:text-destructive" onClick={onRetry} disabled={retrying || !success.result?.override_id}>
                 {retrying ? <Loader2 className="animate-spin" aria-hidden="true" /> : <RotateCcw aria-hidden="true" />}
                 Retry the bill refresh
               </Button>

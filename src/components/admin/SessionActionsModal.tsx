@@ -186,7 +186,7 @@ export const SessionActionsModal = ({ session, onClose, onSuccess }: SessionActi
             )}
 
             {statusError && (
-              <p role="alert" className="text-sm font-medium text-destructive break-words">{statusError}</p>
+              <p role="alert" className="text-sm font-semibold break-words">{statusError}</p>
             )}
 
             <div className="flex flex-col gap-2 sm:flex-row">

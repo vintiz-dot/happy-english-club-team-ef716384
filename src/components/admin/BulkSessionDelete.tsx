@@ -305,7 +305,7 @@ export function BulkSessionDelete() {
               <Button
                 variant="outline"
                 size="lg"
-                className="min-h-12 w-full border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto"
+                className="min-h-12 w-full border-destructive text-foreground hover:bg-destructive/10 hover:text-foreground [&_svg]:text-destructive sm:w-auto"
                 disabled={!canGo}
                 aria-describedby="bulk-go-help"
                 onClick={() => void handleConfirm()}
