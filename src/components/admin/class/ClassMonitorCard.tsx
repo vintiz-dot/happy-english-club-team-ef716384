@@ -87,15 +87,15 @@ export function ClassMonitorCard({ classId }: ClassMonitorCardProps) {
   const isLoading = loadingStudents || loadingMonitor;
 
   return (
-    <Card className="border-warning/20 bg-gradient-to-br from-warning/5 via-card to-card shadow-lg overflow-hidden">
+    <Card className="overflow-hidden">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <div className="p-2 rounded-lg bg-warning/15">
-            <Shield className="h-5 w-5 text-warning" />
+        <CardTitle className="flex items-center gap-2">
+          <div className="shrink-0 rounded-hec-md bg-hec-sunken p-2">
+            <Shield className="h-5 w-5 text-hec-brass" />
           </div>
-          <div>
-            <span className="text-foreground">Class Monitor</span>
-            <p className="text-xs font-normal text-muted-foreground mt-0.5">
+          <div className="min-w-0">
+            <span className="text-hec-ink">Class Monitor</span>
+            <p className="mt-1 font-sans text-hec-caption font-normal text-hec-ink-soft">
               Designate a student as class leader
             </p>
           </div>
@@ -104,8 +104,8 @@ export function ClassMonitorCard({ classId }: ClassMonitorCardProps) {
       <CardContent className="space-y-4">
         {isLoading ? (
           <div className="space-y-3">
-            <Skeleton className="h-14 w-full rounded-xl" />
-            <Skeleton className="h-9 w-full rounded-lg" />
+            <Skeleton className="h-14 w-full rounded-hec-md" />
+            <Skeleton className="h-11 w-full rounded-hec-md" />
           </div>
         ) : (
           <>
@@ -117,26 +117,26 @@ export function ClassMonitorCard({ classId }: ClassMonitorCardProps) {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-warning/10 to-warning/5 border border-warning/20"
+                  className="flex items-start gap-3 rounded-hec-md border border-hec-brass/40 bg-hec-surface p-3"
                 >
-                  <div className="relative">
-                    <div className="h-10 w-10 rounded-full bg-warning/20 flex items-center justify-center">
-                      <Crown className="h-5 w-5 text-warning" />
+                  <div className="relative shrink-0">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-hec-sunken">
+                      <Crown className="h-5 w-5 text-hec-brass" />
                     </div>
-                    <Sparkles className="absolute -top-1 -right-1 h-3.5 w-3.5 text-warning" />
+                    <Sparkles className="absolute -right-1 -top-1 h-4 w-4 text-hec-brass" aria-hidden="true" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-foreground truncate">
+                  <div className="min-w-0 flex-1 self-center">
+                    <p className="whitespace-normal break-words hyphens-none text-hec-small font-semibold text-hec-ink">
                       🛡️ {monitorName || "Unknown Student"}
                     </p>
-                    <p className="text-xs text-muted-foreground">Current Class Monitor</p>
+                    <p className="text-hec-caption text-hec-ink-soft">Current Class Monitor</p>
                   </div>
                   <Button
-                    variant="ghost"
+                    variant="destructive-quiet"
                     size="sm"
                     onClick={() => removeMutation.mutate()}
                     disabled={removeMutation.isPending}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-2"
+                    className="shrink-0"
                   >
                     <X className="h-4 w-4 mr-1" /> Remove
                   </Button>
@@ -146,10 +146,10 @@ export function ClassMonitorCard({ classId }: ClassMonitorCardProps) {
                   key="empty"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="p-3 rounded-xl bg-muted/30 border border-dashed border-border text-center"
+                  className="rounded-hec-md border border-dashed border-hec-line bg-hec-sunken p-4 text-center"
                 >
-                  <UserCheck className="h-8 w-8 mx-auto text-muted-foreground/40 mb-1" />
-                  <p className="text-xs text-muted-foreground">No monitor assigned yet</p>
+                  <UserCheck className="mx-auto mb-1 h-8 w-8 text-hec-ink-faint" aria-hidden="true" />
+                  <p className="text-hec-caption text-hec-ink-soft">No monitor assigned yet</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -157,7 +157,7 @@ export function ClassMonitorCard({ classId }: ClassMonitorCardProps) {
             {/* Assignment controls */}
             <div className="flex gap-2">
               <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-                <SelectTrigger className="flex-1 h-9 text-sm">
+                <SelectTrigger className="min-w-0 flex-1" aria-label="Student to make class monitor">
                   <SelectValue placeholder="Select a student..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -170,17 +170,17 @@ export function ClassMonitorCard({ classId }: ClassMonitorCardProps) {
               </Select>
               <Button
                 size="sm"
-                className="h-9 gap-1 bg-warning hover:bg-warning/90 text-warning-foreground"
+                className="shrink-0 gap-2"
                 disabled={!selectedStudent || assignMutation.isPending}
                 onClick={() => selectedStudent && assignMutation.mutate(selectedStudent)}
               >
-                <Shield className="h-3.5 w-3.5" />
+                <Shield className="h-4 w-4" />
                 {currentMonitor ? "Reassign" : "Assign"}
               </Button>
             </div>
 
             {enrolledStudents?.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center">
+              <p className="text-center text-hec-caption text-hec-ink-soft">
                 No students enrolled in this class yet.
               </p>
             )}
