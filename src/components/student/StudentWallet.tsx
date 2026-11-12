@@ -57,33 +57,33 @@ export function StudentWallet({ studentId, classId, className, totalPoints, econ
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 24 }}
+        transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
       >
-        <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 overflow-hidden">
+        <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Wallet className="h-5 w-5 text-primary" />
-              My Bank — {className}
+            <CardTitle className="flex items-start gap-2">
+              <Wallet className="mt-1 h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
+              <span className="min-w-0 whitespace-normal break-words hyphens-none">My Bank — {className}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Balance Display */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="glass-sm rounded-xl p-3 text-center">
-                <Coins className="h-5 w-5 mx-auto mb-1 text-amber-500" />
-                <p className="text-2xl font-black text-primary">{totalPoints}</p>
-                <p className="text-xs text-muted-foreground">Points</p>
+              <div className="rounded-hec-md bg-hec-sunken p-3 text-center">
+                <Coins className="mx-auto mb-1 h-5 w-5 text-hec-brass" aria-hidden />
+                <p className="whitespace-nowrap text-hec-h2 font-semibold tabular-nums text-hec-ink">{totalPoints}</p>
+                <p className="text-hec-caption text-hec-ink-soft">Points</p>
               </div>
-              <div className="glass-sm rounded-xl p-3 text-center">
-                <Banknote className="h-5 w-5 mx-auto mb-1 text-green-500" />
-                <p className="text-2xl font-black text-green-600">{cashOnHand}</p>
-                <p className="text-xs text-muted-foreground">Cash on Hand</p>
+              <div className="rounded-hec-md bg-hec-sunken p-3 text-center">
+                <Banknote className="mx-auto mb-1 h-5 w-5 text-hec-ink-soft" aria-hidden />
+                <p className="whitespace-nowrap text-hec-h2 font-semibold tabular-nums text-hec-ink">{cashOnHand}</p>
+                <p className="text-hec-caption text-hec-ink-soft">Cash on Hand</p>
               </div>
             </div>
 
-            <p className="text-xs text-center text-muted-foreground">
+            <p className="text-center text-hec-caption tabular-nums text-hec-ink-soft">
               Rate: {pointsToCashRate} pts = 1 cash unit
               {potentialCash > 0 && ` • You can withdraw up to ${potentialCash} cash`}
             </p>
@@ -95,7 +95,7 @@ export function StudentWallet({ studentId, classId, className, totalPoints, econ
             )}
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-3">
               <Button
                 variant="default"
                 size="sm"
@@ -104,7 +104,7 @@ export function StudentWallet({ studentId, classId, className, totalPoints, econ
                 className="gap-1"
               >
                 <ArrowDownToLine className="h-3.5 w-3.5" />
-                <span className="text-xs">Withdraw</span>
+                <span>Withdraw</span>
               </Button>
               <Button
                 variant="outline"
@@ -113,7 +113,7 @@ export function StudentWallet({ studentId, classId, className, totalPoints, econ
                 className="gap-1"
               >
                 <ArrowUpFromLine className="h-3.5 w-3.5" />
-                <span className="text-xs">Deposit</span>
+                <span>Deposit</span>
               </Button>
               <Button
                 variant="ghost"
@@ -122,7 +122,7 @@ export function StudentWallet({ studentId, classId, className, totalPoints, econ
                 className="gap-1"
               >
                 <History className="h-3.5 w-3.5" />
-                <span className="text-xs">History</span>
+                <span>History</span>
               </Button>
             </div>
           </CardContent>
