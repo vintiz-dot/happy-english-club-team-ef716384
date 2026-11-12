@@ -38,6 +38,42 @@ Not done, by design: the critic's (e) "server hashes the object" needs an edge f
 - After: `node scripts/pgtest/run.mjs` -> `2250 assertions across 33 suites, 0 suite(s) failed` (baseline 2157 across 33; 2157 - 191 + 284 = 2250: the only count that changed is the recorder suite; every other suite has its baseline count and passes; app and edge-function typechecks included).
 - Every old recorder assertion is kept. Where the rule changed, the assertion changed with it: e.g. "start time held to the arming time" is now "the start time is the server's", "hard limit end + overrun" is now the window check, "two tracks are 30 s" now reads `verified_audio_ms`, the bucket has two policies, and "a child who joins blocks the next recording with the switch on" is now made through an enrolment that skips the trigger, because a normal enrolment now switches the class off (F9).
 
+## Mutation run
+
+`.probe/mut.mjs` (throwaway, not committed, deleted at the end) wrote a mutated copy of the migration to `.probe/m_class_recorder.sql` and ran `node scripts/pgtest/recorder.test.mjs <TA mig> .probe/m_class_recorder.sql`. CAUGHT = a FAIL or a non-zero exit. The first 23 ran before the session restart; the rest ran after it, against the same commit.
+
+| Mutation | Result |
+|---|---|
+| F1 chunk span not bounded by chunk_ms | CAUGHT (282/2) |
+| F1 byte floor removed | CAUGHT (283/1) |
+| F1 server-clock bound removed | CAUGHT (278/6) |
+| F1 complete-time span check removed | CAUGHT (281/3) |
+| F1 overlap check removed | CAUGHT (282/2) |
+| F1 view: verified ignores server span | CAUGHT (283/1) |
+| F1 view: verified ignores stored bytes | CAUGHT (283/1) |
+| F1 view: held threshold zero | CAUGHT (281/3) |
+| F1 started_at = laptop claim | CAUGHT (FAIL, then crash) |
+| F1 complete skips stored-object re-check | CAUGHT (282/2) |
+| F2 listen = whole class for today's cover | CAUGHT (280/4) |
+| F2 class tier widened 3650 days ahead (critic's survivor) | CAUGHT (281/3) |
+| F2 storage read by class, not recording | CAUGHT (281/3) |
+| F2 archived cover teacher still teaches the session | CAUGHT (280/4) |
+| F7 archived standing teacher still a teacher (critic's survivor) | CAUGHT (FAIL, then crash) |
+| F13 starter reads closed recordings forever | CAUGHT (282/2) |
+| F3 per-child wording version ignored | CAUGHT (FAIL, then crash) |
+| F3 wording change does not switch off | CAUGHT (281/3) |
+| F3 arm ignores class wording | CAUGHT (283/1) |
+| F4 client may detach session | CAUGHT (282/2) |
+| F4 armed_session_id mutable | CAUGHT (282/2) |
+| F5 pre-roll not enforced at start | CAUGHT (283/1) |
+| F5 window not enforced at register | CAUGHT (283/1) |
+| F5 grace widened to 60 min | CAUGHT (282/2) |
+| F6 row_security=off removed everywhere | CAUGHT (279/5) |
+| F6 delete trigger skips storage re-check | CAUGHT (281/3) |
+| F8 after-Stop check removed | CAUGHT (283/1) |
+| F9 enrolment trigger inert | CAUGHT (281/3) |
+| F10 cancel trigger inert | CAUGHT (283/1) |
+
 ## Contract for D1
 
 D reads `public.recorder_session_evidence` and decides on ONE column: **`counts_as_held_evidence`** (`WHERE session_id = $1 AND counts_as_held_evidence`). `was_completed` is technical only. Full column table: `C1-architecture.md` section 7. Not wired into D1 (`session_recording_evidence`) until this revision passes its second review.
