@@ -151,12 +151,12 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 
 | Stream | Units | Done | What is done |
 |---|---|---|---|
-| D money integrity | 18.5 | 12.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
+| D money integrity | 18.5 | 13.5 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
 | A overhaul | 12.0 | 9.4 | A0, A1, A2.1-A2.3, A3.1-A3.4, A4.5 SHIPPED to main (release 1, dbfe3cc); A4.1, A4.2 merged; rollout running. Left: A3.5-A3.7, A4.3, A4.4, rollout batches, A5 |
 | B lesson monitor evaluation | 10.5 | 4.7 | vendor research, audio prep, harness, vendor proxy live, B1 batch runner + scoring built (owner batch run pending). Left: B1 results, B2, B2b, B3, report |
 | C class recorder | 8.0 | 2.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **28.6** | **56%** |
+| **Total** | **51.0** | **30.1** | **59%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -281,3 +281,9 @@ Log: 2026-11-12 - 56% (A release 1 shipped).
   BEFORE -> AFTER: entry JS gzip 216.3 -> 163.4 KiB; Layout chunk 391.9 -> 48.2 KiB; initial CSS 44.3 -> 41.1 KiB; requests parent view 78 -> 19, student dashboard 33 -> 28, admin schedule 16 -> 13; horizontal overflow at 375: 1 screen -> 0; teacher regression script 28 PASS / 70 FAIL -> 127 PASS / 1 FAIL (the 1 was a page-load timeout under load; that scenario alone re-ran 5/0).
   NOT MET or NOT JUDGED: total JS across all chunks rose 1474.7 -> 1521.3 KiB (+3.2%, accepted: code moved into lazy chunks); axe counts unchanged (the accessibility fixes are in the design rollout, not this release); TIMINGS NOT JUDGED - the machine was shared by many agents and first loads ran 2-8x slower, so the "no screen slower" gate needs a quiet re-run; `: any` count 749 -> 750 (one in useShellQueries.ts:39).
   Not verified on the live site: a homework PDF, a profile share image and a tuition bulk PDF (each needs one click); the real flipbook provider inside the frame.
+Log: 2026-11-12 - 59% (D release LIVE).
+
+- 2026-11-12 D RELEASE assembled (sonnet, release/d1 c43a82f): leak check clean; tsc 0; full pgtest on the release branch 2155 assertions / 33 suites / 0 failed (D suites 143, 266, 135); bun 73/0; fingerprint over 25 functions, 9 triggers, 4 relations, deterministic.
+- 2026-11-12 D RELEASE IS LIVE (opus agent following docs/evidence/D-live-apply-brief.md; evidence docs/evidence/D-live-apply.md). On project aswgmbefikhsnhogtryv: migration `session_held_evidence` applied, fingerprint 2/2 matched; `manage-session` v3 -> v4 and `bulk-cancel-sessions` v3 -> v4 deployed (verify_jwt on; read-back identical; publishable key -> 401); migration `session_cancel_guard` applied; fingerprint 66/66 objects matched (every function body md5, security-definer flag, volatility, triggers, columns, policies, grants). Probes: 9 triggers enabled; `cancel_session_checked` executable by authenticated only (service_role and anon refused); one `guard_installed` event, 0 overrides; sessions unchanged at 876 total / 132 Canceled before and after; the preview RPC answers 401/42501 to the publishable key. Then the conductor merged release/d1 onto main (after A release 1) and PUSHED dc0deb5 so the new dialogs deploy. Type check of the combined main running as a follow-up.
+  NOT yet verified (needs a signed-in admin): `session_cancel_guard_status()`; opening and closing a preview leaves confirmed bills untouched on live; one real checked cancellation end to end; the next rebuild (09:00 Hanoi) and Stars sync runs.
+  Window: between the function deploy and the dialogs' Cloudflare build finishing, the OLD dialogs are refused (clear error, nothing written).
