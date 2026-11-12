@@ -1,3 +1,3 @@
 # D3 dialogs
 
-Where I am / next step: helpers (src/lib/sessionGuard.ts) + 29 tests pass; next: hook + shared components in src/components/admin/session-guard/, then rewire callers.
+Where I am / next step: all components + callers written (WIP commits); running tsc, then harness at C:SERSDELLHEC-TOOLS-HARNESS (PORT 5343) FOR SCREENSHOTS + AXE.
