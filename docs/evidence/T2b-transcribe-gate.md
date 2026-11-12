@@ -1,3 +1,3 @@
 # T2b: transcribe-lesson-audio caller gate
 
-Where I am / next step: test written, 107/107 on the fix, fails on the base; next: register in run.mjs, mutations, typecheck, full run.
+Where I am / next step: mutants 6/6 caught, edge typecheck 5/5; next: full run.mjs, then write up evidence.
