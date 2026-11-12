@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { invoicePaidLabel } from '../_lib/invoice-status.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -120,16 +121,14 @@ Deno.serve(async (req) => {
 
             if (totalCredited > 0) {
               const newPaidAmount = Math.max(0, invoice.paid_amount - totalCredited);
-              let newStatus = invoice.status;
-
-              // Update status based on new paid amount
-              if (newPaidAmount === 0) {
-                newStatus = 'draft';
-              } else if (newPaidAmount >= invoice.total_amount) {
-                newStatus = 'paid';
-              } else {
-                newStatus = 'partial';
-              }
+              // The one label rule: what is recorded for the month against
+              // what the month asks for. This function reverses the ledger
+              // and lowers paid_amount; it does not change recorded_payment,
+              // so the label follows whatever is still recorded on the bill
+              // (issued when nothing is). It used to judge by cumulative
+              // paid_amount, which left "paid" behind for a family with
+              // history, and wrote 'draft' on a bill that had been issued.
+              const newStatus = invoicePaidLabel(invoice);
 
               console.log(`[delete-payment] Reverting invoice ${invoice.id}: ${invoice.paid_amount} -> ${newPaidAmount}, status: ${invoice.status} -> ${newStatus}`);
 

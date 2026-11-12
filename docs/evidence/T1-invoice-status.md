@@ -240,3 +240,185 @@ The 18 figure fixtures: plain month; 10% enrollment discount; Excused + Late + A
 The full run was started at commit b358c3c (the fix), when the new suite had 95 assertions. The 13 assertions added afterwards (the owner-SQL section) changed only `invoice-status.test.mjs` and `scripts/CHECK-invoice-status-resets.sql`; that suite was re-run on its own at 108. The full run was NOT repeated after that, so the expected full total now is 2873, of which 2860 were observed in one run and 108 (replacing 95) separately.
 
 Existing suites in that run, unchanged and passing: family payment month 6, dated enrollment discounts 22, cancelled lessons 25, session held evidence 143, session cancel guard 266, session guard functions 135, shared-module mirrors 13, edge functions typecheck 5, app typecheck 3, and the rest. No existing test file was edited; `run.mjs` only gained the new suite's entry.
+
+---
+
+# Round 2 - after the review (docs/evidence/T1-review.md) and the conductor's ruling
+
+**Where I am / next step:** round 2 complete and tested; waiting for the reviewer. Nothing deployed, applied or pushed. Supersedes round-1 rule 2 ("`status` is not this function's to change") and round-1 owner question 2.
+
+Ruling: the fix is not deployed alone. With labels now sticking, the three cumulative-`paid_amount` rules would show (M-1), so M-1, M-2 and the T3 response fields ship in the same release.
+
+## The label rule (M-1) - ONE rule, `supabase/functions/_lib/invoice-status.ts` (`monthPayable`, `paidLabel`, `invoicePaidLabel`)
+
+```
+payable = this month's charge (total_amount) + debt carried in - credit carried in
+paid     when recorded_payment >= payable AND payable > 0
+partial  when recorded_payment > 0 otherwise
+issued   when nothing is recorded for the month
+```
+
+`recorded_payment` is the money recorded IN that month. Cumulative `paid_amount` is never compared with anything.
+
+It is not a new rule: it is the one `RecordPaymentDialog.tsx:89-97`, `QuickPayPanel.tsx:127-128`, `BatchPaymentDialog.tsx:98-99` and `ai_action_apply` / `ai_action_undo` (`20261107090000:571-574`, `:726-729`) already used; the suite asserts each of those sources still states it and that PostgreSQL evaluating the SQL `CASE` agrees with the helper on a grid. **No browser dialog disagrees with the rule; none was edited.**
+
+| situation | label | why |
+|---|---|---|
+| 400,000 charged, 400,000 recorded | paid | |
+| 400,000 charged, 100,000 recorded (family with paid earlier months) | partial | was `paid` under the cumulative rule |
+| debt of 300,000 carried in, 400,000 recorded | partial | the month asks for 700,000; `paid` at 700,000 |
+| 100,000 credit carried in, 300,000 recorded | paid | payable is 300,000 |
+| credit carried in covers the whole month, nothing recorded | issued | nothing was paid IN the month; that nothing is owed is read from the carry balances (`carry_out_debt` 0), not from this label. Owner question R2-1 |
+| a month with no charge | issued; partial if money was recorded on it | never `paid` for a month that asks for nothing (the dialogs' `payable > 0`) |
+| frozen bill | the same rule on the SAVED total | 400,000 of a frozen 810,000 is partial although the live figure is 400,000 |
+| `credit` set by an admin | left alone | not one of the three derived values |
+| `draft` | derived (issued when nothing recorded) | as before |
+
+## Design chosen for re-deriving: calculate-tuition re-derives the label on every recalculation
+
+Round 1 left `status` untouched on an existing bill. That cannot be right after a payment is edited down, reversed or moved in Recorded Payment Manager (`RecordedPaymentManager.tsx:107-113`, `:163-169`: it writes `recorded_payment` only), after modify-payment (writes no invoice at all), or for a label written by the old cumulative rule: nothing would ever correct it. calculate-tuition runs after every one of those paths and holds the month's recorded payment, total and carry-in, so it now passes `paidLabel(monthPayments, payable)` to `invoiceLabelFields`, which:
+
+- writes that label on a new bill (issued when nothing is recorded - what it wrote before);
+- on an existing bill writes it ONLY when it differs from the stored one, and never over `credit`.
+
+"Only when it differs" is what keeps the round-1 property: a calculation that agrees with the stored label says nothing about the column, so the audit trail shows no churn and a label saved by a payment while the calculation was running is not overwritten by it (tested).
+
+Consequences, stated plainly:
+- A bill's label is right after ANY payment path followed by the standard recalculation.
+- Bills paid before the deploy (all labelled `issued` by the old reset) get `paid` / `partial` at their next ordinary calculation. That is the same lazy write the function always made, with the true value; no back-fill, no figure touched. The owner SQL query 3 lists them.
+- An admin override in Invoice Status Manager to `paid` / `partial` / `issued` / `draft` that disagrees with the money lasts until the next calculation (as before T1, when it lasted until the next calculation and became `issued`). Only `credit` sticks. For the conductor: that screen and `PaymentIntegrityRepair.tsx:46-70`, `:134-152` (judges by cumulative `paid_amount`, writes `draft`) DISAGREE with the rule. Not edited (src/ is out of scope); listed.
+
+## M-2 closed: calculate-tuition no longer writes `recorded_payment`
+
+Owner of the column: the payment paths (family-payment, smart-family-payment, the three payment dialogs, Recorded Payment Manager, ai_action_apply/undo). No trigger writes it. calculate-tuition only ever wrote back the value it read at the start. It is now absent from both upserts (`calculate-tuition/index.ts:604-623` and the fallback `:646-658`); a new bill gets the column default 0 (`20251015053836`), which is what was written before, so the golden's saved figures are byte-identical. The carry columns the function writes from its older reading are recomputed from the real rows by the `invoices_carry_sync` trigger in the same statement.
+
+Proof (real carry trigger): a payment recorded between the calculation's read and its save survives with `recorded_payment` 400,000, carry-out 0 and its `paid` label; a payment that CREATES the bill in that gap survives with 200,000 and carry-out debt 200,000 - its label is written `issued` by the calculation that never saw it and is `partial` after the next one (label only; every payment path recalculates afterwards).
+
+Also fail-closed (review m-4): an unreadable read of the earlier months now fails the call (`:162`) instead of pricing the carry as "no earlier payments".
+
+## T3 additions (additive response fields; no existing field or figure changed)
+
+- `carry.payable` in calculate-tuition (`index.ts:500`, `:684`) and in every calculate-tuition-bulk result (`calculate-tuition-bulk/index.ts:394`; flag at `:398`), both from `monthPayable`: **charge for the month + carry-in debt - carry-in credit, BEFORE this month's payment; may be negative when the credit is larger; not clamped.** It is exactly what `useLiveTuitionData.ts:142` and the dialogs add up today, and exactly the figure the label is judged against (one helper). `payable - payments.monthPayments = carryOutDebt - carryOutCredit` is asserted. On a frozen bill it uses the saved total.
+- `siblingUnresolved` per student in calculate-tuition-bulk (`:399`): true when the family's discount state is `unresolved`, the same test as the single function's `siblingUnresolved`; its figures are unchanged (still the provisional charge).
+- Readers must treat both as optional (a function not yet redeployed does not send them).
+- Tested on the 18 golden fixtures (payable = total + carry-in debt - carry-in credit, single = bulk) and on the T3 cases where the browser was wrong: no bill row with arrears (payable 700,000, browser 300,000), saved total out of date (payable follows the register), credit larger than the month (-250,000), unresolved family (flag true), resolved (false, 360,000).
+- **For the conductor:** T3's own suite (`tuition-prior-balance.test.mjs` on `worktree-agent-a34c3c84114092f37`) asserts that neither response HAS a payable or a `siblingUnresolved`. Those assertions will fail once this branch is merged with it and must be turned round there; I did not touch that branch.
+
+## Functions changed (file:line at the final commit)
+
+| function | change |
+|---|---|
+| `_lib/invoice-status.ts` | `monthPayable`, `paidLabel`, `invoicePaidLabel` (the rule); `invoiceLabelFields` takes the derived label and writes `status` only when it differs, never over `credit` |
+| `calculate-tuition/index.ts` | `:9` import; `:158`, `:162` fail closed on either invoice read; `:500` payable; `:595-602` label fields with `paidLabel(monthPayments, payable)`; `:604-623` payload without `recorded_payment` (fallback `:646-658`); `:684` `carry.payable` |
+| `calculate-tuition-bulk/index.ts` | `:7` import; `:390-398` `carry.payable`, `siblingUnresolved`. Still writes nothing |
+| `smart-family-payment/index.ts` | `:4` import; `:268` reads carry-in; `:283` `invoicePaidLabel(invoice, newRecorded)` (was cumulative `paid_amount + applied >= total`); `:300` new-row branch `paidLabel(applied, sibling.debt - sibling.credit)` |
+| `family-payment/index.ts` | `:4` import; `:92-107` the open bills are chosen by `invoicePaidLabel(inv) !== 'paid'` instead of the stored `.neq('status','paid')`; `:270` label by the rule (was recorded vs total without carry) |
+| `settle-bill/index.ts` | `:3` import; `:79` reads `recorded_payment`; `:194` `invoicePaidLabel(invoice)` (was cumulative) |
+| `delete-payment/index.ts` | `:2` import; `:124-131` `invoicePaidLabel(invoice)` (was cumulative, and `draft` at zero) |
+| `confirm-tuition/index.ts` | `:4` import; `:66-81` takes the `changed_after_confirmation` flag off the bills it confirms (review m-2) |
+| `modify-payment` | NOT changed: it writes no invoice; its recalculation now corrects the labels |
+| `src/components/admin/TuitionReviewQueue.tsx:146` | heading "Changed after it was confirmed" for the flag group (the one src edit allowed) |
+
+family-payment `.neq('status','paid')`: the review suggested dropping it because "the owed arithmetic already applies 0 to a paid bill". Tested first, and that is FALSE for a bill paid with credit carried in (300,000 recorded on a 400,000 charge with 100,000 credit is paid, while `total - recorded` still reads 100,000 - family-payment would take another 100,000). So the selection is kept, but judged from the bill's money with the helper instead of the stored label: a bill wrongly labelled paid is paid into (tested), a bill that is paid is left out (tested), and no zero-amount allocation rows are created.
+
+## The seven minors
+
+| | done? | |
+|---|---|---|
+| m-1 raw key as heading | fixed | label added (step 4). Showing the before/after amounts on the card is a second src edit - not allowed here; left for the conductor |
+| m-2 flag outlives re-confirmation | fixed | confirm-tuition removes it; tested |
+| m-3 "compare only total" mutant | test added | base and discount both +100,000, total unchanged -> needs_review with the flag |
+| m-4 `priorInvoicesRes.error` | fixed | fail closed; tested (400, zero writes) |
+| m-5 stand-in in `session-guard-functions.test.mjs` imitates the old reset | left | not a correctness issue: the stand-in exists to prove the preview never calls the function; that suite is unchanged and passing |
+| m-6 owner SQL wording | fixed | query 3 says to expect a long list and uses the one rule; queries 5 and 6 say what post-fix rows mean and that 6 also catches the M-2 race |
+| m-7 queue's Confirmed list omits `adjusted` | left | a src edit beyond the one allowed; one-line filter (`TuitionReviewQueue.tsx:67-70`), listed for the conductor |
+
+## Stopped on / found, NOT changed (each would move money or is outside the allowed files)
+
+1. **settle-bill works out the balance it may write off from cumulative `paid_amount`** (`settle-bill/index.ts:86-88`): for a family with paid earlier months it finds "No outstanding debt to discount (balance: 0)" and refuses a real debt (executed: 400 with 400,000 owed). The honest balance is the bill's carry-out. Changing it changes which write-offs are accepted, so it is the conductor's call.
+2. **A settle-bill write-off never reaches the bill**: it posts ledger entries and a `settlements` row, and `paid_amount += settled` (overwritten by the recalculation that follows). `recorded_payment`, `total_amount` and the carry balances are unchanged, so every tuition screen still shows the debt. By the label rule the bill therefore stays issued / partial after a settlement "in full" (before T1 it was reset to `issued` as well; under the cumulative rule it briefly read `paid`). Making a settlement count needs a decision about where a write-off lives on the bill - an amount change.
+3. **delete-payment never lowers `recorded_payment`** and only finds ledger entries whose key starts `payment-<id>` (the family payment functions use `family-payment-...` / `smart-family-...`, so deleting one of those changes no invoice). The label after a delete follows what the bill still records: issued when nothing is, partial / paid when the money is still on the bill. To take the money off the bill an admin uses Recorded Payment Manager; the recalculation then corrects the label (tested).
+4. `PaymentIntegrityRepair` and `InvoiceStatusManager` (browser) disagree with the rule, as above; `TuitionReviewQueue` m-7; the before/after on the review card.
+5. T3's assertions that the new fields are absent (above).
+
+## Tests
+
+`scripts/pgtest/invoice-status.test.mjs`, real handlers: calculate-tuition, calculate-tuition-bulk, confirm-tuition, family-payment, smart-family-payment, settle-bill, delete-payment, modify-payment; `invoices` in PostgreSQL with the real CHECK, carry, audit and freeze migrations.
+
+| path, then the standard recalculation | label |
+|---|---|
+| smart-family-payment, full | paid |
+| smart-family-payment, part, family WITH earlier paid months (M-1) | partial (was paid); paid once the rest is paid |
+| smart-family-payment creating the bill (discount unresolved, no row) | partial / paid |
+| family-payment part / rest / on a paid bill | partial / paid / not selected, no write |
+| family-payment on a bill wrongly labelled paid | paid into |
+| debt carried in: month paid / debt paid too | partial / paid |
+| credit carried in covers the month | issued, nothing owed, payable 0 |
+| zero-charge month / money recorded on it | issued / partial |
+| frozen bill 400,000 of 810,000 / 810,000 | partial / paid |
+| settle-bill in full / in part | issued / partial - bill's money unchanged (finding 2) |
+| delete-payment, nothing recorded on the bill / 150,000 still recorded | issued / partial |
+| payment reversed on the bill (recorded 0) | issued |
+| payment edited down to 100,000 / to 0 | partial / issued |
+| payment moved to another month (+ real modify-payment) | old month issued with the debt; new month paid |
+| dialogs / ai_action_apply writing paid, partial | unchanged, and the recalculation does not touch the column |
+| admin `credit` / `draft` | kept / issued |
+| a bill paid before the fix | paid at its next calculation |
+
+Round-1 assertions changed, on purpose: "settled by discount (status paid, no recorded payment) ... still settled by status" is now "a `paid` label with nothing recorded is corrected to issued" (the label follows the money; the guard still sees paid and part-paid bills as settled, by payment and by status - asserted). Nothing else from round 1 was weakened; the golden file is untouched (`git log --oneline -- scripts/pgtest/fixtures/tuition-figures.golden.json`: one commit, 4cbe742).
+
+Totals: see "Round 2 verification" below.
+
+## What the cancellation guard sees now
+
+Unchanged SQL. A bill counts as settled when `recorded_payment > 0`, or the label is paid / partial, or it is confirmed / adjusted, or frozen. With the label derived from `recorded_payment`, "settled by label" and "settled by payment" now agree, except a zero-payment `paid` (impossible by the rule). Confirmed bills behave as in round 1. A bill written off through settle-bill is not settled for the guard unless money is recorded on it or it is confirmed - the same as in production today.
+
+## Redeploy together (no migration; one publish for the queue heading)
+
+All seven have `verify_jwt = true` in `supabase/config.toml` (calculate-tuition `:6-7`, confirm-tuition `:39-40`, smart-family-payment `:48-49`, calculate-tuition-bulk `:52-53`, delete-payment `:186-187`, family-payment `:189-190`, settle-bill `:216-217`).
+
+None of the `_lib` files below imports another local file (`auth.ts` imports only the remote supabase-js).
+
+| function | files |
+|---|---|
+| calculate-tuition | `calculate-tuition/index.ts`, `_lib/rate-limit.ts`, `_lib/auth.ts`, `_lib/sibling-state.ts`, `_lib/tuition-session.ts`, `_lib/enrollment-discounts.ts`, `_lib/invoice-status.ts` |
+| calculate-tuition-bulk | `calculate-tuition-bulk/index.ts`, `_lib/auth.ts`, `_lib/sibling-state.ts`, `_lib/tuition-session.ts`, `_lib/enrollment-discounts.ts`, `_lib/invoice-status.ts` (NEW import) |
+| smart-family-payment | `smart-family-payment/index.ts`, `_lib/rate-limit.ts`, `_lib/invoice-status.ts` (NEW import) |
+| family-payment | `family-payment/index.ts`, `_lib/rate-limit.ts`, `_lib/invoice-status.ts` (NEW import) |
+| settle-bill | `settle-bill/index.ts`, `_lib/invoice-status.ts` (NEW import) |
+| delete-payment | `delete-payment/index.ts`, `_lib/invoice-status.ts` (NEW import) |
+| confirm-tuition | `confirm-tuition/index.ts`, `_lib/auth.ts`, `_lib/invoice-status.ts` (NEW import) |
+
+Order does not matter for safety: each function is correct on its own, and readers treat the new response fields as optional. calculate-tuition first is the natural order (it is the one that corrects labels). A function deployed without `_lib/invoice-status.ts` fails at boot.
+
+P0 from the review still applies before deploying calculate-tuition (the five label columns must exist; the read now fails the call). settle-bill's read now also selects `recorded_payment`, and smart-family-payment's `carry_in_debt, carry_in_credit` - all in `types.ts`.
+
+## What admins will notice (round 2 on top of the review's list)
+
+- Status badges say paid / partial / issued by one rule everywhere. A part payment through Smart Family Payment reads partial (it would have read paid). A bill whose payment is reversed, edited down or moved goes back to partial / issued at its next calculation.
+- Bills paid before the release turn from issued to paid / partial as their tuition screens are opened; no amount changes.
+- A month paid for entirely by credit carried in reads issued with nothing owed; a month with debt carried in reads partial until the debt is paid too.
+- A write-off in Settle Bill does not turn the bill paid (it never changed the bill's balance). For a family with earlier paid months Settle Bill still refuses, as it does today (finding 1).
+- A status set by hand in Invoice Status Manager lasts until the next calculation unless it is `credit`.
+- The review queue heads the group "Changed after it was confirmed"; a re-confirmed bill no longer carries that badge.
+- Rarely: "Unable to read the earlier tuition invoices" on a tuition screen; reloading fixes it.
+- The Finance tab and `/tuition` can show "Being calculated" for a family whose discount is being decided once the T3 screens read `siblingUnresolved`.
+
+## Owner questions (policy), round 2
+
+- R2-1. **A month covered entirely by credit carried in is labelled issued**, not paid (nothing was paid in that month; nothing is owed). Recommended default: keep - it is what the payment dialogs have always written, and the amount owed is shown from the carry balance.
+- R2-2. **Should a Settle Bill write-off count on the bill** (reduce what is owed and be able to make it paid), and should Settle Bill work for families with history? Recommended default: yes to both, as its own change with its own review, because it moves balances.
+- R2-3. **Should deleting a payment take the money off the bill's recorded payment?** Recommended default: yes, as its own change; until then admins reverse it in Recorded Payment Manager.
+- Round-1 question 2 is answered by this round (the label is re-derived).
+
+## Round 2 verification
+
+| command | result |
+|---|---|
+| `node scripts/pgtest/invoice-status.test.mjs <4 migrations>` | **187 passed, 0 failed** (108 in round 1; golden comparison unchanged and passing, golden file untouched) |
+| `node scripts/pgtest/edge-functions.test.mjs` | 5 passed, 0 failed (100 files loaded of 100) |
+| `node scripts/pgtest/run.mjs` (full, run on the final code; only docs committed after it started) | **3148 assertions across 39 suites, 0 suite(s) failed** |
+
+In that full run: family payment month 6, dated enrollment discounts 22, invoice status 187, cancelled lessons 25, session held evidence 143, session cancel guard 266, session guard functions 135, shared-module mirrors 13, edge functions typecheck 5, app typecheck 3. No other suite's file was edited in either round.
+
+Not done: no run against the live database or deployed functions; no mutation run in round 2 (the review's surviving mutant M3 now has its test, m-3); the T3 branch was not merged here.

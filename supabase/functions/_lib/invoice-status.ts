@@ -12,8 +12,10 @@
 // saved as they are whatever this returns.
 //
 //   - no bill yet: issued, auto_approved | needs_review - as always;
-//   - `status` on an existing bill belongs to the payment paths and the
-//     admin, so it is left out of the save. Only a draft is still issued;
+//   - `status` is derived from the MONTH's own money by `paidLabel` below,
+//     the one rule every writer of that column uses. It is written only
+//     when it differs from what is stored, and an admin's 'credit' is
+//     never replaced;
 //   - a confirmed / adjusted bill whose charged figures are the same stays
 //     as it is: confirmation_status is left out of the save;
 //   - a confirmed / adjusted bill whose charged figures CHANGED goes to
@@ -33,8 +35,68 @@ export interface ChargedFigures {
   total_amount: number;
 }
 
+// ---------------------------------------------------------------- paid label
+//
+// ONE rule for invoices.status, for every function that writes it
+// (calculate-tuition, family-payment, smart-family-payment, settle-bill,
+// delete-payment). It is the rule the admin payment dialogs
+// (RecordPaymentDialog, QuickPayPanel, BatchPaymentDialog) and
+// ai_action_apply already used:
+//
+//   payable = this month's charge + debt carried in - credit carried in
+//   paid     when recorded_payment >= payable and payable > 0
+//   partial  when recorded_payment > 0 otherwise
+//   issued   when nothing is recorded for the month
+//
+// `recorded_payment` is the money recorded IN that month. `paid_amount` is
+// cumulative across months and must never be compared with one month's
+// charge: for a family with history it is already larger than any single
+// bill, so every part payment read as "paid".
+//
+// What follows from the rule, on purpose:
+//   - debt carried in: the month is paid only when the payment covers the
+//     debt as well as the month;
+//   - credit carried in that covers the whole month, nothing recorded:
+//     issued. Nothing was paid IN this month; that nothing is owed is read
+//     from the carry balances, not from this label;
+//   - a month with no charge: issued, or partial if money was recorded;
+//   - a frozen bill: the same rule on its saved total.
+// The label is a label. Never branch on it for money.
+
+export type PaidLabel = "paid" | "partial" | "issued";
+
+const amount = (v: unknown): number => {
+  const n = Number(v ?? 0);
+  return Number.isFinite(n) ? n : 0;
+};
+
+/** What the month asks for: its own charge plus debt carried in, less credit carried in. */
+export function monthPayable(row: {
+  total_amount?: unknown;
+  carry_in_debt?: unknown;
+  carry_in_credit?: unknown;
+}): number {
+  return amount(row?.total_amount) + amount(row?.carry_in_debt) - amount(row?.carry_in_credit);
+}
+
+export function paidLabel(recordedPayment: unknown, payable: unknown): PaidLabel {
+  const recorded = amount(recordedPayment);
+  const due = amount(payable);
+  if (recorded >= due && due > 0) return "paid";
+  if (recorded > 0) return "partial";
+  return "issued";
+}
+
+/** The label of a stored bill row, optionally with a different recorded payment (the one about to be saved). */
+export function invoicePaidLabel(
+  row: { total_amount?: unknown; carry_in_debt?: unknown; carry_in_credit?: unknown; recorded_payment?: unknown },
+  recordedPayment: unknown = row?.recorded_payment,
+): PaidLabel {
+  return paidLabel(recordedPayment, monthPayable(row));
+}
+
 export interface InvoiceLabelFields {
-  status?: "issued";
+  status?: PaidLabel;
   confirmation_status?: "auto_approved" | "needs_review";
   review_flags: any[];
 }
@@ -58,18 +120,24 @@ function sameCharge(a: ChargedFigures, b: ChargedFigures): boolean {
  * @param figures       the charged figures about to be saved
  * @param computedFlags the review flags calculate-tuition worked out for those figures
  * @param nowIso        when this calculation ran
+ * @param paid          `paidLabel` for the month's recorded payment and payable, as this calculation read them
  */
 export function invoiceLabelFields(
   existing: any | null,
   figures: ChargedFigures,
   computedFlags: any[],
   nowIso: string,
+  paid: PaidLabel,
 ): InvoiceLabelFields {
   const fresh = computedFlags.length === 0 ? "auto_approved" : "needs_review";
-  if (!existing) return { status: "issued", confirmation_status: fresh, review_flags: computedFlags };
+  if (!existing) return { status: paid, confirmation_status: fresh, review_flags: computedFlags };
 
   const out: InvoiceLabelFields = { review_flags: computedFlags };
-  if (existing.status == null || existing.status === "draft") out.status = "issued";
+  // Written only when it would change the row: a calculation that agrees
+  // with what is stored says nothing about `status`, so it cannot overwrite
+  // a label a payment saved while this calculation was running. 'credit' is
+  // set by an admin only and is not one of the three derived values.
+  if (existing.status !== "credit" && existing.status !== paid) out.status = paid;
 
   const current = chargedOf(figures);
   const previous = existing.confirmation_status;
