@@ -118,7 +118,7 @@ export function TeacherBankingInfo({ teacherId }: TeacherBankingInfoProps) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <Loader2 className="h-8 w-8 animate-spin text-hec-ink-soft" />
         </CardContent>
       </Card>
     );
@@ -129,10 +129,10 @@ export function TeacherBankingInfo({ teacherId }: TeacherBankingInfoProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0 space-y-1">
+            <CardTitle className="flex items-center gap-2 text-hec-h2">
+              <Building2 className="h-5 w-5 shrink-0 text-hec-ink-soft" />
               Banking Information
             </CardTitle>
             <CardDescription>
@@ -140,7 +140,7 @@ export function TeacherBankingInfo({ teacherId }: TeacherBankingInfoProps) {
             </CardDescription>
           </div>
           {hasInfo && !editing && (
-            <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400">
+            <Badge variant="outline" className="border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">
               <CreditCard className="h-3 w-3 mr-1" />
               Configured
             </Badge>
@@ -151,29 +151,29 @@ export function TeacherBankingInfo({ teacherId }: TeacherBankingInfoProps) {
         {!editing && hasInfo ? (
           // Display mode
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <Label className="text-xs text-muted-foreground">Bank Name</Label>
-                <p className="font-medium">{bankingInfo.bank_name}</p>
+                <Label className="text-hec-caption text-hec-ink-soft">Bank Name</Label>
+                <p className="break-words font-medium text-hec-ink">{bankingInfo.bank_name}</p>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Account Holder</Label>
-                <p className="font-medium">{bankingInfo.account_holder_name}</p>
+                <Label className="text-hec-caption text-hec-ink-soft">Account Holder</Label>
+                <p className="whitespace-normal break-words font-medium text-hec-ink">{bankingInfo.account_holder_name}</p>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Account Number</Label>
-                <p className="font-mono font-medium">••••••{bankingInfo.account_number.slice(-4)}</p>
+                <Label className="text-hec-caption text-hec-ink-soft">Account Number</Label>
+                <p className="font-mono font-medium text-hec-ink">••••••{bankingInfo.account_number.slice(-4)}</p>
               </div>
               {bankingInfo.branch_name && (
                 <div>
-                  <Label className="text-xs text-muted-foreground">Branch</Label>
-                  <p className="font-medium">{bankingInfo.branch_name}</p>
+                  <Label className="text-hec-caption text-hec-ink-soft">Branch</Label>
+                  <p className="break-words font-medium text-hec-ink">{bankingInfo.branch_name}</p>
                 </div>
               )}
               {bankingInfo.swift_code && (
                 <div>
-                  <Label className="text-xs text-muted-foreground">SWIFT Code</Label>
-                  <p className="font-mono font-medium">{bankingInfo.swift_code}</p>
+                  <Label className="text-hec-caption text-hec-ink-soft">SWIFT Code</Label>
+                  <p className="font-mono font-medium text-hec-ink">{bankingInfo.swift_code}</p>
                 </div>
               )}
             </div>
