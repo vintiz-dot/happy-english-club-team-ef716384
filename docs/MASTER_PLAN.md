@@ -152,11 +152,11 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 | Stream | Units | Done | What is done |
 |---|---|---|---|
 | D money integrity | 18.5 | 8.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
-| A overhaul | 12.0 | 5.2 | A0, A1, A2.1 diagnosis, A3.1, A3.2, A3.3, A4.1 (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
+| A overhaul | 12.0 | 5.7 | A0, A1, A2.1 diagnosis, A3.1, A3.2, A3.3, A3.4, A4.1 (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
 | B lesson monitor evaluation | 10.5 | 3.7 | vendor research, audio prep, harness, vendor proxy built (deploy running). Left: B1, B2, B2b, B3, report |
 | C class recorder | 8.0 | 1.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **18.4** | **36%** |
+| **Total** | **51.0** | **18.9** | **37%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -229,3 +229,6 @@ Log: 2026-11-12 - 36% (D review 3 merged).
 - CONDUCTOR RULINGS on review 3: all fixes adopted. The preview becomes read-only: it shows the STORED bills and no "after" figure; the new bill appears after the change, from the standard refresh. Ship order as the review recommends: apply 20261112090000 -> deploy both functions (guarded actions answer 503, no write) -> apply 20261112091000 immediately -> push the dialogs. Nothing ships until the fixes pass and the dialogs are merged.
 - PRE-EXISTING FINDING for D5 and the owner (not introduced by this work, not changed): calculate-tuition sets `confirmation_status` to auto_approved/needs_review and `status` to "issued" on EVERY call. If nothing else restores them, any screen or job that recalculates a bill silently un-confirms a bill an admin confirmed and marks a paid bill "issued". Whether a trigger or a later step puts them back was not established; D5 audits it.
 - Deferred, owner should know (review-2 F-3 / review-3 F-11): if someone first re-dates a point row and unlinks a transcript, a taught, paid lesson can then be cancelled at the lowest tier without review. Only audited today; closed in D4.
+Log: 2026-11-12 - 37% (A3.4 merged).
+
+- 2026-11-12 A3.4 merged (sonnet, e996811): the header and the profile picker share one cached families -> students lookup (key includes the user id; 30 s; never cached on error; cleared on sign-out and when there is no user); announcements wait for auth. Requests on the fake: student dashboard 33 -> 28, parent view 25 -> 20, admin schedule 16 -> 13; the after-list is a subset of the before-list. Agent's proofs: 7 unit tests (user A's list never returned for B; sign-out clears), 20/20 preview checks incl. no name from the first family anywhere after signing in as a second. Conductor read useShellQueries.ts and the three caller diffs: query text unchanged, selection logic untouched. Not changed (pre-existing): no cancel flag for a fetch still in flight when the user changes. Held back to avoid file conflicts: A3.6 and A3.5 (student files, behind the A4.2 restyle), A3.7 (Admin.tsx, behind D3). A4.5 (overflow + focus ring) launched.
