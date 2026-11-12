@@ -128,7 +128,7 @@ Routing: every page in `src/App.tsx` is `lazy(() => import(...))` (admin, teache
 
 ## Part 2 - runtime (fake Supabase client)
 
-Run: 2026-11-12T00:31:38.691Z. vite dev server, fake client (NOT production). Times are **dev-server numbers through the fake client** (Vite on-demand transforms, 15-25 ms fake latency, no minification): comparable only with the same harness. "Render" = first time #root holds >150 characters of non-loader text; "idle" = last resource/fake request activity before 1 s of quiet. Light = median of 3 loads; dark = 1 load (screenshot + axe). Warm-up load before measuring. Requests = fake-client calls (from/rpc/functions/storage) at idle.
+Run: 2026-11-12T00:35:20.130Z. vite dev server, fake client (NOT production). Times are **dev-server numbers through the fake client** (Vite on-demand transforms, 15-25 ms fake latency, no minification): comparable only with the same harness. "Render" = first time #root holds >150 characters of non-loader text; "idle" = last resource/fake request activity before 1 s of quiet. Light = median of 3 loads; dark = 1 load (screenshot + axe). Warm-up load before measuring. Requests = fake-client calls (from/rpc/functions/storage) at idle.
 
 | Screen | Route (role) | Req | 375 render/idle ms | 375 @4x CPU render/idle ms | 768 render/idle ms | 1280 render/idle ms | Overflow at 375 | axe 375 (crit/ser/mod/min) | axe 1280 |
 |---|---|---|---|---|---|---|---|---|---|
@@ -137,6 +137,7 @@ Run: 2026-11-12T00:31:38.691Z. vite dev server, fake client (NOT production). Ti
 | admin-attendance | `/teacher/attendance` (admin) | 17 | 2580 / 2475 | 7250 / 6878 | 2808 / 2844 | 2895 / 2936 | no | 1/1/1/0 (3 rules, 19 nodes) | 1/3/1/0 (5 rules, 18 nodes) |
 | admin-class-sessions | `/admin/classes/c-0001` (admin) | 19 | 2263 / 2414 | 14610 / 13542 | 2271 / 2420 | 3168 / 3332 | no | 1/1/0/0 (2 rules, 6 nodes) | 1/3/0/0 (4 rules, 10 nodes) |
 | admin-schedule | `/schedule` (admin) | 16 | 2675 / 2822 | 8935 / 9093 | 3331 / 3500 | 3161 / 3329 | no | 1/2/1/0 (4 rules, 19 nodes) | 1/4/1/0 (6 rules, 19 nodes) |
+| teacher-dashboard | `/teacher/dashboard` (teacher) | 27 | 1903 / 2174 | 12155 / 8548 | 1952 / 2212 | 1895 / 2139 | no | 1/3/1/0 (5 rules, 16 nodes) | 1/5/1/0 (7 rules, 17 nodes) |
 
 Axe at dark 375 and per-run details are in `docs/evidence/A0/results.json`. Screenshots: `docs/evidence/A0/<screen>-<375|768|1280>-<light|dark>.png` (.jpg when a PNG exceeded 380 KB).
 
@@ -147,6 +148,7 @@ Request kinds per screen (375 light):
 - admin-attendance: from:students x4, from:families x3, from:site_announcements x2, from:user_roles x2, from:teachers x2, from:announcement_dismissals x1, rpc:ai_actions_list x1, from:profiles x1, from:teaching_assistants x1
 - admin-class-sessions: from:students x4, from:families x3, from:site_announcements x2, from:user_roles x2, function:admin-unlock x1, from:announcement_dismissals x1, rpc:ai_actions_list x1, from:sessions x1, from:enrollments x1, from:profiles x1, from:classes x1, from:teachers x1
 - admin-schedule: from:students x4, from:families x3, from:site_announcements x2, from:user_roles x2, from:announcement_dismissals x1, rpc:ai_actions_list x1, from:sessions x1, from:profiles x1, from:teachers x1
+- teacher-dashboard: from:sessions x5, from:students x4, from:teachers x4, from:families x3, from:site_announcements x2, from:user_roles x2, from:announcement_dismissals x1, from:video_submissions x1, from:profiles x1, function:calculate-payroll x1, from:notifications x1, from:homeworks x1, from:homework_submissions x1
 
 Page errors seen (375 light): admin-tuition: Cannot read properties of undefined (reading 'name') | Cannot read properties of undefined (reading 'name') | Cannot read properties of undefined (reading 'name')
 
