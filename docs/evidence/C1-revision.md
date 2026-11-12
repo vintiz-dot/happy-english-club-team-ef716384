@@ -1,6 +1,6 @@
 # C1 Revision 1 - class recorder fixes (F1-F15)
 
-**Where I am / next step:** session restarted after d2f987c. Recorder suite re-run: 284 passed, 0 failed. The full run (2250/33/0) finished before the restart, and no code has changed since. Mutation run: 29 of 35 done, all caught (table below). The last 6 (F11 x3, F12, F14, F15) "crashed" because, at 11:11, something outside this worktree removed `@electric-sql/pglite` from the main checkout's node_modules, which this worktree links to. Those 6 results are void. Next: re-run them when pglite is back, then clean up.
+**Where I am / next step:** session restarted after d2f987c. Recorder suite re-run: 284 passed, 0 failed. The full run (2250/33/0) finished before the restart, and no code has changed since. DONE. Mutation run 35/35 caught. The full run (2250/33/0) finished at abfecd3, before the shared-node_modules outage, and no code has changed since. Last step: remove the node_modules link (`cmd //c rmdir node_modules`) and `.probe/`; both are uncommitted.
 
 Files touched (only these): `supabase/migrations/20261112100000_class_recorder.sql` (edited in place: never applied), `scripts/pgtest/recorder.test.mjs`, `docs/evidence/C1-architecture.md` (Revision 1 changelog at the top; sections 3, 4, 5.5, 6, 7, 8, 9.1), this file. Written and tested, NOT applied to any database.
 
@@ -73,6 +73,14 @@ Not done, by design: the critic's (e) "server hashes the object" needs an edge f
 | F8 after-Stop check removed | CAUGHT (283/1) |
 | F9 enrolment trigger inert | CAUGHT (281/3) |
 | F10 cancel trigger inert | CAUGHT (283/1) |
+| F11 deletion_requested_by client-writable | CAUGHT (282/2) |
+| F11 teacher may claim stop_reason admin | CAUGHT (282/2) |
+| F11 foreign device profile allowed | CAUGHT (283/1) |
+| F12 role oracle re-granted | CAUGHT (282/2) |
+| F14 sample rate up to 192 kHz | CAUGHT (283/1) |
+| F15 admin storage delete policy back | CAUGHT (277/7) |
+
+**35 applied, 35 caught, 0 survived.** Both of the critic's survivors (archived teacher; cover window widened) are now caught. The last 6 were first run during the shared-node_modules outage (pglite missing: void "crash" results). They were re-run after the restore, preceded by a control run of the unmutated suite (284/0).
 
 ## Contract for D1
 
