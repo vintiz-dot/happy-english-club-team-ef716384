@@ -1,4 +1,6 @@
-VERDICT: INCOMPLETE
+VERDICT: FAIL
+
+Counts: 1 BLOCKER (N1), 2 MAJOR (N2, N3), 3 MINOR (N4-N6). Critic 1's F1-F7 are fixed against their own probes. Safe to apply to live: NO (N1). Status: finished.
 
 # C1 critic 2 (second review of class recorder migration)
 
@@ -96,4 +98,53 @@ silently kept (server-owned): started_at ended_at stopped_by stop_reason complet
 - Locks: CREATE TRIGGER on enrollments/sessions and the FKs take SHARE ROW EXCLUSIVE on enrollments, sessions, classes, students until COMMIT - blocks writes (not reads) for the second or two the script runs; it queues behind any long open transaction. Add `SET LOCAL lock_timeout = '5s';` after BEGIN and apply outside lesson hours.
 - A class with a recording can no longer be hard-deleted (FK NO ACTION); none exist on day one.
 
-Where I am / next step: waiting on the mutation run, then post-apply probes and verdict.
+## Mutation run (executed, `.probe/mut.mjs`, real suite against a mutated copy)
+
+| Mutation (aimed at the revision) | Result |
+|---|---|
+| cover tier ignores `is_active` | CAUGHT (280/4) |
+| class-level read: today -> last 7 days | CAUGHT (281/3) |
+| enrolment trigger ignores current enrolments | CAUGHT (crash after FAIL) |
+| session-cancel trigger fires on Held instead | CAUGHT (281/3) |
+| Stop not clamped to the window | CAUGHT (283/1) |
+| **view: `counts_as_held_evidence` without `completed_at`** | **SURVIVED (284/0)** |
+| confirm skips the stored-size check | CAUGHT (crash after FAIL) |
+| complete skips the manifest-in-storage check | CAUGHT (283/1) |
+| register ignores the stop request | CAUGHT (283/1) |
+| delete trigger ignores status | CAUGHT (283/1) |
+| upload allowed at a confirmed chunk's path | CAUGHT (281/3) |
+| name chip may name a child of another class | CAUGHT (281/3) |
+| rows policy: starter reads closed recordings | CAUGHT (282/2) |
+| anyone may switch a class off | CAUGHT (279/5) |
+| **`stopped_by` = the owner, not the actor** | **SURVIVED (284/0)** |
+| teacher may extend retention | CAUGHT (283/1) |
+| consent withdrawal does not switch off | CAUGHT (277/7) |
+
+17 applied, 15 caught, 2 survived. MINOR (N6): the suite has no case where an ABANDONED (or still uploading) recording with confirmed audio is checked for `counts_as_held_evidence = false` - the one column D reads; and none for `stopped_by` being the person who pressed Stop (e.g. an admin's stop). Add both. N1 (bucket policy) and N2/N3 have no test by construction.
+
+## Post-apply read-only probes (SQL editor, after the fixed migration)
+
+1. `SELECT to_regclass('public.class_recordings'), to_regclass('public.recorder_session_evidence'), to_regclass('public.recorder_audit_log');` - all non-null.
+2. `SELECT count(*) FROM public.class_recording_settings WHERE recording_enabled;` = 0; `SELECT count(*) FROM public.class_recordings;` = 0; `SELECT consent_wording_version, retention_days FROM public.recorder_settings;` = one row, defaults.
+3. `SELECT tgname, tgrelid::regclass, tgenabled FROM pg_trigger WHERE tgname IN ('recorder_enrollment_consent','recorder_session_canceled');` - exactly 2.
+4. `SELECT proname, prosecdef, proconfig FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname LIKE 'recorder%';` - 31; every DEFINER has `search_path=public`; 3 have `row_security=off`.
+5. `SELECT table_name, grantee, string_agg(privilege_type, ',') FROM information_schema.role_table_grants WHERE table_schema='public' AND (table_name LIKE 'recorder%' OR table_name LIKE 'class_recording%') AND grantee IN ('anon','authenticated') GROUP BY 1,2;` - no anon row; authenticated matches :1741-1750.
+6. `SELECT id, public, file_size_limit, allowed_mime_types FROM storage.buckets WHERE id IN ('class-recordings', '<new recorder bucket>');` - the old bucket UNCHANGED (50 MB, its mp3/m4a/mp4 list); the new one private, 8 MB.
+7. `SELECT policyname, cmd FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND (qual LIKE '%<new bucket>%' OR with_check LIKE '%<new bucket>%');` - exactly the recorder's INSERT and SELECT; `SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND qual IS NULL AND with_check IS NULL` = 0.
+8. `SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user;` - true (else confirm/complete/delete raise: fail closed, but nothing works).
+9. With the publishable key: `GET /rest/v1/class_recordings?select=id` -> permission denied (42501), not "not in schema cache"; `POST /rest/v1/rpc/recorder_register_chunk` -> permission denied for anon.
+10. Upload an mp3 on Teacher Transcripts (or `SELECT file_size_limit FROM storage.buckets WHERE id='class-recordings'` = 52428800) - the existing feature is untouched.
+
+## Verdict
+
+FAIL. 1 BLOCKER (N1), 2 MAJOR (N2, N3), 3 MINOR (N4, N5, N6). All seven of critic 1's BLOCKER/MAJOR findings are fixed against their original probes (re-run here or by the named suite cases in the 284/0 run), and 15 of 17 new mutations are caught. But N1 is a data-exposure hole and a live regression that neither the suite nor either review could see, because the suite never loads 20260717090000.
+
+Safe to apply to live? **No.** As written, the moment it COMMITs it shrinks the existing transcript bucket (Teacher Transcripts mp3/m4a/mp4 and >8 MB uploads stop working), and the first recording would be readable, overwritable and deletable by every teacher. After N1 is fixed (own bucket, preflight, PRELUDE case), the apply itself is inert with the recorder off: two triggers on existing tables doing zero-row work, brief SHARE ROW EXCLUSIVE locks (add `lock_timeout`). Fix N2 and N3 in the same file before applying. They change the D contract and the trigger, and are cheap now but need a second migration once applied. N4-N6 are small and should ride along.
+
+## Not checked
+
+- Whether the live database really has bucket `class-recordings` and "staff_manage_class_recordings" (no live access by rule). The repo is authoritative and the live Teacher Transcripts page uses that bucket, so both almost certainly exist. Post-apply probe 6/7 (run BEFORE applying too) settles it.
+- Whether production's pasting role bypasses RLS (post-apply probe 8).
+- Supabase Storage behaviour (how `metadata.size` is set, upsert semantics). Concurrency beyond reading the lock order. D's use of the view (not wired yet). The full `run.mjs` (not run, by brief).
+
+Where I am / next step: DONE. `.probe/` and the node_modules link removed.
