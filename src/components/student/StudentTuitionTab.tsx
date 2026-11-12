@@ -12,10 +12,19 @@ import { InvoiceDownloadButton } from "@/components/invoice/InvoiceDownloadButto
 import { checkStudentFinanceParity } from "@/lib/dev/parityCheck";
 import { SettleBillModal } from "@/components/admin/SettleBillModal";
 import { useAuth } from "@/hooks/useAuth";
-import { getPaymentStatus, getTuitionStatusBadge } from "@/lib/tuitionStatus";
+import { getPaymentStatus, getTuitionStatusBadge, getIvoryTuitionStatusBadge } from "@/lib/tuitionStatus";
+import { useIvory } from "@/hooks/useIvory";
+import { cn } from "@/lib/utils";
 import { PriorBalanceBreakdown } from "./PriorBalanceBreakdown";
 import { BillFreezePanel, useBillFreeze } from "./BillFreezePanel";
 import { Lock } from "lucide-react";
+
+// Ivory (A4.6) strings. This tab renders on the admin student page only, so it keeps
+// the old classes until the staff area flips (useIvory). Amounts: ink, sans, tabular,
+// never wrapped (DS s.14); state is carried by the panel tint and the words beside it.
+const LABEL = "font-sans text-hec-small font-medium text-hec-ink-soft";
+const AMOUNT = "whitespace-nowrap text-hec-h2 font-semibold tabular-nums text-hec-ink";
+const CAPTION = "mt-1 text-hec-caption text-hec-ink-soft";
 
 const CURRENT_MONTH = (() => {
   const now = new Date();
@@ -60,6 +69,7 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
 
   const queryClient = useQueryClient();
   const { role } = useAuth();
+  const ivory = useIvory();
 
   // Load student name
   useEffect(() => {
@@ -134,7 +144,7 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
 
 
   // Status badge - using shared utility
-  const statusBadge = tuitionData ? getTuitionStatusBadge(getPaymentStatus({
+  const statusBadge = tuitionData ? (ivory ? getIvoryTuitionStatusBadge : getTuitionStatusBadge)(getPaymentStatus({
     carryOutDebt: tuitionData.carryOutDebt,
     carryOutCredit: tuitionData.carryOutCredit,
     totalAmount: tuitionData.totalAmount,
@@ -146,10 +156,10 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-pulse space-y-4 w-full">
-          <div className="h-12 bg-muted rounded" />
+          <div className={cn(ivory ? "h-12 rounded-hec-md bg-hec-sunken" : "h-12 bg-muted rounded")} />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-32 bg-muted rounded" />
+              <div key={i} className={cn(ivory ? "h-32 rounded-hec-md bg-hec-sunken" : "h-32 bg-muted rounded")} />
             ))}
           </div>
         </div>
@@ -160,7 +170,7 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
   if (!tuitionData) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">No tuition data available for this month</p>
+        <p className={cn(ivory ? "text-hec-body text-hec-ink-soft" : "text-muted-foreground")}>No tuition data available for this month</p>
       </div>
     );
   }
@@ -169,13 +179,13 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
     <div className="space-y-6">
       {/* Month Selector and Filters - Match Admin Finance */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className={cn(ivory ? "flex flex-wrap items-center justify-between gap-3" : "flex items-center justify-between")}>
           <div className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            <h2 className="text-2xl font-bold">Tuition Overview</h2>
+            <DollarSign className={cn("h-5 w-5", ivory && "shrink-0 text-hec-ink-soft")} />
+            <h2 className={cn(ivory ? "font-display text-hec-h2 font-medium text-hec-ink" : "text-2xl font-bold")}>Tuition Overview</h2>
           </div>
           <Select value={selectedMonth} onValueChange={(v) => { setUserPicked(true); setSelectedMonth(v); }}>
-            <SelectTrigger className="w-[280px]">
+            <SelectTrigger className={cn(ivory ? "w-full sm:w-[280px]" : "w-[280px]")}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="max-h-80">
@@ -184,7 +194,7 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
                   {lockedMonths.has(value) && <Lock className="inline h-3 w-3 mr-1" aria-label="Locked" />}
                   {label}
                   {classes.length > 0 && (
-                    <span className="text-muted-foreground"> · {classes.join(", ")}</span>
+                    <span className={cn(ivory ? "text-hec-ink-soft" : "text-muted-foreground")}> · {classes.join(", ")}</span>
                   )}
                 </SelectItem>
               ))}
@@ -195,8 +205,8 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
       </div>
 
       {/* Status and Invoice - Match Admin Finance */}
-      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-        <div className="flex items-center gap-2">
+      <div className={cn(ivory ? "flex flex-wrap items-center justify-between gap-3 rounded-hec-md bg-hec-sunken p-4" : "flex items-center justify-between p-4 bg-muted/50 rounded-lg")}>
+        <div className={cn(ivory ? "flex flex-wrap items-center gap-2" : "flex items-center gap-2")}>
           {statusBadge}
           {lockedMonths.has(selectedMonth) && (
             <Badge className="gap-1"><Lock className="h-3 w-3" /> Bill locked</Badge>
@@ -212,13 +222,13 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
             </Badge>
           )}
           {tuitionData.siblingState?.status === 'pending' && (
-            <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+            <Badge variant="outline" className={cn(ivory ? "border-hec-warn/30 bg-hec-warn-tint text-hec-warn" : "text-yellow-600 border-yellow-600")}>
               Sibling Pending
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {role === "admin" && ((tuitionData?.carryOutDebt ?? 0) > 0 || (tuitionData?.carryOutCredit ?? 0) > 0) && (
+        <div className={cn(ivory ? "flex flex-wrap items-center gap-2" : "flex items-center gap-2")}>
+          {role === "admin" &&((tuitionData?.carryOutDebt ?? 0) > 0 || (tuitionData?.carryOutCredit ?? 0) > 0) && (
             <Button
               onClick={() => setSettleBillOpen(true)}
               variant="outline"
@@ -242,13 +252,13 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className={cn(ivory ? LABEL : "text-sm font-medium text-muted-foreground")}>
               Sessions
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{tuitionData.sessionCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className={cn(ivory ? AMOUNT : "text-2xl font-bold")}>{tuitionData.sessionCount}</p>
+            <p className={cn(ivory ? CAPTION : "text-xs text-muted-foreground mt-1")}>
               Scheduled this month
             </p>
           </CardContent>
@@ -256,15 +266,15 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className={cn(ivory ? LABEL : "text-sm font-medium text-muted-foreground")}>
               Base Tuition
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">
+            <p className={cn(ivory ? AMOUNT : "text-2xl font-bold")}>
               {formatVND(tuitionData.baseAmount)}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className={cn(ivory ? CAPTION : "text-xs text-muted-foreground mt-1")}>
               Before discounts
             </p>
           </CardContent>
@@ -272,31 +282,31 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className={cn(ivory ? LABEL : "text-sm font-medium text-muted-foreground")}>
               Discounts
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">
+            <p className={cn(ivory ? AMOUNT : "text-2xl font-bold text-green-600")}>
               -{formatVND(tuitionData.totalDiscount)}
             </p>
             {tuitionData.discounts && tuitionData.discounts.length > 0 && (
               <div className="mt-2 space-y-1">
                 {tuitionData.discounts.map((d: any, i) => (
-                  <p key={i} className="text-xs text-muted-foreground">
+                  <p key={i} className={cn(ivory ? "text-hec-caption tabular-nums text-hec-ink" : "text-xs text-muted-foreground")}>
                     {d.name}: -{formatVND(d.amount)}
                     {d.appliedToClass && (
-                      <span className="text-[10px] text-muted-foreground ml-1">
+                      <span className={cn(ivory ? "ml-1 text-hec-caption text-hec-ink-soft" : "text-[10px] text-muted-foreground ml-1")}>
                         ({d.appliedToClass})
                       </span>
                     )}
                     {d.isRateAdjustment && d.overrideRate && d.defaultRate && (
-                      <span className="text-[10px] block text-blue-600">
+                      <span className={cn(ivory ? "block text-hec-caption text-hec-ink-soft" : "text-[10px] block text-blue-600")}>
                         Custom: {formatVND(d.overrideRate)}/session (saves {formatVND(d.savingsPerSession || 0)}/session from {formatVND(d.defaultRate)})
                       </span>
                     )}
                     {d.isSiblingWinner && d.appliedToClass && (
-                      <span className="text-[10px] block text-primary">
+                      <span className={cn(ivory ? "block text-hec-caption text-hec-ink-soft" : "text-[10px] block text-primary")}>
                         Applied to one class only
                       </span>
                     )}
@@ -309,28 +319,30 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className={cn(ivory ? LABEL : "text-sm font-medium text-muted-foreground")}>
               Current Charges
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">
+            <p className={cn(ivory ? AMOUNT : "text-2xl font-bold")}>
               {formatVND(tuitionData.totalAmount)}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className={cn(ivory ? CAPTION : "text-xs text-muted-foreground mt-1")}>
               This month only
             </p>
           </CardContent>
         </Card>
 
-        <Card className={tuitionData.carryInDebt > 0 ? 'bg-red-50 dark:bg-red-950/20' : tuitionData.carryInCredit > 0 ? 'bg-green-50 dark:bg-green-950/20' : ''}>
+        <Card className={ivory
+          ? (tuitionData.carryInDebt > 0 ? 'border-hec-danger/30 bg-hec-danger-tint' : tuitionData.carryInCredit > 0 ? 'border-hec-leaf/30 bg-hec-leaf-tint' : '')
+          : (tuitionData.carryInDebt > 0 ? 'bg-red-50 dark:bg-red-950/20' : tuitionData.carryInCredit > 0 ? 'bg-green-50 dark:bg-green-950/20' : '')}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className={cn(ivory ? LABEL : "text-sm font-medium text-muted-foreground")}>
               Prior Balance
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className={`text-2xl font-bold ${
+            <p className={ivory ? AMOUNT : `text-2xl font-bold ${
               tuitionData.carryInDebt > 0 ? 'text-red-600 dark:text-red-400' : 
               tuitionData.carryInCredit > 0 ? 'text-green-600 dark:text-green-400' : ''
             }`}>
@@ -341,7 +353,9 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
                   : formatVND(0)
               }
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className={cn(ivory
+              ? cn(CAPTION, tuitionData.carryInDebt > 0 && "font-medium text-hec-danger", tuitionData.carryInDebt === 0 && tuitionData.carryInCredit > 0 && "font-medium text-hec-leaf")
+              : "text-xs text-muted-foreground mt-1")}>
               {tuitionData.carryInCredit > 0 ? '✓ Credit (Family overpaid)' : 
                tuitionData.carryInDebt > 0 ? '⚠ Debt (Family owes)' : 'No carry-over'}
             </p>
@@ -358,7 +372,7 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
       {tuitionData.classBreakdown && tuitionData.classBreakdown.length > 0 && (
         <Card className="md:col-span-2 lg:col-span-5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className={cn(ivory ? LABEL : "text-sm font-medium text-muted-foreground")}>
               Tuition by Class
             </CardTitle>
           </CardHeader>
@@ -374,33 +388,35 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
                 const finalAmount = classItem.amount_vnd - siblingDiscountAmount;
 
                 return (
-                  <div 
-                    key={classItem.class_id} 
-                    className={`flex items-center justify-between p-3 border rounded-lg ${
+                  <div
+                    key={classItem.class_id}
+                    className={ivory
+                      ? `flex items-start justify-between gap-3 rounded-hec-md border p-3 ${isWinnerClass ? 'border-hec-line-strong bg-hec-sunken' : 'border-hec-line'}`
+                      : `flex items-center justify-between p-3 border rounded-lg ${
                       isWinnerClass ? 'bg-green-50/50 border-green-200 dark:bg-green-950/20 dark:border-green-800' : ''
                     }`}
                   >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold">{classItem.class_name}</p>
+                    <div className={cn(ivory ? "min-w-0 flex-1 space-y-1" : "space-y-1")}>
+                      <div className={cn(ivory ? "flex flex-wrap items-center gap-2" : "flex items-center gap-2")}>
+                        <p className={cn(ivory ? "min-w-0 whitespace-normal break-words hyphens-none font-semibold text-hec-ink" : "font-semibold")}>{classItem.class_name}</p>
                         {isWinnerClass && (
-                          <Badge variant="default" className="bg-green-600 text-xs">
+                          <Badge variant="default" className={cn(ivory ? "border-hec-line bg-hec-raised text-hec-ink" : "bg-green-600 text-xs")}>
                             Sibling Winner
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {classItem.sessions_count} sessions × {formatVND(classItem.session_rate_vnd)}
+                      <p className={cn(ivory ? "text-hec-caption tabular-nums text-hec-ink-soft" : "text-xs text-muted-foreground")}>
+                        {classItem.sessions_count} sessions× {formatVND(classItem.session_rate_vnd)}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{formatVND(classItem.amount_vnd)}</p>
+                    <div className={cn(ivory ? "shrink-0 text-right tabular-nums text-hec-ink" : "text-right")}>
+                      <p className={cn(ivory ? "whitespace-nowrap font-semibold" : "font-semibold")}>{formatVND(classItem.amount_vnd)}</p>
                       {isWinnerClass && siblingDiscountAmount > 0 && (
                         <>
-                          <p className="text-xs text-green-600 dark:text-green-400">
+                          <p className={cn(ivory ? "whitespace-nowrap text-hec-caption" : "text-xs text-green-600 dark:text-green-400")}>
                             -{formatVND(siblingDiscountAmount)} ({tuitionData.siblingState?.percent}%)
                           </p>
-                          <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                          <p className={cn(ivory ? "whitespace-nowrap text-hec-small font-semibold" : "text-sm font-bold text-green-600 dark:text-green-400")}>
                             = {formatVND(finalAmount)}
                           </p>
                         </>
@@ -416,17 +432,18 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
 
       {/* Payment Status - Match Admin Finance */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-primary/5">
+        <Card className={cn(!ivory && "bg-primary/5")}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className={cn(ivory ? LABEL : "text-sm font-medium text-muted-foreground")}>
               Final Payable
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-primary">
+            {/* The total: the largest figure, the one under a 2 px ink rule (DS s.14). */}
+            <p className={cn(ivory ? "whitespace-nowrap border-t-2 border-hec-ink pt-2 text-hec-h1 font-semibold tabular-nums text-hec-ink" : "text-2xl font-bold text-primary")}>
               {formatVND(tuitionData.totalAmount + (tuitionData.carryInDebt - tuitionData.carryInCredit))}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className={cn(ivory ? CAPTION : "text-xs text-muted-foreground mt-1")}>
               Current + Prior Balance
             </p>
           </CardContent>
@@ -434,15 +451,15 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className={cn(ivory ? LABEL : "text-sm font-medium text-muted-foreground")}>
               Recorded Payment
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-blue-600">
+            <p className={cn(ivory ? AMOUNT : "text-2xl font-bold text-blue-600")}>
               {formatVND(tuitionData.monthPayments)}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className={cn(ivory ? CAPTION : "text-xs text-muted-foreground mt-1")}>
               Paid this month
             </p>
           </CardContent>
@@ -450,18 +467,20 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className={cn(ivory ? LABEL : "text-sm font-medium text-muted-foreground")}>
               Outstanding
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className={`text-2xl font-bold ${
+            <p className={ivory ? AMOUNT : `text-2xl font-bold ${
               tuitionData.carryOutDebt > 0 ? 'text-destructive' : 
               tuitionData.carryOutCredit > 0 ? 'text-green-600' : ''
             }`}>
               {formatVND(tuitionData.carryOutDebt > 0 ? tuitionData.carryOutDebt : tuitionData.carryOutCredit)}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className={cn(ivory
+              ? cn(CAPTION, tuitionData.carryOutDebt > 0 && "font-medium text-hec-danger", tuitionData.carryOutDebt === 0 && tuitionData.carryOutCredit === 0 && "font-medium text-hec-leaf")
+              : "text-xs text-muted-foreground mt-1")}>
               {tuitionData.carryOutCredit > 0 && 'Overpaid - Credit'}
               {tuitionData.carryOutDebt > 0 && 'Amount Due'}
               {tuitionData.carryOutDebt === 0 && tuitionData.carryOutCredit === 0 && 'Fully Settled'}
@@ -471,7 +490,7 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className={cn(ivory ? LABEL : "text-sm font-medium text-muted-foreground")}>
               Status
             </CardTitle>
           </CardHeader>
@@ -479,8 +498,8 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
             <div className="flex items-center gap-2">
               {statusBadge}
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {tuitionData.balanceStatus === 'settled' ? 'All paid up' : tuitionData.balanceStatus === 'credit' ? 'Overpaid for this month' : 'Outstanding balance'}
+            <p className={cn(ivory ? "mt-2 text-hec-caption text-hec-ink-soft" : "text-xs text-muted-foreground mt-2")}>
+              {tuitionData.balanceStatus=== 'settled' ? 'All paid up' : tuitionData.balanceStatus === 'credit' ? 'Overpaid for this month' : 'Outstanding balance'}
             </p>
           </CardContent>
         </Card>
@@ -495,20 +514,20 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
           <CardContent>
             <div className="space-y-2">
               {tuitionData.sessionDetails.map((session, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">
+                <div key={idx} className={cn(ivory ? "flex items-start justify-between gap-3 rounded-hec-md border border-hec-line p-3" : "flex items-center justify-between p-3 border rounded-lg")}>
+                  <div className={cn(ivory && "min-w-0")}>
+                    <p className={cn(ivory ? "font-medium tabular-nums text-hec-ink" : "font-medium")}>
                       {new Date(session.date).toLocaleDateString('en-US', {
                         weekday: 'short',
                         month: 'short',
                         day: 'numeric'
                       })}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className={cn(ivory ? "text-hec-small text-hec-ink-soft" : "text-sm text-muted-foreground")}>
                       Status: {session.status}
                     </p>
                   </div>
-                  <p className="font-semibold">
+                  <p className={cn(ivory ? "shrink-0 whitespace-nowrap font-semibold tabular-nums text-hec-ink" : "font-semibold")}>
                     {formatVND(session.rate)}
                   </p>
                 </div>
