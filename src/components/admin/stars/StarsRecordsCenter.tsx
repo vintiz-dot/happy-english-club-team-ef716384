@@ -95,15 +95,18 @@ function initialView(): RecordsView {
   return preset ? applyPreset(view, preset, todayKey()) : view;
 }
 
+// DESIGN_SYSTEM s.14: danger / warning / success panels; the rest neutral. The badge always carries the word.
 const RESULT_TONE: Record<ResultKey, string> = {
-  settle: "border-destructive/40 bg-destructive/10 text-destructive",
-  refused: "border-destructive/40 bg-destructive/10 text-destructive",
-  waiting: "border-warning/50 bg-warning/10 text-warning",
-  applied: "border-success/40 bg-success/10 text-success",
-  withdrawn: "border-border bg-muted text-muted-foreground",
-  duplicate: "border-border bg-muted text-muted-foreground",
-  before_start: "border-border bg-muted text-muted-foreground",
+  settle: "border-hec-danger/30 bg-hec-danger-tint text-hec-danger",
+  refused: "border-hec-danger/30 bg-hec-danger-tint text-hec-danger",
+  waiting: "border-hec-warn/30 bg-hec-warn-tint text-hec-warn",
+  applied: "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
+  withdrawn: "border-hec-line bg-hec-sunken text-hec-ink-soft",
+  duplicate: "border-hec-line bg-hec-sunken text-hec-ink-soft",
+  before_start: "border-hec-line bg-hec-sunken text-hec-ink-soft",
 };
+
+const FOCUS = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
 function ResultBadge({ result, className }: { result: ResultKey; className?: string }) {
   return (
@@ -174,10 +177,10 @@ function FacetFilter({ label, options, selected, onChange }: {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className={cn("h-8 gap-1.5", selected.length > 0 && "border-primary/60 bg-primary/5")}>
+        <Button variant="outline" size="sm" className={cn("gap-2", selected.length > 0 && "border-hec-brass bg-hec-sunken")}>
           {label}
           {selected.length > 0 && (
-            <span className="rounded-full bg-primary px-1.5 text-[11px] font-semibold leading-4 text-primary-foreground">
+            <span className="rounded-full bg-hec-action px-2 text-hec-caption font-semibold tabular-nums text-hec-on-action">
               {selected.length}
             </span>
           )}
@@ -197,19 +200,20 @@ function FacetFilter({ label, options, selected, onChange }: {
                     key={option.value}
                     value={foldText(`${option.label} ${option.sublabel ?? ""} ${option.value}`)}
                     onSelect={() => toggle(option.value)}
-                    className="gap-2"
+                    className="min-h-hec-target items-start gap-2 py-2"
                   >
                     <span className={cn(
-                      "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border",
-                      on ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40",
+                      "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-hec-sm border",
+                      on ? "border-hec-action bg-hec-action text-hec-on-action" : "border-hec-line-strong",
                     )}>
                       {on && <Check className="h-3 w-3" />}
                     </span>
+                    {/* Options are children and classes: their names wrap, never cut (DESIGN_SYSTEM s.13). */}
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate">{option.label}</span>
-                      {option.sublabel && <span className="block truncate text-[11px] text-muted-foreground">{option.sublabel}</span>}
+                      <span className="block whitespace-normal break-words hyphens-none">{option.label}</span>
+                      {option.sublabel && <span className="block whitespace-normal break-words text-hec-caption text-hec-ink-soft">{option.sublabel}</span>}
                     </span>
-                    <span className="text-xs tabular-nums text-muted-foreground">{option.count}</span>
+                    <span className="shrink-0 text-hec-caption tabular-nums text-hec-ink-soft">{option.count}</span>
                   </CommandItem>
                 );
               })}
@@ -218,7 +222,7 @@ function FacetFilter({ label, options, selected, onChange }: {
               <>
                 <CommandSeparator />
                 <CommandGroup>
-                  <CommandItem value="__clear__" onSelect={() => onChange([])} className="justify-center text-xs">
+                  <CommandItem value="__clear__" onSelect={() => onChange([])} className="min-h-hec-target justify-center text-hec-small">
                     Clear
                   </CommandItem>
                 </CommandGroup>
@@ -254,32 +258,32 @@ function DateFilter({ from, to, onChange }: {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className={cn("h-8 gap-1.5", active && "border-primary/60 bg-primary/5")}>
-          <Calendar className="h-3.5 w-3.5" /> {label}
+        <Button variant="outline" size="sm" className={cn("gap-2 tabular-nums", active && "border-hec-brass bg-hec-sunken")}>
+          <Calendar className="h-4 w-4" /> {label}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[280px] space-y-3">
-        <div className="flex flex-wrap gap-1.5">
+      <PopoverContent align="start" className="w-[300px] max-w-[calc(100vw-2rem)] space-y-4">
+        <div className="flex flex-wrap gap-2">
           {quick.map((q) => (
-            <Button key={q.label} size="sm" variant="secondary" className="h-7 text-xs" onClick={() => onChange(q.from, q.to)}>
+            <Button key={q.label} size="sm" variant="secondary" onClick={() => onChange(q.from, q.to)}>
               {q.label}
             </Button>
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <Label htmlFor="stars-from-date" className="text-xs">From</Label>
-            <Input id="stars-from-date" type="date" className="h-8 px-2 text-xs" value={from ?? ""}
+        <div className="grid grid-cols-1 gap-2 min-[340px]:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="stars-from-date">From</Label>
+            <Input id="stars-from-date" type="date" className="px-2 tabular-nums" value={from ?? ""}
               onChange={(e) => onChange(e.target.value || null, to)} />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="stars-to-date" className="text-xs">To</Label>
-            <Input id="stars-to-date" type="date" className="h-8 px-2 text-xs" value={to ?? ""}
+          <div className="space-y-2">
+            <Label htmlFor="stars-to-date">To</Label>
+            <Input id="stars-to-date" type="date" className="px-2 tabular-nums" value={to ?? ""}
               onChange={(e) => onChange(from, e.target.value || null)} />
           </div>
         </div>
         {active && (
-          <Button size="sm" variant="ghost" className="h-7 w-full text-xs" onClick={() => onChange(null, null)}>
+          <Button size="sm" variant="ghost" className="w-full" onClick={() => onChange(null, null)}>
             Any date
           </Button>
         )}
@@ -292,24 +296,25 @@ function DateFilter({ from, to, onChange }: {
 
 function ChildCell({ record, compact, onLink }: { record: StarsRecord; compact: boolean; onLink: (ref: string) => void }) {
   return (
-    <div className="flex min-w-0 items-center gap-2">
-      <div className="min-w-0">
-        <p className={cn("truncate font-medium", record.childRef ? "" : "text-muted-foreground")}>{record.childName}</p>
+    <div className="flex min-w-[10rem] items-start gap-2">
+      {/* A child's name, HEC's or Pixel Pal's, wraps and is never cut (DESIGN_SYSTEM s.13). */}
+      <div className="min-w-0 flex-1">
+        <p className={cn("whitespace-normal break-words hyphens-none font-medium", record.childRef ? "text-hec-ink" : "text-hec-ink-soft")}>{record.childName}</p>
         {!compact && record.childRef && !record.childLinked && record.pixelPalName && (
-          <p className="truncate text-[11px] text-muted-foreground">Pixel Pal no. {record.childRef}</p>
+          <p className="text-hec-caption tabular-nums text-hec-ink-soft">Pixel Pal no. {record.childRef}</p>
         )}
         {!compact && record.childLinked && record.pixelPalName && record.pixelPalName !== record.childName && (
-          <p className="truncate text-[11px] text-muted-foreground">“{record.pixelPalName}” in Pixel Pal</p>
+          <p className="whitespace-normal break-words text-hec-caption text-hec-ink-soft">“{record.pixelPalName}” in Pixel Pal</p>
         )}
       </div>
       {record.why === "child_unlinked" && record.childRef && (
         <Button
           size="sm"
           variant="outline"
-          className="h-6 shrink-0 gap-1 px-1.5 text-[11px]"
+          className="shrink-0 gap-1"
           onClick={(e) => { e.stopPropagation(); onLink(record.childRef as string); }}
         >
-          <Link2 className="h-3 w-3" /> Link
+          <Link2 className="h-4 w-4" /> Link
         </Button>
       )}
     </div>
@@ -325,30 +330,31 @@ function RecordsTable({ records, view, onOpen, onLinkChild, onSort, sortable }: 
   sortable: boolean;
 }) {
   const compact = view.density === "compact";
-  const cell = compact ? "px-2 py-1 text-xs" : "px-3 py-2.5 text-sm";
+  const cell = compact ? "px-2 py-1 text-hec-caption" : "px-3 py-3 text-hec-small";
   const columns = ALL_COLUMNS.filter((c) => view.columns.includes(c.key));
 
   const render = (key: ColumnKey, r: StarsRecord): ReactNode => {
     switch (key) {
-      case "lesson": return <span className="whitespace-nowrap">{lessonLabel(r.lessonDate)}</span>;
+      case "lesson": return <span className="whitespace-nowrap tabular-nums">{lessonLabel(r.lessonDate)}</span>;
       case "child": return <ChildCell record={r} compact={compact} onLink={onLinkChild} />;
-      case "class": return <span className="block max-w-[10rem] truncate">{r.className}</span>;
+      // A class name wraps, never cut (DESIGN_SYSTEM s.13).
+      case "class": return <span className="block min-w-[7rem] max-w-[12rem] whitespace-normal break-words hyphens-none">{r.className}</span>;
       case "what": return (
         <span className="block max-w-[18rem] truncate" title={r.what}>
           {r.kind === "retraction" || r.kind === "other"
             ? r.what
-            : <><span className="text-muted-foreground">{KIND_LABEL[r.kind]} · </span>{r.what}</>}
+            : <><span className="text-hec-ink-soft">{KIND_LABEL[r.kind]} · </span>{r.what}</>}
         </span>
       );
       case "result": return <ResultBadge result={r.result} />;
       case "why": return (
-        <span className={cn("block max-w-[16rem] truncate", r.why ? "" : "text-muted-foreground")} title={r.note}>
+        <span className={cn("block max-w-[16rem] truncate", r.why ? "" : "text-hec-ink-soft")} title={r.note}>
           {r.why ? WHY_LABEL[r.why] : r.note || "—"}
         </span>
       );
-      case "processed": return <span className="whitespace-nowrap text-muted-foreground">{timeLabel(r.processedAt)}</span>;
-      case "tries": return <span className="tabular-nums text-muted-foreground">{r.attempts}</span>;
-      case "seq": return <span className="font-mono text-xs text-muted-foreground">{r.seq}</span>;
+      case "processed": return <span className="whitespace-nowrap tabular-nums text-hec-ink-soft">{timeLabel(r.processedAt)}</span>;
+      case "tries": return <span className="tabular-nums text-hec-ink-soft">{r.attempts}</span>;
+      case "seq": return <span className="font-mono text-hec-caption tabular-nums text-hec-ink-soft">{r.seq}</span>;
     }
   };
 
@@ -360,9 +366,9 @@ function RecordsTable({ records, view, onOpen, onLinkChild, onSort, sortable }: 
           <TableHeader>
             <TableRow>
               {columns.map((c) => (
-                <TableHead key={c.key} className={cn("h-9 whitespace-nowrap", compact ? "px-2 text-xs" : "px-3")}>
+                <TableHead key={c.key} className={cn("whitespace-nowrap", compact ? "px-2" : "px-3")}>
                   {sortable ? (
-                    <button type="button" className="inline-flex items-center gap-1 font-medium hover:text-foreground" onClick={() => onSort(c.key)}>
+                    <button type="button" className={cn("inline-flex min-h-hec-target items-center gap-1 rounded-hec-sm font-medium uppercase tracking-wider hover:text-hec-ink", FOCUS)} onClick={() => onSort(c.key)}>
                       {c.label}
                       {view.sort === c.key && (view.descending ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />)}
                     </button>
@@ -376,7 +382,7 @@ function RecordsTable({ records, view, onOpen, onLinkChild, onSort, sortable }: 
               <TableRow
                 key={r.id}
                 tabIndex={0}
-                className="cursor-pointer"
+                className={cn("cursor-pointer align-top", "focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hec-ring")}
                 onClick={() => onOpen(r)}
                 onKeyDown={(e) => { if (e.key === "Enter") onOpen(r); }}
               >
@@ -388,23 +394,27 @@ function RecordsTable({ records, view, onOpen, onLinkChild, onSort, sortable }: 
       </div>
 
       {/* ...and a list on a phone, where nine columns cannot fit. */}
-      <div className="space-y-1.5 md:hidden">
+      <div className="space-y-2 md:hidden">
         {records.map((r) => (
           <button
             key={r.id}
             type="button"
             onClick={() => onOpen(r)}
-            className="block w-full rounded-lg border bg-card/60 p-2.5 text-left text-sm"
+            className={cn(
+              "block min-h-hec-target w-full rounded-hec-md border border-hec-line bg-hec-surface p-3 text-left text-hec-small text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken/60",
+              FOCUS,
+            )}
           >
             <div className="flex items-start justify-between gap-2">
-              <span className="min-w-0 truncate font-medium">{r.childName}</span>
+              {/* The child's name wraps; the badge beside it gives way, the name never does (DESIGN_SYSTEM s.13). */}
+              <span className="min-w-0 flex-1 whitespace-normal break-words hyphens-none text-balance font-medium">{r.childName}</span>
               <ResultBadge result={r.result} className="shrink-0" />
             </div>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            <p className="mt-1 whitespace-normal break-words text-hec-caption text-hec-ink-soft">
               {lessonLabel(r.lessonDate)} · {r.className}
             </p>
-            <p className="mt-0.5 truncate text-xs">{r.what}</p>
-            {r.why && <p className="mt-0.5 truncate text-xs text-muted-foreground">{WHY_LABEL[r.why]}</p>}
+            <p className="mt-1 truncate text-hec-caption">{r.what}</p>
+            {r.why && <p className="mt-1 truncate text-hec-caption text-hec-ink-soft">{WHY_LABEL[r.why]}</p>}
           </button>
         ))}
       </div>
@@ -427,41 +437,42 @@ function GroupBlock({ group, defaultOpen, view, onOpen, onLinkChild, onSort }: {
   const [shown, setShown] = useState(ROWS_IN_GROUP);
   const { counts } = group;
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="rounded-lg border">
-      <div className="flex items-center gap-2 pr-2">
-        <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-2 p-2.5 text-left">
-          <ChevronRight className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-90")} />
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-medium">
+    <Collapsible open={open} onOpenChange={setOpen} className="rounded-hec-md border border-hec-line bg-hec-surface">
+      <div className="flex items-start gap-2 pr-2">
+        <CollapsibleTrigger className={cn("flex min-h-hec-target min-w-0 flex-1 flex-wrap items-start gap-2 rounded-hec-md p-3 text-left", FOCUS)}>
+          <ChevronRight className={cn("mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft transition-transform duration-hec-1 ease-hec", open && "rotate-90")} />
+          {/* A group can be a child or a class: the label wraps, never cut (DESIGN_SYSTEM s.13). */}
+          <span className="min-w-0 flex-1 basis-40">
+            <span className="block whitespace-normal break-words hyphens-none text-hec-small font-medium text-hec-ink">
               {view.groupBy === "lesson" ? lessonLabel(group.key || null) : group.label}
             </span>
-            {group.sublabel && <span className="block truncate text-[11px] text-muted-foreground">{group.sublabel}</span>}
+            {group.sublabel && <span className="block whitespace-normal break-words text-hec-caption text-hec-ink-soft">{group.sublabel}</span>}
           </span>
           <span className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-1">
             {RESULT_ORDER.filter((key) => counts[key]).map((key) => (
-              <Badge key={key} variant="outline" className={cn("px-1.5 py-0 text-[11px] font-medium", RESULT_TONE[key])}>
+              <Badge key={key} variant="outline" className={cn("tabular-nums font-medium", RESULT_TONE[key])}>
                 {counts[key]} {RESULT_LABEL[key].toLowerCase()}
               </Badge>
             ))}
             {group.waitingPoints !== 0 && (
-              <span className="px-1 text-[11px] text-warning">{pointsLabel(group.waitingPoints)} held up</span>
+              <span className="px-1 text-hec-caption tabular-nums text-hec-warn">{pointsLabel(group.waitingPoints)} held up</span>
             )}
             {group.appliedPoints !== 0 && (
-              <span className="px-1 text-[11px] text-muted-foreground">{pointsLabel(group.appliedPoints)} applied</span>
+              <span className="px-1 text-hec-caption tabular-nums text-hec-ink-soft">{pointsLabel(group.appliedPoints)} applied</span>
             )}
           </span>
         </CollapsibleTrigger>
         {group.linkChild && (
-          <Button size="sm" variant="outline" className="h-7 shrink-0 gap-1 text-xs"
+          <Button size="sm" variant="outline" className="mt-1 shrink-0 gap-1"
             onClick={() => onLinkChild(group.linkChild as string)}>
-            <Link2 className="h-3 w-3" /> Link
+            <Link2 className="h-4 w-4" /> Link
           </Button>
         )}
       </div>
-      <CollapsibleContent className="space-y-2 border-t p-2">
+      <CollapsibleContent className="space-y-2 border-t border-hec-line p-2">
         <RecordsTable records={group.records.slice(0, shown)} view={view} onOpen={onOpen} onLinkChild={onLinkChild} onSort={onSort} sortable />
         {group.records.length > shown && (
-          <Button size="sm" variant="ghost" className="h-7 w-full text-xs" onClick={() => setShown((n) => n + ROWS_IN_GROUP * 2)}>
+          <Button size="sm" variant="ghost" className="w-full" onClick={() => setShown((n) => n + ROWS_IN_GROUP * 2)}>
             Show more of {group.records.length}
           </Button>
         )}
@@ -495,8 +506,8 @@ function whatHecDid(record: StarsRecord): string | null {
 
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid grid-cols-[7.5rem_1fr] gap-2 py-1 text-sm">
-      <dt className="text-muted-foreground">{label}</dt>
+    <div className="grid grid-cols-[7.5rem_1fr] gap-2 py-2 text-hec-small">
+      <dt className="text-hec-ink-soft">{label}</dt>
       <dd className="min-w-0 break-words">{children}</dd>
     </div>
   );
@@ -514,24 +525,24 @@ function RecordDetail({ record, onClose, onShowChild, onFix }: {
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         {record && (
           <>
-            <SheetHeader className="space-y-2 pr-6 text-left">
+            <SheetHeader className="space-y-2 pr-12 text-left">
               <div><ResultBadge result={record.result} /></div>
-              <SheetTitle className="text-lg">{record.childName}</SheetTitle>
-              <SheetDescription>{KIND_LABEL[record.kind]} · {lessonLabel(record.lessonDate)} · {record.className}</SheetDescription>
+              <SheetTitle className="whitespace-normal break-words hyphens-none text-balance">{record.childName}</SheetTitle>
+              <SheetDescription className="whitespace-normal break-words">{KIND_LABEL[record.kind]} · {lessonLabel(record.lessonDate)} · {record.className}</SheetDescription>
             </SheetHeader>
 
             <div className="mt-4 space-y-4">
-              <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+              <div className="rounded-hec-md border border-hec-line bg-hec-sunken p-4 text-hec-small text-hec-ink">
                 <p className="font-medium">{record.what}</p>
-                {record.note && <p className="mt-1 text-muted-foreground">{record.note}</p>}
+                {record.note && <p className="mt-1 text-hec-ink-soft">{record.note}</p>}
               </div>
 
               {record.why && (
-                <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+                <div className="rounded-hec-md border border-hec-line bg-hec-surface p-4 text-hec-small text-hec-ink">
                   <p className="font-medium">What to do</p>
-                  <p className="mt-1 text-muted-foreground">{WHAT_TO_DO[record.why]}</p>
+                  <p className="mt-1 text-hec-ink-soft">{WHAT_TO_DO[record.why]}</p>
                   {record.fix && (
-                    <Button size="sm" className="mt-2 h-8" onClick={() => onFix(record)}>
+                    <Button size="sm" className="mt-3" onClick={() => onFix(record)}>
                       {record.fix === "link_child" ? "Link this child"
                         : record.fix === "link_class" ? "Link this class"
                         : record.fix === "settle" ? "Go to To settle"
@@ -542,18 +553,18 @@ function RecordDetail({ record, onClose, onShowChild, onFix }: {
               )}
 
               {did && (
-                <div className="rounded-lg border p-3 text-sm">
+                <div className="rounded-hec-md border border-hec-line p-4 text-hec-small text-hec-ink">
                   <p className="font-medium">What HEC did</p>
-                  <p className="mt-1 text-muted-foreground">{did}</p>
+                  <p className="mt-1 text-hec-ink-soft">{did}</p>
                 </div>
               )}
 
-              <dl className="divide-y">
+              <dl className="divide-y divide-hec-line">
                 <Fact label="Child">
                   <span className="flex flex-wrap items-center gap-2">
-                    {record.childName}
+                    <span className="min-w-0 whitespace-normal break-words hyphens-none">{record.childName}</span>
                     {record.studentId && (
-                      <Link to={`/students/${record.studentId}`} className="inline-flex items-center gap-0.5 text-xs text-primary hover:underline">
+                      <Link to={`/students/${record.studentId}`} className={cn("inline-flex min-h-hec-target items-center gap-1 rounded-hec-sm text-hec-small text-hec-brass underline-offset-4 hover:underline", FOCUS)}>
                         Open <ExternalLink className="h-3 w-3" />
                       </Link>
                     )}
@@ -573,21 +584,22 @@ function RecordDetail({ record, onClose, onShowChild, onFix }: {
                 <Fact label="Arrived">{timeLabel(record.receivedAt)}</Fact>
                 <Fact label="Last looked at">{timeLabel(record.processedAt)}</Fact>
                 <Fact label="Tries">{record.attempts}</Fact>
-                <Fact label="Record no."><span className="font-mono text-xs">{record.seq}</span></Fact>
+                <Fact label="Record no."><span className="font-mono text-hec-caption tabular-nums">{record.seq}</span></Fact>
               </dl>
 
               {record.childRef && (
-                <Button variant="outline" size="sm" className="w-full" onClick={() => onShowChild(record.childRef as string)}>
-                  <ListFilter className="mr-2 h-3.5 w-3.5" /> Every record for {record.childName}
+                // The label holds the child's name: the button wraps instead of cutting it.
+                <Button variant="outline" size="sm" className="h-auto w-full whitespace-normal py-2 text-left" onClick={() => onShowChild(record.childRef as string)}>
+                  <ListFilter className="h-4 w-4" /> <span className="min-w-0 break-words">Every record for {record.childName}</span>
                 </Button>
               )}
 
               <Collapsible>
-                <CollapsibleTrigger className="flex w-full items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                  <ChevronRight className="h-3 w-3" /> What Pixel Pal sent
+                <CollapsibleTrigger className={cn("flex min-h-hec-target w-full items-center gap-2 rounded-hec-sm text-hec-small text-hec-ink-soft hover:text-hec-ink", FOCUS)}>
+                  <ChevronRight className="h-4 w-4" /> What Pixel Pal sent
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <pre className="mt-2 overflow-x-auto rounded-md bg-muted p-2 text-[11px]">
+                  <pre className="mt-2 overflow-x-auto rounded-hec-md bg-hec-sunken p-3 text-hec-caption text-hec-ink">
                     {JSON.stringify(record.payload, null, 2)}
                   </pre>
                 </CollapsibleContent>
@@ -613,18 +625,18 @@ function BlockerRow({ blocker, onShow, onFix }: {
     : blocker.fix === "setup" ? "Setup"
     : null;
   return (
-    <li className="flex flex-wrap items-center justify-between gap-2 py-2">
-      <div className="min-w-0">
-        <p className="text-sm font-medium">{blocker.headline}</p>
-        <p className="text-xs text-muted-foreground">
+    <li className="flex flex-wrap items-center justify-between gap-2 py-3">
+      <div className="min-w-0 flex-1 basis-60">
+        <p className="whitespace-normal break-words text-hec-small font-medium text-hec-ink">{blocker.headline}</p>
+        <p className="text-hec-caption text-hec-ink-soft">
           {blocker.count} record{blocker.count === 1 ? "" : "s"}
           {blocker.points !== 0 ? `, ${pointsLabel(blocker.points)}` : ""}
           {" · "}{WHAT_TO_DO[blocker.why]}
         </p>
       </div>
-      <div className="flex shrink-0 gap-1.5">
-        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => onShow(blocker)}>Show</Button>
-        {fixLabel && <Button size="sm" className="h-7 text-xs" onClick={() => onFix(blocker)}>{fixLabel}</Button>}
+      <div className="flex shrink-0 gap-2">
+        <Button size="sm" variant="ghost" onClick={() => onShow(blocker)}>Show</Button>
+        {fixLabel && <Button size="sm" onClick={() => onFix(blocker)}>{fixLabel}</Button>}
       </div>
     </li>
   );
@@ -736,10 +748,10 @@ export function StarsRecordsCenter({
 
   if (error) {
     return (
-      <Card className="border-destructive/60">
+      <Card className="border-hec-danger/30 bg-hec-danger-tint">
         <CardHeader>
-          <CardTitle className="text-base">The records could not be loaded</CardTitle>
-          <CardDescription>{error}</CardDescription>
+          <CardTitle className="text-hec-danger">The records could not be loaded</CardTitle>
+          <CardDescription className="text-hec-ink">{error}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button variant="outline" size="sm" onClick={onRefresh}>Try again</Button>
@@ -761,14 +773,15 @@ export function StarsRecordsCenter({
               onClick={() => toggleResult(key)}
               aria-pressed={on}
               className={cn(
-                "rounded-xl border bg-card/60 p-3 text-left transition-colors hover:bg-muted/50",
-                on && "ring-2 ring-primary",
+                "min-h-hec-target rounded-hec-lg border border-hec-line bg-hec-surface p-3 text-left shadow-hec-1 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken/60",
+                FOCUS,
+                on && "border-hec-brass bg-hec-sunken",
               )}
             >
-              <p className={cn("text-xl font-semibold tabular-nums", counts[key] > 0 && (key === "settle" || key === "refused") && "text-destructive", counts[key] > 0 && key === "waiting" && "text-warning")}>
+              <p className={cn("font-sans text-hec-h2 font-semibold tabular-nums text-hec-ink", counts[key] > 0 && (key === "settle" || key === "refused") && "text-hec-danger", counts[key] > 0 && key === "waiting" && "text-hec-warn")}>
                 {loading ? "…" : counts[key].toLocaleString()}
               </p>
-              <p className="text-xs text-muted-foreground">{RESULT_LABEL[key]}</p>
+              <p className="text-hec-caption text-hec-ink-soft">{RESULT_LABEL[key]}</p>
             </button>
           );
         })}
@@ -778,13 +791,13 @@ export function StarsRecordsCenter({
       {blockers.length > 0 && (
         <Card>
           <CardHeader className="pb-1">
-            <CardTitle className="text-base">What is holding records up</CardTitle>
-            <CardDescription>
+            <CardTitle>What is holding records up</CardTitle>
+            <CardDescription className="tabular-nums">
               {stuck.toLocaleString()} stuck, from {blockers.length} cause{blockers.length === 1 ? "" : "s"}. Biggest first.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="divide-y">
+            <ul className="divide-y divide-hec-line">
               {blockers.slice(0, 5).map((blocker) => (
                 <BlockerRow
                   key={blocker.key}
@@ -795,7 +808,7 @@ export function StarsRecordsCenter({
               ))}
             </ul>
             {blockers.length > 5 && (
-              <Button size="sm" variant="ghost" className="mt-1 h-7 w-full text-xs"
+              <Button size="sm" variant="ghost" className="mt-2 w-full"
                 onClick={() => setView((current) => ({ ...clearFilters(current), results: ["settle", "refused", "waiting"], groupBy: "why" }))}>
                 See all {blockers.length} causes
               </Button>
@@ -807,13 +820,13 @@ export function StarsRecordsCenter({
       {/* ------------------------------------------------ choosing a view */}
       <Card>
         <CardContent className="space-y-3 pt-5">
-          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Quick views">
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Quick views">
             {VIEW_PRESETS.map((preset) => (
               <Button
                 key={preset.key}
                 size="sm"
                 variant={activePreset?.key === preset.key ? "default" : "outline"}
-                className="h-7 rounded-full text-xs"
+                className="rounded-full"
                 title={preset.description}
                 onClick={() => setView((current) => applyPreset(current, preset, today))}
               >
@@ -824,19 +837,19 @@ export function StarsRecordsCenter({
               const on = JSON.stringify(s.view) === JSON.stringify(view);
               return (
                 <span key={s.id} className={cn(
-                  "inline-flex h-7 items-center rounded-full border text-xs",
-                  on ? "border-primary bg-primary text-primary-foreground" : "bg-background",
+                  "inline-flex min-h-hec-target items-center rounded-full border text-hec-small",
+                  on ? "border-hec-action bg-hec-action text-hec-on-action" : "border-hec-line-strong bg-hec-raised text-hec-ink",
                 )}>
-                  <button type="button" className="inline-flex items-center gap-1 pl-2.5 pr-1" onClick={() => setView(s.view)}>
-                    <Bookmark className="h-3 w-3" /> {s.name}
+                  <button type="button" className={cn("inline-flex min-h-hec-target items-center gap-1 rounded-full pl-3 pr-1", FOCUS)} onClick={() => setView(s.view)}>
+                    <Bookmark className="h-4 w-4" /> {s.name}
                   </button>
                   <button
                     type="button"
                     aria-label={`Delete saved view ${s.name}`}
-                    className="pr-2 opacity-60 hover:opacity-100"
+                    className={cn("inline-flex min-h-hec-target min-w-hec-target items-center justify-center rounded-full opacity-60 hover:opacity-100", FOCUS)}
                     onClick={() => setSaved((current) => current.filter((v) => v.id !== s.id))}
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-4 w-4" />
                   </button>
                 </span>
               );
@@ -845,11 +858,11 @@ export function StarsRecordsCenter({
 
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hec-ink-faint" />
               <Input
                 aria-label="Search the records"
                 placeholder="Child, class, reason, number…"
-                className="h-8 pl-8 text-sm"
+                className="pl-9"
                 value={view.search}
                 onChange={(e) => patch({ search: e.target.value })}
               />
@@ -864,15 +877,15 @@ export function StarsRecordsCenter({
             )}
             <DateFilter from={view.from} to={view.to} onChange={(from, to) => patch({ from, to })} />
             {filtersOn > 0 && (
-              <Button size="sm" variant="ghost" className="h-8 gap-1 text-xs" onClick={() => setView((current) => clearFilters(current))}>
-                <RotateCcw className="h-3 w-3" /> Clear {filtersOn}
+              <Button size="sm" variant="ghost" className="gap-1 tabular-nums" onClick={() => setView((current) => clearFilters(current))}>
+                <RotateCcw className="h-4 w-4" /> Clear {filtersOn}
               </Button>
             )}
 
             <div className="ml-auto flex flex-wrap items-center gap-2">
               <Select value={view.groupBy} onValueChange={(groupBy) => patch({ groupBy: groupBy as GroupKey })}>
-                <SelectTrigger aria-label="Group by" className="h-8 w-[150px] text-xs">
-                  <span className="text-muted-foreground">Group:</span> <SelectValue />
+                <SelectTrigger aria-label="Group by" className="w-[180px] text-hec-small">
+                  <span className="text-hec-ink-soft">Group:</span> <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {(Object.keys(GROUP_LABEL) as GroupKey[]).map((key) => (
@@ -882,8 +895,8 @@ export function StarsRecordsCenter({
               </Select>
               <div className="flex items-center">
                 <Select value={view.sort} onValueChange={(sort) => patch({ sort: sort as SortKey })}>
-                  <SelectTrigger aria-label="Sort by" className="h-8 w-[150px] rounded-r-none text-xs">
-                    <span className="text-muted-foreground">Sort:</span> <SelectValue />
+                  <SelectTrigger aria-label="Sort by" className="w-[180px] rounded-r-none text-hec-small">
+                    <span className="text-hec-ink-soft">Sort:</span> <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {(Object.keys(SORT_LABEL) as SortKey[]).map((key) => (
@@ -894,23 +907,23 @@ export function StarsRecordsCenter({
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 rounded-l-none border-l-0"
+                  className="rounded-l-none border-l-0"
                   aria-label={view.descending ? "Sorted high to low, change" : "Sorted low to high, change"}
                   onClick={() => patch({ descending: !view.descending })}
                 >
-                  {view.descending ? <ArrowDown className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />}
+                  {view.descending ? <ArrowDown className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
                 </Button>
               </div>
 
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
-                    <SlidersHorizontal className="h-3.5 w-3.5" /> Customize
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <SlidersHorizontal className="h-4 w-4" /> Customize
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="end" className="w-[280px] space-y-4">
+                <PopoverContent align="end" className="w-[300px] max-w-[calc(100vw-2rem)] space-y-4">
                   <div>
-                    <p className="mb-1.5 text-xs font-medium">Columns</p>
+                    <p className="mb-2 text-hec-small font-medium text-hec-ink">Columns</p>
                     <div className="grid grid-cols-2 gap-1">
                       {ALL_COLUMNS.map((column) => {
                         const on = view.columns.includes(column.key);
@@ -920,16 +933,17 @@ export function StarsRecordsCenter({
                             type="button"
                             aria-pressed={on}
                             className={cn(
-                              "flex items-center gap-1.5 rounded px-1.5 py-1 text-left text-xs hover:bg-muted",
-                              on ? "" : "text-muted-foreground",
+                              "flex min-h-hec-target items-center gap-2 rounded-hec-sm px-2 text-left text-hec-small hover:bg-hec-sunken",
+                              FOCUS,
+                              on ? "text-hec-ink" : "text-hec-ink-soft",
                             )}
                             onClick={() => {
                               const next = on ? view.columns.filter((c) => c !== column.key) : [...view.columns, column.key];
                               if (next.length > 0) patch({ columns: next });
                             }}
                           >
-                            <span className={cn("flex h-3.5 w-3.5 items-center justify-center rounded-sm border", on ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40")}>
-                              {on && <Check className="h-2.5 w-2.5" />}
+                            <span className={cn("flex h-4 w-4 shrink-0 items-center justify-center rounded-hec-sm border", on ? "border-hec-action bg-hec-action text-hec-on-action" : "border-hec-line-strong")}>
+                              {on && <Check className="h-3 w-3" />}
                             </span>
                             {column.label}
                           </button>
@@ -937,39 +951,39 @@ export function StarsRecordsCenter({
                       })}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <Label htmlFor="stars-compact" className="text-xs font-medium">Compact rows</Label>
+                  <div className="flex min-h-hec-target items-center justify-between gap-2">
+                    <Label htmlFor="stars-compact" className="text-hec-small font-medium">Compact rows</Label>
                     <Switch id="stars-compact" checked={view.density === "compact"} onCheckedChange={(on) => patch({ density: on ? "compact" : "comfortable" })} />
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <Label htmlFor="stars-page-size" className="text-xs font-medium">Rows on a page</Label>
+                    <Label htmlFor="stars-page-size" className="text-hec-small font-medium">Rows on a page</Label>
                     <Select value={String(view.pageSize)} onValueChange={(size) => patch({ pageSize: Number(size) })}>
-                      <SelectTrigger id="stars-page-size" className="h-7 w-[80px] text-xs"><SelectValue /></SelectTrigger>
+                      <SelectTrigger id="stars-page-size" className="w-[96px] tabular-nums"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {[25, 50, 100, 200].map((size) => <SelectItem key={size} value={String(size)}>{size}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <Label htmlFor="stars-before-start" className="text-xs font-medium">
+                  <div className="flex min-h-hec-target items-center justify-between gap-2">
+                    <Label htmlFor="stars-before-start" className="text-hec-small font-medium tabular-nums">
                       Records before the start date{beforeStartCount !== null ? ` (${beforeStartCount.toLocaleString()})` : ""}
                     </Label>
                     <Switch id="stars-before-start" checked={includeBeforeStart} onCheckedChange={onIncludeBeforeStart} />
                   </div>
-                  <div className="space-y-1.5 border-t pt-3">
-                    <Label htmlFor="stars-save-name" className="text-xs font-medium">Save this view</Label>
-                    <div className="flex gap-1.5">
+                  <div className="space-y-2 border-t border-hec-line pt-3">
+                    <Label htmlFor="stars-save-name" className="text-hec-small font-medium">Save this view</Label>
+                    <div className="flex gap-2">
                       <Input
                         id="stars-save-name"
-                        className="h-8 text-xs"
+                        className="min-w-0"
                         placeholder="Name it"
                         value={saveName}
                         onChange={(e) => setSaveName(e.target.value)}
                         onKeyDown={(e) => { if (e.key === "Enter") saveCurrent(); }}
                       />
-                      <Button size="sm" className="h-8 text-xs" disabled={!saveName.trim()} onClick={saveCurrent}>Save</Button>
+                      <Button size="sm" disabled={!saveName.trim()} onClick={saveCurrent}>Save</Button>
                     </div>
-                    <p className="text-[11px] text-muted-foreground">Filters, grouping, sorting and columns. Kept in this browser.</p>
+                    <p className="text-hec-caption text-hec-ink-soft">Filters, grouping, sorting and columns. Kept in this browser.</p>
                   </div>
                 </PopoverContent>
               </Popover>
@@ -981,38 +995,38 @@ export function StarsRecordsCenter({
       {/* ------------------------------------------------------- the rows */}
       <Card>
         <CardContent className="space-y-3 pt-5">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-hec-small tabular-nums text-hec-ink-soft">
             <p>
               {loading
                 ? "Loading the records…"
                 : <>
-                    <strong className="font-semibold text-foreground">{sorted.length.toLocaleString()}</strong>
+                    <strong className="font-semibold text-hec-ink">{sorted.length.toLocaleString()}</strong>
                     {" "}of {records.length.toLocaleString()} record{records.length === 1 ? "" : "s"}
                     {deferred.groupBy !== "none" && `, in ${groups.length} group${groups.length === 1 ? "" : "s"}`}
                   </>}
             </p>
             <div className="flex items-center gap-2">
-              {loadedAt && <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {dayjs(loadedAt).tz().format("HH:mm")}</span>}
-              <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={onRefresh} disabled={fetching}>
-                {fetching ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />} Refresh
+              {loadedAt && <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" /> {dayjs(loadedAt).tz().format("HH:mm")}</span>}
+              <Button variant="ghost" size="sm" className="gap-1" onClick={onRefresh} disabled={fetching}>
+                {fetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Refresh
               </Button>
             </div>
           </div>
 
           {truncated && (
-            <p className="rounded-md border border-warning/50 bg-warning/5 p-2 text-xs">
+            <p className="flex items-start gap-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 text-hec-small text-hec-ink">
               This is the newest 20,000 records. Older ones are in the log but not loaded here.
             </p>
           )}
 
           {loading ? (
-            <div className="flex items-center gap-2 py-10 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 py-12 text-hec-small text-hec-ink-soft">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading…
             </div>
           ) : records.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">Nothing yet. Pixel Pal has not been read.</p>
+            <p className="py-12 text-center text-hec-small text-hec-ink-soft">Nothing yet. Pixel Pal has not been read.</p>
           ) : sorted.length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">
+            <div className="py-12 text-center text-hec-small text-hec-ink-soft">
               <p>{filtersOn > 0 ? "No records match this view." : "Nothing to show."}</p>
               {filtersOn > 0 && (
                 <Button variant="link" size="sm" onClick={() => setView((current) => clearFilters(current))}>Clear the filters</Button>
@@ -1048,11 +1062,11 @@ export function StarsRecordsCenter({
                 sortable
               />
               {pages > 1 && (
-                <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-hec-small tabular-nums text-hec-ink-soft">
                   <span>Page {safePage + 1} of {pages}</span>
-                  <div className="flex gap-1.5">
-                    <Button size="sm" variant="outline" className="h-7 text-xs" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>Previous</Button>
-                    <Button size="sm" variant="outline" className="h-7 text-xs" disabled={safePage >= pages - 1} onClick={() => setPage(safePage + 1)}>Next</Button>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>Previous</Button>
+                    <Button size="sm" variant="outline" disabled={safePage >= pages - 1} onClick={() => setPage(safePage + 1)}>Next</Button>
                   </div>
                 </div>
               )}
