@@ -1,8 +1,10 @@
 """B2 step 4: diarize real lessons locally, match clusters to enrolled children, write a teacher check.
 
-Ungated, local only: sherpa-onnx speaker diarization = pyannote segmentation-3.0
-(ONNX mirror, MIT) + a WeSpeaker/3D-Speaker embedding + sherpa's agglomerative
-clustering. No Hugging Face token, no vendor.
+Ungated, local only, no Hugging Face token, no vendor. Default engine "own":
+silero VAD (faster-whisper) -> 1.5 s chunks inside speech regions -> embedding
+(WeSpeaker/3D-Speaker ONNX) -> average-linkage cosine AHC (idlib.ahc). The
+sherpa-onnx pipeline (pyannote segmentation-3.0 ONNX mirror, MIT) is kept as
+`tune --engine sherpa`; it ran at RTF ~1.3 here and over-split at threshold 0.5.
 
   tune   run the diarizer on synthetic mixes with known speakers, for several
          clustering thresholds; DER (score.der_file, collar 0.25 s) and speaker-count
@@ -51,6 +53,37 @@ EMB = {"wes_campp": "wespeaker_en_voxceleb_CAM++.onnx", "3ds_campp": "3dspeaker_
        "3ds_eres2v2": "3dspeaker_speech_eres2netv2_sv_zh-cn_16k-common.onnx"}
 
 
+CHUNK = 1.5  # seconds per diarization chunk
+
+
+def vad_chunks(x: np.ndarray) -> list[tuple[float, float]]:
+    """Silero VAD regions cut into chunks of <= CHUNK s (>= 0.5 s), never across a pause."""
+    from split import vad_segments
+    regs, _ = vad_segments(x)
+    out = []
+    for s, e in regs:
+        n = max(1, int(round((e - s) / CHUNK)))
+        step = (e - s) / n
+        for i in range(n):
+            a, b = s + i * step, s + (i + 1) * step
+            if b - a >= 0.5:
+                out.append((a, b))
+    return out
+
+
+def own_diarize(x, chunks, E, threshold: float, min_cluster_s: float = 0.0):
+    """AHC (average linkage, cosine) over chunk embeddings; adjacent same-label chunks merged."""
+    lab = idlib.ahc(E, threshold)
+    segs = [(s, e, f"c{l:02d}") for (s, e), l in zip(chunks, lab)]
+    merged = []
+    for s, e, c in segs:
+        if merged and merged[-1][2] == c and s - merged[-1][1] < 0.3:
+            merged[-1] = (merged[-1][0], e, c)
+        else:
+            merged.append((s, e, c))
+    return merged
+
+
 def diarizer(threshold: float, emb_model: str, threads: int):
     import sherpa_onnx
     cfg = sherpa_onnx.OfflineSpeakerDiarizationConfig(
@@ -83,6 +116,35 @@ def cmd_tune(a) -> int:
     mixes = []
     for tag in a.mix_sets.split(","):
         mixes += sorted((WORK / "mix" / tag).glob("*.wav"))
+    if a.engine == "own":
+        emb = make_embedder(a.diar_model, a.threads)
+        cache, t0, secs = [], time.time(), 0.0
+        for w in mixes:
+            x, _ = read_wav(w)
+            secs += len(x) / SR
+            ch = vad_chunks(x)
+            cache.append((w, ch, idlib.l2n(emb([x[int(s * SR): int(e * SR)] for s, e in ch]))))
+        cost = (time.time() - t0) / secs
+        for thr in [float(t) for t in a.thresholds.split(",")]:
+            ders, cnt = [], []
+            for w, ch, E in cache:
+                hyp = own_diarize(None, ch, E, thr)
+                ref = score.read_rttm(w.with_suffix(".rttm"))[w.stem]
+                d = score.der_file(ref, hyp, collar=0.25)
+                ders.append(d["der"])
+                big = {}
+                for s, e, c in hyp:
+                    big[c] = big.get(c, 0) + e - s
+                cnt.append((len(big), sum(v >= 10 for v in big.values()), d["ref_speakers"]))
+            out[thr] = {"mixes": len(mixes), "der_mean": float(np.mean(ders)), "der_each": [round(v, 3) for v in ders],
+                        "clusters_all_ge10s_ref": cnt, "rtf_contaminated": cost}
+            print(f"own thr {thr}: DER mean {np.mean(ders):.3f}  (clusters, clusters>=10s, ref) {cnt}  "
+                  f"RTF {cost:.3f} (contaminated)", flush=True)
+        p = safe_out(WORK / "b2" / "diar_tune.json")
+        prev = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+        prev[f"own|{a.diar_model}|{a.mix_sets}"] = out
+        p.write_text(json.dumps(prev, indent=1), encoding="utf-8")
+        return 0
     for thr in [float(t) for t in a.thresholds.split(",")]:
         sd = diarizer(thr, a.diar_model, a.threads)
         ders, cnt_err, t0, secs = [], [], time.time(), 0.0
@@ -106,8 +168,8 @@ def cmd_tune(a) -> int:
 
 
 def cmd_run(a) -> int:
-    sd = diarizer(a.diar_threshold, a.diar_model, a.threads)
-    emb = make_embedder(a.id_model, a.threads)
+    demb = make_embedder(a.diar_model, a.threads)
+    emb = demb if a.id_model == a.diar_model else make_embedder(a.id_model, a.threads)
     D = Data(a.id_model)
     cfg = parse_cfg(a.id_config)
     G, cx, co = gallery(D, D.codes, cfg["src"], cfg["secs"], cfg["cent"])
@@ -120,7 +182,9 @@ def cmd_run(a) -> int:
         x, _ = read_wav(lesson_wav(L), 0, a.minutes * 60 if a.minutes else None)
         secs = len(x) / SR
         t0 = time.time()
-        segs = diarize(sd, x)
+        ch = vad_chunks(x)
+        CE = idlib.l2n(demb([x[int(s * SR): int(e * SR)] for s, e in ch]))
+        segs = own_diarize(x, ch, CE, a.diar_threshold)
         t_diar = time.time() - t0
         with open(out_dir / f"{L}.rttm", "w", encoding="utf-8") as f:
             for s, e, c in segs:
@@ -139,8 +203,9 @@ def cmd_run(a) -> int:
             f0 = median_f0(np.concatenate([x[int(s * SR): int(e * SR)] for s, e in longest]), SR)
             rec["median_f0_hz"] = None if f0 is None else round(f0, 1)
             rec["adult_pitch"] = f0 is not None and f0 < 200
-            if not use:
-                rec.update({"suggestion": "UNKNOWN", "score": None, "reason": "no turn >= 1 s"})
+            if speech < a.min_cluster_s or not use:
+                rec.update({"suggestion": "UNKNOWN", "score": None,
+                            "reason": f"minor cluster (< {a.min_cluster_s:g} s speech)" if use else "no turn >= 1 s"})
                 clusters.append(rec)
                 continue
             TE = idlib.l2n(emb([x[int(s * SR): int(e * SR)] for s, e in use]))
@@ -217,17 +282,20 @@ def main() -> int:
     p.add_argument("--thresholds", default="0.5,0.6,0.7,0.8,0.9")
     p.add_argument("--mix-sets", default="seed7_ov05_s500,seed7_ov15_s500")
     p.add_argument("--diar-model", default="wes_campp", choices=sorted(EMB))
+    p.add_argument("--engine", choices=["own", "sherpa"], default="own",
+                   help="own = silero VAD + 1.5 s chunks + AHC; sherpa = pyannote-seg ONNX pipeline (slow here)")
     p.add_argument("--threads", type=int, default=2)
     p.set_defaults(fn=cmd_tune)
     p = sub.add_parser("run")
     p.add_argument("--lessons", default="L1,L2,L3")
     p.add_argument("--minutes", type=float, default=0, help="0 = whole lesson")
     p.add_argument("--diar-threshold", type=float, required=True)
-    p.add_argument("--diar-model", default="wes_campp", choices=sorted(EMB))
+    p.add_argument("--diar-model", default="wes_campp", choices=sorted(EMB) + ["ecapa"])
     p.add_argument("--id-model", required=True)
     p.add_argument("--id-config", required=True)
     p.add_argument("--threshold", type=float, required=True, help="cluster-level UNKNOWN-below threshold from b2_eval")
     p.add_argument("--max-turns", type=int, default=60)
+    p.add_argument("--min-cluster-s", type=float, default=10.0, help="smaller clusters are reported but not matched")
     p.add_argument("--sample-s", type=float, default=15.0)
     p.add_argument("--threads", type=int, default=2)
     p.set_defaults(fn=cmd_run)
