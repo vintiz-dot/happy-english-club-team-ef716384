@@ -405,7 +405,7 @@ export default function StudentDashboard() {
       {/* "Ivory" design system scope (docs/DESIGN_SYSTEM.md): only this screen carries it at the checkpoint. */}
       <div
         data-hec-theme="ivory"
-        data-hec-scale={isYoungLearner((studentProfile as any).date_of_birth) ? "young" : undefined}
+        data-hec-scale={isYoungLearner(studentProfile.date_of_birth) ? "young" : undefined}
         className="relative"
       >
       {/* Celebration Overlay */}
