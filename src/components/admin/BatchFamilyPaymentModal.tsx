@@ -53,6 +53,7 @@ interface FamilyPaymentEntry {
 
 type Step = "select" | "configure" | "processing" | "results";
 import { useTuitionMonthConfirmation } from "./TuitionMonthConfirmation";
+import { useIvory } from "@/hooks/useIvory";
 
 interface ProcessingResult {
   familyId: string;
@@ -83,6 +84,8 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
 
   // Per-family amount overrides (familyId -> amount string)
   const tuitionMonth = useTuitionMonthConfirmation(sharedSettings.month, open);
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
   const [familyAmounts, setFamilyAmounts] = useState<Map<string, string>>(new Map());
 
   const queryClient = useQueryClient();
@@ -344,11 +347,11 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
         </DialogHeader>
 
         {/* Step indicators */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className={iv("flex flex-wrap items-center gap-2 text-hec-caption text-hec-ink-soft", "flex items-center gap-2 text-xs text-muted-foreground")}>
           {["select", "configure", "processing", "results"].map((s, i) => (
             <div key={s} className="flex items-center gap-1">
               {i > 0 && <ChevronRight className="h-3 w-3" />}
-              <span className={step === s ? "font-bold text-foreground" : ""}>
+              <span className={ivory ? (step === s ? "font-semibold text-hec-ink" : "") : step === s ? "font-bold text-foreground" : ""} aria-current={ivory && step === s ? "step" : undefined}>
                 {s === "select" ? "Select" : s === "configure" ? "Configure" : s === "processing" ? "Process" : "Results"}
               </span>
             </div>
@@ -361,7 +364,7 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
           {/* STEP 1: SELECT FAMILIES */}
           {step === "select" && (
             <div className="space-y-4 py-2">
-              <div className="flex items-center justify-between">
+              <div className={iv("flex flex-wrap items-center justify-between gap-2", "flex items-center justify-between")}>
                 <Label>Families with 2+ students ({families.length})</Label>
                 <div className="flex gap-2">
                   <Button type="button" variant="ghost" size="sm" onClick={selectAll}>
@@ -378,18 +381,19 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
                   <Loader2 className="h-5 w-5 animate-spin" />
                 </div>
               ) : (
-                <div className="border rounded-lg divide-y max-h-[35vh] overflow-y-auto pb-1">
+                <div className={iv("border border-hec-line rounded-hec-md divide-y divide-hec-line max-h-[35vh] overflow-y-auto pb-1", "border rounded-lg divide-y max-h-[35vh] overflow-y-auto pb-1")}>
                   {families.map(family => (
                     <label
                       key={family.id}
-                      className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors"
+                      className={iv("flex min-h-hec-target items-start gap-3 px-3 py-3 hover:bg-hec-sunken/60 cursor-pointer transition-colors duration-hec-1 ease-hec", "flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors")}
                     >
                       <Checkbox
                         checked={selectedFamilyIds.has(family.id)}
                         onCheckedChange={() => toggleFamily(family.id)}
+                        className={iv("mt-1 shrink-0", "")}
                       />
-                      <span className="flex-1 font-medium">{family.name}</span>
-                      <Badge variant="secondary">{family.studentCount} students</Badge>
+                      <span className={iv("min-w-0 flex-1 whitespace-normal break-words hyphens-none text-hec-body font-medium text-hec-ink", "flex-1 font-medium")}>{family.name}</span>
+                      <Badge variant="secondary" className={iv("shrink-0 tabular-nums", "")}>{family.studentCount} students</Badge>
                     </label>
                   ))}
                 </div>
@@ -397,19 +401,19 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
 
               {/* Shared settings */}
               <div className="space-y-3 pt-2">
-                <Label className="text-sm font-semibold">Payment Settings</Label>
+                <Label className={iv("text-hec-small font-semibold text-hec-ink", "text-sm font-semibold")}>Payment Settings</Label>
                 {tuitionMonth.field}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Tuition month</Label>
+                <div className={iv("grid grid-cols-1 min-[400px]:grid-cols-2 gap-3", "grid grid-cols-2 gap-3")}>
+                  <div className={iv("min-w-0 space-y-2", "space-y-1.5")}>
+                    <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Tuition month</Label>
                     <Input
                       type="month"
                       value={sharedSettings.month}
                       onChange={e => setSharedSettings(p => ({ ...p, month: e.target.value }))}
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Method</Label>
+                  <div className={iv("min-w-0 space-y-2", "space-y-1.5")}>
+                    <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Method</Label>
                     <Select
                       value={sharedSettings.method}
                       onValueChange={v => setSharedSettings(p => ({ ...p, method: v }))}
@@ -422,16 +426,16 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Date</Label>
+                  <div className={iv("min-w-0 space-y-2", "space-y-1.5")}>
+                    <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Date</Label>
                     <Input
                       type="date"
                       value={sharedSettings.occurredAt}
                       onChange={e => setSharedSettings(p => ({ ...p, occurredAt: e.target.value }))}
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Memo (optional)</Label>
+                  <div className={iv("min-w-0 space-y-2", "space-y-1.5")}>
+                    <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Memo (optional)</Label>
                     <Input
                       value={sharedSettings.memo}
                       onChange={e => setSharedSettings(p => ({ ...p, memo: e.target.value }))}
@@ -449,13 +453,13 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
               {loadingDebts ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-3">
                   <Loader2 className="h-6 w-6 animate-spin" />
-                  <p className="text-sm text-muted-foreground">
+                  <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
                     Loading balances for {selectedFamilyIds.size} families...
                   </p>
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center justify-between">
+                  <div className={iv("flex flex-wrap items-center justify-between gap-2", "flex items-center justify-between")}>
                     <Label>Family Debts & Payment Amounts</Label>
                     <Button type="button" variant="outline" size="sm" onClick={settleAllFamilies}>
                       <Wallet className="h-3.5 w-3.5 mr-1.5" />
@@ -463,7 +467,7 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
                     </Button>
                   </div>
 
-                  <div className="border rounded-lg divide-y">
+                  <div className={iv("border border-hec-line rounded-hec-md divide-y divide-hec-line", "border rounded-lg divide-y")}>
                     {selectedFamiliesWithDebt.map(family => {
                       const amountStr = familyAmounts.get(family.familyId) || "0";
                       const amount = parseInt(amountStr) || 0;
@@ -471,20 +475,20 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
 
                       return (
                         <div key={family.familyId} className="p-3 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <span className="font-medium">{family.familyName}</span>
-                              <span className="text-xs text-muted-foreground ml-2">
+                          <div className={iv("flex items-start justify-between gap-3", "flex items-center justify-between")}>
+                            <div className={iv("min-w-0 flex-1", "")}>
+                              <span className={iv("whitespace-normal break-words hyphens-none text-hec-body font-medium text-hec-ink", "font-medium")}>{family.familyName}</span>
+                              <span className={iv("text-hec-caption text-hec-ink-soft ml-2 whitespace-nowrap tabular-nums", "text-xs text-muted-foreground ml-2")}>
                                 {family.siblings.length} students
                               </span>
                             </div>
-                            <Badge variant={family.totalDebt > 0 ? "destructive" : "secondary"}>
+                            <Badge variant={family.totalDebt > 0 ? "destructive" : "secondary"} className={iv("shrink-0 whitespace-nowrap tabular-nums", "")}>
                               {family.totalDebt > 0 ? `Debt: ${formatVND(family.totalDebt)}` : "No debt"}
                             </Badge>
                           </div>
 
                           {/* Siblings preview */}
-                          <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground ml-1">
+                          <div className={iv("flex flex-wrap gap-x-4 gap-y-1 text-hec-caption text-hec-ink-soft tabular-nums ml-1", "flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground ml-1")}>
                             {family.siblings.map(s => (
                               <span key={s.id}>
                                 {s.name}: {s.debt > 0 ? formatVND(s.debt) : "✓"}
@@ -503,11 +507,12 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
                                   next.set(family.familyId, e.target.value);
                                   setFamilyAmounts(next);
                                 }}
-                                className="h-8 text-sm"
+                                className={iv("min-w-0 tabular-nums", "h-8 text-sm")}
+                                aria-label={ivory ? `Payment amount for ${family.familyName}` : undefined}
                               />
                               <Button
                                 type="button" variant="ghost" size="sm"
-                                className="h-8 text-xs shrink-0"
+                                className={iv("shrink-0", "h-8 text-xs shrink-0")}
                                 onClick={() => {
                                   const next = new Map(familyAmounts);
                                   next.set(family.familyId, family.totalDebt.toString());
@@ -516,12 +521,12 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
                               >
                                 Settle
                               </Button>
-                              {isFullSettle && <Check className="h-4 w-4 text-green-600 shrink-0" />}
+                              {isFullSettle && <Check className={iv("h-4 w-4 text-hec-leaf shrink-0", "h-4 w-4 text-green-600 shrink-0")} aria-label={ivory ? "Settles the full debt" : undefined} />}
                             </div>
                           )}
 
                           {family.error && (
-                            <p className="text-xs text-destructive">{family.error}</p>
+                            <p className={iv("text-hec-caption text-hec-danger", "text-xs text-destructive")}>{family.error}</p>
                           )}
                         </div>
                       );
@@ -530,18 +535,18 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
 
                   {/* Grand totals */}
                   <Card>
-                    <CardContent className="pt-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Total Debt Across Families</span>
-                        <span className="font-semibold text-destructive">{formatVND(grandTotalDebt)}</span>
+                    <CardContent className={iv("pt-4 sm:pt-6 space-y-2", "pt-4")}>
+                      <div className={iv("flex items-baseline justify-between gap-4 text-hec-small", "flex justify-between text-sm")}>
+                        <span className={iv("min-w-0 text-hec-ink-soft", "text-muted-foreground")}>Total Debt Across Families</span>
+                        <span className={iv("shrink-0 whitespace-nowrap font-semibold text-hec-ink tabular-nums", "font-semibold text-destructive")}>{formatVND(grandTotalDebt)}</span>
                       </div>
-                      <div className="flex justify-between text-sm mt-1">
-                        <span className="text-muted-foreground">Total Payment Amount</span>
-                        <span className="font-semibold">{formatVND(grandTotalPayment)}</span>
+                      <div className={iv("flex items-baseline justify-between gap-4 text-hec-small", "flex justify-between text-sm mt-1")}>
+                        <span className={iv("min-w-0 text-hec-ink-soft", "text-muted-foreground")}>Total Payment Amount</span>
+                        <span className={iv("shrink-0 whitespace-nowrap font-semibold text-hec-ink tabular-nums", "font-semibold")}>{formatVND(grandTotalPayment)}</span>
                       </div>
-                      <div className="flex justify-between text-sm mt-1">
-                        <span className="text-muted-foreground">Families to Process</span>
-                        <span className="font-semibold">
+                      <div className={iv("flex items-baseline justify-between gap-4 text-hec-small", "flex justify-between text-sm mt-1")}>
+                        <span className={iv("min-w-0 text-hec-ink-soft", "text-muted-foreground")}>Families to Process</span>
+                        <span className={iv("shrink-0 font-semibold text-hec-ink tabular-nums", "font-semibold")}>
                           {selectedFamiliesWithDebt.filter(f => (parseInt(familyAmounts.get(f.familyId) || "0") || 0) > 0).length}
                         </span>
                       </div>
@@ -555,15 +560,15 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
           {/* STEP 3: PROCESSING */}
           {step === "processing" && (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Loader2 className={iv("h-8 w-8 animate-spin text-hec-brass", "h-8 w-8 animate-spin text-primary")} />
               <div className="text-center space-y-1">
-                <p className="font-medium">Processing payments...</p>
-                <p className="text-sm text-muted-foreground">
+                <p className={iv("text-hec-body font-medium text-hec-ink", "font-medium")}>Processing payments...</p>
+                <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
                   Please don't close this dialog
                 </p>
               </div>
-              <Progress value={processingProgress} className="w-64" />
-              <p className="text-sm text-muted-foreground">{processingProgress}%</p>
+              <Progress value={processingProgress} className={iv("w-full max-w-64", "w-64")} aria-label={ivory ? "Payments processed" : undefined} />
+              <p className={iv("text-hec-small text-hec-ink-soft tabular-nums", "text-sm text-muted-foreground")}>{processingProgress}%</p>
             </div>
           )}
 
@@ -571,47 +576,47 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
           {step === "results" && (
             <div className="space-y-4 py-2">
               {/* Summary */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className={iv("grid grid-cols-2 sm:grid-cols-3 gap-3", "grid grid-cols-3 gap-3")}>
                 <Card>
-                  <CardContent className="pt-4 text-center">
-                    <p className="text-2xl font-bold text-green-600">{successCount}</p>
-                    <p className="text-xs text-muted-foreground">Successful</p>
+                  <CardContent className={iv("pt-4 sm:pt-6 text-center", "pt-4 text-center")}>
+                    <p className={iv("font-sans text-hec-h1 font-semibold text-hec-leaf tabular-nums", "text-2xl font-bold text-green-600")}>{successCount}</p>
+                    <p className={iv("text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground")}>Successful</p>
                   </CardContent>
                 </Card>
                 <Card>
-                  <CardContent className="pt-4 text-center">
-                    <p className="text-2xl font-bold text-destructive">{failCount}</p>
-                    <p className="text-xs text-muted-foreground">Failed</p>
+                  <CardContent className={iv("pt-4 sm:pt-6 text-center", "pt-4 text-center")}>
+                    <p className={iv("font-sans text-hec-h1 font-semibold text-hec-danger tabular-nums", "text-2xl font-bold text-destructive")}>{failCount}</p>
+                    <p className={iv("text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground")}>Failed</p>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardContent className="pt-4 text-center">
-                    <p className="text-2xl font-bold">{formatVND(totalProcessed)}</p>
-                    <p className="text-xs text-muted-foreground">Total Processed</p>
+                <Card className={iv("col-span-2 sm:col-span-1", "")}>
+                  <CardContent className={iv("pt-4 sm:pt-6 text-center", "pt-4 text-center")}>
+                    <p className={iv("whitespace-nowrap font-sans text-hec-h1 font-semibold text-hec-ink tabular-nums", "text-2xl font-bold")}>{formatVND(totalProcessed)}</p>
+                    <p className={iv("text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground")}>Total Processed</p>
                   </CardContent>
                 </Card>
               </div>
 
               {/* Per-family results */}
-              <div className="border rounded-lg divide-y">
+              <div className={iv("border border-hec-line rounded-hec-md divide-y divide-hec-line", "border rounded-lg divide-y")}>
                 {results.map(r => (
-                  <div key={r.familyId} className="flex items-center gap-3 p-3">
+                  <div key={r.familyId} className={iv("flex items-start gap-3 p-3", "flex items-center gap-3 p-3")}>
                     {r.success ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                      <CheckCircle2 className={iv("h-5 w-5 text-hec-leaf shrink-0", "h-5 w-5 text-green-600 shrink-0")} aria-label={ivory ? "Recorded" : undefined} />
                     ) : (
-                      <XCircle className="h-5 w-5 text-destructive shrink-0" />
+                      <XCircle className={iv("h-5 w-5 text-hec-danger shrink-0", "h-5 w-5 text-destructive shrink-0")} aria-label={ivory ? "Failed" : undefined} />
                     )}
                     <div className="flex-1 min-w-0">
-                      <span className="font-medium">{r.familyName}</span>
+                      <span className={iv("whitespace-normal break-words hyphens-none text-hec-body font-medium text-hec-ink", "font-medium")}>{r.familyName}</span>
                       {r.success ? (
-                        <p className="text-xs text-muted-foreground">
+                        <p className={iv("text-hec-caption text-hec-ink-soft tabular-nums", "text-xs text-muted-foreground")}>
                           {formatVND(r.amount)} applied to {r.allocationsCount} students
                         </p>
                       ) : (
-                        <p className="text-xs text-destructive">{r.error}</p>
+                        <p className={iv("text-hec-caption text-hec-danger", "text-xs text-destructive")}>{r.error}</p>
                       )}
                     </div>
-                    <span className="text-sm font-medium">{formatVND(r.amount)}</span>
+                    <span className={iv("shrink-0 whitespace-nowrap text-hec-small font-medium text-hec-ink tabular-nums", "text-sm font-medium")}>{formatVND(r.amount)}</span>
                   </div>
                 ))}
               </div>
@@ -645,7 +650,7 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
                 disabled={loadingDebts || grandTotalPayment <= 0}
               >
                 <Wallet className="h-4 w-4 mr-1.5" />
-                Process {formatVND(grandTotalPayment)}
+                {ivory ? <span className="tabular-nums">Process {formatVND(grandTotalPayment)}</span> : <>Process {formatVND(grandTotalPayment)}</>}
               </Button>
             </>
           )}
