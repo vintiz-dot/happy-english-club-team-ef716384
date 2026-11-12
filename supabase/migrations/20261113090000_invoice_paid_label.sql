@@ -31,6 +31,15 @@
 -- the new call, the migration STOPS with an error and changes nothing - a
 -- person must look, rather than this guess.
 --
+-- An admin's 'credit' label is kept by both, as by every other writer.
+--
+-- AFTER THIS, the installed source of the two functions is in NO migration:
+-- it is kept in docs/sql/ai_action_apply_undo.installed.sql, and
+-- scripts/pgtest/ai-actions.test.mjs fails if the patched functions differ
+-- from it. A later change to either function starts from THAT file, not from
+-- 20261107090000 (which still holds the old label CASE); the same suite fails
+-- if a later migration re-creates either without invoice_paid_label.
+--
 -- Updates no row. A bill's stored label changes only when something writes
 -- it next (a payment, or calculate-tuition), exactly as before.
 
@@ -78,7 +87,10 @@ BEGIN
       CONTINUE;
     END IF;
     def := pg_get_functiondef(fn);
-    replacement := format('public.invoice_paid_label(%s, v_payable, invoices.base_amount, invoices.total_amount)', t[2]);
+    -- An admin's 'credit' is kept, as every other writer keeps it.
+    replacement := format(
+      '(CASE WHEN invoices.status = ''credit'' THEN invoices.status ELSE public.invoice_paid_label(%s, v_payable, invoices.base_amount, invoices.total_amount) END)',
+      t[2]);
     IF position(replacement IN def) > 0 THEN
       RAISE NOTICE 'invoice_paid_label: % already uses the rule', t[1];
       CONTINUE;
