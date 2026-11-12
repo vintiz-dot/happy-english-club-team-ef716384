@@ -312,6 +312,14 @@ console.log("=== the screen uses the session, not its own engine lifetime ===");
   ok("C3-b: it prepares and recovers by itself when the page opens", /void ready\(false\)/.test(src));
   ok("R4-2: the page no longer arms (the session does)", !/\.arm\(/.test(src) && /pressReady\(userId, today\)/.test(src) && /startDay\(dayDeps\(/.test(src));
   ok("R4-2: Ready is read back from the session (survives leaving and a reload)", /useState\(\(\) => !!readyFor\(userId/.test(src));
+  const eng = (await import("node:fs")).readFileSync(resolve(repo, "src/components/recorder/engine.ts"), "utf8");
+  const pick = eng.slice(eng.indexOf("export type RecorderLike"), eng.indexOf(">;", eng.indexOf("export type RecorderLike")));
+  ok("minor: the screens' engine type leaves out kill() (the crash simulation)", pick.includes('"dispose"') && !pick.includes('"kill"'));
+  const lay = (await import("node:fs")).readFileSync(resolve(repo, "src/components/Layout.tsx"), "utf8");
+  const nav = lay.slice(lay.indexOf("const getNavigationItems"), lay.indexOf("const navItems"));
+  const entry = /\{ icon: Mic, label: "Class recorder", path: "\/teacher\/recorder" \}/g;
+  const adminPart = nav.slice(nav.indexOf('case "admin"'), nav.indexOf('case "teacher"')), teacherPart = nav.slice(nav.indexOf('case "teacher"'), nav.indexOf("default:"));
+  ok("sidebar: 'Class recorder' for teachers and admins, and nobody else", (adminPart.match(entry) ?? []).length === 1 && (teacherPart.match(entry) ?? []).length === 1 && (nav.match(entry) ?? []).length === 2 && /default:\s*return \[\];/.test(nav));
   const app = (await import("node:fs")).readFileSync(resolve(repo, "src/App.tsx"), "utf8");
   ok("R4-2: RecorderBoot is mounted once in App", (app.match(/<RecorderBoot \/>/g) ?? []).length === 1);
 }

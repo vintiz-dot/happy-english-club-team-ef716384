@@ -1751,6 +1751,46 @@ for (const [label, answer] of unclassified) {
   ok("R4-1: ...'cannot be sent' only then, the microphones closed, the audio held", r.state === "error" && !src.open && errors.filter((e) => e.code === "start_failed").length === 1 && (await r.heldAudio()).some((h) => h.recordingId === row.id && h.bytes > 0));
 }
 
+console.log("=== review 4 minor: the purge after a server-side 'no' is chosen by the server's own codes ===");
+{
+  const sql = readFileSync(resolve(repo, "supabase/migrations/20261112100000_class_recorder.sql"), "utf8");
+  const codes = [...sql.matchAll(/'recorder\.server_write', 'abandon:([^']+)'/g)].map((m) => m[1]);
+  ok("the migration's server abandon codes are found", codes.length >= 4, JSON.stringify(codes));
+  ok("every 'school said no' code is one the server writes", R.SAID_NO_ABANDON_REASONS.every((c) => codes.includes(c)), JSON.stringify(R.SAID_NO_ABANDON_REASONS));
+  eq("...and exactly the switch-off and the cancellation (not 'deletion requested' / 'never finished')", [...R.SAID_NO_ABANDON_REASONS].sort(), ["session_canceled", "switch_off"]);
+  for (const [reason, purged] of [["switch_off", true], ["session_canceled", true], ["never finished", false]]) {
+    const { w, src, r, store, row } = await started();
+    w.server.offline = true; r.tick(); await r.settle(); await src.play(30, r, 200);   // captured, nothing sent yet
+    const sr = w.server.recordings.get(row.id); sr.status = "abandoned"; sr.abandon_reason = reason; sr.abandoned_at = new Date(clock).toISOString();
+    w.server.offline = false; await src.play(20, r, 100); await ticks(r, 6);
+    const bytes = await store.bytesHeld(row.id);
+    ok(`server abandoned it as '${reason}': ${purged ? "what it did not take is DELETED" : "the audio is KEPT (not a 'no')"}`, purged ? bytes === 0 : bytes > 0, String(bytes));
+  }
+}
+
+console.log("=== R4-2 (engine): back-to-back, the next lesson armed while the first one uploads ===");
+{
+  // The session arms B as soon as A has stopped (state `uploading`): the engine must finish A and record B.
+  const { w, src, r, errors, row } = await started({ lessonMs: 10 * 60000 });
+  const bStart = T0 + 15 * 60000, sid2 = crypto.randomUUID();
+  w.server.addSession(sid2, { class_id: CLASS, start: bStart, end: bStart + 10 * 60000, teacher_id: TEACHER });
+  r.extend(bStart);                                   // the back-to-back stop at B's start (what arm's stopAt does)
+  r.tick(); await r.settle();
+  await src.play(15 * 60 + 5, r, 200);
+  const aState = w.server.recordings.get(row.id).status;
+  ok("R4-2 engine: A stopped by itself at B's start", ["uploading", "complete"].includes(aState) && !src.open, aState);
+  const pendingA = w.server.chunkRows(row.id).filter((c) => !c.confirmed_at).length;
+  const rowB = await r.arm({ sessionId: sid2, classId: CLASS, date: "2026-11-12", startTime: "17:15", endTime: "17:25" });
+  eq("R4-2 engine: B armed after A", r.state, "armed");
+  await src.play(4 * 60, r, 200);
+  eq("R4-2 engine: B records", r.state, "recording");
+  await r.stop(); await r.settle(); await ticks(r, 40, 5000);
+  eq("R4-2 engine: A completes", w.server.recordings.get(row.id).status, "complete");
+  eq("R4-2 engine: B completes", w.server.recordings.get(rowB.id).status, "complete");
+  ok("R4-2 engine: A's audio is whole (contiguous) and B's too", contiguous(seqs(w, row.id, "teacher")) && contiguous(seqs(w, rowB.id, "teacher")) && teacherSeconds(w, rowB.id) >= 4 * 60 - 1, `${pendingA} ${teacherSeconds(w, row.id)} ${teacherSeconds(w, rowB.id)}`);
+  ok("R4-2 engine: nothing refused on the way", !errors.some((e) => e.code === "server_refused" || e.code === "start_failed"), errors.filter((e) => e.code === "server_refused").map((e) => e.message).join(" | "));
+}
+
 console.log("=== R3-M1: filled silence is stated exactly and never counts ===");
 {
   const { w, src, r, row } = await started();

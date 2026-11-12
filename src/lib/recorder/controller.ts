@@ -161,6 +161,13 @@ const FINAL_START_REFUSALS: ServerRefusal[] = ["window_closed", "switch_off", "c
 /** A stated "this lesson must not be recorded": what was captured before it is deleted at once (R3-M2). */
 const DELETE_ON_NO: ServerRefusal[] = ["switch_off", "consent_missing", "session_canceled", "not_teacher"];
 /** Stop refusals the server actually stated: final. Anything else is retried (B4). */
+/**
+ * C2 round 5 (review 4 minor): the server's own abandon reasons that mean "the
+ * school said no" - exactly the codes its abandon paths write
+ * (`set_config('recorder.server_write', 'abandon:<reason>')` in the migration;
+ * a test reads them from there). Audio the server did not take is purged.
+ */
+export const SAID_NO_ABANDON_REASONS: string[] = ["switch_off", "session_canceled"];
 /** C2 round 5 (R4-1): the only answers to the pre-start statement that end a recording - texts the server STATES. */
 export const FINAL_PRE_START_REFUSALS: ServerRefusal[] = ["pre_start_refused", "recording_closed", "not_your_recording"];
 const FINAL_STOP_REFUSALS: ServerRefusal[] = ["window_closed", "recording_closed", "not_your_recording", "no_longer_teaching"];
@@ -1820,7 +1827,7 @@ export class Recorder {
       await this.saveRec(a.rec);
       // R3-M2: the server gave it up because the school said no (switch-off,
       // consent, cancellation): nothing it did not take may stay here.
-      if (/switch|consent|cancel/i.test(row.abandon_reason ?? "")) {
+      if (SAID_NO_ABANDON_REASONS.includes(row.abandon_reason ?? "")) {
         await this.o.store.purgeRecording(a.rec.id, { allowUnconfirmed: true }).catch(() => null);
         this.events.emit("error", new RecorderError("start_failed", "The school switched recording off for this lesson: whatever was not on the server yet has been DELETED from this laptop.", { refusal: "switch_off", detail: { keptMs: 0 } }));
       }
