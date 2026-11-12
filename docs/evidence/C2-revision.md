@@ -116,7 +116,8 @@ The review's 16: 16 caught (04 after one added case). New 8 for B1-B4/M1 (17-24)
 9. Clap test at minute 1 and minute 95: inter-track offset < 20 ms, growth < 10 ms.
 10. **M6:** the browser's task manager while recording on the school laptop: the recorder tab's main thread stays responsive (no 1-3 s freezes); `encodeMs` per chunk in the chunk events.
 11. Real FLAC bytes per second for a normal lesson AND a silent room / muted lapel: the silent track now shows `mic_silent` within seconds and its chunks are `below_floor` (stored, not evidence).
-12. Unplug the lapel receiver for 10 s and plug back: `device_unplugged` -> `device_restored`; > 60 s: `device_lost`, the lesson continues on one track; the reopened mic's settings read back again.
+12. **Field finding:** unplug the S500 for 10 s, then for 2 minutes, then re-plug it into a DIFFERENT USB port: "the room microphone STOPPED" at once, the lapel keeps recording, a second alert at 60 s, and the room track resumes on its own (found by label under its new id) with `device_lost` -> `device_restored` and two gap markers. Same for the lapel receiver. Also leave it plugged and let Windows sleep the USB hub (power plan) to see whether that is what ended it at 54:51.
+12b. **Clipping:** speak loudly into the lapel: the meter shows clipping and the "turn its gain down" warning appears; set the receiver gain so it does not.
 13. Roles swapped on purpose: `roles_maybe_swapped` in the first minute.
 14. **M1/M2:** two teacher accounts on the same browser profile: B sees "another account has unsent audio", A's audio is untouched, A finishes it on next sign-in; after a complete lesson, DevTools -> Application -> IndexedDB `hec-recorder` holds nothing of it.
 15. **M3:** fill the disk until under ~2 GB free: arming refuses; during a lesson the page stops loudly before the browser refuses (`storageStopBytes`).
