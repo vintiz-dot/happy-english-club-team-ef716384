@@ -243,7 +243,7 @@ try {
       await sleep(7000); // no waitForFunction: its polling would itself count as a gesture
       const r = await page.evaluate(() => window.__noclick ?? null);
       info(`no-click (${label})`, r);
-      await b.close();
+      await Promise.race([b.close(), sleep(8000)]);
     }
   }  if (want("autostart")) {
     console.log("=== the recorder arms, starts and finishes with no click at all ===");
@@ -259,13 +259,14 @@ try {
     ok("no gesture at any point", r.activationAtPrepare === false && r.activationAt20s === false);
     ok("context suspended at prepare, re-made once the mics were open, then running", r.contextAtPrepare === "suspended" && r.contextRebuilt === true && r.contextNow === "running", JSON.stringify(r));
     ok("audio flowed and the recording completed with no click", r.framesDelivered > 48000 * 15 && fin?.status === "complete", fin?.status);
-    await b.close();
+    await Promise.race([b.close(), sleep(8000)]);
   }
 } finally {
   mkdirSync(OUT, { recursive: true });
   writeFileSync(`${OUT}\\browser-results.json`, JSON.stringify(results, null, 2));
-  await browser.close().catch(() => {});
-  await H.close();
+  await Promise.race([browser.close().catch(() => {}), sleep(8000)]);
+  H.http.closeAllConnections?.();
+  await Promise.race([H.close(), sleep(3000)]);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
