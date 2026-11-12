@@ -12,6 +12,7 @@ import { dayjs } from "@/lib/date";
 import { soundManager } from "@/lib/soundManager";
 import { motion, AnimatePresence } from "framer-motion";
 import { SubmitCheckmark } from "./SubmitCheckmark";
+import { useIvory } from "@/hooks/useIvory";
 import VideoHomeworkSubmission, { useVideoHomework } from "@/components/video-homework/VideoHomeworkSubmission";
 
 const ReactQuill = lazy(() => import("react-quill-new"));
@@ -48,6 +49,9 @@ function WrittenHomeworkSubmission({
   const [thanked, setThanked] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
   const queryClient = useQueryClient();
+  // "Ivory" design system (DS s.15) on a listed route; today's classes elsewhere (the `/` page shares this form).
+  const ivory = useIvory();
+  const c = (next: string, old: string) => (ivory ? next : old);
 
   // Check if student already thanked
   const { data: existingReaction } = useQuery({
@@ -256,28 +260,28 @@ function WrittenHomeworkSubmission({
       />
       <motion.div
         className="space-y-4 min-w-0"
-        initial={{ opacity: 0, y: 10 }}
+        initial={ivory ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
         {isGraded ? (
           <div className="space-y-4">
             {/* Result */}
-            <div className="flex items-center gap-4 rounded-3xl border-2 border-b-[5px] border-emerald-300 bg-emerald-50 p-4 dark:border-emerald-500/50 dark:bg-emerald-500/10">
+            <div className={c("flex items-center gap-4 rounded-hec-lg border border-hec-leaf/30 bg-hec-leaf-tint p-4", "flex items-center gap-4 rounded-3xl border-2 border-b-[5px] border-emerald-300 bg-emerald-50 p-4 dark:border-emerald-500/50 dark:bg-emerald-500/10")}>
               <motion.div
-                className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full bg-white text-emerald-700 shadow-[0_4px_0_0_theme(colors.emerald.300)] dark:bg-emerald-950 dark:text-emerald-300"
-                initial={{ scale: 0, rotate: -20 }}
+                className={c("flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full border border-hec-leaf/30 bg-hec-surface text-hec-leaf", "flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full bg-white text-emerald-700 shadow-[0_4px_0_0_theme(colors.emerald.300)] dark:bg-emerald-950 dark:text-emerald-300")}
+                initial={ivory ? false : { scale: 0, rotate: -20 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 220, delay: 0.15 }}
               >
-                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider">Grade</span>
-                <span className="max-w-[4.5rem] truncate text-2xl font-black leading-tight">
+                <span className={c("text-hec-caption font-medium uppercase tracking-wider", "text-[0.65rem] font-extrabold uppercase tracking-wider")}>Grade</span>
+                <span className={c("max-w-[4.5rem] truncate font-sans text-hec-h2 font-semibold leading-tight", "max-w-[4.5rem] truncate text-2xl font-black leading-tight")}>
                   {existingSubmission.grade || "✓"}
                 </span>
               </motion.div>
               <div className="min-w-0">
-                <p className="text-lg font-black leading-snug">🌟 Well done!</p>
-                <p className="text-sm font-semibold text-muted-foreground">
+                <p className={c("font-display text-hec-h3 font-medium text-hec-ink", "text-lg font-black leading-snug")}>🌟 Well done!</p>
+                <p className={c("text-hec-small text-hec-ink-soft", "text-sm font-semibold text-muted-foreground")}>
                   {existingSubmission.graded_at
                     ? `Marked ${format(new Date(existingSubmission.graded_at), "d MMM")}`
                     : "Your teacher marked this"}
@@ -288,20 +292,20 @@ function WrittenHomeworkSubmission({
             {/* Teacher's words, as a chat bubble */}
             {existingSubmission.teacher_feedback && (
               <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xl" aria-hidden>
+                <div className={c("flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-hec-line bg-hec-sunken text-xl", "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xl")} aria-hidden>
                   👩‍🏫
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="mb-1 text-xs font-extrabold uppercase tracking-wide text-muted-foreground">Your teacher says</p>
-                  <div className="rounded-3xl rounded-tl-md border-2 border-primary/20 bg-primary/5 px-4 py-3">
-                    <p className="whitespace-pre-wrap break-words text-[1.0625rem] leading-relaxed text-foreground">
+                  <p className={c("mb-1 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft", "mb-1 text-xs font-extrabold uppercase tracking-wide text-muted-foreground")}>Your teacher says</p>
+                  <div className={c("rounded-hec-lg border border-hec-line bg-hec-sunken px-4 py-3", "rounded-3xl rounded-tl-md border-2 border-primary/20 bg-primary/5 px-4 py-3")}>
+                    <p className={c("whitespace-pre-wrap break-words text-hec-body text-hec-ink", "whitespace-pre-wrap break-words text-[1.0625rem] leading-relaxed text-foreground")}>
                       {existingSubmission.teacher_feedback}
                     </p>
                   </div>
                   {!existingReaction && !thanked ? (
                     <button
                       type="button"
-                      className="mt-3 inline-flex h-11 items-center gap-2 rounded-2xl border-2 border-b-4 border-pink-300 bg-pink-50 px-4 text-sm font-extrabold text-pink-700 transition-[transform] duration-100 active:translate-y-[2px] active:border-b-2 disabled:opacity-60 dark:border-pink-500/50 dark:bg-pink-500/10 dark:text-pink-200"
+                      className={c("mt-3 inline-flex min-h-hec-target items-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised px-4 text-hec-body font-medium text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring", "mt-3 inline-flex h-11 items-center gap-2 rounded-2xl border-2 border-b-4 border-pink-300 bg-pink-50 px-4 text-sm font-extrabold text-pink-700 transition-[transform] duration-100 active:translate-y-[2px] active:border-b-2 disabled:opacity-60 dark:border-pink-500/50 dark:bg-pink-500/10 dark:text-pink-200")}
                       onClick={() => thankMutation.mutate()}
                       disabled={thankMutation.isPending}
                     >
@@ -309,8 +313,8 @@ function WrittenHomeworkSubmission({
                       Thank you, Teacher!
                     </button>
                   ) : (
-                    <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-                      <Heart className="h-4 w-4 fill-pink-500 text-pink-500" /> You said thank you
+                    <p className={c("mt-2 flex items-center gap-2 text-hec-small text-hec-ink-soft", "mt-2 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground")}>
+                      <Heart className={c("h-4 w-4 text-hec-ink-soft", "h-4 w-4 fill-pink-500 text-pink-500")} /> You said thank you
                     </p>
                   )}
                 </div>
@@ -319,8 +323,8 @@ function WrittenHomeworkSubmission({
 
             {/* What the student sent */}
             {(existingSubmission.submission_text || existingSubmission.file_name) && (
-              <div className="rounded-3xl border-2 border-border bg-card p-4">
-                <p className="mb-2 text-xs font-extrabold uppercase tracking-wide text-muted-foreground">What you sent</p>
+              <div className={c("rounded-hec-lg border border-hec-line bg-hec-surface p-4", "rounded-3xl border-2 border-border bg-card p-4")}>
+                <p className={c("mb-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft", "mb-2 text-xs font-extrabold uppercase tracking-wide text-muted-foreground")}>What you sent</p>
                 {existingSubmission.submission_text && (
                   <RichText html={existingSubmission.submission_text} size="sm" />
                 )}
@@ -328,7 +332,7 @@ function WrittenHomeworkSubmission({
                   <button
                     type="button"
                     onClick={downloadFile}
-                    className="mt-3 inline-flex max-w-full items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm font-bold"
+                    className={c("mt-3 inline-flex min-h-hec-target max-w-full items-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 text-hec-small font-medium text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring", "mt-3 inline-flex max-w-full items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm font-bold")}
                   >
                     <FileText className="h-4 w-4 shrink-0" />
                     <span className="truncate">{existingSubmission.file_name}</span>
@@ -340,14 +344,14 @@ function WrittenHomeworkSubmission({
         ) : (
           <>
             {isSent && (
-              <div className="rounded-2xl bg-sky-50 px-4 py-3 text-[0.9375rem] font-semibold text-sky-800 dark:bg-sky-500/10 dark:text-sky-200">
+              <div className={c("rounded-hec-md border border-hec-line bg-hec-sunken px-4 py-3 text-hec-body text-hec-ink", "rounded-2xl bg-sky-50 px-4 py-3 text-[0.9375rem] font-semibold text-sky-800 dark:bg-sky-500/10 dark:text-sky-200")}>
                 📬 Sent! Your teacher will mark it soon. You can still change it and send again.
               </div>
             )}
 
             <div className="hw-answer-editor min-w-0">
               <Label htmlFor="submission-text" className="sr-only">Your answer</Label>
-              <Suspense fallback={<div className="flex h-40 items-center justify-center rounded-3xl border-2 text-muted-foreground">Getting the answer box ready…</div>}>
+              <Suspense fallback={<div className={c("flex h-40 items-center justify-center rounded-hec-lg border border-hec-line text-hec-ink-soft", "flex h-40 items-center justify-center rounded-3xl border-2 text-muted-foreground")}>Getting the answer box ready…</div>}>
                 <ReactQuill
                   theme="snow"
                   value={submissionText}
@@ -373,16 +377,16 @@ function WrittenHomeworkSubmission({
                 onChange={handleFileChange}
               />
               {file ? (
-                <div className="flex items-center gap-3 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-3 dark:border-emerald-500/50 dark:bg-emerald-500/10">
+                <div className={c("flex items-center gap-3 rounded-hec-md border border-hec-leaf/30 bg-hec-leaf-tint p-3", "flex items-center gap-3 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-3 dark:border-emerald-500/50 dark:bg-emerald-500/10")}>
                   <span className="text-2xl" aria-hidden>📎</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[0.9375rem] font-bold">{file.name}</span>
-                    <span className="block text-xs font-semibold text-muted-foreground">{(file.size / 1024).toFixed(0)} KB · ready to send</span>
+                    <span className={c("block truncate text-hec-body font-medium text-hec-ink", "block truncate text-[0.9375rem] font-bold")}>{file.name}</span>
+                    <span className={c("block text-hec-caption text-hec-ink-soft", "block text-xs font-semibold text-muted-foreground")}>{(file.size / 1024).toFixed(0)} KB · ready to send</span>
                   </span>
                   <button
                     type="button"
                     onClick={() => setFile(null)}
-                    className="shrink-0 rounded-full px-3 py-2 text-sm font-bold text-muted-foreground hover:bg-background"
+                    className={c("min-h-hec-target shrink-0 rounded-hec-md px-3 text-hec-small font-medium text-hec-ink hover:bg-hec-sunken", "shrink-0 rounded-full px-3 py-2 text-sm font-bold text-muted-foreground hover:bg-background")}
                   >
                     Remove
                   </button>
@@ -390,18 +394,18 @@ function WrittenHomeworkSubmission({
               ) : (
                 <label
                   htmlFor={`submission-file-${homeworkId}`}
-                  className="flex min-h-[3.5rem] cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 px-4 py-3 text-center text-[0.9375rem] font-extrabold text-primary transition hover:bg-primary/10"
+                  className={c("flex min-h-hec-target cursor-pointer items-center justify-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised px-4 py-3 text-center text-hec-body font-medium text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-hec-ring", "flex min-h-[3.5rem] cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 px-4 py-3 text-center text-[0.9375rem] font-extrabold text-primary transition hover:bg-primary/10")}
                 >
                   <Upload className="h-5 w-5 shrink-0" />
                   Add a photo or file
-                  <span className="font-semibold text-muted-foreground">(up to 5 MB)</span>
+                  <span className={c("font-normal text-hec-ink-soft", "font-semibold text-muted-foreground")}>(up to 5 MB)</span>
                 </label>
               )}
               {existingSubmission?.file_name && !file && (
                 <button
                   type="button"
                   onClick={downloadFile}
-                  className="inline-flex max-w-full items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm font-bold"
+                  className={c("inline-flex min-h-hec-target max-w-full items-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 text-hec-small font-medium text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring", "inline-flex max-w-full items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm font-bold")}
                 >
                   <FileText className="h-4 w-4 shrink-0" />
                   <span className="truncate">Sent before: {existingSubmission.file_name}</span>
@@ -413,7 +417,7 @@ function WrittenHomeworkSubmission({
               type="button"
               onClick={() => uploadMutation.mutate()}
               disabled={uploadMutation.isPending || (!submissionText && !file)}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 text-lg font-black tracking-wide text-white shadow-[0_5px_0_0_theme(colors.emerald.700)] transition-[transform,box-shadow] duration-100 active:translate-y-[4px] active:shadow-[0_1px_0_0_theme(colors.emerald.700)] disabled:bg-muted disabled:text-muted-foreground disabled:shadow-[0_5px_0_0_hsl(var(--border))] disabled:active:translate-y-0"
+              className={c("inline-flex min-h-hec-target w-full items-center justify-center gap-2 rounded-hec-md bg-hec-action px-6 text-hec-body font-medium text-hec-on-action transition-colors duration-hec-1 ease-hec hover:bg-hec-action/90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring", "flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 text-lg font-black tracking-wide text-white shadow-[0_5px_0_0_theme(colors.emerald.700)] transition-[transform,box-shadow] duration-100 active:translate-y-[4px] active:shadow-[0_1px_0_0_theme(colors.emerald.700)] disabled:bg-muted disabled:text-muted-foreground disabled:shadow-[0_5px_0_0_hsl(var(--border))] disabled:active:translate-y-0")}
             >
               {uploadMutation.isPending ? (
                 "Sending…"
@@ -424,7 +428,7 @@ function WrittenHomeworkSubmission({
               )}
             </button>
             {!submissionText && !file && (
-              <p className="-mt-1 text-center text-sm font-semibold text-muted-foreground">
+              <p className={c("-mt-1 text-center text-hec-small text-hec-ink-soft", "-mt-1 text-center text-sm font-semibold text-muted-foreground")}>
                 Write your answer or add a photo, then tap send.
               </p>
             )}
