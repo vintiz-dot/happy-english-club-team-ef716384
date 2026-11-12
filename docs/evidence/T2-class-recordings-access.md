@@ -82,8 +82,8 @@ Writes are tested WITHOUT RETURNING: with RETURNING (or a WHERE naming a column)
 | # | mutant | result |
 |---|---|---|
 | 1 | helper returns true for any teacher (no class check) | CAUGHT (12 fail) |
-| 2 | UPDATE WITH CHECK only `bucket_id` | first run SURVIVED (SELECT policy masked it); see Runs for the rerun |
-| 3 | regex allows nested paths | CAUGHT (5 fail) |
+| 2 | UPDATE WITH CHECK only `bucket_id` | first run SURVIVED (the SELECT policy masked it on WHERE-id updates); after adding the column-free UPDATE case: CAUGHT (1 fail) |
+| 3 | regex allows nested paths | CAUGHT (5 fail; rerun after the new cases: 5 fail) |
 | 4 | `has_role teacher` conjunct dropped | CAUGHT (1 fail) |
 | 5 | INSERT allowed for any teacher | CAUGHT (22 fail) |
 | 6 | old policy not dropped | CAUGHT (28 fail) |
