@@ -283,25 +283,38 @@ Everything below is in `supabase/migrations/20261112100000_class_recorder.sql`.
 
 **Teaching assistants: NO.** Not to record, not to read, not to switch off.
 
-This needed its own helper. `is_teacher_of_class`, as defined NOW (`supabase/migrations/20261111110000_ta_standing_assignments_and_homework_upload.sql:54-118`), says yes for teaching assistants: lines 97-108 (a TA on a session in the window) and 110-117 (a standing assignment). Using it would have handed TAs the audio. `recorder_is_class_teacher(user, class)` repeats its three teacher tiers only (default teacher `:61-67`, teacher of a session from 7 days back to 60 ahead `:69-78`, teacher named in the weekly template `:80-95`) and additionally ignores archived teachers. The suite shows a standing TA for whom `is_teacher_of_class` is true and the recorder's check is false **[tested]**.
+This needed its own helper. `is_teacher_of_class`, as defined NOW (`supabase/migrations/20261111110000_ta_standing_assignments_and_homework_upload.sql:54-118`), says yes for teaching assistants: lines 97-108 (a TA on a session in the window) and 110-117 (a standing assignment). Using it would have handed TAs the audio.
+
+Rev. 1 splits recording from listening (critic F2):
+
+| Helper | Says yes to | Used for |
+|---|---|---|
+| `recorder_is_class_teacher(user, class)` (internal: not executable by `authenticated`, F12) | a STANDING teacher: default teacher (`:61-67`) or named in the weekly template (`:80-95`); active only | the two below |
+| `recorder__teaches_session(user, session, class)` (internal) | the teacher of that one session of that class; active only | the two below |
+| arm trigger | admin, standing teacher, or teacher of THE session being armed | recording |
+| `recorder_can_listen(class, session)` | admin, standing teacher, or teacher of the recording's own session | rows of `class_recordings`, tracks, chunks, markers, evidence view, storage SELECT |
+| `recorder_can_read_class(class)` | admin, standing teacher, or teacher of a non-cancelled lesson of the class dated TODAY (Hanoi) | the switch row, the missing-consent number, switching off |
+
+The old -7/+60-day session tier is gone: a cover booked 59 days ahead reads nothing, and a cover teacher reads the recording of the lesson they covered and nothing else of the class, before or after **[tested]**. Archived teachers are nobody in every tier **[tested]**. The suite also shows a standing TA for whom `is_teacher_of_class` is true and the recorder's check is false, and a teacher of another class who is also this class's TA reading nothing **[tested]**.
 
 `has_role(uuid, app_role)` is the original (`supabase/migrations/20251012023454_6adfb949-50dc-4ebb-8853-6de73d8e8441.sql:34-46`, `user_roles` lookup, SECURITY DEFINER), executable by `authenticated` (`supabase/migrations/20260719014455_97d48fc4-92fa-492b-80b3-b7f3f31f762d.sql:2`).
 
 Stated consequences, so the critic need not find them:
 
 - The copy can drift from `is_teacher_of_class`. If the teacher tiers of that function change, this one must be changed too. (Drift in the safe direction only narrows access.)
-- A cover teacher - one non-cancelled session of the class within the last 7 days - can read ALL of that class's recordings still in retention, for those 7 days, exactly as they can read the rest of the class's data. If the owner wants covers limited to the recording they made themselves, that is a one-line change to the storage read rule (9.1 Q4).
-- The person who made a recording can always read its ROWS (so an interrupted upload can finish) but reads its FILES only while still a teacher of the class.
+- (rev. 1) A cover teacher reads only the recording of the session they taught (decided: this was 9.1 Q4).
+- (rev. 1) The person who made a recording reads its ROWS while it is still open (so an interrupted upload can finish), and its FILES only while they may listen. Once it is closed, only the listeners read it (critic F13).
+- Residual: a session reassigned to another teacher after the fact (a payroll correction) moves "teacher of the session" with it - that teacher then hears it. That is the record saying they taught it.
 
 ### 6.2 Tables
 
 | Table | Purpose | `authenticated` may | RLS |
 |---|---|---|---|
-| `recorder_settings` | one row: retention 30 d, pre-roll 5, grace 10, arm window 20, overrun 30, stale 14 d, wording version | SELECT, UPDATE | staff read; admin updates (logged) |
+| `recorder_settings` | one row: retention 30 d, pre-roll 5, grace 10, arm window 20, stale 14 d, clock tolerance 15 s, held fraction 0.50, byte floors (Opus 2 000 / FLAC 4 000 / WAV 15 000 B/s), wording version (rev. 1: no overrun) | SELECT, UPDATE | staff read; admin updates (logged; a wording change switches every class off) |
 | `class_recording_settings` | the switch + consent confirmation | SELECT | admin and the class's teachers; writes only via function |
 | `recorder_child_consents` | per-child granted/withdrawn | SELECT | admin only; writes only via function |
 | `recorder_device_profiles` | the two microphones per browser | all four | own rows; admin reads all |
-| `class_recordings` | one per recording | SELECT, INSERT, UPDATE | read: admin, class teachers, the starter. Insert: self, own class, then the trigger. Update: starter while open; admin |
+| `class_recordings` | one per recording; snapshots `armed_session_id`, `capture_opens_at/closes_at`, `min_bytes_per_sec`, `clock_tolerance_ms`, `held_min_fraction` at arming (all immutable) | SELECT, INSERT, UPDATE | read: `recorder_can_listen`, or the starter while open. Insert: self, class today, then the trigger. Update: starter while open; admin. Server-owned: start/stop times, stop reason, deletion attribution, device profile owner |
 | `class_recording_tracks` | teacher / room | SELECT, INSERT, UPDATE | read as recording; write: starter while open |
 | `class_recording_chunks` | one per file | SELECT | read as recording; writes only via functions |
 | `class_recording_markers` | roll call, activity, name chips, gaps | SELECT, INSERT, DELETE | read as recording; insert/delete: starter while open |
@@ -325,7 +338,7 @@ armed --> recording --> uploading --> complete --> deleted
 - `uploading`: capture stopped (`ended_at`, `stopped_by`, `stop_reason`); chunks and then the manifest still arriving.
 - `complete`: manifest stored, all chunks confirmed, counts agree. `completed_at`. Nothing more is accepted **[tested]**.
 - `abandoned`: given up - switch-off while armed, deletion requested while open, or never finished after 14 days.
-- `deleted`: the audio is gone from storage (`audio_deleted_at`). The row stays as the record. Refused while a single object remains under the recording's prefix **[tested]**. A row can be removed only in this state **[tested]**.
+- `deleted`: the audio is gone from storage (`audio_deleted_at`). The row stays as the record. Refused while a single object remains under the recording's prefix **[tested]**. A row can be removed only in this state AND only when the DELETE trigger itself finds no object under the prefix (rev. 1) **[tested]**. Both checks run with `row_security = off`: an owner that cannot see `storage.objects` gets an error, never a pass **[tested]** with a NOBYPASSRLS owner.
 
 Every other move is refused, by anyone **[tested]**. Class, session, owner, window, format and hard limit are immutable after arming **[tested]**.
 
@@ -336,11 +349,13 @@ Every other move is refused, by anyone **[tested]**. Class, session, owner, wind
 | Operation | Who |
 |---|---|
 | INSERT | the starter of an open recording, only at a registered chunk's exact path, or the manifest once capture has stopped |
-| SELECT | admin; a teacher of the class; nothing once the recording is `deleted` |
+| SELECT | `recorder_can_listen` for THAT recording (admin, standing teacher, teacher of its session); nothing once the recording is `deleted` |
 | UPDATE | nobody (no policy) |
-| DELETE | admin; (the retention job, as service role) |
+| DELETE | nobody under RLS (rev. 1, critic F15): only the retention job (service role), which lists, removes, re-lists and then marks the recording deleted, so a removal is always logged and a `complete` row never points at files removed by hand |
 
-There is no family, student or TA policy on this bucket and none may be added (hard rule: "No family SELECT policy on audio"). The suite asserts the bucket's policies are exactly these three **[tested]**.
+There is no family, student or TA policy on this bucket and none may be added (hard rule: "No family SELECT policy on audio"). The suite asserts the bucket's policies are exactly INSERT and SELECT **[tested]**.
+
+Sample rate is capped at 48 kHz (rev. 1, F14), so a 60 s `pcm-wav` chunk (5.76 MB) always fits the 8 MB file limit.
 
 **Signed URLs.** A signed URL is a bearer link: whoever holds it can fetch the file until it expires. Rule for C2/C3: do not create signed URLs for this bucket. Read-back and any future playback use an authenticated `download()` (the JWT in a header, the bytes in memory, a `blob:` URL at most). If a later feature truly needs one, the expiry is 60 s or less and it is created on the click that uses it.
 
