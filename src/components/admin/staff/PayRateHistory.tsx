@@ -161,9 +161,9 @@ export function PayRateHistory({ staffId, staffType, staff, previewMinutes = DEF
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border bg-muted/40 p-3">
-        <p className="text-xs text-muted-foreground">On right now</p>
-        <p className="text-sm font-semibold">{describeRate(inForce)}</p>
+      <div className="rounded-hec-md border border-hec-line bg-hec-sunken p-3">
+        <p className="text-hec-caption text-hec-ink-soft">On right now</p>
+        <p className="text-hec-small font-semibold tabular-nums text-hec-ink">{describeRate(inForce)}</p>
       </div>
 
       <PayRateFields
@@ -187,7 +187,7 @@ export function PayRateHistory({ staffId, staffType, staff, previewMinutes = DEF
         </div>
         <div>
           <Label htmlFor={`payhist-note-${staffId}`}>
-            Why <span className="text-muted-foreground font-normal">(optional)</span>
+            Why <span className="font-normal text-hec-ink-soft">(optional)</span>
           </Label>
           <Input
             id={`payhist-note-${staffId}`}
@@ -199,9 +199,9 @@ export function PayRateHistory({ staffId, staffType, staff, previewMinutes = DEF
       </div>
 
       {isBackdated ? (
-        <div className="flex gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs">
-          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-          <div className="space-y-1">
+        <div className="flex gap-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 text-hec-small text-hec-ink">
+          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-hec-warn" />
+          <div className="min-w-0 space-y-1">
             <p className="font-semibold">This is backdated — it changes what past months cost.</p>
             {reprices.length > 0 ? (
               <p>
@@ -215,14 +215,14 @@ export function PayRateHistory({ staffId, staffType, staff, previewMinutes = DEF
                 those months.
               </p>
             )}
-            <p className="text-muted-foreground">
+            <p className="text-hec-ink-soft">
               Use this to correct a rate that was recorded wrongly. For a raise, set the date to today or later
               and nothing already paid will move.
             </p>
           </div>
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-hec-small text-hec-ink-soft">
           {effectiveFrom === today
             ? "Applies from today. Months already paid keep the rate they were paid at."
             : `Saved now, applies on ${fmt(effectiveFrom)}. Nothing changes until then.`}
@@ -238,37 +238,37 @@ export function PayRateHistory({ staffId, staffType, staff, previewMinutes = DEF
       </Button>
 
       {upcoming.length > 0 && (
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
-          <p className="text-xs font-semibold">Scheduled change{upcoming.length === 1 ? "" : "s"}</p>
+        <div className="rounded-hec-md border border-hec-line bg-hec-sunken p-3">
+          <p className="text-hec-small font-semibold text-hec-ink">Scheduled change{upcoming.length === 1 ? "" : "s"}</p>
           {upcoming.map((r) => (
-            <p key={r.id ?? r.effective_from} className="mt-1 text-xs">
+            <p key={r.id ?? r.effective_from} className="mt-1 text-hec-small tabular-nums text-hec-ink">
               <span className="font-medium">{fmt(r.effective_from)}</span> — {describeRate(r)}
               {r.note ? ` · ${r.note}` : ""}
             </p>
           ))}
-          <p className="mt-1 text-xs text-muted-foreground">Not in force yet.</p>
+          <p className="mt-1 text-hec-caption text-hec-ink-soft">Not in force yet.</p>
         </div>
       )}
 
       <div>
-        <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+        <p className="mb-2 flex items-center gap-2 text-hec-caption font-semibold text-hec-ink-soft">
           <History className="h-3.5 w-3.5" /> Rate history
         </p>
         <div className="space-y-1">
-          {sorted.length === 0 && <p className="text-xs text-muted-foreground">Nothing recorded yet.</p>}
+          {sorted.length === 0 && <p className="text-hec-small text-hec-ink-soft">Nothing recorded yet.</p>}
           {sorted.map((r) => {
             const until = recordEndsOn(sorted, r);
             const current = !until && r.effective_from <= today;
             return (
-              <div key={r.id ?? r.effective_from} className="flex items-start justify-between gap-2 rounded border px-2.5 py-1.5 text-xs">
-                <div>
-                  <p className="font-medium">
+              <div key={r.id ?? r.effective_from} className="flex flex-wrap items-start justify-between gap-2 rounded-hec-sm border border-hec-line px-3 py-2 text-hec-small text-hec-ink">
+                <div className="min-w-0">
+                  <p className="font-medium tabular-nums">
                     {fmt(r.effective_from)} {until ? `– ${fmt(until)}` : "– now"}
                   </p>
-                  {r.note && <p className="text-muted-foreground">{r.note}</p>}
+                  {r.note && <p className="break-words text-hec-ink-soft">{r.note}</p>}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <span>{describeRate(r)}</span>
+                  <span className="whitespace-nowrap tabular-nums">{describeRate(r)}</span>
                   {current && <Badge variant="secondary">Current</Badge>}
                 </div>
               </div>
