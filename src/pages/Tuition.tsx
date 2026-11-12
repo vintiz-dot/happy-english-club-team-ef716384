@@ -48,7 +48,8 @@ export default function Tuition() {
       <Layout title="Tuition">
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-hec-body text-hec-ink-soft">Access denied. This page is for students and families only.</p>
+            {/* A teacher is never in the Ivory scope here (ivoryScope.ts lists /tuition for student and family only): the old class stays. */}
+            <p className="text-muted-foreground">Access denied. This page is for students and families only.</p>
           </CardContent>
         </Card>
       </Layout>
