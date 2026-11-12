@@ -1,9 +1,11 @@
+VERDICT: PASS WITH CHANGES (fit for the supervised hardware checks with the backup recorder; R4-1, R4-2 before unsupervised use)
+
 # C2 review 4 - delta review of round 4 (`git diff bb70791..596ce69d`, recorder files only)
 
 Reviewed commit: 596ce69d (`worktree-agent-a4803c8e10a251526`). Code read and run in the detached worktree `.claude/worktrees/c2r2`; this file is committed on `claude/hec-conductor-setup-efbaa5`.
 Review only: no product code changed, nothing deployed, pushed or applied. Synthetic audio only (`RECORDER_REAL_AUDIO`, `RECORDER_FLAC_CHECK`, `RECORDER_WAV` unset in every run).
 
-**Where I am / next step:** sections 1-2 written. Next: 3 (majors), 4 (mutants running), 5, verdict.
+**Where I am / next step:** DONE. Verdict PASS WITH CHANGES; fit for the supervised hardware checks with the quick recorder as backup; R4-1 and R4-2 before unsupervised use.
 
 Probes V1-V7: the unit suite's harness (lines 14-33, 296-403, 775-789 of `scripts/recorder/unit.test.mjs`, verbatim) + my scenarios, synthetic source, unmodified engine; saved as `docs/evidence/C2-review-4-probes.mjs.txt`. File:line is at 596ce69d.
 
@@ -49,3 +51,52 @@ What does not:
 - **R3-M2 a stated "no" - FIXED.** `DELETE_ON_NO` = switch_off, consent_missing, session_canceled, not_teacher: the local copy is purged at once and nothing is sent. V4, both texts after 3 minutes of waiting: `state error | mics open false | local row false bytes 0 | server chunks 0 | "... The 189 s captured before the school's answer have been DELETED from this laptop; nothing was sent."` `consent_missing` is final (mutant N3 now caught, section 4). A server-side abandon for switch-off / consent / cancellation purges what was not taken (`pollServer`), and chunks refused as "asked to stop" lose their bytes (`dropForbidden`). One loose end: the purge in `pollServer` is chosen by a regex on `abandon_reason` text (`/switch|consent|cancel/`), not by a code; if the wording in the migration changes, audio that must go would be kept. Minor; tie the two with a test that reads the migration, as was done for the limit.
 - **C3-b a day with no lesson - FIXED, with one limit.** The page prepares and recovers by itself when opened (`ready(false)`; the "one click needed" notice is suppressed for that pass; arming still needs the click), and the no-lesson branch renders the error board, the unsent / stuck list and the Discard dialog. Limit: resumed uploads of EARLIER recordings do not make the session "busy" (the state stays `ready`), so leaving the recorder page ends the session and pauses them until the page is opened again. Not a loss. Count pending uploads as busy when R4-2 is done.
 - **The 14-day deletion (owner's ruling) - DONE as specified.** `abandonedAt` is stamped when the local phase becomes `abandoned`; `recover()` deletes the unsent audio once `abandonedKeepMs` (14 days) has passed and says so; `heldAudio().deleteAt` carries the date and the screen prints it ("it is deleted from this laptop by itself on <date>"). V5: `phase abandoned | held ['164 MB deleteAt +14 d']`; page opened 13 days later: still 164 MB, nothing said; 2 days after that: `bytes held 0 | row false | 'Unsent audio from 2026-11-12 was deleted from this laptop: the server gave that recording up more than 14 days ago.'` It runs only when the recorder page is opened (that is when `recover()` runs), so on a laptop nobody opens the recorder on, the audio outlives the date; acceptable, and worth one line in the runbook. While the server can still take a recording nothing is deleted (mutant X4 shows the test for that).
+
+## 4. Suites and mutations, run here
+
+Suites (c2r2 at 596ce69d; `node_modules` as a junction, removed at the end with `cmd //c rmdir node_modules`):
+
+| Suite | Result here | Claim |
+|---|---|---|
+| `tsc --noEmit -p tsconfig.app.json` (alone) | exit 0 | exit 0 |
+| `node scripts/pgtest/run.mjs` | **4042 assertions across 45 suites, 0 suite(s) failed**, exit 0 | 4042 / 45 / 0 |
+| - recorder engine (`unit.test.mjs`) | 445 / 0 (and six more full runs under mutants) | 445 / 0 |
+| - recorder screens logic / screens render | 30 / 0, 26 / 0 | same |
+| - class recorder SQL | 423 / 0 | 423 / 0 |
+| - recorder retention / cron / app typecheck / edge functions typecheck | 37/0, 22/0, 3/0, 5/0 | same |
+| `browser.test.mjs` | not run (the implementer did not re-run it this round either) | - |
+
+Mutations - **8 of 8 CAUGHT**. Engine mutants are throwaway copies outside the repo (`RECORDER_SRC`); X1 and X3 were made in place in my review worktree, run, and restored with `git checkout --` (worktree clean afterwards).
+
+| # | Mutant | Result | Caught by |
+|---|---|---|---|
+| N1 | chunks registered before the offset is acknowledged (`uploader.ts` gate removed) | CAUGHT 444/1 | "N1: with the offset not yet acknowledged nothing is registered" |
+| N3 | `consent_missing` not a final Start refusal | CAUGHT 443/2 | "N3 (consent missing): final ..." and "R3-M2 (consent missing): ... DELETED" |
+| N4 | the end of a stall ignores "no microphones" | CAUGHT 444/1 | "N4: audio flows again but there is still no microphone: `stalled`" |
+| N5 | silence fill unbounded | CAUGHT 444/1 | "N5: a 35-minute stall is filled with at most 30 minutes" |
+| X1 | session ownership: another user is handed the first user's engine (`session.ts` `sessionFor`) | CAUGHT 25/1 (`screens.test.mjs`) | "another teacher signing in never gets the first one's engine" |
+| X2 | pre-start limit: the engine's function ignores `max_duration_ms` | CAUGHT 444/1 | "R3-B1: the engine's limit is the same expression" |
+| X3 | silence subtraction: the SQL view no longer subtracts `padded_ms` from lesson time | CAUGHT 422/1 (`recorder.test.mjs`) | "R3-M1: 10 minutes of filled silence stated ... the 38 left are not evidence" |
+| X4 | 14-day purge: audio the server gave up is deleted at once | CAUGHT 440/5 | "ruling: still kept after 13 days" and four more |
+
+Render tests now exist (`screens.test.mjs`, react-dom/server on `RecordingBar` and the session). They cover the bar and the session; `DailyRecorder.tsx` itself (the arming effect, the `clicked` state - where R4-2 lives) is still rendered by nothing.
+
+## 5. Test hygiene
+
+- No default or CI path reads a real lesson file. `unit.test.mjs:190-193`: the FLAC ratio check runs only with `RECORDER_FLAC_CHECK=1` and then reads the SYNTHETIC WAV unless `RECORDER_FLAC_FILE` names another file; the hard-coded lesson path is gone from the file. `harness.mjs:21` (browser suite) defaults to the synthetic WAV. `run.mjs` sets none of these variables; the repo has no workflow that does. The only mentions of the real-audio folder left are two comments (`browser.test.mjs:6`, `harness.mjs:10`).
+- `screens.test.mjs` writes its bundle to the repo root as `.screens-test.<pid>.mjs` and removes it; a killed run would leave an untracked file there. Harmless; note it.
+- The delta adds no binary or audio file (`git diff --stat bb70791 596ce69d` on the recorder paths: 17 text files).
+
+## Verdict
+
+**PASS WITH CHANGES.** Both mandatory changes of review 3 are closed as asked (the cap is gone and the limit is one expression tied by tests; the engine outlives the page and `dispose()` ends a capture properly), the three majors are closed, all eight mutants are caught, and the suites are green as claimed.
+
+**Fit for the owner's hardware checks on a real class, with the quick recorder running alongside as the backup: YES**, on two conditions for that session: press "Ready for today" and stay on the recorder page until the bar says the lesson is armed or recording (R4-2); treat a red "This recording CANNOT be sent" in the first seconds as a reason to rely on the backup for that lesson (R4-1). Not yet fit for unsupervised daily use.
+
+Before unsupervised use:
+1. **R4-1** - three unclassified answers (429, "no rows") to the pre-start statement end the capture and abandon the row with a false "CANNOT be sent" (V1). Count only the trigger's own refusal text; retry everything else.
+2. **R4-2** - "Ready for today" followed by leaving the page before the lesson is armed (or between two back-to-back lessons) records nothing and shows nothing: arming still lives in the page. Move arming into the session, or keep the session and show the bar while `ready`.
+
+Minors: resumed uploads of earlier recordings pause when the page is left; nothing tells the teacher after a crash / hard reload on another page; the session does not follow auth changes that bypass the guard; the purge after a server-side "no" is chosen by matching the reason's wording; fullscreen content hides the bar; `kill()` is public; the 14-day deletion runs only when the recorder page is opened.
+
+Hardware checks: review 3's list stands, with item 3 at 35 minutes offline, item 8 = "navigate away while recording: the bar with Stop follows, the recording continues", and two additions - (17) press Ready, leave the page BEFORE the lesson arms, and see what the lesson does (today: nothing; R4-2); (18) put the lesson material in full screen while recording and confirm the teacher still knows it is recording (the bar is hidden).
