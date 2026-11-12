@@ -157,15 +157,18 @@ The database also refuses two live recordings of one session (`class_recordings_
 
 **The switch.** `class_recording_settings.recording_enabled`, per class, `DEFAULT false`, and no row at all also means off **[tested]**. A table CHECK makes ON impossible without `consent_confirmed_by`, `consent_confirmed_at`, `consent_wording_version` and a non-empty `consent_note` - even for the service role **[tested]**. Signed-in users hold only SELECT on the table; the one way to change it is `recorder_set_class_recording()`:
 
-- ON: an admin only; must quote the current wording version (`recorder_settings.consent_wording_version`, so changing the consent text invalidates every earlier confirmation - arming is refused under an older version **[tested]**); must say where the signed forms are held; refused while any enrolled child lacks consent **[tested]**.
-- OFF: an admin OR a teacher of the class. Stopping never needs permission. Switching off wipes the confirmation (the history is in the audit log), abandons anything armed and stamps `stop_requested_at` on anything recording; audio captured more than 60 s after that stamp is refused at registration **[tested]**.
+- ON: an admin only; must quote the current wording version (`recorder_settings.consent_wording_version`); must say where the signed forms are held; refused while any enrolled child lacks consent **under that same version** **[tested]**.
+- A wording change (rev. 1) switches every class off at once, in the settings trigger, logged as `switch_off_auto` with the old and new versions; nothing records until an admin re-records each child's consent under the new wording and switches the class on again **[tested]**. Arming independently refuses a class confirmation under an older version **[tested]**.
+- OFF: an admin OR a teacher of the class (a standing teacher, or the teacher of one of its lessons today). Stopping never needs permission. Switching off wipes the confirmation (the history is in the audit log), abandons anything armed and stamps `stop_requested_at` on anything recording; audio captured more than 60 s after that stamp is refused at registration **[tested]**.
 
 **Per-child consent.** `recorder_child_consents`: one row per child, `granted` or `withdrawn`, who recorded it, when, wording version, note. Admin only, through `recorder_record_child_consent()`; teachers cannot read it and are told a number, not names (`recorder_class_missing_consent`) **[tested]**.
 
 **A child without consent in a class - recommendation: the class is not recorded.** A room microphone cannot leave one child out, and "ask that child to stay quiet" is not consent. So:
 
-- the switch cannot be turned on while one enrolled child lacks `granted`;
-- arming re-counts on the lesson's date, so a child who joins later blocks the next recording with the switch still showing on **[tested]**;
+- the switch cannot be turned on while one enrolled child lacks `granted` under the current wording;
+- one count does this everywhere, `recorder__children_without_consent(class, date)` (internal), used by the switch, the teacher's number and the arm trigger; it returns NULL if the wording cannot be read, and NULL is a refusal;
+- a child enrolled while the class is on, without current consent, switches it off at once (trigger on `enrollments`, rev. 1; it never refuses the enrolment) **[tested]**;
+- arming re-counts on the lesson's date anyway, so an enrolment that reached the table some other way still blocks the next recording **[tested]**;
 - recording a withdrawal switches off every class the child is enrolled in today, in the same transaction **[tested]**.
 
 The cost is real (one family's "no" stops the class) and it is the owner's call - 9.1 Q2.
