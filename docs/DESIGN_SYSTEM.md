@@ -1,7 +1,5 @@
 # HEC Design System - "Ivory"
 
-Where I am / next step: all sections written; next = verify every class in the doc compiles, final build + evidence file, then remove this line.
-
 Status: tokens exist and are inert. Nothing uses them until an element carries `data-hec-theme="ivory"`. The first screen to do so is the student dashboard (task A4.2); the rest of the app waits for the owner's approval at the design checkpoint.
 
 Sources of truth: the values are in `src/index.css` (the block headed `"Ivory" design system`), the class names in `tailwind.config.ts` (`hec` colours, `font-display`, `text-hec-*`, `shadow-hec-*`, `rounded-hec-*`, `duration-hec-*`, `ease-hec`, `min-h-hec-target`). `node scripts/design-tokens-check.mjs` checks both and prints the tables in section 3. If this document and the CSS disagree, the CSS and the script are right and this document is out of date.
@@ -182,7 +180,7 @@ Lowest text pair: `on-brass` on `brass-fill` (light) 4.83:1.
 | (top level) | 110 | 110 | 0 | 0 | 0 |
 | @media (prefers-reduced-motion: reduce) | 3 | 3 | 0 | 0 | 0 |
 
-55 `--hec-*` tokens (27 colours) and 55 remapped legacy tokens per theme; young scale overrides 12.
+55 `--hec-*` tokens (27 colours) and 55 remapped legacy tokens per theme; young scale overrides 13.
 `var(--hec-*)` references checked: 24 in index.css, 53 in tailwind.config.ts.
 
 All text tokens pass 4.5:1 on every surface, so large text needs no exception list: any text token may be used at any size. The 3:1 rows are the non-text ones (control borders, focus ring, button edges). `hec-line` is deliberately absent: it is decoration and must never be the only cue.
@@ -202,13 +200,13 @@ What a child's phone actually draws, and whether it has Vietnamese (U+1EA0-U+1EF
 
 | Platform | Display serif resolves to | Vietnamese | Body sans | Checked how |
 |---|---|---|---|---|
-| Windows (Chrome, Edge, Firefox) | Palatino Linotype | yes | Segoe UI | measured on this machine: all of ễ ả ư ờ ỹ Ạ đ Ễ ₫ present in Palatino Linotype, Times New Roman, Segoe UI |
+| Windows (Chrome, Edge, Firefox) | Palatino Linotype | yes | Segoe UI | measured on this machine: all nine of ễ ả ư ờ ỹ Ạ đ Ễ ₫ present in Palatino Linotype, Times New Roman, Segoe UI |
 | Android (Chrome, Zalo and Facebook in-app browsers) | Noto Serif (the system serif) | yes | Roboto | from the platform's font set; not run on a device in this task |
 | iPhone, iPad, Mac Safari (every iOS browser is WebKit) | New York, through `ui-serif` | expected (Apple lists Vietnamese for its system fonts) | San Francisco | not run on a device in this task - **look at one iPhone before approving** |
 | Mac Chrome / Firefox | Times New Roman (`ui-serif` is not understood there) | yes | San Francisco | from the platform's font set |
 | ChromeOS, Linux | Noto Serif or DejaVu Serif | yes | Roboto / Noto Sans | from the platform's font set |
 
-Why not the older `--font-studio` stack: it starts with Iowan Old Style (Apple) and falls through Book Antiqua and Georgia. On this machine Georgia and Book Antiqua have **none** of the nine Vietnamese test characters, and Iowan Old Style's coverage could not be checked here. A font without the glyph makes the browser draw that one letter from another typeface, so "Nguyễn" would be set in two fonts. The display stack therefore lists only families known to carry Vietnamese.
+Why not the older `--font-studio` stack: it starts with Iowan Old Style (Apple) and falls through Book Antiqua and Georgia. On this machine Georgia and Book Antiqua lack **eight of the nine** Vietnamese test characters (only đ is there), and Iowan Old Style's coverage could not be checked here. A font without the glyph makes the browser draw that one letter from another typeface, so "Nguyễn" would be set in two fonts. The display stack therefore lists only families known to carry Vietnamese.
 
 The faces differ by platform (Palatino on Windows, Noto Serif on Android, New York on Apple). That is the cost of zero bytes; a self-hosted serif is the owner's open question Q-A3.
 

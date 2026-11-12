@@ -181,7 +181,7 @@ function rgbOf(map, token) {
   // Rounded to 8-bit, because that is what a screen draws.
   return [hue(h + 1 / 3), hue(h), hue(h - 1 / 3)].map((c) => Math.round(c * 255));
 }
-const hex = (rgb) => "#" + rgb.map((c) => c.toString(16).padStart(2, "0")).join("").toUpperCase();
+const hex = (rgb) => !rgb ? "n/a" : "#" + rgb.map((c) => c.toString(16).padStart(2, "0")).join("").toUpperCase();
 function luminance(rgb) {
   const [r, g, b] = rgb.map((c) => {
     const v = c / 255;
@@ -259,7 +259,9 @@ for (const [fg, bg, min, what] of pairs) {
 // 6. raw logo green is not a text colour
 const logoRows = [];
 for (const bg of SURFACES) {
-  const r = contrast(rgbOf(light, "logo"), rgbOf(light, bg));
+  const logo = rgbOf(light, "logo"), surface = rgbOf(light, bg);
+  if (!logo || !surface) { fail(`logo on ${bg}: not a colour token in light`); continue; }
+  const r = contrast(logo, surface);
   logoRows.push(`\`${bg}\` ${fmt(r)}`);
   if (r >= UI) fail(`logo green on ${bg} (light) reaches ${fmt(r)}:1 - the doc says it never carries text; re-read the rule`);
 }
