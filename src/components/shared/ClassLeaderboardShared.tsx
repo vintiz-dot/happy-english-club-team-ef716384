@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Users, X, CheckSquare, Clock, Monitor, ExternalLink } from "lucide-react";
 import { openClassBoardWindow } from "@/pages/ClassBoardWindow";
 import { BoardErrorBoundary } from "@/components/leaderboard/BoardErrorBoundary";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import {
   Select,
   SelectContent,
@@ -15,7 +15,12 @@ import { useToast } from "@/hooks/use-toast";
 import { PointHistoryDialog } from "@/components/admin/PointHistoryDialog";
 import { BulkPointsDialog } from "@/components/shared/BulkPointsDialog";
 import { Button } from "@/components/ui/button";
-import { StudentAnalyticsModal } from "@/components/student/StudentAnalyticsModal";
+import { lazyRetry } from "@/lib/lazyRetry";
+
+// Charts (recharts) load only when a student's analytics are opened.
+const StudentAnalyticsModal = lazyRetry(() =>
+  import("@/components/student/StudentAnalyticsModal").then((m) => ({ default: m.StudentAnalyticsModal })),
+);
 import { EconomyActions } from "@/components/shared/EconomyActions";
 import { type BoardEntry } from "@/components/shared/PodiumBoard";
 import { StyledClassBoard } from "@/components/leaderboard/StyledClassBoard";
@@ -58,6 +63,8 @@ export function ClassLeaderboardShared({
     new Map()
   );
   const [showBulkDialog, setShowBulkDialog] = useState(false);
+  // The analytics modal (and its charts) is only fetched once a student is opened; stays mounted after so it can animate closed.
+  const analyticsEverOpened = useRef(false);
   const [analyticsStudent, setAnalyticsStudent] = useState<{
     id: string;
     name: string;
@@ -70,6 +77,7 @@ export function ClassLeaderboardShared({
     rank: number;
     selectedMonth: string;
   } | null>(null);
+  if (analyticsStudent) analyticsEverOpened.current = true;
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const previousLeaderboardRef = useRef<any[]>([]);
@@ -504,6 +512,8 @@ export function ClassLeaderboardShared({
         />
       )}
 
+      {analyticsEverOpened.current && (
+      <Suspense fallback={null}>
       <StudentAnalyticsModal
         open={!!analyticsStudent}
         onOpenChange={(open) => !open && setAnalyticsStudent(null)}
@@ -511,6 +521,8 @@ export function ClassLeaderboardShared({
         classId={classId}
         selectedMonth={analyticsStudent?.selectedMonth || selectedMonth}
       />
+      </Suspense>
+      )}
     </div>
   );
 }
