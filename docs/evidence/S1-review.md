@@ -2,7 +2,7 @@
 
 Reviewed commit: e3c039f (`worktree-agent-ab290c3d49fd33671`) against `claude/hec-conductor-setup-efbaa5`. Review only: no product code changed, nothing applied, deployed or pushed. Live (`aswgmbefikhsnhogtryv`) was read read-only: catalog, md5 of function bodies, aggregate counts. No row about a person, no secret.
 
-**Where I am / next step:** F-14 APPLY, F-15 APPLY, F-01 APPLY WITH CHANGES (revised after the owner said family self-registration stays), F-16 APPLY browser-first: written up. Next: F-21, F-02, the brief.
+**Where I am / next step:** COMPLETE. All six fixes and the live-apply brief are written up; the verdict table is at the end. F-01 was revised after the owner said family self-registration stays. Nothing was applied, deployed or pushed; the `node_modules` link used for the suites has been removed.
 
 Method used throughout for "what can this kind of account read on live": one read-only transaction, `set_config('request.jwt.claims', ...)` with the id of an account of that kind picked inside the query (never printed), `SET LOCAL ROLE authenticated`, then `count(*)` of every table / view in `public` the role may select and of `storage.objects` per bucket. Counts only.
 
@@ -14,7 +14,7 @@ The owner has since said that families registering themselves on the app is a re
 
 **Change 1 (migration, one condition).** Withhold a role only for a request of `teacher`. A request of `admin` must get `student`, exactly as the live function does today.
 - `supabase/migrations/20261113100000_signup_role_from_server_only.sql:86`: `IF v_requested IN ('teacher', 'admin') THEN` becomes `IF v_requested = 'teacher' THEN`; reword the header (:14-19, :28-37) and the WARNING to match.
-- Why: on live, 24 of 76 accounts were created with metadata `admin` and only 3 accounts are admins; 17 non-admin accounts carry it, 14 of them linked to a family or child; 9 such accounts were created since March 2026 (4 in July). Real parents pick "Admin" on the form. Today they get `student` and everything works. As built they would get no role: a blank page after sign-in (`Dashboard.tsx:19-28` and `ProtectedRoute.tsx:24,63` render nothing without a role), and it stays blank after the admin links them with "link to family", because `manage-admin-users` `linkToFamily` (:597-612) grants no role.
+- Why: on live, 24 of 76 accounts were created with metadata `admin` and only 3 accounts are admins; 17 non-admin accounts carry it, 14 of them linked to a family or child; 9 accounts with that metadata were created since March 2026 (4 in July), of which at most 3 can be the admins. Real parents pick "Admin" on the form. Today they get `student` and everything works. As built they would get no role: a blank page after sign-in (`Dashboard.tsx:19-28` and `ProtectedRoute.tsx:24,63` render nothing without a role), and it stays blank after the admin links them with "link to family", because `manage-admin-users` `linkToFamily` (:597-612) grants no role.
 - Security is unchanged by this: `admin` is still never granted by a sign-up, and `student` on an unlinked account opens nothing (measured below). It also makes `manage-admin-users create` end as `{admin, student}`, which is what it produces on live today, so the change removes a behaviour difference rather than adding one.
 - `teacher` stays "no row": granting `student` there would leave every admin-created teacher and TA with `{student, teacher}`, a state no live staff account has.
 - With it: update `scripts/pgtest/signup-role.test.mjs` (the "asks for admin" cases expect `{student}`; `manage-admin-users create` expects `{admin, student}`; add "form says Admin, then linkToFamily -> `{student}`") and the tables in `S1-security-fixes.md`. The function md5 changes; the brief's pre-check md5 (`b2979d90...`) does not.
@@ -219,3 +219,96 @@ The implementer's "either order" is true for errors but not for what the screen 
 - Live pre-checks hold: the four old policies exist under their names; md5 of `can_view_classmate` `ffe7e1f8...`, `can_view_student` `53f2d327...`, `can_view_enrollment` `3bbba012...`, `is_student_enrolled_in_class` `e8d7b359...` equal the brief's values.
 - Rollback `S1-F16-rollback.sql`: its four policies fingerprinted against live `pg_policies` (name, command, roles, USING): 4 of 4 identical.
 - Suite run by me: 77 passed. Mutations caught: family test removed from the three `student_id` policies (11 fail); `is_family_student` made always true (10); `get_class_skill_points` opened to anyone (4).
+
+---
+
+## F-21 - `20261113140000_creator_rows_need_class_staff.sql` - verdict: APPLY (browser build first, as F-16)
+
+### a. Does it close the finding
+
+Yes. On live each of `student_work`, `student_reports`, `cefr_assessments`, `student_error_log` has one staff policy, `FOR ALL`, `<creator> = auth.uid() OR (class_id IS NOT NULL AND is_teacher_of_class(...))`, and `resources` has insert / update / delete on `uploaded_by = auth.uid()` for role `public`: any signed-in account could write rows about any child. After the migration every write needs role `teacher`, staff of the row's class, the caller as creator on insert, and a child who belongs to that class (or to one of the caller's classes); `resources` needs `teacher` or `admin`. The other policies on the five tables (listed from live) are admin, own-child reads and class-shared reads; none writes. The guard finds nothing else on live.
+
+Left open on purpose, and correctly labelled by the implementer: a self-made `teacher` account can still add its own `resources` row (closed by F-01 plus the owner looking at the two record-less teacher accounts); `resource_class_access` (F-18).
+
+### b. Staff-of-class rule against live rows (aggregates) - does any teacher lose work in progress
+
+| Table | Rows with a creator | Creator is staff of the row's class today | Other |
+|---|---|---|---|
+| `student_work` | 253 | 246 (3 teachers) | 7 by the former admin login |
+| `student_error_log` | 170 | 170 (1 teacher) | - |
+| `student_reports` | 9 | 0 | 9 by the former admin login |
+| `cefr_assessments` | 9 | 0 | 9 by the former admin login |
+| `resources` | 8 | all 8 by accounts holding `teacher` | - |
+
+- No row has `class_id` NULL. 6 `student_work` rows are pending review; all 6 were uploaded by a teacher who is staff of that class now, so every item in a review queue can still be approved.
+- 3 `student_work` rows name a child who never had an enrollment in that class and is not in the uploader's classes: all 3 are already `approved`, so nothing is waiting on them; only an admin can re-save them. Error log: 0 such rows.
+- **"The former admin login loses access (25 rows)": confirmed.** 7 + 9 + 9 = 25 rows were created by one account, the same one that made the 8 pause windows; it holds only `student` today and its 792 audit rows are admin work (12 Oct 2025 - 10 Oct 2026). Today it can still read and edit those 25 rows as a non-staff account, which is the defect. After: it cannot; class staff, admins and the children's own families read them as before. Every one of the 25 has a class.
+- The writers in `src/`, re-read: `TeacherSmartUpload.tsx:331-345, 439-451, 478-488, 532-544`; `BulkReportExport.tsx:164-176` (from `TeacherClassDetail`, class set); `AIReportDialog.tsx:66-78` (mounted only in the admin `StudentDetail`); `StudentActionPopover.tsx:196-207`; `TeacherTranscripts.tsx:588-632`; `useResources.ts:237, 334, 375`. Each sets the creator to the caller and the class to the class open. Each insert that asks for the row back passes the new SELECT policy (creator holding `teacher`).
+- Links: 0 stored links fail the new CHECK (probe P4 = 0, 0 now). Smart Upload already refuses a non-http(s) link before saving (`:471`). `ResourceUploadDialog.tsx:186` does not: a teacher who types `docs.google.com/...` without `https://` used to save a dead link and will now get the database's constraint message. Correct outcome, poor wording; worth a friendly check in that dialog later.
+
+Role by role: admin unchanged; teacher / TA of the class unchanged for every screen above; a teacher keeps reading rows they created in a class they have left but cannot edit them; children and families: reads unchanged (their policies are not touched); unlinked / new / demo accounts: could write, now cannot.
+
+### c. The migration
+
+- One transaction, preflight, guard, idempotent; three helpers `SECURITY DEFINER`, `STABLE`, `search_path = public`, grants explicit; constraints `NOT VALID` (no table scan, no existing row touched). No trigger on the four tables; `resources` has only its `updated_at` trigger.
+- Rollback `S1-F21-rollback.sql`: its seven policies fingerprinted against live: 7 of 7 identical.
+- Suite run by me: 123 passed. Mutations caught: `is_teacher_of_class` removed from `staff_may_write_for` (4 fail); creator test removed from the reports insert (1); thumbnail constraint loosened (2).
+- Browser files: commit `371a628` - `src/lib/safeUrl.ts` (new), `ResourceCard.tsx`, `MyWorkGallery.tsx`, `StudentLessonDetail.tsx`, `TeacherResources.tsx`, `TeacherSmartUpload.tsx`. They only stop a non-http(s) link being rendered, so they are safe to ship first and independent of the paste.
+
+---
+
+## F-02 - nine functions behind `requireSpender` - verdict: APPLY WITH CHANGES (to the deploy steps, not the code)
+
+### a. Does it close the finding
+
+Yes. Each of the nine calls `requireSpender` straight after the CORS preflight: a real session (the public key alone is 401), a role in `user_roles` (none is 403, the service key is 403), then the per-account limiter. `_lib/auth.ts` and `_lib/rate-limit.ts` are unchanged from the base branch. Live `verify_jwt` today: `word-enrichment`, `image-search`, `pronounce-syllables`, `pronounce-viseme` false; the other five true - as the implementer states. Known limit, stated by the implementer: the limiter is per instance and in memory.
+
+### b. Who is locked out
+
+- Every caller in `src/` uses `supabase.functions.invoke` (`WordExplorer.tsx:227, 284`, `ImageCarousel.tsx:83, 294`, `VisemePlayer.tsx:251`, `VocabularyCreator.tsx:117, 200, 224`, `grammarChecker.ts:416`, `livePronunciation.ts:27`), which sends the signed-in session's token. No raw `fetch`, no other function calls them.
+- A signed-in child, parent, teacher or admin holds a role: on live the only accounts with no role are 2, both banned. So no real account meets the 403.
+- The video recorder (`get-speech-token`): `startLivePronunciation` returns null on any error and recording carries on without the pronunciation summary, so even a 429 or 403 here cannot stop a child handing in a video. The recorder is mounted only in the signed-in homework screen; the parents' shared-link page (`/watch/:token`) does not use it.
+- Grammar check and pictures are best-effort in the same way (`grammarChecker.ts:413-437`, `ImageCarousel.tsx:92-96`).
+- Signed-out visitors: `/vocabulary` and `/student/vocabulary` have no route guard (`App.tsx:169-170`), so a visitor with the address gets "Could not look up word" afterwards. Who uses it signed out today: the gateway log for the last 24 hours (the whole window kept) shows 9 calls to the nine functions in total, each an empty-body probe answered 400 / 401 - no lookup by anyone, signed in or not, and no recorder start. Nobody will notice; I could not look further back than a day.
+- A shared family login used on several devices shares one allowance (40 words / 5 min). Acceptable.
+
+### c. Deploy list, and what to change in the brief's F-02 item
+
+Each function: its own `index.ts` plus `_lib/ai-gate.ts`, `_lib/auth.ts`, `_lib/rate-limit.ts`. Checked: each `index.ts` has exactly one relative import (`../_lib/ai-gate.ts`); `ai-gate.ts` imports `./auth.ts` and `./rate-limit.ts`; those import nothing relative. Functions: `word-enrichment`, `image-search`, `pronounce-syllables`, `pronounce-viseme` (verify_jwt false -> true), `smart-dictation`, `smart-dictionary`, `sapling-grammar`, `get-speech-token`, `image-generate` (already true).
+
+Changes to the brief:
+1. Before deploying each function, `get_edge_function` it, keep the returned source in the evidence folder, and compare it with `git show claude/hec-conductor-setup-efbaa5:supabase/functions/<name>/index.ts` ignoring line endings. If they differ, stop: the deploy would silently change something else. (I did this for `get-speech-token`: identical. The other eight are not checked.) The saved copy, not `origin/main`, is the rollback.
+2. State the file names and entry point for the deploy: `<name>/index.ts` with `_lib/...` beside it, so `../_lib/ai-gate.ts` resolves (live functions deployed in bulk sit at `source/supabase/functions/<name>/index.ts`; the ones redeployed through the tool sit at `source/<name>/index.ts`).
+3. Deploy `get-speech-token` last and not during lesson or homework hours; it is the one a child's recorder touches.
+4. The suite has no migration to mutate; its own contrast is the pre-gate source from git, driven with the same requests (no header, public key) and shown to reach the vendor. I did not add a mutation of my own to the function sources.
+
+---
+
+## The live-apply brief (`S1-live-apply-brief.md`)
+
+Sound in shape: one item at a time, stop on any difference, LF blobs from the commit (the working copies here are CRLF: `i/lf w/crlf`), md5 of every created function after each paste, counts before and after, a rollback per item. Every pre-check value in it matches live now: `handle_new_user` `b2979d90...`, `pause_enrollment` `37437aad...`, the four F-16 helper md5s, role counts admin 3 / student 64 / teacher 8, 76 accounts, 99 homework objects, 8 pause windows, 36 homework policies (same names as the DROP list), F-21 P4 = 0, 0. All three rollback files reproduce live exactly (36 + 4 + 7 policies fingerprinted).
+
+Changes needed:
+1. **F-01**: do not apply until the migration carries Change 1 (above); deploy the browser build first; delete step 4 (switching sign-up off - the owner keeps it on). In the hand check, also join choosing each option the old form had, by a direct request if the form no longer offers it: `admin` -> shows Student; `teacher` -> shows no role.
+2. **F-16 and F-21**: "ship the browser build with it" must read "deploy the browser build, confirm it is live, then paste". For F-16 the other order shows wrong "class best / average" figures, not an error.
+3. **F-02**: the four points in the F-02 section above.
+4. **Rollbacks**: say where each one is in the item itself - F-01 and F-15 are the fenced blocks in `S1-security-fixes.md`, F-14 / F-16 / F-21 the three `.sql` files, F-02 the saved pre-deploy sources.
+5. **Expected md5 after apply** can be written into the brief now for F-15 instead of being recomputed: `pause_enrollment` -> `fd2186eff3f49bb91602e7bc182bece0` (2217 chars), which is the body between the `$function$` markers of the LF file.
+6. **Probes with the public key only** exist for F-02. For the SQL items the probes are catalog reads, which is right; two cheap outside probes are worth adding: with the publishable key and no session, `POST /rest/v1/rpc/pause_enrollment` is refused, and listing bucket `homework` returns nothing.
+7. **Order today**: F-14 and F-15 first (both APPLY as they stand), F-01 after its change. F-14 is the one that removes what a just-registered account can read about children right now, so it should not wait for F-01.
+8. `apply_migration` is given files that carry their own `BEGIN` / `COMMIT`; that is how 20261112101734 and the others went in, so it works, but the preflight / guard "nothing has changed" promise rests on the file's own transaction - do not strip it.
+
+---
+
+## Verdicts
+
+| Fix | Verdict |
+|---|---|
+| F-14 homework bucket | **APPLY** |
+| F-15 pause_enrollment | **APPLY** |
+| F-01 sign-up role | **APPLY WITH CHANGES**: `admin` request -> `student` as today (only `teacher` gets no role), suite and write-up updated; browser build with the new form live first |
+| F-16 classmates' rows | **APPLY**, browser build (`0123c4f`) live first |
+| F-21 creator rows | **APPLY**, browser build (`371a628`) live first |
+| F-02 nine functions | **APPLY WITH CHANGES** to the deploy steps: snapshot and compare live source first; `get-speech-token` last, outside lesson hours |
+
+Owner decisions: (1) the two `teacher` accounts with no teacher record still read 41 learning profiles and 217 student-work files - no migration here removes that; (2) whether families of a class should still get every classmate's per-skill totals by name (`get_class_skill_points`) or only best / average / top three; (3) whether new parents should ever get the parents' page (`family` role) - if so an admin sets it after linking; (4) F-16's visible change: a classmate's pop-up shows name and points only.
