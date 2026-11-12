@@ -9,7 +9,7 @@
 import { useState, useMemo } from "react";
 import Fuse from "fuse.js";
 import {
-  Search, ArrowDownAZ, ArrowUpZA, Volume2, Star, Trash2, Pencil, Save, Loader2,
+  Search, ArrowDownAZ, ArrowUpZA, Volume2, Star, Trash2, Pencil, Save, Loader2, ImageIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -204,7 +204,12 @@ export function VocabularyIndex({ items, onDelete, onUpdate }: Props) {
                     loading="lazy"
                     decoding="async"
                   />
-                ) : null}
+                ) : (
+                  // No picture yet: a quiet mark, so the well does not read as a hole (dark theme).
+                  <div className="flex h-full w-full items-center justify-center" aria-hidden>
+                    <ImageIcon className="h-8 w-8 text-hec-ink-faint" />
+                  </div>
+                )}
                 <button
                   type="button"
                   className={cn(FOCUS, "absolute inset-0 h-full w-full cursor-pointer focus-visible:-outline-offset-2")}
