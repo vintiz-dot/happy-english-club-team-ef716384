@@ -102,6 +102,8 @@ async function newPage([w, h], { role = 'teacher', live = '', touch = true } = {
   const page = await ctx.newPage();
   page.on('pageerror', (e) => { (page.__errors ||= []).push(String(e)); });
   const cdp = await ctx.newCDPSession(page);
+  // a tablet/phone: no hover, coarse pointer (index.css:805-812 keys 44 px targets off `hover: none`)
+  await cdp.send('Emulation.setEmulatedMedia', { media: '', features: touch ? [{ name: 'hover', value: 'none' }, { name: 'any-hover', value: 'none' }, { name: 'pointer', value: 'coarse' }, { name: 'any-pointer', value: 'coarse' }] : [{ name: 'hover', value: 'hover' }, { name: 'any-hover', value: 'hover' }, { name: 'pointer', value: 'fine' }, { name: 'any-pointer', value: 'fine' }] });
   page.__slow = false;
   await page.route('**/book.html*', async (route) => { if (page.__slow) await sleep(562); await route.continue(); });
   page.__throttle = async () => {
@@ -459,7 +461,8 @@ async function hud(size) {
     await page.__throttle(); await sleep(1500);
     const subs = await page.evaluate(() => window.__rt.subs.filter((s) => !s.removed && s.channel.startsWith('hud-')).map((s) => ({ channel: s.channel, table: s.filter?.table, event: s.filter?.event, filter: s.filter?.filter ?? null })));
     const att = subs.find((s) => s.table === 'attendance');
-    gate('M7.attendance-subscription-filter', S, !!att && !!att.filter, subs, `HUD realtime subscriptions: ${subs.map((s) => `${s.table}(${s.event}) filter=${s.filter ?? 'NONE'}`).join('; ')}`);
+    // INFO, not gated: the plan allows either a filter or a debounce; M7.unrelated-burst gates both
+    record('M7.attendance-subscription-filter', S, att && att.filter ? 'INFO' : 'INFO', subs, `HUD realtime subscriptions: ${subs.map((s) => `${s.table}(${s.event}) filter=${s.filter ?? 'NONE'}`).join('; ')}`);
     const HUDT = ['enrollments', 'point_transactions', 'sessions', 'attendance'];
     const snap = () => page.evaluate((T) => ({ commits: window.__hudCommits.filter((c) => c.phase !== 'mount').length, reqs: window.__requests.filter((r) => T.includes(r.name)).length }), HUDT);
     const unrelated = (k) => page.evaluate((k) => window.__rt.emit('attendance', { eventType: 'UPDATE', new: { id: 'a-x' + k, session_id: 'ses-other-class-' + k, student_id: 's-0009', status: 'Present' }, old: {} }), k);
@@ -516,25 +519,30 @@ function reportTargets(S, id, list, gated = true) {
   return gated ? gate(`M8.${id}`, S, list.length > 0 && small.length === 0, { total: list.length, small }, list.length ? detail : 'no targets found - probe broken') : record(`M8.${id}`, S, 'INFO', { total: list.length, small }, detail);
 }
 async function targets(size) {
-  const S = size.join('x');
-  const { ctx, page } = await newPage(size, { live: '1' });
-  try {
-    await page.goto(BASE + '/__lab'); await page.waitForSelector('#lab-hud button', { timeout: 90000 }); await sleep(1500);
-    reportTargets(S, 'HUD-chips', await smallTargets(page, '#lab-hud'));
-    await page.locator('#lab-skill button').first().click(); await sleep(800);
-    reportTargets(S, 'SkillButton-popover', await smallTargets(page, '[data-radix-popper-content-wrapper]'));
-    await closeOverlay(page);
-    const radial = [...await smallTargets(page, '#lab-radial')];
-    await page.locator('#lab-radial button', { hasText: 'Correction' }).click(); await sleep(500);
-    radial.push(...await smallTargets(page, '#lab-radial'));
-    await page.locator('#lab-radial button').nth(1).click(); await sleep(500);
-    radial.push(...await smallTargets(page, '#lab-radial'));
-    reportTargets(S, 'RadialSkillMenu-all-stages', radial);
-    await page.locator('#lab-hud button').first().click(); await sleep(1200);
-    reportTargets(S, 'StudentActionPopover', await smallTargets(page, '[role=dialog]'), false);
-  } catch (e) {
-    record('targets.error', S, 'FAIL', String(e), 'scenario aborted: ' + String(e).split('\n')[0]);
-  } finally { await ctx.close(); }
+  for (const touch of [true, false]) {
+    const S = size.join('x') + (touch ? ' touch' : ' mouse');
+    const { ctx, page } = await newPage(size, { live: '1', touch });
+    try {
+      await page.goto(BASE + '/__lab'); await page.waitForSelector('#lab-hud button', { timeout: 90000 }); await sleep(1500);
+      const mq = await page.evaluate(() => ({ hoverNone: matchMedia('(hover: none)').matches, coarse: matchMedia('(pointer: coarse)').matches }));
+      record('M8.media', S, 'INFO', mq, `(hover: none)=${mq.hoverNone}, (pointer: coarse)=${mq.coarse}`);
+      // gated on touch (the tablet in class); the mouse context is reported for comparison
+      reportTargets(S, 'HUD-chips', await smallTargets(page, '#lab-hud'), touch);
+      await page.locator('#lab-skill button').first().click(); await sleep(800);
+      reportTargets(S, 'SkillButton-popover', await smallTargets(page, '[data-radix-popper-content-wrapper]'), touch);
+      await closeOverlay(page);
+      const radial = [...await smallTargets(page, '#lab-radial')];
+      await page.locator('#lab-radial button', { hasText: 'Correction' }).click(); await sleep(500);
+      radial.push(...await smallTargets(page, '#lab-radial'));
+      await page.locator('#lab-radial button').nth(1).click(); await sleep(500);
+      radial.push(...await smallTargets(page, '#lab-radial'));
+      reportTargets(S, 'RadialSkillMenu-all-stages', radial, touch);
+      await page.locator('#lab-hud button').first().click(); await sleep(1200);
+      reportTargets(S, 'StudentActionPopover', await smallTargets(page, '[role=dialog]'), false);
+    } catch (e) {
+      record('targets.error', S, 'FAIL', String(e), 'scenario aborted: ' + String(e).split('\n')[0]);
+    } finally { await ctx.close(); }
+  }
 }
 
 // ================================================================= 6. STATIC: native title= hints on screens the fake cannot populate
