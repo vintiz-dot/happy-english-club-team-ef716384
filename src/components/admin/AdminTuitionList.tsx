@@ -129,7 +129,7 @@ export const AdminTuitionList = ({ month }: AdminTuitionListProps) => {
     // with the same bounded backoff as the other calculate-tuition screens.
     refetchInterval: (query) =>
       siblingRetryDelayMs(
-        query.state.data?.some((row: any) => row.figures.state === "pending") ? "unresolved" : null,
+        query.state.data?.some((row) => row.figures.state === "pending") ? "unresolved" : null,
         Math.max(0, query.state.dataUpdateCount - 1),
       ),
   });
