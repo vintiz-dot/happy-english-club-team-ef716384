@@ -1,6 +1,10 @@
 # C2 round 4 - after C2 review 3 (PASS WITH CHANGES: R3-B1, C3-a mandatory)
 
-**Where I am / next step:** all fixes written and committed; running the unit suite; then mutations, full run.mjs, totals.
+**Where I am / next step:** DONE. Both mandatory changes and every major landed with tests; suites green (below). Remaining: the owner's hardware checks (review 3's list; item 3 now with 35 minutes offline, item 8 must show the recording continuing with the bar and Stop on the other page).
+
+## Totals (final code)
+
+`node scripts/pgtest/run.mjs`: **4042 assertions across 45 suites, 0 suite(s) failed** - recorder engine (unit) **445/0** (was 406), recorder screens logic 30/0, recorder screens render **26/0** (new), class recorder SQL **423/0** (was 415), recorder retention 37/0, recorder cron 22/0, app typecheck 3/0 (`tsc -p tsconfig.app.json` exit 0), edge functions typecheck 5/0. The browser suite was not re-run this round (not in the required list; the engine paths it exercises are covered by the unit suite).
 
 Branch `worktree-agent-a4803c8e10a251526`, merged `claude/hec-conductor-setup-efbaa5` (3efdebd). Synthetic audio only. Nothing applied, deployed or pushed.
 
