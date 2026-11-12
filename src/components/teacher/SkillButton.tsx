@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import {
   Popover,
   PopoverContent,
@@ -50,10 +51,18 @@ export function SkillButton({
     }
   };
 
-  const baseClasses = cn(
+  const ivory = useIvory();
+  const baseClasses = ivory
+    ? cn(
+        "flex flex-col items-center justify-center gap-1 p-3 rounded-hec-md border min-w-[56px] min-h-[56px] transition-colors duration-hec-1 ease-hec touch-manipulation select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+        variant === "positive"
+          ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf hover:border-hec-leaf"
+          : "border-hec-danger/30 bg-hec-danger-tint text-hec-danger hover:border-hec-danger"
+      )
+    : cn(
     "flex flex-col items-center justify-center gap-1 p-3 rounded-xl min-w-[56px] min-h-[56px] transition-all active:scale-95 touch-manipulation select-none",
-    variant === "positive" 
-      ? "bg-green-500/20 hover:bg-green-500/30 text-green-600 dark:text-green-400" 
+    variant === "positive"
+      ? "bg-green-500/20 hover:bg-green-500/30 text-green-600 dark:text-green-400"
       : "bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400"
   );
 
@@ -66,23 +75,25 @@ export function SkillButton({
           onContextMenu={(e) => e.preventDefault()}
         >
           <Icon className="h-6 w-6" />
-          <span className="text-[10px] font-medium leading-tight">{label}</span>
+          <span className={ivory ? "text-hec-caption font-medium" : "text-[10px] font-medium leading-tight"}>{label}</span>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-2" side="top" align="center">
-        <div className="flex gap-1 items-center">
+      <PopoverContent className={ivory ? "w-auto max-w-[calc(100vw-2rem)] p-2" : "w-auto p-2"} side="top" align="center">
+        <div className={ivory ? "flex flex-wrap gap-2 items-center justify-center" : "flex gap-1 items-center"}>
           {POINT_OPTIONS.map((pts) => (
             <Button
               key={pts}
               variant="outline"
               size="sm"
-              className="w-10 h-10 p-0 text-sm font-bold hover:bg-warmGray hover:text-royalGreen hover:border-royalGreen dark:hover:bg-warmGray-dark dark:hover:text-royalGreen-light dark:hover:border-royalGreen-light"
+              className={ivory
+                ? "min-h-hec-target min-w-hec-target p-0 text-hec-body font-semibold tabular-nums"
+                : "w-10 h-10 p-0 text-sm font-bold hover:bg-warmGray hover:text-royalGreen hover:border-royalGreen dark:hover:bg-warmGray-dark dark:hover:text-royalGreen-light dark:hover:border-royalGreen-light"}
               onClick={() => handlePointSelect(pts)}
             >
               +{pts}
             </Button>
           ))}
-          <div className="flex items-center gap-0.5 ml-1">
+          <div className={ivory ? "flex items-center gap-2" : "flex items-center gap-0.5 ml-1"}>
             <Input
               ref={inputRef}
               type="number"
@@ -93,16 +104,19 @@ export function SkillButton({
               onChange={(e) => setCustomValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleCustomSubmit(); }}
               aria-label={`Custom points for ${label}`}
-              className="w-12 h-10 [@media(hover:none)]:h-11 text-center text-sm font-bold p-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className={ivory
+                ? "w-16 min-h-hec-target text-center text-hec-body font-semibold tabular-nums p-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                : "w-12 h-10 [@media(hover:none)]:h-11 text-center text-sm font-bold p-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"}
             />
             <Button
               variant="outline"
               size="sm"
-              className="w-8 h-10 p-0"
+              className={ivory ? "min-h-hec-target min-w-hec-target p-0" : "w-8 h-10 p-0"}
               disabled={!customValue || isNaN(parseInt(customValue)) || parseInt(customValue) < 1}
               onClick={handleCustomSubmit}
+              aria-label={ivory ? `Give the custom points for ${label}` : undefined}
             >
-              <Check className="h-4 w-4" />
+              <Check className={ivory ? "h-5 w-5" : "h-4 w-4"} />
             </Button>
           </div>
         </div>
