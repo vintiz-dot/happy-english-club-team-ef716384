@@ -8,7 +8,7 @@ Where the work happened: my session's working directory was the conductor's own 
 
 Review only: no product code changed, nothing deployed, pushed or applied to any database. No real audio was read: every probe uses the unit suite's synthetic sine + noise source.
 
-**Where I am / next step:** sections 1-4 and 7 written. Next: section 5 (suite results) and 6 (mutations) when the runs finish, then the verdict.
+**Where I am / next step:** DONE. All seven sections and the verdict are below. Next step is the reviser's: N-B1, N-B2, N-B3 with a test each, then the majors.
 
 How the probes were run: a throwaway `probe.mjs` in my scratchpad (outside the repo, not committed) = the unit suite's own harness (`world`, `FakeSource`, `recorder`, `started`, the contract-enforcing fake server; `scripts/recorder/unit.test.mjs` lines 14-33, 295-401, 773-787, copied verbatim) + 14 scenarios of mine, against the unmodified engine at d449acc. "P n" below is a probe; its printed result is quoted. File:line is `src/lib/recorder/` at d449acc unless another path is given.
 
@@ -129,6 +129,36 @@ Clipping warning (field 6): `health.ts:34` (>= 0.999), `controller.ts:984-1000`.
 - Order with the Worker: jobs are posted in cut order and awaited in that order on one queue (`controller.ts:1035-1050`), so a late answer cannot reorder chunks. Samples are structured-cloned to the worker (not transferred), so the page still holds them if the worker dies.
 - If the Worker dies: `onerror` -> inline re-run of pending jobs, a once-only notice (`index.ts:137`, code `internal`; C3's default view for `internal` says "Reload the page", the wrong advice mid-lesson - section 7). If it HANGS: N-M6.
 
+## 5. The suites, run here
+
+All in the c2r2 worktree at d449acc, `node_modules` linked as a junction (and removed with `cmd //c rmdir node_modules` at the end; nothing else was deleted). The machine was heavily loaded (other agents' node processes), so times mean nothing.
+
+| Suite | Result here | Author's claim |
+|---|---|---|
+| `node scripts/recorder/unit.test.mjs` | **337 passed, 0 failed**, exit 0 | 337 / 0 |
+| `node scripts/pgtest/run.mjs` | **2799 assertions across 37 suites, 0 suite(s) failed**, exit 0 - incl. class recorder 406/0, recorder retention 37/0, recorder cron 22/0, edge functions typecheck 5/0, app typecheck 3/0 | 2799 / 37 / 0 |
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | exit 0 (run alone, before pgtest) | exit 0 |
+| `node scripts/recorder/browser.test.mjs` | **NOT RUN.** It needs a headless Chromium for many real-time recordings (well over a few minutes), and its default input is a real lesson WAV (`harness.mjs:20`, `C:\Users\Dell\hec-audio-eval\...`), which this review must not read. Read only. | 62 assertions, 59/3 then 34/34 on the re-run sections |
+
+So the browser-only claims stand on the author's word here: the real `ctx.suspend()` / `ctx.close()` recovery, the Worker actually being used in Chromium, real IndexedDB across reload and crash. None of my findings depends on them, and none of them answers my findings.
+
+What the unit suite cannot see, by construction (`FakeSource`, `unit.test.mjs:316-385`): a context that is "running" but delivers nothing (its `resume()` answers `!stalled`); a re-open that hangs; two faults in one lesson; two lessons on one engine; an answer to Start that is neither offline, 5xx nor a database text; a worker that hangs. Those are exactly where the probes found things.
+
+## 6. Six mutations of my own
+
+Throwaway copies of `src/lib/recorder` in my scratchpad (outside the repo), one change each, the unit suite run against each with `RECORDER_SRC`. I checked that each mutated line really was in the bundle under test, and ran a control first-hand: the author's mutant 17 (watchdog never fires) -> **CAUGHT, 9 FAIL** (the same 9 the author reports), so the harness does catch things.
+
+| # | Path | Mutant (`controller.ts`) | Result | What it means |
+|---|---|---|---|---|
+| A | stall detection | :698 the "judge on the next tick" deferral is taken EVERY time a tick comes late (`&& !this.deferredOnce` removed) | **SURVIVED 337/0** | With ticks more than 1.5 s apart (a throttled hidden tab - the author's own hardware item 6) a dead context is never declared. No test drives a stall with slow ticks; the 3.6 s case (:841 of the test) only proves the deferral happens, not that it happens once. |
+| B | stall detection | :728 the context is re-made only when `resume()` says "not running" (`stuckFor > 2 x stallAfterMs` removed) | **SURVIVED 337/0** | "The context says running but no audio arrives" (a dead worklet) is untested: the fake's `resume()` cannot say running while stalled. |
+| C | re-acquire | :1289 the label fallback may open the OTHER track's device (`=== other?.deviceId` guard removed) | **SURVIVED 337/0** | "Never the other microphone" has no test in which the two could be confused (same label). |
+| D | re-acquire | :1254 a loss is no longer ignored when that track is already lost | **SURVIVED 337/0** | `ended` followed by `devicechange` (the normal order on a real unplug) may log the loss twice and restart the 60 s alert; no test fires both. |
+| E | Stop retry | :474 the row is NOT read back after a failed Stop | **SURVIVED 337/0** | "The Stop may have landed and only its answer was lost" is untested (the fake's injected failure never lands). My P12 shows the real code handles it; nothing guards it. |
+| F | purge | :356 `recover()` no longer purges a `complete` recording's leftovers | **SURVIVED 337/0** | The clean-up of what an older engine left behind is untested (and, per N-M4, would not reach ownerless rows anyway). |
+
+**0 of 6 caught.** The author's 32 mutants are each the inverse of a test written for it; one step off that path the suite is blind. These six need a case each (D and E are two lines of test), together with cases for N-B1..N-B3 and N-M1..N-M8 - the probe file `docs/evidence/C2-review-2-probes.mjs.txt` has every scenario ready to be turned into assertions.
+
 ## 7. What C3 must change (`src/components/recorder/**`, `src/pages/TeacherRecorder.tsx`, and `src/lib/recorderUi.ts`)
 
 Read at `claude/hec-conductor-setup-efbaa5`; line numbers are that branch's.
@@ -147,3 +177,27 @@ Read at `claude/hec-conductor-setup-efbaa5`; line numbers are that branch's.
 12. **`RecorderLike`** (`engine.ts:22`) must also pick `signOut`, `othersPending`, `heldAudio`, `durable`, `discardLocal`, `current`. `not_durable` / `rec.durable === false`: say so before "Ready for today" and do not arm.
 13. **Upload line**: show `stopPending` ("not stopped on the server yet"), `stopRefused`, `heldInMemory` ("keep this page open"), `belowFloor`.
 14. Do not offer the folder backup (`enableLocalBackup` is a no-op). `clock.jumpMs`: informational only.
+
+## Verdict
+
+**FAIL** - by the same rule as the first review: a path that loses lesson audio while the page says otherwise. The revision is real work and most of it holds (B2, B4, M3, M4, M5, M7, the sample-exact chunking, the server boundary, the cron migration). The three blockers are each a few lines to a few dozen; with them and their tests in, this is PASS WITH CHANGES.
+
+Blockers (before any lesson with real children):
+- **N-B1** Slow / absent Start: everything before the server's stamp is discarded while the state is `starting`, the tab title says "● RECORDING" and the messages say "the audio is kept"; a whole offline lesson ends "the audio captured so far is kept" with 2 of 45 minutes kept (`controller.ts:649, 889, 904-912, 969, 1015-1016, 1591`; P2a, P2b).
+- **N-B2** Start has the bug B4 fixed for Stop: one unclassified answer (429, 409, "no rows") is final - microphones closed, state `error`, no retry, the lesson is not recorded (`controller.ts:883, 892`; P3).
+- **N-B3** Both microphones lost: state `recording`, red dot, silence uploaded for the rest of the lesson (`controller.ts:1297-1320`, `worklet.ts:46-47`; P4).
+
+Majors:
+- **N-M1** a second dead AudioContext in one lesson is never re-made (`controller.ts:729`; P1).
+- **N-M2** after a stall longer than `late_after`, every later chunk is "late" = not evidence (timeline not padded; P13).
+- **N-M3** the clock measurement accepts any round-trip time; a slow answer makes the next start discard real audio, or hides a needed re-anchor (`controller.ts:1470-1483`; P8).
+- **N-M4** recordings stored by the previous engine have no owner: never purged, resumed or discardable; the classroom laptop that recorded the real class has them (`controller.ts:607`; P7).
+- **N-M5** a recording that completes with refused chunks keeps its audio and marker labels in IndexedDB for ever, invisible to `heldAudio`, `stuck` and `signOut` (`controller.ts:547, 1440`; P5).
+- **N-M6** an encoder Worker that hangs without an error event blocks every chunk and crash segment and the Stop, with the state `recording` and no error (`encoderClient.ts:71-83`, `controller.ts:1047, 1184`; P9).
+- **N-M7** a re-open that never answers ends the search for the lost microphone (`controller.ts:1324-1351`; P11).
+- **N-M8** silent-microphone and clipping warnings are not raised in the next lesson on the same engine (`health.ts:57-61, 75`, `controller.ts:844`; P6).
+- **N-M9** the six surviving mutants (section 6): stall detection with slow ticks, "running but silent", the other-microphone guard, double loss, the Stop read-back, the legacy purge are all untested.
+
+For the owner to decide: whether unsent children's audio may stay on the laptop indefinitely until someone types DISCARD (the 14-day rule only reports); whether a lesson that starts without internet should be recordable at all (needs a server change).
+
+Not checked: the real-browser suite (not run - see section 5); anything on the real S500 + lapel; the live database (nothing was called).
