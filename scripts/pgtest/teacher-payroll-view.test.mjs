@@ -91,6 +91,7 @@ console.log("=== a closed month, nothing corrected since ===");
   const v = view({ locked: true, payrollData: [row({ live: { totalAmountActual: 1050000, sessionsCountActual: 3 }, liveTotalAmountActual: 1050000 })] });
   eq("closed", v.closed, true);
   eq("frozen = live, so per-lesson figures are shown", v.perSessionAvailable, true);
+  eq("rates shown too", v.sessions.map((x) => x.rateVnd), [200000, 200000, 300000, 300000]);
   eq("earned is the frozen figure", v.earned, 1050000);
   eq("amounts shown", v.sessions.map((x) => x.amount), [300000, 300000, 450000, 450000]);
 }
@@ -108,6 +109,7 @@ console.log("=== a closed month, a lesson corrected after the close ===");
   eq("hours are the frozen ones", v.totalHours, 3);
   eq("per-lesson figures withheld: recomputed ones would not add up to what was paid", v.perSessionAvailable, false);
   eq("every amount is 'figure unavailable'", v.sessions.map((x) => x.amount), [null, null, null, null]);
+  eq("and so is every rate (the CSV prints neither)", v.sessions.map((x) => [x.rateVnd, x.payRateType]), [[null, null], [null, null], [null, null], [null, null]]);
   eq("every day total is 'figure unavailable', never a recomputed sum", [...v.earnedByDate.values()], [null, null]);
   eq("still to come is set against the LIVE actuals (1,500,000 - 1,050,000)", v.stillToCome, 450000);
   eq("scheduled count against the live count (4 - 3)", v.scheduledSessions, 1);
@@ -128,6 +130,9 @@ console.log("=== a locked month in which this person has no frozen line ===");
 {
   const v = view({ locked: true, payrollData: [row()] });
   eq("not treated as closed: the figures are live ones", v.closed, false);
+  eq("but the month is known to be closed (the screen says so beside the live figure)", v.monthLocked, true);
+  eq("an open month is not monthLocked", view({ locked: false, payrollData: [row()] }).monthLocked, false);
+  eq("a closed month with a frozen line is monthLocked", view({ locked: true, payrollData: [row({ liveTotalAmountActual: 1050000 })] }).monthLocked, true);
   eq("amounts shown", v.sessions.every((x) => x.amount !== null), true);
 }
 

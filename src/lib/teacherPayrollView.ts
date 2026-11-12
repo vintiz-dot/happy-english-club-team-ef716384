@@ -116,6 +116,12 @@ export interface TeacherPayrollView {
   found: boolean;
   /** The month is closed and these totals are what it was closed at. */
   closed: boolean;
+  /**
+   * The month is closed (payroll_periods locked), whether or not this
+   * person has a frozen line in it. True with `closed` false means they
+   * had none when it closed, so the figures shown are calculated now.
+   */
+  monthLocked: boolean;
   heldSessions: number;
   scheduledSessions: number;
   totalHours: number;
@@ -177,6 +183,7 @@ export function pickPayrollRow(
 const EMPTY: TeacherPayrollView = {
   found: false,
   closed: false,
+  monthLocked: false,
   heldSessions: 0,
   scheduledSessions: 0,
   totalHours: 0,
@@ -197,7 +204,7 @@ export function teacherPayrollView(
   staffId: string | null | undefined,
 ): TeacherPayrollView {
   const row = pickPayrollRow(response?.payrollData, staffId);
-  if (!row) return { ...EMPTY, earnedByDate: new Map() };
+  if (!row) return { ...EMPTY, monthLocked: response?.locked === true, earnedByDate: new Map() };
 
   const earned = num(row.totalAmountActual);
   const heldSessions = num(row.sessionsCountActual);
@@ -242,8 +249,11 @@ export function teacherPayrollView(
     minutes: figure(d?.minutes),
     counted: isCounted(d ?? {}),
     amount: perSessionAvailable ? figure(d?.amount) : null,
-    rateVnd: figure(d?.rateVnd),
-    payRateType: d?.payRateType === "hourly" || d?.payRateType === "per_session" ? d.payRateType : null,
+    // The rate is withheld with the amount: in a closed month corrected
+    // after the close it is the recomputed one too, and the CSV printing it
+    // beside a blank amount would be half of the figure the screen hides.
+    rateVnd: perSessionAvailable ? figure(d?.rateVnd) : null,
+    payRateType: perSessionAvailable && (d?.payRateType === "hourly" || d?.payRateType === "per_session") ? d.payRateType : null,
   }));
 
   const earnedByDate = new Map<string, number | null>();
@@ -279,6 +289,7 @@ export function teacherPayrollView(
   return {
     found: true,
     closed,
+    monthLocked: response?.locked === true,
     heldSessions,
     scheduledSessions,
     totalHours: hours ?? num(row.totalMinutesActual) / 60,
