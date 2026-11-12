@@ -18,10 +18,10 @@ export function RadialSkillMenu({ onSkillTap, onClose, onReadingTheoryClick }: R
   const ivory = useIvory();
   // ivory: a solid raised panel (no glass) and tiles that match SkillButton's
   const PANEL = ivory
-    ? "rounded-hec-lg border border-hec-line bg-hec-raised p-3 text-hec-ink shadow-hec-2"
+    ? "mx-auto w-[min(22rem,calc(100vw-2rem))] max-w-full rounded-hec-lg border border-hec-line bg-hec-raised p-3 text-hec-ink shadow-hec-2"
     : "glass rounded-2xl p-3 shadow-xl border border-border/50";
   const TILE =
-    "flex flex-col items-center justify-center gap-1 p-3 rounded-hec-md border min-w-[56px] min-h-[56px] transition-colors duration-hec-1 ease-hec touch-manipulation select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
+    "flex w-full min-w-0 flex-col items-center justify-center gap-1 px-1 py-2 rounded-hec-md border min-h-[56px] transition-colors duration-hec-1 ease-hec touch-manipulation select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
   const handleSkillTap = (skill: string, points: number) => {
     onSkillTap(skill, points);
@@ -130,7 +130,7 @@ export function RadialSkillMenu({ onSkillTap, onClose, onReadingTheoryClick }: R
   return (
     <div className={PANEL}>
       {/* Skills Row */}
-      <div className={ivory ? "flex flex-wrap gap-2 mb-2 justify-center" : "flex gap-2 mb-2"}>
+      <div className={ivory ? "grid grid-cols-4 gap-2 mb-2" : "flex gap-2 mb-2"}>
         {Object.entries(SKILL_CONFIG).map(([key, config]) => (
           <SkillButton
             key={key}
@@ -144,7 +144,7 @@ export function RadialSkillMenu({ onSkillTap, onClose, onReadingTheoryClick }: R
       </div>
 
       {/* Behaviors Row + Reading Theory + Correction */}
-      <div className={ivory ? "flex flex-wrap gap-2 justify-center" : "flex gap-2 justify-center"}>
+      <div className={ivory ? "grid grid-cols-4 gap-2" : "flex gap-2 justify-center"}>
         {Object.entries(BEHAVIOR_CONFIG).map(([key, config]) => (
           <SkillButton
             key={key}

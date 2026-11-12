@@ -54,7 +54,7 @@ export function SkillButton({
   const ivory = useIvory();
   const baseClasses = ivory
     ? cn(
-        "flex flex-col items-center justify-center gap-1 p-3 rounded-hec-md border min-w-[56px] min-h-[56px] transition-colors duration-hec-1 ease-hec touch-manipulation select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+        "flex w-full min-w-0 flex-col items-center justify-center gap-1 px-1 py-2 rounded-hec-md border min-h-[56px] transition-colors duration-hec-1 ease-hec touch-manipulation select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
         variant === "positive"
           ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf hover:border-hec-leaf"
           : "border-hec-danger/30 bg-hec-danger-tint text-hec-danger hover:border-hec-danger"
