@@ -69,7 +69,7 @@ Status: todo / running / review / PASS / FAIL / reverted / blocked-owner. Model 
 | D4 | Other tuition-affecting actions | fable design, opus build / fable | docs/evidence/D4-*.md; migration; affected dialogs | todo | |
 | D5 | Invariant audit + regression tests + owner SQL | fable audit, sonnet/opus tests / fable | docs/evidence/D5-audit.md; scripts/pgtest/*; scripts/CHECK-past-cancellations-with-evidence.sql | todo | |
 | A0 | Baseline | sonnet (haiku captures) / fable | docs/ENHANCEMENT_BASELINE.md; docs/evidence/A0/ | PASS (sonnet, e4df152; conductor re-ran tsc + pgtest, viewed a screenshot, checked the PDF-import claim) | docs/ENHANCEMENT_BASELINE.md, docs/evidence/A0/ |
-| A1 | Plan + critic | fable / fable critic | docs/evidence/A1-plan.md | running (fable) | |
+| A1 | Plan + critic | fable / fable critic | docs/evidence/A1-plan.md | PASS (fable, 85051bd; conductor read sections 1.3-4 as the critic - no separate critic, see D-8) | docs/evidence/A1-plan.md |
 | A2 | Teacher stability: flipbook, tooltips | opus / fable | TeacherBooks + viewer, SkillButton, LiveEngagementHUD, tooltips in TeacherLeaderboards/SmartUpload/Transcripts | todo | |
 | A3 | Speed | sonnet bundle, opus data / same-or-higher | set in A1 | todo | |
 | A4 | Design system + a11y + dark mode | fable system, opus first screens, sonnet rollout / fable | docs/DESIGN_SYSTEM.md, src/index.css, tailwind.config.ts, student dashboard | todo | HOLD at checkpoint |
@@ -152,11 +152,11 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 | Stream | Units | Done | What is done |
 |---|---|---|---|
 | D money integrity | 18.5 | 6.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
-| A overhaul | 12.0 | 1.0 | A0 baseline. Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
+| A overhaul | 12.0 | 2.0 | A0 baseline, A1 plan. Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
 | B lesson monitor evaluation | 10.5 | 2.5 | vendor research, audio prep, harness about 70%. Left: B1, B2, B2b, B3, report |
 | C class recorder | 8.0 | 1.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **11.0** | **22%** |
+| **Total** | **51.0** | **12.0** | **24%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -177,3 +177,8 @@ Log: 2026-11-12 - 22% (D review 2 merged; D1 PASS).
   - C: one child without consent = class not recorded; past recordings auto-deleted on consent withdrawal; cover teacher read access 7 days; retention 30 days; one click a day; evaluation recordings only inside timetabled lessons; no playback screen this phase.
   - A: fonts and any other choice raised by the A1 plan take the plan's recommended default, unless it needs a new npm dependency (then it is dropped).
   NOT covered by this instruction, because each is an act only the owner can perform or an explicit gate in the brief: pasting migrations; deploying D's edge functions (they must ship together with the migration paste and the dialogs); the consent wording text and the confirmation that parental consent is on file; the recorder's first real class; MONITOR_GO; the design rollout beyond the checkpoint (the owner has not seen it yet).
+Log: 2026-11-12 - 24% (A1 plan merged).
+
+- 2026-11-12 A1 plan merged (fable, 85051bd): 15 active tasks in 4 waves (A2 x3, A3 x7, A4 x5) + the held rollout A4.6. Top items: A3.1 take recharts/jsPDF/html2canvas out of the Layout chunk (392 -> <=150 KiB gzip on every Layout page; chain Layout.tsx:16 -> ClassroomToolsLauncher -> LeaderboardTool -> ClassLeaderboardShared -> StudentAnalyticsModal); A2.2 the "flipbook" is a third-party iframe that is unmounted when the `[user]` loader re-runs on token refresh / refocus, resetting the book to page 1 (hypothesis, A2.1 measures it); A3.3 parent view 78 -> <=40 requests. Dropped by the 5%/low-risk rule: vendor manualChunks, staleTime tuning, the `useAuth` root fix, board re-renders, list virtualisation (new dependency), the other 51 `select('*')`, lazy framer-motion, web-font download.
+- D-8: the conductor acted as the A1 critic (read the task specs, proofs, waves and conflicts) instead of spawning a separate one, under D-6. Design defaults adopted under D-7: the logo is leaf GREEN, not navy/brass - navy ink + warm ivory carry the interface, brass is the one interactive accent, the logo green stays for the mark and a darkened leaf for success states; system serif stack for display headings (no font download); dark mode default Light until the rollout finishes; theme remembered per device and user id (no migration); the `useAuth` root fix becomes its own reviewed task after A; speed and stability tasks ship wave by wave once gated.
+- A wave 1 launched: A2.1 diagnose (opus), A3.1 (sonnet), A3.3 (sonnet), A4.1 design system (fable).
