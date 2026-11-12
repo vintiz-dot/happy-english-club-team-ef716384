@@ -450,9 +450,17 @@ Deno.serve(async (req) => {
     // The recording must be filed under the row's own class (`<class_id>/...`,
     // the only path the app writes), so a row cannot point at another
     // class's audio (T2 finding F1; also a CHECK on class_transcripts).
+    // Exactly `<class_id>/<file>`: two parts, no dot segments, backslash or
+    // percent-escape, so `<A>/../<B>/x.mp3` cannot reach another class's file
+    // when the storage client collapses the path (T2 review R1).
+    const audioParts = tr.audio_storage_path ? String(tr.audio_storage_path).split("/") : [];
     if (
       tr.audio_storage_path &&
-      String(tr.audio_storage_path).split("/")[0].toLowerCase() !== String(tr.class_id).toLowerCase()
+      (audioParts.length !== 2 ||
+        audioParts[0].toLowerCase() !== String(tr.class_id).toLowerCase() ||
+        audioParts.some((part) =>
+          !part || part === "." || part === ".." || part.includes("%") || part.includes(String.fromCharCode(92))
+        ))
     ) {
       console.warn(`transcribe-lesson-audio refused: transcript ${tr.id} audio path is not under class ${tr.class_id}`);
       return respond({ success: false, error: "That recording is not filed under this transcript's class." }, 403);
