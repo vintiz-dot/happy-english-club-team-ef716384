@@ -60,15 +60,16 @@ A write-off is a reduction of what a month charges. The bill's balance is comput
 - **A discount write-off counts on the bill** (2b): calculate-tuition and calculate-tuition-bulk read `settlements` of type `discount` for the student and month and apply their sum as one more discount line, "Settle Bill write-off", after every other discount. `total_amount` falls, the trigger moves the carry, the label follows (fault 5 makes a full write-off `paid`). The bill gets the ordinary `tuition_adjustment` review flag; a confirmed bill goes to review with the before/after flag (T1 rule 4), which is right: its charge changed.
 - **Cap**: one month's write-off cannot exceed that month's charge (`total_amount` before write-offs), so `total_amount` never goes below 0. settle-bill caps `amount` at `min(balance, charge - already written off)`. Debt carried in from an earlier month is written off on that earlier month.
 - **Frozen bill**: its charged figures are pinned (`keep_frozen_invoice_amounts`), so a write-off could not count; settle-bill refuses it with a message instead of posting a write-off that would never show.
-- **Old settlements**: only settlements created from `SETTLEMENTS_ON_BILL_FROM` (2026-11-14, in `_lib/invoice-status.ts`, one constant for both calculators) count. The four made so far (last 7 Oct 2026) had their balance worked out from cumulative `paid_amount`; letting them change four old bills on their next view is the owner's decision, not a side effect of a deploy. `scripts/CHECK-payment-paths.sql` lists them by count.
+- **Old settlements**: only settlements created from `SETTLEMENTS_ON_BILL_FROM` (2026-11-12T00:00Z - changed from the planned 14 Nov during coding: the test clock reads 12 Nov UTC, and any date after the last live settlement (7 Oct) serves; in `_lib/invoice-status.ts`, one constant for both calculators) count. The four made so far (last 7 Oct 2026) had their balance worked out from cumulative `paid_amount`; letting them change four old bills on their next view is the owner's decision, not a side effect of a deploy. `scripts/CHECK-payment-paths.sql` lists them by count.
 - **Voluntary contribution / unapplied cash**: balance from the carry as above (no more phantom credit from cumulative `paid_amount`); still ledger-only. A contribution does not consume the bill's credit - owner decision (it needs a charge line on the bill).
 - A read error on `settlements` fails the calculation (fail closed), like every other pricing read after fault 7.
 
 ### Fault 1 - delete-payment
 
 - Find the payment's ledger transactions by its id in any key the payment paths write (`payment-<id>`, `family-payment-<id>-`, `smart-family-<id>-`, and their `-credit-` / `-contribution-` leftovers), then read BOTH legs of each transaction by `tx_id`.
-- What the payment put on a bill: per student and month, the AR credits of its allocation transactions (leftover transactions are not on any bill). That amount, capped at what the bill still records, comes off `recorded_payment` (and `paid_amount`); the label is the rule's; then calculate-tuition runs for that month, as every payment path does.
-- Every leg of every transaction is reversed (balanced).
+- What the payment put on a bill: per student and month, the AR credits of its allocation transactions (leftover transactions are not on any bill). That amount comes off `recorded_payment` (and `paid_amount`); the label is the rule's; then calculate-tuition runs for that month, as every payment path does.
+- (Changed while coding, from "capped at what the bill still records": if a bill records LESS than the payment put there it was edited since, and taking even the smaller amount could remove another payment's money. delete-payment now refuses (409) before writing anything; the admin corrects the bill in Recorded Payment Manager. Same for a payment with no ledger entries, or one already reversed.)
+- Every leg of every transaction is reversed (balanced), in one insert, BEFORE the bills are lowered: a retry after a part failure finds the reversal and refuses, so a bill is never lowered twice.
 - A payment that was modified (has children in `payments.parent_payment_id`) or that a modification created is refused with a message: modify-payment writes no invoice, so which bill holds that money cannot be known from the ledger.
 
 ### Fault 3 / 4 - browser writers
@@ -81,7 +82,7 @@ A write-off is a reduction of what a month charges. The bill's balance is comput
 
 ### Fault 6 - family-payment
 
-`owed = max(0, payable - recorded)` with the bill's carry-in, in all three places; a bill with nothing owed is not selected (no zero allocation rows); manual mode puts the whole allocation on the student's bill (any excess becomes credit through the carry) instead of posting more to the ledger than reaches the bill.
+`owed = max(0, payable - recorded)` with the bill's carry-in, in all three places; a bill with nothing owed is not selected (no zero allocation rows); manual mode puts the whole allocation on the student's bill (any excess becomes credit through the carry) instead of posting more to the ledger than reaches the bill. Found while coding and also fixed: a remainder with no `leftoverHandling` was dropped silently (the payment row kept the full amount, the ledger and bills got less), and an allocation for a child with no bill was posted to the ledger only. Both are now refused (400) before anything is written; so is a contribution without consent (it used to be refused only after the allocations were written).
 
 ### Fault 7
 
