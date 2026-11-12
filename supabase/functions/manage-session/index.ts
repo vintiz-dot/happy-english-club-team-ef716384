@@ -2,9 +2,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
 import {
-  BULK_PREVIEW_CAP, bulkCancelChunks, callerClient, corsHeaders, fail, fetchConsequences, guardError,
-  GUARD_NOT_INSTALLED_MESSAGE, isUuid, json, mapDbError, preview, readReason, refreshAndRecord, rpc,
-  studentsAndMonths, type BulkItem, type GuardError,
+  BULK_PREVIEW_CAP, bulkCancelChunks, bulkPreview, callerClient, cleanItems, corsHeaders, fail, fetchConsequences,
+  guardError, isUuid, json, mapDbError, preview, readReason, refreshAndRecord, refreshDone, rpc,
+  studentsAndMonths, type GuardError,
 } from '../_lib/session-guard.ts';
 
 // Cancel, un-cancel, delete and move go through the checked RPCs of
@@ -381,7 +381,8 @@ Deno.serve(async (req) => {
                       refresh_pairs: r?.refresh_pairs ?? [] });
         }
       }
-      if (chunkError?.code === 'guard_not_installed' && done.length === 0) return fail(chunkError);
+      // Nothing went through and the database refused the whole request: say so plainly.
+      if (chunkError && done.length === 0 && refused.length === 0) return fail(chunkError, { not_attempted });
       const tuition = await refreshDone(supabase, asCaller, done);
       await audit(op === 'delete' ? 'session_bulk_hard_delete' : 'session_bulk_cancel', null, {
         batch_id: batchId, count: done.length, ids: done.map((d) => d.id), refused: refused.length,
@@ -392,7 +393,7 @@ Deno.serve(async (req) => {
         done: done.map(({ refresh_pairs: _p, ...d }) => d), refused, not_attempted,
         stopped: chunkError ? { code: chunkError.code, message_key: chunkError.message_key, message: chunkError.message } : null,
         tuition,
-      }, chunkError ? (chunkError.status >= 500 ? 207 : 200) : 200);
+      });
     }
 
     // ------------------------------------------------------------ create
@@ -432,57 +433,3 @@ Deno.serve(async (req) => {
                   message_key: 'sessionGuard.error.unexpected' }, 500);
   }
 });
-
-/** One preview per lesson, split into plain (tier 0, allowed) and the rest. */
-async function bulkPreview(asCaller: any, sessions: any[], op: string) {
-  const plain: any[] = [], needs_ack: any[] = [], refused: any[] = [], preview_failed: any[] = [];
-  for (const s of sessions) {
-    const p = await preview(asCaller, s.id, op);
-    if ('error' in p) {
-      if (p.error.code === 'guard_not_installed' || p.error.code === 'forbidden') return { error: p.error };
-      preview_failed.push({ id: s.id, code: p.error.code, message_key: p.error.message_key });
-      continue;
-    }
-    const v = p.data;
-    const row = { id: s.id, date: s.date, start_time: s.start_time, end_time: s.end_time, status: s.status,
-                  class_id: s.class_id, teacher_id: s.teacher_id, tier: v.tier, token: v.token };
-    if (!v.allowed) refused.push({ ...row, refuse_code: v.refuse_code });
-    else if (v.tier === 0) plain.push(row);
-    else needs_ack.push({ ...row, level: v.level, settled_any: v.settled_any, requires: v.requires,
-                          review_required: v.review_required, evidence: v.evidence, affected: v.affected,
-                          invoices_before: v.invoices_before });
-  }
-  return { plain, needs_ack, refused, preview_failed };
-}
-
-/** Items from the client: id + token, booleans only (22P02 aborts a chunk), de-duplicated. */
-function cleanItems(raw: unknown): { items: BulkItem[] } | { error: GuardError } {
-  if (!Array.isArray(raw) || raw.length === 0) return { error: guardError(400, 'bad_items', 'items is required.') };
-  if (raw.length > BULK_PREVIEW_CAP) return { error: guardError(413, 'too_many', `At most ${BULK_PREVIEW_CAP} lessons.`) };
-  const byId = new Map<string, BulkItem>();
-  for (const it of raw as any[]) {
-    if (!isUuid(it?.id) || typeof it?.token !== 'string') return { error: guardError(400, 'bad_items', 'Every item needs an id and a token.') };
-    const item: BulkItem = { id: it.id, token: it.token };
-    if (it.confirm === true) item.confirm = true;
-    if (typeof it.reason === 'string' && it.reason.trim() !== '') item.reason = it.reason.replace(/\s+/g, ' ').trim();
-    if (typeof it.correction_reason === 'string' && it.correction_reason.trim() !== '') {
-      item.correction_reason = it.correction_reason.replace(/\s+/g, ' ').trim();
-    }
-    byId.set(it.id, item);
-  }
-  return { items: [...byId.values()] };
-}
-
-/** Refresh every done lesson's pairs, one event per override, continuing past failures. */
-async function refreshDone(service: any, asCaller: any, done: any[]) {
-  const per: any[] = [];
-  for (const d of done) {
-    const t = await refreshAndRecord(service, asCaller, d.override_id, d.refresh_pairs ?? []);
-    per.push({ id: d.id, override_id: d.override_id, status: t.status, failed: t.failed, event_recorded: t.event_recorded });
-  }
-  const failed = per.filter((p) => p.status === 'failed');
-  return { status: per.length === 0 || per.every((p) => p.status === 'none') ? 'none' : failed.length ? 'failed' : 'refreshed',
-           per_session: per, failed };
-}
-
-export { GUARD_NOT_INSTALLED_MESSAGE };
