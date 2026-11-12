@@ -37,10 +37,21 @@
  *   rec.on("recovered", ...)  rec.on("backup", ...)
  *
  *   // Other calls:
- *   rec.enableLocalBackup()          // from a click: also write every chunk to a folder
  *   rec.discardLocal(id, "DISCARD")  // typed confirmation, abandoned/complete only
  *   rec.swapMeasurement()            // the "roles look swapped" numbers, for the UI to ask
- *   rec.uploadProgress(id)
+ *   rec.uploadProgress(id)           // + stopPending / stopRefused / belowFloor / heldInMemory
+ *   rec.enableLocalBackup()          // REMOVED (C2 review M5): a no-op that answers false
+ *
+ *   // Added by the C2 revision (all additive):
+ *   //   state "stalled"   capturing but NO audio arrives: show "NOT RECORDING", never the red dot
+ *   //   state "error"     the server refused to start; the audio so far is kept on the laptop
+ *   //   health "capture_stalled" / "capture_resumed" (gapMs)
+ *   //   error codes capture_stalled, server_unavailable, mic_silent, start_delayed, start_failed,
+ *   //               stop_pending, not_durable, local_store_failed
+ *   //   rec.on("stuck", ({ recordings }) => ...)   own unsent audio older than 14 days (never auto-deleted)
+ *   //   rec.on("recovered", ({ recordingIds, othersPending }) => ...)  another account's unsent audio here
+ *   //   rec.othersPending()  rec.heldAudio()  rec.durable
+ *   //   await rec.signOut()  -> { unsentRecordings, unsentBytes }: frees confirmed audio, keeps the rest, disposes
  *
  *   Devices (the setup wizard): listInputs(), realInputs(), resolveProfile(),
  *   hintRole(), pairIsDistinct(), zeroLagCorrelation(), openBoth(), saveProfile(),
@@ -51,7 +62,14 @@
  *   - The supabase client is INJECTED and is the teacher's own session: no
  *     service role, RLS is the boundary. No signed URLs are made.
  *   - Register -> upload -> confirm per chunk; a chunk's local bytes are deleted
- *     only when the server confirmed it AND the recording reached `complete`.
+ *     only when the server confirmed it AND the recording reached `complete`
+ *     (then the whole local copy goes) - or on sign-out, or when the browser
+ *     runs out of space; audio the server does not have is never deleted
+ *     without the typed Discard.
+ *   - Each local recording belongs to the user who recorded it; another
+ *     user's engine never touches it.
+ *   - Lesson timing runs on the server's clock carried by the monotonic
+ *     clock, never on the laptop's wall clock.
  *   - Never falls back to the default microphone: exact deviceIds, or no arming.
  *   - Processing flags are requested OFF and READ BACK; what was not honoured is
  *     reported and stored with the track.
