@@ -52,10 +52,10 @@ function sm2(card: SrsCard, quality: number) {
 }
 
 const RATINGS = [
-  { label: "Again", quality: 2, className: "border-red-500/40 text-red-500 hover:bg-red-500/10" },
-  { label: "Hard", quality: 3, className: "border-amber-500/40 text-amber-600 hover:bg-amber-500/10" },
-  { label: "Good", quality: 4, className: "border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10" },
-  { label: "Easy", quality: 5, className: "border-blue-500/40 text-blue-600 hover:bg-blue-500/10" },
+  { label: "Again", quality: 2, className: "border-hec-danger/30 text-hec-danger hover:bg-hec-danger-tint" },
+  { label: "Hard", quality: 3, className: "border-hec-warn/30 text-hec-warn hover:bg-hec-warn-tint" },
+  { label: "Good", quality: 4, className: "border-hec-leaf/30 text-hec-leaf hover:bg-hec-leaf-tint" },
+  { label: "Easy", quality: 5, className: "border-hec-line-strong text-hec-ink hover:bg-hec-sunken" },
 ] as const;
 
 export function SrsReviewDeck() {
@@ -127,14 +127,14 @@ export function SrsReviewDeck() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="h-6 w-6 animate-spin text-hec-ink-soft" />
       </div>
     );
   }
 
   if (!studentId) {
     return (
-      <div className="text-center py-16 text-sm text-muted-foreground">
+      <div className="text-center py-16 text-hec-small text-hec-ink-soft">
         Your account isn't linked to a student profile yet — ask your teacher.
       </div>
     );
@@ -143,9 +143,9 @@ export function SrsReviewDeck() {
   if (!current) {
     return (
       <div className="text-center py-16 space-y-3">
-        <PartyPopper className="h-10 w-10 mx-auto text-amber-400" />
-        <h3 className="text-lg font-bold">All caught up!</h3>
-        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+        <PartyPopper className="h-10 w-10 mx-auto text-hec-brass" />
+        <h3 className="font-display text-hec-h2 font-medium text-hec-ink">All caught up!</h3>
+        <p className="text-hec-small text-hec-ink-soft max-w-sm mx-auto">
           {doneCount > 0
             ? `You reviewed ${doneCount} card${doneCount === 1 ? "" : "s"} today. New cards appear here automatically when your teacher flags something to practice.`
             : "No cards due. Cards are created automatically from things flagged in class — check back after your next lesson!"}
@@ -157,8 +157,8 @@ export function SrsReviewDeck() {
   return (
     <div className="max-w-xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold flex items-center gap-2">
-          <Layers className="h-4 w-4 text-violet-500" />Fix-It Deck
+        <p className="text-hec-small font-semibold text-hec-ink flex items-center gap-2">
+          <Layers className="h-4 w-4 text-hec-brass" />Fix-It Deck
         </p>
         <Badge variant="secondary">{progressLabel}</Badge>
       </div>
@@ -167,20 +167,20 @@ export function SrsReviewDeck() {
       <AnimatePresence mode="wait">
         <motion.div
           key={current.id + (flipped ? "-b" : "-f")}
-          initial={{ rotateY: 90, opacity: 0 }}
-          animate={{ rotateY: 0, opacity: 1 }}
-          exit={{ rotateY: -90, opacity: 0 }}
-          transition={{ duration: 0.18 }}
-          className="rounded-3xl border-2 bg-card shadow-md min-h-[220px] p-6 flex flex-col cursor-pointer select-none"
+          initial={{ y: 8, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 0, opacity: 0 }}
+          transition={{ duration: 0.14 }}
+          className="rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1 min-h-[220px] p-6 flex flex-col cursor-pointer select-none"
           onClick={() => !flipped && setFlipped(true)}
         >
           <div className="flex items-center justify-between mb-3">
-            <Badge variant="outline" className="text-[10px] uppercase">
+            <Badge variant="outline" className="text-hec-caption uppercase tracking-wider">
               {flipped ? "Answer" : current.source === "vocab" ? "Vocabulary" : "Fix the error"}
             </Badge>
             {!flipped && current.hint && (
               <Button
-                variant="ghost" size="sm" className="h-7 gap-1 text-xs text-amber-600"
+                variant="ghost" size="sm" className="min-h-hec-target gap-1 text-hec-caption text-hec-warn"
                 onClick={(e) => { e.stopPropagation(); setShowHint((h) => !h); }}
               >
                 <Lightbulb className="h-3.5 w-3.5" />Hint
@@ -189,16 +189,16 @@ export function SrsReviewDeck() {
           </div>
 
           <div className="flex-1 flex items-center justify-center text-center">
-            <p className={`whitespace-pre-line ${flipped ? "text-emerald-600 font-semibold text-lg" : "text-lg font-medium"}`}>
+            <p className={`whitespace-pre-line text-hec-h3 ${flipped ? "text-hec-leaf font-semibold" : "text-hec-ink font-medium"}`}>
               {flipped ? current.back : current.front}
             </p>
           </div>
 
           {!flipped && showHint && current.hint && (
-            <p className="text-xs text-amber-600 text-center mt-2">{current.hint}</p>
+            <p className="text-hec-caption text-hec-warn text-center mt-2">{current.hint}</p>
           )}
           {!flipped && (
-            <p className="text-[11px] text-muted-foreground text-center mt-3">tap to reveal</p>
+            <p className="text-hec-caption text-hec-ink-soft text-center mt-3">tap to reveal</p>
           )}
         </motion.div>
       </AnimatePresence>
@@ -211,7 +211,7 @@ export function SrsReviewDeck() {
               key={r.label}
               variant="outline"
               disabled={reviewMutation.isPending}
-              className={`rounded-xl font-semibold ${r.className}`}
+              className={`min-h-hec-target rounded-hec-md px-2 font-semibold ${r.className}`}
               onClick={() => reviewMutation.mutate({ card: current, quality: r.quality })}
             >
               {r.label}
@@ -219,7 +219,7 @@ export function SrsReviewDeck() {
           ))}
         </div>
       ) : (
-        <Button variant="outline" className="w-full rounded-xl gap-2" onClick={() => setFlipped(true)}>
+        <Button variant="outline" className="min-h-hec-target w-full rounded-hec-md gap-2" onClick={() => setFlipped(true)}>
           <RotateCcw className="h-4 w-4" />Show answer
         </Button>
       )}

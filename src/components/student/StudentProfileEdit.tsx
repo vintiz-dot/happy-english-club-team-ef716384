@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { ProfilePictureUpload } from "./ProfilePictureUpload";
 import { AvatarPicker } from "./AvatarPicker";
+import { useIvory } from "@/hooks/useIvory";
 
 interface StudentProfileEditProps {
   studentId: string;
@@ -16,6 +17,11 @@ interface StudentProfileEditProps {
 
 export function StudentProfileEdit({ studentId }: StudentProfileEditProps) {
   const queryClient = useQueryClient();
+  // Also rendered on the staff student page (not migrated yet): old classes there.
+  const ivory = useIvory();
+  const cardCls = ivory ? undefined : "glass-lg border-primary/20";
+  const titleCls = ivory ? "flex items-center gap-2" : "flex items-center gap-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent";
+  const iconCls = ivory ? "h-5 w-5 text-hec-ink-soft" : "h-5 w-5 text-primary";
 
   const { data: student, isLoading } = useQuery({
     queryKey: ["student-profile-edit", studentId],
@@ -95,10 +101,10 @@ export function StudentProfileEdit({ studentId }: StudentProfileEditProps) {
   return (
     <div className="space-y-6">
       {/* Avatar Selection Section */}
-      <Card className="glass-lg border-primary/20">
+      <Card className={cardCls}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            <User className="h-5 w-5 text-primary" />
+          <CardTitle className={titleCls}>
+            <User className={iconCls} />
             Choose Your Avatar
           </CardTitle>
           <CardDescription>Select from standard avatars or unlock premium ones by ranking top-3</CardDescription>
@@ -132,10 +138,10 @@ export function StudentProfileEdit({ studentId }: StudentProfileEditProps) {
       </Card>
 
       {/* Profile Picture Upload (Custom) */}
-      <Card className="glass-lg border-primary/20">
+      <Card className={cardCls}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            <User className="h-5 w-5 text-primary" />
+          <CardTitle className={titleCls}>
+            <User className={iconCls} />
             Custom Profile Picture
           </CardTitle>
           <CardDescription>Or upload your own custom picture</CardDescription>
@@ -150,10 +156,10 @@ export function StudentProfileEdit({ studentId }: StudentProfileEditProps) {
       </Card>
 
       {/* Status Message Section */}
-      <Card className="glass-lg border-primary/20">
+      <Card className={cardCls}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            <MessageCircle className="h-5 w-5 text-primary" />
+          <CardTitle className={titleCls}>
+            <MessageCircle className={iconCls} />
             Status Message
           </CardTitle>
           <CardDescription>Set a fun status for your profile! (max 50 characters)</CardDescription>
@@ -170,16 +176,16 @@ export function StudentProfileEdit({ studentId }: StudentProfileEditProps) {
               placeholder="On a 🔥 streak!"
               maxLength={50}
             />
-            <p className="text-xs text-muted-foreground text-right">{formData.status_message.length}/50</p>
+            <p className={ivory ? "text-hec-caption text-hec-ink-soft text-right" : "text-xs text-muted-foreground text-right"}>{formData.status_message.length}/50</p>
           </div>
         </CardContent>
       </Card>
 
       {/* Contact Information Section */}
-      <Card className="glass-lg border-primary/20">
+      <Card className={cardCls}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            <Mail className="h-5 w-5 text-primary" />
+          <CardTitle className={titleCls}>
+            <Mail className={iconCls} />
             Contact Information
           </CardTitle>
           <CardDescription>Update your contact details</CardDescription>

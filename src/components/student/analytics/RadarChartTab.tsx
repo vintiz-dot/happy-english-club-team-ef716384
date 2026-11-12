@@ -14,6 +14,7 @@ import {
   Tooltip,
 } from "recharts";
 import { dayjs } from "@/lib/date";
+import { useIvory } from "@/hooks/useIvory";
 
 const SKILL_COLORS: Record<string, string> = {
   reading: "hsl(210, 100%, 60%)",
@@ -50,6 +51,13 @@ const SKILL_ICONS: Record<string, React.ReactNode> = {
 };
 
 export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartTabProps) {
+  // Opened from the teacher/admin class board too (not migrated yet): old classes there.
+  // Series colours (skills, class best/avg/you) are chart palette and stay in both.
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
+  const INK = "hsl(var(--hec-ink))";
+  const INK_SOFT = "hsl(var(--hec-ink-soft))";
+  const LINE = "hsl(var(--hec-line-strong))";
   // Determine current and previous month boundaries
   const currentMonthStart = selectedMonth 
     ? dayjs(selectedMonth).startOf('month').format('YYYY-MM-DD')
@@ -265,16 +273,18 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-card/50 rounded-xl border border-border/50 p-4"
+            className={iv("rounded-hec-lg border border-hec-line bg-hec-surface p-4", "bg-card/50 rounded-xl border border-border/50 p-4")}
           >
             <div className="flex items-center gap-2 mb-3">
-              <BarChart3 className="h-5 w-5 text-primary" />
-              <span className="text-sm font-semibold text-foreground">Skill Comparison</span>
+              <BarChart3 className={iv("h-5 w-5 text-hec-brass", "h-5 w-5 text-primary")} />
+              <span className={iv("text-hec-small font-semibold text-hec-ink", "text-sm font-semibold text-foreground")}>Skill Comparison</span>
             </div>
             
-            <div className={`relative h-64 bg-gradient-to-br from-slate-900/80 to-blue-950/60 rounded-lg p-2 overflow-hidden ${hasLeaderSkills ? 'ring-2 ring-yellow-500/50' : ''}`}>
+            <div className={ivory
+              ? `relative h-64 rounded-hec-md bg-hec-sunken p-2 overflow-hidden ${hasLeaderSkills ? 'ring-1 ring-hec-brass/40' : ''}`
+              : `relative h-64 bg-gradient-to-br from-slate-900/80 to-blue-950/60 rounded-lg p-2 overflow-hidden ${hasLeaderSkills ? 'ring-2 ring-yellow-500/50' : ''}`}>
               {/* Animated glow overlay when student leads */}
-              {hasLeaderSkills && (
+              {!ivory && hasLeaderSkills && (
                 <motion.div
                   className="absolute inset-0 pointer-events-none"
                   initial={{ opacity: 0 }}
@@ -287,7 +297,7 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
               )}
               
               {/* Pulsing highlight on strongest skill direction */}
-              {strongestSkill && hasData && (
+              {!ivory && strongestSkill && hasData && (
                 <motion.div
                   className="absolute inset-0 pointer-events-none"
                   initial={{ opacity: 0 }}
@@ -302,23 +312,23 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart data={chartData} cx="50%" cy="50%" outerRadius="75%">
                   <PolarGrid 
-                    stroke="#8B5CF6" 
-                    strokeOpacity={0.6} 
+                    stroke={ivory ? LINE : "#8B5CF6"}
+                    strokeOpacity={ivory ? 1 : 0.6} 
                     gridType="polygon"
                   />
                   <PolarAngleAxis
                     dataKey="skill"
-                    tick={{ fill: '#F8FAFC', fontSize: 12, fontWeight: 600 }}
-                    tickLine={{ stroke: '#8B5CF6', strokeWidth: 2 }}
-                    axisLine={{ stroke: '#8B5CF6', strokeWidth: 2 }}
+                    tick={{ fill: ivory ? INK : '#F8FAFC', fontSize: ivory ? 13 : 12, fontWeight: 600 }}
+                    tickLine={{ stroke: ivory ? LINE : '#8B5CF6', strokeWidth: ivory ? 1 : 2 }}
+                    axisLine={{ stroke: ivory ? LINE : '#8B5CF6', strokeWidth: ivory ? 1 : 2 }}
                   />
                   <PolarRadiusAxis
                     angle={30}
                     domain={[0, 'auto']}
-                    tick={{ fontSize: 10, fill: '#A78BFA', fontWeight: 500 }}
+                    tick={{ fontSize: ivory ? 13 : 10, fill: ivory ? INK_SOFT : '#A78BFA', fontWeight: 500 }}
                     tickCount={4}
-                    axisLine={{ stroke: '#A78BFA', strokeWidth: 1.5 }}
-                    stroke="#A78BFA"
+                    axisLine={{ stroke: ivory ? LINE : '#A78BFA', strokeWidth: ivory ? 1 : 1.5 }}
+                    stroke={ivory ? LINE : "#A78BFA"}
                   />
                   
                   {/* Class Best - bright orange */}
@@ -358,23 +368,23 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
                   
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: 'hsl(222, 47%, 11%)',
-                      border: '1px solid #8B5CF6',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      color: '#F8FAFC',
+                      backgroundColor: ivory ? 'hsl(var(--hec-raised))' : 'hsl(222, 47%, 11%)',
+                      border: ivory ? '1px solid hsl(var(--hec-line))' : '1px solid #8B5CF6',
+                      borderRadius: ivory ? '10px' : '8px',
+                      fontSize: ivory ? '13px' : '12px',
+                      color: ivory ? INK : '#F8FAFC',
                     }}
-                    labelStyle={{ fontWeight: 600, marginBottom: 4, color: '#F8FAFC' }}
+                    labelStyle={{ fontWeight: 600, marginBottom: 4, color: ivory ? INK : '#F8FAFC' }}
                   />
                   <Legend
                     wrapperStyle={{ 
-                      fontSize: '12px', 
+                      fontSize: ivory ? '13px' : '12px',
                       paddingTop: '16px'
                     }}
                     iconType="circle"
                     iconSize={10}
                     formatter={(value) => (
-                      <span style={{ color: '#F8FAFC', fontWeight: 500 }}>{value}</span>
+                      <span style={{ color: ivory ? INK : '#F8FAFC', fontWeight: 500 }}>{value}</span>
                     )}
                   />
                 </RadarChart>
@@ -389,12 +399,12 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
                 className="flex items-center justify-center gap-2 mt-2"
               >
                 <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-yellow-500/50 to-amber-500/40 border-2 border-yellow-400 shadow-lg shadow-yellow-500/30"
+                  animate={ivory ? undefined : { scale: [1, 1.1, 1] }}
+                  transition={ivory ? undefined : { duration: 1.5, repeat: Infinity }}
+                  className={iv("flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-hec-brass/40 bg-hec-sunken", "flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-yellow-500/50 to-amber-500/40 border-2 border-yellow-400 shadow-lg shadow-yellow-500/30")}
                 >
-                  <Crown className="h-4 w-4 text-yellow-300" />
-                  <span className="text-sm font-bold text-yellow-200">
+                  <Crown className={iv("h-4 w-4 text-hec-brass", "h-4 w-4 text-yellow-300")} />
+                  <span className={iv("text-hec-small font-semibold text-hec-ink", "text-sm font-bold text-yellow-200")}>
                     Leading in {leaderSkills.length} skill{leaderSkills.length > 1 ? 's' : ''}!
                   </span>
                 </motion.div>
@@ -405,13 +415,13 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
           {/* Skills vs Class Best Header */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-500" />
-              <span className="text-sm font-semibold text-foreground">Skills Breakdown</span>
+              <Trophy className={iv("h-5 w-5 text-hec-brass", "h-5 w-5 text-yellow-500")} />
+              <span className={iv("text-hec-small font-semibold text-hec-ink", "text-sm font-semibold text-foreground")}>Skills Breakdown</span>
             </div>
-            <div className="text-xs text-muted-foreground">
-              Total: <span className="font-bold text-foreground">{studentTotal}</span>
+            <div className={iv("text-hec-caption text-hec-ink-soft tabular-nums", "text-xs text-muted-foreground")}>
+              Total: <span className={iv("font-semibold text-hec-ink", "font-bold text-foreground")}>{studentTotal}</span>
               <span className="mx-1">/</span>
-              <span className="text-yellow-500">{classHighestTotal}</span>
+              <span className={iv("text-hec-ink", "text-yellow-500")}>{classHighestTotal}</span>
             </div>
           </div>
 
@@ -431,10 +441,10 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className={`relative p-4 rounded-xl border transition-all ${
-                    isLeader 
-                      ? "bg-gradient-to-r from-yellow-500/10 to-amber-500/5 border-yellow-500/30" 
-                      : "bg-card/50 border-border/50"
+                  className={`relative p-4 border transition-all ${ivory ? "rounded-hec-lg" : "rounded-xl"} ${
+                    isLeader
+                      ? iv("bg-hec-sunken border-hec-brass/40", "bg-gradient-to-r from-yellow-500/10 to-amber-500/5 border-yellow-500/30")
+                      : iv("bg-hec-surface border-hec-line", "bg-card/50 border-border/50")
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -450,9 +460,9 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-foreground">{SKILL_LABELS[skill]}</span>
+                          <span className={iv("font-semibold text-hec-ink", "font-semibold text-foreground")}>{SKILL_LABELS[skill]}</span>
                           {isLeader && (
-                            <Crown className="h-4 w-4 text-yellow-500" />
+                            <Crown className={iv("h-4 w-4 text-hec-brass", "h-4 w-4 text-yellow-500")} />
                           )}
                           {/* Trend indicator */}
                           {(() => {
@@ -461,44 +471,44 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
                               <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
-                                className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-500/20"
+                                className={iv("flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-hec-leaf-tint", "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-500/20")}
                               >
-                                <TrendingUp className="h-3 w-3 text-green-500" />
-                                <span className="text-[10px] font-bold text-green-500">↑</span>
+                                <TrendingUp className={iv("h-3 w-3 text-hec-leaf", "h-3 w-3 text-green-500")} />
+                                <span className={iv("text-hec-caption font-medium text-hec-leaf", "text-[10px] font-bold text-green-500")}>↑</span>
                               </motion.div>
                             );
                             if (trend === 'down') return (
                               <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
-                                className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-500/20"
+                                className={iv("flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-hec-danger-tint", "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-500/20")}
                               >
-                                <TrendingDown className="h-3 w-3 text-red-500" />
-                                <span className="text-[10px] font-bold text-red-500">↓</span>
+                                <TrendingDown className={iv("h-3 w-3 text-hec-danger", "h-3 w-3 text-red-500")} />
+                                <span className={iv("text-hec-caption font-medium text-hec-danger", "text-[10px] font-bold text-red-500")}>↓</span>
                               </motion.div>
                             );
                             return (
-                              <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-muted/50">
-                                <Minus className="h-3 w-3 text-muted-foreground" />
+                              <div className={iv("flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-hec-sunken", "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-muted/50")}>
+                                <Minus className={iv("h-3 w-3 text-hec-ink-soft", "h-3 w-3 text-muted-foreground")} />
                               </div>
                             );
                           })()}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-lg font-black text-foreground">{score}</span>
-                          <span className="text-xs text-muted-foreground">/ {highest}</span>
+                          <span className={iv("text-hec-h3 font-semibold tabular-nums text-hec-ink", "text-lg font-black text-foreground")}>{score}</span>
+                          <span className={iv("text-hec-caption tabular-nums text-hec-ink-soft", "text-xs text-muted-foreground")}>/ {highest}</span>
                         </div>
                       </div>
                       
                       {/* Progress Bar with Average marker */}
-                      <div className="relative h-2 rounded-full overflow-hidden bg-muted/50">
+                      <div className={iv("relative h-2 rounded-full overflow-hidden bg-hec-sunken", "relative h-2 rounded-full overflow-hidden bg-muted/50")}>
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${Math.min(percentage, 100)}%` }}
                           transition={{ delay: index * 0.05 + 0.2, duration: 0.5, ease: "easeOut" }}
                           className="absolute inset-y-0 left-0 rounded-full"
                           style={{ 
-                            background: isLeader 
+                            background: isLeader && !ivory
                               ? `linear-gradient(90deg, ${SKILL_COLORS[skill]}, hsl(45, 100%, 60%))` 
                               : SKILL_COLORS[skill] 
                           }}
@@ -506,7 +516,7 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
                         {/* Average marker */}
                         {highest > 0 && avg > 0 && (
                           <div 
-                            className="absolute top-0 bottom-0 w-0.5 bg-muted-foreground/60"
+                            className={iv("absolute top-0 bottom-0 w-0.5 bg-hec-ink-soft", "absolute top-0 bottom-0 w-0.5 bg-muted-foreground/60")}
                             style={{ left: `${Math.min((avg / highest) * 100, 100)}%` }}
                             title={`Class avg: ${avg}`}
                           />
@@ -515,15 +525,15 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
                       
                       {/* Stats row */}
                       <div className="flex justify-between mt-1">
-                        <span className={`text-xs font-medium ${
-                          percentage >= 80 ? 'text-green-500' : 
-                          percentage >= 50 ? 'text-yellow-500' : 
-                          'text-muted-foreground'
+                        <span className={`font-medium ${ivory ? "text-hec-caption" : "text-xs"} ${
+                          percentage >= 80 ? iv('text-hec-leaf', 'text-green-500') :
+                          percentage >= 50 ? iv('text-hec-warn', 'text-yellow-500') :
+                          iv('text-hec-ink-soft', 'text-muted-foreground')
                         }`}>
                           {percentage}% of best
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          Avg: {avg} {aboveAvg && score > 0 && <span className="text-green-500">↑</span>}
+                        <span className={iv("text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground")}>
+                          Avg: {avg} {aboveAvg && score > 0 && <span className={iv("text-hec-leaf", "text-green-500")}>↑</span>}
                         </span>
                       </div>
                     </div>
@@ -536,28 +546,28 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
           {/* Legend */}
           <div className="flex flex-wrap items-center justify-center gap-6 pt-3 text-sm">
             <div className="flex items-center gap-1.5">
-              <Crown className="h-4 w-4 text-yellow-400" />
-              <span className="text-foreground font-medium">= Class Leader</span>
+              <Crown className={iv("h-4 w-4 text-hec-brass", "h-4 w-4 text-yellow-400")} />
+              <span className={iv("text-hec-ink font-medium", "text-foreground font-medium")}>= Class Leader</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-0.5 bg-blue-400" />
-              <span className="text-foreground font-medium">= Class Avg</span>
+              <div className={iv("w-4 h-0.5 bg-hec-ink-soft", "w-4 h-0.5 bg-blue-400")} />
+              <span className={iv("text-hec-ink font-medium", "text-foreground font-medium")}>= Class Avg</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <TrendingUp className="h-4 w-4 text-green-500" />
-              <span className="text-foreground font-medium">= Improving</span>
+              <TrendingUp className={iv("h-4 w-4 text-hec-leaf", "h-4 w-4 text-green-500")} />
+              <span className={iv("text-hec-ink font-medium", "text-foreground font-medium")}>= Improving</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <TrendingDown className="h-4 w-4 text-red-500" />
-              <span className="text-foreground font-medium">= Declining</span>
+              <TrendingDown className={iv("h-4 w-4 text-hec-danger", "h-4 w-4 text-red-500")} />
+              <span className={iv("text-hec-ink font-medium", "text-foreground font-medium")}>= Declining</span>
             </div>
           </div>
         </>
       ) : (
-        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+        <div className={iv("flex flex-col items-center justify-center py-12 text-hec-ink-soft", "flex flex-col items-center justify-center py-12 text-muted-foreground")}>
           <Shield className="h-16 w-16 mb-4 opacity-30" />
-          <p className="text-lg font-medium">No skill data yet</p>
-          <p className="text-sm">Assessments will appear here as your teacher adds them</p>
+          <p className={iv("text-hec-h3 font-medium", "text-lg font-medium")}>No skill data yet</p>
+          <p className={iv("text-hec-small", "text-sm")}>Assessments will appear here as your teacher adds them</p>
         </div>
       )}
     </div>

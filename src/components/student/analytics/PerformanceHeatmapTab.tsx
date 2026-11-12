@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SKILL_ICONS } from "@/lib/skillConfig";
+import { useIvory } from "@/hooks/useIvory";
 
 interface PerformanceHeatmapTabProps {
   studentId: string;
@@ -37,12 +38,17 @@ const SKILL_COLORS: Record<string, string> = {
 
 const RANK_ICONS = [Crown, Medal, Award];
 const RANK_COLORS = ["text-yellow-500", "text-slate-400", "text-amber-600"];
+const RANK_COLORS_IVORY = ["text-hec-brass", "text-hec-ink-soft", "text-hec-ink-soft"];
 
 export function PerformanceHeatmapTab({
   studentId,
   classId,
   selectedMonth,
 }: PerformanceHeatmapTabProps) {
+  // Opened from the teacher/admin class board too (not migrated yet): old classes there.
+  // Skill colours are chart palette and stay in both.
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
   const [compareStudentId, setCompareStudentId] = useState<string | null>(null);
 
@@ -292,7 +298,7 @@ export function PerformanceHeatmapTab({
 
   if (!sessionDates || sessionDates.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
+      <div className={iv("text-center py-8 text-hec-small text-hec-ink-soft", "text-center py-8 text-muted-foreground")}>
         No classes scheduled for {format(monthStart, "MMMM yyyy")}.
       </div>
     );
@@ -303,15 +309,15 @@ export function PerformanceHeatmapTab({
       {/* Header */}
       <div className="text-center">
         <motion.h3 
-          className="text-lg font-bold text-foreground flex items-center justify-center gap-2"
+          className={iv("font-display text-hec-h2 font-medium text-hec-ink flex items-center justify-center gap-2", "text-lg font-bold text-foreground flex items-center justify-center gap-2")}
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <Trophy className="h-5 w-5 text-yellow-500" />
+          <Trophy className={iv("h-5 w-5 text-hec-brass", "h-5 w-5 text-yellow-500")} />
           Skills vs Class Best
-          <Trophy className="h-5 w-5 text-yellow-500" />
+          <Trophy className={iv("h-5 w-5 text-hec-brass", "h-5 w-5 text-yellow-500")} />
         </motion.h3>
-        <p className="text-sm text-muted-foreground">Tap a skill to see details</p>
+        <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>Tap a skill to see details</p>
       </div>
 
       {/* Compare Dropdown */}
@@ -321,9 +327,9 @@ export function PerformanceHeatmapTab({
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        <span className="text-sm text-muted-foreground">Compare with:</span>
+        <span className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>Compare with:</span>
         <Select value={compareStudentId || "_none"} onValueChange={(v) => setCompareStudentId(v === "_none" ? null : v)}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className={iv("w-48 max-w-full min-h-hec-target", "w-48")}>
             <SelectValue placeholder="Select classmate" />
           </SelectTrigger>
           <SelectContent>
@@ -345,21 +351,21 @@ export function PerformanceHeatmapTab({
               onOpenChange={(open) => setExpandedSkill(open ? skill.skill : null)}
             >
               <motion.div
-                initial={{ opacity: 0, x: -30, scale: 0.95 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 30, scale: 0.95 }}
-                transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 25 }}
-                whileHover={{ scale: 1.01, boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}
-                className="bg-card rounded-xl border border-border/50 overflow-hidden shadow-sm"
+                initial={ivory ? { opacity: 0, y: 8 } : { opacity: 0, x: -30, scale: 0.95 }}
+                animate={ivory ? { opacity: 1, y: 0 } : { opacity: 1, x: 0, scale: 1 }}
+                exit={ivory ? { opacity: 0 } : { opacity: 0, x: 30, scale: 0.95 }}
+                transition={ivory ? { delay: index * 0.04, duration: 0.24 } : { delay: index * 0.08, type: "spring", stiffness: 300, damping: 25 }}
+                whileHover={ivory ? undefined : { scale: 1.01, boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}
+                className={iv("rounded-hec-lg border border-hec-line bg-hec-surface overflow-hidden shadow-hec-1", "bg-card rounded-xl border border-border/50 overflow-hidden shadow-sm")}
               >
-                <CollapsibleTrigger className="w-full p-4 hover:bg-muted/30 transition-colors cursor-pointer">
+                <CollapsibleTrigger className={iv("w-full p-4 min-h-hec-target hover:bg-hec-sunken transition-colors duration-hec-1 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring", "w-full p-4 hover:bg-muted/30 transition-colors cursor-pointer")}>
                   <div className="flex items-center gap-3">
                     {/* Skill Icon */}
                     <motion.div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center shadow-md shrink-0"
-                      style={{ backgroundColor: `${skill.color}20`, border: `2px solid ${skill.color}` }}
-                      whileHover={{ rotate: 5, scale: 1.1 }}
-                      transition={{ type: "spring", stiffness: 400 }}
+                      className={iv("w-11 h-11 rounded-hec-md flex items-center justify-center shrink-0", "w-11 h-11 rounded-xl flex items-center justify-center shadow-md shrink-0")}
+                      style={{ backgroundColor: `${skill.color}20`, border: `${ivory ? 1 : 2}px solid ${skill.color}` }}
+                      whileHover={ivory ? undefined : { rotate: 5, scale: 1.1 }}
+                      transition={ivory ? undefined : { type: "spring", stiffness: 400 }}
                     >
                       {skill.Icon && <skill.Icon className="h-5 w-5" style={{ color: skill.color }} />}
                     </motion.div>
@@ -367,9 +373,9 @@ export function PerformanceHeatmapTab({
                     {/* Skill Info */}
                     <div className="flex-1 min-w-0 text-left">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-foreground">{skill.label}</span>
+                        <span className={iv("font-semibold text-hec-ink", "font-bold text-foreground")}>{skill.label}</span>
                         {skill.isLeader && (
-                          <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/50 text-xs px-1.5 py-0">
+                          <Badge className={iv("border-hec-brass/40 bg-hec-sunken text-hec-brass text-hec-caption px-1.5 py-0", "bg-yellow-500/20 text-yellow-500 border-yellow-500/50 text-xs px-1.5 py-0")}>
                             <Trophy className="h-3 w-3 mr-0.5" /> Leader
                           </Badge>
                         )}
@@ -379,7 +385,7 @@ export function PerformanceHeatmapTab({
                             animate={{ scale: 1 }}
                             transition={{ type: "spring", delay: index * 0.08 + 0.3 }}
                           >
-                            <Badge className="bg-green-500/20 text-green-500 border-green-500/50 text-xs px-1.5 py-0">
+                            <Badge className={iv("border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf text-hec-caption px-1.5 py-0", "bg-green-500/20 text-green-500 border-green-500/50 text-xs px-1.5 py-0")}>
                               <TrendingUp className="h-3 w-3 mr-0.5" /> +{skill.improvement}%
                             </Badge>
                           </motion.div>
@@ -389,7 +395,7 @@ export function PerformanceHeatmapTab({
                       {/* Progress Bars */}
                       <div className="space-y-1 mt-2">
                         {/* Student's bar */}
-                        <div className="h-2.5 bg-muted/50 rounded-full overflow-hidden">
+                        <div className={iv("h-2.5 bg-hec-sunken rounded-full overflow-hidden", "h-2.5 bg-muted/50 rounded-full overflow-hidden")}>
                           <motion.div
                             className="h-full rounded-full"
                             style={{ backgroundColor: skill.color }}
@@ -400,7 +406,7 @@ export function PerformanceHeatmapTab({
                         </div>
                         {/* Compare student's bar */}
                         {compareStudentId && (
-                          <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+                          <div className={iv("h-2 bg-hec-sunken rounded-full overflow-hidden", "h-2 bg-muted/30 rounded-full overflow-hidden")}>
                             <motion.div
                               className="h-full rounded-full opacity-60"
                               style={{ backgroundColor: skill.color }}
@@ -413,13 +419,13 @@ export function PerformanceHeatmapTab({
                       </div>
 
                       {/* Stats Row */}
-                      <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
-                        <span>You: <span className="font-bold text-foreground">{skill.studentTotal}pts</span></span>
+                      <div className={iv("flex items-center gap-3 mt-1.5 text-hec-caption text-hec-ink-soft flex-wrap", "flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap")}>
+                        <span>You: <span className={iv("font-semibold tabular-nums text-hec-ink", "font-bold text-foreground")}>{skill.studentTotal}pts</span></span>
                         {compareStudentId && (
                           <span className="opacity-70">{compareStudentName.split(" ")[0]}: <span className="font-medium">{skill.compareTotal}pts</span></span>
                         )}
                         <span className="flex items-center gap-1">
-                          <Trophy className="h-3 w-3 text-yellow-500" />
+                          <Trophy className={iv("h-3 w-3 text-hec-brass", "h-3 w-3 text-yellow-500")} />
                           Best: {skill.classBest}pts
                         </span>
                         <span className="flex items-center gap-1">
@@ -429,18 +435,18 @@ export function PerformanceHeatmapTab({
                       </div>
                     </div>
 
-                    <div className="text-muted-foreground shrink-0">
+                    <div className={iv("text-hec-ink-soft shrink-0", "text-muted-foreground shrink-0")}>
                       {expandedSkill === skill.skill ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                     </div>
                   </div>
                 </CollapsibleTrigger>
 
                 <CollapsibleContent>
-                  <div className="px-4 pb-4 pt-2 border-t border-border/50 space-y-4">
+                  <div className={iv("px-4 pb-4 pt-2 border-t border-hec-line space-y-4", "px-4 pb-4 pt-2 border-t border-border/50 space-y-4")}>
                     {/* Top 3 Leaderboard */}
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                        <Crown className="h-4 w-4 text-yellow-500" /> Top 3 in {skill.label}
+                      <h4 className={iv("text-hec-small font-medium text-hec-ink-soft mb-2 flex items-center gap-1", "text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1")}>
+                        <Crown className={iv("h-4 w-4 text-hec-brass", "h-4 w-4 text-yellow-500")} /> Top 3 in {skill.label}
                       </h4>
                       <div className="flex gap-2">
                         {skill.top3.map((s, i) => {
@@ -452,26 +458,26 @@ export function PerformanceHeatmapTab({
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: i * 0.1 }}
-                              className={`flex-1 p-2 rounded-lg text-center ${isMe ? "bg-primary/10 border border-primary/30" : "bg-muted/30"}`}
+                              className={`flex-1 min-w-0 p-2 rounded-hec-md text-center ${isMe ? iv("bg-hec-sunken border border-hec-brass/40", "bg-primary/10 border border-primary/30") : iv("bg-hec-sunken", "bg-muted/30")}`}
                             >
-                              <RankIcon className={`h-5 w-5 mx-auto ${RANK_COLORS[i]}`} />
-                              <p className="text-xs font-medium truncate mt-1">{s.studentName.split(" ")[0]}</p>
-                              <p className="text-xs text-muted-foreground">{s.total}pts</p>
+                              <RankIcon className={`h-5 w-5 mx-auto ${ivory ? RANK_COLORS_IVORY[i] : RANK_COLORS[i]}`} />
+                              <p className={ivory ? "text-hec-caption font-medium text-hec-ink whitespace-normal break-words hyphens-none mt-1" : "text-xs font-medium truncate mt-1"}>{s.studentName.split(" ")[0]}</p>
+                              <p className={iv("text-hec-caption tabular-nums text-hec-ink-soft", "text-xs text-muted-foreground")}>{s.total}pts</p>
                             </motion.div>
                           );
                         })}
                         {skill.top3.length === 0 && (
-                          <p className="text-sm text-muted-foreground text-center w-full py-2">No data yet</p>
+                          <p className={iv("text-hec-small text-hec-ink-soft text-center w-full py-2", "text-sm text-muted-foreground text-center w-full py-2")}>No data yet</p>
                         )}
                       </div>
                     </div>
 
                     {/* Session History */}
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">Session History</h4>
+                      <h4 className={iv("text-hec-small font-medium text-hec-ink-soft mb-2", "text-sm font-medium text-muted-foreground mb-2")}>Session History</h4>
                       <div className="space-y-2">
                         {getSkillSessionDetails(skill.skill).length === 0 ? (
-                          <p className="text-sm text-muted-foreground text-center py-4">No {skill.label.toLowerCase()} activity yet</p>
+                          <p className={iv("text-hec-small text-hec-ink-soft text-center py-4", "text-sm text-muted-foreground text-center py-4")}>No {skill.label.toLowerCase()} activity yet</p>
                         ) : (
                           getSkillSessionDetails(skill.skill).map((detail, i) => (
                             <motion.div
@@ -479,17 +485,17 @@ export function PerformanceHeatmapTab({
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: i * 0.05 }}
-                              className={`flex items-center gap-3 p-2.5 rounded-lg ${detail.isAbsent ? "bg-destructive/10 border border-destructive/30" : "bg-muted/30"}`}
+                              className={`flex items-center gap-3 p-2.5 rounded-hec-md ${detail.isAbsent ? iv("bg-hec-danger-tint border border-hec-danger/30", "bg-destructive/10 border border-destructive/30") : iv("bg-hec-sunken", "bg-muted/30")}`}
                             >
-                              <span className="text-xs text-muted-foreground w-16 shrink-0">{format(new Date(detail.date), "MMM d")}</span>
+                              <span className={iv("text-hec-caption text-hec-ink-soft w-16 shrink-0", "text-xs text-muted-foreground w-16 shrink-0")}>{format(new Date(detail.date), "MMM d")}</span>
                               {detail.isAbsent ? (
-                                <span className="flex items-center gap-1.5 text-destructive text-sm font-medium">
+                                <span className={iv("flex items-center gap-1.5 text-hec-danger text-hec-small font-medium", "flex items-center gap-1.5 text-destructive text-sm font-medium")}>
                                   <AlertCircle className="h-4 w-4" /> Absent
                                 </span>
                               ) : (
                                 <div className="flex-1 min-w-0">
-                                  <span className="font-bold text-sm" style={{ color: skill.color }}>+{detail.points}pts</span>
-                                  {detail.comment && <span className="text-sm text-muted-foreground ml-2 truncate">{detail.comment}</span>}
+                                  <span className={iv("font-semibold text-hec-small tabular-nums", "font-bold text-sm")} style={{ color: skill.color }}>+{detail.points}pts</span>
+                                  {detail.comment && <span className={iv("text-hec-small text-hec-ink-soft ml-2 truncate", "text-sm text-muted-foreground ml-2 truncate")}>{detail.comment}</span>}
                                 </div>
                               )}
                             </motion.div>
@@ -507,7 +513,7 @@ export function PerformanceHeatmapTab({
 
       {/* Footer */}
       <motion.div 
-        className="text-center text-xs text-muted-foreground pt-2"
+        className={iv("text-center text-hec-caption text-hec-ink-soft pt-2", "text-center text-xs text-muted-foreground pt-2")}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}

@@ -205,19 +205,19 @@ export function StudentScheduleCalendar({ studentId }: StudentScheduleCalendarPr
     const isFuture = dayjs(day).isAfter(dayjs(), "day");
     const isToday = day === today;
 
-    if (!info || (!info.sessions.length && !info.homeworks.length)) return "bg-muted/30";
+    if (!info || (!info.sessions.length && !info.homeworks.length)) return "bg-hec-sunken/50";
 
     if (isFuture || isToday) {
-      if (info.homeworks.length > 0) return "bg-warning/20 border-warning/40";
-      return "bg-primary/15 border-primary/30";
+      if (info.homeworks.length > 0) return "bg-hec-warn-tint border-hec-warn/30";
+      return "bg-hec-sunken border-hec-line";
     }
 
     // Past
-    if (info.sessions.length > 0 && info.attendedCount === info.sessions.length) return "bg-success/25 border-success/40";
-    if (info.sessions.length > 0 && info.attendedCount > 0) return "bg-success/15 border-success/30";
-    if (info.sessions.length > 0) return "bg-muted/40";
-    if (info.homeworks.length > 0) return "bg-warning/15 border-warning/30";
-    return "bg-muted/30";
+    if (info.sessions.length > 0 && info.attendedCount === info.sessions.length) return "bg-hec-leaf-tint border-hec-leaf/30";
+    if (info.sessions.length > 0 && info.attendedCount > 0) return "bg-hec-leaf-tint border-hec-leaf/30";
+    if (info.sessions.length > 0) return "bg-hec-sunken";
+    if (info.homeworks.length > 0) return "bg-hec-warn-tint border-hec-warn/30";
+    return "bg-hec-sunken/50";
   };
 
   const getDayEmojis = (day: string) => {
@@ -239,43 +239,31 @@ export function StudentScheduleCalendar({ studentId }: StudentScheduleCalendarPr
       {/* Header: Streak + Month Picker */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
         <div className="flex items-center gap-5">
-          <motion.div
-            className="flex items-center gap-2 glass rounded-2xl px-4 py-2"
-            whileHover={{ scale: 1.05 }}
-          >
-            <Flame className="h-6 w-6 text-destructive" />
+          <div className="flex items-center gap-2 rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1 px-4 py-2">
+            <Flame className="h-6 w-6 text-hec-brass" />
             <div className="text-center">
-              <span className="text-2xl font-black">{data?.streak || 0}</span>
-              <p className="text-[10px] text-muted-foreground leading-tight">streak 🔥</p>
+              <span className="text-2xl font-semibold tabular-nums text-hec-ink">{data?.streak || 0}</span>
+              <p className="text-hec-caption text-hec-ink-soft">streak 🔥</p>
             </div>
-          </motion.div>
-          <motion.div
-            className="flex items-center gap-2 glass rounded-2xl px-4 py-2"
-            whileHover={{ scale: 1.05 }}
-          >
+          </div>
+          <div className="flex items-center gap-2 rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1 px-4 py-2">
             <span className="text-xl">🏆</span>
             <div className="text-center">
-              <span className="text-2xl font-black">{data?.longestStreak || 0}</span>
-              <p className="text-[10px] text-muted-foreground leading-tight">best!</p>
+              <span className="text-2xl font-semibold tabular-nums text-hec-ink">{data?.longestStreak || 0}</span>
+              <p className="text-hec-caption text-hec-ink-soft">best!</p>
             </div>
-          </motion.div>
+          </div>
           {(data?.streak || 0) >= 5 && (
-            <motion.span
-              className="text-2xl"
-              animate={{ scale: [1, 1.3, 1], rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              🔥
-            </motion.span>
+            <span className="text-2xl" aria-hidden>🔥</span>
           )}
         </div>
         <MonthPicker value={selectedMonth} onChange={setSelectedMonth} />
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1.5">
+      <div className="grid grid-cols-7 gap-0">
         {weekDayHeaders.map((d) => (
-          <div key={d} className="text-xs font-bold text-muted-foreground text-center py-1.5">
+          <div key={d} className="text-hec-caption font-medium text-hec-ink-soft text-center py-1.5">
             {d}
           </div>
         ))}
@@ -291,30 +279,28 @@ export function StudentScheduleCalendar({ studentId }: StudentScheduleCalendarPr
           const cellContent = (
             <motion.div
               className={cn(
-                "aspect-square rounded-xl flex flex-col items-center justify-center text-xs transition-all relative border border-transparent min-h-[48px]",
-                !isCurrentMonth && "opacity-20",
+                "aspect-square rounded-hec-md flex flex-col items-center justify-center text-hec-caption transition-colors duration-hec-1 ease-hec relative border border-transparent min-h-hec-target",
                 isCurrentMonth && getDayBg(day),
-                isToday && "ring-2 ring-primary ring-offset-1 ring-offset-background",
-                hasContent && isCurrentMonth && "cursor-pointer hover:shadow-md hover:scale-[1.05]"
+                isToday && "ring-2 ring-hec-brass ring-offset-1 ring-offset-hec-paper",
+                hasContent && isCurrentMonth && "cursor-pointer hover:shadow-hec-2"
               )}
-              whileTap={hasContent && isCurrentMonth ? { scale: 0.95 } : undefined}
+              whileTap={hasContent && isCurrentMonth ? { scale: 0.98 } : undefined}
             >
               {isToday && (
-                <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[8px] font-black text-primary bg-background px-1 rounded">
+                <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-hec-caption font-medium text-hec-brass bg-hec-paper px-1 rounded-hec-sm">
                   TODAY
                 </span>
               )}
               <span className={cn(
-                "font-bold text-sm",
-                isToday && "text-primary",
-                !isCurrentMonth && "text-muted-foreground"
+                "font-semibold text-hec-small tabular-nums",
+                isCurrentMonth ? "text-hec-ink" : "text-hec-ink-faint"
               )}>
                 {djDay.date()}
               </span>
               {emojis && isCurrentMonth && (
                 <div className="flex gap-0.5 mt-0.5">
                   {emojis.slice(0, 3).map((e, i) => (
-                    <span key={i} className="text-[10px] leading-none">{e}</span>
+                    <span key={i} className="text-hec-caption leading-none">{e}</span>
                   ))}
                 </div>
               )}
@@ -322,44 +308,44 @@ export function StudentScheduleCalendar({ studentId }: StudentScheduleCalendarPr
           );
 
           if (!hasContent || !isCurrentMonth) {
-            return <div key={day}>{cellContent}</div>;
+            return <div key={day} className="p-0.5">{cellContent}</div>;
           }
 
           return (
             <Popover key={day}>
               <PopoverTrigger asChild>
-                <button className="focus:outline-none w-full">{cellContent}</button>
+                <button className="w-full rounded-hec-md p-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">{cellContent}</button>
               </PopoverTrigger>
-              <PopoverContent className="w-72 p-4 text-sm space-y-3 pointer-events-auto">
-                <p className="font-black text-base">{djDay.format("ddd, MMM D")} {isToday ? "⭐" : ""}</p>
+              <PopoverContent className="w-72 p-4 text-hec-small space-y-3 pointer-events-auto">
+                <p className="font-display text-hec-h3 font-semibold text-hec-ink">{djDay.format("ddd, MMM D")} {isToday ? "⭐" : ""}</p>
 
                 {/* Sessions */}
                 {info!.sessions.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+                    <p className="text-hec-caption uppercase tracking-wider text-hec-ink-soft">
                       {isFuture ? "📅 Upcoming Classes" : "📋 Classes"}
                     </p>
                     {info!.sessions.map((s, i) => (
-                      <div key={i} className="glass rounded-lg p-2.5 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold">{s.name}</span>
+                      <div key={i} className="rounded-hec-md border border-hec-line bg-hec-raised p-2.5 space-y-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="min-w-0 whitespace-normal break-words font-semibold text-hec-ink">{s.name}</span>
                           {!isFuture && (
                             <span className={cn(
-                              "text-xs px-2 py-0.5 rounded-full font-bold",
-                              s.present ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"
+                              "shrink-0 text-hec-caption px-2 py-0.5 rounded-full font-medium",
+                              s.present ? "bg-hec-leaf-tint text-hec-leaf" : "bg-hec-sunken text-hec-ink-soft"
                             )}>
                               {s.present ? "✅ There!" : "—"}
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 text-hec-caption text-hec-ink-soft">
                           <span>🕐 {s.time} – {s.endTime}</span>
                         </div>
                         {isFuture && (
-                          <div className="flex items-center gap-2 text-xs">
+                          <div className="flex flex-wrap items-center gap-2 text-hec-caption text-hec-ink">
                             <span>👩‍🏫 {s.teacherName}</span>
-                            {isToday && <Badge className="bg-success text-success-foreground text-[10px] px-1.5 py-0">Today!</Badge>}
-                            {djDay.diff(dayjs(), "day") === 1 && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Tomorrow!</Badge>}
+                            {isToday && <Badge className="bg-hec-leaf text-hec-paper text-hec-caption px-1.5 py-0">Today!</Badge>}
+                            {djDay.diff(dayjs(), "day") === 1 && <Badge variant="secondary" className="text-hec-caption px-1.5 py-0">Tomorrow!</Badge>}
                           </div>
                         )}
                       </div>
@@ -370,14 +356,14 @@ export function StudentScheduleCalendar({ studentId }: StudentScheduleCalendarPr
                 {/* XP (past only) */}
                 {!isFuture && info!.totalPoints > 0 && (
                   <div className="space-y-1.5">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">⚡ XP Earned</p>
-                    <div className="glass rounded-lg p-2.5">
-                      <p className="font-black text-warning text-lg">+{info!.totalPoints} XP</p>
+                    <p className="text-hec-caption uppercase tracking-wider text-hec-ink-soft">⚡ XP Earned</p>
+                    <div className="rounded-hec-md border border-hec-line bg-hec-raised p-2.5">
+                      <p className="font-semibold text-hec-brass text-hec-h3 tabular-nums">+{info!.totalPoints} XP</p>
                       <div className="space-y-0.5 mt-1">
                         {info!.points.map((p, i) => (
-                          <div key={i} className="flex justify-between text-xs">
-                            <span className="capitalize text-muted-foreground">{p.category.replace(/_/g, " ")}</span>
-                            <span className="text-success font-bold">+{p.points}</span>
+                          <div key={i} className="flex justify-between text-hec-caption">
+                            <span className="capitalize text-hec-ink-soft">{p.category.replace(/_/g, " ")}</span>
+                            <span className="text-hec-leaf font-medium tabular-nums">+{p.points}</span>
                           </div>
                         ))}
                       </div>
@@ -388,25 +374,25 @@ export function StudentScheduleCalendar({ studentId }: StudentScheduleCalendarPr
                 {/* Homework */}
                 {info!.homeworks.length > 0 && (
                   <div className="space-y-1.5">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">📝 Homework Due</p>
+                    <p className="text-hec-caption uppercase tracking-wider text-hec-ink-soft">📝 Homework Due</p>
                     {info!.homeworks.map((hw) => (
-                      <div key={hw.id} className="glass rounded-lg p-2.5 flex justify-between items-center">
-                        <div>
-                          <p className="font-semibold text-xs">{hw.title}</p>
-                          <p className="text-[10px] text-muted-foreground">{hw.className}</p>
+                      <div key={hw.id} className="rounded-hec-md border border-hec-line bg-hec-raised p-2.5 flex justify-between items-start gap-2">
+                        <div className="min-w-0">
+                          <p className="font-medium text-hec-caption text-hec-ink whitespace-normal break-words">{hw.title}</p>
+                          <p className="text-hec-caption text-hec-ink-soft whitespace-normal break-words">{hw.className}</p>
                         </div>
                         {hw.submission ? (
                           <span className={cn(
-                            "text-[10px] px-2 py-0.5 rounded-full font-bold",
-                            hw.submission.status === "graded" ? "bg-success/20 text-success" :
-                            hw.submission.status === "submitted" ? "bg-primary/20 text-primary" :
-                            "bg-warning/20 text-warning"
+                            "shrink-0 text-hec-caption px-2 py-0.5 rounded-full font-medium",
+                            hw.submission.status === "graded" ? "bg-hec-leaf-tint text-hec-leaf" :
+                            hw.submission.status === "submitted" ? "bg-hec-sunken text-hec-ink" :
+                            "bg-hec-warn-tint text-hec-warn"
                           )}>
                             {hw.submission.status === "graded" ? `✅ ${hw.submission.grade}` :
                              hw.submission.status === "submitted" ? "📤 Sent!" : "⏳ Pending"}
                           </span>
                         ) : (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-destructive/20 text-destructive font-bold">
+                          <span className="shrink-0 text-hec-caption px-2 py-0.5 rounded-full bg-hec-danger-tint text-hec-danger font-medium">
                             {isFuture ? "📝 Do it!" : "❌ Missed"}
                           </span>
                         )}
@@ -419,7 +405,7 @@ export function StudentScheduleCalendar({ studentId }: StudentScheduleCalendarPr
                 {info!.sessions.length === 0 && info!.homeworks.length === 0 && (
                   <div className="text-center py-2">
                     <span className="text-3xl">🎮</span>
-                    <p className="text-xs text-muted-foreground mt-1">No classes! Time to play!</p>
+                    <p className="text-hec-caption text-hec-ink-soft mt-1">No classes! Time to play!</p>
                   </div>
                 )}
               </PopoverContent>
@@ -429,7 +415,7 @@ export function StudentScheduleCalendar({ studentId }: StudentScheduleCalendarPr
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-3 text-xs justify-center">
+      <div className="flex flex-wrap items-center gap-3 text-hec-caption text-hec-ink-soft justify-center">
         <span className="flex items-center gap-1"><span>✅</span> I was there!</span>
         <span className="flex items-center gap-1"><span>📅</span> Class coming!</span>
         <span className="flex items-center gap-1"><span>📝</span> Homework due</span>
@@ -439,21 +425,21 @@ export function StudentScheduleCalendar({ studentId }: StudentScheduleCalendarPr
       {/* XP Trend Chart */}
       {data?.xpTrend && data.xpTrend.some((d) => d.xp > 0) && (
         <div className="space-y-3">
-          <h4 className="text-base font-bold flex items-center gap-2">⚡ XP This Month</h4>
-          <div className="h-48 w-full glass rounded-2xl p-3">
+          <h4 className="text-hec-h3 font-semibold text-hec-ink flex items-center gap-2">⚡ XP This Month</h4>
+          <div className="h-48 w-full rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1 p-3">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.xpTrend} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-hec-line" />
                 <XAxis
                   dataKey="day"
                   tick={{ fontSize: 10 }}
-                  className="fill-muted-foreground"
+                  className="fill-hec-ink-soft"
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis
                   tick={{ fontSize: 10 }}
-                  className="fill-muted-foreground"
+                  className="fill-hec-ink-soft"
                   tickLine={false}
                   axisLine={false}
                   width={30}

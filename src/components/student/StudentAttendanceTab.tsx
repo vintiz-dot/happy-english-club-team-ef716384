@@ -9,8 +9,16 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AttendanceHeatmap } from "./AttendanceHeatmap";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useIvory } from "@/hooks/useIvory";
 
-const getAttendanceColor = (sessionDate: string, sessionStatus: string, attendanceStatus?: string) => {
+// Dot fills per state. The ivory set is for the Ivory design system (tokens carry both themes);
+// the old set stays for staff screens that have not been migrated yet (StudentDetail).
+const DOT = {
+  old: { present: "bg-green-500", absent: "bg-red-500", excused: "bg-gray-500", canceled: "bg-amber-500", holiday: "bg-slate-500", none: "bg-muted", onFill: "text-white" },
+  ivory: { present: "bg-hec-leaf", absent: "bg-hec-danger-fill", excused: "bg-hec-ink-soft", canceled: "bg-hec-warn", holiday: "bg-hec-ink-faint", none: "bg-hec-sunken", onFill: "text-hec-paper" },
+};
+
+const getAttendanceColor = (sessionDate: string, sessionStatus: string, attendanceStatus: string | undefined, c: typeof DOT.old) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const sessDate = new Date(sessionDate);
@@ -18,22 +26,24 @@ const getAttendanceColor = (sessionDate: string, sessionStatus: string, attendan
   
   // Future dates always show as Scheduled (muted)
   if (sessDate > today) {
-    return 'bg-muted';
+    return c.none;
   }
   
   // Past/today dates: check status
-  if (sessionStatus === 'Canceled') return 'bg-amber-500';
-  if (sessionStatus === 'Holiday') return 'bg-slate-500';
+  if (sessionStatus === 'Canceled') return c.canceled;
+  if (sessionStatus === 'Holiday') return c.holiday;
   
   // For Held or Scheduled sessions in the past, show attendance colors
-  if (attendanceStatus === 'Present') return 'bg-green-500';
-  if (attendanceStatus === 'Absent') return 'bg-red-500';
-  if (attendanceStatus === 'Excused') return 'bg-gray-500';
+  if (attendanceStatus === 'Present') return c.present;
+  if (attendanceStatus === 'Absent') return c.absent;
+  if (attendanceStatus === 'Excused') return c.excused;
   
-  return 'bg-muted';
+  return c.none;
 };
 
 export function StudentAttendanceTab({ studentId }: { studentId: string }) {
+  const ivory = useIvory();
+  const dot = ivory ? DOT.ivory : DOT.old;
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
 
   const { data: sessions, isLoading } = useQuery({
@@ -142,27 +152,27 @@ export function StudentAttendanceTab({ studentId }: { studentId: string }) {
         <CardContent>
           <div className="flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-green-500"></div>
+              <div className={cn("w-4 h-4 rounded-full", dot.present)}></div>
               <span>Present</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-red-500"></div>
+              <div className={cn("w-4 h-4 rounded-full", dot.absent)}></div>
               <span>Absent</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-gray-500"></div>
+              <div className={cn("w-4 h-4 rounded-full", dot.excused)}></div>
               <span>Excused</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-amber-500"></div>
+              <div className={cn("w-4 h-4 rounded-full", dot.canceled)}></div>
               <span>Canceled</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-slate-500"></div>
+              <div className={cn("w-4 h-4 rounded-full", dot.holiday)}></div>
               <span>Holiday</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-muted"></div>
+              <div className={cn("w-4 h-4 rounded-full", dot.none)}></div>
               <span>Scheduled (future)</span>
             </div>
           </div>
@@ -201,11 +211,13 @@ export function StudentAttendanceTab({ studentId }: { studentId: string }) {
                         key={session.id}
                         variant="outline"
                         className={cn(
-                          "h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium text-white",
+                          "h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium",
+                          dot.onFill,
                           getAttendanceColor(
                             session.date,
                             session.status,
-                            session.attendance?.status
+                            session.attendance?.status,
+                            dot
                           )
                         )}
                         title={`${session.class?.name} - ${session.attendance?.status || 'Scheduled'}`}
