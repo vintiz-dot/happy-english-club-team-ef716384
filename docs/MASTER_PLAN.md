@@ -152,11 +152,11 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 | Stream | Units | Done | What is done |
 |---|---|---|---|
 | D money integrity | 18.5 | 12.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
-| A overhaul | 12.0 | 8.9 | A0, A1, A2.1, A2.2 (shipped), A2.3, A3.1-A3.4, A4.1, A4.2, A4.5 merged; release 1 being gated. Left: A3.5-A3.7, A4.3, A4.4, rollout, A5 |
+| A overhaul | 12.0 | 9.4 | A0, A1, A2.1-A2.3, A3.1-A3.4, A4.5 SHIPPED to main (release 1, dbfe3cc); A4.1, A4.2 merged; rollout running. Left: A3.5-A3.7, A4.3, A4.4, rollout batches, A5 |
 | B lesson monitor evaluation | 10.5 | 4.7 | vendor research, audio prep, harness, vendor proxy live, B1 batch runner + scoring built (owner batch run pending). Left: B1 results, B2, B2b, B3, report |
 | C class recorder | 8.0 | 2.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **28.1** | **55%** |
+| **Total** | **51.0** | **28.6** | **56%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -275,3 +275,9 @@ Log: 2026-11-12 - 55% (D3 review passed; D release being assembled).
 - D RELEASE: a sonnet agent assembles migrations + functions + dialogs on top of origin/main (leak check against A/C/B/design work), runs tsc, the full pgtest run and bun tests, and writes a catalog FINGERPRINT (md5 of every function body, triggers, policies, grants) so that after the conductor applies the migrations through the Supabase connection the live database can be proven identical to the repo text - the connection re-types the SQL, so this check is the guard against a silent alteration. Brief: docs/evidence/D-release-brief.md. Then: apply 20261112090000 -> deploy both functions -> apply 20261112091000 -> push.
 
 - D-12 (2026-11-12, owner, verbatim): "Yes, roll out". The design checkpoint is approved: the new design system rolls out to the other screens, and the design work may ship to main as each batch passes its gates. Kept: the three display boards (Star Board, High Scores, Night League) stay themed canvases; money screens are restyled by token only with a figure-equality check per screen; D's cancellation dialogs are restyled only after the D release is live. The five points the conductor raised on the dashboard (level title shown twice, greeting by family name, the assistant button over the hero, "Home" vs "Dashboard" tab label, the young scale from date of birth) are fixed in the first rollout batch; the young-scale rule stays as built unless the owner says otherwise.
+Log: 2026-11-12 - 56% (A release 1 shipped).
+
+- 2026-11-12 SHIPPED: A RELEASE 1 pushed to main as dbfe3cc (A3.1, A3.2, A3.3, A3.4, A4.5, A2.3 on top of 78659cb; sonnet release agent, conductor re-checked the path list before pushing). Leak check: one file rebuilt (ProfileShareCard.tsx carried a restyle commit; rebuilt from main + the one lazy-import line). Gates on the release branch: tsc exit 0; bun tests 41 pass / 0 fail; build ok.
+  BEFORE -> AFTER: entry JS gzip 216.3 -> 163.4 KiB; Layout chunk 391.9 -> 48.2 KiB; initial CSS 44.3 -> 41.1 KiB; requests parent view 78 -> 19, student dashboard 33 -> 28, admin schedule 16 -> 13; horizontal overflow at 375: 1 screen -> 0; teacher regression script 28 PASS / 70 FAIL -> 127 PASS / 1 FAIL (the 1 was a page-load timeout under load; that scenario alone re-ran 5/0).
+  NOT MET or NOT JUDGED: total JS across all chunks rose 1474.7 -> 1521.3 KiB (+3.2%, accepted: code moved into lazy chunks); axe counts unchanged (the accessibility fixes are in the design rollout, not this release); TIMINGS NOT JUDGED - the machine was shared by many agents and first loads ran 2-8x slower, so the "no screen slower" gate needs a quiet re-run; `: any` count 749 -> 750 (one in useShellQueries.ts:39).
+  Not verified on the live site: a homework PDF, a profile share image and a tuition bulk PDF (each needs one click); the real flipbook provider inside the frame.
