@@ -172,6 +172,44 @@ def test_ident_cli_fixture(capsys):
     assert out["recommendation"]["threshold"] == pytest.approx(0.8)
 
 
+def test_wilson_interval():
+    assert score.wilson_interval(0, 0) is None
+    lo, hi = score.wilson_interval(0, 300)
+    assert lo == 0.0 and hi == pytest.approx(score.wilson_upper(0, 300)) and hi < 0.0127
+    lo, hi = score.wilson_interval(50, 100)
+    assert lo < 0.5 < hi and hi - 0.5 == pytest.approx(0.5 - lo)
+    r = score.ident_at(_turns(), 0.7)
+    assert r["accuracy_ci95"][0] < r["accuracy"] < r["accuracy_ci95"][1]
+
+
+def test_recommend_split_open_set_not_diluted():
+    # 400 easy closed-set turns + 20 open-set turns, 2 of which score 0.6:
+    # pooled, 2/420 = 0.5 % passes a 1 % target at T=0.6; split, the open set
+    # alone (2/20 = 10 %) forces T above 0.6.
+    T = [Turn(f"g{i}", "S01", "S01", 0.9, True) for i in range(400)]
+    T += [Turn(f"o{i}", "S99", "S02", 0.2, False) for i in range(18)]
+    T += [Turn("oa", "S99", "S02", 0.6, False), Turn("ob", "S98", "S03", 0.6, False)]
+    pooled = score.recommend(T, 0.01)
+    split = score.recommend_split(T, 0.01)
+    assert split["threshold"] > 0.6
+    assert split["observed_open"]["open_set_accepts"] == 0
+    assert split["evidence"] == "insufficient"   # 20 open-set turns cannot show 1 %
+    assert pooled["threshold"] <= split["threshold"]
+    assert score.recommend_split([Turn("g", "S01", "S01", 0.9, True)], 0.01)["open"] is None
+
+
+def test_ident_cli_by_group(tmp_path, capsys):
+    p = tmp_path / "g.csv"
+    p.write_text("turn_id,true_code,pred_code,score,enrolled,group\n"
+                 "a,S01,S01,0.9,1,short\nb,S01,S02,0.8,1,short\nc,S01,S01,0.9,1,long\n"
+                 "d,S09,S01,0.3,0,long\n", encoding="utf-8")
+    score.main(["ident", "--table", str(p), "--thresholds", "0.5", "--by-group"])
+    out = json.loads(capsys.readouterr().out)
+    assert set(out["by_group"]) == {"short", "long"}
+    assert out["by_group"]["short"]["by_threshold"][0]["false_accept_n"] == 1
+    assert out["by_group"]["long"]["by_threshold"][0]["accuracy"] == 1.0
+
+
 # ------------------------------------------------------- learner-error tally
 def test_preserve_classification():
     ann = "he {go=>goes} to school and {=>the} dog {am=>} like it"

@@ -42,7 +42,11 @@ IDENT: input CSV turn_id,true_code,pred_code,score[,enrolled]. A true speaker
   observed rate does, flagged "insufficient evidence" (with few turns 1%
   cannot be shown: zero false accepts in ~300 turns are needed).
   EER is the top-1 verification EER: genuine = pred is the true child,
-  impostor = pred is any wrong answer.
+  impostor = pred is any wrong answer. Every rate carries a 95% Wilson
+  interval. recommendation_split meets the target on the closed-set and the
+  open-set rows SEPARATELY (T = the larger of the two), so easy closed-set
+  turns cannot dilute open-set false accepts. Optional column `group` (e.g. a
+  turn-length bin) with --by-group repeats the report per group.
 
 PRESERVE: annotated reference = the verbatim words the child said, with each
   learner error marked {spoken=>correct}: "he {go=>goes} to school",
@@ -355,6 +359,7 @@ class Turn:
     pred: str
     score: float
     enrolled: bool
+    group: str = ""
 
     @property
     def answer(self) -> str:
@@ -369,6 +374,17 @@ def wilson_upper(k: int, n: int, z: float = 1.96) -> float | None:
     c = p + z * z / (2 * n)
     r = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))
     return (c + r) / den
+
+
+def wilson_interval(k: int, n: int, z: float = 1.96) -> tuple[float, float] | None:
+    """Two-sided 95% Wilson score interval for k successes in n trials."""
+    if n == 0:
+        return None
+    p = k / n
+    den = 1 + z * z / n
+    c = p + z * z / (2 * n)
+    r = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))
+    return (max(0.0, (c - r) / den), min(1.0, (c + r) / den))
 
 
 def ident_at(turns: list[Turn], t: float) -> dict:
@@ -392,7 +408,8 @@ def ident_at(turns: list[Turn], t: float) -> dict:
                     open_fa += 1
     return {"threshold": t, "turns": n, "accuracy": acc / n if n else None,
             "false_accept": fa / n if n else None, "false_accept_n": fa,
-            "fa_upper95": wilson_upper(fa, n), "misid_enrolled": mis, "open_set_accepts": open_fa,
+            "fa_upper95": wilson_upper(fa, n), "fa_ci95": wilson_interval(fa, n),
+            "accuracy_ci95": wilson_interval(acc, n), "misid_enrolled": mis, "open_set_accepts": open_fa,
             "false_reject": fr / len(enr) if enr else None, "unknown_rate": unk / n if n else None}
 
 
@@ -428,6 +445,45 @@ def recommend(turns: list[Turn], fa_target: float = 0.01) -> dict:
     return {"rule": "no threshold meets the target", "threshold": None, "fa_target": fa_target}
 
 
+def recommend_split(turns: list[Turn], fa_target: float = 0.01) -> dict:
+    """Operating threshold that meets the target on BOTH populations separately:
+    closed-set (enrolled speakers: a wrong child shown) and open-set (unenrolled
+    speakers: any child shown). Pooling them would let many easy closed-set turns
+    dilute the open-set false accepts. T = max of the two per-population T's; if
+    either population has no threshold, there is none. Fails closed like
+    recommend(): "sufficient" only when both 95% upper bounds meet the target."""
+    parts = {"closed": [x for x in turns if x.enrolled], "open": [x for x in turns if not x.enrolled]}
+    out, ts, ev = {"fa_target": fa_target}, [], "sufficient"
+    for k, sub in parts.items():
+        if not sub:
+            out[k] = None
+            continue
+        r = recommend(sub, fa_target)
+        out[k] = {"threshold": r["threshold"], "evidence": r.get("evidence"), "turns": len(sub)}
+        if r["threshold"] is None:
+            out["threshold"] = None
+            out["evidence"] = f"no threshold meets the target on the {k} set"
+            return out
+        ts.append(r["threshold"])
+        if r.get("evidence") != "sufficient":
+            ev = "insufficient"
+    out["threshold"] = max(ts) if ts else None
+    out["evidence"] = ev
+    if out["threshold"] is not None:
+        out["observed"] = ident_at(turns, out["threshold"])
+        out["observed_closed"] = ident_at(parts["closed"], out["threshold"]) if parts["closed"] else None
+        out["observed_open"] = ident_at(parts["open"], out["threshold"]) if parts["open"] else None
+    return out
+
+
+def ident_report(turns: list[Turn], ts: list[float], fa_target: float) -> dict:
+    return {"turns": len(turns), "enrolled_turns": sum(x.enrolled for x in turns),
+            "open_set_turns": sum(not x.enrolled for x in turns),
+            "by_threshold": [ident_at(turns, t) for t in ts], "eer": eer(turns),
+            "recommendation": recommend(turns, fa_target),
+            "recommendation_split": recommend_split(turns, fa_target)}
+
+
 def read_ident(path: Path, enrolled: set[str] | None) -> list[Turn]:
     turns = []
     with open(path, newline="", encoding="utf-8") as f:
@@ -440,7 +496,8 @@ def read_ident(path: Path, enrolled: set[str] | None) -> list[Turn]:
                 en = enrolled is None or true in enrolled
             sc = r.get("score", "")
             turns.append(Turn(r["turn_id"], true, pred.upper() if pred.upper() == UNKNOWN else pred,
-                              float(sc) if sc not in ("", None) else -math.inf, en))
+                              float(sc) if sc not in ("", None) else -math.inf, en,
+                              (r.get("group") or "").strip()))
     return turns
 
 
@@ -452,10 +509,10 @@ def cmd_ident(a) -> int:
     turns = read_ident(a.table, enrolled)
     ts = [float(t) for t in a.thresholds.split(",")] if a.thresholds else \
         sorted({round(x.score, 3) for x in turns if math.isfinite(x.score)})
-    out = {"turns": len(turns), "enrolled_turns": sum(x.enrolled for x in turns),
-           "open_set_turns": sum(not x.enrolled for x in turns),
-           "by_threshold": [ident_at(turns, t) for t in ts], "eer": eer(turns),
-           "recommendation": recommend(turns, a.fa_target)}
+    out = ident_report(turns, ts, a.fa_target)
+    if a.by_group:
+        out["by_group"] = {g: ident_report([x for x in turns if x.group == g], ts, a.fa_target)
+                           for g in sorted({x.group for x in turns})}
     print(json.dumps(out, indent=1, default=lambda v: None if v in (math.inf, -math.inf) else v))
     return 0
 
@@ -632,7 +689,9 @@ def main(argv=None) -> int:
     p.add_argument("--table", type=Path, required=True)
     p.add_argument("--enrolled", help="comma list or file of enrolled codes (else column 'enrolled', else all)")
     p.add_argument("--thresholds", help="comma list (default: every observed score)")
-    p.add_argument("--fa-target", type=float, default=0.01); p.set_defaults(fn=cmd_ident)
+    p.add_argument("--fa-target", type=float, default=0.01)
+    p.add_argument("--by-group", action="store_true", help="also report per value of the optional 'group' column")
+    p.set_defaults(fn=cmd_ident)
     p = sub.add_parser("preserve", help="learner-error preservation tally")
     p.add_argument("--ref", type=Path, required=True, help="TSV id<TAB>annotated verbatim reference")
     p.add_argument("--hyp", action="append", required=True, help="name=path (TSV or result JSON), repeatable")

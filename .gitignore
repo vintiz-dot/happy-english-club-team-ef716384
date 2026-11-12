@@ -78,3 +78,6 @@ MIGRATIONS-TO-PASTE.sql
 *.onnx
 *.embeddings.json
 hec-audio-eval/
+# exception: the scorer's synthetic DER fixtures (letters A/B/C, no voice data)
+!scripts/lesson-eval/tests/fixtures/ref.rttm
+!scripts/lesson-eval/tests/fixtures/hyp.rttm
