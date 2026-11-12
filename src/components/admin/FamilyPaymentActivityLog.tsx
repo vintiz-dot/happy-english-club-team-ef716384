@@ -9,6 +9,7 @@ import { Users, ArrowRight, Check, Clock, Wallet, ChevronDown, ChevronUp } from 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
+import { useIvory } from "@/hooks/useIvory";
 
 interface FamilyPaymentActivityLogProps {
   selectedMonth?: string;
@@ -48,6 +49,8 @@ interface AuditLogEntry {
 export function FamilyPaymentActivityLog({ selectedMonth }: FamilyPaymentActivityLogProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
 
   // Fetch family payment audit logs
   const { data: activityLogs, isLoading } = useQuery({
@@ -162,7 +165,7 @@ export function FamilyPaymentActivityLog({ selectedMonth }: FamilyPaymentActivit
         <CardContent>
           <div className="animate-pulse space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 bg-muted rounded-lg" />
+              <div key={i} className={iv("h-16 bg-hec-sunken rounded-hec-md", "h-16 bg-muted rounded-lg")} />
             ))}
           </div>
         </CardContent>
@@ -184,7 +187,7 @@ export function FamilyPaymentActivityLog({ selectedMonth }: FamilyPaymentActivit
       <CardContent>
         <ScrollArea className="h-[400px] pr-4">
           {paymentSummaries.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className={iv("text-center py-8 text-hec-body text-hec-ink-soft", "text-center py-8 text-muted-foreground")}>
               No family payment activity found
             </div>
           ) : (
@@ -195,29 +198,31 @@ export function FamilyPaymentActivityLog({ selectedMonth }: FamilyPaymentActivit
                   open={expandedItems.has(summary.paymentId)}
                   onOpenChange={() => toggleExpand(summary.paymentId)}
                 >
-                  <div className="border rounded-lg overflow-hidden">
+                  <div className={iv("border border-hec-line bg-hec-surface rounded-hec-md overflow-hidden", "border rounded-lg overflow-hidden")}>
                     <CollapsibleTrigger asChild>
                       <Button
                         variant="ghost"
-                        className="w-full justify-between p-4 h-auto hover:bg-muted/50"
+                        className={iv("w-full justify-between gap-3 whitespace-normal rounded-none p-4 h-auto text-left hover:bg-hec-sunken/60", "w-full justify-between p-4 h-auto hover:bg-muted/50")}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                        <div className={iv("flex min-w-0 items-start gap-3", "flex items-center gap-3")}>
+                          <div className={ivory ? `h-10 w-10 shrink-0 rounded-full border flex items-center justify-center ${
+                            summary.isComplete ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf" : "border-hec-warn/30 bg-hec-warn-tint text-hec-warn"
+                          }` : `h-10 w-10 rounded-full flex items-center justify-center ${
                             summary.isComplete ? "bg-green-100 text-green-600" : "bg-yellow-100 text-yellow-600"
-                          }`}>
+                          }`} role={ivory ? "img" : undefined} aria-label={ivory ? (summary.isComplete ? "Completed" : "In progress") : undefined}>
                             {summary.isComplete ? <Check className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
                           </div>
-                          <div className="text-left">
-                            <div className="font-medium">{summary.familyName}</div>
-                            <div className="text-sm text-muted-foreground">
+                          <div className={iv("min-w-0 text-left", "text-left")}>
+                            <div className={iv("whitespace-normal break-words hyphens-none text-hec-body font-medium text-hec-ink", "font-medium")}>{summary.familyName}</div>
+                            <div className={iv("text-hec-small font-normal text-hec-ink-soft", "text-sm text-muted-foreground")}>
                               {formatDistanceToNow(new Date(summary.occurredAt), { addSuffix: true })}
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className={iv("flex shrink-0 items-center gap-3", "flex items-center gap-3")}>
                           <div className="text-right">
-                            <div className="font-semibold">{formatVND(summary.totalPayment)}</div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className={iv("whitespace-nowrap font-semibold text-hec-ink tabular-nums", "font-semibold")}>{formatVND(summary.totalPayment)}</div>
+                            <div className={iv("text-hec-caption font-normal text-hec-ink-soft tabular-nums", "text-xs text-muted-foreground")}>
                               {summary.siblingsCount} sibling{summary.siblingsCount > 1 ? "s" : ""}
                             </div>
                           </div>
@@ -231,25 +236,25 @@ export function FamilyPaymentActivityLog({ selectedMonth }: FamilyPaymentActivit
                     </CollapsibleTrigger>
                     
                     <CollapsibleContent>
-                      <div className="px-4 pb-4 space-y-3 border-t pt-3">
+                      <div className={iv("px-4 pb-4 space-y-3 border-t border-hec-line pt-3", "px-4 pb-4 space-y-3 border-t pt-3")}>
                         {/* Allocation Chain */}
                         {summary.allocations.map((alloc, index) => (
-                          <div key={alloc.id} className="flex items-center gap-2 text-sm">
-                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium">
+                          <div key={alloc.id} className={iv("flex flex-wrap items-center gap-2 text-hec-small text-hec-ink", "flex items-center gap-2 text-sm")}>
+                            <div className={iv("h-6 w-6 shrink-0 rounded-full bg-hec-sunken text-hec-ink-soft flex items-center justify-center text-hec-caption font-medium tabular-nums", "h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium")}>
                               {alloc.diff.allocation_order || index + 1}
                             </div>
-                            <span className="font-medium">{alloc.diff.student?.name}</span>
-                            <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-green-600">
+                            <span className={iv("min-w-0 whitespace-normal break-words hyphens-none font-medium", "font-medium")}>{alloc.diff.student?.name}</span>
+                            <ArrowRight className={iv("h-3 w-3 text-hec-ink-soft", "h-3 w-3 text-muted-foreground")} />
+                            <span className={iv("whitespace-nowrap text-hec-ink tabular-nums", "text-green-600")}>
                               {formatVND(alloc.diff.student?.applied || 0)}
                             </span>
                             {alloc.diff.student?.after_debt === 0 && (
-                              <Badge variant="outline" className="text-green-600 border-green-600">
+                              <Badge variant="outline" className={iv("border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf", "text-green-600 border-green-600")}>
                                 Settled
                               </Badge>
                             )}
                             {alloc.diff.student?.after_debt && alloc.diff.student.after_debt > 0 && (
-                              <span className="text-muted-foreground text-xs">
+                              <span className={iv("whitespace-nowrap text-hec-ink-soft text-hec-caption tabular-nums", "text-muted-foreground text-xs")}>
                                 (remaining: {formatVND(alloc.diff.student.after_debt)})
                               </span>
                             )}
@@ -258,21 +263,21 @@ export function FamilyPaymentActivityLog({ selectedMonth }: FamilyPaymentActivit
 
                         {/* Credit Transfers */}
                         {summary.transfers.map((transfer) => (
-                          <div key={transfer.id} className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 p-2 rounded">
-                            <Wallet className="h-4 w-4" />
+                          <div key={transfer.id} className={iv("flex flex-wrap items-center gap-2 text-hec-small text-hec-ink bg-hec-sunken border border-hec-line p-2 rounded-hec-sm", "flex items-center gap-2 text-sm text-orange-600 bg-orange-50 p-2 rounded")}>
+                            <Wallet className={iv("h-4 w-4 text-hec-ink-soft", "h-4 w-4")} />
                             <span>Credit transfer:</span>
-                            <span className="font-medium">{transfer.diff.from_student?.name}</span>
+                            <span className={iv("min-w-0 whitespace-normal break-words font-medium", "font-medium")}>{transfer.diff.from_student?.name}</span>
                             <ArrowRight className="h-3 w-3" />
-                            <span className="font-medium">{transfer.diff.to_student?.name}</span>
-                            <span>({formatVND(transfer.diff.transfer_amount || 0)})</span>
+                            <span className={iv("min-w-0 whitespace-normal break-words font-medium", "font-medium")}>{transfer.diff.to_student?.name}</span>
+                            <span className={iv("whitespace-nowrap tabular-nums", "")}>({formatVND(transfer.diff.transfer_amount || 0)})</span>
                           </div>
                         ))}
 
                         {/* Leftover */}
                         {summary.leftover && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground border-t pt-2">
+                          <div className={iv("flex flex-wrap items-center gap-2 text-hec-small text-hec-ink-soft border-t border-hec-line pt-2", "flex items-center gap-2 text-sm text-muted-foreground border-t pt-2")}>
                             <span>Leftover:</span>
-                            <span className="font-medium">{formatVND(summary.leftover.amount)}</span>
+                            <span className={iv("whitespace-nowrap font-medium text-hec-ink tabular-nums", "font-medium")}>{formatVND(summary.leftover.amount)}</span>
                             <Badge variant="secondary">
                               {summary.leftover.type === "voluntary_contribution" 
                                 ? "Contribution" 
