@@ -28,10 +28,10 @@ import type { RecorderLike } from "./engine";
 import { fetchClassSwitch, fetchEnrolled, fetchRecorderSettings, fetchTodayLessons } from "./data";
 import { LevelMeter, MicTick, Notice, Status } from "./pieces";
 import { NotRecordedNotice, RecordingBar } from "./RecordingBar";
-import { adopt, attachScreen, detachScreen, sessionFor, setLessonLabel } from "./session";
+import { adopt, attachScreen, CAPTURING_STATES, detachScreen, sessionFor, setLessonLabel } from "./session";
 
 // `stalled` is a capturing state: Stop stays, the screen must not be left (C2 review 2, item 1).
-const CAPTURING: RecorderState[] = ["starting", "recording", "stalled"];
+const CAPTURING: RecorderState[] = CAPTURING_STATES;   // one list, shared with the floating bar (tested)
 const TITLE_PREFIX = /^(● RECORDING|◌ ARMED|⚠ NOT RECORDING|◌ WAITING FOR THE SERVER) - /;
 const SAVING: RecorderState[] = ["stopping", "uploading", "finalizing"];
 
