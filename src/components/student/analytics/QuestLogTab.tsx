@@ -6,6 +6,7 @@ import { CheckCircle, Clock, AlertTriangle, BookOpen, Calendar, Target, ChevronR
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import HomeworkDetailDialog from "@/components/student/HomeworkDetailDialog";
+import { useIvory } from "@/hooks/useIvory";
 
 interface QuestLogTabProps {
   studentId: string;
@@ -39,32 +40,45 @@ function getMissionStatus(
   return "pending";
 }
 
-function getStatusBadge(status: MissionStatus) {
+function getStatusBadge(status: MissionStatus, ivory: boolean) {
+  const cls = ivory
+    ? {
+        completed: "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
+        pending: "border-hec-warn/30 bg-hec-warn-tint text-hec-warn",
+        missing: "border-hec-danger/30 bg-hec-danger-tint text-hec-danger",
+        active: "border-hec-line bg-hec-sunken text-hec-ink",
+      }
+    : {
+        completed: "bg-green-500/20 text-green-500 border-green-500/30",
+        pending: "bg-yellow-500/20 text-yellow-500 border-yellow-500/30",
+        missing: "bg-red-500/20 text-red-500 border-red-500/30",
+        active: "bg-blue-500/20 text-blue-500 border-blue-500/30",
+      };
   switch (status) {
     case "completed":
       return (
-        <Badge className="bg-green-500/20 text-green-500 border-green-500/30">
+        <Badge className={cls.completed}>
           <CheckCircle className="h-3 w-3 mr-1" />
           Completed
         </Badge>
       );
     case "pending":
       return (
-        <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30">
+        <Badge className={cls.pending}>
           <Clock className="h-3 w-3 mr-1" />
           Pending Grading
         </Badge>
       );
     case "missing":
       return (
-        <Badge className="bg-red-500/20 text-red-500 border-red-500/30">
+        <Badge className={cls.missing}>
           <AlertTriangle className="h-3 w-3 mr-1" />
           Missing
         </Badge>
       );
     case "active":
       return (
-        <Badge className="bg-blue-500/20 text-blue-500 border-blue-500/30">
+        <Badge className={cls.active}>
           <Target className="h-3 w-3 mr-1" />
           Active
         </Badge>
@@ -73,6 +87,9 @@ function getStatusBadge(status: MissionStatus) {
 }
 
 export function QuestLogTab({ studentId, classId, selectedMonth, viewerStudentId }: QuestLogTabProps) {
+  // Opened from the teacher/admin class board too (not migrated yet): old classes there.
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
   const [selectedHomework, setSelectedHomework] = useState<any>(null);
   
   // Calculate month date range
@@ -158,39 +175,39 @@ export function QuestLogTab({ studentId, classId, selectedMonth, viewerStudentId
       {/* Quest Progress Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Mission Completion */}
-        <div className="glass-panel p-4 rounded-xl border border-border/50">
+        <div className={iv("p-4 rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1", "glass-panel p-4 rounded-xl border border-border/50")}>
           <div className="flex items-center gap-2 mb-3">
-            <BookOpen className="h-5 w-5 text-primary" />
-            <h3 className="font-bold text-foreground">Mission Progress</h3>
+            <BookOpen className={iv("h-5 w-5 text-hec-brass", "h-5 w-5 text-primary")} />
+            <h3 className={iv("font-display text-hec-h2 font-medium text-hec-ink", "font-bold text-foreground")}>Mission Progress</h3>
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Completed</span>
-              <span className="font-bold text-foreground">{completed} / {total}</span>
+            <div className={iv("flex justify-between text-hec-small", "flex justify-between text-sm")}>
+              <span className={iv("text-hec-ink-soft", "text-muted-foreground")}>Completed</span>
+              <span className={iv("font-semibold tabular-nums text-hec-ink", "font-bold text-foreground")}>{completed} / {total}</span>
             </div>
             <Progress value={completionRate} className="h-3" />
-            <p className="text-xs text-muted-foreground text-right">{completionRate}% completion rate</p>
+            <p className={iv("text-hec-caption text-hec-ink-soft text-right", "text-xs text-muted-foreground text-right")}>{completionRate}% completion rate</p>
           </div>
         </div>
 
         {/* Attendance Summary */}
-        <div className="glass-panel p-4 rounded-xl border border-border/50">
+        <div className={iv("p-4 rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1", "glass-panel p-4 rounded-xl border border-border/50")}>
           <div className="flex items-center gap-2 mb-3">
-            <Calendar className="h-5 w-5 text-primary" />
-            <h3 className="font-bold text-foreground">Attendance Record</h3>
+            <Calendar className={iv("h-5 w-5 text-hec-brass", "h-5 w-5 text-primary")} />
+            <h3 className={iv("font-display text-hec-h2 font-medium text-hec-ink", "font-bold text-foreground")}>Attendance Record</h3>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div>
-              <div className="text-2xl font-black text-green-500">{attendance?.present ?? 0}</div>
-              <div className="text-xs text-muted-foreground">Present</div>
+              <div className={iv("text-hec-h1 font-semibold tabular-nums text-hec-leaf", "text-2xl font-black text-green-500")}>{attendance?.present ?? 0}</div>
+              <div className={iv("text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground")}>Present</div>
             </div>
             <div>
-              <div className="text-2xl font-black text-red-500">{attendance?.absent ?? 0}</div>
-              <div className="text-xs text-muted-foreground">Absent</div>
+              <div className={iv("text-hec-h1 font-semibold tabular-nums text-hec-danger", "text-2xl font-black text-red-500")}>{attendance?.absent ?? 0}</div>
+              <div className={iv("text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground")}>Absent</div>
             </div>
             <div>
-              <div className="text-2xl font-black text-yellow-500">{attendance?.excused ?? 0}</div>
-              <div className="text-xs text-muted-foreground">Excused</div>
+              <div className={iv("text-hec-h1 font-semibold tabular-nums text-hec-warn", "text-2xl font-black text-yellow-500")}>{attendance?.excused ?? 0}</div>
+              <div className={iv("text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground")}>Excused</div>
             </div>
           </div>
         </div>
@@ -198,8 +215,8 @@ export function QuestLogTab({ studentId, classId, selectedMonth, viewerStudentId
 
       {/* Mission List */}
       <div className="space-y-3">
-        <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
-          <Target className="h-5 w-5 text-primary" />
+        <h3 className={iv("font-display text-hec-h2 font-medium text-hec-ink flex items-center gap-2", "font-bold text-lg text-foreground flex items-center gap-2")}>
+          <Target className={iv("h-5 w-5 text-hec-brass", "h-5 w-5 text-primary")} />
           Quest Log
         </h3>
 
@@ -214,21 +231,23 @@ export function QuestLogTab({ studentId, classId, selectedMonth, viewerStudentId
                 <div
                   key={mission.id}
                   onClick={() => setSelectedHomework(mission)}
-                  className={`glass-panel p-4 rounded-xl border transition-all cursor-pointer hover:border-primary/50 hover:scale-[1.01] ${
+                  className={ivory
+                    ? `p-4 rounded-hec-lg border bg-hec-surface shadow-hec-1 transition-shadow duration-hec-1 cursor-pointer hover:shadow-hec-2 ${status === "missing" ? "border-hec-danger/30 bg-hec-danger-tint" : "border-hec-line"}`
+                    : `glass-panel p-4 rounded-xl border transition-all cursor-pointer hover:border-primary/50 hover:scale-[1.01] ${
                     status === "missing" ? "border-red-500/30 bg-red-500/5" : "border-border/50"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-foreground truncate">{mission.title}</h4>
+                        <h4 className={iv("font-semibold text-hec-ink truncate", "font-semibold text-foreground truncate")}>{mission.title}</h4>
                         {isDueSoon && status === "active" && (
-                          <Badge variant="outline" className="text-orange-500 border-orange-500/30">
+                          <Badge variant="outline" className={iv("text-hec-warn border-hec-warn/30", "text-orange-500 border-orange-500/30")}>
                             Due Soon!
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className={iv("flex items-center gap-3 text-hec-caption text-hec-ink-soft", "flex items-center gap-3 text-xs text-muted-foreground")}>
                         {mission.due_date && (
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
@@ -236,15 +255,15 @@ export function QuestLogTab({ studentId, classId, selectedMonth, viewerStudentId
                           </span>
                         )}
                         {mission.submission?.grade && (
-                          <span className="flex items-center gap-1 text-green-500 font-semibold">
+                          <span className={iv("flex items-center gap-1 text-hec-leaf font-semibold", "flex items-center gap-1 text-green-500 font-semibold")}>
                             Grade: {mission.submission.grade}
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      {getStatusBadge(status)}
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      {getStatusBadge(status, ivory)}
+                      <ChevronRight className={iv("h-4 w-4 text-hec-ink-soft", "h-4 w-4 text-muted-foreground")} />
                     </div>
                   </div>
                 </div>
@@ -252,10 +271,10 @@ export function QuestLogTab({ studentId, classId, selectedMonth, viewerStudentId
             })}
           </div>
         ) : (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className={iv("text-center py-8 text-hec-ink-soft", "text-center py-8 text-muted-foreground")}>
             <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="font-medium">No quests assigned yet</p>
-            <p className="text-sm">Check back later for new missions!</p>
+            <p className={iv("text-hec-small", "text-sm")}>Check back later for new missions!</p>
           </div>
         )}
       </div>
