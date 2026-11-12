@@ -78,7 +78,7 @@ export function SkillButton({
           <span className={ivory ? "text-hec-caption font-medium" : "text-[10px] font-medium leading-tight"}>{label}</span>
         </button>
       </PopoverTrigger>
-      <PopoverContent className={ivory ? "w-auto max-w-[calc(100vw-2rem)] p-2" : "w-auto p-2"} side="top" align="center">
+      <PopoverContent className={ivory ? "w-auto max-w-[calc(100vw-2rem)] p-2" : "w-auto p-2"} side="top" align="center" aria-label={ivory ? `Points for ${label}` : undefined}>
         <div className={ivory ? "flex flex-wrap gap-2 items-center justify-center" : "flex gap-1 items-center"}>
           {POINT_OPTIONS.map((pts) => (
             <Button

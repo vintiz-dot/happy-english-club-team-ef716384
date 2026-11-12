@@ -271,7 +271,7 @@ export function StudentActionPopover({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className={ivory ? "w-[21rem] max-w-[calc(100vw-2rem)] p-0 overflow-hidden" : "w-[21rem] p-0 overflow-hidden"} align="center" sideOffset={6}>
+      <PopoverContent className={ivory ? "w-[21rem] max-w-[calc(100vw-2rem)] p-0 overflow-hidden" : "w-[21rem] p-0 overflow-hidden"} align="center" sideOffset={6} aria-label={ivory ? `Actions for ${studentName}` : undefined}>
         {ivory ? (
           // Ivory identity band: the whole name (it wraps), today's and this month's points, attendance in words
           <div className="flex items-start gap-3 border-b border-hec-line bg-hec-sunken px-4 py-3">

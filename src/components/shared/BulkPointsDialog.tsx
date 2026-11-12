@@ -324,11 +324,11 @@ export function BulkPointsDialog({
           {/* Sub-tag Selection */}
           {skillConfig && skillConfig.subTags.length > 0 && (
             <div className="space-y-2">
-              <Label className={ivory ? LABEL_IVORY : "text-base font-semibold"}>
+              <Label htmlFor={ivory ? "points-reason" : undefined} className={ivory ? LABEL_IVORY : "text-base font-semibold"}>
                 Reason (optional)
               </Label>
               <Select value={selectedSubTag} onValueChange={setSelectedSubTag}>
-                <SelectTrigger className="h-12">
+                <SelectTrigger id={ivory ? "points-reason" : undefined} className="h-12">
                   <SelectValue placeholder="Select specific reason" />
                 </SelectTrigger>
                 <SelectContent>
@@ -376,11 +376,11 @@ export function BulkPointsDialog({
           {/* Correction Reason */}
           {category === "correction" && (
             <div className="space-y-2">
-              <Label className={ivory ? LABEL_IVORY : "text-base font-semibold"}>
+              <Label htmlFor={ivory ? "points-correction" : undefined} className={ivory ? LABEL_IVORY : "text-base font-semibold"}>
                 Correction Reason *
               </Label>
               <Select value={selectedCorrection} onValueChange={setSelectedCorrection}>
-                <SelectTrigger className="h-12">
+                <SelectTrigger id={ivory ? "points-correction" : undefined} className="h-12">
                   <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
                 <SelectContent>
@@ -396,7 +396,7 @@ export function BulkPointsDialog({
 
           {/* Points Amount */}
           <div className="space-y-3">
-            <Label className={ivory ? LABEL_IVORY : "text-base font-semibold"}>Points Amount *</Label>
+            <Label htmlFor={ivory ? "points-amount" : undefined} className={ivory ? LABEL_IVORY : "text-base font-semibold"}>Points Amount *</Label>
             <div className="grid grid-cols-4 gap-2">
               <Button
                 type="button"
@@ -444,7 +444,7 @@ export function BulkPointsDialog({
               value={points}
               onChange={(e) => setPoints(e.target.value)}
               placeholder="Or enter custom amount"
-              aria-label={ivory ? "Points amount" : undefined}
+              id={ivory ? "points-amount" : undefined}
               className={ivory ? "h-12 text-center text-hec-h3 font-semibold tabular-nums" : "h-12 text-center text-lg font-semibold"}
             />
           </div>

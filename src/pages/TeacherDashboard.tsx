@@ -454,7 +454,7 @@ export default function TeacherDashboard() {
                   varianceAmount={payrollData?.varianceAmountProjected}
                 />
                 <p className="text-hec-small text-hec-ink-soft mb-2">Projected (VND)</p>
-                <Progress value={progressPercent} className="h-2" />
+                <Progress value={progressPercent} className="h-2" aria-label="Sessions held of those projected this month" />
               </div>
             </CardContent>
           </Card>
