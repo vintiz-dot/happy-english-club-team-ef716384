@@ -64,8 +64,8 @@ Status: todo / running / review / PASS / FAIL / reverted / blocked-owner. Model 
 |---|---|---|---|---|---|
 | D0 | Inventory of cancel / owe-changing paths | sonnet / fable | docs/evidence/D0-inventory.md | PASS (conductor spot-check) | docs/evidence/D0-inventory.md, 480ad48; 6 claims re-read in code by conductor |
 | D1 | Evidence model design; `session_held_evidence` | fable design, opus build / fable | docs/evidence/D1-evidence-model.md; supabase/migrations/2026111209*_session_held_evidence.sql; scripts/pgtest/session-evidence.test.mjs | PASS (fable review 2, 8b9d1a2, no findings; suite 143/0) | docs/evidence/D1-evidence-model.md, 61ce962 |
-| D2 | Guard: trigger + `cancel_session_checked` + threat model | fable design, opus build / fable | docs/evidence/D2-*.md; guard migration; manage-session; bulk-cancel-sessions; pgtest | SQL guard: review 2 PASS WITH CHANGES (2 major, 7 minor, no executed bypass of the checked path); revision + edge functions running (opus) | docs/evidence/D2-guard-design.md, D2-threat-model.md |
-| D3 | Nudge UI + override review screen | sonnet / opus + fable wording | CancelSessionDialog, SessionActionsModal, EditSessionModal, DeleteSessionDialog, BulkSessionDelete, new review screen | todo | |
+| D2 | Guard: trigger + `cancel_session_checked` + threat model | fable design, opus build / fable | docs/evidence/D2-*.md; guard migration; manage-session; bulk-cancel-sessions; pgtest | SQL revision 1 + edge functions merged (opus, db1641a: guard suite 239/0, functions suite 81/0); final fable review 3 running; conductor full run in progress | docs/evidence/D2-guard-design.md, D2-threat-model.md |
+| D3 | Nudge UI + override review screen | sonnet / opus + fable wording | CancelSessionDialog, SessionActionsModal, EditSessionModal, DeleteSessionDialog, BulkSessionDelete, new review screen | running (sonnet) | |
 | D4 | Other tuition-affecting actions | fable design, opus build / fable | docs/evidence/D4-*.md; migration; affected dialogs | todo | |
 | D5 | Invariant audit + regression tests + owner SQL | fable audit, sonnet/opus tests / fable | docs/evidence/D5-audit.md; scripts/pgtest/*; scripts/CHECK-past-cancellations-with-evidence.sql | todo | |
 | A0 | Baseline | sonnet (haiku captures) / fable | docs/ENHANCEMENT_BASELINE.md; docs/evidence/A0/ | PASS (sonnet, e4df152; conductor re-ran tsc + pgtest, viewed a screenshot, checked the PDF-import claim) | docs/ENHANCEMENT_BASELINE.md, docs/evidence/A0/ |
@@ -151,12 +151,12 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 
 | Stream | Units | Done | What is done |
 |---|---|---|---|
-| D money integrity | 18.5 | 6.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
+| D money integrity | 18.5 | 7.0 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
 | A overhaul | 12.0 | 3.0 | A0 baseline, A1 plan, A3.1 and A3.3 (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
 | B lesson monitor evaluation | 10.5 | 3.0 | vendor research, audio prep, harness. Left: B1, B2, B2b, B3, report |
 | C class recorder | 8.0 | 1.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **13.5** | **26%** |
+| **Total** | **51.0** | **14.5** | **28%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -205,3 +205,6 @@ Log: 2026-11-12 - 26% (A3.1 merged).
 
 - 2026-11-12 A3.1 merged (sonnet, 95b92aa): Layout chunk 391.9 -> 48.3 KiB gzip (target <=150); recharts / jsPDF / html2canvas hits in it 82 / 87 / 23 -> 0 / 0 / 0. JS to first render, summed from chunk files: student dashboard 704.0 -> 503.5 (-28.5%), teacher dashboard -43.5%, admin tuition -52.5%. Total JS across ALL chunks 1474.7 -> 1515.2 (+2.75%, over the plan's 2% line; 231 chunks vs 147). RULING: accepted - no user downloads the total; what each page loads fell by 28-52%. Conductor read the four exporter diffs (TuitionBulkDownload, HomeworkPdfDownload, ProfileShareCard, reportPdf): import lines moved into the handler as `await import(...)`, nothing else changed. NOT proven by the agent: a homework PDF, a profile share image and a tuition bulk PDF generated before/after (the fake client lacks their data) - to be clicked once on the live site after shipping. Follow-ups: StudentClassLeaderboard.tsx still imports StudentAnalyticsModal statically, so recharts still loads on the student dashboard (folded into A3.5); lazyRetry's "new version" toast has no reload button.
 - A wave 2 (part): A3.2 entry-chunk diet (sonnet), A3.4 shell asks once (sonnet) launched; A2.2/A2.3 wait for the A2.1 diagnosis. B2 speaker identification (opus) launched.
+Log: 2026-11-12 09:15 - 28% (guard revision + edge functions merged).
+
+- 2026-11-12 D2 revision 1 + edge functions merged (opus, db1641a; the agent finished without a hand-back, so the conductor read docs/evidence/D2-edge-build.md directly). manage-session and bulk-cancel-sessions now: every person-initiated write to sessions goes through the checked RPCs on a client built from the CALLER'S own token (service key only for `create`, reads and audit entries); canned reasons removed; two-step preview -> confirm with token, a call without a token is 409 `preview_required`; guard migration missing -> 503 `guard_not_installed` and no fallback write; un-cancel goes through its RPC and refreshes tuition; refresh continues past failures and reports per pair. Eleven deviations recorded, the one to watch: the preview calls calculate-tuition, which saves the canonical bill (same write any tuition screen triggers) - review 3 checks it is idempotent and respects frozen bills. Not exercised: real PostgREST error shapes, two-connection races. Launched together to avoid a pause: final fable review 3 (with a SHIP decision and apply order) and D3 dialogs (sonnet) built from the contract; if review 3 changes the contract, D3 gets a follow-up.
