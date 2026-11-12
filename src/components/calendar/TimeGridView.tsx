@@ -112,10 +112,7 @@ function EventBlock({
         aria-hidden
         className={cn("absolute inset-y-0 left-0 w-[3px]", ivory ? "rounded-l-hec-sm" : "rounded-l-lg", color.rail)}
       />
-      {/* Ivory: the visible lines are hidden from assistive tech because the
-          button's aria-label already says all of it (axe
-          label-content-name-mismatch). */}
-      <div aria-hidden={ivory || undefined} className="flex items-start gap-1">
+      <div className="flex items-start gap-1">
         {/* A block is as tall as the session (positioned on the time axis):
             the name is cut to one line here and given whole in the label
             and in the session drawer. */}
@@ -134,7 +131,6 @@ function EventBlock({
       </div>
       {showMeta && (
         <div
-          aria-hidden={ivory || undefined}
           className={
             ivory
               ? cn("truncate text-hec-caption leading-tight tabular-nums", variance ? "font-medium text-hec-warn" : color.text)
@@ -150,7 +146,7 @@ function EventBlock({
         </div>
       )}
       {showTeacher && event.teacher_name && (
-        <div aria-hidden={ivory || undefined} className={ivory ? cn("truncate text-hec-caption leading-tight", color.text) : "truncate text-[10px] leading-tight opacity-60"}>{event.teacher_name}</div>
+        <div className={ivory ? cn("truncate text-hec-caption leading-tight", color.text) : "truncate text-[10px] leading-tight opacity-60"}>{event.teacher_name}</div>
       )}
     </button>
   );
