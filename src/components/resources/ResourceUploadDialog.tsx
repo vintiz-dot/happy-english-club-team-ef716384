@@ -208,17 +208,17 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {isEdit ? (
               <>
-                <FileText className="h-5 w-5 text-blue-500" />
+                <FileText className="h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
                 Edit Resource
               </>
             ) : (
               <>
-                <Upload className="h-5 w-5 text-blue-500" />
+                <Upload className="h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
                 Upload Resource
               </>
             )}
@@ -230,7 +230,7 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 pt-2">
+        <div className="space-y-6">
           {/* ---- Title ---- */}
           <div className="space-y-1.5">
             <Label htmlFor="res-title">Title *</Label>
@@ -262,17 +262,18 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
               onDragOver={handleDragOver}
               onClick={() => fileInputRef.current?.click()}
               className={cn(
-                "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors",
-                "hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10",
-                file ? "border-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/10" : "border-muted-foreground/25",
+                "rounded-hec-lg border border-dashed p-6 text-center cursor-pointer transition-colors duration-hec-1 ease-hec",
+                "hover:border-hec-brass hover:bg-hec-sunken/60",
+                "has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-hec-ring",
+                file ? "border-hec-leaf/30 bg-hec-leaf-tint" : "border-hec-line-strong",
               )}
             >
               {file ? (
                 <div className="flex items-center justify-center gap-3">
-                  <span className="text-2xl">{getFileTypeInfo(file.type).icon}</span>
-                  <div className="text-left">
-                    <p className="font-medium text-sm truncate max-w-[300px]">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <span className="shrink-0 text-2xl" aria-hidden>{getFileTypeInfo(file.type).icon}</span>
+                  <div className="min-w-0 text-left">
+                    <p className="max-w-[300px] truncate text-hec-small font-medium text-hec-ink">{file.name}</p>
+                    <p className="text-hec-caption tabular-nums text-hec-ink-soft">
                       {(file.size / 1024 / 1024).toFixed(1)} MB
                     </p>
                   </div>
@@ -280,7 +281,8 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 shrink-0"
+                    className="shrink-0"
+                    aria-label="Remove the file"
                     onClick={(e) => {
                       e.stopPropagation();
                       setFile(null);
@@ -291,12 +293,12 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    Drag & drop a file, or <span className="text-blue-600 font-medium">click to browse</span>
+                  <Upload className="mx-auto h-8 w-8 text-hec-ink-faint" aria-hidden />
+                  <p className="text-hec-small text-hec-ink-soft">
+                    Drag & drop a file, or <span className="font-medium text-hec-brass">click to browse</span>
                   </p>
                   {isEdit && editResource?.file_name && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="break-words text-hec-caption text-hec-ink-soft">
                       Current: {editResource.file_name}
                     </p>
                   )}
@@ -305,7 +307,8 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
               <input
                 ref={fileInputRef}
                 type="file"
-                className="hidden"
+                aria-label="File"
+                className="sr-only"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) setFile(f);
@@ -317,7 +320,7 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
           {/* ---- External URL ---- */}
           <div className="space-y-1.5">
             <Label htmlFor="res-url" className="flex items-center gap-1.5">
-              <Link2 className="h-3.5 w-3.5" /> External URL (optional)
+              <Link2 className="h-4 w-4" aria-hidden /> External URL (optional)
             </Label>
             <Input
               id="res-url"
@@ -328,16 +331,17 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
           </div>
 
           {/* ---- Visibility ---- */}
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div>
-              <Label className="text-sm font-medium">Shared with Students</Label>
-              <p className="text-xs text-muted-foreground">
+          <div className="flex items-center justify-between gap-3 rounded-hec-md border border-hec-line p-3">
+            <div className="min-w-0">
+              <Label htmlFor="res-shared" className="text-hec-small font-medium text-hec-ink">Shared with Students</Label>
+              <p className="text-hec-caption text-hec-ink-soft">
                 {visibility === "shared"
                   ? "Students in selected classes can see this resource"
                   : "Only teachers/admins can see this resource"}
               </p>
             </div>
             <Switch
+              id="res-shared"
               checked={visibility === "shared"}
               onCheckedChange={(checked) => setVisibility(checked ? "shared" : "private")}
             />
@@ -345,10 +349,10 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
 
           {/* ---- Class Selection ---- */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <Label>Assign to Classes *</Label>
               <div className="flex items-center gap-2">
-                <Label htmlFor="all-classes" className="text-xs text-muted-foreground cursor-pointer">
+                <Label htmlFor="all-classes" className="cursor-pointer text-hec-caption text-hec-ink-soft">
                   All Classes
                 </Label>
                 <Switch
@@ -358,26 +362,26 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto rounded-lg border p-2">
+            <div className="grid max-h-56 grid-cols-1 gap-2 overflow-y-auto rounded-hec-md border border-hec-line p-2 sm:grid-cols-2">
               {classes.map((c: any) => (
                 <label
                   key={c.id}
                   className={cn(
-                    "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors",
+                    "flex min-h-hec-target items-center gap-2 rounded-hec-sm px-2 py-2 text-hec-small text-hec-ink cursor-pointer transition-colors duration-hec-1 ease-hec",
                     selectedClasses.includes(c.id)
-                      ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                      : "hover:bg-muted/60",
+                      ? "bg-hec-sunken font-medium"
+                      : "hover:bg-hec-sunken/60",
                   )}
                 >
                   <Checkbox
                     checked={selectedClasses.includes(c.id)}
                     onCheckedChange={() => toggleClass(c.id)}
                   />
-                  <span className="truncate">{c.name}</span>
+                  <span className="min-w-0 whitespace-normal break-words hyphens-none">{c.name}</span>
                 </label>
               ))}
               {classes.length === 0 && (
-                <p className="col-span-full text-xs text-muted-foreground text-center py-2">
+                <p className="col-span-full py-2 text-center text-hec-caption text-hec-ink-soft">
                   No active classes found
                 </p>
               )}
@@ -393,12 +397,12 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
                   key={level.value}
                   type="button"
                   onClick={() => toggleBlooms(level.value)}
+                  aria-pressed={selectedBlooms.includes(level.value)}
                   className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
-                    "border hover:scale-105",
+                    "inline-flex min-h-hec-target items-center gap-2 rounded-full border px-3 text-hec-caption font-medium transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
                     selectedBlooms.includes(level.value)
-                      ? `${level.color} border-transparent shadow-sm`
-                      : "bg-transparent border-muted-foreground/20 text-muted-foreground hover:border-muted-foreground/40",
+                      ? `${level.color} border-transparent`
+                      : "border-hec-line-strong bg-transparent text-hec-ink-soft hover:bg-hec-sunken",
                   )}
                 >
                   <span>{level.icon}</span>
@@ -418,12 +422,12 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
                   key={theme.value}
                   type="button"
                   onClick={() => togglePyp(theme.value)}
+                  aria-pressed={selectedPyp.includes(theme.value)}
                   className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
-                    "border hover:scale-105",
+                    "inline-flex min-h-hec-target items-center gap-2 rounded-full border px-3 text-hec-caption font-medium transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
                     selectedPyp.includes(theme.value)
-                      ? `${theme.color} border-transparent shadow-sm`
-                      : "bg-transparent border-muted-foreground/20 text-muted-foreground hover:border-muted-foreground/40",
+                      ? `${theme.color} border-transparent`
+                      : "border-hec-line-strong bg-transparent text-hec-ink-soft hover:bg-hec-sunken",
                   )}
                 >
                   <span>{theme.icon}</span>
@@ -440,15 +444,17 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
             {vocabTags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {vocabTags.map((tag) => (
-                  <Badge
+                  // A real button (keyboard, focus ring); same handler as the old clickable badge.
+                  <button
                     key={tag}
-                    variant="secondary"
-                    className="gap-1 pl-2 pr-1 cursor-pointer hover:bg-destructive/10"
+                    type="button"
+                    className="inline-flex min-h-hec-target items-center gap-1 rounded-full border border-hec-line bg-hec-sunken px-3 text-hec-caption font-medium text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-danger-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                     onClick={() => removeVocabTag(tag)}
+                    aria-label={`Remove ${tag}`}
                   >
                     {tag}
-                    <X className="h-3 w-3" />
-                  </Badge>
+                    <X className="h-3 w-3" aria-hidden />
+                  </button>
                 ))}
               </div>
             )}
@@ -457,6 +463,7 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
                 <div className="flex gap-2">
                   <Input
                     placeholder="Type a tag and press Enter..."
+                    aria-label="Vocabulary tag"
                     value={vocabInput}
                     onChange={(e) => {
                       setVocabInput(e.target.value);
@@ -478,6 +485,7 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
                     variant="outline"
                     size="icon"
                     className="shrink-0"
+                    aria-label="Add the tag"
                     onClick={() => vocabInput.trim() && addVocabTag(vocabInput)}
                   >
                     <Plus className="h-4 w-4" />
@@ -504,7 +512,7 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
           </div>
 
           {/* ---- Actions ---- */}
-          <div className="flex justify-end gap-3 pt-2 border-t">
+          <div className="flex flex-col-reverse gap-3 border-t border-hec-line pt-4 sm:flex-row sm:justify-end">
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
@@ -515,7 +523,7 @@ export function ResourceUploadDialog({ open, onOpenChange, editResource }: Props
             <Button
               onClick={handleSubmit}
               disabled={isSaving}
-              className="gap-2 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700"
+              className="gap-2"
             >
               {isSaving ? (
                 <span className="animate-spin">⏳</span>
