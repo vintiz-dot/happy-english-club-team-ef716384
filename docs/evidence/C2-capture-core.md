@@ -1,6 +1,6 @@
 # C2 - Recorder capture core
 
-**Where I am / next step:** built and tested; waiting on the minimised-window hidden-tab run and the 10-minute CPU re-run after the encoder speed-up, then the full `run.mjs`, then re-merge the conductor branch (revision 2 not merged yet at the time of writing).
+**Where I am / next step:** DONE. Built, aligned with C1 revision 2 and critic 3, all checks green (see Test totals). Remaining work is the owner's hardware list and the conductor requests below.
 
 Nothing here was applied, deployed or pointed at the live project. No audio entered the repo: the lesson WAV is read in place from `C:\Users\Dell\hec-audio-eval\...`, results go to `C:\Users\Dell\hec-tools\c2-harness\`. No new npm dependency (FLAC encoder written here; Playwright is used by path from `C:\Users\Dell\hec-tools\a0-harness`).
 
@@ -164,7 +164,15 @@ Needs the real S500 and lapel (numbered for the owner; extends C1 9.2):
 
 ## Test totals
 
-TOTALS
+All after the merge of `claude/hec-conductor-setup-efbaa5` (revision 2 + critic 3), on this branch:
+
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0 (run inside `run.mjs` as "app typecheck", 3/0, which asserts it loaded the source).
+- `node scripts/recorder/unit.test.mjs`: **195 passed, 0 failed** (pure logic + the controller against the contract-enforcing fake server).
+- `node scripts/pgtest/recorder-retention.test.mjs`: **33 passed, 0 failed**.
+- `node scripts/pgtest/edge-functions.test.mjs`: 5/0 (inside the full run; recorder-retention is among the files type-checked).
+- `node scripts/recorder/browser.test.mjs` (Chromium 145, fake devices): **46 passed** in the full run, plus `--only=autostart` re-run **3/3** after making that test wait on the server's state instead of a fixed 45 s (it had timed out at "stopping" on a heavily loaded machine) -> 49/49 assertions passing.
+- `node scripts/pgtest/run.mjs`: **2734 assertions across 36 suites, 0 suite(s) failed** (before this branch's merge of revision 2 the same run was 2570/36/0; the difference is the conductor's own suites - class recorder 284 -> 367, session guard 239 -> 266 and 81 -> 135; no existing assertion was removed; the only suite this branch adds is "recorder retention", 33).
+- Measurements (not test totals): `scripts/recorder/measure.mjs --run=formats` 32 min and 10 min, `--run=hidden` 2 x 11 min; JSON in `C:\Users\Dell\hec-tools\c2-harness\`.
 
 ## Requests to the conductor
 
