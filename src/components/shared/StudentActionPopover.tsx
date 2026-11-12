@@ -30,6 +30,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import { supabase } from "@/integrations/supabase/client";
 import { awardPoints, getTodaySession } from "@/lib/pointsHelper";
 import { SKILL_CONFIG, BEHAVIOR_CONFIG, CORRECTION_CONFIG } from "@/lib/skillConfig";
@@ -84,6 +85,7 @@ export function StudentActionPopover({
   const [flagText, setFlagText] = useState("");
   const [flagType, setFlagType] = useState<string>("grammar");
   const queryClient = useQueryClient();
+  const ivory = useIvory();
 
   // Live contextual data — fetched only while the popover is open.
   const { data: live, isLoading: liveLoading } = useQuery<LiveContext>({
@@ -239,6 +241,18 @@ export function StudentActionPopover({
 
   const attendanceChip = () => {
     const s = (live?.attendanceStatus || "").toLowerCase();
+    if (ivory) {
+      const chip = "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-hec-caption font-medium";
+      if (s === "present")
+        return <span className={`${chip} border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf`}><CheckCircle2 className="h-3.5 w-3.5" />Present</span>;
+      if (s === "late")
+        return <span className={`${chip} border-hec-warn/30 bg-hec-warn-tint text-hec-warn`}><Clock className="h-3.5 w-3.5" />Late</span>;
+      if (s === "absent")
+        return <span className={`${chip} border-hec-danger/30 bg-hec-danger-tint text-hec-danger`}><XCircle className="h-3.5 w-3.5" />Absent</span>;
+      if (live?.sessionId)
+        return <span className={`${chip} border-hec-line bg-hec-surface text-hec-ink-soft`}>Unmarked</span>;
+      return null;
+    }
     const base = "flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold backdrop-blur-sm";
     if (s === "present")
       return <span className={`${base} bg-emerald-400/25 text-emerald-100 ring-1 ring-emerald-300/40`}><CheckCircle2 className="h-3 w-3" />Present</span>;
@@ -257,8 +271,37 @@ export function StudentActionPopover({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-[21rem] p-0 overflow-hidden" align="center" sideOffset={6}>
-        {/* Aurora identity band */}
+      <PopoverContent className={ivory ? "w-[21rem] max-w-[calc(100vw-2rem)] p-0 overflow-hidden" : "w-[21rem] p-0 overflow-hidden"} align="center" sideOffset={6}>
+        {ivory ? (
+          // Ivory identity band: the whole name (it wraps), today's and this month's points, attendance in words
+          <div className="flex items-start gap-3 border-b border-hec-line bg-hec-sunken px-4 py-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-hec-line bg-hec-surface text-hec-small font-semibold text-hec-ink-soft" aria-hidden>
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="whitespace-normal break-words hyphens-none text-balance text-hec-body font-semibold text-hec-ink">{studentName}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-hec-small text-hec-ink-soft">
+                {live && (
+                  <>
+                    <span className="flex items-center gap-1 whitespace-nowrap">
+                      <Zap className="h-3.5 w-3.5 text-hec-brass" />
+                      <span className="font-semibold tabular-nums text-hec-ink">{live.pointsToday}</span> today
+                    </span>
+                    <span className="whitespace-nowrap">
+                      <span className="font-semibold tabular-nums text-hec-ink">{live.pointsMonth}</span> this month
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+            {liveLoading ? (
+              <Loader2 className="mt-1 h-4 w-4 shrink-0 animate-spin text-hec-ink-faint" />
+            ) : (
+              attendanceChip()
+            )}
+          </div>
+        ) : (
+        /* Aurora identity band */
         <div className="relative overflow-hidden bg-aurora hero-sheen px-3.5 pt-3 pb-2.5 text-white">
           <div className="nova-grid-light absolute inset-0 pointer-events-none" />
           <div className="relative flex items-center gap-2.5">
@@ -289,42 +332,49 @@ export function StudentActionPopover({
           </div>
           <div className="hairline-gradient absolute inset-x-0 bottom-0 h-px" />
         </div>
+        )}
 
         <AnimatePresence mode="wait" initial={false}>
           {panel === "main" && (
-            <motion.div key="main" {...panelMotion} className="p-2.5 space-y-2">
+            <motion.div key="main" {...panelMotion} className={ivory ? "p-3 space-y-3" : "p-2.5 space-y-2"}>
               {/* Attendance micro-actions */}
               {canManagePoints && live?.sessionId && (
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className={ivory ? "grid grid-cols-3 gap-2" : "grid grid-cols-3 gap-1.5"}>
                   <button
                     disabled={isBusy}
                     onClick={() => attendanceMutation.mutate("Present")}
-                    className="flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold text-white bg-gradient-to-br from-emerald-500 to-teal-600 shadow-[0_4px_12px_-4px_rgba(16,185,129,0.6)] transition-transform hover:scale-[1.04] active:scale-95 disabled:opacity-50"
+                    className={ivory
+                      ? cn(SAP_STATE_BUTTON, "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf hover:border-hec-leaf")
+                      : "flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold text-white bg-gradient-to-br from-emerald-500 to-teal-600 shadow-[0_4px_12px_-4px_rgba(16,185,129,0.6)] transition-transform hover:scale-[1.04] active:scale-95 disabled:opacity-50"}
                   >
-                    <CheckCircle2 className="h-3.5 w-3.5" />Present
+                    <CheckCircle2 className={ivory ? "h-4 w-4" : "h-3.5 w-3.5"} />Present
                   </button>
                   <button
                     disabled={isBusy}
                     onClick={() => attendanceMutation.mutate("Late")}
-                    className="flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold text-white bg-gradient-to-br from-amber-400 to-orange-500 shadow-[0_4px_12px_-4px_rgba(245,158,11,0.6)] transition-transform hover:scale-[1.04] active:scale-95 disabled:opacity-50"
+                    className={ivory
+                      ? cn(SAP_STATE_BUTTON, "border-hec-warn/30 bg-hec-warn-tint text-hec-warn hover:border-hec-warn")
+                      : "flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold text-white bg-gradient-to-br from-amber-400 to-orange-500 shadow-[0_4px_12px_-4px_rgba(245,158,11,0.6)] transition-transform hover:scale-[1.04] active:scale-95 disabled:opacity-50"}
                   >
-                    <Clock className="h-3.5 w-3.5" />Late
+                    <Clock className={ivory ? "h-4 w-4" : "h-3.5 w-3.5"} />Late
                   </button>
                   <button
                     disabled={isBusy}
                     onClick={() => attendanceMutation.mutate("Absent")}
-                    className="flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold text-white bg-gradient-to-br from-rose-500 to-red-600 shadow-[0_4px_12px_-4px_rgba(244,63,94,0.6)] transition-transform hover:scale-[1.04] active:scale-95 disabled:opacity-50"
+                    className={ivory
+                      ? cn(SAP_STATE_BUTTON, "border-hec-danger/30 bg-hec-danger-tint text-hec-danger hover:border-hec-danger")
+                      : "flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold text-white bg-gradient-to-br from-rose-500 to-red-600 shadow-[0_4px_12px_-4px_rgba(244,63,94,0.6)] transition-transform hover:scale-[1.04] active:scale-95 disabled:opacity-50"}
                   >
-                    <XCircle className="h-3.5 w-3.5" />Absent
+                    <XCircle className={ivory ? "h-4 w-4" : "h-3.5 w-3.5"} />Absent
                   </button>
                 </div>
               )}
 
               {/* Action tiles */}
               {canManagePoints && (
-                <div className="grid grid-cols-2 gap-1.5">
+                <div className={ivory ? "grid grid-cols-2 gap-2" : "grid grid-cols-2 gap-1.5"}>
                   <ActionTile
-                    icon={<Zap className="h-4 w-4" />}
+                    icon={<Zap className={ivory ? "h-4 w-4 text-hec-brass" : "h-4 w-4"} />}
                     label="Quick +5"
                     sub="Instant award"
                     tone="from-amber-500/15 to-yellow-500/5 text-amber-600 dark:text-amber-300 hover:ring-amber-500/40"
@@ -370,21 +420,21 @@ export function StudentActionPopover({
                     onViewHistory();
                   }}
                 >
-                  <History className="h-4 w-4 text-muted-foreground" />
+                  <History className={ivory ? "h-4 w-4 text-hec-ink-soft" : "h-4 w-4 text-muted-foreground"} />
                   View History
                 </Button>
               )}
 
               {/* Recent errors preview — instant teaching context */}
               {live && live.recentErrors.length > 0 && (
-                <div className="rounded-xl bg-muted/40 px-2.5 py-2 space-y-1">
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-bold flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3 text-orange-500" />
+                <div className={ivory ? "rounded-hec-md border border-hec-line bg-hec-sunken px-3 py-2 space-y-1" : "rounded-xl bg-muted/40 px-2.5 py-2 space-y-1"}>
+                  <p className={ivory ? SAP_SECTION_LABEL + " flex items-center gap-1" : "text-[10px] uppercase tracking-wide text-muted-foreground font-bold flex items-center gap-1"}>
+                    <AlertTriangle className={ivory ? "h-3.5 w-3.5 text-hec-warn" : "h-3 w-3 text-orange-500"} />
                     Recent errors
                   </p>
                   {live.recentErrors.map((e, i) => (
-                    <p key={i} className="text-xs text-muted-foreground truncate" title={e.error_text}>
-                      <span className="text-orange-500 font-semibold">{e.error_type}:</span> {e.error_text}
+                    <p key={i} className={ivory ? "text-hec-small text-hec-ink-soft break-words" : "text-xs text-muted-foreground truncate"} title={e.error_text}>
+                      <span className={ivory ? "text-hec-warn font-semibold" : "text-orange-500 font-semibold"}>{e.error_type}:</span> {e.error_text}
                     </p>
                   ))}
                 </div>
@@ -395,15 +445,15 @@ export function StudentActionPopover({
           {panel === "skills" && (
             <motion.div key="skills" {...panelMotion} className="p-3 space-y-3">
               <div className="flex items-center justify-between">
-                <Button variant="ghost" size="sm" className="gap-1 -ml-2 h-7" onClick={() => setPanel("main")}>
+                <Button variant="ghost" size="sm" className={ivory ? "gap-1 -ml-2" : "gap-1 -ml-2 h-7"} onClick={() => setPanel("main")}>
                   <ChevronLeft className="h-4 w-4" />Back
                 </Button>
-                {awardPointsMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                {awardPointsMutation.isPending && <Loader2 className={ivory ? "h-4 w-4 animate-spin text-hec-ink-faint" : "h-4 w-4 animate-spin"} />}
               </div>
 
-              <div className="space-y-1.5">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-bold">Skills (+1)</p>
-                <div className="grid grid-cols-2 gap-1.5">
+              <div className={ivory ? "space-y-2" : "space-y-1.5"}>
+                <p className={ivory ? SAP_SECTION_LABEL : "text-[10px] uppercase tracking-wide text-muted-foreground font-bold"}>Skills (+1)</p>
+                <div className={ivory ? "grid grid-cols-2 gap-2" : "grid grid-cols-2 gap-1.5"}>
                   {Object.entries(SKILL_CONFIG).map(([key, config]) => {
                     const Icon = config.icon;
                     return (
@@ -420,9 +470,9 @@ export function StudentActionPopover({
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-bold">Behaviors (+1)</p>
-                <div className="grid grid-cols-2 gap-1.5">
+              <div className={ivory ? "space-y-2" : "space-y-1.5"}>
+                <p className={ivory ? SAP_SECTION_LABEL : "text-[10px] uppercase tracking-wide text-muted-foreground font-bold"}>Behaviors (+1)</p>
+                <div className={ivory ? "grid grid-cols-2 gap-2" : "grid grid-cols-2 gap-1.5"}>
                   {Object.entries(BEHAVIOR_CONFIG).map(([key, config]) => {
                     const Icon = config.icon;
                     return (
@@ -439,17 +489,19 @@ export function StudentActionPopover({
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-bold">Corrections (-1)</p>
-                <div className="grid grid-cols-1 gap-1.5">
+              <div className={ivory ? "space-y-2" : "space-y-1.5"}>
+                <p className={ivory ? SAP_SECTION_LABEL : "text-[10px] uppercase tracking-wide text-muted-foreground font-bold"}>Corrections (-1)</p>
+                <div className={ivory ? "grid grid-cols-1 gap-2" : "grid grid-cols-1 gap-1.5"}>
                   {CORRECTION_CONFIG.subTags.slice(0, 3).map((tag) => (
                     <button
                       key={tag.value}
                       disabled={isBusy}
                       onClick={() => awardPointsMutation.mutate({ skill: "correction", subTag: tag.value })}
-                      className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-rose-500/10 to-red-500/5 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-300 ring-1 ring-transparent hover:ring-rose-500/40 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+                      className={ivory
+                        ? "flex min-h-hec-target items-center gap-2 rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint px-3 py-2 text-left text-hec-small font-semibold text-hec-danger transition-colors duration-hec-1 ease-hec hover:border-hec-danger disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+                        : "flex items-center gap-2 rounded-xl bg-gradient-to-br from-rose-500/10 to-red-500/5 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-300 ring-1 ring-transparent hover:ring-rose-500/40 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"}
                     >
-                      <CORRECTION_CONFIG.icon className="h-3.5 w-3.5" />
+                      <CORRECTION_CONFIG.icon className={ivory ? "h-4 w-4 shrink-0" : "h-3.5 w-3.5"} />
                       {tag.label}
                     </button>
                   ))}
@@ -459,25 +511,34 @@ export function StudentActionPopover({
           )}
 
           {panel === "flag" && (
-            <motion.div key="flag" {...panelMotion} className="p-3 space-y-2">
+            <motion.div key="flag" {...panelMotion} className={ivory ? "p-3 space-y-3" : "p-3 space-y-2"}>
               <div className="flex items-center justify-between">
-                <Button variant="ghost" size="sm" className="gap-1 -ml-2 h-7" onClick={() => setPanel("main")}>
+                <Button variant="ghost" size="sm" className={ivory ? "gap-1 -ml-2" : "gap-1 -ml-2 h-7"} onClick={() => setPanel("main")}>
                   <ChevronLeft className="h-4 w-4" />Back
                 </Button>
-                <p className="text-xs font-medium text-muted-foreground">Flag for review</p>
+                <p className={ivory ? "text-hec-small font-medium text-hec-ink-soft" : "text-xs font-medium text-muted-foreground"}>Flag for review</p>
               </div>
               <Textarea
                 placeholder={`What did ${studentName} say/write? e.g. "He go to school yesterday"`}
                 value={flagText}
                 onChange={(e) => setFlagText(e.target.value)}
-                className="min-h-[64px] text-sm rounded-xl"
+                className={ivory ? "min-h-[88px]" : "min-h-[64px] text-sm rounded-xl"}
+                aria-label={ivory ? "What was said or written" : undefined}
               />
-              <div className="flex flex-wrap gap-1">
+              <div className={ivory ? "flex flex-wrap gap-2" : "flex flex-wrap gap-1"}>
                 {["grammar", "vocabulary", "pronunciation", "spelling"].map((t) => (
                   <button
                     key={t}
                     onClick={() => setFlagType(t)}
-                    className={cn(
+                    aria-pressed={ivory ? flagType === t : undefined}
+                    className={ivory
+                      ? cn(
+                          "min-h-hec-target rounded-full border px-4 text-hec-small font-medium capitalize transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+                          flagType === t
+                            ? "border-hec-action bg-hec-action text-hec-on-action"
+                            : "border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken",
+                        )
+                      : cn(
                       "h-7 rounded-full px-3 text-xs font-semibold capitalize transition-all",
                       flagType === t
                         ? "bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-[0_4px_12px_-4px_rgba(249,115,22,0.6)]"
@@ -489,7 +550,7 @@ export function StudentActionPopover({
                 ))}
               </div>
               <Button
-                className="w-full gap-2 rounded-xl text-white bg-gradient-to-r from-orange-500 via-rose-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 shadow-[0_6px_18px_-6px_rgba(249,115,22,0.6)]"
+                className={ivory ? "w-full gap-2" : "w-full gap-2 rounded-xl text-white bg-gradient-to-r from-orange-500 via-rose-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 shadow-[0_6px_18px_-6px_rgba(249,115,22,0.6)]"}
                 disabled={!flagText.trim() || flagMutation.isPending}
                 onClick={() => flagMutation.mutate()}
               >
@@ -518,6 +579,20 @@ function ActionTile({
   onClick: () => void;
   disabled?: boolean;
 }) {
+  const ivory = useIvory();
+  if (ivory) {
+    return (
+      <button disabled={disabled} onClick={onClick} className={SAP_TILE + " py-2"}>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-hec-sm bg-hec-sunken text-hec-ink-soft">
+          {icon}
+        </span>
+        <span className="min-w-0">
+          <span className="block text-hec-small font-semibold text-hec-ink">{label}</span>
+          <span className="block text-hec-caption text-hec-ink-soft">{sub}</span>
+        </span>
+      </button>
+    );
+  }
   return (
     <button
       disabled={disabled}
@@ -539,6 +614,13 @@ function ActionTile({
   );
 }
 
+// Ivory class strings shared by the popover's panels and tiles.
+const SAP_STATE_BUTTON =
+  "flex min-h-hec-target items-center justify-center gap-1 rounded-hec-md border px-2 text-hec-small font-semibold transition-colors duration-hec-1 ease-hec disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
+const SAP_SECTION_LABEL = "text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft";
+const SAP_TILE =
+  "flex min-h-hec-target items-center gap-2 rounded-hec-md border border-hec-line bg-hec-surface px-3 text-left text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
+
 function SkillTile({
   icon, label, tone, onClick, disabled,
 }: {
@@ -548,6 +630,15 @@ function SkillTile({
   onClick: () => void;
   disabled?: boolean;
 }) {
+  const ivory = useIvory();
+  if (ivory) {
+    return (
+      <button disabled={disabled} onClick={onClick} className={SAP_TILE + " py-2 text-hec-small font-semibold"}>
+        <span className="shrink-0 text-hec-leaf">{icon}</span>
+        {label}
+      </button>
+    );
+  }
   return (
     <button
       disabled={disabled}
