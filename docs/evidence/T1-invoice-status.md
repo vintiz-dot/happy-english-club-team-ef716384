@@ -225,3 +225,18 @@ The 18 figure fixtures: plain month; 10% enrollment discount; Excused + Late + A
 3. **Figures that return to exactly what was confirmed** (a lesson cancelled, then restored): the bill stays in review until an admin confirms. Recommended default: keep it that way - one click, and nobody is told "confirmed" by a machine.
 4. **A change in class breakdown only** (same totals) does not un-confirm. Recommended default: keep.
 5. **Query 6 rows, if any**: a payment that an edge function lowered. Recommended default: look at each by hand against the family's receipts before touching anything; no automatic repair.
+
+### Verification (commands and totals)
+
+**Where I am / next step:** done; waiting for the reviewer. Nothing deployed, applied or pushed.
+
+| command | result |
+|---|---|
+| `node scripts/pgtest/invoice-status.test.mjs <4 migrations>` on the function at 736264c | 66 passed, 29 failed (the reproduction) |
+| the same, on the fixed function, final suite | **108 passed, 0 failed** |
+| `node scripts/pgtest/edge-functions.test.mjs` | 5 passed, 0 failed (100 files loaded of 100) |
+| `node scripts/pgtest/run.mjs` (full) | **2860 assertions across 37 suites, 0 suite(s) failed** |
+
+The full run was started at commit b358c3c (the fix), when the new suite had 95 assertions. The 13 assertions added afterwards (the owner-SQL section) changed only `invoice-status.test.mjs` and `scripts/CHECK-invoice-status-resets.sql`; that suite was re-run on its own at 108. The full run was NOT repeated after that, so the expected full total now is 2873, of which 2860 were observed in one run and 108 (replacing 95) separately.
+
+Existing suites in that run, unchanged and passing: family payment month 6, dated enrollment discounts 22, cancelled lessons 25, session held evidence 143, session cancel guard 266, session guard functions 135, shared-module mirrors 13, edge functions typecheck 5, app typecheck 3, and the rest. No existing test file was edited; `run.mjs` only gained the new suite's entry.
