@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { givenName } from "@/lib/givenName";
 
 interface MascotCompanionProps {
   studentName?: string;
@@ -85,7 +86,9 @@ export function MascotCompanion({ studentName, streak = 0, pendingHomework = 0, 
   // element that disappeared would move the page under the child's finger.
   // showBubble / isWaving keep their timers but no longer move or hide anything.
   void showBubble; void isWaving;
-  const message = `${studentName ? `Hey ${studentName.split(' ')[0]}! ` : ''}${currentMessage.message}`;
+  // Vietnamese names are family name first: greet the child by the given name ("Anh"), not "Nguyễn".
+  const called = givenName(studentName);
+  const message = `${called ? `Hey ${called}! ` : ''}${currentMessage.message}`;
 
   return (
     <div className="relative">
