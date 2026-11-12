@@ -31,6 +31,43 @@ Probes ran in a throwaway `.probe/` harness that copies the suite's PRELUDE verb
 - Why it matters: children's voice audio of every past lesson of the class (30 days retained, up to 180 by admin) opens to a teacher who has not taught it yet and may never; a cover booked two months ahead (or a mis-assigned session that an admin cancels later... while not Canceled) is a read grant on the whole archive. The brief requires "readable only by the class's teacher and admins". The 7-day back window has the same shape (a one-off cover last week reads the whole month).
 - Fix: split "may record" from "may listen". Recording: keep tiers 1-3 but restrict tier 2 to `s.date = today (Hanoi)` (a cover teacher records the lesson they are covering, nothing else). Listening (`recorder_can_read_recording` / `recorder_can_read_object`): admin, the class's default/timetable teacher, or `r.started_by = auth.uid()` while still a teacher of the class, or the teacher of THAT recording's own session (`sessions.id = r.session_id AND teacher.user_id = auth.uid()`). Never a future session. Add suite cases: future cover reads 0, past cover reads only its own session's recording.
 
+### F3 MAJOR - per-child consent is never checked against the current wording version: a new wording invalidates the class confirmation but not one child's consent
+
+- Where: `recorder_child_consents.wording_version` is stored (:217, :384) but neither `recorder_class_missing_consent` (:244-246) nor the arm trigger (:619-621) compares it with `recorder_settings.consent_wording_version`; both test only `status = 'granted'`. Architecture 4 says changing the text "invalidates every earlier confirmation"; that is true only of the class row.
+- Probe (executed): both children granted under v1; admin sets wording v2; admin switches the class ON quoting v2; teacher arms.
+  ```
+  C-version: switch ON under v2 while both children's consent is v1: {"ok":[{"recorder_set_class_recording":""}]}
+  C-version: child consent rows: [{"wording_version":"v1-2026-11"},{"wording_version":"v1-2026-11"}]
+  C-version: arm under v2 with v1 child consents: {"ok":"33623fcb-..."}
+  ```
+- Why: the reason to version the wording is that v2 may ask parents for something v1 did not (e.g. "may be sent to an AI vendor", which the owner approved for evaluation). Children are then recorded under terms their parents never saw. Fail-open against the guard's own stated intent.
+- Fix: in both places, `NOT EXISTS (... cc.status = 'granted' AND cc.wording_version = v_set.consent_wording_version)`. Suite case: bump the version, reconfirm the class, arm must be refused with "N children".
+
+### F4 MAJOR - the recorder can detach its own open recording from its session (`session_id := NULL`), which erases the evidence for that session and defeats the one-live-recording index
+
+- Where: update trigger (:691-694) deliberately allows `session_id` -> NULL ("the session may vanish"), but the RLS update policy (:1286-1292) lets the owner write the column while the recording is open, so the exception meant for `ON DELETE SET NULL` is open to the client.
+- Probe (executed):
+  ```
+  DETACH: owner sets session_id NULL on open recording: {"ok":[{"session_id":null}]}
+  DETACH: evidence rows for that session now: 0
+  DETACH: second live recording of the same session: {"ok":"ad06489a-..."}
+  ```
+- Why: the cancellation guard (D) finds evidence by `session_id`; a recording detached this way still has audio of children but no session, so D sees "no recording" and the STRONG path is skipped. Recordings with NULL session are also orphans for any per-session reasoning, and the unique index (:482-483) no longer stops two concurrent captures of one lesson.
+- Fix: in the update trigger, allow `NEW.session_id IS NULL AND OLD.session_id IS NOT NULL` only when the session row is actually gone: `AND NOT EXISTS (SELECT 1 FROM public.sessions WHERE id = OLD.session_id)` (inside the FK's SET NULL action the row is already deleted). Better: keep `session_id` NOT NULL with no FK action and a separate `session_deleted_at`, so evidence is never keyed on a nullable column. Add a suite case for the client write.
+
+### F5 MAJOR - the server lets capture run from 20 minutes before the lesson (settable to 30) and to 30 minutes after it (settable to 60); the product rule is 5 minutes before to end + grace
+
+- Where: arm window `arm_window_minutes` default 20, max 30 (:58); `max_duration_ms` = end + `max_overrun_minutes` (default 30, max 60) - now (:641-642); `started_at` may be as early as `armed_at` (:728). `pre_roll_minutes` (5) and `grace_minutes` (10) are, by the file's own comment (:56-57), only "what the page does by itself" - i.e. not enforced.
+- Probe (executed): lesson starts in 19 min.
+  ```
+  WINDOW: arm 19 min before start: {"ok":"5933b003-..."}
+  WINDOW: start capture now (19 min early): {"ok":[{"started_at":"2026-11-12T01:35:21.645Z","scheduled_start":"2026-11-12T01:54:21.616Z"}]}
+  WINDOW: chunk t=0..30s (i.e. 19 min before the lesson) registers: {"ok":[...,"already_registered":false}]}
+  WINDOW: max_duration_ms (min): 108
+  ```
+- Why: room audio of children in the corridor/break 15+ minutes outside the window the parents were told about is accepted and stored. The server is the only boundary a modified page cannot cross; here it is 4x wider than the product rule.
+- Fix: arming may stay early (it is just a row), but `armed -> recording` must clamp `started_at >= scheduled_start - pre_roll_minutes` (refuse earlier), and `recorder_register_chunk` must refuse audio whose server-time position falls before `scheduled_start - pre_roll` or after `scheduled_end + grace_minutes` (compute from `started_at` + `t_ms`, and see F1(a) for tying `t_ms` to the server clock). If an overrun allowance is wanted, it is `grace_minutes`, one number.
+
 ## Must fix before C2 builds on it
 (in progress)
 
