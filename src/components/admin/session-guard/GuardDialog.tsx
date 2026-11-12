@@ -67,6 +67,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
   const [typedDate, setTypedDate] = useState("");
   const keepRef = useRef<HTMLButtonElement>(null);
   const doneRef = useRef<HTMLButtonElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) {
@@ -82,6 +83,8 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
     if (staleNonce > 0) {
       setConfirm(false);
       setTypedDate("");
+      // The "changed while you were looking" notice is at the top: bring it into view.
+      bodyRef.current?.scrollTo({ top: 0 });
     }
   }, [staleNonce]);
 
@@ -144,7 +147,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
           </DialogDescription>
         </DialogHeader>
 
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-5">
+        <div ref={bodyRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-5">
           {phase === "loading" && <LoadingBody />}
 
           {phase === "failed" && error && (
