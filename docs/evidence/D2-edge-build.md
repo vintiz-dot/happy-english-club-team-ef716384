@@ -2,6 +2,8 @@
 
 Where I am / next step: FINISHED. Revision 1 + both functions + tests; full run 2265/34/0; node_modules link removed. Next belongs to the conductor: review, then D3 builds the dialogs from "Contract for the dialogs (D3)". Nothing applied or deployed.
 
+Ship fixes after D-review-3: see docs/evidence/D-ship-fixes.md. The "Contract for the dialogs (D3)" section below is updated to the FINAL shapes; deviations 1 and 2 are superseded.
+
 Written and tested only. NOTHING applied or deployed: no Supabase/MCP tool, no live database. Every change to cancellation behaviour waits for the owner.
 
 ## Files
@@ -29,8 +31,8 @@ Written and tested only. NOTHING applied or deployed: no Supabase/MCP tool, no l
 
 ## Deviations (each the fail-closed or the spec-silent choice)
 
-1. **Preview calls calculate-tuition, which saves the canonical bill** (`_lib/session-guard.ts` `fetchConsequences`; `manage-session/index.ts` preview). calculate-tuition always writes the invoice it computes and has no projection mode, so: it runs BEFORE the preview that issues the token (the token then covers the refreshed bill), BEFORE figures are passed through as a snapshot of named fields (never `paid_amount`), and AFTER figures are reported as `{ fetched: false, reason: 'not_available_before_the_change' }` - the real after-figures come back from the confirm step's refresh. `figures: false` skips it. Bulk previews never fetch figures (rate limit 30/min).
-2. **Teacher pay line** (design silent): fetched from calculate-payroll `{ month, teacherId }` only for a single preview of a `Held` lesson, passed through raw; otherwise `{ fetched: false, reason }`.
+1. **SUPERSEDED by the ship fixes (F-1): the preview no longer calls calculate-tuition or calculate-payroll; it shows the stored bills (`consequences.invoices_before`).** Original text: **Preview calls calculate-tuition, which saves the canonical bill** (`_lib/session-guard.ts` `fetchConsequences`; `manage-session/index.ts` preview). calculate-tuition always writes the invoice it computes and has no projection mode, so: it runs BEFORE the preview that issues the token (the token then covers the refreshed bill), BEFORE figures are passed through as a snapshot of named fields (never `paid_amount`), and AFTER figures are reported as `{ fetched: false, reason: 'not_available_before_the_change' }` - the real after-figures come back from the confirm step's refresh. `figures: false` skips it. Bulk previews never fetch figures (rate limit 30/min).
+2. **SUPERSEDED (F-1): no pay line in a preview** - calculate-payroll upserts `payroll_summaries` for an open month (`calculate-payroll/index.ts:768`), so a preview may not call it; `consequences.pay_line` says `available: false`. Original text: **Teacher pay line** (design silent): fetched from calculate-payroll `{ month, teacherId }` only for a single preview of a `Held` lesson, passed through raw; otherwise `{ fetched: false, reason }`.
 3. **`refreshCancelledTuition` kept unchanged but no longer called** by these two functions (`_lib/refresh-cancelled-tuition.ts`): it throws at the first failed pair and reads attendance (gone after a delete). `refreshPairs` makes the same call with the same failure test (`error`, `data.error`, `siblingUnresolved`) and continues (review-1 B-7).
 4. **`create` still writes on the service key** (`manage-session/index.ts`, `create`): brief says unchanged; INSERT is not guarded. Recorded in the F-2 assertion as the one service-key sessions write.
 5. **`change-status` Scheduled <-> Held keeps an optional reason** (not a guarded kind; behaviour unchanged except the write is the admin's own).
