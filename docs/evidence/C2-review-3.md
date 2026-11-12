@@ -78,6 +78,41 @@ Line by line:
 - **R3-2 (minor): `recorder_session_evidence` should expose `pre_start_ms`** (see above).
 - **R3-3 (minor): the 9 new SQL assertions (406 -> 415) cover**: armed refused, beyond-window refused (with 365 days, which also trips the 30-min cap, so neither bound is tested on its own), stated once, stored, three pre-start chunks accepted, ahead-of-clock from the new origin, completes, "48 of 50 minutes count", refused after a chunk. **Not covered**: another teacher (not `started_by`) setting it; a value just over `started_at - capture_opens_at` with the cap not in play; the cap itself; a chunk that straddles `started_at` (it is not live - right, untested); `late` for post-start chunks after a long pre-start; the state `uploading`. The trigger reads correctly on each of these; they have no test that could fail.
 
+## 5. The C3 screens (read, not rendered: `src/components/recorder/DailyRecorder.tsx`, `signOutGuard.ts`, `src/pages/TeacherRecorder.tsx`, `src/lib/recorderUi.ts`)
+
+The 14 items of review 2:
+
+| # | Item | Status |
+|---|---|---|
+| 1 | `stalled` keeps the bar and Stop; setup not offered | DONE - `CAPTURING` includes `stalled` (`DailyRecorder.tsx:33`); the bar is drawn for all three; `active` stays true so `TeacherRecorder.tsx` hides "Microphones" and `onSetup` is guarded. |
+| 2 | `starting` has no red dot | DONE - the dot only when `state === "recording"`; "Starting...", after 5 s "Saving on this laptop - the school server has not confirmed yet" as an alert. |
+| 3 | `error` screen | DONE - "This lesson is not being recorded" + the engine's text; may arm the next lesson, not the same one. |
+| 4 | title prefixes | DONE - one regex with all four. |
+| 5 | a view per new code, no Reload while capturing | DONE (`recorderUi.ts:249-265`; the button handler also refuses reload while capturing). |
+| 6 | error board | DONE (`boardAdd/boardClear/boardShow`). |
+| 7 | `device_lost` / `device_restored` | DONE - "Still missing - plug it back in; the recorder is looking for it"; restore clears both sets and both board entries. |
+| 8 | clipping on the meter | DONE. |
+| 9 | `mic_silent` until `recovered` | DONE. |
+| 10 | `stuck`, `othersPending`, typed DISCARD | DONE, but see C3-b. |
+| 11 | sign-out through the recorder; engine per user | PARTLY - see C3-c. The engine is re-created on a user change (`key={`${key}-${user.id}`}`). |
+| 12-14 | `RecorderLike`, `durable`, upload line, no folder backup | DONE. |
+
+A state with no Stop button: none found among `starting / recording / stalled` (one bar, one Stop, `stop("manual")` works in all three; the 30 s encoder timeout means `stopping` can no longer hang). A false red dot from the screen itself: none - the dot follows `state === "recording"` only. (The engine can hold `recording` while nothing reaches the server: R3-B1.)
+
+What I found that is not on the list:
+- **C3-a - MUST FIX before a real class: leaving the page inside the app ends the recording silently.** `DailyRecorder.tsx` (`useEffect(() => () => { void rec.current?.dispose(); }, [])`) disposes the engine on unmount. `TeacherRecorder` keeps it mounted across its own three views, but any Layout link (attendance, the class page - what a teacher does during a lesson) is a client-side route change: the page unmounts, `dispose()` drops the audio callbacks and the timer, no Stop is sent, nothing is said (the screen is gone), and `dispose()` does not close the microphones, so the browser's own microphone indicator stays on. `beforeunload` (the engine's guard) does not fire for a route change, and nothing blocks the route (no `useBlocker`, checked in `App.tsx` / `Layout.tsx`). Everything from that moment to the teacher's return is not recorded; on return and "Ready" the capture is closed as `crash_recovered`. This existed before round 3 and I missed it in review 2; it answers this review's question ("silently fail to record") with yes. Fix, either: block the route while `active` (confirm dialog "Stop the recording first"), or hold the engine above the router so it outlives the page and show the recording bar in Layout. And `dispose()` while capturing should itself end the capture properly (flush, close the microphones, queue the Stop) rather than abandon it.
+- **C3-b (major): on a day with no lesson the screen offers nothing.** The early return for `!lesson && !capturing && !SAVING` renders only "No more lessons to record today": no "Ready for today" button, so `recover()` never runs and yesterday's unfinished upload is not resumed until the teacher's next lesson day; the `stuck` / other-account notices and the DISCARD dialog are not rendered there either. Unsent audio waits on the laptop for days for no reason. Fix: run `prepare()` + `recover()` whenever the page is opened (uploads need no gesture) and render `heldBox` in that branch.
+- **C3-c (minor): the sign-out guard exists only while the recorder page is mounted and "Ready" was pressed** (`rec.current`); a sign-out from any other page skips `rec.signOut()`, so confirmed audio of an unfinished upload stays in IndexedDB until that teacher next opens the recorder. No warning about unsent audio either.
+- C3-d (minor): for "both microphones gone" the bar says "NOT RECORDING - restarting the audio" (the board entry has the right words); the meters keep their last level during a context stall.
+- No render test exists: `ui.test.mjs` covers `recorderUi.ts` only. Removing `"stalled"` from `CAPTURING` (the Stop bar vanishing in the worst moment) is caught by nothing (section 4, N6). These screens have never been opened in a browser by anyone in this workstream; the owner's first hardware session is also their first render.
+
+## 7. For the owner: may unsent audio stay on the laptop until someone types DISCARD?
+
+My recommendation: **yes while the server can still take it, no once it cannot.**
+- While the recording is still open on the server (up to 14 days, `stale_upload_days`), the laptop holds the only copy of a lesson. Deleting it automatically would be the engine destroying a lesson; keep it, show it (it is shown), and resume the upload without anyone asking (C3-b).
+- Once the server has abandoned or deleted the recording, the audio can never be sent (`recorder_can_upload` refuses) and there is no export tool (the folder backup was rightly removed). From then on it is children's voices in plain IndexedDB on a shared classroom laptop, serving nobody. Delete it automatically 14 days after that point, with the countdown shown on the recorder page and the typed DISCARD still available earlier. An admin who wants a longer rescue window should get an admin-only export, not an indefinite local copy.
+- Independently: one Windows account per classroom laptop is not enough protection for this data; turn on BitLocker on that laptop, and do not let the browser profile sync.
+
 ## 6. No real audio, transcript or derived data in the repo
 
 - `git log --numstat d0d18b7..bb70791`: the only binary files in the whole range are PNG screenshots under `docs/evidence/A4.6/` (the conductor branch's tuition work, merged in; not this workstream). No `.wav/.flac/.mp3/.ogg/.webm/.m4a/.opus/.pcm/.zip/.npy/.mp4` was ever added. No blob over 300 kB exists in the range. The one added fixture is `scripts/pgtest/fixtures/tuition-figures.golden.json` (tuition).
