@@ -95,7 +95,7 @@ export function WeeklyProgressCard({ studentId, currentStreak }: WeeklyProgressC
           return (
             <div
               key={stat.label}
-              className="rounded-hec-md bg-hec-sunken/60 p-4 text-center"
+              className="rounded-hec-md border border-hec-line p-4 text-center"
             >
               {chartData ? (
                 <div className="mx-auto mb-1 h-14 w-14" aria-hidden>
