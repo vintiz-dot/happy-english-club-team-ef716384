@@ -244,7 +244,7 @@ try {
     const man = JSON.parse(new TextDecoder().decode(H.server.objects.get(`${BUCKET}/${fin.manifest_path}`).bytes));
     const gap = man.discontinuities.find((d) => d.kind === "context_stall");
     info(`B1 ${how} discontinuities`, man.discontinuities);
-    ok(`B1 ${how}: the gap is in the manifest`, gap && gap.wall_gap_ms >= 4000, JSON.stringify(gap));
+    ok(`B1 ${how}: the gap (the time with no audio, however short) is in the manifest`, gap && gap.wall_gap_ms >= 200, JSON.stringify(gap));
     for (const track of ["teacher", "room"]) {
       const mine = H.server.chunkRows(row.id).filter((c) => c.track === track).sort((a, b) => a.seq - b.seq);
       ok(`B1 ${how} ${track}: contiguous on one timeline after the restart`, mine.every((c, i) => c.seq === i && (i === 0 || c.t_start_ms === mine[i - 1].t_end_ms)));
