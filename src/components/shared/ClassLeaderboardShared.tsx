@@ -346,7 +346,10 @@ export function ClassLeaderboardShared({
     <div
       className={
         ivory
-          ? "relative min-h-[460px] overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1"
+          ? // `text-ink`: the colour the board element inherits stays the
+            // studio ink it had under `studio-surface` (DS s.17: the board
+            // keeps its own look). Every frame text below sets its own hec ink.
+            "relative min-h-[460px] overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface text-ink shadow-hec-1"
           : "studio-surface relative min-h-[460px] overflow-hidden rounded-3xl border border-studio shadow-studio"
       }
     >
