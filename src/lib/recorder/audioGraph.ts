@@ -48,7 +48,9 @@ export class AudioGraph {
 
   /** Must be called from a user gesture the first time. */
   async resume(): Promise<boolean> {
-    try { await this.ctx.resume(); } catch { /* state says it */ }
+    // Without a gesture Chrome leaves resume()'s promise PENDING (measured:
+    // the page hung here) rather than rejecting it, so never wait on it long.
+    try { await Promise.race([this.ctx.resume(), new Promise((r) => setTimeout(r, 1000))]); } catch { /* state says it */ }
     return this.ctx.state === "running";
   }
 
