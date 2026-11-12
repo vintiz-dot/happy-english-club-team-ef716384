@@ -246,6 +246,9 @@ const SUITES = [
     file: "homework-bucket-scope.test.mjs",
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113110000_homework_bucket_scope.sql"],
   },
+  // F-15: pause_enrollment asks for an admin. The "before" is the live
+  // function, kept as the rollback block in the evidence file.
+  { name: "pause enrollment (F-15)", file: "pause-enrollment.test.mjs", migrations: ["20261113120000_pause_enrollment_admin_only.sql"] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",

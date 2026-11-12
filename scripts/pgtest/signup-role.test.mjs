@@ -111,6 +111,11 @@ async function as(uid, sql, params = []) {
 
 // ---------------------------------------------------------------- BEFORE
 console.log("=== before the fix: the defect reproduces ===");
+// md5(replace(prosrc, E'\r', '')) of handle_new_user in production, read from
+// the live catalog on 13 Nov 2026 (562 characters): 20260312152157 is what is live.
+eq("the function under test is byte-for-byte production's (md5 from the live catalog)",
+  await one(`SELECT md5(replace(prosrc, E'\\r', '')) m, length(replace(prosrc, E'\\r', '')) l FROM pg_proc WHERE proname = 'handle_new_user'`),
+  { m: "b2979d905a52445265d16091df7111b2", l: 562 });
 const oldTeacher = await signUp({ role: "teacher" });
 eq("a public sign-up that sends role=teacher IS a teacher", await state(oldTeacher.id), { roles: ["teacher"], legacy: "teacher" });
 ok("has_role(..., 'teacher') is true for it - every 'any teacher' policy opens", await has(oldTeacher.id, "teacher"));
@@ -259,7 +264,11 @@ let createdTeacherId = null;
   // recorded here so nobody takes it for a regression.
   const u = await signUp({ role: "student", migrated_from_user_id: randomUUID() });
   const e = await insertRole(u.id, "student");
-  ok("student-create-migration-account: its plain insert conflicts - unchanged, broken before and after", e !== null && /duplicate key|unique/.test(e), e ?? "no conflict");
+  ok("student-create-migration-account as deployed: its plain insert conflicts - unchanged, broken before and after", e !== null && /duplicate key|unique/.test(e), e ?? "no conflict");
+  const e2 = await upsertRole(u.id, "student");
+  eq("  ...and as fixed in this branch (an upsert): student, no error", { e2, roles: await rolesOf(u.id) }, { e2: null, roles: ["student"] });
+  ok("the function in this branch does upsert", /\.upsert\(\{ user_id: newUserId, role: "student" \}, \{ onConflict: "user_id,role" \}\)/.test(
+    readFileSync(new URL("../../supabase/functions/student-create-migration-account/index.ts", import.meta.url), "utf8")));
 }
 {
   const id = randomUUID();
