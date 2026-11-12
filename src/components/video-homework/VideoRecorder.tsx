@@ -22,6 +22,7 @@ import {
 import { startLivePronunciation, type LivePronunciation } from "@/lib/video/livePronunciation";
 import { formatTimestamp } from "@/lib/videoHomework";
 import { KID_STEPS, inAppBrowser, speak, stepFor } from "@/lib/video/kidVideo";
+import { useIvory } from "@/hooks/useIvory";
 
 type Phase = "idle" | "preview" | "countdown" | "recording" | "review";
 
@@ -36,6 +37,7 @@ interface Props {
 }
 
 export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, busy, kid = false }: Props) {
+  const ivory = useIvory();
   const [phase, setPhase] = useState<Phase>("idle");
   const [count, setCount] = useState(3);
   const [elapsed, setElapsed] = useState(0);
@@ -264,7 +266,7 @@ export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, bus
     kid ? (
       <span className="flex flex-col items-center leading-tight">
         <span>{en}</span>
-        <span className="text-xs font-normal opacity-80">{vi}</span>
+        <span className={ivory ? "text-hec-caption font-normal" : "text-xs font-normal opacity-80"}>{vi}</span>
       </span>
     ) : (
       en
@@ -279,42 +281,48 @@ export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, bus
             <li
               key={st.id}
               aria-current={st.id === step ? "step" : undefined}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-2xl border-2 py-2 text-sm font-semibold ${
-                st.id === step ? "border-primary bg-primary/10" : "border-transparent bg-muted/50 text-muted-foreground"
-              }`}
+              className={
+                ivory
+                  ? `flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-hec-md border px-1 py-2 text-hec-small font-medium ${
+                      st.id === step ? "border-hec-brass bg-hec-surface text-hec-ink" : "border-transparent bg-hec-sunken text-hec-ink-soft"
+                    }`
+                  : `flex flex-1 items-center justify-center gap-1.5 rounded-2xl border-2 py-2 text-sm font-semibold ${
+                      st.id === step ? "border-primary bg-primary/10" : "border-transparent bg-muted/50 text-muted-foreground"
+                    }`
+              }
             >
               <span className="text-xl">{st.emoji}</span>
-              <span className="flex flex-col leading-tight"><span>{n + 1}. {st.en}</span><span className="text-[11px] font-normal">{st.vi}</span></span>
+              <span className="flex flex-col leading-tight"><span>{n + 1}. {st.en}</span><span className={ivory ? "text-hec-caption font-normal" : "text-[11px] font-normal"}>{st.vi}</span></span>
             </li>
           ))}
         </ol>
       )}
       {inApp && (
-        <div className="rounded-2xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 text-sm">
+        <div className={ivory ? "rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 text-hec-body text-hec-ink" : "rounded-2xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 text-sm"}>
           <p>📱 If the camera does not work, open this page in <strong>Chrome</strong> or <strong>Safari</strong>. You can also choose a video you already made.</p>
-          <p className="text-xs text-muted-foreground mt-1">Nếu máy quay không hoạt động, hãy mở trang này bằng Chrome hoặc Safari. Bạn cũng có thể chọn video đã quay sẵn.</p>
+          <p className={ivory ? "mt-1 text-hec-small text-hec-ink-soft" : "text-xs text-muted-foreground mt-1"}>Nếu máy quay không hoạt động, hãy mở trang này bằng Chrome hoặc Safari. Bạn cũng có thể chọn video đã quay sẵn.</p>
         </div>
       )}
       {cueCard && phase !== "review" && (
-        <div className="rounded-2xl border-2 border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 p-3">
-          <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mb-1">🎬 Your video is about</p>
-          <p className={kid ? "text-lg leading-relaxed" : "text-sm leading-relaxed"}>{cueCard}</p>
+        <div className={ivory ? "rounded-hec-md border border-hec-line bg-hec-sunken p-3" : "rounded-2xl border-2 border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 p-3"}>
+          <p className={ivory ? "mb-1 text-hec-small font-medium text-hec-ink-soft" : "text-xs font-semibold text-amber-700 dark:text-amber-300 mb-1"}>🎬 Your video is about</p>
+          <p className={ivory ? (kid ? "text-hec-h3 text-hec-ink" : "text-hec-body text-hec-ink") : kid ? "text-lg leading-relaxed" : "text-sm leading-relaxed"}>{cueCard}</p>
           {kid && (
-            <Button type="button" variant="outline" size="sm" className="mt-2 h-9" onClick={() => speak(cueCard)}>
+            <Button type="button" variant={ivory ? "secondary" : "outline"} size="sm" className={ivory ? "mt-2 h-11" : "mt-2 h-9"} onClick={() => speak(cueCard)}>
               <Volume2 className="h-4 w-4 mr-1.5" /> Listen · Nghe
             </Button>
           )}
           {vocabulary.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2">
               {vocabulary.slice(0, 10).map((w) => (
-                <span key={w} className="text-xs rounded-full bg-white/80 dark:bg-white/10 border px-2 py-0.5">{w}</span>
+                <span key={w} className={ivory ? "rounded-full border border-hec-line bg-hec-surface px-3 py-1 text-hec-caption text-hec-ink" : "text-xs rounded-full bg-white/80 dark:bg-white/10 border px-2 py-0.5"}>{w}</span>
               ))}
             </div>
           )}
         </div>
       )}
 
-      <div className="relative overflow-hidden rounded-2xl bg-black aspect-video">
+      <div className={ivory ? "relative aspect-video overflow-hidden rounded-hec-lg bg-hec-action" : "relative overflow-hidden rounded-2xl bg-black aspect-video"}>
         <video
           ref={liveRef}
           className={`h-full w-full object-cover ${facing === "user" ? "-scale-x-100" : ""} ${phase === "review" || phase === "idle" ? "hidden" : ""}`}
@@ -326,22 +334,24 @@ export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, bus
           <video src={takeUrl} className="h-full w-full object-contain" controls playsInline />
         )}
         {phase === "idle" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center text-white">
+          <div className={ivory ? "absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center text-hec-on-action" : "absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center text-white"}>
             <Camera className="h-10 w-10 opacity-80" />
-            <p className="text-sm opacity-90">You can practise and record again as many times as you like.</p>
+            <p className={ivory ? "text-hec-small" : "text-sm opacity-90"}>You can practise and record again as many times as you like.</p>
           </div>
         )}
         {phase === "countdown" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-            <span className={`${kid ? "text-9xl" : "text-7xl"} font-bold text-white drop-shadow`}>{count}</span>
+          <div className={ivory ? "absolute inset-0 flex items-center justify-center bg-hec-action/60" : "absolute inset-0 flex items-center justify-center bg-black/40"}>
+            <span className={`${kid ? "text-9xl" : "text-7xl"} font-bold tabular-nums ${ivory ? "text-hec-on-action" : "text-white drop-shadow"}`}>{count}</span>
           </div>
         )}
         {phase === "recording" && (
           <div className="absolute top-2 left-2 right-2 flex items-center justify-between">
-            <span className="flex items-center gap-1.5 rounded-full bg-red-600 px-2.5 py-1 text-xs font-semibold text-white">
-              <span className="h-2 w-2 rounded-full bg-white animate-pulse" /> {formatTimestamp(elapsed)}
+            <span className={ivory ? "flex items-center gap-1.5 rounded-full bg-hec-danger-fill px-3 py-1 text-hec-caption font-medium tabular-nums text-hec-on-danger" : "flex items-center gap-1.5 rounded-full bg-red-600 px-2.5 py-1 text-xs font-semibold text-white"}>
+              <span className={ivory ? "h-2 w-2 rounded-full bg-hec-on-danger" : "h-2 w-2 rounded-full bg-white animate-pulse"} /> {formatTimestamp(elapsed)}
             </span>
-            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${remaining < 20 ? "bg-amber-500 text-white" : "bg-black/50 text-white"}`}>
+            <span className={ivory
+              ? `rounded-full border px-3 py-1 text-hec-caption font-medium tabular-nums ${remaining < 20 ? "border-hec-warn/30 bg-hec-warn-tint text-hec-warn" : "border-hec-line bg-hec-surface text-hec-ink"}`
+              : `rounded-full px-2.5 py-1 text-xs font-semibold ${remaining < 20 ? "bg-amber-500 text-white" : "bg-black/50 text-white"}`}>
               {formatTimestamp(remaining)} left
             </span>
           </div>
@@ -350,7 +360,7 @@ export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, bus
           <button
             type="button"
             onClick={flip}
-            className="absolute top-2 right-2 rounded-full bg-black/50 p-2 text-white"
+            className={ivory ? "absolute right-2 top-2 flex min-h-hec-target min-w-hec-target items-center justify-center rounded-full bg-hec-action/70 text-hec-on-action focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring" : "absolute top-2 right-2 rounded-full bg-black/50 p-2 text-white"}
             aria-label="Switch camera"
           >
             <SwitchCamera className="h-5 w-5" />
@@ -359,9 +369,9 @@ export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, bus
       </div>
 
       {cameraError && (
-        <div className="text-sm text-destructive">
+        <div className={ivory ? "text-hec-body text-hec-danger" : "text-sm text-destructive"}>
           <p>{cameraError}</p>
-          {kid && <p className="text-xs">Hãy nhờ người lớn cho phép dùng máy quay và micro, rồi thử lại. Bạn cũng có thể chọn một video có sẵn.</p>}
+          {kid && <p className={ivory ? "text-hec-small" : "text-xs"}>Hãy nhờ người lớn cho phép dùng máy quay và micro, rồi thử lại. Bạn cũng có thể chọn một video có sẵn.</p>}
         </div>
       )}
 
@@ -373,13 +383,13 @@ export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, bus
                 <Camera className="h-5 w-5 mr-2" /> {label("Open camera", "Mở máy quay")}
               </Button>
             )}
-            <Button size="lg" variant="outline" className={`h-12 flex-1 ${big}`} onClick={() => fileInput.current?.click()}>
+            <Button size="lg" variant={ivory ? "secondary" : "outline"} className={`h-12 flex-1 ${big}`} onClick={() => fileInput.current?.click()}>
               <Upload className="h-5 w-5 mr-2" /> {label("Choose a video", "Chọn video")}
             </Button>
           </>
         )}
         {phase === "preview" && (
-          <Button size="lg" className={`h-14 flex-1 text-base bg-red-600 hover:bg-red-700 ${kid ? "h-20 text-xl" : ""}`} onClick={beginCountdown}>
+          <Button size="lg" variant={ivory ? "brass" : undefined} className={`h-14 flex-1 text-base ${ivory ? "" : "bg-red-600 hover:bg-red-700"} ${kid ? "h-20 text-xl" : ""}`} onClick={beginCountdown}>
             <Circle className="h-5 w-5 mr-2 fill-current" /> {label("Start recording", "Bắt đầu quay")}
           </Button>
         )}
@@ -390,7 +400,7 @@ export function VideoRecorder({ maxSeconds, cueCard, vocabulary = [], onUse, bus
         )}
         {phase === "review" && take && (
           <>
-            <Button size="lg" variant="outline" className={`h-12 flex-1 ${big}`} onClick={retake} disabled={busy}>
+            <Button size="lg" variant={ivory ? "secondary" : "outline"} className={`h-12 flex-1 ${big}`} onClick={retake} disabled={busy}>
               <RefreshCw className="h-5 w-5 mr-2" /> {label("Record again", "Quay lại")}
             </Button>
             <Button size="lg" className={`h-12 flex-1 text-base ${big}`} onClick={() => onUse(take)} disabled={busy}>
