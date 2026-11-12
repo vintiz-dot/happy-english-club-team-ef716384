@@ -423,8 +423,8 @@ export default function TeacherBooks() {
       <Layout title="Flipbooks & Presentations" hideNavigation={true}>
         <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
-            <p className="text-muted-foreground font-semibold">Loading presentation center...</p>
+            <Loader2 className="h-10 w-10 animate-spin text-hec-ink-soft" />
+            <p className="text-hec-body font-medium text-hec-ink-soft">Loading presentation center...</p>
           </div>
         </div>
       </Layout>
@@ -433,17 +433,17 @@ export default function TeacherBooks() {
 
   return (
     <Layout title="Flipbooks & Presentations" hideNavigation={true}>
-      <div className="min-h-screen bg-gradient-to-br from-warmGray/10 to-royalGreen/5 p-4 md:p-6 flex flex-col w-full">
+      <div className="flex min-h-screen w-full flex-col bg-hec-paper p-4 md:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 gap-6 w-full">
           {/* Back and Title Bar */}
-          <div className="flex items-center justify-between border-b pb-4 shrink-0">
-            <div className="flex items-center gap-3">
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-hec-line pb-4">
+            <div className="flex min-w-0 items-center gap-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="rounded-full shadow-sm hover:bg-muted"
+                  className="shrink-0 rounded-full"
                   // The embedded flipbook iframe pushes its internal page turns
                   // into browser history, so history.back() traps the teacher on
                   // this page. Navigate explicitly instead.
@@ -456,31 +456,31 @@ export default function TeacherBooks() {
               </TooltipTrigger>
               <TooltipContent>Return to LMS</TooltipContent>
             </Tooltip>
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent flex items-center gap-2">
-                <BookOpen className="h-6 w-6 text-blue-600" />
+            <div className="min-w-0">
+              <h1 className="flex items-center gap-2 font-display text-hec-h1 font-medium text-hec-ink">
+                <BookOpen className="h-6 w-6 shrink-0 text-hec-ink-soft" />
                 Flipbook Presentation Center
               </h1>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-hec-small text-hec-ink-soft">
                 Manage external materials and present them full-screen with overlay toolbars.
               </p>
             </div>
           </div>
 
           <div className="w-auto">
-            <TabsList className="bg-card shadow-sm border rounded-xl p-1 gap-1">
+            <TabsList className="gap-1">
               <TabsTrigger
                 value="present"
-                className="rounded-lg gap-1.5 data-[state=active]:bg-blue-500 data-[state=active]:text-white font-medium text-xs py-1.5 px-3"
+                className="gap-2"
               >
-                <Presentation className="h-3.5 w-3.5" />
+                <Presentation className="h-4 w-4" />
                 Presenter
               </TabsTrigger>
               <TabsTrigger
                 value="manage"
-                className="rounded-lg gap-1.5 data-[state=active]:bg-blue-500 data-[state=active]:text-white font-medium text-xs py-1.5 px-3"
+                className="gap-2"
               >
-                <Settings className="h-3.5 w-3.5" />
+                <Settings className="h-4 w-4" />
                 Settings (CRUD)
               </TabsTrigger>
             </TabsList>
@@ -491,15 +491,15 @@ export default function TeacherBooks() {
         <TabsContent
           value="present"
           forceMount
-          className="flex-1 flex flex-col gap-4 min-h-0 focus-visible:outline-none data-[state=inactive]:hidden"
+          className="flex-1 flex flex-col gap-4 min-h-0 data-[state=inactive]:hidden"
         >
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-card/65 backdrop-blur-md border rounded-2xl p-4 shadow-sm shrink-0">
-            <div className="flex flex-1 items-center gap-3">
-              <Label htmlFor="active-book-select" className="text-sm font-semibold shrink-0">
+          <div className="flex shrink-0 flex-col items-stretch justify-between gap-4 rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 md:flex-row md:items-center">
+            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <Label htmlFor="active-book-select" className="shrink-0 text-hec-small font-medium text-hec-ink">
                 Select Book:
               </Label>
               <Select value={selectedBookId} onValueChange={setSelectedBookId}>
-                <SelectTrigger id="active-book-select" className="flex-1 md:max-w-md bg-background rounded-xl border">
+                <SelectTrigger id="active-book-select" className="flex-1 md:max-w-md">
                   <SelectValue placeholder="-- Select a flipbook --" />
                 </SelectTrigger>
                 <SelectContent>
@@ -522,7 +522,7 @@ export default function TeacherBooks() {
               <div className="flex items-center gap-2">
                 <Button
                   onClick={triggerPresentMode}
-                  className="bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 text-white rounded-xl shadow-md gap-2"
+                  className="flex-1 gap-2 md:flex-none"
                 >
                   <Maximize2 className="h-4 w-4" />
                   Present Fullscreen
@@ -532,7 +532,7 @@ export default function TeacherBooks() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="rounded-xl border hover:bg-muted"
+                      className="shrink-0"
                       onClick={() => window.open(activeBook.url, "_blank")}
                       title="Open directly in tab"
                       aria-label="Open directly in tab"
@@ -547,7 +547,7 @@ export default function TeacherBooks() {
           </div>
 
           {activeBook ? (
-            <div className="flex-1 flex flex-col min-h-0 border rounded-2xl overflow-hidden shadow-q3 bg-black relative">
+            <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-hec-lg border border-hec-line bg-black shadow-hec-2">
               {/* Fullscreen presentation container */}
               <div
                 ref={presentationContainerRef}
@@ -569,15 +569,15 @@ export default function TeacherBooks() {
               </div>
             </div>
           ) : (
-            <div className="flex-1 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center p-8 text-center bg-card/40">
-              <BookOpen className="h-12 w-12 text-muted-foreground/60 mb-3 animate-pulse" />
-              <h3 className="text-lg font-bold text-foreground">No Book Selected</h3>
-              <p className="text-sm text-muted-foreground max-w-sm mt-1">
+            <div className="flex flex-1 flex-col items-center justify-center rounded-hec-lg border border-dashed border-hec-line-strong bg-hec-surface p-8 text-center">
+              <BookOpen className="mb-3 h-12 w-12 text-hec-ink-faint" />
+              <h3 className="font-display text-hec-h2 font-medium text-hec-ink">No Book Selected</h3>
+              <p className="mt-1 max-w-sm text-hec-small text-hec-ink-soft">
                 Select a book from the dropdown, or go to Settings to add new presentation materials.
               </p>
               <Button
                 variant="outline"
-                className="mt-4 rounded-xl border border-blue-500/35 hover:bg-blue-50 text-blue-600"
+                className="mt-4"
                 onClick={() => setActiveTab("manage")}
               >
                 Add Your First Book
@@ -587,18 +587,18 @@ export default function TeacherBooks() {
         </TabsContent>
 
         {/* Tab 2: Settings (CRUD) */}
-        <TabsContent value="manage" className="focus-visible:outline-none">
-          <Card className="rounded-2xl border bg-card/65 backdrop-blur-md shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b pb-4">
-              <div>
-                <CardTitle className="text-lg font-bold">Manage Materials</CardTitle>
-                <CardDescription className="text-xs">
+        <TabsContent value="manage" className="">
+          <Card className="">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4 space-y-0 border-b border-hec-line">
+              <div className="min-w-0 flex-1">
+                <CardTitle className="">Manage Materials</CardTitle>
+                <CardDescription className="">
                   Create, modify, or delete presentation flipbooks and assign them to specific classes.
                 </CardDescription>
               </div>
               <Button
                 onClick={() => handleOpenDialog()}
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl gap-1.5 text-xs py-1.5 px-3"
+                className="w-full gap-2 sm:w-auto"
               >
                 <Plus className="h-4 w-4" />
                 Add Book Link
@@ -607,52 +607,52 @@ export default function TeacherBooks() {
             <CardContent className="pt-4">
               {flipbooks.length === 0 ? (
                 <div className="text-center py-12 flex flex-col items-center justify-center">
-                  <BookOpen className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                  <p className="text-sm font-semibold text-foreground">No flipbooks registered</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <BookOpen className="mb-3 h-12 w-12 text-hec-ink-faint" />
+                  <p className="text-hec-small font-semibold text-hec-ink">No flipbooks registered</p>
+                  <p className="mt-1 text-hec-caption text-hec-ink-soft">
                     Click the button in the top-right to register your first flipbook URL.
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto border rounded-xl bg-background">
+                <div className="overflow-x-auto rounded-hec-lg border border-hec-line bg-hec-surface">
                   <Table>
-                    <TableHeader className="bg-muted/40">
+                    <TableHeader className="">
                       <TableRow>
-                        <TableHead className="font-bold text-xs">Title</TableHead>
-                        <TableHead className="font-bold text-xs">Target URL</TableHead>
-                        <TableHead className="font-bold text-xs">Associated Class</TableHead>
-                        <TableHead className="font-bold text-xs text-right">Actions</TableHead>
+                        <TableHead className="">Title</TableHead>
+                        <TableHead className="">Target URL</TableHead>
+                        <TableHead className="">Associated Class</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {flipbooks.map((b) => (
-                        <TableRow key={b.id} className="hover:bg-muted/20">
-                          <TableCell className="font-medium text-xs">{b.title}</TableCell>
-                          <TableCell className="max-w-xs truncate text-xs text-muted-foreground" title={b.url}>
+                        <TableRow key={b.id} className="">
+                          <TableCell className="min-w-40 font-medium text-hec-ink">{b.title}</TableCell>
+                          <TableCell className="max-w-xs truncate text-hec-ink-soft" title={b.url}>
                             {b.url}
                           </TableCell>
-                          <TableCell className="text-xs">
+                          <TableCell className="min-w-32 whitespace-normal break-words">
                             {b.class_id
                               ? classes.find((c) => c.id === b.class_id)?.name || "Active Class"
                               : "All Classes (Global)"}
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                            <div className="flex items-center justify-end gap-2">
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 hover:bg-blue-100 hover:text-blue-700 text-muted-foreground"
+                                className="text-hec-ink-soft"
                                 onClick={() => handleOpenDialog(b)}
                               >
-                                <Edit2 className="h-3.5 w-3.5" />
+                                <Edit2 className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 hover:bg-red-100 hover:text-red-700 text-muted-foreground"
+                                className="text-hec-danger hover:bg-hec-danger-tint"
                                 onClick={() => handleDeleteBook(b.id, b.title)}
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -670,21 +670,21 @@ export default function TeacherBooks() {
 
       {/* CRUD dialog modal */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[480px] rounded-2xl">
+        <DialogContent className="sm:max-w-[480px]">
           <form onSubmit={handleSaveBook}>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-blue-500" />
+                <BookOpen className="h-5 w-5 shrink-0 text-hec-ink-soft" />
                 {editingBook ? "Edit Flipbook Details" : "Add New Flipbook"}
               </DialogTitle>
-              <DialogDescription className="text-xs">
+              <DialogDescription className="">
                 Provide a friendly title and embeddable URL. We will check it for iframe compatibility.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="book-title" className="text-xs font-bold">
+              <div className="space-y-2">
+                <Label htmlFor="book-title" className="text-hec-small font-medium text-hec-ink">
                   Book Title
                 </Label>
                 <Input
@@ -692,13 +692,13 @@ export default function TeacherBooks() {
                   placeholder="e.g., Family & Friends 3 Unit 5"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
-                  className="rounded-xl border"
+                  className=""
                   required
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="book-url" className="text-xs font-bold">
+              <div className="space-y-2">
+                <Label htmlFor="book-url" className="text-hec-small font-medium text-hec-ink">
                   Material URL (Embed link)
                 </Label>
                 <Input
@@ -706,31 +706,31 @@ export default function TeacherBooks() {
                   placeholder="https://..."
                   value={formUrl}
                   onChange={(e) => setFormUrl(e.target.value)}
-                  className="rounded-xl border"
+                  className=""
                   required
                 />
                 
                 {formWarning && (
-                  <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-600 p-2.5 rounded-xl text-xs mt-1.5 leading-relaxed">
-                    <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
+                  <div className="mt-2 flex items-start gap-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 text-hec-small text-hec-ink">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-hec-warn" />
                     <span>{formWarning}</span>
                   </div>
                 )}
                 
                 {!formWarning && formUrl.startsWith("https://") && (
-                  <div className="flex items-center gap-1.5 text-emerald-600 text-xs px-1 mt-1">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                  <div className="mt-1 flex items-center gap-2 px-1 text-hec-small text-hec-leaf">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-hec-leaf" />
                     <span>HTTPS URL provided. Pre-checks completed.</span>
                   </div>
                 )}
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="book-class" className="text-xs font-bold">
+              <div className="space-y-2">
+                <Label htmlFor="book-class" className="text-hec-small font-medium text-hec-ink">
                   Link to Class (Optional)
                 </Label>
                 <Select value={formClassId} onValueChange={setFormClassId}>
-                  <SelectTrigger id="book-class" className="rounded-xl border">
+                  <SelectTrigger id="book-class" className="">
                     <SelectValue placeholder="Select Class" />
                   </SelectTrigger>
                   <SelectContent>
@@ -745,19 +745,19 @@ export default function TeacherBooks() {
               </div>
             </div>
 
-            <DialogFooter className="gap-2 sm:gap-0 border-t pt-4">
+            <DialogFooter className="gap-3 border-t border-hec-line pt-4">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => setIsDialogOpen(false)}
-                className="rounded-xl"
+                className=""
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl min-w-[80px]"
+                className="min-w-32"
               >
                 {isSubmitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
