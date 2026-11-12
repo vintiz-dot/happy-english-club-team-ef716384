@@ -37,32 +37,36 @@ interface ChildSummary {
 }
 
 // BEGIN fetchChildren
+interface Kid { id: string; full_name: string; avatar_url: string | null }
+/** The one thing fetchChildren needs from a client: the caller's own supabase client. */
+interface Db { from(table: string): any }
+
 /** PostgREST returns at most this many rows per request unless told otherwise. */
 const POSTGREST_ROW_CAP = 1000;
 
 /** Original shape: five requests per child. Kept verbatim as the fallback. */
-async function fetchChildrenPerChild(client: any, children: any[], since: string): Promise<ChildSummary[]> {
+async function fetchChildrenPerChild(client: Db, children: Kid[], since: string): Promise<ChildSummary[]> {
   return Promise.all(
     children.map(async (kid): Promise<ChildSummary> => {
       const [profile, points, att, enr] = await Promise.all([
-        (client as any)
+        client
           .from("student_learning_profiles")
           .select("summary, cefr_estimate")
           .eq("student_id", kid.id).maybeSingle(),
-        (client as any)
+        client
           .from("student_points")
           .select("total_points").eq("student_id", kid.id).maybeSingle(),
-        (client as any)
+        client
           .from("attendance")
           .select("status").eq("student_id", kid.id).gte("date", since),
-        (client as any)
+        client
           .from("enrollments").select("class_id").eq("student_id", kid.id),
       ]);
 
-      const classIds = [...new Set(((enr.data || []) as any[]).map((r) => r.class_id))];
+      const classIds = [...new Set((enr.data || []).map((r: { class_id: string }) => r.class_id))];
       let lessons: ChildSummary["lessons"] = [];
       if (classIds.length) {
-        const { data: ov } = await (client as any)
+        const { data: ov } = await client
           .from("lesson_overviews")
           .select("lesson_date, title, summary, homework")
           .in("class_id", classIds)
@@ -71,7 +75,7 @@ async function fetchChildrenPerChild(client: any, children: any[], since: string
         lessons = ov || [];
       }
 
-      const attRows = (att.data || []) as any[];
+      const attRows: Array<{ status: string }> = att.data || [];
       return {
         id: kid.id,
         full_name: kid.full_name,
@@ -97,20 +101,20 @@ async function fetchChildrenPerChild(client: any, children: any[], since: string
  * Returns null (caller falls back to the per-child path) when a batched
  * request errored or came back as long as PostgREST's row cap allows.
  */
-async function fetchChildrenBatched(client: any, children: any[], since: string): Promise<ChildSummary[] | null> {
+async function fetchChildrenBatched(client: Db, children: Kid[], since: string): Promise<ChildSummary[] | null> {
   const ids = children.map((k) => k.id);
   const [profiles, points, att, enr] = await Promise.all([
-    (client as any).from("student_learning_profiles").select("student_id, summary, cefr_estimate").in("student_id", ids),
-    (client as any).from("student_points").select("student_id, total_points").in("student_id", ids),
-    (client as any).from("attendance").select("student_id, status").in("student_id", ids).gte("date", since),
-    (client as any).from("enrollments").select("student_id, class_id").in("student_id", ids),
+    client.from("student_learning_profiles").select("student_id, summary, cefr_estimate").in("student_id", ids),
+    client.from("student_points").select("student_id, total_points").in("student_id", ids),
+    client.from("attendance").select("student_id, status").in("student_id", ids).gte("date", since),
+    client.from("enrollments").select("student_id, class_id").in("student_id", ids),
   ]);
   for (const r of [profiles, points, att, enr]) {
     if (r.error || !Array.isArray(r.data) || r.data.length >= POSTGREST_ROW_CAP) return null;
   }
 
-  const group = (rows: any[]) => {
-    const m = new Map<string, any[]>();
+  const group = <T extends { student_id: string }>(rows: T[]) => {
+    const m = new Map<string, T[]>();
     for (const r of rows) {
       const l = m.get(r.student_id);
       if (l) l.push(r); else m.set(r.student_id, [r]);
@@ -119,7 +123,7 @@ async function fetchChildrenBatched(client: any, children: any[], since: string)
   };
   const profBy = group(profiles.data), ptsBy = group(points.data), attBy = group(att.data), enrBy = group(enr.data);
   // .maybeSingle() yields no data for zero rows AND for more than one row.
-  const single = (m: Map<string, any[]>, id: string) => {
+  const single = <T,>(m: Map<string, T[]>, id: string): T | null => {
     const l = m.get(id);
     return l && l.length === 1 ? l[0] : null;
   };
@@ -128,14 +132,14 @@ async function fetchChildrenBatched(client: any, children: any[], since: string)
   const lessonsBySet = new Map<string, Promise<ChildSummary["lessons"]>>();
   return Promise.all(
     children.map(async (kid): Promise<ChildSummary> => {
-      const classIds = [...new Set((enrBy.get(kid.id) || []).map((r) => r.class_id))];
+      const classIds = [...new Set((enrBy.get(kid.id) || []).map((r) => r.class_id))] as string[];
       let lessons: ChildSummary["lessons"] = [];
       if (classIds.length) {
         const key = JSON.stringify([...classIds].sort());
         let p = lessonsBySet.get(key);
         if (!p) {
           p = (async () => {
-            const { data: ov } = await (client as any)
+            const { data: ov } = await client
               .from("lesson_overviews")
               .select("lesson_date, title, summary, homework")
               .in("class_id", classIds)
@@ -167,14 +171,14 @@ async function fetchChildrenBatched(client: any, children: any[], since: string)
   );
 }
 
-export async function fetchChildren(client: any): Promise<ChildSummary[]> {
+export async function fetchChildren(client: Db): Promise<ChildSummary[]> {
   // RLS: a family user's students select returns exactly their children.
-  const { data: kids } = await (client as any)
+  const { data: kids } = await client
     .from("students")
     .select("id, full_name, avatar_url")
     .eq("is_active", true)
     .order("full_name");
-  const children = (kids || []) as any[];
+  const children: Kid[] = kids || [];
   const since = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
   if (!children.length) return [];
   return (await fetchChildrenBatched(client, children, since)) ?? fetchChildrenPerChild(client, children, since);
