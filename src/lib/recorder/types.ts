@@ -59,6 +59,14 @@ export interface ChunkMeta {
   refusal?: string;
   createdAt: number;
   confirmedAt?: number;
+  /** When the server registered it (laptop clock). */
+  registeredAt?: number;
+  /**
+   * Registered later than its capture + tolerance (revision 2): it is still
+   * uploaded and stored, but the server does not count it as evidence. The
+   * server's own flag when it returns one, else the page's estimate.
+   */
+  late?: boolean;
 }
 
 export interface Anchor {
@@ -135,6 +143,8 @@ export interface LocalRecording {
   stopReason?: StopReason;
   /** The stop transition still has to reach the server. */
   stopPending?: boolean;
+  /** The server refused the stop (revision 2: a Stop after the window is refused, not clamped). */
+  stopRefused?: string;
   serverOffsetAtStart?: number | null;
   serverOffsetAtEnd?: number | null;
   tracks: TrackInfo[];

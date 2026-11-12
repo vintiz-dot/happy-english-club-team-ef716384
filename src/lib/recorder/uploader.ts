@@ -36,12 +36,22 @@ export interface UploadProgress {
   lastError: RecorderError | null;
   /** The recording cannot take audio any more (abandoned, not ours...). */
   halted: ServerRefusal | null;
+  /** Unregistered chunks: their rows have not reached the server yet. */
+  unregistered: number;
+  /**
+   * "Recorded offline too long: these minutes will not count as evidence."
+   * Chunks registered after the tolerance; they are still uploaded and kept.
+   */
+  late: number;
+  lateMs: number;
 }
 
 export interface UploaderOptions {
   now?: () => number;
   random?: () => number;
   maxBackoffMs?: number;
+  /** Registration later than capture + chunk length + this is "late" (default 10 min). */
+  lateToleranceMs?: number;
   onChunk?: (c: ChunkMeta) => void;
   onError?: (e: RecorderError, c?: ChunkMeta) => void;
 }
@@ -56,8 +66,11 @@ export class Uploader {
   private random: () => number;
   private running = new Map<string, Promise<UploadProgress>>();
 
+  private lateToleranceMs: number;
+
   constructor(private store: RecorderStore, private backend: RecorderBackend, private o: UploaderOptions = {}) {
     this.now = o.now ?? (() => Date.now());
+    this.lateToleranceMs = o.lateToleranceMs ?? 10 * 60000;
     this.random = o.random ?? Math.random;
   }
 
@@ -95,27 +108,37 @@ export class Uploader {
       nextWakeAt: open.length ? (waits.length ? Math.min(...waits) : this.now()) : null,
       lastError: state.lastError,
       halted: state.halted,
+      unregistered: chunks.filter((c) => c.state === "captured").length,
+      late: chunks.filter((c) => c.late).length,
+      lateMs: chunks.filter((c) => c.late).reduce((s, c) => s + (c.tEndMs - c.tStartMs), 0),
     };
   }
 
+  /**
+   * Register EARLY, upload when possible (revision 2): a chunk only counts as
+   * evidence if its row reaches the server within its capture time + a
+   * tolerance, so every captured chunk is registered as soon as it can be -
+   * registering is one small call - and the uploads (the big part) follow,
+   * oldest first. Registration stays in seq order per track.
+   */
   private async track(rec: LocalRecording, track: TrackRole, state: { offline: boolean; lastError: RecorderError | null; halted: ServerRefusal | null }) {
     for (;;) {
       if (state.offline || state.halted) return;
       const fresh = (await this.store.getRecording(rec.id)) ?? rec;
       const info = fresh.tracks.find((t) => t.track === track);
       const chunks = (await this.store.listChunks(rec.id)).filter((c) => c.track === track).sort((a, b) => a.seq - b.seq);
-      const next = chunks.find((c) => c.state !== "confirmed" && c.state !== "refused");
-      if (!next) return;
-      if (info?.refusedFromSeq !== undefined && next.seq >= info.refusedFromSeq) {
-        await this.refuse(fresh, next, info.refusedReason as ServerRefusal ?? "unknown", false);
-        continue;
-      }
-      if ((next.nextAttemptAt ?? 0) > this.now()) return;
-      // Registration in seq order: everything below must already be registered.
-      const below = chunks.filter((c) => c.seq < next.seq);
-      if (next.state === "captured" && below.some((c) => c.state === "captured")) return;
-      const progressed = await this.step(fresh, next, state);
-      if (!progressed) return;
+      const open = chunks.filter((c) => c.state !== "confirmed" && c.state !== "refused");
+      if (!open.length) return;
+      const beyond = info?.refusedFromSeq !== undefined ? open.find((c) => c.seq >= info.refusedFromSeq!) : undefined;
+      if (beyond) { await this.refuse(fresh, beyond, (info!.refusedReason as ServerRefusal) ?? "unknown", false); continue; }
+      const due = (c: ChunkMeta) => (c.nextAttemptAt ?? 0) <= this.now();
+      // 1. The lowest unregistered chunk (seq order keeps the server's rows contiguous).
+      const reg = open.find((c) => c.state === "captured");
+      if (reg && due(reg)) { if (await this.step(fresh, reg, state)) continue; if (state.offline || state.halted) return; }
+      // 2. The oldest registered chunk still to upload / confirm.
+      const up = open.find((c) => (c.state === "registered" || c.state === "uploaded") && due(c));
+      if (!up) return;
+      if (!(await this.step(fresh, up, state))) return;
     }
   }
 
@@ -133,6 +156,10 @@ export class Uploader {
         }
         const r = await this.backend.registerChunk({ recording: rec.id, track: c.track, seq: c.seq, byteSize: c.byteSize, sha256: c.sha256, tStartMs: c.tStartMs, tEndMs: c.tEndMs });
         c.chunkId = r.chunk_id; c.storagePath = r.storage_path;
+        if (!c.registeredAt) c.registeredAt = this.now();
+        // The server's verdict when it gives one; otherwise our own estimate
+        // (cut at createdAt, registered now) so the UI can warn either way.
+        c.late = typeof (r as any).late === "boolean" ? (r as any).late : c.registeredAt - c.createdAt > rec.chunkMs + this.lateToleranceMs;
         c.state = r.confirmed ? "confirmed" : "registered";
         if (r.confirmed) c.confirmedAt = this.now();
       } else if (c.state === "registered") {

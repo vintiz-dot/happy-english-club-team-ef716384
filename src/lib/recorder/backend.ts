@@ -10,7 +10,12 @@
 import type { RecorderFormat, ServerRecording, StopReason, TrackRole } from "./types";
 import { RecorderError, toRecorderError } from "./errors";
 
-export const BUCKET = "class-recordings";
+/**
+ * The recorder's own private bucket - the ONE place its name is written in
+ * the engine. (`class-recordings` already exists for transcript uploads; the
+ * second review renamed the recorder's bucket.)
+ */
+export const BUCKET = "class-recorder-audio";
 
 export interface ArmInput {
   session_id: string;
@@ -33,7 +38,8 @@ export interface TrackRow {
   applied_settings: Record<string, unknown>;
 }
 
-export interface RegisterResult { chunk_id: string; storage_path: string; already_registered: boolean; confirmed: boolean }
+/** `late`: revision 2 - the server registered it outside the capture-time tolerance (not evidence). */
+export interface RegisterResult { chunk_id: string; storage_path: string; already_registered: boolean; confirmed: boolean; late?: boolean }
 
 export interface RecorderBackend {
   serverTime(): Promise<string>;
