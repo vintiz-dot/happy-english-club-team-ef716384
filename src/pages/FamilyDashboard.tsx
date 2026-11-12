@@ -39,7 +39,8 @@ interface ChildSummary {
 // BEGIN fetchChildren
 interface Kid { id: string; full_name: string; avatar_url: string | null }
 /** The one thing fetchChildren needs from a client: the caller's own supabase client. */
-interface Db { from(table: string): any }
+type Query = any; // PostgREST builder; the generated types do not list every table used here
+interface Db { from(table: string): Query }
 
 /** PostgREST returns at most this many rows per request unless told otherwise. */
 const POSTGREST_ROW_CAP = 1000;
@@ -121,7 +122,10 @@ async function fetchChildrenBatched(client: Db, children: Kid[], since: string):
     }
     return m;
   };
-  const profBy = group(profiles.data), ptsBy = group(points.data), attBy = group(att.data), enrBy = group(enr.data);
+  const profBy = group<{ student_id: string; summary: string | null; cefr_estimate: string | null }>(profiles.data);
+  const ptsBy = group<{ student_id: string; total_points: number }>(points.data);
+  const attBy = group<{ student_id: string; status: string }>(att.data);
+  const enrBy = group<{ student_id: string; class_id: string }>(enr.data);
   // .maybeSingle() yields no data for zero rows AND for more than one row.
   const single = <T,>(m: Map<string, T[]>, id: string): T | null => {
     const l = m.get(id);
@@ -132,7 +136,7 @@ async function fetchChildrenBatched(client: Db, children: Kid[], since: string):
   const lessonsBySet = new Map<string, Promise<ChildSummary["lessons"]>>();
   return Promise.all(
     children.map(async (kid): Promise<ChildSummary> => {
-      const classIds = [...new Set((enrBy.get(kid.id) || []).map((r) => r.class_id))] as string[];
+      const classIds = [...new Set((enrBy.get(kid.id) || []).map((r) => r.class_id))];
       let lessons: ChildSummary["lessons"] = [];
       if (classIds.length) {
         const key = JSON.stringify([...classIds].sort());
