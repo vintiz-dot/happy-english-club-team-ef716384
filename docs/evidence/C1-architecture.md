@@ -2,6 +2,18 @@
 
 Task C1 of `docs/MASTER_PLAN.md`. Author: Fable 5.2, 2026-11-11. Branch `worktree-agent-acf51c46cb0eb722c`.
 
+## Revision 2 (2026-11-12) - after C1 critic 2 (`docs/evidence/C1-critic-2.md`) and the conductor's rulings
+
+Still never applied, so edited in place again. Evidence, mutation run and both contracts: `docs/evidence/C1-revision-2.md`. Where this document says otherwise below, the section is updated; a sentence marked "(rev. 1)" that conflicts with this list is superseded by it.
+
+- **N1 (bucket collision, BLOCKER).** The recorder has its OWN bucket, **`class-recorder-audio`** (private, 8 MB, webm/flac/wav/json), created `ON CONFLICT DO NOTHING`. The migration never inserts, updates or alters `class-recordings` (Teacher Transcripts, 20260717090000) or its policy `staff_manage_class_recordings`. A preflight at the top of the file refuses to install, before anything is created, if `storage.objects` has no RLS, if `class-recorder-audio` already exists with other settings, or if any permissive storage policy other than the recorder's two either is not scoped by `bucket_id` or names the recorder's bucket. The recorder's policies are renamed `class_recorder_audio_insert` / `_select`. The suite now loads 20260717090000 first and proves the old bucket row and every policy naming it are byte-identical before and after (three pastes), and that a teacher of another class, a TA, a parent, a student and anon can do nothing in the new bucket. `SET LOCAL lock_timeout = '5s'` after BEGIN.
+- **N2 (evidence manufactured after the fact).** A chunk counts only if the server REGISTERED it no later than `late_after` after the moment it claims to end (`registered_at <= started_at + t_end_ms + late_after`; setting `late_after_minutes`, default 10, 1-30, snapshot at arming as `late_after_ms`). Late chunks are stored, listenable and reported (`late` in the register result, `late_audio_ms` in the view) but count for nothing. `ended_at` is the real moment of Stop, never clamped. A Stop later than `capture_closes_at + late_after` turns the recording `abandoned` ("stopped after the lesson window"): no evidence, no more audio.
+- **N3 (the person in question could destroy the evidence).** `delete_after`, the deletion fields and the stop-request fields are server-owned: column privileges keep the stamps out of reach entirely, and the trigger ignores `delete_after` / `stop_requested_at` from anyone but an admin. Early deletion goes only through `recorder_request_deletion` (or an admin bringing the date forward, which is stamped as a request by that admin). `recorder_mark_audio_deleted` is refused before `delete_after`. Evidence: a recording deleted by RETENTION after a verified complete run keeps `recording_ran_evidence` (a tombstone, `deleted_by_retention`, `audio_deleted_at`); a recording whose early deletion a person asked for loses it from the moment of the request, and the request is in the append-only log.
+- **Rename.** `counts_as_held_evidence` -> **`recording_ran_evidence`**; `held_threshold_ms` -> `evidence_threshold_ms`; settings `held_evidence_min_fraction` -> `evidence_min_fraction`; per recording `held_min_fraction` -> `evidence_min_fraction`. It means "a recording ran, live, for at least the configured fraction of the lesson, verified by the server". It is NOT proof children attended; D labels it "A recording was made".
+- **N4.** Only the server (switch-off and cancellation paths, through a transaction-local flag) or an admin can make a stop request; it records `stop_request_reason`, and a page may claim `session_canceled` / `switch_off` only when that is the reason the server asked.
+- **N5.** `recorder__may_record` (admin, standing teacher, teacher of that session) is asked again at Start and for every chunk: a cover teacher taken off the lesson, or an archived teacher, adds nothing more.
+- **N6.** Cases added: an uploading and an abandoned recording with enough verified audio are not evidence; an admin's Stop records the admin as `stopped_by`.
+
 ## Revision 1 (2026-11-12) - after the C1 critic (`docs/evidence/C1-critic.md`)
 
 The migration was never applied, so it was edited in place. Evidence and the mutation run: `docs/evidence/C1-revision.md`. What changed, by finding:
@@ -257,8 +269,8 @@ The manifest's own SHA-256 goes in `class_recordings.manifest_sha256`. The datab
 
 Per chunk, in this order:
 
-1. `recorder_register_chunk(recording, track, seq, byte_size, sha256, t_start_ms, t_end_ms)` -> `{ chunk_id, storage_path, already_registered, confirmed }`. Idempotent: `INSERT ... ON CONFLICT (recording_id, track, seq) DO NOTHING` against a plain unique constraint, then compare; same bytes and span -> the existing row; anything different -> refused, never overwritten **[tested]**. Refused unless (rev. 1, each **[tested]**): the span is at most `chunk_ms` + tolerance; `byte_size >= min_bytes_per_sec x span` for the format (floors: Opus 2 000 B/s against 16 000 nominal at 128 kbit/s; FLAC 4 000 B/s against 96 000 raw at 48 kHz/16-bit and a typical 45-60 kB/s; WAV 15 000 B/s; settings, snapshot at arming, **[C2-measure]** the real rates); `t_end_ms <= (server now - started_at) + 15 s`; after Stop, `t_end_ms <= (ended_at - started_at) + 15 s`; `started_at + t_end_ms <= capture_closes_at + 15 s`; after a stop request, `t_start_ms <= (stop_requested_at - started_at) + 60 s`.
-2. `storage.from('class-recordings').upload(storage_path, blob, { upsert: false })`. The INSERT policy accepts only the exact path of a registered, not-yet-confirmed chunk of the caller's own open recording **[tested]**. "Already exists" is success-so-far: go to step 3. There is no UPDATE policy, so nothing stored is ever replaced **[tested]**.
+1. `recorder_register_chunk(recording, track, seq, byte_size, sha256, t_start_ms, t_end_ms)` -> `{ chunk_id, storage_path, already_registered, confirmed }`. Idempotent: `INSERT ... ON CONFLICT (recording_id, track, seq) DO NOTHING` against a plain unique constraint, then compare; same bytes and span -> the existing row; anything different -> refused, never overwritten **[tested]**. Refused unless (rev. 1, each **[tested]**): the span is at most `chunk_ms` + tolerance; `byte_size >= min_bytes_per_sec x span` for the format (floors: Opus 2 000 B/s against 16 000 nominal at 128 kbit/s; FLAC 4 000 B/s against 96 000 raw at 48 kHz/16-bit and a typical 45-60 kB/s; WAV 15 000 B/s; settings, snapshot at arming, **[C2-measure]** the real rates); `t_end_ms <= (server now - started_at) + 15 s`; after Stop, `t_end_ms <= (ended_at - started_at) + 15 s`; `started_at + t_end_ms <= capture_closes_at + 15 s`; after a stop request, `t_start_ms <= (stop_requested_at - started_at) + 60 s`; (rev. 2) the caller must still be allowed to record that lesson. The result also carries `late` (rev. 2): true when the server registered the chunk more than `late_after_ms` (default 10 min) after `started_at + t_end_ms`. A late chunk is kept and uploaded like any other, but never counts as evidence. The first registration decides; re-registering does not refresh it.
+2. `storage.from('class-recorder-audio').upload(storage_path, blob, { upsert: false })` (rev. 2: the recorder's own bucket; `class-recordings` is Teacher Transcripts'). The INSERT policy accepts only the exact path of a registered, not-yet-confirmed chunk of the caller's own open recording **[tested]**. "Already exists" is success-so-far: go to step 3. There is no UPDATE policy, so nothing stored is ever replaced **[tested]**.
 3. Download the object back, SHA-256 it, and call `recorder_confirm_chunk(chunk_id, readback_sha256)`. It returns true only if the object is in the bucket at that path, Storage's recorded size equals `byte_size`, and the read-back hash equals the registered one **[tested]**. Idempotent.
 
 **"The server confirms" is defined as step 3 returning true.** Only then is the local chunk marked `confirmed`. Honest limit: the object's existence and size are the server's facts (read with `row_security = off`, so an owner that cannot see storage gets an error, not a quiet "no file" - rev. 1); the read-back hash is computed by the page (Storage keeps no SHA-256), so it proves only that an honest page read back the right bytes. It is kept for the page's own safety ("never drop local audio that did not round-trip") and is NOT evidence; nothing in section 7 rests on it. A real content check needs C2's edge function to hash the stored object server-side.
@@ -312,11 +324,11 @@ Stated consequences, so the critic need not find them:
 
 | Table | Purpose | `authenticated` may | RLS |
 |---|---|---|---|
-| `recorder_settings` | one row: retention 30 d, pre-roll 5, grace 10, arm window 20, stale 14 d, clock tolerance 15 s, held fraction 0.50, byte floors (Opus 2 000 / FLAC 4 000 / WAV 15 000 B/s), wording version (rev. 1: no overrun) | SELECT, UPDATE | staff read; admin updates (logged; a wording change switches every class off) |
+| `recorder_settings` | one row: retention 30 d, pre-roll 5, grace 10, arm window 20, stale 14 d, clock tolerance 15 s, late allowance 10 min (rev. 2), evidence fraction 0.50, byte floors (Opus 2 000 / FLAC 4 000 / WAV 15 000 B/s), wording version (rev. 1: no overrun) | SELECT, UPDATE | staff read; admin updates (logged; a wording change switches every class off) |
 | `class_recording_settings` | the switch + consent confirmation | SELECT | admin and the class's teachers; writes only via function |
 | `recorder_child_consents` | per-child granted/withdrawn | SELECT | admin only; writes only via function |
 | `recorder_device_profiles` | the two microphones per browser | all four | own rows; admin reads all |
-| `class_recordings` | one per recording; snapshots `armed_session_id`, `capture_opens_at/closes_at`, `min_bytes_per_sec`, `clock_tolerance_ms`, `held_min_fraction` at arming (all immutable) | SELECT, INSERT, UPDATE | read: `recorder_can_listen`, or the starter while open. Insert: self, class today, then the trigger. Update: starter while open; admin. Server-owned: start/stop times, stop reason, deletion attribution, device profile owner |
+| `class_recordings` | one per recording; snapshots `armed_session_id`, `capture_opens_at/closes_at`, `min_bytes_per_sec`, `clock_tolerance_ms`, `late_after_ms`, `evidence_min_fraction` at arming (all immutable) | SELECT, INSERT, UPDATE of listed columns only (rev. 2: not the start/stop/completion/abandon/deletion stamps, `stop_request_reason`, `updated_at`) | read: `recorder_can_listen`, or the starter while open. Insert: self, class today, then the trigger. Update: starter while open; admin. Server-owned: start/stop times, stop reason, deletion attribution, device profile owner; (rev. 2) `delete_after` and `stop_requested_at` from anyone but an admin, deletion fields except through `recorder_request_deletion` |
 | `class_recording_tracks` | teacher / room | SELECT, INSERT, UPDATE | read as recording; write: starter while open |
 | `class_recording_chunks` | one per file | SELECT | read as recording; writes only via functions |
 | `class_recording_markers` | roll call, activity, name chips, gaps | SELECT, INSERT, DELETE | read as recording; insert/delete: starter while open |
@@ -337,16 +349,16 @@ armed --> recording --> uploading --> complete --> deleted
 
 - `armed`: authorised by the server (section 4 checks passed at that instant). No audio accepted yet **[tested]**.
 - `recording`: capture running. `started_at` set.
-- `uploading`: capture stopped (`ended_at`, `stopped_by`, `stop_reason`); chunks and then the manifest still arriving.
+- `uploading`: capture stopped (`ended_at` = the real moment, `stopped_by` = whoever pressed Stop, `stop_reason`); chunks and then the manifest still arriving. (rev. 2) A Stop later than `capture_closes_at + late_after` does not land here: the recording goes straight to `abandoned` ("stopped after the lesson window") **[tested]**.
 - `complete`: manifest stored, all chunks confirmed, counts agree. `completed_at`. Nothing more is accepted **[tested]**.
-- `abandoned`: given up - switch-off while armed, deletion requested while open, or never finished after 14 days.
-- `deleted`: the audio is gone from storage (`audio_deleted_at`). The row stays as the record. Refused while a single object remains under the recording's prefix **[tested]**. A row can be removed only in this state AND only when the DELETE trigger itself finds no object under the prefix (rev. 1) **[tested]**. Both checks run with `row_security = off`: an owner that cannot see `storage.objects` gets an error, never a pass **[tested]** with a NOBYPASSRLS owner.
+- `abandoned`: given up - switch-off while armed, deletion requested while open, a Stop after the window (rev. 2), or never finished after 14 days.
+- `deleted`: the audio is gone from storage (`audio_deleted_at`). The row stays as the record. Refused while a single object remains under the recording's prefix **[tested]**, and (rev. 2) before `delete_after` **[tested]**, so a `deleted` row without a deletion request was always removed by retention. A row can be removed only in this state AND only when the DELETE trigger itself finds no object under the prefix (rev. 1) **[tested]**. Both checks run with `row_security = off`: an owner that cannot see `storage.objects` gets an error, never a pass **[tested]** with a NOBYPASSRLS owner.
 
 Every other move is refused, by anyone **[tested]**. Class, session, owner, window, format and hard limit are immutable after arming **[tested]**.
 
 ### 6.4 Bucket
 
-`class-recordings`, private, 8 MB a file (a 60 s WAV chunk is 5.8 MB), audio and JSON only. House pattern: `supabase/migrations/20261109090000_video_homework.sql:371-378` and `:452-474` (path-parsing SECURITY DEFINER helpers that answer "no" rather than error), and `supabase/migrations/20261111090000_audit_voice_clips.sql:139-161`.
+(rev. 2) **`class-recorder-audio`** - the recorder's own bucket. `class-recordings` already exists (20260717090000, Teacher Transcripts, 50 MB mp3/m4a/mp4/wav/webm) with a FOR ALL policy for every teacher; the recorder never touches it, and a preflight refuses to install if any policy that is not the recorder's could reach `class-recorder-audio` (unscoped by `bucket_id`, or naming it) or if that bucket already exists with other settings **[tested]**. Private, 8 MB a file (a 60 s WAV chunk is 5.8 MB), audio and JSON only. House pattern: `supabase/migrations/20261109090000_video_homework.sql:371-378` and `:452-474` (path-parsing SECURITY DEFINER helpers that answer "no" rather than error), and `supabase/migrations/20261111090000_audit_voice_clips.sql:139-161`.
 
 | Operation | Who |
 |---|---|
@@ -367,7 +379,7 @@ Sample rate is capped at 48 kHz (rev. 1, F14), so a 60 s `pcm-wav` chunk (5.76 M
 
 Why 30 and not the monitor design's "7 days after processing": nothing processes these recordings yet, so "after processing" never arrives, and a 7-day clock from capture would delete the evaluation material before workstream B has finished with it. 30 days is long enough for one evaluation cycle and short enough to be defensible. When the monitor exists the rule should become `min(processed_at + 7 days, scheduled_end + 30 days)` - that is a monitor-phase migration, not this one.
 
-Admins can extend one recording, never beyond 180 days (table CHECK), and each change is logged; teachers cannot extend at all **[tested]**. Anyone who can see the row can shorten it by asking for deletion.
+Admins can extend one recording, never beyond 180 days (table CHECK), and each change is logged; teachers cannot extend at all **[tested]**. (rev. 2) Nobody but an admin changes `delete_after` directly - a teacher's write is ignored **[tested]**. Bringing it forward is an early deletion: through `recorder_request_deletion` (anyone who may listen), or an admin's direct change, which is stamped as that admin's deletion request **[tested]**. Either ends the recording's evidence status (section 7). `recorder_mark_audio_deleted` is refused before `delete_after` **[tested]**.
 
 **How deletion actually happens.** SQL cannot do it: removing rows from `storage.objects` leaves the files in the object store (and current Supabase refuses the direct delete). The repo's one existing example removes files through the Storage API with a service client (`supabase/functions/update-student-avatar/index.ts:144`). The repo's scheduled-job pattern is pg_cron + pg_net calling an edge function, guarded by a token kept in a table only the service role can read (`supabase/migrations/20261110160000_schedule_runner_and_nightly_rebuild.sql:13-25` and `:32-67`).
 
@@ -382,7 +394,7 @@ So, for C2 to build:
 
 ### 6.6 Deletion on request
 
-- **One recording:** `recorder_request_deletion(recording, reason)` - a teacher of the class or an admin; reason required; makes it due immediately; logged with who asked **[tested]**. The next retention run (or the admin's "delete now") removes the files.
+- **One recording:** `recorder_request_deletion(recording, reason)` - a teacher of the class or an admin; reason required; makes it due immediately; logged with who asked **[tested]**. The next retention run (or the admin's "delete now") removes the files. (rev. 2) From the moment of the request the recording is no longer evidence (`recording_ran_evidence = false`, `deletion_requested_by` in the view) **[tested]**: the privacy right is kept, but a person cannot both destroy the audio before anyone listens and keep the "a recording was made" mark.
 - **One child:** NOT POSSIBLE for a room recording, and the design does not pretend otherwise. A child's voice cannot be cut out of a recording of a room. What is done instead, when a parent asks:
   1. the admin records `withdrawn`; every class the child is in stops being recordable at that moment (4);
   2. the admin lists the recordings that can contain the child - `class_recordings` of those classes with `session_date` inside the child's enrolment dates - and requests deletion of each. C3 should make that one screen ("recordings that include this child") with a single confirm;
@@ -391,9 +403,9 @@ So, for C2 to build:
 
 ## 7. Contract for D1
 
-A completed recording of a session is strong evidence that the class was held - **if it covers the lesson**. D1's `session_held_evidence(session_id)` (through `session_recording_evidence`, which C replaces only after this revision passes its second review) should read ONE thing: the view **`public.recorder_session_evidence`**, and ONE column of it for the decision: **`counts_as_held_evidence`**. Its columns are the contract; C will not rename or remove them without telling D.
+(rev. 2) A recording proves that **a recording was made**: a device signed in as a teacher of the lesson captured and uploaded audio, live, for at least half the lesson, inside the lesson window, and the server saw it happen. It is **NOT proof that children attended** or that the lesson was taught - an empty room, or a laptop left running, records the same. D1's `session_held_evidence(session_id)` (through `session_recording_evidence`, which C replaces only after this revision passes its third review) reads ONE thing: the view **`public.recorder_session_evidence`**, and ONE column of it for the decision: **`recording_ran_evidence`**, labelled in the UI **"A recording was made"** (never "lesson held" or "children present"). Its columns are the contract; C will not rename or remove them without telling D.
 
-**Rev. 1 contract (supersedes the table that read `confirmed_audio_ms`, which is gone):**
+**Rev. 2 contract (supersedes rev. 1: `counts_as_held_evidence` is now `recording_ran_evidence`, `held_threshold_ms` is now `evidence_threshold_ms`):**
 
 | Column | Meaning | Trust |
 |---|---|---|
@@ -401,30 +413,34 @@ A completed recording of a session is strong evidence that the class was held - 
 | `armed_session_id` | the lesson it was armed for, for good | server, immutable |
 | `recording_id`, `class_id`, `purpose` | | server |
 | `status` | `armed` / `recording` / `uploading` / `complete` / `abandoned` / `deleted` | server-enforced state machine |
-| **`counts_as_held_evidence`** | **THE column D reads.** `was_completed` AND at least one track AND `verified_lesson_ms >= held_threshold_ms`. Never NULL (NULL inputs read as false) | derived only from server facts below |
-| `was_completed` | technical: it reached `complete` (all chunks confirmed and still stored, manifest stored, spans consistent with the server's clock). Stays true after retention deletes the audio. **Not** evidence on its own: a 90-second recording is `was_completed` and not `counts_as_held_evidence` **[tested]** | server |
-| `too_short` | `NOT (verified_lesson_ms >= held_threshold_ms)` - for the admin's explanation | server |
-| `started_at`, `ended_at` | the server's clock at the start and stop transitions; `ended_at <= capture_closes_at` | server |
+| **`recording_ran_evidence`** | **THE column D reads.** `was_completed` AND no deletion request AND `ended_at <= capture_closes_at + late_after_ms` AND at least one track AND `verified_lesson_ms >= evidence_threshold_ms`, where only LIVE chunks count. Stays true after deletion by retention (tombstone); false from the moment a person asks for early deletion. Never NULL | derived only from server facts below |
+| `was_completed` | technical: it reached `complete` (all chunks confirmed and still stored, manifest stored, spans consistent with the server's clock). Stays true after the audio is deleted. **Not** evidence on its own: a 90-second recording, or a lesson's worth uploaded after the lesson, is `was_completed` and not `recording_ran_evidence` **[tested]** | server |
+| `too_short` | `NOT (verified_lesson_ms >= evidence_threshold_ms)` - for the admin's explanation | server |
+| `audio_deleted_at`, `deleted_by_retention` | (rev. 2) when the files went; true only for `deleted` with no deletion request | server |
+| `deletion_requested_at`, `deletion_requested_by` | (rev. 2) an early deletion asked for by a person (an admin bringing the date forward counts) | server-stamped |
+| `stop_requested_at`, `stop_request_reason`, `stop_reason`, `stopped_by`, `abandon_reason` | (rev. 2) why and by whom it stopped | server-stamped; `stop_reason` is the page's word, checked |
+| `started_at`, `ended_at` | the server's clock at the start and stop transitions; (rev. 2) `ended_at` is the real moment, never clamped | server |
 | `client_started_at`, `client_ended_at` | the laptop's times | **claim, never evidence** |
 | `started_by`, `armed_at`, `completed_at` | | server |
 | `scheduled_start`, `scheduled_end` | the lesson's window as it stood at arming | server |
 | `server_capture_ms` | `ended_at - started_at` | server clock |
 | `lesson_overlap_ms` | overlap of `[started_at, ended_at]` with `[scheduled_start, scheduled_end]` | server clock |
 | `claimed_audio_ms` | sum of confirmed chunk spans, longest track | **claim** (bounded at registration, see 5.5) |
+| `late_audio_ms` | (rev. 2) confirmed audio the server registered more than `late_after_ms` after the moment it claims to end, longest track. Stored, never evidence | server clock |
+| `late_after_ms` | (rev. 2) the allowance, snapshot at arming (`late_after_minutes`, default 10) | server |
 | `stored_bytes` | bytes storage reported at confirmation, all tracks | server (storage metadata) |
-| `verified_audio_ms` | per track `LEAST(claimed, server_capture_ms, stored_bytes / format floor)`, longest track | the most the server can vouch for **[tested]** each bound |
+| `verified_audio_ms` | per track `LEAST(live claimed, server_capture_ms, live stored_bytes / format floor)`, longest track | the most the server can vouch for **[tested]** each bound |
 | `verified_lesson_ms` | `LEAST(verified_audio_ms, lesson_overlap_ms)` | server |
-| `held_threshold_ms` | `ceil(held_min_fraction x lesson length)`; the fraction (`held_evidence_min_fraction`, default 0.50) is snapshot at arming, so a later settings change does not reinterpret old evidence **[tested]** | server |
+| `evidence_threshold_ms` | `ceil(evidence_min_fraction x lesson length)`; the fraction (setting `evidence_min_fraction`, default 0.50) is snapshot at arming, so a later settings change does not reinterpret old evidence **[tested]** | server |
 | `tracks_with_audio` | 0, 1 or 2 | server |
 | `first/last_chunk_registered_at`, `first/last_chunk_confirmed_at` | when audio reached the server | server clock |
 
-Minimal use: `WHERE session_id = $1 AND counts_as_held_evidence`. Zero rows means "no recording evidence", which is NOT evidence the class was not held: most classes will have the switch off. A row with `was_completed AND NOT counts_as_held_evidence` is a recording too short to say the lesson happened; D may show it, never weigh it as STRONG.
+Minimal use: `WHERE session_id = $1 AND recording_ran_evidence`, shown as "A recording was made". Zero rows means "no recording", which is NOT evidence the class was not held: most classes will have the switch off. A row with `was_completed AND NOT recording_ran_evidence` is a recording too short, too late or deleted early at a person's request; D may show it (with the reason from the columns above), never weigh it.
 
 What it proves and what it does not - D should grade accordingly:
 
-- It proves that the named teacher's login armed a recording of that lesson with the class's consent switch on, that the server saw capture run from `started_at` to `ended_at`, and that storage holds (or held) at least the byte floor's worth of audio for the verified span.
-- It does not prove children were present, or that the bytes are a lesson rather than noise: nobody has listened, nothing analyses it, and the server cannot hash the stored files (5.5). A page determined to cheat must now keep a tab open for half the lesson and upload real-sized files; it can no longer fabricate the evidence in a quarter of a second (critic F1, closed **[tested]**).
-- Strongest when `first_chunk_confirmed_at` falls inside the lesson window (the upload was live).
+- It proves that the named teacher's login armed a recording of that lesson with the class's consent switch on, that the server saw capture run from `started_at` to `ended_at`, that chunks covering at least half the lesson reached the server while the lesson was running (each within `late_after` of its end), and that storage holds (or, after retention, held) at least the byte floor's worth of audio for that span.
+- It does not prove children were present or that a lesson was taught: nobody has listened, nothing analyses it, the server cannot hash the stored files (5.5), and an empty room records the same. A page determined to cheat must keep a device online and uploading real-sized files throughout the lesson; it can no longer produce the mark afterwards (critic 2 N2, closed **[tested]**) or in a quarter of a second (critic F1).
 - A recording that exists for a session later marked `Canceled` is a contradiction D should surface, not hide; the recorder keeps such audio for that reason (3).
 - The view is `security_invoker`: a function running as the service role or as an admin sees every row; a teacher sees their own classes. `service_role` holds SELECT **[tested]**.
 - The recorder never writes to `sessions`. It does not flip Scheduled to Held and it touches no money path.
@@ -438,7 +454,7 @@ What it proves and what it does not - D should grade accordingly:
 | 3 | Recording a class whose switch is off | Impossible to create the row: no row / off / no confirmation / old wording / a child without consent -> refused, for teachers, admins and the service role alike. Without the row no chunk registers and no file uploads | trigger **[tested]** |
 | 4 | Switch turned on without consent | CHECK constraint; only an admin via the function; needs the current wording version, a note, and every child's consent | **[tested]** |
 | 5 | A teacher reads another class's audio, or a cover teacher the class's archive | Table RLS and the bucket's SELECT policy both ask `recorder_can_listen` for THAT recording; a cover hears only their own lesson, and nothing from a future booking (rev. 1) | **[tested]** rows and files |
-| 5a | Fabricated "lesson recorded" evidence | Server timestamps, byte floor, server-clock bound per chunk, re-check of stored objects at complete, `counts_as_held_evidence` threshold (rev. 1) | **[tested]** |
+| 5a | Fabricated "lesson recorded" evidence | Server timestamps, byte floor, server-clock bound per chunk, re-check of stored objects at complete, `recording_ran_evidence` threshold (rev. 1); only chunks registered live count, a late Stop abandons, early deletion by a person ends it (rev. 2) | **[tested]** |
 | 6 | A teaching assistant reads or records | Not in `recorder_is_class_teacher` | **[tested]** |
 | 7 | Families or students | No policy names them; they read no table, no file, not even the settings | **[tested]** |
 | 8 | Signed-URL leakage | None are created (6.4). Residual: an admin with the dashboard can make one; that is the owner's own account | rule for C2/C3 |
@@ -477,7 +493,7 @@ What it proves and what it does not - D should grade accordingly:
 | Q2 | A class where one child's parents have not consented or have refused. | The class is not recorded (built this way). The alternative - record and "exclude" the child - is not technically real for a room microphone. |
 | Q3 | When a parent withdraws: delete the past recordings their child is in automatically, or have an admin choose? | Automatically, all of them, logged. (Built: an admin requests each; C3 can make it one button.) |
 | Q4 | May a cover teacher listen to the class's other recordings? | Decided by the conductor's ruling on critic F2 (rev. 1): no. A cover teacher hears only the lesson they covered. |
-| Q4a | Held-evidence threshold: what share of the scheduled lesson must the verified audio cover? | 0.50 (`held_evidence_min_fraction`, 0.10-1.00). |
+| Q4a | Evidence threshold: what share of the scheduled lesson must the verified LIVE audio cover for "a recording was made"? | 0.50 (`evidence_min_fraction`, 0.10-1.00). Late allowance `late_after_minutes` 10 (1-30). |
 | Q5 | Retention: 30 days from the lesson. Storage cost follows from it (about 30 GB held for 5 lessons a day in Opus, about 100 GB in FLAC). | 30 days. |
 | Q6 | Teaching assistants: no access of any kind. | No. |
 | Q7 | Is one click a day ("Ready for today") acceptable, or must the laptop record with nobody touching it after a reboot? | One click a day. Zero-touch would need the measurement in 1.4 and possibly a desktop wrapper. |
