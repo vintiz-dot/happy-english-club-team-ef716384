@@ -547,7 +547,8 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $
        AND l.diff -> 'old' ->> 'session_id' = p_session_id::text
        AND l.diff -> 'old' ->> 'status' IN ('Present', 'Late')
        AND (l.diff -> 'old' ->> 'marked_by') IS NOT NULL
-       AND (l.diff -> 'new' ->> 'session_id') IS NOT DISTINCT FROM (l.diff -> 'old' ->> 'session_id')
+       AND (l.operation = 'DELETE'      -- a re-parent is reported by the next branch instead
+            OR (l.diff -> 'new' ->> 'session_id') IS NOT DISTINCT FROM (l.diff -> 'old' ->> 'session_id'))
        AND (l.operation = 'DELETE'
             OR (l.diff -> 'new' ->> 'status') IS DISTINCT FROM (l.diff -> 'old' ->> 'status')
                AND (l.diff -> 'new' ->> 'status') NOT IN ('Present', 'Late')
