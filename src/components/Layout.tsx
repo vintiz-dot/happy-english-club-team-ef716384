@@ -155,8 +155,9 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
             className={
               role === "student"
                 ? // Room below for the fixed bottom bar, the assistant button above it and the home indicator.
-                  "container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 pb-[calc(9rem+env(safe-area-inset-bottom))] md:pb-24"
-                : "container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-24"
+                  // lg:pb-24 too: lg:py-8 otherwise wins at 1024+ and the assistant button sat on the last card (R08).
+                  "container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 pb-[calc(9rem+env(safe-area-inset-bottom))] md:pb-24 lg:pb-24"
+                : "container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-24 lg:pb-24"
             }
           >{children}</main>
           <AssistantLauncher />
