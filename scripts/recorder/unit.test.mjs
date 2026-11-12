@@ -525,8 +525,10 @@ console.log("=== register early, upload later ===");
   ok("rows registered as soon as the chunks were cut, uploads still queued", rows.length >= 6 && rows.every((c) => !c.confirmed_at), `${rows.length} registered`);
   ok("none of them late", rows.every((c) => !c.late));
   w.server.injections.length = 0;
-  clock += 70000; await r.drive(row.id); await r.settle();
+  clock += 11 * 60000; await r.drive(row.id); await r.settle();
   ok("uploads catch up afterwards", w.server.chunkRows(row.id).every((c) => c.confirmed_at));
+  const lp = await r.uploadProgress(row.id);
+  ok("registered on time but bytes confirmed 11 min late: the page marks them late too (critic 3 M1)", lp.late > 0 && w.server.chunkRows(row.id).every((c) => !c.late), `${lp.late} late`);
   await r.stop(); await r.settle();
 }
 

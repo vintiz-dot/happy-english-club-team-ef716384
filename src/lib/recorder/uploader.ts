@@ -182,6 +182,10 @@ export class Uploader {
         const ok = await this.backend.confirmChunk(c.chunkId!, sha);
         if (!ok) throw new RecorderError("server_refused", "The server did not confirm the chunk", { refusal: "not_in_storage", retryable: true });
         c.state = "confirmed"; c.confirmedAt = this.now();
+        // Critic 3 (M1): the BYTES must also be confirmed within late_after of
+        // the chunk's end to count. The server's view decides; this mirrors it
+        // so the UI can say "uploaded too late to count" for these minutes too.
+        if (c.confirmedAt - c.createdAt > (rec.lateAfterMs ?? this.lateToleranceMs)) c.late = true;
       }
       c.attempts = 0; c.nextAttemptAt = undefined; c.lastError = undefined;
       await this.store.updateChunk(c);
