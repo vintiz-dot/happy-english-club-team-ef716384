@@ -22,7 +22,8 @@ export const ToastAnnouncement = ({ announcement, onDismiss }: Props) => {
       className={
         ivory
           ? // Inset 16 px at 375 (the old w-full + right-6 pushed it off the left edge); a card from sm.
-            "fixed inset-x-4 bottom-4 z-[150] overflow-hidden rounded-hec-lg border border-hec-line bg-hec-raised text-hec-ink shadow-hec-2 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-full sm:max-w-sm"
+            // Sits above the phone's bottom nav and a footer-bar announcement instead of covering them.
+            "fixed inset-x-4 bottom-24 z-[150] overflow-hidden rounded-hec-lg border border-hec-line bg-hec-raised text-hec-ink shadow-hec-2 sm:inset-x-auto sm:bottom-20 sm:right-6 sm:w-full sm:max-w-sm"
           : "fixed bottom-6 right-6 z-[150] max-w-sm w-full rounded-xl shadow-xl border bg-card text-card-foreground overflow-hidden"
       }
       style={{ background: bg, color: text }}
