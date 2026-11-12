@@ -644,6 +644,12 @@ eq("a teacher cannot push a deletion date later", await (async () => {
   refused("nor ended_at", await tryAs(ADMIN, () => db.query(`UPDATE public.class_recordings SET ended_at = now() WHERE id=$1`, [recB.id])), /permission denied/);
   refused("nor stop_request_reason", await tryAs(ADMIN, () => db.query(
     `UPDATE public.class_recordings SET stop_request_reason = 'admin' WHERE id=$1`, [recB.id])), /permission denied/);
+  // The service role holds the column privileges; the trigger still takes a
+  // deletion request only from recorder_request_deletion.
+  await as(null, () => db.query(`UPDATE public.class_recordings SET deletion_requested_at = now(), deletion_reason = 'x' WHERE id=$1`, [recB.id]), "service_role");
+  eq("even the service role cannot write a deletion request into the row: only the function makes one", (await one(
+    `SELECT deletion_requested_at, deletion_reason FROM public.class_recordings WHERE id=$1`, [recB.id])),
+    { deletion_requested_at: null, deletion_reason: null });
 }
 eq("an admin can, and it is logged", await (async () => {
   await as(ADMIN, () => db.query(`UPDATE public.class_recordings SET delete_after = scheduled_end + interval '60 days' WHERE id=$1`, [recB.id]));
