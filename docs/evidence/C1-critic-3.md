@@ -1,6 +1,14 @@
-VERDICT: INCOMPLETE
+VERDICT: PASS WITH CHANGES
 
-Where I am / next step: suite re-run, N1/N2/N3 probes done (findings M1, M2, m1, m2 below). Next: guard suite with the recorder appended (check 4), mutations, verdict.
+Where I am / next step: DONE. 0 BLOCKER, 2 MAJOR (M1, M2: both in the evidence view, which nothing reads yet), 3 MINOR. Safe to apply to live now with the recorder switched off; M1 and M2 must be fixed (in this file before applying, or by a follow-up `CREATE OR REPLACE VIEW`) before workstream D wires the evidence into `session_recording_evidence`.
+
+Changes asked for (each small, verifiable by diff + one test):
+1. M1 - view `live` test also requires `confirmed_at <= started_at + t_end_ms + late_after_ms`; C2 contract item 2 reworded. Test: register on time, upload 3 days later -> no evidence.
+2. M2 - view counts only the part of each live chunk inside the scheduled lesson. Test: 5 min pre-roll + 15 min lesson + 10 min grace of a 60-min lesson -> no evidence.
+3. m1 - `abandon_reason` from the page only from a fixed list; server reasons only from server paths.
+4. m2 - column-level UPDATE grant on `class_recording_tracks` without `recording_id`, `track`, `created_at`.
+5. m3 - `delete_after` brought forward only together with the stamped request (`ELSIF v_server_delete AND NEW.deletion_requested_at IS NOT NULL`).
+6. Tests for the three mutation survivors below (upload class prefix, deleted-recording read, lesson-overlap cap).
 
 # C1 critic 3 (third review of the class recorder migration, revision 2)
 
@@ -54,6 +62,68 @@ Fix (small): per chunk, count only the part inside the lesson - in the inner sel
 ### m2 MINOR (read + executed) - `class_recording_tracks` keeps a whole-table UPDATE grant
 
 `:1974`. While the recording is open the owner may update `recording_id`, `track`, `created_at` as well as the descriptive columns (probe lists all 13). Moving a track to another open recording of theirs is stopped by the chunks' foreign key once a chunk exists, and `chunk_count` is re-checked at completion, so nothing reaches evidence. Fix: column-level UPDATE grant without `recording_id`, `track`, `created_at`, same pattern as `class_recordings`.
+
+### m3 MINOR (executed) - the server flag alone moves retention forward with NO deletion request, so an early deletion would read as "deleted by retention"
+
+`:1039-1040`: with `recorder.server_write = 'delete:<id>'` the trigger takes `LEAST(OLD.delete_after, NEW.delete_after)` whether or not a deletion request is being stamped. Today nothing outside `recorder_request_deletion` can set the flag over the API (PostgREST exposes `public` only; `set_config` is in `pg_catalog`; I grepped `supabase/migrations/` for any public function that calls `set_config` with a caller-chosen name: none). But if it ever can, column privileges do NOT save this case, contrary to revision 2's note: `delete_after` is in the UPDATE grant. Probe (`.probe/p5.mjs`, the recorder itself, open `uploading` row, `set_config` in the same transaction):
+
+```
+P5 forged delete flag + delete_after (as the recorder) :: null
+P5 row after :: {"due_now":true,"deletion_requested_at":null}
+P5 audit rows for it :: ["armed","started","stopped","retention_changed"]
+P5 retention marks deleted :: null
+P5 view :: {"recording_ran_evidence":true,"deleted_by_retention":true,"deletion_requested_at":null}
+```
+
+(The audit log does keep a `retention_changed` row with the recorder as actor.) Fix: `ELSIF v_server_delete AND NEW.deletion_requested_at IS NOT NULL THEN` - the move then only happens together with the stamped request. Test: the probe above -> `delete_after` unchanged.
+
+## Mutation run (executed, `.probe/mut.mjs`: throwaway copy, real suite, 4 in parallel; CAUGHT = a FAIL or a non-zero exit)
+
+| Mutation | Result |
+|---|---|
+| preflight: unscoped-policy test removed | CAUGHT (366/1) |
+| preflight: bucket size-limit test removed | CAUGHT (366/1) |
+| upload: a confirmed chunk may be uploaded again | CAUGHT (363/4) |
+| upload: class prefix not checked (`r.class_id = p.class_id` dropped in `recorder_can_upload`) | **SURVIVED (367/0)** |
+| read object: deleted recordings still readable (`status <> 'deleted'` dropped) | **SURVIVED (367/0)** |
+| view: live allowance doubled | CAUGHT (366/1) |
+| retention: non-admin may move delete_after | CAUGHT (363/4) |
+| row delete: allowed before 'deleted' | CAUGHT (366/1) |
+| deletion request: any signed-in user | CAUGHT (359/8) |
+| enrolment without consent does not switch off | CAUGHT (364/3) |
+| cancellation does not request a stop | CAUGHT (364/3) |
+| register: audio after the window accepted | CAUGHT (366/1) |
+| confirm: stored size not compared | CAUGHT (suite crashed) |
+| grant: server stamps writable again | CAUGHT (366/1) |
+| listen: `is_teacher_of_class` (TAs) instead of the session's teacher | CAUGHT (354/13) |
+| view: evidence not capped by lesson overlap | **SURVIVED (367/0)** |
+
+16 applied, 13 caught, 3 survived. Survivor 1 matters most: without the class check the owner could upload a `manifest.json` (any allowed type, 8 MB) under ANOTHER class's prefix with their own recording id, and retention - which removes `{class}/{recording}/` - would never remove it. The check is in the file; only its test is missing. Add: owner uploads `{other class}/{own recording}/manifest.json` while uploading -> refused. Survivor 2: a test that an admin cannot read an object of a recording marked `deleted` (insert the object as superuser). Survivor 3 is the M2 area: M2's test covers it.
+
+## Safe to apply to live? YES
+
+- N1 is closed on the evidence: own bucket, the old bucket row and its policy are byte-identical after two pastes, every non-owner role is refused on every operation and on imitated prefixes, and no storage policy anywhere in `supabase/migrations/` other than the recorder's two can reach `class-recorder-audio`.
+- Switched off it does nothing: no `class_recording_settings` row means OFF, the two triggers on `sessions` / `enrollments` update zero rows, the guard suite's behaviour is unchanged, and `session_recording_evidence` is untouched (not wired, as ruled).
+- GRANTs explicit (no anon; authenticated per table, column-level UPDATE on `class_recordings`); pastes twice; preflight refuses before creating anything.
+- M1 and M2 make `recording_ran_evidence` say yes when it should not. Nothing reads it until D wires it in a separately reviewed step, so they do not make the apply unsafe; they must be fixed before that step. Cheapest: fix them in this file before pasting (it has never been applied).
+- Apply outside lesson hours (`lock_timeout` 5 s on sessions / enrollments / classes / students).
+
+## Post-apply read-only probes
+
+Revision 2's probes 1-10 stand (C1-revision-2.md, "Post-apply read-only probes"). Add, BEFORE and AFTER the paste, and compare:
+
+- 7b, behaviour not text: `SELECT policyname, cmd, roles, qual, with_check FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND permissive='PERMISSIVE' AND (coalesce(qual,'') ~* '\mor\M' OR coalesce(with_check,'') ~* '\mor\M') ORDER BY 1;` - read every row: each OR branch must carry its own `bucket_id = '<another bucket>'`. (The tree has none of this shape; this catches a dashboard-made one.) Before applying, also `SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND tablename='objects';` and compare with the 85 the tree gives (after the recorder); a different number means policies exist that no migration made - read them.
+- 11: `SELECT string_agg(tgname, ',' ORDER BY tgname) FROM pg_trigger WHERE tgrelid IN ('public.sessions'::regclass, 'public.enrollments'::regclass) AND NOT tgisinternal;` - after = before + `recorder_enrollment_consent`, `recorder_session_canceled`.
+- 12: `SELECT md5(pg_get_functiondef('public.session_recording_evidence(uuid)'::regprocedure)), md5(pg_get_functiondef('public.session_held_evidence(uuid)'::regprocedure));` - identical before and after.
+- 13: `SELECT public.session_cancel_guard_status();` (as an admin) - identical before and after.
+
+## Not checked
+
+- The live database itself (no access by rule): dashboard-made storage policies, the real owner of `storage.objects`, whether the SQL-editor role has BYPASSRLS (probe 8), and whether the live `storage.objects` has the `(bucket_id, name)` unique index the PGlite stand-in lacks (so "upload twice to one path before confirming" was not tested against the real constraint).
+- Supabase Storage's own API behaviour (upsert headers, signed URLs, `x-upsert` needing an UPDATE policy) - only the table policies were exercised.
+- The guard suite was run with the recorder pasted at one point (after D2, before every guard case); the guard's preflight-refusal blocks (fresh databases) were not re-run with the recorder present.
+- Whether PostgREST or pg_graphql on the live project exposes any route to `set_config` (m3 is only reachable that way).
+- C2 (client, retention edge function) and D wiring do not exist yet; nothing about them is verified.
 
 ## Checks that held (executed)
 
