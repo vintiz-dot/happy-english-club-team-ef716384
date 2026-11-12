@@ -298,21 +298,48 @@ test("adapter: preview.invoices_before and the older tuition[] shape both read",
 test("figures not requested produce no rows", () => {
   expect(consequenceRows({ fetched: false, reason: "not_requested" })).toEqual([]);
 });
-test("payroll line is the calculate-payroll figure, or says it was not fetched", () => {
-  const ok = payrollLine({
-    tuition: [],
-    payroll: { fetched: true, month: "2026-11", teacher_id: "t1", response: { payrollData: [{ teacherId: "t0", totalAmountActual: 1 }, { teacherId: "t1", totalAmountActual: 4500000, sessionsCountActual: 9 }] } },
-  });
-  expect(ok.fetched).toBe(true);
-  expect(ok.text).toContain(formatVnd(4500000));
-  expect(ok.text).toContain("9 lessons");
-  expect(payrollLine({ payroll: { fetched: false, reason: "calculate_payroll_failed", error: "x" } }).fetched).toBe(false);
-  expect(payrollLine({ payroll: { fetched: false, reason: "lesson_not_held" } }).text).toContain("not marked Held");
-  expect(payrollLine({ payroll: { fetched: true, month: "2026-11", teacher_id: "zz", response: { payrollData: [{ teacherId: "a" }, { teacherId: "b" }] } } }).fetched).toBe(false);
+test("teacher pay: a preview never shows a pay figure, whatever the server sends", () => {
+  const final = payrollLine({ pay_line: { available: false, reason: "not fetched in a preview" } });
+  expect(final.fetched).toBe(false);
+  expect(final.text).toBe("Pay is recalculated by Payroll after the change.");
+  // An older server that still sends a payroll figure: it is NOT shown.
+  const old = payrollLine({ payroll: { fetched: true, month: "2026-11", teacher_id: "t1", response: { payrollData: [{ teacherId: "t1", totalAmountActual: 4500000 }] } } });
+  expect(old.text).not.toContain(formatVnd(4500000));
   expect(payrollLine(null).fetched).toBe(false);
-  // A single row for ANOTHER teacher is never shown as this lesson's teacher's pay.
-  expect(payrollLine({ payroll: { fetched: true, month: "2026-11", teacher_id: "t1", response: { payrollData: [{ teacherId: "t9", totalAmountActual: 999 }] } } }).fetched).toBe(false);
-  expect(payrollLine({ payroll: { fetched: true, month: "2026-11", teacher_id: "t1", response: { payrollData: [{ totalAmountActual: 5 }] } } }).fetched).toBe(true);
+});
+
+test("final contract: consequences.invoices_before entries carry `bill` or null", () => {
+  const c = {
+    source: "stored",
+    affected_students: [{ student_id: "a", month: "2026-11", mark: { status: "Present", marked_by_person: true } }, { student_id: "b", month: "2026-12", mark: null }],
+    invoices_before: [
+      { student_id: "a", month: "2026-11", bill: { total_amount: 1800000, discount_amount: 0, recorded_payment: 1800000, confirmation_status: "confirmed", status: "paid", tuition_frozen: false } },
+      { student_id: "b", month: "2026-12", bill: null },
+      { student_id: "c", month: "2026-11", bill: { total_amount: 0, discount_amount: 0, recorded_payment: 0, status: "issued", confirmation_status: "auto_approved", tuition_frozen: true } },
+    ],
+    after: { available: false, reason: "worked out after the change" },
+    pay_line: { available: false, reason: "x" },
+  };
+  const rows = consequenceRows(c as any, base());
+  expect(rows[0].nowText).toBe(`Current bill for 2026-11: ${formatVnd(1800000)} (paid, confirmed); paid this month ${formatVnd(1800000)}`);
+  // no bill saved: said in words, never 0 and never "not available"
+  expect(rows[1].nowText).toBe("No bill saved yet for 2026-12");
+  expect(rows[1].fetched).toBe(true);
+  // a real zero bill is a figure, shown as given
+  expect(rows[2].nowText).toContain(formatVnd(0));
+  expect(rows[2].frozen).toBe(true);
+  expect(totalsRow(rows).notFetched).toBe(0);
+});
+
+test("stale diff names a bill change", () => {
+  const a = base({ invoices_before: [{ student_id: "a", month: "2026-11", total_amount: 1, confirmation_status: "confirmed" }] });
+  const b = base({ invoices_before: [{ student_id: "a", month: "2026-11", total_amount: 1, confirmation_status: "auto_approved" }] });
+  expect(stalePreviewDiff(a, b).join(" ")).toContain("family bill");
+});
+
+test("new codes of the final contract have wording", () => {
+  expect(errorText("rate_limited")).toContain("Nothing was changed");
+  expect(errorText("outside_criteria")).toContain("not sent");
 });
 
 test("query refresh covers the lesson screens the old dialogs' parents refetched", () => {

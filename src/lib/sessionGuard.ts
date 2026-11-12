@@ -79,8 +79,15 @@ export interface TuitionFigure {
 }
 
 export interface Consequences {
+  /** Final contract: "stored" (the saved bills, read-only). */
+  source?: string;
+  affected_students?: Array<{ student_id: string; month: string; mark?: { status?: string; marked_by_person?: boolean } | null }>;
+  invoices_before?: any[];
+  after?: { available: boolean; reason?: string };
+  pay_line?: { available: boolean; reason?: string };
   fetched?: boolean;
   reason?: string;
+  /** Older shapes, read defensively only. */
   tuition?: TuitionFigure[];
   payroll?: {
     fetched: boolean;
@@ -217,6 +224,8 @@ export const ERROR_TEXT: Record<string, string> = {
   retry: "The database was busy. Nothing was changed. Try again.",
   misconfigured: "The server is missing a setting and cannot make this change safely. Nothing was changed.",
   unexpected: "Something unexpected went wrong on the server. Reload the lesson to see whether anything was changed before trying again.",
+  rate_limited: "Too many lesson changes in one minute. Nothing was changed. Wait a minute, then check again.",
+  outside_criteria: "This lesson is outside the dates, class or teacher you chose, so it was not sent. Nothing was changed for it.",
   network: "Could not reach the server. Check your connection, then reload the lesson to see whether anything was changed.",
   relay: "The server could not run this request (the function did not answer). Reload the lesson to see whether anything was changed.",
   function_missing: "The server function for this change is not deployed yet. Nothing was changed.",
@@ -263,7 +272,7 @@ export const COPY = {
   reviewNote: "This change is recorded for review.",
   erasedNote: "Marks were removed before this change",
   consequenceNotFetched: "not available",
-  payrollNotFetched: "could not be worked out - check Payroll after the change",
+  payRecalculated: "Pay is recalculated by Payroll after the change.",
   afterNotAvailable: "worked out after the change",
 };
 
@@ -487,6 +496,8 @@ export interface ConsequenceRow {
 export interface StoredBill {
   studentId: string;
   month: string;
+  /** The server said there is no bill saved for this child and month. */
+  noBill?: boolean;
   total: number | null;
   discount: number | null;
   recordedPayment: number | null;
@@ -501,16 +512,24 @@ export function readStoredBills(c: Consequences | null | undefined, preview?: Gu
   const anyC: any = c ?? {};
   const list: any[] | null = Array.isArray(anyC.invoices_before) ? anyC.invoices_before : Array.isArray(anyC.bills) ? anyC.bills : Array.isArray(preview?.invoices_before) ? preview!.invoices_before! : null;
   if (list) {
-    return list.map((b) => ({
-      studentId: String(b?.student_id ?? ""),
-      month: String(b?.month ?? ""),
-      total: numOrNull(b?.total_amount ?? b?.totalAmount),
-      discount: numOrNull(b?.discount_amount ?? b?.totalDiscount),
-      recordedPayment: numOrNull(b?.recorded_payment),
-      status: b?.status ?? null,
-      confirmation: b?.confirmation_status ?? null,
-      frozen: !!(b?.tuition_frozen ?? b?.tuitionFrozen),
-    }));
+    return list.map((e) => {
+      // Final contract (D-ship-fixes "CONTRACT FIELDS"): { student_id, month, bill: {...} | null }.
+      // bill: null = no bill saved for that child and month ("no bill yet", never 0).
+      // An entry without a `bill` key is read flat (the preview's own invoices_before rows).
+      const hasBillKey = !!e && typeof e === "object" && Object.prototype.hasOwnProperty.call(e, "bill");
+      const b = hasBillKey ? e.bill : e;
+      return {
+        studentId: String(e?.student_id ?? ""),
+        month: String(e?.month ?? ""),
+        noBill: hasBillKey && (b === null || b === undefined),
+        total: numOrNull(b?.total_amount ?? b?.totalAmount),
+        discount: numOrNull(b?.discount_amount ?? b?.totalDiscount),
+        recordedPayment: numOrNull(b?.recorded_payment),
+        status: b?.status ?? null,
+        confirmation: b?.confirmation_status ?? null,
+        frozen: !!(b?.tuition_frozen ?? b?.tuitionFrozen),
+      };
+    });
   }
   // Older shape: calculate-tuition snapshots.
   return (anyC.tuition ?? []).map((t: TuitionFigure) => ({
@@ -531,12 +550,18 @@ export function consequenceRows(c: Consequences | null | undefined, preview?: Gu
     if (b.frozen) notes.push("This bill is frozen and will not change");
     const state = [b.status, b.confirmation].filter(Boolean).join(", ");
     const fetched = b.total !== null;
+    const paid = b.recordedPayment !== null && b.recordedPayment !== 0 ? `; paid this month ${formatVnd(b.recordedPayment)}` : "";
     return {
       key: `${b.studentId}-${b.month}-${i}`,
       studentId: b.studentId,
       month: b.month,
-      fetched,
-      nowText: fetched ? `Current bill for ${b.month}: ${formatVnd(b.total)}${state ? ` (${state})` : ""}` : "Current bill: not available",
+      // "No bill yet" is a known answer, not a missing figure.
+      fetched: fetched || !!b.noBill,
+      nowText: b.noBill
+        ? `No bill saved yet for ${b.month}`
+        : fetched
+          ? `Current bill for ${b.month}: ${formatVnd(b.total)}${state ? ` (${state})` : ""}${paid}`
+          : "Current bill: not available",
       afterText: b.frozen ? "unchanged (frozen)" : COPY.afterNotAvailable,
       notes,
       frozen: b.frozen,
@@ -544,7 +569,7 @@ export function consequenceRows(c: Consequences | null | undefined, preview?: Gu
   });
 }
 
-export const NEW_BILL_LINE = "The new bill is worked out after the lesson is cancelled and shown here.";
+export const NEW_BILL_LINE = "These are the bills as saved now. The new bills are worked out after the change and shown on the next screen.";
 
 export interface TotalsRow {
   bills: number;
@@ -569,27 +594,14 @@ export interface PayrollLine {
   text: string;
 }
 
-/** The teacher's line as calculate-payroll reported it; nothing derived. */
-export function payrollLine(c: Consequences | null | undefined): PayrollLine {
-  const p = c?.payroll;
-  if (!p) return { fetched: false, text: COPY.payrollNotFetched };
-  if (!p.fetched) {
-    if (p.reason === "lesson_not_held") return { fetched: false, text: "The lesson is not marked Held, so no teacher pay is attached to it." };
-    return { fetched: false, month: p.month, text: COPY.payrollNotFetched };
-  }
-  const rows: any[] = p.response?.payrollData ?? [];
-  // Only this lesson's teacher. A single row is used only when it names no teacher at all;
-  // a row naming someone else is never shown as this teacher's pay.
-  const mine = rows.find((r) => r?.teacherId === p.teacher_id) ?? (rows.length === 1 && !rows[0]?.teacherId ? rows[0] : null);
-  if (!mine) return { fetched: false, month: p.month, text: COPY.payrollNotFetched };
-  const amount = mine.totalAmountActual ?? mine.totalAmountProjected;
-  const sessions = mine.sessionsCountActual ?? mine.sessionsCountProjected;
-  if (amount === undefined || amount === null) return { fetched: false, month: p.month, text: COPY.payrollNotFetched };
-  return {
-    fetched: true,
-    month: p.month,
-    text: `Pay line for ${p.month} as it stands now: ${formatVnd(amount)}${sessions !== undefined && sessions !== null ? ` for ${fmtCount(Number(sessions), "lesson", "lessons")}` : ""}. It is recalculated by Payroll after the change.`,
-  };
+/**
+ * Teacher pay in a preview. Final contract: the preview never returns a pay
+ * figure (`pay_line: { available: false }`), because calculate-payroll saves
+ * the month summary whenever it runs. So the dialog shows one fixed line and
+ * never a number, even if an older server still sends `payroll`.
+ */
+export function payrollLine(_c?: Consequences | null): PayrollLine {
+  return { fetched: false, text: COPY.payRecalculated };
 }
 
 /* ----------------------------------------------------------------- stale */
@@ -612,6 +624,7 @@ export function stalePreviewDiff(before: GuardPreview | null | undefined, after:
     if (!ai.has(type)) out.push(`No longer recorded: ${describeEvidence((before.evidence?.items ?? []).find((i) => i.type === type)!)}.`);
   }
   if ((before.affected?.length ?? 0) !== (after.affected?.length ?? 0)) out.push("The number of children on the lesson changed.");
+  if (JSON.stringify(before.invoices_before ?? []) !== JSON.stringify(after.invoices_before ?? [])) out.push("A family bill for this lesson changed (look at the bills again).");
   if (before.tier !== after.tier) out.push("The level of care this change needs has changed.");
   if (!out.length) out.push("Something recorded against this lesson changed.");
   return out;

@@ -160,6 +160,10 @@ export function useGuardedChange({ open, sessionId, op, change, figures }: Optio
             if (fresh) {
               setStale(stalePreviewDiff(p, fresh));
               setPreview(fresh);
+              // The body carries fresh consequences beside the fresh preview (a bill
+              // that changed is exactly why the token went stale). Without them the
+              // old bills must not stay on screen: show "not available" instead.
+              setConsequences(err.consequences && typeof err.consequences === "object" ? (err.consequences as Consequences) : null);
               setPhase("ready");
             } else {
               await load();
