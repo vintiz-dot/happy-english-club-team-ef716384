@@ -27,6 +27,7 @@ import { StudentAnalyticsModal } from "@/components/student/StudentAnalyticsModa
 import { type BoardEntry } from "@/components/shared/PodiumBoard";
 import { StyledClassBoard } from "@/components/leaderboard/StyledClassBoard";
 import { useClassMonitor } from "@/hooks/useClassMonitor";
+import { useIvory } from "@/hooks/useIvory";
 
 interface StudentClassLeaderboardProps {
   classId: string;
@@ -73,8 +74,12 @@ export function StudentClassLeaderboard({
   classId,
   className,
   currentStudentId,
-  ivory = false,
+  ivory: ivoryProp = false,
 }: StudentClassLeaderboardProps) {
+  // The frame follows the system wherever the route is listed (the staff
+  // student page included), not only where a caller passes the prop.
+  const scoped = useIvory();
+  const ivory = ivoryProp || scoped;
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [analyticsStudent, setAnalyticsStudent] = useState<{
     id: string;
