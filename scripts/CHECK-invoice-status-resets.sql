@@ -89,12 +89,12 @@ ORDER BY i.month DESC, i.id;
 --    bill (opening its tuition screen) writes the label below.
 --    would_be_by_month_rule is the one label rule (_lib/invoice-status.ts):
 --    recorded payment against the month's charge plus debt carried in less
---    credit carried in.
+--    credit carried in. Every row here has money recorded, so (T4) the rule
+--    is simply: paid when that covers what the month asks for, else partial.
 SELECT
   i.id AS invoice_id, i.student_id, i.month, i.status AS status_now,
   i.total_amount, i.recorded_payment, i.carry_in_debt, i.carry_in_credit,
   CASE WHEN COALESCE(i.recorded_payment, 0) >= i.total_amount + COALESCE(i.carry_in_debt, 0) - COALESCE(i.carry_in_credit, 0)
-            AND i.total_amount + COALESCE(i.carry_in_debt, 0) - COALESCE(i.carry_in_credit, 0) > 0
        THEN 'paid' ELSE 'partial' END AS would_be_by_month_rule,
   i.updated_at
 FROM public.invoices i

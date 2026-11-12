@@ -1431,6 +1431,48 @@ console.log('\nT4 fault 7 - a pricing read that fails, fails the calculation');
   }
 }
 
+console.log('\nT4 - scripts/CHECK-payment-paths.sql counts what each fault touches, aggregates only, and writes nothing');
+{
+  const sql = readFileSync(join(repo, 'scripts', 'CHECK-payment-paths.sql'), 'utf8');
+  const code = sql.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n').replace(/'[^']*'/g, "''");
+  ok('the file is SELECT / WITH statements only',
+     !/\b(insert|update|delete|alter|drop|create|truncate|grant|revoke|call|do)\b/i.test(code)
+       && code.split(';').filter((s) => s.trim()).every((s) => /^\s*(select|with)\b/i.test(s)));
+  // The tables it reads besides invoices, as the payment functions shape them.
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS public.payment_deletions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), payment_id uuid, snapshot jsonb, deleted_at timestamptz DEFAULT now());
+    CREATE TABLE IF NOT EXISTS public.payments (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid, family_id uuid, parent_payment_id uuid, amount integer);
+    CREATE TABLE IF NOT EXISTS public.ledger_entries (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tx_id uuid, tx_key text, debit integer DEFAULT 0, credit integer DEFAULT 0, month text);
+    CREATE TABLE IF NOT EXISTS public.settlements (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid, month text, settlement_type text, amount integer, created_at timestamptz DEFAULT now());
+    CREATE TABLE IF NOT EXISTS public.referral_bonuses (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid, effective_from date, effective_to date);
+  `);
+  await reset(); world(); inFamilyOf();
+  await seedBill(SEP, 400000, 400000, 'paid'); await calc();                 // October: a real debt the old formula calls 0
+  await seedBill('2026-07', 400000, 800000, 'paid');                          // (an earlier overpayment, to make a credit-covered month)
+  await db.exec(`
+    INSERT INTO public.payment_deletions (payment_id, snapshot) VALUES (gen_random_uuid(), '{"payment_data":{"family_id":"${FAMILY}","amount":150000}}');
+    INSERT INTO public.ledger_entries (tx_id, tx_key, debit, credit) VALUES ('00000000-0000-4000-8000-00000000aaaa', 'payment-reversal-x-1', 150000, 0);
+    INSERT INTO public.settlements (student_id, month, settlement_type, amount, created_at) VALUES ('${S1}', '${MONTH}', 'discount', 100000, '2026-10-07');
+    INSERT INTO public.referral_bonuses (student_id, effective_from) VALUES ('${S1}', '2026-01-01');
+  `);
+  const counts = async () => (await db.query(
+    `SELECT (SELECT md5(string_agg(t::text, '|' ORDER BY id)) FROM public.invoices t) h, (SELECT count(*) FROM public.audit_log)::int a`)).rows[0];
+  const before = await counts();
+  let res = null, err = null;
+  try { res = await db.exec(sql); } catch (e) { err = e.message; }
+  ok('all nine statements run', err === null && res?.length === 9, err ?? res?.length);
+  const row = (i) => res?.[i]?.rows?.[0] ?? {};
+  ok('1: the deleted family payment and the one-legged reversal are counted',
+     Number(row(0).family_payments_deleted) === 1 && Number(row(0).family_payments_deleted_vnd) === 150000 && Number(row(0).unbalanced_reversals) === 1, row(0));
+  ok('2: the October debt the old settle-bill formula called 0 is counted', Number(row(1).real_debt_refused) >= 1, row(1));
+  ok('2b: the old write-off is listed, and does not count on a bill after T4',
+     res?.[2]?.rows?.[0]?.settlement_type === 'discount' && Number(res?.[2]?.rows?.[0]?.counts_on_bill_after_t4) === 0, res?.[2]?.rows);
+  ok('3: stored label -> T4 label pairs are listed', (res?.[3]?.rows ?? []).length >= 1, res?.[3]?.rows);
+  ok('7: the referral bonus is counted', Number(row(8).referral_bonuses) === 1, row(8));
+  ok('no column carries a name or an id', res.every((x) => x.fields.every((f) => !/name|(^|_)id$/i.test(f.name))), res.map((x) => x.fields.map((f) => f.name)));
+  ok('running it changed nothing', same(await counts(), before));
+}
+
 // ================================================== the owner's check SQL
 console.log('\nscripts/CHECK-invoice-status-resets.sql finds bills the old behaviour reset, and writes nothing');
 {
