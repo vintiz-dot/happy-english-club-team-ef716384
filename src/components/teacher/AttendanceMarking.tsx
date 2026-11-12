@@ -8,6 +8,7 @@ import { format, isPast, addHours } from "date-fns";
 import { Clock, Users, Award } from "lucide-react";
 import { ParticipationPoints } from "@/components/admin/ParticipationPoints";
 import { useAuth } from "@/hooks/useAuth";
+import { useIvory } from "@/hooks/useIvory";
 
 interface Session {
   id: string;
@@ -39,6 +40,7 @@ export function AttendanceMarking() {
   const [showParticipationPoints, setShowParticipationPoints] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const ivory = useIvory();
 
   useEffect(() => {
     if (user) loadTodaySessions();
@@ -263,6 +265,14 @@ export function AttendanceMarking() {
       Absent: "bg-destructive/20 text-destructive hover:bg-destructive/30",
       Excused: "bg-warning/20 text-warning hover:bg-warning/30"
     };
+    if (ivory) {
+      const ivoryColors = {
+        Present: "border border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf hover:bg-hec-leaf-tint",
+        Absent: "border border-hec-danger/30 bg-hec-danger-tint text-hec-danger hover:bg-hec-danger-tint",
+        Excused: "border border-hec-warn/30 bg-hec-warn-tint text-hec-warn hover:bg-hec-warn-tint"
+      };
+      return `${ivoryColors[status]} min-h-hec-target shrink-0 px-4`;
+    }
     return colors[status];
   };
 
@@ -287,7 +297,7 @@ export function AttendanceMarking() {
         </CardHeader>
         <CardContent className="space-y-4">
           {!canEdit && (
-            <div className="p-4 bg-muted rounded-lg text-sm text-muted-foreground">
+            <div className={ivory ? "p-4 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint text-hec-small text-hec-ink" : "p-4 bg-muted rounded-lg text-sm text-muted-foreground"}>
               {new Date() < new Date(new Date(`${selectedSession.date}T${selectedSession.end_time}`).getTime() + 5 * 60000)
                 ? "⚠️ Cannot mark attendance yet. Please wait until 5 minutes after the session ends (prevents invalid 'Held' status)."
                 : "Editing window closed (24 hours after session end)"}
@@ -295,14 +305,14 @@ export function AttendanceMarking() {
           )}
           
           {alreadyMarked && canEdit && (
-            <div className="p-4 bg-blue-100 dark:bg-blue-900 rounded-lg text-sm">
+            <div className={ivory ? "p-4 rounded-hec-md border border-hec-line bg-hec-sunken text-hec-small text-hec-ink" : "p-4 bg-blue-100 dark:bg-blue-900 rounded-lg text-sm"}>
               Attendance has been marked. You can still make changes within the 24-hour window.
             </div>
           )}
           
           {students.map(student => (
-            <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg">
-              <span className="font-medium">{student.full_name}</span>
+            <div key={student.id} className={ivory ? "flex items-center justify-between gap-3 p-4 border border-hec-line rounded-hec-md bg-hec-surface" : "flex items-center justify-between p-4 border rounded-lg"}>
+              <span className={ivory ? "min-w-0 whitespace-normal break-words hyphens-none text-balance font-medium text-hec-ink" : "font-medium"}>{student.full_name}</span>
               <Badge
                 className={`cursor-pointer ${getStatusBadge(attendance[student.id])}`}
                 onClick={() => canEdit && toggleAttendance(student.id)}
@@ -356,23 +366,23 @@ export function AttendanceMarking() {
       </CardHeader>
       <CardContent className="space-y-3">
         {sessions.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">No sessions scheduled for today</p>
+          <p className={ivory ? "text-hec-ink-soft text-center py-8" : "text-muted-foreground text-center py-8"}>No sessions scheduled for today</p>
         ) : (
           sessions.map(session => (
             <div
               key={session.id}
-              className="p-4 border rounded-lg hover:border-primary cursor-pointer transition-colors"
+              className={ivory ? "p-4 border border-hec-line rounded-hec-md bg-hec-surface hover:border-hec-line-strong hover:bg-hec-sunken/60 cursor-pointer transition-colors duration-hec-1 ease-hec" : "p-4 border rounded-lg hover:border-primary cursor-pointer transition-colors"}
               onClick={() => handleSessionSelect(session)}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{session.classes.name}</p>
-                  <p className="text-sm text-muted-foreground">
+              <div className={ivory ? "flex items-start justify-between gap-3" : "flex items-center justify-between"}>
+                <div className={ivory ? "min-w-0" : undefined}>
+                  <p className={ivory ? "whitespace-normal break-words font-medium text-hec-ink" : "font-medium"}>{session.classes.name}</p>
+                  <p className={ivory ? "text-hec-small text-hec-ink-soft tabular-nums" : "text-sm text-muted-foreground"}>
                     {format(new Date(`${session.date}T${session.start_time}`), "h:mm a")} - 
                     {format(new Date(`${session.date}T${session.end_time}`), "h:mm a")}
                   </p>
                 </div>
-                <Badge variant={session.status === 'Held' ? 'default' : 'secondary'}>
+                <Badge variant={session.status === 'Held' ? (ivory ? 'success' : 'default') : 'secondary'} className={ivory ? "shrink-0" : undefined}>
                   {session.status}
                 </Badge>
               </div>
