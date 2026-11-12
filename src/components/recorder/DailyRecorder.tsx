@@ -41,7 +41,7 @@ function micDetail(res: ProfileResolution | null, role: TrackRole, profile: Devi
   return { ok: true, detail: label };
 }
 
-export function DailyRecorder({ userId, onSetup }: { userId: string; onSetup: () => void }) {
+export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: string; onSetup: () => void; onActiveChange?: (active: boolean) => void }) {
   const { client, engine, now } = useRecorderDeps();
   const [tick, setTick] = useState(() => now());
   useEffect(() => { const iv = setInterval(() => setTick(now()), 1000); return () => clearInterval(iv); }, [now]);
@@ -89,6 +89,8 @@ export function DailyRecorder({ userId, onSetup }: { userId: string; onSetup: ()
   }, [capturing]);
 
   useEffect(() => () => { void rec.current?.dispose(); }, []);
+  const active = state === "armed" || capturing || SAVING.includes(state);
+  useEffect(() => { onActiveChange?.(active); }, [active]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const showError = useCallback((e: RecorderError) => {
     if (e.code === "offline") return; // the upload line says it
