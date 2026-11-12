@@ -723,27 +723,67 @@ Deno.serve(async (req) => {
        * figure on the teacher's own payroll page, which used to price these
        * lessons in the browser at the staff row's rate of today.
        */
-      lostIncome: LostIncome;
+      //
+      // OPTIONAL: absent when the cancelled lessons could not be read. This
+      // is a display figure, so failing to read it must never fail the
+      // calculation - close-payroll-month and the finance dashboard run
+      // through here, and a payroll close must not depend on it.
+      lostIncome?: LostIncome;
       staffType?: string;
     }> = [];
 
+    /**
+     * The month's cancelled lessons for Lost Income, or null when they
+     * cannot be read. Never throws: see `lostIncome` above. Every pay figure
+     * is computed from the held/projected reads, which still throw.
+     */
+    const readCancelled = async (
+      who: string,
+      narrow: (q: any) => any,
+    ): Promise<SessionRow[] | null> => {
+      try {
+        const { data, error } = await narrow(
+          supabase
+            .from("sessions")
+            .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)"),
+        )
+          .eq("status", CANCELLED_SESSION_STATUS)
+          .gte("date", startDate)
+          .lt("date", nextMonthStart);
+        if (error) {
+          console.error(`Lost income not read for ${who}:`, error.message ?? error);
+          return null;
+        }
+        return (data ?? []) as SessionRow[];
+      } catch (e) {
+        console.error(`Lost income not read for ${who}:`, e instanceof Error ? e.message : e);
+        return null;
+      }
+    };
+
     /** Prices the month's cancelled lessons through the same computeTotals. */
     const lostIncomeFor = (
-      cancelled: SessionRow[] | null | undefined,
+      cancelled: SessionRow[] | null,
       staff: StaffPayRate,
       rates: PayRateRecord[],
       headline: StaffPayRate,
-    ): LostIncome => {
-      const t = computeTotals(cancelled ?? [], staff, versionsByClass, rates);
-      return {
-        sessionsCount: t.perSession.length,
-        totalMinutes: t.totalMinutes,
-        totalAmount: t.totalAmount,
-        quantityLabel: describeQuantity(headline, {
-          sessions: t.perSession.length,
-          minutes: t.totalMinutes,
-        }),
-      };
+    ): LostIncome | undefined => {
+      if (cancelled === null) return undefined;
+      try {
+        const t = computeTotals(cancelled, staff, versionsByClass, rates);
+        return {
+          sessionsCount: t.perSession.length,
+          totalMinutes: t.totalMinutes,
+          totalAmount: t.totalAmount,
+          quantityLabel: describeQuantity(headline, {
+            sessions: t.perSession.length,
+            minutes: t.totalMinutes,
+          }),
+        };
+      } catch (e) {
+        console.error("Lost income not priced:", e instanceof Error ? e.message : e);
+        return undefined;
+      }
     };
 
     for (const t of teachers ?? []) {
@@ -771,15 +811,7 @@ Deno.serve(async (req) => {
 
       if (projErr) throw projErr;
 
-      const { data: cancelled, error: cancelErr } = await supabase
-        .from("sessions")
-        .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
-        .eq("teacher_id", t.id)
-        .eq("status", CANCELLED_SESSION_STATUS)
-        .gte("date", startDate)
-        .lt("date", nextMonthStart);
-
-      if (cancelErr) throw cancelErr;
+      const cancelled = await readCancelled(`teacher ${t.id}`, (q) => q.eq("teacher_id", t.id));
 
       const teacherRates = ratesByStaff.get(t.id) ?? [];
       const actual = computeTotals(held ?? [], t, versionsByClass, teacherRates);
@@ -899,13 +931,7 @@ Deno.serve(async (req) => {
           .gte("date", startDate)
           .lt("date", nextMonthStart);
 
-        const { data: cancelled } = await supabase
-          .from("sessions")
-          .select("id, date, start_time, end_time, status, class_id, classes(name, default_session_length_minutes, schedule_template)")
-          .in("id", sessionIds)
-          .eq("status", CANCELLED_SESSION_STATUS)
-          .gte("date", startDate)
-          .lt("date", nextMonthStart);
+        const cancelled = await readCancelled(`assistant ${ta.id}`, (q) => q.in("id", sessionIds));
 
         const taRates = ratesByStaff.get(ta.id) ?? [];
         const actual = computeTotals(held ?? [], ta, versionsByClass, taRates);

@@ -128,6 +128,9 @@ function seed() {
 // ------------------------------------------------ the Supabase stand-in
 let db = seed();
 let log = [];
+// Make the read of cancelled lessons (Lost Income) fail: null, "error"
+// (PostgREST answers with an error) or "throw" (the request itself throws).
+let failCancelled = null;
 const clone = (v) => JSON.parse(JSON.stringify(v));
 function fakeClient(key) {
   const who = key === SERVICE_KEY ? "service" : "other";
@@ -144,9 +147,13 @@ function fakeClient(key) {
       return true;
     });
     const exec = () => {
-      log.push(clone({ client: who, table, op: st.op, filters: st.filters, single: st.single }));
+      log.push(clone({ client: who, table, op: st.op, filters: st.filters, single: st.single, payload: st.op === "select" ? undefined : st.payload }));
+      if (failCancelled && table === "sessions" && st.op === "select" && st.filters.some(([op, k, v]) => op === "eq" && k === "status" && v === "Canceled")) {
+        if (failCancelled === "throw") throw new Error("connection reset while reading cancelled lessons");
+        return { data: null, error: { code: "08006", message: "connection reset" } };
+      }
       if (st.op === "upsert" || st.op === "insert" || st.op === "update" || st.op === "delete") {
-        if (st.op === "upsert") db[table].push(clone(st.payload));
+        if (st.op === "upsert") (db[table] ??= []).push(clone(st.payload));
         return { data: null, error: null };
       }
       let rows = (db[table] ?? []).filter(match).map(clone);
@@ -182,6 +189,18 @@ function fakeClient(key) {
   return {
     from,
     rpc: async (name) => { log.push({ client: who, rpc: name }); return { data: null, error: { message: `unexpected rpc ${name}` } }; },
+    // close-payroll-month asks calculate-payroll over the service role.
+    functions: {
+      invoke: async (name, opts = {}) => {
+        log.push({ client: who, invoke: name });
+        if (name !== "calculate-payroll" || !globalThis.__t5PayrollFn) return { data: null, error: { message: `unexpected invoke ${name}` } };
+        const res = await globalThis.__t5PayrollFn(new Request("https://example.supabase.co/functions/v1/calculate-payroll", {
+          method: "POST", headers: { "content-type": "application/json", ...(opts.headers ?? {}) }, body: JSON.stringify(opts.body ?? {}),
+        }));
+        const data = await res.json();
+        return res.ok ? { data, error: null } : { data: null, error: { message: data?.error ?? `status ${res.status}` } };
+      },
+    },
     auth: {
       getUser: async (token) => {
         const uid = Object.values(U).find((u) => tokenOf(u) === token);
@@ -374,6 +393,51 @@ await section("the new fields", async () => {
   eq("  and their lost income is reported (none cancelled)", ta.lostIncome.totalAmount, 0);
 });
 
+// ======================================================= Lost Income fails
+// Lost Income is a display figure. Its read failing must never fail the
+// calculation: close-payroll-month, the finance dashboard and every pay
+// screen run through this function.
+globalThis.__t5PayrollFn = fn;
+const CLOSE_DIR = resolve(repo, "supabase", "functions", "close-payroll-month");
+const closeFn = await load(readFileSync(resolve(CLOSE_DIR, "index.ts"), "utf8"), "close", CLOSE_DIR);
+const dropLost = (v) => JSON.parse(JSON.stringify(v), (k, x) => (k === "lostIncome" ? undefined : x));
+const closeWrites = (r) => r.log.filter((e) => e.op === "upsert" && (e.table === "payroll_lines" || e.table === "expenditures")).map((e) => [e.table, e.payload]);
+
+await section("the cancelled-lessons read fails", async () => {
+  failCancelled = null;
+  const cases = [
+    ["admin, October", tokenOf(U.admin), { month: "2026-10" }],
+    ["admin, September (closed)", tokenOf(U.admin), { month: "2026-09" }],
+    ["teacher A, October", tokenOf(U.teacherA), { month: "2026-10" }],
+    ["service role, October", SERVICE_KEY, { month: "2026-10" }],
+  ];
+  const normal = {};
+  for (const [label, token, body] of cases) normal[label] = await call(fn, token, body);
+  failCancelled = null;
+  const normalClose = await call(closeFn, tokenOf(U.admin), { month: "2026-10", action: "close" });
+  ok("close-payroll-month (normal run) closes October", normalClose.status === 200 && normalClose.json?.status === "locked", normalClose.json);
+  for (const mode of ["error", "throw"]) {
+    for (const [label, token, body] of cases) {
+      failCancelled = mode;
+      const r = await call(fn, token, body);
+      failCancelled = null;
+      ok(`${mode}: ${label} -> 200`, r.status === 200, { status: r.status, json: r.json });
+      ok(`${mode}: ${label}: every pay figure identical to the run where it was read`,
+        JSON.stringify(r.json) === JSON.stringify(dropLost(normal[label].json)), { got: r.json, want: dropLost(normal[label].json) });
+      ok(`${mode}: ${label}: lostIncome absent on every row (the screen shows "Figure unavailable")`,
+        (r.json?.payrollData ?? []).length > 0 && r.json.payrollData.every((x) => !("lostIncome" in x)));
+      eq(`${mode}: ${label}: same writes`, writes(r).map((e) => [e.table, e.op, e.payload]), writes(normal[label]).map((e) => [e.table, e.op, e.payload]));
+    }
+    failCancelled = mode;
+    const close = await call(closeFn, tokenOf(U.admin), { month: "2026-10", action: "close" });
+    failCancelled = null;
+    ok(`${mode}: close-payroll-month still closes October`, close.status === 200 && close.json?.status === "locked", close.json);
+    eq(`${mode}: close-payroll-month books the same lines and costs`, closeWrites(close), closeWrites(normalClose));
+    eq(`${mode}: close-payroll-month same total`, close.json?.totalAmountVnd, normalClose.json?.totalAmountVnd);
+  }
+  ok("the normal close booked lines at all (the comparison is not empty)", closeWrites(normalClose).length >= 2, closeWrites(normalClose));
+});
+
 // ===================================================================== 3
 // The BASE browser code, reproduced over the same fixture. Line numbers are
 // at BASE. Real payRate.ts / sessionDuration.ts, as those screens imported.
@@ -430,6 +494,15 @@ const addRow = (screen, what, before, after, shouldDiffer, why) => {
   const differ = JSON.stringify(before) !== JSON.stringify(after);
   ok(`${screen} / ${what}: ${shouldDiffer ? "old browser figure disagrees with the function" : "agrees"}`, differ === shouldDiffer, { before, after });
 };
+
+await section("teacher page when the cancelled-lessons read failed", async () => {
+  failCancelled = "error";
+  const r = await call(fn, tokenOf(U.teacherA), { month: "2026-10" });
+  failCancelled = null;
+  const v = V.teacherPayrollView(r.json, T_A);
+  eq("Lost Income: figure unavailable", v.lostIncome, null);
+  eq("Amount Earned unaffected", v.earned, 1200000);
+});
 
 await section("before / after on the fixture", async () => {
   const seedRows = seed();
