@@ -1,6 +1,6 @@
 # A5 security audit - findings
 
-**Where I am / next step:** 13 Nov 2026. Section 1 (edge functions) written. Section 2 (RLS, definer functions, storage) in progress - first results already recorded as F-01, F-05, F-06. Next: finish section 2, then 3-8, then top five and owner summary.
+**Where I am / next step:** 13 Nov 2026. Sections 1, 2, 3 written (F-01 to F-20). Next: section 4 (bundle and repo), 5 (auth and sessions), 6 (abuse and cost), 7 (advisors), 8 (dependencies), then top five and owner summary.
 
 Report only. No product code changed, nothing pushed or deployed. Live catalog read read-only (policies, grants, function bodies, counts). No child, family, staff or payment row was selected. No secret was read or printed.
 
