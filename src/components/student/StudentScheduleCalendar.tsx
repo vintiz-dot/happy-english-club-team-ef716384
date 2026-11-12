@@ -261,7 +261,7 @@ export function StudentScheduleCalendar({ studentId }: StudentScheduleCalendarPr
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1.5">
+      <div className="grid grid-cols-7 gap-0">
         {weekDayHeaders.map((d) => (
           <div key={d} className="text-hec-caption font-medium text-hec-ink-soft text-center py-1.5">
             {d}
@@ -280,7 +280,6 @@ export function StudentScheduleCalendar({ studentId }: StudentScheduleCalendarPr
             <motion.div
               className={cn(
                 "aspect-square rounded-hec-md flex flex-col items-center justify-center text-hec-caption transition-colors duration-hec-1 ease-hec relative border border-transparent min-h-hec-target",
-                !isCurrentMonth && "opacity-20",
                 isCurrentMonth && getDayBg(day),
                 isToday && "ring-2 ring-hec-brass ring-offset-1 ring-offset-hec-paper",
                 hasContent && isCurrentMonth && "cursor-pointer hover:shadow-hec-2"
@@ -293,8 +292,8 @@ export function StudentScheduleCalendar({ studentId }: StudentScheduleCalendarPr
                 </span>
               )}
               <span className={cn(
-                "font-semibold text-hec-small tabular-nums text-hec-ink",
-                !isCurrentMonth && "text-hec-ink-faint"
+                "font-semibold text-hec-small tabular-nums",
+                isCurrentMonth ? "text-hec-ink" : "text-hec-ink-faint"
               )}>
                 {djDay.date()}
               </span>
@@ -309,13 +308,13 @@ export function StudentScheduleCalendar({ studentId }: StudentScheduleCalendarPr
           );
 
           if (!hasContent || !isCurrentMonth) {
-            return <div key={day}>{cellContent}</div>;
+            return <div key={day} className="p-0.5">{cellContent}</div>;
           }
 
           return (
             <Popover key={day}>
               <PopoverTrigger asChild>
-                <button className="w-full rounded-hec-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">{cellContent}</button>
+                <button className="w-full rounded-hec-md p-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">{cellContent}</button>
               </PopoverTrigger>
               <PopoverContent className="w-72 p-4 text-hec-small space-y-3 pointer-events-auto">
                 <p className="font-display text-hec-h3 font-semibold text-hec-ink">{djDay.format("ddd, MMM D")} {isToday ? "⭐" : ""}</p>
