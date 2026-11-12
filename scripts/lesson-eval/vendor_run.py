@@ -290,7 +290,7 @@ def upload(url, key, token, obj, local: Path) -> None:
                     {**auth_headers(key, token), "Content-Type": MIME[ext], "x-upsert": "false"}, local.read_bytes())
     if st in (200, 201):
         return
-    if st in (400, 409) and b"exists" in body.lower() or b"Duplicate" in body:
+    if st in (400, 409) and (b"exists" in body.lower() or b"duplicate" in body.lower()):
         return  # already uploaded by an earlier, interrupted run
     sys.exit(f"upload of {obj} failed: HTTP {st}")
 
