@@ -32,11 +32,15 @@ def ev(e):
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--json", type=Path, default=WORK / "b2" / "results.json")
+    ap.add_argument("--json", type=Path, action="append",
+                    help="results JSON(s) from b2_eval.py (repeatable; default work\\b2\\results*.json)")
     ap.add_argument("--diag-model", default="ecapa")
     ap.add_argument("--diag-config", default="vad-all-mean-cos")
+    ap.add_argument("--sections", default="all")
     a = ap.parse_args()
-    R = json.loads(a.json.read_text(encoding="utf-8"))
+    R = {}
+    for jp in a.json or sorted((WORK / "b2").glob("results*.json")):
+        R.update(json.loads(jp.read_text(encoding="utf-8")))
     out = []
     w = out.append
 

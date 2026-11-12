@@ -7,7 +7,7 @@ Aggregates and codes (S01..., L1/L2/L3) only. No transcript text, no source file
 
 ## Where I am / next step
 
-**2026-11-12.** Done: setup, models fetched, scorer additions + tests, unit cuts (b2_units.py). Running: embeddings for 6 models (b2_embed.py), diarization tune on mixes. Next: b2_eval.py on each model as it finishes, then write sections 2-5; then lessons (section 6).
+**2026-11-12, resumed after a session restart.** Done: setup, models fetched, scorer additions + tests, unit cuts (b2_units.py), wes_campp embeddings. Lost in the restart and re-started detached: ecapa / 3ds_campp / titanet_l embeddings, wes_campp eval, diarization tune. 3ds_eres2v2 dropped: at RTF ~1.4 under this load it would take ~4 h (it had done 1280/4165 units in 51 min). Next: eval each model as it lands, write sections 3-5; then lessons (section 6).
 
 ## 1. Setup, models, what installed
 
