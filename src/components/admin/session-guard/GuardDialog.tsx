@@ -120,7 +120,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
   return (
     <Dialog open={open} onOpenChange={(o) => !o && close()}>
       <DialogContent
-        className="flex max-h-[92dvh] w-[calc(100vw-1rem)] max-w-xl flex-col gap-0 overflow-hidden p-0 sm:max-h-[90dvh]"
+        className="flex max-h-[92dvh] w-[calc(100vw-1rem)] max-w-xl flex-col gap-0 overflow-hidden !bg-background p-0 sm:max-h-[90dvh]"
         onOpenAutoFocus={(e) => {
           // Keep lesson is the default: it, not the first form field, takes focus.
           e.preventDefault();
