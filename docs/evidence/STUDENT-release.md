@@ -2,7 +2,7 @@
 
 Branch `release/student-1`, cut from `origin/main` 93ca410 (the tuition release, live). Source of the work: `claude/hec-conductor-setup-efbaa5` at 0f64f40 (not merged; files copied). Nothing pushed, nothing deployed, no database access.
 
-**Where I am / next step:** part 1 written, release tree assembled, type-check green. Running the suites and the build (results in section 4). Next: bundle sizes against origin/main, leak check, hand back.
+**Where I am / next step:** DONE. Gate PASS WITH CHANGES; `release/student-1` assembled; every suite and the build green; leak check clean. Next step is the conductor's: read this, push `release/student-1` to main (no migration, no function to deploy), then the phone check in the release note.
 
 ## RELEASE NOTE FOR THE OWNER
 
@@ -114,4 +114,35 @@ No shipped file imports recorder code: `grep -rn "ecorder" src` on the release t
 
 ## 3. Leak check
 
-(filled in below after the suites)
+`git diff --stat origin/main..release/student-1`: **140 files changed** (125 ship + `App.tsx` + 13 docs / checks + this file), about 7 000 insertions and 4 100 deletions.
+
+`git diff --name-only origin/main..release/student-1` filtered for `recorder|Recorder|lesson-eval|^supabase/|docs/pc2|audit-eval|.gitignore|CommandPalette|src/components/admin/|src/components/teacher/|src/components/schedule/|TeacherPayroll|sessionStatus|calendarStatus` returns one path: `src/components/video-homework/VideoRecorder.tsx`, the child's video-homework recorder (R02; the file is on origin/main already and is in the ship set). **No excluded path. Nothing under `supabase/`.**
+
+Line endings: every changed blob is LF except `vocabulary/ImageCarousel.tsx` and `vocabulary/VisemePlayer.tsx`, which are CRLF on origin/main too and are kept so (their diffs are 67 and 38 lines, not whole-file).
+
+## 4. Gates on the release tree
+
+| Gate | Command | Result |
+|---|---|---|
+| Migration and library suites | `node scripts/pgtest/run.mjs` | **2684 assertions across 36 suites, 0 suites failed** (the suite list is origin/main's; includes invoice status 188, app typecheck 3, edge functions typecheck 5, shared-module mirrors 13) |
+| App type-check | `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | exit 0 (run again on the final tree, after finding 4) |
+| Bun suites | `npx --yes bun test scripts/*.test.ts` | **132 pass, 0 fail**, 486 expects, 10 files |
+| Scope registry | `node scripts/pgtest/ivory-scope.test.mjs` | 45 passed, 0 failed |
+| Tokens | `node scripts/design-tokens-check.mjs` | PASS (70 pairs x 2 themes) |
+| Build | `node node_modules/vite/bin/vite.js build` | exit 0, built in 1 m 25 s |
+
+Bundle sizes in kB, raw / gzip. origin/main 93ca410 was built the same way in the same worktree for the comparison.
+
+| File | origin/main | release/student-1 | Change |
+|---|---|---|---|
+| entry `index.js` | 533.9 / 163.6 | 542.3 / 166.2 | +8.4 / +2.6 |
+| `index.css` | 277.5 / 42.1 | 258.5 / 41.2 | -19.0 / -0.9 (old palette classes gone from the student files) |
+| `Admin.js` | 549.1 / 142.7 | 549.8 / 142.9 | +0.7 / +0.2 |
+| `jspdf`, speech SDK, charts, `html2canvas` | 381.2, 373.3, 341.0, 197.6 raw | same | 0 |
+| `Layout.js` | 167.9 / 48.4 | 179.2 / 50.6 | +11.3 / +2.2 (the ivory shell and the account menu) |
+| all JS (228 files -> 226) | 5150.6 / 1546.7 | 5198.6 / 1554.8 | +48.0 / +8.1 |
+| all CSS | 301.4 / 45.7 | 282.3 / 44.8 | -19.1 / -0.9 |
+
+A first visit downloads about 2 kB more (gzip) than today.
+
+Housekeeping: the node_modules junction was removed with `cmd //c rmdir node_modules` and nothing else. No process of this run is left (one `scripts/pgtest/run.mjs` seen running at the end belongs to another agent's worktree, `agent-a4803c8e10a251526`, and was left alone). `dist/` in the worktree is ignored build output. One slip to record: while writing this section a shell quoting mistake started a second `pgtest` run by accident; it was stopped at once, changed no file (`git status` clean afterwards), and the figures above are from the first, complete run.
