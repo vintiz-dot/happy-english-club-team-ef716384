@@ -685,7 +685,7 @@ console.log("=== uploader: refusals end a track, never leave a hole ===");
 {
   clock = Date.parse("2026-11-12T09:55:00.000Z");
   const w = world();
-  w.server.settings.min_bytes_per_sec_flac = 90000;   // an admin's floor above what FLAC makes
+  w.server.settings.min_bytes_per_sec_flac = 99000;   // a floor above even raw 16-bit PCM (96 000 B/s): nothing can meet it
   const store = new R.MemoryStore(), src = new FakeSource();
   const { r, errors } = recorder(w, store, src);
   await r.prepare();

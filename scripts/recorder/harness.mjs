@@ -69,14 +69,20 @@ window.compareTrack = async (track, objects) => {
     parts.push(ab.getChannelData(0));
   }
   const decoded = new Int16Array(parts.reduce((n, p) => n + p.length, 0)); let o = 0;
-  for (const p of parts) { const i16 = new Int16Array(p.length); R.floatToInt16(p, i16); decoded.set(i16, o); o += p.length; }
+  // Chrome's decoder turns s16 into float as v / 32768 for negatives and v / 32767 for
+  // positives (measured: every mismatch with x*32768 was +1 on a positive sample), so invert that.
+  for (const p of parts) { for (let i = 0; i < p.length; i++) decoded[o + i] = p[i] < 0 ? Math.round(p[i] * 32768) : Math.round(p[i] * 32767); o += p.length; }
   // the source from t0
   const src = new Int16Array(decoded.length); let k = 0;
   for (const [frame, x] of window.tapped[track]) { const i16 = new Int16Array(x.length); R.floatToInt16(x, i16); for (let i = 0; i < x.length && k < src.length; i++) if (frame + i >= t0) src[k++] = i16[i]; }
-  let diff = 0, first = -1;
-  for (let i = 0; i < Math.min(k, decoded.length); i++) if (src[i] !== decoded[i]) { diff++; if (first < 0) first = i; }
+  let diff = 0, first = -1, maxAbs = 0; const examples = [];
+  for (let i = 0; i < Math.min(k, decoded.length); i++) if (src[i] !== decoded[i]) {
+    diff++; if (first < 0) first = i; maxAbs = Math.max(maxAbs, Math.abs(src[i] - decoded[i]));
+    if (examples.length < 8) examples.push([i, src[i], decoded[i]]);
+  }
+  window.lastCompare = { src, decoded };
   let energy = 0; for (let i = 0; i < decoded.length; i += 7) energy += Math.abs(decoded[i]);
-  return { decoded: decoded.length, compared: Math.min(k, decoded.length), differing: diff, firstDiff: first, meanAbs: energy / (decoded.length / 7), chunks: parts.map((p) => p.length) };
+  return { decoded: decoded.length, compared: Math.min(k, decoded.length), differing: diff, firstDiff: first, maxAbs, examples, meanAbs: energy / (decoded.length / 7), chunks: parts.map((p) => p.length) };
 };
 window.harnessReady = true;
 </script>`;
