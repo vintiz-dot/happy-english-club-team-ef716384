@@ -692,18 +692,26 @@ await section('assess output: level_now, floor, fingerprint, impact, token v3', 
   await asAdmin(`UPDATE invoices SET recorded_payment = 100000 WHERE student_id=$1`, [kids[0]]);
   const p3 = await preview(s.sid);
   ok('impact.paid_vnd counts the highest payment seen (the floor), not the lowered one', Number(p3.impact.paid_vnd) === 500000, p3.impact);
-  // token v3: a removal between preview and confirm stales it, even when the level does not move.
-  const t = await mk({ when: PAST, status: 'Held' });
-  for (let i = 0; i < 2; i++) await att(t.sid, 'Present', t.teacher);
-  await point(t);
-  const id2 = await point(t);
-  const pt = await preview(t.sid);
-  await asTeacher(t, `DELETE FROM point_transactions WHERE id=$1`, [id2]);
-  ok('fixture: the level is unchanged by the removal (still STRONG)', (await d1(t.sid)).level === 'STRONG');
-  const r = await tryIt(() => checked(t.sid, { token: pt.token, confirm: true }));
+  // token v3: a floor cause added between preview and confirm stales the
+  // token even when nothing D1 reads (its hash) and the floor's level move:
+  // lesson A already has a STRONG floor; a point linked to lesson B of the
+  // same class and day is deleted, which the keep also records against A.
+  const A = await mk({ when: PAST, status: 'Held' });
+  const ka = await att(A.sid, 'Present', A.teacher);
+  await att(A.sid, 'Present', A.teacher);
+  await asAdmin(`UPDATE attendance SET status='Absent' WHERE student_id=$1`, [ka]);
+  const B = await mk({ when: PAST, cid: A.cid, start: '08:00', end: '09:00' });
+  const idB = await point(B);
+  const pt = await preview(A.sid);
+  const h0 = (await d1(A.sid)).snapshot_hash;
+  await asTeacher(A, `DELETE FROM point_transactions WHERE id=$1`, [idB]);
+  const fa = await floorOf(A.sid);
+  ok('fixture: the D1 hash of A and its floor level unchanged; the floor of A gained a cause', (await d1(A.sid)).snapshot_hash === h0 &&
+     fa.level === 'STRONG' && fa.causes.length === 2, fa.causes);
+  const r = await tryIt(() => checked(A.sid, { token: pt.token, confirm: true }));
   ok('token v3: a floor cause added between preview and confirm -> HC011', r.code === 'HC011', r);
-  const pt2 = await preview(t.sid);
-  ok('  a new preview works', !!(await must('token', () => checked(t.sid, { token: pt2.token, confirm: true, corr: pt2.tier === 3 ? CORR : null }))).override_id);
+  const pt2 = await preview(A.sid);
+  ok('  a new preview works', !!(await must('token', () => checked(A.sid, { token: pt2.token, confirm: true, corr: pt2.tier === 3 ? CORR : null }))).override_id);
 });
 
 await section('G-10 residue: marks re-pointed away before D4', async () => {
