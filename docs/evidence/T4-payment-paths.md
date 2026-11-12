@@ -90,4 +90,39 @@ Both calculators fail on a `referral_bonuses` or `discount_assignments` read err
 
 ## Tests
 
-(next)
+All in `scripts/pgtest/invoice-status.test.mjs` (real handlers, `invoices` in PostgreSQL with the real carry, audit, freeze and CHECK migrations), sections "T4 fault 1/2/3-4/5/6/7" and the check-SQL case; the SQL label in `ai-actions.test.mjs`. Against the functions at 6465f08: **195 passed, 44 failed** - every T4 case listed in `docs/evidence/T4-before.txt` failed except invariants ("the other payment's ledger is untouched", "an old write-off does not reprice", "no lessons stays issued", bulk already failing on discount_assignments).
+
+Round-2 assertions turned round on purpose (each says "T4" in its name): credit-covered month issued -> paid; zero-charge month with money partial -> paid; settle-bill in full "bill unchanged, issued" -> charge 0, paid; settle-bill refusing a family with history -> accepted; delete-payment on a bill holding less than the ledger says -> refused; family-payment of money nobody owes -> refused instead of 200 with the money dropped; the old dialog-regex checks replaced by the mirror checks; the old SQL CASE grid now compared only where something is owed. Golden file untouched (`git diff 6465f08 -- scripts/pgtest/fixtures` empty) and passing.
+
+## Results
+
+| command | result |
+|---|---|
+| `node scripts/pgtest/run.mjs` | **3557 assertions across 41 suites, 0 failed** (invoice status 247, AI admin actions 76, mirrors 16, edge functions typecheck 5, app typecheck 3, family payment month 6) |
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | exit 0 |
+| `npx bun test` over the 11 `scripts/*.test.ts` | 155 pass, 0 fail |
+
+## Faults - outcome
+
+| # | outcome |
+|---|---|
+| 1 | fixed: both legs reversed; payment taken off `recorded_payment`; refusals for modified / unledgered / already-reversed / bill-holds-less |
+| 2 | fixed: balance = refreshed bill's carry-out; discount write-off is a discount line in both calculators (from 2026-11-12); capped at the month's charge; frozen refused. Contributions still ledger-only (owner) |
+| 3 | fixed: dialogs + RecordedPaymentManager write `labelForPayment` / `labelAfterPayment` from the mirror; credit kept |
+| 4 | fixed: Repair uses the rule and skips credit; Status Manager offers credit / follow only |
+| 5 | rule changed (nothing left to pay = paid); every reader moved together incl. ai_action_apply/undo via 20261113090000 |
+| 6 | fixed (owed with carry); plus remainder/no-bill/consent refused before writes |
+| 7 | fixed in both calculators (single also checked discount_assignments) |
+
+## To deploy (not done here)
+
+Migration `20261113090000_invoice_paid_label.sql` (paste; idempotent; stops with an error and changes nothing if the live functions hold neither expression). Functions, each with `_lib/invoice-status.ts`: calculate-tuition, calculate-tuition-bulk, smart-family-payment, family-payment, settle-bill, delete-payment (confirm-tuition imports the lib too - redeploy it so all copies match). One publish for the browser (dialogs, RecordedPaymentManager, PaymentIntegrityRepair, InvoiceStatusManager, `src/lib/invoiceStatus.ts`). Functions first: settle-bill's write-off counts only once BOTH calculators are new.
+
+## Owner decisions
+
+1. The 4 settlements made before 2026-11-12 (2 discount, 2 contribution) stay ledger-only; count them in on their bills? (CHECK query 2b.)
+2. Voluntary contribution: should it consume the bill's credit (a charge line)? Today it is revenue in the ledger while the family keeps the credit.
+3. Fault 5 relabels on the next write: CHECK query 4 counts them (review 2 saw 11 + 4).
+4. Not fixed: payment functions still read-then-write `recorded_payment` (R2-m6); delete-payment has the same window.
+
+**Where I am / next step:** complete.
