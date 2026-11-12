@@ -110,17 +110,18 @@ export const BulkEnrollmentDateSetter = () => {
       <CardContent className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label>Target Date</Label>
+            <Label htmlFor="bulk-enrol-target-date">Target Date</Label>
             <Input
+              id="bulk-enrol-target-date"
               type="date"
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <Label>Filter by Class</Label>
+            <Label htmlFor="bulk-enrol-class">Filter by Class</Label>
             <Select value={filterClass} onValueChange={setFilterClass}>
-              <SelectTrigger>
+              <SelectTrigger id="bulk-enrol-class">
                 <SelectValue placeholder="All classes" />
               </SelectTrigger>
               <SelectContent>
@@ -152,7 +153,7 @@ export const BulkEnrollmentDateSetter = () => {
                 </div>
               </div>
               {previewData && previewData.length > 0 && (
-                <div className={iv("mt-3 max-h-48 space-y-2 overflow-y-auto", "max-h-48 overflow-y-auto space-y-1 mt-3")}>
+                <div tabIndex={0} role="region" aria-label="Enrollments to update" className={iv("mt-3 max-h-48 space-y-2 overflow-y-auto rounded-hec-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring", "max-h-48 overflow-y-auto space-y-1 mt-3")}>
                   {previewData.slice(0, 10).map((e) => (
                     <div key={e.id} className={iv("flex items-start justify-between gap-4 text-hec-small", "text-sm flex justify-between")}>
                       <span className={iv("min-w-0 whitespace-normal break-words hyphens-none text-hec-ink", "")}>{e.students?.full_name} - {e.classes?.name}</span>
