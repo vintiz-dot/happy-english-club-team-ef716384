@@ -13,19 +13,23 @@ import {
  * calculate-tuition / calculate-payroll returned; nothing is calculated
  * here. The totals row counts bills; it never adds money up.
  */
-export function ConsequenceTable({ preview, consequences }: { preview: GuardPreview; consequences: Consequences | null }) {
-  const rows = consequenceRows(consequences);
-  const ids = [...new Set(rows.map((r) => r.studentId))];
-  const { data: names } = useQuery({
-    queryKey: ["session-guard-student-names", ids.join(",")],
-    enabled: ids.length > 0,
+export function useStudentNames(ids: string[]) {
+  const key = [...new Set(ids)].sort();
+  return useQuery({
+    queryKey: ["session-guard-student-names", key.join(",")],
+    enabled: key.length > 0,
     staleTime: 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("students").select("id, full_name").in("id", ids);
+      const { data, error } = await supabase.from("students").select("id, full_name").in("id", key);
       if (error) throw error;
-      return Object.fromEntries((data ?? []).map((s: any) => [s.id, s.full_name as string]));
+      return Object.fromEntries((data ?? []).map((s: any) => [s.id, s.full_name as string])) as Record<string, string>;
     },
-  });
+  }).data;
+}
+
+export function ConsequenceTable({ preview, consequences }: { preview: GuardPreview; consequences: Consequences | null }) {
+  const rows = consequenceRows(consequences);
+  const names = useStudentNames(rows.map((r) => r.studentId));
   const totals = totalsRow(rows);
   const pay = payrollLine(consequences);
   const kids = preview.affected?.length ?? 0;
