@@ -1,0 +1,4390 @@
+{
+ "label": "after",
+ "runs": {
+  "books-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-books-375-light.png",
+   "kb": 32
+  },
+  "books-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-books-375-dark.png",
+   "kb": 32
+  },
+  "books-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-books-1280-light.png",
+   "kb": 36
+  },
+  "books-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-books-1280-dark.png",
+   "kb": 36
+  },
+  "books-settings-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       "tr:nth-child(1) > .text-right > .justify-end.gap-2.flex > .hover\\:bg-hec-sunken.",
+       "tr:nth-child(1) > .text-right > .justify-end.gap-2.flex > .text-hec-danger.hover",
+       "tr:nth-child(2) > .text-right > .justify-end.gap-2.flex > .hover\\:bg-hec-sunken."
+      ]
+     }
+    ]
+   },
+   "shot": "after-books-settings-375-light.png",
+   "kb": 33
+  },
+  "books-settings-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       "tr:nth-child(1) > .text-right > .justify-end.gap-2.flex > .hover\\:bg-hec-sunken.",
+       "tr:nth-child(1) > .text-right > .justify-end.gap-2.flex > .text-hec-danger.hover",
+       "tr:nth-child(2) > .text-right > .justify-end.gap-2.flex > .hover\\:bg-hec-sunken."
+      ]
+     }
+    ]
+   },
+   "shot": "after-books-settings-375-dark.png",
+   "kb": 33
+  },
+  "books-settings-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       "tr:nth-child(1) > .text-right > .justify-end.gap-2.flex > .hover\\:bg-hec-sunken.",
+       "tr:nth-child(1) > .text-right > .justify-end.gap-2.flex > .text-hec-danger.hover",
+       "tr:nth-child(2) > .text-right > .justify-end.gap-2.flex > .hover\\:bg-hec-sunken."
+      ]
+     }
+    ]
+   },
+   "shot": "after-books-settings-1280-light.png",
+   "kb": 44
+  },
+  "books-settings-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       "tr:nth-child(1) > .text-right > .justify-end.gap-2.flex > .hover\\:bg-hec-sunken.",
+       "tr:nth-child(1) > .text-right > .justify-end.gap-2.flex > .text-hec-danger.hover",
+       "tr:nth-child(2) > .text-right > .justify-end.gap-2.flex > .hover\\:bg-hec-sunken."
+      ]
+     }
+    ]
+   },
+   "shot": "after-books-settings-1280-dark.png",
+   "kb": 44
+  },
+  "books-dialog-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-books-dialog-375-light.png",
+   "kb": 44
+  },
+  "books-dialog-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-books-dialog-375-dark.png",
+   "kb": 41
+  },
+  "books-dialog-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-books-dialog-1280-light.png",
+   "kb": 77
+  },
+  "books-dialog-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-books-dialog-1280-dark.png",
+   "kb": 73
+  },
+  "ls-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ls-375-light.png",
+   "kb": 31
+  },
+  "ls-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-ls-375-dark.png",
+   "kb": 31
+  },
+  "ls-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 3,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-ls-1280-light.png",
+   "kb": 66
+  },
+  "ls-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 3,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-ls-1280-dark.png",
+   "kb": 66
+  },
+  "ls-edit-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"The\" 35x44",
+     "main:BUTTON \"on\" 28x44",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4
+    },
+    "rules": []
+   },
+   "shot": "after-ls-edit-375-light.png",
+   "kb": 82
+  },
+  "ls-edit-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"The\" 35x44",
+     "main:BUTTON \"on\" 28x44",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4
+    },
+    "rules": []
+   },
+   "shot": "after-ls-edit-375-dark.png",
+   "kb": 83
+  },
+  "ls-edit-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"The\" 35x44",
+     "main:BUTTON \"on\" 28x44",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "after-ls-edit-1280-light.png",
+   "kb": 127
+  },
+  "ls-edit-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"The\" 35x44",
+     "main:BUTTON \"on\" 28x44",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "after-ls-edit-1280-dark.png",
+   "kb": 128
+  },
+  "ls-picker-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-ls-picker-375-light.png",
+   "kb": 45
+  },
+  "ls-picker-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-ls-picker-375-dark.png",
+   "kb": 43
+  },
+  "ls-picker-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-ls-picker-1280-light.png",
+   "kb": 98
+  },
+  "ls-picker-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-ls-picker-1280-dark.png",
+   "kb": 95
+  },
+  "ls-new-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4
+    },
+    "rules": []
+   },
+   "shot": "after-ls-new-375-light.png",
+   "kb": 62
+  },
+  "ls-new-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4
+    },
+    "rules": []
+   },
+   "shot": "after-ls-new-375-dark.png",
+   "kb": 63
+  },
+  "ls-new-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-ls-new-1280-light.png",
+   "kb": 108
+  },
+  "ls-new-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-ls-new-1280-dark.png",
+   "kb": 109
+  },
+  "lb-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2026",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 2,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .justify-end.studio-focus.group > .px-2.p",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .justify-end.studio-focus.group > .px-2.p",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .justify-end.studio-focus.group > .px-2.p"
+      ]
+     },
+     {
+      "id": "image-alt",
+      "impact": "critical",
+      "n": 7,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .justify-end.studio-focus.group > .px-2.p",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .justify-end.studio-focus.group > .px-2.p",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .justify-end.studio-focus.group > .px-2.p"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-375-light.png",
+   "kb": 70
+  },
+  "lb-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2026",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 2,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .justify-end.studio-focus.group > .px-2.p",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .justify-end.studio-focus.group > .px-2.p",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .justify-end.studio-focus.group > .px-2.p"
+      ]
+     },
+     {
+      "id": "image-alt",
+      "impact": "critical",
+      "n": 7,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .justify-end.studio-focus.group > .px-2.p",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .justify-end.studio-focus.group > .px-2.p",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .justify-end.studio-focus.group > .px-2.p"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-375-dark.png",
+   "kb": 69
+  },
+  "lb-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "14",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "4",
+     "4",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 4,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       "button[aria-label=\"Show Book points\"]",
+       "button[aria-label=\"Show Bolt points\"]",
+       "button[aria-label=\"Show Flame points\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-1280-light.png",
+   "kb": 186
+  },
+  "lb-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "14",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "4",
+     "4",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 4,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       "button[aria-label=\"Show Book points\"]",
+       "button[aria-label=\"Show Bolt points\"]",
+       "button[aria-label=\"Show Flame points\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-1280-dark.png",
+   "kb": 194
+  },
+  "lb-admin-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:teaching_assistants:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-lb-admin-375-light.png",
+   "kb": 22
+  },
+  "lb-admin-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:teaching_assistants:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-lb-admin-375-dark.png",
+   "kb": 22
+  },
+  "lb-admin-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:teaching_assistants:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-admin-1280-light.png",
+   "kb": 54
+  },
+  "lb-admin-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:teaching_assistants:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-admin-1280-dark.png",
+   "kb": 54
+  },
+  "lb-board-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "14",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "4",
+     "4",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 4,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       "button[aria-label=\"Show Book points\"]",
+       "button[aria-label=\"Show Bolt points\"]",
+       "button[aria-label=\"Show Flame points\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-board-1280-light.png"
+  },
+  "profile-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1/5/2026",
+     "2026",
+     "2026",
+     "250,000"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     }
+    ]
+   },
+   "shot": "after-profile-375-light.png",
+   "kb": 38
+  },
+  "profile-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1/5/2026",
+     "2026",
+     "2026",
+     "250,000"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     }
+    ]
+   },
+   "shot": "after-profile-375-dark.png",
+   "kb": 39
+  },
+  "profile-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1/5/2026",
+     "2026",
+     "2026",
+     "250,000"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-profile-1280-light.png",
+   "kb": 76
+  },
+  "profile-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1/5/2026",
+     "2026",
+     "2026",
+     "250,000"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-profile-1280-dark.png",
+   "kb": 77
+  },
+  "profile-pic-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1/5/2026",
+     "250,000",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-profile-pic-375-light.png",
+   "kb": 34
+  },
+  "profile-pic-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1/5/2026",
+     "250,000",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-profile-pic-375-dark.png",
+   "kb": 35
+  },
+  "profile-pic-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1/5/2026",
+     "250,000",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-profile-pic-1280-light.png",
+   "kb": 72
+  },
+  "profile-pic-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1/5/2026",
+     "250,000",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-profile-pic-1280-dark.png",
+   "kb": 73
+  },
+  "smart-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-smart-375-light.png",
+   "kb": 134
+  },
+  "smart-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-smart-375-dark.png",
+   "kb": 136
+  },
+  "smart-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-smart-1280-light.png",
+   "kb": 161
+  },
+  "smart-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-smart-1280-dark.png",
+   "kb": 161
+  },
+  "smart-team-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "2",
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-smart-team-375-light.png",
+   "kb": 41
+  },
+  "smart-team-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "2",
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-smart-team-375-dark.png",
+   "kb": 41
+  },
+  "smart-team-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "2",
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-smart-team-1280-light.png",
+   "kb": 79
+  },
+  "smart-team-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "2",
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-smart-team-1280-dark.png",
+   "kb": 80
+  },
+  "smart-vocab-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-smart-vocab-375-light.png",
+   "kb": 41
+  },
+  "smart-vocab-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-smart-vocab-375-dark.png",
+   "kb": 42
+  },
+  "smart-vocab-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-smart-vocab-1280-light.png",
+   "kb": 87
+  },
+  "smart-vocab-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-smart-vocab-1280-dark.png",
+   "kb": 87
+  },
+  "tr-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "25",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-tr-375-light.png",
+   "kb": 50
+  },
+  "tr-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "25",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-tr-375-dark.png",
+   "kb": 51
+  },
+  "tr-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "25",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-tr-1280-light.png",
+   "kb": 85
+  },
+  "tr-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "25",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-tr-1280-dark.png",
+   "kb": 85
+  },
+  "tr-lesson-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+3",
+     "+5",
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-13",
+     "-2",
+     "-21",
+     "-28",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "4",
+     "4",
+     "42",
+     "45",
+     "5",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-tr-lesson-375-light.png",
+   "kb": 253
+  },
+  "tr-lesson-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "+3",
+     "+5",
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-13",
+     "-2",
+     "-21",
+     "-28",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "4",
+     "4",
+     "42",
+     "45",
+     "5",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-tr-lesson-375-dark.png",
+   "kb": 257
+  },
+  "tr-lesson-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+3",
+     "+5",
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-13",
+     "-2",
+     "-21",
+     "-28",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "4",
+     "4",
+     "42",
+     "45",
+     "5",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "after-tr-lesson-1280-light.png",
+   "kb": 310
+  },
+  "tr-lesson-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "+3",
+     "+5",
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-13",
+     "-2",
+     "-21",
+     "-28",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "4",
+     "4",
+     "42",
+     "45",
+     "5",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "after-tr-lesson-1280-dark.png",
+   "kb": 312
+  },
+  "tr-failed-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-21",
+     "-28",
+     "1",
+     "1",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-tr-failed-375-light.png",
+   "kb": 41
+  },
+  "tr-failed-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-21",
+     "-28",
+     "1",
+     "1",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-tr-failed-375-dark.png",
+   "kb": 42
+  },
+  "tr-failed-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-21",
+     "-28",
+     "1",
+     "1",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-tr-failed-1280-light.png",
+   "kb": 97
+  },
+  "tr-failed-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-21",
+     "-28",
+     "1",
+     "1",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-tr-failed-1280-dark.png",
+   "kb": 98
+  },
+  "vocab-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+0",
+     "+2",
+     "+2",
+     "+4",
+     "-11",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/1",
+     "1/2",
+     "2",
+     "2",
+     "2",
+     "2/4",
+     "2026",
+     "3",
+     "3",
+     "4",
+     "4",
+     "57",
+     "6",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-vocab-375-light.png",
+   "kb": 58
+  },
+  "vocab-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "+0",
+     "+2",
+     "+2",
+     "+4",
+     "-11",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/1",
+     "1/2",
+     "2",
+     "2",
+     "2",
+     "2/4",
+     "2026",
+     "3",
+     "3",
+     "4",
+     "4",
+     "57",
+     "6",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-vocab-375-dark.png",
+   "kb": 59
+  },
+  "vocab-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+0",
+     "+2",
+     "+2",
+     "+4",
+     "-11",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/1",
+     "1/2",
+     "2",
+     "2",
+     "2",
+     "2/4",
+     "2026",
+     "3",
+     "3",
+     "4",
+     "4",
+     "57",
+     "6",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-vocab-1280-light.png",
+   "kb": 91
+  },
+  "vocab-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "+0",
+     "+2",
+     "+2",
+     "+4",
+     "-11",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/1",
+     "1/2",
+     "2",
+     "2",
+     "2",
+     "2/4",
+     "2026",
+     "3",
+     "3",
+     "4",
+     "4",
+     "57",
+     "6",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-vocab-1280-dark.png",
+   "kb": 91
+  },
+  "vocab-micro-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "-11",
+     "0",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-vocab-micro-375-light.png",
+   "kb": 38
+  },
+  "vocab-micro-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "-11",
+     "0",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-vocab-micro-375-dark.png",
+   "kb": 39
+  },
+  "vocab-micro-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "-11",
+     "0",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-vocab-micro-1280-light.png",
+   "kb": 71
+  },
+  "vocab-micro-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "-11",
+     "0",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-vocab-micro-1280-dark.png",
+   "kb": 72
+  }
+ }
+}

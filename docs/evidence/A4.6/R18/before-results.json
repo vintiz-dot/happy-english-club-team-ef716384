@@ -1,0 +1,6729 @@
+{
+ "label": "before",
+ "runs": {
+  "books-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Return to LMS\" 18x40",
+     "main:BUTTON \"Presenter\" 95x28",
+     "main:BUTTON \"Settings (CRUD)\" 131x28",
+     "main:BUTTON \"Family and Friends 3 - Unit 5 \" 219x40",
+     "main:BUTTON \"Present Fullscreen\" 170x40",
+     "main:BUTTON \"Open directly in tab\" 40x40"
+    ],
+    "numbers": [
+     "1",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:r0\\:-trigger-present"
+      ]
+     }
+    ]
+   },
+   "shot": "before-books-375-light.png",
+   "kb": 66
+  },
+  "books-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Return to LMS\" 18x40",
+     "main:BUTTON \"Presenter\" 95x28",
+     "main:BUTTON \"Settings (CRUD)\" 131x28",
+     "main:BUTTON \"Family and Friends 3 - Unit 5 \" 219x40",
+     "main:BUTTON \"Present Fullscreen\" 170x40",
+     "main:BUTTON \"Open directly in tab\" 40x40"
+    ],
+    "numbers": [
+     "1",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:r0\\:-trigger-present"
+      ]
+     }
+    ]
+   },
+   "shot": "before-books-375-dark.png",
+   "kb": 66
+  },
+  "books-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Return to LMS\" 40x40",
+     "main:BUTTON \"Presenter\" 95x28",
+     "main:BUTTON \"Settings (CRUD)\" 131x28",
+     "main:BUTTON \"Family and Friends 3 - Unit 5 \" 448x40",
+     "main:BUTTON \"Present Fullscreen\" 170x40",
+     "main:BUTTON \"Open directly in tab\" 40x40"
+    ],
+    "numbers": [
+     "1",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:r0\\:-trigger-present"
+      ]
+     }
+    ]
+   },
+   "shot": "before-books-1280-light.png",
+   "kb": 96
+  },
+  "books-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Return to LMS\" 40x40",
+     "main:BUTTON \"Presenter\" 95x28",
+     "main:BUTTON \"Settings (CRUD)\" 131x28",
+     "main:BUTTON \"Family and Friends 3 - Unit 5 \" 448x40",
+     "main:BUTTON \"Present Fullscreen\" 170x40",
+     "main:BUTTON \"Open directly in tab\" 40x40"
+    ],
+    "numbers": [
+     "1",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:r0\\:-trigger-present"
+      ]
+     }
+    ]
+   },
+   "shot": "before-books-1280-dark.png",
+   "kb": 96
+  },
+  "books-settings-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Return to LMS\" 18x40",
+     "main:BUTTON \"Presenter\" 95x28",
+     "main:BUTTON \"Settings (CRUD)\" 131x28",
+     "main:BUTTON \"Add Book Link\" 125x40",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"\" 32x32"
+    ],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".hover\\:bg-muted\\/20:nth-child(1) > .text-right > .justify-end.gap-1\\.5.flex > .",
+       ".hover\\:bg-muted\\/20:nth-child(1) > .text-right > .justify-end.gap-1\\.5.flex > .",
+       ".hover\\:bg-muted\\/20:nth-child(2) > .text-right > .justify-end.gap-1\\.5.flex > ."
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:r0\\:-trigger-manage"
+      ]
+     }
+    ]
+   },
+   "shot": "before-books-settings-375-light.png",
+   "kb": 60
+  },
+  "books-settings-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Return to LMS\" 18x40",
+     "main:BUTTON \"Presenter\" 95x28",
+     "main:BUTTON \"Settings (CRUD)\" 131x28",
+     "main:BUTTON \"Add Book Link\" 125x40",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"\" 32x32"
+    ],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".hover\\:bg-muted\\/20:nth-child(1) > .text-right > .justify-end.gap-1\\.5.flex > .",
+       ".hover\\:bg-muted\\/20:nth-child(1) > .text-right > .justify-end.gap-1\\.5.flex > .",
+       ".hover\\:bg-muted\\/20:nth-child(2) > .text-right > .justify-end.gap-1\\.5.flex > ."
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:r0\\:-trigger-manage"
+      ]
+     }
+    ]
+   },
+   "shot": "before-books-settings-375-dark.png",
+   "kb": 60
+  },
+  "books-settings-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Return to LMS\" 40x40",
+     "main:BUTTON \"Presenter\" 95x28",
+     "main:BUTTON \"Settings (CRUD)\" 131x28",
+     "main:BUTTON \"Add Book Link\" 125x40",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"\" 32x32"
+    ],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".hover\\:bg-muted\\/20:nth-child(1) > .text-right > .justify-end.gap-1\\.5.flex > .",
+       ".hover\\:bg-muted\\/20:nth-child(1) > .text-right > .justify-end.gap-1\\.5.flex > .",
+       ".hover\\:bg-muted\\/20:nth-child(2) > .text-right > .justify-end.gap-1\\.5.flex > ."
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:r0\\:-trigger-manage"
+      ]
+     }
+    ]
+   },
+   "shot": "before-books-settings-1280-light.png",
+   "kb": 151
+  },
+  "books-settings-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Return to LMS\" 40x40",
+     "main:BUTTON \"Presenter\" 95x28",
+     "main:BUTTON \"Settings (CRUD)\" 131x28",
+     "main:BUTTON \"Add Book Link\" 125x40",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"\" 32x32",
+     "main:BUTTON \"\" 32x32"
+    ],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".hover\\:bg-muted\\/20:nth-child(1) > .text-right > .justify-end.gap-1\\.5.flex > .",
+       ".hover\\:bg-muted\\/20:nth-child(1) > .text-right > .justify-end.gap-1\\.5.flex > .",
+       ".hover\\:bg-muted\\/20:nth-child(2) > .text-right > .justify-end.gap-1\\.5.flex > ."
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:r0\\:-trigger-manage"
+      ]
+     }
+    ]
+   },
+   "shot": "before-books-settings-1280-dark.png",
+   "kb": 151
+  },
+  "books-dialog-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"\" 325x40",
+     "other:INPUT \"\" 325x40",
+     "other:BUTTON \"Global (All Classes)\" 325x40",
+     "other:BUTTON \"Cancel\" 325x40",
+     "other:BUTTON \"Save Changes\" 325x40",
+     "other:BUTTON \"Close\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       "#radix-\\:r0\\:-trigger-manage",
+       "#radix-\\:rb\\:",
+       ".items-start > span"
+      ]
+     }
+    ]
+   },
+   "shot": "before-books-dialog-375-light.png",
+   "kb": 42
+  },
+  "books-dialog-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"\" 325x40",
+     "other:INPUT \"\" 325x40",
+     "other:BUTTON \"Global (All Classes)\" 325x40",
+     "other:BUTTON \"Cancel\" 325x40",
+     "other:BUTTON \"Save Changes\" 325x40",
+     "other:BUTTON \"Close\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       "#radix-\\:r0\\:-trigger-manage",
+       "#radix-\\:rb\\:",
+       ".items-start > span"
+      ]
+     }
+    ]
+   },
+   "shot": "before-books-dialog-375-dark.png",
+   "kb": 42
+  },
+  "books-dialog-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"\" 430x40",
+     "other:INPUT \"\" 430x40",
+     "other:BUTTON \"Global (All Classes)\" 430x40",
+     "other:BUTTON \"Cancel\" 74x40",
+     "other:BUTTON \"Save Changes\" 119x40",
+     "other:BUTTON \"Close\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:r0\\:-trigger-manage"
+      ]
+     }
+    ]
+   },
+   "shot": "before-books-dialog-1280-light.png",
+   "kb": 72
+  },
+  "books-dialog-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teacher_flipbooks:select": 1,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"\" 430x40",
+     "other:INPUT \"\" 430x40",
+     "other:BUTTON \"Global (All Classes)\" 430x40",
+     "other:BUTTON \"Cancel\" 74x40",
+     "other:BUTTON \"Save Changes\" 119x40",
+     "other:BUTTON \"Close\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "20",
+     "23",
+     "3",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:r0\\:-trigger-manage"
+      ]
+     }
+    ]
+   },
+   "shot": "before-books-dialog-1280-dark.png",
+   "kb": 72
+  },
+  "ls-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"New set\" 113x40"
+    ],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "before-ls-375-light.png",
+   "kb": 35
+  },
+  "ls-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"New set\" 113x40"
+    ],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "before-ls-375-dark.png",
+   "kb": 35
+  },
+  "ls-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"New set\" 113x40"
+    ],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 3,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ls-1280-light.png",
+   "kb": 90
+  },
+  "ls-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"New set\" 113x40"
+    ],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 3,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ls-1280-dark.png",
+   "kb": 90
+  },
+  "ls-edit-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"New set\" 113x40",
+     "main:BUTTON \"← All sets\" 85x36",
+     "main:INPUT \"\" 264x40",
+     "main:INPUT \"\" 264x40",
+     "main:BUTTON \"Add with pictures\" 174x40",
+     "main:BUTTON \"Import a set file\" 165x40",
+     "main:BUTTON \"Remove sentence\" 28x28",
+     "main:BUTTON \"The\" 35x28",
+     "main:BUTTON \"on\" 28x28",
+     "main:BUTTON \"Remove sentence\" 28x28",
+     "main:BUTTON \"Delete set\" 125x40",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1,
+     "moderate": 4
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".ml-auto"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ls-edit-375-light.png",
+   "kb": 105
+  },
+  "ls-edit-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"New set\" 113x40",
+     "main:BUTTON \"← All sets\" 85x36",
+     "main:INPUT \"\" 264x40",
+     "main:INPUT \"\" 264x40",
+     "main:BUTTON \"Add with pictures\" 174x40",
+     "main:BUTTON \"Import a set file\" 165x40",
+     "main:BUTTON \"Remove sentence\" 28x28",
+     "main:BUTTON \"The\" 35x28",
+     "main:BUTTON \"on\" 28x28",
+     "main:BUTTON \"Remove sentence\" 28x28",
+     "main:BUTTON \"Delete set\" 125x40",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1,
+     "moderate": 4
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".ml-auto"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ls-edit-375-dark.png",
+   "kb": 105
+  },
+  "ls-edit-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"New set\" 113x40",
+     "main:INPUT \"\" 287x40",
+     "main:INPUT \"\" 287x40",
+     "main:BUTTON \"Add with pictures\" 174x40",
+     "main:BUTTON \"Import a set file\" 165x40",
+     "main:BUTTON \"Remove sentence\" 28x28",
+     "main:BUTTON \"The\" 35x28",
+     "main:BUTTON \"on\" 28x28",
+     "main:BUTTON \"Remove sentence\" 28x28",
+     "main:BUTTON \"Delete set\" 125x40",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 3,
+     "moderate": 4
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-primary > .text-xs.text-muted-foreground",
+       ".ml-auto"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ls-edit-1280-light.png",
+   "kb": 174
+  },
+  "ls-edit-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"New set\" 113x40",
+     "main:INPUT \"\" 287x40",
+     "main:INPUT \"\" 287x40",
+     "main:BUTTON \"Add with pictures\" 174x40",
+     "main:BUTTON \"Import a set file\" 165x40",
+     "main:BUTTON \"Remove sentence\" 28x28",
+     "main:BUTTON \"The\" 35x28",
+     "main:BUTTON \"on\" 28x28",
+     "main:BUTTON \"Remove sentence\" 28x28",
+     "main:BUTTON \"Delete set\" 125x40",
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 3,
+     "moderate": 4
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-primary > .text-xs.text-muted-foreground",
+       ".ml-auto"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > .gap-1\\.5",
+       ".contents:nth-child(2) > .gap-1\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ls-edit-1280-dark.png",
+   "kb": 174
+  },
+  "ls-picker-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"Search pictures\" 211x40",
+     "other:BUTTON \"Search\" 106x40",
+     "other:BUTTON \"No picture for this word\" 325x40",
+     "other:BUTTON \"Close\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 8,
+      "t": [
+       ".p-2.rounded-lg.border:nth-child(1)",
+       ".p-2.rounded-lg.border:nth-child(2)",
+       ".p-2.rounded-lg.border:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".ml-auto"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ls-picker-375-light.png",
+   "kb": 61
+  },
+  "ls-picker-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"Search pictures\" 211x40",
+     "other:BUTTON \"Search\" 106x40",
+     "other:BUTTON \"No picture for this word\" 325x40",
+     "other:BUTTON \"Close\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 8,
+      "t": [
+       ".p-2.rounded-lg.border:nth-child(1)",
+       ".p-2.rounded-lg.border:nth-child(2)",
+       ".p-2.rounded-lg.border:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".ml-auto"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ls-picker-375-dark.png",
+   "kb": 61
+  },
+  "ls-picker-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"Search pictures\" 508x40",
+     "other:BUTTON \"Search\" 106x40",
+     "other:BUTTON \"No picture for this word\" 622x40",
+     "other:BUTTON \"Close\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 8,
+      "t": [
+       ".p-2.rounded-lg.border:nth-child(1)",
+       ".p-2.rounded-lg.border:nth-child(2)",
+       ".p-2.rounded-lg.border:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".ml-auto",
+       "section:nth-child(3) > .text-destructive"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ls-picker-1280-light.png",
+   "kb": 113
+  },
+  "ls-picker-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:INPUT \"Search pictures\" 508x40",
+     "other:BUTTON \"Search\" 106x40",
+     "other:BUTTON \"No picture for this word\" 622x40",
+     "other:BUTTON \"Close\" 16x16"
+    ],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 8,
+      "t": [
+       ".p-2.rounded-lg.border:nth-child(1)",
+       ".p-2.rounded-lg.border:nth-child(2)",
+       ".p-2.rounded-lg.border:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".ml-auto",
+       "section:nth-child(3) > .text-destructive"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ls-picker-1280-dark.png",
+   "kb": 113
+  },
+  "ls-new-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"New set\" 115x41",
+     "main:BUTTON \"← All sets\" 85x36",
+     "main:INPUT \"\" 261x40",
+     "main:INPUT \"\" 261x40",
+     "main:BUTTON \"Add with pictures\" 174x40",
+     "main:BUTTON \"Import a set file\" 165x40"
+    ],
+    "numbers": [
+     "1",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4
+    },
+    "rules": []
+   },
+   "shot": "before-ls-new-375-light.png",
+   "kb": 85
+  },
+  "ls-new-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"New set\" 115x41",
+     "main:BUTTON \"← All sets\" 85x36",
+     "main:INPUT \"\" 261x40",
+     "main:INPUT \"\" 261x40",
+     "main:BUTTON \"Add with pictures\" 174x40",
+     "main:BUTTON \"Import a set file\" 165x40"
+    ],
+    "numbers": [
+     "1",
+     "3"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4
+    },
+    "rules": []
+   },
+   "shot": "before-ls-new-375-dark.png",
+   "kb": 85
+  },
+  "ls-new-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"New set\" 115x41",
+     "main:INPUT \"\" 287x40",
+     "main:INPUT \"\" 287x40",
+     "main:BUTTON \"Add with pictures\" 174x40",
+     "main:BUTTON \"Import a set file\" 165x40"
+    ],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ls-new-1280-light.png",
+   "kb": 151
+  },
+  "ls-new-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:language_support_set_classes:select": 1,
+     "from:language_support_sets:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"New set\" 115x41",
+     "main:INPUT \"\" 287x40",
+     "main:INPUT \"\" 287x40",
+     "main:BUTTON \"Add with pictures\" 174x40",
+     "main:BUTTON \"Import a set file\" 165x40"
+    ],
+    "numbers": [
+     "0",
+     "1",
+     "1",
+     "2",
+     "3",
+     "3:",
+     "4:"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-ls-new-1280-dark.png",
+   "kb": 151
+  },
+  "lb-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"\" 40x36",
+     "main:BUTTON \"Live\" 40x36",
+     "main:BUTTON \"Add Points\" 117x36",
+     "main:BUTTON \"\" 42x36",
+     "main:BUTTON \"\" 42x36",
+     "main:BUTTON \"November 2026\" 144x36",
+     "main:BUTTON \"Select all\" 104x36",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2026",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 2,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".border-border > .bg-primary.text-primary-foreground.hover\\:bg-primary\\/90",
+       ".placeholder\\:text-muted-foreground"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .justify-end.studio-focus.flex-col > .px-",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .justify-end.studio-focus.flex-col > .px-",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .justify-end.studio-focus.flex-col > .px-"
+      ]
+     },
+     {
+      "id": "image-alt",
+      "impact": "critical",
+      "n": 7,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .justify-end.studio-focus.flex-col > .px-",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .justify-end.studio-focus.flex-col > .px-",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .justify-end.studio-focus.flex-col > .px-"
+      ]
+     }
+    ]
+   },
+   "shot": "before-lb-375-light.png",
+   "kb": 85
+  },
+  "lb-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"\" 40x36",
+     "main:BUTTON \"Live\" 40x36",
+     "main:BUTTON \"Add Points\" 117x36",
+     "main:BUTTON \"\" 42x36",
+     "main:BUTTON \"\" 42x36",
+     "main:BUTTON \"November 2026\" 144x36",
+     "main:BUTTON \"Select all\" 104x36",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "2026",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 2,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".border-border > .bg-primary.text-primary-foreground.hover\\:bg-primary\\/90",
+       ".placeholder\\:text-muted-foreground"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .justify-end.studio-focus.flex-col > .px-",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .justify-end.studio-focus.flex-col > .px-",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .justify-end.studio-focus.flex-col > .px-"
+      ]
+     },
+     {
+      "id": "image-alt",
+      "impact": "critical",
+      "n": 7,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .justify-end.studio-focus.flex-col > .px-",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .justify-end.studio-focus.flex-col > .px-",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .justify-end.studio-focus.flex-col > .px-"
+      ]
+     }
+    ]
+   },
+   "shot": "before-lb-375-dark.png",
+   "kb": 85
+  },
+  "lb-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Standard\" 103x36",
+     "main:BUTTON \"Live\" 71x36",
+     "main:BUTTON \"Add Points\" 117x36",
+     "main:BUTTON \"Award points\" 132x36",
+     "main:BUTTON \"New window\" 130x36",
+     "main:BUTTON \"November 2026\" 170x36",
+     "main:BUTTON \"Select all\" 112x36"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "14",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "4",
+     "4",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 4,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".placeholder\\:text-muted-foreground"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       "button[aria-label=\"Show Book points\"]",
+       "button[aria-label=\"Show Bolt points\"]",
+       "button[aria-label=\"Show Flame points\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".flex-wrap"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-lb-1280-light.png",
+   "kb": 222
+  },
+  "lb-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Standard\" 103x36",
+     "main:BUTTON \"Live\" 71x36",
+     "main:BUTTON \"Add Points\" 117x36",
+     "main:BUTTON \"Award points\" 132x36",
+     "main:BUTTON \"New window\" 130x36",
+     "main:BUTTON \"November 2026\" 170x36",
+     "main:BUTTON \"Select all\" 112x36"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "14",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "4",
+     "4",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 4,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".placeholder\\:text-muted-foreground"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       "button[aria-label=\"Show Book points\"]",
+       "button[aria-label=\"Show Bolt points\"]",
+       "button[aria-label=\"Show Flame points\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".flex-wrap"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-lb-1280-dark.png",
+   "kb": 221
+  },
+  "lb-admin-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:teaching_assistants:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"\" 40x36",
+     "main:BUTTON \"Live\" 40x36"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".bg-primary"
+      ]
+     }
+    ]
+   },
+   "shot": "before-lb-admin-375-light.png",
+   "kb": 27
+  },
+  "lb-admin-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:teaching_assistants:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"\" 40x36",
+     "main:BUTTON \"Live\" 40x36"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".bg-primary"
+      ]
+     }
+    ]
+   },
+   "shot": "before-lb-admin-375-dark.png",
+   "kb": 27
+  },
+  "lb-admin-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:teaching_assistants:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Standard\" 103x36",
+     "main:BUTTON \"Live\" 71x36"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".flex-wrap"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-lb-admin-1280-light.png",
+   "kb": 71
+  },
+  "lb-admin-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 14,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:teaching_assistants:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Standard\" 103x36",
+     "main:BUTTON \"Live\" 71x36"
+    ],
+    "numbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".flex-wrap"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-lb-admin-1280-dark.png",
+   "kb": 71
+  },
+  "lb-board-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Standard\" 103x36",
+     "main:BUTTON \"Live\" 71x36",
+     "main:BUTTON \"Add Points\" 117x36",
+     "main:BUTTON \"Award points\" 132x36",
+     "main:BUTTON \"New window\" 130x36",
+     "main:BUTTON \"November 2026\" 170x36",
+     "main:BUTTON \"Select all\" 112x36"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "14",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "4",
+     "4",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 4,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".placeholder\\:text-muted-foreground"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       "button[aria-label=\"Show Book points\"]",
+       "button[aria-label=\"Show Bolt points\"]",
+       "button[aria-label=\"Show Flame points\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".flex-wrap"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-lb-board-1280-light.png"
+  },
+  "profile-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Manage Link\" 147x40",
+     "main:BUTTON \"Edit\" 90x40",
+     "main:BUTTON \"Overview\" 42x32",
+     "main:BUTTON \"Schedule\" 42x32",
+     "main:BUTTON \"Classes\" 42x32",
+     "main:BUTTON \"Payroll\" 42x32",
+     "main:BUTTON \"Profile\" 42x32",
+     "main:BUTTON \"Files & Notes\" 42x32",
+     "main:BUTTON \"Audit\" 42x32",
+     "main:BUTTON \"Diagnostics\" 42x32",
+     "main:BUTTON \"November 2026\" 192x40"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1/5/2026",
+     "2026",
+     "2026",
+     "250,000"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".border-input"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".px-2\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-profile-375-light.png",
+   "kb": 49
+  },
+  "profile-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Manage Link\" 147x40",
+     "main:BUTTON \"Edit\" 90x40",
+     "main:BUTTON \"Overview\" 42x32",
+     "main:BUTTON \"Schedule\" 42x32",
+     "main:BUTTON \"Classes\" 42x32",
+     "main:BUTTON \"Payroll\" 42x32",
+     "main:BUTTON \"Profile\" 42x32",
+     "main:BUTTON \"Files & Notes\" 42x32",
+     "main:BUTTON \"Audit\" 42x32",
+     "main:BUTTON \"Diagnostics\" 42x32",
+     "main:BUTTON \"November 2026\" 192x40"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1/5/2026",
+     "2026",
+     "2026",
+     "250,000"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".border-input"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".px-2\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-profile-375-dark.png",
+   "kb": 49
+  },
+  "profile-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Manage Link\" 147x40",
+     "main:BUTTON \"Edit\" 90x40",
+     "main:BUTTON \"Overview\" 123x32",
+     "main:BUTTON \"Schedule\" 123x32",
+     "main:BUTTON \"Classes\" 123x32",
+     "main:BUTTON \"Payroll\" 123x32",
+     "main:BUTTON \"Profile\" 123x32",
+     "main:BUTTON \"Files & Notes\" 123x32",
+     "main:BUTTON \"Audit\" 123x32",
+     "main:BUTTON \"Diagnostics\" 123x32",
+     "main:BUTTON \"November 2026\" 192x40"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1/5/2026",
+     "2026",
+     "2026",
+     "250,000"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".border-input"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".px-2\\.5"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".flex-wrap"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-profile-1280-light.png",
+   "kb": 113
+  },
+  "profile-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Manage Link\" 147x40",
+     "main:BUTTON \"Edit\" 90x40",
+     "main:BUTTON \"Overview\" 123x32",
+     "main:BUTTON \"Schedule\" 123x32",
+     "main:BUTTON \"Classes\" 123x32",
+     "main:BUTTON \"Payroll\" 123x32",
+     "main:BUTTON \"Profile\" 123x32",
+     "main:BUTTON \"Files & Notes\" 123x32",
+     "main:BUTTON \"Audit\" 123x32",
+     "main:BUTTON \"Diagnostics\" 123x32",
+     "main:BUTTON \"November 2026\" 192x40"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1/5/2026",
+     "2026",
+     "2026",
+     "250,000"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".border-input"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".px-2\\.5"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".flex-wrap"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-profile-1280-dark.png",
+   "kb": 113
+  },
+  "profile-pic-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "actionError": "locator.evaluate: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('Edit Profile Picture').first()\u001b[22m\n",
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Manage Link\" 147x40",
+     "main:BUTTON \"Edit\" 90x40",
+     "main:BUTTON \"Overview\" 42x32",
+     "main:BUTTON \"Schedule\" 42x32",
+     "main:BUTTON \"Classes\" 42x32",
+     "main:BUTTON \"Payroll\" 42x32",
+     "main:BUTTON \"Profile\" 42x32",
+     "main:BUTTON \"Files & Notes\" 42x32",
+     "main:BUTTON \"Audit\" 42x32",
+     "main:BUTTON \"Diagnostics\" 42x32",
+     "main:BUTTON \"Save Notes\" 135x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:BUTTON \"Add Document Link\" 160x40"
+    ],
+    "numbers": [
+     "1/5/2026",
+     "250,000"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".px-2\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-profile-pic-375-light.png",
+   "kb": 49
+  },
+  "profile-pic-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "actionError": "locator.evaluate: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('Edit Profile Picture').first()\u001b[22m\n",
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Manage Link\" 147x40",
+     "main:BUTTON \"Edit\" 90x40",
+     "main:BUTTON \"Overview\" 42x32",
+     "main:BUTTON \"Schedule\" 42x32",
+     "main:BUTTON \"Classes\" 42x32",
+     "main:BUTTON \"Payroll\" 42x32",
+     "main:BUTTON \"Profile\" 42x32",
+     "main:BUTTON \"Files & Notes\" 42x32",
+     "main:BUTTON \"Audit\" 42x32",
+     "main:BUTTON \"Diagnostics\" 42x32",
+     "main:BUTTON \"Save Notes\" 135x40",
+     "main:INPUT \"\" 293x40",
+     "main:INPUT \"\" 293x40",
+     "main:BUTTON \"Add Document Link\" 160x40"
+    ],
+    "numbers": [
+     "1/5/2026",
+     "250,000"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".px-2\\.5"
+      ]
+     }
+    ]
+   },
+   "shot": "before-profile-pic-375-dark.png",
+   "kb": 49
+  },
+  "profile-pic-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Manage Link\" 147x40",
+     "main:BUTTON \"Edit\" 90x40",
+     "main:BUTTON \"Overview\" 123x32",
+     "main:BUTTON \"Schedule\" 123x32",
+     "main:BUTTON \"Classes\" 123x32",
+     "main:BUTTON \"Payroll\" 123x32",
+     "main:BUTTON \"Profile\" 123x32",
+     "main:BUTTON \"Files & Notes\" 123x32",
+     "main:BUTTON \"Audit\" 123x32",
+     "main:BUTTON \"Diagnostics\" 123x32",
+     "main:INPUT \"\" 942x40",
+     "main:INPUT \"\" 942x40",
+     "main:BUTTON \"Save Changes\" 942x40"
+    ],
+    "numbers": [
+     "1/5/2026",
+     "250,000",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".px-2\\.5"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".flex-wrap"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-profile-pic-1280-light.png",
+   "kb": 103
+  },
+  "profile-pic-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 2,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:calculate-payroll:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Students\" 207x36",
+     "nav:BUTTON \"Teachers\" 207x36",
+     "nav:BUTTON \"Classes\" 207x36",
+     "nav:BUTTON \"Families\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Finance\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Reports\" 207x36",
+     "nav:BUTTON \"Automation\" 207x36",
+     "nav:BUTTON \"Activity\" 207x36",
+     "nav:BUTTON \"AI actions\" 207x36",
+     "nav:BUTTON \"Data\" 207x36",
+     "nav:BUTTON \"Stars Sync\" 207x36",
+     "nav:BUTTON \"Audit clips\" 207x36",
+     "nav:BUTTON \"Announcements\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Manage Link\" 147x40",
+     "main:BUTTON \"Edit\" 90x40",
+     "main:BUTTON \"Overview\" 123x32",
+     "main:BUTTON \"Schedule\" 123x32",
+     "main:BUTTON \"Classes\" 123x32",
+     "main:BUTTON \"Payroll\" 123x32",
+     "main:BUTTON \"Profile\" 123x32",
+     "main:BUTTON \"Files & Notes\" 123x32",
+     "main:BUTTON \"Audit\" 123x32",
+     "main:BUTTON \"Diagnostics\" 123x32",
+     "main:INPUT \"\" 942x40",
+     "main:INPUT \"\" 942x40",
+     "main:BUTTON \"Save Changes\" 942x40"
+    ],
+    "numbers": [
+     "1/5/2026",
+     "250,000",
+     "5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".px-2\\.5"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".flex-wrap"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-profile-pic-1280-dark.png",
+   "kb": 103
+  },
+  "smart-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Select class\" 261x40",
+     "main:BUTTON \"Auto-detect from the page\" 261x40",
+     "main:BUTTON \"Student Work\" 152x32",
+     "main:BUTTON \"Vocab Scan\" 152x32",
+     "main:BUTTON \"Individual\" 98x28",
+     "main:BUTTON \"Team\" 73x28",
+     "main:INPUT \"\" 285x40",
+     "main:INPUT \"\" 285x39",
+     "main:BUTTON \"Add link\" 285x40",
+     "main:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 258x32",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Assign student…\" 258x32",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36"
+    ],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       "button[aria-controls=\"radix-:re:\"]",
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rm:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".p-3.bg-card.rounded-2xl:nth-child(1) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(2) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(3) > .gap-2.flex > .bg-emerald-600.hover\\:bg-"
+      ]
+     }
+    ]
+   },
+   "shot": "before-smart-375-light.png",
+   "kb": 151
+  },
+  "smart-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Select class\" 261x40",
+     "main:BUTTON \"Auto-detect from the page\" 261x40",
+     "main:BUTTON \"Student Work\" 152x32",
+     "main:BUTTON \"Vocab Scan\" 152x32",
+     "main:BUTTON \"Individual\" 98x28",
+     "main:BUTTON \"Team\" 73x28",
+     "main:INPUT \"\" 285x40",
+     "main:INPUT \"\" 285x39",
+     "main:BUTTON \"Add link\" 285x40",
+     "main:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 258x32",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Assign student…\" 258x32",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36"
+    ],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       "button[aria-controls=\"radix-:re:\"]",
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rm:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".p-3.bg-card.rounded-2xl:nth-child(1) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(2) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(3) > .gap-2.flex > .bg-emerald-600.hover\\:bg-"
+      ]
+     }
+    ]
+   },
+   "shot": "before-smart-375-dark.png",
+   "kb": 151
+  },
+  "smart-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Select class\" 441x40",
+     "main:BUTTON \"Auto-detect from the page\" 441x40",
+     "main:BUTTON \"Student Work\" 188x32",
+     "main:BUTTON \"Vocab Scan\" 188x32",
+     "main:BUTTON \"Individual\" 98x28",
+     "main:BUTTON \"Team\" 73x28",
+     "main:INPUT \"\" 192x40",
+     "main:INPUT \"\" 603x40",
+     "main:BUTTON \"Add link\" 107x40",
+     "main:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 413x32",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Assign student…\" 413x32",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36"
+    ],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       "button[aria-controls=\"radix-:re:\"]",
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rm:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".p-3.bg-card.rounded-2xl:nth-child(1) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(2) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(3) > .gap-2.flex > .bg-emerald-600.hover\\:bg-"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-smart-1280-light.png",
+   "kb": 207
+  },
+  "smart-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Select class\" 441x40",
+     "main:BUTTON \"Auto-detect from the page\" 441x40",
+     "main:BUTTON \"Student Work\" 188x32",
+     "main:BUTTON \"Vocab Scan\" 188x32",
+     "main:BUTTON \"Individual\" 98x28",
+     "main:BUTTON \"Team\" 73x28",
+     "main:INPUT \"\" 192x40",
+     "main:INPUT \"\" 603x40",
+     "main:BUTTON \"Add link\" 107x40",
+     "main:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 413x32",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Assign student…\" 413x32",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36"
+    ],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       "button[aria-controls=\"radix-:re:\"]",
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rm:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".p-3.bg-card.rounded-2xl:nth-child(1) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(2) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(3) > .gap-2.flex > .bg-emerald-600.hover\\:bg-"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-smart-1280-dark.png",
+   "kb": 207
+  },
+  "smart-team-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Select class\" 261x40",
+     "main:BUTTON \"Auto-detect from the page\" 261x40",
+     "main:BUTTON \"Student Work\" 152x32",
+     "main:BUTTON \"Vocab Scan\" 152x32",
+     "main:BUTTON \"Individual\" 98x28",
+     "main:BUTTON \"Team\" 73x28",
+     "main:BUTTON \"Pick team members…\" 311x40",
+     "main:INPUT \"\" 285x40",
+     "main:INPUT \"\" 285x39",
+     "main:BUTTON \"Add link\" 285x40",
+     "main:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 258x32",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Assign student…\" 258x32",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36"
+    ],
+    "numbers": [
+     "2",
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 5,
+      "t": [
+       "button[aria-controls=\"radix-:re:\"]",
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rp:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".p-3.bg-card.rounded-2xl:nth-child(1) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(2) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(3) > .gap-2.flex > .bg-emerald-600.hover\\:bg-"
+      ]
+     }
+    ]
+   },
+   "shot": "before-smart-team-375-light.png",
+   "kb": 49
+  },
+  "smart-team-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Select class\" 261x40",
+     "main:BUTTON \"Auto-detect from the page\" 261x40",
+     "main:BUTTON \"Student Work\" 152x32",
+     "main:BUTTON \"Vocab Scan\" 152x32",
+     "main:BUTTON \"Individual\" 98x28",
+     "main:BUTTON \"Team\" 73x28",
+     "main:BUTTON \"Pick team members…\" 311x40",
+     "main:INPUT \"\" 285x40",
+     "main:INPUT \"\" 285x39",
+     "main:BUTTON \"Add link\" 285x40",
+     "main:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 258x32",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Assign student…\" 258x32",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36"
+    ],
+    "numbers": [
+     "2",
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 5,
+      "t": [
+       "button[aria-controls=\"radix-:re:\"]",
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rp:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".p-3.bg-card.rounded-2xl:nth-child(1) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(2) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(3) > .gap-2.flex > .bg-emerald-600.hover\\:bg-"
+      ]
+     }
+    ]
+   },
+   "shot": "before-smart-team-375-dark.png",
+   "kb": 49
+  },
+  "smart-team-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Select class\" 441x40",
+     "main:BUTTON \"Auto-detect from the page\" 441x40",
+     "main:BUTTON \"Student Work\" 188x32",
+     "main:BUTTON \"Vocab Scan\" 188x32",
+     "main:BUTTON \"Individual\" 98x28",
+     "main:BUTTON \"Team\" 73x28",
+     "main:BUTTON \"Pick team members…\" 944x40",
+     "main:INPUT \"\" 192x40",
+     "main:INPUT \"\" 603x40",
+     "main:BUTTON \"Add link\" 107x40",
+     "main:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 413x32",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Assign student…\" 413x32",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36"
+    ],
+    "numbers": [
+     "2",
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 5,
+      "t": [
+       "button[aria-controls=\"radix-:re:\"]",
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rp:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".p-3.bg-card.rounded-2xl:nth-child(1) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(2) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(3) > .gap-2.flex > .bg-emerald-600.hover\\:bg-"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-smart-team-1280-light.png",
+   "kb": 110
+  },
+  "smart-team-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Select class\" 441x40",
+     "main:BUTTON \"Auto-detect from the page\" 441x40",
+     "main:BUTTON \"Student Work\" 188x32",
+     "main:BUTTON \"Vocab Scan\" 188x32",
+     "main:BUTTON \"Individual\" 98x28",
+     "main:BUTTON \"Team\" 73x28",
+     "main:BUTTON \"Pick team members…\" 944x40",
+     "main:INPUT \"\" 192x40",
+     "main:INPUT \"\" 603x40",
+     "main:BUTTON \"Add link\" 107x40",
+     "main:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 413x32",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Assign student…\" 413x32",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36"
+    ],
+    "numbers": [
+     "2",
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 5,
+      "t": [
+       "button[aria-controls=\"radix-:re:\"]",
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rp:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".p-3.bg-card.rounded-2xl:nth-child(1) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(2) > .gap-2.flex > .bg-emerald-600.hover\\:bg-",
+       ".p-3.bg-card.rounded-2xl:nth-child(3) > .gap-2.flex > .bg-emerald-600.hover\\:bg-"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-smart-team-1280-dark.png",
+   "kb": 110
+  },
+  "smart-vocab-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Select class\" 261x40",
+     "main:BUTTON \"Auto-detect from the page\" 261x40",
+     "main:BUTTON \"Student Work\" 152x32",
+     "main:BUTTON \"Vocab Scan\" 152x32",
+     "main:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 258x32",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Assign student…\" 258x32",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36"
+    ],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       "button[aria-controls=\"radix-:re:\"]",
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rm:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".p-3.rounded-2xl.space-y-2:nth-child(1) > .gap-2.flex > .hover\\:shadow-lg.bg-eme",
+       ".p-3.rounded-2xl.space-y-2:nth-child(2) > .gap-2.flex > .hover\\:shadow-lg.bg-eme",
+       ".p-3.rounded-2xl.space-y-2:nth-child(3) > .gap-2.flex > .hover\\:shadow-lg.bg-eme"
+      ]
+     }
+    ]
+   },
+   "shot": "before-smart-vocab-375-light.png",
+   "kb": 51
+  },
+  "smart-vocab-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Select class\" 261x40",
+     "main:BUTTON \"Auto-detect from the page\" 261x40",
+     "main:BUTTON \"Student Work\" 152x32",
+     "main:BUTTON \"Vocab Scan\" 152x32",
+     "main:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 258x32",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Assign student…\" 258x32",
+     "main:BUTTON \"Approve & publish\" 165x36",
+     "main:BUTTON \"Reject\" 85x36"
+    ],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       "button[aria-controls=\"radix-:re:\"]",
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rm:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".p-3.rounded-2xl.space-y-2:nth-child(1) > .gap-2.flex > .hover\\:shadow-lg.bg-eme",
+       ".p-3.rounded-2xl.space-y-2:nth-child(2) > .gap-2.flex > .hover\\:shadow-lg.bg-eme",
+       ".p-3.rounded-2xl.space-y-2:nth-child(3) > .gap-2.flex > .hover\\:shadow-lg.bg-eme"
+      ]
+     }
+    ]
+   },
+   "shot": "before-smart-vocab-375-dark.png",
+   "kb": 51
+  },
+  "smart-vocab-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Select class\" 441x40",
+     "main:BUTTON \"Auto-detect from the page\" 441x40",
+     "main:BUTTON \"Student Work\" 188x32",
+     "main:BUTTON \"Vocab Scan\" 188x32",
+     "main:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 413x32",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Assign student…\" 413x32",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36"
+    ],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       "button[aria-controls=\"radix-:re:\"]",
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rm:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".p-3.rounded-2xl.space-y-2:nth-child(1) > .gap-2.flex > .hover\\:shadow-lg.bg-eme",
+       ".p-3.rounded-2xl.space-y-2:nth-child(2) > .gap-2.flex > .hover\\:shadow-lg.bg-eme",
+       ".p-3.rounded-2xl.space-y-2:nth-child(3) > .gap-2.flex > .hover\\:shadow-lg.bg-eme"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-smart-vocab-1280-light.png",
+   "kb": 121
+  },
+  "smart-vocab-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:student_work:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Select class\" 441x40",
+     "main:BUTTON \"Auto-detect from the page\" 441x40",
+     "main:BUTTON \"Student Work\" 188x32",
+     "main:BUTTON \"Vocab Scan\" 188x32",
+     "main:BUTTON \"Nguyễn Hoàng Phương Thảo Nguyê\" 413x32",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36",
+     "main:BUTTON \"Assign student…\" 413x32",
+     "main:BUTTON \"Approve & publish\" 320x36",
+     "main:BUTTON \"Reject\" 85x36"
+    ],
+    "numbers": [
+     "3",
+     "5",
+     "92"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       "button[aria-controls=\"radix-:re:\"]",
+       "button[aria-controls=\"radix-:rf:\"]",
+       "button[aria-controls=\"radix-:rm:\"]"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".p-3.rounded-2xl.space-y-2:nth-child(1) > .gap-2.flex > .hover\\:shadow-lg.bg-eme",
+       ".p-3.rounded-2xl.space-y-2:nth-child(2) > .gap-2.flex > .hover\\:shadow-lg.bg-eme",
+       ".p-3.rounded-2xl.space-y-2:nth-child(3) > .gap-2.flex > .hover\\:shadow-lg.bg-eme"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-smart-vocab-1280-dark.png",
+   "kb": 121
+  },
+  "tr-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Select class\" 261x40",
+     "main:INPUT \"\" 261x40",
+     "main:BUTTON \".vtt / .txt\" 261x40",
+     "main:BUTTON \"Upload recording\" 261x40",
+     "main:BUTTON \"Analyze transcript\" 170x40"
+    ],
+    "numbers": [
+     "25",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     }
+    ]
+   },
+   "shot": "before-tr-375-light.png",
+   "kb": 70
+  },
+  "tr-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Select class\" 261x40",
+     "main:INPUT \"\" 261x40",
+     "main:BUTTON \".vtt / .txt\" 261x40",
+     "main:BUTTON \"Upload recording\" 261x40",
+     "main:BUTTON \"Analyze transcript\" 170x40"
+    ],
+    "numbers": [
+     "25",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     }
+    ]
+   },
+   "shot": "before-tr-375-dark.png",
+   "kb": 70
+  },
+  "tr-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Select class\" 256x40",
+     "main:INPUT \"\" 320x40",
+     "main:BUTTON \".vtt / .txt\" 113x40",
+     "main:BUTTON \"Upload recording\" 169x40",
+     "main:BUTTON \"Analyze transcript\" 170x40"
+    ],
+    "numbers": [
+     "25",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".flex-wrap"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-tr-1280-light.png",
+   "kb": 128
+  },
+  "tr-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Select class\" 256x40",
+     "main:INPUT \"\" 320x40",
+     "main:BUTTON \".vtt / .txt\" 113x40",
+     "main:BUTTON \"Upload recording\" 169x40",
+     "main:BUTTON \"Analyze transcript\" 170x40"
+    ],
+    "numbers": [
+     "25",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-md"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".flex-wrap"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-tr-1280-dark.png",
+   "kb": 128
+  },
+  "tr-lesson-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 261x40",
+     "main:INPUT \"\" 261x40",
+     "main:BUTTON \".vtt / .txt\" 261x40",
+     "main:BUTTON \"Upload recording\" 261x40",
+     "main:BUTTON \"Analyze transcript\" 170x40",
+     "main:BUTTON \"Re-analyze\" 117x36",
+     "main:BUTTON \"Edit\" 65x28",
+     "main:BUTTON \"Apply all present (1)\" 174x36",
+     "main:BUTTON \"Apply\" 76x28",
+     "main:BUTTON \"\" 40x28",
+     "main:BUTTON \"Apply\" 76x28",
+     "main:BUTTON \"\" 40x28",
+     "main:BUTTON \"Correct this feedback\" 24x24",
+     "main:BUTTON \"Correct this feedback\" 24x24",
+     "main:BUTTON \"Correct this feedback\" 24x24",
+     "main:BUTTON \"Assign to a student…\" 351x32"
+    ],
+    "numbers": [
+     "+3",
+     "+5",
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-13",
+     "-2",
+     "-21",
+     "-28",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "4",
+     "4",
+     "42",
+     "45",
+     "5",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".md\\:w-64",
+       ".bg-card.p-2\\.5.items-start:nth-child(1) > .gap-1.shrink-0.flex > .h-7.hover\\:gl",
+       ".bg-card.p-2\\.5.items-start:nth-child(2) > .gap-1.shrink-0.flex > .h-7.hover\\:gl"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 19,
+      "t": [
+       ".justify-between.gap-2.flex > .border-emerald-500\\/40.text-emerald-600.py-0\\.5",
+       "h3 > .border-emerald-500\\/40.text-emerald-600.py-0\\.5",
+       ".dark\\:text-emerald-400.text-emerald-600.font-bold"
+      ]
+     }
+    ]
+   },
+   "shot": "before-tr-lesson-375-light.png",
+   "kb": 287
+  },
+  "tr-lesson-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 261x40",
+     "main:INPUT \"\" 261x40",
+     "main:BUTTON \".vtt / .txt\" 261x40",
+     "main:BUTTON \"Upload recording\" 261x40",
+     "main:BUTTON \"Analyze transcript\" 170x40",
+     "main:BUTTON \"Re-analyze\" 117x36",
+     "main:BUTTON \"Edit\" 65x28",
+     "main:BUTTON \"Apply all present (1)\" 174x36",
+     "main:BUTTON \"Apply\" 76x28",
+     "main:BUTTON \"\" 40x28",
+     "main:BUTTON \"Apply\" 76x28",
+     "main:BUTTON \"\" 40x28",
+     "main:BUTTON \"Correct this feedback\" 24x24",
+     "main:BUTTON \"Correct this feedback\" 24x24",
+     "main:BUTTON \"Correct this feedback\" 24x24",
+     "main:BUTTON \"Assign to a student…\" 351x32"
+    ],
+    "numbers": [
+     "+3",
+     "+5",
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-13",
+     "-2",
+     "-21",
+     "-28",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "4",
+     "4",
+     "42",
+     "45",
+     "5",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".md\\:w-64",
+       ".bg-card.p-2\\.5.items-start:nth-child(1) > .gap-1.shrink-0.flex > .h-7.hover\\:gl",
+       ".bg-card.p-2\\.5.items-start:nth-child(2) > .gap-1.shrink-0.flex > .h-7.hover\\:gl"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 19,
+      "t": [
+       ".justify-between.gap-2.flex > .border-emerald-500\\/40.text-emerald-600.py-0\\.5",
+       "h3 > .border-emerald-500\\/40.text-emerald-600.py-0\\.5",
+       ".dark\\:text-emerald-400.text-emerald-600.font-bold"
+      ]
+     }
+    ]
+   },
+   "shot": "before-tr-lesson-375-dark.png",
+   "kb": 287
+  },
+  "tr-lesson-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 256x40",
+     "main:INPUT \"\" 320x40",
+     "main:BUTTON \".vtt / .txt\" 113x40",
+     "main:BUTTON \"Upload recording\" 169x40",
+     "main:BUTTON \"Analyze transcript\" 170x40",
+     "main:BUTTON \"Re-analyze\" 117x36",
+     "main:BUTTON \"Edit\" 65x28",
+     "main:BUTTON \"Apply all present (1)\" 174x36",
+     "main:BUTTON \"Apply\" 76x28",
+     "main:BUTTON \"\" 40x28",
+     "main:BUTTON \"Apply\" 76x28",
+     "main:BUTTON \"\" 40x28",
+     "main:BUTTON \"Correct this feedback\" 24x24",
+     "main:BUTTON \"Correct this feedback\" 24x24",
+     "main:BUTTON \"Correct this feedback\" 24x24",
+     "main:BUTTON \"Assign to a student…\" 252x32"
+    ],
+    "numbers": [
+     "+3",
+     "+5",
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-13",
+     "-2",
+     "-21",
+     "-28",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "4",
+     "4",
+     "42",
+     "45",
+     "5",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".md\\:w-64",
+       ".bg-card.p-2\\.5.items-start:nth-child(1) > .gap-1.shrink-0.flex > .h-7.hover\\:gl",
+       ".bg-card.p-2\\.5.items-start:nth-child(2) > .gap-1.shrink-0.flex > .h-7.hover\\:gl"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 21,
+      "t": [
+       ".justify-between.gap-2.flex > .border-emerald-500\\/40.text-emerald-600.py-0\\.5",
+       "h3 > .border-emerald-500\\/40.text-emerald-600.py-0\\.5",
+       ".dark\\:text-emerald-400.text-emerald-600.font-bold"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-tr-lesson-1280-light.png",
+   "kb": 383
+  },
+  "tr-lesson-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 256x40",
+     "main:INPUT \"\" 320x40",
+     "main:BUTTON \".vtt / .txt\" 113x40",
+     "main:BUTTON \"Upload recording\" 169x40",
+     "main:BUTTON \"Analyze transcript\" 170x40",
+     "main:BUTTON \"Re-analyze\" 117x36",
+     "main:BUTTON \"Edit\" 65x28",
+     "main:BUTTON \"Apply all present (1)\" 174x36",
+     "main:BUTTON \"Apply\" 76x28",
+     "main:BUTTON \"\" 40x28",
+     "main:BUTTON \"Apply\" 76x28",
+     "main:BUTTON \"\" 40x28",
+     "main:BUTTON \"Correct this feedback\" 24x24",
+     "main:BUTTON \"Correct this feedback\" 24x24",
+     "main:BUTTON \"Correct this feedback\" 24x24",
+     "main:BUTTON \"Assign to a student…\" 252x32"
+    ],
+    "numbers": [
+     "+3",
+     "+5",
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-13",
+     "-2",
+     "-21",
+     "-28",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "14",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "4",
+     "4",
+     "42",
+     "45",
+     "5",
+     "60",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".md\\:w-64",
+       ".bg-card.p-2\\.5.items-start:nth-child(1) > .gap-1.shrink-0.flex > .h-7.hover\\:gl",
+       ".bg-card.p-2\\.5.items-start:nth-child(2) > .gap-1.shrink-0.flex > .h-7.hover\\:gl"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 21,
+      "t": [
+       ".justify-between.gap-2.flex > .border-emerald-500\\/40.text-emerald-600.py-0\\.5",
+       "h3 > .border-emerald-500\\/40.text-emerald-600.py-0\\.5",
+       ".dark\\:text-emerald-400.text-emerald-600.font-bold"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-tr-lesson-1280-dark.png",
+   "kb": 383
+  },
+  "tr-failed-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 261x40",
+     "main:INPUT \"\" 261x40",
+     "main:BUTTON \".vtt / .txt\" 261x40",
+     "main:BUTTON \"Upload recording\" 261x40",
+     "main:BUTTON \"Analyze transcript\" 170x40",
+     "main:BUTTON \"Retry transcription\" 170x37",
+     "main:BUTTON \"Re-analyze\" 117x36"
+    ],
+    "numbers": [
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-21",
+     "-28",
+     "1",
+     "1",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".border-input"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".px-2\\.5",
+       ".text-red-600",
+       ".text-cyan-700"
+      ]
+     }
+    ]
+   },
+   "shot": "before-tr-failed-375-light.png",
+   "kb": 56
+  },
+  "tr-failed-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 261x40",
+     "main:INPUT \"\" 261x40",
+     "main:BUTTON \".vtt / .txt\" 261x40",
+     "main:BUTTON \"Upload recording\" 261x40",
+     "main:BUTTON \"Analyze transcript\" 170x40",
+     "main:BUTTON \"Retry transcription\" 166x36",
+     "main:BUTTON \"Re-analyze\" 117x36"
+    ],
+    "numbers": [
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-21",
+     "-28",
+     "1",
+     "1",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".border-input"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".px-2\\.5",
+       ".text-red-600",
+       ".text-cyan-700"
+      ]
+     }
+    ]
+   },
+   "shot": "before-tr-failed-375-dark.png",
+   "kb": 56
+  },
+  "tr-failed-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 256x40",
+     "main:INPUT \"\" 320x40",
+     "main:BUTTON \".vtt / .txt\" 113x40",
+     "main:BUTTON \"Upload recording\" 169x40",
+     "main:BUTTON \"Analyze transcript\" 170x40",
+     "main:BUTTON \"Retry transcription\" 166x36",
+     "main:BUTTON \"Re-analyze\" 117x36"
+    ],
+    "numbers": [
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-21",
+     "-28",
+     "1",
+     "1",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".border-input"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".px-2\\.5",
+       ".text-red-600"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-tr-failed-1280-light.png",
+   "kb": 145
+  },
+  "tr-failed-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 256x40",
+     "main:INPUT \"\" 320x40",
+     "main:BUTTON \".vtt / .txt\" 113x40",
+     "main:BUTTON \"Upload recording\" 169x40",
+     "main:BUTTON \"Analyze transcript\" 170x40",
+     "main:BUTTON \"Retry transcription\" 166x36",
+     "main:BUTTON \"Re-analyze\" 117x36"
+    ],
+    "numbers": [
+     "-01",
+     "-01",
+     "-02",
+     "-02",
+     "-21",
+     "-28",
+     "1",
+     "1",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "25",
+     "3",
+     "45",
+     "60"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 3,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".border-input"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".px-2\\.5",
+       ".text-red-600"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-tr-failed-1280-dark.png",
+   "kb": 145
+  },
+  "vocab-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 180x40",
+     "main:BUTTON \"Previous month\" 32x32",
+     "main:BUTTON \"Next month\" 32x32",
+     "main:BUTTON \"Whole Class\" 168x32",
+     "main:BUTTON \"Individual Student\" 168x32"
+    ],
+    "numbers": [
+     "+0",
+     "+2",
+     "+2",
+     "+4",
+     "-11",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/1",
+     "1/2",
+     "2",
+     "2",
+     "2",
+     "2/4",
+     "2026",
+     "3",
+     "3",
+     "4",
+     "4",
+     "57",
+     "6",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".border-input"
+      ]
+     }
+    ]
+   },
+   "shot": "before-vocab-375-light.png",
+   "kb": 70
+  },
+  "vocab-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 180x40",
+     "main:BUTTON \"Previous month\" 32x32",
+     "main:BUTTON \"Next month\" 32x32",
+     "main:BUTTON \"Whole Class\" 168x32",
+     "main:BUTTON \"Individual Student\" 168x32"
+    ],
+    "numbers": [
+     "+0",
+     "+2",
+     "+2",
+     "+4",
+     "-11",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/1",
+     "1/2",
+     "2",
+     "2",
+     "2",
+     "2/4",
+     "2026",
+     "3",
+     "3",
+     "4",
+     "4",
+     "57",
+     "6",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".border-input"
+      ]
+     }
+    ]
+   },
+   "shot": "before-vocab-375-dark.png",
+   "kb": 70
+  },
+  "vocab-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 180x40",
+     "main:BUTTON \"Previous month\" 32x32",
+     "main:BUTTON \"Next month\" 32x32",
+     "main:BUTTON \"Whole Class\" 220x32",
+     "main:BUTTON \"Individual Student\" 220x32"
+    ],
+    "numbers": [
+     "+0",
+     "+2",
+     "+2",
+     "+4",
+     "-11",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/1",
+     "1/2",
+     "2",
+     "2",
+     "2",
+     "2/4",
+     "2026",
+     "3",
+     "3",
+     "4",
+     "4",
+     "57",
+     "6",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".border-input"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-vocab-1280-light.png",
+   "kb": 125
+  },
+  "vocab-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 180x40",
+     "main:BUTTON \"Previous month\" 32x32",
+     "main:BUTTON \"Next month\" 32x32",
+     "main:BUTTON \"Whole Class\" 220x32",
+     "main:BUTTON \"Individual Student\" 220x32"
+    ],
+    "numbers": [
+     "+0",
+     "+2",
+     "+2",
+     "+4",
+     "-11",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/1",
+     "1/2",
+     "2",
+     "2",
+     "2",
+     "2/4",
+     "2026",
+     "3",
+     "3",
+     "4",
+     "4",
+     "57",
+     "6",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".border-input"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-vocab-1280-dark.png",
+   "kb": 125
+  },
+  "vocab-micro-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 180x40",
+     "main:BUTTON \"Previous month\" 32x32",
+     "main:BUTTON \"Next month\" 32x32",
+     "main:BUTTON \"Whole Class\" 168x32",
+     "main:BUTTON \"Individual Student\" 168x32",
+     "main:BUTTON \"Nguyễn Minh Anh\" 343x40"
+    ],
+    "numbers": [
+     "-11",
+     "0",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".w-\\[180px\\]",
+       ".sm\\:w-\\[280px\\]"
+      ]
+     }
+    ]
+   },
+   "shot": "before-vocab-micro-375-light.png",
+   "kb": 52
+  },
+  "vocab-micro-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 180x40",
+     "main:BUTTON \"Previous month\" 32x32",
+     "main:BUTTON \"Next month\" 32x32",
+     "main:BUTTON \"Whole Class\" 168x32",
+     "main:BUTTON \"Individual Student\" 168x32",
+     "main:BUTTON \"Nguyễn Minh Anh\" 343x40"
+    ],
+    "numbers": [
+     "-11",
+     "0",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".w-\\[180px\\]",
+       ".sm\\:w-\\[280px\\]"
+      ]
+     }
+    ]
+   },
+   "shot": "before-vocab-micro-375-dark.png",
+   "kb": 52
+  },
+  "vocab-micro-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 180x40",
+     "main:BUTTON \"Previous month\" 32x32",
+     "main:BUTTON \"Next month\" 32x32",
+     "main:BUTTON \"Whole Class\" 220x32",
+     "main:BUTTON \"Individual Student\" 220x32",
+     "main:BUTTON \"Nguyễn Minh Anh\" 280x40"
+    ],
+    "numbers": [
+     "-11",
+     "0",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".w-\\[180px\\]",
+       ".sm\\:w-\\[280px\\]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-vocab-micro-1280-light.png",
+   "kb": 105
+  },
+  "vocab-micro-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 19,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:classes:select": 1,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_vocabulary_entries:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2,
+     "from:vocab_activity_log:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Starters 1 (Mon-Wed)\" 180x40",
+     "main:BUTTON \"Previous month\" 32x32",
+     "main:BUTTON \"Next month\" 32x32",
+     "main:BUTTON \"Whole Class\" 220x32",
+     "main:BUTTON \"Individual Student\" 220x32",
+     "main:BUTTON \"Nguyễn Minh Anh\" 280x40"
+    ],
+    "numbers": [
+     "-11",
+     "0",
+     "1",
+     "1",
+     "1",
+     "2",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 2,
+      "t": [
+       ".w-\\[180px\\]",
+       ".sm\\:w-\\[280px\\]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-vocab-micro-1280-dark.png",
+   "kb": 105
+  }
+ }
+}

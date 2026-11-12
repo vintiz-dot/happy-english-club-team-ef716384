@@ -1,0 +1,145 @@
+{
+ "label": "before-frz",
+ "runs": {
+  "lb-board-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:BUTTON \"Standard\" 103x36",
+     "main:BUTTON \"Live\" 71x36",
+     "main:BUTTON \"Add Points\" 117x36",
+     "main:BUTTON \"Award points\" 132x36",
+     "main:BUTTON \"New window\" 130x36",
+     "main:BUTTON \"November 2026\" 170x36",
+     "main:BUTTON \"Select all\" 112x36"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "14",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "4",
+     "4",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 4,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".placeholder\\:text-muted-foreground"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       "button[aria-label=\"Show Book points\"]",
+       "button[aria-label=\"Show Bolt points\"]",
+       "button[aria-label=\"Show Flame points\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".flex-wrap"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "before-frz-lb-board-1280-light.png"
+  }
+ }
+}
