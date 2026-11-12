@@ -36,3 +36,33 @@ Also: `scripts/pgtest/run.mjs` now runs the engine unit suite ("recorder engine"
 ## C3 screens (`src/components/recorder/**`, `src/pages/TeacherRecorder.tsx`, `src/lib/recorderUi.ts`, one wrapped call in `src/components/Layout.tsx`)
 
 Review 2 section 7, item by item: (1) `stalled` is in CAPTURING: the bar and Stop stay, the screen is not left (setup not offered), drawn without the red dot as "NOT RECORDING - restarting the audio", `role="alert"`; (2) `starting` has no red dot: "Starting...", after 5 s "Saving on this laptop - the school server has not confirmed yet" as an alert; (3) an `error` screen "This lesson is not being recorded" with the start_failed text (what is kept); `error` may arm the NEXT lesson, never re-arm the same one; (4) the title regex knows all four prefixes; (5) `errorView` has a view per new code, and while capturing no view offers Reload (the default says "Do not reload while recording"); (6) an error board in `recorderUi.ts` (`boardAdd/boardClear/boardShow`): one entry per (code, track), by priority (NOT RECORDING > microphones > silent/quota > server > others > clipping), repeats counted, offline never on it, at most three shown; (7) `device_lost` = "still missing - plug it back in; the recorder is looking for it", and `device_restored` clears both `unplugged` and `lost` (and their board entries); (8) `level.clipping` on the meter ("Too loud - clipping") and the clipping warning clears itself after a minute; (9) `mic_silent` stays per track until health `recovered` for that track; (10) `stuck` and `recovered.othersPending` shown, with a typed-DISCARD dialog for stuck audio; (11) sign-out goes through `guardedSignOut` (new `signOutGuard.ts`; Layout's one edit): refused while capturing, warns when audio is unsent, then `rec.signOut()`; the engine is re-created on a user change (DailyRecorder keyed by user id); (12) `RecorderLike` picks `signOut`, `othersPending`, `heldAudio`, `durable`, `discardLocal`, `current`; `durable === false` -> an error notice and no arming; (13) the upload line shows `stopPending`, `stopRefused`, `heldInMemory`, `belowFloor`; (14) no folder backup offered. Tested: `scripts/recorder/ui.test.mjs` 30/0 (views, no Reload while capturing, the board, the upload lines); the screens themselves type-check (`tsc -p tsconfig.app.json` exit 0); not rendered in a browser here.
+
+## Mutation run (`.probe/mut.mjs`, throwaway, removed; each mutant a copy of `src/lib/recorder` run against `unit.test.mjs` via `RECORDER_SRC`)
+
+| # | Mutant | Result |
+|---|---|---|
+| A | reviewer: the late-tick deferral taken every time | CAUGHT 403/1 |
+| B | reviewer: re-made only when resume() says not running | CAUGHT 403/1 |
+| C | reviewer: label fallback may open the other track's device | CAUGHT 403/1 |
+| D | reviewer: a loss not ignored when the track is already lost | SURVIVED 404/0 -> case (a second `ended`) -> CAUGHT 406/1 |
+| E | reviewer: no read-back after a failed Stop | CAUGHT 403/1 |
+| F | reviewer: recover leaves complete leftovers | CAUGHT 403/1 |
+| G | N-B1: t0 at the answer again | CAUGHT (suite crashed) |
+| H | N-B1: pre_start never told to the server | CAUGHT 398/6 |
+| I | N-B1: `starting` considered `recording` | SURVIVED 404/0 -> case (a stall while starting) -> CAUGHT 406/1 |
+| J | N-B2: any start failure final | CAUGHT 395/9 |
+| K | N-B3: both lost does not stall | CAUGHT 401/3 |
+| L | N-M1: one re-make per lesson | CAUGHT 403/1 |
+| N | N-M2: no padding | CAUGHT 401/3 |
+| O | N-M3: slow clock answers kept | CAUGHT 402/2 |
+| P | N-M4: ownerless rows not adopted | CAUGHT 403/1 |
+| Q | N-M5: complete-with-refused not listed | CAUGHT 401/3 |
+| S | N-M6: no encoder timeout | CAUGHT (suite never finished on the hung encoder) |
+| T | N-M7: no re-open timeout | CAUGHT 403/1 |
+| U | N-M8: no health reset per lesson | CAUGHT 403/1 |
+
+The reviewer's six: 6 caught (D after one case). 13 new: 13 caught (I after one case).
+
+## Synthetic audio only
+
+The unit suite's one real-lesson FLAC check now runs only with `RECORDER_REAL_AUDIO=1`; the browser harness defaults to a synthetic WAV made by `scripts/recorder/make-synthetic-wav.mjs` (`C:\Users\Dell\hec-tools\c2r-harness\synthetic.wav`, harmonic tones + noise with pauses). Every run reported here used synthetic audio.
