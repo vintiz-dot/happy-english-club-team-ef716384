@@ -654,6 +654,17 @@ await section('settled reads the bill floor (D2 settled test)', async () => {
   ok('fixture: D1 reads NONE and not settled (no billable row left)', (await d1(e.sid)).level === 'NONE' && (await d1(e.sid)).settled.tuition === false);
   const pe = await preview(e.sid);
   ok('with an evidence floor, settled is judged over every child on the register: T3', pe.tier === 3 && pe.settled_any === true, [pe.tier, pe.settled_any]);
+  // A child on the register who is NOT named by any cause (a seeded row the
+  // service lane excused) still counts once the lesson has a floor.
+  const x = await mk({ when: PAST });
+  const kx = await att(x.sid, 'Present', null);
+  await inv(kx, x.month, { recorded: 540000 });
+  await asService(`UPDATE attendance SET status='Excused' WHERE student_id=$1`, [kx]);
+  const tx = await transcript(x);
+  await asTeacher(x, `DELETE FROM class_transcripts WHERE id=$1`, [tx]);
+  const px = await preview(x.sid);
+  ok('with a floor, an excused child never named by a cause still makes the lesson settled: T3 (not T2)',
+     px.tier === 3 && px.settled_any === true && !(px.floor?.causes ?? []).some((c) => c.student_id === kx), [px.tier, px.settled_any]);
   // A child whose mark the service lane deleted is still named by the floor's cause.
   const g = await mk({ when: PAST });
   const kg = await att(g.sid, 'Present', g.teacher);

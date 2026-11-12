@@ -102,7 +102,7 @@ const SUITES = [
   {
     name: "d4 floors",
     file: "d4-floors.test.mjs",
-    expect: 197,
+    expect: 198,
     migrations: [
       "20261009130000_audit_every_admin_action.sql",
       "20261027090000_cancelled_lesson_attendance_guard.sql",
