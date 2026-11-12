@@ -228,7 +228,7 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
           )}
         </div>
         <div className={cn(ivory ? "flex flex-wrap items-center gap-2" : "flex items-center gap-2")}>
-          {role === "admin" &&((tuitionData?.carryOutDebt ?? 0) > 0 || (tuitionData?.carryOutCredit ?? 0) > 0) && (
+          {role === "admin" && ((tuitionData?.carryOutDebt ?? 0) > 0 || (tuitionData?.carryOutCredit ?? 0) > 0) && (
             <Button
               onClick={() => setSettleBillOpen(true)}
               variant="outline"
@@ -406,7 +406,7 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
                         )}
                       </div>
                       <p className={cn(ivory ? "text-hec-caption tabular-nums text-hec-ink-soft" : "text-xs text-muted-foreground")}>
-                        {classItem.sessions_count} sessions× {formatVND(classItem.session_rate_vnd)}
+                        {classItem.sessions_count} sessions × {formatVND(classItem.session_rate_vnd)}
                       </p>
                     </div>
                     <div className={cn(ivory ? "shrink-0 text-right tabular-nums text-hec-ink" : "text-right")}>
@@ -499,7 +499,7 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
               {statusBadge}
             </div>
             <p className={cn(ivory ? "mt-2 text-hec-caption text-hec-ink-soft" : "text-xs text-muted-foreground mt-2")}>
-              {tuitionData.balanceStatus=== 'settled' ? 'All paid up' : tuitionData.balanceStatus === 'credit' ? 'Overpaid for this month' : 'Outstanding balance'}
+              {tuitionData.balanceStatus === 'settled' ? 'All paid up' : tuitionData.balanceStatus === 'credit' ? 'Overpaid for this month' : 'Outstanding balance'}
             </p>
           </CardContent>
         </Card>
