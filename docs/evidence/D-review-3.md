@@ -4,7 +4,7 @@ SHIP: YES AFTER FIXES
 
 # D review 3 - SQL guard revision 1 and the rewired edge functions (last review before the live apply)
 
-Where I am / next step: probes finished; findings written; mutation tables filled as far as the runs got (see "Mutation runs"). Next step is the conductor's: the four fixes in "Ship decision".
+Where I am / next step: FINISHED. Three probe runs and both mutation runs complete (27 function mutants, 18 SQL mutants); `.probe/` and the node_modules link removed. Next step is the conductor's: the four fixes in "Ship decision".
 
 Counts. SQL revision 1: 0 BLOCKER, 0 MAJOR, 3 MINOR. Functions: 0 BLOCKER, 2 MAJOR, 9 MINOR. Ship unit: 1 missing part (the D3 dialogs are not in this branch).
 
@@ -77,7 +77,7 @@ Why SHIP is not a plain YES: (1) the preview step of `manage-session` calls calc
 
 ### F-7 MINOR (rollout) - nothing calls `log_session_automation_refused`; a refused rebuild delete is silent
 
-- Probe (c3): `N7 rebuild: delete TODAY's lesson that started 2h ago, blank register => HC020 "kind=delete; started=true; level=NONE"`, `N18 automation_refused events => 0`. `schedule-sessions/index.ts:752-765` ignores the error and simply does not count the lesson as removed. Review-2 contract gap 10 ("must call") is still open; the build doc says so. The owner will not see that the rebuild wanted to remove a lesson and was stopped.
+- Probe (c3): `N7 rebuild: delete TODAY's lesson that started 2h ago, blank register => HC020 "kind=delete; started=true; level=NONE"`, `N18 automation_refused events => 0`. `schedule-sessions/index.ts:751-765` ignores the error and simply does not count the lesson as removed. Review-2 contract gap 10 ("must call") is still open; the build doc says so. The owner will not see that the rebuild wanted to remove a lesson and was stopped.
 - Fix (own small change to `schedule-sessions`, can follow the ship): on `HC020`/`HC021` call the RPC and return the lesson in an `attention` list.
 
 ### F-8 MINOR (functions) - bulk refresh will mostly fail on its first pass; the 429 of `manage-session` has no code
@@ -99,14 +99,17 @@ Why SHIP is not a plain YES: (1) the preview step of `manage-session` calls calc
 
 - Probe (c1 V7): seeded register, paid bill, points + linked transcript = `tier 3`; after re-dating the point row and unlinking the transcript: preview `{"tier":1,"level":"NONE","settled_any":true,"review":false,"erased":[]}`, cancel stored `review_required:false`, not in the queue. This is review-2 F-3, deferred to D4 by the conductor. Still true; the owner should hear it in one sentence.
 
-### F-12 MINOR (SQL tests) - three mutants in the revised destination rules survive
+### F-12 MINOR (SQL tests) - six mutants in the revised destination rules survive
 
 ```
 SURVIVED | S05 destination-day evidence no longer raises the tier
 SURVIVED | S06 review ignores destination day evidence
 SURVIVED | S08 review ignores a started destination
+SURVIVED | S12 day evidence ignores other Held / marked lessons
+SURVIVED | S14 day evidence ignores points
+SURVIVED | S15 day evidence ignores transcripts
 ```
-Each condition is covered only together with another one (a day in the past with points is also a started destination), so removing one alone changes no assertion. A lesson moved later on the SAME day onto homework set that day is the one input that reaches `day_evidence` alone; no case has it. Add that case (expect tier >= 1 and `review_required`), and a move to a started destination with no day evidence.
+S05/S06/S08: each condition is covered only together with another one (a day in the past with points is also a started destination), so removing one alone changes no assertion. A lesson moved later on the SAME day onto homework set that day is the one input that reaches `day_evidence` alone; no case has it. S12/S14/S15: of the four families `session_day_evidence` reads, only homework has a case that depends on it. Add: one case per family through the automation lane (as the homework case does), the same-day case (expect tier >= 1 and `review_required`), and a move to a started destination with no day evidence. None of these is a hole in the SQL as written; they are rules a later edit could drop unnoticed.
 
 ### F-13 MINOR - Held -> Scheduled needs no reason (deviation 5), by `change-status` and by `update`
 
@@ -189,7 +192,62 @@ Each condition is covered only together with another one (a day in the past with
 
 Run on copies (`.probe/fm/<n>/supabase/functions`, `.probe/sm/<n>.sql`); the real files were never edited. Unmutated controls: functions suite `81 passed, 0 failed`; guard suite `239 passed, 0 failed`.
 
-MUTATION-TABLES-PLACEHOLDER
+Functions - 27 mutants, 20 caught, 7 survived (every caught mutant printed its summary line; F20 and F26 were caught partly through `section ... ran to the end` FAIL lines):
+
+```
+SURVIVED F01 admin gate removed (manage-session)                 81/0   -> F-2
+SURVIVED F02 admin gate removed (bulk-cancel-sessions)           81/0   -> F-2
+SURVIVED F03 Scheduled<->Held write on the service client        81/0   -> F-2
+caught   F04 kind-null move write on the service client          2 FAIL
+caught   F05 update write on the service client                  1 FAIL
+caught   F06 reason length check dropped in the function         1 FAIL (bulk; the single path is still refused by SQL HC010)
+caught   F07 reason not read at all in readAck                   1 FAIL
+caught   F08 missing token accepted                              5 FAIL
+caught   F09 refresh skipped after a confirmed change            7 FAIL
+caught   F10 bulk includes held_items by default                 5 FAIL
+caught   F11 bulk plain items not stripped                       4 FAIL
+caught   F12 guard-missing branch removed                        6 FAIL
+caught   F13 refreshPairs stops at the first failure             3 FAIL
+caught   F14 tuition_refreshed recorded although a pair failed   1 FAIL
+caught   F15 update no longer refuses a date/time change         1 FAIL (the mutant answers 200 and writes no date - it only stops saying no)
+caught   F16 update no longer refuses status into/out of Canceled 2 FAIL
+caught   F17 cancel always sent with confirm true                2 FAIL
+caught   F18 bulk held item without confirm accepted             1 FAIL
+SURVIVED F19 a sibling-unresolved refresh counted as ok          81/0   - no case scripts `siblingUnresolved`; a bill not saved would be reported "refreshed"
+caught   F20 caller client built without the Authorization header 17 FAIL
+SURVIVED F21 SUPABASE_ANON_KEY-missing check removed             81/0   - no case; my probe G5 shows the real behaviour (503 misconfigured)
+SURVIVED F22 bulk-delete 0-62 day range check removed            81/0   - no case; my probe K8 shows 400
+caught   F23 change-status Canceled -> Held allowed              1 FAIL
+caught   F24 a failed refresh reported as "refreshed"            1 FAIL
+SURVIVED F25 hard bulk-delete: per-item confirm forced true      81/0   - no hard-delete case with a tier-1 lesson sent without confirm
+caught   F26 preview on the service client                       12 FAIL
+caught   F27 tuitionSnapshot leaks paid_amount                   1 FAIL
+```
+
+SQL (revised areas) - 18 mutants, 12 caught, 6 survived, no crash:
+
+```
+caught   S01 re-parent branch removed                            4 FAIL
+caught   S02 re-parent counts only person-marked rows            1 FAIL
+caught   S03 id change not raised in the function                4 FAIL
+caught   S04 trigger WHEN omits id                               4 FAIL
+SURVIVED S05 destination-day evidence no longer raises the tier  239/0  -> F-12
+SURVIVED S06 review ignores destination day evidence             239/0  -> F-12
+caught   S07 review ignores a settled destination                2 FAIL
+SURVIVED S08 review ignores a started destination                239/0  -> F-12
+caught   S09 un-cancel in a settled month not reviewed           2 FAIL
+caught   S10 automation lane ignores destination day evidence    1 FAIL
+caught   S11 insert guard: owner check removed                   1 FAIL (the assertion reads the function's source text, it does not try an insert as another role)
+SURVIVED S12 day evidence ignores other Held / marked lessons    239/0  -> F-12
+caught   S13 day evidence ignores homework                       1 FAIL
+SURVIVED S14 day evidence ignores points                         239/0  -> F-12
+SURVIVED S15 day evidence ignores transcripts                    239/0  -> F-12
+caught   S16 preview review_required always false                6 FAIL
+caught   S17 un-cancel review ignores the bills of excused children 2 FAIL
+caught   S18 preview erased_recently always empty                2 FAIL
+```
+
+Add to fix 2 of the ship decision, same size: cases for F19 (scripted `siblingUnresolved: true` -> `tuition.status: "failed"`, `error: "sibling_unresolved"`), F21, F22 and F25.
 
 ---
 
@@ -257,4 +315,4 @@ Why not 4 before 3: with the guard on and the OLD function still deployed, the o
 - The live database, PostgREST's real error shapes (`PGRST202`), supabase-js `functions.invoke` on non-2xx, the real rate limiter between functions, statement timeouts, two-connection races.
 - The stars engine and `schedule-sessions` end to end under the guard (write shapes only).
 - The D3 dialogs (none exist here) and the i18n keys.
-- Mutants marked "not finished" in the table.
+- A future lesson whose register the Pixel Pal sync wrote was deleted by the rebuild shape in my probe (`N9 => OK`); the fixture is artificial (the sync marks taught lessons) and I did not establish whether D1 is meant to count such a mark before the lesson starts.
