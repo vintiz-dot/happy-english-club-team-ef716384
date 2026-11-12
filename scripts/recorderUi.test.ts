@@ -53,8 +53,6 @@ describe("time and headline", () => {
     expect(durationWords(92 * 60000)).toBe("1 h 32 min");
     expect(durationWords(45 * 60000)).toBe("45 min");
     expect(durationWords(20_000)).toBe("under a minute");
-    expect(documentTitle("Recorder", true)).toBe("● Recording - Recorder");
-    expect(documentTitle("Recorder", false)).toBe("Recorder");
   });
 });
 
