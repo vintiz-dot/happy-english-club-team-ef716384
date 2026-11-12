@@ -4,7 +4,9 @@ Task B0 of `docs/MASTER_PLAN.md`. Tooling only; no model comparison (that is B1/
 Aggregates and codes (S01...) only in this file: no transcript text, no names. `key.txt` / `consent.txt` were never opened.
 Appended as the work went; each section says what was run and what it printed.
 
-## Where I am / next steps (PAUSED 2026-11-11 for the money work)
+## Where I am / next steps (paused 2026-11-11, RESUMED 2026-11-12)
+
+**Next step right now:** first ECAPA identification run (`ident_ecapa.py`, oracle turns) on the s500 mixes is running; then `score.py ident` on its output -> section 7.
 
 Built and committed (all in `scripts/lesson-eval/`): common.py (repo-write refusal, key.txt/consent.txt skip), extract.py, confirm_pairs.py, split.py, mix.py, score.py + result_schema.json, hardware.py, smoke_local.py, delete_voiceprints.py, delete_all_derived.py, README.md, tests/ (26 pytest cases on synthetic fixtures).
 
@@ -118,3 +120,31 @@ Result: **15 children qualify for a held-out set** (S01-S07, S10, S11, S14, S15,
 Owner questions: (a) is S23's clip really the child (a 134 Hz median is adult/teen range)? (b) S13, S20, S21 (the long > 8 min clips) are mostly an adult voice - expected (lesson recordings with a teacher) or wrong clips?
 
 First run (8 s blocks, no enrolment floor) let held-out eat into enrolment (S24 enrol 20 s); fixed with the 30 s floor, 5 s blocks and up to 100 seeded deals per child.
+
+## 5. Synthetic discussions (mix.py, run 2026-11-11)
+
+`mix.py --n 3 --overlap {0.00,0.05,0.15} --degrade s500 --seed 7` and `--n 3 --overlap 0.05 --seed 7` (no degradation). 12 mixes of 3.1-5.8 min, 3-5 children each, 47-109 turns. Outputs `work\mix\seed7_ov{00,05,15}_{s500,none}\`.
+
+| set | measured overlap fraction per mix | notes |
+|---|---|---|
+| ov00_s500 | 0.000 / 0.000 / 0.000 | |
+| ov05_s500 | 0.051 / 0.050 / 0.051 | |
+| ov15_s500 | 0.154 / 0.165 / 0.161 | SNR 15.3 / 22.2 / 12.9 dB |
+| ov05_none | 0.052 / 0.050 / 0.051 | |
+
+Checks: re-run of ov15_s500 into a second folder -> all three WAVs byte-identical (`cmp`); its ground-truth RTTM scored against itself with `score.py der` -> DER 0.0. Held-out segments are reused (max reuse factor 2.9-4.5 per child within a mix), so independent test turns are fewer than turns; ident scoring counts each source segment once. `--exclude S20,S21` (added) builds a set without the two clips carrying adult speech. `mix.py --out <path in repo>` -> "REFUSED ... inside the git repository", exit 3.
+
+## 6. Hardware, install matrix, smoke run (2026-11-11)
+
+`hardware.py --out work\hardware.json`: Intel Core i7-8665U @ 1.90 GHz (4 cores / 8 threads, max clock 2112 MHz reported), 15.8 GB RAM, Windows 11 (10.0.26300), Python 3.13.14, ffmpeg 8.1.2. GPUs: Intel UHD 620 + a virtual monitor; **no CUDA** (torch.cuda False, CTranslate2 0 CUDA devices, onnxruntime providers CPU + Azure only).
+
+| stack | installed in `.venv` (Python 3.13) | result |
+|---|---|---|
+| numpy 2.5.4, scipy 1.18.1, soundfile 0.14.0, pytest 9.2.0 | yes | used by every script |
+| faster-whisper 1.2.1 (CTranslate2 4.9.0, onnxruntime 1.31.1, av 19.0.2) | yes | smoke OK; its silero VAD used by split.py |
+| torch 2.15.0+cpu, torchaudio 2.11.1+cpu (pytorch CPU index) | yes | OK on Python 3.13 |
+| SpeechBrain 1.1.2, ECAPA `speechbrain/spkrec-ecapa-voxceleb` (ungated) | yes | smoke OK (needs `LocalStrategy.COPY` on Windows: no symlinks) |
+| sherpa-onnx 2.0.1 | yes | import only; diarization models not fetched |
+| pyannote.audio | not installed | models gated on Hugging Face; needs a token (requirement recorded, none requested) |
+
+Smoke (`smoke_local.py --wav ...\S01_clip1.wav`, first 30 s, 8 threads; timings only): whisper-small int8 load 35.9 s (first download included), transcribe 44.9 s = RTF 1.50, 42 words, mean word confidence 0.84. ECAPA load 10.8 s, 10 x 3 s windows embedded in 9.8 s = RTF 0.33, 192-dim; embeddings not saved. Models cached under `C:\Users\Dell\hec-audio-eval\models\`.
