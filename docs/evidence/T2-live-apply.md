@@ -1,6 +1,6 @@
 # T2 live apply (aswgmbefikhsnhogtryv)
 
-Where I am / next step: step 2 done; next step 3 verify migration.
+Where I am / next step: step 3 done; next step 4 deploy transcribe-lesson-audio.
 
 ## Step 0 - read
 Read T2-live-apply-brief.md, T2-class-recordings-access.md, T2-review.md, T2b-transcribe-gate.md from 7f8004e (detached HEAD).
@@ -14,3 +14,19 @@ Read T2-live-apply-brief.md, T2-class-recordings-access.md, T2-review.md, T2b-tr
 
 ## Step 2 - apply
 `apply_migration` name `class_recordings_scope`, query = the LF content of `supabase/migrations/20261112120000_class_recordings_scope.sql` at 7f8004e. Result: `{"success":true}`.
+
+## Step 3 - verify the migration landed
+- P1: exactly five policies, all PERMISSIVE, roles `{authenticated}`; no "staff_manage_class_recordings".
+  - class_recordings_admin_all ALL: qual = with_check = `((bucket_id = 'class-recordings'::text) AND has_role(auth.uid(), 'admin'::app_role))` (file: `bucket_id = 'class-recordings' AND public.has_role(auth.uid(), 'admin'::public.app_role)` for both) - same.
+  - class_recordings_staff_select SELECT: qual `((bucket_id = 'class-recordings'::text) AND class_recordings_staff_can(name))`, with_check null - same as file.
+  - class_recordings_staff_insert INSERT: qual null, with_check `((bucket_id = 'class-recordings'::text) AND class_recordings_staff_can(name))` - same.
+  - class_recordings_staff_update UPDATE: qual and with_check both `((bucket_id = 'class-recordings'::text) AND class_recordings_staff_can(name))` - same.
+  - class_recordings_staff_delete DELETE: qual `((bucket_id = 'class-recordings'::text) AND class_recordings_staff_can(name))` - same.
+  - Also: md5 of the five policies' (name|cmd|roles|qual|with_check) live = `bfecfb23f905fa37ed67349029c25c87` = local pglite load.
+- P2: prosecdef t, provolatile s, proconfig `{search_path=public}`, anon EXECUTE f, authenticated EXECUTE t.
+- md5(prosrc) of class_recordings_staff_can: live `b8b2985ed5d906b138fbaf93d988db64` (len 387); local pglite (PRELUDE + 20260717090000 + 20261111110000 + the fix, LF blobs from 7f8004e, loaded as class-recordings-scope.test.mjs does) `b8b2985ed5d906b138fbaf93d988db64` (len 387). EQUAL.
+- P5: `class_transcripts_audio_path_in_class`, convalidated f. Definition: `CHECK (((audio_storage_path IS NULL) OR ((lower(split_part(audio_storage_path, '/'::text, 1)) = (class_id)::text) AND (audio_storage_path ~ '^[^/\\]+/[^/\\]+$'::text)))) NOT VALID` - both conditions; exactly two backslashes inside each bracket (strpos check true, no triple). md5(def) live `236774d34d13649f539275a8ccfeb4c6` = local.
+- P7: 0 rows.
+- P3: 0. P6: 0.
+- Objects in bucket 11 (step 1: 11); rows with audio 11 (step 1: 11).
+- Note: sha256 of the LF fix blob at 7f8004e is `f01a227a...c652`, not the `92044de3...` in T2-class-recordings-access.md "Fingerprint" (that fingerprint predates folding in R1, the two-segment clause; the file was not re-fingerprinted). The md5 checks above are what verify the live state.
