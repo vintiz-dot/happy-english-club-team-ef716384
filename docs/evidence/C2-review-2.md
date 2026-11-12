@@ -146,7 +146,7 @@ What the unit suite cannot see, by construction (`FakeSource`, `unit.test.mjs:31
 
 ## 6. Six mutations of my own
 
-Throwaway copies of `src/lib/recorder` in my scratchpad (outside the repo), one change each, the unit suite run against each with `RECORDER_SRC`. I checked that each mutated line really was in the bundle under test, and ran a control first-hand: the author's mutant 17 (watchdog never fires) -> **CAUGHT, 9 FAIL** (the same 9 the author reports), so the harness does catch things.
+Throwaway copies of `src/lib/recorder` in my scratchpad (outside the repo), one change each, the unit suite run against each with `RECORDER_SRC`. I checked that each mutated line really was in the bundle under test, and ran a control first-hand: the author's mutant 17 (watchdog never fires) -> **CAUGHT 328/9, exit 1** (the author reports 9 failures for it too), so the harness does catch things.
 
 | # | Path | Mutant (`controller.ts`) | Result | What it means |
 |---|---|---|---|---|
