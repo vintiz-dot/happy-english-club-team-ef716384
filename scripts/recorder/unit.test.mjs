@@ -1754,8 +1754,8 @@ for (const [label, msg, refusal] of [
   w.server.failNext("rpc:recorder_register_chunk", 1, { message: "Recording was asked to stop: audio captured after that is refused" });
   await src.play(12, r);
   await r.stop(); await r.settle(); await ticks(r, 4);
-  const refused = (await store.listChunks(row.id)).filter((c) => c.refusal === "stop_requested");
-  ok("R3-M2: chunks refused after the school's stop request hold no audio on the laptop", refused.length >= 1 && (await Promise.all(refused.map((c) => store.getBytes(row.id, c.track, c.seq)))).every((b) => !b));
+  ok("R3-M2: the server refused audio after the school's stop request (the track ended there)", w.server.chunkRows(row.id).length < 2 * Math.ceil(37 / 10));
+  ok("R3-M2: and none of that audio stays on the laptop (nothing else was left, so the recording is gone locally)", (await store.bytesHeld(row.id)) === 0 && !(await r.heldAudio()).some((h) => h.recordingId === row.id));
 }
 
 console.log("=== owner ruling: unsent audio 14 days after the server gave it up ===");
