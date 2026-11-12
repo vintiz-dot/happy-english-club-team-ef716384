@@ -132,7 +132,7 @@ def summ(turns, T=None):
     out = {"n_closed": len(cl), "n_open": len(op),
            "top1": top1 / len(cl) if cl else None, "top1_ci": score.wilson_interval(top1, len(cl)),
            "eer": score.eer(turns)["eer"]}
-    if T is not None and math.isfinite(T):
+    if T is not None:  # T may be inf: nothing is named, everything is UNKNOWN
         c, o = score.ident_at(cl, T), score.ident_at(op, T)
         named = sum(1 for x in cl if x.score >= T and x.pred == x.true)
         out.update({"T": T, "named": named / len(cl), "named_ci": score.wilson_interval(named, len(cl)),
