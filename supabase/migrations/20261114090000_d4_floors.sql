@@ -45,6 +45,12 @@
 
 BEGIN;
 
+-- Fail fast instead of queueing behind a busy table (review N-4): CREATE
+-- TRIGGER takes a lock on attendance, sessions, invoices and the other
+-- evidence tables. If one is busy for 5 seconds the paste stops, installs
+-- nothing, and is simply repeated a moment later.
+SET LOCAL lock_timeout = '5s';
+
 -- ---------------------------------------------------------------- 0
 -- Preflight. Refuse loudly, install nothing.
 
@@ -397,6 +403,21 @@ $fn$;
 
 -- ---------------------------------------------------------------- 5
 -- The keep triggers. Every one RETURNS the row it was given, unchanged.
+--
+-- A floor is kept only on a REAL lowering (review C-2): each trigger works
+-- out what the row proves for each lesson it can touch, BEFORE and AFTER
+-- the write (D1's own rules, item by item), and calls the keep only for a
+-- lesson where that goes down. A pipeline status update, a re-signed mark
+-- or a mark that rose is not a removal and writes nothing.
+
+-- What one register row proves on its own (D1 items 1 and 4).
+CREATE OR REPLACE FUNCTION public._floor_mark_level(p_status text, p_marked_by uuid)
+RETURNS int LANGUAGE sql IMMUTABLE SET search_path = public AS $fn$
+  SELECT CASE WHEN p_marked_by IS NULL THEN 0
+              WHEN p_status IN ('Present', 'Late') THEN 2
+              WHEN p_status = 'Absent' THEN 1
+              ELSE 0 END
+$fn$;
 
 -- G-10 + keep for the register. HC024 on every lane; HC025 on the person
 -- lane for a direct statement on a started lesson.
@@ -405,7 +426,8 @@ RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f
 DECLARE
   v_lane text;
   s record;
-  v_own text;
+  v_old int;
+  v_new int;
 BEGIN
   IF TG_OP = 'UPDATE' AND (OLD.session_id IS DISTINCT FROM NEW.session_id
                            OR OLD.student_id IS DISTINCT FROM NEW.student_id) THEN
@@ -432,85 +454,101 @@ BEGIN
     END IF;
   END IF;
 
-  IF TG_OP = 'DELETE' OR OLD.status IS DISTINCT FROM NEW.status OR OLD.marked_by IS DISTINCT FROM NEW.marked_by THEN
-    v_own := CASE WHEN OLD.status IN ('Present', 'Late') THEN 'STRONG' WHEN OLD.status = 'Absent' THEN 'SOFT' ELSE 'NONE' END;
+  v_old := public._floor_mark_level(OLD.status::text, OLD.marked_by);
+  v_new := CASE WHEN TG_OP = 'DELETE' THEN 0 ELSE public._floor_mark_level(NEW.status::text, NEW.marked_by) END;
+  IF v_new < v_old THEN
     PERFORM public._session_evidence_keep(OLD.session_id,
       jsonb_build_object('table', 'attendance', 'what', 'attendance', 'op', TG_OP, 'row_id', OLD.id,
                          'student_id', OLD.student_id, 'old_status', OLD.status,
-                         'new_status', CASE WHEN TG_OP = 'UPDATE' THEN NEW.status END),
-      v_own, CASE v_own WHEN 'STRONG' THEN 'D' WHEN 'SOFT' THEN 'R' END);
+                         'new_status', CASE WHEN TG_OP = 'UPDATE' THEN NEW.status END,
+                         'old_marked_by', OLD.marked_by,
+                         'new_marked_by', CASE WHEN TG_OP = 'UPDATE' THEN NEW.marked_by END),
+      CASE v_old WHEN 2 THEN 'STRONG' WHEN 1 THEN 'SOFT' ELSE 'NONE' END,
+      CASE v_old WHEN 2 THEN 'D' WHEN 1 THEN 'R' END);
   END IF;
   IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
   RETURN NEW;
 END $fn$;
 
+-- What one point row proves for one lesson (D1 item 7): 1 = SOFT P, 0 = nothing.
+CREATE OR REPLACE FUNCTION public._floor_point_level(
+  p_lesson uuid, p_class uuid, p_date date,
+  r_class uuid, r_date date, r_session uuid, r_type text, r_points integer, r_created_by uuid)
+RETURNS int LANGUAGE sql IMMUTABLE SET search_path = public AS $fn$
+  SELECT CASE WHEN r_class = p_class AND r_date = p_date
+                   AND r_type IN ('participation', 'correction') AND COALESCE(r_points, 0) > 0
+                   AND (r_session = p_lesson OR (r_session IS NULL AND r_created_by IS NOT NULL))
+              THEN 1 ELSE 0 END
+$fn$;
+
 CREATE OR REPLACE FUNCTION public._point_evidence_keep()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
 DECLARE
   l record;
+  v_old int;
+  v_new int;
 BEGIN
-  IF OLD.type IN ('participation', 'correction') AND OLD.points > 0
-     AND (TG_OP = 'DELETE'
-          OR OLD.class_id   IS DISTINCT FROM NEW.class_id
-          OR OLD.date       IS DISTINCT FROM NEW.date
-          OR OLD.session_id IS DISTINCT FROM NEW.session_id
-          OR OLD.type       IS DISTINCT FROM NEW.type
-          OR OLD.points     IS DISTINCT FROM NEW.points
-          OR OLD.created_by IS DISTINCT FROM NEW.created_by
-          OR OLD.student_id IS DISTINCT FROM NEW.student_id
-          OR OLD.created_at IS DISTINCT FROM NEW.created_at) THEN
-    -- Ascending id (A-12): two removals on one class-day lock floors in one order.
-    FOR l IN
-      SELECT ss.id, ss.class_id, ss.date FROM public.sessions ss
-       WHERE ss.id = OLD.session_id OR (ss.class_id = OLD.class_id AND ss.date = OLD.date)
-       ORDER BY ss.id
-    LOOP
+  -- Ascending id (A-12): two removals on one class-day lock floors in one order.
+  FOR l IN
+    SELECT ss.id, ss.class_id, ss.date FROM public.sessions ss
+     WHERE ss.id = OLD.session_id OR (ss.class_id = OLD.class_id AND ss.date = OLD.date)
+     ORDER BY ss.id
+  LOOP
+    v_old := public._floor_point_level(l.id, l.class_id, l.date,
+               OLD.class_id, OLD.date, OLD.session_id, OLD.type::text, OLD.points::integer, OLD.created_by);
+    v_new := CASE WHEN TG_OP = 'DELETE' THEN 0 ELSE public._floor_point_level(l.id, l.class_id, l.date,
+               NEW.class_id, NEW.date, NEW.session_id, NEW.type::text, NEW.points::integer, NEW.created_by) END;
+    IF v_new < v_old THEN
       PERFORM public._session_evidence_keep(l.id,
         jsonb_build_object('table', 'point_transactions', 'what', 'points', 'op', TG_OP, 'row_id', OLD.id,
                            'student_id', OLD.student_id),
-        -- what D1 item 7 would have counted for THIS lesson
-        CASE WHEN l.class_id = OLD.class_id AND l.date = OLD.date
-                  AND (OLD.session_id = l.id OR (OLD.session_id IS NULL AND OLD.created_by IS NOT NULL))
-             THEN 'SOFT' ELSE 'NONE' END,
-        'P');
-    END LOOP;
-  END IF;
+        'SOFT', 'P');
+    END IF;
+  END LOOP;
   IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
   RETURN NEW;
 END $fn$;
+
+-- What one transcript row proves for one lesson (D1 items 3 and 8):
+-- 2 = STRONG D (linked), 1 = SOFT T (unlinked, same day), 0 = nothing.
+CREATE OR REPLACE FUNCTION public._floor_transcript_level(
+  p_lesson uuid, p_class uuid, p_date date,
+  r_class uuid, r_session uuid, r_tdate date, r_created timestamptz, r_status text, r_audio text)
+RETURNS int LANGUAGE sql STABLE SET search_path = public AS $fn$
+  SELECT CASE WHEN r_class IS DISTINCT FROM p_class
+                   OR NOT (r_status IS DISTINCT FROM 'failed' OR r_audio IS NOT NULL) THEN 0
+              WHEN r_session = p_lesson THEN 2
+              WHEN r_session IS NULL
+                   AND (r_tdate = p_date OR (r_created AT TIME ZONE 'Asia/Ho_Chi_Minh')::date = p_date) THEN 1
+              ELSE 0 END
+$fn$;
 
 CREATE OR REPLACE FUNCTION public._transcript_evidence_keep()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
 DECLARE
   l record;
   v_day date := (OLD.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
-  v_counts boolean := (OLD.status IS DISTINCT FROM 'failed' OR OLD.audio_storage_path IS NOT NULL);
+  v_old int;
+  v_new int;
 BEGIN
-  IF TG_OP = 'DELETE'
-     OR OLD.class_id           IS DISTINCT FROM NEW.class_id
-     OR OLD.session_id         IS DISTINCT FROM NEW.session_id
-     OR OLD.transcript_date    IS DISTINCT FROM NEW.transcript_date
-     OR OLD.status             IS DISTINCT FROM NEW.status
-     OR OLD.audio_storage_path IS DISTINCT FROM NEW.audio_storage_path
-     OR OLD.uploaded_by        IS DISTINCT FROM NEW.uploaded_by
-     OR OLD.created_at         IS DISTINCT FROM NEW.created_at THEN
-    FOR l IN
-      SELECT ss.id, ss.class_id, ss.date FROM public.sessions ss
-       WHERE ss.id = OLD.session_id
-          OR (ss.class_id = OLD.class_id AND (ss.date = OLD.transcript_date OR ss.date = v_day))
-       ORDER BY ss.id
-    LOOP
+  FOR l IN
+    SELECT ss.id, ss.class_id, ss.date FROM public.sessions ss
+     WHERE ss.id = OLD.session_id
+        OR (ss.class_id = OLD.class_id AND (ss.date = OLD.transcript_date OR ss.date = v_day))
+     ORDER BY ss.id
+  LOOP
+    v_old := public._floor_transcript_level(l.id, l.class_id, l.date,
+               OLD.class_id, OLD.session_id, OLD.transcript_date, OLD.created_at, OLD.status::text, OLD.audio_storage_path::text);
+    v_new := CASE WHEN TG_OP = 'DELETE' THEN 0 ELSE public._floor_transcript_level(l.id, l.class_id, l.date,
+               NEW.class_id, NEW.session_id, NEW.transcript_date, NEW.created_at, NEW.status::text, NEW.audio_storage_path::text) END;
+    IF v_new < v_old THEN
       PERFORM public._session_evidence_keep(l.id,
         jsonb_build_object('table', 'class_transcripts', 'what', 'transcript', 'op', TG_OP, 'row_id', OLD.id,
                            'linked', OLD.session_id IS NOT NULL),
-        -- what D1 items 3 and 8 would have counted for THIS lesson
-        CASE WHEN NOT v_counts OR l.class_id IS DISTINCT FROM OLD.class_id THEN 'NONE'
-             WHEN OLD.session_id = l.id THEN 'STRONG'
-             WHEN OLD.session_id IS NULL AND (OLD.transcript_date = l.date OR v_day = l.date) THEN 'SOFT'
-             ELSE 'NONE' END,
-        CASE WHEN OLD.session_id = l.id THEN 'D' ELSE 'T' END);
-    END LOOP;
-  END IF;
+        CASE v_old WHEN 2 THEN 'STRONG' ELSE 'SOFT' END,
+        CASE v_old WHEN 2 THEN 'D' ELSE 'T' END);
+    END IF;
+  END LOOP;
   IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
   RETURN NEW;
 END $fn$;
@@ -522,61 +560,79 @@ DECLARE
   l record;
   v_class uuid;
   v_day date;
-  v_own text;
-  v_go boolean := false;
+  v_new_class uuid;
+  v_new_day date;
+  v_old_counts boolean := false;
+  v_new_counts boolean := false;
 BEGIN
   IF TG_TABLE_NAME = 'homeworks' THEN
-    v_go := OLD.created_at IS NOT NULL
-            AND (TG_OP = 'DELETE'
-                 OR OLD.class_id   IS DISTINCT FROM NEW.class_id
-                 OR OLD.created_at IS DISTINCT FROM NEW.created_at
-                 OR OLD.created_by IS DISTINCT FROM NEW.created_by);
-    IF v_go THEN
+    -- Counts for the class on the Hanoi day it was set, unless it came from the Stars sync.
+    IF OLD.created_at IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM public.stars_homework_map m WHERE m.homework_id = OLD.id) THEN
       v_class := OLD.class_id;
       v_day := (OLD.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
-      v_own := CASE WHEN EXISTS (SELECT 1 FROM public.stars_homework_map m WHERE m.homework_id = OLD.id)
-                    THEN 'NONE' ELSE 'SOFT' END;
+      v_old_counts := true;
+      IF TG_OP = 'UPDATE' AND NEW.created_at IS NOT NULL THEN
+        v_new_class := NEW.class_id;
+        v_new_day := (NEW.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
+        v_new_counts := true;
+      END IF;
     END IF;
   ELSE
-    -- Graded_at cleared, moved to another day, or the row re-pointed:
-    -- the evidence of the old day goes (fail closed: any change, not only clearing).
-    v_go := OLD.graded_at IS NOT NULL
-            AND (TG_OP = 'DELETE'
-                 OR OLD.graded_at   IS DISTINCT FROM NEW.graded_at
-                 OR OLD.homework_id IS DISTINCT FROM NEW.homework_id
-                 OR OLD.student_id  IS DISTINCT FROM NEW.student_id);
-    IF v_go THEN
+    -- Counts for the homework's class on the Hanoi day it was graded, unless the sync graded it.
+    IF OLD.graded_at IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM public.stars_sync_grade_state g
+                        WHERE g.homework_id = OLD.homework_id AND g.student_id = OLD.student_id) THEN
       SELECT h.class_id INTO v_class FROM public.homeworks h WHERE h.id = OLD.homework_id;
       v_day := (OLD.graded_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
-      v_own := CASE WHEN EXISTS (SELECT 1 FROM public.stars_sync_grade_state g
-                                  WHERE g.homework_id = OLD.homework_id AND g.student_id = OLD.student_id)
-                    THEN 'NONE' ELSE 'SOFT' END;
+      v_old_counts := v_class IS NOT NULL;
+      IF TG_OP = 'UPDATE' AND NEW.graded_at IS NOT NULL
+         AND NOT EXISTS (SELECT 1 FROM public.stars_sync_grade_state g
+                          WHERE g.homework_id = NEW.homework_id AND g.student_id = NEW.student_id) THEN
+        SELECT h.class_id INTO v_new_class FROM public.homeworks h WHERE h.id = NEW.homework_id;
+        v_new_day := (NEW.graded_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
+        v_new_counts := v_new_class IS NOT NULL;
+      END IF;
     END IF;
   END IF;
 
-  IF v_go AND v_class IS NOT NULL THEN
+  -- Lowered for the old day unless the row still counts for the same class and day.
+  IF v_old_counts AND NOT (v_new_counts AND v_new_class = v_class AND v_new_day = v_day) THEN
     FOR l IN
       SELECT ss.id FROM public.sessions ss WHERE ss.class_id = v_class AND ss.date = v_day ORDER BY ss.id
     LOOP
       PERFORM public._session_evidence_keep(l.id,
         jsonb_build_object('table', TG_TABLE_NAME, 'what', 'homework', 'op', TG_OP, 'row_id', OLD.id),
-        v_own, 'H');
+        'SOFT', 'H');
     END LOOP;
   END IF;
   IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
   RETURN NEW;
 END $fn$;
 
--- The lesson's own status / date. Records only: D2's trigger decides
--- whether the write is allowed (a refused write rolls the floor back too).
+-- The lesson's own row. Records only: D2's trigger decides whether the
+-- write is allowed (a refused write rolls the floor back too). Three real
+-- lowerings: Held undone; the date changed (points, transcripts and
+-- homework are matched to a lesson by its day); and the lesson made "not
+-- started" by a later start time the same day (review C-1: after that every
+-- keep, and G-10, would treat it as a lesson that has not happened).
 CREATE OR REPLACE FUNCTION public._session_evidence_keep_trg()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
+DECLARE
+  v_unhold boolean := OLD.status = 'Held' AND NEW.status IS DISTINCT FROM 'Held' AND NEW.status IS DISTINCT FROM 'Canceled';
+  v_moved boolean := OLD.date IS DISTINCT FROM NEW.date;
+  v_unstart boolean := COALESCE(public.session_has_started(OLD.date, OLD.start_time), false)
+                       AND NOT COALESCE(public.session_has_started(NEW.date, NEW.start_time), false);
 BEGIN
-  PERFORM public._session_evidence_keep(OLD.id,
-    jsonb_build_object('table', 'sessions', 'what', 'session_status', 'op', TG_OP, 'row_id', OLD.id,
-                       'old_status', OLD.status, 'new_status', NEW.status,
-                       'old_date', OLD.date, 'new_date', NEW.date),
-    CASE WHEN OLD.status = 'Held' THEN 'SOFT' ELSE 'NONE' END, 'R');
+  IF v_unhold OR v_moved OR v_unstart THEN
+    PERFORM public._session_evidence_keep(OLD.id,
+      jsonb_build_object('table', 'sessions', 'what', 'session_status', 'op', TG_OP, 'row_id', OLD.id,
+                         'old_status', OLD.status, 'new_status', NEW.status,
+                         'old_date', OLD.date, 'new_date', NEW.date,
+                         'old_start_time', OLD.start_time, 'new_start_time', NEW.start_time,
+                         'unstarted', v_unstart),
+      CASE WHEN OLD.status = 'Held' THEN 'SOFT' ELSE 'NONE' END, 'R');
+  END IF;
   RETURN NEW;
 END $fn$;
 
@@ -663,7 +719,8 @@ CREATE TRIGGER zz_homework_evidence_keep BEFORE UPDATE OR DELETE ON public.homew
 DROP TRIGGER IF EXISTS zz0_session_evidence_keep ON public.sessions;
 CREATE TRIGGER zz0_session_evidence_keep BEFORE UPDATE ON public.sessions FOR EACH ROW
   WHEN ((OLD.status = 'Held' AND NEW.status IS DISTINCT FROM 'Held' AND NEW.status IS DISTINCT FROM 'Canceled')
-     OR OLD.date IS DISTINCT FROM NEW.date)
+     OR OLD.date IS DISTINCT FROM NEW.date
+     OR OLD.start_time IS DISTINCT FROM NEW.start_time)
   EXECUTE FUNCTION public._session_evidence_keep_trg();
 
 -- zz_ sorts after keep_frozen_invoice_amounts: the floor sees the final NEW.
@@ -1036,6 +1093,9 @@ REVOKE ALL ON FUNCTION
   public._floor_families_or(jsonb, jsonb),
   public._floor_causes_push(jsonb, jsonb),
   public._session_evidence_keep(uuid, jsonb, text, text),
+  public._floor_mark_level(text, uuid),
+  public._floor_point_level(uuid, uuid, date, uuid, date, uuid, text, integer, uuid),
+  public._floor_transcript_level(uuid, uuid, date, uuid, uuid, date, timestamptz, text, text),
   public.session_effective_level(uuid, jsonb),
   public.invoice_floor_state(uuid, text),
   public._attendance_evidence_guard(),

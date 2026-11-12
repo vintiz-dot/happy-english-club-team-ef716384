@@ -11,7 +11,7 @@
       },
       "identity": "public._attendance_evidence_guard()",
       "identity_arguments": "",
-      "md5_prosrc": "b03adfd5cd6cfa995b6f7ab19db046e1",
+      "md5_prosrc": "0348195c51404b1da3185e8626361946",
       "proname": "_attendance_evidence_guard",
       "security_definer": true,
       "volatility": "v"
@@ -73,6 +73,38 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._floor_mark_level(p_status text, p_marked_by uuid)",
+      "identity_arguments": "p_status text, p_marked_by uuid",
+      "md5_prosrc": "ed25e62b64c592f1ee6a026596eb11d0",
+      "proname": "_floor_mark_level",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._floor_point_level(p_lesson uuid, p_class uuid, p_date date, r_class uuid, r_date date, r_session uuid, r_type text, r_points integer, r_created_by uuid)",
+      "identity_arguments": "p_lesson uuid, p_class uuid, p_date date, r_class uuid, r_date date, r_session uuid, r_type text, r_points integer, r_created_by uuid",
+      "md5_prosrc": "dad4fd7df357fb823b5fcfd9db0d5921",
+      "proname": "_floor_point_level",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._floor_table_guard()",
       "identity_arguments": "",
       "md5_prosrc": "79be4d195d4dbb559094061b90f7f5fd",
@@ -89,9 +121,25 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._floor_transcript_level(p_lesson uuid, p_class uuid, p_date date, r_class uuid, r_session uuid, r_tdate date, r_created timestamp with time zone, r_status text, r_audio text)",
+      "identity_arguments": "p_lesson uuid, p_class uuid, p_date date, r_class uuid, r_session uuid, r_tdate date, r_created timestamp with time zone, r_status text, r_audio text",
+      "md5_prosrc": "3c8c752f920eeab0611b6fe33cc66101",
+      "proname": "_floor_transcript_level",
+      "security_definer": false,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._homework_evidence_keep()",
       "identity_arguments": "",
-      "md5_prosrc": "983c26406508d6dd70707887036a7558",
+      "md5_prosrc": "2639cb97dfbad79959c8295ffef922fd",
       "proname": "_homework_evidence_keep",
       "security_definer": true,
       "volatility": "v"
@@ -123,7 +171,7 @@
       },
       "identity": "public._point_evidence_keep()",
       "identity_arguments": "",
-      "md5_prosrc": "5651fd8109ee796379bc0ee6ba072ea7",
+      "md5_prosrc": "0003dc7cfe5783c02b3d7875deba5751",
       "proname": "_point_evidence_keep",
       "security_definer": true,
       "volatility": "v"
@@ -187,7 +235,7 @@
       },
       "identity": "public._session_evidence_keep_trg()",
       "identity_arguments": "",
-      "md5_prosrc": "48aa9c83e617fc46da4abdc0e82b01a2",
+      "md5_prosrc": "8c2cfa6ad9ef61853ffc8b07134dcc8b",
       "proname": "_session_evidence_keep_trg",
       "security_definer": true,
       "volatility": "v"
@@ -203,7 +251,7 @@
       },
       "identity": "public._transcript_evidence_keep()",
       "identity_arguments": "",
-      "md5_prosrc": "8fcce33f3f77d4d91ba110cf6edf9e6d",
+      "md5_prosrc": "6874f3d1d42b899885b3589f1919bbcf",
       "proname": "_transcript_evidence_keep",
       "security_definer": true,
       "volatility": "v"
@@ -524,7 +572,7 @@
     {
       "enabled": "O",
       "function": "_session_evidence_keep_trg",
-      "md5_def": "9b70dd012d689d0ffe7676953c4313ce",
+      "md5_def": "0886607a6e0dc5e58ef6498e6771e540",
       "name": "zz0_session_evidence_keep",
       "table": "sessions",
       "tgtype": 19

@@ -145,12 +145,12 @@ await section('install: definer functions, search_path, grants', async () => {
   const names = ['_caller_lane', '_floor_table_guard', '_floor_families_or', '_floor_causes_push', '_session_evidence_keep',
     'session_effective_level', 'invoice_floor_state', '_attendance_evidence_guard', '_point_evidence_keep',
     '_transcript_evidence_keep', '_homework_evidence_keep', '_session_evidence_keep_trg', '_invoice_state_floor',
-    '_session_change_assess', '_session_erased_recently'];
+    '_session_change_assess', '_session_erased_recently', '_floor_mark_level', '_floor_point_level', '_floor_transcript_level'];
   const p = (await db.query(`SELECT proname, prosecdef, proconfig,
       has_function_privilege('anon', oid, 'EXECUTE') an, has_function_privilege('authenticated', oid, 'EXECUTE') au,
       has_function_privilege('service_role', oid, 'EXECUTE') sr
       FROM pg_proc WHERE pronamespace = 'public'::regnamespace AND proname = ANY($1)`, [names])).rows;
-  ok('all 15 functions of the file exist', p.length === 15, p.map((x) => x.proname));
+  ok('all 18 functions of the file exist', p.length === 18, p.map((x) => x.proname));
   ok('every function of the file pins search_path=public (every SECURITY DEFINER one included)',
      p.every((x) => (x.proconfig ?? []).includes('search_path=public')), p.filter((x) => !(x.proconfig ?? []).includes('search_path=public')).map((x) => x.proname));
   ok('the keep, the floors and the trigger functions are SECURITY DEFINER; the table guard is not (current_user must be the writer)',
@@ -704,18 +704,18 @@ await section('assess output: level_now, floor, fingerprint, impact, token v3', 
   const p3 = await preview(s.sid);
   ok('impact.paid_vnd counts the highest payment seen (the floor), not the lowered one', Number(p3.impact.paid_vnd) === 500000, p3.impact);
   // token v3: a floor cause added between preview and confirm stales the
-  // token even when nothing D1 reads (its hash) and the floor's level move:
-  // lesson A already has a STRONG floor; a point linked to lesson B of the
-  // same class and day is deleted, which the keep also records against A.
+  // token even when nothing D1 reads (its hash) and the floor's level move.
+  // Since C-2 every keep follows a real lowering (which D1's hash already
+  // sees), so the cause is added the one other way there is: the owner's
+  // insert-only backfill appending to an existing STRONG floor.
   const A = await mk({ when: PAST, status: 'Held' });
   const ka = await att(A.sid, 'Present', A.teacher);
   await att(A.sid, 'Present', A.teacher);
   await asAdmin(`UPDATE attendance SET status='Absent' WHERE student_id=$1`, [ka]);
-  const B = await mk({ when: PAST, cid: A.cid, start: '08:00', end: '09:00' });
-  const idB = await point(B);
   const pt = await preview(A.sid);
   const h0 = (await d1(A.sid)).snapshot_hash;
-  await asTeacher(A, `DELETE FROM point_transactions WHERE id=$1`, [idB]);
+  await asSuper(`UPDATE session_evidence_floor SET causes = causes || jsonb_build_array(jsonb_build_object(
+      'at', now(), 'what', 'attendance', 'source', 'backfill', 'lane', 'owner')) WHERE session_id=$1`, [A.sid]);
   const fa = await floorOf(A.sid);
   ok('fixture: the D1 hash of A and its floor level unchanged; the floor of A gained a cause', (await d1(A.sid)).snapshot_hash === h0 &&
      fa.level === 'STRONG' && fa.causes.length === 2, fa.causes);
@@ -740,6 +740,97 @@ await section('G-10 residue: marks re-pointed away before D4', async () => {
   ok('the re-pointed child (90 days ago) is in refresh_pairs and invoices_before',
      p.refresh_pairs.some((x) => x.student_id === gone && x.month === s.month) && p.invoices_before.some((x) => x.student_id === gone), p.refresh_pairs);
   ok('  and their paid bill makes the lesson settled: T2 -> (Held, SOFT, settled) T2, settled_any true', p.settled_any === true, p.settled_any);
+});
+
+// ---------------------------------------------------------------- review 1a: C-1, C-2, C-4
+await section('C-1 same-day un-start: a taught, paid lesson moved later today keeps its floor', async () => {
+  const c = await clock(0, -2), later = await clock(0, 3);
+  const s = await mk({ when: c, start: c.time, end: c.end_time, status: 'Held' });
+  const kids = [];
+  for (let i = 0; i < 3; i++) kids.push(await att(s.sid, 'Present', s.teacher));
+  await inv(kids[0], s.month, { recorded: 540000 });
+  const pid = await point(s);
+  const p0 = await preview(s.sid);
+  ok('C-1 fixture: taught today, paid, a linked point -> tier 3', p0.tier === 3 && p0.level === 'STRONG', [p0.tier, p0.level]);
+  const pm = await preview(s.sid, 'move', { date: later.date, start_time: later.time, end_time: later.end_time });
+  await must('C-1 move', () => move(s.sid, { date: later.date, start: later.time, end: later.end_time, token: pm.token, confirm: true,
+    corr: pm.tier === 3 ? CORR : null }));
+  const f = await floorOf(s.sid);
+  ok('C-1 the checked move to a later time today (the lesson now "has not started") keeps a STRONG floor first',
+     f?.level === 'STRONG' && f.causes.some((x) => x.what === 'session_status' && x.unstarted === true), f);
+  await asTeacher(s, `DELETE FROM point_transactions WHERE id=$1`, [pid]);
+  await asAdmin(`UPDATE attendance SET status='Excused' WHERE session_id=$1`, [s.sid]);
+  const p1 = await preview(s.sid);
+  ok('C-1 then the point deleted and the marks excused: the cancel is still tier 3 (STRONG floor, settled)',
+     p1.tier === 3 && p1.level === 'STRONG' && p1.level_now !== 'STRONG' && p1.settled_any === true, [p1.tier, p1.level, p1.level_now]);
+  // Not a lowering: an earlier or later start that leaves the lesson started.
+  const d = await mk({ when: PAST, status: 'Held' });
+  await att(d.sid, 'Present', d.teacher);
+  await asAdmin(`UPDATE sessions SET start_time='18:00', end_time='19:30' WHERE id=$1`, [d.sid]);
+  ok('C-1 a time edit that leaves a past lesson started writes no floor', !(await floorOf(d.sid)));
+});
+
+await section('C-2 only a real lowering writes a floor', async () => {
+  const a = await mk({ when: PAST });
+  const tid = (await asSuper(`INSERT INTO class_transcripts(class_id,session_id,uploaded_by,status) VALUES ($1,$2,$3,'processing') RETURNING id`,
+    [a.cid, a.sid, a.teacher])).rows[0].id;
+  await asService(`UPDATE class_transcripts SET status='analyzed' WHERE id=$1`, [tid]);
+  ok('C-2 a transcript going processing -> analyzed (every analysed upload) writes no floor', !(await floorOf(a.sid)));
+  const b = await mk({ when: PAST });
+  const kb = await att(b.sid, 'Present', b.teacher);
+  await asService(`UPDATE attendance SET marked_by=$2 WHERE student_id=$1`, [kb, ADMIN]);
+  ok('C-2 a register re-saved by another person (same status, new signature) writes no floor', !(await floorOf(b.sid)));
+  const c = await mk({ when: PAST });
+  const kc = await att(c.sid, 'Absent', c.teacher);
+  await asAdmin(`UPDATE attendance SET status='Present' WHERE student_id=$1`, [kc]);
+  ok('C-2 Absent -> Present (evidence rose) writes no floor', !(await floorOf(c.sid)));
+  const d = await mk({ when: PAST });
+  const pid = await point(d);
+  await asTeacher(d, `UPDATE point_transactions SET points = 7, notes = 'well done' WHERE id=$1`, [pid]);
+  const hid = await homework(d);
+  await asTeacher(d, `UPDATE homeworks SET title = 'Unit 3 reading' WHERE id=$1`, [hid]);
+  ok('C-2 a point raised and a homework renamed write no floor', !(await floorOf(d.sid)));
+  // A real lowering still writes one, and the attendance cause names both signatures.
+  const e = await mk({ when: PAST });
+  const ke = await att(e.sid, 'Present', e.teacher);
+  await asAdmin(`UPDATE attendance SET status='Absent', marked_by=$2 WHERE student_id=$1`, [ke, ADMIN]);
+  const fe = await floorOf(e.sid);
+  ok('C-2 Present -> Absent is a lowering: floor STRONG; the cause carries old_marked_by and new_marked_by',
+     fe?.level === 'STRONG' && fe.causes[0].old_marked_by === e.teacher && fe.causes[0].new_marked_by === ADMIN, fe?.causes);
+});
+
+await section('C-4 the reviewer\'s surviving mutants, one case each', async () => {
+  // R2: a failed transcript counts only while it has audio.
+  const a = await mk({ when: PAST });
+  const ta = (await asSuper(`INSERT INTO class_transcripts(class_id,session_id,uploaded_by,status,audio_storage_path) VALUES ($1,$2,$3,'failed','rec/a.flac') RETURNING id`,
+    [a.cid, a.sid, a.teacher])).rows[0].id;
+  ok('R2 fixture: a failed transcript with audio is STRONG evidence', (await d1(a.sid)).level === 'STRONG');
+  await asTeacher(a, `UPDATE class_transcripts SET audio_storage_path = NULL WHERE id=$1`, [ta]);
+  ok('R2 its audio path cleared -> floor STRONG', (await floorOf(a.sid))?.level === 'STRONG', await floorOf(a.sid));
+  // R3: points set to 0.
+  const b = await mk({ when: PAST });
+  const pb = await point(b);
+  await asTeacher(b, `UPDATE point_transactions SET points = 0 WHERE id=$1`, [pb]);
+  ok('R3 a participation row set to 0 points -> floor SOFT', (await floorOf(b.sid))?.level === 'SOFT', await floorOf(b.sid));
+  // R8: signature-only change on the service lane (the sync's restore).
+  const c = await mk({ when: PAST });
+  const kc = await att(c.sid, 'Present', c.teacher);
+  await asService(`UPDATE attendance SET marked_by = NULL WHERE student_id=$1`, [kc]);
+  const fc = await floorOf(c.sid);
+  ok('R8 service lane sets marked_by NULL on a Present row, status unchanged -> floor STRONG, cause names the old signature',
+     fc?.level === 'STRONG' && fc.causes[0].old_marked_by === c.teacher && fc.causes[0].lane === 'service', fc);
+  // R10: a lesson whose only evidence is same-day points, moved to another date.
+  const d = await mk({ when: PAST });
+  await point(d, { linked: false });
+  const p0 = await preview(d.sid);
+  ok('R10 fixture: same-day points only -> SOFT, tier 2', p0.level === 'SOFT' && p0.tier === 2, [p0.level, p0.tier]);
+  // to another PAST day: still started, so only the date rule can keep it
+  const other = await clock(-9);
+  const pm = await preview(d.sid, 'move', { date: other.date, start_time: '17:30', end_time: '19:00' });
+  await must('R10 move', () => move(d.sid, { date: other.date, start: '17:30', end: '19:00', token: pm.token, confirm: true }));
+  const p1 = await preview(d.sid);
+  ok('R10 moved to another (past) date through the checked path -> floor SOFT, and the cancel keeps tier 2',
+     (await floorOf(d.sid))?.level === 'SOFT' && p1.level === 'SOFT' && p1.level_now === 'NONE' && p1.tier === 2, [p1.level, p1.level_now, p1.tier]);
 });
 
 // ---------------------------------------------------------------- column sweep

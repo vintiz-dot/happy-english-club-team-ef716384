@@ -45,15 +45,14 @@ export const MUTANTS = [
     "  IF TG_OP = 'UPDATE' AND (OLD.session_id IS DISTINCT FROM NEW.session_id", "  IF false AND (OLD.session_id IS DISTINCT FROM NEW.session_id", ['floors', 'carry']],
   ['M09', 'HC025 only for DELETE (un-signing a mark passes)',
     "       AND (TG_OP = 'DELETE' OR NEW.marked_by IS NULL) THEN", "       AND (TG_OP = 'DELETE') THEN", ['floors']],
-  ['M10', 'the point keep ignores a re-dated row',
-    "          OR OLD.date       IS DISTINCT FROM NEW.date\n", "", ['floors']],
-  ['M11', 'the transcript keep ignores an unlinked row',
-    "     OR OLD.session_id         IS DISTINCT FROM NEW.session_id\n", "", ['floors']],
-  ['M12', 'the submission keep ignores graded_at',
-    "                 OR OLD.graded_at   IS DISTINCT FROM NEW.graded_at\n", "", ['floors']],
-  ['M13', 'the lesson keep ignores Held -> Scheduled',
-    "  WHEN ((OLD.status = 'Held' AND NEW.status IS DISTINCT FROM 'Held' AND NEW.status IS DISTINCT FROM 'Canceled')\n     OR OLD.date IS DISTINCT FROM NEW.date)",
-    "  WHEN (OLD.date IS DISTINCT FROM NEW.date)", ['floors', 'carry']],
+  ['M10', "the point keep ignores a re-dated row",
+    "WHEN r_class = p_class AND r_date = p_date", "WHEN r_class = p_class", ['floors']],
+  ['M11', "the transcript keep ignores an unlinked row",
+    "              WHEN r_session = p_lesson THEN 2", "              WHEN r_session = p_lesson OR r_session IS NULL THEN 2", ['floors']],
+  ['M12', "the submission keep ignores a cleared graded_at",
+    "      IF TG_OP = 'UPDATE' AND NEW.graded_at IS NOT NULL\n", "      IF TG_OP = 'UPDATE'\n", ['floors']],
+  ['M13', "the lesson keep ignores Held -> Scheduled",
+    "  WHEN ((OLD.status = 'Held' AND NEW.status IS DISTINCT FROM 'Held' AND NEW.status IS DISTINCT FROM 'Canceled')\n     OR OLD.date", "  WHEN ((false)\n     OR OLD.date", ['floors', 'carry']],
   ['M14', 'the floor\'s causes are not in erased_recently (no review)',
     "       AND (c ->> 'at')::timestamptz >= now() - interval '30 days'", "       AND false", ['floors']],
   ['M15', 'the token does not cover the floor\'s causes',
@@ -78,8 +77,46 @@ export const MUTANTS = [
     "  IF false THEN\n    RAISE EXCEPTION '% rows are written only by the floor functions'", ['floors']],
   ['M23', 'the keep returns before D1 for every person (no floor from admins / teachers)',
     "  IF v_lane IN ('person', 'unknown')\n     AND NOT COALESCE(", "  IF v_lane IN ('person', 'unknown')\n     OR NOT COALESCE(", ['floors', 'deployed']],
-  ['M24', 'the sessions keep fires on a cancel (Held -> Canceled)',
-    "AND NEW.status IS DISTINCT FROM 'Canceled')\n     OR OLD.date", ")\n     OR OLD.date", ['floors', 'carry']],
+  ['M24', "the sessions keep fires on a cancel (Held -> Canceled)",
+    [["AND NEW.status IS DISTINCT FROM 'Held' AND NEW.status IS DISTINCT FROM 'Canceled')\n     OR OLD.date", "AND NEW.status IS DISTINCT FROM 'Held')\n     OR OLD.date"], ["v_unhold boolean := OLD.status = 'Held' AND NEW.status IS DISTINCT FROM 'Held' AND NEW.status IS DISTINCT FROM 'Canceled';", "v_unhold boolean := OLD.status = 'Held' AND NEW.status IS DISTINCT FROM 'Held';"]], null, ['floors', 'carry']],
+  ['M25', "C-1: the lesson trigger ignores a start_time change",
+    "\n     OR OLD.start_time IS DISTINCT FROM NEW.start_time)", "\n    )", ['floors']],
+  ['M26', "C-1: an un-start is not kept",
+    "  v_unstart boolean := COALESCE(", "  v_unstart boolean := false AND COALESCE(", ['floors']],
+  ['M27', "C-2: the register keeps on any change, not only a lowering",
+    "  IF v_new < v_old THEN\n    PERFORM public._session_evidence_keep(OLD.session_id,", "  IF v_new <= v_old AND (TG_OP = 'DELETE' OR NEW IS DISTINCT FROM OLD) THEN\n    PERFORM public._session_evidence_keep(OLD.session_id,", ['floors']],
+  ['M28', "C-2: the transcript keeps on any change",
+    "    IF v_new < v_old THEN\n      PERFORM public._session_evidence_keep(l.id,\n        jsonb_build_object('table', 'class_transcripts'", "    IF v_new <= v_old AND v_old > 0 THEN\n      PERFORM public._session_evidence_keep(l.id,\n        jsonb_build_object('table', 'class_transcripts'", ['floors']],
+  ['M29', "C-2: the register cause does not name the old signature",
+    "                         'old_marked_by', OLD.marked_by,", "", ['floors']],
+  ['M30', "C-2: a point keeps on any change",
+    "    IF v_new < v_old THEN\n      PERFORM public._session_evidence_keep(l.id,\n        jsonb_build_object('table', 'point_transactions'", "    IF v_new <= v_old AND v_old > 0 THEN\n      PERFORM public._session_evidence_keep(l.id,\n        jsonb_build_object('table', 'point_transactions'", ['floors']],
+  ['M31', "C-2: a homework keeps on any change",
+    "  IF v_old_counts AND NOT (v_new_counts AND v_new_class = v_class AND v_new_day = v_day) THEN", "  IF v_old_counts THEN", ['floors']],
+  ['R01', "transcript keep ignores a status change (-> failed)",
+    "OR NOT (r_status IS DISTINCT FROM 'failed' OR r_audio IS NOT NULL) THEN 0", "OR false THEN 0", ['floors']],
+  ['R02', "transcript keep ignores audio_storage_path",
+    "NEW.status::text, NEW.audio_storage_path::text) END;", "NEW.status::text, OLD.audio_storage_path::text) END;", ['floors']],
+  ['R03', "point keep ignores a points change (5 -> 0)",
+    "NEW.type::text, NEW.points::integer", "NEW.type::text, OLD.points::integer", ['floors']],
+  ['R04', "bill floor ignores un-freezing",
+    "      IF v_frozen AND NOT COALESCE(NEW.tuition_frozen, false) THEN", "      IF false THEN", ['floors']],
+  ['R05', "bill floor ignores un-confirming",
+    "      IF v_signed AND NOT COALESCE(NEW.confirmation_status IN ('confirmed', 'adjusted'), false) THEN", "      IF false THEN", ['floors']],
+  ['R06', "a re-keyed bill leaves no floor",
+    "      v_what := ARRAY['moved'];", "      v_what := ARRAY[]::text[];", ['floors']],
+  ['R07', "floor rows can be deleted",
+    "  IF TG_OP IN ('DELETE', 'TRUNCATE') THEN", "  IF TG_OP IN ('TRUNCATE') THEN", ['floors']],
+  ['R08', "attendance keep ignores a signature-only change",
+    "public._floor_mark_level(NEW.status::text, NEW.marked_by)", "public._floor_mark_level(NEW.status::text, OLD.marked_by)", ['floors']],
+  ['R09', "homework keep ignores a re-dated homework",
+    "        v_new_day := (NEW.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;", "        v_new_day := v_day;", ['floors']],
+  ['R10', "lesson keep ignores a date move",
+    "  v_moved boolean := OLD.date IS DISTINCT FROM NEW.date;", "  v_moved boolean := false;", ['floors', 'carry']],
+  ['R11', "move destination ignores the bill floor",
+    "                          OR EXISTS (SELECT 1 FROM unnest(v_kids) AS k(id)\n                                       JOIN public.invoice_state_floor f", "                          OR false AND EXISTS (SELECT 1 FROM unnest(v_kids) AS k(id)\n                                       JOIN public.invoice_state_floor f", ['floors']],
+  ['R12', "HC025 also on the service lane",
+    "    IF v_lane IN ('person', 'unknown')\n       AND (TG_OP = 'DELETE' OR NEW.marked_by IS NULL) THEN", "    IF v_lane IN ('person', 'unknown', 'service')\n       AND (TG_OP = 'DELETE' OR NEW.marked_by IS NULL) THEN", ['floors']],
 ];
 
 const D4_LITERALS = [/('[0-9a-f]{32}'\) THEN\s+-- this file)/g];
@@ -113,9 +150,11 @@ const original = readFileSync(migPath(FLOORS), 'utf8').replace(/\r\n/g, '\n');
 const results = [];
 for (const [id, what, find, repl, suites] of MUTANTS) {
   if (only.length && !only.includes(id)) continue;
-  const n = original.split(find).length - 1;
-  if (n !== 1) { results.push({ id, what, verdict: `BAD MUTANT (pattern found ${n} times)` }); console.log(`${id} BAD MUTANT (${n})`); continue; }
-  const mutated = original.replace(find, repl);
+  const pairs = Array.isArray(find) ? find : [[find, repl]];
+  const counts = pairs.map(([f]) => original.split(f).length - 1);
+  if (counts.some((n) => n !== 1)) { results.push({ id, what, verdict: `BAD MUTANT (pattern found ${counts.join('/')} times)` }); console.log(`${id} BAD MUTANT (${counts})`); continue; }
+  let mutated = original;
+  for (const [f, r] of pairs) mutated = mutated.replace(f, () => r);
   const { text, error } = await patchLiterals(mutated);
   if (error) { results.push({ id, what, verdict: `CAUGHT at install (${error.slice(0, 80)})` }); console.log(`${id} CAUGHT at install`); continue; }
   const p = resolve(tmpdir(), `d4-mutant-${id}-${process.pid}.sql`);
