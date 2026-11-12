@@ -1119,7 +1119,8 @@ await section('R1 F-5 what a move lands on', async () => {
   let r = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [b.sid, fday.date]));
   ok('F-5 automation cannot move a lesson onto a day with homework of its class -> HC020', r.code === 'HC020', r);
   const ctl = await mk();
-  r = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [ctl.sid, (await clock(13)).date]));
+  const cday = await clock(13);
+  r = await tryIt(() => asService(`UPDATE sessions SET date=$2 WHERE id=$1`, [ctl.sid, cday.date]));
   ok('F-5   control: the same move onto a clean day is still allowed', r.ok !== undefined, r);
   const c = await mk();
   const hday = await clock(-6);
