@@ -26,6 +26,12 @@
  *   OPENAI_API_KEY
  */
 
+import { requireSpender, type SpendGate } from "../_lib/ai-gate.ts";
+
+// A signed-in account holding a role, and no more than 40 calls per
+// account in each window: OpenAI + dictionary lookups per word.
+const GATE: SpendGate = { name: "smart-dictionary", limit: 40, windowMs: 5 * 60_000 };
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -94,6 +100,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Who is asking, before anything is read or spent (audit F-02).
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
 
   try {
     const body = await req.json();

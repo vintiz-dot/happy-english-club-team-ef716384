@@ -2,6 +2,12 @@
 // Proxies requests to OpenAI gpt-4o-mini for ESL pronunciation correction.
 // The OPENAI_API_KEY must be set in Supabase Dashboard → Edge Functions → Secrets.
 
+import { requireSpender, type SpendGate } from "../_lib/ai-gate.ts";
+
+// A signed-in account holding a role, and no more than 40 calls per
+// account in each window: OpenAI gpt-4o-mini per dictated sentence.
+const GATE: SpendGate = { name: "smart-dictation", limit: 40, windowMs: 5 * 60_000 };
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -11,6 +17,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Who is asking, before anything is read or spent (audit F-02).
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
 
   try {
     const { rawText, targetLanguage } = await req.json();

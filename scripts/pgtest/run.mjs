@@ -262,6 +262,9 @@ const SUITES = [
     file: "creator-rows.test.mjs",
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql"],
   },
+  // F-02: the nine AI / speech / image-search functions, handler by handler:
+  // no session, wrong role, right role, the per-account limit.
+  { name: "ai spend gate (F-02)", file: "ai-gate.test.mjs", migrations: [] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
