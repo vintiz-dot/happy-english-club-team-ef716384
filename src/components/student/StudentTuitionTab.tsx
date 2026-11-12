@@ -185,7 +185,7 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
             <h2 className={cn(ivory ? "font-display text-hec-h2 font-medium text-hec-ink" : "text-2xl font-bold")}>Tuition Overview</h2>
           </div>
           <Select value={selectedMonth} onValueChange={(v) => { setUserPicked(true); setSelectedMonth(v); }}>
-            <SelectTrigger className={cn(ivory ? "w-full sm:w-[280px]" : "w-[280px]")}>
+            <SelectTrigger aria-label={ivory ? "Month" : undefined} className={cn(ivory ? "w-full sm:w-[280px]" : "w-[280px]")}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="max-h-80">
@@ -301,7 +301,7 @@ export function StudentTuitionTab({ studentId }: { studentId: string }) {
                       </span>
                     )}
                     {d.isRateAdjustment && d.overrideRate && d.defaultRate && (
-                      <span className={cn(ivory ? "block text-hec-caption text-hec-ink-soft" : "text-[10px] block text-blue-600")}>
+                      <span className={cn(ivory ? "block text-hec-caption text-hec-ink" : "text-[10px] block text-blue-600")}>
                         Custom: {formatVND(d.overrideRate)}/session (saves {formatVND(d.savingsPerSession || 0)}/session from {formatVND(d.defaultRate)})
                       </span>
                     )}
