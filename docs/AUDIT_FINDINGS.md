@@ -158,3 +158,88 @@ Notes
 - No function takes the caller's identity from the request body. `record-practice` and `save-word` say so in their headers and ignore `user_id`.
 
 **Ranked gaps for section 1:** F-01 (role), F-02 (open spend), F-04 (no class scope), F-03 (cache planting), F-07 (unlock), then F-08 to F-13.
+
+---
+
+## 2. Row-level security, functions, grants and storage (live catalog, 13 Nov)
+
+What is in good order
+- All 129 tables in `public` have RLS on. None is off.
+- 9 tables have RLS on and NO policy, which is right for each: `admin_auth_challenges`, `admin_passcodes`, `admin_passkeys`, `admin_unlock_sessions`, `schedule_runner`, `stars_sync_secrets`, `student_access_codes`, `vocab_cache`, `vocab_image_cache` (service role only).
+- 323 policies; 110 are plain admin-only. No policy names the `anon` role. Only one policy is `USING (true)`: `payroll_periods` SELECT for any signed-in user (F-20).
+- The 3 views (`session_cancel_review_queue`, `session_cancel_tuition_pending`, `v_projected_base`) are all `security_invoker=true`.
+- All 144 SECURITY DEFINER functions have a pinned `search_path`.
+- The tables that carry money are admin-write only: `invoices`, `payments`, `ledger_*`, `payroll_*`, `staff_pay_rates`, `expenditures`, `families`, `students`, `enrollments`, `user_roles`. Families read their own bills through `can_view_student`.
+- Column guards exist where a non-admin may update a row with sensitive columns: `teachers` and `teaching_assistants` (contact, bio, photo only - pay is refused), `classes` (economy settings only), `sessions` (`session_change_guard` refuses a signed-in direct cancel/move/reclass/delete), `video_submissions` (family cannot set status or teacher note), `users` (role pinned).
+- The session cancel/move functions, the enrollment functions `end_enrollment`, `change_enrollment_days`, `modify_enrollment_transfer`, the `ai_action_*` functions, `approve_video_feedback`, `stars_sync_resolve_conflict` and the class overhead readers each check admin (or class teacher) themselves.
+- Confirmed fixed: `class-recordings` bucket has exactly `class_recordings_admin_all` plus four `class_recordings_staff_*` policies, each through `class_recordings_staff_can(name)`, which requires the teacher role AND `is_teacher_of_class` on the class id in the path. The old any-teacher policy is gone.
+
+### F-14 CRITICAL - Every child's homework file can be read by any signed-in account, including one made a minute ago on the sign-up form
+- Who: any account with the `student`, `family` or `teacher` role. A brand-new self-registered account gets `student` by default (F-01), so: anyone on the internet.
+- Proof (live storage policies on bucket `homework`, 99 objects, private, no size or type limit):
+  - `Students can view all homework files`: `bucket_id = 'homework' AND has_role(auth.uid(),'student')`
+  - `Family can view all homework files`: `bucket_id = 'homework' AND has_role(auth.uid(),'family')`
+  - `Teachers can view all homework files`: `... has_role(auth.uid(),'teacher')`; also `Teachers view all homework` (any `teachers` row).
+  - Source: `supabase/migrations/20251026083002_c5c670d8-7d35-47c8-9d78-05fac786594b.sql`. Storage SELECT policies are OR-ed, so these three make the careful per-child policies beside them (`Students read own homework submissions`, `Families read student homework submissions`, ...) meaningless. SELECT also allows listing the bucket, so file names (which carry student ids) need not be guessed.
+- Impact: one family can download every other child's submitted homework (photos of handwriting, sometimes of the child). With open sign-up, so can a stranger.
+- Smallest fix: drop those three blanket policies (and `Teachers view all homework`); keep the scoped ones; give teachers a policy scoped by `is_teacher_of_class` on the homework's class. Check the teacher grading screen still opens files afterwards.
+- Permission change needing the owner: YES.
+
+### F-15 HIGH - Any signed-in account can "pause" any child and overwrite the register to Excused
+- Who: any signed-in account (parent, child, self-registered).
+- Proof (live function body): `public.pause_enrollment(p_student_id, p_class_id, p_from_date, p_to_date, p_memo)` is SECURITY DEFINER, EXECUTE granted to `authenticated` (`supabase/migrations/20260722020830_e93174db-8549-43fa-a4a3-e95d5ee4786d.sql:1`, first granted in `20251023112730_3625a376-5d07-41a5-88fd-a6af65c32ddc.sql:326`), and has NO role check - its siblings `end_enrollment`, `change_enrollment_days`, `modify_enrollment_transfer` each start with `IF NOT has_role(v_actor,'admin') THEN RAISE`. It inserts a `pause_windows` row and then, for every non-cancelled lesson of that class in the date range, inserts attendance `Excused` `ON CONFLICT ... DO UPDATE SET status = 'Excused'` - overwriting marks a teacher made.
+- Impact: money and records. Excused lessons are not charged, so a parent can call it for their own child (they know the student id and class id from their own pages) over any past or future range and the next tuition calculation lowers the bill; already-confirmed bills go to "needs review". Anyone who has another child's ids (a classmate's are readable, F-16) can wipe that child's attendance marks. It is written to `audit_log`, so misuse would be traceable.
+- Smallest fix: add the same admin check as its siblings at the top of the function.
+- Permission change needing the owner: YES (a database function rule), though it only restores what the screen already assumes.
+
+### F-16 HIGH - A family can read the full record of every classmate, not just the name on the leaderboard
+- Who: any child or family account, about children enrolled in the same class.
+- Proof (live): `students` has a SELECT policy `can_view_classmate(id, auth.uid())` (`20260712024213_b12a82c4-5e2a-4b43-ae19-d3bfa844e6ce.sql`), and RLS is per row, not per column. The row holds `full_name, phone, email, date_of_birth, notes, family_id, linked_user_id, cash_on_hand, status_message, sibling_discount_from, ...`. The same class-wide read exists on `attendance` (status and `notes` for every classmate, policy with `viewer_enroll`), `skill_assessments` (`score`, `teacher_comment`), `point_transactions` (`notes`) and `student_points`.
+- Impact: a parent who opens the browser tools (or uses the public key with their own session) reads other children's date of birth, phone, email, the school's private notes about them, their attendance and the teacher's comments. The screens only show a name, an avatar and points.
+- Smallest fix: remove the classmate SELECT on `students` and serve the leaderboard / class wall from a SECURITY DEFINER function or view that returns only `id, display name, avatar_url` (as `get_class_video_wall` already does); restrict classmates' `attendance` and `skill_assessments` to own child; keep `student_points` class-wide if the board needs it.
+- Permission change needing the owner: YES. Needs care: `class-leaderboard` (service role) is unaffected, but any page that reads classmates directly must move to the function first.
+
+### F-17 MEDIUM - Staff pay rates and contact details are readable by every signed-in account
+- Proof (live):
+  - `teachers` SELECT `can_view_teacher(id, auth.uid())`, and that function (`20261110140000_scope_staff_quest_and_homework_reads.sql`) returns true for ANY signed-in user when the teacher is the default teacher of an active class. The row includes `hourly_rate_vnd`, `per_session_rate_vnd`, `pay_rate_type`, `phone`, `email`.
+  - `teacher_rate_on(p_teacher_id, p_date)` and `assistant_rate_on(...)` are SECURITY DEFINER, EXECUTE to `authenticated`, no check (`20261021090000_staff_pay_rate_history.sql`): any signed-in user gets any staff member's dated pay rate by id.
+  - `teaching_assistants` SELECT `is_staff_member(auth.uid())`: every teacher and TA sees every TA's row, pay included.
+- Smallest fix: revoke EXECUTE on the two `*_rate_on` functions from `authenticated` (calculate-payroll uses the service role); serve families a name/avatar/bio view of teachers instead of the table; scope the TA row to self + admin.
+- Permission change needing the owner: YES.
+
+### F-18 MEDIUM - "Any teacher" storage rules: children's work photos, lesson resources, exam reports
+- Proof (live storage policies): `staff_manage_student_work_files` is ALL on bucket `student-work` (217 photos of children's work) for `has_role(...,'teacher')`: read, overwrite, delete, list, for every class. Same shape: `staff_manage_lesson_resource_files` (ALL, `lesson-resources`), `Teachers and admins upload exam-reports files` (INSERT), `Authenticated read resources own folder` (SELECT for any teacher), and on `homework`: `Teachers and admins can update homework files` / `Teachers can update homework files` (any teacher may overwrite any homework file, including a child's submission).
+- With F-01 this is not limited to real staff.
+- Smallest fix: scope each by the class id in the path with `is_teacher_of_class`, as `class_recordings_staff_can` now does.
+- Permission change needing the owner: YES.
+
+### F-19 LOW - Rows and files a child's account can write that it should not
+- `student_vocabulary_entries` INSERT is `user_id = auth.uid()` with any `student_id`; the row is then shown to that other child (`is_linked_student`) and their teacher. A signed-in user can put a word, definition and `image_url` into another child's word list.
+- `homework` bucket INSERT `Students can upload homework submissions`: any student, anywhere under `submissions/`, and the bucket has no size or type limit (nor have `exam-reports`, `submissions`, `resources`).
+- `daily_login_rewards` (INSERT with any `xp_awarded`), `student_login_streaks` (UPDATE own streak), `early_submission_rewards` (INSERT own row with any `points_awarded`): a child can inflate their own game counters. None of these feeds `point_transactions` by trigger, so leaderboard points are not affected.
+
+### F-20 LOW - Hardening
+- `anon` holds every table privilege (SELECT/INSERT/UPDATE/DELETE/TRUNCATE) on almost every table in `public`. RLS stops it today (no policy is for `anon`), but RLS is then the only wall; root `AGENTS.md` says 20260712023825 revoked these defaults - on this project they are back. Revoke all on `public` tables from `anon`.
+- `video_staff_for_class` returns TRUE when `auth.uid()` is null (meant for the service role). `anon` cannot execute it today; if EXECUTE were ever granted to `anon`, or a policy `TO public` used it, anonymous callers would be "staff" on every video table. Replace the null test with `auth.role() = 'service_role'`.
+- Helper functions that take a user id as a parameter (`has_role`, `get_user_role`, `can_view_student`, `can_view_family`, `is_teacher_of_class`, ...) are callable over RPC by any signed-in user for ANY user id: a way to learn who is an admin or which account belongs to which child. `is_enrolled_in_class`, `is_linked_student` are callable by `anon` too.
+- `refresh_invoice_carry(student)` and `recompute_student_points(...)` (the latter also by `anon`) are definer and unchecked. Both only recompute from stored rows, so the effect is load, not wrong figures.
+- `payroll_periods` is readable by every signed-in user (`USING (true)`): which months are closed, by which admin id, with the note and reopen reason.
+- `student-avatars`, `teacher-avatars`, `announcements`, `qr-codes` are PUBLIC buckets: a child's avatar is reachable by anyone who has the URL, without signing in. Not listable. Acceptable only if avatars are never real photographs.
+- The policy `Students can manage their own avatar` contains `storage.foldername(f.name)` (the family's name, not the file's) - a dead branch.
+- 203 non-definer functions have no pinned `search_path` (advisor-level).
+
+---
+
+## 3. Children's privacy rules from AGENTS.md - do they hold in the database?
+
+| Rule | Holds? | Evidence |
+|---|---|---|
+| No family SELECT on `video_analyses` | YES | one policy only: ALL for `video_staff_for_class` of the submission's class |
+| Families read video reports only through `get_video_homework_for_student` | YES, with a note | the function checks `can_view_student` or class staff and returns the report only when the submission is `approved` (`20261109090000_video_homework.sql:526-537`). Note: besides `final_*` it returns `strengths`, `focus_points` and `criteria_scores` - not `final_`-named columns. `get_video_progress` likewise returns `criteria_scores` and `final_gaps`. Confirm `approve_video_feedback` rewrites those with the teacher's version; if they are the AI's draft, a draft reaches families after approval. |
+| Classmates see videos, never scores | YES | `get_class_video_wall` returns first name, title, video and poster path, hearts - no score; storage `can_view_homework_video` gives a classmate only `video_path` and `frame_paths` of an approved, shared video, never `audio_path`. `video_reactions` is staff-read only. |
+| Nothing reaches a family before a teacher approves | YES | `video_submissions_guard` pins status for non-staff; the public `parent-video-page` skips rows without `approved_at`. Note: that page shows score, grade and feedback to anyone holding the link, links never expire (only revoke), and a class teacher as well as the family can read the token (`can_manage_video_parent_link`). |
+| Stars Sync names never persisted | YES | `stars_student_map` holds ids only; the stored feed record (`stars_sync_events.raw`) has keys `class_ref, event_id, kind, lesson_date, occurred_at, payload, seq, student_ref` and payload keys `body, category, due_date, feedback, grade, homework_ref, points, reason, retracts_event_id, status, title` - no name field (keys read, not values). Browser side checked in section 4. |
+| Lesson audio / transcripts never reachable by a family | YES for audio and transcript text | `class_transcripts`, `class_speaker_aliases`, `transcript_point_suggestions`: `is_teacher_of_class` only; bucket `class-recordings`: staff of the class only. By design a child's linked login can read its own row of `transcript_speaker_metrics` (counts, `highlights`, `contribution`, teacher feedback) - used by `src/pages/StudentLessonDetail.tsx:47-53`. If `highlights` quotes other children's words, that is a leak; I did not read rows to check. |
+| The assistant has no write path and cannot call apply/undo | YES | `chat/index.ts` and its `_lib` contain no insert/update/upsert/delete and one rpc, `ai_action_preview` (`:1544`), which is STABLE in the live catalog. The service-role client is used only inside `authenticateUser` (`:1681-1682`). `ai_action_apply` / `ai_action_undo` are named only in a comment; they are called from `src/lib/aiActions.ts` by the admin's click and each begins with an admin check. |
+
+Not a listed rule, but the same subject - see F-14 (homework files), F-16 (classmate records), F-01/F-06 (learning profiles).
