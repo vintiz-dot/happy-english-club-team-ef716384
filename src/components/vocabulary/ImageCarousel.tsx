@@ -46,13 +46,17 @@ interface Props {
   onPick?: (img: ImageItem) => void;
 }
 
-const SOURCE_BADGE: Record<string, { label: string; bg: string }> = {
-  pixabay:   { label: "Pixabay",   bg: "bg-green-500/85" },
-  pexels:    { label: "Pexels",    bg: "bg-teal-500/85" },
-  wikimedia: { label: "Wiki",      bg: "bg-slate-700/85" },
-  google:    { label: "Google",    bg: "bg-blue-500/85" },
-  unsplash:  { label: "Unsplash",  bg: "bg-zinc-800/85" },
+// The provider is told apart by its name; one quiet chip for all of them.
+const SOURCE_BADGE: Record<string, { label: string }> = {
+  pixabay:   { label: "Pixabay" },
+  pexels:    { label: "Pexels" },
+  wikimedia: { label: "Wiki" },
+  google:    { label: "Google" },
+  unsplash:  { label: "Unsplash" },
 };
+
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
 export function ImageCarousel({ query, className, pickedUrl, onPick }: Props) {
   const [images, setImages] = useState<ImageItem[]>([]);
@@ -108,12 +112,12 @@ export function ImageCarousel({ query, className, pickedUrl, onPick }: Props) {
   if (loading) {
     return (
       <div className={cn("space-y-2", className)}>
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-          <Loader2 className="w-3 h-3 animate-spin" /> Finding pictures…
+        <p className="flex items-center gap-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
+          <Loader2 className="h-4 w-4 animate-spin" /> Finding pictures…
         </p>
         <div className="flex overflow-hidden gap-3 p-1">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="w-[140px] h-[105px] rounded-xl shrink-0 bg-slate-100 dark:bg-[hsl(240_8%_12%)] animate-pulse" />
+            <div key={i} className="h-[105px] w-[140px] shrink-0 animate-pulse rounded-hec-md bg-hec-sunken" />
           ))}
         </div>
       </div>
@@ -122,9 +126,9 @@ export function ImageCarousel({ query, className, pickedUrl, onPick }: Props) {
 
   if (error) {
     return (
-      <div className={cn("flex items-center justify-center py-6 text-muted-foreground gap-2", className)}>
-        <ImageOff className="w-5 h-5" />
-        <span className="text-sm">{error}</span>
+      <div className={cn("flex items-center justify-center gap-2 py-6 text-hec-ink-soft", className)}>
+        <ImageOff className="h-5 w-5" />
+        <span className="text-hec-small">{error}</span>
       </div>
     );
   }
@@ -136,23 +140,23 @@ export function ImageCarousel({ query, className, pickedUrl, onPick }: Props) {
 
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="min-w-0 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
           🖼️ Pictures for this word
-          {onPick && <span className="ml-2 normal-case font-medium text-muted-foreground">— tap one to pick</span>}
+          {onPick && <span className="ml-2 font-normal normal-case tracking-normal text-hec-ink-soft">— tap one to pick</span>}
         </p>
         {showProgress && (
           <div
-            className="flex items-center gap-1.5 text-[11px] font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-full px-2 py-0.5"
+            className="flex shrink-0 items-center gap-1 rounded-full border border-hec-line bg-hec-sunken px-2 py-1 text-hec-caption font-medium tabular-nums text-hec-ink-soft"
             role="status"
             aria-live="polite"
           >
-            <Loader2 className="w-3 h-3 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
             <span>Loading {pending} / {totalImages}</span>
           </div>
         )}
       </div>
-      <ScrollArea className="w-full whitespace-nowrap rounded-2xl">
+      <ScrollArea className="w-full whitespace-nowrap rounded-hec-lg">
         <div className="flex w-max gap-3 p-1">
           {images.map((img, i) => (
             <CarouselTile
@@ -224,7 +228,7 @@ function CarouselTile({ img, picked, onPick, onResolved }: TileProps) {
     setSrc(img.thumb || img.thumbnail || img.url);
   }, [inView, img.thumb, img.thumbnail, img.url]);
 
-  const badge = SOURCE_BADGE[img.source] ?? { label: img.source, bg: "bg-slate-500/85" };
+  const badge = SOURCE_BADGE[img.source] ?? { label: img.source };
   const isClickable = !!onPick;
   const Wrapper: any = isClickable ? "button" : "div";
 
@@ -235,16 +239,16 @@ function CarouselTile({ img, picked, onPick, onResolved }: TileProps) {
         ? { type: "button", onClick: () => onPick!(img), "aria-pressed": picked }
         : {})}
       className={cn(
-        "relative rounded-xl overflow-hidden w-[140px] h-[105px] shrink-0 border transition-all bg-slate-50 dark:bg-[hsl(240_8%_10%)]",
-        isClickable && "cursor-pointer hover:border-slate-300 dark:hover:border-[hsl(240_8%_24%)]",
+        "relative h-[105px] w-[140px] shrink-0 overflow-hidden rounded-hec-md border bg-hec-sunken transition-colors duration-hec-1 ease-hec",
+        isClickable && cn("cursor-pointer", FOCUS),
         picked
-          ? "border-blue-500 ring-2 ring-blue-500/35"
-          : "border-slate-200 dark:border-[hsl(240_8%_18%)] hover:border-slate-300 dark:hover:border-[hsl(240_8%_24%)]",
+          ? "border-hec-brass ring-2 ring-inset ring-hec-brass"
+          : "border-hec-line hover:border-hec-line-strong",
       )}
     >
       {/* Skeleton stays visible until the actual <img> paints or errors. */}
       {!hidden && (src === null || (!resolvedRef.current && !didFallback)) && (
-        <div className="absolute inset-0 bg-slate-100 dark:bg-[hsl(240_8%_12%)] animate-pulse" />
+        <div className="absolute inset-0 animate-pulse bg-hec-sunken" />
       )}
       {src && !hidden && (
         <img
@@ -268,20 +272,15 @@ function CarouselTile({ img, picked, onPick, onResolved }: TileProps) {
           }}
         />
       )}
-      <div className="absolute top-1.5 right-1.5">
-        <span
-          className={cn(
-            "text-[9px] font-bold px-1.5 py-0.5 rounded-sm backdrop-blur-md text-white shadow-sm uppercase tracking-wider",
-            badge.bg,
-          )}
-        >
+      <div className="absolute right-1 top-1">
+        <span className="rounded-hec-sm bg-hec-raised/90 px-1 text-hec-caption font-medium text-hec-ink shadow-hec-1">
           {badge.label}
         </span>
       </div>
       {picked && (
-        <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-          <div className="bg-blue-600 text-white rounded-full p-1 shadow-lg">
-            <Check className="w-4 h-4" />
+        <div className="absolute inset-0 flex items-center justify-center bg-hec-brass/20">
+          <div className="rounded-full bg-hec-action p-1 text-hec-on-action shadow-hec-2">
+            <Check className="h-4 w-4" />
           </div>
         </div>
       )}

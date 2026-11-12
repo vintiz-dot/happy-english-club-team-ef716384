@@ -45,6 +45,8 @@ const POS_OPTIONS = [
   { value: "adjective", label: "Adj (adj.)" }, { value: "adverb", label: "Adv (adv.)" },
   { value: "phrase", label: "Phrase" }, { value: "other", label: "Other" },
 ];
+// Part-of-speech chips are a category palette (four things told apart): left as they are
+// until a category palette is designed (DESIGN_SYSTEM s.18). Listed in docs/evidence/A4.6/R07.md.
 const POS_COLORS: Record<string, string> = {
   noun: "bg-blue-100 text-blue-700", verb: "bg-emerald-100 text-emerald-700",
   adjective: "bg-amber-100 text-amber-700", adverb: "bg-purple-100 text-purple-700",
@@ -55,6 +57,10 @@ function speak(text: string, lang = "en-US", rate = 0.8) {
   const u = new SpeechSynthesisUtterance(text); u.lang = lang; u.rate = rate;
   speechSynthesis.speak(u);
 }
+
+const FOCUS = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
+const POS_NEUTRAL = "border-hec-line bg-hec-sunken text-hec-ink-soft";
+const CHIP = `inline-flex min-h-hec-target items-center rounded-full border border-hec-line-strong bg-hec-raised px-3 text-hec-small font-medium text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken ${FOCUS}`;
 
 const GRADE_KEY = "hec-vocab-grade";
 const GRADES = ["1", "2", "3", "4", "5", "6", "7", "8"];
@@ -292,9 +298,10 @@ export function VocabularyCreator({ onAddWord }: Props) {
   const MicBtn = ({ field, lang }: { field: string; lang: string }) => {
     const active = listeningField === field;
     return (
-      <Button type="button" variant={active ? "destructive" : "ghost"} size="icon"
+      <Button type="button" variant={active ? "default" : "ghost"} size="icon"
         onClick={() => startVoiceWithCountdown(field, lang)}
-        className={cn("rounded-full shrink-0", active && "animate-pulse")}>
+        aria-label={active ? "Stop" : "Speak"} aria-pressed={active}
+        className="shrink-0 rounded-full">
         {active ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
       </Button>
     );
@@ -304,33 +311,33 @@ export function VocabularyCreator({ onAddWord }: Props) {
     <>
       {/* Countdown overlay */}
       {countdown !== null && (
-        <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center">
-          <div className="text-center space-y-4 animate-in zoom-in duration-200">
-            <div className="text-8xl font-black text-white drop-shadow-2xl animate-pulse">{countdown}</div>
-            <p className="text-xl text-white/80 font-medium">Get ready to speak...</p>
-            <Timer className="w-8 h-8 text-white/60 mx-auto animate-spin" />
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-hec-scrim/60 p-4">
+          <div role="status" aria-live="assertive" className="space-y-4 rounded-hec-lg border border-hec-line bg-hec-raised p-8 text-center shadow-hec-3 animate-in fade-in">
+            <div className="text-8xl font-semibold tabular-nums text-hec-ink">{countdown}</div>
+            <p className="text-hec-h3 font-medium text-hec-ink-soft">Get ready to speak...</p>
+            <Timer className="mx-auto h-8 w-8 text-hec-brass" aria-hidden="true" />
           </div>
         </div>
       )}
 
-      <Card className="w-full max-w-2xl mx-auto shadow-xl border-0 bg-gradient-to-br from-white to-blue-50/50 dark:from-slate-900 dark:to-slate-800">
+      <Card className="mx-auto w-full max-w-2xl">
         <CardHeader className="pb-2">
-          <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">
+          <CardTitle className="text-center">
             Add a New Word
           </CardTitle>
-          <p className="text-center text-sm text-muted-foreground">Tap 🎤 to speak or type your word</p>
+          <p className="text-center text-hec-small text-hec-ink-soft">Tap 🎤 to speak or type your word</p>
         </CardHeader>
         <CardContent>
           {/* Grade Selector (shown if not set) */}
           {!grade ? (
-            <div className="text-center space-y-5 py-6">
-              <div className="text-5xl">🎓</div>
-              <h3 className="text-xl font-bold text-foreground">What grade are you in?</h3>
-              <p className="text-sm text-muted-foreground">This helps us show definitions you can understand.</p>
-              <div className="grid grid-cols-4 gap-3 max-w-xs mx-auto">
+            <div className="space-y-4 py-6 text-center">
+              <div className="text-5xl" aria-hidden="true">🎓</div>
+              <h3 className="font-display text-hec-h2 font-medium text-hec-ink">What grade are you in?</h3>
+              <p className="text-hec-small text-hec-ink-soft">This helps us show definitions you can understand.</p>
+              <div className="mx-auto grid max-w-xs grid-cols-4 gap-3">
                 {GRADES.map(g => (
                   <Button key={g} variant="outline" onClick={() => setAndSaveGrade(g)}
-                    className="h-14 text-xl font-bold rounded-xl hover:bg-violet-50 hover:border-violet-400 hover:text-violet-700 transition-all">
+                    className="h-14 text-hec-h3 font-semibold tabular-nums">
                     {g}
                   </Button>
                 ))}
@@ -340,10 +347,10 @@ export function VocabularyCreator({ onAddWord }: Props) {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Grade + CEFR indicator */}
             <div className="flex items-center justify-end gap-2">
-              <Badge variant="outline" className="text-[10px] font-medium bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 border-violet-200">
+              <Badge variant="brass">
                 {getCEFRBadgeLabel(gradeNum)}
               </Badge>
-              <button type="button" onClick={() => setAndSaveGrade("")} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              <button type="button" onClick={() => setAndSaveGrade("")} className={`flex min-h-hec-target items-center gap-1 rounded-hec-sm px-2 text-hec-caption text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink ${FOCUS}`}>
                 🎓 Grade {grade}
                 <span className="underline">change</span>
               </button>
@@ -351,77 +358,77 @@ export function VocabularyCreator({ onAddWord }: Props) {
 
             {/* Word + POS */}
             <div className="space-y-2">
-              <Label className="text-base font-semibold">English Word</Label>
+              <Label className="text-hec-body font-semibold text-hec-ink">English Word</Label>
               <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Input placeholder="e.g. exercise" value={word} onChange={e => onWordChange(e.target.value)} className="text-lg h-12 pr-20" />
+                <div className="relative min-w-0 flex-1">
+                  <Input placeholder="e.g. exercise" value={word} onChange={e => onWordChange(e.target.value)} className="h-12 pr-24 text-hec-body" />
                   <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                    {word && <Button type="button" variant="ghost" size="icon" className="rounded-full" onClick={() => speak(word)}><Volume2 className="w-4 h-4 text-blue-500" /></Button>}
+                    {word && <Button type="button" variant="ghost" size="icon" className="rounded-full text-hec-brass" aria-label="Listen" onClick={() => speak(word)}><Volume2 className="w-4 h-4" aria-hidden="true" /></Button>}
                     <MicBtn field="word" lang="en-US" />
                   </div>
                 </div>
                 <Select value={pos} onValueChange={setPos}>
-                  <SelectTrigger className="w-[120px] h-12"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-12 w-[120px] shrink-0"><SelectValue /></SelectTrigger>
                   <SelectContent>{POS_OPTIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
 
             {/* Smart Word Explorer */}
-            {dictLoading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Looking up word...</div>}
+            {dictLoading && <div className="flex items-center gap-2 text-hec-small text-hec-ink-soft"><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Looking up word...</div>}
 
             {dictData && (
-              <div className="rounded-2xl border-2 border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-950/20 p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="space-y-3 rounded-hec-lg border border-hec-line bg-hec-sunken p-4 animate-in fade-in slide-in-from-top-2">
                 {/* Header with Viseme Pronunciation */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <BookOpen className="w-5 h-5 text-violet-600" />
-                    <h3 className={cn("font-bold capitalize", gradeNum <= 3 ? "text-2xl" : "text-lg")}>{dictData.word}</h3>
-                    {gradeNum >= 4 && dictData.phonetic && <span className="text-sm text-muted-foreground font-mono">{dictData.phonetic}</span>}
-                    {eslEntry && <Badge variant="outline" className="text-[10px] ml-1 border-violet-300 text-violet-600">{eslEntry.cefr_level}</Badge>}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex min-w-0 flex-wrap items-center gap-3">
+                    <BookOpen className="w-5 h-5 shrink-0 text-hec-brass" aria-hidden="true" />
+                    <h3 className={cn("break-words font-display font-medium capitalize text-hec-ink", gradeNum <= 3 ? "text-hec-h1" : "text-hec-h2")}>{dictData.word}</h3>
+                    {gradeNum >= 4 && dictData.phonetic && <span className="font-mono text-hec-small text-hec-ink-soft">{dictData.phonetic}</span>}
+                    {eslEntry && <Badge variant="brass">{eslEntry.cefr_level}</Badge>}
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex shrink-0 items-center gap-1">
                     <VisemePlayer word={dictData.word} compact />
-                    <Button type="button" variant="ghost" size="sm" onClick={playDictAudio} className="text-violet-600 gap-1">
-                      <Volume2 className="w-4 h-4" /> {gradeNum <= 3 ? "🔊" : "Listen"}
+                    <Button type="button" variant="ghost" size="sm" onClick={playDictAudio}>
+                      <Volume2 className="w-4 h-4" aria-hidden="true" /> {gradeNum <= 3 ? "🔊" : "Listen"}
                     </Button>
                   </div>
                 </div>
 
                 {/* Vietnamese translation — always prominent */}
                 {viTranslation && (
-                  <div className={cn("flex items-center gap-2 rounded-lg px-3", gradeNum <= 3 ? "bg-blue-100 dark:bg-blue-950/40 py-3" : "bg-blue-50 dark:bg-blue-950/30 py-2")}>
+                  <div className={cn("flex items-center gap-2 rounded-hec-md border border-hec-line bg-hec-raised px-3", gradeNum <= 3 ? "py-3" : "py-2")}>
                     <span className={gradeNum <= 3 ? "text-2xl" : "text-sm"}>🇻🇳</span>
-                    <span className={cn("font-bold text-blue-700 dark:text-blue-300", gradeNum <= 3 ? "text-xl" : "text-sm")}>{viTranslation}</span>
+                    <span className={cn("min-w-0 break-words font-semibold text-hec-ink", gradeNum <= 3 ? "text-hec-h3" : "text-hec-small")}>{viTranslation}</span>
                   </div>
                 )}
 
-                <Separator className="bg-violet-200 dark:bg-violet-800" />
+                <Separator className="bg-hec-line" />
 
                 {/* ── v2 ESL Entry (LLM-generated) ── */}
                 {eslEntry ? (
                   <div className="space-y-3">
                     {/* Part of speech badge */}
-                    <Badge className={cn("text-xs font-bold uppercase", POS_COLORS[eslEntry.part_of_speech] || "bg-slate-100 text-slate-600")}>
+                    <Badge className={cn("text-hec-caption font-semibold uppercase", POS_COLORS[eslEntry.part_of_speech] || POS_NEUTRAL)}>
                       {eslEntry.part_of_speech === "noun" && gradeNum <= 3 ? "📦 Thing (Noun)" : eslEntry.part_of_speech === "verb" && gradeNum <= 3 ? "🏃 Action (Verb)" : eslEntry.part_of_speech === "adjective" && gradeNum <= 3 ? "🌈 Describing (Adjective)" : eslEntry.part_of_speech}
                     </Badge>
 
                     {/* English definition */}
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-3 space-y-2 border">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">📖 Definition</p>
-                      <p className={cn("text-foreground font-medium", gradeNum <= 3 ? "text-base" : "text-sm")}>{eslEntry.english_definition}</p>
+                    <div className="space-y-2 rounded-hec-md border border-hec-line bg-hec-raised p-3">
+                      <p className="text-hec-caption font-semibold uppercase tracking-wider text-hec-ink-soft">📖 Definition</p>
+                      <p className={cn("font-medium text-hec-ink", gradeNum <= 3 ? "text-hec-body" : "text-hec-small")}>{eslEntry.english_definition}</p>
                     </div>
 
                     {/* Usage examples */}
                     {eslEntry.usage_examples.length > 0 && (
-                      <div className="space-y-1.5">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">💬 Examples</p>
+                      <div className="space-y-2">
+                        <p className="text-hec-caption font-semibold uppercase tracking-wider text-hec-ink-soft">💬 Examples</p>
                         {eslEntry.usage_examples.map((ex, i) => (
-                          <div key={i} className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg px-3 py-2">
-                            <span className="text-xs font-bold text-emerald-600 shrink-0">{i + 1}.</span>
-                            <p className={cn("text-foreground italic flex-1", gradeNum <= 3 ? "text-sm font-medium" : "text-sm")}>"{ex}"</p>
-                            <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-blue-500" onClick={() => speak(ex, "en-US", gradeNum <= 3 ? 0.7 : 0.85)}>
-                              <Volume2 className="w-3.5 h-3.5" />
+                          <div key={i} className="flex items-center gap-2 rounded-hec-md border border-hec-line bg-hec-raised px-3 py-1">
+                            <span className="shrink-0 text-hec-caption font-semibold tabular-nums text-hec-ink-soft">{i + 1}.</span>
+                            <p className={cn("min-w-0 flex-1 break-words italic text-hec-ink", gradeNum <= 3 ? "text-hec-small font-medium" : "text-hec-small")}>"{ex}"</p>
+                            <Button type="button" variant="ghost" size="icon" className="shrink-0 text-hec-brass" aria-label="Listen" onClick={() => speak(ex, "en-US", gradeNum <= 3 ? 0.7 : 0.85)}>
+                              <Volume2 className="w-4 h-4" aria-hidden="true" />
                             </Button>
                           </div>
                         ))}
@@ -432,11 +439,11 @@ export function VocabularyCreator({ onAddWord }: Props) {
                     {(eslEntry.synonyms.length > 0 || eslEntry.antonyms.length > 0) && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {eslEntry.synonyms.length > 0 && (
-                          <div className="bg-teal-50 dark:bg-teal-950/20 rounded-xl p-3 space-y-1.5 border border-teal-200 dark:border-teal-800">
-                            <p className="text-xs font-semibold text-teal-700 dark:text-teal-400 uppercase tracking-wider">✅ Synonyms</p>
-                            <div className="flex flex-wrap gap-1.5">
+                          <div className="space-y-2 rounded-hec-md border border-hec-line bg-hec-raised p-3">
+                            <p className="text-hec-caption font-semibold uppercase tracking-wider text-hec-ink-soft">✅ Synonyms</p>
+                            <div className="flex flex-wrap gap-2">
                               {eslEntry.synonyms.map((s, i) => (
-                                <button key={i} type="button" onClick={() => speak(s)} className="px-2.5 py-1 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-800 dark:text-teal-200 text-xs font-medium hover:bg-teal-200 dark:hover:bg-teal-800/60 transition-colors cursor-pointer">
+                                <button key={i} type="button" onClick={() => speak(s)} className={CHIP}>
                                   {s}
                                 </button>
                               ))}
@@ -444,11 +451,11 @@ export function VocabularyCreator({ onAddWord }: Props) {
                           </div>
                         )}
                         {eslEntry.antonyms.length > 0 && (
-                          <div className="bg-rose-50 dark:bg-rose-950/20 rounded-xl p-3 space-y-1.5 border border-rose-200 dark:border-rose-800">
-                            <p className="text-xs font-semibold text-rose-700 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1"><ArrowRightLeft className="w-3 h-3" /> Antonyms</p>
-                            <div className="flex flex-wrap gap-1.5">
+                          <div className="space-y-2 rounded-hec-md border border-hec-line bg-hec-raised p-3">
+                            <p className="flex items-center gap-1 text-hec-caption font-semibold uppercase tracking-wider text-hec-ink-soft"><ArrowRightLeft className="w-3 h-3" aria-hidden="true" /> Antonyms</p>
+                            <div className="flex flex-wrap gap-2">
                               {eslEntry.antonyms.map((a, i) => (
-                                <button key={i} type="button" onClick={() => speak(a)} className="px-2.5 py-1 rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-200 text-xs font-medium hover:bg-rose-200 dark:hover:bg-rose-800/60 transition-colors cursor-pointer">
+                                <button key={i} type="button" onClick={() => speak(a)} className={CHIP}>
                                   {a}
                                 </button>
                               ))}
@@ -465,17 +472,17 @@ export function VocabularyCreator({ onAddWord }: Props) {
                       <div className="space-y-3">
                         {dictData.meanings.slice(0, 1).map((m, mi) => (
                           <div key={mi} className="space-y-2">
-                            <Badge className={cn("text-sm font-bold", POS_COLORS[m.partOfSpeech] || "bg-slate-100 text-slate-600")}>
+                            <Badge className={cn("text-hec-small font-semibold", POS_COLORS[m.partOfSpeech] || POS_NEUTRAL)}>
                               {m.partOfSpeech === "noun" ? "📦 Thing (Noun)" : m.partOfSpeech === "verb" ? "🏃 Action (Verb)" : m.partOfSpeech === "adjective" ? "🌈 Describing (Adjective)" : "📝 " + m.partOfSpeech}
                             </Badge>
                             {m.definitions.slice(0, 1).map((d, di) => (
-                              <div key={di} className="bg-white dark:bg-slate-800 rounded-xl p-3 space-y-2 border">
+                              <div key={di} className="space-y-2 rounded-hec-md border border-hec-line bg-hec-raised p-3">
                                 {d.example && (
-                                  <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg px-3 py-2">
-                                    <span className="text-lg">💬</span>
-                                    <p className="text-sm font-medium text-foreground italic">"{d.example}"</p>
-                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-blue-500" onClick={() => speak(d.example!, "en-US", 0.7)}>
-                                      <Volume2 className="w-3.5 h-3.5" />
+                                  <div className="flex items-center gap-2 rounded-hec-md bg-hec-sunken px-3 py-1">
+                                    <span className="text-lg" aria-hidden="true">💬</span>
+                                    <p className="min-w-0 flex-1 break-words text-hec-small font-medium italic text-hec-ink">"{d.example}"</p>
+                                    <Button type="button" variant="ghost" size="icon" className="shrink-0 text-hec-brass" aria-label="Listen" onClick={() => speak(d.example!, "en-US", 0.7)}>
+                                      <Volume2 className="w-4 h-4" aria-hidden="true" />
                                     </Button>
                                   </div>
                                 )}
@@ -490,19 +497,19 @@ export function VocabularyCreator({ onAddWord }: Props) {
                     {gradeNum >= 4 && (
                       <div className="space-y-3">
                         {dictData.meanings.slice(0, 2).map((m, mi) => (
-                          <div key={mi} className="space-y-1.5">
-                            <Badge className={cn("text-xs font-bold uppercase", POS_COLORS[m.partOfSpeech] || "bg-slate-100 text-slate-600")}>
+                          <div key={mi} className="space-y-2">
+                            <Badge className={cn("text-hec-caption font-semibold uppercase", POS_COLORS[m.partOfSpeech] || POS_NEUTRAL)}>
                               {m.partOfSpeech}
                             </Badge>
-                            <ul className="space-y-1.5 pl-1">
+                            <ul className="space-y-2 pl-1">
                               {m.definitions.slice(0, 3).map((d, di) => (
-                                <li key={di} className="text-sm space-y-0.5">
-                                  <p><span className="font-medium text-muted-foreground mr-1">{di + 1}.</span>{d.definition}</p>
+                                <li key={di} className="space-y-1 text-hec-small text-hec-ink">
+                                  <p><span className="mr-1 font-medium tabular-nums text-hec-ink-soft">{di + 1}.</span>{d.definition}</p>
                                   {d.example && (
-                                    <p className="text-xs text-muted-foreground italic pl-4 border-l-2 border-violet-200">
+                                    <p className="border-l border-hec-line-strong pl-4 text-hec-caption italic text-hec-ink-soft">
                                       "{d.example}"
-                                      <Button type="button" variant="ghost" size="sm" className="ml-1 h-5 px-1 text-blue-500" onClick={() => speak(d.example!, "en-US", 0.8)}>
-                                        <Volume2 className="w-3 h-3" />
+                                      <Button type="button" variant="ghost" size="icon" className="ml-1 text-hec-brass" aria-label="Listen" onClick={() => speak(d.example!, "en-US", 0.8)}>
+                                        <Volume2 className="w-4 h-4" aria-hidden="true" />
                                       </Button>
                                     </p>
                                   )}
@@ -517,9 +524,9 @@ export function VocabularyCreator({ onAddWord }: Props) {
                 )}
 
                 {/* Prompt */}
-                <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 rounded-xl p-3">
-                  <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                  <p className={cn("text-amber-700 dark:text-amber-400", gradeNum <= 3 ? "text-base" : "text-sm")}>
+                <div className="flex items-start gap-2 rounded-hec-md border border-hec-line bg-hec-raised p-3">
+                  <Lightbulb className="mt-1 h-5 w-5 shrink-0 text-hec-brass" aria-hidden="true" />
+                  <p className={cn("min-w-0 text-hec-ink", gradeNum <= 3 ? "text-hec-body" : "text-hec-small")}>
                     {gradeNum <= 3
                       ? <><strong>Đến lượt em!</strong> Viết một câu có từ "<strong>{dictData.word}</strong>" ở bên dưới nhé! ✍️</>
                       : <><strong>Your turn!</strong> Write your own sentence using "<strong>{dictData.word}</strong>" below!</>}
@@ -530,35 +537,34 @@ export function VocabularyCreator({ onAddWord }: Props) {
 
             {/* Image Gallery */}
             {(fetchingImages || images.length > 0) && (
-              <div className="space-y-2 bg-muted/30 p-3 rounded-xl border">
-                <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <div className="space-y-2 rounded-hec-md border border-hec-line bg-hec-sunken p-3">
+                <Label className="flex items-center gap-2 text-hec-small font-medium text-hec-ink-soft">
                   {fetchingImages ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Finding best pictures...</>
+                    <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Finding best pictures...</>
                   ) : (
                     "Pick the best picture for this word"
                   )}
                 </Label>
-                <ScrollArea className="w-full whitespace-nowrap rounded-lg">
+                <ScrollArea className="w-full whitespace-nowrap rounded-hec-md">
                   <div className="flex w-max gap-3 p-1">
                     {fetchingImages ? (
-                      [1, 2, 3, 4].map(i => <Skeleton key={i} className="w-[130px] h-[95px] rounded-xl shrink-0" />)
+                      [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[95px] w-[130px] shrink-0 rounded-hec-md" />)
                     ) : (
                       images.map((img, i) => (
-                        <div key={i}
-                          className={cn("relative cursor-pointer rounded-xl overflow-hidden w-[130px] h-[95px] shrink-0 transition-all duration-200 hover:scale-105",
-                            selectedImage === img.url ? "ring-3 ring-violet-500 ring-offset-2 shadow-lg" : "opacity-70 hover:opacity-100"
+                        <button type="button" key={i} aria-pressed={selectedImage === img.url}
+                          className={cn(`relative h-[95px] w-[130px] shrink-0 cursor-pointer overflow-hidden rounded-hec-md transition-opacity duration-hec-1 ease-hec ${FOCUS}`,
+                            selectedImage === img.url ? "shadow-hec-2 outline outline-2 outline-offset-2 outline-hec-brass" : "opacity-70 hover:opacity-100"
                           )} onClick={() => setSelectedImage(img.url)}>
                           <img src={img.url} alt={img.alt} className="w-full h-full object-cover" loading="lazy" />
                           <div className="absolute top-1 left-1">
                             <span className={cn(
-                              "text-[8px] font-bold px-1.5 py-0.5 rounded-sm backdrop-blur-md text-white shadow-sm uppercase tracking-wider",
-                              img.source === "pixabay" ? "bg-green-500/80" : "bg-teal-500/80"
+                              "rounded-hec-sm bg-hec-action px-1 text-hec-caption font-medium text-hec-on-action"
                             )}>
                               {img.source === "pixabay" ? "Pixabay" : "Pexels"}
                             </span>
                           </div>
-                          {selectedImage === img.url && <div className="absolute top-1 right-1 bg-violet-500 text-white rounded-full p-0.5 shadow-md"><Check className="w-3 h-3" /></div>}
-                        </div>
+                          {selectedImage === img.url && <div className="absolute right-1 top-1 rounded-full bg-hec-action p-1 text-hec-on-action shadow-hec-1"><Check className="w-3 h-3" aria-hidden="true" /></div>}
+                        </button>
                       ))
                     )}
                   </div>
@@ -569,13 +575,13 @@ export function VocabularyCreator({ onAddWord }: Props) {
 
             {/* Vietnamese Meaning */}
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Vietnamese Meaning (Nghĩa tiếng Việt)</Label>
+              <Label className="text-hec-body font-semibold text-hec-ink">Vietnamese Meaning (Nghĩa tiếng Việt)</Label>
               <div className="relative">
-                <Input placeholder="e.g. bài tập" value={meaning} onChange={e => setMeaning(e.target.value)} className="text-lg h-12 pr-12" />
+                <Input placeholder="e.g. bài tập" value={meaning} onChange={e => setMeaning(e.target.value)} className="h-12 pr-12 text-hec-body" />
                 <div className="absolute right-1 top-1/2 -translate-y-1/2"><MicBtn field="meaning" lang="vi-VN" /></div>
               </div>
               {viTranslation && meaning !== viTranslation && (
-                <button type="button" className="text-xs text-blue-600 hover:underline" onClick={() => setMeaning(viTranslation)}>
+                <button type="button" className={`min-h-hec-target text-left text-hec-small text-hec-brass underline-offset-4 hover:underline ${FOCUS}`} onClick={() => setMeaning(viTranslation)}>
                   💡 Suggested: {viTranslation}
                 </button>
               )}
@@ -583,14 +589,14 @@ export function VocabularyCreator({ onAddWord }: Props) {
 
             {/* ── ESL Quick Reference (explicitly rendered from LLM payload) ── */}
             {eslEntry && (
-              <div className="space-y-3 bg-gradient-to-br from-indigo-50/80 to-sky-50/60 dark:from-indigo-950/30 dark:to-sky-950/20 rounded-2xl p-4 border border-indigo-200 dark:border-indigo-800 animate-in fade-in duration-300">
-                <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">📚 Quick Reference</p>
+              <div className="space-y-3 rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 animate-in fade-in">
+                <p className="text-hec-caption font-semibold uppercase tracking-wider text-hec-ink-soft">📚 Quick Reference</p>
 
                 {/* English Meaning */}
                 {eslEntry.english_definition && (
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold text-muted-foreground">English Meaning:</p>
-                    <p className={cn("text-foreground font-medium bg-white/70 dark:bg-slate-800/50 rounded-lg px-3 py-2", gradeNum <= 3 ? "text-base" : "text-sm")}>
+                    <p className="text-hec-caption font-semibold text-hec-ink-soft">English Meaning:</p>
+                    <p className={cn("rounded-hec-md bg-hec-sunken px-3 py-2 font-medium text-hec-ink", gradeNum <= 3 ? "text-hec-body" : "text-hec-small")}>
                       {eslEntry.english_definition}
                     </p>
                   </div>
@@ -599,12 +605,12 @@ export function VocabularyCreator({ onAddWord }: Props) {
                 {/* Examples as bullet points */}
                 {eslEntry.usage_examples.length > 0 && (
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold text-muted-foreground">Examples:</p>
+                    <p className="text-hec-caption font-semibold text-hec-ink-soft">Examples:</p>
                     <ul className="space-y-1 pl-1">
                       {eslEntry.usage_examples.map((ex, i) => (
                         <li key={i} className="flex items-start gap-2">
-                          <span className="text-indigo-400 mt-1.5 shrink-0">•</span>
-                          <p className={cn("text-foreground italic", gradeNum <= 3 ? "text-sm" : "text-sm")}>{ex}</p>
+                          <span className="mt-1 shrink-0 text-hec-ink-faint" aria-hidden="true">•</span>
+                          <p className={cn("min-w-0 italic text-hec-ink", gradeNum <= 3 ? "text-hec-small" : "text-hec-small")}>{ex}</p>
                         </li>
                       ))}
                     </ul>
@@ -614,8 +620,8 @@ export function VocabularyCreator({ onAddWord }: Props) {
                 {/* Similar words (synonyms) */}
                 {eslEntry.synonyms.length > 0 && (
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold text-muted-foreground">Similar words:</p>
-                    <p className="text-sm text-teal-700 dark:text-teal-300 font-medium bg-teal-50/80 dark:bg-teal-950/30 rounded-lg px-3 py-1.5">
+                    <p className="text-hec-caption font-semibold text-hec-ink-soft">Similar words:</p>
+                    <p className="rounded-hec-md bg-hec-sunken px-3 py-2 text-hec-small font-medium text-hec-ink">
                       {eslEntry.synonyms.join(", ")}
                     </p>
                   </div>
@@ -624,8 +630,8 @@ export function VocabularyCreator({ onAddWord }: Props) {
                 {/* Opposite words (antonyms) */}
                 {eslEntry.antonyms.length > 0 && (
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold text-muted-foreground">Opposite words:</p>
-                    <p className="text-sm text-rose-700 dark:text-rose-300 font-medium bg-rose-50/80 dark:bg-rose-950/30 rounded-lg px-3 py-1.5">
+                    <p className="text-hec-caption font-semibold text-hec-ink-soft">Opposite words:</p>
+                    <p className="rounded-hec-md bg-hec-sunken px-3 py-2 text-hec-small font-medium text-hec-ink">
                       {eslEntry.antonyms.join(", ")}
                     </p>
                   </div>
@@ -636,28 +642,28 @@ export function VocabularyCreator({ onAddWord }: Props) {
             {/* Example Sentence with grammar check */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Your Example Sentence</Label>
-                {checkingGrammar && <Badge variant="outline" className="text-xs gap-1 animate-pulse"><SpellCheck className="w-3 h-3" /> Checking...</Badge>}
+                <Label className="text-hec-body font-semibold text-hec-ink">Your Example Sentence</Label>
+                {checkingGrammar && <Badge variant="secondary"><SpellCheck className="w-3 h-3" aria-hidden="true" /> Checking...</Badge>}
               </div>
               <div className="relative">
-                <Textarea placeholder="Write a sentence using this word..." value={example} onChange={e => onExampleChange(e.target.value)} className="text-base min-h-[80px] resize-none pr-12" />
+                <Textarea placeholder="Write a sentence using this word..." value={example} onChange={e => onExampleChange(e.target.value)} className="min-h-[80px] resize-none pr-12 text-hec-body" />
                 <div className="absolute top-2 right-1"><MicBtn field="example" lang="en-US" /></div>
               </div>
               {grammarResult && (
-                <div className="flex items-start gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 rounded-xl p-3 animate-in fade-in duration-200">
-                  <SpellCheck className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                  <div className="flex-1 text-sm">
-                    <p className="text-blue-700 dark:text-blue-300 font-medium">AI suggests:</p>
-                    <p className="text-blue-800 dark:text-blue-200 italic">"{grammarResult}"</p>
+                <div className="flex flex-wrap items-start gap-2 rounded-hec-md border border-hec-line bg-hec-sunken p-3 animate-in fade-in">
+                  <SpellCheck className="mt-1 h-4 w-4 shrink-0 text-hec-brass" aria-hidden="true" />
+                  <div className="min-w-0 flex-1 text-hec-small">
+                    <p className="font-medium text-hec-ink-soft">AI suggests:</p>
+                    <p className="break-words italic text-hec-ink">"{grammarResult}"</p>
                   </div>
-                  <Button type="button" variant="ghost" size="sm" className="text-blue-600 shrink-0 text-xs" onClick={acceptGrammarFix}>
+                  <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={acceptGrammarFix}>
                     Accept ✓
                   </Button>
                 </div>
               )}
             </div>
 
-            <Button type="submit" className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all">
+            <Button type="submit" className="h-14 w-full text-hec-h3 font-semibold">
               {gradeNum <= 3 ? "Thêm từ vựng ✨" : "Add to My Vocabulary ✨"}
             </Button>
           </form>

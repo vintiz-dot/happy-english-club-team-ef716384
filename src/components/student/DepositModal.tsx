@@ -133,47 +133,48 @@ export function DepositModal({ open, onOpenChange, studentId, classId, cashOnHan
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ArrowUpFromLine className="h-5 w-5 text-green-600" />
+            <ArrowUpFromLine className="h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
             Deposit Cash
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="text-center space-y-1">
-            <p className="text-sm text-muted-foreground">Cash on Hand</p>
-            <p className="text-3xl font-black text-green-600">{cashOnHand}</p>
+            <p className="text-hec-small text-hec-ink-soft">Cash on Hand</p>
+            <p className="whitespace-nowrap text-hec-h1 font-semibold tabular-nums text-hec-ink">{cashOnHand}</p>
           </div>
 
           {maxDepositable === 0 ? (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+            <div className="flex items-start gap-2 rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-3 text-hec-small text-hec-ink">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-hec-danger" aria-hidden />
               <p>You don't have any physical cash available to deposit. You can only deposit cash you've previously withdrawn and haven't spent.</p>
             </div>
           ) : (
             <>
               <div className="space-y-2">
-                <Label>Cash to deposit</Label>
+                <Label htmlFor="deposit-cash-amount">Cash to deposit</Label>
                 <Input
+                  id="deposit-cash-amount"
                   type="number"
                   min={1}
                   max={maxDepositable}
                   value={amount}
                   onChange={(e) => setAmount(Math.max(1, Math.min(maxDepositable, parseInt(e.target.value) || 1)))}
                 />
-                <p className="text-xs text-muted-foreground">Max depositable: {maxDepositable}</p>
+                <p className="text-hec-caption tabular-nums text-hec-ink-soft">Max depositable: {maxDepositable}</p>
               </div>
 
-              <div className="flex items-center justify-center gap-3 p-3 rounded-xl bg-muted/50">
+              <div className="flex items-center justify-center gap-3 rounded-hec-md bg-hec-sunken p-3">
                 <div className="text-center">
-                  <Banknote className="h-5 w-5 mx-auto text-green-500 mb-1" />
-                  <p className="font-bold text-red-500">-{amount}</p>
-                  <p className="text-[10px] text-muted-foreground">Cash</p>
+                  <Banknote className="mx-auto mb-1 h-5 w-5 text-hec-ink-soft" aria-hidden />
+                  <p className="whitespace-nowrap font-semibold tabular-nums text-hec-ink">-{amount}</p>
+                  <p className="text-hec-caption text-hec-ink-soft">Cash</p>
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                <ArrowRight className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
                 <div className="text-center">
-                  <Coins className="h-5 w-5 mx-auto text-amber-500 mb-1" />
-                  <p className="font-bold text-green-600">+{pointsGain}</p>
-                  <p className="text-[10px] text-muted-foreground">Points</p>
+                  <Coins className="mx-auto mb-1 h-5 w-5 text-hec-brass" aria-hidden />
+                  <p className="whitespace-nowrap font-semibold tabular-nums text-hec-ink">+{pointsGain}</p>
+                  <p className="text-hec-caption text-hec-ink-soft">Points</p>
                 </div>
               </div>
             </>

@@ -44,6 +44,20 @@ const m = (name) => join(migrations, name);
 const SUITES = [
   { name: "family payment month", file: "family-payment-month.test.mjs", migrations: [] },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
+  // A recalculation must not un-confirm or un-pay a bill. The real
+  // calculate-tuition, -bulk and confirm-tuition handlers over an invoices
+  // table carrying the real CHECK, carry, audit and freeze migrations; and
+  // every figure compared with the function as it was before the change.
+  {
+    name: "invoice status",
+    file: "invoice-status.test.mjs",
+    migrations: [
+      "20251117061416_2afa5f4f-f2a4-48ba-9c52-9939e4ece5e9.sql",
+      "20261009120000_keep_invoice_carry_balances_correct.sql",
+      "20261009130000_audit_every_admin_action.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+    ],
+  },
   {
     name: "cancelled lessons",
     file: "cancelled-lessons.test.mjs",
@@ -216,6 +230,10 @@ const SUITES = [
   // 20260717090000 first: the existing class-recordings bucket and its policy,
   // so the suite proves the recorder leaves them alone (C1 critic 2, N1).
   { name: "class recorder", file: "recorder.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql"] },
+  // Teacher Transcripts' audio scoped to the class's own staff (D-14), with
+  // the recorder pasted after it to prove its preflight still accepts.
+  { name: "transcribe gate", file: "transcribe-gate.test.mjs", migrations: [] },
+  { name: "class recordings scope", file: "class-recordings-scope.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112120000_class_recordings_scope.sql", "20261112100000_class_recorder.sql"] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
