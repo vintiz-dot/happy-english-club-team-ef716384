@@ -127,12 +127,12 @@ export default function TeacherResources() {
       <div className="space-y-6">
         {/* ---- Header ---- */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <FolderOpen className="h-6 w-6 text-blue-500" />
+          <div className="space-y-2">
+            <h1 className="flex items-center gap-2 font-display text-hec-display font-medium text-hec-ink">
+              <FolderOpen className="h-6 w-6 shrink-0 text-hec-ink-soft" aria-hidden />
               Resource Hub
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-hec-body tabular-nums text-hec-ink-soft">
               {totalItems} resource{totalItems !== 1 ? "s" : ""}
             </p>
           </div>
@@ -141,7 +141,7 @@ export default function TeacherResources() {
               setEditResource(null);
               setUploadOpen(true);
             }}
-            className="gap-2 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 shadow-md"
+            className="w-full sm:w-auto"
           >
             <Plus className="h-4 w-4" />
             Upload Resource
@@ -151,9 +151,10 @@ export default function TeacherResources() {
         {/* ---- Filters ---- */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hec-ink-faint" aria-hidden />
             <Input
               placeholder="Search resources..."
+              aria-label="Search resources"
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
@@ -163,7 +164,7 @@ export default function TeacherResources() {
             />
           </div>
           <Select value={bloomFilter} onValueChange={(v) => { setBloomFilter(v); setPage(1); }}>
-            <SelectTrigger className="w-full sm:w-44">
+            <SelectTrigger className="w-full sm:w-44" aria-label="Bloom's Level">
               <SelectValue placeholder="Bloom's Level" />
             </SelectTrigger>
             <SelectContent>
@@ -176,7 +177,7 @@ export default function TeacherResources() {
             </SelectContent>
           </Select>
           <Select value={pypFilter} onValueChange={(v) => { setPypFilter(v); setPage(1); }}>
-            <SelectTrigger className="w-full sm:w-44">
+            <SelectTrigger className="w-full sm:w-44" aria-label="PYP Theme">
               <SelectValue placeholder="PYP Theme" />
             </SelectTrigger>
             <SelectContent>
@@ -189,7 +190,7 @@ export default function TeacherResources() {
             </SelectContent>
           </Select>
           <Select value={visFilter} onValueChange={(v) => { setVisFilter(v); setPage(1); }}>
-            <SelectTrigger className="w-full sm:w-36">
+            <SelectTrigger className="w-full sm:w-36" aria-label="Visibility">
               <SelectValue placeholder="Visibility" />
             </SelectTrigger>
             <SelectContent>
@@ -203,17 +204,17 @@ export default function TeacherResources() {
         {/* ---- Resource List ---- */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <Loader2 className="h-8 w-8 animate-spin text-hec-ink-faint" />
           </div>
         ) : paged.length === 0 ? (
           <div className="text-center py-20 space-y-3">
-            <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground/40" />
-            <p className="text-muted-foreground">
+            <FolderOpen className="mx-auto h-12 w-12 text-hec-ink-faint" aria-hidden />
+            <p className="text-hec-body text-hec-ink-soft">
               {resources.length === 0 ? "No resources yet. Upload your first resource!" : "No resources match your filters."}
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-4">
             {paged.map((resource) => {
               const fileInfo = getFileTypeInfo(resource.file_type);
               const bloomLabels = resource.blooms_levels
@@ -226,50 +227,52 @@ export default function TeacherResources() {
               return (
                 <div
                   key={resource.id}
-                  className="flex items-center gap-3 p-3 sm:p-4 rounded-xl border bg-card hover:bg-muted/30 transition-colors group"
+                  className="flex flex-col gap-3 rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 sm:flex-row sm:items-start"
                 >
-                  {/* File type icon */}
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                  {/* File type icon (category colour, resourceConstants) */}
                   <div
                     className={cn(
-                      "w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 text-white shadow-sm",
+                      "w-11 h-11 rounded-hec-md flex items-center justify-center text-xl shrink-0 text-white",
                       fileInfo.color,
                     )}
+                    aria-hidden
                   >
                     {fileInfo.icon}
                   </div>
 
                   {/* Info */}
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-sm truncate">{resource.title}</p>
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <p className="min-w-0 truncate text-hec-body font-semibold text-hec-ink">{resource.title}</p>
                       {resource.visibility === "private" ? (
-                        <Badge variant="outline" className="text-[10px] gap-0.5 shrink-0">
-                          <EyeOff className="h-2.5 w-2.5" /> Private
+                        <Badge variant="outline" className="shrink-0 gap-1">
+                          <EyeOff className="h-3 w-3" aria-hidden /> Private
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="text-[10px] gap-0.5 shrink-0 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                          <Eye className="h-2.5 w-2.5" /> Shared
+                        <Badge variant="secondary" className="shrink-0 gap-1">
+                          <Eye className="h-3 w-3" aria-hidden /> Shared
                         </Badge>
                       )}
                     </div>
 
                     {/* Tags row */}
-                    <div className="flex flex-wrap gap-1 items-center">
+                    <div className="flex flex-wrap items-center gap-1">
                       {/* Class badges */}
                       {(resource.class_ids || []).slice(0, 3).map((cid) => (
-                        <Badge key={cid} variant="outline" className="text-[9px] px-1.5 py-0 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                        <Badge key={cid} variant="outline" className="max-w-full whitespace-normal break-words text-left">
                           {classNameMap.get(cid) || "Class"}
                         </Badge>
                       ))}
                       {(resource.class_ids || []).length > 3 && (
-                        <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                        <Badge variant="outline" className="tabular-nums">
                           +{resource.class_ids!.length - 3}
                         </Badge>
                       )}
                       {bloomLabels.map((b) => (
                         <span
                           key={b!.value}
-                          className={cn("inline-flex items-center gap-0.5 px-1.5 py-0 rounded-full text-[9px] font-medium", b!.color)}
+                          className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-hec-caption font-medium", b!.color)}
                         >
                           {b!.icon} {b!.label}
                         </span>
@@ -277,61 +280,62 @@ export default function TeacherResources() {
                       {pypLabels.map((t) => (
                         <span
                           key={t!.value}
-                          className={cn("inline-flex items-center gap-0.5 px-1.5 py-0 rounded-full text-[9px] font-medium", t!.color)}
+                          className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-hec-caption font-medium", t!.color)}
                         >
                           {t!.icon} {t!.shortLabel || t!.label}
                         </span>
                       ))}
                       {resource.vocab_tags.slice(0, 3).map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-[9px] px-1.5 py-0">
+                        <Badge key={tag} variant="outline">
                           {tag}
                         </Badge>
                       ))}
                     </div>
 
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-hec-caption tabular-nums text-hec-ink-soft">
                       {fileInfo.label}
                       {resource.file_size ? ` · ${(resource.file_size / 1024 / 1024).toFixed(1)} MB` : ""}
                       {" · "}
                       {new Date(resource.created_at).toLocaleDateString()}
                     </p>
                   </div>
+                  </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+                  <div className="flex shrink-0 items-center justify-end gap-2">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
                       onClick={() => handleDownload(resource)}
                       disabled={downloading === resource.id}
+                      aria-label="Open"
                     >
                       {downloading === resource.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       ) : resource.external_url ? (
-                        <ExternalLink className="h-3.5 w-3.5" />
+                        <ExternalLink className="h-4 w-4" />
                       ) : (
-                        <Download className="h-3.5 w-3.5" />
+                        <Download className="h-4 w-4" />
                       )}
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
                       onClick={() => {
                         setEditResource(resource);
                         setUploadOpen(true);
                       }}
+                      aria-label="Edit"
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
-                      variant="ghost"
+                      variant="destructive-quiet"
                       size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
                       onClick={() => setDeleteTarget(resource)}
+                      aria-label="Delete"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -342,7 +346,7 @@ export default function TeacherResources() {
 
         {/* ---- Pagination ---- */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-4 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             <Button
               variant="outline"
               size="sm"
@@ -353,7 +357,7 @@ export default function TeacherResources() {
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-            <span className="text-sm text-muted-foreground tabular-nums">
+            <span className="text-hec-small text-hec-ink-soft tabular-nums">
               Page {currentPage} of {totalPages}
             </span>
             <Button
@@ -387,12 +391,12 @@ export default function TeacherResources() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Keep the resource</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90"
             >
-              Delete
+              Delete the resource
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
