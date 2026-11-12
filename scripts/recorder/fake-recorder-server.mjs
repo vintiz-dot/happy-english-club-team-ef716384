@@ -39,6 +39,11 @@ export function createFakeServer(opts = {}) {
     log: [],
     injections: [],
     corrupt: new Set(),
+    /** First registrations, in the order they reached the server: { recording, track, seq }. */
+    registrations: [],
+    forceLate: false,
+    /** Calls the engine made, with the user who made them: { uid, key, recording }. */
+    calls: [],
   };
 
   s.addUser = (id, roles = ["teacher"]) => { s.users.set(id, { roles, token: `jwt-${id}` }); return `jwt-${id}`; };
@@ -179,7 +184,9 @@ export function createFakeServer(opts = {}) {
     if (r.stop_requested_at && a.p_t_start_ms > Date.parse(r.stop_requested_at) - started + 60000) return err("Recording was asked to stop: audio captured after that is refused");
     const span = a.p_t_end_ms - a.p_t_start_ms;
     if (span > r.chunk_ms + r.clock_tolerance_ms) return err(`A chunk is at most ${r.chunk_ms} ms of audio: refused`);
-    if (a.p_byte_size * 1000 < r.min_bytes_per_sec * span) return err(`This chunk is too small to hold ${span} ms of ${r.format} audio (at least ${r.min_bytes_per_sec} bytes a second): refused`);
+    // Ruling (a): below the floor is stored and flagged; only < 40 bytes is refused.
+    if (a.p_byte_size < 40) return err(`This chunk is too small to hold any audio (${a.p_byte_size} bytes): refused`);
+    const belowFloor = a.p_byte_size * 1000 < r.min_bytes_per_sec * span;
     const elapsed = s.now() - started;
     if (a.p_t_end_ms > elapsed + r.clock_tolerance_ms) return err(`This audio ends later than the server's clock says capture has run (${elapsed} ms): refused`);
     if (r.ended_at && a.p_t_end_ms > Date.parse(r.ended_at) - started + r.clock_tolerance_ms) return err("This audio is from after Stop: refused");
@@ -190,15 +197,17 @@ export function createFakeServer(opts = {}) {
     if (have) {
       if (have.sha256 !== a.p_sha256.toLowerCase() || have.byte_size !== a.p_byte_size || have.t_start_ms !== a.p_t_start_ms || have.t_end_ms !== a.p_t_end_ms)
         return err(`Chunk ${a.p_seq} of the ${a.p_track} track is already registered with different audio`);
-      return ok({ chunk_id: have.id, storage_path: have.storage_path, already_registered: true, confirmed: !!have.confirmed_at, late: !!have.late });
+      return ok({ chunk_id: have.id, storage_path: have.storage_path, already_registered: true, confirmed: !!have.confirmed_at, late: !!have.late || s.forceLate, below_floor: have.below_floor });
     }
     // Revision 2: registered later than started_at + t_end_ms + late_after_ms:
-    // stored but marked late (never evidence).
-    const late = s.now() > started + a.p_t_end_ms + r.late_after_ms;
+    // stored but marked late (never evidence). (`forceLate`: a test makes the
+    // server say late where the page's own estimate would not.)
+    const late = s.forceLate || s.now() > started + a.p_t_end_ms + r.late_after_ms;
     const c = { id: randomUUID(), recording_id: r.id, track: a.p_track, seq: a.p_seq, storage_path: path, byte_size: a.p_byte_size, sha256: a.p_sha256.toLowerCase(),
-      t_start_ms: a.p_t_start_ms, t_end_ms: a.p_t_end_ms, registered_by: uid, registered_at: iso(s.now()), stored_size: null, confirmed_at: null, late };
+      t_start_ms: a.p_t_start_ms, t_end_ms: a.p_t_end_ms, registered_by: uid, registered_at: iso(s.now()), stored_size: null, confirmed_at: null, late, below_floor: belowFloor };
     s.chunks.set(c.id, c);
-    return ok({ chunk_id: c.id, storage_path: path, already_registered: false, confirmed: false, late });
+    s.registrations.push({ recording: r.id, track: a.p_track, seq: a.p_seq });
+    return ok({ chunk_id: c.id, storage_path: path, already_registered: false, confirmed: false, late, below_floor: belowFloor });
   }
 
   function confirmChunk(uid, a) {
@@ -232,6 +241,7 @@ export function createFakeServer(opts = {}) {
     if (inj) { inj.n--; if (inj.error.offline) throw new TypeError("Failed to fetch"); return { data: null, error: inj.error }; }
     s.log.push(["op", key]);
     const filt = Object.fromEntries(q.filters ?? []);
+    s.calls.push({ uid, key, recording: filt.id ?? filt.recording_id ?? q.args?.p_recording ?? q.row?.recording_id ?? (/^[0-9a-f-]{36}\/([0-9a-f-]{36})\//.exec(q.path ?? "") ?? [])[1] ?? null });
     switch (key) {
       case "getUser": {
         const u = [...s.users.entries()].find(([, v]) => v.token === q.token);

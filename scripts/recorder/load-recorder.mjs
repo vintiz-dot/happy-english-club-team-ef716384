@@ -8,9 +8,13 @@ import { tmpdir } from "node:os";
 
 export const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
-export async function bundleRecorder({ format = "esm", platform = "neutral" } = {}) {
+// RECORDER_SRC points the tests at another copy of the engine (the mutation
+// runs use throwaway copies under .probe/).
+const SRC = process.env.RECORDER_SRC ? resolve(process.env.RECORDER_SRC) : resolve(repo, "src/lib/recorder");
+
+export async function bundleRecorder({ format = "esm", platform = "neutral", entry = "index.ts" } = {}) {
   const out = await build({
-    entryPoints: [resolve(repo, "src/lib/recorder/index.ts")],
+    entryPoints: [resolve(SRC, entry)],
     bundle: true, format, platform, write: false, logLevel: "silent", target: "es2020",
   });
   return out.outputFiles[0].text;

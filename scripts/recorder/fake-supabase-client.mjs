@@ -42,10 +42,15 @@ class Query {
 }
 
 export function makeClient(transport) {
-  return {
+  const client = {
+    refreshed: 0,
     rpc: (fn, args = {}) => transport({ op: "rpc", fn, args }),
     from: (table) => new Query(transport, table),
-    auth: { getUser: (token) => transport({ op: "getUser", token }) },
+    auth: {
+      getUser: (token) => transport({ op: "getUser", token }),
+      // supabase-js refreshes an expired session; the fake only counts the calls.
+      refreshSession: async () => { client.refreshed += 1; return { data: { session: {} }, error: null }; },
+    },
     storage: {
       from: (bucket) => ({
         async upload(path, body, opts = {}) {
@@ -63,6 +68,7 @@ export function makeClient(transport) {
       }),
     },
   };
+  return client;
 }
 
 /** Browser transport: POST to the harness, which holds the fake server. */
