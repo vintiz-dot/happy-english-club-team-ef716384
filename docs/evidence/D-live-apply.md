@@ -114,3 +114,15 @@ Ran D-release-fingerprint.sql verbatim inside a CTE that returns md5(jsonb::text
 | trigger | sessions.zz_session_change_guard_upd | 916ee42e79046e66aff6b6f52ed4f127 | 916ee42e79046e66aff6b6f52ed4f127 | yes |
 | trigger | sessions.zz_session_no_truncate | 60dfda3b19dc5f373a7dd107302f6ee4 | 60dfda3b19dc5f373a7dd107302f6ee4 | yes |
 | informational | view defs md5 + view_options | review_queue 6bc572ee..., tuition_pending 3f9f0800..., security_invoker=true x2 | identical | yes |
+
+## Step 7 - post-apply probes: PASS
+- Triggers, all enabled `O`: sessions.zz_session_change_guard_upd / _del / zz_session_no_truncate; session_cancel_overrides _append_only / _insert_guard / _no_truncate; session_cancel_override_events _append_only / _insert_guard / _no_truncate (9/9).
+- Owner of session_cancel_overrides = postgres = owner of _session_change_apply.
+- has_function_privilege on cancel_session_checked: authenticated true, service_role false, anon false.
+- session_cancel_override_events: guard_installed = 1 (no other kind); session_cancel_overrides: 0 rows.
+- public.sessions: 876 total, 132 Canceled - same as step 1 (876 / 132).
+- Publishable key: POST /rest/v1/rpc/session_change_preview -> HTTP 401, code 42501 "permission denied for function session_change_preview" (not PGRST202: the function is in the schema cache). POST /functions/v1/manage-session -> HTTP 401 unauthorized.
+- cron.job (names and flags): rebuild-upcoming-sessions = active, stars-sync = active.
+- Not run (need an admin session in the app, outside this brief): session_cancel_guard_status(), the F-1 bill re-read, EXPLAIN on audit_log.
+
+Where I am / next step: all steps done. LIVE AND VERIFIED. Nothing pushed.
