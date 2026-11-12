@@ -395,10 +395,10 @@ const OperationalReports = () => {
       <BulkReportExport />
 
       {/* Month Selector */}
-      <div className="flex items-center gap-4">
-        <label className="type-micro font-medium">Select Month:</label>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <label htmlFor="ops-month" className="text-hec-small font-medium text-hec-ink">Select Month:</label>
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger id="ops-month" className="w-[200px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -414,7 +414,7 @@ const OperationalReports = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-destructive" />
+              <XCircle className="h-5 w-5 shrink-0 text-hec-danger" aria-hidden />
               Cancelled Sessions
             </CardTitle>
             <CardDescription>
@@ -422,21 +422,21 @@ const OperationalReports = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-destructive">{lostRevenue?.sessionCount || 0}</div>
+            <div className="font-sans text-hec-display font-semibold tabular-nums text-hec-ink">{lostRevenue?.sessionCount || 0}</div>
           </CardContent>
         </Card>
 
-        <Card className="border-orange-500/30 bg-orange-50 dark:bg-orange-950/20">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingDown className="h-5 w-5 text-orange-600" />
+              <TrendingDown className="h-5 w-5 shrink-0 text-hec-warn" aria-hidden />
               Lost Profit
             </CardTitle>
             <CardDescription>Potential profit lost from cancelled sessions</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-orange-600">{formatVND(lostRevenue?.lostProfit || 0)}</div>
-            <div className="text-sm text-muted-foreground mt-2 space-y-1">
+            <div className="whitespace-nowrap font-sans text-hec-display font-semibold tabular-nums text-hec-ink">{formatVND(lostRevenue?.lostProfit || 0)}</div>
+            <div className="mt-2 space-y-1 text-hec-small tabular-nums text-hec-ink-soft">
               <p>Lost Tuition: {formatVND(lostRevenue?.lostTuition || 0)}</p>
               <p>Saved Payroll: {formatVND(lostRevenue?.savedPayroll || 0)}</p>
             </div>
@@ -448,7 +448,7 @@ const OperationalReports = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <UserX className="h-5 w-5 text-amber-600" />
+            <UserX className="h-5 w-5 shrink-0 text-hec-warn" aria-hidden />
             Excused Absences
           </CardTitle>
           <CardDescription>
@@ -469,20 +469,20 @@ const OperationalReports = () => {
               <TableBody>
                 {excusedData.rows.map((row: any) => (
                   <TableRow key={row.id}>
-                    <TableCell>{row.date}</TableCell>
-                    <TableCell className="font-medium">{row.studentName}</TableCell>
-                    <TableCell>{row.className}</TableCell>
-                    <TableCell className="text-right text-amber-600 font-medium">{formatVND(row.rate)}</TableCell>
+                    <TableCell className="whitespace-nowrap tabular-nums">{row.date}</TableCell>
+                    <TableCell className="break-words font-medium">{row.studentName}</TableCell>
+                    <TableCell className="break-words">{row.className}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right font-medium tabular-nums">{formatVND(row.rate)}</TableCell>
                   </TableRow>
                 ))}
-                <TableRow className="bg-muted/50 font-bold">
+                <TableRow className="border-t-2 border-hec-ink font-semibold">
                   <TableCell colSpan={3}>TOTAL</TableCell>
-                  <TableCell className="text-right text-amber-600">{formatVND(excusedData.totalLoss)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(excusedData.totalLoss)}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
           ) : (
-            <p className="text-sm text-muted-foreground">No excused absences this month.</p>
+            <p className="text-hec-small text-hec-ink-soft">No excused absences this month.</p>
           )}
         </CardContent>
       </Card>
@@ -494,7 +494,7 @@ const OperationalReports = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+            <FileText className="h-5 w-5 shrink-0" aria-hidden />
             Payment Details
           </CardTitle>
           <CardDescription>
@@ -509,10 +509,10 @@ const OperationalReports = () => {
       {/* Class Finance Report */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
               <CardTitle className="flex items-center gap-2">
-                <TrendingDown className="h-5 w-5" />
+                <TrendingDown className="h-5 w-5 shrink-0" aria-hidden />
                 Class Finance Report
               </CardTitle>
               <CardDescription>
@@ -522,24 +522,24 @@ const OperationalReports = () => {
                   : ""}
               </CardDescription>
               {classFinance?.overheadUnavailable && (
-                <p className="text-xs text-amber-600 mt-1">
+                <p className="mt-1 text-hec-caption text-hec-warn">
                   Standing costs are not included: the class-overhead migration has not been applied yet.
                 </p>
               )}
               {classFinance?.payrollEstimated && (
-                <p className="text-xs text-amber-600 mt-1">
+                <p className="mt-1 text-hec-caption text-hec-warn">
                   Payroll could not be loaded, so these figures are estimated from teacher rates and leave
                   out teaching assistants.
                 </p>
               )}
               {(classFinance?.unattributedPayroll ?? 0) !== 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="mt-1 text-hec-caption text-hec-ink-soft">
                   {formatVND(classFinance?.unattributedPayroll ?? 0)} of pay belongs to no class and is not
                   in the rows below.
                 </p>
               )}
               {unallocatedOverhead > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="mt-1 text-hec-caption text-hec-ink-soft">
                   {formatVND(unallocatedOverhead)} of standing costs is not in the Overhead column — either no
                   class ran this month, or it belongs to a class not listed above.
                 </p>
@@ -547,7 +547,7 @@ const OperationalReports = () => {
               {/* The bottom line here is structurally higher than the
                   Finance Summary's net, and saying so beats letting
                   someone discover it by subtraction. */}
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-hec-caption text-hec-ink-soft">
                 Click a class to see what its overhead is made of and what it needs to break even. Overhead
                 covers costs aimed at a class; unaimed spend is not shared,
                 so this TOTAL is higher than Net Profit on the Finance tab by whatever else was spent.
@@ -555,8 +555,8 @@ const OperationalReports = () => {
                   " An open month prices every scheduled session; the Finance tab's actual figure counts only lessons already held."}
               </p>
             </div>
-            <Button onClick={exportClassFinanceCSV} variant="outline" size="sm" disabled={!classRows.length}>
-              <Download className="h-4 w-4 mr-2" />
+            <Button onClick={exportClassFinanceCSV} variant="outline" size="sm" className="shrink-0" disabled={!classRows.length}>
+              <Download className="h-4 w-4" aria-hidden />
               Export CSV
             </Button>
           </div>
@@ -589,40 +589,40 @@ const OperationalReports = () => {
                   className="cursor-pointer"
                   onClick={() => toggleRow(cls.id)}
                 >
-                  <TableCell className="font-medium">
-                    <span className="inline-flex items-center gap-1">
+                  <TableCell className="min-w-[10rem] font-medium">
+                    <span className="inline-flex items-start gap-1">
                       {open ? (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
                       ) : (
-                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
                       )}
-                      {cls.name}
+                      <span className="min-w-0 break-words">{cls.name}</span>
                     </span>
                     {!cls.isActive && (
-                      <span className="ml-2 text-xs font-normal text-muted-foreground">archived</span>
+                      <span className="ml-2 text-hec-caption font-normal text-hec-ink-soft">archived</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">{cls.sessionCount}</TableCell>
-                  <TableCell className="text-right">{cls.studentCount}</TableCell>
-                  <TableCell className="text-right">{formatVND(cls.grossTuition)}</TableCell>
-                  <TableCell className="text-right text-muted-foreground">
+                  <TableCell className="text-right tabular-nums">{cls.sessionCount}</TableCell>
+                  <TableCell className="text-right tabular-nums">{cls.studentCount}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(cls.grossTuition)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums text-hec-ink-soft">
                     {cls.discounts > 0 ? `-${formatVND(cls.discounts)}` : '-'}
                   </TableCell>
-                  <TableCell className="text-right font-medium">{formatVND(cls.tuition)}</TableCell>
-                  <TableCell className="text-right">{formatVND(cls.payroll)}</TableCell>
-                  <TableCell className="text-right text-muted-foreground">
+                  <TableCell className="whitespace-nowrap text-right font-medium tabular-nums">{formatVND(cls.tuition)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(cls.payroll)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums text-hec-ink-soft">
                     {cls.overhead > 0 ? formatVND(cls.overhead) : '-'}
                   </TableCell>
-                  <TableCell className={`text-right font-semibold ${cls.net >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                  <TableCell className={`whitespace-nowrap text-right font-semibold tabular-nums ${cls.net >= 0 ? 'text-hec-leaf' : 'text-hec-danger'}`}>
                     {formatVND(cls.net)}
                   </TableCell>
                   <TableCell className="text-right">
                     {be.students === null ? (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-hec-ink-soft">—</span>
                     ) : (
-                      <span className="tabular-nums">
+                      <span className="whitespace-nowrap tabular-nums">
                         {be.students}
-                        <span className={`ml-1 text-xs ${(be.gap ?? 0) > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        <span className={`ml-1 text-hec-caption ${(be.gap ?? 0) > 0 ? 'text-hec-danger' : 'text-hec-ink-soft'}`}>
                           {(be.gap ?? 0) > 0 ? `(+${be.gap})` : (be.gap ?? 0) < 0 ? `(${be.gap})` : '(=)'}
                         </span>
                       </span>
@@ -631,15 +631,15 @@ const OperationalReports = () => {
                 </TableRow>
 
                 {open && (
-                  <TableRow key={`${cls.id}-detail`} className="bg-muted/30 hover:bg-muted/30">
+                  <TableRow key={`${cls.id}-detail`} className="bg-hec-sunken/60 hover:bg-hec-sunken/60">
                     <TableCell colSpan={10} className="py-3">
                       <div className="grid gap-4 md:grid-cols-3">
                         <div>
-                          <p className="text-xs font-semibold mb-1.5">
+                          <p className="mb-2 text-hec-caption font-semibold text-hec-ink">
                             Pay — what the {formatVND(cls.payroll)} is made of
                           </p>
                           {staff.length === 0 ? (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-hec-caption text-hec-ink-soft">
                               {classFinance?.payrollEstimated
                                 ? "Payroll could not be loaded, so there is nobody to list."
                                 : "Nobody was paid for this class this month."}
@@ -647,10 +647,10 @@ const OperationalReports = () => {
                           ) : (
                             <ul className="space-y-1">
                               {staff.map((person) => (
-                                <li key={person.id} className="text-xs flex justify-between gap-3">
-                                  <span>
+                                <li key={person.id} className="flex justify-between gap-3 text-hec-caption">
+                                  <span className="min-w-0 break-words">
                                     <span className="font-medium">{person.name}</span>
-                                    <span className="text-muted-foreground">
+                                    <span className="text-hec-ink-soft">
                                       {" "}· {person.isAssistant ? "assistant" : "teacher"}
                                     </span>
                                   </span>
@@ -659,35 +659,35 @@ const OperationalReports = () => {
                               ))}
                             </ul>
                           )}
-                          <p className="mt-1 text-[11px] text-muted-foreground">
+                          <p className="mt-1 text-hec-caption text-hec-ink-soft">
                             {classFinance?.locked
                               ? "What this class was paid when the month was closed."
                               : "Every session on the calendar that was not cancelled, priced at the rate that applied on its date. An assistant marked absent for a lesson is not in here."}
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs font-semibold mb-1.5">
+                          <p className="mb-2 text-hec-caption font-semibold text-hec-ink">
                             Overhead — what the {formatVND(cls.overhead)} is made of
                           </p>
                           {lines.length === 0 ? (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-hec-caption text-hec-ink-soft">
                               No shared costs reached this class this month.
                             </p>
                           ) : (
                             <ul className="space-y-1">
                               {lines.map((l) => (
-                                <li key={`${l.class_id}-${l.category}-${l.cost_vnd}`} className="text-xs flex justify-between gap-3">
-                                  <span>
+                                <li key={`${l.class_id}-${l.category}-${l.cost_vnd}`} className="flex justify-between gap-3 text-hec-caption">
+                                  <span className="min-w-0 break-words">
                                     <span className="font-medium">{l.category}</span>
-                                    {l.memo ? <span className="text-muted-foreground"> · {l.memo}</span> : null}
-                                    <span className="text-muted-foreground">
+                                    {l.memo ? <span className="text-hec-ink-soft"> · {l.memo}</span> : null}
+                                    <span className="text-hec-ink-soft">
                                       {" "}· {describeAim(l.allocation_mode, Number(l.cost_vnd), Number(l.share_vnd))}
                                     </span>
                                   </span>
                                   <span className="tabular-nums whitespace-nowrap">
                                     {formatVND(Number(l.share_vnd))}
                                     {Number(l.share_vnd) < Number(l.cost_vnd) && (
-                                      <span className="text-muted-foreground"> of {formatVND(Number(l.cost_vnd))}</span>
+                                      <span className="text-hec-ink-soft"> of {formatVND(Number(l.cost_vnd))}</span>
                                     )}
                                   </span>
                                 </li>
@@ -696,31 +696,31 @@ const OperationalReports = () => {
                           )}
                         </div>
                         <div>
-                          <p className="text-xs font-semibold mb-1.5">Break-even</p>
+                          <p className="mb-2 text-hec-caption font-semibold text-hec-ink">Break-even</p>
                           {be.students === null ? (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-hec-caption text-hec-ink-soft">
                               No students billed this month, so there is nothing to work out what one is worth.
                             </p>
                           ) : (
-                            <div className="text-xs space-y-1">
+                            <div className="space-y-1 text-hec-caption">
                               <p>
                                 One student here is worth{" "}
-                                <span className="font-medium tabular-nums">{formatVND(Math.round(be.revenuePerStudent))}</span>
-                                <span className="text-muted-foreground">
+                                <span className="whitespace-nowrap font-medium tabular-nums">{formatVND(Math.round(be.revenuePerStudent))}</span>
+                                <span className="text-hec-ink-soft">
                                   {" "}— this class's own net tuition over its {cls.studentCount} student
                                   {cls.studentCount === 1 ? "" : "s"}, discounts included.
                                 </span>
                               </p>
                               <p>
-                                It costs <span className="font-medium tabular-nums">{formatVND(be.cost)}</span>
-                                <span className="text-muted-foreground">
+                                It costs <span className="whitespace-nowrap font-medium tabular-nums">{formatVND(be.cost)}</span>
+                                <span className="text-hec-ink-soft">
                                   {" "}— {formatVND(cls.payroll)} of pay and {formatVND(cls.overhead)} of overhead.
                                 </span>
                               </p>
-                              <p className={(be.gap ?? 0) > 0 ? "text-destructive font-medium" : "font-medium"}>
+                              <p className={(be.gap ?? 0) > 0 ? "font-medium text-hec-danger" : "font-medium"}>
                                 Needs {be.students} student{be.students === 1 ? "" : "s"} · {describeGap(be)}
                               </p>
-                              <p className="text-muted-foreground">
+                              <p className="text-hec-ink-soft">
                                 An estimate at today's prices. It assumes one more student costs nothing extra to
                                 teach, which stops being true once the room is full.
                               </p>
@@ -738,20 +738,20 @@ const OperationalReports = () => {
                   adding a column: an extra one here shifts every total
                   under the wrong heading and the rows above still look
                   right, so it reads as the totals contradicting them. */}
-              <TableRow className="bg-muted/50 font-bold">
+              <TableRow className="border-t-2 border-hec-ink font-semibold">
                 <TableCell>TOTAL</TableCell>
                 <TableCell className="text-right">-</TableCell>
                 <TableCell className="text-right">-</TableCell>
-                <TableCell className="text-right">{formatVND(totalGrossTuition)}</TableCell>
-                <TableCell className="text-right text-muted-foreground">
+                <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(totalGrossTuition)}</TableCell>
+                <TableCell className="whitespace-nowrap text-right tabular-nums text-hec-ink-soft">
                   {totalDiscounts > 0 ? `-${formatVND(totalDiscounts)}` : '-'}
                 </TableCell>
-                <TableCell className="text-right">{formatVND(totalTuition)}</TableCell>
-                <TableCell className="text-right">{formatVND(totalPayroll)}</TableCell>
-                <TableCell className="text-right text-muted-foreground">
+                <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(totalTuition)}</TableCell>
+                <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(totalPayroll)}</TableCell>
+                <TableCell className="whitespace-nowrap text-right tabular-nums text-hec-ink-soft">
                   {totalOverhead > 0 ? formatVND(totalOverhead) : '-'}
                 </TableCell>
-                <TableCell className={`text-right ${totalNet >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                <TableCell className={`whitespace-nowrap text-right tabular-nums ${totalNet >= 0 ? 'text-hec-leaf' : 'text-hec-danger'}`}>
                   {formatVND(totalNet)}
                 </TableCell>
                 <TableCell className="text-right">-</TableCell>
