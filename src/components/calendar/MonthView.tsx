@@ -6,8 +6,10 @@ import { cn } from "@/lib/utils";
 import { dayjs, nowBangkok } from "@/lib/date";
 import { statusTreatment, type ClassColor } from "@/lib/classColors";
 import { describeVariance } from "@/lib/sessionDuration";
+import { useIvory } from "@/hooks/useIvory";
 import {
   STATUS_META,
+  STATUS_META_IVORY,
   colorKeyFor,
   eventVariance,
   formatTime,
@@ -78,6 +80,43 @@ function useMeasuredHeight<T extends HTMLElement>() {
 
 type ColorFor = (key: string) => ClassColor;
 
+export const CAL_FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
+
+/**
+ * statusTreatment (lib/classColors) in the "Ivory" system, for the calendar
+ * views on a listed route. Same states and the same `showWarning`; the
+ * difference is that a state never fades the chip with `opacity-*` - over a
+ * class tint that took the class name below 4.5:1 (the teal chips). Held and
+ * holiday desaturate the tint instead, cancelled is dashed and struck
+ * through, the one actionable state keeps its amber ring, today its brass
+ * ring. The class colours themselves are a category palette and stay.
+ */
+export function statusTreatmentIvory(statusKey: string): {
+  wrapper: string;
+  label: string;
+  showWarning: boolean;
+} {
+  switch (statusKey) {
+    case "needsAttention":
+      return {
+        wrapper: "ring-2 ring-hec-warn ring-offset-1 ring-offset-hec-surface",
+        label: "",
+        showWarning: true,
+      };
+    case "canceled":
+      return { wrapper: "border-dashed", label: "line-through decoration-2", showWarning: false };
+    case "held":
+      return { wrapper: "saturate-50", label: "", showWarning: false };
+    case "holiday":
+      return { wrapper: "saturate-0", label: "italic", showWarning: false };
+    case "today":
+      return { wrapper: "ring-1 ring-hec-brass", label: "", showWarning: false };
+    default:
+      return { wrapper: "", label: "", showWarning: false };
+  }
+}
+
 interface ChipProps {
   event: CalendarEvent;
   onSelect?: (event: CalendarEvent) => void;
@@ -87,11 +126,12 @@ interface ChipProps {
 }
 
 function EventChip({ event, onSelect, draggable, compact, colorFor }: ChipProps) {
+  const ivory = useIvory();
   const statusKey = getStatusKey(event);
-  const meta = STATUS_META[statusKey];
+  const meta = (ivory ? STATUS_META_IVORY : STATUS_META)[statusKey];
   // Colour identifies the CLASS; status is applied on top as treatment.
   const color = colorFor(colorKeyFor(event));
-  const treatment = statusTreatment(statusKey);
+  const treatment = (ivory ? statusTreatmentIvory : statusTreatment)(statusKey);
   const variance = eventVariance(event);
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -122,9 +162,13 @@ function EventChip({ event, onSelect, draggable, compact, colorFor }: ChipProps)
       title={variance ? describeVariance(variance) : undefined}
       style={{ height: CHIP_H }}
       className={cn(
-        "group/chip relative flex w-full items-center gap-1.5 overflow-hidden rounded-[5px] pl-2 pr-1.5 text-left",
-        "border transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+        ivory
+          ? "group/chip relative flex w-full items-center gap-1 overflow-hidden rounded-hec-sm pl-2 pr-1 text-left"
+          : "group/chip relative flex w-full items-center gap-1.5 overflow-hidden rounded-[5px] pl-2 pr-1.5 text-left",
+        ivory ? "border transition-colors duration-hec-1 ease-hec" : "border transition-colors",
+        ivory
+          ? "focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hec-ring"
+          : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         color.tint,
         color.border,
         treatment.wrapper,
@@ -135,26 +179,35 @@ function EventChip({ event, onSelect, draggable, compact, colorFor }: ChipProps)
       {/* The identifying rail, in the class's own colour. */}
       <span
         aria-hidden
-        className={cn("absolute inset-y-0 left-0 w-[3px] rounded-l-[5px]", color.rail)}
+        className={cn("absolute inset-y-0 left-0 w-[3px]", ivory ? "rounded-l-hec-sm" : "rounded-l-[5px]", color.rail)}
       />
-      <span className="shrink-0 text-[10px] font-semibold tabular-nums opacity-70">
+      <span className={ivory ? cn("shrink-0 text-hec-caption font-semibold leading-none tabular-nums", color.text) : "shrink-0 text-[10px] font-semibold tabular-nums opacity-70"}>
         {formatTime(event.start_time)}
       </span>
-      <span className={cn("truncate text-[11px] font-medium leading-none", color.text, treatment.label)}>
+      {/* The chip is one line of a fixed height (CHIP_H, measured layout):
+          the name is cut here and given whole in the label, the day view
+          and the "+N more" list. */}
+      <span
+        className={cn(
+          ivory ? "truncate text-hec-caption font-medium leading-none" : "truncate text-[11px] font-medium leading-none",
+          color.text,
+          treatment.label,
+        )}
+      >
         {event.class_name}
       </span>
       <span className="ml-auto flex shrink-0 items-center gap-1">
         {variance && (
           <AlertTriangle
-            className="h-3 w-3 text-warning"
+            className={ivory ? "h-3 w-3 text-hec-warn" : "h-3 w-3 text-warning"}
             aria-hidden
           />
         )}
         {treatment.showWarning && !variance && (
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warning" />
+          <span aria-hidden className={ivory ? "h-1.5 w-1.5 rounded-full bg-hec-warn" : "h-1.5 w-1.5 rounded-full bg-warning"} />
         )}
         {!compact && event.enrolled_count ? (
-          <span className="text-[10px] tabular-nums opacity-60">{event.enrolled_count}</span>
+          <span className={ivory ? cn("text-hec-caption leading-none tabular-nums", color.text) : "text-[10px] tabular-nums opacity-60"}>{event.enrolled_count}</span>
         ) : null}
       </span>
     </button>
@@ -186,6 +239,7 @@ function DayCell({
   dense,
   colorFor,
 }: DayCellProps) {
+  const ivory = useIvory();
   const dateStr = date.format("YYYY-MM-DD");
   const isToday = date.isSame(nowBangkok(), "day");
   const [listRef, listHeight] = useMeasuredHeight<HTMLDivElement>();
@@ -202,28 +256,50 @@ function DayCell({
   return (
     <div
       ref={setNodeRef}
-      className={cn(
-        "group/cell relative flex min-h-[116px] flex-col rounded-xl border p-1.5 transition-colors",
-        // Weekends are NOT dimmed: this school teaches Saturday and Sunday,
-        // and the old grid greyed out two of its busiest days.
-        isCurrentMonth ? "border-border/50 bg-card/40" : "border-transparent bg-muted/20",
-        isOver && "border-primary/60 bg-primary/5 ring-2 ring-primary/30",
-      )}
+      className={
+        ivory
+          ? cn(
+              // 136 px, not 116: the 44 px date button takes 20 px more of
+              // the cell, and this keeps the same three chips in view.
+              "group/cell relative flex min-h-[136px] flex-col rounded-hec-md border p-1 transition-colors duration-hec-1 ease-hec",
+              isCurrentMonth ? "border-hec-line bg-hec-surface" : "border-transparent bg-hec-sunken/60",
+              isOver && "border-hec-brass bg-hec-sunken ring-2 ring-hec-brass/40",
+            )
+          : cn(
+              "group/cell relative flex min-h-[116px] flex-col rounded-xl border p-1.5 transition-colors",
+              // Weekends are NOT dimmed: this school teaches Saturday and Sunday,
+              // and the old grid greyed out two of its busiest days.
+              isCurrentMonth ? "border-border/50 bg-card/40" : "border-transparent bg-muted/20",
+              isOver && "border-primary/60 bg-primary/5 ring-2 ring-primary/30",
+            )
+      }
     >
       <div className="mb-1 flex items-center justify-between">
         <button
           type="button"
           onClick={() => onOpenDay?.(dateStr)}
           aria-label={`Open ${date.format("D MMMM")}`}
-          className={cn(
-            "flex h-6 min-w-6 items-center justify-center rounded-md px-1 text-xs font-semibold tabular-nums transition-colors",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            isToday
-              ? "bg-primary text-primary-foreground"
-              : isCurrentMonth
-                ? "text-foreground hover:bg-muted"
-                : "text-muted-foreground/60",
-          )}
+          className={
+            ivory
+              ? cn(
+                  "flex min-h-hec-target w-full items-center justify-center rounded-hec-sm px-1 text-hec-small font-semibold tabular-nums transition-colors duration-hec-1 ease-hec sm:w-auto sm:min-w-hec-target",
+                  CAL_FOCUS,
+                  isToday
+                    ? "border border-hec-brass text-hec-brass"
+                    : isCurrentMonth
+                      ? "text-hec-ink hover:bg-hec-sunken"
+                      : "text-hec-ink-faint hover:bg-hec-sunken",
+                )
+              : cn(
+                  "flex h-6 min-w-6 items-center justify-center rounded-md px-1 text-xs font-semibold tabular-nums transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  isToday
+                    ? "bg-primary text-primary-foreground"
+                    : isCurrentMonth
+                      ? "text-foreground hover:bg-muted"
+                      : "text-muted-foreground/60",
+                )
+          }
         >
           {date.format("D")}
         </button>
@@ -233,9 +309,16 @@ function DayCell({
             type="button"
             onClick={() => onAddSession(date.toDate())}
             aria-label={`Add a session on ${date.format("D MMMM")}`}
-            className="rounded-md p-0.5 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/cell:opacity-70"
+            className={
+              ivory
+                ? cn(
+                    "flex min-h-hec-target min-w-hec-target items-center justify-center rounded-hec-sm text-hec-ink-soft opacity-0 transition-opacity duration-hec-1 ease-hec hover:bg-hec-sunken hover:text-hec-ink focus-visible:opacity-100 group-hover/cell:opacity-100 max-sm:min-h-0 max-sm:min-w-0 max-sm:p-1",
+                    CAL_FOCUS,
+                  )
+                : "rounded-md p-0.5 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/cell:opacity-70"
+            }
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className={ivory ? "h-4 w-4" : "h-3.5 w-3.5"} />
           </button>
         )}
       </div>
@@ -260,13 +343,17 @@ function DayCell({
               <button
                 type="button"
                 style={{ height: MORE_H }}
-                className="w-full rounded-[5px] text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className={
+                  ivory
+                    ? "w-full rounded-hec-sm text-hec-caption font-medium leading-none tabular-nums text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken hover:text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hec-ring"
+                    : "w-full rounded-[5px] text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                }
               >
                 +{hidden} more
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-64 p-2">
-              <p className="px-1 pb-1.5 text-xs font-semibold">
+              <p className={ivory ? "px-1 pb-2 text-hec-small font-semibold text-hec-ink" : "px-1 pb-1.5 text-xs font-semibold"}>
                 {date.format("dddd D MMMM")}
               </p>
               <div className="flex flex-col gap-[3px]">
@@ -332,24 +419,29 @@ export default function MonthView({
     return map;
   }, [events]);
 
+  const ivory = useIvory();
   const weekdays = isMobile
     ? ["M", "T", "W", "T", "F", "S", "S"]
     : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   return (
     <div>
-      <div className="mb-1.5 grid grid-cols-7 gap-1.5">
+      <div className={ivory ? "mb-1 grid grid-cols-7 gap-1" : "mb-1.5 grid grid-cols-7 gap-1.5"}>
         {weekdays.map((day, idx) => (
           <div
             key={`${day}-${idx}`}
-            className="py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+            className={
+              ivory
+                ? "py-1 text-center text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft"
+                : "py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+            }
           >
             {day}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1.5">
+      <div className={ivory ? "grid grid-cols-7 gap-1" : "grid grid-cols-7 gap-1.5"}>
         {cells.map((date) => {
           const dateStr = date.format("YYYY-MM-DD");
           return (
