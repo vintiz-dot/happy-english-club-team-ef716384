@@ -9,64 +9,68 @@ import { Filter } from "lucide-react";
 import { AssignmentCalendar } from "@/components/assignments/AssignmentCalendar";
 import { ClassSelector } from "@/components/assignments/ClassSelector";
 
+// DS s.15 card recipe, for the filter panels above each tab.
+const PANEL = "rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 sm:p-6";
+
 export default function TeacherAssignments() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedClassId, setSelectedClassId] = useState<string>("all");
 
   return (
     <Layout title="Assignments">
-      <div className="space-y-4 md:space-y-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Assignments</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Create and manage homework assignments</p>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h1 className="font-display text-hec-display font-medium text-hec-ink">Assignments</h1>
+          <p className="text-hec-body text-hec-ink-soft">Create and manage homework assignments</p>
         </div>
 
         <Tabs defaultValue="create" className="w-full">
           <TabsList className="w-full grid grid-cols-3 h-auto">
-            <TabsTrigger value="create" className="text-xs sm:text-sm py-3">
+            <TabsTrigger value="create">
               Create
             </TabsTrigger>
-            <TabsTrigger value="calendar" className="text-xs sm:text-sm py-3">
+            <TabsTrigger value="calendar">
               Calendar
             </TabsTrigger>
-            <TabsTrigger value="grade" className="text-xs sm:text-sm py-3">
+            <TabsTrigger value="grade">
               Grade
             </TabsTrigger>
           </TabsList>
 
-<TabsContent value="create" className="space-y-4 md:space-y-6 mt-4">
-            <div className="bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl border p-4">
+<TabsContent value="create" className="space-y-6 mt-4">
+            <div className={PANEL}>
               <ClassSelector value={selectedClassId} onChange={setSelectedClassId} />
             </div>
             <AssignmentUpload classFilter={selectedClassId} />
           </TabsContent>
 
-          <TabsContent value="calendar" className="space-y-4 md:space-y-6 mt-4">
-            <div className="bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl border p-4 mb-4 space-y-4">
-              <p className="text-sm text-muted-foreground">
-                <strong>Click on any date</strong> to view assignment details
+          <TabsContent value="calendar" className="space-y-6 mt-4">
+            <div className={`${PANEL} space-y-4`}>
+              <p className="text-hec-small text-hec-ink-soft">
+                <strong className="font-semibold text-hec-ink">Click on any date</strong> to view assignment details
               </p>
               <ClassSelector value={selectedClassId} onChange={setSelectedClassId} />
             </div>
             <AssignmentCalendar role="teacher" classId={selectedClassId} />
           </TabsContent>
 
-<TabsContent value="grade" className="space-y-4 md:space-y-6 mt-4">
+<TabsContent value="grade" className="space-y-6 mt-4">
             {/* Filters */}
-            <div className="flex flex-col gap-4 p-4 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl border">
+            <div className={`${PANEL} flex flex-col gap-4`}>
               <ClassSelector value={selectedClassId} onChange={setSelectedClassId} />
-              
-              <div className="pt-3 border-t">
-                <div className="flex items-center gap-2 mb-3">
-                  <Filter className="h-4 w-4" />
-                  <p className="text-sm font-semibold">Filter by status</p>
+
+              <div className="border-t border-hec-line pt-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-hec-ink-soft" aria-hidden />
+                  <p className="text-hec-small font-semibold text-hec-ink">Filter by status</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     variant={statusFilter === "all" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setStatusFilter("all")}
-                    className="flex-1 sm:flex-none min-h-[44px] rounded-full"
+                    aria-pressed={statusFilter === "all"}
+                    className="flex-1 sm:flex-none"
                   >
                     All
                   </Button>
@@ -74,27 +78,30 @@ export default function TeacherAssignments() {
                     variant={statusFilter === "not_submitted" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setStatusFilter("not_submitted")}
-                    className="flex-1 sm:flex-none min-h-[44px] rounded-full"
+                    aria-pressed={statusFilter === "not_submitted"}
+                    className="flex-1 sm:flex-none"
                   >
-                    <div className="w-2 h-2 rounded-full bg-gray-500 dark:bg-gray-400 mr-2" />
+                    <div className="h-2 w-2 rounded-full bg-hec-ink-faint" aria-hidden />
                     Not Submitted
                   </Button>
                   <Button
                     variant={statusFilter === "submitted" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setStatusFilter("submitted")}
-                    className="flex-1 sm:flex-none min-h-[44px] rounded-full"
+                    aria-pressed={statusFilter === "submitted"}
+                    className="flex-1 sm:flex-none"
                   >
-                    <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2" />
+                    <div className="h-2 w-2 rounded-full bg-hec-warn" aria-hidden />
                     Submitted
                   </Button>
                   <Button
                     variant={statusFilter === "graded" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setStatusFilter("graded")}
-                    className="flex-1 sm:flex-none min-h-[44px] rounded-full"
+                    aria-pressed={statusFilter === "graded"}
+                    className="flex-1 sm:flex-none"
                   >
-                    <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+                    <div className="h-2 w-2 rounded-full bg-hec-leaf" aria-hidden />
                     Graded
                   </Button>
                 </div>
