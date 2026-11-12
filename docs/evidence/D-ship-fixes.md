@@ -1,6 +1,6 @@
 # D-ship-fixes - fixes required by D-review-3 before shipping the cancellation guard
 
-Where I am / next step: fixes, tests and docs committed; first mutation run done (several runs died with 0xC0000142 when the session restarted - being re-run); full `run.mjs` still to run. Next: record mutation re-run + full run below, remove the node_modules link, report.
+Where I am / next step: FINISHED. Fixes, tests, docs, mutation re-run and full run done; node_modules link removed. Next is the conductor's: review, the schedule-sessions patch, the probes, then apply/deploy with the D3 dialogs.
 
 Nothing applied or deployed. No Supabase/MCP tool, no live database. Nothing under `src/` touched.
 
@@ -118,3 +118,13 @@ Mutation re-run (scratch copies only, runner `scratchpad/mut.mjs`; a run stops a
 Environment note for the conductor: during this session `@electric-sql/pglite` DISAPPEARED from the main checkout's `node_modules` (the folder was modified at 11:11 today; it is a devDependency in package.json; every pgtest suite needs it). I did not touch the main node_modules. To keep testing I installed it OFFLINE from the local npm cache into my scratchpad and junctioned it at this worktree's `scripts/node_modules/@electric-sql` (git-ignored, removed at the end). Someone should run `npm install` in the main checkout before the next pgtest run. (The conductor has since restored it with `npm install`; my pglite junction is removed.)
 
 PROBABLE CAUSE - MY MUTATION RUNNER. Each function mutant ran in a scratch mirror holding a `node_modules` JUNCTION to the shared install. The runner removed the junction with `rmdirSync` before deleting the mirror, but it ALSO began each mutant with `rmSync(mirror, { recursive: true, force: true })` to clear leftovers. When the session restarted mid-run, mirrors were left with their junction inside; the re-run's opening `rmSync` then followed the junction and deleted files of the shared `node_modules` (pglite, typescript libs, ...) before failing. I cannot prove it from logs, but the timing fits (the re-run started just before 11:30) and nothing else in my work touched that folder. Lesson recorded: never `rmSync` a folder that may contain a junction; remove junctions explicitly first, or use `cmd /c rmdir`.
+
+Full run, after the conductor restored the shared node_modules:
+
+```
+node scripts/pgtest/run.mjs
+-> 2525 assertions across 35 suites, 0 suite(s) failed   (exit 0)
+   baseline 2265/34 + audit eval proxy 179 = 2444/35; +27 session cancel guard (239 -> 266), +54 session guard functions (81 -> 135).
+   No assertion removed; the two replaced preview assertions are listed above. (A run during the node_modules outage gave 2523/35 with
+   edge-functions and app typecheck failing on missing TypeScript lib files - environment, not code.)
+```
