@@ -42,7 +42,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import idlib  # noqa: E402
 import score  # noqa: E402
 from b2_embed import make_embedder  # noqa: E402
-from b2_eval import Data, gallery, parse_cfg  # noqa: E402
+from b2_eval import Data, parse_cfg, score_units  # noqa: E402
 from common import MANIFEST, ROOT, SR, WAV_DIR, WORK, read_wav, safe_out, write_wav  # noqa: E402
 from split import median_f0  # noqa: E402
 
@@ -175,7 +175,6 @@ def cmd_run(a) -> int:
     emb = demb if a.id_model == a.diar_model else make_embedder(a.id_model, a.threads)
     D = Data(a.id_model)
     cfg = parse_cfg(a.id_config)
-    G, cx, co = gallery(D, D.codes, cfg["src"], cfg["secs"], cfg["cent"])
     out_dir = safe_out(WORK / "b2" / "lessons")
     vp_dir = safe_out(WORK / "voiceprints" / "b2" / "lessons")
     tc_dir = safe_out(WORK / "teacher-check")
@@ -214,10 +213,7 @@ def cmd_run(a) -> int:
             TE = idlib.l2n(emb([x[int(s * SR): int(e * SR)] for s, e in use]))
             cen = idlib.centroid(TE)
             np.save(vp_dir / f"{L}_{c}.voiceprint.npy", cen)
-            S = idlib.gallery_scores(np.vstack([cen, TE]), G)
-            if cfg["norm"] == "asnorm":
-                S = idlib.asnorm(S, np.vstack([cen, TE]), G, cx, co, D.codes, topk=50)
-            pred, sc, mg = idlib.top1(S, D.codes)
+            pred, sc, mg, S = score_units(D, np.vstack([cen, TE]), D.codes, cfg, return_scores=True)
             order = np.argsort(-S[0])
             sug = pred[0] if sc[0] >= a.threshold else "UNKNOWN"
             rec.update({"top1": pred[0], "score": round(float(sc[0]), 3), "margin": round(float(mg[0]), 3),

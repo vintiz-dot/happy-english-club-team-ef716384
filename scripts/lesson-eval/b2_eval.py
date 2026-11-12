@@ -60,26 +60,39 @@ class Data:
         self.cost = {k: float(d[k]) for k in ("load_s", "embed_s", "audio_s")}
 
 
-def gallery(D: Data, codes, src="vad", secs=None, cent="mean", seed=0):
+def enrol_mean(D: Data, codes) -> np.ndarray:
+    """Mean enrolment embedding of the GALLERY children only (an unenrolled child never contributes)."""
+    return D.E[(D.kind == "enrol") & np.isin(D.code, list(codes))].mean(0)
+
+
+def gallery(D: Data, codes, src="vad", secs=None, cent="mean", seed=0, mu=None):
+    """Voiceprints for `codes`. With mu, embeddings are centred (x - mu, renormalised) first."""
     kind = "enrol" if src == "vad" else "raw"
+    E = D.E if mu is None else idlib.l2n(D.E - mu)
     G, cx, co = [], [], []
     for c in codes:
         m = (D.kind == kind) & (D.code == c)
         if secs is not None:
             mm = m & (D.pos < secs)
             m = mm if mm.any() else m & (D.pos == D.pos[m].min())
-        X = D.E[m]
+        X = E[m]
         G.append(idlib.centroid(X)[None, :] if cent == "mean" else idlib.sub_centroids(X, int(cent[1]), seed))
-        cx.append(D.E[(D.kind == "enrol") & (D.code == c)])
+        cx.append(E[(D.kind == "enrol") & (D.code == c)])
         co += [c] * int(((D.kind == "enrol") & (D.code == c)).sum())
     return G, np.concatenate(cx), co
 
 
-def score_units(D, T, codes, cfg):
-    G, cx, co = gallery(D, codes, cfg["src"], cfg["secs"], cfg["cent"])
+def score_units(D, T, codes, cfg, return_scores=False):
+    """norm: cos | asnorm | ccos / casnorm (= the same after centring on the gallery's enrolment mean)."""
+    mu = enrol_mean(D, codes) if cfg["norm"].startswith("c") and cfg["norm"] != "cos" else None
+    if mu is not None:
+        T = idlib.l2n(np.atleast_2d(T) - mu)
+    G, cx, co = gallery(D, codes, cfg["src"], cfg["secs"], cfg["cent"], mu=mu)
     S = idlib.gallery_scores(T, G)
-    if cfg["norm"] == "asnorm":
+    if cfg["norm"] in ("asnorm", "casnorm"):
         S = idlib.asnorm(S, T, G, cx, co, codes, topk=50)
+    if return_scores:
+        return (*idlib.top1(S, codes), S)
     return idlib.top1(S, codes)
 
 
@@ -195,7 +208,9 @@ def main() -> int:
     ap.add_argument("--models", required=True)
     ap.add_argument("--configs", default="vad-all-mean-cos,vad-10-mean-cos,vad-20-mean-cos,vad-40-mean-cos,"
                     "vad-all-mean-asnorm,vad-10-mean-asnorm,vad-20-mean-asnorm,vad-40-mean-asnorm,"
-                    "vad-all-k2-asnorm,vad-all-k3-asnorm,vad-all-k2-cos,raw-all-mean-cos,raw-all-mean-asnorm")
+                    "vad-all-k2-asnorm,vad-all-k3-asnorm,vad-all-k2-cos,raw-all-mean-cos,raw-all-mean-asnorm,"
+                    "vad-all-mean-ccos,vad-all-mean-casnorm,vad-all-k2-casnorm,vad-10-mean-casnorm,"
+                    "vad-20-mean-casnorm,vad-40-mean-casnorm")
     ap.add_argument("--cluster-config", default="", help="config for the aggregation run (default: best by EER)")
     ap.add_argument("--shuffles", type=int, default=5)
     ap.add_argument("--json", type=Path, default=OUT / "results.json")
