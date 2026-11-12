@@ -45,19 +45,78 @@ rec.swapMeasurement();  rec.enableLocalBackup();  rec.discardLocal(id, "DISCARD"
 
 ## Format decision: FLAC (candidate B), with numbers
 
-MEASURE_TABLE
+**Decision: FLAC.** Chosen on the design's criteria (C1 5.2), by measurement:
+
+| | A. Opus 128k WebM (MediaRecorder) | B. FLAC 48 kHz 16-bit (worklet + own encoder) |
+|---|---|---|
+| Bytes/s per track (fake lesson audio, full 30 s chunks) | 15 830 (32 min run), 14 974 (10 min run) | 45 499 (32 min), 45 627 (10 min) |
+| MB per minute per track | 0.90-0.95 | 2.73 |
+| **90-min lesson, two tracks** | **~162-171 MB** | **~491 MB** (measured rate; see caveat) |
+| Full window 5 + 90 + 10 min, two tracks | ~189-200 MB | ~573 MB |
+| (WAV fallback, 96 000 B/s) | | 1.04 GB / 1.21 GB |
+| Main-thread task time per audio minute (CDP `TaskDuration`, both tracks) | 2.75 s (10 min run), 6.2 s (32 min) | 8.27 s after the encoder speed-up (10 min run); 28 s with the first encoder (32 min) |
+| Encoder time per 30 s chunk | native, off the main thread | 0.61 s mean, 1.79 s max in the tab under heavy machine load; 0.2-0.3 s in Node on the same lesson audio |
+| Gapless join, decoded and compared with the source | not testable sample-exactly (lossy); 30 s+ decodes only as the joined stream | **exact**: Chrome's own decoder gives back every sample the worklet delivered, 1.70 M samples per track, 0 differ (`browser.test.mjs`); own decoder and ffmpeg agree in `unit.test.mjs` |
+| Chunks decodable alone | **no**: chunk 0 decodes, chunk 1 does not (`decodeAudioData` fails) | yes, every chunk is a complete .flac |
+| Timeline | approximate (two MediaRecorders) | exact (one worklet frame counter for both) |
+| Inter-track offset, minute 1 -> end (fake inputs play the same file) | 0 -> 0 ms (both runs) | -10.02 -> -10.00 ms over 30.5 min (32 min run, light load); 18.1 -> 32.0 ms over 9.5 min (10 min run, heavy machine load) |
+
+Reading the offsets honestly: the worklet hands over frame n of both inputs in one `process()` call, so the PIPELINE cannot add drift (and the 32-minute run shows 0.02 ms, one sample of quantisation). The 13.9 ms seen in the loaded run comes from Chrome's two *fake* input devices themselves, which are software-clocked threads that fell behind unevenly while this laptop ran several other agents' browsers. Real USB devices have independent hardware clocks; the clap test (owner check 9) is the only real measurement. The Opus "0 ms" is from another page whose fake devices happened to open together; it is not evidence that Opus aligns better.
+
+Caveat on FLAC size: the evaluation WAV is 16 kHz audio that Chrome upsamples to 48 kHz, so it has little above 8 kHz and compresses well. A real 48 kHz microphone with a noise floor will be larger; C1's estimate (45-60 kB/s) gives up to ~650 MB per 90-minute lesson. The byte floors (FLAC 4 000, Opus 2 000 B/s) are 11x and 7x below the measured speech rates. Digital silence (a muted input) compresses below the FLAC floor; the engine then writes that chunk as VERBATIM FLAC (the real samples, 96 kB/s) - never padding. Opus on a near-silent room may fall under its 2 000 B/s floor (VBR); not measured with real silence.
+
+Why B and not A: criterion 2 (exact common timeline) and "a lossy original can never be made lossless later" (criterion 3), plus standalone chunks (a crash or a lost object costs one chunk, not the rest of the stream). A's advantages are size (one third) and CPU. B's CPU after the speed-up is ~14% of one core's main thread under heavy load (8.3 s per minute, including meters and uploads), ~5.5 s more per minute than A. If the school laptop struggles, the next step is moving `encodePcmChunk` into a dedicated Worker (it is pure and has no dependencies), not switching to A. The engine still supports `opus-webm` and `pcm-wav` behind the same API (`format` option).
 
 ## Constraint read-back (Chrome 145, fake devices)
 
-CONSTRAINTS
+Both fake inputs opened concurrently with `deviceId: { exact }`; values READ BACK with `getSettings()` after both were open (`browser.test.mjs`, "devices"):
+
+| | requested | read back |
+|---|---|---|
+| echoCancellation | false | false (both) |
+| noiseSuppression | false | false (both) |
+| autoGainControl | false | false (both) |
+| voiceIsolation (supported: true) | false | false (both) |
+| channelCount | ideal 1 | **2** (both) - not honoured; reported as `channelCount: 2 (channel 0 is recorded)`; the worklet records channel 0 |
+| sampleRate | (not requested) | 44 100 at the device; the AudioContext runs at 48 000, so Chrome resamples - the track row stores 48 000 and the device's own rate is in `applied_settings` |
+| deviceId / groupId | exact ids | distinct ids AND distinct groupIds |
+
+The same device for both roles is refused (`same_device_twice`). The S500's firmware DSP cannot be read back by any browser API; the manifest marks the room track `room_device_dsp: "hardware, not disableable"` from its label.
 
 ## Arm and start WITHOUT a click
 
-NOCLICK
+Measured by a page that runs at LOAD, with no gesture at all (Playwright's `evaluate()` itself carries a user gesture, so an earlier version of this probe was wrong and its result is discarded): permission `granted`, `navigator.userActivation.hasBeenActive` false before and after. Same result headless, headed with Chrome's default policy, and headed with `--autoplay-policy=document-user-activation-required`:
+
+| step, no gesture | result |
+|---|---|
+| `new AudioContext()` at load | `suspended`; `resume()` leaves it suspended and its promise **never settles** (the engine now races it with a 1 s timeout - it hung `prepare()` before that fix) |
+| `getUserMedia` with the persisted grant | works |
+| the context made before capture, resumed after capture started | still `suspended` |
+| a NEW `AudioContext` created while a microphone capture is live | **`running`** |
+| `MediaRecorder` (Opus) on the stream | records (16.6 kB in 1.6 s) |
+| `MediaStreamTrackProcessor` | available |
+
+So zero-touch IS possible in this Chromium: open the microphones first, then create the context. The engine does exactly that when it finds its context suspended at capture time (`BrowserCaptureSource.openTracks`, `rebuiltContext`), and `browser.test.mjs` "autostart" proves it end to end: a page opened with no gesture prepares (context suspended, `audio_context_suspended` reported), arms, starts at the window by its 1 s interval, re-makes the context once the mics are open (running), captures 886 784 frames and completes - with `hasBeenActive` still false. Caveats: (1) before capture the heartbeat is the 1 s `setInterval`, which Chrome throttles to once a minute after 5 minutes hidden, so an unattended hidden page could start up to ~1 minute late; with the "Ready" click the worklet ticks drive it instead; (2) this is Chrome's documented capture exception as observed in Chromium 145; Edge/Chrome on the school laptop must be checked (owner check list, item 3).
 
 ## Hidden tab, closed tab, sleep, lid
 
-HIDDEN
+**Not measured as hidden - say so plainly.** Two attempts ran 11 minutes each with Chrome's own throttling enabled (Playwright's `--disable-background-timer-throttling`, `--disable-backgrounding-occluded-windows`, `--disable-renderer-backgrounding` removed), headed: (1) another tab brought to the front, (2) the window minimised through CDP. In both, `document.visibilityState` stayed `"visible"` for the whole run: Playwright emulates focus/visibility for the pages it drives. So timer throttling never engaged, and these runs do not answer the question. What they do show (`measure-hidden*.json` in the tools folder):
+
+| | run 1 | run 2 (heavier machine load) |
+|---|---|---|
+| frames delivered by the worklet vs the context clock | 30 840 832 vs 30 839 936 | 26 851 328 vs 26 852 096 |
+| context clock vs wall clock over the period | 642 s of audio in 650 s | **559 s of audio in 650 s** |
+| setInterval(1 s) wake-ups per minute | 33-52 | 50-58 |
+| chunks stored / confirmed per minute | 4 / 4 (2 x 30 s x 2 tracks) | 2-4 / 2-4 |
+| result | complete, contiguous | complete, contiguous |
+
+Run 2 is a real finding: with the CPU starved by other processes, the AudioContext itself ran 14% slow (fake devices are software-clocked), so 91 s of a 665 s server-seen span is simply absent from the audio. The engine marks a context stall when wall time outruns audio time by > 1 s between ticks (`gap` marker, `context_stall` discontinuity); the server's `verified_audio_ms` would count only what is there. On real hardware the device clock does not stop with the CPU, so the symptom would be dropped frames instead - the frames-captured vs frames-written counts in the manifest are what show it.
+
+By documented platform behaviour (not executed here):
+- **Hidden tab:** Chrome's intensive throttling (one timer wake-up a minute after 5 minutes hidden) is waived while the page is capturing audio/WebRTC and does not apply to the audio thread at all. The capture path uses no main-thread timer (worklet -> port message); uploads are driven by chunk events and the 5 s check in `tick()`, which also runs from the worklet's ticks. Expected: capture and uploads continue. **Owner check 8 is still required.**
+- **Tab or browser closed:** capture stops at once (a page cannot run without its window). Measured instead: reload and renderer crash mid-recording lose 2.3 s and 2.8 s (segments every 5 s), and the next load finishes the recording as `crash_recovered`.
+- **Laptop sleeps / lid closes:** the OS suspends the audio devices and the page; no web API prevents it. On wake the context stall check writes a `gap` marker. Runbook: power plan "do nothing" on lid close, sleep never on mains.
+- `powercfg /requests` needs an elevated prompt; not run (owner check).
 
 ## Simulated vs needs the real hardware
 
