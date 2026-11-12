@@ -50,14 +50,29 @@ const pv = path.join(HARNESS, 'preview');
 fs.mkdirSync(pv, { recursive: true });
 for (const f of fs.readdirSync(path.join(here, 'preview'))) fs.copyFileSync(path.join(here, 'preview', f), path.join(pv, f));
 await new Promise((r) => spawn(process.execPath, [path.join(here, 'gen-schema.mjs'), repo, path.join(pv, 'schema.json')], { stdio: 'inherit' }).on('exit', r));
-const vite = spawn(process.execPath, [path.join(repo, 'node_modules/vite/bin/vite.js'), '--config', path.join(pv, 'vite.config.ts'), '--port', String(PORT), '--strictPort'], { cwd: repo, env: { ...process.env, A2_REPO: repo }, stdio: ['ignore', 'pipe', 'pipe'] });
-let viteLog = ''; vite.stdout.on('data', (d) => (viteLog += d)); vite.stderr.on('data', (d) => (viteLog += d));
-const stop = () => { try { vite.kill(); } catch {} };
-process.on('exit', stop);
-process.on('SIGINT', () => { stop(); process.exit(130); });
+// Vite runs in-process from the repo's own node_modules (a config file outside the repo could not
+// resolve "vite"). The fake client alias comes BEFORE "@", so no page can reach the live project.
+const repoReq = createRequire(path.join(repo, 'package.json'));
+const { createServer } = await import(pathToFileURL(repoReq.resolve('vite')).href);
+const react = (await import(pathToFileURL(repoReq.resolve('@vitejs/plugin-react-swc')).href)).default;
+process.chdir(repo); // tailwind content globs are relative to the cwd
+const server = await createServer({
+  configFile: false, root: pv, cacheDir: path.join(HARNESS, '.vite-cache'), logLevel: 'error',
+  css: { postcss: repo },
+  server: { host: '127.0.0.1', port: PORT, strictPort: true, fs: { strict: false }, hmr: false },
+  plugins: [react()],
+  resolve: { alias: [
+    { find: '@/integrations/supabase/client', replacement: path.join(pv, 'fake-supabase.ts') },
+    { find: '@', replacement: path.join(repo, 'src') },
+  ] },
+});
+await server.listen();
+let stopped = false;
+const stop = async () => { if (stopped) return; stopped = true; try { await server.close(); } catch {} };
+process.on('SIGINT', async () => { await stop(); process.exit(130); });
 let up = false;
 for (let i = 0; i < 90 && !up; i++) { try { up = (await fetch(BASE + '/')).ok; } catch {} if (!up) await sleep(1000); }
-if (!up) { console.error('Vite did not start on ' + PORT + '\n' + viteLog); process.exit(2); }
+if (!up) { console.error('Vite did not start on ' + PORT); await stop(); process.exit(2); }
 
 const browser = await chromium.launch({ channel: 'chrome' });
 
@@ -260,7 +275,7 @@ try {
 } finally {
   saveResults();
   await browser.close().catch(() => {});
-  stop();
+  await stop();
 }
 const fails = results.checks.filter((c) => c.status === 'FAIL');
 console.log(`\n${results.checks.length} lines, ${fails.length} FAIL. Results: ${path.relative(repo, path.join(OUT, 'results.json'))}`);
