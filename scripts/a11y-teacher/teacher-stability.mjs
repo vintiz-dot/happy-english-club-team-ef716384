@@ -500,7 +500,10 @@ async function hud(size) {
     gate('M7.open-popover-kept', S, kept.open && kept.sameFocus && kept.connected, { focused, ...kept, commits: o1.commits - o0.commits, requests: o1.reqs - o0.reqs }, `open StudentActionPopover (focus on "${focused}") across an unrelated event (+${o1.commits - o0.commits} commits, +${o1.reqs - o0.reqs} queries): still open=${kept.open}, focus kept=${kept.sameFocus}, focused node connected=${kept.connected}`);
     await closeOverlay(page);
     if (flag('idle-minute')) {
+      const openTips = () => page.evaluate(() => ({ tooltips: document.querySelectorAll('[role=tooltip]').length, focus: (document.activeElement?.textContent || document.activeElement?.tagName || '').trim().slice(0, 20) }));
+      const t0 = await openTips();
       const i0 = await snap(); await sleep(61000); const i1 = await snap();
+      record('M7.idle-minute.state', S, 'INFO', t0, `at the start of the idle window: open tooltips ${t0.tooltips}, focus on "${t0.focus}"`);
       record('M7.idle-minute', S, 'INFO', { commits: i1.commits - i0.commits, requests: i1.reqs - i0.reqs }, `61 s idle: HUD commits ${i1.commits - i0.commits}, HUD queries ${i1.reqs - i0.reqs} (30 s tick at LiveEngagementHUD.tsx:46-49, 60 s refetchInterval at :54)`);
     } else record('M7.idle-minute', S, 'NOTMEASURED', null, 'run with --idle-minute to measure the 61 s idle window');
   } catch (e) {
