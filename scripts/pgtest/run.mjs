@@ -249,6 +249,13 @@ const SUITES = [
   // F-15: pause_enrollment asks for an admin. The "before" is the live
   // function, kept as the rollback block in the evidence file.
   { name: "pause enrollment (F-15)", file: "pause-enrollment.test.mjs", migrations: ["20261113120000_pause_enrollment_admin_only.sql"] },
+  // F-16: classmates' rows. The four production policies come from
+  // docs/evidence/S1-F16-rollback.sql ("before" and rollback under test).
+  {
+    name: "classmate rows (F-16)",
+    file: "classmate-rows.test.mjs",
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113130000_classmate_rows_private.sql"],
+  },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
