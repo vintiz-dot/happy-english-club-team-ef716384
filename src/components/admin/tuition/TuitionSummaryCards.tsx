@@ -204,6 +204,7 @@ export function TuitionSummaryCards({ stats, isLoading }: TuitionSummaryCardsPro
                 <Progress
                   value={stats.collectionRate}
                   className="h-2 bg-hec-sunken [&>div]:bg-hec-brass"
+                  aria-label="Collection rate"
                 />
               </div>
             </div>
