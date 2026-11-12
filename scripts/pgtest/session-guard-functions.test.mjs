@@ -185,8 +185,15 @@ const asSuper = (sql, params) => as(null, '', null, sql, params);
 const SERVICE_KEY = 'service-role-key';
 const ANON_KEY = 'anon-key';
 const jwts = new Map();                 // bearer token -> user id
-const log = { writes: [], rpcs: [], invokes: [] };
+const log = { writes: [], rpcs: [], invokes: [], reads: [] };
 const tuitionFail = new Set();          // student ids whose calculate-tuition fails
+const siblingUnresolved = new Set();    // student ids whose calculate-tuition answers siblingUnresolved
+const rpcThrows = new Set();            // rpc names whose call throws (a network error, not a returned error)
+// When on, the calculate-tuition stand-in does what the real one does to the
+// bill (calculate-tuition/index.ts:575-607): upsert it with status 'issued'
+// and confirmation_status auto_approved, creating it when there is none,
+// keeping a frozen bill. Used by the D-review-3 F-1 sections.
+let tuitionUpserts = false;
 const pgErr = (e) => ({ code: e.code, message: e.message, details: e.detail ?? null });
 
 function fakeClient(key, opts) {
@@ -223,6 +230,7 @@ function fakeClient(key, opts) {
         sql = `INSERT INTO public.${table} AS t (${ks.join(', ')}) VALUES (${ph.join(', ')}) RETURNING to_jsonb(t) j`;
       }
       if (q.op !== 'select') log.writes.push({ table, op: q.op, who, uid });
+      else log.reads.push({ table, who });
       try {
         const rows = (await run(sql, params)).rows.map((r) => r.j);
         if (q.one === 'single') {
@@ -264,6 +272,7 @@ function fakeClient(key, opts) {
     },
     rpc: async (name, params = {}) => {
       log.rpcs.push({ name, who, uid, params });
+      if (rpcThrows.has(name)) throw new Error(`scripted network error calling ${name}`);
       const exists = (await asSuper(`SELECT count(*)::int n FROM pg_proc WHERE proname=$1 AND pronamespace='public'::regnamespace`, [name])).rows[0].n;
       if (!exists) return { data: null, error: { code: 'PGRST202', message: `Could not find the function public.${name}` } };
       const keys = Object.keys(params);
@@ -277,6 +286,17 @@ function fakeClient(key, opts) {
         log.invokes.push({ name, who, body });
         if (name === 'calculate-tuition') {
           if (tuitionFail.has(body.studentId)) return { data: { error: 'scripted failure' }, error: null };
+          if (tuitionUpserts) {
+            await asSuper(`INSERT INTO invoices(student_id, month, status, confirmation_status)
+                             VALUES ($1, $2, 'issued', 'auto_approved')
+                           ON CONFLICT (student_id, month) DO UPDATE
+                             SET status = CASE WHEN invoices.tuition_frozen THEN invoices.status ELSE 'issued' END,
+                                 confirmation_status = CASE WHEN invoices.tuition_frozen THEN invoices.confirmation_status
+                                                            ELSE 'auto_approved' END`, [body.studentId, body.month]);
+          }
+          if (siblingUnresolved.has(body.studentId)) {
+            return { data: { totalAmount: null, siblingUnresolved: true, invoiceSaved: false }, error: null };
+          }
           return { data: { totalAmount: 1000, baseAmount: 1000, totalDiscount: 0, sessionCount: 4, tuitionFrozen: false,
                            siblingUnresolved: false, invoiceSaved: true, carry: { carryInCredit: 0, carryInDebt: 0,
                            carryOutCredit: 0, carryOutDebt: 0, status: 'settled' },
@@ -374,6 +394,103 @@ await section('gate: no token, non-admin', async () => {
   ok('  nothing written', (await sess(s.sid)).status === 'Scheduled' && (await overrides(s.sid)).length === 0);
 });
 
+// D-review-3 F-2: EVERY action of both functions, EVERY non-admin caller,
+// refused before any read of a lesson, its evidence or a bill, and before
+// any RPC, write or invoke. The only read allowed is the role lookup.
+await section('F-2 gate: every action, every non-admin caller, nothing read or called', async () => {
+  const s = await mk({ when: PAST, status: 'Held' });
+  const kid = await att(s.sid, 'Present', s.teacher);
+  await inv(kid, s.month, 540000);
+  const noRole = await person(null), teacher = await person('teacher'), family = await person('family'), student = await person('student');
+  const callers = [
+    ['no Authorization header', null, 401],
+    ['the anon (publishable) key as bearer', ANON_KEY, 401],
+    ['a garbage token', 'not-a-jwt', 401],
+    ['a valid JWT with no role', noRole.tok, 403],
+    ['a teacher', teacher.tok, 403],
+    ['a parent (family)', family.tok, 403],
+    ['a student', student.tok, 403],
+  ];
+  const T = 'f'.repeat(64);
+  const msBodies = [
+    ['preview cancel', 'preview', { id: s.sid, op: 'cancel' }],
+    ['preview delete', 'preview', { id: s.sid, op: 'delete' }],
+    ['preview uncancel', 'preview', { id: s.sid, op: 'uncancel' }],
+    ['preview move', 'preview', { id: s.sid, op: 'move', change: { date: FAR.date, start_time: '17:30', end_time: '19:00' } }],
+    ['cancel', 'cancel', { id: s.sid, token: T, reason: REASON, confirm: true, correction_reason: CORR }],
+    ['force-cancel', 'force-cancel', { id: s.sid, token: T, reason: REASON, confirm: true }],
+    ['uncancel', 'uncancel', { id: s.sid, token: T, reason: REASON }],
+    ['delete', 'delete', { id: s.sid, token: T, reason: REASON, confirm: true }],
+    ['move', 'move', { id: s.sid, date: FAR.date, start_time: '17:30', end_time: '19:00', token: T, reason: REASON }],
+    ['move (same-day, plain path)', 'move', { id: s.sid, date: s.date, start_time: '18:00', end_time: '19:30' }],
+    ['change-status Held -> Scheduled', 'change-status', { id: s.sid, status: 'Scheduled' }],
+    ['change-status -> Canceled', 'change-status', { id: s.sid, status: 'Canceled', token: T, reason: REASON }],
+    ['update', 'update', { id: s.sid, notes: 'gate probe', teacher_id: randomUUID() }],
+    ['refresh-tuition', 'refresh-tuition', { override_id: randomUUID() }],
+    ['bulk-delete preview', 'bulk-delete', { step: 'preview', class_id: s.cid, from_date: PAST.date, to_date: FUTURE.date, hard_delete: false }],
+    ['bulk-delete confirm', 'bulk-delete', { step: 'confirm', class_id: s.cid, from_date: PAST.date, to_date: FUTURE.date,
+                                             hard_delete: true, reason: REASON, items: [{ id: s.sid, token: T }] }],
+    ['create', 'create', { class_id: s.cid, date: FAR.date, start_time: '06:00', end_time: '07:00', teacher_id: randomUUID() }],
+  ];
+  const bulkBodies = [
+    ['bulk preview', { step: 'preview', date_from: PAST.date, date_to: FUTURE.date, class_id: s.cid }],
+    ['bulk confirm', { step: 'confirm', reason: REASON, items: [{ id: s.sid, token: T }], include_held: true,
+                       held_items: [{ id: s.sid, token: T, confirm: true, reason: REASON }] }],
+    ['bulk, old one-step body', { date_from: PAST.date, date_to: FUTURE.date, reason: REASON }],
+  ];
+  const invBefore = JSON.stringify((await asSuper(`SELECT to_jsonb(i) j FROM invoices i ORDER BY id`)).rows);
+  const sesBefore = JSON.stringify((await asSuper(`SELECT to_jsonb(x) j FROM sessions x ORDER BY id`)).rows);
+  let cases = 0, bad = [];
+  for (const [who, tok, want] of callers) {
+    const runs = [...msBodies.map(([n, a, d]) => [`manage-session ${n}`, () => ms(tok, a, d)]),
+                  ...bulkBodies.map(([n, b]) => [`bulk-cancel-sessions ${n}`, () => call(bulkFn, tok, b)])];
+    for (const [name, go] of runs) {
+      log.writes = []; log.rpcs = []; log.invokes = []; log.reads = [];
+      const r = await go();
+      const code = want === 401 ? 'unauthorized' : 'forbidden';
+      const otherReads = log.reads.filter((x) => x.table !== 'user_roles');
+      const roleReads = log.reads.filter((x) => x.table === 'user_roles');
+      cases++;
+      const good = r.status === want && r.body?.code === code && log.writes.length === 0 && log.rpcs.length === 0 &&
+        log.invokes.length === 0 && otherReads.length === 0 && (want === 403 ? roleReads.length === 1 : roleReads.length === 0);
+      if (!good) bad.push({ who, name, status: r.status, code: r.body?.code, writes: log.writes, rpcs: log.rpcs.map((x) => x.name),
+                            invokes: log.invokes.map((x) => x.name), reads: log.reads });
+    }
+  }
+  ok(`F-2 ${cases} calls (7 callers x ${msBodies.length + bulkBodies.length} actions): each refused 401/403 with its code, ` +
+     'zero writes, zero RPCs, zero invokes, no read but the role lookup', bad.length === 0 && cases === 7 * (msBodies.length + bulkBodies.length), bad.slice(0, 4));
+  for (const [who, tok, want] of callers) {
+    const mine = bad.filter((b) => b.who === who);
+    ok(`F-2   ${who} -> ${want} on every action of both functions`, mine.length === 0, mine.slice(0, 2));
+  }
+  ok('F-2   every bill and every lesson byte-identical afterwards',
+     JSON.stringify((await asSuper(`SELECT to_jsonb(i) j FROM invoices i ORDER BY id`)).rows) === invBefore &&
+     JSON.stringify((await asSuper(`SELECT to_jsonb(x) j FROM sessions x ORDER BY id`)).rows) === sesBefore);
+  // Control: the same harness lets an admin through (so the zero counts above are not vacuous).
+  const a = await person('admin');
+  log.rpcs = []; log.reads = [];
+  const r = await ms(a.tok, 'preview', { id: s.sid, op: 'cancel' });
+  ok('F-2   control: an admin\'s preview passes the gate and reaches the RPC on the caller\'s client',
+     r.status === 200 && log.rpcs.some((x) => x.name === 'session_change_preview' && x.who === 'user'), [r.status, log.rpcs.map((x) => x.name)]);
+});
+
+// D-review-3 F-2 / mutant F03: the one un-reasoned status write a person
+// can make (Scheduled <-> Held) is the admin's own, never the service key.
+await section('F-2 change-status Scheduled <-> Held is written on the caller\'s client', async () => {
+  const a = await person('admin');
+  const s = await mk({ when: PAST });
+  log.writes = [];
+  let r = await ms(a.tok, 'change-status', { id: s.sid, status: 'Held' });
+  const w = log.writes.filter((x) => x.table === 'sessions');
+  ok('Scheduled -> Held -> 200, Held, the sessions write is who=user with the admin\'s uid',
+     r.status === 200 && (await sess(s.sid)).status === 'Held' && w.length === 1 && w[0].who === 'user' && w[0].uid === a.id, [r.body, w]);
+  log.writes = [];
+  r = await ms(a.tok, 'change-status', { id: s.sid, status: 'Scheduled' });
+  const w2 = log.writes.filter((x) => x.table === 'sessions');
+  ok('Held -> Scheduled -> 200, Scheduled, who=user', r.status === 200 && (await sess(s.sid)).status === 'Scheduled' &&
+     w2.length === 1 && w2[0].who === 'user', [r.body, w2]);
+});
+
 await section('old one-step calls are refused with a code', async () => {
   const a = await person('admin');
   const s = await mk();
@@ -409,20 +526,29 @@ await section('reasons', async () => {
   ok('  nothing cancelled', (await sess(s.sid)).status === 'Scheduled');
 });
 
-await section('T0 preview -> confirm, figures fetched', async () => {
+await section('T0 preview -> confirm, stored bills shown', async () => {
   const a = await person('admin');
   const s = await mk();
   const kid = await att(s.sid, 'Present', null);
+  await inv(kid, s.month, 0);
   log.invokes = [];
   const p = await ms(a.tok, 'preview', { id: s.sid, op: 'cancel' });
   ok('preview 200: tier 0, token, review_required false', p.status === 200 && p.body.preview.tier === 0 &&
      /^[0-9a-f]{64}$/.test(p.body.preview.token) && p.body.preview.review_required === false, p.body);
-  const ct = p.body.consequences.tuition;
-  ok('preview consequences: calculate-tuition BEFORE figures for the child, AFTER said to be unavailable (not guessed)',
-     ct.length === 1 && ct[0].student_id === kid && ct[0].fetched && ct[0].before.totalAmount === 1000 &&
-     ct[0].after.fetched === false && !JSON.stringify(ct).includes('paid_amount'), ct);
-  ok('preview consequences: payroll not fetched for a Scheduled lesson (only Held lessons are paid)',
-     p.body.consequences.payroll.fetched === false && p.body.consequences.payroll.reason === 'lesson_not_held', p.body.consequences.payroll);
+  // Replaces the pre-F-1 assertion "calculate-tuition BEFORE figures": the
+  // preview now shows the STORED bill and invokes nothing (D-review-3 F-1).
+  const c = p.body.consequences;
+  ok('preview consequences: the STORED bill for the child (total, discount, payment, statuses, frozen), AFTER said to be unavailable',
+     c.source === 'stored' && c.invoices_before.length === 1 && c.invoices_before[0].student_id === kid &&
+     c.invoices_before[0].month === s.month && c.invoices_before[0].bill.total_amount === 540000 &&
+     c.invoices_before[0].bill.discount_amount === 0 && c.invoices_before[0].bill.recorded_payment === 0 &&
+     c.invoices_before[0].bill.status === 'issued' && c.invoices_before[0].bill.tuition_frozen === false &&
+     'confirmation_status' in c.invoices_before[0].bill && c.after.available === false &&
+     c.after.reason === 'worked out after the change' && !JSON.stringify(c).includes('paid_amount'), c);
+  ok('preview consequences: affected_students lists the child with the mark; pay line not fetched',
+     c.affected_students.length === 1 && c.affected_students[0].student_id === kid && c.affected_students[0].mark.status === 'Present' &&
+     c.pay_line.available === false, c);
+  ok('preview invoked nothing (no calculate-tuition, no calculate-payroll)', log.invokes.length === 0, log.invokes);
   log.invokes = [];
   const r = await ms(a.tok, 'cancel', { id: s.sid, token: p.body.preview.token, reason: `  ${REASON}  ` });
   ok('confirm 200 ok, result tier 0', r.status === 200 && r.body.ok && r.body.result.tier === 0, r.body);
@@ -452,10 +578,13 @@ await section('T1, T2, T3', async () => {
 
   const t2 = await mk({ when: PAST, status: 'Held' });
   await att(t2.sid, 'Present', t2.teacher);
+  log.invokes = [];
   p = await ms(a.tok, 'preview', { id: t2.sid, op: 'cancel' });
-  ok('T2 preview: tier 2 STRONG, review_required, payroll line fetched from calculate-payroll (Held)',
+  // Replaces the pre-F-1 "payroll line fetched": calculate-payroll upserts
+  // payroll_summaries for an open month, so a preview no longer calls it.
+  ok('T2 preview: tier 2 STRONG, review_required; pay line NOT fetched (calculate-payroll writes), nothing invoked',
      p.body.preview.tier === 2 && p.body.preview.level === 'STRONG' && p.body.preview.review_required === true &&
-     p.body.consequences.payroll.fetched === true && p.body.consequences.payroll.response.teachers[0].totalAmount === 1234, p.body.consequences);
+     p.body.consequences.pay_line.available === false && log.invokes.length === 0, [p.body.consequences, log.invokes]);
   r = await ms(a.tok, 'cancel', { id: t2.sid, token: p.body.preview.token, reason: REASON, confirm: true });
   ok('T2 confirm -> 200, review_required', r.status === 200 && r.body.result.review_required === true, r.body);
 
@@ -660,9 +789,151 @@ await section('manage-session bulk-delete (hard): one checked delete per lesson'
   const evTok = (await ms(a.tok, 'preview', { id: ev.sid, op: 'delete', figures: false })).body.preview.token;
   r = await ms(a.tok, 'bulk-delete', { step: 'confirm', class_id: cid, from_date: (await clock(-2)).date, to_date: (await clock(40)).date,
     hard_delete: true, reason: 'Class closed, lessons entered by mistake',
-    items: [{ id: free.sid, token: r.body.plain[0].token }, { id: ev.sid, token: evTok, confirm: true }] });
-  ok('confirm: clean one deleted, evidence one refused use_cancel and kept', r.status === 200 && r.body.done.length === 1 &&
+    items: [{ id: free.sid, token: r.body.plain[0].token }], include_held: true,
+    held_items: [{ id: ev.sid, token: evTok, confirm: true }] });
+  ok('confirm: clean one deleted, evidence one (acknowledged in held_items) refused use_cancel and kept', r.status === 200 && r.body.done.length === 1 &&
      r.body.refused[0]?.code === 'use_cancel' && !(await sess(free.sid)) && !!(await sess(ev.sid)), r.body);
+});
+
+// D-review-3 F-4 + mutant F25: bulk-delete takes the same confirm shape as
+// bulk-cancel-sessions; a confirmation in a plain item is stripped.
+await section('F-4 / F25 bulk-delete: plain items carry no confirmation; held_items need include_held', async () => {
+  const a = await person('admin');
+  const cid = randomUUID();
+  await asSuper(`INSERT INTO classes VALUES ($1,$2)`, [cid, randomUUID()]);
+  const d1 = await clock(-2), d2 = await clock(-1);
+  const t1 = await mk({ when: d1, cid });                       // past, blank register: tier 1, deletable
+  const crit = { class_id: cid, from_date: d1.date, to_date: d2.date, hard_delete: true };
+  let p = await ms(a.tok, 'bulk-delete', { step: 'preview', ...crit });
+  const row = p.body.needs_ack?.find((x) => x.id === t1.sid);
+  ok('F25 preview: the past blank lesson is tier 1 in needs_ack', p.status === 200 && row?.tier === 1, p.body);
+  let r = await ms(a.tok, 'bulk-delete', { step: 'confirm', ...crit, reason: 'Lessons entered twice by mistake',
+    items: [{ id: t1.sid, token: row?.token, confirm: true, reason: 'Entered twice by mistake, own reason' }] });
+  ok('F25 hard: a tier-1 lesson sent as a PLAIN item with confirm:true -> refused confirm_required (stripped), lesson kept',
+     r.status === 200 && r.body.done.length === 0 && r.body.refused[0]?.code === 'confirm_required' && !!(await sess(t1.sid)), r.body);
+  r = await ms(a.tok, 'bulk-delete', { step: 'confirm', ...crit, reason: 'Lessons entered twice by mistake',
+    items: [], held_items: [{ id: t1.sid, token: row?.token, confirm: true }] });
+  ok('F-4 hard: held_items without include_held are ignored and reported (nothing sent)',
+     r.status === 400 && r.body.code === 'bad_items' && !!(await sess(t1.sid)), r.body);
+  r = await ms(a.tok, 'bulk-delete', { step: 'confirm', ...crit, reason: 'Lessons entered twice by mistake', include_held: true,
+    held_items: [{ id: t1.sid, token: row?.token }] });
+  ok('F-4 hard: a held item without confirm:true -> 422 confirm_required, nothing sent', r.status === 422 && r.body.code === 'confirm_required', r.body);
+  r = await ms(a.tok, 'bulk-delete', { step: 'confirm', ...crit, reason: 'Lessons entered twice by mistake', include_held: true,
+    held_items: [{ id: t1.sid, token: row?.token, confirm: true }] });
+  ok('F25 hard: the same lesson in held_items with include_held + confirm -> deleted',
+     r.status === 200 && r.body.done.length === 1 && !(await sess(t1.sid)), r.body);
+  // soft (cancel) path, the K5 probe: a T2 lesson with confirm + own reason in items.
+  const t2 = await mk({ when: d2, cid, status: 'Held' });
+  await att(t2.sid, 'Present', randomUUID());
+  const soft = { ...crit, hard_delete: false };
+  p = await ms(a.tok, 'bulk-delete', { step: 'preview', ...soft });
+  const r2 = p.body.needs_ack?.find((x) => x.id === t2.sid);
+  r = await ms(a.tok, 'bulk-delete', { step: 'confirm', ...soft, reason: 'Public holiday, school closed',
+    items: [{ id: t2.sid, token: r2?.token, confirm: true, reason: 'Class abandoned after roll-call, fire alarm' }] });
+  ok('F-4 soft (K5): T2 lesson smuggled into items with confirm + own reason -> refused confirm_required, still Held',
+     r.status === 200 && r.body.done.length === 0 && r.body.refused[0]?.code === 'confirm_required' && (await sess(t2.sid)).status === 'Held', r.body);
+  r = await ms(a.tok, 'bulk-delete', { step: 'confirm', ...soft, reason: 'Public holiday, school closed', include_held: true,
+    held_items: [{ id: t2.sid, token: r2?.token, confirm: true, reason: 'Class abandoned after roll-call, fire alarm' }] });
+  ok('F-4 soft: through held_items with include_held -> cancelled', r.status === 200 && r.body.done.length === 1 &&
+     (await sess(t2.sid)).status === 'Canceled', r.body);
+});
+
+// D-review-3 F-5: the criteria an audit row records are the criteria that selected the lessons.
+await section('F-5 bulk confirm refuses lessons outside the stated criteria', async () => {
+  const a = await person('admin');
+  const cid = randomUUID(), other = randomUUID();
+  await asSuper(`INSERT INTO classes VALUES ($1,$2), ($3,$4)`, [cid, randomUUID(), other, randomUUID()]);
+  const day = await clock(30);
+  const mine = await mk({ when: day, cid }), theirs = await mk({ when: day, cid: other, start: '08:00', end: '09:00' });
+  const tokMine = (await ms(a.tok, 'preview', { id: mine.sid, op: 'delete' })).body.preview.token;
+  const tokTheirs = (await ms(a.tok, 'preview', { id: theirs.sid, op: 'delete' })).body.preview.token;
+  let r = await ms(a.tok, 'bulk-delete', { step: 'confirm', class_id: cid, from_date: day.date, to_date: day.date, hard_delete: true,
+    reason: 'Class closed, lessons entered by mistake', items: [{ id: mine.sid, token: tokMine }, { id: theirs.sid, token: tokTheirs }] });
+  ok('K7: bulk-delete for class A with a lesson of class B -> B refused outside_criteria and kept, A deleted',
+     r.status === 200 && r.body.done.length === 1 && r.body.done[0].id === mine.sid &&
+     r.body.refused.some((x) => x.id === theirs.sid && x.code === 'outside_criteria') && !!(await sess(theirs.sid)) && !(await sess(mine.sid)), r.body);
+  const ctok = (await ms(a.tok, 'preview', { id: theirs.sid, op: 'cancel' })).body.preview.token;
+  r = await call(bulkFn, a.tok, { step: 'confirm', class_id: cid, date_from: day.date, date_to: day.date,
+    reason: 'Public holiday, school closed', items: [{ id: theirs.sid, token: ctok }] });
+  ok('bulk-cancel-sessions confirm for class A with a lesson of class B -> refused outside_criteria, still Scheduled',
+     r.status === 200 && r.body.canceled.length === 0 && r.body.refused[0]?.code === 'outside_criteria' &&
+     (await sess(theirs.sid)).status === 'Scheduled', r.body);
+  const out = await call(bulkFn, a.tok, { step: 'confirm', date_from: (await clock(31)).date, date_to: (await clock(32)).date,
+    reason: 'Public holiday, school closed', items: [{ id: theirs.sid, token: ctok }] });
+  ok('  ... and outside the stated dates -> refused outside_criteria', out.body.refused?.[0]?.code === 'outside_criteria', out.body);
+});
+
+// Surviving mutants F19, F21, F22 (D-review-3 mutation table) and F-6, F-8, F-9.
+await section('F19 a sibling-unresolved refresh is a failed refresh, never "refreshed"', async () => {
+  const a = await person('admin');
+  const s = await mk();
+  const kid = await att(s.sid, 'Present', null);
+  siblingUnresolved.add(kid);
+  try {
+    const p = await ms(a.tok, 'preview', { id: s.sid, op: 'cancel' });
+    const r = await ms(a.tok, 'cancel', { id: s.sid, token: p.body.preview.token, reason: REASON });
+    ok('cancel stands; tuition.status failed with error sibling_unresolved; event tuition_refresh_failed',
+       r.status === 200 && r.body.tuition.status === 'failed' && r.body.tuition.failed[0]?.error === 'sibling_unresolved' &&
+       (await events(r.body.result.override_id))[0]?.kind === 'tuition_refresh_failed', r.body.tuition);
+  } finally { siblingUnresolved.delete(kid); }
+});
+
+await section('F21 SUPABASE_ANON_KEY missing -> 503 misconfigured, nothing read or written', async () => {
+  const a = await person('admin');
+  const s = await mk();
+  const saved = env.SUPABASE_ANON_KEY;
+  delete env.SUPABASE_ANON_KEY;
+  try {
+    const w0 = log.writes.length, r0 = log.rpcs.length;
+    let r = await ms(a.tok, 'preview', { id: s.sid, op: 'cancel' });
+    ok('manage-session preview -> 503 misconfigured', r.status === 503 && r.body.code === 'misconfigured', r.body);
+    r = await ms(a.tok, 'change-status', { id: s.sid, status: 'Held' });
+    ok('manage-session change-status -> 503 misconfigured', r.status === 503 && r.body.code === 'misconfigured', r.body);
+    r = await call(bulkFn, a.tok, { step: 'preview', date_from: FUTURE.date, date_to: FUTURE.date });
+    ok('bulk-cancel-sessions preview -> 503 misconfigured', r.status === 503 && r.body.code === 'misconfigured', r.body);
+    ok('  no RPC and no write to sessions', log.rpcs.length === r0 &&
+       log.writes.slice(w0).filter((w) => w.table === 'sessions').length === 0, [log.rpcs.slice(r0), log.writes.slice(w0)]);
+  } finally { env.SUPABASE_ANON_KEY = saved; }
+});
+
+await section('F22 bulk ranges: 0-62 days only', async () => {
+  const a = await person('admin');
+  const s = await mk();
+  const d0 = await clock(0), d63 = await clock(63), d62 = await clock(62);
+  let r = await ms(a.tok, 'bulk-delete', { step: 'preview', class_id: s.cid, from_date: d0.date, to_date: d63.date, hard_delete: false });
+  ok('manage-session bulk-delete 63 days -> 400 bad_request', r.status === 400 && r.body.code === 'bad_request', r.body);
+  r = await ms(a.tok, 'bulk-delete', { step: 'confirm', class_id: s.cid, from_date: d63.date, to_date: d0.date, hard_delete: false,
+    reason: REASON, items: [{ id: s.sid, token: 'x' }] });
+  ok('manage-session bulk-delete with to before from -> 400 bad_request, nothing sent', r.status === 400 && r.body.code === 'bad_request', r.body);
+  r = await ms(a.tok, 'bulk-delete', { step: 'preview', class_id: s.cid, from_date: d0.date, to_date: d62.date, hard_delete: false });
+  ok('  control: 62 days -> 200', r.status === 200, r.body);
+  r = await call(bulkFn, a.tok, { step: 'preview', date_from: d0.date, date_to: d63.date, class_id: s.cid });
+  ok('bulk-cancel-sessions preview 63 days -> 400 bad_request', r.status === 400 && r.body.code === 'bad_request', r.body);
+});
+
+await section('F-9 a throw after the change committed is not reported as a failed change', async () => {
+  const a = await person('admin');
+  const s = await mk();
+  await att(s.sid, 'Present', null);
+  const p = await ms(a.tok, 'preview', { id: s.sid, op: 'cancel' });
+  rpcThrows.add('record_session_override_event');
+  let r;
+  try { r = await ms(a.tok, 'cancel', { id: s.sid, token: p.body.preview.token, reason: REASON }); }
+  finally { rpcThrows.delete('record_session_override_event'); }
+  ok('cancel -> 200 ok with the override id and tuition.status failed (not 500 unexpected); lesson Canceled',
+     r.status === 200 && r.body.ok === true && !!r.body.result?.override_id && r.body.tuition.status === 'failed' &&
+     (await sess(s.sid)).status === 'Canceled', r.body);
+  const rr = await ms(a.tok, 'refresh-tuition', { override_id: r.body.result?.override_id });
+  ok('  the dialog can retry with that override id -> refreshed', rr.status === 200 && rr.body.tuition.status === 'refreshed', rr.body);
+});
+
+await section('F-8 manage-session 429 carries a code and message_key', async () => {
+  const a = await person('admin');
+  let last = null;
+  for (let i = 0; i < 51; i++) last = await ms(a.tok, 'preview', { id: randomUUID(), op: 'nope' });
+  ok('the 51st action in a minute -> 429 rate_limited with message_key and Retry-After seconds',
+     last.status === 429 && last.body.code === 'rate_limited' && last.body.message_key === 'sessionGuard.error.rate_limited' &&
+     typeof last.body.retryAfter === 'number', last);
 });
 
 await section('create is unchanged', async () => {
@@ -671,6 +942,106 @@ await section('create is unchanged', async () => {
   await asSuper(`INSERT INTO classes VALUES ($1,$2)`, [cid, randomUUID()]);
   const r = await ms(a.tok, 'create', { class_id: cid, date: FAR.date, start_time: '10:00', end_time: '11:00', teacher_id: randomUUID() });
   ok('create -> 200 with the new lesson (insert, not guarded)', r.status === 200 && r.body.session?.id, r.body);
+});
+
+// D-review-3 F-1, the D1a-D1f probe reproduced with a calculate-tuition
+// stand-in that does the real upsert: a preview (single and bulk) must
+// invoke nothing and leave every bill byte-identical.
+await section('F-1 a preview is read-only: tier 3 stays 3, bills byte-identical, no bill created', async () => {
+  const a = await person('admin');
+  tuitionUpserts = true;
+  try {
+    const allBills = async () => JSON.stringify((await asSuper(`SELECT to_jsonb(i) j FROM invoices i ORDER BY id`)).rows);
+    const nBills = async () => (await asSuper(`SELECT count(*)::int n FROM invoices`)).rows[0].n;
+    const billsOf = async (kids) => (await asSuper(`SELECT student_id::text, month, status, confirmation_status, recorded_payment
+        FROM invoices WHERE student_id::text = ANY($1::text[]) ORDER BY student_id, month`, [kids])).rows;
+    // Past Held lesson, two children marked Present by the teacher, both bills confirmed by an admin, unpaid.
+    const s = await mk({ when: PAST, status: 'Held' });
+    const k1 = await att(s.sid, 'Present', s.teacher), k2 = await att(s.sid, 'Present', s.teacher);
+    for (const k of [k1, k2]) {
+      await asSuper(`INSERT INTO invoices(student_id,month,status,total_amount,base_amount,discount_amount,recorded_payment,confirmation_status)
+                     VALUES ($1,$2,'issued',540000,600000,60000,0,'confirmed')`, [k, s.month]);
+    }
+    const d1a = await billsOf([k1, k2]);
+    ok('D1a bills before any preview: issued / confirmed / unpaid x2',
+       d1a.length === 2 && d1a.every((b) => b.status === 'issued' && b.confirmation_status === 'confirmed'), d1a);
+    const before = await allBills(), countBefore = await nBills();
+    log.invokes = [];
+    const p = await ms(a.tok, 'preview', { id: s.sid, op: 'cancel' });
+    ok('D1c default preview (no figures flag) -> tier 3, settled_any true, correction reason required',
+       p.status === 200 && p.body.preview.tier === 3 && p.body.preview.settled_any === true &&
+       p.body.preview.requires.correction_reason === true && p.body.preview.requires.confirm === true, p.body.preview);
+    ok('  ZERO calls to calculate-tuition or calculate-payroll', log.invokes.length === 0, log.invokes);
+    ok('D1d bills after the (abandoned) preview: byte-identical, same count', (await allBills()) === before && (await nBills()) === countBefore,
+       await billsOf([k1, k2]));
+    const c = p.body.consequences;
+    ok('  the preview shows the stored bills as they stand (confirmed, total 540000, discount 60000, payment 0)',
+       c.invoices_before.length === 2 && c.invoices_before.every((x) => x.bill?.confirmation_status === 'confirmed' &&
+       x.bill.total_amount === 540000 && x.bill.discount_amount === 60000 && x.bill.recorded_payment === 0 && x.bill.status === 'issued'), c);
+    log.invokes = [];
+    const pf = await ms(a.tok, 'preview', { id: s.sid, op: 'cancel', figures: true });
+    ok('  figures:true is ignored: still zero invokes, bills identical, same token',
+       log.invokes.length === 0 && (await allBills()) === before && pf.body.preview.token === p.body.preview.token, log.invokes);
+    // Bulk previews of the same lesson: zero invokes, bills identical.
+    log.invokes = [];
+    let r = await call(bulkFn, a.tok, { step: 'preview', date_from: s.date, date_to: s.date, class_id: s.cid });
+    ok('bulk-cancel-sessions preview: lesson in needs_ack at tier 3, stored bills shown, zero invokes, bills identical',
+       r.status === 200 && r.body.needs_ack.some((x) => x.id === s.sid && x.tier === 3 && x.consequences?.invoices_before?.length === 2) &&
+       log.invokes.length === 0 && (await allBills()) === before, [r.body.needs_ack, log.invokes]);
+    r = await ms(a.tok, 'bulk-delete', { step: 'preview', class_id: s.cid, from_date: s.date, to_date: s.date, hard_delete: false });
+    ok('manage-session bulk-delete preview: zero invokes, bills identical',
+       r.status === 200 && log.invokes.length === 0 && (await allBills()) === before, log.invokes);
+    // D1e: a paid bill keeps 'paid' across a preview.
+    const sp = await mk({ when: PAST, status: 'Held' });
+    const kp = await att(sp.sid, 'Present', sp.teacher);
+    await asSuper(`INSERT INTO invoices(student_id,month,status,total_amount,base_amount,recorded_payment,confirmation_status)
+                   VALUES ($1,$2,'paid',540000,540000,540000,'confirmed')`, [kp, sp.month]);
+    const beforeP = await allBills();
+    log.invokes = [];
+    const pp = await ms(a.tok, 'preview', { id: sp.sid, op: 'cancel' });
+    ok('D1e paid bill: tier 3, status stays "paid", confirmation stays "confirmed", zero invokes',
+       pp.body.preview.tier === 3 && (await allBills()) === beforeP && log.invokes.length === 0 &&
+       (await billsOf([kp]))[0]?.status === 'paid', await billsOf([kp]));
+    // D1f: a move preview to a month 70 days out creates no bill there.
+    const sm = await mk();
+    const km1 = await att(sm.sid, 'Present', null), km2 = await att(sm.sid, 'Present', null);
+    await inv(km1, sm.month, 0); await inv(km2, sm.month, 0);
+    const far = await clock(70);
+    const beforeM = await allBills(), nM = await nBills();
+    log.invokes = [];
+    const pm = await ms(a.tok, 'preview', { id: sm.sid, op: 'move', change: { date: far.date, start_time: '17:30', end_time: '19:00' } });
+    const dest = (pm.body.consequences?.invoices_before ?? []).filter((x) => x.month === far.date.slice(0, 7));
+    ok('D1f move preview 70 days out: no bill created for the destination month (count and rows identical), zero invokes',
+       pm.status === 200 && (await nBills()) === nM && (await allBills()) === beforeM && log.invokes.length === 0, [pm.status, log.invokes]);
+    ok('  the destination month is shown with bill: null for each child (no bill saved there)',
+       far.date.slice(0, 7) !== sm.month ? dest.length === 2 && dest.every((x) => x.bill === null) : true, pm.body.consequences);
+    // The token covers what the preview shows: a change to any shown bill field makes it stale.
+    for (const [what, sql] of [['discount', `UPDATE invoices SET discount_amount = discount_amount + 1 WHERE student_id=$1 AND month=$2`],
+                               ['confirmation status', `UPDATE invoices SET confirmation_status='needs_review' WHERE student_id=$1 AND month=$2`],
+                               ['recorded payment', `UPDATE invoices SET recorded_payment = 1000 WHERE student_id=$1 AND month=$2`]]) {
+      const t = await mk({ when: PAST, status: 'Held' });
+      const kt = await att(t.sid, 'Present', t.teacher);
+      await asSuper(`INSERT INTO invoices(student_id,month,status,total_amount,base_amount,discount_amount,recorded_payment,confirmation_status)
+                     VALUES ($1,$2,'issued',540000,600000,60000,0,'confirmed')`, [kt, t.month]);
+      const pt = await ms(a.tok, 'preview', { id: t.sid, op: 'cancel' });
+      await asSuper(sql, [kt, t.month]);
+      const rt = await ms(a.tok, 'cancel', { id: t.sid, token: pt.body.preview.token, reason: REASON, confirm: true, correction_reason: CORR });
+      ok(`token covers the stored bill: ${what} changed after the preview -> 409 token_stale with fresh consequences, lesson still Held`,
+         rt.status === 409 && rt.body.code === 'token_stale' && Array.isArray(rt.body.consequences?.invoices_before) &&
+         (await sess(t.sid)).status === 'Held', rt.body.code);
+    }
+    // After a SUCCESSFUL change the standard refresh runs exactly as built.
+    log.invokes = [];
+    const rc = await ms(a.tok, 'cancel', { id: s.sid, token: p.body.preview.token, reason: REASON, confirm: true, correction_reason: CORR });
+    const ti = log.invokes.filter((x) => x.name === 'calculate-tuition');
+    ok('the confirm (tier 3, correction reason) -> 200, then calculate-tuition once per (student, month): the standard refresh',
+       rc.status === 200 && rc.body.result.tier === 3 && ti.length === 2 &&
+       new Set(ti.map((x) => x.body.studentId)).size === 2 && rc.body.tuition.status === 'refreshed', [rc.body, ti.length]);
+    const o = (await overrides(s.sid))[0];
+    ok('  stored as a correction of a settled lesson (settled true, correction_mode), bills before = the confirmed ones',
+       o?.settled === true && o.correction_mode === true &&
+       o.invoices_before.every((x) => x.confirmation_status === 'confirmed'), o && { settled: o.settled, cm: o.correction_mode });
+  } finally { tuitionUpserts = false; }
 });
 
 // The F-2 acceptance test: over everything above, no write to `sessions`
@@ -686,6 +1057,16 @@ await section('no person-initiated sessions write on the service key', async () 
   ok('every guard RPC was called on the caller\'s client', bad.length === 0, bad);
   const total = (await asSuper(`SELECT count(*)::int n FROM session_cancel_overrides WHERE actor_user_id IS NULL`)).rows[0].n;
   ok('no override row without a person', total === 0);
+});
+
+// After the acceptance count above (this one attempts a service-key INSERT that fails).
+await section('F-6 create on a taken slot -> 409 slot_taken, the existing lesson untouched', async () => {
+  const a = await person('admin');
+  const s = await mk();
+  const before = JSON.stringify(await sess(s.sid));
+  const r = await ms(a.tok, 'create', { class_id: s.cid, date: s.date, start_time: '17:30', end_time: '19:00', teacher_id: randomUUID() });
+  ok('create into an occupied slot -> 409 slot_taken (was 500 unexpected)', r.status === 409 && r.body.code === 'slot_taken', r.body);
+  ok('  existing lesson byte-identical', JSON.stringify(await sess(s.sid)) === before);
 });
 
 // Rollout: the functions deployed before the migration is pasted.

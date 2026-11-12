@@ -417,7 +417,7 @@ Deno.serve(async (req) => {
       });
       return json({
         ok: !chunkError, partial: !!chunkError || refused.length > 0, op, batch_id: batchId,
-        done: done.map(({ refresh_pairs: _p, ...d }) => d), refused, not_attempted,
+        done: done.map(({ refresh_pairs: _p, ...d }) => d), refused, not_attempted, held_ignored: split.held_ignored,
         stopped: chunkError ? { code: chunkError.code, message_key: chunkError.message_key, message: chunkError.message } : null,
         tuition,
       });
