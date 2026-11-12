@@ -56,13 +56,13 @@ export function AssignmentByStudentView({ byStudent, assignments, homeworkPoints
   return (
     <div className="space-y-6">
       <div className="relative w-full max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search students..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hec-ink-faint" />
+        <Input aria-label="Search students" placeholder="Search students..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
       </div>
 
       {!search && chartData.length > 0 && (
-        <Card className="glass-sm p-4">
-          <h3 className="text-sm font-semibold mb-3">Submission Rates (lowest first)</h3>
+        <Card className="p-4 sm:p-6">
+          <h3 className="mb-3 text-hec-h3 font-semibold text-hec-ink">Submission Rates (lowest first)</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={chartData} layout="vertical" margin={{ left: 60 }}>
               <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
@@ -74,7 +74,7 @@ export function AssignmentByStudentView({ byStudent, assignments, homeworkPoints
         </Card>
       )}
 
-      <Card className="glass-sm">
+      <Card>
         <Table>
           <TableHeader>
             <TableRow>
@@ -90,19 +90,20 @@ export function AssignmentByStudentView({ byStudent, assignments, homeworkPoints
             {students.slice(0, 50).map((s) => (
               <TableRow
                 key={s.studentId}
-                className="cursor-pointer hover:bg-muted/50"
+                className="cursor-pointer"
                 onClick={() => setSelectedStudent(s)}
               >
-                <TableCell className="font-medium">{s.studentName}</TableCell>
-                <TableCell className="text-right">{s.assignedCount}</TableCell>
-                <TableCell className="text-right">{s.submittedCount}</TableCell>
-                <TableCell className="text-right">{s.gradedCount}</TableCell>
-                <TableCell className="text-right">
+                {/* The child's name wraps, never cut (DESIGN_SYSTEM s.13). */}
+                <TableCell className="min-w-[10rem] whitespace-normal break-words hyphens-none font-medium text-hec-ink">{s.studentName}</TableCell>
+                <TableCell className="whitespace-nowrap text-right tabular-nums">{s.assignedCount}</TableCell>
+                <TableCell className="whitespace-nowrap text-right tabular-nums">{s.submittedCount}</TableCell>
+                <TableCell className="whitespace-nowrap text-right tabular-nums">{s.gradedCount}</TableCell>
+                <TableCell className="whitespace-nowrap text-right tabular-nums">
                   <Badge variant={s.submissionRate >= 80 ? "default" : s.submissionRate >= 50 ? "secondary" : "destructive"}>
                     {s.submissionRate.toFixed(0)}%
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right text-xs text-muted-foreground">
+                <TableCell className="text-right text-hec-caption text-hec-ink-soft">
                   {s.grades.length > 0 ? s.grades.slice(0, 5).join(", ") : "—"}
                 </TableCell>
               </TableRow>
@@ -110,36 +111,36 @@ export function AssignmentByStudentView({ byStudent, assignments, homeworkPoints
           </TableBody>
         </Table>
         {students.length === 0 && (
-          <p className="text-center text-muted-foreground py-8">No students found</p>
+          <p className="py-8 text-center text-hec-small text-hec-ink-soft">No students found</p>
         )}
       </Card>
 
       {/* Student Detail Dialog */}
       <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-h-[85dvh] max-w-3xl overflow-y-auto">
           {selectedStudent && (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedStudent.studentName}</DialogTitle>
+                <DialogTitle className="whitespace-normal break-words pr-8 text-balance">{selectedStudent.studentName}</DialogTitle>
                 <DialogDescription>Assignment details & performance</DialogDescription>
               </DialogHeader>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
-                <Card className="p-3 bg-muted/30">
-                  <div className="text-xs text-muted-foreground">Assigned</div>
-                  <div className="text-lg font-bold">{selectedStudent.assignedCount}</div>
+              <div className="my-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
+                <Card className="bg-hec-sunken p-3 shadow-none">
+                  <div className="text-hec-caption text-hec-ink-soft">Assigned</div>
+                  <div className="font-sans text-hec-h3 font-semibold tabular-nums text-hec-ink">{selectedStudent.assignedCount}</div>
                 </Card>
-                <Card className="p-3 bg-muted/30">
-                  <div className="text-xs text-muted-foreground">Submitted</div>
-                  <div className="text-lg font-bold">{selectedStudent.submittedCount}</div>
+                <Card className="bg-hec-sunken p-3 shadow-none">
+                  <div className="text-hec-caption text-hec-ink-soft">Submitted</div>
+                  <div className="font-sans text-hec-h3 font-semibold tabular-nums text-hec-ink">{selectedStudent.submittedCount}</div>
                 </Card>
-                <Card className="p-3 bg-muted/30">
-                  <div className="text-xs text-muted-foreground">Graded</div>
-                  <div className="text-lg font-bold">{selectedStudent.gradedCount}</div>
+                <Card className="bg-hec-sunken p-3 shadow-none">
+                  <div className="text-hec-caption text-hec-ink-soft">Graded</div>
+                  <div className="font-sans text-hec-h3 font-semibold tabular-nums text-hec-ink">{selectedStudent.gradedCount}</div>
                 </Card>
-                <Card className="p-3 bg-muted/30">
-                  <div className="text-xs text-muted-foreground">Rate</div>
-                  <div className="text-lg font-bold">{selectedStudent.submissionRate.toFixed(0)}%</div>
+                <Card className="bg-hec-sunken p-3 shadow-none">
+                  <div className="text-hec-caption text-hec-ink-soft">Rate</div>
+                  <div className="font-sans text-hec-h3 font-semibold tabular-nums text-hec-ink">{selectedStudent.submissionRate.toFixed(0)}%</div>
                 </Card>
               </div>
 
@@ -158,15 +159,15 @@ export function AssignmentByStudentView({ byStudent, assignments, homeworkPoints
                   {studentDetail.map((d) => (
                     <TableRow key={d.id}>
                       <TableCell className="font-medium">{d.title}</TableCell>
-                      <TableCell className="text-xs">{d.className}</TableCell>
-                      <TableCell className="text-xs">{d.dueDate}</TableCell>
+                      <TableCell className="min-w-[8rem] whitespace-normal break-words">{d.className}</TableCell>
+                      <TableCell className="whitespace-nowrap tabular-nums">{d.dueDate}</TableCell>
                       <TableCell>
-                        <Badge variant={d.status === "graded" ? "default" : d.status === "submitted" ? "secondary" : "outline"} className="text-xs">
+                        <Badge variant={d.status === "graded" ? "default" : d.status === "submitted" ? "secondary" : "outline"} className="whitespace-nowrap">
                           {d.status}
                         </Badge>
                       </TableCell>
                       <TableCell>{d.grade}</TableCell>
-                      <TableCell className="text-right">{d.points}</TableCell>
+                      <TableCell className="whitespace-nowrap text-right tabular-nums">{d.points}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
