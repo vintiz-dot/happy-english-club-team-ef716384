@@ -34,7 +34,7 @@ export function AssignmentByTeacherView({ byTeacher }: Props) {
   return (
     <div className="space-y-6">
       <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
-        <SelectTrigger className="w-[250px]">
+        <SelectTrigger aria-label="Teacher" className="w-full sm:w-[250px]">
           <SelectValue placeholder="All Teachers" />
         </SelectTrigger>
         <SelectContent>
@@ -52,29 +52,29 @@ export function AssignmentByTeacherView({ byTeacher }: Props) {
         const filteredGraded = filteredAssignments.reduce((n, a) => n + a.submissions.filter((s) => s.status === "graded").length, 0);
 
         return (
-          <Card key={ts.teacherId} className="glass-sm p-4 space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div>
-                <h3 className="font-semibold">{ts.teacherName}</h3>
-                <p className="text-xs text-muted-foreground">{ts.classCount} classes · {ts.assignmentCount} assignments</p>
+          <Card key={ts.teacherId} className="space-y-4 p-4 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <h3 className="whitespace-normal break-words hyphens-none text-balance text-hec-h3 font-semibold text-hec-ink">{ts.teacherName}</h3>
+                <p className="text-hec-small tabular-nums text-hec-ink-soft">{ts.classCount} classes · {ts.assignmentCount} assignments</p>
               </div>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex shrink-0 flex-wrap gap-2">
                 <Badge variant="secondary">{ts.gradingRate.toFixed(0)}% graded</Badge>
                 <Badge variant="outline">{ts.avgTurnaroundDays !== null ? `${ts.avgTurnaroundDays.toFixed(1)}d turnaround` : "No data"}</Badge>
               </div>
             </div>
 
             {ts.classIds.length > 1 && (
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground font-medium">Filter by class:</p>
+              <div className="space-y-2">
+                <p className="text-hec-caption font-medium text-hec-ink-soft">Filter by class:</p>
                 <ToggleGroup
                   type="multiple"
                   value={[...activeClasses]}
                   onValueChange={(vals) => toggleClassFilter(ts.teacherId, vals)}
-                  className="flex flex-wrap gap-1"
+                  className="flex flex-wrap justify-start gap-2"
                 >
                   {ts.classIds.map((cid, i) => (
-                    <ToggleGroupItem key={cid} value={cid} size="sm" variant="outline" className="text-xs">
+                    <ToggleGroupItem key={cid} value={cid} size="sm" variant="outline" className="h-auto min-h-hec-target whitespace-normal break-words rounded-hec-md border-hec-line-strong px-3 py-2 text-left text-hec-small text-hec-ink data-[state=on]:border-hec-brass data-[state=on]:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
                       {ts.classNames[i]}
                     </ToggleGroupItem>
                   ))}
@@ -82,18 +82,18 @@ export function AssignmentByTeacherView({ byTeacher }: Props) {
               </div>
             )}
 
-            <div className="grid grid-cols-3 gap-3">
-              <Card className="p-3 bg-muted/30">
-                <div className="text-xs text-muted-foreground">Submissions</div>
-                <div className="text-lg font-bold">{filteredSubs}</div>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <Card className="bg-hec-sunken p-3 shadow-none">
+                <div className="text-hec-caption text-hec-ink-soft">Submissions</div>
+                <div className="font-sans text-hec-h3 font-semibold tabular-nums text-hec-ink">{filteredSubs}</div>
               </Card>
-              <Card className="p-3 bg-muted/30">
-                <div className="text-xs text-muted-foreground">Graded</div>
-                <div className="text-lg font-bold">{filteredGraded}</div>
+              <Card className="bg-hec-sunken p-3 shadow-none">
+                <div className="text-hec-caption text-hec-ink-soft">Graded</div>
+                <div className="font-sans text-hec-h3 font-semibold tabular-nums text-hec-ink">{filteredGraded}</div>
               </Card>
-              <Card className="p-3 bg-muted/30">
-                <div className="text-xs text-muted-foreground">Pending</div>
-                <div className="text-lg font-bold">{filteredSubs - filteredGraded}</div>
+              <Card className="bg-hec-sunken p-3 shadow-none">
+                <div className="text-hec-caption text-hec-ink-soft">Pending</div>
+                <div className="font-sans text-hec-h3 font-semibold tabular-nums text-hec-ink">{filteredSubs - filteredGraded}</div>
               </Card>
             </div>
 
@@ -114,10 +114,10 @@ export function AssignmentByTeacherView({ byTeacher }: Props) {
                   return (
                     <TableRow key={a.id}>
                       <TableCell className="font-medium">{a.title}</TableCell>
-                      <TableCell>{a.className}</TableCell>
-                      <TableCell>{a.due_date || "—"}</TableCell>
-                      <TableCell className="text-right">{subs}</TableCell>
-                      <TableCell className="text-right">{graded}</TableCell>
+                      <TableCell className="min-w-[8rem] whitespace-normal break-words">{a.className}</TableCell>
+                      <TableCell className="whitespace-nowrap tabular-nums">{a.due_date || "—"}</TableCell>
+                      <TableCell className="whitespace-nowrap text-right tabular-nums">{subs}</TableCell>
+                      <TableCell className="whitespace-nowrap text-right tabular-nums">{graded}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -128,7 +128,7 @@ export function AssignmentByTeacherView({ byTeacher }: Props) {
       })}
 
       {display.length === 0 && (
-        <p className="text-center text-muted-foreground py-8">No teacher data available</p>
+        <p className="py-8 text-center text-hec-small text-hec-ink-soft">No teacher data available</p>
       )}
     </div>
   );
