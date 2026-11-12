@@ -85,7 +85,7 @@ function AssessmentStudentCardImpl({
         bulkMode &&
           isSelected &&
           !unavailable &&
-          "border-hec-brass bg-hec-sunken"
+          "border-hec-brass shadow-hec-2"
       )}
       onClick={(e) => {
         if (unavailable) return;

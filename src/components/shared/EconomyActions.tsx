@@ -225,8 +225,7 @@ export function LogSpendButton({ studentId, classId, studentName, cashOnHand }: 
     <>
       <Button
         size="icon"
-        variant="ghost"
-        className="text-hec-danger"
+        variant="destructive-quiet"
         onClick={(e) => { e.stopPropagation(); setOpen(true); }}
         title="Log Spend"
         aria-label={`Log Spend for ${studentName}`}
@@ -248,6 +247,8 @@ export function LogSpendButton({ studentId, classId, studentName, cashOnHand }: 
               value={amount}
               onChange={(e) => setAmount(parseInt(e.target.value) || 1)}
               onKeyDown={(e) => e.key === "Enter" && handleSpend()}
+              aria-label={`Cash to deduct from ${studentName}`}
+              className="font-sans tabular-nums"
               autoFocus
             />
           </div>

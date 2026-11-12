@@ -277,7 +277,7 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
           {/* Category Selection */}
           <div className="space-y-3">
             <Label className="text-base font-semibold">Category *</Label>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {[
                 { key: "skill", label: "Skill", desc: "Speaking, Listening, etc." },
                 { key: "behavior", label: "Behavior", desc: "Focus, Teamwork" },
@@ -339,11 +339,11 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
           {/* Sub-tag Selection */}
           {skillConfig && skillConfig.subTags.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-base font-semibold">
+              <Label htmlFor="points-subtag" className="text-base font-semibold">
                 Reason (optional)
               </Label>
               <Select value={selectedSubTag} onValueChange={setSelectedSubTag}>
-                <SelectTrigger className="h-12">
+                <SelectTrigger id="points-subtag" className="h-12">
                   <SelectValue placeholder="Select specific reason" />
                 </SelectTrigger>
                 <SelectContent>
@@ -391,11 +391,11 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
           {/* Correction Reason */}
           {category === "correction" && (
             <div className="space-y-2">
-              <Label className="text-base font-semibold">
+              <Label htmlFor="points-correction" className="text-base font-semibold">
                 Correction Reason *
               </Label>
               <Select value={selectedCorrection} onValueChange={setSelectedCorrection}>
-                <SelectTrigger className="h-12">
+                <SelectTrigger id="points-correction" className="h-12">
                   <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
                 <SelectContent>

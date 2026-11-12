@@ -70,7 +70,7 @@ export function SkillButton({
           <span className="text-hec-caption font-medium">{label}</span>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-2" side="top" align="center">
+      <PopoverContent className="w-auto p-2" side="top" align="center" aria-label={`Points for ${label}`}>
         <div className="flex flex-wrap justify-center gap-2 items-center">
           {POINT_OPTIONS.map((pts) => (
             <Button

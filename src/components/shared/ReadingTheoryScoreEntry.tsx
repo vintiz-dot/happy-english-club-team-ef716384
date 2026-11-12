@@ -220,9 +220,9 @@ export function ReadingTheoryScoreEntry({
         <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
           {/* Reason Selection */}
           <div className="space-y-2">
-            <Label className="text-base font-semibold">Reason *</Label>
+            <Label htmlFor="rt-reason" className="text-base font-semibold">Reason *</Label>
             <Select value={selectedReason} onValueChange={setSelectedReason}>
-              <SelectTrigger className="h-12">
+              <SelectTrigger id="rt-reason" className="h-12">
                 <SelectValue placeholder="Select reason" />
               </SelectTrigger>
               <SelectContent>

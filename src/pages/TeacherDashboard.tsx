@@ -454,7 +454,7 @@ export default function TeacherDashboard() {
                   varianceAmount={payrollData?.varianceAmountProjected}
                 />
                 <p className={cn(STAT_LABEL, "mb-2")}>Projected (VND)</p>
-                <Progress value={progressPercent} className="h-2" />
+                <Progress value={progressPercent} className="h-2" aria-label="Sessions taught this month, of those planned" />
               </div>
             </CardContent>
           </Card>
@@ -553,7 +553,7 @@ export default function TeacherDashboard() {
                           </div>
 
                           {/* Session Details */}
-                          <div className="flex-1 min-w-0">
+                          <div className="min-w-0 grow basis-48">
                             <div className="flex flex-wrap items-center gap-2 mb-1">
                               <h4 className={NAME}>{session.classes.name}</h4>
                               {timeStatus === "ongoing" && (

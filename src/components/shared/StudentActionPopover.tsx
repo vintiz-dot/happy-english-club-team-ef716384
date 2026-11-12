@@ -260,7 +260,7 @@ export function StudentActionPopover({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-[21rem] p-0 overflow-x-hidden overflow-y-auto max-h-[var(--radix-popover-content-available-height)]" align="center" sideOffset={6}>
+      <PopoverContent className="w-[21rem] p-0 overflow-x-hidden overflow-y-auto max-h-[var(--radix-popover-content-available-height)]" align="center" sideOffset={6} aria-label={`Actions for ${studentName}`}>
         {/* Identity band: who this is, today's numbers, attendance state */}
         <div className="border-b border-hec-line bg-hec-sunken px-4 py-3 text-hec-ink">
           <div className="flex items-start gap-3">
@@ -284,13 +284,13 @@ export function StudentActionPopover({
                     </span>
                   </>
                 )}
+                {liveLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-hec-ink-soft shrink-0" />
+                ) : (
+                  attendanceChip()
+                )}
               </div>
             </div>
-            {liveLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-hec-ink-soft shrink-0" />
-            ) : (
-              attendanceChip()
-            )}
           </div>
         </div>
 

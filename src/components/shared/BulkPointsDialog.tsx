@@ -311,11 +311,11 @@ export function BulkPointsDialog({
           {/* Sub-tag Selection */}
           {skillConfig && skillConfig.subTags.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-base font-semibold">
+              <Label htmlFor="bulk-subtag" className="text-base font-semibold">
                 Reason (optional)
               </Label>
               <Select value={selectedSubTag} onValueChange={setSelectedSubTag}>
-                <SelectTrigger className="h-12">
+                <SelectTrigger id="bulk-subtag" className="h-12">
                   <SelectValue placeholder="Select specific reason" />
                 </SelectTrigger>
                 <SelectContent>
@@ -363,11 +363,11 @@ export function BulkPointsDialog({
           {/* Correction Reason */}
           {category === "correction" && (
             <div className="space-y-2">
-              <Label className="text-base font-semibold">
+              <Label htmlFor="bulk-correction" className="text-base font-semibold">
                 Correction Reason *
               </Label>
               <Select value={selectedCorrection} onValueChange={setSelectedCorrection}>
-                <SelectTrigger className="h-12">
+                <SelectTrigger id="bulk-correction" className="h-12">
                   <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
                 <SelectContent>
