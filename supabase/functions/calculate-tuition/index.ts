@@ -6,7 +6,7 @@ import { requireRole, callerOwnsStudent } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts } from "../_lib/enrollment-discounts.ts";
-import { invoiceLabelFields } from "../_lib/invoice-status.ts";
+import { invoiceLabelFields, paidLabel } from "../_lib/invoice-status.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -156,6 +156,10 @@ Deno.serve(async (req) => {
     // as if there were no bill would save recorded_payment 0 over a payment
     // and reset a confirmed or paid bill.
     if (currentInvoiceRes.error) throw new Error("Unable to read the current tuition invoice");
+    // The other months carry the balance brought in. Unread, they would
+    // count as "no earlier payments": a wrong carry in the answer and a
+    // wrong paid label saved.
+    if (priorInvoicesRes.error) throw new Error("Unable to read the earlier tuition invoices");
     const discountAssignments = discountAssignmentsRes.data;
     const referralBonuses = referralBonusesRes.data;
 
@@ -588,8 +592,15 @@ Deno.serve(async (req) => {
       { base_amount: baseAmount, discount_amount: totalDiscount, total_amount: totalAmount },
       reviewFlags,
       savedAt,
+      // paid / partial / issued from the month's own money - the one rule.
+      paidLabel(monthPayments, totalAmount + carryInDebt - carryInCredit),
     );
 
+    // recorded_payment is NOT in this save. It belongs to the payment paths;
+    // this function only ever wrote back the value it read at the start, so
+    // a payment recorded while it was calculating was overwritten with the
+    // older figure (0 on a bill that did not exist yet). A new bill gets
+    // the column default, 0, which is what was written before.
     const invoicePayloadExtended: any = {
       student_id: studentId,
       month,
@@ -597,7 +608,6 @@ Deno.serve(async (req) => {
       discount_amount: totalDiscount,
       total_amount: totalAmount,
       paid_amount: cumulativePaidAmount,
-      recorded_payment: monthPayments,
       carry_in_credit: carryInCredit,
       carry_in_debt: carryInDebt,
       carry_out_credit: carryOutCredit,
