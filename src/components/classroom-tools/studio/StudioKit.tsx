@@ -161,7 +161,7 @@ export function Segmented<T extends string>({
             className={
               ivory
                 ? cn(
-                    "min-h-hec-target min-w-0 truncate rounded-hec-sm font-medium text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:bg-hec-raised hover:text-hec-ink data-[active=true]:bg-hec-action data-[active=true]:text-hec-on-action data-[active=true]:shadow-hec-1",
+                    "min-h-hec-target min-w-0 whitespace-normal break-words rounded-hec-sm py-1 font-medium leading-tight text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:bg-hec-raised hover:text-hec-ink data-[active=true]:bg-hec-action data-[active=true]:text-hec-on-action data-[active=true]:shadow-hec-1",
                     FOCUS,
                     size === "sm" ? "px-2 text-hec-small" : "px-3 text-hec-body",
                     disabled && "cursor-not-allowed opacity-50",
