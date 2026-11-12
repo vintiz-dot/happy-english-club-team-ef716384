@@ -71,15 +71,15 @@ export function StudentExamReportsTab({ studentId }: StudentExamReportsTabProps)
   };
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading exam reports…</p>;
+    return <p className="text-hec-small text-hec-ink-soft">Loading exam reports…</p>;
   }
 
   if (!reports || reports.length === 0) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">No exam reports yet. When your teacher posts one, it will appear here.</p>
+          <FileText className="mx-auto mb-3 h-12 w-12 text-hec-ink-faint" aria-hidden />
+          <p className="text-hec-small text-hec-ink-soft">No exam reports yet. When your teacher posts one, it will appear here.</p>
         </CardContent>
       </Card>
     );
@@ -116,14 +116,14 @@ function ExamReportCard({
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="min-w-0">
-            <CardTitle className="text-xl">{report.title}</CardTitle>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {report.classes?.name && <Badge variant="secondary">{report.classes.name}</Badge>}
+          <div className="min-w-0 flex-1">
+            <CardTitle className="break-words">{report.title}</CardTitle>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {report.classes?.name && <Badge variant="secondary" className="whitespace-normal break-words text-left">{report.classes.name}</Badge>}
               {report.exam_date && (
-                <Badge variant="outline">Exam: {format(new Date(report.exam_date), "MMM d, yyyy")}</Badge>
+                <Badge variant="outline" className="tabular-nums">Exam: {format(new Date(report.exam_date), "MMM d, yyyy")}</Badge>
               )}
-              <Badge variant="outline">Posted {format(new Date(report.created_at), "MMM d, yyyy")}</Badge>
+              <Badge variant="outline" className="tabular-nums">Posted {format(new Date(report.created_at), "MMM d, yyyy")}</Badge>
             </div>
           </div>
           {report.file_storage_key && report.file_name && (
@@ -131,7 +131,7 @@ function ExamReportCard({
               size="lg"
               onClick={onDownload}
               disabled={downloading}
-              className="font-bold shadow-md"
+              className="w-full sm:w-auto"
             >
               {downloading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
               Download PDF
@@ -142,17 +142,17 @@ function ExamReportCard({
       <CardContent className="space-y-4">
         {report.content_html && (
           <div
-            className="prose prose-sm md:prose-base max-w-none dark:prose-invert text-foreground"
+            className="prose prose-sm md:prose-base max-w-none text-hec-body text-hec-ink"
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(report.content_html) }}
           />
         )}
 
         {report.file_storage_key && (
-          <div className="rounded-md overflow-hidden border bg-muted/30">
+          <div className="overflow-hidden rounded-hec-md border border-hec-line bg-hec-sunken">
             {!pdfRequested ? (
               <div className="p-6 flex flex-col items-center gap-3">
-                <FileText className="h-10 w-10 text-primary" />
-                <p className="text-sm text-muted-foreground">{report.file_name}</p>
+                <FileText className="h-10 w-10 text-hec-ink-soft" aria-hidden />
+                <p className="max-w-full break-words text-center text-hec-small text-hec-ink-soft">{report.file_name}</p>
                 <Button
                   variant="outline"
                   onClick={() => { setPdfRequested(true); onLoadPdf(); }}
@@ -163,12 +163,12 @@ function ExamReportCard({
             ) : pdfUrl ? (
               <iframe
                 src={pdfUrl}
-                className="w-full h-[600px] bg-background"
+                className="w-full h-[600px] bg-hec-raised"
                 title={report.title}
               />
             ) : (
               <div className="p-6 flex justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <Loader2 className="h-6 w-6 animate-spin text-hec-ink-faint" />
               </div>
             )}
           </div>
