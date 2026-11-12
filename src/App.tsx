@@ -14,8 +14,9 @@ import { StartupGuard } from "./components/StartupGuard";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import { OfflineFallback } from "./components/OfflineFallback";
 import { Suspense, lazy } from "react";
+import { lazyRetry } from "./lib/lazyRetry";
 import { AppLoader } from "./components/AppLoader";
-import { AnnouncementRenderer } from "./components/announcements/AnnouncementRenderer";
+const AnnouncementRenderer = lazyRetry(() => import("./components/announcements/AnnouncementRenderer").then((m) => ({ default: m.AnnouncementRenderer })));
 import { AuthProvider } from "@/hooks/useAuth";
 
 // Lazy-load every route — keeps initial bundle small and speeds up navigation
@@ -96,7 +97,7 @@ function AppContent() {
         <BrowserRouter>
           <AuthProvider>
             <ProfilePicker />
-            <AnnouncementRenderer />
+            <Suspense fallback={null}><AnnouncementRenderer /></Suspense>
             <StartupGuard>
               <Suspense fallback={<AppLoader />}>
                 <Routes>

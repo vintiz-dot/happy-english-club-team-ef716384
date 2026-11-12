@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useStudentProfile } from "@/contexts/StudentProfileContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { loadMyStudents, clearShellCache } from "@/hooks/useShellQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,34 +25,13 @@ export default function ProfileSwitcher() {
     async function loadStudents() {
       try {
         if (!user) {
+          clearShellCache(queryClient);
           setLoading(false);
           return;
         }
 
-        const { data: familyData } = await supabase
-          .from("families")
-          .select("id")
-          .eq("primary_user_id", user.id)
-          .maybeSingle();
-
-        let studentData;
-        if (familyData) {
-          const { data } = await supabase
-            .from("students")
-            .select("id, full_name, date_of_birth")
-            .eq("family_id", familyData.id)
-            .eq("is_active", true)
-            .order("full_name");
-          studentData = data;
-        } else {
-          const { data } = await supabase
-            .from("students")
-            .select("id, full_name, date_of_birth")
-            .eq("linked_user_id", user.id)
-            .eq("is_active", true)
-            .order("full_name");
-          studentData = data;
-        }
+        // Shared, cached lookup (src/hooks/useShellQueries.ts); same two queries as before.
+        const studentData = await loadMyStudents(queryClient, user.id);
 
         setStudents(studentData || []);
         
