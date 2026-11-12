@@ -1,5 +1,5 @@
 {
- "when": "2026-11-12T00:37:13.611Z",
+ "when": "2026-11-12T00:39:06.445Z",
  "base": "vite dev server, fake client (NOT production)",
  "screens": {
   "student-dashboard": {
@@ -2559,6 +2559,384 @@
       11874,
       10067,
       11205
+     ],
+     "requests": 27
+    }
+   }
+  },
+  "board-highscores": {
+   "route": "/teacher/leaderboards",
+   "role": "teacher",
+   "boardStyle": "arcade",
+   "runs": {
+    "375-light": {
+     "fmrMs": 1845.300000011921,
+     "requests": 27,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "from:teachers": 3,
+      "from:profiles": 1,
+      "from:sessions": 3,
+      "from:classes": 3,
+      "from:notifications": 1,
+      "from:class_monitors": 1,
+      "from:enrollments": 1,
+      "from:student_points": 1,
+      "from:point_transactions": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 275,
+     "path": "/teacher/leaderboards",
+     "idleMs": 1867.4000000357628,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 15,
+      "byImpact": {
+       "critical": 2,
+       "serious": 1,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,5)",
+       "color-contrast(serious,3)",
+       "heading-order(moderate,1)",
+       "image-alt(critical,6)"
+      ]
+     },
+     "shot": "board-highscores-375-light.png",
+     "fmrMedianMs": 1845,
+     "idleMedianMs": 1867,
+     "fmrAll": [
+      1845,
+      1688,
+      1874
+     ],
+     "idleAll": [
+      1867,
+      1723,
+      1903
+     ],
+     "requestsAll": [
+      27,
+      27,
+      27
+     ]
+    },
+    "375-dark": {
+     "fmrMs": 1763.800000011921,
+     "requests": 27,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "from:teachers": 3,
+      "from:profiles": 1,
+      "from:sessions": 3,
+      "from:classes": 3,
+      "from:notifications": 1,
+      "from:class_monitors": 1,
+      "from:enrollments": 1,
+      "from:student_points": 1,
+      "from:point_transactions": 1
+     },
+     "scrollWidth": 375,
+     "clientWidth": 375,
+     "overflow": false,
+     "offenders": [],
+     "text": 275,
+     "path": "/teacher/leaderboards",
+     "idleMs": 1796.199999988079,
+     "errors": [],
+     "axe": {
+      "rules": 4,
+      "nodes": 16,
+      "byImpact": {
+       "critical": 2,
+       "serious": 1,
+       "moderate": 1
+      },
+      "top": [
+       "button-name(critical,5)",
+       "color-contrast(serious,4)",
+       "heading-order(moderate,1)",
+       "image-alt(critical,6)"
+      ]
+     },
+     "shot": "board-highscores-375-dark.png",
+     "fmrMedianMs": 1764,
+     "idleMedianMs": 1796,
+     "fmrAll": [
+      1764
+     ],
+     "idleAll": [
+      1796
+     ],
+     "requestsAll": [
+      27
+     ]
+    },
+    "768-light": {
+     "fmrMs": 1598.300000011921,
+     "requests": 27,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "from:teachers": 3,
+      "from:profiles": 1,
+      "from:sessions": 3,
+      "from:classes": 3,
+      "from:notifications": 1,
+      "from:class_monitors": 1,
+      "from:enrollments": 1,
+      "from:student_points": 1,
+      "from:point_transactions": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 926,
+     "path": "/teacher/leaderboards",
+     "idleMs": 2149.100000023842,
+     "errors": [],
+     "axe": {
+      "rules": 9,
+      "nodes": 21,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 4
+      },
+      "top": [
+       "button-name(critical,4)",
+       "color-contrast(serious,2)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,8)",
+       "landmark-main-is-top-level(moderate,1)",
+       "landmark-no-duplicate-main(moderate,1)"
+      ]
+     },
+     "shot": "board-highscores-768-light.png",
+     "fmrMedianMs": 1598,
+     "idleMedianMs": 1978,
+     "fmrAll": [
+      1598,
+      1498,
+      1619
+     ],
+     "idleAll": [
+      2149,
+      1864,
+      1978
+     ],
+     "requestsAll": [
+      27,
+      27,
+      27
+     ]
+    },
+    "768-dark": {
+     "fmrMs": 1622.800000011921,
+     "requests": 27,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "from:teachers": 3,
+      "from:profiles": 1,
+      "from:sessions": 3,
+      "from:classes": 3,
+      "from:notifications": 1,
+      "from:class_monitors": 1,
+      "from:enrollments": 1,
+      "from:student_points": 1,
+      "from:point_transactions": 1
+     },
+     "scrollWidth": 768,
+     "clientWidth": 768,
+     "overflow": false,
+     "offenders": [],
+     "text": 926,
+     "path": "/teacher/leaderboards",
+     "idleMs": 2030.6000000238419,
+     "errors": [],
+     "axe": {
+      "rules": 9,
+      "nodes": 36,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 4
+      },
+      "top": [
+       "button-name(critical,4)",
+       "color-contrast(serious,17)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,8)",
+       "landmark-main-is-top-level(moderate,1)",
+       "landmark-no-duplicate-main(moderate,1)"
+      ]
+     },
+     "shot": "board-highscores-768-dark.png",
+     "fmrMedianMs": 1623,
+     "idleMedianMs": 2031,
+     "fmrAll": [
+      1623
+     ],
+     "idleAll": [
+      2031
+     ],
+     "requestsAll": [
+      27
+     ]
+    },
+    "1280-light": {
+     "fmrMs": 2069.699999988079,
+     "requests": 27,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "from:teachers": 3,
+      "from:profiles": 1,
+      "from:sessions": 3,
+      "from:classes": 3,
+      "from:notifications": 1,
+      "from:class_monitors": 1,
+      "from:enrollments": 1,
+      "from:student_points": 1,
+      "from:point_transactions": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 941,
+     "path": "/teacher/leaderboards",
+     "idleMs": 2417.099999964237,
+     "errors": [],
+     "axe": {
+      "rules": 8,
+      "nodes": 18,
+      "byImpact": {
+       "critical": 1,
+       "moderate": 4,
+       "serious": 3
+      },
+      "top": [
+       "button-name(critical,3)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,8)",
+       "landmark-main-is-top-level(moderate,1)",
+       "landmark-no-duplicate-main(moderate,1)",
+       "landmark-unique(moderate,1)"
+      ]
+     },
+     "shot": "board-highscores-1280-light.png",
+     "fmrMedianMs": 2055,
+     "idleMedianMs": 2417,
+     "fmrAll": [
+      2070,
+      2055,
+      1937
+     ],
+     "idleAll": [
+      2417,
+      2608,
+      2373
+     ],
+     "requestsAll": [
+      27,
+      27,
+      27
+     ]
+    },
+    "1280-dark": {
+     "fmrMs": 2122.399999976158,
+     "requests": 27,
+     "requestKinds": {
+      "from:site_announcements": 2,
+      "from:user_roles": 2,
+      "from:families": 3,
+      "from:announcement_dismissals": 1,
+      "from:students": 4,
+      "from:teachers": 3,
+      "from:profiles": 1,
+      "from:sessions": 3,
+      "from:classes": 3,
+      "from:notifications": 1,
+      "from:class_monitors": 1,
+      "from:enrollments": 1,
+      "from:student_points": 1,
+      "from:point_transactions": 1
+     },
+     "scrollWidth": 1280,
+     "clientWidth": 1280,
+     "overflow": false,
+     "offenders": [],
+     "text": 941,
+     "path": "/teacher/leaderboards",
+     "idleMs": 2634.899999976158,
+     "errors": [],
+     "axe": {
+      "rules": 9,
+      "nodes": 36,
+      "byImpact": {
+       "critical": 1,
+       "serious": 4,
+       "moderate": 4
+      },
+      "top": [
+       "button-name(critical,3)",
+       "color-contrast(serious,18)",
+       "heading-order(moderate,1)",
+       "label-content-name-mismatch(serious,8)",
+       "landmark-main-is-top-level(moderate,1)",
+       "landmark-no-duplicate-main(moderate,1)"
+      ]
+     },
+     "shot": "board-highscores-1280-dark.png",
+     "fmrMedianMs": 2122,
+     "idleMedianMs": 2635,
+     "fmrAll": [
+      2122
+     ],
+     "idleAll": [
+      2635
+     ],
+     "requestsAll": [
+      27
+     ]
+    },
+    "375-light-cpu4x": {
+     "fmrMedianMs": 11766,
+     "idleMedianMs": 10743,
+     "fmrAll": [
+      8081,
+      12487,
+      11766
+     ],
+     "idleAll": [
+      6937,
+      11207,
+      10743
      ],
      "requests": 27
     }
