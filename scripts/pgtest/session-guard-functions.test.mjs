@@ -559,6 +559,8 @@ await section('T0 preview -> confirm, stored bills shown', async () => {
   ok('tuition refreshed for the one pair, event tuition_refreshed with the result',
      r.body.tuition.status === 'refreshed' && r.body.tuition.results.length === 1 &&
      log.invokes.filter((x) => x.name === 'calculate-tuition').length === 1, r.body.tuition);
+  ok('  the refresh result copies named fields only: never the cumulative paid_amount (the stand-in returns one)',
+     r.body.tuition.results[0]?.response?.totalAmount === 1000 && !JSON.stringify(r.body.tuition).includes('paid_amount'), r.body.tuition);
   const ev = await events(o.id);
   ok('  event recorded by the admin, results attached, invoices_after by SQL',
      ev.length === 1 && ev[0].kind === 'tuition_refreshed' && ev[0].actor_user_id === a.id &&
