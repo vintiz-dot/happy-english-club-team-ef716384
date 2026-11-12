@@ -477,11 +477,20 @@ BEGIN
 END $fn$;
 
 -- Review change 4: evidence erased in the 30 days before, from audit_log.
--- Only read inside the RPCs (one call per change), never in the trigger.
+-- Only read inside the RPCs and the preview (one call per change), never
+-- in the trigger.
+--
+-- Revision 1 (D-review-2 F-1): a register row RE-PARENTED away from this
+-- lesson (`UPDATE attendance SET session_id = <another lesson>`) is erased
+-- evidence too, whatever its status or who marked it: it takes the mark
+-- AND the child's bill line with it, and nothing in the app needs that
+-- write. Counted fail-closed (any status, seeded or not), so a lesson
+-- stripped that way is always reviewed. Refusing the write itself is D4.
 CREATE OR REPLACE FUNCTION public._session_erased_recently(p_session_id uuid)
 RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $fn$
   SELECT COALESCE(jsonb_agg(x ORDER BY x ->> 'occurred_at', x::text), '[]'::jsonb) FROM (
     SELECT jsonb_build_object('what', 'attendance', 'operation', l.operation,
+             'student_id', l.diff -> 'old' ->> 'student_id',
              'old_status', l.diff -> 'old' ->> 'status', 'new_status', l.diff -> 'new' ->> 'status',
              'new_marked_by_null', (l.diff -> 'new') IS NOT NULL AND (l.diff -> 'new' ->> 'marked_by') IS NULL,
              'actor_user_id', l.actor_user_id, 'occurred_at', l.occurred_at) AS x
@@ -492,10 +501,24 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $
        AND l.diff -> 'old' ->> 'session_id' = p_session_id::text
        AND l.diff -> 'old' ->> 'status' IN ('Present', 'Late')
        AND (l.diff -> 'old' ->> 'marked_by') IS NOT NULL
+       AND (l.diff -> 'new' ->> 'session_id') IS NOT DISTINCT FROM (l.diff -> 'old' ->> 'session_id')
        AND (l.operation = 'DELETE'
             OR (l.diff -> 'new' ->> 'status') IS DISTINCT FROM (l.diff -> 'old' ->> 'status')
                AND (l.diff -> 'new' ->> 'status') NOT IN ('Present', 'Late')
             OR (l.diff -> 'new' ->> 'marked_by') IS NULL)
+    UNION ALL
+    SELECT jsonb_build_object('what', 'attendance_reparented', 'operation', l.operation,
+             'student_id', l.diff -> 'old' ->> 'student_id',
+             'old_status', l.diff -> 'old' ->> 'status', 'new_status', l.diff -> 'new' ->> 'status',
+             'old_marked_by_person', (l.diff -> 'old' ->> 'marked_by') IS NOT NULL,
+             'new_session_id', l.diff -> 'new' ->> 'session_id',
+             'actor_user_id', l.actor_user_id, 'occurred_at', l.occurred_at)
+      FROM public.audit_log l
+     WHERE l.entity = 'attendance'
+       AND l.operation = 'UPDATE'
+       AND l.occurred_at >= now() - interval '30 days'
+       AND l.diff -> 'old' ->> 'session_id' = p_session_id::text
+       AND (l.diff -> 'new' ->> 'session_id') IS DISTINCT FROM (l.diff -> 'old' ->> 'session_id')
     UNION ALL
     SELECT jsonb_build_object('what', 'session_status', 'operation', l.operation,
              'old_status', l.diff -> 'old' ->> 'status', 'new_status', l.diff -> 'new' ->> 'status',
