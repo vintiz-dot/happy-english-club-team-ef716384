@@ -6,15 +6,15 @@ Appended as the work went; each section says what was run and what it printed.
 
 ## Where I am / next steps (paused 2026-11-11, RESUMED 2026-11-12)
 
-**Next step right now:** confirm_pairs re-run with lesson L3 included (section 8) is running; record its verdict, then B0 is complete.
+**Next step right now:** none - B0 is complete. The open items under "Not done / next" belong to B1/B2/B2b or need the owner.
 
 Built and committed (all in `scripts/lesson-eval/`): common.py (repo-write refusal, key.txt/consent.txt skip), extract.py, confirm_pairs.py, split.py, mix.py, score.py + result_schema.json, hardware.py, smoke_local.py, ident_ecapa.py, delete_voiceprints.py, delete_all_derived.py, README.md, tests/ (26 pytest cases on synthetic fixtures).
 
 Run, with results (details in sections 2-8):
 - ECAPA identification baseline (section 7): 23 enrolled, open set S05/S07/S15, 100-120 unique turns per set; EER 26-39 %; at the 1 % false-accept point it names only 11-53 % of turns (rest UNKNOWN); evidence insufficient at this turn count.
-- L3 (sixth lesson, section 8): extracted, 76.7 min, 48 kHz AAC mono.
+- L3 (sixth lesson, section 8): extracted, 76.7 min, 48 kHz AAC mono; confirm_pairs: a separate recording (0/24 windows match any other file). Three unique lessons, ~300 min.
 - extract `--verify`: 35 unique WAVs pass; 28 SHA-256 duplicates (S21_clip2 + the nested `videos\videos\videos` copy); 30 video WAVs = 27 children (S26 clip2-5 only in the nested folder).
-- confirm_pairs: Recording == outp1ut_compressed; Untitled == output_compressed; Recording is the first 86.9 min of Untitled; je,ch,sa,po distinct. Two unique lesson recordings (~223.5 min).
+- confirm_pairs: Recording == outp1ut_compressed; Untitled == output_compressed; Recording is the first 86.9 min of Untitled; je,ch,sa,po distinct (L3 below makes three unique recordings).
 - split (X = 50 s): 15 children with held-out (13 clean + S20, S21 with heavy adult-pitch speech); S23 has no child-pitch speech; deterministic.
 - mix: 0/5/15 % overlap targets met (measured 0.000 / 0.050-0.053 / 0.154-0.165), deterministic (byte-identical WAVs on re-run), ground-truth RTTM scores DER 0 against itself.
 - tests: 26 passed. `--help` works on every script. Repo-path output refused with exit 3 (checked with mix.py). Deletion scripts checked with `--dry-run` only.
@@ -172,3 +172,8 @@ What this says (aggregate only):
 
 The owner added a sixth file to `lessons\` (an .m4a; referred to here only as **L3**, its file name is not used in the repo). Roster unknown.
 `extract.py` (default, skips existing) -> converted only L3; `ALL CHECKS PASSED`; 64 sources, 28 duplicates (unchanged), lessons now 6 WAVs / 612.9 min. L3 source: AAC, 48000 Hz, 1 channel, 68 kbps, 4604.2 s (76.7 min); WAV 4604.2 s; SHA-256 af000bb5bdb4... (unique).
+
+`confirm_pairs.py --windows 24` re-run over all six lessons (3 min 35 s, 30 ordered pairs):
+- **L3 is a separate recording (verified, not assumed):** L3 against each of the other five, in both directions: 0/24 windows matched, max envelope NCC 0.30-0.36. That is the negative-control range; a true match here scores 1.000, and the threshold is NCC >= 0.6.
+- The verdicts among the first five files are unchanged (same SAME / A_CONTAINED_IN_B / PARTIAL / DIFFERENT pattern and window counts).
+- Unique lesson audio is now **three recordings, about 300 min**: Untitled (139.0 min, which contains Recording/outp1ut_compressed as its first 86.9 min), je,ch,sa,po (84.5 min), L3 (76.7 min).
