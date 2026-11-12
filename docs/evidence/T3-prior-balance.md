@@ -79,3 +79,37 @@ Source of truth for "what the family owes now": the calculator's `carry.carryOut
 ## 1d. How the Finance tab gets the same figures
 
 `src/components/admin/tabs/FinanceTab.tsx` renders `AdminTuitionListEnhanced`, which calls `useLiveTuitionData(month)` (`src/hooks/useLiveTuitionData.ts`): query key `["admin-tuition-live", month]`, `staleTime` 30 s, no refetch on focus, no retry of its own; roster = `fetchStudentsInMonth` narrowed to students with an enrolment in an active class that month; `calculate-tuition-bulk` in batches of 150 ids in parallel (107-122); a student whose result is missing or `error` is dropped from the list (132). The payment dialogs patch and invalidate that same key.
+
+## 1c. Can the browser sum and the calculator disagree? Yes
+
+Executed: `node scripts/pgtest/tuition-prior-balance.test.mjs` (in `scripts/pgtest/run.mjs` as "tuition prior balance") bundles the REAL `calculate-tuition` and `calculate-tuition-bulk` handlers, runs them over one made-up school, and sets them beside the removed browser arithmetic (kept in the test as `legacyBrowserRows`, the record of what lines 93-155 did). The two calculators agree with each other on every figure in every case.
+
+The carry-IN is the same sum in both (payments minus charges over the stored earlier rows), so it agrees whenever the browser manages to read every earlier row. They part on three things: the browser used the STORED charge for the month (0 when there is no row), it read the whole school's history in one request, and it never knew `settledInMonth`.
+
+Month viewed: 2026-11. Amounts in VND. "owed" = carry-out debt.
+
+| # | Case | Browser (before) | Calculator | Verdict |
+|---|---|---|---|---|
+| 1 | bill saved and current, no history | charge 1,440,000; owed 1,440,000; unpaid | same | equal |
+| 2 | October short by 1,000,000 | prior debt 1,000,000; payable 2,440,000; owed 2,440,000 | same | equal |
+| 3 | October overpaid by 560,000 | prior credit 560,000; owed 880,000 | same | equal |
+| 4 | **no November invoice row yet**, October short 1,000,000 | charge 0; payable 1,000,000; owed 1,000,000 | charge 1,440,000; owed 2,440,000 | **DIFFERS** by the month's whole charge |
+| 5 | **no November row**, no history | everything 0; "Open" | charge 1,440,000; owed 1,440,000; "Unpaid" | **DIFFERS** |
+| 6 | **saved total out of date** (saved at 7 lessons and paid; an 8th marked since) | charge 1,260,000; owed 0; "Settled" | charge 1,440,000; owed 180,000; "Underpaid" | **DIFFERS** |
+| 7 | frozen bill (810,000; register says 1,440,000) | 810,000 | 810,000 | equal - the freeze holds in both |
+| 8 | November's money recorded on the October bill | prior credit 1,440,000; owed 0; "Settled" | same | equal |
+| 9 | **November's money recorded on a December bill** | owed 1,440,000; "Unpaid" | owed 1,440,000; **"Settled in 2026-12"** | figures equal, **status differs** |
+| 10 | October payment corrected down by 500,000 (refund / edited / deleted payment) | prior debt 500,000; owed 1,940,000 | same | equal - both read `recorded_payment` |
+| 11 | a zero-charge month in the history | owed 1,440,000 | same | equal |
+| 12 | left on 31 October owing 700,000, no November row | owed 700,000 | charge 0; owed 700,000 | equal (the Finance tab does not LIST this child; `/tuition` does) |
+| 13 | October re-billed after November was computed; November row still stores carry-in 0 | prior credit 180,000 | prior credit 180,000 | equal - neither reads the stored column |
+| 14 | **family discount unresolved** (being re-decided), saved bill has the 10% | charge 1,296,000 (the saved bill) | bulk: charge **1,440,000, with no sign that it is provisional**; single: `siblingUnresolved: true`, nothing saved | **DIFFERS, and here the bulk answer is the provisional one** |
+| 15 | the other child of that family | 1,440,000 | 1,440,000 | equal |
+| - | **whole-school history past the row cap** (60 students x 20 months = 1,200 rows, PostgREST default 1,000 per request) | 10 of 60 students read as owing NOTHING instead of 2,000,000 | per-student calculator: 2,000,000 | **DIFFERS** (test-only; depends on the project's max-rows) |
+
+Not constructible as a disagreement: a carry "capped or reset by a settlement/correction". Neither reader has such a concept; a correction is a changed `recorded_payment` or `total_amount` on a stored row and both read it (cases 10, 13).
+
+Three things the test shows about the calculator itself (I did not touch `supabase/functions`):
+- **Neither response has a payable or a signed balance** (asserted). See "Stopped on".
+- **The bulk response does not say when a family discount is unresolved** (asserted: no `siblingState`, no `siblingUnresolved`), while its `totalAmount` leaves the discount out. The Finance tab has always shown that provisional figure as if final for as long as `compute-sibling-discounts` is busy; after this fix `/tuition` does too.
+- The bulk function reads "all other invoices" for up to 200 students in one unpaged request (`calculate-tuition-bulk/index.ts:199-204` via `fetchChunked`, 40-58). With the Finance tab's batches of 150, that passes 1,000 rows once the average student has 7 earlier bills. If the project's PostgREST `max-rows` is still the default 1,000, the bulk carry would be short for the LATEST months of the last students in a batch (rows are ordered by month). I cannot see the live setting from here; the owner SQL below shows whether the stored carry and a full sum agree.
