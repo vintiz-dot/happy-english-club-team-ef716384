@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import { Pencil, Trash2, Eye, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { PlaceholderCard } from "@/components/ui/loading";
+import { useIvory } from "@/hooks/useIvory";
 
 type JournalType = "personal" | "student" | "class" | "collab_student_teacher";
 
@@ -45,6 +46,9 @@ interface JournalListProps {
 
 export function JournalList({ type, studentId, classId, onEdit, onView }: JournalListProps) {
   const { user, role } = useAuth();
+  // Also rendered on /student/journal (StudentJournal), which is not in the
+  // system yet: off-scope the old classes stay exactly as they were.
+  const ivory = useIvory();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -165,7 +169,15 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
       class: "outline",
       collab_student_teacher: "destructive",
     };
-    return <Badge variant={variants[type] as any}>{type.replace(/_/g, " ")}</Badge>;
+    // DS s.14: red only for danger, so the shared journal is not a red badge;
+    // the word tells the types apart.
+    const ivoryVariants: Record<JournalType, string> = {
+      personal: "secondary",
+      student: "secondary",
+      class: "outline",
+      collab_student_teacher: "outline",
+    };
+    return <Badge variant={(ivory ? ivoryVariants : variants)[type] as any} className={ivory ? "shrink-0 self-start" : undefined}>{type.replace(/_/g, " ")}</Badge>;
   };
 
   const filteredEntries = entries.filter((entry) =>
@@ -181,6 +193,7 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
       <div className="mb-4">
         <Input
           placeholder="Search journals..."
+          aria-label={ivory ? "Search journals" : undefined}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -188,7 +201,7 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
 
       {filteredEntries.length === 0 ? (
         <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
+          <CardContent className={ivory ? "p-6 text-center text-hec-body text-hec-ink-soft" : "p-6 text-center text-muted-foreground"}>
             No journal entries found.
           </CardContent>
         </Card>
@@ -197,18 +210,18 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
           const truncatedContent = entry.content_rich.replace(/<[^>]*>/g, "").substring(0, 150);
           
           return (
-            <Card key={entry.id} className="mb-3 md:mb-4 overflow-hidden hover:shadow-lg transition-all border-2">
-              <CardHeader className="bg-gradient-to-br from-muted/30 to-muted/10 pb-3">
+            <Card key={entry.id} className={ivory ? "mb-4 overflow-hidden" : "mb-3 md:mb-4 overflow-hidden hover:shadow-lg transition-all border-2"}>
+              <CardHeader className={ivory ? "border-b border-hec-line" : "bg-gradient-to-br from-muted/30 to-muted/10 pb-3"}>
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                  <CardTitle className="text-base md:text-lg line-clamp-2">{entry.title}</CardTitle>
+                  <CardTitle className={ivory ? "min-w-0 break-words line-clamp-2" : "text-base md:text-lg line-clamp-2"}>{entry.title}</CardTitle>
                   {getTypeBadge(entry.type)}
                 </div>
-                <p className="text-xs md:text-sm text-muted-foreground">
+                <p className={ivory ? "text-hec-small tabular-nums text-hec-ink-soft" : "text-xs md:text-sm text-muted-foreground"}>
                   📅 {format(new Date(entry.created_at), "MMM d, yyyy")}
                 </p>
               </CardHeader>
-              <CardContent className="pt-3">
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+              <CardContent className={ivory ? "pt-4 sm:pt-6" : "pt-3"}>
+                <p className={ivory ? "mb-4 line-clamp-3 text-hec-small text-hec-ink-soft" : "text-sm text-muted-foreground mb-4 line-clamp-3"}>
                   {truncatedContent}
                   {entry.content_rich.length > 150 && "..."}
                 </p>
@@ -218,7 +231,7 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
                       variant="outline"
                       size="sm"
                       onClick={() => onView(entry)}
-                      className="flex-1 sm:flex-none min-h-[40px]"
+                      className={ivory ? "flex-1 sm:flex-none" : "flex-1 sm:flex-none min-h-[40px]"}
                     >
                       <Eye className="h-4 w-4 mr-2" />
                       View
@@ -229,7 +242,7 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
                       variant="outline"
                       size="sm"
                       onClick={() => onEdit(entry.id)}
-                      className="flex-1 sm:flex-none min-h-[40px]"
+                      className={ivory ? "flex-1 sm:flex-none" : "flex-1 sm:flex-none min-h-[40px]"}
                     >
                       <Pencil className="h-4 w-4 mr-2" />
                       Edit
@@ -237,10 +250,10 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
                   )}
                   {isOwner[entry.id] ? (
                     <Button
-                      variant="destructive"
+                      variant={ivory ? "destructive-quiet" : "destructive"}
                       size="sm"
                       onClick={() => setDeleteId(entry.id)}
-                      className="flex-1 sm:flex-none min-h-[40px]"
+                      className={ivory ? "flex-1 sm:flex-none" : "flex-1 sm:flex-none min-h-[40px]"}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete
@@ -254,7 +267,7 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
                         variant="outline"
                         size="sm"
                         onClick={() => handleLeave(entry.id)}
-                        className="flex-1 sm:flex-none min-h-[40px]"
+                        className={ivory ? "flex-1 sm:flex-none" : "flex-1 sm:flex-none min-h-[40px]"}
                       >
                         <LogOut className="h-4 w-4 mr-2" />
                         Leave
@@ -277,8 +290,8 @@ export function JournalList({ type, studentId, classId, onEdit, onView }: Journa
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{ivory ? "Keep the entry" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className={ivory ? "bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90" : undefined}>{ivory ? "Delete the entry" : "Delete"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
