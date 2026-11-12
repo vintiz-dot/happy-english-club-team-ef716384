@@ -6,6 +6,7 @@ import { requireRole, callerOwnsStudent } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts } from "../_lib/enrollment-discounts.ts";
+import { invoiceLabelFields, monthPayable, paidLabel } from "../_lib/invoice-status.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -138,7 +139,9 @@ Deno.serve(async (req) => {
         .order("month", { ascending: true }),
       supabase
         .from("invoices")
-        .select("recorded_payment, tuition_frozen, base_amount, discount_amount, total_amount")
+        .select(
+          "recorded_payment, tuition_frozen, base_amount, discount_amount, total_amount, status, confirmation_status, review_flags, confirmed_at, confirmed_by",
+        )
         .eq("student_id", studentId)
         .eq("month", month)
         .maybeSingle(),
@@ -148,6 +151,15 @@ Deno.serve(async (req) => {
     if (studentError) throw studentError;
     const { data: enrollments, error: enrollErr } = enrollmentsRes;
     if (enrollErr) throw enrollErr;
+    // The month's own bill carries this month's payment and the labels an
+    // admin or a payment put on it. If it cannot be read, stop: carrying on
+    // as if there were no bill would save recorded_payment 0 over a payment
+    // and reset a confirmed or paid bill.
+    if (currentInvoiceRes.error) throw new Error("Unable to read the current tuition invoice");
+    // The other months carry the balance brought in. Unread, they would
+    // count as "no earlier payments": a wrong carry in the answer and a
+    // wrong paid label saved.
+    if (priorInvoicesRes.error) throw new Error("Unable to read the earlier tuition invoices");
     const discountAssignments = discountAssignmentsRes.data;
     const referralBonuses = referralBonusesRes.data;
 
@@ -481,6 +493,11 @@ Deno.serve(async (req) => {
 
     // Closing balance for this month: current charges - carry-in credit + carry-in debt - current payments
     // carryInBalance > 0 means credit (reduces what's owed), < 0 means debt (increases what's owed)
+    // What the month asks for before this month's payment: its charge plus
+    // debt carried in, less credit carried in (negative when the credit is
+    // larger). Returned as carry.payable so no screen adds it up, and the
+    // figure the paid label is judged against - one arithmetic for both.
+    const payable = monthPayable({ total_amount: totalAmount, carry_in_debt: carryInDebt, carry_in_credit: carryInCredit });
     const closingBalance = totalAmount - carryInBalance - monthPayments;
     const carryOutCredit = closingBalance < 0 ? Math.abs(closingBalance) : 0;
     const carryOutDebt = closingBalance > 0 ? closingBalance : 0;
@@ -572,9 +589,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Determine confirmation status - simple logic
-    const confirmationStatus = reviewFlags.length === 0 ? "auto_approved" : "needs_review";
+    // Which labels this save may write. A recalculation must not un-confirm
+    // or un-pay a bill: see _lib/invoice-status.ts. No figure is decided here.
+    const savedAt = new Date().toISOString();
+    const labelFields = invoiceLabelFields(
+      currentInvoiceRes.data ?? null,
+      { base_amount: baseAmount, discount_amount: totalDiscount, total_amount: totalAmount },
+      reviewFlags,
+      savedAt,
+      // paid / partial / issued from the month's own money - the one rule.
+      paidLabel(monthPayments, payable),
+    );
 
+    // recorded_payment is NOT in this save. It belongs to the payment paths;
+    // this function only ever wrote back the value it read at the start, so
+    // a payment recorded while it was calculating was overwritten with the
+    // older figure (0 on a bill that did not exist yet). A new bill gets
+    // the column default, 0, which is what was written before.
     const invoicePayloadExtended: any = {
       student_id: studentId,
       month,
@@ -582,16 +613,13 @@ Deno.serve(async (req) => {
       discount_amount: totalDiscount,
       total_amount: totalAmount,
       paid_amount: cumulativePaidAmount,
-      recorded_payment: monthPayments,
       carry_in_credit: carryInCredit,
       carry_in_debt: carryInDebt,
       carry_out_credit: carryOutCredit,
       carry_out_debt: carryOutDebt,
-      confirmation_status: confirmationStatus,
-      review_flags: reviewFlags,
       class_breakdown: classBreakdown, // Per-class tuition breakdown
-      status: "issued",
-      updated_at: new Date().toISOString(),
+      ...labelFields, // review_flags always; status / confirmation_status only when this save may set them
+      updated_at: savedAt,
     };
 
     // Never save a bill while the family discount is still being decided:
@@ -623,8 +651,8 @@ Deno.serve(async (req) => {
           base_amount: baseAmount,
           discount_amount: totalDiscount,
           total_amount: totalAmount,
-          status: "issued",
-          updated_at: new Date().toISOString(),
+          ...(labelFields.status ? { status: labelFields.status } : {}),
+          updated_at: savedAt,
         },
         { onConflict: "student_id,month" },
       );
@@ -653,6 +681,7 @@ Deno.serve(async (req) => {
         carryInDebt,
         carryOutCredit,
         carryOutDebt,
+        payable, // charge + carry-in debt - carry-in credit, before this month's payment
         settledInMonth,
         status: balanceStatus, // 'credit' | 'debt' | 'settled'
         message: balanceMessage, // show in UI

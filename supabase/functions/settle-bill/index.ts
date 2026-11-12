@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { invoicePaidLabel } from '../_lib/invoice-status.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -75,7 +76,7 @@ Deno.serve(async (req) => {
     // month (carry_out) → AR ledger balance (the double-entry ground truth).
     const { data: invoice } = await supabase
       .from('invoices')
-      .select('id, total_amount, paid_amount, carry_in_debt, carry_in_credit')
+      .select('id, total_amount, paid_amount, recorded_payment, carry_in_debt, carry_in_credit')
       .eq('student_id', studentId)
       .eq('month', month)
       .maybeSingle();
@@ -183,8 +184,14 @@ Deno.serve(async (req) => {
           .from('invoices')
           .update({
             paid_amount: invoice.paid_amount + settledAmount,
-            status:
-              invoice.total_amount <= invoice.paid_amount + settledAmount ? 'paid' : 'partial',
+            // The one label rule: the month's recorded payment against what
+            // the month asks for. A write-off posts to the ledger; it does
+            // not change recorded_payment or the bill's total, so it does
+            // not by itself make the bill "paid" - the bill's balance
+            // columns still show the debt, and the label must not say
+            // otherwise. (It used to compare cumulative paid_amount, which
+            // read "paid" for nearly any family with history.)
+            status: invoicePaidLabel(invoice),
           })
           .eq('id', invoice.id);
         if (invErr) console.warn('invoice update failed (ledger already posted):', invErr.message);

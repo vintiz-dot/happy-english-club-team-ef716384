@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { requireRole } from "../_lib/auth.ts";
+import { CHANGED_AFTER_CONFIRMATION } from "../_lib/invoice-status.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,6 +63,22 @@ Deno.serve(async (req) => {
       .select();
 
     if (error) throw error;
+
+    // A bill that came back to review because it changed after an earlier
+    // confirmation carries a flag saying so. The admin has now confirmed the
+    // new figures, so the flag has done its work: without this it stayed on
+    // a confirmed bill until the next calculation. A label only; a failure
+    // here must not undo the confirmation, and the next calculation drops
+    // the flag anyway.
+    for (const invoice of data || []) {
+      const flags: any[] = Array.isArray(invoice.review_flags) ? invoice.review_flags : [];
+      if (!flags.some((f) => f?.type === CHANGED_AFTER_CONFIRMATION)) continue;
+      const { error: flagError } = await supabase
+        .from("invoices")
+        .update({ review_flags: flags.filter((f) => f?.type !== CHANGED_AFTER_CONFIRMATION) })
+        .eq("id", invoice.id);
+      if (flagError) console.error("Could not clear the changed-after-confirmation flag:", flagError.message);
+    }
 
     // Log to audit
     for (const invoice of data || []) {

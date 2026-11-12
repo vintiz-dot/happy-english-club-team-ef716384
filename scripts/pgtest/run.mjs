@@ -44,6 +44,23 @@ const m = (name) => join(migrations, name);
 const SUITES = [
   { name: "family payment month", file: "family-payment-month.test.mjs", migrations: [] },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
+  // A recalculation must not un-confirm or un-pay a bill. The real
+  // calculate-tuition, -bulk and confirm-tuition handlers over an invoices
+  // table carrying the real CHECK, carry, audit and freeze migrations; and
+  // every figure compared with the function as it was before the change.
+  {
+    name: "invoice status",
+    file: "invoice-status.test.mjs",
+    migrations: [
+      "20251117061416_2afa5f4f-f2a4-48ba-9c52-9939e4ece5e9.sql",
+      "20261009120000_keep_invoice_carry_balances_correct.sql",
+      "20261009130000_audit_every_admin_action.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+    ],
+  },
+  // The admin tuition list reads the calculator instead of summing invoice
+  // rows itself: both real handlers beside the old browser sum, case by case.
+  { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },
   {
     name: "cancelled lessons",
     file: "cancelled-lessons.test.mjs",

@@ -1,0 +1,4448 @@
+{
+ "plain month": {
+  "month": "2026-10",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 400000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 400000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 400.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 400000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 0,
+     "total_amount": 400000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 400000,
+   "discount_amount": 0,
+   "total_amount": 400000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 400000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 400000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 400000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 400000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 400.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 400000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 0,
+     "total_amount": 400000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 400000,
+   "discount_amount": 0,
+   "total_amount": 400000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 400000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 400000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": []
+ },
+ "10% enrollment discount": {
+  "month": "2026-10",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 40000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 40000,
+    "totalAmount": 360000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 360000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 360.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 360000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 40000,
+     "total_amount": 360000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 400000,
+   "discount_amount": 40000,
+   "total_amount": 360000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 360000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 360000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 40000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 40000,
+    "totalAmount": 360000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 360000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 360.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 360000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 40000,
+     "total_amount": 360000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 400000,
+   "discount_amount": 40000,
+   "total_amount": 360000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 360000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 360000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": []
+ },
+ "Excused, Late, Absent and a Canceled lesson": {
+  "month": "2026-10",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 3,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Excused",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Late",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Absent",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 200000,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 200000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 200000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 200.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 200000,
+       "net_amount_vnd": 200000,
+       "sessions_count": 1,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 200000,
+     "discount_amount": 0,
+     "total_amount": 200000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 200000,
+   "discount_amount": 0,
+   "total_amount": 200000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 200000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 200000,
+     "class_name": "Class A",
+     "net_amount_vnd": 200000,
+     "sessions_count": 1,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 3,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Excused",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Late",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Absent",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 200000,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 200000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 200000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 200.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 200000,
+       "net_amount_vnd": 200000,
+       "sessions_count": 1,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 200000,
+     "discount_amount": 0,
+     "total_amount": 200000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 200000,
+   "discount_amount": 0,
+   "total_amount": 200000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 200000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 200000,
+     "class_name": "Class A",
+     "net_amount_vnd": 200000,
+     "sessions_count": 1,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": []
+ },
+ "rate override below the class rate": {
+  "month": "2026-10",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 80000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 80000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 80000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 80000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [
+     {
+      "name": "Rate Adjustment",
+      "type": "amount",
+      "value": 80000,
+      "amount": 80000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "appliedToClass": "Class A",
+      "isRateAdjustment": true,
+      "overrideRate": 80000,
+      "defaultRate": 0,
+      "savingsPerSession": -80000
+     }
+    ],
+    "totalDiscount": 80000,
+    "totalAmount": 320000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 320000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 320.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 320000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 80000,
+     "total_amount": 320000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 400000,
+   "discount_amount": 80000,
+   "total_amount": 320000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 320000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 320000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 80000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 80000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 80000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 80000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [
+     {
+      "name": "Rate Adjustment",
+      "type": "amount",
+      "value": 80000,
+      "amount": 80000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "appliedToClass": "Class A",
+      "isRateAdjustment": true,
+      "overrideRate": 80000,
+      "defaultRate": 0,
+      "savingsPerSession": -80000
+     }
+    ],
+    "totalDiscount": 80000,
+    "totalAmount": 320000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 320000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 320.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 320000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 80000,
+     "total_amount": 320000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 400000,
+   "discount_amount": 80000,
+   "total_amount": 320000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 320000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 320000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": []
+ },
+ "special discount 15% + referral 50,000": {
+  "month": "2026-10",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [
+     {
+      "name": "Staff child",
+      "type": "percent",
+      "value": 15,
+      "amount": 60000
+     },
+     {
+      "name": "Referral Bonus",
+      "type": "amount",
+      "value": 50000,
+      "amount": 50000
+     }
+    ],
+    "totalDiscount": 110000,
+    "totalAmount": 290000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 290000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 290.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 400000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 110000,
+     "total_amount": 290000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 400000,
+   "discount_amount": 110000,
+   "total_amount": 290000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 290000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 400000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [
+     {
+      "name": "Staff child",
+      "type": "percent",
+      "value": 15,
+      "amount": 60000
+     },
+     {
+      "name": "Referral Bonus",
+      "type": "amount",
+      "value": 50000,
+      "amount": 50000
+     }
+    ],
+    "totalDiscount": 110000,
+    "totalAmount": 290000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 290000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 290.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 400000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 110000,
+     "total_amount": 290000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 400000,
+   "discount_amount": 110000,
+   "total_amount": 290000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 290000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 400000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": []
+ },
+ "sibling winner 10% on class A, two classes": {
+  "month": "2026-10",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 6,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-08",
+      "rate": 150000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B"
+     },
+     {
+      "date": "2026-10-15",
+      "rate": 150000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B"
+     }
+    ],
+    "baseAmount": 700000,
+    "discounts": [
+     {
+      "name": "Sibling Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 40000,
+      "isSiblingWinner": true,
+      "appliedToClass": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 40000,
+    "totalAmount": 660000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 660000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 660.000 ₫ cần thanh toán."
+    },
+    "siblingState": {
+     "status": "assigned",
+     "percent": 10,
+     "reason": null,
+     "isWinner": true,
+     "winnerClassId": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+    },
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 400000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      },
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+       "class_name": "Class B",
+       "amount_vnd": 300000,
+       "net_amount_vnd": 300000,
+       "sessions_count": 2,
+       "session_rate_vnd": 150000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 700000,
+     "discount_amount": 40000,
+     "total_amount": 660000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 700000,
+   "discount_amount": 40000,
+   "total_amount": 660000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 660000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 400000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    },
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+     "amount_vnd": 300000,
+     "class_name": "Class B",
+     "net_amount_vnd": 300000,
+     "sessions_count": 2,
+     "session_rate_vnd": 150000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 6,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-08",
+      "rate": 150000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B"
+     },
+     {
+      "date": "2026-10-15",
+      "rate": 150000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B"
+     }
+    ],
+    "baseAmount": 700000,
+    "discounts": [
+     {
+      "name": "Sibling Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 40000,
+      "isSiblingWinner": true,
+      "appliedToClass": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 40000,
+    "totalAmount": 660000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 660000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 660.000 ₫ cần thanh toán."
+    },
+    "siblingState": {
+     "status": "assigned",
+     "percent": 10,
+     "reason": null,
+     "isWinner": true,
+     "winnerClassId": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+    },
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 400000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      },
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+       "class_name": "Class B",
+       "amount_vnd": 300000,
+       "net_amount_vnd": 300000,
+       "sessions_count": 2,
+       "session_rate_vnd": 150000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+      "class_name": "Class B",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 700000,
+     "discount_amount": 40000,
+     "total_amount": 660000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 700000,
+   "discount_amount": 40000,
+   "total_amount": 660000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 660000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 400000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    },
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0b",
+     "amount_vnd": 300000,
+     "class_name": "Class B",
+     "net_amount_vnd": 300000,
+     "sessions_count": 2,
+     "session_rate_vnd": 150000
+    }
+   ]
+  },
+  "others": []
+ },
+ "in a family, another child wins": {
+  "month": "2026-10",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 400000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 400000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 400.000 ₫ cần thanh toán."
+    },
+    "siblingState": {
+     "status": "assigned",
+     "percent": 10,
+     "reason": null,
+     "isWinner": false,
+     "winnerClassId": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+    },
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 400000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 0,
+     "total_amount": 400000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 400000,
+   "discount_amount": 0,
+   "total_amount": 400000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 400000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 400000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 400000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 400000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 400.000 ₫ cần thanh toán."
+    },
+    "siblingState": {
+     "status": "assigned",
+     "percent": 10,
+     "reason": null,
+     "isWinner": false,
+     "winnerClassId": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+    },
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 400000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 0,
+     "total_amount": 400000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 400000,
+   "discount_amount": 0,
+   "total_amount": 400000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 400000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 400000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": []
+ },
+ "debt carried in, part payment this month, settled later": {
+  "month": "2026-10",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 400000,
+    "payments": {
+     "priorPayments": 500000,
+     "monthPayments": 150000,
+     "cumulativePaidAmount": 650000
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 300000,
+     "carryOutCredit": 0,
+     "carryOutDebt": 550000,
+     "settledInMonth": "2026-11",
+     "status": "debt",
+     "message": "Bạn còn nợ 550.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 400000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 0,
+     "total_amount": 400000,
+     "paid_amount": 650000,
+     "recorded_payment": 650000
+    },
+    "priorBalanceBreakdown": {
+     "months": [
+      {
+       "month": "2026-08",
+       "label": "August 2026",
+       "charges": 400000,
+       "payments": 400000,
+       "netBalance": 0,
+       "items": [
+        {
+         "type": "payment",
+         "amount": 400000,
+         "description": "Payment received"
+        }
+       ]
+      },
+      {
+       "month": "2026-09",
+       "label": "September 2026",
+       "charges": 400000,
+       "payments": 100000,
+       "netBalance": -300000,
+       "items": [
+        {
+         "type": "payment",
+         "amount": 100000,
+         "description": "Payment received"
+        }
+       ]
+      }
+     ],
+     "summary": {
+      "totalPriorCharges": 800000,
+      "totalPriorPayments": 500000,
+      "netCarryIn": -300000
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 400000,
+   "discount_amount": 0,
+   "total_amount": 400000,
+   "paid_amount": 650000,
+   "recorded_payment": 150000,
+   "carry_in_credit": 0,
+   "carry_in_debt": 300000,
+   "carry_out_credit": 0,
+   "carry_out_debt": 550000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 400000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 400000,
+    "payments": {
+     "priorPayments": 500000,
+     "monthPayments": 150000,
+     "cumulativePaidAmount": 650000
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 300000,
+     "carryOutCredit": 0,
+     "carryOutDebt": 550000,
+     "settledInMonth": "2026-11",
+     "status": "debt",
+     "message": "Bạn còn nợ 550.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 400000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 0,
+     "total_amount": 400000,
+     "paid_amount": 650000,
+     "recorded_payment": 650000
+    },
+    "priorBalanceBreakdown": {
+     "months": [
+      {
+       "month": "2026-08",
+       "label": "August 2026",
+       "charges": 400000,
+       "payments": 400000,
+       "netBalance": 0,
+       "items": [
+        {
+         "type": "payment",
+         "amount": 400000,
+         "description": "Payment received"
+        }
+       ]
+      },
+      {
+       "month": "2026-09",
+       "label": "September 2026",
+       "charges": 400000,
+       "payments": 100000,
+       "netBalance": -300000,
+       "items": [
+        {
+         "type": "payment",
+         "amount": 100000,
+         "description": "Payment received"
+        }
+       ]
+      }
+     ],
+     "summary": {
+      "totalPriorCharges": 800000,
+      "totalPriorPayments": 500000,
+      "netCarryIn": -300000
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 400000,
+   "discount_amount": 0,
+   "total_amount": 400000,
+   "paid_amount": 650000,
+   "recorded_payment": 150000,
+   "carry_in_credit": 0,
+   "carry_in_debt": 300000,
+   "carry_out_credit": 0,
+   "carry_out_debt": 550000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 400000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": [
+   {
+    "month": "2026-08",
+    "base_amount": 400000,
+    "discount_amount": 0,
+    "total_amount": 400000,
+    "paid_amount": 0,
+    "recorded_payment": 400000,
+    "carry_in_credit": 0,
+    "carry_in_debt": 0,
+    "carry_out_credit": 0,
+    "carry_out_debt": 0,
+    "class_breakdown": []
+   },
+   {
+    "month": "2026-09",
+    "base_amount": 400000,
+    "discount_amount": 0,
+    "total_amount": 400000,
+    "paid_amount": 0,
+    "recorded_payment": 100000,
+    "carry_in_credit": 0,
+    "carry_in_debt": 0,
+    "carry_out_credit": 0,
+    "carry_out_debt": 300000,
+    "class_breakdown": []
+   },
+   {
+    "month": "2026-11",
+    "base_amount": 0,
+    "discount_amount": 0,
+    "total_amount": 0,
+    "paid_amount": 0,
+    "recorded_payment": 900000,
+    "carry_in_credit": 0,
+    "carry_in_debt": 550000,
+    "carry_out_credit": 350000,
+    "carry_out_debt": 0,
+    "class_breakdown": []
+   }
+  ]
+ },
+ "credit carried in": {
+  "month": "2026-10",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 400000,
+    "payments": {
+     "priorPayments": 650000,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 650000
+    },
+    "carry": {
+     "carryInCredit": 250000,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 150000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 150.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 400000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 0,
+     "total_amount": 400000,
+     "paid_amount": 650000,
+     "recorded_payment": 650000
+    },
+    "priorBalanceBreakdown": {
+     "months": [
+      {
+       "month": "2026-09",
+       "label": "September 2026",
+       "charges": 400000,
+       "payments": 650000,
+       "netBalance": 250000,
+       "items": [
+        {
+         "type": "payment",
+         "amount": 650000,
+         "description": "Payment received"
+        }
+       ]
+      }
+     ],
+     "summary": {
+      "totalPriorCharges": 400000,
+      "totalPriorPayments": 650000,
+      "netCarryIn": 250000
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 400000,
+   "discount_amount": 0,
+   "total_amount": 400000,
+   "paid_amount": 650000,
+   "recorded_payment": 0,
+   "carry_in_credit": 250000,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 150000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 400000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 400000,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 400000,
+    "payments": {
+     "priorPayments": 650000,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 650000
+    },
+    "carry": {
+     "carryInCredit": 250000,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 150000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 150.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 400000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 400000,
+     "discount_amount": 0,
+     "total_amount": 400000,
+     "paid_amount": 650000,
+     "recorded_payment": 650000
+    },
+    "priorBalanceBreakdown": {
+     "months": [
+      {
+       "month": "2026-09",
+       "label": "September 2026",
+       "charges": 400000,
+       "payments": 650000,
+       "netBalance": 250000,
+       "items": [
+        {
+         "type": "payment",
+         "amount": 650000,
+         "description": "Payment received"
+        }
+       ]
+      }
+     ],
+     "summary": {
+      "totalPriorCharges": 400000,
+      "totalPriorPayments": 650000,
+      "netCarryIn": 250000
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 400000,
+   "discount_amount": 0,
+   "total_amount": 400000,
+   "paid_amount": 650000,
+   "recorded_payment": 0,
+   "carry_in_credit": 250000,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 150000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 400000,
+     "class_name": "Class A",
+     "net_amount_vnd": 400000,
+     "sessions_count": 4,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": [
+   {
+    "month": "2026-09",
+    "base_amount": 400000,
+    "discount_amount": 0,
+    "total_amount": 400000,
+    "paid_amount": 0,
+    "recorded_payment": 650000,
+    "carry_in_credit": 0,
+    "carry_in_debt": 0,
+    "carry_out_credit": 250000,
+    "carry_out_debt": 0,
+    "class_breakdown": []
+   }
+  ]
+ },
+ "frozen bill": {
+  "month": "2026-10",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 900000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 40000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 90000,
+    "totalAmount": 900000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 900000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 900.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": true,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 360000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 900000,
+     "discount_amount": 90000,
+     "total_amount": 900000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 900000,
+   "discount_amount": 90000,
+   "total_amount": 900000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 900000,
+   "class_breakdown": []
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 4,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-14",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     },
+     {
+      "date": "2026-10-28",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A"
+     }
+    ],
+    "baseAmount": 900000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 40000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 90000,
+    "totalAmount": 900000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 900000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 900.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": true,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Class A",
+       "amount_vnd": 400000,
+       "net_amount_vnd": 360000,
+       "sessions_count": 4,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Class A",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 900000,
+     "discount_amount": 90000,
+     "total_amount": 900000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 900000,
+   "discount_amount": 90000,
+   "total_amount": 900000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 900000,
+   "class_breakdown": []
+  },
+  "others": []
+ },
+ "no lessons in the month": {
+  "month": "2026-12",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-12",
+    "sessionCount": 0,
+    "sessionDetails": [],
+    "baseAmount": 0,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 0,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 0,
+     "settledInMonth": null,
+     "status": "settled",
+     "message": "Tháng này đã thanh toán đầy đủ."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": []
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Unknown",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 0,
+     "discount_amount": 0,
+     "total_amount": 0,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 0,
+   "discount_amount": 0,
+   "total_amount": 0,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 0,
+   "class_breakdown": []
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-12",
+    "sessionCount": 0,
+    "sessionDetails": [],
+    "baseAmount": 0,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 0,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 0,
+     "settledInMonth": null,
+     "status": "settled",
+     "message": "Tháng này đã thanh toán đầy đủ."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": []
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Unknown",
+      "start_date": "2026-09-01",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 0,
+     "discount_amount": 0,
+     "total_amount": 0,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 0,
+   "discount_amount": 0,
+   "total_amount": 0,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 0,
+   "class_breakdown": []
+  },
+  "others": []
+ },
+ "split register, Sep": {
+  "month": "2026-09",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-09",
+    "sessionCount": 1,
+    "sessionDetails": [
+     {
+      "date": "2026-09-02",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 100000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 10000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 10000,
+    "totalAmount": 90000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 90000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 90.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 100000,
+       "net_amount_vnd": 90000,
+       "sessions_count": 1,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 100000,
+     "discount_amount": 10000,
+     "total_amount": 90000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 100000,
+   "discount_amount": 10000,
+   "total_amount": 90000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 90000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 100000,
+     "class_name": "Test class",
+     "net_amount_vnd": 90000,
+     "sessions_count": 1,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-09",
+    "sessionCount": 1,
+    "sessionDetails": [
+     {
+      "date": "2026-09-02",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 100000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 10000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 10000,
+    "totalAmount": 90000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 90000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 90.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 100000,
+       "net_amount_vnd": 90000,
+       "sessions_count": 1,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 100000,
+     "discount_amount": 10000,
+     "total_amount": 90000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 100000,
+   "discount_amount": 10000,
+   "total_amount": 90000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 90000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 100000,
+     "class_name": "Test class",
+     "net_amount_vnd": 90000,
+     "sessions_count": 1,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": []
+ },
+ "split register, Oct": {
+  "month": "2026-10",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 3,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     },
+     {
+      "date": "2026-10-09",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 300000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 30000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 30000,
+    "totalAmount": 270000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 270000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 270.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 300000,
+       "net_amount_vnd": 270000,
+       "sessions_count": 3,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 300000,
+     "discount_amount": 30000,
+     "total_amount": 270000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 300000,
+   "discount_amount": 30000,
+   "total_amount": 270000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 270000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 300000,
+     "class_name": "Test class",
+     "net_amount_vnd": 270000,
+     "sessions_count": 3,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 3,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     },
+     {
+      "date": "2026-10-09",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 300000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 30000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 30000,
+    "totalAmount": 270000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 270000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 270.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 300000,
+       "net_amount_vnd": 270000,
+       "sessions_count": 3,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 300000,
+     "discount_amount": 30000,
+     "total_amount": 270000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 300000,
+   "discount_amount": 30000,
+   "total_amount": 270000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 270000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 300000,
+     "class_name": "Test class",
+     "net_amount_vnd": 270000,
+     "sessions_count": 3,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": []
+ },
+ "split register, Nov": {
+  "month": "2026-11",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-11",
+    "sessionCount": 1,
+    "sessionDetails": [
+     {
+      "date": "2026-11-04",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 100000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 10000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 10000,
+    "totalAmount": 90000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 90000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 90.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 100000,
+       "net_amount_vnd": 90000,
+       "sessions_count": 1,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 100000,
+     "discount_amount": 10000,
+     "total_amount": 90000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 100000,
+   "discount_amount": 10000,
+   "total_amount": 90000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 90000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 100000,
+     "class_name": "Test class",
+     "net_amount_vnd": 90000,
+     "sessions_count": 1,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-11",
+    "sessionCount": 1,
+    "sessionDetails": [
+     {
+      "date": "2026-11-04",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 100000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 10000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 10000,
+    "totalAmount": 90000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 90000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 90.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 100000,
+       "net_amount_vnd": 90000,
+       "sessions_count": 1,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 100000,
+     "discount_amount": 10000,
+     "total_amount": 90000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 100000,
+   "discount_amount": 10000,
+   "total_amount": 90000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 90000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 100000,
+     "class_name": "Test class",
+     "net_amount_vnd": 90000,
+     "sessions_count": 1,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": []
+ },
+ "split, fixed 20,000 monthly, Oct": {
+  "month": "2026-10",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 3,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     },
+     {
+      "date": "2026-10-09",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 300000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "amount",
+      "value": 20000,
+      "amount": 20000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 20000,
+    "totalAmount": 280000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 280000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 280.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 300000,
+       "net_amount_vnd": 280000,
+       "sessions_count": 3,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 300000,
+     "discount_amount": 20000,
+     "total_amount": 280000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 300000,
+   "discount_amount": 20000,
+   "total_amount": 280000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 280000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 300000,
+     "class_name": "Test class",
+     "net_amount_vnd": 280000,
+     "sessions_count": 3,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 3,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     },
+     {
+      "date": "2026-10-09",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 300000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "amount",
+      "value": 20000,
+      "amount": 20000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 20000,
+    "totalAmount": 280000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 280000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 280.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 300000,
+       "net_amount_vnd": 280000,
+       "sessions_count": 3,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 300000,
+     "discount_amount": 20000,
+     "total_amount": 280000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 300000,
+   "discount_amount": 20000,
+   "total_amount": 280000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 280000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 300000,
+     "class_name": "Test class",
+     "net_amount_vnd": 280000,
+     "sessions_count": 3,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": []
+ },
+ "split, fixed 20,000 once, Nov": {
+  "month": "2026-11",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-11",
+    "sessionCount": 1,
+    "sessionDetails": [
+     {
+      "date": "2026-11-04",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 100000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "amount",
+      "value": 20000,
+      "amount": 20000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 20000,
+    "totalAmount": 80000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 80000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 80.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 100000,
+       "net_amount_vnd": 80000,
+       "sessions_count": 1,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 100000,
+     "discount_amount": 20000,
+     "total_amount": 80000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 100000,
+   "discount_amount": 20000,
+   "total_amount": 80000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 80000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 100000,
+     "class_name": "Test class",
+     "net_amount_vnd": 80000,
+     "sessions_count": 1,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-11",
+    "sessionCount": 1,
+    "sessionDetails": [
+     {
+      "date": "2026-11-04",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 100000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "amount",
+      "value": 20000,
+      "amount": 20000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 20000,
+    "totalAmount": 80000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 80000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 80.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 100000,
+       "net_amount_vnd": 80000,
+       "sessions_count": 1,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 100000,
+     "discount_amount": 20000,
+     "total_amount": 80000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 100000,
+   "discount_amount": 20000,
+   "total_amount": 80000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 80000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 100000,
+     "class_name": "Test class",
+     "net_amount_vnd": 80000,
+     "sessions_count": 1,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": []
+ },
+ "split, second term 20%": {
+  "month": "2026-10",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 3,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     },
+     {
+      "date": "2026-10-09",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 300000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 20000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     },
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 20,
+      "amount": 20000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 40000,
+    "totalAmount": 260000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 260000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 260.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 300000,
+       "net_amount_vnd": 260000,
+       "sessions_count": 3,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 300000,
+     "discount_amount": 40000,
+     "total_amount": 260000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 300000,
+   "discount_amount": 40000,
+   "total_amount": 260000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 260000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 300000,
+     "class_name": "Test class",
+     "net_amount_vnd": 260000,
+     "sessions_count": 3,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-10",
+    "sessionCount": 3,
+    "sessionDetails": [
+     {
+      "date": "2026-10-07",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     },
+     {
+      "date": "2026-10-09",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     },
+     {
+      "date": "2026-10-21",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 300000,
+    "discounts": [
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 10,
+      "amount": 20000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     },
+     {
+      "name": "Enrollment Discount",
+      "type": "percent",
+      "value": 20,
+      "amount": 20000,
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a"
+     }
+    ],
+    "totalDiscount": 40000,
+    "totalAmount": 260000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 260000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 260.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 300000,
+       "net_amount_vnd": 260000,
+       "sessions_count": 3,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 300000,
+     "discount_amount": 40000,
+     "total_amount": 260000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 300000,
+   "discount_amount": 40000,
+   "total_amount": 260000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 260000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 300000,
+     "class_name": "Test class",
+     "net_amount_vnd": 260000,
+     "sessions_count": 3,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": []
+ },
+ "split, second term has no discount": {
+  "month": "2026-11",
+  "first": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-11",
+    "sessionCount": 1,
+    "sessionDetails": [
+     {
+      "date": "2026-11-04",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 100000,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 100000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 100000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 100.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 100000,
+       "net_amount_vnd": 100000,
+       "sessions_count": 1,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 100000,
+     "discount_amount": 0,
+     "total_amount": 100000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored1": {
+   "base_amount": 100000,
+   "discount_amount": 0,
+   "total_amount": 100000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 100000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 100000,
+     "class_name": "Test class",
+     "net_amount_vnd": 100000,
+     "sessions_count": 1,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "second": {
+   "status": 200,
+   "body": {
+    "studentId": "11111111-1111-4111-8111-111111111111",
+    "month": "2026-11",
+    "sessionCount": 1,
+    "sessionDetails": [
+     {
+      "date": "2026-11-04",
+      "rate": 100000,
+      "status": "Present",
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class"
+     }
+    ],
+    "baseAmount": 100000,
+    "discounts": [],
+    "totalDiscount": 0,
+    "totalAmount": 100000,
+    "payments": {
+     "priorPayments": 0,
+     "monthPayments": 0,
+     "cumulativePaidAmount": 0
+    },
+    "carry": {
+     "carryInCredit": 0,
+     "carryInDebt": 0,
+     "carryOutCredit": 0,
+     "carryOutDebt": 100000,
+     "settledInMonth": null,
+     "status": "debt",
+     "message": "Bạn còn nợ 100.000 ₫ cần thanh toán."
+    },
+    "siblingState": null,
+    "siblingUnresolved": false,
+    "invoiceSaved": true,
+    "tuitionFrozen": false,
+    "breakdown": {
+     "classes": [
+      {
+       "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+       "class_name": "Test class",
+       "amount_vnd": 100000,
+       "net_amount_vnd": 100000,
+       "sessions_count": 1,
+       "session_rate_vnd": 100000
+      }
+     ]
+    },
+    "enrollments": [
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-09-01",
+      "end_date": "2026-10-15"
+     },
+     {
+      "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+      "class_name": "Test class",
+      "start_date": "2026-10-16",
+      "end_date": null
+     }
+    ],
+    "invoice": {
+     "base_amount": 100000,
+     "discount_amount": 0,
+     "total_amount": 100000,
+     "paid_amount": 0,
+     "recorded_payment": 0
+    },
+    "priorBalanceBreakdown": {
+     "months": [],
+     "summary": {
+      "totalPriorCharges": 0,
+      "totalPriorPayments": 0,
+      "netCarryIn": 0
+     }
+    }
+   }
+  },
+  "stored2": {
+   "base_amount": 100000,
+   "discount_amount": 0,
+   "total_amount": 100000,
+   "paid_amount": 0,
+   "recorded_payment": 0,
+   "carry_in_credit": 0,
+   "carry_in_debt": 0,
+   "carry_out_credit": 0,
+   "carry_out_debt": 100000,
+   "class_breakdown": [
+    {
+     "class_id": "cccccccc-cccc-4ccc-8ccc-cccccccccc0a",
+     "amount_vnd": 100000,
+     "class_name": "Test class",
+     "net_amount_vnd": 100000,
+     "sessions_count": 1,
+     "session_rate_vnd": 100000
+    }
+   ]
+  },
+  "others": []
+ }
+}

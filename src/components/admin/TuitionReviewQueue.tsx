@@ -143,6 +143,7 @@ export function TuitionReviewQueue() {
   const getFlagLabel = (flagType: string) => {
     const labels: Record<string, string> = {
       tuition_adjustment: "Tuition Adjustments",
+      changed_after_confirmation: "Changed after it was confirmed",
       other: "Other Issues",
     };
     return labels[flagType] || flagType;
