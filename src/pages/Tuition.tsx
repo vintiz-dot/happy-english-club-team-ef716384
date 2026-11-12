@@ -10,7 +10,7 @@ import { InvoiceDownloadButton } from "@/components/invoice/InvoiceDownloadButto
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useStudentMonthFinance, formatVND } from "@/hooks/useStudentMonthFinance";
-import { getPaymentStatus, getTuitionStatusBadge } from "@/lib/tuitionStatus";
+import { getPaymentStatus, getIvoryTuitionStatusBadge } from "@/lib/tuitionStatus";
 import { SmartFamilyPaymentModal } from "@/components/admin/SmartFamilyPaymentModal";
 import { Button } from "@/components/ui/button";
 import { Wallet } from "lucide-react";
@@ -48,7 +48,7 @@ export default function Tuition() {
       <Layout title="Tuition">
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">Access denied. This page is for students and families only.</p>
+            <p className="text-hec-body text-hec-ink-soft">Access denied. This page is for students and families only.</p>
           </CardContent>
         </Card>
       </Layout>
@@ -63,7 +63,7 @@ export default function Tuition() {
       <Layout title="Tuition">
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">Please select a student profile</p>
+            <p className="text-hec-body text-hec-ink-soft">Please select a student profile</p>
           </CardContent>
         </Card>
       </Layout>
@@ -79,7 +79,7 @@ export default function Tuition() {
   }
 
   // Calculate status using shared utility
-  const statusBadge = tuitionData ? getTuitionStatusBadge(getPaymentStatus({
+  const statusBadge = tuitionData ? getIvoryTuitionStatusBadge(getPaymentStatus({
     carryOutDebt: tuitionData.carryOutDebt,
     carryOutCredit: tuitionData.carryOutCredit,
     totalAmount: tuitionData.totalAmount,
@@ -102,7 +102,7 @@ export default function Tuition() {
   return (
     <Layout title="Tuition">
       <div className="space-y-6">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <MonthPicker value={month} onChange={setMonth} maxMonth={currentMonth} />
           {tuitionData && studentId && <InvoiceDownloadButton studentId={studentId} month={month} />}
         </div>
@@ -110,40 +110,41 @@ export default function Tuition() {
         {!tuitionData || tuitionData.totalAmount === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">No tuition record found for {dayjs(month).format("MMMM YYYY")}</p>
+              <p className="text-hec-body text-hec-ink-soft">No tuition record found for {dayjs(month).format("MMMM YYYY")}</p>
             </CardContent>
           </Card>
         ) : (
           <>
             <Card>
               <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <CardDescription>Current Balance</CardDescription>
                   {statusBadge}
                 </div>
-                <CardTitle className="text-4xl">{getBalanceDisplay()}</CardTitle>
+                {/* An amount: sans, ink, tabular (DS s.14) - never the CardTitle serif. */}
+                <CardTitle className="whitespace-nowrap font-sans text-hec-display font-semibold tabular-nums text-hec-ink">{getBalanceDisplay()}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Base Amount</p>
-                    <p className="text-lg font-semibold">{formatVND(tuitionData.baseAmount)}</p>
+                <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="min-w-0">
+                    <dt className="text-hec-small text-hec-ink-soft">Base Amount</dt>
+                    <dd className="whitespace-nowrap text-hec-h3 font-semibold tabular-nums text-hec-ink">{formatVND(tuitionData.baseAmount)}</dd>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Discounts</p>
-                    <p className="text-lg font-semibold text-green-600">
+                  <div className="min-w-0">
+                    <dt className="text-hec-small text-hec-ink-soft">Discounts</dt>
+                    <dd className="whitespace-nowrap text-hec-h3 font-semibold tabular-nums text-hec-ink">
                       -{formatVND(tuitionData.totalDiscount)}
-                    </p>
+                    </dd>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Payable</p>
-                    <p className="text-lg font-semibold">{formatVND(tuitionData.totalAmount)}</p>
+                  <div className="min-w-0">
+                    <dt className="text-hec-small text-hec-ink-soft">Total Payable</dt>
+                    <dd className="whitespace-nowrap text-hec-h3 font-semibold tabular-nums text-hec-ink">{formatVND(tuitionData.totalAmount)}</dd>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Recorded Pay</p>
-                    <p className="text-lg font-semibold text-blue-600">{formatVND(tuitionData.monthPayments)}</p>
+                  <div className="min-w-0">
+                    <dt className="text-hec-small text-hec-ink-soft">Recorded Pay</dt>
+                    <dd className="whitespace-nowrap text-hec-h3 font-semibold tabular-nums text-hec-ink">{formatVND(tuitionData.monthPayments)}</dd>
                   </div>
-                </div>
+                </dl>
               </CardContent>
             </Card>
 
@@ -158,19 +159,19 @@ export default function Tuition() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
-                        <TableHead>Rate</TableHead>
+                        <TableHead className="text-right">Rate</TableHead>
                         <TableHead>Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {tuitionData.sessionDetails.map((session, idx) => (
                         <TableRow key={idx}>
-                          <TableCell>{dayjs(session.date).format("MMM D, YYYY")}</TableCell>
-                          <TableCell>{formatVND(session.rate)}</TableCell>
+                          <TableCell className="whitespace-nowrap tabular-nums">{dayjs(session.date).format("MMM D, YYYY")}</TableCell>
+                          <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(session.rate)}</TableCell>
                           <TableCell>
                             <span
-                              className={`px-2 py-1 rounded-full text-xs ${
-                                session.status === "Held" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
+                              className={`inline-flex items-center rounded-full border px-3 py-1 text-hec-caption font-medium ${
+                                session.status === "Held" ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf" : "border-hec-line bg-hec-sunken text-hec-ink-soft"
                               }`}
                             >
                               {session.status}
