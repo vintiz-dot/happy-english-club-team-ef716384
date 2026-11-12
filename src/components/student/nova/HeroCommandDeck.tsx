@@ -1,24 +1,25 @@
 /**
- * HeroCommandDeck — the student dashboard's cinematic opening.
+ * HeroCommandDeck — the opening card of the student dashboard.
  *
  * Purely presentational. Every value is passed in; this component runs no
- * queries and owns no business logic. It replaces the old hero card with a
- * layered "command deck": drifting aurora orbs, the level ring as a power
- * core, an animated XP energy meter, and a live vitals strip.
+ * queries and owns no business logic. In the "Ivory" design system
+ * (docs/DESIGN_SYSTEM.md): one card, the child's name in the display serif as
+ * the focal point, the level ring and one progress meter beside it, the four
+ * vitals under a hairline. The mascot stays; its message is a line in the
+ * normal flow under the name, so it can never cover the name.
  */
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { LevelProgressRing } from "@/components/student/LevelProgressRing";
 import { MascotCompanion } from "@/components/student/MascotCompanion";
-import { AnimatedNumber } from "@/components/fx/AnimatedNumber";
 import { cn } from "@/lib/utils";
-import { Edit, Zap, Flame, Star, Trophy, Sparkles } from "lucide-react";
+import { Edit, Zap, Flame, Star, Trophy } from "lucide-react";
+import { BADGE_NEUTRAL, BADGE_BRASS, FOCUS, LABEL, WARM_CARD } from "./ivory";
 
 interface Vital {
   icon: React.ElementType;
   label: string;
   value: number;
-  tint: string;
 }
 
 interface Props {
@@ -41,183 +42,121 @@ interface Props {
 }
 
 export function HeroCommandDeck({
-  firstName, fullName, avatarUrl, statusMessage, greeting,
+  fullName, avatarUrl, statusMessage, greeting,
   levelTitle, level, currentXp, nextLevelXp, progress, totalXp,
   streak, pendingHomework, classesThisWeek, isMonitor, onEditProfile,
 }: Props) {
+  const reduce = useReducedMotion();
+  // Where the mascot's message is drawn: a row under the name, in the flow.
+  const [messageSlot, setMessageSlot] = useState<HTMLDivElement | null>(null);
+
   const vitals: Vital[] = [
-    { icon: Flame, label: "Day streak", value: streak, tint: "text-orange-500" },
-    { icon: Star, label: "Total XP", value: totalXp, tint: "text-amber-500" },
-    { icon: Trophy, label: "Classes this week", value: classesThisWeek, tint: "text-emerald-500" },
-    { icon: Zap, label: "Open quests", value: pendingHomework, tint: "text-violet-500" },
+    { icon: Flame, label: "Day streak", value: streak },
+    { icon: Star, label: "Total XP", value: totalXp },
+    { icon: Trophy, label: "Classes this week", value: classesThisWeek },
+    { icon: Zap, label: "Open quests", value: pendingHomework },
   ];
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-      className={cn(
-        "holo-card relative overflow-hidden p-4 sm:p-6 md:p-8",
-        isMonitor && "ring-2 ring-amber-400/40",
-      )}
+    <section
+      className={cn(WARM_CARD, "lg:p-8", isMonitor && "border-hec-brass/40")}
     >
-      {/* Ambient depth */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-        <motion.div
-          className="nova-orb h-72 w-72 -top-24 -left-16"
-          style={{ background: "radial-gradient(circle, hsl(224 90% 62% / .5), transparent 70%)" }}
-          animate={{ x: [0, 30, 0], y: [0, 18, 0] }}
-          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="nova-orb h-80 w-80 -bottom-28 right-0"
-          style={{ background: "radial-gradient(circle, hsl(280 85% 66% / .42), transparent 70%)" }}
-          animate={{ x: [0, -26, 0], y: [0, -20, 0] }}
-          transition={{ duration: 17, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-        />
-        <motion.div
-          className="nova-orb h-56 w-56 top-1/3 left-1/2"
-          style={{ background: "radial-gradient(circle, hsl(188 92% 55% / .35), transparent 70%)" }}
-          animate={{ scale: [1, 1.18, 1] }}
-          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <div className="absolute inset-0 nova-grid opacity-[0.35] dark:opacity-25" />
-      </div>
-
-      <div className="relative z-10">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-8">
-          {/* Identity */}
-          <div className="flex items-center gap-3 sm:gap-4 md:gap-5 min-w-0 flex-1">
-            <div className="shrink-0">
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12">
+        {/* Identity: the focal point */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start gap-4">
+            <div className="shrink-0 pt-1">
               <MascotCompanion
                 studentName={fullName}
                 streak={streak}
                 pendingHomework={pendingHomework}
                 level={level}
+                messageSlot={messageSlot}
               />
             </div>
-            <div className="min-w-0 space-y-1">
-              <motion.div
-                className="flex items-center gap-2 text-sm text-muted-foreground"
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.25 }}
-              >
-                <span className="text-xl leading-none">{greeting.emoji}</span>
+            <div className="min-w-0 flex-1 space-y-2">
+              <p className="flex items-center gap-2 text-hec-small text-hec-ink-soft">
+                <span aria-hidden>{greeting.emoji}</span>
                 <span>{greeting.text},</span>
-              </motion.div>
-
-              <h1 className="text-[2rem] sm:text-4xl md:text-5xl font-black tracking-tight leading-[1.05] truncate">
-                <span className="aurora-text">{firstName}</span>
+              </p>
+              <h1 className="whitespace-normal break-words text-balance font-display text-hec-display font-medium text-hec-ink [hyphens:none] [[data-hec-scale=young]_&]:font-bold">
+                {fullName}
               </h1>
-
-              <div className="flex items-center gap-2 flex-wrap pt-0.5">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-md shadow-violet-600/25">
-                  <Sparkles className="h-3 w-3" />
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className={BADGE_NEUTRAL}>
                   {levelTitle} · Lv {level}
                 </span>
                 {isMonitor && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 px-2.5 py-1 text-[11px] font-bold text-amber-600 dark:text-amber-300 ring-1 ring-amber-400/40">
-                    ⭐ Class Monitor
+                  <span className={BADGE_BRASS}>
+                    <span aria-hidden>⭐</span> Class Monitor
                   </span>
                 )}
               </div>
-
               {statusMessage && (
-                <p className="text-xs italic text-muted-foreground/80 pt-1 truncate">"{statusMessage}"</p>
+                <p className="whitespace-normal break-words text-hec-small italic text-hec-ink-soft">"{statusMessage}"</p>
               )}
-              <p className="text-xs text-muted-foreground">{greeting.subtext}</p>
             </div>
           </div>
-
-          {/* Power core */}
-          <div className="flex items-center justify-center lg:justify-end gap-4 shrink-0">
-            <motion.div
-              initial={{ scale: 0.86, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 18 }}
-              className="relative"
-            >
-              <div
-                className="absolute -inset-4 rounded-full blur-2xl opacity-60 pointer-events-none"
-                style={{ background: "radial-gradient(circle, hsl(224 90% 62% / .45), transparent 70%)" }}
-                aria-hidden
-              />
-              <div className="relative">
-                <LevelProgressRing
-                  avatarUrl={avatarUrl}
-                  name={fullName}
-                  level={level}
-                  currentXp={currentXp}
-                  nextLevelXp={nextLevelXp}
-                  progress={progress}
-                  totalXp={totalXp}
-                  size="lg"
-                />
-              </div>
-            </motion.div>
-
-            <Button
-              onClick={onEditProfile}
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 rounded-full glass-sm shrink-0 self-start"
-              title="Edit profile"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-          </div>
+          {/* The mascot's message lands here (role=status), full width of the card. */}
+          <div ref={setMessageSlot} className="mt-4" />
         </div>
 
-        {/* XP energy meter */}
-        <motion.div
-          className="mt-7 space-y-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.45 }}
-        >
-          <div className="flex items-end justify-between gap-3 text-xs">
-            <span className="font-bold uppercase tracking-wider text-muted-foreground">
-              Progress to Level {level + 1}
-            </span>
-            <span className="font-mono font-bold tabular-nums">
-              {currentXp}<span className="text-muted-foreground"> / {nextLevelXp} XP</span>
-            </span>
-          </div>
-          <div className="relative h-3.5 rounded-full bg-muted/60 ring-1 ring-inset ring-border/50 overflow-hidden">
-            <motion.div
-              className="energy-meter absolute inset-y-0 left-0 rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.max(progress, 2)}%` }}
-              transition={{ duration: 1.2, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        {/* Level: ring + one meter */}
+        <div className="flex items-center gap-6 lg:w-96 lg:shrink-0">
+          <div className="shrink-0">
+            <LevelProgressRing
+              ivory
+              avatarUrl={avatarUrl}
+              name={fullName}
+              level={level}
+              currentXp={currentXp}
+              nextLevelXp={nextLevelXp}
+              progress={progress}
+              totalXp={totalXp}
+              size="md"
             />
           </div>
-        </motion.div>
-
-        {/* Vitals strip */}
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          {vitals.map((v, i) => (
-            <motion.div
-              key={v.label}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.55 + i * 0.07 }}
-              className="rounded-2xl bg-background/45 ring-1 ring-border/50 backdrop-blur-sm px-3 py-2.5"
+          <div className="min-w-0 flex-1 space-y-2">
+            <p className={LABEL}>Progress to Level {level + 1}</p>
+            <p className="font-sans text-hec-h3 font-semibold tabular-nums text-hec-ink">
+              {currentXp}<span className="font-normal text-hec-ink-soft"> / {nextLevelXp} XP</span>
+            </p>
+            <div className="h-2 overflow-hidden rounded-full bg-hec-sunken">
+              <motion.div
+                className="h-2 rounded-full bg-hec-brass"
+                initial={reduce ? false : { width: 0 }}
+                animate={{ width: `${Math.max(progress, 2)}%` }}
+                transition={{ duration: 0.42, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={onEditProfile}
+              title="Edit profile"
+              className={cn(
+                "-ml-3 inline-flex min-h-hec-target items-center gap-2 rounded-hec-md px-3 text-hec-small text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken hover:text-hec-ink",
+                FOCUS,
+              )}
             >
-              <div className="flex items-center gap-1.5">
-                <v.icon className={cn("h-3.5 w-3.5", v.tint)} />
-                <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground truncate">
-                  {v.label}
-                </span>
-              </div>
-              <p className="text-2xl font-black tabular-nums leading-tight mt-0.5">
-                <AnimatedNumber value={v.value} />
-              </p>
-            </motion.div>
-          ))}
+              <Edit className="h-4 w-4" aria-hidden />
+              Edit profile
+            </button>
+          </div>
         </div>
       </div>
-    </motion.section>
+
+      {/* Vitals */}
+      <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-6 border-t border-hec-line pt-6 sm:grid-cols-4">
+        {vitals.map((v) => (
+          <div key={v.label} className="min-w-0 space-y-1">
+            <dt className={cn(LABEL, "flex items-center gap-2")}>
+              <v.icon className="h-4 w-4 shrink-0 text-hec-ink-faint" aria-hidden />
+              <span className="min-w-0">{v.label}</span>
+            </dt>
+            <dd className="font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{v.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }

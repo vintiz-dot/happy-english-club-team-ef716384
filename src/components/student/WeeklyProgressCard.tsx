@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { dayjs } from "@/lib/date";
-import { motion } from "framer-motion";
 import { Calendar, BookOpen, Zap, Flame } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { CARD, CARD_TITLE } from "@/components/student/nova/ivory";
 
 interface WeeklyProgressCardProps {
   studentId: string;
@@ -44,76 +44,61 @@ export function WeeklyProgressCard({ studentId, currentStreak }: WeeklyProgressC
 
   if (!data) return null;
 
+  // Ivory: completion is leaf on a hairline track; counts are ink.
   const stats = [
     {
       label: "Classes",
       value: data.classesAttended,
       total: data.totalClasses,
       icon: Calendar,
-      color: "hsl(var(--primary))",
-      bgColor: "from-primary/20 to-primary/5",
+      color: "hsl(var(--hec-leaf))",
     },
     {
       label: "Homework",
       value: data.homeworkSubmitted,
       total: data.totalHomework,
       icon: BookOpen,
-      color: "hsl(var(--accent))",
-      bgColor: "from-accent/20 to-accent/5",
+      color: "hsl(var(--hec-leaf))",
     },
     {
       label: "XP Earned",
       value: data.xpEarned,
       total: null,
       icon: Zap,
-      color: "hsl(var(--warning))",
-      bgColor: "from-warning/20 to-warning/5",
+      color: "hsl(var(--hec-ink))",
     },
     {
       label: "Streak",
       value: currentStreak,
       total: null,
       icon: Flame,
-      color: "hsl(var(--destructive))",
-      bgColor: "from-destructive/20 to-destructive/5",
+      color: "hsl(var(--hec-ink))",
     },
   ];
 
   return (
-    <motion.div
-      className="glass-lg border-0 shadow-xl rounded-2xl p-6"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <div className="flex items-center gap-3 mb-5">
-        <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-accent/10">
-          <span className="text-xl">📊</span>
-        </div>
-        <div>
-          <h3 className="text-lg font-bold text-foreground">This Week</h3>
-          <p className="text-xs text-muted-foreground">
-            {dayjs(weekStart).format("MMM D")} – {dayjs(weekEnd).format("MMM D")}
-          </p>
-        </div>
+    <section className={CARD}>
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className={CARD_TITLE}>This Week</h2>
+        <p className="text-hec-small tabular-nums text-hec-ink-soft">
+          {dayjs(weekStart).format("MMM D")} – {dayjs(weekEnd).format("MMM D")}
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {stats.map((stat, i) => {
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {stats.map((stat) => {
           const pct = stat.total ? Math.round((stat.value / Math.max(stat.total, 1)) * 100) : null;
           const chartData = pct !== null
             ? [{ value: pct }, { value: 100 - pct }]
             : null;
 
           return (
-            <motion.div
+            <div
               key={stat.label}
-              className={`rounded-xl p-3 bg-gradient-to-br ${stat.bgColor} text-center`}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.08 }}
+              className="rounded-hec-md bg-hec-sunken/60 p-4 text-center"
             >
               {chartData ? (
-                <div className="w-14 h-14 mx-auto mb-1">
+                <div className="mx-auto mb-1 h-14 w-14" aria-hidden>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -121,33 +106,34 @@ export function WeeklyProgressCard({ studentId, currentStreak }: WeeklyProgressC
                         dataKey="value"
                         cx="50%"
                         cy="50%"
-                        innerRadius={18}
+                        innerRadius={20}
                         outerRadius={26}
                         startAngle={90}
                         endAngle={-270}
                         strokeWidth={0}
+                        isAnimationActive={false}
                       >
                         <Cell fill={stat.color} />
-                        <Cell fill="hsl(var(--muted))" />
+                        <Cell fill="hsl(var(--hec-line))" />
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="w-14 h-14 mx-auto mb-1 flex items-center justify-center">
-                  <span className="text-2xl font-black" style={{ color: stat.color }}>
+                <div className="mx-auto mb-1 flex h-14 w-14 items-center justify-center">
+                  <span className="font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">
                     {stat.value}
                   </span>
                 </div>
               )}
-              <p className="text-xs font-medium text-foreground">
+              <p className="text-hec-small font-medium tabular-nums text-hec-ink">
                 {stat.total !== null ? `${stat.value}/${stat.total}` : stat.value}
               </p>
-              <p className="text-[10px] text-muted-foreground">{stat.label}</p>
-            </motion.div>
+              <p className="text-hec-caption text-hec-ink-soft">{stat.label}</p>
+            </div>
           );
         })}
       </div>
-    </motion.div>
+    </section>
   );
 }

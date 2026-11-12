@@ -1,62 +1,60 @@
 /**
- * NovaStatCard — a single premium stat tile for the student dashboard.
+ * NovaStatCard — a single stat tile for the student dashboard.
  *
- * Presentational only. Handles the big-number treatment, gradient icon well,
- * optional trailing caption and an optional click target. `value` may be a
- * number (count-up animated) or pre-formatted text (e.g. currency).
+ * Presentational only. In the "Ivory" design system: a plain card, a small
+ * uppercase label with one ink icon, the value in the sans at h1 size with
+ * tabular figures (never the serif, never counted up), an optional caption
+ * and an optional click target. `value` may be a number or pre-formatted
+ * text (e.g. currency) and is shown exactly as given.
  */
 import { motion } from "framer-motion";
-import { AnimatedNumber } from "@/components/fx/AnimatedNumber";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
+import { CARD, FOCUS, LABEL } from "./ivory";
 
 interface Props {
   icon: React.ElementType;
   label: string;
   value: number | string;
   caption?: string;
-  /** tailwind gradient stops for the icon well, e.g. "from-violet-500 to-indigo-600" */
+  /** Kept for callers; the Ivory tile has one ink icon colour, not a gradient. */
   gradient: string;
-  /** value colour override (e.g. debt in red) */
+  /** value colour override (e.g. debt in the danger colour) */
   valueClassName?: string;
   onClick?: () => void;
   delay?: number;
 }
 
 export function NovaStatCard({
-  icon: Icon, label, value, caption, gradient, valueClassName, onClick, delay = 0,
+  icon: Icon, label, value, caption, valueClassName, onClick,
 }: Props) {
   const interactive = !!onClick;
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       onClick={onClick}
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}
       onKeyDown={interactive ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick!(); } } : undefined}
       className={cn(
-        "holo-card group p-5 relative",
-        interactive && "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+        CARD,
+        "group relative",
+        interactive && cn("cursor-pointer transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2", FOCUS),
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className={cn("icon-well p-2.5 bg-gradient-to-br", gradient)}>
-          <Icon className="h-5 w-5 text-white drop-shadow" />
-        </div>
+      <div className="flex items-center justify-between gap-3">
+        <p className={cn(LABEL, "flex min-w-0 items-center gap-2")}>
+          <Icon className="h-4 w-4 shrink-0 text-hec-ink-faint" aria-hidden />
+          <span className="min-w-0">{label}</span>
+        </p>
         {interactive && (
-          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+          <ChevronRight className="h-5 w-5 shrink-0 text-hec-ink-faint transition-colors duration-hec-1 group-hover:text-hec-ink" aria-hidden />
         )}
       </div>
 
-      <p className="mt-3.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-        {label}
+      <p className={cn("mt-2 whitespace-nowrap font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink", valueClassName)}>
+        {value}
       </p>
-      <p className={cn("text-3xl md:text-[2.1rem] font-black tabular-nums leading-tight mt-0.5", valueClassName)}>
-        {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
-      </p>
-      {caption && <p className="text-xs text-muted-foreground mt-1">{caption}</p>}
+      {caption && <p className="mt-1 text-hec-small text-hec-ink-soft">{caption}</p>}
     </motion.div>
   );
 }

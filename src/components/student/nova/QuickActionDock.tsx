@@ -1,58 +1,57 @@
 /**
- * QuickActionDock — the student's launcher rail.
+ * QuickActionDock — the student's launcher.
  *
- * Presentational. Replaces the old 4-card grid of quick links with a denser,
- * more tactile dock: gradient tiles that lift and glow, comfortable tap
- * targets on mobile, and a horizontal scroll on narrow screens with end
- * padding so the final tile can never clip.
+ * Presentational. Ivory: a heading over a hairline, then a grid of quiet
+ * link cards (two across on a phone, so nothing scrolls sideways and every
+ * tile is a full-size target). The emoji stays, on a sunken disc.
  */
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { FOCUS } from "./ivory";
 
 export interface DockAction {
   to: string;
   emoji: string;
   title: string;
   desc: string;
-  /** tailwind gradient stops, e.g. "from-blue-500 to-cyan-500" */
+  /** Kept for callers; the Ivory tiles carry no gradient. */
   gradient: string;
 }
 
 export function QuickActionDock({ actions }: { actions: DockAction[] }) {
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-3">
-        <h2 className="text-lg font-black">Jump back in</h2>
-        <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
-      </div>
+    <section aria-labelledby="quick-actions-title">
+      <h2
+        id="quick-actions-title"
+        className="border-b border-hec-line pb-2 font-display text-hec-h2 font-medium text-hec-ink [[data-hec-scale=young]_&]:font-bold"
+      >
+        Jump back in
+      </h2>
 
-      <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 pr-4 sm:grid sm:grid-cols-3 lg:grid-cols-6 sm:pr-0 sm:overflow-visible">
-        {actions.map((a, i) => (
-          <motion.div
-            key={a.to + a.title}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="shrink-0 w-[132px] sm:w-auto"
-          >
-            <Link to={a.to} className="block h-full group">
-              <div className="holo-card h-full p-4 text-center sm:text-left">
-                <div
-                  className={cn(
-                    "icon-well mx-auto sm:mx-0 h-11 w-11 flex items-center justify-center text-2xl bg-gradient-to-br transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6",
-                    a.gradient,
-                  )}
-                >
-                  <span className="drop-shadow-sm">{a.emoji}</span>
-                </div>
-                <p className="mt-3 text-sm font-bold leading-tight">{a.title}</p>
-                <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{a.desc}</p>
-              </div>
+      <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {actions.map((a) => (
+          <li key={a.to + a.title} className="min-w-0">
+            <Link
+              to={a.to}
+              className={cn(
+                "flex h-full min-h-hec-target flex-col gap-3 rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2 [[data-hec-scale=young]_&]:bg-hec-honey",
+                FOCUS,
+              )}
+            >
+              <span
+                aria-hidden
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-hec-sunken text-2xl"
+              >
+                {a.emoji}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-hec-body font-medium text-hec-ink">{a.title}</span>
+                <span className="block text-hec-small text-hec-ink-soft">{a.desc}</span>
+              </span>
             </Link>
-          </motion.div>
+          </li>
         ))}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 }
