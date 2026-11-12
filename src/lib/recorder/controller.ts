@@ -1074,7 +1074,7 @@ export class Recorder {
     rec.preStartAcked = pre === 0;
     if (pre > this.o.startLeadOkMs) {
       rec.discontinuities.push({ t_ms: 0, kind: "pre_start", wall_gap_ms: pre });
-      this.events.emit("error", new RecorderError("start_delayed", `The school server started the recording ${Math.round(pre / 1000)} s after this laptop began recording. All of it is kept and sent; those first ${Math.round(pre / 1000)} s do not count as evidence that the lesson was recorded.`, { detail: { preStartMs: pre } }));
+      // (said once the server has ACCEPTED the offset - sendPreStart - never before: R3-B1)
     }
     const ts = this.o.source.timestamp();
     rec.anchors.push({ t_ms: 0, context_time: ts.contextTime, performance_now: ts.performanceNow, date_now: this.o.now(), server_offset_ms: this.offsetMs });
@@ -1118,6 +1118,9 @@ export class Recorder {
       this.active.rec.preStartAcked = true;
       if (this.active.capturing) this.setState(this.capturingState(this.active));
     }
+    const pre = rec.preStartMs ?? 0;
+    if (pre > this.o.startLeadOkMs)
+      this.events.emit("error", new RecorderError("start_delayed", `The school server started the recording ${Math.round(pre / 1000)} s after this laptop began recording. The server has accepted all of it; those first ${Math.round(pre / 1000)} s do not count as evidence that the lesson was recorded.`, { detail: { preStartMs: pre } }));
     return true;
   }
 

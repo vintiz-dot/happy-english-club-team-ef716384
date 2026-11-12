@@ -945,7 +945,7 @@ console.log("=== B3: a slow Start loses nothing the server counts ===");
   const firstSend = r.active.firstSendFrame;
   held.shift()(); await r.settle();
   await src.play(30, r);
-  ok("N-B1: the server's stamp came 25 s after capture began: said, and that ALL of it is kept", errors.some((e) => e.code === "start_delayed" && /All of it is kept/.test(e.message)));
+  ok("N-B1: the server's stamp came 25 s after capture began: said, and that ALL of it is kept", errors.some((e) => e.code === "start_delayed" && /has accepted all of it/.test(e.message)));
   const cur = await r.current();
   ok("N-B1: the offset is in the manifest's record (pre_start, 25 s)", cur.discontinuities.some((d) => d.kind === "pre_start" && Math.abs(d.wall_gap_ms - 25000) < 1000) && Math.abs(cur.preStartMs - 25000) < 1000, JSON.stringify(cur.discontinuities));
   eq("N-B1: t = 0 stays the first captured sample (nothing trimmed)", r.active.chunker.t0Frame, firstSend);
@@ -972,15 +972,16 @@ console.log("=== B3: a slow Start loses nothing the server counts ===");
 }
 let failedStart = null;
 {
-  // The server refuses the start after 12 s: explicit failed state, the audio kept here.
+  // The server refuses the start after 12 s for a reason that is NOT a "no" to recording
+  // (another live recording of the lesson exists): explicit failed state, the audio kept here.
   const { w, src, r, errors, states, row, store } = await started();
   const held = [];
-  w.backend.start = () => new Promise((res, rej) => held.push(() => rej({ message: "Recording is switched off for this class", code: "42501" })));
+  w.backend.start = () => new Promise((res, rej) => held.push(() => rej({ message: 'duplicate key value violates unique constraint "class_recordings_one_live_per_session"', code: "23505" })));
   r.tick(); await r.settle();
   await src.play(12, r);
   held.shift()(); await r.settle();
   eq("B3: a refused start leaves an explicit failed state", r.state, "error");
-  ok("B3: with a clear error naming the refusal", errors.some((e) => e.code === "start_failed" && e.refusal === "switch_off"));
+  ok("B3: with a clear error naming the refusal", errors.some((e) => e.code === "start_failed" && e.refusal === "already_live"));
   ok("B3: and the 12 s captured are kept on this laptop", (await store.bytesHeld(row.id)) > 0 && (await store.listChunks(row.id)).length >= 2);
   eq("B3: nothing reached the server", w.server.chunkRows(row.id).length, 0);
   void states;
@@ -1079,7 +1080,7 @@ console.log("=== M2: sign-out, abandoned, stuck and deleted audio ===");
   const { w, store, id } = failedStart;
   const held = await store.bytesHeld(id);
   clock += 15 * 86400000;
-  const h = recorder(w, store, new FakeSource());
+  const h = recorder(w, store, new FakeSource(), { abandonedKeepMs: 30 * 86400000 });   // (the 14-day deletion rule is tested on its own below)
   const stuck = []; h.r.on("stuck", (e) => stuck.push(...e.recordings));
   await h.r.prepare(); await h.r.recover();
   ok("M2: audio stuck longer than 14 days is surfaced with its age and size", stuck.some((s) => s.recordingId === id && s.overLimit && s.bytes > 0 && s.ageMs > 14 * 86400000), JSON.stringify(stuck));
@@ -1087,7 +1088,7 @@ console.log("=== M2: sign-out, abandoned, stuck and deleted audio ===");
   await throwsLike("M8: Discard needs the typed word: a lower-case 'discard' is refused", () => h.r.discardLocal(id, "discard"), /Type DISCARD/);
   eq("M8: and nothing was thrown away", await store.bytesHeld(id), held);
   w.server.recordings.get(id).status = "deleted";        // the server deleted it (retention / a deletion request)
-  const h2 = recorder(w, store, new FakeSource());
+  const h2 = recorder(w, store, new FakeSource(), { abandonedKeepMs: 30 * 86400000 });
   await h2.r.prepare(); await h2.r.recover();
   ok("M2: a recording the server reports deleted is purged here too", !(await store.getRecording(id)) && (await store.bytesHeld(id)) === 0);
 }
@@ -1645,6 +1646,175 @@ console.log("=== mutant E (P12): the Stop landed, its answer was lost ===");
   w.backend.getRecording = async (...a) => { if (lose < 1 && loseGet-- > 0) throw { message: "upstream request timeout", code: "503" }; return get(...a); };
   await r.stop(); await r.settle(); await ticks(r, 40);
   eq("P12: the Stop landed, its answer and two read-backs were lost: complete, local copy gone", [w.server.recordings.get(row.id).status, r.state, !!(await store.getRecording(row.id))], ["complete", "complete", false]);
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// C2 round 4: review 3's findings.
+
+console.log("=== R3-B1: one pre-start limit, shared with the migration ===");
+{
+  const sql = readFileSync(resolve(repo, "supabase/migrations/20261112100000_class_recorder.sql"), "utf8");
+  const trig = sql.slice(sql.indexOf("IF NEW.pre_start_ms IS DISTINCT FROM OLD.pre_start_ms THEN"), sql.indexOf("RAISE EXCEPTION 'The audio before the server''s start can be stated once"));
+  ok("R3-B1: the migration's bound is LEAST(max_duration_ms, started_at - capture_opens_at) and nothing else (no 30-minute cap)",
+    /NEW\.pre_start_ms > LEAST\(OLD\.max_duration_ms,\s*GREATEST\(0, floor\(extract\(epoch FROM \(OLD\.started_at - OLD\.capture_opens_at\)\) \* 1000\)\)::bigint\)/.test(trig) && !/1800000/.test(sql));
+  const L = (s, o, d) => R.preStartLimitMs({ startedAt: s, captureOpensAt: o, maxDurationMs: d });
+  const opens = Date.parse("2026-11-12T09:55:00Z");
+  eq("R3-B1: the engine's limit is the same expression", [L(opens + 31 * 60000, opens, 6300000), L(opens + 200 * 60000, opens, 6300000), L(opens - 5000, opens, 6300000), L(opens + 1234.7, opens, 6300000)], [31 * 60000, 6300000, 0, 1234]);
+}
+{
+  const { w, src, r, errors, states, row, store } = await started();
+  const calls = []; const orig = w.backend.setPreStart.bind(w.backend);
+  w.backend.setPreStart = (id, ms) => { calls.push(ms); return orig(id, ms); };
+  w.server.offline = true;
+  r.tick(); await r.settle();
+  await src.play(31 * 60, r, 400);
+  ok("R3-B1: 31 minutes offline at the start: still `starting`, never the red dot", r.state === "starting" && !states.includes("recording"));
+  w.server.offline = false;
+  await src.play(120, r, 200);
+  eq("R3-B1: the network back: recording", r.state, "recording");
+  ok("R3-B1: the offset (> 30 min) was accepted, stated ONCE (the in-memory copy learnt it)", calls.length === 1 && calls[0] > 30 * 60000 && w.server.recordings.get(row.id).pre_start_ms === calls[0], JSON.stringify(calls));
+  ok("R3-B1: and the chunks are going up", w.server.chunkRows(row.id).filter((c) => c.confirmed_at).length > 100);
+  await r.stop(); await r.settle(); await ticks(r, 30, 5000);
+  eq("R3-B1: Stop completes", w.server.recordings.get(row.id).status, "complete");
+  ok("R3-B1: all 33 minutes are on the server", teacherSeconds(w, row.id) >= 33 * 60 - 1, String(teacherSeconds(w, row.id)));
+  ok("R3-B1: no refusal on the way", !errors.some((e) => e.code === "server_refused"), errors.filter((e) => e.code === "server_refused").map((e) => e.message).slice(0, 2).join(" | "));
+  void store;
+}
+{
+  // A server that refuses the statement anyway: said plainly, not retried for ever, Stop path ends.
+  const { w, src, r, errors, states, row, store } = await started();
+  const held = []; const orig = w.backend.start;
+  w.backend.start = (...a) => new Promise((res, rej) => held.push(() => orig(...a).then(res, rej)));
+  w.backend.setPreStart = async () => { throw { message: "The audio before the server's start can be stated once, before any chunk, and not from before the window opened", code: "P0001" }; };
+  r.tick(); await r.settle();
+  await src.play(20, r);
+  held.shift()(); await r.settle();
+  await src.play(30, r);
+  ok("R3-B1: while the server will not take the offset the state is never `recording`", !states.includes("recording"), states.join(","));
+  const e = errors.find((x) => x.code === "start_failed" && /CANNOT be sent/.test(x.message));
+  ok("R3-B1: after three refusals: 'cannot be sent', recording stopped, the microphones closed", !!e && r.state === "error" && !src.open, e?.message);
+  ok("R3-B1: no 'kept and sent' claim was made", !errors.some((x) => /kept and sent/.test(x.message)));
+  eq("R3-B1: the server row is given up, not left `recording`", w.server.recordings.get(row.id).status, "abandoned");
+  ok("R3-B1: the audio is kept on the laptop and listed", (await r.heldAudio()).some((h) => h.recordingId === row.id && h.bytes > 0));
+  void store;
+}
+
+console.log("=== R3-M1: filled silence is stated exactly and never counts ===");
+{
+  const { w, src, r, row } = await started();
+  r.tick(); await r.settle();
+  for (let i = 0; i < 6; i++) {
+    await src.play(14, r);
+    src.stalled = true; src.resumeHeals = false; src.rebuildHeals = false;
+    await src.play(5, r, 24); src.resumeHeals = true; await src.play(2, r, 24);
+  }
+  await src.play(10, r);
+  await r.stop(); await r.settle(); await ticks(r, 4);
+  const man = manifestOf(w, row.id);
+  const filled = man.discontinuities.filter((d) => d.kind === "context_stall").reduce((n, d) => n + (d.padded_ms ?? 0), 0);
+  const tr = [...w.server.tracks.values()].filter((t) => t.recording_id === row.id);
+  ok("R3-M1: there was silence filled inside chunks that hold real audio", filled > 20000 && w.server.chunkRows(row.id).some((c) => !c.below_floor), String(filled));
+  ok("R3-M1: the page states it per track, exactly (every fill sits inside counting chunks here)", tr.length === 2 && tr.every((t) => t.padded_ms === filled), JSON.stringify(tr.map((t) => t.padded_ms)));
+}
+{
+  const { w, src, r, row } = await started();
+  r.tick(); await r.settle(); await src.play(12, r);
+  src.stalled = true; src.resumeHeals = false; src.rebuildHeals = false;
+  await src.play(35 * 60, r, 24);
+  src.resumeHeals = true; await src.play(8, r);
+  const cur = await r.current();
+  const d = cur.discontinuities.find((x) => x.kind === "context_stall");
+  eq("N5: a 35-minute stall is filled with at most 30 minutes of silence (bounded)", d?.padded_ms, 30 * 60000);
+  await r.stop(); await r.settle();
+  void w; void row;
+}
+
+console.log("=== R3-M2 and N3: a stated 'no' deletes what was captured; consent and cancellation are final ===");
+for (const [label, msg, refusal] of [
+  ["consent missing", "Recording is refused: 2 child(ren) in this class have no consent on record under wording v1-2026-11", "consent_missing"],
+  ["lesson cancelled", "This lesson is cancelled: it cannot be recorded", "session_canceled"],
+  ["switched off", "Recording is switched off for this class", "switch_off"],
+]) {
+  const { w, src, r, errors, row, store } = await started();
+  const held = [];
+  w.backend.start = () => new Promise((res, rej) => held.push(() => rej({ message: msg, code: "42501" })));
+  r.tick(); await r.settle();
+  await src.play(12, r);
+  ok(`N3 (${label}): audio was being stored while the server had not answered`, (await store.listChunks(row.id)).length >= 2);
+  held.shift()(); await r.settle();
+  await src.play(10, r);
+  ok(`N3 (${label}): final - recording stopped, microphones closed, no retry`, r.state === "error" && !src.open && errors.some((e) => e.code === "start_failed" && e.refusal === refusal));
+  ok(`R3-M2 (${label}): what was captured before the answer is DELETED from the laptop, and said so`, !(await store.getRecording(row.id)) && (await store.bytesHeld(row.id)) === 0 && errors.some((e) => /DELETED/.test(e.message)));
+  eq(`R3-M2 (${label}): nothing was sent`, w.server.chunkRows(row.id).length, 0);
+}
+{
+  // Mid-lesson: audio the server refuses because the school asked to stop is not kept.
+  const { w, src, r, row, store } = await started();
+  r.tick(); await r.settle(); await src.play(25, r);
+  w.server.failNext("rpc:recorder_register_chunk", 1, { message: "Recording was asked to stop: audio captured after that is refused" });
+  await src.play(12, r);
+  await r.stop(); await r.settle(); await ticks(r, 4);
+  const refused = (await store.listChunks(row.id)).filter((c) => c.refusal === "stop_requested");
+  ok("R3-M2: chunks refused after the school's stop request hold no audio on the laptop", refused.length >= 1 && (await Promise.all(refused.map((c) => store.getBytes(row.id, c.track, c.seq)))).every((b) => !b));
+}
+
+console.log("=== owner ruling: unsent audio 14 days after the server gave it up ===");
+{
+  const { w, src, r, row, store } = await started();
+  const held = [];
+  w.backend.start = () => new Promise((res, rej) => held.push(() => rej({ message: 'duplicate key value violates unique constraint "class_recordings_one_live_per_session"', code: "23505" })));
+  r.tick(); await r.settle(); await src.play(12, r);
+  held.shift()(); await r.settle();
+  const h0 = (await r.heldAudio()).find((h) => h.recordingId === row.id);
+  ok("ruling: kept, with the day it will be deleted shown (14 days after it was given up)", h0 && h0.bytes > 0 && Math.abs(h0.deleteAt - (clock + 14 * 86400000)) < 120000, JSON.stringify(h0));
+  clock += 13 * 86400000;
+  const a = recorder(w, store, new FakeSource()); await a.r.prepare(); await a.r.recover();
+  ok("ruling: still kept after 13 days", (await store.bytesHeld(row.id)) > 0);
+  clock += 2 * 86400000;
+  const b = recorder(w, store, new FakeSource()); await b.r.prepare(); await b.r.recover();
+  ok("ruling: deleted after 14 days, and said", !(await store.getRecording(row.id)) && b.errors.some((e) => /was deleted from this laptop/.test(e.message)));
+}
+
+console.log("=== N4: a context stall that ends while both microphones are gone ===");
+{
+  const { src, r } = await started();
+  r.tick(); await r.settle(); await src.play(10, r);
+  const devs = src.devices;
+  src.dead.room = true; src.dead.teacher = true; src.devices = [];
+  src.onTrackEnded("room"); src.onTrackEnded("teacher");
+  src.stalled = true; src.resumeHeals = false; src.rebuildHeals = false;
+  await src.play(6, r, 24);
+  src.resumeHeals = true; await src.play(4, r, 24);
+  eq("N4: audio flows again but there is still no microphone: `stalled`, never `recording`", r.state, "stalled");
+  src.devices = devs; src.onDeviceChange?.(); await r.settle(); await src.play(3, r);
+  eq("N4: a microphone back: recording", r.state, "recording");
+  await r.stop(); await r.settle();
+}
+
+console.log("=== N1: the uploader never registers before the server knows the offset ===");
+{
+  const w = world();
+  const store = new R.MemoryStore();
+  const calls = []; const orig = w.backend.registerChunk.bind(w.backend);
+  w.backend.registerChunk = (a) => { calls.push(a.seq); return orig(a); };
+  const rec = { id: "u1", ownerUserId: TEACHER, classId: CLASS, sessionId: w.sid, format: "flac", chunkMs: 10000, sampleRate: 48000, purpose: "lesson", serverStatus: "recording", phase: "capturing",
+    scheduledStart: new Date(clock).toISOString(), scheduledEnd: new Date(clock + 3600000).toISOString(), captureOpensAt: new Date(clock - 60000).toISOString(), captureClosesAt: new Date(clock + 3600000).toISOString(),
+    sessionDate: "2026-11-12", minBytesPerSec: 4000, clockToleranceMs: 15000, maxDurationMs: 3700000, startedAtServer: new Date(clock).toISOString(), preStartMs: 30000, preStartAcked: false,
+    tracks: [{ track: "teacher" }, { track: "room" }], anchors: [], discontinuities: [], installId: "i", appVersion: "t", userAgent: "t", createdAt: clock, updatedAt: clock };
+  await store.putRecording(rec);
+  await store.addChunk({ recordingId: "u1", track: "teacher", seq: 0, startFrame: 0, endFrame: 480000, sampleRate: 48000, tStartMs: 0, tEndMs: 10000, byteSize: 50000, sha256: "a".repeat(64), mime: "audio/flac", ext: "flac", encoding: "fixed", state: "captured", attempts: 0, createdAt: clock }, new Uint8Array(50000));
+  const up = new R.Uploader(store, w.backend, { now });
+  await up.run("u1");
+  eq("N1: with the offset not yet acknowledged nothing is registered", calls.length, 0);
+}
+
+console.log("=== C3-a: dispose() while capturing ends the capture properly ===");
+{
+  const { w, src, r, row } = await started();
+  r.tick(); await r.settle(); await src.play(15, r);
+  await r.dispose();
+  ok("C3-a: the microphones are closed", !src.open);
+  ok("C3-a: the Stop was sent (not a silent abandon)", ["uploading", "complete"].includes(w.server.recordings.get(row.id).status), w.server.recordings.get(row.id).status);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
