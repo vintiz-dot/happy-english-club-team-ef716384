@@ -260,7 +260,7 @@ export function StudentActionPopover({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-[21rem] p-0 overflow-hidden" align="center" sideOffset={6}>
+      <PopoverContent className="w-[21rem] p-0 overflow-x-hidden overflow-y-auto max-h-[var(--radix-popover-content-available-height)]" align="center" sideOffset={6}>
         {/* Identity band: who this is, today's numbers, attendance state */}
         <div className="border-b border-hec-line bg-hec-sunken px-4 py-3 text-hec-ink">
           <div className="flex items-start gap-3">
@@ -476,7 +476,7 @@ export function StudentActionPopover({
                 placeholder={`What did ${studentName} say/write? e.g. "He go to school yesterday"`}
                 value={flagText}
                 onChange={(e) => setFlagText(e.target.value)}
-                className="min-h-[64px]"
+                className="min-h-[96px]"
               />
               <div className="flex flex-wrap gap-2">
                 {["grammar", "vocabulary", "pronunciation", "spelling"].map((t) => (
