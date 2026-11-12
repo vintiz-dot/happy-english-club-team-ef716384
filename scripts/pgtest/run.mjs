@@ -96,6 +96,59 @@ const SUITES = [
       "20261112091000_session_cancel_guard.sql",
     ],
   },
+  // D4 step 1a (docs/evidence/D4-design.md f.2): the two floors, D2's own
+  // suite re-run with them, the functions as deployed today against them,
+  // and the rollback back to the D release. Each pins its assertion count.
+  {
+    name: "d4 floors",
+    file: "d4-floors.test.mjs",
+    expect: 197,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261113100000_d4_floors.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+    ],
+  },
+  {
+    name: "d4 D2 carry-over",
+    file: "d4-d2-carryover.test.mjs",
+    expect: 275,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261113100000_d4_floors.sql",
+    ],
+  },
+  {
+    name: "d4 deployed functions",
+    file: "d4-deployed-functions.test.mjs",
+    expect: 34,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261113100000_d4_floors.sql",
+    ],
+  },
+  {
+    name: "d4 rollback",
+    file: "d4-rollback.test.mjs",
+    expect: 22,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261113100000_d4_floors.sql",
+    ],
+    args: ["scripts/ROLLBACK-d4-1-floors.sql"],
+  },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.

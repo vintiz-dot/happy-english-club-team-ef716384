@@ -3,6 +3,7 @@
 //   node scripts/pgtest/guard-fingerprint.mjs [--check]                 D release (D1 + D2)
 //   node scripts/pgtest/guard-fingerprint.mjs --release d4 [--check]    D4 so far (D release + D4 files)
 //   node scripts/pgtest/guard-fingerprint.mjs --check-unchanged         the 66 D-release objects after D4
+//   node scripts/pgtest/guard-fingerprint.mjs --check-unchanged --after-rollback   ... after the D4 rollbacks: 66/66
 //
 // 1. Loads a prelude, then the release's BASELINE migrations, snapshots the
 //    catalog, then the release's NEW migrations (the real files).
@@ -234,6 +235,18 @@ export async function checkUnchanged({ prelude = D2_PRELUDE + D4_PEOPLE, d4Files
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
+  if (process.argv.includes('--check-unchanged') && process.argv.includes('--after-rollback')) {
+    // D4 rollback (design f.7): every D4 rollback script, newest first, then
+    // 20261112091000 pasted again -> the 66 objects must all match.
+    const rollbacks = ['scripts/ROLLBACK-d4-1-floors.sql'];
+    const { total, diff } = await checkUnchanged({ after: async (x) => {
+      for (const r of rollbacks) await x.exec(readFileSync(resolve(root, r), 'utf8'));
+      await x.exec(mig(D2));
+    } });
+    console.log(`D-release objects compared: ${total}; differing: ${diff.length} (${diff.join('; ')})`);
+    console.log(diff.length === 0 && total === 66 ? '66 of 66 again' : 'NOT RESTORED');
+    process.exit(diff.length === 0 && total === 66 ? 0 : 1);
+  }
   if (process.argv.includes('--check-unchanged')) {
     const { total, diff } = await checkUnchanged();
     const allowed = ['function public._session_change_assess(s sessions, p_action text, p_change jsonb, p_uid uuid)',
