@@ -62,6 +62,20 @@ const SUITES = [
       "20261112091000_session_cancel_guard.sql",
     ],
   },
+  // manage-session and bulk-cancel-sessions bundled and driven with
+  // requests, their Supabase clients a stand-in for PostgREST over the same
+  // real migrations: the checked RPCs run, and every sessions write is
+  // checked to be on the admin's own JWT.
+  {
+    name: "session guard functions",
+    file: "session-guard-functions.test.mjs",
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+    ],
+  },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.

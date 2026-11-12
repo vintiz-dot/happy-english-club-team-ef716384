@@ -1,6 +1,6 @@
 # D2 build log - cancellation guard (SQL + tests)
 
-Where I am / next step: FINISHED. Step 1 (D1 revision 1, 143/0) and step 2 (guard migration + suite 212/0, full run 2157/33/0, 17/17 mutants caught) committed; node_modules link removed. Next belongs to the conductor: review, then the edge-function task works from "Contract for the edge functions and UI" below.
+Where I am / next step: Revision 1 done (SQL + suite 239/0 + mutants + contract gaps). Edge functions: see docs/evidence/D2-edge-build.md.
 
 Written and tested only. NOT applied to any database (no Supabase/MCP tool, no live access).
 
@@ -57,6 +57,35 @@ Files (all on this branch):
 - B-7 / B-8 / B-10 / B-11: edge-function or owner items, not SQL.
 - Real two-connection lock behaviour (pglite is one connection): lock order is asserted structurally (d37) only.
 - `authenticated`'s live statement timeout (B-5): the owner should read `SELECT rolconfig FROM pg_roles WHERE rolname = 'authenticated'` before rollout.
+
+## Revision 1 (D-review-2, conductor rulings on review 2)
+
+Edited in place: `20261112091000_session_cancel_guard.sql` (never applied) and its suite. Nothing else in `supabase/migrations/` touched.
+
+| Item | Change | Where | Test (suite label) |
+|---|---|---|---|
+| F-1 MAJOR | A register row re-parented away from the lesson (`UPDATE attendance SET session_id = ...`) is erased evidence, ANY status, seeded or person-marked (fail closed: the child's bill line leaves with it). New `attendance_reparented` entries (student, old/new status, `new_session_id`) in `erased_recently`; the ordinary attendance branch no longer double-counts a re-parent. Refusing the write itself stays D4. | `_session_erased_recently` | `F-1 E2 ...` (probe reproduced: T3 lesson, admin re-parents both Present marks, preview then cancel -> `review_required:true`, both rows listed, in the queue); seeded re-parent counted; control lesson not reviewed |
+| F-4 | A session's id cannot change: `OLD.id IS DISTINCT FROM NEW.id` added to the UPDATE trigger's WHEN, and `session_change_guard` raises `HC020` (`DETAIL kind=id_change`) for EVERY caller, before either lane. | trigger WHEN, `session_change_guard` | `F-4 UPDATE sessions SET id by the admin/service role/superuser -> HC020`; probe E4 |
+| F-5 / B-3(c) | New `session_day_evidence(session, class, date)` (STABLE, internal): points, transcripts, homework and other Held/person-marked lessons of the class on a day. A move's `destination` now carries `day_evidence`. Destination evidence raises the tier to at least 1 (reason + confirm). Review rule now one function `_session_review_required`, which adds: a move whose destination is started, settled (`destination.any`) or has day evidence; an un-cancel when any register child's bill in the month is settled (D1's `settled` reads false after a cancel because every mark is Excused). Automation lane: a move onto a day with evidence -> `HC020`. | `_session_change_assess`, `_session_review_required`, `session_change_guard` | `F-5 G2 ...`, `F-5 G3 ...`, `F-5 I5 ...`, `F-5 automation ... homework -> HC020` + control |
+| F-7 | Every top-level block of the suite now runs inside `section(name, fn)`: an unexpected throw is a FAIL line and the suite goes on. Bare fixture calls after a refusal test wrapped in `must(label, fn)` (d21, d22, d23, d24/d33, d26, d29 x3, d31, d32). New cases for the three survivors: M08 (an acknowledged un-cancel written as Held -> HC020, control Scheduled accepted), M32 (`log_session_automation_refused` with a uid on the service role -> 42501), M38 (automation move out of a paid source month into another month -> HC020, control allowed). | suite | `M08 ...`, `M32 ...`, `M38 ...` |
+| F-8.2 | The preview now returns `review_required` and `erased_recently` (informational, not in the token; the RPC result is the authority). | `session_change_preview` | `F-8.2 preview of an untouched future lesson ...`, F-1/F-5 cases |
+| F-9 (second half) | The audit-table insert guard is owner-only: refuses any `current_user` that is not the table's owner, besides the named API roles. | `session_cancel_audit_insert_guard` | `F-9 ...` |
+
+Deferred, not built (rulings): guarding deletion of points/transcripts (D4); wiring the recorder view into `session_recording_evidence` (ships with the recorder migration). The F-9 `EXPLAIN ANALYZE` of the 30-day `audit_log` scan and `authenticated`'s statement timeout remain owner reads before the paste; the preview now runs the scan too (one more call per preview).
+
+Revision deviations (fail-closed choices):
+- R1. `attendance_reparented` counts rows of any status and seeded rows (the review asked only for the session_id branch on person-marked Present/Late).
+- R2. Destination-day evidence raises the tier to >= 1 as well as requiring review (the ruling asked for the reviewed path only).
+- R3. Destination-day evidence is read over-inclusively: points linked to ANOTHER lesson, any transcript of the day not linked to this lesson, and other Held/marked lessons of the class that day also count.
+
+Verification (revision 1):
+
+```
+node scripts/pgtest/session-cancel-guard.test.mjs supabase/migrations/20261009130000_audit_every_admin_action.sql supabase/migrations/20261027090000_cancelled_lesson_attendance_guard.sql supabase/migrations/20261112090000_session_held_evidence.sql supabase/migrations/20261112091000_session_cancel_guard.sql
+-> 239 passed, 0 failed   (was 212; no case removed or weakened)
+```
+
+Mutation re-run (scratch copies, never committed), 11 mutants, all caught with the summary line printed (no crash): M08 uncancel to any status (2 FAIL), M32 automation log without uid check (4), M38 move out of a settled month (1), F-1 no re-parent branch (4), F-4 id change allowed (4), F-5 no day evidence in the raw lane (1), F-5 review ignores the destination (5), M19 flag not consumed (42 FAIL, 186 assertions reported - was a crash at 37), M17 confirm never required (12 - was a crash), M27 delete with evidence allowed (4 - was a crash), F-9 insert guard role list only (1).
 
 ## Contract for the edge functions and UI (as built)
 
@@ -169,6 +198,22 @@ For `schedule-sessions` when a delete/time update comes back `HC020`/`HC021`: on
 | `22004` | | NULL id or batch id | 400 |
 | `55000` | | evidence unavailable (recorder helper VOLATILE, evidence incomplete) | 503 |
 | `PGRST202` / `42883` | | function missing: migration not pasted | 503 `guard_not_installed` |
+
+### Revision 1: what the contract left open (D-review-2 F-8, items 1-11)
+
+Preview additions (revision 1): `review_required` (bool), `erased_recently` (array of `{what: 'attendance'|'attendance_reparented'|'session_status', operation, student_id?, old_status, new_status, new_session_id?, actor_user_id, occurred_at}`), and for a move `destination.day_evidence = {points, transcripts, homeworks, other_lessons, any}`. Neither `review_required` nor `erased_recently` is covered by the token.
+
+1. **Which client - a RULE.** Every person-initiated write to `sessions` - the checked RPCs AND an unguarded (`kind: null`) edit such as a same-day time change, a teacher, notes or rate edit, or `Scheduled <-> Held` - is made on a client built from the caller's own `Authorization` header (anon key + JWT). `manage-session` and `bulk-cancel-sessions` never write `sessions` with the service key. The one exception in the codebase is `schedule-sessions`' own rebuild (automation, no `auth.uid()`). The service client may still read, write `audit_log` named entries, and invoke calculate-tuition / calculate-payroll. (`manage-session` `create` still INSERTs on the service key: inserts are not guarded and the brief keeps `create` unchanged - see D2-edge-build.md deviations.)
+2. **Review before Confirm.** The preview returns `review_required` and `erased_recently` (above). Informational; the RPC result's `review_required` is the authority.
+3. **Partial refresh.** `tuition_refreshed` only when EVERY pair returned ok; otherwise ONE `tuition_refresh_failed` event carrying every pair's result. A retry (`manage-session` `refresh-tuition`) records a NEW event; the latest tuition event decides the queue's `tuition_state` and `session_cancel_tuition_pending` (which looks only for any `tuition_refreshed`).
+4. **More errors.** `22P02`: a non-boolean `confirm` (or other malformed value) in a bulk item aborts the WHOLE chunk (not a per-item refusal) - the edge function sends booleans only. `23514`: `p_context.attached` at or over 128 KB - nothing changed; the function keeps attachments small (calculator snapshots of named fields only).
+5. **Bulk details.** A duplicate id in one chunk: the second comes back `HC015 already_canceled` (the edge function de-duplicates before sending). A malformed item comes back `{id: <as given or null>, code: 'HC015', message: 'bad_item'}`. `done`/`refused` are in ascending id order, never input order: map by `id`.
+6. **No bulk delete / bulk move RPC.** `manage-session` `bulk-delete` (hard) loops `cancel_session_checked(id,'delete')` one call per lesson, each its own transaction; NOT atomic. Its soft form (cancel) uses `cancel_sessions_checked_bulk` in chunks like bulk-cancel. There is no bulk reschedule.
+7. **Check order.** The RPC checks: admin, reason (`HC010`), id, lock, `HC015` refuse codes, token (`HC011`), confirm (`HC012`), correction reason (`HC013`), `use_cancel` (`HC014`), bulk own reason (`HC017`). So a delete of an evidence lesson without `confirm` is `HC012` before `HC014`. The UI must branch on the preview's `allowed` / `refuse_code`, not on the RPC error.
+8. **No re-class, no teacher moves.** There is no checked re-class: a `class_id` change by a person is always `HC021`; the screens do not offer it (the admin cancels and creates a lesson in the other class). A teacher cannot move a lesson's date at all once it has started or has evidence (RPCs are admin-only; the teacher policy allows only unguarded edits): the teacher asks an admin.
+9. **Direct writers in `src/` that start getting `HC020`/`HC021` when the migration is pasted** and their replacement (D3): `src/components/admin/SessionActionsModal.tsx:134` (raw delete) -> manage-session `preview` + `delete`; `src/components/schedule/GlobalCalendar.tsx:191` (drag reschedule and its undo) -> manage-session `preview` op `move` + `move`; `src/components/admin/EditSessionModal.tsx:122` (start/end time) -> only a time edit that UN-STARTS a started lesson is refused (`move`): send times through manage-session `move` (which does a plain caller-JWT update when the preview's `kind` is null). Not refused (unguarded columns): `src/components/admin/class/SessionDetailDrawer.tsx:116` (notes/teacher), `src/components/admin/class/AttendanceDrawer.tsx:130` (teacher swap), `src/components/admin/TeacherScheduleTransfer.tsx:144,157` (teacher), `src/components/teacher/AttendanceMarking.tsx:217` (`Held`).
+10. **`schedule-sessions` MUST** (not "may") call `log_session_automation_refused(id, 'schedule-sessions')` on an `HC020`/`HC021` from its delete or time update, and MUST NOT count that lesson as removed (`index.ts:745-750` swallows the error today). Not part of this task's files; owed by the schedule-sessions change before the paste.
+11. **Chunk aborts.** `HC022`, `HC050`, `55000`, `40P01`/`40001`, `22P02` or a missing function abort the current chunk (its transaction rolls back). Earlier chunks of the same `batch_id` are COMMITTED and stay; the edge function STOPS (sends no later chunk), refreshes tuition for what was done, and returns the failed and later lessons as `not_attempted` with the code. A retry is a new request with fresh tokens (the done lessons are now `already_canceled`).
 
 ## Verification
 

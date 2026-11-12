@@ -194,7 +194,11 @@ END $fn$;
 CREATE OR REPLACE FUNCTION public.session_cancel_audit_insert_guard()
 RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $fn$
 BEGIN
-  IF current_user::text IN ('anon', 'authenticated', 'service_role', 'authenticator') THEN
+  -- Revision 1 (D-review-2 F-9): fail-closed form - only the table's
+  -- owner (whom the definer functions run as) may insert; a role added
+  -- later is refused by default, not let in.
+  IF current_user::text IN ('anon', 'authenticated', 'service_role', 'authenticator')
+     OR current_user <> (SELECT c.relowner::regrole::name FROM pg_class c WHERE c.oid = TG_RELID) THEN
     RAISE EXCEPTION '% rows are written only by the checked session functions', TG_TABLE_NAME
       USING ERRCODE = 'HC041';
   END IF;
@@ -314,6 +318,40 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS
             OR COALESCE(i.tuition_frozen, false)))
 $fn$;
 
+-- Revision 1 (review-1 B-3(c), D-review-2 F-5): what a move LANDS on.
+-- Points, transcripts and homework are matched to a lesson by class +
+-- date (D1 items 7-9), so moving a lesson onto a day that already has
+-- them attaches them to it. Read over-inclusively (fail closed): any
+-- positive participation/correction point row of the class that day not
+-- linked to this lesson, any unlinked transcript of that day, any
+-- homework set that Hanoi day outside the Pixel Pal sync, and any OTHER
+-- lesson of the class that day that is Held or carries a person's mark.
+-- It decides only "review this move" and "not on the automation lane".
+CREATE OR REPLACE FUNCTION public.session_day_evidence(p_session_id uuid, p_class_id uuid, p_date date)
+RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $fn$
+DECLARE
+  v_day_start timestamptz := (p_date::timestamp) AT TIME ZONE 'Asia/Ho_Chi_Minh';
+  v_day_end   timestamptz := ((p_date + 1)::timestamp) AT TIME ZONE 'Asia/Ho_Chi_Minh';
+  v_points int; v_tr int; v_hw int; v_other int;
+BEGIN
+  SELECT count(*)::int INTO v_points FROM public.point_transactions pt
+   WHERE pt.class_id = p_class_id AND pt.date = p_date
+     AND pt.type IN ('participation', 'correction') AND pt.points > 0
+     AND pt.session_id IS DISTINCT FROM p_session_id;
+  SELECT count(*)::int INTO v_tr FROM public.class_transcripts ct
+   WHERE ct.class_id = p_class_id AND ct.session_id IS DISTINCT FROM p_session_id
+     AND (ct.transcript_date = p_date OR (ct.created_at >= v_day_start AND ct.created_at < v_day_end));
+  SELECT count(*)::int INTO v_hw FROM public.homeworks h
+   WHERE h.class_id = p_class_id AND h.created_at >= v_day_start AND h.created_at < v_day_end
+     AND NOT EXISTS (SELECT 1 FROM public.stars_homework_map m WHERE m.homework_id = h.id);
+  SELECT count(*)::int INTO v_other FROM public.sessions o
+   WHERE o.class_id = p_class_id AND o.date = p_date AND o.id <> p_session_id
+     AND (o.status = 'Held'
+          OR EXISTS (SELECT 1 FROM public.attendance a WHERE a.session_id = o.id AND a.marked_by IS NOT NULL));
+  RETURN jsonb_build_object('points', v_points, 'transcripts', v_tr, 'homeworks', v_hw, 'other_lessons', v_other,
+                            'any', (v_points + v_tr + v_hw + v_other) > 0);
+END $fn$;
+
 -- ---------------------------------------------------------------- 3
 -- Assessment: everything the admin is shown and the token covers. Used
 -- by the preview (no lock) and by the RPCs (after the row lock, so its
@@ -339,6 +377,7 @@ DECLARE
   v_dest_started boolean := false;
   v_dest_locked boolean := false;
   v_dest_tuition boolean := false;
+  v_dest_day jsonb := NULL;
   v_tier int;
   v_affected jsonb;
   v_aff_fp text;
@@ -393,9 +432,11 @@ BEGIN
         v_dest_started := public.session_has_started(n.date, n.start_time);
         v_dest_locked  := public.payroll_month_is_locked(to_char(n.date, 'YYYY-MM'));
         v_dest_tuition := public.session_month_tuition_settled(s.id, to_char(n.date, 'YYYY-MM'));
+        v_dest_day := public.session_day_evidence(s.id, s.class_id, n.date);   -- revision 1, F-5
         v_dest := jsonb_build_object('month', to_char(n.date, 'YYYY-MM'), 'started', v_dest_started,
                                      'payroll_month_locked', v_dest_locked, 'tuition', v_dest_tuition,
-                                     'any', v_dest_locked OR v_dest_tuition);
+                                     'any', v_dest_locked OR v_dest_tuition,
+                                     'day_evidence', v_dest_day);
         v_change := v_change || jsonb_build_object('destination', v_dest);
         v_started := v_started_src OR v_dest_started;
         v_settled := v_settled_src OR v_dest_locked OR v_dest_tuition;
@@ -409,6 +450,11 @@ BEGIN
   END IF;
 
   v_tier := public.session_change_tier(v_started, v_level, v_settled);
+  -- Revision 1: landing on a day that already carries evidence is never
+  -- a no-question move - at least a reason AND a confirmation (and review).
+  IF COALESCE((v_dest_day ->> 'any')::boolean, false) AND v_tier < 1 THEN
+    v_tier := 1;
+  END IF;
 
   SELECT COALESCE(jsonb_agg(jsonb_build_object(
            'student_id', a.student_id, 'month', v_src_month, 'status', a.status,
@@ -477,11 +523,20 @@ BEGIN
 END $fn$;
 
 -- Review change 4: evidence erased in the 30 days before, from audit_log.
--- Only read inside the RPCs (one call per change), never in the trigger.
+-- Only read inside the RPCs and the preview (one call per change), never
+-- in the trigger.
+--
+-- Revision 1 (D-review-2 F-1): a register row RE-PARENTED away from this
+-- lesson (`UPDATE attendance SET session_id = <another lesson>`) is erased
+-- evidence too, whatever its status or who marked it: it takes the mark
+-- AND the child's bill line with it, and nothing in the app needs that
+-- write. Counted fail-closed (any status, seeded or not), so a lesson
+-- stripped that way is always reviewed. Refusing the write itself is D4.
 CREATE OR REPLACE FUNCTION public._session_erased_recently(p_session_id uuid)
 RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $fn$
   SELECT COALESCE(jsonb_agg(x ORDER BY x ->> 'occurred_at', x::text), '[]'::jsonb) FROM (
     SELECT jsonb_build_object('what', 'attendance', 'operation', l.operation,
+             'student_id', l.diff -> 'old' ->> 'student_id',
              'old_status', l.diff -> 'old' ->> 'status', 'new_status', l.diff -> 'new' ->> 'status',
              'new_marked_by_null', (l.diff -> 'new') IS NOT NULL AND (l.diff -> 'new' ->> 'marked_by') IS NULL,
              'actor_user_id', l.actor_user_id, 'occurred_at', l.occurred_at) AS x
@@ -492,10 +547,25 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $
        AND l.diff -> 'old' ->> 'session_id' = p_session_id::text
        AND l.diff -> 'old' ->> 'status' IN ('Present', 'Late')
        AND (l.diff -> 'old' ->> 'marked_by') IS NOT NULL
+       AND (l.operation = 'DELETE'      -- a re-parent is reported by the next branch instead
+            OR (l.diff -> 'new' ->> 'session_id') IS NOT DISTINCT FROM (l.diff -> 'old' ->> 'session_id'))
        AND (l.operation = 'DELETE'
             OR (l.diff -> 'new' ->> 'status') IS DISTINCT FROM (l.diff -> 'old' ->> 'status')
                AND (l.diff -> 'new' ->> 'status') NOT IN ('Present', 'Late')
             OR (l.diff -> 'new' ->> 'marked_by') IS NULL)
+    UNION ALL
+    SELECT jsonb_build_object('what', 'attendance_reparented', 'operation', l.operation,
+             'student_id', l.diff -> 'old' ->> 'student_id',
+             'old_status', l.diff -> 'old' ->> 'status', 'new_status', l.diff -> 'new' ->> 'status',
+             'old_marked_by_person', (l.diff -> 'old' ->> 'marked_by') IS NOT NULL,
+             'new_session_id', l.diff -> 'new' ->> 'session_id',
+             'actor_user_id', l.actor_user_id, 'occurred_at', l.occurred_at)
+      FROM public.audit_log l
+     WHERE l.entity = 'attendance'
+       AND l.operation = 'UPDATE'
+       AND l.occurred_at >= now() - interval '30 days'
+       AND l.diff -> 'old' ->> 'session_id' = p_session_id::text
+       AND (l.diff -> 'new' ->> 'session_id') IS DISTINCT FROM (l.diff -> 'old' ->> 'session_id')
     UNION ALL
     SELECT jsonb_build_object('what', 'session_status', 'operation', l.operation,
              'old_status', l.diff -> 'old' ->> 'status', 'new_status', l.diff -> 'new' ->> 'status',
@@ -507,6 +577,34 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $
        AND l.diff -> 'old' ->> 'status' = 'Held'
        AND (l.diff -> 'new' ->> 'status') IS DISTINCT FROM 'Held'
   ) q
+$fn$;
+
+-- Who goes to the review queue. ONE rule, used by the preview (so the
+-- dialog can say so before Confirm - D-review-2 F-8.2) and by the apply.
+-- Revision 1 (F-5): a move that starts at, lands in a settled month of,
+-- or lands on a day with evidence of its DESTINATION is reviewed too, and
+-- so is an un-cancel inside a settled month.
+CREATE OR REPLACE FUNCTION public._session_review_required(a jsonb, p_action text, p_erased jsonb)
+RETURNS boolean LANGUAGE sql IMMUTABLE SET search_path = public AS $fn$
+  SELECT COALESCE(
+       (a ->> 'tier')::int = 3
+    OR ((a ->> 'tier')::int = 2 AND a ->> 'level' = 'STRONG')
+    OR (p_action = 'delete' AND (a ->> 'tier')::int >= 1)
+    OR (p_action = 'move' AND (a ->> 'tier')::int >= 2)
+    OR (p_action = 'move' AND (COALESCE((a -> 'destination' ->> 'started')::boolean, true)
+                               OR COALESCE((a -> 'destination' ->> 'any')::boolean, true)
+                               OR COALESCE((a -> 'destination' -> 'day_evidence' ->> 'any')::boolean, true)))
+    -- After a cancel every mark is Excused, so D1's "settled" (billable rows
+    -- only) reads false; judge an un-cancel by the bills of EVERY child on
+    -- the register instead (same settled test as session_month_tuition_settled).
+    OR (p_action = 'uncancel' AND (COALESCE((a ->> 'settled_any')::boolean, true)
+         OR EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(a -> 'invoices_before', '[]'::jsonb)) i
+                     WHERE COALESCE((i ->> 'recorded_payment')::numeric, 0) > 0
+                        OR i ->> 'status' IN ('paid', 'partial')
+                        OR i ->> 'confirmation_status' IN ('confirmed', 'adjusted')
+                        OR COALESCE((i ->> 'tuition_frozen')::boolean, false))))
+    OR jsonb_array_length(COALESCE(p_erased, '[]'::jsonb)) > 0,
+    true)
 $fn$;
 
 -- ---------------------------------------------------------------- 4
@@ -524,6 +622,13 @@ DECLARE
   v_ok boolean;
   v_new_month text;
 BEGIN
+  -- Revision 1 (D-review-2 F-4): a lesson's id is its identity in the
+  -- audit trail (overrides, audit_log history). Nobody changes it, on any
+  -- lane, with or without an acknowledgement.
+  IF TG_OP = 'UPDATE' AND OLD.id IS DISTINCT FROM NEW.id THEN
+    RAISE EXCEPTION 'session_change_requires_checked_path' USING ERRCODE = 'HC020',
+      DETAIL = 'kind=id_change; a lesson''s id cannot be changed';
+  END IF;
   IF TG_OP = 'DELETE' THEN
     v_kind := 'delete';
   ELSE
@@ -589,7 +694,9 @@ BEGIN
             AND v_level = 'NONE'
             AND NOT (v_new_month <> to_char(OLD.date, 'YYYY-MM') AND v_settled)
             AND NOT public.payroll_month_is_locked(v_new_month)               -- change 3: destination
-            AND NOT public.session_month_tuition_settled(OLD.id, v_new_month);
+            AND NOT public.session_month_tuition_settled(OLD.id, v_new_month)
+            -- revision 1 (F-5): not onto a day that already has evidence
+            AND NOT COALESCE((public.session_day_evidence(OLD.id, OLD.class_id, NEW.date) ->> 'any')::boolean, true);
   END IF;
 
   IF NOT COALESCE(v_ok, false) THEN
@@ -610,7 +717,8 @@ END $fn$;
 
 DROP TRIGGER IF EXISTS zz_session_change_guard_upd ON public.sessions;
 CREATE TRIGGER zz_session_change_guard_upd BEFORE UPDATE ON public.sessions FOR EACH ROW
-  WHEN (OLD.status     IS DISTINCT FROM NEW.status
+  WHEN (OLD.id         IS DISTINCT FROM NEW.id
+     OR OLD.status     IS DISTINCT FROM NEW.status
      OR OLD.date       IS DISTINCT FROM NEW.date
      OR OLD.start_time IS DISTINCT FROM NEW.start_time
      OR OLD.class_id   IS DISTINCT FROM NEW.class_id)
@@ -641,6 +749,7 @@ DECLARE
   v_uid uuid := public._session_require_admin();
   s public.sessions;
   v jsonb;
+  v_erased jsonb := '[]'::jsonb;
 BEGIN
   IF p_session_id IS NULL THEN
     RAISE EXCEPTION 'a session id is required' USING ERRCODE = '22004';
@@ -650,10 +759,18 @@ BEGIN
     RAISE EXCEPTION 'lesson not found' USING ERRCODE = 'P0002';
   END IF;
   v := public._session_change_assess(s, p_action, p_change, v_uid);
+  -- Revision 1 (F-8.2): say before Confirm whether this goes to review.
+  -- Informational: NOT covered by the token (the 30-day window moves);
+  -- the RPC result's review_required is the authority.
+  IF p_action IN ('cancel', 'delete', 'move') THEN
+    v_erased := public._session_erased_recently(s.id);
+  END IF;
   -- What the trigger would do with a plain edit of this shape (B-1): the
   -- UI sends an unguarded edit (kind null) as a normal update.
   RETURN v || jsonb_build_object('kind', CASE WHEN p_action = 'move' AND v ->> 'refuse_code' = 'bad_change'
-                                               THEN NULL ELSE p_action END);
+                                               THEN NULL ELSE p_action END,
+                                 'erased_recently', v_erased,
+                                 'review_required', public._session_review_required(v, p_action, v_erased));
 END $fn$;
 
 CREATE OR REPLACE FUNCTION public._session_change_apply(
@@ -726,11 +843,7 @@ BEGIN
   IF p_action IN ('cancel', 'delete', 'move') THEN
     v_erased := public._session_erased_recently(s.id);
   END IF;
-  v_review := v_tier = 3
-              OR (v_tier = 2 AND a ->> 'level' = 'STRONG')
-              OR (p_action = 'delete' AND v_tier >= 1)
-              OR (p_action = 'move' AND v_tier >= 2)
-              OR jsonb_array_length(v_erased) > 0;
+  v_review := public._session_review_required(a, p_action, v_erased);
 
   IF p_action = 'delete' THEN
     v_deleted := jsonb_build_object(
@@ -1007,6 +1120,8 @@ REVOKE ALL ON FUNCTION
   public.session_change_tier(boolean, text, boolean),
   public.session_change_reason_ok(text),
   public.session_month_tuition_settled(uuid, text),
+  public.session_day_evidence(uuid, uuid, date),
+  public._session_review_required(jsonb, text, jsonb),
   public._session_change_assess(public.sessions, text, jsonb, uuid),
   public._session_erased_recently(uuid),
   public.session_change_guard(),
