@@ -125,6 +125,11 @@ const SUITES = [
   // calculate-payroll instead of recomputing the month, and this is the
   // mapping that stands between the two.
   { name: "payroll screen rows", file: "payroll-rows.test.mjs", migrations: [] },
+  // The teacher's own payroll page and the admin's view of one teacher read
+  // calculate-payroll too (T5): the mapping, and the function itself as a
+  // teacher, an admin, a TA, a parent and nobody call it.
+  { name: "teacher payroll view", file: "teacher-payroll-view.test.mjs", migrations: [] },
+  { name: "teacher payroll function", file: "teacher-payroll.test.mjs", migrations: [] },
   {
     name: "pay-rate history",
     file: "payhist.mjs",
