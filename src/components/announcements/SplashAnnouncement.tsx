@@ -47,6 +47,9 @@ export const SplashAnnouncement = ({ announcement, onDismiss }: Props) => {
       {/* Full-viewport HTML body */}
       <motion.div
         className="flex-1 overflow-auto"
+        tabIndex={ivory ? 0 : undefined}
+        role={ivory ? "region" : undefined}
+        aria-label={ivory ? "Announcement" : undefined}
         initial={ivory ? { y: 8, opacity: 0 } : { scale: 0.97, opacity: 0 }}
         animate={ivory ? { y: 0, opacity: 1 } : { scale: 1, opacity: 1 }}
         transition={ivory ? { delay: 0.2, duration: 0.42, ease: [0.22, 1, 0.36, 1] } : { delay: 0.2, type: "spring", stiffness: 200, damping: 25 }}
