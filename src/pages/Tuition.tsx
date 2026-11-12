@@ -154,23 +154,23 @@ export default function Tuition() {
                   <CardTitle>Session Details</CardTitle>
                   <CardDescription>Classes attended in {dayjs(month).format("MMMM YYYY")}</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 sm:px-6">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Rate</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className="px-2 sm:px-4">Date</TableHead>
+                        <TableHead className="px-2 text-right sm:px-4">Rate</TableHead>
+                        <TableHead className="px-2 sm:px-4">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {tuitionData.sessionDetails.map((session, idx) => (
                         <TableRow key={idx}>
-                          <TableCell className="whitespace-nowrap tabular-nums">{dayjs(session.date).format("MMM D, YYYY")}</TableCell>
-                          <TableCell className="whitespace-nowrap text-right tabular-nums">{formatVND(session.rate)}</TableCell>
-                          <TableCell>
+                          <TableCell className="px-2 tabular-nums sm:whitespace-nowrap sm:px-4">{dayjs(session.date).format("MMM D, YYYY")}</TableCell>
+                          <TableCell className="whitespace-nowrap px-2 text-right tabular-nums sm:px-4">{formatVND(session.rate)}</TableCell>
+                          <TableCell className="px-2 sm:px-4">
                             <span
-                              className={`inline-flex items-center rounded-full border px-3 py-1 text-hec-caption font-medium ${
+                              className={`inline-flex items-center rounded-full border px-2 py-1 sm:px-3 text-hec-caption font-medium ${
                                 session.status === "Held" ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf" : "border-hec-line bg-hec-sunken text-hec-ink-soft"
                               }`}
                             >
