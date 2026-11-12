@@ -339,7 +339,7 @@ export default function TeacherPayroll() {
                       </TableRow>
                     ) : (
                       payrollData?.payrollResult?.sessionDetailsProjected?.map((session: any) => (
-                        <TableRow key={session.id} className={session.status === "Scheduled" ? "opacity-60" : ""}>
+                        <TableRow key={session.id} className={session.status === "Scheduled" ? "text-hec-ink-soft" : ""}>
                           <TableCell className="px-2 sm:px-4">
                             {dayjs(session.date).format("MMM D, YYYY")}
                           </TableCell>

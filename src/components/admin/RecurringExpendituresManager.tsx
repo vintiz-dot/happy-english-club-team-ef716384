@@ -694,7 +694,7 @@ export function RecurringExpendituresManager({ selectedMonth }: RecurringExpendi
                         {describeAllocation(t.allocation_mode)}
                       </Badge>
                       {applied && (
-                        <Badge className="border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">
+                        <Badge className="whitespace-nowrap border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">
                           <CheckCircle2 className="h-3 w-3 mr-0.5" />
                           Applied this month
                         </Badge>

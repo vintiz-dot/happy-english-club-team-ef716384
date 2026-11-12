@@ -83,8 +83,8 @@ export default function TeacherPayrollCalendar({
         <CardHeader>
           <CardTitle className="text-hec-h2">Calendar View</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+        <CardContent className="px-1 sm:px-6">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-2">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
               <div key={day} className="py-2 text-center text-hec-caption font-medium text-hec-ink-soft">
                 {day}
