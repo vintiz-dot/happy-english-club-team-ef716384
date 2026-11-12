@@ -107,7 +107,7 @@ Reading: the two CAM++ models are close to chance on these children's voices; EC
 
 ## 5. Results with the best model (ECAPA) - SYNTHETIC, UPPER BOUND
 
-`b2_eval.py --models ecapa` (final units, 21 enrolled, 17 test children; open set = leave-one-out, so every test window is also an unenrolled-speaker trial; run 2026-11-12, `work\b2\results_ecapa.json`, ECAPA rerun with 11 configurations and 3 cluster shuffles after the restart). "named" = correct child shown; "wrong child" = an enrolled child shown as someone else (closed set); "open accepted" = an unenrolled child shown as an enrolled one. Thresholds are chosen by `score.recommend_split` on the pooled s500* conditions so that BOTH the closed-set wrong-child rate and the open-set accept rate meet the target; "ok" = the 95 % upper bound meets it (1 358 test windows per population: enough to show 1 %, unlike B0's ~100).
+`b2_eval.py --models ecapa` (final units, 21 enrolled, 17 test children; open set = leave-one-out, so every test window is also an unenrolled-speaker trial; run 2026-11-12, `work\b2\results_ecapa.json`, ECAPA rerun with 11 configurations and 3 cluster shuffles after the restart). "named" = correct child shown; "wrong child" = an enrolled child shown as someone else (closed set); "open accepted" = an unenrolled child shown as an enrolled one. Thresholds are chosen by `score.recommend_split` on the pooled s500* conditions so that BOTH the closed-set wrong-child rate and the open-set accept rate meet the target; "ok" = the 95 % upper bound meets it (1 590 pooled s500* test windows per population - 914 s500 + 338 + 338 overlap: enough to show 1 % overall, unlike B0's ~100; per-length subsets are smaller, see their CIs).
 
 ### 5.1 Configurations (pooled s500* conditions, all lengths)
 
