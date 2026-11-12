@@ -78,8 +78,24 @@ export class BrowserCaptureSource implements CaptureSource {
 
   async openTracks(ids: { teacher: string; room: string }) {
     const both = await openBoth(ids);
+    if (this.g.state !== "running") await this.g.resume();
+    if (this.g.state !== "running") {
+      // Measured (C2 evidence, "arm without a click"): with no user gesture a
+      // context made BEFORE capture stays suspended even after resume(), but
+      // one created while a microphone capture is live starts running. So
+      // with the mics open, make a fresh context rather than give up.
+      const old = this.g;
+      const g = await AudioGraph.create(old.sampleRate);
+      g.onBatch = (b) => this.onBatch?.(b);
+      g.onTick = (f, t) => this.onTick?.(f, t);
+      this.g = g;
+      void old.close();
+      this.rebuiltContext = true;
+    }
     return { teacher: this.attach(both.teacher), room: this.attach(both.room) };
   }
+  /** True when the context had to be re-made after the mics opened (no gesture). */
+  rebuiltContext = false;
 
   async reopen(role: TrackRole, deviceId: string) {
     const o = await openInput(role, deviceId);
