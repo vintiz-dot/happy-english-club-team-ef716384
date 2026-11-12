@@ -25,7 +25,7 @@ export interface Announcement {
 }
 
 export function useAnnouncements() {
-  const { user, role } = useAuth();
+  const { user, role, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [localDismissals, setLocalDismissals] = useState<string[]>([]);
 
@@ -40,6 +40,10 @@ export function useAnnouncements() {
       if (error) throw error;
       return (data ?? []) as unknown as Announcement[];
     },
+    // Wait for the sign-in check to finish: before it does, `user` is null
+    // and the key would be the signed-out one, so a signed-in page load
+    // asked for the same rows twice (once under each key).
+    enabled: !authLoading,
     staleTime: 5 * 60 * 1000,
   });
 
