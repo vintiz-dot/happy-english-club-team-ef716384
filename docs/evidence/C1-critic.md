@@ -1,6 +1,6 @@
-VERDICT: INCOMPLETE
+VERDICT: FAIL
 
-Where I am / next step: 2 findings confirmed by probe; next: consent version, session detach, window, fail-open delete check, mutations.
+Counts: 2 BLOCKER (F1 false evidence, F2 data exposure), 5 MAJOR (F3-F7), 8 MINOR (F8-F15). Every BLOCKER and MAJOR was run as a probe; the real output is quoted. FAIL because F1 (fabricated `was_completed`), F2 (children's audio readable by a teacher of another class) and F6 (fail-open deletion guard) were executed. Status: finished.
 
 Critic of C1 (class recorder): `supabase/migrations/20261112100000_class_recorder.sql`, `scripts/pgtest/recorder.test.mjs`, `docs/evidence/C1-architecture.md`, on branch `claude/hec-conductor-setup-efbaa5` merged into the critic worktree. Baseline: `node scripts/pgtest/recorder.test.mjs <TA mig> <recorder mig>` -> `191 passed, 0 failed` (run by the critic).
 
@@ -99,7 +99,7 @@ Executed: `.probe/mut.mjs` wrote a mutated copy of the migration (CRLF-aware str
 | arm ignores per-child consent | CAUGHT (189/2) |
 | CHECK "ON needs consent" removed | CAUGHT (189/2) |
 | audit trigger allows DELETE | CAUGHT (188/3) |
-| audit TRUNCATE trigger moved off the table | CAUGHT (only because the second paste collided; no TRUNCATE assertion would have failed by itself - the owner-TRUNCATE case passes on `/append-only/` from... the moved trigger is gone, so it was the re-paste that failed) |
+| audit TRUNCATE trigger removed (re-run cleanly in `.probe/mut2.mjs`) | CAUGHT (190/1: `FAIL or truncate it :: it was allowed`) |
 | storage SELECT policy = bucket only | CAUGHT (186/5) |
 | storage read lets TAs in via `is_teacher_of_class` | CAUGHT (190/1) |
 | **archived teacher (`is_active=false`) still a teacher** | **SURVIVED (191/0)** - no inactive-teacher case |
@@ -120,11 +120,53 @@ Two controls (per-child wording version; client nulls `session_id`) could not be
 
 Other test-quality notes (read, not executed): roles ARE really switched (`SET LOCAL ROLE` + `test.uid`, :124-131) - good. But (a) every storage function runs as the pglite superuser, so the suite can never see F6; (b) the PRELUDE's `enrollments`, `sessions`, `teachers` are cut-down stand-ins (:40-57), so a column renamed in production would not fail here; (c) the "TA reads nothing" case passes because the TA has no `teachers` row - no case covers a person who is both a TA of class A and a teacher of class B; (d) the "audio from after the lesson window" case uses 9 000 000 ms, nowhere near the edge.
 
+### MINOR findings
+
+- **F8 MINOR (executed) - audio from after Stop is accepted.** In `uploading`, `recorder_register_chunk` (:987, :1003) bounds `t_end_ms` only by `max_duration_ms`, not by `ended_at`. Probe: stopped at once, then `AFTER-STOP: chunk claiming minutes 60-61 after Stop registers: {"ok":[...]}`. A page that keeps capturing after showing "stopped" can still deliver it. Fix: once `ended_at` is set, refuse `p_t_start_ms > (ended_at - started_at) ms + 5 s`.
+- **F9 MINOR (executed) - a child enrolled mid-recording is recorded without consent until the lesson ends.** Probe: `MID-ENROL: missing consent count now: 1`, `switch still on: true`, `audio keeps registering: {"ok":...}`. The next arm is refused (good), but nothing reacts to the enrolment. Fix: an AFTER INSERT/UPDATE trigger on `enrollments` that calls `recorder__switch_off(class, 'switch_off_auto', ...)` when the new child has no current-version consent - same shape as the withdrawal path.
+- **F10 MINOR (executed) - a lesson cancelled after arming keeps recording and completes; `stop_reason 'session_canceled'` exists but nothing sets it.** Probe: `CANCELLED: complete after the session was cancelled: {"ok":[]}`, evidence `[{"was_completed":true,"status":"Canceled"}]`. This is the very case the D guard exists for, so evidence must stay; but capture should be told to stop: a trigger on `sessions` status -> Canceled sets `stop_requested_at` on live recordings of that session (and abandons armed ones).
+- **F11 MINOR (executed) - the recorder can forge attribution fields.** Probe: `SPOOF: owner writes deletion_requested_by=ADMIN directly: {"ok":[{"deletion_requested_by":"1111...","stop_reason":"admin"}]}`. The audit log still records the true actor, so this is cosmetic, but `deletion_requested_*`, `stop_reason='admin'`, `client_info`, `device_profile_id` (any profile id, including another user's) are client-writable while open. Fix: add them to the server-owned list in the update trigger (:697-705) and set them only from `recorder_request_deletion` / the trigger.
+- **F12 MINOR (executed) - role oracle.** `recorder_is_class_teacher(p_user, p_class)` is granted to `authenticated` with arbitrary arguments; probe: `P9 parent calls recorder_is_class_teacher(T1,C1): {"ok":[{"v":true}]}`. A parent can map which login teaches which class. Fix: revoke from `authenticated` (policies call it via the DEFINER wrappers) or ignore `p_user` and use `auth.uid()`. Same for `recorder_can_read_class` - fine as is, it uses `auth.uid()`.
+- **F13 MINOR (reasoning only - not executed) - a former teacher keeps reading recording rows, chunks and name-chip markers of a class forever** through `started_by = auth.uid()` (`class_recordings_read` :1279, `recorder_can_read_recording` :914). The audio itself is correctly cut off (`recorder_can_read_object` uses only `recorder_can_read_class`). Markers carry `student_id`s with timestamps. Fix: drop the `started_by` arm from the read helpers once the recording is not open.
+- **F14 MINOR (reasoning only) - schema allows configurations the bucket refuses.** `sample_rate` up to 192 000 (:490) and `chunk_ms` up to 60 000 (:445) with `pcm-wav`: 96 kHz x 2 B x 60 s = 11.5 MB > the 8 MB `file_size_limit` (:1373). Such a chunk can never upload, never confirm, and the recording can never complete. Fix: CHECK on the recording/track that `sample_rate * 2 * chunk_ms / 1000 <= 8 MB` for pcm-wav, or cap sample_rate at 48 000.
+- **F15 MINOR (reasoning only) - an admin's direct storage DELETE (policy :1473-1476) leaves `complete` rows pointing at missing files**, with nothing recording it in the audit log. Prefer: admins delete only via the retention function, which logs.
+
+## Design soundness for C2 (brief, reasoning only)
+
+- **Size/bandwidth re-derived:** Opus 128 kbit/s = 16 kB/s; x 5 400 s = 86.4 MB per track, 172.8 MB for two - matches. Full 105-min window x 2 = 201.6 MB - matches. 5 lessons/day x 30 days = 150 recordings x 0.2 GB = 30.2 GB - matches; FLAC 150 x 0.61-0.72 GB = 92-108 GB - matches. PCM 48 kHz 16-bit = 96 kB/s; 30 s = 2.88 MB, 60 s = 5.76 MB - matches. Uplink needed in real time: Opus 2 x 128 = 256 kbit/s, FLAC about 0.8-0.9 Mbit/s, WAV 1.54 Mbit/s - not stated in the doc; C2 should state it next to the school's measured uplink. 128 kbit/s mono Opus is generous for speech (48-64 kbit/s is transparent for voice) - halving it halves storage.
+- **Clock claim overstated:** "frame n of teacher and frame n of room are the same instant ... aligned by construction" (arch 5.3) is true of the context's frame counter, not of the sound: each USB device has its own capture latency and buffer, so a fixed offset (often tens of ms) between the tracks remains, plus drift. The doc does list drift as [C2-measure]; it should also list the initial offset and the tap test should measure it.
+- **The manifest and chunk times are client claims** (F1). C2's edge function is the place to make them server facts (hash the stored object, read its duration, write both server-side).
+- **Stolen laptop / IndexedDB:** plain children's audio at rest until uploaded, with no local TTL. A recording that the server abandons (14-day stale sweep) or deletes is never told to the laptop, so its local copy can outlive server retention indefinitely. C2 needs: on page open, ask the server for the status of every local recording and drop local bytes for `abandoned`/`deleted`/`complete`; and a hard local TTL equal to `retention_days`.
+- **Per-child withdrawal on a room recording:** switching the class off is right, but past recordings that contain the child stay for up to 30 days (180 if an admin extends) unless an admin requests each (arch Q3 open). Recommend `recorder_record_child_consent('withdrawn')` also calls `recorder_request_deletion` for every non-deleted recording of every class the child was enrolled in on `session_date`, in the same transaction - logged.
+
 ## Must fix before C2 builds on it
-(in progress)
+
+1. F1 - make `was_completed` / audio length server facts (span bound to server clock, minimum duration, per-track contiguity, drop or rename `confirmed_audio_ms`), before D's cancellation guard reads them.
+2. F2 - split record vs listen; no future-session read; past cover reads only its own session's recording. Tests for both.
+3. F3 - compare per-child `wording_version` with the current one in both counting places.
+4. F4 - client cannot null `session_id`.
+5. F5 - enforce pre-roll/grace on the server (start and chunk position), not only in the page.
+6. F6 - `SET row_security = off` on every DEFINER function that reads `storage.objects`; re-check storage in the DELETE trigger; a suite case with a NOBYPASSRLS owner.
+7. F7 - add the missing cases (inactive teacher, cover teacher, both F-holes above) so each fix is pinned.
+8. F8-F10 should land in the same migration (they are small and touch the same triggers).
 
 ## Checked and found sound
-(in progress)
+
+- No family, student, TA, other-teacher or anon access to any recorder row or file in the steady state (suite cases :352-355 plus the mutation run proves they bite); bucket private; no family policy on audio; no storage UPDATE policy (no overwrite); no unscoped `storage.objects` policy in any migration (scripted scan of every `CREATE POLICY ... ON storage.objects` without `bucket_id`: none), so nothing ORs the recorder bucket open.
+- `recorder_is_class_teacher` excludes both TA tiers of the current `is_teacher_of_class` (20261111110000:97-117) and parses `teacherId` safely (`t.id::text = lower(...)`, no cast error). Its session tier matches the current definition exactly - which is the problem in F2, not a drift.
+- Arming fails closed for: no switch row, switch off, no confirmation, old class wording, any enrolled child without `granted`, cancelled session, no session, session of another class (class taken from the session, client value overwritten), ended lesson, no signed-in user (service role refused). Switch-off/withdrawal vs arm race is serialised by `FOR SHARE` on the switch row (:598-599) against the UPDATE in `recorder__switch_off`. Only `session_status` values are Scheduled/Held/Canceled (20251012020423), so `<> 'Canceled'` is complete.
+- State machine: no skipped states, `complete`/`abandoned`/`deleted` cannot go back (mutations and suite), class/session/owner/window immutable, stop request sticky, server-owned timestamps overwritten.
+- Audit log: UPDATE/DELETE/TRUNCATE refused for admin, service role and the superuser owner (suite :406-415; truncate mutation caught). Writer function not executable by `authenticated`.
+- SECURITY DEFINER helpers: all pin `search_path = public` and schema-qualify every relation (so a caller's `pg_temp` table cannot shadow one); all are NULL-safe for a caller with no uid; error messages do not distinguish "not yours" from "does not exist" for recordings/chunks.
+- Upload path: only the exact DB-chosen path of a registered, unconfirmed chunk, or the manifest while `uploading`; strict regex parse (`recorder_path_parts`) returns "no" instead of erroring.
+- Grants: explicit per table, nothing to anon/PUBLIC, `service_role` explicit. The only partial unique index (`class_recordings_one_live_per_session`) is not used as an ON CONFLICT target; both upserts target plain UNIQUE constraints.
+- Paste twice: suite asserts it (`and applies a second time unchanged`) and it passed in the critic's run.
 
 ## Not checked
-(in progress)
+
+- Whether the role that will paste the migration on production bypasses RLS on `storage.objects` (decides whether F6 bites today) - no live database by rule.
+- Production column names/types of `enrollments`, `sessions`, `classes.schedule_template` against the suite's stand-ins (only `teachers.is_active` and the `session_status` enum were checked in the migration tree). A missing column makes the paste fail and roll back (fail closed), not mis-behave.
+- Supabase Storage API behaviour (upsert header, whether upload needs SELECT as well as INSERT, how `metadata.size` is set) - pglite has only a stand-in `storage.objects`.
+- Concurrency beyond reading the lock order; no multi-connection probe.
+- Workstream D's cancellation guard (20261112090000/091000) does not yet reference `recorder_session_evidence`; how it will weigh `was_completed` was not reviewed.
+- Browser claims marked [C2-measure] in the architecture (two simultaneous USB captures, AudioContext without gesture, drift) - nothing to execute yet.
