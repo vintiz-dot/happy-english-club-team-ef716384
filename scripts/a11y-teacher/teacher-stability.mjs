@@ -369,6 +369,9 @@ async function overlays(size) {
     const sheetVis = await hintVisible(p2, 'nothing hides anything else');
     gate('M5.TeacherBooks.classroom-tools-sheet', S, !!fsOn && sheetVis, { fsOn, sheetVis }, `fullscreen ${fsOn ?? 'none'}; classroom tools sheet visible=${sheetVis}`);
     // a Select inside a tool panel (TeamMaker / LeaderboardTool use ui/select)
+    // data tools are Deferred until near the viewport: jump to them first
+    for (const t of ['Teams', 'Board']) { await p2.getByRole('navigation', { name: 'Jump to a tool' }).getByRole('button', { name: t }).click().catch(() => {}); await sleep(2500); }
+    await p2.getByRole('navigation', { name: 'Jump to a tool' }).getByRole('button', { name: 'Teams' }).click().catch(() => {}); await sleep(1500);
     const combo = p2.getByRole('dialog').getByRole('combobox').first();
     if (await combo.count()) {
       await combo.scrollIntoViewIfNeeded().catch(() => {}); await combo.click(); await sleep(900);
