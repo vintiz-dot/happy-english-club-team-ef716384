@@ -1,6 +1,6 @@
 # T4 - payment paths agree with the one label rule
 
-**Where I am / next step:** faults verified and the design written (below). Next: the failing tests (section "Tests"), run against the unchanged code, then the fixes one fault at a time.
+**Where I am / next step:** round 2 complete (section "Round 2" at the end supersedes the deploy steps above it).
 
 Build and test only: nothing pushed, nothing deployed, no database touched. Branch `worktree-agent-aafcbedf13a50d197`, reset to `claude/hec-conductor-setup-efbaa5` @ 6465f08.
 
@@ -125,4 +125,39 @@ Migration `20261113090000_invoice_paid_label.sql` (paste; idempotent; stops with
 3. Fault 5 relabels on the next write: CHECK query 4 counts them (review 2 saw 11 + 4).
 4. Not fixed: payment functions still read-then-write `recorded_payment` (R2-m6); delete-payment has the same window.
 
-**Where I am / next step:** complete.
+**Where I am / next step:** round 1 complete; review in `T4-review.md` (PASS WITH CHANGES).
+
+---
+
+# Round 2 (after `T4-review.md` and the conductor's ruling)
+
+| item | done | where |
+|---|---|---|
+| 1. T4-M1 refusals hidden as "non-2xx" | `src/lib/functionError.ts` reads the function's body; used by all five callers of the changed functions (LedgerBalanceInspector, SettleBillModal, FamilyPaymentModal, SmartFamilyPaymentModal, BatchFamilyPaymentModal - the last three swallowed it too). Settle Bill now says the amount actually settled and when the bill could not be refreshed (m6) | `scripts/functionError.test.ts` |
+| 2. T4-M2 date cutoff | Removed. A write-off counts only when its ledger transaction is keyed `settlement-writeoff-`, which only the new settle-bill writes (the old one wrote `settlement-discount-`). So no old-function write-off can count whenever it is made, and the 4 old settlements stay ledger-only (owner default). One filter, in `settledWriteOff`; the calculators read settlements and their legs unfiltered, and fail on a read error | cases "OLD settle-bill ... made on 7 Oct / made TODAY" (both calculators), "the same row with the T4 key counts", legs unreadable |
+| 3. R2-m6 lost payments | Compare-and-set everywhere `recorded_payment` is written: `_lib/recorded-payment-write.ts` mirrored as `src/lib/recordedPaymentWrite.ts` (registered). Dialogs (Record / QuickPay / Batch) and Recorded Payment Manager: `setRecordedPayment` writes only if the bill still holds what the screen showed, else nothing is written, the admin is told and the list reloads; a bill created meanwhile (placeholder path) is the same conflict, no longer an upsert overwrite. QuickPay / Batch patch the cache only for rows really saved. smart-family-payment, family-payment, delete-payment: `addToRecordedPayment` re-reads and retries once, then fails loudly; smart-family-payment now checks its bill errors | "T4 r2 - two payments on one bill at the same moment": dialogs A/B (bill exists, and no bill yet), two smart payments, two family payments, delete while a payment lands, settle-bill while a payment lands (writes no recorded_payment, payment kept). 9 failed before the callers used it |
+| 4. surviving mutations | d2 delete with a leftover (4 legs reversed, only the allocation off the bill); d4 retry after success with other money on the bill (refused as already reversed; the stand-in now has the UNIQUE `tx_key`); h4 gone (single filter) and asserted; plus m2 refused (allocation naming no bill) | "T4 r2 - the mutations the review left alive" |
+| 5. `bun test scripts` hangs | Cause: it also collects `scripts/pgtest/*.test.mjs`, node scripts for `run.mjs`. Under bun, run one by one with a 40 s limit: four exit 2 at once (they need migration arguments) and four do not finish in time - `app-typecheck` runs the full tsc (minutes), `audit-clips`, `stars-sync`, `stars-sync-homework`. Fix: `node scripts/run-bun-tests.mjs` (`npm run test:bun`) runs every `scripts/*.test.ts` in one bun call, listing them from the folder; AGENTS.md says so | - |
+| 6. installed source | `docs/sql/ai_action_apply_undo.installed.sql` (generated from the patched functions); ai-actions suite asserts the installed definitions equal it, and that no later migration re-creates either without `invoice_paid_label`. AGENTS.md line. The patch also keeps an admin's `credit` now (m1) | ai-actions T4 cases |
+
+Not done (minors left as reviewed): m3 delete-payment not one transaction; m5 `payment_deletions` error; m7 double write-off; m8 charge later below the write-off; m10 smart-family-payment drops a sibling whose calculation failed; m11 pro-rata rounding. The `ai_action_apply` insert of a missing bill still writes `partial`.
+
+## Suites (final)
+
+| command | result |
+|---|---|
+| `node scripts/pgtest/run.mjs` | see the last commit message / below |
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | exit 0 |
+| `node scripts/run-bun-tests.mjs` | 159 pass, 0 fail (12 files) |
+
+Golden file untouched.
+
+## Deploy steps (supersede the ones above)
+
+1. **Pre-check, read-only:** `scripts/CHECK-payment-paths.sql` - query 2b `counts_on_bill_after_t4` must be 0 (it can only become non-zero after the new settle-bill is live); the review's section-2 query: the label pattern matches 1 in `ai_action_apply` and 1 in `ai_action_undo`.
+2. **Migration** `20261113090000_invoice_paid_label.sql` (paste once). Expect two "now uses the rule" notices; check both functions are still SECURITY DEFINER, `search_path=public`, ACL authenticated + service_role. If it stops with "expected exactly one label expression", nothing changed: compare the live function with `docs/sql/ai_action_apply_undo.installed.sql`.
+3. **Functions, one sitting, in this order**, each uploaded with `_lib/invoice-status.ts` AND `_lib/recorded-payment-write.ts` where it imports it: calculate-tuition, calculate-tuition-bulk, settle-bill, delete-payment (+ recorded-payment-write), smart-family-payment (+ recorded-payment-write), family-payment (+ recorded-payment-write), confirm-tuition. The calculators before settle-bill.
+4. **Publish** the browser (functionError, recordedPaymentWrite, invoiceStatus, the dialogs, Recorded Payment Manager, Repair, Status Manager, the four family/settle/ledger screens).
+5. Tell the owner: labels change as bills are next written (review section 1: 461, no downgrade from the rule; three child-months newly count as settled for the cancellation guard); the four old settlements do not show on their bills; an admin saving a payment on a bill another admin changed since the screen loaded now sees "This bill changed since the screen was loaded ..." and re-enters it.
+
+**Where I am / next step:** round 2 complete.
