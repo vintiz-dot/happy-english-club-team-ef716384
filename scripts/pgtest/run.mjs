@@ -238,6 +238,14 @@ const SUITES = [
   // the recorder pasted after it to prove its preflight still accepts.
   { name: "transcribe gate", file: "transcribe-gate.test.mjs", migrations: [] },
   { name: "class recordings scope", file: "class-recordings-scope.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112120000_class_recordings_scope.sql", "20261112100000_class_recorder.sql"] },
+  // F-14: the homework bucket. The 36 production policies come from
+  // docs/evidence/S1-F14-rollback.sql, which is both the "before" and the
+  // rollback under test.
+  {
+    name: "homework bucket (F-14)",
+    file: "homework-bucket-scope.test.mjs",
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113110000_homework_bucket_scope.sql"],
+  },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",

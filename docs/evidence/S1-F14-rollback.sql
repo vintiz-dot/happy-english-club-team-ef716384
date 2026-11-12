@@ -20,6 +20,44 @@ DROP POLICY IF EXISTS homework_staff_update ON storage.objects;
 DROP POLICY IF EXISTS homework_staff_delete ON storage.objects;
 DROP POLICY IF EXISTS homework_family_insert ON storage.objects;
 
+-- so this file can be pasted twice
+DROP POLICY IF EXISTS "Admins manage all homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can delete any homework files" ON storage.objects;
+DROP POLICY IF EXISTS "hw_admin_delete" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can upload any homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Students can upload homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Students can upload homework submissions" ON storage.objects;
+DROP POLICY IF EXISTS "Students upload own homework submissions" ON storage.objects;
+DROP POLICY IF EXISTS "Teachers and admins can upload homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Teachers can upload homework assignments" ON storage.objects;
+DROP POLICY IF EXISTS "Teachers can upload homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Teachers upload homework materials" ON storage.objects;
+DROP POLICY IF EXISTS "Teaching assistants upload homework files" ON storage.objects;
+DROP POLICY IF EXISTS "hw_admin_insert" ON storage.objects;
+DROP POLICY IF EXISTS "hw_student_insert" ON storage.objects;
+DROP POLICY IF EXISTS "hw_teacher_insert" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can select homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can view all homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Admins view all homework" ON storage.objects;
+DROP POLICY IF EXISTS "Families read student homework submissions" ON storage.objects;
+DROP POLICY IF EXISTS "Family can view all homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Students can read their homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Students can view all homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Students can view homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Students read own homework submissions" ON storage.objects;
+DROP POLICY IF EXISTS "Students view enrolled class assignments" ON storage.objects;
+DROP POLICY IF EXISTS "Students view own submissions" ON storage.objects;
+DROP POLICY IF EXISTS "Teachers and students can read homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Teachers can view all homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Teachers read homework materials" ON storage.objects;
+DROP POLICY IF EXISTS "Teachers read homework submissions" ON storage.objects;
+DROP POLICY IF EXISTS "Teachers view all homework" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can update any homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Teachers and admins can update homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Teachers can update homework files" ON storage.objects;
+DROP POLICY IF EXISTS "Teaching assistants update homework files" ON storage.objects;
+DROP POLICY IF EXISTS "hw_admin_update" ON storage.objects;
+
 -- ALL
 CREATE POLICY "Admins manage all homework files" ON storage.objects FOR ALL TO authenticated
   USING ((bucket_id = 'homework'::text) AND has_role(auth.uid(), 'admin'::app_role))
