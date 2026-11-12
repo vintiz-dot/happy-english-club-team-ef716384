@@ -1,6 +1,6 @@
 # Payments release (T4) - live deploy log
 
-**Where I am / next step:** STOPPED AT STEP 2 - the `apply_migration` call was refused by the session's permission system ("Production Deploy"), before it reached the database. Nothing was applied, nothing deployed, nothing to roll back. Step 1 passed in full. Next step is the owner's or conductor's: allow `apply_migration` for this session (or the owner pastes the migration in the SQL editor), then resume from step 2.
+**Where I am / next step:** RESUMED (second agent). Migration applied by the conductor. Step A (start state) passed; next is step B, deploy 1 of 7 (calculate-tuition). See "RESUMED" below. (The first run, below, stopped at step 2: `apply_migration` refused by the permission system; nothing was changed by it.)
 
 ## Step 1 - pre-checks (read-only, 2026-11-12 21:54 UTC)
 
@@ -42,4 +42,39 @@ Not started: the manifest puts the migration first, so no function was deployed.
 
 To resume: allow `mcp__...__apply_migration` for this session, or have the owner paste the migration into the SQL editor (expect the two "now uses the rule" notices); then step 2 verification (AFTER md5s b7981cd00c7136d5b7c6b9a829fe309b / 944c9035dbb2b70afd142c465c9f7530) and step 3. The exported blobs, the compare and probe scripts and the rollback copies are in place.
 
-**Where I am / next step:** STOPPED AT STEP 2 (permission refused for apply_migration). Nothing changed on live.
+(End of the first run: stopped at step 2, nothing changed on live.)
+
+# RESUMED - the functions (second agent, 12 Nov 2026 23:43 UTC onwards)
+
+The conductor applied the migration `invoice_paid_label` and verified it. This run deploys the seven functions only: no SQL that writes, no migration, no push.
+
+## Step A - start state (read-only, 23:43 UTC)
+
+| check | expected | live |
+|---|---|---|
+| seven functions (`list_edge_functions`) | v4, ACTIVE, verify_jwt true | all seven v4, ACTIVE, verify_jwt true; `ezbr_sha256` 188aac7a (calculate-tuition), bc53fc1e (bulk), 620e841b (settle-bill), c751a4d2 (delete-payment), 8e5c925b (smart-family-payment), 14e966c8 (family-payment), d6a55f8b (confirm-tuition) - the same seven as step 1, nobody deployed since |
+| `ai_action_apply` md5(prosrc) | b7981cd00c7136d5b7c6b9a829fe309b | the same (patched) |
+| `ai_action_undo` md5(prosrc) | 944c9035dbb2b70afd142c465c9f7530 | the same (patched) |
+| `invoice_paid_label(bigint x4)` | exists | exists |
+| bills / sum recorded_payment / sum total_amount | 708 / 864,719,903 / 884,051,800 | 708 / 864,719,903 / 884,051,800 |
+| status | - | draft 10, issued 557, paid 115, partial 26 (credit 0) |
+| confirmation_status | - | auto_approved 497, confirmed 156, needs_review 55 |
+| ledger keys `settlement-writeoff%` | 0 | 0 |
+| recorded_payment NULL / negative | 0 / 0 | 0 / 0 |
+
+Also: sum base_amount 950,702,000, discount_amount 67,174,200, paid_amount 5,178,349,523; newest `invoices.updated_at` 20:41:23 UTC on 12 Nov (as in step 1: no bill written since); payments 14.
+
+Rollback copies: `C:\Users\Dell\hec-tools\payments-rollback\<function>\v4\` holds all seven (26 files: each entrypoint plus the `_lib` files v4 imports), none empty. The compare script was tried on one before trusting it: `get_edge_function` settle-bill (v4) against its saved copy - 2 of 2 identical, byte for byte.
+
+Release files: the 14 files (7 entrypoints + rate-limit, auth, sibling-state, tuition-session, enrollment-discounts, invoice-status, recorded-payment-write) exported from a9cbbe53. `git archive` wrote them CRLF (autocrlf), so a script turned them back to LF and kept each file only when its git blob hash equals `git ls-tree a9cbbe53`: 14 of 14, 0 CR bytes. Relative imports read from each entrypoint equal the manifest's lists; none of the seven `_lib` files imports another file. `supabase/config.toml` at a9cbbe53 has `verify_jwt = true` for all seven.
+
+Boot probe of the seven as they are (v4), 23:48 UTC, for comparison: no header 401 from the gateway for all; public key as bearer 401 `{"error":"Unauthorized"}` (calculate-tuition, bulk, settle-bill, confirm-tuition) and 400 `{"error":"Unauthorized"}` (delete-payment, smart-family-payment, family-payment).
+
+## Step B / C - deploys
+
+Uploaded as `<function>/index.ts` + `_lib/<file>.ts`, entrypoint `<function>/index.ts`, verify_jwt true. After each: `get_edge_function`, then `verify.mjs` reads the returned files out of this agent's transcript (tool results only, never my own input) and compares them with the LF blobs. Probe A: POST `{}` with no Authorization header. Probe B: the public client key as apikey + Bearer.
+
+| # | function | version | files against a9cbbe53 | probe A | probe B |
+|---|---|---|---|---|---|
+
+**Where I am / next step:** Step A passed. Next: step B, deploy 1 of 7 (calculate-tuition). Nothing deployed yet; the seven are v4.
