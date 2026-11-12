@@ -389,31 +389,40 @@ So, for C2 to build:
 
 ## 7. Contract for D1
 
-A completed recording of a session is strong evidence that the class was held. D1's `session_held_evidence(session_id)` should read ONE thing: the view **`public.recorder_session_evidence`**. Its columns are the contract; C will not rename or remove them without telling D.
+A completed recording of a session is strong evidence that the class was held - **if it covers the lesson**. D1's `session_held_evidence(session_id)` (through `session_recording_evidence`, which C replaces only after this revision passes its second review) should read ONE thing: the view **`public.recorder_session_evidence`**, and ONE column of it for the decision: **`counts_as_held_evidence`**. Its columns are the contract; C will not rename or remove them without telling D.
+
+**Rev. 1 contract (supersedes the table that read `confirmed_audio_ms`, which is gone):**
 
 | Column | Meaning | Trust |
 |---|---|---|
-| `session_id` | the lesson (NULL if the session row was later deleted) | server |
-| `recording_id`, `class_id` | | server |
+| `session_id` | the lesson (NULL only if the session row was later deleted) | server; the recorder cannot change or null it |
+| `armed_session_id` | the lesson it was armed for, for good | server, immutable |
+| `recording_id`, `class_id`, `purpose` | | server |
 | `status` | `armed` / `recording` / `uploading` / `complete` / `abandoned` / `deleted` | server-enforced state machine |
-| `was_completed` | true once it has ever been `complete` - **use this, not `status = 'complete'`**: retention turns `complete` into `deleted` after 30 days and the evidence must not expire with the audio | server |
-| `started_at`, `ended_at` | capture start and end | the laptop's claim, clamped by the server to [armed_at, now] and to the hard limit |
-| `started_by` | auth user id of the teacher who recorded | server (`auth.uid()` at arming) |
-| `armed_at` | when the server authorised it | server clock |
-| `completed_at` | when the server accepted it as complete | server clock |
+| **`counts_as_held_evidence`** | **THE column D reads.** `was_completed` AND at least one track AND `verified_lesson_ms >= held_threshold_ms`. Never NULL (NULL inputs read as false) | derived only from server facts below |
+| `was_completed` | technical: it reached `complete` (all chunks confirmed and still stored, manifest stored, spans consistent with the server's clock). Stays true after retention deletes the audio. **Not** evidence on its own: a 90-second recording is `was_completed` and not `counts_as_held_evidence` **[tested]** | server |
+| `too_short` | `NOT (verified_lesson_ms >= held_threshold_ms)` - for the admin's explanation | server |
+| `started_at`, `ended_at` | the server's clock at the start and stop transitions; `ended_at <= capture_closes_at` | server |
+| `client_started_at`, `client_ended_at` | the laptop's times | **claim, never evidence** |
+| `started_by`, `armed_at`, `completed_at` | | server |
 | `scheduled_start`, `scheduled_end` | the lesson's window as it stood at arming | server |
-| `first_chunk_registered_at`, `last_chunk_registered_at` | when audio actually reached the server | server clock |
-| `confirmed_audio_ms` | length of audio confirmed in storage - the longer track, not the sum **[tested]** | chunk spans are the laptop's; presence and size are the server's |
+| `server_capture_ms` | `ended_at - started_at` | server clock |
+| `lesson_overlap_ms` | overlap of `[started_at, ended_at]` with `[scheduled_start, scheduled_end]` | server clock |
+| `claimed_audio_ms` | sum of confirmed chunk spans, longest track | **claim** (bounded at registration, see 5.5) |
+| `stored_bytes` | bytes storage reported at confirmation, all tracks | server (storage metadata) |
+| `verified_audio_ms` | per track `LEAST(claimed, server_capture_ms, stored_bytes / format floor)`, longest track | the most the server can vouch for **[tested]** each bound |
+| `verified_lesson_ms` | `LEAST(verified_audio_ms, lesson_overlap_ms)` | server |
+| `held_threshold_ms` | `ceil(held_min_fraction x lesson length)`; the fraction (`held_evidence_min_fraction`, default 0.50) is snapshot at arming, so a later settings change does not reinterpret old evidence **[tested]** | server |
 | `tracks_with_audio` | 0, 1 or 2 | server |
-| `purpose` | `lesson` / `evaluation` | |
+| `first/last_chunk_registered_at`, `first/last_chunk_confirmed_at` | when audio reached the server | server clock |
 
-Minimal use: `WHERE session_id = $1 AND was_completed`. Zero rows means "no recording evidence", which is NOT evidence the class was not held: most classes will have the switch off.
+Minimal use: `WHERE session_id = $1 AND counts_as_held_evidence`. Zero rows means "no recording evidence", which is NOT evidence the class was not held: most classes will have the switch off. A row with `was_completed AND NOT counts_as_held_evidence` is a recording too short to say the lesson happened; D may show it, never weigh it as STRONG.
 
 What it proves and what it does not - D should grade accordingly:
 
-- It proves that the named teacher's login armed a recording inside that lesson's window (server clock) with the class's consent switch on, and uploaded that much audio.
-- It does not prove children were present, or that the audio is of a lesson: nobody has listened and nothing analyses it.
-- Strongest when `first_chunk_registered_at` falls inside the lesson window (the upload was live; it cannot have been produced afterwards). A recording uploaded hours later is weaker: its times are the laptop's.
+- It proves that the named teacher's login armed a recording of that lesson with the class's consent switch on, that the server saw capture run from `started_at` to `ended_at`, and that storage holds (or held) at least the byte floor's worth of audio for the verified span.
+- It does not prove children were present, or that the bytes are a lesson rather than noise: nobody has listened, nothing analyses it, and the server cannot hash the stored files (5.5). A page determined to cheat must now keep a tab open for half the lesson and upload real-sized files; it can no longer fabricate the evidence in a quarter of a second (critic F1, closed **[tested]**).
+- Strongest when `first_chunk_confirmed_at` falls inside the lesson window (the upload was live).
 - A recording that exists for a session later marked `Canceled` is a contradiction D should surface, not hide; the recorder keeps such audio for that reason (3).
 - The view is `security_invoker`: a function running as the service role or as an admin sees every row; a teacher sees their own classes. `service_role` holds SELECT **[tested]**.
 - The recorder never writes to `sessions`. It does not flip Scheduled to Held and it touches no money path.
