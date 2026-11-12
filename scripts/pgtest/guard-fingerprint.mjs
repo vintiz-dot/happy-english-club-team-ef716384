@@ -1,25 +1,34 @@
-// Catalog fingerprint of the two cancellation-guard migrations (D release).
+// Catalog fingerprint of what a release's migrations created or replaced.
 //
-//   node scripts/pgtest/guard-fingerprint.mjs [--check]
+//   node scripts/pgtest/guard-fingerprint.mjs [--check]                 D release (D1 + D2)
+//   node scripts/pgtest/guard-fingerprint.mjs --release d4 [--check]    D4 so far (D release + D4 files)
+//   node scripts/pgtest/guard-fingerprint.mjs --check-unchanged         the 66 D-release objects after D4
 //
-// 1. Loads the same prelude as session-cancel-guard.test.mjs, then the audit
-//    trigger and cancelled-lesson guard migrations (the BASELINE), then the
-//    two D migrations from the real files.
-// 2. Diffs the catalog before and after the D migrations to decide which
-//    objects they created or replaced (nothing is hand-listed).
+// 1. Loads a prelude, then the release's BASELINE migrations, snapshots the
+//    catalog, then the release's NEW migrations (the real files).
+// 2. Diffs the catalog before and after to decide which objects the new
+//    migrations created or replaced (nothing is hand-listed).
 // 3. Writes ONE read-only SELECT (jsonb_build_object / jsonb_agg) that
 //    produces a fingerprint of exactly those objects, runs it on pglite, and
-//    writes the expected JSON (keys sorted):
-//      docs/evidence/D-release-fingerprint.sql
-//      docs/evidence/D-release-fingerprint.expected.json
-//    The conductor pastes the .sql into the live SQL editor after applying the
-//    migrations and compares the one JSON value with the expected file.
+//    writes the expected JSON (keys sorted). The conductor pastes the .sql
+//    into the live SQL editor after applying the migrations and compares the
+//    one JSON value with the expected file.
 //
-// --check re-derives both files and fails if they differ from what is on disk.
+// The D release keeps its files byte for byte (docs/evidence/D-release-
+// fingerprint.*). D4 (design f.6) adds `md5_def` = md5(pg_get_triggerdef)
+// to every trigger entry, so a changed WHEN clause or event list shows.
+//
+// --check re-derives the files and fails if they differ from what is on disk
+// (line endings ignored: a Windows checkout has CRLF).
+// --check-unchanged applies D1, D2 and every D4 file, runs the D-release
+// statement, and compares with the D-release expected JSON: of the 66
+// objects exactly _session_change_assess and _session_erased_recently may
+// differ (design c.0); every other one must be identical.
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { D2_PRELUDE, D4_PEOPLE } from './d4-prelude.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const mig = (n) => readFileSync(resolve(root, 'supabase/migrations', n), 'utf8').replaceAll('\r\n', '\n'); // LF as committed; a CRLF checkout must not change prosrc
@@ -29,8 +38,31 @@ const AUDIT = '20261009130000_audit_every_admin_action.sql';
 const CANCEL = '20261027090000_cancelled_lesson_attendance_guard.sql';
 const D1 = '20261112090000_session_held_evidence.sql';
 const D2 = '20261112091000_session_cancel_guard.sql';
+const D4_FILES = ['20261113100000_d4_floors.sql'];   // each D4 step appends its file here
 const ROLES = ['anon', 'authenticated', 'service_role'];
-const TRIGGER_TABLES = ['sessions', 'attendance', 'session_cancel_overrides', 'session_cancel_override_events'];
+
+const RELEASES = {
+  d: {
+    label: 'D release',
+    prelude: PRELUDE,
+    baseline: [AUDIT, CANCEL],
+    added: [D1, D2],
+    triggerTables: ['sessions', 'attendance', 'session_cancel_overrides', 'session_cancel_override_events'],
+    triggerDefMd5: false,
+    sqlPath: 'docs/evidence/D-release-fingerprint.sql',
+    jsonPath: 'docs/evidence/D-release-fingerprint.expected.json',
+  },
+  d4: {
+    label: 'D4 release',
+    prelude: D2_PRELUDE + D4_PEOPLE,
+    baseline: [AUDIT, CANCEL, D1, D2],
+    added: D4_FILES,
+    triggerTables: null,          // every trigger the D4 files created or replaced
+    triggerDefMd5: true,
+    sqlPath: 'docs/evidence/D4-release-fingerprint.sql',
+    jsonPath: 'docs/evidence/D4-release-fingerprint.expected.json',
+  },
+};
 
 const q = (db, sql) => db.query(sql).then((r) => r.rows);
 
@@ -63,8 +95,8 @@ const changed = (before, after) => [...after.values()].filter((r) => !before.has
 // ---- the single read-only statement (parameterised only by the lists) ----
 const lit = (a) => `ARRAY[${a.map((s) => `'${s.replace(/'/g, "''")}'`).join(', ')}]::text[]`;
 const roleObj = (f) => `jsonb_build_object(${ROLES.map((r) => `'${r}', ${f(r)}`).join(', ')})`;
-function buildSql({ fns, trgs, rels }) {
-  return `-- D release fingerprint: ONE read-only SELECT returning one jsonb value.
+export function buildSql({ fns, trgs, rels }, { label = 'D release', triggerDefMd5 = false } = {}) {
+  return `-- ${label} fingerprint: ONE read-only SELECT returning one jsonb value.
 -- Generated by scripts/pgtest/guard-fingerprint.mjs - do not edit by hand.
 SELECT jsonb_build_object(
   'functions', COALESCE((
@@ -87,7 +119,8 @@ SELECT jsonb_build_object(
   'triggers', COALESCE((
     SELECT jsonb_agg(jsonb_build_object(
       'name', t.tgname, 'table', c.relname, 'tgtype', t.tgtype::int,
-      'function', fp.proname, 'enabled', t.tgenabled::text
+      'function', fp.proname, 'enabled', t.tgenabled::text${triggerDefMd5 ? `,
+      'md5_def', md5(pg_get_triggerdef(t.oid))` : ''}
     ) ORDER BY c.relname, t.tgname)
     FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace
          JOIN pg_proc fp ON fp.oid = t.tgfoid
@@ -134,48 +167,97 @@ SELECT jsonb_build_object(
 `;
 }
 
-const sortKeys = (v) => Array.isArray(v) ? v.map(sortKeys)
+export const sortKeys = (v) => Array.isArray(v) ? v.map(sortKeys)
   : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v;
+/** The statement of a generated .sql file, ready for db.query (comments and the final ';' removed). */
+export const statementOf = (sql) => sql.replace(/\r\n/g, '\n').replace(/^--.*\n/gm, '').trim().replace(/;$/, '');
 
-async function build() {
+async function build(cfg) {
   const db = new PGlite();
-  await db.exec(PRELUDE);
-  await db.exec(mig(AUDIT));
-  await db.exec(mig(CANCEL));
+  await db.exec(cfg.prelude);
+  for (const f of cfg.baseline) await db.exec(mig(f));
   const before = await snapshot(db);
-  await db.exec(mig(D1));
-  await db.exec(mig(D2));
+  for (const f of cfg.added) await db.exec(mig(f));
   const after = await snapshot(db);
 
   const fns = changed(before.fns, after.fns).map((r) => r.k).sort();
   const trgsAll = changed(before.trgs, after.trgs).map((r) => r.k).sort();
-  const trgs = trgsAll.filter((k) => TRIGGER_TABLES.includes(k.split('.')[0]));
+  const trgs = cfg.triggerTables ? trgsAll.filter((k) => cfg.triggerTables.includes(k.split('.')[0])) : trgsAll;
   const relsChanged = changed(before.rels, after.rels);
   const rels = relsChanged.map((r) => r.k).sort();
   const droppedFns = [...before.fns.keys()].filter((k) => !after.fns.has(k));
+  const droppedTrgs = [...before.trgs.keys()].filter((k) => !after.trgs.has(k));
   const touchedExisting = relsChanged.filter((r) => before.rels.has(r.k)).map((r) => r.k);
+  const replacedFns = fns.filter((k) => before.fns.has(k));
   if (trgsAll.length !== trgs.length) console.error('WARN triggers outside the listed tables:', trgsAll.filter((k) => !trgs.includes(k)));
   if (droppedFns.length) console.error('WARN functions dropped:', droppedFns);
+  if (droppedTrgs.length) console.error('WARN triggers dropped:', droppedTrgs);
   if (touchedExisting.length) console.error('NOTE pre-existing relations changed by the migrations (included):', touchedExisting);
 
-  const sql = buildSql({ fns, trgs, rels });
-  const stmt = sql.replace(/^--.*\n/gm, '').trim().replace(/;$/, '');
-  const fp = (await db.query(stmt)).rows[0].fingerprint;
+  const sql = buildSql({ fns, trgs, rels }, cfg);
+  const fp = (await db.query(statementOf(sql))).rows[0].fingerprint;
   const expected = JSON.stringify(sortKeys(fp), null, 2) + '\n';
   await db.close();
-  return { sql, expected, counts: { functions: fns.length, triggers: trgs.length, relations: rels.length, touchedExisting } };
+  return { sql, expected, counts: { functions: fns.length, triggers: trgs.length, relations: rels.length,
+                                     replacedFunctions: replacedFns, touchedExisting, droppedFns, droppedTrgs } };
 }
 
-const { sql, expected, counts } = await build();
-const sqlPath = resolve(root, 'docs/evidence/D-release-fingerprint.sql');
-const jsonPath = resolve(root, 'docs/evidence/D-release-fingerprint.expected.json');
-if (process.argv.includes('--check')) {
-  const same = readFileSync(sqlPath, 'utf8') === sql && readFileSync(jsonPath, 'utf8') === expected;
-  console.log(same ? 'fingerprint files up to date' : 'fingerprint files DIFFER');
-  process.exit(same ? 0 : 1);
+/**
+ * The D-release statement on a database with D1, D2 and every D4 file,
+ * compared object by object with the D-release expected JSON.
+ */
+export async function checkUnchanged({ prelude = D2_PRELUDE + D4_PEOPLE, d4Files = D4_FILES, after = null } = {}) {
+  const db = new PGlite();
+  await db.exec(prelude);
+  for (const f of [AUDIT, CANCEL, D1, D2, ...d4Files]) await db.exec(mig(f));
+  if (after) await after(db);
+  const live = (await db.query(statementOf(readFileSync(resolve(root, RELEASES.d.sqlPath), 'utf8')))).rows[0].fingerprint;
+  await db.close();
+  const want = JSON.parse(readFileSync(resolve(root, RELEASES.d.jsonPath), 'utf8'));
+  const diff = [];
+  let total = 0;
+  const byKey = (arr, key) => new Map((arr ?? []).map((o) => [key(o), o]));
+  const cmp = (kind, a, b) => {
+    for (const [k, v] of a) {
+      total++;
+      if (JSON.stringify(sortKeys(v)) !== JSON.stringify(sortKeys(b.get(k)))) diff.push(`${kind} ${k}`);
+    }
+    for (const k of b.keys()) if (!a.has(k)) diff.push(`${kind} ${k} (extra)`);
+  };
+  cmp('function', byKey(want.functions, (o) => o.identity), byKey(live.functions, (o) => o.identity));
+  cmp('trigger', byKey(want.triggers, (o) => `${o.table}.${o.name}`), byKey(live.triggers, (o) => `${o.table}.${o.name}`));
+  const parts = (rels) => new Map(Object.entries(rels ?? {}).flatMap(([r, o]) => [[`${r}`, null], ...Object.entries(o).map(([p, v]) => [`${r}.${p}`, v])]).filter(([, v]) => v !== null));
+  cmp('relation-part', parts(want.relations), parts(live.relations));
+  total += Object.keys(want.relations ?? {}).length;   // the relations themselves, as D-live-apply counted them
+  return { total, diff };
 }
-mkdirSync(dirname(sqlPath), { recursive: true });
-writeFileSync(sqlPath, sql);
-writeFileSync(jsonPath, expected);
-console.log(expected);
-console.error('objects covered:', JSON.stringify(counts));
+
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  if (process.argv.includes('--check-unchanged')) {
+    const { total, diff } = await checkUnchanged();
+    const allowed = ['function public._session_change_assess(s sessions, p_action text, p_change jsonb, p_uid uuid)',
+                     'function public._session_erased_recently(p_session_id uuid)'];
+    const unexpected = diff.filter((d) => !allowed.includes(d));
+    console.log(`D-release objects compared: ${total}; differing: ${diff.length} (${diff.join('; ')})`);
+    console.log(unexpected.length === 0 && diff.length === allowed.length ? 'only the two replaced functions differ' : `UNEXPECTED: ${unexpected.join('; ')}`);
+    process.exit(unexpected.length === 0 && diff.length === allowed.length ? 0 : 1);
+  }
+  const which = process.argv.includes('--release') ? process.argv[process.argv.indexOf('--release') + 1] : 'd';
+  const cfg = RELEASES[which];
+  if (!cfg) { console.error(`unknown release ${which}`); process.exit(2); }
+  const { sql, expected, counts } = await build(cfg);
+  const sqlPath = resolve(root, cfg.sqlPath);
+  const jsonPath = resolve(root, cfg.jsonPath);
+  if (process.argv.includes('--check')) {
+    const lf = (p) => readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
+    const same = lf(sqlPath) === sql && lf(jsonPath) === expected;
+    console.log(same ? 'fingerprint files up to date' : 'fingerprint files DIFFER');
+    process.exit(same ? 0 : 1);
+  }
+  mkdirSync(dirname(sqlPath), { recursive: true });
+  writeFileSync(sqlPath, sql);
+  writeFileSync(jsonPath, expected);
+  console.log(expected);
+  console.error('objects covered:', JSON.stringify(counts));
+}

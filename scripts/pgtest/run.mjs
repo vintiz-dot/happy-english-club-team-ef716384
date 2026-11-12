@@ -275,11 +275,17 @@ const SUITES = [
   },
 ];
 
+// D4 (docs/evidence/D4-design.md f.1): a suite may pin `expect`, the number
+// of assertions it must report; FEWER is a failure, because a suite that
+// silently loaded nothing passes with nothing. `args` are extra files,
+// relative to the repo root, passed after the migrations.
+const repoRoot = resolve(here, "..", "..");
+
 const run = (suite) =>
   new Promise((done) => {
     const child = spawn(
       process.execPath,
-      [join(here, suite.file), ...suite.migrations.map(m)],
+      [join(here, suite.file), ...suite.migrations.map(m), ...(suite.args ?? []).map((a) => join(repoRoot, a))],
       { stdio: ["ignore", "pipe", "pipe"] },
     );
     let out = "";
@@ -296,7 +302,11 @@ for (const suite of SUITES) {
   const summary = r.out.trim().split("\n").pop() ?? "";
   const counted = /^(\d+) passed, (\d+) failed$/.exec(summary);
   if (counted) total += Number(counted[1]);
-  if (r.code === 0) {
+  const short = suite.expect !== undefined && (!counted || Number(counted[1]) < suite.expect);
+  if (short && r.code === 0) {
+    failed += 1;
+    console.log(`  FAIL  ${suite.name.padEnd(24)} ${summary} (expected at least ${suite.expect} passing assertions)`);
+  } else if (r.code === 0) {
     console.log(`  ok    ${suite.name.padEnd(24)} ${summary}`);
   } else {
     failed += 1;
