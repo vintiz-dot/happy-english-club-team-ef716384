@@ -25,64 +25,253 @@
 
 | system | kind | files | minutes processed | pieces failed | wall s per audio min (includes upload/proxy overhead; NOT a benchmark, shared CPU) | USD per audio hour (estimate) | USD recorded by proxy |
 |---|---|---|---|---|---|---|---|
-| azure-fast-multilingual | vendor | 2 | 9.0 | n/a (no batch summary) | 3.03 (run level incl. upload) | 1.0 | 0.149 |
+| azure-fast-en-vi | vendor | 27 | 65.0 | 1 | 2.28 (per call, proxy+vendor, 27 calls) | 1.0 | 1.084 |
+| azure-fast-multilingual | vendor | 33 | 146.7 | 0 | 2.79 (per call, proxy+vendor, 35 calls) | 1.0 | 2.467 |
+| gemini-transcribe-speakers | vendor | 33 | 146.7 | 0 | 10.82 (per call, proxy+vendor, 37 calls) | 0.18 | 0.444 |
 | local-fwhisper-small | local | 2 | 3.0 | n/a (no batch summary) | 151.21 (run level incl. upload) | 0.0 | 0.0 |
+| openai-gpt-4o-transcribe | vendor | 30 | 86.7 | 1 | 2.45 (per call, proxy+vendor, 32 calls) | 0.36 | 0.585 |
+| openai-gpt-4o-transcribe-diarize | vendor | 29 | 66.7 | 1 | 16.08 (per call, proxy+vendor, 29 calls) | 0.36 | 0.4 |
+| openai-gpt-transcribe | vendor | 32 | 126.7 | 1 | 1.92 (per call, proxy+vendor, 35 calls) | 0.27 | 0.575 |
+| openai-whisper-1 | vendor | 0 | 0.0 | 1 | n/a | 0.36 | 0.0 |
 
 ### (a) Synthetic mixes: speakers found vs true (ground truth: speakers only; NO text reference, so no word accuracy)
 
 | system | mix file | overlap % | room degradation | true speakers | found | found (>= 5 s of speech) | DER collar 0.25 s | DER collar 0.25 s, overlap excluded |
 |---|---|---|---|---|---|---|---|---|
+| azure-fast-en-vi | mix_seed7_ov00_s500_000 | 0 | s500 | 3 | 3 | 3 | 0.4318 | 0.4318 |
+| azure-fast-en-vi | mix_seed7_ov00_s500_001 | 0 | s500 | 5 | 5 | 3 | 0.6413 | 0.6413 |
+| azure-fast-en-vi | mix_seed7_ov00_s500_002 | 0 | s500 | 3 | 5 | 3 | 0.3075 | 0.3075 |
+| azure-fast-en-vi | mix_seed7_ov05_none_000 | 5 | none | 5 | 5 | 5 | 0.2353 | 0.215 |
+| azure-fast-en-vi | mix_seed7_ov05_none_001 | 5 | none | 5 | 3 | 3 | 0.2999 | 0.2832 |
+| azure-fast-en-vi | mix_seed7_ov05_none_002 | 5 | none | 5 | 5 | 3 | 0.2355 | 0.2226 |
+| azure-fast-en-vi | mix_seed7_ov05_s500_000 | 5 | s500 | 3 | 3 | 3 | 0.2627 | 0.2501 |
+| azure-fast-en-vi | mix_seed7_ov05_s500_001 | 5 | s500 | 3 | 3 | 3 | 0.1905 | 0.1763 |
+| azure-fast-en-vi | mix_seed7_ov05_s500_002 | 5 | s500 | 4 | 6 | 5 | 0.3589 | 0.3485 |
+| azure-fast-en-vi | mix_seed7_ov15_s500_000 | 15 | s500 | 3 | 2 | 2 | 0.4505 | 0.4341 |
+| azure-fast-en-vi | mix_seed7_ov15_s500_001 | 15 | s500 | 4 | 6 | 5 | 0.4397 | 0.4099 |
+| azure-fast-en-vi | mix_seed7_ov15_s500_002 | 15 | s500 | 5 | 6 | 3 | 0.5686 | 0.5497 |
 | azure-fast-multilingual | mix_seed7_ov00_s500_000 | 0 | s500 | 3 | 5 | 4 | 0.3457 | 0.3457 |
 | azure-fast-multilingual | mix_seed7_ov00_s500_001 | 0 | s500 | 5 | 5 | 3 | 0.5618 | 0.5618 |
+| azure-fast-multilingual | mix_seed7_ov00_s500_002 | 0 | s500 | 3 | 5 | 4 | 0.3377 | 0.3377 |
+| azure-fast-multilingual | mix_seed7_ov05_none_000 | 5 | none | 5 | 5 | 5 | 0.2349 | 0.2171 |
+| azure-fast-multilingual | mix_seed7_ov05_none_001 | 5 | none | 5 | 4 | 4 | 0.1687 | 0.1474 |
+| azure-fast-multilingual | mix_seed7_ov05_none_002 | 5 | none | 5 | 6 | 4 | 0.19 | 0.1739 |
+| azure-fast-multilingual | mix_seed7_ov05_s500_000 | 5 | s500 | 3 | 3 | 3 | 0.4876 | 0.4858 |
+| azure-fast-multilingual | mix_seed7_ov05_s500_001 | 5 | s500 | 3 | 3 | 3 | 0.1632 | 0.1417 |
+| azure-fast-multilingual | mix_seed7_ov05_s500_002 | 5 | s500 | 4 | 6 | 4 | 0.3375 | 0.3264 |
+| azure-fast-multilingual | mix_seed7_ov15_s500_000 | 15 | s500 | 3 | 3 | 3 | 0.3609 | 0.3467 |
+| azure-fast-multilingual | mix_seed7_ov15_s500_001 | 15 | s500 | 4 | 5 | 5 | 0.3824 | 0.3394 |
+| azure-fast-multilingual | mix_seed7_ov15_s500_002 | 15 | s500 | 5 | 4 | 4 | 0.5535 | 0.5273 |
+| gemini-transcribe-speakers | mix_seed7_ov00_s500_000 | 0 | s500 | 3 | 3 | 3 | 0.0575 | 0.0575 |
+| gemini-transcribe-speakers | mix_seed7_ov00_s500_001 | 0 | s500 | 5 | 9 | 9 | 0.7396 | 0.7396 |
+| gemini-transcribe-speakers | mix_seed7_ov00_s500_002 | 0 | s500 | 3 | 4 | 4 | 0.5591 | 0.5591 |
+| gemini-transcribe-speakers | mix_seed7_ov05_none_000 | 5 | none | 5 | 5 | 5 | 0.1053 | 0.0803 |
+| gemini-transcribe-speakers | mix_seed7_ov05_none_001 | 5 | none | 5 | 5 | 5 | 0.0811 | 0.0578 |
+| gemini-transcribe-speakers | mix_seed7_ov05_none_002 | 5 | none | 5 | 7 | 5 | 0.6455 | 0.644 |
+| gemini-transcribe-speakers | mix_seed7_ov05_s500_000 | 5 | s500 | 3 | 4 | 4 | 0.4973 | 0.4874 |
+| gemini-transcribe-speakers | mix_seed7_ov05_s500_001 | 5 | s500 | 3 | 3 | 3 | 0.0461 | 0.0267 |
+| gemini-transcribe-speakers | mix_seed7_ov05_s500_002 | 5 | s500 | 4 | 10 | 8 | 0.3691 | 0.3649 |
+| gemini-transcribe-speakers | mix_seed7_ov15_s500_000 | 15 | s500 | 3 | 4 | 4 | 0.2735 | 0.2465 |
+| gemini-transcribe-speakers | mix_seed7_ov15_s500_001 | 15 | s500 | 4 | 9 | 8 | 0.6932 | 0.6858 |
+| gemini-transcribe-speakers | mix_seed7_ov15_s500_002 | 15 | s500 | 5 | 8 | 6 | 0.6273 | 0.6071 |
 | local-fwhisper-small | mix_seed7_ov00_s500_000 | 0 | s500 | 3 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-4o-transcribe | mix_seed7_ov00_s500_000 | 0 | s500 | 3 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-4o-transcribe | mix_seed7_ov00_s500_001 | 0 | s500 | 5 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-4o-transcribe | mix_seed7_ov00_s500_002 | 0 | s500 | 3 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-4o-transcribe | mix_seed7_ov05_none_000 | 5 | none | 5 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-4o-transcribe | mix_seed7_ov05_none_001 | 5 | none | 5 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-4o-transcribe | mix_seed7_ov05_none_002 | 5 | none | 5 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-4o-transcribe | mix_seed7_ov05_s500_000 | 5 | s500 | 3 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-4o-transcribe | mix_seed7_ov05_s500_001 | 5 | s500 | 3 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-4o-transcribe | mix_seed7_ov05_s500_002 | 5 | s500 | 4 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-4o-transcribe | mix_seed7_ov15_s500_000 | 15 | s500 | 3 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-4o-transcribe | mix_seed7_ov15_s500_001 | 15 | s500 | 4 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-4o-transcribe | mix_seed7_ov15_s500_002 | 15 | s500 | 5 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-4o-transcribe-diarize | mix_seed7_ov00_s500_000 | 0 | s500 | 3 | 1 | 0 | 1.0 | 1.0 |
+| openai-gpt-4o-transcribe-diarize | mix_seed7_ov00_s500_001 | 0 | s500 | 5 | 2 | 2 | 0.9168 | 0.9168 |
+| openai-gpt-4o-transcribe-diarize | mix_seed7_ov00_s500_002 | 0 | s500 | 3 | 2 | 2 | 0.4853 | 0.4853 |
+| openai-gpt-4o-transcribe-diarize | mix_seed7_ov05_none_000 | 5 | none | 5 | 7 | 4 | 0.3341 | 0.3217 |
+| openai-gpt-4o-transcribe-diarize | mix_seed7_ov05_none_001 | 5 | none | 5 | 2 | 2 | 0.3406 | 0.3257 |
+| openai-gpt-4o-transcribe-diarize | mix_seed7_ov05_none_002 | 5 | none | 5 | 6 | 5 | 0.2693 | 0.2575 |
+| openai-gpt-4o-transcribe-diarize | mix_seed7_ov05_s500_000 | 5 | s500 | 3 | 1 | 1 | 0.8805 | 0.8803 |
+| openai-gpt-4o-transcribe-diarize | mix_seed7_ov05_s500_001 | 5 | s500 | 3 | 3 | 3 | 0.3674 | 0.3577 |
+| openai-gpt-4o-transcribe-diarize | mix_seed7_ov05_s500_002 | 5 | s500 | 4 | 3 | 3 | 0.4659 | 0.4592 |
+| openai-gpt-4o-transcribe-diarize | mix_seed7_ov15_s500_000 | 15 | s500 | 3 | 2 | 2 | 0.7085 | 0.6984 |
+| openai-gpt-4o-transcribe-diarize | mix_seed7_ov15_s500_001 | 15 | s500 | 4 | 3 | 2 | 0.579 | 0.5519 |
+| openai-gpt-4o-transcribe-diarize | mix_seed7_ov15_s500_002 | 15 | s500 | 5 | 3 | 3 | 0.7645 | 0.7603 |
+| openai-gpt-transcribe | mix_seed7_ov00_s500_000 | 0 | s500 | 3 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-transcribe | mix_seed7_ov00_s500_001 | 0 | s500 | 5 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-transcribe | mix_seed7_ov00_s500_002 | 0 | s500 | 3 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-transcribe | mix_seed7_ov05_none_000 | 5 | none | 5 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-transcribe | mix_seed7_ov05_none_001 | 5 | none | 5 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-transcribe | mix_seed7_ov05_none_002 | 5 | none | 5 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-transcribe | mix_seed7_ov05_s500_000 | 5 | s500 | 3 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-transcribe | mix_seed7_ov05_s500_001 | 5 | s500 | 3 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-transcribe | mix_seed7_ov05_s500_002 | 5 | s500 | 4 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-transcribe | mix_seed7_ov15_s500_000 | 15 | s500 | 3 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-transcribe | mix_seed7_ov15_s500_001 | 15 | s500 | 4 | n/a | n/a | n/a (no speaker labels) | n/a |
+| openai-gpt-transcribe | mix_seed7_ov15_s500_002 | 15 | s500 | 5 | n/a | n/a | n/a (no speaker labels) | n/a |
 
 ### (a) DER by condition (pooled over files; miss / false alarm / confusion as shares of reference speech)
 
 | system | overlap % | room degradation | files | speaker count exact | found / true (total) | DER | miss | false alarm | confusion | DER overlap excluded |
 |---|---|---|---|---|---|---|---|---|---|---|
-| azure-fast-multilingual | 0 | s500 | 2 | 1/2 | 10/8 | 0.488 | 0.228 | 0.007 | 0.253 | 0.488 |
+| azure-fast-en-vi | 0 | s500 | 3 | 2/3 | 13/11 | 0.468 | 0.192 | 0.006 | 0.27 | 0.468 |
+| azure-fast-en-vi | 5 | none | 3 | 2/3 | 13/15 | 0.254 | 0.138 | 0.004 | 0.112 | 0.236 |
+| azure-fast-en-vi | 5 | s500 | 3 | 2/3 | 12/10 | 0.267 | 0.159 | 0.007 | 0.101 | 0.254 |
+| azure-fast-en-vi | 15 | s500 | 3 | 0/3 | 14/12 | 0.499 | 0.234 | 0.001 | 0.264 | 0.476 |
+| azure-fast-multilingual | 0 | s500 | 3 | 1/3 | 15/11 | 0.43 | 0.171 | 0.005 | 0.254 | 0.43 |
+| azure-fast-multilingual | 5 | none | 3 | 1/3 | 15/15 | 0.205 | 0.149 | 0.004 | 0.052 | 0.186 |
+| azure-fast-multilingual | 5 | s500 | 3 | 2/3 | 12/10 | 0.297 | 0.207 | 0.006 | 0.084 | 0.285 |
+| azure-fast-multilingual | 15 | s500 | 3 | 1/3 | 12/12 | 0.452 | 0.201 | 0.002 | 0.249 | 0.422 |
+| gemini-transcribe-speakers | 0 | s500 | 3 | 1/3 | 16/11 | 0.527 | 0.035 | 0.022 | 0.47 | 0.527 |
+| gemini-transcribe-speakers | 5 | none | 3 | 2/3 | 17/15 | 0.238 | 0.087 | 0.008 | 0.143 | 0.221 |
+| gemini-transcribe-speakers | 5 | s500 | 3 | 1/3 | 17/10 | 0.263 | 0.024 | 0.055 | 0.184 | 0.251 |
+| gemini-transcribe-speakers | 15 | s500 | 3 | 0/3 | 21/12 | 0.562 | 0.168 | 0.005 | 0.389 | 0.54 |
+| openai-gpt-4o-transcribe-diarize | 0 | s500 | 3 | 0/3 | 5/11 | 0.768 | 0.622 | 0.004 | 0.142 | 0.768 |
+| openai-gpt-4o-transcribe-diarize | 5 | none | 3 | 0/3 | 15/15 | 0.319 | 0.126 | 0.0 | 0.193 | 0.305 |
+| openai-gpt-4o-transcribe-diarize | 5 | s500 | 3 | 1/3 | 7/10 | 0.516 | 0.338 | 0.004 | 0.174 | 0.509 |
+| openai-gpt-4o-transcribe-diarize | 15 | s500 | 3 | 0/3 | 8/12 | 0.691 | 0.483 | 0.001 | 0.207 | 0.679 |
 
 ### (b) Word AGREEMENT between systems, synthetic mixes - AGREEMENT, NOT ACCURACY, UNCHECKED (cell = pooled agreement, n = files)
 
-|  | azure-fast-multilingual | local-fwhisper-small |
-|---|---|---|
-| azure-fast-multilingual | 1 | 0.143 (n=1) |
-| local-fwhisper-small | 0.143 (n=1) | 1 |
+|  | azure-fast-en-vi | azure-fast-multilingual | gemini-transcribe-speakers | local-fwhisper-small | openai-gpt-4o-transcribe | openai-gpt-4o-transcribe-diarize | openai-gpt-transcribe | openai-whisper-1 |
+|---|---|---|---|---|---|---|---|---|
+| azure-fast-en-vi | 1 | 0.73 (n=12) | 0.627 (n=12) | 0.171 (n=1) | 0.651 (n=12) | 0.48 (n=12) | 0.7 (n=12) | - |
+| azure-fast-multilingual | 0.73 (n=12) | 1 | 0.586 (n=12) | 0.143 (n=1) | 0.62 (n=12) | 0.506 (n=12) | 0.638 (n=12) | - |
+| gemini-transcribe-speakers | 0.627 (n=12) | 0.586 (n=12) | 1 | 0.122 (n=1) | 0.528 (n=12) | 0.448 (n=12) | 0.61 (n=12) | - |
+| local-fwhisper-small | 0.171 (n=1) | 0.143 (n=1) | 0.122 (n=1) | 1 | 0.16 (n=1) | 0.0 (n=1) | 0.227 (n=1) | - |
+| openai-gpt-4o-transcribe | 0.651 (n=12) | 0.62 (n=12) | 0.528 (n=12) | 0.16 (n=1) | 1 | 0.476 (n=12) | 0.612 (n=12) | - |
+| openai-gpt-4o-transcribe-diarize | 0.48 (n=12) | 0.506 (n=12) | 0.448 (n=12) | 0.0 (n=1) | 0.476 (n=12) | 1 | 0.585 (n=12) | - |
+| openai-gpt-transcribe | 0.7 (n=12) | 0.638 (n=12) | 0.61 (n=12) | 0.227 (n=1) | 0.612 (n=12) | 0.585 (n=12) | 1 | - |
+| openai-whisper-1 | - | - | - | - | - | - | - | 1 |
 
 Where systems disagree most, synthetic mixes (per file: lowest and highest agreeing pair), UNCHECKED:
 
 | file | systems | lowest agreement | highest agreement |
 |---|---|---|---|
-| mix_seed7_ov00_s500_000 | 2 | 0.143 (azure-fast-multilingual vs local-fwhisper-small) | 0.143 (azure-fast-multilingual vs local-fwhisper-small) |
+| mix_seed7_ov00_s500_000 | 7 | 0.0 (azure-fast-en-vi vs openai-gpt-4o-transcribe-diarize) | 0.499 (azure-fast-en-vi vs openai-gpt-4o-transcribe) |
+| mix_seed7_ov00_s500_001 | 6 | 0.188 (azure-fast-multilingual vs openai-gpt-4o-transcribe-diarize) | 0.665 (azure-fast-en-vi vs openai-gpt-4o-transcribe) |
+| mix_seed7_ov00_s500_002 | 6 | 0.22 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe-diarize) | 0.854 (azure-fast-en-vi vs azure-fast-multilingual) |
+| mix_seed7_ov05_none_000 | 6 | 0.335 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe) | 0.799 (azure-fast-en-vi vs azure-fast-multilingual) |
+| mix_seed7_ov05_none_001 | 6 | 0.396 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe) | 0.873 (azure-fast-en-vi vs azure-fast-multilingual) |
+| mix_seed7_ov05_none_002 | 6 | 0.6 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe-diarize) | 0.88 (openai-gpt-4o-transcribe vs openai-gpt-transcribe) |
+| mix_seed7_ov05_s500_000 | 6 | 0.175 (azure-fast-multilingual vs openai-gpt-transcribe) | 0.526 (azure-fast-en-vi vs openai-gpt-4o-transcribe) |
+| mix_seed7_ov05_s500_001 | 6 | 0.436 (azure-fast-multilingual vs openai-gpt-4o-transcribe-diarize) | 0.834 (azure-fast-en-vi vs openai-gpt-transcribe) |
+| mix_seed7_ov05_s500_002 | 6 | 0.325 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe-diarize) | 0.782 (azure-fast-en-vi vs azure-fast-multilingual) |
+| mix_seed7_ov15_s500_000 | 6 | 0.288 (openai-gpt-4o-transcribe vs openai-gpt-4o-transcribe-diarize) | 0.687 (azure-fast-multilingual vs gemini-transcribe-speakers) |
+| mix_seed7_ov15_s500_001 | 6 | 0.266 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe-diarize) | 0.82 (azure-fast-en-vi vs azure-fast-multilingual) |
+| mix_seed7_ov15_s500_002 | 6 | 0.306 (azure-fast-multilingual vs openai-gpt-4o-transcribe-diarize) | 0.746 (azure-fast-en-vi vs azure-fast-multilingual) |
 
 ### (b) Word AGREEMENT between systems, held-out clips - AGREEMENT, NOT ACCURACY, UNCHECKED (cell = pooled agreement, n = files)
 
-pending owner run (needs two systems on the same files)
+|  | azure-fast-en-vi | azure-fast-multilingual | gemini-transcribe-speakers | local-fwhisper-small | openai-gpt-4o-transcribe | openai-gpt-4o-transcribe-diarize | openai-gpt-transcribe | openai-whisper-1 |
+|---|---|---|---|---|---|---|---|---|
+| azure-fast-en-vi | 1 | 0.906 (n=15) | 0.852 (n=15) | 0.898 (n=1) | 0.859 (n=15) | 0.818 (n=15) | 0.889 (n=15) | - |
+| azure-fast-multilingual | 0.906 (n=15) | 1 | 0.835 (n=17) | 0.885 (n=1) | 0.839 (n=17) | 0.809 (n=17) | 0.877 (n=17) | - |
+| gemini-transcribe-speakers | 0.852 (n=15) | 0.835 (n=17) | 1 | 0.851 (n=1) | 0.821 (n=17) | 0.817 (n=17) | 0.862 (n=17) | - |
+| local-fwhisper-small | 0.898 (n=1) | 0.885 (n=1) | 0.851 (n=1) | 1 | 0.943 (n=1) | 0.88 (n=1) | 0.892 (n=1) | - |
+| openai-gpt-4o-transcribe | 0.859 (n=15) | 0.839 (n=17) | 0.821 (n=17) | 0.943 (n=1) | 1 | 0.824 (n=17) | 0.875 (n=17) | - |
+| openai-gpt-4o-transcribe-diarize | 0.818 (n=15) | 0.809 (n=17) | 0.817 (n=17) | 0.88 (n=1) | 0.824 (n=17) | 1 | 0.843 (n=17) | - |
+| openai-gpt-transcribe | 0.889 (n=15) | 0.877 (n=17) | 0.862 (n=17) | 0.892 (n=1) | 0.875 (n=17) | 0.843 (n=17) | 1 | - |
+| openai-whisper-1 | - | - | - | - | - | - | - | 1 |
+
+Where systems disagree most, held-out clips (per file: lowest and highest agreeing pair), UNCHECKED:
+
+| file | systems | lowest agreement | highest agreement |
+|---|---|---|---|
+| S01_held_01 | 7 | 0.822 (azure-fast-en-vi vs openai-gpt-4o-transcribe-diarize) | 0.971 (azure-fast-en-vi vs openai-gpt-transcribe) |
+| S02_held_01 | 6 | 0.759 (azure-fast-multilingual vs openai-gpt-4o-transcribe-diarize) | 0.933 (openai-gpt-4o-transcribe vs openai-gpt-transcribe) |
+| S03_held_01 | 6 | 0.763 (azure-fast-multilingual vs gemini-transcribe-speakers) | 0.936 (azure-fast-en-vi vs openai-gpt-transcribe) |
+| S04_held_01 | 6 | 0.795 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe-diarize) | 0.964 (azure-fast-multilingual vs openai-gpt-transcribe) |
+| S05_held_01 | 6 | 0.887 (azure-fast-multilingual vs openai-gpt-4o-transcribe-diarize) | 0.966 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe-diarize) |
+| S06_held_01 | 6 | 0.735 (azure-fast-en-vi vs openai-gpt-transcribe) | 0.905 (azure-fast-multilingual vs openai-gpt-4o-transcribe) |
+| S07_held_01 | 6 | 0.914 (azure-fast-en-vi vs openai-gpt-transcribe) | 1.0 (azure-fast-multilingual vs openai-gpt-4o-transcribe) |
+| S10_held_01 | 6 | 0.917 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe-diarize) | 0.982 (azure-fast-multilingual vs openai-gpt-transcribe) |
+| S11_held_01 | 6 | 0.882 (azure-fast-multilingual vs openai-gpt-4o-transcribe-diarize) | 0.973 (azure-fast-en-vi vs openai-gpt-transcribe) |
+| S14_held_01 | 6 | 0.683 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe-diarize) | 0.966 (openai-gpt-4o-transcribe vs openai-gpt-transcribe) |
+| S15_held_01 | 6 | 0.828 (azure-fast-multilingual vs gemini-transcribe-speakers) | 0.945 (openai-gpt-4o-transcribe-diarize vs openai-gpt-transcribe) |
+| S17_held_01 | 6 | 0.93 (azure-fast-en-vi vs azure-fast-multilingual) | 1.0 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe) |
+| S18_held_01 | 6 | 0.742 (azure-fast-multilingual vs openai-gpt-4o-transcribe) | 1.0 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe-diarize) |
+| S20_held_01 | 6 | 0.326 (openai-gpt-4o-transcribe vs openai-gpt-4o-transcribe-diarize) | 0.855 (azure-fast-en-vi vs azure-fast-multilingual) |
+| S21_held_01 | 6 | 0.411 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe) | 0.766 (azure-fast-en-vi vs azure-fast-multilingual) |
+| S24_held_01 | 5 | 0.203 (openai-gpt-4o-transcribe vs openai-gpt-4o-transcribe-diarize) | 0.83 (gemini-transcribe-speakers vs openai-gpt-transcribe) |
+| S30_held_01 | 5 | 0.922 (azure-fast-multilingual vs gemini-transcribe-speakers) | 0.987 (openai-gpt-4o-transcribe vs openai-gpt-transcribe) |
 
 ### (b) Word AGREEMENT between systems, lessons (first 20 min of L1, L2, L3) - AGREEMENT, NOT ACCURACY, UNCHECKED (cell = pooled agreement, n = files)
 
-pending owner run (needs two systems on the same files)
+|  | azure-fast-en-vi | azure-fast-multilingual | gemini-transcribe-speakers | local-fwhisper-small | openai-gpt-4o-transcribe | openai-gpt-4o-transcribe-diarize | openai-gpt-transcribe | openai-whisper-1 |
+|---|---|---|---|---|---|---|---|---|
+| azure-fast-en-vi | 1 | - | - | - | - | - | - | - |
+| azure-fast-multilingual | - | 1 | 0.754 (n=3) | - | 0.731 (n=1) | - | 0.826 (n=3) | - |
+| gemini-transcribe-speakers | - | 0.754 (n=3) | 1 | - | 0.68 (n=1) | - | 0.752 (n=3) | - |
+| local-fwhisper-small | - | - | - | 1 | - | - | - | - |
+| openai-gpt-4o-transcribe | - | 0.731 (n=1) | 0.68 (n=1) | - | 1 | - | 0.789 (n=1) | - |
+| openai-gpt-4o-transcribe-diarize | - | - | - | - | - | 1 | - | - |
+| openai-gpt-transcribe | - | 0.826 (n=3) | 0.752 (n=3) | - | 0.789 (n=1) | - | 1 | - |
+| openai-whisper-1 | - | - | - | - | - | - | - | 1 |
+
+Where systems disagree most, lessons (first 20 min of L1, L2, L3) (per file: lowest and highest agreeing pair), UNCHECKED:
+
+| file | systems | lowest agreement | highest agreement |
+|---|---|---|---|
+| L1 | 4 | 0.68 (gemini-transcribe-speakers vs openai-gpt-4o-transcribe) | 0.794 (azure-fast-multilingual vs openai-gpt-transcribe) |
+| L2 | 3 | 0.792 (azure-fast-multilingual vs gemini-transcribe-speakers) | 0.854 (azure-fast-multilingual vs openai-gpt-transcribe) |
+| L3 | 3 | 0.718 (gemini-transcribe-speakers vs openai-gpt-transcribe) | 0.826 (azure-fast-multilingual vs openai-gpt-transcribe) |
 
 ### (c) Learner-error preservation: PROXY ONLY (the real measure needs the teacher's annotated slice) - counts of differences between system pairs on held-out clips, UNCHECKED
 
-pending owner run
+| pair | compared words | article | function word | ending | other word | article /100 | function /100 | ending /100 |
+|---|---|---|---|---|---|---|---|---|
+| azure-fast-en-vi vs azure-fast-multilingual | 1096 | 12 | 40 | 3 | 77 | 1.09 | 3.65 | 0.27 |
+| azure-fast-en-vi vs gemini-transcribe-speakers | 1216 | 24 | 77 | 9 | 142 | 1.97 | 6.33 | 0.74 |
+| azure-fast-en-vi vs local-fwhisper-small | 86 | 1 | 5 | 0 | 5 | 1.16 | 5.81 | 0.0 |
+| azure-fast-en-vi vs openai-gpt-4o-transcribe | 1084 | 11 | 67 | 12 | 127 | 1.01 | 6.18 | 1.11 |
+| azure-fast-en-vi vs openai-gpt-4o-transcribe-diarize | 1181 | 23 | 98 | 7 | 159 | 1.95 | 8.3 | 0.59 |
+| azure-fast-en-vi vs openai-gpt-transcribe | 1096 | 11 | 47 | 12 | 83 | 1.0 | 4.29 | 1.09 |
+| azure-fast-multilingual vs gemini-transcribe-speakers | 1386 | 31 | 89 | 9 | 174 | 2.24 | 6.42 | 0.65 |
+| azure-fast-multilingual vs local-fwhisper-small | 93 | 2 | 8 | 0 | 6 | 2.15 | 8.6 | 0.0 |
+| azure-fast-multilingual vs openai-gpt-4o-transcribe | 1250 | 18 | 92 | 10 | 164 | 1.44 | 7.36 | 0.8 |
+| azure-fast-multilingual vs openai-gpt-4o-transcribe-diarize | 1346 | 24 | 102 | 6 | 195 | 1.78 | 7.58 | 0.45 |
+| azure-fast-multilingual vs openai-gpt-transcribe | 1261 | 17 | 53 | 10 | 109 | 1.35 | 4.2 | 0.79 |
+| gemini-transcribe-speakers vs local-fwhisper-small | 95 | 3 | 6 | 1 | 11 | 3.16 | 6.32 | 1.05 |
+| gemini-transcribe-speakers vs openai-gpt-4o-transcribe | 1374 | 37 | 108 | 5 | 221 | 2.69 | 7.86 | 0.36 |
+| gemini-transcribe-speakers vs openai-gpt-4o-transcribe-diarize | 1426 | 37 | 102 | 4 | 197 | 2.59 | 7.15 | 0.28 |
+| gemini-transcribe-speakers vs openai-gpt-transcribe | 1381 | 30 | 79 | 7 | 151 | 2.17 | 5.72 | 0.51 |
+| local-fwhisper-small vs openai-gpt-4o-transcribe | 81 | 1 | 2 | 1 | 2 | 1.23 | 2.47 | 1.23 |
+| local-fwhisper-small vs openai-gpt-4o-transcribe-diarize | 94 | 3 | 5 | 0 | 9 | 3.19 | 5.32 | 0.0 |
+| local-fwhisper-small vs openai-gpt-transcribe | 86 | 3 | 4 | 0 | 5 | 3.49 | 4.65 | 0.0 |
+| openai-gpt-4o-transcribe vs openai-gpt-4o-transcribe-diarize | 1320 | 30 | 113 | 6 | 195 | 2.27 | 8.56 | 0.45 |
+| openai-gpt-4o-transcribe vs openai-gpt-transcribe | 1235 | 21 | 73 | 11 | 125 | 1.7 | 5.91 | 0.89 |
+| openai-gpt-4o-transcribe-diarize vs openai-gpt-transcribe | 1342 | 27 | 90 | 6 | 161 | 2.01 | 6.71 | 0.45 |
 
 Preservation tally on the teacher's slice: pending teacher annotation (run `b1_score.py preserve` once work\teacher-check\b1\annotated.tsv exists).
 
 ### (d) Code-switching on the lessons, UNCHECKED (heuristic: toneless Vietnamese counts as English, so Vietnamese shares are lower bounds)
 
-pending owner run
+| system | lesson words | words with a language tag | Vietnamese % by system tag | Vietnamese % by diacritics |
+|---|---|---|---|---|
+| azure-fast-multilingual | 6303 | 6303 | 0.0 | 0.0 |
+| gemini-transcribe-speakers | 7782 | 7782 | 4.18 | 3.53 |
+| openai-gpt-4o-transcribe | 1392 | 0 | n/a (no language tag) | 0.0 |
+| openai-gpt-transcribe | 4628 | 4628 | 0.0 | 0.13 |
 
-Windows of 10 s where ANY usable system wrote >= 3 Vietnamese-diacritic words: 0. What each system did in them (systems whose word times are spread over the whole piece are excluded), UNCHECKED:
+Windows of 10 s where ANY usable system wrote >= 3 Vietnamese-diacritic words: 31. What each system did in them (systems whose word times are spread over the whole piece are excluded), UNCHECKED:
 
-pending owner run
+| system | windows | Vietnamese text | dropped (< 30% of the busiest system's words) | non-Vietnamese text (English/other) |
+|---|---|---|---|---|
+| azure-fast-multilingual | 31 | 0 | 7 | 24 |
+| gemini-transcribe-speakers | 31 | 31 | 0 | 0 |
 
 ### (e) Compression cost: L1 original vs its 16 kHz / 32 kbps twin (L4), same 20 minutes - agreement, UNCHECKED
 
-pending owner run
+| system | agreement: own L1 vs own L4 | mean agreement with other systems' L1: own L1 | mean agreement with other systems' L1: own L4 |
+|---|---|---|---|
+| azure-fast-multilingual | 0.869 | 0.753 | 0.761 |
+| gemini-transcribe-speakers | 0.772 | 0.715 | 0.677 |
 
 ### Teacher-check package
 
-teacher-check pack: pending owner run (no lesson result with speaker labels yet)
+teacher-check pack: L2 810-1110 s, 3 speakers with >= 8 s, 35 speaker changes (chosen on azure-fast-multilingual); 3 system transcript(s) written
 
 <!-- B1-TABLES-END -->
