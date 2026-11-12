@@ -4,6 +4,7 @@
  */
 import { forwardRef, useEffect, useState } from "react";
 import { signedVideoUrl } from "@/lib/video/recorder";
+import { useIvory } from "@/hooks/useIvory";
 
 interface Props extends React.VideoHTMLAttributes<HTMLVideoElement> {
   path: string;
@@ -14,6 +15,7 @@ export const SignedVideo = forwardRef<HTMLVideoElement, Props>(function SignedVi
   { path, posterPath, ...rest },
   ref,
 ) {
+  const ivory = useIvory();
   const [src, setSrc] = useState<string | null>(null);
   const [poster, setPoster] = useState<string | undefined>(undefined);
   const [failed, setFailed] = useState(false);
@@ -37,7 +39,7 @@ export const SignedVideo = forwardRef<HTMLVideoElement, Props>(function SignedVi
 
   if (failed) {
     return (
-      <div className={`${rest.className ?? ""} flex items-center justify-center text-sm text-white/80`}>
+      <div className={`${rest.className ?? ""} flex items-center justify-center ${ivory ? "p-4 text-center text-hec-small text-hec-ink-soft" : "text-sm text-white/80"}`}>
         This video can't be played right now.
       </div>
     );
@@ -75,7 +77,7 @@ export const SignedVideo = forwardRef<HTMLVideoElement, Props>(function SignedVi
       }}
     />
     {broken && (
-      <p className="text-xs text-destructive mt-1">
+      <p className={ivory ? "mt-1 text-hec-small text-hec-danger" : "text-xs text-destructive mt-1"}>
         This browser can't play this recording to the end. It usually plays on the phone it was made on, or in
         Safari. If it won't, send it back and ask for a new recording.
       </p>

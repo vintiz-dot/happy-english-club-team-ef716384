@@ -1,7 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { motion } from "framer-motion";
 import { Flame, Zap, Trophy } from "lucide-react";
 
 interface HomeworkStreakCardProps {
@@ -103,104 +101,74 @@ export default function HomeworkStreakCard({ studentId, assignments }: HomeworkS
   const emoji = getStreakEmoji(current);
   const message = getStreakMessage(current);
 
-  // Flame intensity based on streak
-  const flameColors = current >= 5
-    ? "from-orange-500 via-red-500 to-yellow-500"
-    : current >= 3
-    ? "from-amber-500 via-orange-500 to-yellow-500"
-    : "from-amber-400 to-yellow-400";
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-    >
-      <Card className="overflow-hidden border-0 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-red-500/10 dark:from-amber-500/15 dark:via-orange-500/10 dark:to-red-500/15">
-        <div className="p-4 sm:p-5">
-          <div className="flex items-center gap-3">
-            {/* Streak flame */}
-            <motion.div
-              className={`relative w-14 h-14 rounded-2xl bg-gradient-to-br ${flameColors} flex items-center justify-center shadow-lg`}
-              animate={current >= 3 ? { scale: [1, 1.05, 1] } : {}}
-              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-            >
-              <span className="text-2xl">{emoji}</span>
-              {current > 0 && (
-                <motion.div
-                  className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-foreground text-background text-xs font-bold flex items-center justify-center shadow-md"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 400, delay: 0.3 }}
-                >
-                  {current}
-                </motion.div>
-              )}
-            </motion.div>
-
-            {/* Streak info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <Flame className="h-4 w-4 text-orange-500" />
-                <h3 className="font-bold text-sm">Homework Streak</h3>
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">{message}</p>
-
-              {/* Streak stats */}
-              <div className="flex items-center gap-3 mt-2">
-                <div className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground">
-                  <Trophy className="h-3 w-3" />
-                  <span>Best: {best}</span>
-                </div>
-                <div className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground">
-                  <Zap className="h-3 w-3" />
-                  <span>Total on-time: {total}</span>
-                </div>
-                {bonus > 0 && (
-                  <motion.div
-                    className="flex items-center gap-1 text-[11px] sm:text-xs font-bold text-amber-600 dark:text-amber-400"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ repeat: Infinity, duration: 1.5 }}
-                  >
-                    <span>+{bonus} XP bonus</span>
-                  </motion.div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Next milestone */}
-          {current > 0 && current < 10 && (
-            <div className="mt-3">
-              <div className="flex items-center justify-between text-[11px] sm:text-xs text-muted-foreground mb-1">
-                <span>Next milestone</span>
-                <span>
-                  {current < 3 ? "3 🔓" : current < 5 ? "5 🔓" : current < 7 ? "7 🔓" : "10 🔓"}
-                </span>
-              </div>
-              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  className={`h-full rounded-full bg-gradient-to-r ${flameColors}`}
-                  initial={{ width: 0 }}
-                  animate={{
-                    width: `${
-                      current < 3
-                        ? (current / 3) * 100
-                        : current < 5
-                        ? ((current - 3) / 2) * 100
-                        : current < 7
-                        ? ((current - 5) / 2) * 100
-                        : ((current - 7) / 3) * 100
-                    }%`,
-                  }}
-                  transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
-                />
-              </div>
+    <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 sm:p-6">
+      <div className="flex items-center gap-3">
+        {/* Streak mark */}
+        <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-hec-md border border-hec-line bg-hec-sunken">
+          <span className="text-2xl" aria-hidden>{emoji}</span>
+          {current > 0 && (
+            <div className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-hec-action px-1 text-hec-caption font-medium tabular-nums text-hec-on-action">
+              {current}
             </div>
           )}
         </div>
-      </Card>
-    </motion.div>
+
+        {/* Streak info */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <Flame className="h-4 w-4 shrink-0 text-hec-ink-soft" aria-hidden />
+            <h3 className="font-display text-hec-h3 font-medium text-hec-ink">Homework Streak</h3>
+          </div>
+          <p className="mt-0.5 text-hec-small text-hec-ink-soft">{message}</p>
+
+          {/* Streak stats */}
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <div className="flex items-center gap-1 text-hec-caption text-hec-ink-soft">
+              <Trophy className="h-4 w-4" aria-hidden />
+              <span>Best: {best}</span>
+            </div>
+            <div className="flex items-center gap-1 text-hec-caption text-hec-ink-soft">
+              <Zap className="h-4 w-4" aria-hidden />
+              <span>Total on-time: {total}</span>
+            </div>
+            {bonus > 0 && (
+              <div className="flex items-center gap-1 text-hec-caption font-medium text-hec-brass">
+                <span>+{bonus} XP bonus</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Next milestone */}
+      {current > 0 && current < 10 && (
+        <div className="mt-3">
+          <div className="mb-1 flex items-center justify-between text-hec-caption text-hec-ink-soft">
+            <span>Next milestone</span>
+            <span>
+              {current < 3 ? "3 🔓" : current < 5 ? "5 🔓" : current < 7 ? "7 🔓" : "10 🔓"}
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-hec-sunken">
+            <div
+              className="h-2 rounded-full bg-hec-brass"
+              style={{
+                width: `${
+                  current < 3
+                    ? (current / 3) * 100
+                    : current < 5
+                    ? ((current - 3) / 2) * 100
+                    : current < 7
+                    ? ((current - 5) / 2) * 100
+                    : ((current - 7) / 3) * 100
+                }%`,
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -6,6 +6,7 @@ import { Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAvatarUrl } from "@/lib/avatars";
+import { useIvory } from "@/hooks/useIvory";
 
 interface ProfilePictureUploadProps {
   studentId?: string;
@@ -19,6 +20,9 @@ export function ProfilePictureUpload({
   studentName 
 }: ProfilePictureUploadProps) {
   const [uploading, setUploading] = useState(false);
+  // Also rendered on the staff student page (not migrated yet): old classes there.
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
   const queryClient = useQueryClient();
 
   const uploadMutation = useMutation({
@@ -99,12 +103,12 @@ export function ProfilePictureUpload({
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="relative group">
-        <Avatar className="h-32 w-32 ring-4 ring-primary/10 transition-all group-hover:ring-primary/20">
+        <Avatar className={iv("h-32 w-32 border border-hec-line", "h-32 w-32 ring-4 ring-primary/10 transition-all group-hover:ring-primary/20")}>
           <AvatarImage src={getAvatarUrl(currentAvatarUrl) || undefined} alt={studentName} className="object-cover" />
-          <AvatarFallback className="text-2xl bg-gradient-to-br from-primary/20 to-primary/10">{initials}</AvatarFallback>
+          <AvatarFallback className={iv("bg-hec-sunken text-hec-h1 text-hec-ink", "text-2xl bg-gradient-to-br from-primary/20 to-primary/10")}>{initials}</AvatarFallback>
         </Avatar>
-        <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <Camera className="h-8 w-8 text-white" />
+        <div className={iv("absolute inset-0 bg-hec-action/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-hec-1 flex items-center justify-center", "absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center")}>
+          <Camera className={iv("h-8 w-8 text-hec-on-action", "h-8 w-8 text-white")} />
         </div>
       </div>
       
@@ -144,7 +148,7 @@ export function ProfilePictureUpload({
         </label>
       </div>
       
-      <p className="text-xs text-muted-foreground text-center">
+      <p className={iv("text-hec-caption text-hec-ink-soft text-center", "text-xs text-muted-foreground text-center")}>
         Maximum file size: 5MB<br />
         Supported formats: JPG, PNG, WEBP
       </p>

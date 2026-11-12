@@ -13,9 +13,9 @@ import { videoDb } from "@/lib/video/recorder";
 import { gradeForScore, summarizeProgress, type ProgressVideo } from "@/lib/videoHomework";
 
 const TREND = {
-  up: { icon: TrendingUp, text: "You're getting better and better! 🚀", tone: "text-emerald-600" },
-  steady: { icon: Minus, text: "Nice and steady - keep it up! 👍", tone: "text-sky-600" },
-  down: { icon: TrendingDown, text: "Let's practise a little more together 💪", tone: "text-amber-600" },
+  up: { icon: TrendingUp, text: "You're getting better and better! 🚀", tone: "text-hec-leaf" },
+  steady: { icon: Minus, text: "Nice and steady - keep it up! 👍", tone: "text-hec-ink-soft" },
+  down: { icon: TrendingDown, text: "Let's practise a little more together 💪", tone: "text-hec-warn" },
 } as const;
 
 const TYPE_EMOJI: Record<string, string> = { grammar: "🧩", vocabulary: "📚", pronunciation: "🗣️", syntax: "🧱", other: "✏️" };
@@ -38,24 +38,24 @@ export function VideoProgressCard({ studentId }: { studentId: string }) {
   const practise = [...p.recurring.map((r) => ({ ...r, recurring: true })), ...p.recent.map((r) => ({ ...r, recurring: false, times: 1 }))].slice(0, 5);
 
   return (
-    <Card className="shadow-md">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">🎥 My speaking journey</CardTitle>
+    <Card>
+      <CardHeader>
+        <CardTitle>🎥 My speaking journey</CardTitle>
         <CardDescription>{p.count} video{p.count === 1 ? "" : "s"} checked by your teacher</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {trend && (
-          <p className={`flex items-center gap-2 text-sm font-medium ${trend.tone}`}>
+          <p className={`flex items-center gap-2 text-hec-body font-medium ${trend.tone}`}>
             <trend.icon className="h-4 w-4" /> {trend.text}
           </p>
         )}
 
         <div className="space-y-1.5">
           {p.scores.slice(-5).reverse().map((s) => (
-            <div key={`${s.date}-${s.title}`} className="flex items-center justify-between gap-2 text-sm">
-              <span className="truncate">{s.title}</span>
+            <div key={`${s.date}-${s.title}`} className="flex items-start justify-between gap-2 text-hec-body text-hec-ink">
+              <span className="min-w-0 break-words">{s.title}</span>
               <span className="flex items-center gap-2 shrink-0">
-                <span className="text-xs text-muted-foreground">{dayjs(s.date).format("MMM D")}</span>
+                <span className="text-hec-caption text-hec-ink-soft">{dayjs(s.date).format("MMM D")}</span>
                 <Badge variant="secondary">{gradeForScore(s.score)}</Badge>
               </span>
             </div>
@@ -63,20 +63,20 @@ export function VideoProgressCard({ studentId }: { studentId: string }) {
         </div>
 
         {practise.length > 0 && (
-          <div className="border-t pt-3 space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+          <div className="space-y-2 border-t border-hec-line pt-3">
+            <p className="flex items-center gap-1.5 text-hec-small font-medium text-hec-ink-soft">
               <Target className="h-3.5 w-3.5" /> Things to practise
             </p>
             {practise.map((g) => (
-              <div key={g.topic} className="rounded-lg bg-muted/40 p-2 text-sm">
+              <div key={g.topic} className="rounded-hec-md bg-hec-sunken p-3 text-hec-body text-hec-ink">
                 <div className="flex items-center gap-1.5">
                   <span>{TYPE_EMOJI[g.type] ?? "✏️"}</span>
-                  <span className="font-medium">{g.topic}</span>
-                  {g.recurring && <Badge variant="outline" className="text-[10px] ml-auto">came up {g.times}×</Badge>}
+                  <span className="min-w-0 break-words font-medium">{g.topic}</span>
+                  {g.recurring && <Badge variant="outline" className="ml-auto shrink-0">came up {g.times}×</Badge>}
                 </div>
                 {g.fix && g.example && g.fix !== g.topic && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    “{g.example}” → <span className="text-foreground">“{g.fix}”</span>
+                  <p className="mt-0.5 text-hec-small text-hec-ink-soft">
+                    “{g.example}” → <span className="text-hec-ink">“{g.fix}”</span>
                   </p>
                 )}
               </div>

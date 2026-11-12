@@ -10,6 +10,23 @@
     <title>Education Manager - Happy English Club</title>
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#1e3a8a" />
+    <!-- No flash of the wrong theme (A4.6): before the first paint, apply what the app last
+         showed on this device (src/components/theme/IvoryScope.tsx writes hec-theme-boot).
+         Screens outside the Ivory system are always light. -->
+    <script>
+      (function () {
+        try {
+          var b = JSON.parse(localStorage.getItem("hec-theme-boot") || "null");
+          if (!b || !b.ivory) return;
+          var de = document.documentElement;
+          de.setAttribute("data-hec-theme", "ivory");
+          var dark = b.theme === "dark" || (b.theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) de.classList.add("dark");
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute("content", dark ? "#0A111E" : "#F7F2E9");
+        } catch (e) {}
+      })();
+    </script>
     <meta name="description" content="Professional education management system for Happy English Club - manage classes, attendance, payments, homework and more">
     <meta name="author" content="Happy English Club" />
 

@@ -79,6 +79,52 @@ export const statusConfig: Record<HomeworkStatus, {
   },
 };
 
+/**
+ * "Ivory" design system (DESIGN_SYSTEM s.14): the same states as `statusConfig`
+ * above, as token classes. Colour only adds to the word; every state keeps its
+ * label. Use inside an ivory scope (useIvory()); `statusConfig` stays for the
+ * screens that have not moved yet.
+ */
+export const ivoryStatusConfig: Record<HomeworkStatus, {
+  /** Left-edge rule + panel for a row or card of this state. */
+  panelClass: string;
+  /** Badge (rounded-full, border, tint). */
+  badgeClass: string;
+  /** Text / icon colour for the date line. */
+  textClass: string;
+}> = {
+  overdue: {
+    panelClass: "border-hec-danger/30 bg-hec-danger-tint",
+    badgeClass: "border-hec-danger/30 bg-hec-danger-tint text-hec-danger",
+    textClass: "text-hec-danger",
+  },
+  "due-today": {
+    panelClass: "border-hec-warn/30 bg-hec-warn-tint",
+    badgeClass: "border-hec-warn/30 bg-hec-warn-tint text-hec-warn",
+    textClass: "text-hec-warn",
+  },
+  "due-soon": {
+    panelClass: "border-hec-warn/30 bg-hec-warn-tint",
+    badgeClass: "border-hec-warn/30 bg-hec-warn-tint text-hec-warn",
+    textClass: "text-hec-warn",
+  },
+  submitted: {
+    panelClass: "border-hec-line bg-hec-sunken",
+    badgeClass: "border-hec-line bg-hec-sunken text-hec-ink-soft",
+    textClass: "text-hec-ink-soft",
+  },
+  graded: {
+    panelClass: "border-hec-leaf/30 bg-hec-leaf-tint",
+    badgeClass: "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
+    textClass: "text-hec-leaf",
+  },
+  upcoming: {
+    panelClass: "border-hec-line bg-hec-surface",
+    badgeClass: "border-hec-line bg-hec-sunken text-hec-ink-soft",
+    textClass: "text-hec-ink-soft",
+  },
+};
+
 export function getCountdown(dueDate: string | null): string | null {
   if (!dueDate) return null;
   const now = new Date();

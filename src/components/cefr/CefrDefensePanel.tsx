@@ -8,6 +8,7 @@
  * in cefr_assessments so the growth chart tells the whole story.
  */
 import { useState } from "react";
+import { useIvory } from "@/hooks/useIvory";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,20 +39,37 @@ const invokeDefense = async (body: Record<string, unknown>) => {
   return data;
 };
 
-const statusBadge = (status?: string | null) => {
+// Rendered on the staff student page (not flipped yet) and, later, everywhere: `ivory` picks the class set.
+const BADGE_TONES = {
+  old: {
+    good: "bg-emerald-500/15 text-emerald-600 gap-1",
+    warn: "bg-amber-500/15 text-amber-600 gap-1",
+    bad: "bg-red-500/15 text-red-600 gap-1",
+    info: "bg-blue-500/15 text-blue-600 gap-1",
+  },
+  ivory: {
+    good: "gap-1 border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
+    warn: "gap-1 border-hec-warn/30 bg-hec-warn-tint text-hec-warn",
+    bad: "gap-1 border-hec-danger/30 bg-hec-danger-tint text-hec-danger",
+    info: "gap-1 border-hec-line bg-hec-sunken text-hec-ink-soft",
+  },
+};
+
+const statusBadge = (status: string | null | undefined, ivory: boolean) => {
+  const T = ivory ? BADGE_TONES.ivory : BADGE_TONES.old;
   switch (status) {
     case "supported":
-      return <Badge className="bg-emerald-500/15 text-emerald-600 gap-1"><ShieldCheck className="h-3 w-3" />Evidence supports</Badge>;
+      return <Badge className={T.good}><ShieldCheck className="h-3 w-3" />Evidence supports</Badge>;
     case "partially_supported":
-      return <Badge className="bg-amber-500/15 text-amber-600 gap-1"><ShieldQuestion className="h-3 w-3" />Partially supported</Badge>;
+      return <Badge className={T.warn}><ShieldQuestion className="h-3 w-3" />Partially supported</Badge>;
     case "not_supported":
-      return <Badge className="bg-red-500/15 text-red-600 gap-1"><ShieldAlert className="h-3 w-3" />Not supported</Badge>;
+      return <Badge className={T.bad}><ShieldAlert className="h-3 w-3" />Not supported</Badge>;
     case "test_assigned":
-      return <Badge className="bg-blue-500/15 text-blue-600 gap-1"><FileQuestion className="h-3 w-3" />Defense test assigned</Badge>;
+      return <Badge className={T.info}><FileQuestion className="h-3 w-3" />Defense test assigned</Badge>;
     case "defended":
-      return <Badge className="bg-emerald-500/15 text-emerald-600 gap-1"><ShieldCheck className="h-3 w-3" />Level defended</Badge>;
+      return <Badge className={T.good}><ShieldCheck className="h-3 w-3" />Level defended</Badge>;
     case "not_defended":
-      return <Badge className="bg-red-500/15 text-red-600 gap-1"><ShieldAlert className="h-3 w-3" />Not defended</Badge>;
+      return <Badge className={T.bad}><ShieldAlert className="h-3 w-3" />Not defended</Badge>;
     default:
       return <Badge variant="secondary" className="gap-1"><ShieldQuestion className="h-3 w-3" />Unverified</Badge>;
   }
@@ -59,7 +77,41 @@ const statusBadge = (status?: string | null) => {
 
 export function CefrDefensePanel({ studentId, classId }: { studentId: string; classId?: string | null }) {
   const queryClient = useQueryClient();
+  const ivory = useIvory();
   const [level, setLevel] = useState<string>("");
+  const k = ivory
+    ? {
+        icon: "h-4 w-4 text-hec-ink-soft",
+        level: "font-display text-hec-h1 font-medium text-hec-brass",
+        audit: "gap-1.5",
+        box: "rounded-hec-md border border-hec-line p-3 space-y-2 text-hec-small",
+        label: "text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft",
+        muted: "text-hec-small text-hec-ink-soft",
+        body: "text-hec-small text-hec-ink-soft",
+        strong: "font-semibold text-hec-ink",
+        forBox: "rounded-hec-sm border border-hec-leaf/30 bg-hec-leaf-tint p-3",
+        forTitle: "mb-1 text-hec-caption font-medium text-hec-leaf",
+        againstBox: "rounded-hec-sm border border-hec-warn/30 bg-hec-warn-tint p-3",
+        againstTitle: "mb-1 text-hec-caption font-medium text-hec-warn",
+        item: "text-hec-caption text-hec-ink-soft",
+        wait: "flex items-center gap-1.5 text-hec-caption text-hec-ink-soft",
+      }
+    : {
+        icon: "h-4 w-4 text-violet-500",
+        level: "text-2xl font-black text-violet-600",
+        audit: "gap-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white",
+        box: "rounded-xl border p-3 space-y-2 text-sm",
+        label: "font-semibold text-xs uppercase tracking-wide text-muted-foreground",
+        muted: "text-xs text-muted-foreground",
+        body: "text-xs text-muted-foreground leading-relaxed",
+        strong: "font-bold text-foreground",
+        forBox: "rounded-lg bg-emerald-500/5 ring-1 ring-emerald-500/20 p-2",
+        forTitle: "text-[11px] font-bold text-emerald-600 mb-1",
+        againstBox: "rounded-lg bg-amber-500/5 ring-1 ring-amber-500/20 p-2",
+        againstTitle: "text-[11px] font-bold text-amber-600 mb-1",
+        item: "text-[11px] text-muted-foreground",
+        wait: "text-[11px] text-muted-foreground flex items-center gap-1.5",
+      };
 
   const { data: state, isLoading } = useQuery<any>({
     queryKey: ["cefr-defense", studentId],
@@ -101,24 +153,24 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div>
             <CardTitle className="text-base flex items-center gap-2">
-              <Scale className="h-4 w-4 text-violet-500" />
+              <Scale className={k.icon} />
               CEFR Level Defense
             </CardTitle>
-            <CardDescription className="text-xs mt-1">
+            <CardDescription className={ivory ? "mt-1 text-hec-small" : "text-xs mt-1"}>
               Declare a working level, then let the AI audit the evidence — or have the student defend it in an adaptive test.
             </CardDescription>
           </div>
           {claim && (
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-black text-violet-600">{claim.claimed_level}</span>
-              {statusBadge(claim.status)}
+              <span className={k.level}>{claim.claimed_level}</span>
+              {statusBadge(claim.status, ivory)}
             </div>
           )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+          <div className={ivory ? "flex items-center gap-2 py-2 text-hec-small text-hec-ink-soft" : "flex items-center gap-2 text-sm text-muted-foreground py-2"}>
             <Loader2 className="h-4 w-4 animate-spin" />Loading…
           </div>
         ) : (
@@ -142,7 +194,7 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
               {claim && (
                 <>
                   <Button
-                    size="sm" className="gap-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
+                    size="sm" className={k.audit}
                     disabled={evidenceMutation.isPending}
                     onClick={() => evidenceMutation.mutate()}
                   >
@@ -165,32 +217,32 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
 
             {/* Evidence verdict */}
             {verdict && (
-              <div className="rounded-xl border p-3 space-y-2 text-sm">
+              <div className={k.box}>
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <p className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">Evidence audit</p>
-                  <p className="text-xs text-muted-foreground">
-                    Recommends <span className="font-bold text-foreground">{verdict.recommended_level}</span>
+                  <p className={k.label}>Evidence audit</p>
+                  <p className={k.muted}>
+                    Recommends <span className={k.strong}>{verdict.recommended_level}</span>
                     {typeof verdict.confidence === "number" && ` · ${Math.round(verdict.confidence * 100)}% confidence`}
                   </p>
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{verdict.rationale}</p>
+                <p className={k.body}>{verdict.rationale}</p>
                 <div className="grid sm:grid-cols-2 gap-2">
                   {(verdict.evidence_for || []).length > 0 && (
-                    <div className="rounded-lg bg-emerald-500/5 ring-1 ring-emerald-500/20 p-2">
-                      <p className="text-[11px] font-bold text-emerald-600 mb-1">Supports the level</p>
+                    <div className={k.forBox}>
+                      <p className={k.forTitle}>Supports the level</p>
                       <ul className="space-y-1">
                         {verdict.evidence_for.map((e: any, i: number) => (
-                          <li key={i} className="text-[11px] text-muted-foreground">• {e.point} <span className="opacity-60">({e.source})</span></li>
+                          <li key={i} className={k.item}>• {e.point} <span className="opacity-60">({e.source})</span></li>
                         ))}
                       </ul>
                     </div>
                   )}
                   {(verdict.evidence_against || []).length > 0 && (
-                    <div className="rounded-lg bg-amber-500/5 ring-1 ring-amber-500/20 p-2">
-                      <p className="text-[11px] font-bold text-amber-600 mb-1">Challenges the level</p>
+                    <div className={k.againstBox}>
+                      <p className={k.againstTitle}>Challenges the level</p>
                       <ul className="space-y-1">
                         {verdict.evidence_against.map((e: any, i: number) => (
-                          <li key={i} className="text-[11px] text-muted-foreground">• {e.point} <span className="opacity-60">({e.source})</span></li>
+                          <li key={i} className={k.item}>• {e.point} <span className="opacity-60">({e.source})</span></li>
                         ))}
                       </ul>
                     </div>
@@ -201,20 +253,20 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
 
             {/* Latest defense-test result */}
             {latestGraded?.result && (
-              <div className="rounded-xl border p-3 space-y-2 text-sm">
+              <div className={k.box}>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">Defense test result</p>
+                  <p className={k.label}>Defense test result</p>
                   {latestGraded.result.defended ? (
-                    <Badge className="bg-emerald-500/15 text-emerald-600 gap-1"><CheckCircle2 className="h-3 w-3" />Defended {latestGraded.target_level}</Badge>
+                    <Badge className={BADGE_TONES[ivory ? "ivory" : "old"].good}><CheckCircle2 className="h-3 w-3" />Defended {latestGraded.target_level}</Badge>
                   ) : (
-                    <Badge className="bg-red-500/15 text-red-600 gap-1"><XCircle className="h-3 w-3" />Estimate: {latestGraded.result.level_estimate}</Badge>
+                    <Badge className={BADGE_TONES[ivory ? "ivory" : "old"].bad}><XCircle className="h-3 w-3" />Estimate: {latestGraded.result.level_estimate}</Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{latestGraded.result.rationale}</p>
+                <p className={k.body}>{latestGraded.result.rationale}</p>
                 {Array.isArray(latestGraded.result.next_steps) && latestGraded.result.next_steps.length > 0 && (
                   <ul className="space-y-0.5">
                     {latestGraded.result.next_steps.map((s: string, i: number) => (
-                      <li key={i} className="text-[11px] text-muted-foreground">→ {s}</li>
+                      <li key={i} className={k.item}>→ {s}</li>
                     ))}
                   </ul>
                 )}
@@ -222,7 +274,7 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
             )}
 
             {tests.some((t) => t.status !== "graded") && (
-              <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+              <p className={k.wait}>
                 <FileQuestion className="h-3 w-3" />
                 A defense test is waiting for the student in their portal ("Defend my level").
               </p>

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Loader2, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { extFor, signedVideoUrl } from "@/lib/video/recorder";
+import { useIvory } from "@/hooks/useIvory";
 
 interface Props {
   path: string;
@@ -29,6 +30,7 @@ interface Props {
 const safeName = (s: string) => s.replace(/[^\p{L}\p{N} _-]+/gu, "").trim().slice(0, 60) || "homework-video";
 
 export function ShareVideoButton({ path, title, text, size = "default", className }: Props) {
+  const ivory = useIvory();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -85,13 +87,13 @@ export function ShareVideoButton({ path, title, text, size = "default", classNam
 
   if (file) {
     return (
-      <Button size={size} className={`bg-[#1877F2] hover:bg-[#166FE5] text-white ${className ?? ""}`} onClick={share}>
+      <Button size={size} className={ivory ? className : `bg-[#1877F2] hover:bg-[#166FE5] text-white ${className ?? ""}`} onClick={share}>
         <Share2 className="h-4 w-4 mr-2" /> Share now - choose Facebook
       </Button>
     );
   }
   return (
-    <Button size={size} variant="outline" className={className} onClick={prepare} disabled={loading}>
+    <Button size={size} variant={ivory ? "secondary" : "outline"} className={className} onClick={prepare} disabled={loading}>
       {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
       {loading ? "Getting the video…" : "Share to Facebook"}
     </Button>

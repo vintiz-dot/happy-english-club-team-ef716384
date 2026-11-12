@@ -3,8 +3,11 @@
 @tailwind utilities;
 
 /* Premium system font stack — matches platform-native rendering on every OS,
-   no FOUT, no extra HTTP request. */
-:root {
+   no FOUT, no extra HTTP request.
+   [data-hec-board] (the three display boards' frame) re-declares these
+   old values under the Ivory scope, so a board looks as it always did
+   (DESIGN_SYSTEM s.17; same in the two blocks below and in @layer base). */
+:root, [data-hec-board] {
   --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable",
     "Segoe UI", "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
   --font-display: var(--font-sans);
@@ -57,7 +60,7 @@ html, body {
    tokens that the redesigned components consume. Old components keep
    working untouched.
    ==================================================================== */
-:root {
+:root, [data-hec-board] {
   /* Signature gradient sets — used sparingly for emphasis */
   --gradient-aurora: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #facc15 100%);
   --gradient-citrus: linear-gradient(135deg, #f59e0b 0%, #f43f5e 100%);
@@ -85,7 +88,7 @@ html, body {
   --dur-slow: 320ms;
 }
 
-.dark {
+.dark, .dark [data-hec-board] {
   --surface-1: 260 35% 7%;
   --surface-2: 260 30% 11%;
   --surface-3: 260 25% 14%;
@@ -198,7 +201,7 @@ All colors MUST be HSL.
 }
 
 @layer base {
-  :root {
+  :root, [data-hec-board] {
     /* Premium Kids EduTech - Bright, friendly, and sophisticated */
     --background: 250 30% 98%;
     --foreground: 250 25% 15%;
@@ -342,7 +345,7 @@ All colors MUST be HSL.
   }
   }
 
-  .dark {
+  .dark, .dark [data-hec-board] {
     /* Gemini Dark Aesthetic — deep charcoal, muted accents */
     --background: 240 10% 7%;
     --foreground: 220 10% 85%;
@@ -1691,4 +1694,310 @@ All colors MUST be HSL.
   /* Without the travelling highlight the gradient would freeze
      mid-sweep and look like a rendering fault. Flatten it. */
   .hec-placeholder { background-image: none; background-color: hsl(var(--muted)); }
+}
+
+/* ====================================================================
+   "Ivory" design system (A4.1) - docs/DESIGN_SYSTEM.md
+   --------------------------------------------------------------------
+   Deep ink, warm ivory, one brass accent. Everything below is SCOPED to
+   an element carrying data-hec-theme="ivory", so with the attribute
+   absent no rule here matches and the app is unchanged.
+
+   Three selector spellings, on purpose:
+     [data-hec-theme="ivory"]        light. Matches the attribute wherever
+                                     it sits: an inner root today, <html>
+                                     after the rollout.
+     .dark[data-hec-theme="ivory"]   dark, attribute on the SAME element as
+                                     the dark class (<html>, after rollout).
+     .dark [data-hec-theme="ivory"]  dark, attribute on an inner root below
+                                     <html class="dark"> (the checkpoint).
+   Both dark spellings always appear together and carry the same values.
+   Tokens that do not change with the theme are declared once, under all
+   three spellings, so every token is still defined in both themes.
+
+   Colours are HSL triplets (no hsl() wrapper) like the tokens above, so
+   Tailwind can add opacity: bg-hec-ink/60.
+
+   `node scripts/design-tokens-check.mjs` fails if light and dark ever
+   hold different sets of names, or a documented pair loses contrast.
+   ==================================================================== */
+
+/* ---- Light ---- */
+[data-hec-theme="ivory"] {
+  color-scheme: light;
+
+  /* Surfaces: warm ivory, lightest on top */
+  --hec-paper:   42 45% 94%;    /* the page                          */
+  --hec-surface: 43 64% 98%;    /* a card                            */
+  --hec-raised:  45 100% 99%;   /* dialog, popover, input field      */
+  --hec-sunken:  41 37% 90%;    /* inset well, track, hover wash     */
+  --hec-honey:   42 78% 91%;    /* the warm card of the young scale  */
+
+  /* Ink: deep navy */
+  --hec-ink:       222 48% 14%; /* headings, body                    */
+  --hec-ink-soft:  223 19% 33%; /* secondary text                    */
+  --hec-ink-faint: 223 12% 40%; /* captions, placeholders            */
+
+  /* Lines */
+  --hec-line:        41 28% 84%; /* hairline: decoration, never the only cue */
+  --hec-line-strong: 43 9% 46%;  /* edge of a control: 3:1 on every surface  */
+
+  /* Brass: the one accent */
+  --hec-brass:      40 63% 28%;  /* links, icons, active mark, progress */
+  --hec-brass-fill: 41 58% 40%;  /* the single hero action of a screen  */
+  --hec-on-brass:   222 55% 9%;
+
+  /* Primary action: ink */
+  --hec-action:    222 48% 14%;
+  --hec-on-action: 42 45% 94%;
+
+  /* States */
+  --hec-leaf:        101 60% 26%; /* growth, success - the logo's green, darkened */
+  --hec-leaf-tint:   85 41% 89%;
+  --hec-warn:        29 100% 28%;
+  --hec-warn-tint:   35 88% 90%;
+  --hec-danger:      358 76% 36%;
+  --hec-danger-fill: 3 71% 41%;
+  --hec-on-danger:   0 0% 100%;
+  --hec-danger-tint: 7 76% 93%;
+
+  --hec-ring: var(--hec-brass);
+  --hec-logo: 86 54% 51%;         /* the mark only. Never text, never on a control. */
+  --hec-scrim: 222 48% 10%;       /* behind a dialog, at /50 */
+  --hec-shadow-tint: 222 48% 14%;
+
+  /* Elevation: ink-tinted, layered, soft */
+  --hec-shadow-1: 0 1px 1px hsl(var(--hec-shadow-tint) / 0.04), 0 1px 2px hsl(var(--hec-shadow-tint) / 0.06);
+  --hec-shadow-2: 0 1px 2px hsl(var(--hec-shadow-tint) / 0.05), 0 6px 16px -6px hsl(var(--hec-shadow-tint) / 0.1),
+    0 16px 32px -16px hsl(var(--hec-shadow-tint) / 0.12);
+  --hec-shadow-3: 0 2px 4px hsl(var(--hec-shadow-tint) / 0.06), 0 16px 32px -10px hsl(var(--hec-shadow-tint) / 0.16),
+    0 40px 72px -28px hsl(var(--hec-shadow-tint) / 0.24);
+}
+
+/* ---- Dark: its own theme, not an inversion ---- */
+.dark[data-hec-theme="ivory"],
+.dark [data-hec-theme="ivory"] {
+  color-scheme: dark;
+
+  /* Surfaces: deep ink, lighter as they rise */
+  --hec-paper:   220 49% 8%;
+  --hec-surface: 220 44% 12%;
+  --hec-raised:  221 41% 16%;
+  --hec-sunken:  221 53% 6%;
+  --hec-honey:   39 38% 10%;
+
+  /* Ink: ivory */
+  --hec-ink:       42 42% 89%;
+  --hec-ink-soft:  45 11% 71%;
+  --hec-ink-faint: 44 6% 61%;
+
+  --hec-line:        221 30% 20%;
+  --hec-line-strong: 224 13% 50%;
+
+  --hec-brass:      41 58% 65%;
+  --hec-brass-fill: 40 50% 57%;
+  --hec-on-brass:   220 49% 8%;
+
+  --hec-action:    42 42% 89%;
+  --hec-on-action: 220 49% 8%;
+
+  --hec-leaf:        87 55% 59%;
+  --hec-leaf-tint:   102 46% 11%;
+  --hec-warn:        31 90% 61%;
+  --hec-warn-tint:   33 70% 11%;
+  --hec-danger:      5 100% 75%;
+  --hec-danger-fill: 3 66% 50%;
+  --hec-on-danger:   0 0% 100%;
+  --hec-danger-tint: 3 55% 13%;
+
+  --hec-ring: var(--hec-brass);
+  --hec-logo: 86 54% 51%;
+  --hec-scrim: 220 60% 3%;
+  --hec-shadow-tint: 220 60% 2%;
+
+  /* On dark a shadow alone does not read as height; the lighter surface does
+     the work and the shadow only seats it. */
+  --hec-shadow-1: 0 1px 1px hsl(var(--hec-shadow-tint) / 0.3), 0 1px 2px hsl(var(--hec-shadow-tint) / 0.4);
+  --hec-shadow-2: 0 1px 2px hsl(var(--hec-shadow-tint) / 0.4), 0 6px 16px -6px hsl(var(--hec-shadow-tint) / 0.5),
+    0 16px 32px -16px hsl(var(--hec-shadow-tint) / 0.5);
+  --hec-shadow-3: 0 2px 4px hsl(var(--hec-shadow-tint) / 0.5), 0 16px 32px -10px hsl(var(--hec-shadow-tint) / 0.6),
+    0 40px 72px -28px hsl(var(--hec-shadow-tint) / 0.7);
+}
+
+/* ---- Both themes: type, shape, motion, and the bridge to the old names ---- */
+[data-hec-theme="ivory"],
+.dark[data-hec-theme="ivory"],
+.dark [data-hec-theme="ivory"] {
+  /* Type. System fonts only. The serif stack starts with the families that
+     are KNOWN to carry Vietnamese (U+1EA0-1EF9), so a name like "Nguyễn" is
+     never drawn from two typefaces. */
+  --hec-font-display: ui-serif, "Palatino Linotype", "Noto Serif", "Times New Roman", serif;
+  --hec-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable", "Segoe UI", Roboto,
+    "Noto Sans", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+
+  --hec-text-display: clamp(1.75rem, 1.3rem + 2vw, 2.5rem);
+  --hec-text-h1: 1.5rem;
+  --hec-text-h2: 1.25rem;
+  --hec-text-h3: 1.0625rem;
+  --hec-text-body: 1rem;
+  --hec-text-small: 0.875rem;
+  --hec-text-caption: 0.8125rem;
+  --hec-leading-display: 1.25;
+  --hec-leading-h1: 1.3;
+  --hec-leading-h2: 1.35;
+  --hec-leading-h3: 1.4;
+  --hec-leading-body: 1.6;
+  --hec-leading-small: 1.55;
+  --hec-leading-caption: 1.5;
+
+  /* Shape */
+  --hec-radius-sm: 0.375rem;
+  --hec-radius-md: 0.625rem;
+  --hec-radius-lg: 0.875rem;
+  --hec-target: 2.75rem;        /* 44 px: the smallest thing a finger is asked to hit */
+
+  /* Motion: slow, and it lands softly. No overshoot. */
+  --hec-dur-1: 140ms;           /* press, hover, colour      */
+  --hec-dur-2: 240ms;           /* popover, tooltip, reveal  */
+  --hec-dur-3: 420ms;           /* dialog, sheet, page       */
+  --hec-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --hec-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Bridge: inside the scope the existing token names take the new values,
+     so shared primitives (Button, Card, Dialog ...) follow without an edit.
+     Outside the scope these names keep the values declared further up. */
+  --background: var(--hec-paper);
+  --foreground: var(--hec-ink);
+  --card: var(--hec-surface);
+  --card-foreground: var(--hec-ink);
+  --card-glass: var(--hec-surface) / 0.94;
+  --popover: var(--hec-raised);
+  --popover-foreground: var(--hec-ink);
+  --popover-glass: var(--hec-raised) / 0.97;
+  --primary: var(--hec-action);
+  --primary-foreground: var(--hec-on-action);
+  --primary-glass: var(--hec-action) / 0.08;
+  --secondary: var(--hec-sunken);
+  --secondary-foreground: var(--hec-ink);
+  --secondary-glass: var(--hec-sunken) / 0.6;
+  --muted: var(--hec-sunken);
+  --muted-foreground: var(--hec-ink-soft);
+  --muted-glass: var(--hec-sunken) / 0.5;
+  --accent: var(--hec-sunken);
+  --accent-foreground: var(--hec-ink);
+  --accent-glass: var(--hec-brass) / 0.08;
+  --destructive: var(--hec-danger-fill);
+  --destructive-foreground: var(--hec-on-danger);
+  --destructive-glass: var(--hec-danger) / 0.1;
+  --success: var(--hec-leaf);
+  --success-foreground: var(--hec-paper);
+  --success-glass: var(--hec-leaf) / 0.1;
+  --warning: var(--hec-warn);
+  --warning-foreground: var(--hec-paper);
+  --warning-glass: var(--hec-warn) / 0.1;
+  --border: var(--hec-line);
+  --border-glass: var(--hec-line) / 0.6;
+  --input: var(--hec-line-strong);
+  --ring: var(--hec-ring);
+  --radius: var(--hec-radius-lg);
+  --shadow-glass: var(--hec-shadow-2);
+  --shadow-glass-sm: var(--hec-shadow-1);
+  --shadow-glass-lg: var(--hec-shadow-3);
+  --sidebar-background: var(--hec-surface);
+  --sidebar-foreground: var(--hec-ink);
+  --sidebar-primary: var(--hec-action);
+  --sidebar-primary-foreground: var(--hec-on-action);
+  --sidebar-accent: var(--hec-sunken);
+  --sidebar-accent-foreground: var(--hec-ink);
+  --sidebar-border: var(--hec-line);
+  --sidebar-ring: var(--hec-ring);
+  --sidebar-glass: var(--hec-surface) / 0.94;
+  --surface-1: var(--hec-paper);
+  --surface-2: var(--hec-surface);
+  --surface-3: var(--hec-raised);
+  --shadow-1: var(--hec-shadow-1);
+  --shadow-2: var(--hec-shadow-2);
+  --shadow-3: var(--hec-shadow-3);
+  --shadow-4: var(--hec-shadow-3);
+  --font-sans: var(--hec-font-sans);
+  --font-display: var(--hec-font-display);
+
+  color: hsl(var(--hec-ink));
+  font-family: var(--hec-font-sans);
+}
+
+/* ---- The "young" scale (Grades 1-3): larger type, rounder corners, bigger
+   targets. Sizes only - the palette and its contrast are the same. Put
+   data-hec-scale="young" on the scoped root or on any element inside it. ---- */
+[data-hec-theme="ivory"][data-hec-scale="young"],
+[data-hec-theme="ivory"] [data-hec-scale="young"] {
+  --hec-text-display: clamp(2rem, 1.4rem + 2.8vw, 2.75rem);
+  --hec-text-h1: 1.75rem;
+  --hec-text-h2: 1.375rem;
+  --hec-text-h3: 1.1875rem;
+  --hec-text-body: 1.125rem;
+  --hec-text-small: 1rem;
+  --hec-text-caption: 0.9375rem;
+  --hec-leading-body: 1.65;
+  --hec-radius-sm: 0.625rem;
+  --hec-radius-md: 0.875rem;
+  --hec-radius-lg: 1.25rem;
+  --hec-target: 3.5rem;         /* 56 px */
+  --radius: var(--hec-radius-lg); /* re-resolve the bridge for primitives inside */
+}
+
+/* ---- The page under the scope (A4.6): solid paper. The old body glow
+   (three radial gradients and a blurred, drifting ::before) is the purple /
+   cyan haze that must not appear in this system. ---- */
+[data-hec-theme="ivory"] body {
+  background-image: none;
+}
+[data-hec-theme="ivory"] body::before {
+  content: none;
+  animation: none;
+}
+
+/* ---- Boards opt out (A4.6, DESIGN_SYSTEM s.17). The old token values are
+   re-declared on [data-hec-board] by the :root / .dark blocks at the top of
+   this file; here the font the scope sets on <html> goes back to the old
+   stack. (Colour is left to inherit: the frame around every board sets
+   its own, and forcing one here changed two elements.) ---- */
+[data-hec-theme="ivory"] [data-hec-board] {
+  font-family: var(--font-sans);
+}
+
+/* ---- Reduced motion: inside the scope nothing runs longer than 0.01 s ---- */
+@media (prefers-reduced-motion: reduce) {
+  [data-hec-theme="ivory"],
+  .dark[data-hec-theme="ivory"],
+  .dark [data-hec-theme="ivory"] {
+    --hec-dur-1: 0.01ms;
+    --hec-dur-2: 0.01ms;
+    --hec-dur-3: 0.01ms;
+  }
+
+  /* The display boards keep their own motion rules (they read the same
+     media query themselves): excluded here like everywhere else. */
+  [data-hec-theme="ivory"],
+  [data-hec-theme="ivory"] *:not([data-hec-board], [data-hec-board] *),
+  [data-hec-theme="ivory"]::before,
+  [data-hec-theme="ivory"]::after,
+  [data-hec-theme="ivory"] *:not([data-hec-board], [data-hec-board] *)::before,
+  [data-hec-theme="ivory"] *:not([data-hec-board], [data-hec-board] *)::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Outside the scope too: the shared dialog / popover / menu entrance
+     (spring-in) is the one animation every screen has. */
+  .animate-spring-in,
+  .animate-spring-out,
+  .data-\[state\=open\]\:animate-spring-in[data-state="open"],
+  .data-\[state\=closed\]\:animate-spring-out[data-state="closed"] {
+    animation-duration: 0.01ms !important;
+  }
 }

@@ -102,7 +102,7 @@ export function ClassCatalog({ studentId }: ClassCatalogProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-hec-ink-soft" />
       </div>
     );
   }
@@ -117,54 +117,53 @@ export function ClassCatalog({ studentId }: ClassCatalogProps) {
           return (
             <motion.div
               key={cls.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ duration: 0.24, delay: Math.min(i, 6) * 0.03 }}
             >
-              <Card className="h-full hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <CardContent className="p-5 relative space-y-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">{cls.name}</h3>
+              <Card className="group relative h-full overflow-hidden">
+                <CardContent className="relative space-y-4 p-4 sm:p-5">
+                  <div className="min-w-0">
+                    <h3 className="whitespace-normal break-words font-display text-hec-h2 font-medium text-hec-ink">{cls.name}</h3>
                     {cls.teacherName && (
-                      <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
-                        <User className="h-3.5 w-3.5" />
-                        {cls.teacherName}
+                      <p className="mt-1 flex items-start gap-1.5 text-hec-small text-hec-ink-soft">
+                        <User className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        <span className="min-w-0 whitespace-normal break-words">{cls.teacherName}</span>
                       </p>
                     )}
                     {cls.teacherBio && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{cls.teacherBio}</p>
+                      <p className="mt-1 line-clamp-2 text-hec-caption text-hec-ink-soft">{cls.teacherBio}</p>
                     )}
                   </div>
 
                   {/* Class metadata */}
                   {(cls.showDescription && (cls as any).description) && (
-                    <p className="text-sm text-muted-foreground">{(cls as any).description}</p>
+                    <p className="text-hec-small text-hec-ink-soft">{(cls as any).description}</p>
                   )}
                   <div className="flex flex-wrap gap-2">
                     {cls.showCurriculum && (cls as any).curriculum && (
-                      <Badge variant="secondary" className="text-xs">📚 {(cls as any).curriculum}</Badge>
+                      <Badge variant="secondary" className="text-hec-caption">📚 {(cls as any).curriculum}</Badge>
                     )}
                     {cls.showAgeRange && (cls as any).age_range && (
-                      <Badge variant="secondary" className="text-xs">👥 Ages {(cls as any).age_range}</Badge>
+                      <Badge variant="secondary" className="text-hec-caption">👥 Ages {(cls as any).age_range}</Badge>
                     )}
                   </div>
 
                   {/* Schedule */}
                   <div className="space-y-2">
-                    <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                      <Calendar className="h-3.5 w-3.5 text-primary" />
+                    <div className="flex items-center gap-1.5 text-hec-small font-medium text-hec-ink">
+                      <Calendar className="h-3.5 w-3.5 text-hec-ink-soft" />
                       Schedule
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {uniqueDays.map(day => (
-                        <Badge key={day} variant="secondary" className="text-xs">
+                        <Badge key={day} variant="secondary" className="text-hec-caption">
                           {DAY_NAMES[day]}
                         </Badge>
                       ))}
                     </div>
                     {cls.slots.length > 0 && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5 text-hec-caption tabular-nums text-hec-ink-soft">
                         <Clock className="h-3 w-3" />
                         {cls.slots[0].startTime?.slice(0, 5)} – {cls.slots[0].endTime?.slice(0, 5)}
                       </div>
@@ -173,13 +172,13 @@ export function ClassCatalog({ studentId }: ClassCatalogProps) {
 
                   {/* CTA */}
                   {isPending ? (
-                    <Button disabled className="w-full" variant="secondary" size="sm">
+                    <Button disabled className="min-h-hec-target w-full" variant="secondary" size="sm">
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Request Pending
                     </Button>
                   ) : (
                     <Button
-                      className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground"
+                      className="min-h-hec-target w-full"
                       size="sm"
                       onClick={() => setSelectedClass(cls)}
                     >
@@ -196,9 +195,9 @@ export function ClassCatalog({ studentId }: ClassCatalogProps) {
 
       {/* Confirmation Dialog */}
       <Dialog open={!!selectedClass} onOpenChange={() => { setSelectedClass(null); setMessage(""); }}>
-        <DialogContent className="glass-lg border-0 shadow-2xl">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Join {selectedClass?.name}? 🚀</DialogTitle>
+            <DialogTitle className="whitespace-normal break-words">Join {selectedClass?.name}? 🚀</DialogTitle>
             <DialogDescription>
               Send a request to the admin. They'll review it and get back to you!
             </DialogDescription>
@@ -217,7 +216,6 @@ export function ClassCatalog({ studentId }: ClassCatalogProps) {
             <Button
               onClick={() => requestMutation.mutate({ classId: selectedClass.id, msg: message })}
               disabled={requestMutation.isPending}
-              className="bg-gradient-to-r from-primary to-accent text-primary-foreground"
             >
               {requestMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
               Send Request

@@ -10,7 +10,8 @@ import { HomeworkPdfDownload } from "@/components/homework/HomeworkPdfDownload";
 import { RichText } from "@/components/homework/RichText";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { classTint, dueText, homeworkLook } from "./homework/homeworkLook";
+import { classTint, dueText, homeworkLook, ivoryLook } from "./homework/homeworkLook";
+import { useIvory } from "@/hooks/useIvory";
 
 const HomeworkSubmission = lazy(() => import("./HomeworkSubmission"));
 
@@ -23,17 +24,19 @@ interface HomeworkDetailDialogProps {
 
 /** A numbered step: big friendly number, a heading, then the content. */
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+  const ivory = useIvory();
+  const c = (next: string, old: string) => (ivory ? next : old);
   return (
     <section className="min-w-0">
       <div className="mb-3 flex items-center gap-3">
         {n > 0 ? (
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-black text-primary-foreground shadow-[0_3px_0_0_hsl(var(--primary)/0.45)]">
+          <span className={c("flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-hec-action text-hec-small font-medium tabular-nums text-hec-on-action", "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-black text-primary-foreground shadow-[0_3px_0_0_hsl(var(--primary)/0.45)]")}>
             {n}
           </span>
         ) : (
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center text-2xl" aria-hidden>🌟</span>
+          <span className={c("flex h-8 w-8 shrink-0 items-center justify-center text-hec-h2", "flex h-8 w-8 shrink-0 items-center justify-center text-2xl")} aria-hidden>🌟</span>
         )}
-        <h3 className="text-lg font-extrabold tracking-tight">{title}</h3>
+        <h3 className={c("font-display text-hec-h3 font-medium text-hec-ink", "text-lg font-extrabold tracking-tight")}>{title}</h3>
       </div>
       {children}
     </section>
@@ -47,6 +50,9 @@ function fileSize(bytes?: number | null) {
 
 export default function HomeworkDetailDialog({ homework, studentId, isReadOnly = false, onClose }: HomeworkDetailDialogProps) {
   const isMobile = useIsMobile();
+  // "Ivory" design system on a listed route; today's classes elsewhere (the teacher's student analytics opens this too).
+  const ivory = useIvory();
+  const c = (next: string, old: string) => (ivory ? next : old);
 
   // Teacher name for the PDF header.
   const { data: teacherName } = useQuery({
@@ -90,47 +96,47 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
       type="button"
       onClick={onClose}
       aria-label="Close"
-      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm ring-1 ring-border backdrop-blur transition hover:bg-background"
+      className={c("flex min-h-hec-target min-w-hec-target shrink-0 items-center justify-center rounded-full border border-hec-line bg-hec-raised text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring", "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm ring-1 ring-border backdrop-blur transition hover:bg-background")}
     >
       <X className="h-5 w-5" strokeWidth={2.5} />
     </button>
   );
 
   const header = (
-    <header className="relative isolate shrink-0 bg-background px-4 pb-4 pt-3 sm:px-6 sm:pt-5">
+    <header className={cn("relative isolate shrink-0 px-4 pb-4 pt-3 sm:px-6 sm:pt-5", c("bg-hec-raised", "bg-background"))}>
       {/* State tint over a solid base, so nothing behind the sheet shows through. */}
-      <div className={cn("absolute inset-0 -z-10 border-0 border-b-2", look.cardClass)} aria-hidden />
-      {isMobile && <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-foreground/15" aria-hidden />}
+      <div className={cn("absolute inset-0 -z-10 border-0", ivory ? cn("border-b", ivoryLook[status].washClass) : cn("border-b-2", look.cardClass))} aria-hidden />
+      {isMobile && <div className={c("mx-auto mb-3 h-1.5 w-11 rounded-full bg-hec-line-strong", "mx-auto mb-3 h-1.5 w-11 rounded-full bg-foreground/15")} aria-hidden />}
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className={cn("inline-block max-w-full truncate rounded-full px-2.5 py-1 text-xs font-bold", classTint(className))}>
+            <span className={ivory ? "min-w-0 whitespace-normal break-words rounded-full border border-hec-line bg-hec-surface px-3 py-1 text-hec-caption font-medium text-hec-ink-soft" : cn("inline-block max-w-full truncate rounded-full px-2.5 py-1 text-xs font-bold", classTint(className))}>
               {className}
             </span>
-            <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-extrabold whitespace-nowrap", look.pillClass)}>
+            <span className={ivory ? cn("inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-3 py-1 text-hec-caption font-medium", ivoryLook[status].pillClass) : cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-extrabold whitespace-nowrap", look.pillClass)}>
               <span aria-hidden>{look.emoji}</span>
               {look.pill}
             </span>
           </div>
           {isMobile ? (
-            <SheetTitle className="mt-2.5 text-xl font-black leading-snug tracking-tight break-words [hyphens:auto]">
+            <SheetTitle className={c("mt-3 break-words font-display text-hec-h2 font-medium text-hec-ink", "mt-2.5 text-xl font-black leading-snug tracking-tight break-words [hyphens:auto]")}>
               {homework.title}
             </SheetTitle>
           ) : (
-            <DialogTitle className="mt-2.5 text-2xl font-black leading-snug tracking-tight break-words [hyphens:auto]">
+            <DialogTitle className={c("mt-3 break-words font-display text-hec-h2 font-medium text-hec-ink", "mt-2.5 text-2xl font-black leading-snug tracking-tight break-words [hyphens:auto]")}>
               {homework.title}
             </DialogTitle>
           )}
           {(() => {
             const Desc = isMobile ? SheetDescription : DialogDescription;
             return (
-              <Desc className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold text-muted-foreground">
+              <Desc className={c("mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-hec-small text-hec-ink-soft", "mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold text-muted-foreground")}>
                 {due && (
                   <span
                     className={cn(
                       "inline-flex items-center gap-1.5",
-                      status === "overdue" && "text-rose-600 dark:text-rose-300",
-                      status === "due-today" && "text-amber-700 dark:text-amber-300",
+                      status === "overdue" && (ivory ? "font-medium text-hec-danger" : "text-rose-600 dark:text-rose-300"),
+                      status === "due-today" && (ivory ? "font-medium text-hec-warn" : "text-amber-700 dark:text-amber-300"),
                     )}
                   >
                     <CalendarDays className="h-4 w-4 shrink-0" />
@@ -152,7 +158,7 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
     <div className="flex flex-col gap-7 px-4 py-5 sm:px-6 sm:py-6 min-w-0">
       {homework.body && (
         <Step n={++step} title="What to do">
-          <div className="rounded-3xl border-2 border-border bg-card p-4 sm:p-5">
+          <div className={c("rounded-hec-lg border border-hec-line bg-hec-surface p-4 sm:p-5", "rounded-3xl border-2 border-border bg-card p-4 sm:p-5")}>
             <RichText html={homework.body} />
           </div>
         </Step>
@@ -169,18 +175,18 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
                   key={file.id}
                   type="button"
                   onClick={() => downloadFile(file.storage_key)}
-                  className="flex w-full items-center gap-3 rounded-2xl border-2 border-b-4 border-border bg-card p-3 text-left transition-[transform] duration-100 active:translate-y-[2px] active:border-b-2"
+                  className={c("flex min-h-hec-target w-full items-center gap-3 rounded-hec-md border border-hec-line-strong bg-hec-raised p-3 text-left transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring", "flex w-full items-center gap-3 rounded-2xl border-2 border-b-4 border-border bg-card p-3 text-left transition-[transform] duration-100 active:translate-y-[2px] active:border-b-2")}
                 >
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <span className={c("flex h-11 w-11 shrink-0 items-center justify-center rounded-hec-md bg-hec-sunken text-hec-ink-soft", "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary")}>
                     <FileText className="h-5 w-5" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[0.9375rem] font-bold">{file.file_name}</span>
-                    <span className="block text-xs font-semibold text-muted-foreground">
+                    <span className={c("block whitespace-normal break-words text-hec-body font-medium text-hec-ink", "block truncate text-[0.9375rem] font-bold")}>{file.file_name}</span>
+                    <span className={c("block text-hec-caption text-hec-ink-soft", "block text-xs font-semibold text-muted-foreground")}>
                       {ext}{size ? ` · ${size}` : ""}
                     </span>
                   </span>
-                  <Download className="h-5 w-5 shrink-0 text-muted-foreground" />
+                  <Download className={c("h-5 w-5 shrink-0 text-hec-ink-soft", "h-5 w-5 shrink-0 text-muted-foreground")} />
                 </button>
               );
             })}
@@ -197,10 +203,10 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
       <div className={cn("min-w-0", resultFirst && "order-first")}>
       <Step n={resultFirst ? 0 : ++step} title={isReadOnly ? "Classmate's work" : resultFirst ? "Your result" : "Your answer"}>
         {isReadOnly ? (
-          <div className="rounded-3xl border-2 border-border bg-card p-4 space-y-2">
+          <div className={c("rounded-hec-lg border border-hec-line bg-hec-surface p-4 space-y-2", "rounded-3xl border-2 border-border bg-card p-4 space-y-2")}>
             {submission ? (
               <>
-                <p className="text-[0.9375rem] font-bold">
+                <p className={c("text-hec-body font-medium text-hec-ink", "text-[0.9375rem] font-bold")}>
                   {submission.status === "graded"
                     ? `🌟 Marked${submission.grade ? ` · ${submission.grade}` : ""}`
                     : submission.status === "submitted"
@@ -208,19 +214,19 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
                       : "📝 Not sent yet"}
                 </p>
                 {submission.submitted_at && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className={c("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
                     Sent {format(new Date(submission.submitted_at), "d MMM 'at' h:mm a")}
                   </p>
                 )}
               </>
             ) : (
-              <p className="text-[0.9375rem] text-muted-foreground">This classmate has not sent it yet.</p>
+              <p className={c("text-hec-body text-hec-ink-soft", "text-[0.9375rem] text-muted-foreground")}>This classmate has not sent it yet.</p>
             )}
           </div>
         ) : (
           <Suspense
             fallback={
-              <div className="flex items-center justify-center py-8 text-muted-foreground">
+              <div className={c("flex items-center justify-center py-8 text-hec-ink-soft", "flex items-center justify-center py-8 text-muted-foreground")}>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 Getting your answer box ready…
               </div>
@@ -239,7 +245,7 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
       <Sheet open={true} onOpenChange={(open) => !open && onClose()}>
         <SheetContent
           side="bottom"
-          className="flex h-[94dvh] max-h-[94dvh] flex-col gap-0 overflow-hidden rounded-t-[1.75rem] border-0 !bg-background !backdrop-blur-none p-0 [&>button.absolute]:hidden"
+          className={c("flex h-[94dvh] max-h-[94dvh] flex-col gap-0 overflow-hidden rounded-t-hec-lg border-0 p-0 [&>button.absolute]:hidden", "flex h-[94dvh] max-h-[94dvh] flex-col gap-0 overflow-hidden rounded-t-[1.75rem] border-0 !bg-background !backdrop-blur-none p-0 [&>button.absolute]:hidden")}
         >
           {/* Header scrolls with the page, so a long title never pins a third of the screen. */}
           <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pb-[max(1.5rem,env(safe-area-inset-bottom))]">
@@ -254,7 +260,7 @@ export default function HomeworkDetailDialog({ homework, studentId, isReadOnly =
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden rounded-3xl !bg-background p-0 sm:max-w-2xl [&>button.absolute]:hidden">
+      <DialogContent className={c("flex max-h-[90vh] flex-col gap-0 overflow-hidden rounded-hec-lg p-0 sm:max-w-2xl [&>button.absolute]:hidden", "flex max-h-[90vh] flex-col gap-0 overflow-hidden rounded-3xl !bg-background p-0 sm:max-w-2xl [&>button.absolute]:hidden")}>
         {header}
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">{body}</div>
       </DialogContent>

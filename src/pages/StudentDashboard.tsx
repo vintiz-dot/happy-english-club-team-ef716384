@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentProfileEdit } from "@/components/student/StudentProfileEdit";
 import { useStudentMonthFinance, formatVND } from "@/hooks/useStudentMonthFinance";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useLoginChallenge } from "@/hooks/useLoginChallenge";
 
 // New kid-friendly components
@@ -41,25 +41,39 @@ import { HeroCommandDeck } from "@/components/student/nova/HeroCommandDeck";
 import { NovaStatCard } from "@/components/student/nova/NovaStatCard";
 import { QuickActionDock, type DockAction } from "@/components/student/nova/QuickActionDock";
 import { SectionHeading } from "@/components/student/nova/SectionHeading";
+import { BUTTON_QUIET, CARD, CARD_TITLE, reducedMotion } from "@/components/student/nova/ivory";
+import { cn } from "@/lib/utils";
 
-// Animation variants
+// Animation variants. "Ivory" design system: the page arrives once, as one
+// slow fade with an 8 px rise; the cards do not each fly in (DESIGN_SYSTEM section 9).
 const containerVariants = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 0, y: 8 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.1 }
+    y: 0,
+    transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] }
   }
 } as const;
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    scale: 1,
-    transition: { type: "spring" as const, stiffness: 300, damping: 24 }
-  }
+  hidden: {},
+  visible: {}
 };
+
+/**
+ * Grades 1-3 get the design system's young scale (bigger type, 56 px targets,
+ * the warm honey surface). Read from date_of_birth, which this screen already
+ * loads: a Vietnamese child starts Grade 1 in the September of the year they
+ * turn 6, so in school year Y (Sept Y - Aug Y+1) the grade is Y - birth year - 5.
+ * Younger children count as young too. No date of birth: the standard scale.
+ */
+function isYoungLearner(dateOfBirth?: string | null): boolean {
+  const born = Number((dateOfBirth || "").slice(0, 4));
+  if (!born) return false;
+  const now = dayjs();
+  const schoolYear = now.month() >= 8 ? now.year() : now.year() - 1;
+  return schoolYear - born - 5 <= 3;
+}
 
 import { calculateLevel, getLevelTitle } from "@/lib/levelUtils";
 import { useAuth } from "@/hooks/useAuth";
@@ -98,6 +112,7 @@ export default function StudentDashboard() {
   const tabFromUrl = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(tabFromUrl || "dashboard");
   const greeting = useMemo(() => getGreeting(), []);
+  const reduceMotion = reducedMotion(useReducedMotion());
 
   // Sync tab with URL
   useEffect(() => {
@@ -352,10 +367,10 @@ export default function StudentDashboard() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center glass-lg rounded-3xl p-12"
+            className="text-center rounded-hec-lg border border-hec-line bg-hec-surface p-12 shadow-hec-1"
           >
-            <Sparkles className="h-16 w-16 mx-auto mb-4 text-primary animate-pulse" />
-            <p className="text-xl text-muted-foreground">
+            <Sparkles className="h-16 w-16 mx-auto mb-4 text-hec-brass" aria-hidden />
+            <p className="text-hec-h2 text-hec-ink-soft">
               {studentId ? "Loading your profile…" : "Please select a student profile."}
             </p>
           </motion.div>
@@ -387,69 +402,35 @@ export default function StudentDashboard() {
 
   return (
     <Layout title="Dashboard">
+      {/* "Ivory" design system scope (docs/DESIGN_SYSTEM.md): only this screen carries it at the checkpoint. */}
+      <div
+        data-hec-theme="ivory"
+        data-hec-scale={isYoungLearner(studentProfile.date_of_birth) ? "young" : undefined}
+        className="relative"
+      >
       {/* Celebration Overlay */}
-      <CelebrationOverlay 
-        show={showCelebration} 
+      <CelebrationOverlay
+        show={showCelebration}
         type="level_up"
         title="Level Up!"
         subtitle="You've reached a new level!"
         onComplete={() => setShowCelebration(false)}
       />
 
-      {/* Premium Immersive Background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className={`absolute inset-0 ${isMonitor ? 'bg-gradient-to-br from-background via-warning/5 to-background' : 'bg-gradient-to-br from-background via-primary/5 to-accent/5'}`} />
-        
-        {/* Animated nebula effects */}
-        <motion.div 
-          className={`absolute top-20 left-20 w-[40rem] h-[40rem] ${isMonitor ? 'bg-warning/12' : 'bg-primary/10'} rounded-full blur-[120px]`}
-          animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.15, 0.1] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className={`absolute bottom-20 right-20 w-[35rem] h-[35rem] ${isMonitor ? 'bg-warning/8' : 'bg-accent/10'} rounded-full blur-[120px]`}
-          animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.12, 0.1] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        />
-        {isMonitor && (
-          <motion.div 
-            className="absolute top-1/3 right-1/4 w-[25rem] h-[25rem] rounded-full blur-[100px]"
-            style={{ background: "hsl(var(--monitor-gold) / 0.08)" }}
-            animate={{ scale: [1, 1.3, 1], opacity: [0.05, 0.12, 0.05] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          />
-        )}
+      {/* The paper: one calm, solid page colour behind the whole screen (no glow, no starfield). */}
+      <div className="pointer-events-none fixed inset-0 z-0 bg-hec-paper" aria-hidden />
 
-        {/* Starfield */}
-        <div className="starfield">
-          {Array.from({ length: isMonitor ? 50 : 40 }).map((_, i) => (
-            <motion.div
-              key={i}
-              className={`absolute rounded-full ${isMonitor ? 'bg-warning/30' : 'bg-foreground/20'}`}
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                width: `${Math.random() * 2 + 1}px`,
-                height: `${Math.random() * 2 + 1}px`,
-              }}
-              animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.2, 1] }}
-              transition={{ duration: Math.random() * 3 + 2, repeat: Infinity, delay: Math.random() * 2 }}
-            />
-          ))}
-        </div>
-      </div>
-
-      <motion.div 
-        className="space-y-6 relative z-10"
+      <motion.div
+        className="relative z-10"
         variants={containerVariants}
-        initial="hidden"
+        initial={reduceMotion ? false : "hidden"}
         animate="visible"
       >
         {/* Tab Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Dashboard Tab */}
-          <TabsContent value="dashboard" className="mt-2 sm:mt-6 space-y-5 sm:space-y-8">
-        {/* Hero — cinematic command deck */}
+          <TabsContent value="dashboard" className="mt-2 space-y-8 sm:mt-6 lg:space-y-12">
+        {/* Hero */}
         <HeroCommandDeck
           firstName={studentProfile.full_name.split(' ')[0]}
           fullName={studentProfile.full_name}
@@ -487,7 +468,7 @@ export default function StudentDashboard() {
         </motion.div>
 
         {/* Stats Row - Streak & Challenges */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <motion.div variants={itemVariants}>
             <DailyStreakCard
               currentStreak={streakData.currentStreak}
@@ -503,7 +484,7 @@ export default function StudentDashboard() {
         </div>
 
         {/* Achievement Badges */}
-        <motion.div variants={itemVariants} className="holo-card p-4 sm:p-6">
+        <motion.div variants={itemVariants} className={CARD}>
           <AchievementBadges
             totalXp={totalPoints || 0}
             homeworkCompleted={achievementData?.homeworkCompleted || 0}
@@ -554,151 +535,121 @@ export default function StudentDashboard() {
             }
             caption={`${dayjs().format("MMMM")} - tap to view`}
             gradient="from-amber-500 to-orange-600"
-            valueClassName={
-              tuitionData?.carryOutDebt
-                ? "text-destructive text-2xl md:text-3xl"
-                : tuitionData?.carryOutCredit
-                  ? "text-emerald-600 dark:text-emerald-400 text-2xl md:text-3xl"
-                  : "text-2xl md:text-3xl"
-            }
+            // Ink: red on an amount means overdue and needs the word (DESIGN_SYSTEM s.14);
+            // a balance owed this month is not that. The Tuition page carries the status word.
+            valueClassName="text-hec-ink"
             onClick={() => navigate('/tuition')}
             delay={0.19}
           />
         </div>
 
         {/* Quest Board & Sessions */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2">
           {/* Quest Board (Homework) */}
-          <motion.div 
+          <motion.section
             variants={itemVariants}
-            className="holo-card overflow-hidden"
+            className={CARD}
           >
-            <div className="p-4 sm:p-6 relative">
-              <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-accent/20 to-accent/10 shrink-0">
-                    <span className="text-2xl">📝</span>
-                  </div>
-                  <CardTitle className="text-lg sm:text-xl font-black truncate">My Homework</CardTitle>
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-3">
+                  <FileText className="h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
+                  <h2 className={CARD_TITLE}>My Homework</h2>
                 </div>
-                <Link to="/student/assignments" className="shrink-0">
-                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground font-bold">
-                    See all <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
+                <Link to="/student/assignments" className={cn(BUTTON_QUIET, "shrink-0 px-3 text-hec-small text-hec-ink-soft hover:text-hec-ink")}>
+                  See all <ChevronRight className="h-4 w-4" aria-hidden />
                 </Link>
               </div>
-              
+
               {pendingHomework && pendingHomework.length > 0 ? (
                 <div className="space-y-3">
                   {pendingHomework.slice(0, 3).map((hw: any, index: number) => (
-                    <HomeworkCard key={hw.id} homework={hw} index={index} compact onOpen={() => setOpenHomework(hw)} />
+                    <HomeworkCard key={hw.id} homework={hw} index={index} compact ivory onOpen={() => setOpenHomework(hw)} />
                   ))}
                 </div>
               ) : (
-                <motion.div 
-                  className="glass-muted rounded-xl p-8 text-center"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <span className="text-5xl mb-4 block">🎉</span>
-                  <p className="text-lg font-medium text-foreground mb-1">All Quests Complete!</p>
-                  <p className="text-muted-foreground text-sm">You're all caught up. Great job!</p>
-                </motion.div>
+                <div className="rounded-hec-md bg-hec-sunken/60 px-6 py-8 text-center">
+                  <span className="mb-3 block text-3xl" aria-hidden>🎉</span>
+                  <p className="mb-1 text-hec-h3 font-semibold text-hec-ink">All Quests Complete!</p>
+                  <p className="text-hec-small text-hec-ink-soft">You're all caught up. Great job!</p>
+                </div>
               )}
-            </div>
-          </motion.div>
+          </motion.section>
 
           {/* Upcoming Sessions */}
-          <motion.div 
+          <motion.section
             variants={itemVariants}
-            className="holo-card overflow-hidden"
+            className={CARD}
           >
-            <div className="p-4 sm:p-6 relative">
-              <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shrink-0">
-                    <span className="text-2xl">🚀</span>
-                  </div>
-                  <CardTitle className="text-lg sm:text-xl font-black truncate">Next classes</CardTitle>
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Calendar className="h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
+                  <h2 className={CARD_TITLE}>Next classes</h2>
                 </div>
-                <Link to="/student/dashboard?tab=schedule" className="shrink-0">
-                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                    Schedule <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
+                <Link to="/student/dashboard?tab=schedule" className={cn(BUTTON_QUIET, "shrink-0 px-3 text-hec-small text-hec-ink-soft hover:text-hec-ink")}>
+                  Schedule <ChevronRight className="h-4 w-4" aria-hidden />
                 </Link>
               </div>
-              
+
               {upcomingSessions && upcomingSessions.length > 0 ? (
-                <div className="space-y-3">
-                  {upcomingSessions.map((session: any, index: number) => (
-                    <motion.div 
-                      key={session.id} 
-                      className="glass p-3 sm:p-4 rounded-2xl flex justify-between items-center gap-3 hover:shadow-lg transition-all duration-300"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
+                <ul className="divide-y divide-hec-line">
+                  {upcomingSessions.map((session: any) => (
+                    <li
+                      key={session.id}
+                      className="flex min-h-hec-target items-center justify-between gap-3 py-3"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                          <span className="text-xl">🎓</span>
-                        </div>
-                        <div className="space-y-1 min-w-0">
-                          <p className="font-bold text-foreground truncate">{session.classes?.name || "Class"}</p>
-                          <p className="text-sm text-muted-foreground flex items-center gap-2">
-                            <Calendar className="h-3.5 w-3.5" />
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-hec-sunken" aria-hidden>
+                          <BookOpen className="h-5 w-5 text-hec-ink-soft" />
+                        </span>
+                        <div className="min-w-0 space-y-1">
+                          <p className="whitespace-normal break-words font-medium text-hec-ink">{session.classes?.name || "Class"}</p>
+                          <p className="flex items-center gap-2 text-hec-small tabular-nums text-hec-ink-soft">
+                            <Clock className="h-4 w-4 shrink-0" aria-hidden />
                             {dayjs(session.date).format("MMM D")} • {session.start_time.slice(0, 5)}
                           </p>
                         </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 shrink-0">
+                      <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
                         {dayjs(session.date).isSame(dayjs(), 'day') && (
-                          <Badge className="bg-success text-success-foreground">Today!</Badge>
+                          <span className="inline-flex items-center gap-1 rounded-full border border-hec-leaf/30 bg-hec-leaf-tint px-3 py-1 text-hec-caption font-medium text-hec-leaf">Today!</span>
                         )}
-                        <span className="text-xs text-warning font-bold">+15 XP</span>
+                        <span className="whitespace-nowrap text-hec-caption tabular-nums text-hec-ink-soft">+15 XP</span>
                       </div>
-                    </motion.div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               ) : (
-                <motion.div 
-                  className="glass-muted rounded-xl p-8 text-center"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <span className="text-5xl mb-4 block">📅</span>
-                  <p className="text-lg font-medium text-foreground mb-1">No upcoming sessions</p>
-                  <p className="text-muted-foreground text-sm">Enjoy your free time!</p>
-                </motion.div>
+                <div className="rounded-hec-md bg-hec-sunken/60 px-6 py-8 text-center">
+                  <span className="mb-3 block text-3xl" aria-hidden>📅</span>
+                  <p className="mb-1 text-hec-h3 font-semibold text-hec-ink">No upcoming sessions</p>
+                  <p className="text-hec-small text-hec-ink-soft">Enjoy your free time!</p>
+                </div>
               )}
-            </div>
-          </motion.div>
+          </motion.section>
         </div>
 
         {/* Class Rankings */}
         {enrolledClasses && enrolledClasses.length > 0 && (
-          <motion.div variants={itemVariants} className="space-y-6">
+          <motion.div variants={itemVariants} className="space-y-4">
             <SectionHeading
               icon={Trophy}
               title="Class Champions"
               subtitle="Climb the leaderboard and earn XP!"
               gradient="from-amber-400 to-orange-600"
             />
-            
-            <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {enrolledClasses.map((enrollment: any, index: number) => {
                 const classData = enrollment.classes;
-                
+
                 if (!classData?.id) return null;
-                
+
                 const classEconomy = (classData as any);
-                
+
                 return (
-                  <motion.div 
-                    key={enrollment.id} 
+                  <div
+                    key={enrollment.id}
                     className="space-y-4"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
                   >
                     {classEconomy?.economy_mode && (
                       <StudentWallet
@@ -710,14 +661,13 @@ export default function StudentDashboard() {
                         pointsToCashRate={classEconomy.points_to_cash_rate || 50}
                       />
                     )}
-                    <div className="holo-card overflow-hidden">
-                      <StudentClassLeaderboard 
-                        classId={classData.id} 
-                        className={classData.name}
-                        currentStudentId={studentId}
-                      />
-                    </div>
-                  </motion.div>
+                    <StudentClassLeaderboard
+                      ivory
+                      classId={classData.id}
+                      className={classData.name}
+                      currentStudentId={studentId}
+                    />
+                  </div>
                 );
               }).filter(Boolean)}
             </div>
@@ -732,12 +682,8 @@ export default function StudentDashboard() {
 
           {/* Achievements Tab */}
           <TabsContent value="achievements" className="mt-6">
-            <motion.div
-              className="space-y-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <div className="glass-lg border-0 shadow-xl rounded-2xl p-6">
+            <div className="space-y-8">
+              <section className={CARD}>
                 <AchievementBadges
                   totalXp={totalPoints || 0}
                   homeworkCompleted={achievementData?.homeworkCompleted || 0}
@@ -752,14 +698,14 @@ export default function StudentDashboard() {
                     else localStorage.removeItem("featured_badge_id");
                   }}
                 />
-                <p className="text-xs text-muted-foreground mt-2 text-center">Tap an earned badge to feature it! ⭐</p>
-              </div>
-              
+                <p className="mt-2 text-center text-hec-caption text-hec-ink-soft">Tap an earned badge to feature it! ⭐</p>
+              </section>
+
               {/* Shareable Profile Card */}
-              <div className="glass-lg border-0 shadow-xl rounded-2xl p-6">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <span>📸</span> Your Profile Card
-                </h3>
+              <section className={CARD}>
+                <h2 className={cn(CARD_TITLE, "mb-4")}>
+                  Your Profile Card
+                </h2>
                 <ProfileShareCard
                   name={studentProfile.full_name}
                   avatarUrl={studentProfile.avatar_url}
@@ -768,52 +714,40 @@ export default function StudentDashboard() {
                   currentStreak={streakData.currentStreak}
                   statusMessage={(studentProfile as any).status_message}
                 />
-              </div>
+              </section>
 
-              <div className="glass-lg border-0 shadow-xl rounded-2xl p-6">
+              <section className={CARD}>
                 <HowToEarnXP />
-              </div>
-            </motion.div>
+              </section>
+            </div>
           </TabsContent>
 
           {/* Exam Reports Tab */}
           <TabsContent value="reports" className="mt-6">
-            <motion.div
-              className="glass-lg border-0 shadow-xl rounded-2xl p-6 space-y-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-accent/20 to-accent/10">
-                  <span className="text-2xl">📄</span>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">My Exam Reports</h2>
-                  <p className="text-sm text-muted-foreground">Reports posted by your teachers — read online or download as PDF.</p>
+            <section className={cn(CARD, "space-y-4")}>
+              <div className="mb-2 flex items-start gap-3">
+                <FileText className="mt-1.5 h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
+                <div className="min-w-0">
+                  <h2 className={CARD_TITLE}>My Exam Reports</h2>
+                  <p className="text-hec-small text-hec-ink-soft">Reports posted by your teachers — read online or download as PDF.</p>
                 </div>
               </div>
               <StudentExamReportsTab studentId={studentId} />
-            </motion.div>
+            </section>
           </TabsContent>
 
           {/* My Classes / Schedule Tab */}
           <TabsContent value="schedule" className="mt-6">
-            <motion.div
-              className="glass-lg border-0 shadow-xl rounded-2xl p-6 space-y-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10">
-                  <span className="text-2xl">📅</span>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">My Classes</h2>
-                  <p className="text-sm text-muted-foreground">Your schedule, attendance & homework all in one place!</p>
+            <section className={cn(CARD, "space-y-4")}>
+              <div className="mb-2 flex items-start gap-3">
+                <Calendar className="mt-1.5 h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
+                <div className="min-w-0">
+                  <h2 className={CARD_TITLE}>My Classes</h2>
+                  <p className="text-hec-small text-hec-ink-soft">Your schedule, attendance & homework all in one place!</p>
                 </div>
               </div>
               <StudentScheduleCalendar studentId={studentId} />
-            </motion.div>
+            </section>
           </TabsContent>
         </Tabs>
       </motion.div>
@@ -822,20 +756,23 @@ export default function StudentDashboard() {
         <HomeworkDetailDialog homework={openHomework} studentId={studentId} onClose={() => setOpenHomework(null)} />
       )}
 
-      {/* Edit Profile Dialog */}
+      {/* Edit Profile Dialog: portalled under <body>, so it carries the scope itself. */}
       <Dialog open={showEditProfile} onOpenChange={setShowEditProfile}>
-        <DialogContent className="glass-lg border-0 shadow-2xl max-w-4xl max-h-[90vh] overflow-y-auto">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-          <DialogHeader className="relative">
-            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+        <DialogContent
+          data-hec-theme="ivory"
+          className="max-h-[85dvh] max-w-4xl overflow-y-auto rounded-hec-lg border border-hec-line bg-hec-raised text-hec-ink shadow-hec-3"
+        >
+          <DialogHeader>
+            <DialogTitle className={CARD_TITLE}>
               Edit Your Profile
             </DialogTitle>
           </DialogHeader>
-          <div className="relative">
+          <div>
             <StudentProfileEdit studentId={studentId} />
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </Layout>
   );
 }

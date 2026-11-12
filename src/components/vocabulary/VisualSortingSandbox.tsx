@@ -156,8 +156,8 @@ export function VisualSortingSandbox({ targetWord, antonyms, onComplete, classNa
   if (loading) {
     return (
       <div className={cn("flex items-center justify-center py-8", className)}>
-        <Loader2 className="w-6 h-6 animate-spin text-violet-500" />
-        <span className="ml-2 text-sm text-muted-foreground">Loading visual quiz...</span>
+        <Loader2 className="w-6 h-6 animate-spin text-hec-brass" aria-hidden="true" />
+        <span className="ml-2 text-hec-small text-hec-ink-soft">Loading visual quiz...</span>
       </div>
     );
   }
@@ -167,10 +167,10 @@ export function VisualSortingSandbox({ targetWord, antonyms, onComplete, classNa
   return (
     <div className={cn("space-y-4", className)}>
       <div className="text-center space-y-1">
-        <p className="text-sm font-bold text-foreground">
+        <p className="text-hec-small font-semibold text-hec-ink">
           🧩 Visual Sorting Challenge
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-hec-caption text-hec-ink-soft">
           Drag each picture to the correct box!
         </p>
       </div>
@@ -182,7 +182,7 @@ export function VisualSortingSandbox({ targetWord, antonyms, onComplete, classNa
         onDragEnd={handleDragEnd}
       >
         {/* Image Bank */}
-        <DroppableZone id="bank" label="🖼️ Image Bank" className="bg-slate-50 dark:bg-slate-800/50 min-h-[80px]">
+        <DroppableZone id="bank" label="🖼️ Image Bank" className="min-h-[80px] border-hec-line bg-hec-sunken">
           {tilesInZone("bank").map((tile) => (
             <DraggableTile
               key={tile.id}
@@ -191,7 +191,7 @@ export function VisualSortingSandbox({ targetWord, antonyms, onComplete, classNa
             />
           ))}
           {tilesInZone("bank").length === 0 && (
-            <p className="text-xs text-muted-foreground italic py-2">All pictures placed!</p>
+            <p className="py-2 text-hec-caption italic text-hec-ink-soft">All pictures placed!</p>
           )}
         </DroppableZone>
 
@@ -200,7 +200,7 @@ export function VisualSortingSandbox({ targetWord, antonyms, onComplete, classNa
           <DroppableZone
             id="target"
             label={`✅ This means "${targetWord}"`}
-            className="bg-emerald-50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-700 min-h-[100px]"
+            className="min-h-[100px] border-hec-leaf/30 bg-hec-leaf-tint"
           >
             {tilesInZone("target").map((tile) => (
               <DraggableTile
@@ -214,7 +214,7 @@ export function VisualSortingSandbox({ targetWord, antonyms, onComplete, classNa
           <DroppableZone
             id="opposite"
             label={`❌ This does NOT mean "${targetWord}"`}
-            className="bg-rose-50 dark:bg-rose-950/20 border-rose-300 dark:border-rose-700 min-h-[100px]"
+            className="min-h-[100px] border-hec-danger/30 bg-hec-danger-tint"
           >
             {tilesInZone("opposite").map((tile) => (
               <DraggableTile
@@ -228,7 +228,7 @@ export function VisualSortingSandbox({ targetWord, antonyms, onComplete, classNa
 
         <DragOverlay>
           {activeTile && (
-            <div className="w-[90px] h-[70px] rounded-xl overflow-hidden shadow-2xl border-2 border-violet-500 opacity-90">
+            <div className="h-[70px] w-[90px] overflow-hidden rounded-hec-md border border-hec-brass shadow-hec-3">
               <img src={activeTile.url} alt={activeTile.alt} className="w-full h-full object-cover" />
             </div>
           )}
@@ -241,18 +241,18 @@ export function VisualSortingSandbox({ targetWord, antonyms, onComplete, classNa
           <Button
             onClick={handleVerify}
             disabled={!allPlaced}
-            className="rounded-xl gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold"
+            className="w-full sm:w-auto"
           >
-            <Check className="w-4 h-4" />
+            <Check className="w-4 h-4" aria-hidden="true" />
             Check My Answers
           </Button>
         ) : (
           <Button
             onClick={handleReset}
             variant="outline"
-            className="rounded-xl gap-2"
+            className="w-full sm:w-auto"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-4 h-4" aria-hidden="true" />
             Try Again
           </Button>
         )}
@@ -260,10 +260,10 @@ export function VisualSortingSandbox({ targetWord, antonyms, onComplete, classNa
 
       {verified && (
         <div className={cn(
-          "text-center py-3 rounded-xl font-bold text-sm animate-in fade-in zoom-in duration-300",
+          "rounded-hec-md border py-3 text-center text-hec-small font-semibold animate-in fade-in",
           Object.values(results).every(Boolean)
-            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
-            : "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300"
+            ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf"
+            : "border-hec-warn/30 bg-hec-warn-tint text-hec-warn"
         )}>
           {Object.values(results).every(Boolean)
             ? "🎉 Perfect! All correct! You can save this word now!"
@@ -296,12 +296,12 @@ function DroppableZone({
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-2xl border-2 p-3 transition-all",
-        isOver && "ring-2 ring-violet-400 scale-[1.01]",
+        "rounded-hec-lg border p-3 transition-colors duration-hec-1 ease-hec",
+        isOver && "outline outline-2 outline-offset-2 outline-hec-ring",
         className
       )}
     >
-      <p className="text-xs font-bold text-muted-foreground mb-2">{label}</p>
+      <p className="mb-2 text-hec-caption font-semibold text-hec-ink-soft">{label}</p>
       <div className="flex flex-wrap gap-2 justify-center">
         {children}
       </div>
@@ -325,13 +325,14 @@ function DraggableTile({
       {...listeners}
       {...attributes}
       className={cn(
-        "relative w-[80px] h-[60px] rounded-xl overflow-hidden cursor-grab active:cursor-grabbing",
-        "border-2 shadow-sm transition-all hover:scale-105",
+        "relative h-[60px] w-[80px] cursor-grab overflow-hidden rounded-hec-md active:cursor-grabbing",
+        "border shadow-hec-1 transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2",
+        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
         "touch-none select-none",
-        isDragging && "opacity-50 scale-110 z-50",
-        result === true && "border-emerald-500 ring-2 ring-emerald-300",
-        result === false && "border-red-500 ring-2 ring-red-300",
-        result === undefined && "border-slate-200 dark:border-slate-600"
+        isDragging && "z-50 opacity-50",
+        result === true && "border-hec-leaf outline outline-2 outline-hec-leaf",
+        result === false && "border-hec-danger outline outline-2 outline-hec-danger",
+        result === undefined && "border-hec-line"
       )}
     >
       <img
@@ -344,13 +345,13 @@ function DraggableTile({
         <div
           className={cn(
             "absolute inset-0 flex items-center justify-center",
-            result ? "bg-emerald-500/30" : "bg-red-500/30"
+            result ? "bg-hec-leaf-tint/70" : "bg-hec-danger-tint/70"
           )}
         >
           {result ? (
-            <Check className="w-6 h-6 text-emerald-700" />
+            <Check className="w-6 h-6 text-hec-leaf" />
           ) : (
-            <X className="w-6 h-6 text-red-700" />
+            <X className="w-6 h-6 text-hec-danger" />
           )}
         </div>
       )}

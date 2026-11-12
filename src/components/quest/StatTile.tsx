@@ -13,12 +13,13 @@ interface StatTileProps {
   onClick?: () => void;
 }
 
-const TONES: Record<NonNullable<StatTileProps["tone"]>, { bg: string; ring: string; text: string }> = {
-  violet:  { bg: "from-blue-500/15 to-sky-500/5",   ring: "ring-blue-500/20",  text: "text-blue-600 dark:text-blue-300" },
-  amber:   { bg: "from-amber-500/15 to-orange-500/5",     ring: "ring-amber-500/20",   text: "text-amber-600 dark:text-amber-300" },
-  emerald: { bg: "from-emerald-500/15 to-teal-500/5",     ring: "ring-emerald-500/20", text: "text-emerald-600 dark:text-emerald-300" },
-  rose:    { bg: "from-rose-500/15 to-sky-500/5",        ring: "ring-rose-500/20",    text: "text-rose-600 dark:text-rose-300" },
-  sky:     { bg: "from-sky-500/15 to-cyan-500/5",         ring: "ring-sky-500/20",     text: "text-sky-600 dark:text-sky-300" },
+// A tile is a neutral card; only the icon says what kind of number it is (brass reward, leaf growth, danger, neutral).
+const TONES: Record<NonNullable<StatTileProps["tone"]>, { text: string }> = {
+  violet:  { text: "text-hec-ink-soft" },
+  amber:   { text: "text-hec-brass" },
+  emerald: { text: "text-hec-leaf" },
+  rose:    { text: "text-hec-danger" },
+  sky:     { text: "text-hec-ink-soft" },
 };
 
 /**
@@ -34,25 +35,23 @@ export function StatTile({ icon: Icon, label, value, trend, tone = "violet", cla
       onClick={onClick}
       disabled={!onClick}
       className={cn(
-        "group relative w-full rounded-2xl bg-gradient-to-br p-4 sm:p-5 ring-1 text-left",
-        "surface-2 lift focus-premium",
-        t.bg,
-        t.ring,
-        !onClick && "cursor-default lift:hover-none",
+        "group relative w-full rounded-hec-lg border border-hec-line bg-hec-surface p-4 text-left shadow-hec-1 sm:p-5",
+        "transition-shadow duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+        onClick ? "min-h-hec-target hover:shadow-hec-2" : "cursor-default",
         className
       )}
     >
       <div className="flex items-start justify-between mb-3">
-        <div className={cn("h-9 w-9 rounded-xl bg-white/70 dark:bg-white/10 flex items-center justify-center shadow-q1", t.text)}>
+        <div className={cn("flex h-9 w-9 items-center justify-center rounded-hec-md bg-hec-sunken", t.text)}>
           <Icon className="h-4 w-4" />
         </div>
         {trend && (
           <span
             className={cn(
-              "text-[11px] font-bold px-1.5 py-0.5 rounded-full",
+              "rounded-full border px-2 py-0.5 text-hec-caption font-medium tabular-nums",
               isUp
-                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"
-                : "bg-rose-500/15 text-rose-600 dark:text-rose-300"
+                ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf"
+                : "border-hec-danger/30 bg-hec-danger-tint text-hec-danger"
             )}
           >
             {isUp ? "▲" : "▼"} {Math.abs(trend.delta)}
@@ -60,10 +59,10 @@ export function StatTile({ icon: Icon, label, value, trend, tone = "violet", cla
           </span>
         )}
       </div>
-      <div className="type-h1 tabular-nums">
+      <div className="text-hec-h1 font-semibold tabular-nums text-hec-ink">
         {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
       </div>
-      <div className="type-micro text-muted-foreground mt-0.5">{label}</div>
+      <div className="mt-0.5 text-hec-caption text-hec-ink-soft">{label}</div>
     </button>
   );
 }

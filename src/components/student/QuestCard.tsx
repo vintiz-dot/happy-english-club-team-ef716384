@@ -90,69 +90,47 @@ export function QuestCard({
 
   return (
     <motion.div
-      className={`relative overflow-hidden rounded-2xl cursor-pointer transition-all ${
-        isCompleted 
-          ? 'bg-success/10 border border-success/20' 
+      className={`relative cursor-pointer overflow-hidden rounded-hec-lg border shadow-hec-1 transition-colors duration-hec-1 ease-hec ${
+        isCompleted
+          ? 'border-hec-leaf/30 bg-hec-leaf-tint'
           : isOverdue
-            ? 'bg-destructive/10 border border-destructive/20'
-            : 'glass hover:shadow-xl border border-transparent'
+            ? 'border-hec-danger/30 bg-hec-danger-tint'
+            : 'border-hec-line bg-hec-surface hover:bg-hec-sunken'
       }`}
       onClick={onClick}
-      whileHover={{ scale: 1.02, x: 4 }}
-      whileTap={{ scale: 0.98 }}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
     >
-      {/* Urgent pulse effect */}
-      {isUrgent && !isCompleted && (
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-warning/20 to-transparent"
-          animate={{ opacity: [0.5, 0.8, 0.5] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-      )}
-
-      <div className="relative p-4 flex items-center gap-4">
+      <div className="relative flex items-center gap-4 p-4">
         {/* Quest Icon */}
-        <motion.div 
-          className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${
-            isCompleted 
-              ? 'bg-success/20' 
+        <div
+          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-hec-md border text-hec-h2 ${
+            isCompleted
+              ? 'border-hec-leaf/30 bg-hec-leaf-tint'
               : isOverdue
-                ? 'bg-destructive/20'
-                : `bg-${color}/10`
+                ? 'border-hec-danger/30 bg-hec-danger-tint'
+                : 'border-hec-line bg-hec-sunken'
           }`}
-          animate={isCompleted ? { rotate: [0, 10, -10, 0] } : {}}
-          transition={{ duration: 0.5 }}
+          aria-hidden
         >
           {isCompleted ? '✅' : icon}
-        </motion.div>
+        </div>
 
         {/* Quest Content */}
-        <div className="flex-1 min-w-0 space-y-1">
+        <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2">
-            <h4 className={`font-semibold truncate ${isCompleted ? 'text-success line-through' : 'text-foreground'}`}>
+            <h4 className={`truncate text-hec-body font-medium ${isCompleted ? 'text-hec-ink-soft line-through' : 'text-hec-ink'}`}>
               {title}
             </h4>
-            {isCompleted && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring" }}
-              >
-                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-              </motion.div>
-            )}
+            {isCompleted && <CheckCircle2 className="h-4 w-4 shrink-0 text-hec-leaf" aria-hidden />}
           </div>
-          
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className={`px-2 py-0.5 rounded-md text-xs font-medium bg-${color}/10 text-${color}`}>
+
+          <div className="flex flex-wrap items-center gap-2 text-hec-small text-hec-ink-soft">
+            <span className="rounded-full border border-hec-line bg-hec-sunken px-3 py-0.5 text-hec-caption font-medium text-hec-ink-soft">
               {className}
             </span>
             {dueDate && (
-              <div className={`flex items-center gap-1 ${isUrgent ? 'text-warning' : ''}`}>
-                {isUrgent && <AlertCircle className="h-3 w-3" />}
-                <Clock className="h-3 w-3" />
+              <div className={`flex items-center gap-1 ${isUrgent ? 'font-medium text-hec-warn' : ''}`}>
+                {isUrgent && <AlertCircle className="h-4 w-4" aria-hidden />}
+                <Clock className="h-4 w-4" aria-hidden />
                 <span>
                   {dayjs(dueDate).format("MMM D")}
                   {isUrgent && daysUntilDue === 0 && ' (Today!)'}
@@ -164,52 +142,36 @@ export function QuestCard({
 
           {/* Live countdown timer */}
           {timeLeft && !isCompleted && (
-            <motion.div
-              className="flex items-center gap-1.5 mt-1"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-            >
-              <motion.div
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning/15 text-warning text-xs font-bold"
-                animate={{ scale: [1, 1.04, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <Clock className="h-3 w-3" />
+            <div className="mt-1 flex items-center gap-1.5">
+              <div className="flex items-center gap-1 rounded-full border border-hec-warn/30 bg-hec-warn-tint px-3 py-0.5 text-hec-caption font-medium text-hec-warn">
+                <Clock className="h-4 w-4" aria-hidden />
                 ⏰ {timeLeft}
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           )}
 
           {/* Progress bar for in-progress quests */}
           {status === "in_progress" && progress > 0 && (
             <div className="pt-1">
-              <Progress value={progress} className="h-1.5" />
-              <p className="text-xs text-muted-foreground mt-0.5">{progress}% complete</p>
+              <Progress value={progress} className="h-2" />
+              <p className="mt-0.5 text-hec-caption text-hec-ink-soft">{progress}% complete</p>
             </div>
           )}
         </div>
 
         {/* Right side: XP + Status */}
         <div className="flex flex-col items-end gap-2">
-          <Badge variant={variant} className="text-xs">
+          <Badge variant={variant} className="text-hec-caption">
             {badge}
           </Badge>
-          <motion.div 
-            className={`flex items-center gap-1 text-xs font-bold ${
-              isCompleted ? 'text-success' : 'text-warning'
-            }`}
-            animate={!isCompleted ? { scale: [1, 1.05, 1] } : {}}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
+          <div className={`flex items-center gap-1 text-hec-caption font-medium tabular-nums ${isCompleted ? 'text-hec-leaf' : 'text-hec-brass'}`}>
             <span>+{xpReward}</span>
             <span>XP</span>
-          </motion.div>
+          </div>
         </div>
 
         {/* Arrow indicator */}
-        {!isCompleted && (
-          <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-        )}
+        {!isCompleted && <ChevronRight className="h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />}
       </div>
     </motion.div>
   );
