@@ -26,8 +26,9 @@ export default function Vocabulary() {
       <ClassSelectorModal userId={user?.id} />
       <div className="mx-auto max-w-3xl space-y-8">
         {/* Header */}
-        <div className="space-y-2 text-center">
-          <h1 className="font-display text-hec-display font-medium text-hec-ink">
+        {/* Left-aligned like every other student page header (R08). */}
+        <div className="space-y-1">
+          <h1 className="font-display text-hec-h1 font-medium text-hec-ink">
             Smart Vocabulary
           </h1>
           <p className="text-hec-small text-hec-ink-soft tabular-nums">
