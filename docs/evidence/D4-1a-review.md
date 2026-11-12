@@ -34,7 +34,7 @@ Findings: **C-n** = change I ask for before the apply; **N-n** = note / can foll
 | Submission deleted, `graded_at` cleared or moved | kept for the day it was graded | `M:543-554` |
 | Lesson un-held, or moved to another date | kept (`zz0_` runs before D2's trigger) | `M:664-667`; my R10 caught |
 | Lesson re-classed | impossible for a started or marked lesson (D2: HC021, no checked path) | live `session_change_guard` |
-| Lesson deleted and re-created | a lesson with evidence, now or once, cannot be deleted unless it was cancelled first (`M:756-762`); the cancel holds the evidence in its override row | - |
+| Lesson deleted and re-created | a lesson with evidence, now or once, cannot be deleted unless it was cancelled first (`M:775-781`); the cancel holds the evidence in its override row | - |
 | Service-role writer | every keep fires on every lane; D1 answers the service lane | `M:319-325` |
 | Cascade from a lesson delete | parent gone -> nothing to keep, and the delete itself was judged | `M:311-314` |
 | **C-1. Same-day "un-start"** (executed, probe P1) | **NO** | below |
@@ -80,4 +80,55 @@ Measured (pglite, slower than Postgres): 15 marks changed in one statement 320 m
 - P4: a transcript going `processing -> analyzed` (every analysed upload) writes a floor with the cause the card words as "A class transcript was removed, unlinked or moved to another day ... by an automatic process"; a later cancel of that lesson is flagged for review on that entry.
 - P5: an admin re-saving a teacher's register through `mark-attendance` (service key, `marked_by` becomes the admin, statuses unchanged) writes one cause per child, "changed from Present to Present", lane `service`, `actor_user_id` NULL - twenty of those push every real cause out of the list.
 - P6: Absent -> Present (evidence rose) is recorded as a removal too.
-The level stored is always D1's true answer, so no tier is wrong. But a floor's existence widens "settled" to every child on the register (`M:748`), puts the lesson in the review queue for 30 days, and shows the admin a sentence about removed records that is false; and floor rows are append-only for good. Fix, in the three trigger functions (the two replaced bodies are not touched): call the keep only when what the row proves for that lesson goes DOWN - the functions already compute "own proof" for OLD (`M:436`, `M:472-474`, `M:507-510`); compute it for NEW and compare (DELETE = nothing). Add `old_marked_by` / `new_marked_by` to the attendance cause so a service-lane change still names a person. Cases: the three probes above end with no floor row.
+The level stored is always D1's true answer, so no tier is wrong. But a floor's existence widens "settled" to every child on the register (`M:746`), puts the lesson in the review queue for 30 days, and shows the admin a sentence about removed records that is false; and floor rows are append-only for good. Fix, in the three trigger functions (the two replaced bodies are not touched): call the keep only when what the row proves for that lesson goes DOWN - the functions already compute "own proof" for OLD (`M:436`, `M:472-474`, `M:507-510`); compute it for NEW and compare (DELETE = nothing). Add `old_marked_by` / `new_marked_by` to the attendance cause so a service-lane change still names a person. Cases: the three probes above end with no floor row.
+
+---
+
+## 3. The two replaced bodies, against LIVE
+
+Live catalog today (queried):
+
+| | `_session_change_assess(sessions,text,jsonb,uuid)` | `_session_erased_recently(uuid)` |
+|---|---|---|
+| md5 of the live body (CR stripped; raw is the same) | `e0acbcc9a958a789aa437a6c8c4a84ec` | `32c7fac7d6336c6ac48ba15bfe891630` |
+| = the preflight's "D2" literal (`M:119`, `M:127`) and `D-release-fingerprint.expected.json` | yes | yes |
+| SECURITY DEFINER / volatility / config / owner | true / stable / `search_path=public` / postgres | the same |
+| ACL | `{postgres=X/postgres}` (no API role) | the same |
+
+So the text the builder diffed (the repo's D2 body, which the suite installs and checks at that md5) IS the live text; the diff in `D4-build-1a.md` is a diff against live. I read it hunk by hunk: every removed line is replaced by a superset (the effective level, with the level now still read and used for a cancelled lesson's delete exactly as D2; the destination test OR the bill floor; bills and refresh pairs plus the re-pointed children; token inputs of version 2 all present in version 3; four output keys added, none removed or renamed). `_session_erased_recently` gains one UNION branch. The file re-creates both with the same signature, `STABLE SECURITY DEFINER SET search_path = public` (`M:683-684`, and the erased function likewise), and revokes from the same roles (`M:1047-1048`): flags and grants unchanged. The only behaviour that differs for an untouched lesson is none: with no floor row and no bill floor, every added term is false or empty (the carry-over suite proves it over D2's 266 assertions).
+
+The other D-release objects on live: all 25 functions have the md5 of the expected file (25 of 25, queried), the 9 triggers are present and enabled, and no D4 object exists yet. I did not re-compare the 4 relations and their 28 parts; the brief's step 1.1 does. The file touches none of them (`--check-unchanged`: exactly the two functions differ; I ran it inside the `d4 floors` and `d4 rollback` suites).
+
+One live fact for the brief: `audit_row_change` on live was pasted with CR line endings (raw md5 differs from the CR-stripped one). The preflight strips CR, and the two functions it checks have none; nothing to do.
+
+---
+
+## 4. Refused callers, cancelled lessons, backfill, and lessons taught before the paste
+
+- A caller D1 refuses writes no floor: `M:319-325`, decided before D1 is called; cases for a child, parent, no-role user and another class's teacher on all six writes; mutant M01.
+- Cancelled lessons stay deletable: `M:775-781`; mutant M04; the carry-over suite keeps D2's cancel-then-delete.
+- Nothing is backfilled or rewritten: the file contains no INSERT / UPDATE / DELETE outside the floor functions; the suite compares row digests before and after the paste.
+
+**Are lessons taught before the paste unprotected? No.** A floor is not written when a lesson is taught; it is written at the moment someone is about to lower its evidence, from D1's answer at that moment. That works the same for a lesson from last March as for tonight's: the first removal after the paste finds the evidence still there and records it. So from the paste onward F-11 is closed for every existing lesson, without anyone "touching" it first. Computing a floor lazily at first assessment would add nothing: an intact lesson does not need one, and a stripped lesson can no longer supply one.
+
+What stays uncovered is the past, not the future: evidence removed BEFORE the paste. For marks and status there is `audit_log` (D2 already flags those cancels for review for 30 days; the G-10 residue reads it without a time limit). For points and transcripts there was no audit before this file, so nothing can be recovered, by any method. Seriousness: low; it needs someone to have prepared before today, and D5's audit of past cancellations is the place for it. Smallest history-preserving remedy for the part that can be recovered: the optional insert-only script (design A-11) that adds floor rows from the `audit_log` entries for person-made Present / Late marks changed or deleted and Held undone. It adds facts and rewrites nothing. Not needed for the apply.
+
+---
+
+## 5. The 13 design questions
+
+| DQ | Ruling |
+|---|---|
+| 1 | **Accept the builder's (b), in step 1b, as the conductor ruled.** Live confirms both halves: `teacher_attendance_update` / `_delete` admit the lesson's own teacher and assistants at any date; `is_teacher_of_class` admits the class's default teacher, a teacher named in the weekly template and a standing assistant with no time limit, and a session's teacher or rostered assistant only while they have a lesson of that class from 7 days back to 60 days ahead. So the refusal can only ever meet a one-off cover teacher or assistant returning to a mark more than a week later; the ordinary register stays free. Until 1b the hole is open but narrow, and the mark's change is in `audit_log`, so a cancel within 30 days is still reviewed. Word the refusal "ask an administrator". |
+| 2 | **Change, and it concerns file 1 too.** See C-3. |
+| 3 | Accept (no `hec.floor_seen`). Correctness over one D1 call; the cost is small (section 2). |
+| 4 | Accept: a date move proves SOFT on its own only if the lesson was Held. |
+| 5 | Accept the direction, narrowed by C-2: keep when `graded_at` is cleared or leaves its Hanoi day, or the row is re-pointed. |
+| 6 | Accept the wider list of children. |
+| 7 | Accept: a re-keyed bill is floored as a delete of the old (child, month). |
+| 8 | Accept: if a floor row cannot be written the lowering write fails. Closed is right; the brief's first-day sentence already names it. |
+| 9 | Accept (digest as well as count). |
+| 10 | Accept as a residual of 1a, to be closed in step 3A when `session_change_guard` is replaced anyway: its automation lane must read `session_effective_level`. Until then a floored lesson that an admin moved into the future through the checked path (reviewed) could be deleted by the nightly rebuild if D1 reads NONE. Record it in the ledger. |
+| 11 | Accept. |
+| 12 | Accept, but say plainly what the rollback leaves (section 6). |
+| 13 | Accept; the prelude work for the money-input migrations is step 1b's, and its budget stands. |
