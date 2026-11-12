@@ -158,7 +158,7 @@ export function GuardDialog({ open, session, op, change, onClose, onDone, onCanc
             <DoneBody op={op} success={success} retrying={retry.busy} retryError={retry.error?.code ?? null} onRetry={g.retryRefresh} />
           )}
 
-          {ready && preview && phase !== "done" && (
+          {ready && preview && (
             <>
               {stale && (
                 <div role="alert" className="space-y-2 rounded-xl border border-warning/60 bg-warning/10 p-3 text-sm">

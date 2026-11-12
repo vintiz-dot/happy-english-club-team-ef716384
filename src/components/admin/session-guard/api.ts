@@ -1,7 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { parseInvokeError, type GuardErrorBody } from "@/lib/sessionGuard";
 
-export type CallResult<T = any> = { ok: true; data: T } | { ok: false; error: GuardErrorBody };
+// `error`/`data` are declared on both arms because this repo does not run strictNullChecks, where a boolean `ok` would not narrow.
+export type CallResult<T = any> = { ok: true; data: T; error?: undefined } | { ok: false; error: GuardErrorBody; data?: undefined };
 
 /**
  * Calls one of the checked-cancellation edge functions as the signed-in
