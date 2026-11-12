@@ -113,46 +113,45 @@ export function AIReportDialog({ studentId, studentName, classId, trigger }: Pro
     <Dialog open={open} onOpenChange={setOpen}>
       <span onClick={() => setOpen(true)}>
         {trigger ?? (
-          <Button variant="outline" className="gap-2">
-            <Brain className="h-4 w-4 text-violet-500" />AI Report
+          <Button variant="outline">
+            <Brain className="h-4 w-4" aria-hidden />AI Report
           </Button>
         )}
       </span>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-violet-500" />
-            AI Progress Report — {studentName}
+          <DialogTitle className="flex items-start gap-2">
+            <Brain className="mt-1 h-5 w-5 shrink-0 text-hec-ink-soft" aria-hidden />
+            <span className="min-w-0 whitespace-normal break-words hyphens-none text-balance">AI Progress Report — {studentName}</span>
           </DialogTitle>
           <DialogDescription>
             Evidence-based profile built from transcripts, error logs, vocabulary, work samples and attendance (last 90 days).
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
-            className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
             disabled={generateMutation.isPending}
             onClick={() => generateMutation.mutate()}
           >
             {generateMutation.isPending ? (
-              <><Loader2 className="h-4 w-4 animate-spin" />Profiling…</>
+              <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Profiling…</>
             ) : (
-              <><Sparkles className="h-4 w-4" />{latest ? "Regenerate" : "Generate report"}</>
+              <><Sparkles className="h-4 w-4" aria-hidden />{latest ? "Regenerate" : "Generate report"}</>
             )}
           </Button>
           {latest && (
             <>
-              <Button variant="outline" className="gap-2" onClick={() => window.print()}>
-                <Printer className="h-4 w-4" />Print
+              <Button variant="outline" onClick={() => window.print()}>
+                <Printer className="h-4 w-4" aria-hidden />Print
               </Button>
-              <div className="flex items-center gap-2 ml-auto">
-                <span className="text-xs text-muted-foreground">Visible to student</span>
+              <label className="ml-auto flex min-h-hec-target cursor-pointer items-center gap-2">
+                <span className="text-hec-small text-hec-ink-soft">Visible to student</span>
                 <Switch
                   checked={!!latest.published}
                   onCheckedChange={(v) => publishMutation.mutate({ id: latest.id, published: v })}
                 />
-              </div>
+              </label>
             </>
           )}
         </div>
@@ -173,7 +172,7 @@ export function AIReportDialog({ studentId, studentName, classId, trigger }: Pro
         )}
 
         {!report && !generateMutation.isPending && (
-          <div className="py-10 text-center text-sm text-muted-foreground">
+          <div className="py-12 text-center text-hec-body text-hec-ink-soft">
             No report yet for {studentName}. Generate one to build their language profile.
           </div>
         )}
