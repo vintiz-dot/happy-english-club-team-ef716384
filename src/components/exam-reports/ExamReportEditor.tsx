@@ -270,7 +270,7 @@ export function ExamReportEditor({
           <div className="space-y-2">
             <Label>Report content (optional)</Label>
             <Suspense fallback={<div className="flex h-40 items-center justify-center text-hec-ink-faint"><Loader2 className="h-5 w-5 animate-spin" /></div>}>
-              <div className="rounded-hec-md bg-hec-raised text-hec-ink [&_.ql-toolbar]:rounded-t-hec-md [&_.ql-toolbar]:border-hec-line-strong [&_.ql-container]:rounded-b-hec-md [&_.ql-container]:border-hec-line-strong [&_.ql-stroke]:stroke-hec-ink-soft [&_.ql-fill]:fill-hec-ink-soft [&_.ql-picker]:text-hec-ink-soft [&_.ql-editor.ql-blank::before]:text-hec-ink-faint">
+              <div className="rounded-hec-md bg-hec-raised text-hec-ink [&_.ql-toolbar]:!rounded-t-hec-md [&_.ql-toolbar]:!border-hec-line-strong [&_.ql-container]:!rounded-b-hec-md [&_.ql-container]:!border-hec-line-strong [&_.ql-stroke]:!stroke-hec-ink-soft [&_.ql-fill]:!fill-hec-ink-soft [&_.ql-picker]:!text-hec-ink-soft [&_.ql-editor.ql-blank::before]:!text-hec-ink-faint">
                 <ReactQuill
                   value={contentHtml}
                   onChange={setContentHtml}

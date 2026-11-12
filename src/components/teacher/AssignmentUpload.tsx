@@ -371,7 +371,7 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
               <Suspense fallback={<div className={ivory ? "flex h-40 items-center justify-center gap-2 rounded-hec-md border border-hec-line-strong text-hec-small text-hec-ink-soft" : "h-40 border rounded-md flex items-center justify-center text-muted-foreground"}><Loader2 className={ivory ? "h-5 w-5 animate-spin" : "h-5 w-5 animate-spin mr-2"} />Loading editor...</div>}>
                 <ReactQuill
                   // Ivory: Quill's own toolbar strokes are grey on any background; token colours keep them readable in dark.
-                  className={ivory ? "rounded-hec-md bg-hec-raised text-hec-ink [&_.ql-toolbar]:rounded-t-hec-md [&_.ql-toolbar]:border-hec-line-strong [&_.ql-container]:rounded-b-hec-md [&_.ql-container]:border-hec-line-strong [&_.ql-stroke]:stroke-hec-ink-soft [&_.ql-fill]:fill-hec-ink-soft [&_.ql-picker]:text-hec-ink-soft [&_.ql-editor.ql-blank::before]:text-hec-ink-faint" : undefined}
+                  className={ivory ? "rounded-hec-md bg-hec-raised text-hec-ink [&_.ql-toolbar]:!rounded-t-hec-md [&_.ql-toolbar]:!border-hec-line-strong [&_.ql-container]:!rounded-b-hec-md [&_.ql-container]:!border-hec-line-strong [&_.ql-stroke]:!stroke-hec-ink-soft [&_.ql-fill]:!fill-hec-ink-soft [&_.ql-picker]:!text-hec-ink-soft [&_.ql-editor.ql-blank::before]:!text-hec-ink-faint" : undefined}
                   theme="snow"
                   value={formData.description}
                   onChange={(value) => setFormData({ ...formData, description: value })}
