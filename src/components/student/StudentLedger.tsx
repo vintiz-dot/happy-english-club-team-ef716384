@@ -50,7 +50,9 @@ export function StudentLedger({ open, onOpenChange, studentId, classId }: Studen
           <DialogTitle>Transaction History</DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[60vh]">
+        {/* Radix's viewport wraps content in a display:table div that grows with the row,
+            which pushed the amounts past the dialog edge at 375 (R08): make it a block. */}
+        <ScrollArea className="max-h-[60vh] [&>[data-radix-scroll-area-viewport]>div]:!block">
           {isLoading ? (
             <Loading size="sm" />
           ) : transactions.length === 0 ? (
