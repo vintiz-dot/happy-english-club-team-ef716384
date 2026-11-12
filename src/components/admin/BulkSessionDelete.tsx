@@ -466,6 +466,7 @@ function BulkResultView({
     return r ? `${longDate(r.date)}, ${hm(r.start_time)} - ${className(r.class_id)}` : "A lesson";
   };
   const reviewCount = result.done.filter((d) => d.review_required).length;
+  const allRetried = result.tuitionRetry.length > 0 && result.tuitionRetry.every((t) => retry[t.id]?.ok);
 
   // The contract's retry: manage-session refresh-tuition with the lesson's override id.
   const retryOne = async (id: string, overrideId: string) => {
@@ -500,12 +501,18 @@ function BulkResultView({
       )}
       {(result.tuitionFailed.length > 0 || result.tuitionRetry.length > 0) && (
         <div role="alert" className="space-y-2 rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm">
-          <p className="font-semibold">
-            {result.tuitionFailed.length > 0
-              ? `${result.tuitionFailed.length} ${result.tuitionFailed.length === 1 ? "bill was" : "bills were"} not recalculated.`
-              : "Some bills were not confirmed as recalculated."}
-          </p>
-          <p>Until they are, those families may be shown a bill that still includes a cancelled lesson.</p>
+          {allRetried ? (
+            <p className="font-semibold">The retry recalculated the bills of every lesson listed below.</p>
+          ) : (
+            <>
+              <p className="font-semibold">
+                {result.tuitionFailed.length > 0
+                  ? `${result.tuitionFailed.length} ${result.tuitionFailed.length === 1 ? "bill was" : "bills were"} not recalculated.`
+                  : "Some bills were not confirmed as recalculated."}
+              </p>
+              <p>Until they are, those families may be shown a bill that still includes a cancelled lesson.</p>
+            </>
+          )}
           {result.tuitionRetry.length > 0 ? (
             <ul className="space-y-2">
               {result.tuitionRetry.map((t) => {
