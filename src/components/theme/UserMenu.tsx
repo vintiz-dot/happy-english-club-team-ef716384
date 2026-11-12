@@ -18,7 +18,7 @@ const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
 const CHOICES: { value: ThemeChoice; label: string; icon: typeof Sun }[] = [
-  { value: "system", label: "Same as this device", icon: Monitor },
+  { value: "system", label: "System", icon: Monitor },
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
 ];
