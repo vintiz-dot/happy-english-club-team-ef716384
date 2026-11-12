@@ -89,6 +89,26 @@ def main() -> int:
                 break
         return np.concatenate(parts) if parts else np.zeros(0, np.float32)
 
+    def per_segment(rows, win, min_len, cap=None):
+        """Windows cut INSIDE each VAD segment, never across a splice: (pos, audio).
+        A segment shorter than `win` gives one window if it is >= min_len.
+        (The first cut concatenated segments before windowing. Splicing many short
+        fragments made every child's enrolment look alike - see the evidence file.)"""
+        out, have = [], 0.0
+        for r in rows:
+            x = wav(r["code"], r["clip"])[int(float(r["start"]) * SR): int(float(r["end"]) * SR)]
+            n = int(win * SR)
+            pieces = [x[i: i + n] for i in range(0, len(x) - n + 1, n)] or ([x] if len(x) >= min_len * SR else [])
+            rest = len(x) - (len(x) // n) * n
+            if len(x) >= n and rest >= min_len * SR and min_len < win:
+                pieces.append(x[-rest:])
+            for p in pieces:
+                out.append((have, p))
+                have += len(p) / SR
+            if cap and have >= cap:
+                break
+        return out
+
     meta, audio = [], []
 
     def add(kind, code, x, L=0.0, cond="", pos=0.0, idx=0):
@@ -97,16 +117,15 @@ def main() -> int:
 
     codes = sorted(clips)
     for code in codes:
-        e = cat(segs.get((code, "enrol"), []))
-        for i, w in windows(e, 3.0, keep_partial=1.5):
-            add("enrol", code, w, pos=i / SR)
+        for pos, w in per_segment(segs.get((code, "enrol"), []), 3.0, 1.0):
+            add("enrol", code, w, pos=pos)
         raw = np.concatenate([wav(code, c) for c in sorted(clips[code], key=int)])[: 60 * SR]
         for i, w in windows(raw, 3.0):
             add("raw", code, w, pos=i / SR)
         fl = [r for r in segs.get((code, "excluded"), []) if r.get("flag")]
         if fl:
-            for i, w in windows(cat(fl, cap=60), 3.0, keep_partial=1.5):
-                add("flag", code, w, pos=i / SR)
+            for pos, w in per_segment(fl, 3.0, 1.0, cap=60):
+                add("flag", code, w, pos=pos)
     print(f"enrol/raw/flag units: {len(meta)}", flush=True)
 
     noise = noise_bank(rng)
@@ -114,10 +133,10 @@ def main() -> int:
     hcodes = sorted(held)
     for code in hcodes:
         for L in LENGTHS:
-            for idx, (i, w) in enumerate(windows(held[code], L)):
-                add("test", code, w, L, "clean", i / SR, idx)
+            for idx, (pos, w) in enumerate(per_segment(segs[(code, "heldout")], L, L)):
+                add("test", code, w, L, "clean", pos, idx)
                 y, _ = degrade(w, rng, noise)
-                add("test", code, y, L, "s500", i / SR, idx)
+                add("test", code, y, L, "s500", pos, idx)
                 if L in OV_LENGTHS:
                     for p, tag in ((0.05, "s500_ov05"), (0.15, "s500_ov15")):
                         other = hcodes[(hcodes.index(code) + 1 + int(rng.integers(len(hcodes) - 1))) % len(hcodes)]
@@ -130,7 +149,7 @@ def main() -> int:
                         z = w.copy()
                         z[-len(intr):] += intr
                         y, _ = degrade(z, rng, noise)
-                        add("test", code, y, L, tag, i / SR, idx)
+                        add("test", code, y, L, tag, pos, idx)
         print(f"{code}: held-out {len(held[code]) / SR:.1f} s", flush=True)
     lens = np.array([len(x) for x in audio])
     offs = np.concatenate([[0], np.cumsum(lens)[:-1]])
