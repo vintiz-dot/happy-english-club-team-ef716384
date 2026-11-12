@@ -117,10 +117,10 @@ export function ClassMonitorCard({ classId }: ClassMonitorCardProps) {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="flex items-start gap-3 rounded-hec-md border border-hec-brass/40 bg-hec-surface p-3"
+                  className="flex items-start gap-3 rounded-hec-md border border-hec-line bg-hec-sunken p-3"
                 >
                   <div className="relative shrink-0">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-hec-sunken">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-hec-surface">
                       <Crown className="h-5 w-5 text-hec-brass" />
                     </div>
                     <Sparkles className="absolute -right-1 -top-1 h-4 w-4 text-hec-brass" aria-hidden="true" />
