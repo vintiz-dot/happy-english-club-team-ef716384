@@ -650,7 +650,7 @@ export function StarsTools({
                           </div>
                           <div className="flex shrink-0 gap-2">
                             <Button size="sm" disabled={link.isPending} onClick={() => answerYes(current, candidate)}>This is them</Button>
-                            <Button size="sm" variant="ghost" disabled={link.isPending} aria-label={`Not ${candidate.name}`} onClick={() => answerNo(current, candidate)}>
+                            <Button size="sm" variant="ghost" disabled={link.isPending} aria-label={`Not them, not ${candidate.name}`} onClick={() => answerNo(current, candidate)}>
                               Not them
                             </Button>
                           </div>
@@ -659,9 +659,12 @@ export function StarsTools({
                       </li>
                     ))}
                     {!showAll && current.candidates.length > 5 && (
-                      <Button size="sm" variant="ghost" className="w-full" onClick={() => setShowAll(true)}>
-                        Show the other {current.candidates.length - 5}
-                      </Button>
+                      // In an <li>: a list holds only list items.
+                      <li>
+                        <Button size="sm" variant="ghost" className="w-full" onClick={() => setShowAll(true)}>
+                          Show the other {current.candidates.length - 5}
+                        </Button>
+                      </li>
                     )}
                   </ul>
                 )}
