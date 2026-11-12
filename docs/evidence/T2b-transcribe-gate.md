@@ -1,6 +1,6 @@
 # T2b: transcribe-lesson-audio caller gate (T2 finding F2)
 
-Where I am / next step: fix, test (107/107), registration, mutants (6/6), typecheck and write-up committed; full run.mjs running - next: record its total under Runs, remove the node_modules junction, hand back.
+Where I am / next step: DONE. Handed to the reviewer; nothing deployed or pushed.
 
 ## Facts (base `dedd193`)
 - Callers: the browser only, two places, both `supabase.functions.invoke("transcribe-lesson-audio", { body: { transcript_id } })` under the signed-in user's JWT:
@@ -60,4 +60,4 @@ Read-only post-deploy probes (no body that names a real transcript is needed):
 - Behavioural: retry transcription on Teacher Transcripts as the class's teacher -> queued and processes as before.
 
 ## Runs
-- Full `node scripts/pgtest/run.mjs`: PENDING
+- Full `node scripts/pgtest/run.mjs`: 3069 assertions across 39 suites, 0 suite(s) failed (transcribe gate 107/107).
