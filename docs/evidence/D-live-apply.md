@@ -19,3 +19,22 @@ Ran the functions and triggers parts of D-release-fingerprint.sql verbatim (wrap
 |---|---|---|---|---|---|---|---|
 | session_held_evidence | 71a58e2d403a6eb271172d27aef3b139 | 71a58e2d403a6eb271172d27aef3b139 | true=true | s=s | f/t/t = f/t/t | 84a1917db26a10392bb59f012345a249 | yes |
 | session_recording_evidence | 8bb5ed8fff9c48f6f2ab068db95dba8f | 8bb5ed8fff9c48f6f2ab068db95dba8f | true=true | s=s | f/f/f = f/f/f | 0d10ca695676d362f7980fcd2e8fe624 | yes |
+
+## Step 4 - functions deployed
+Imports (recursive): manage-session -> _lib/rate-limit.ts, _lib/session-guard.ts; bulk-cancel-sessions -> _lib/session-guard.ts. Neither lib imports anything (no _lib/auth.ts needed). verify_jwt = true for both (supabase/config.toml), as before.
+LF blob md5: manage-session/index.ts 42044d90e6f6ec755f81dd3fa569ceb3, bulk-cancel-sessions/index.ts 7c25bb2228b66f42eefd02e381431600, _lib/session-guard.ts 941b53d461e0b3a3148f0a6b81e630db, _lib/rate-limit.ts aad3d996bc38a83848e33bd1cb88415e.
+
+| function | before | after | verify_jwt |
+|---|---|---|---|
+| manage-session | v3 | v4 (ezbr 3308cd3c...c515) | true |
+| bulk-cancel-sessions | v3 | v4 (ezbr 8f105f57...863b) | true |
+
+get_edge_function read-back:
+- manage-session v4: index.ts, _lib/session-guard.ts, _lib/rate-limit.ts - each IDENTICAL to the repo blob (byte comparison by script of the saved response; 25516 / 20500 / 2448 chars).
+- bulk-cancel-sessions v4: index.ts and _lib/session-guard.ts - identical by line-by-line reading (the response was returned inline, not saved to a file, so no byte script); no differing line seen.
+
+Probes (publishable key from .env, not printed):
+- POST /functions/v1/manage-session {"action":"preview"} with the publishable key as bearer -> 401 {"code":"unauthorized","message_key":"sessionGuard.error.unauthorized"} (new v4 code answering; key is not a user JWT).
+- POST manage-session with no Authorization -> 401 UNAUTHORIZED_NO_AUTH_HEADER (gateway).
+- POST bulk-cancel-sessions with no Authorization -> 401.
+Next: step 5, straight away.
