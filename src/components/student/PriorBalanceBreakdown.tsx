@@ -145,7 +145,7 @@ export function PriorBalanceBreakdown({ breakdown, studentId }: Props) {
           )}
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className={cn(ivory ? "mt-3 overflow-x-auto border-t border-hec-line pt-3" : "mt-3 border-t border-border/50 pt-3")}>
+          <div {...(ivory ? { role: "region", "aria-label": "Prior balance history", tabIndex: 0 } : {})} className={cn(ivory ? `mt-3 overflow-x-auto border-t border-hec-line pt-3 ${FOCUS}` : "mt-3 border-t border-border/50 pt-3")}>
             <table className={cn(ivory ? "w-full text-hec-caption text-hec-ink" : "w-full text-xs")}>
               <thead>
                 <tr className={cn(ivory ? "border-b border-hec-line text-hec-ink-soft" : "border-b border-border/50 text-muted-foreground")}>
