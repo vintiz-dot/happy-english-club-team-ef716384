@@ -364,6 +364,8 @@ export function DiscountManager() {
             <TableRow>
               <TableHead className="w-[40px]">
                 <Checkbox
+                  aria-label={ivory ? "Select every active discount" : undefined}
+                  className={ivory ? "relative after:absolute after:-inset-3.5 after:content-['']" : undefined}
                   checked={
                     activeAssignments.length > 0 &&
                     activeAssignments.every((a) => selectedAssignments.includes(a.id))
@@ -399,6 +401,8 @@ export function DiscountManager() {
                   <TableCell>
                     {isActive && (
                       <Checkbox
+                        aria-label={ivory ? `Select ${assignment.students.full_name}` : undefined}
+                        className={ivory ? "relative after:absolute after:-inset-3.5 after:content-['']" : undefined}
                         checked={selectedAssignments.includes(assignment.id)}
                         onCheckedChange={(checked) => {
                           if (checked) {
