@@ -2,8 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
 import { supabase } from "@/integrations/supabase/client";
 import { logPdfEvent, newExportId } from "@/lib/pdfExportLog";
 import { cleanRichHtml } from "@/lib/richText";
@@ -176,6 +174,8 @@ export function HomeworkPdfDownload({ homework, className: classNameProp, teache
       document.body.appendChild(container);
 
       const fileName = `${homework.title.replace(/[^a-zA-Z0-9]/g, "_")}_homework.pdf`;
+      const { jsPDF } = await import("jspdf");
+      const { default: html2canvas } = await import("html2canvas");
       const pdf = new jsPDF("p", "mm", "a4");
 
       // Wait for fonts (cheap when already loaded).

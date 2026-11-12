@@ -12,7 +12,7 @@
  * need data wait until they are nearly on screen (see Deferred) so
  * opening the panel does not fire eight queries at once.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   Bell,
   Bot,
@@ -34,20 +34,24 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/
 import { AssistantChat } from "@/components/chat/AssistantChat";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { useTimer } from "@/contexts/TimerContext";
 import { useNoiseMeter } from "@/contexts/NoiseMeterContext";
 
-import { VisualTimer } from "./VisualTimer";
-import { WheelSpinner } from "./WheelSpinner";
-import { NoiseMeter } from "./NoiseMeter";
-import { FocusChime } from "./FocusChime";
-import { TeamMaker } from "./TeamMaker";
-import { DiceRoller } from "./DiceRoller";
-import { TrafficLight } from "./TrafficLight";
-import { RandomPicker, CoinFlip } from "./RandomPicker";
-import { AttendanceTool } from "./AttendanceTool";
-import { LeaderboardTool } from "./LeaderboardTool";
-import { BackgroundMusic } from "./BackgroundMusic";
+// Each tool is its own chunk: it loads when the panel renders it, not on
+// every page the launcher sits on. lazyRetry retries once after a deploy.
+const VisualTimer = lazyRetry(() => import("./VisualTimer").then((m) => ({ default: m.VisualTimer })));
+const WheelSpinner = lazyRetry(() => import("./WheelSpinner").then((m) => ({ default: m.WheelSpinner })));
+const NoiseMeter = lazyRetry(() => import("./NoiseMeter").then((m) => ({ default: m.NoiseMeter })));
+const FocusChime = lazyRetry(() => import("./FocusChime").then((m) => ({ default: m.FocusChime })));
+const TeamMaker = lazyRetry(() => import("./TeamMaker").then((m) => ({ default: m.TeamMaker })));
+const DiceRoller = lazyRetry(() => import("./DiceRoller").then((m) => ({ default: m.DiceRoller })));
+const TrafficLight = lazyRetry(() => import("./TrafficLight").then((m) => ({ default: m.TrafficLight })));
+const RandomPicker = lazyRetry(() => import("./RandomPicker").then((m) => ({ default: m.RandomPicker })));
+const CoinFlip = lazyRetry(() => import("./RandomPicker").then((m) => ({ default: m.CoinFlip })));
+const AttendanceTool = lazyRetry(() => import("./AttendanceTool").then((m) => ({ default: m.AttendanceTool })));
+const LeaderboardTool = lazyRetry(() => import("./LeaderboardTool").then((m) => ({ default: m.LeaderboardTool })));
+const BackgroundMusic = lazyRetry(() => import("./BackgroundMusic").then((m) => ({ default: m.BackgroundMusic })));
 import { Deferred } from "./studio/Deferred";
 import { ClassScreenContainerContext, keepOpenForClassScreen } from "./studio/ClassScreen";
 import {
@@ -246,13 +250,23 @@ export function ClassroomToolsLauncher() {
                     tool.wide && "md:col-span-2 xl:col-span-3",
                   )}
                 >
-                  {tool.defer ? (
-                    <Deferred wide={tool.wide} minHeight={tool.wide ? 300 : 260}>
-                      {tool.render()}
-                    </Deferred>
-                  ) : (
-                    tool.render()
-                  )}
+                  <Suspense
+                    fallback={
+                      <div
+                        aria-hidden
+                        className="studio-card animate-pulse opacity-60"
+                        style={{ minHeight: tool.wide ? 300 : 260 }}
+                      />
+                    }
+                  >
+                    {tool.defer ? (
+                      <Deferred wide={tool.wide} minHeight={tool.wide ? 300 : 260}>
+                        {tool.render()}
+                      </Deferred>
+                    ) : (
+                      tool.render()
+                    )}
+                  </Suspense>
                 </div>
               ))}
             </div>

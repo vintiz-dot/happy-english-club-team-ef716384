@@ -12,8 +12,6 @@
  * The output is paginated properly: a long report is sliced across as many
  * A4 pages as it needs instead of being squashed onto one.
  */
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 
 /** A4 portrait, in millimetres. */
 const PAGE_W_MM = 210;
@@ -36,6 +34,7 @@ export const A4_CONTENT_WIDTH_PX = 794;
  * Exported separately from the PDF wrapper so it can be verified on its own.
  */
 export async function nodeToCanvas(node: HTMLElement): Promise<HTMLCanvasElement> {
+  const { default: html2canvas } = await import("html2canvas");
   return html2canvas(node, {
     scale: 2, // legible text; 1 is visibly soft when printed
     backgroundColor: "#ffffff",
@@ -55,6 +54,7 @@ export async function nodeToCanvas(node: HTMLElement): Promise<HTMLCanvasElement
 export async function nodeToPdfBlob(node: HTMLElement): Promise<Blob> {
   const canvas = await nodeToCanvas(node);
 
+  const { default: jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const contentWMm = PAGE_W_MM - MARGIN_MM * 2;
   const contentHMm = PAGE_H_MM - MARGIN_MM * 2;
