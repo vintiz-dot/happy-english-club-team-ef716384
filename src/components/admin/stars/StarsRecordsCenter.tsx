@@ -296,7 +296,7 @@ function DateFilter({ from, to, onChange }: {
 
 function ChildCell({ record, compact, onLink }: { record: StarsRecord; compact: boolean; onLink: (ref: string) => void }) {
   return (
-    <div className="flex min-w-[10rem] items-start gap-2">
+    <div className="flex min-w-[14rem] items-start gap-2">
       {/* A child's name, HEC's or Pixel Pal's, wraps and is never cut (DESIGN_SYSTEM s.13). */}
       <div className="min-w-0 flex-1">
         <p className={cn("whitespace-normal break-words hyphens-none font-medium", record.childRef ? "text-hec-ink" : "text-hec-ink-soft")}>{record.childName}</p>
