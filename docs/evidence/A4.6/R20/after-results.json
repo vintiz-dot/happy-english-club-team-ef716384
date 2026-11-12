@@ -1,0 +1,9123 @@
+{
+ "label": "after",
+ "runs": {
+  "lb-podium-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-lg > .bg-hec-action.text-hec-on-action.hover\\:bg-hec-action\\/90"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-podium-375-light.png",
+   "kb": 58
+  },
+  "lb-podium-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-lg > .bg-hec-action.text-hec-on-action.hover\\:bg-hec-action\\/90"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-podium-375-dark.png",
+   "kb": 59
+  },
+  "lb-podium-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-podium-1280-light.png",
+   "kb": 122
+  },
+  "lb-podium-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-podium-1280-dark.png",
+   "kb": 122
+  },
+  "lb-podium-rows-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-lg > .bg-hec-action.text-hec-on-action.hover\\:bg-hec-action\\/90"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-podium-rows-375-light.png",
+   "kb": 53
+  },
+  "lb-podium-rows-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-lg > .bg-hec-action.text-hec-on-action.hover\\:bg-hec-action\\/90"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-podium-rows-375-dark.png",
+   "kb": 53
+  },
+  "lb-podium-rows-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-podium-rows-1280-light.png",
+   "kb": 134
+  },
+  "lb-podium-rows-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-podium-rows-1280-dark.png",
+   "kb": 135
+  },
+  "lb-podium-select-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".hover\\:bg-hec-action\\/90.rounded-none.bg-hec-action"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-podium-select-375-light.png",
+   "kb": 60
+  },
+  "lb-podium-select-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".hover\\:bg-hec-action\\/90.rounded-none.bg-hec-action"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-podium-select-375-dark.png",
+   "kb": 61
+  },
+  "lb-podium-select-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-podium-select-1280-light.png",
+   "kb": 142
+  },
+  "lb-podium-select-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-podium-select-1280-dark.png",
+   "kb": 144
+  },
+  "sched-admin-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "4",
+     "6",
+     "6",
+     "8",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.rounded-md.px-2:nth-child(1)",
+       ".shadow-sm",
+       ".h-7.rounded-md.px-2:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .bg-teal-50.dark\\:bg-teal-950\\",
+       ".border-l.relative.border-hec-line:nth-child(3) > .bg-fuchsia-50.dark\\:bg-fuchsi",
+       ".border-l.relative.border-hec-line:nth-child(4) > .bg-teal-50.dark\\:bg-teal-950\\"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-375-light.png",
+   "kb": 29
+  },
+  "sched-admin-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "4",
+     "6",
+     "6",
+     "8",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.rounded-md.px-2:nth-child(1)",
+       ".shadow-sm",
+       ".h-7.rounded-md.px-2:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .bg-teal-50.dark\\:bg-teal-950\\",
+       ".border-l.relative.border-hec-line:nth-child(3) > .bg-fuchsia-50.dark\\:bg-fuchsi",
+       ".border-l.relative.border-hec-line:nth-child(4) > .bg-teal-50.dark\\:bg-teal-950\\"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-375-dark.png",
+   "kb": 30
+  },
+  "sched-admin-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 November 2026\" 232x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "2026",
+     "4",
+     "6",
+     "6",
+     "8",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .bg-teal-50.dark\\:bg-teal-950\\",
+       ".border-l.relative.border-hec-line:nth-child(3) > .bg-fuchsia-50.dark\\:bg-fuchsi",
+       ".border-l.relative.border-hec-line:nth-child(4) > .bg-teal-50.dark\\:bg-teal-950\\"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-1280-light.png",
+   "kb": 83
+  },
+  "sched-admin-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 November 2026\" 232x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "2026",
+     "4",
+     "6",
+     "6",
+     "8",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .bg-teal-50.dark\\:bg-teal-950\\",
+       ".border-l.relative.border-hec-line:nth-child(3) > .bg-fuchsia-50.dark\\:bg-fuchsi",
+       ".border-l.relative.border-hec-line:nth-child(4) > .bg-teal-50.dark\\:bg-teal-950\\"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-1280-dark.png",
+   "kb": 85
+  },
+  "sched-admin-month-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Nov 2026\" 108x32",
+     "main:BUTTON \"Open 26 October\" 33x44",
+     "main:BUTTON \"Open 27 October\" 33x44",
+     "main:BUTTON \"Open 28 October\" 33x44",
+     "main:BUTTON \"Open 29 October\" 33x44",
+     "main:BUTTON \"Open 30 October\" 33x44",
+     "main:BUTTON \"Open 31 October\" 33x44",
+     "main:BUTTON \"Open 1 November\" 18x44",
+     "main:BUTTON \"Open 2 November\" 18x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 3 November\" 18x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 33x22",
+     "main:BUTTON \"Open 4 November\" 18x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 5 November\" 18x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 33x22",
+     "main:BUTTON \"Open 6 November\" 18x44",
+     "main:BUTTON \"Open 7 November\" 18x44",
+     "main:BUTTON \"Open 8 November\" 18x44",
+     "main:BUTTON \"Open 9 November\" 18x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 10 November\" 24x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 33x22",
+     "main:BUTTON \"Open 11 November\" 24x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 12 November\" 24x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 33x22",
+     "main:BUTTON \"Open 13 November\" 26x44",
+     "main:BUTTON \"Open 14 November\" 24x44",
+     "main:BUTTON \"Open 15 November\" 24x44",
+     "main:BUTTON \"Open 16 November\" 24x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 17 November\" 24x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 33x22",
+     "main:BUTTON \"Open 18 November\" 24x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 19 November\" 24x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 33x22",
+     "main:BUTTON \"Open 20 November\" 24x44",
+     "main:BUTTON \"Open 21 November\" 24x44",
+     "main:BUTTON \"Open 22 November\" 24x44",
+     "main:BUTTON \"Open 23 November\" 24x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 24 November\" 24x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 33x22",
+     "main:BUTTON \"Open 25 November\" 24x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 26 November\" 24x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 33x22",
+     "main:BUTTON \"Open 27 November\" 24x44",
+     "main:BUTTON \"Open 28 November\" 24x44",
+     "main:BUTTON \"Open 29 November\" 24x44",
+     "main:BUTTON \"Open 30 November\" 24x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 1 December\" 33x44",
+     "main:BUTTON \"Open 2 December\" 33x44",
+     "main:BUTTON \"Open 3 December\" 33x44",
+     "main:BUTTON \"Open 4 December\" 33x44",
+     "main:BUTTON \"Open 5 December\" 33x44",
+     "main:BUTTON \"Open 6 December\" 33x44"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "19",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".shadow-sm",
+       ".h-7.px-2.rounded-md:nth-child(2)",
+       ".h-7.px-2.rounded-md:nth-child(3)"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-month-375-light.png",
+   "kb": 32
+  },
+  "sched-admin-month-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"Nov 2026\" 108x32",
+     "main:BUTTON \"Open 26 October\" 33x44",
+     "main:BUTTON \"Open 27 October\" 33x44",
+     "main:BUTTON \"Open 28 October\" 33x44",
+     "main:BUTTON \"Open 29 October\" 33x44",
+     "main:BUTTON \"Open 30 October\" 33x44",
+     "main:BUTTON \"Open 31 October\" 33x44",
+     "main:BUTTON \"Open 1 November\" 18x44",
+     "main:BUTTON \"Open 2 November\" 18x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 3 November\" 18x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 33x22",
+     "main:BUTTON \"Open 4 November\" 18x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 5 November\" 18x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 33x22",
+     "main:BUTTON \"Open 6 November\" 18x44",
+     "main:BUTTON \"Open 7 November\" 18x44",
+     "main:BUTTON \"Open 8 November\" 18x44",
+     "main:BUTTON \"Open 9 November\" 18x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 10 November\" 24x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 33x22",
+     "main:BUTTON \"Open 11 November\" 24x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 12 November\" 24x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 33x22",
+     "main:BUTTON \"Open 13 November\" 26x44",
+     "main:BUTTON \"Open 14 November\" 24x44",
+     "main:BUTTON \"Open 15 November\" 24x44",
+     "main:BUTTON \"Open 16 November\" 24x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 17 November\" 24x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 33x22",
+     "main:BUTTON \"Open 18 November\" 24x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 19 November\" 24x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 33x22",
+     "main:BUTTON \"Open 20 November\" 24x44",
+     "main:BUTTON \"Open 21 November\" 24x44",
+     "main:BUTTON \"Open 22 November\" 24x44",
+     "main:BUTTON \"Open 23 November\" 24x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 24 November\" 24x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 33x22",
+     "main:BUTTON \"Open 25 November\" 24x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 26 November\" 24x44",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 33x22",
+     "main:BUTTON \"Open 27 November\" 24x44",
+     "main:BUTTON \"Open 28 November\" 24x44",
+     "main:BUTTON \"Open 29 November\" 24x44",
+     "main:BUTTON \"Open 30 November\" 24x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 1 December\" 33x44",
+     "main:BUTTON \"Open 2 December\" 33x44",
+     "main:BUTTON \"Open 3 December\" 33x44",
+     "main:BUTTON \"Open 4 December\" 33x44",
+     "main:BUTTON \"Open 5 December\" 33x44",
+     "main:BUTTON \"Open 6 December\" 33x44"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "19",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".shadow-sm",
+       ".h-7.px-2.rounded-md:nth-child(2)",
+       ".h-7.px-2.rounded-md:nth-child(3)"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-month-375-dark.png",
+   "kb": 33
+  },
+  "sched-admin-month-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"November 2026\" 174x32",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "19",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 17,
+      "t": [
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(8) > .min-h-0.gap-\\[3px\\].",
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(9) > .min-h-0.gap-\\[3px\\].",
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(10) > .min-h-0.gap-\\[3px\\]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-month-1280-light.png",
+   "kb": 93
+  },
+  "sched-admin-month-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"November 2026\" 174x32",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Hel\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Movers 2 (Tue-Thu), 18:00, Sch\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "19",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "7",
+     "8",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 17,
+      "t": [
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(8) > .min-h-0.gap-\\[3px\\].",
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(9) > .min-h-0.gap-\\[3px\\].",
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(10) > .min-h-0.gap-\\[3px\\]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-month-1280-dark.png",
+   "kb": 94
+  },
+  "sched-admin-day-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Fri 13 Nov\" 113x32"
+    ],
+    "numbers": [
+     "0",
+     "08:00",
+     "09:00",
+     "10:00",
+     "11:00",
+     "12:00",
+     "13",
+     "13",
+     "13:00",
+     "14:00",
+     "15:00",
+     "16:00",
+     "17:00",
+     "18:00",
+     "19:00"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.rounded-md.px-2:nth-child(1)",
+       ".h-7.rounded-md.px-2:nth-child(2)",
+       ".shadow-sm"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-day-375-light.png",
+   "kb": 19
+  },
+  "sched-admin-day-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"Fri 13 Nov\" 113x32"
+    ],
+    "numbers": [
+     "0",
+     "08:00",
+     "09:00",
+     "10:00",
+     "11:00",
+     "12:00",
+     "13",
+     "13",
+     "13:00",
+     "14:00",
+     "15:00",
+     "16:00",
+     "17:00",
+     "18:00",
+     "19:00"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.rounded-md.px-2:nth-child(1)",
+       ".h-7.rounded-md.px-2:nth-child(2)",
+       ".shadow-sm"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-day-375-dark.png",
+   "kb": 19
+  },
+  "sched-admin-day-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Friday 13 November 2026\" 261x32"
+    ],
+    "numbers": [
+     "0",
+     "08:00",
+     "09:00",
+     "10:00",
+     "11:00",
+     "12:00",
+     "13",
+     "13",
+     "13:00",
+     "14:00",
+     "15:00",
+     "16:00",
+     "17:00",
+     "18:00",
+     "19:00",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-day-1280-light.png",
+   "kb": 59
+  },
+  "sched-admin-day-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"Friday 13 November 2026\" 261x32"
+    ],
+    "numbers": [
+     "0",
+     "08:00",
+     "09:00",
+     "10:00",
+     "11:00",
+     "12:00",
+     "13",
+     "13",
+     "13:00",
+     "14:00",
+     "15:00",
+     "16:00",
+     "17:00",
+     "18:00",
+     "19:00",
+     "2026"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-day-1280-dark.png",
+   "kb": 59
+  },
+  "sched-admin-list-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Nov 2026\" 108x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "16",
+     "17",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "19",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "23",
+     "24",
+     "25",
+     "26",
+     "3",
+     "30",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.px-2.rounded-md:nth-child(1)",
+       ".h-7.px-2.rounded-md:nth-child(2)",
+       ".h-7.px-2.rounded-md:nth-child(3)"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-list-375-light.png",
+   "kb": 40
+  },
+  "sched-admin-list-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"Nov 2026\" 108x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "16",
+     "17",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "19",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "23",
+     "24",
+     "25",
+     "26",
+     "3",
+     "30",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.px-2.rounded-md:nth-child(1)",
+       ".h-7.px-2.rounded-md:nth-child(2)",
+       ".h-7.px-2.rounded-md:nth-child(3)"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-list-375-dark.png",
+   "kb": 41
+  },
+  "sched-admin-list-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"November 2026\" 174x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "16",
+     "17",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "19",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "23",
+     "24",
+     "25",
+     "26",
+     "3",
+     "30",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-list-1280-light.png",
+   "kb": 87
+  },
+  "sched-admin-list-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"November 2026\" 174x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "16",
+     "17",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "19",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "23",
+     "24",
+     "25",
+     "26",
+     "3",
+     "30",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "8",
+     "8",
+     "8",
+     "8",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-list-1280-dark.png",
+   "kb": 88
+  },
+  "sched-admin-mini-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "10",
+     "11",
+     "11",
+     "12",
+     "12",
+     "13",
+     "13",
+     "14",
+     "14",
+     "15",
+     "15",
+     "15",
+     "16",
+     "16:00",
+     "17",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "7",
+     "8",
+     "8",
+     "8",
+     "9",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.rounded-md.px-2:nth-child(1)",
+       ".shadow-sm",
+       ".h-7.rounded-md.px-2:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".border-l.border-hec-line.relative:nth-child(2) > .bg-teal-50.dark\\:bg-teal-950\\",
+       ".border-l.border-hec-line.relative:nth-child(3) > .bg-fuchsia-50.dark\\:bg-fuchsi",
+       ".border-l.border-hec-line.relative:nth-child(4) > .bg-teal-50.dark\\:bg-teal-950\\"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-mini-375-light.png",
+   "kb": 34
+  },
+  "sched-admin-mini-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "10",
+     "11",
+     "11",
+     "12",
+     "12",
+     "13",
+     "13",
+     "14",
+     "14",
+     "15",
+     "15",
+     "15",
+     "16",
+     "16:00",
+     "17",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "7",
+     "8",
+     "8",
+     "8",
+     "9",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.rounded-md.px-2:nth-child(1)",
+       ".shadow-sm",
+       ".h-7.rounded-md.px-2:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".border-l.border-hec-line.relative:nth-child(2) > .bg-teal-50.dark\\:bg-teal-950\\",
+       ".border-l.border-hec-line.relative:nth-child(3) > .bg-fuchsia-50.dark\\:bg-fuchsi",
+       ".border-l.border-hec-line.relative:nth-child(4) > .bg-teal-50.dark\\:bg-teal-950\\"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-mini-375-dark.png",
+   "kb": 34
+  },
+  "sched-admin-mini-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 November 2026\" 232x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "10",
+     "11",
+     "11",
+     "12",
+     "12",
+     "13",
+     "13",
+     "14",
+     "14",
+     "15",
+     "15",
+     "15",
+     "16",
+     "16:00",
+     "17",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "7",
+     "8",
+     "8",
+     "8",
+     "9",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".border-l.border-hec-line.relative:nth-child(2) > .bg-teal-50.dark\\:bg-teal-950\\",
+       ".border-l.border-hec-line.relative:nth-child(3) > .bg-fuchsia-50.dark\\:bg-fuchsi",
+       ".border-l.border-hec-line.relative:nth-child(4) > .bg-teal-50.dark\\:bg-teal-950\\"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-mini-1280-light.png",
+   "kb": 98
+  },
+  "sched-admin-mini-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 November 2026\" 232x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "10",
+     "11",
+     "11",
+     "12",
+     "12",
+     "13",
+     "13",
+     "14",
+     "14",
+     "15",
+     "15",
+     "15",
+     "16",
+     "16:00",
+     "17",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "7",
+     "8",
+     "8",
+     "8",
+     "9",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".border-l.border-hec-line.relative:nth-child(2) > .bg-teal-50.dark\\:bg-teal-950\\",
+       ".border-l.border-hec-line.relative:nth-child(3) > .bg-fuchsia-50.dark\\:bg-fuchsi",
+       ".border-l.border-hec-line.relative:nth-child(4) > .bg-teal-50.dark\\:bg-teal-950\\"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-mini-1280-dark.png",
+   "kb": 100
+  },
+  "sched-admin-filter-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "4",
+     "6",
+     "6",
+     "8",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-dialog-name",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:ro\\:"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.rounded-md.px-2:nth-child(1)",
+       ".shadow-sm",
+       ".h-7.rounded-md.px-2:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .bg-teal-50.dark\\:bg-teal-950\\",
+       ".border-l.relative.border-hec-line:nth-child(3) > .bg-fuchsia-50.dark\\:bg-fuchsi",
+       ".border-l.relative.border-hec-line:nth-child(4) > .bg-teal-50.dark\\:bg-teal-950\\"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-filter-375-light.png",
+   "kb": 35
+  },
+  "sched-admin-filter-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "4",
+     "6",
+     "6",
+     "8",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-dialog-name",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:ro\\:"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.rounded-md.px-2:nth-child(1)",
+       ".shadow-sm",
+       ".h-7.rounded-md.px-2:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .bg-teal-50.dark\\:bg-teal-950\\",
+       ".border-l.relative.border-hec-line:nth-child(3) > .bg-fuchsia-50.dark\\:bg-fuchsi",
+       ".border-l.relative.border-hec-line:nth-child(4) > .bg-teal-50.dark\\:bg-teal-950\\"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-filter-375-dark.png",
+   "kb": 35
+  },
+  "sched-admin-filter-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 November 2026\" 232x32",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "2026",
+     "4",
+     "6",
+     "6",
+     "8",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 4,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-dialog-name",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:ro\\:"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .bg-teal-50.dark\\:bg-teal-950\\",
+       ".border-l.relative.border-hec-line:nth-child(3) > .bg-fuchsia-50.dark\\:bg-fuchsi",
+       ".border-l.relative.border-hec-line:nth-child(4) > .bg-teal-50.dark\\:bg-teal-950\\"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-filter-1280-light.png",
+   "kb": 89
+  },
+  "sched-admin-filter-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 November 2026\" 232x32",
+     "other:BUTTON \"\" 16x16",
+     "other:BUTTON \"\" 16x16"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:00",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "19:00",
+     "19:00",
+     "2",
+     "2",
+     "2026",
+     "4",
+     "6",
+     "6",
+     "8",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 4,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-dialog-name",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "#radix-\\:ro\\:"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .bg-teal-50.dark\\:bg-teal-950\\",
+       ".border-l.relative.border-hec-line:nth-child(3) > .bg-fuchsia-50.dark\\:bg-fuchsi",
+       ".border-l.relative.border-hec-line:nth-child(4) > .bg-teal-50.dark\\:bg-teal-950\\"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".sm\\:gap-2\\.5"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-admin-filter-1280-dark.png",
+   "kb": 91
+  },
+  "sched-teacher-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.rounded-md.px-2:nth-child(1)",
+       ".bg-hec-action",
+       ".h-7.rounded-md.px-2:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .py-1.pl-2.pr-1",
+       ".border-l.relative.border-hec-line:nth-child(4) > .py-1.pl-2.pr-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-teacher-375-light.png",
+   "kb": 27
+  },
+  "sched-teacher-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.rounded-md.px-2:nth-child(1)",
+       ".bg-hec-action",
+       ".h-7.rounded-md.px-2:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .py-1.pl-2.pr-1",
+       ".border-l.relative.border-hec-line:nth-child(4) > .py-1.pl-2.pr-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-teacher-375-dark.png",
+   "kb": 27
+  },
+  "sched-teacher-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 November 2026\" 232x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2026",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .py-1.pl-2.pr-1",
+       ".border-l.relative.border-hec-line:nth-child(4) > .py-1.pl-2.pr-1"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-teacher-1280-light.png",
+   "kb": 71
+  },
+  "sched-teacher-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 November 2026\" 232x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2026",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .py-1.pl-2.pr-1",
+       ".border-l.relative.border-hec-line:nth-child(4) > .py-1.pl-2.pr-1"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-teacher-1280-dark.png",
+   "kb": 71
+  },
+  "sched-teacher-month-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Nov 2026\" 108x32",
+     "main:BUTTON \"Open 26 October\" 33x44",
+     "main:BUTTON \"Open 27 October\" 33x44",
+     "main:BUTTON \"Open 28 October\" 33x44",
+     "main:BUTTON \"Open 29 October\" 33x44",
+     "main:BUTTON \"Open 30 October\" 33x44",
+     "main:BUTTON \"Open 31 October\" 33x44",
+     "main:BUTTON \"Open 1 November\" 33x44",
+     "main:BUTTON \"Open 2 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 3 November\" 33x44",
+     "main:BUTTON \"Open 4 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 5 November\" 33x44",
+     "main:BUTTON \"Open 6 November\" 33x44",
+     "main:BUTTON \"Open 7 November\" 33x44",
+     "main:BUTTON \"Open 8 November\" 33x44",
+     "main:BUTTON \"Open 9 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 10 November\" 33x44",
+     "main:BUTTON \"Open 11 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 12 November\" 33x44",
+     "main:BUTTON \"Open 13 November\" 33x44",
+     "main:BUTTON \"Open 14 November\" 33x44",
+     "main:BUTTON \"Open 15 November\" 33x44",
+     "main:BUTTON \"Open 16 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 17 November\" 33x44",
+     "main:BUTTON \"Open 18 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 19 November\" 33x44",
+     "main:BUTTON \"Open 20 November\" 33x44",
+     "main:BUTTON \"Open 21 November\" 33x44",
+     "main:BUTTON \"Open 22 November\" 33x44",
+     "main:BUTTON \"Open 23 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 24 November\" 33x44",
+     "main:BUTTON \"Open 25 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 26 November\" 33x44",
+     "main:BUTTON \"Open 27 November\" 33x44",
+     "main:BUTTON \"Open 28 November\" 33x44",
+     "main:BUTTON \"Open 29 November\" 33x44",
+     "main:BUTTON \"Open 30 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 1 December\" 33x44",
+     "main:BUTTON \"Open 2 December\" 33x44",
+     "main:BUTTON \"Open 3 December\" 33x44",
+     "main:BUTTON \"Open 4 December\" 33x44",
+     "main:BUTTON \"Open 5 December\" 33x44",
+     "main:BUTTON \"Open 6 December\" 33x44"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "19",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".bg-hec-action",
+       ".h-7.px-2.rounded-md:nth-child(2)",
+       ".h-7.px-2.rounded-md:nth-child(3)"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-teacher-month-375-light.png",
+   "kb": 30
+  },
+  "sched-teacher-month-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"Nov 2026\" 108x32",
+     "main:BUTTON \"Open 26 October\" 33x44",
+     "main:BUTTON \"Open 27 October\" 33x44",
+     "main:BUTTON \"Open 28 October\" 33x44",
+     "main:BUTTON \"Open 29 October\" 33x44",
+     "main:BUTTON \"Open 30 October\" 33x44",
+     "main:BUTTON \"Open 31 October\" 33x44",
+     "main:BUTTON \"Open 1 November\" 33x44",
+     "main:BUTTON \"Open 2 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 3 November\" 33x44",
+     "main:BUTTON \"Open 4 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 5 November\" 33x44",
+     "main:BUTTON \"Open 6 November\" 33x44",
+     "main:BUTTON \"Open 7 November\" 33x44",
+     "main:BUTTON \"Open 8 November\" 33x44",
+     "main:BUTTON \"Open 9 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 10 November\" 33x44",
+     "main:BUTTON \"Open 11 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 12 November\" 33x44",
+     "main:BUTTON \"Open 13 November\" 33x44",
+     "main:BUTTON \"Open 14 November\" 33x44",
+     "main:BUTTON \"Open 15 November\" 33x44",
+     "main:BUTTON \"Open 16 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 17 November\" 33x44",
+     "main:BUTTON \"Open 18 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 19 November\" 33x44",
+     "main:BUTTON \"Open 20 November\" 33x44",
+     "main:BUTTON \"Open 21 November\" 33x44",
+     "main:BUTTON \"Open 22 November\" 33x44",
+     "main:BUTTON \"Open 23 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 24 November\" 33x44",
+     "main:BUTTON \"Open 25 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 26 November\" 33x44",
+     "main:BUTTON \"Open 27 November\" 33x44",
+     "main:BUTTON \"Open 28 November\" 33x44",
+     "main:BUTTON \"Open 29 November\" 33x44",
+     "main:BUTTON \"Open 30 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 1 December\" 33x44",
+     "main:BUTTON \"Open 2 December\" 33x44",
+     "main:BUTTON \"Open 3 December\" 33x44",
+     "main:BUTTON \"Open 4 December\" 33x44",
+     "main:BUTTON \"Open 5 December\" 33x44",
+     "main:BUTTON \"Open 6 December\" 33x44"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "19",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".bg-hec-action",
+       ".h-7.px-2.rounded-md:nth-child(2)",
+       ".h-7.px-2.rounded-md:nth-child(3)"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-teacher-month-375-dark.png",
+   "kb": 31
+  },
+  "sched-teacher-month-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"November 2026\" 174x32",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "19",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 9,
+      "t": [
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(8) > .min-h-0.gap-\\[3px\\].",
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(10) > .min-h-0.gap-\\[3px\\]",
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(15) > .min-h-0.gap-\\[3px\\]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-teacher-month-1280-light.png",
+   "kb": 85
+  },
+  "sched-teacher-month-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 16,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 2,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"November 2026\" 174x32",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 125x22"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "19",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 9,
+      "t": [
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(8) > .min-h-0.gap-\\[3px\\].",
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(10) > .min-h-0.gap-\\[3px\\]",
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(15) > .min-h-0.gap-\\[3px\\]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       "li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-teacher-month-1280-dark.png",
+   "kb": 86
+  },
+  "sched-student-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.rounded-md.text-hec-small:nth-child(1)",
+       ".bg-hec-action",
+       ".h-7.rounded-md.text-hec-small:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .py-1.pl-2.pr-1",
+       ".border-l.relative.border-hec-line:nth-child(4) > .py-1.pl-2.pr-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-student-375-light.png",
+   "kb": 31
+  },
+  "sched-student-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.rounded-md.text-hec-small:nth-child(1)",
+       ".bg-hec-action",
+       ".h-7.rounded-md.text-hec-small:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .py-1.pl-2.pr-1",
+       ".border-l.relative.border-hec-line:nth-child(4) > .py-1.pl-2.pr-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-student-375-dark.png",
+   "kb": 32
+  },
+  "sched-student-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 November 2026\" 232x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2026",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .py-1.pl-2.pr-1",
+       ".border-l.relative.border-hec-line:nth-child(4) > .py-1.pl-2.pr-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-student-1280-light.png",
+   "kb": 58
+  },
+  "sched-student-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 November 2026\" 232x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2026",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-l.relative.border-hec-line:nth-child(2) > .py-1.pl-2.pr-1",
+       ".border-l.relative.border-hec-line:nth-child(4) > .py-1.pl-2.pr-1"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-student-1280-dark.png",
+   "kb": 59
+  },
+  "sched-student-month-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Nov 2026\" 108x32",
+     "main:BUTTON \"Open 26 October\" 33x44",
+     "main:BUTTON \"Open 27 October\" 33x44",
+     "main:BUTTON \"Open 28 October\" 33x44",
+     "main:BUTTON \"Open 29 October\" 33x44",
+     "main:BUTTON \"Open 30 October\" 33x44",
+     "main:BUTTON \"Open 31 October\" 33x44",
+     "main:BUTTON \"Open 1 November\" 33x44",
+     "main:BUTTON \"Open 2 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 3 November\" 33x44",
+     "main:BUTTON \"Open 4 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 5 November\" 33x44",
+     "main:BUTTON \"Open 6 November\" 33x44",
+     "main:BUTTON \"Open 7 November\" 33x44",
+     "main:BUTTON \"Open 8 November\" 33x44",
+     "main:BUTTON \"Open 9 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 10 November\" 33x44",
+     "main:BUTTON \"Open 11 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 12 November\" 33x44",
+     "main:BUTTON \"Open 13 November\" 33x44",
+     "main:BUTTON \"Open 14 November\" 33x44",
+     "main:BUTTON \"Open 15 November\" 33x44",
+     "main:BUTTON \"Open 16 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 17 November\" 33x44",
+     "main:BUTTON \"Open 18 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 19 November\" 33x44",
+     "main:BUTTON \"Open 20 November\" 33x44",
+     "main:BUTTON \"Open 21 November\" 33x44",
+     "main:BUTTON \"Open 22 November\" 33x44",
+     "main:BUTTON \"Open 23 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 24 November\" 33x44",
+     "main:BUTTON \"Open 25 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 26 November\" 33x44",
+     "main:BUTTON \"Open 27 November\" 33x44",
+     "main:BUTTON \"Open 28 November\" 33x44",
+     "main:BUTTON \"Open 29 November\" 33x44",
+     "main:BUTTON \"Open 30 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 1 December\" 33x44",
+     "main:BUTTON \"Open 2 December\" 33x44",
+     "main:BUTTON \"Open 3 December\" 33x44",
+     "main:BUTTON \"Open 4 December\" 33x44",
+     "main:BUTTON \"Open 5 December\" 33x44",
+     "main:BUTTON \"Open 6 December\" 33x44"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "19",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".bg-hec-action",
+       ".h-7.px-2.rounded-md:nth-child(2)",
+       ".h-7.px-2.rounded-md:nth-child(3)"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-student-month-375-light.png",
+   "kb": 33
+  },
+  "sched-student-month-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"Nov 2026\" 108x32",
+     "main:BUTTON \"Open 26 October\" 33x44",
+     "main:BUTTON \"Open 27 October\" 33x44",
+     "main:BUTTON \"Open 28 October\" 33x44",
+     "main:BUTTON \"Open 29 October\" 33x44",
+     "main:BUTTON \"Open 30 October\" 33x44",
+     "main:BUTTON \"Open 31 October\" 33x44",
+     "main:BUTTON \"Open 1 November\" 33x44",
+     "main:BUTTON \"Open 2 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 3 November\" 33x44",
+     "main:BUTTON \"Open 4 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 5 November\" 33x44",
+     "main:BUTTON \"Open 6 November\" 33x44",
+     "main:BUTTON \"Open 7 November\" 33x44",
+     "main:BUTTON \"Open 8 November\" 33x44",
+     "main:BUTTON \"Open 9 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 10 November\" 33x44",
+     "main:BUTTON \"Open 11 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 33x22",
+     "main:BUTTON \"Open 12 November\" 33x44",
+     "main:BUTTON \"Open 13 November\" 33x44",
+     "main:BUTTON \"Open 14 November\" 33x44",
+     "main:BUTTON \"Open 15 November\" 33x44",
+     "main:BUTTON \"Open 16 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 17 November\" 33x44",
+     "main:BUTTON \"Open 18 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 19 November\" 33x44",
+     "main:BUTTON \"Open 20 November\" 33x44",
+     "main:BUTTON \"Open 21 November\" 33x44",
+     "main:BUTTON \"Open 22 November\" 33x44",
+     "main:BUTTON \"Open 23 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 24 November\" 33x44",
+     "main:BUTTON \"Open 25 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 26 November\" 33x44",
+     "main:BUTTON \"Open 27 November\" 33x44",
+     "main:BUTTON \"Open 28 November\" 33x44",
+     "main:BUTTON \"Open 29 November\" 33x44",
+     "main:BUTTON \"Open 30 November\" 33x44",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 33x22",
+     "main:BUTTON \"Open 1 December\" 33x44",
+     "main:BUTTON \"Open 2 December\" 33x44",
+     "main:BUTTON \"Open 3 December\" 33x44",
+     "main:BUTTON \"Open 4 December\" 33x44",
+     "main:BUTTON \"Open 5 December\" 33x44",
+     "main:BUTTON \"Open 6 December\" 33x44"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "19",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".bg-hec-action",
+       ".h-7.px-2.rounded-md:nth-child(2)",
+       ".h-7.px-2.rounded-md:nth-child(3)"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-student-month-375-dark.png",
+   "kb": 34
+  },
+  "sched-student-month-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"November 2026\" 174x32",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 161x22"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "19",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 9,
+      "t": [
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(8) > .min-h-0.flex-1.gap-\\",
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(10) > .min-h-0.flex-1.gap-",
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(15) > .min-h-0.flex-1.gap-"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-student-month-1280-light.png",
+   "kb": 55
+  },
+  "sched-student-month-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"November 2026\" 174x32",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 161x22",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 161x22"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "19",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 9,
+      "t": [
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(8) > .min-h-0.flex-1.gap-\\",
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(10) > .min-h-0.flex-1.gap-",
+       ".bg-hec-surface.border-hec-line.group\\/cell:nth-child(15) > .min-h-0.flex-1.gap-"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-student-month-1280-dark.png",
+   "kb": 57
+  },
+  "sched-student-list-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Nov 2026\" 108x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "11",
+     "16",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "23",
+     "25",
+     "30",
+     "4",
+     "6",
+     "6",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.px-2.rounded-md:nth-child(1)",
+       ".h-7.px-2.rounded-md:nth-child(2)",
+       ".h-7.px-2.rounded-md:nth-child(3)"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-student-list-375-light.png",
+   "kb": 43
+  },
+  "sched-student-list-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"Nov 2026\" 108x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "11",
+     "16",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "23",
+     "25",
+     "30",
+     "4",
+     "6",
+     "6",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".h-7.px-2.rounded-md:nth-child(1)",
+       ".h-7.px-2.rounded-md:nth-child(2)",
+       ".h-7.px-2.rounded-md:nth-child(3)"
+      ]
+     }
+    ]
+   },
+   "shot": "after-sched-student-list-375-dark.png",
+   "kb": 43
+  },
+  "sched-student-list-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"November 2026\" 174x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "11",
+     "16",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "23",
+     "25",
+     "30",
+     "4",
+     "6",
+     "6",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-sched-student-list-1280-light.png",
+   "kb": 58
+  },
+  "sched-student-list-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 13,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:enrollments:select": 2,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 2,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [
+     "main:BUTTON \"November 2026\" 174x32"
+    ],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "11",
+     "16",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "18:30",
+     "2",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "2026",
+     "23",
+     "25",
+     "30",
+     "4",
+     "6",
+     "6",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-sched-student-list-1280-dark.png",
+   "kb": 58
+  },
+  "teacher-home-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 28,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 6,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:A \"Video homework progress →\" 207x36",
+     "main:A \"Mark All\" 97x36",
+     "main:BUTTON \"Mark All\" 97x36",
+     "main:A \"View Full Schedule\" 152x40",
+     "main:BUTTON \"View Full Schedule\" 152x40",
+     "main:BUTTON \"Schedule\" 168x32",
+     "main:BUTTON \"Leaderboards\" 168x32",
+     "main:BUTTON \"Previous\" 32x32",
+     "main:BUTTON \"Today\" 58x32",
+     "main:BUTTON \"Next\" 32x32",
+     "main:BUTTON \"9 – 15 Nov\" 115x32",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"Attendance up to date\" 190x32",
+     "main:BUTTON \"Class\" 80x32",
+     "main:BUTTON \"Teacher\" 96x32"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "13,",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2026",
+     "250,000",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 3,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".bg-secondary"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".px-2.rounded-md.hover\\:glass-sm:nth-child(1)",
+       ".bg-muted\\/60 > .hover\\:bg-primary\\/90.hover\\:shadow-lg.text-primary-foreground",
+       ".px-2.rounded-md.hover\\:glass-sm:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 7,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-l.border-border\\/40.relative:nth-child(2) > .pl-2.pr-1\\.5.text-left",
+       ".border-l.border-border\\/40.relative:nth-child(4) > .pl-2.pr-1\\.5.text-left"
+      ]
+     }
+    ]
+   },
+   "shot": "after-teacher-home-375-light.png",
+   "kb": 43
+  },
+  "teacher-home-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 28,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 6,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:A \"Video homework progress →\" 207x36",
+     "main:A \"Mark All\" 97x36",
+     "main:BUTTON \"Mark All\" 97x36",
+     "main:A \"View Full Schedule\" 152x40",
+     "main:BUTTON \"View Full Schedule\" 152x40",
+     "main:BUTTON \"Schedule\" 168x32",
+     "main:BUTTON \"Leaderboards\" 168x32",
+     "main:BUTTON \"Previous\" 32x32",
+     "main:BUTTON \"Today\" 58x32",
+     "main:BUTTON \"Next\" 32x32",
+     "main:BUTTON \"9 – 15 Nov\" 115x32",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"\" 32x28",
+     "main:BUTTON \"Attendance up to date\" 190x32",
+     "main:BUTTON \"Class\" 80x32",
+     "main:BUTTON \"Teacher\" 96x32"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "13,",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2026",
+     "250,000",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 3,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".bg-secondary"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".px-2.rounded-md.hover\\:glass-sm:nth-child(1)",
+       ".bg-muted\\/60 > .hover\\:bg-primary\\/90.hover\\:shadow-lg.text-primary-foreground",
+       ".px-2.rounded-md.hover\\:glass-sm:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 7,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-l.border-border\\/40.relative:nth-child(2) > .pl-2.pr-1\\.5.text-left",
+       ".border-l.border-border\\/40.relative:nth-child(4) > .pl-2.pr-1\\.5.text-left"
+      ]
+     }
+    ]
+   },
+   "shot": "after-teacher-home-375-dark.png",
+   "kb": 43
+  },
+  "teacher-home-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 28,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 6,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:A \"Video homework progress →\" 207x36",
+     "main:A \"Mark All\" 97x36",
+     "main:BUTTON \"Mark All\" 97x36",
+     "main:A \"View Full Schedule\" 152x40",
+     "main:BUTTON \"View Full Schedule\" 152x40",
+     "main:BUTTON \"Schedule\" 220x32",
+     "main:BUTTON \"Leaderboards\" 220x32",
+     "main:BUTTON \"Previous\" 32x32",
+     "main:BUTTON \"Today\" 58x32",
+     "main:BUTTON \"Next\" 32x32",
+     "main:BUTTON \"9 – 15 November 2026\" 232x32",
+     "main:BUTTON \"Month\" 83x28",
+     "main:BUTTON \"Week\" 76x28",
+     "main:BUTTON \"Day\" 67x28",
+     "main:BUTTON \"List\" 65x28",
+     "main:BUTTON \"Attendance up to date\" 190x32",
+     "main:BUTTON \"Class\" 80x32",
+     "main:BUTTON \"Teacher\" 96x32"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "13,",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2026",
+     "2026",
+     "250,000",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 5,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".bg-secondary"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 9,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-l.border-border\\/40.relative:nth-child(2) > .pl-2.pr-1\\.5.text-left",
+       ".border-l.border-border\\/40.relative:nth-child(4) > .pl-2.pr-1\\.5.text-left"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-teacher-home-1280-light.png",
+   "kb": 107
+  },
+  "teacher-home-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 28,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 6,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:A \"Video homework progress →\" 207x36",
+     "main:A \"Mark All\" 97x36",
+     "main:BUTTON \"Mark All\" 97x36",
+     "main:A \"View Full Schedule\" 152x40",
+     "main:BUTTON \"View Full Schedule\" 152x40",
+     "main:BUTTON \"Schedule\" 220x32",
+     "main:BUTTON \"Leaderboards\" 220x32",
+     "main:BUTTON \"Previous\" 32x32",
+     "main:BUTTON \"Today\" 58x32",
+     "main:BUTTON \"Next\" 32x32",
+     "main:BUTTON \"9 – 15 November 2026\" 232x32",
+     "main:BUTTON \"Month\" 83x28",
+     "main:BUTTON \"Week\" 76x28",
+     "main:BUTTON \"Day\" 67x28",
+     "main:BUTTON \"List\" 65x28",
+     "main:BUTTON \"Attendance up to date\" 190x32",
+     "main:BUTTON \"Class\" 80x32",
+     "main:BUTTON \"Teacher\" 96x32"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "13,",
+     "14",
+     "15",
+     "15",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2026",
+     "2026",
+     "250,000",
+     "6",
+     "6",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 5,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".bg-secondary"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 9,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".border-l.border-border\\/40.relative:nth-child(2) > .pl-2.pr-1\\.5.text-left",
+       ".border-l.border-border\\/40.relative:nth-child(4) > .pl-2.pr-1\\.5.text-left"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-teacher-home-1280-dark.png",
+   "kb": 107
+  },
+  "teacher-home-month-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 28,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 6,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:A \"Video homework progress →\" 207x36",
+     "main:A \"Mark All\" 97x36",
+     "main:BUTTON \"Mark All\" 97x36",
+     "main:A \"View Full Schedule\" 152x40",
+     "main:BUTTON \"View Full Schedule\" 152x40",
+     "main:BUTTON \"Schedule\" 168x32",
+     "main:BUTTON \"Leaderboards\" 168x32",
+     "main:BUTTON \"Previous\" 33x33",
+     "main:BUTTON \"Today\" 59x33",
+     "main:BUTTON \"Next\" 33x33",
+     "main:BUTTON \"Nov 2026\" 110x33",
+     "main:BUTTON \"\" 33x29",
+     "main:BUTTON \"\" 33x29",
+     "main:BUTTON \"\" 33x29",
+     "main:BUTTON \"\" 33x29",
+     "main:BUTTON \"Attendance up to date\" 194x33",
+     "main:BUTTON \"Class\" 81x33",
+     "main:BUTTON \"Teacher\" 98x33",
+     "main:BUTTON \"Scheduled\" 90x33",
+     "main:BUTTON \"Held\" 59x33",
+     "main:BUTTON \"Open 26 October\" 24x24",
+     "main:BUTTON \"Open 27 October\" 24x24",
+     "main:BUTTON \"Open 28 October\" 24x24",
+     "main:BUTTON \"Open 29 October\" 24x24",
+     "main:BUTTON \"Open 30 October\" 24x24",
+     "main:BUTTON \"Open 31 October\" 24x24",
+     "main:BUTTON \"Open 1 November\" 24x24",
+     "main:BUTTON \"Open 2 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 16x22",
+     "main:BUTTON \"Open 3 November\" 24x24",
+     "main:BUTTON \"Open 4 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 16x22",
+     "main:BUTTON \"Open 5 November\" 24x24",
+     "main:BUTTON \"Open 6 November\" 24x24",
+     "main:BUTTON \"Open 7 November\" 24x24",
+     "main:BUTTON \"Open 8 November\" 24x24",
+     "main:BUTTON \"Open 9 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 16x22",
+     "main:BUTTON \"Open 10 November\" 24x24",
+     "main:BUTTON \"Open 11 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 16x22",
+     "main:BUTTON \"Open 12 November\" 24x24",
+     "main:BUTTON \"Open 13 November\" 24x24",
+     "main:BUTTON \"Open 14 November\" 24x24",
+     "main:BUTTON \"Open 15 November\" 24x24",
+     "main:BUTTON \"Open 16 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 16x22",
+     "main:BUTTON \"Open 17 November\" 24x24",
+     "main:BUTTON \"Open 18 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 16x22",
+     "main:BUTTON \"Open 19 November\" 24x24",
+     "main:BUTTON \"Open 20 November\" 24x24",
+     "main:BUTTON \"Open 21 November\" 24x24",
+     "main:BUTTON \"Open 22 November\" 24x24",
+     "main:BUTTON \"Open 23 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 16x22",
+     "main:BUTTON \"Open 24 November\" 24x24",
+     "main:BUTTON \"Open 25 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 16x22",
+     "main:BUTTON \"Open 26 November\" 24x24",
+     "main:BUTTON \"Open 27 November\" 24x24",
+     "main:BUTTON \"Open 28 November\" 24x24",
+     "main:BUTTON \"Open 29 November\" 24x24",
+     "main:BUTTON \"Open 30 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 16x22",
+     "main:BUTTON \"Open 1 December\" 24x24",
+     "main:BUTTON \"Open 2 December\" 24x24",
+     "main:BUTTON \"Open 3 December\" 24x24",
+     "main:BUTTON \"Open 4 December\" 24x24",
+     "main:BUTTON \"Open 5 December\" 24x24",
+     "main:BUTTON \"Open 6 December\" 24x24"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "13,",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "19",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "250,000",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".bg-secondary"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".bg-muted\\/60 > .hover\\:bg-primary\\/90.hover\\:shadow-lg.text-primary-foreground",
+       ".h-7.px-2.hover\\:glass-sm:nth-child(2)",
+       ".h-7.px-2.hover\\:glass-sm:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 10,
+      "t": [
+       "button[aria-label=\"Open 26 October\"]",
+       "button[aria-label=\"Open 27 October\"]",
+       "button[aria-label=\"Open 28 October\"]"
+      ]
+     }
+    ]
+   },
+   "shot": "after-teacher-home-month-375-light.png",
+   "kb": 47
+  },
+  "teacher-home-month-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 28,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 6,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Open the menu\" 40x40",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 42x36",
+     "main:A \"Video homework progress →\" 207x36",
+     "main:A \"Mark All\" 97x36",
+     "main:BUTTON \"Mark All\" 97x36",
+     "main:A \"View Full Schedule\" 152x40",
+     "main:BUTTON \"View Full Schedule\" 152x40",
+     "main:BUTTON \"Schedule\" 168x32",
+     "main:BUTTON \"Leaderboards\" 168x32",
+     "main:BUTTON \"Previous\" 33x33",
+     "main:BUTTON \"Today\" 59x33",
+     "main:BUTTON \"Next\" 33x33",
+     "main:BUTTON \"Nov 2026\" 110x33",
+     "main:BUTTON \"\" 33x29",
+     "main:BUTTON \"\" 33x29",
+     "main:BUTTON \"\" 33x29",
+     "main:BUTTON \"\" 33x29",
+     "main:BUTTON \"Attendance up to date\" 194x33",
+     "main:BUTTON \"Class\" 81x33",
+     "main:BUTTON \"Teacher\" 98x33",
+     "main:BUTTON \"Scheduled\" 90x33",
+     "main:BUTTON \"Held\" 59x33",
+     "main:BUTTON \"Open 26 October\" 24x24",
+     "main:BUTTON \"Open 27 October\" 24x24",
+     "main:BUTTON \"Open 28 October\" 24x24",
+     "main:BUTTON \"Open 29 October\" 24x24",
+     "main:BUTTON \"Open 30 October\" 24x24",
+     "main:BUTTON \"Open 31 October\" 24x24",
+     "main:BUTTON \"Open 1 November\" 24x24",
+     "main:BUTTON \"Open 2 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 16x22",
+     "main:BUTTON \"Open 3 November\" 24x24",
+     "main:BUTTON \"Open 4 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 16x22",
+     "main:BUTTON \"Open 5 November\" 24x24",
+     "main:BUTTON \"Open 6 November\" 24x24",
+     "main:BUTTON \"Open 7 November\" 24x24",
+     "main:BUTTON \"Open 8 November\" 24x24",
+     "main:BUTTON \"Open 9 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 16x22",
+     "main:BUTTON \"Open 10 November\" 24x24",
+     "main:BUTTON \"Open 11 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 16x22",
+     "main:BUTTON \"Open 12 November\" 24x24",
+     "main:BUTTON \"Open 13 November\" 24x24",
+     "main:BUTTON \"Open 14 November\" 24x24",
+     "main:BUTTON \"Open 15 November\" 24x24",
+     "main:BUTTON \"Open 16 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 16x22",
+     "main:BUTTON \"Open 17 November\" 24x24",
+     "main:BUTTON \"Open 18 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 16x22",
+     "main:BUTTON \"Open 19 November\" 24x24",
+     "main:BUTTON \"Open 20 November\" 24x24",
+     "main:BUTTON \"Open 21 November\" 24x24",
+     "main:BUTTON \"Open 22 November\" 24x24",
+     "main:BUTTON \"Open 23 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 16x22",
+     "main:BUTTON \"Open 24 November\" 24x24",
+     "main:BUTTON \"Open 25 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 16x22",
+     "main:BUTTON \"Open 26 November\" 24x24",
+     "main:BUTTON \"Open 27 November\" 24x24",
+     "main:BUTTON \"Open 28 November\" 24x24",
+     "main:BUTTON \"Open 29 November\" 24x24",
+     "main:BUTTON \"Open 30 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 16x22",
+     "main:BUTTON \"Open 1 December\" 24x24",
+     "main:BUTTON \"Open 2 December\" 24x24",
+     "main:BUTTON \"Open 3 December\" 24x24",
+     "main:BUTTON \"Open 4 December\" 24x24",
+     "main:BUTTON \"Open 5 December\" 24x24",
+     "main:BUTTON \"Open 6 December\" 24x24"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "13,",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "19",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "250,000",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 2,
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".bg-secondary"
+      ]
+     },
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".bg-muted\\/60 > .hover\\:bg-primary\\/90.hover\\:shadow-lg.text-primary-foreground",
+       ".h-7.px-2.hover\\:glass-sm:nth-child(2)",
+       ".h-7.px-2.hover\\:glass-sm:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 10,
+      "t": [
+       "button[aria-label=\"Open 26 October\"]",
+       "button[aria-label=\"Open 27 October\"]",
+       "button[aria-label=\"Open 28 October\"]"
+      ]
+     }
+    ]
+   },
+   "shot": "after-teacher-home-month-375-dark.png",
+   "kb": 47
+  },
+  "teacher-home-month-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 28,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 6,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:A \"Video homework progress →\" 207x36",
+     "main:A \"Mark All\" 97x36",
+     "main:BUTTON \"Mark All\" 97x36",
+     "main:A \"View Full Schedule\" 152x40",
+     "main:BUTTON \"View Full Schedule\" 152x40",
+     "main:BUTTON \"Schedule\" 220x32",
+     "main:BUTTON \"Leaderboards\" 220x32",
+     "main:BUTTON \"Previous\" 33x33",
+     "main:BUTTON \"Today\" 59x33",
+     "main:BUTTON \"Next\" 33x33",
+     "main:BUTTON \"November 2026\" 178x33",
+     "main:BUTTON \"Month\" 84x29",
+     "main:BUTTON \"Week\" 78x29",
+     "main:BUTTON \"Day\" 68x29",
+     "main:BUTTON \"List\" 66x29",
+     "main:BUTTON \"Attendance up to date\" 194x33",
+     "main:BUTTON \"Class\" 81x33",
+     "main:BUTTON \"Teacher\" 98x33",
+     "main:BUTTON \"Scheduled\" 90x33",
+     "main:BUTTON \"Held\" 59x33",
+     "main:BUTTON \"Open 26 October\" 24x24",
+     "main:BUTTON \"Open 27 October\" 24x24",
+     "main:BUTTON \"Open 28 October\" 24x24",
+     "main:BUTTON \"Open 29 October\" 24x24",
+     "main:BUTTON \"Open 30 October\" 24x24",
+     "main:BUTTON \"Open 31 October\" 24x24",
+     "main:BUTTON \"Open 1 November\" 24x24",
+     "main:BUTTON \"Open 2 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 109x22",
+     "main:BUTTON \"Open 3 November\" 24x24",
+     "main:BUTTON \"Open 4 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 109x22",
+     "main:BUTTON \"Open 5 November\" 24x24",
+     "main:BUTTON \"Open 6 November\" 24x24",
+     "main:BUTTON \"Open 7 November\" 24x24",
+     "main:BUTTON \"Open 8 November\" 24x24",
+     "main:BUTTON \"Open 9 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 109x22",
+     "main:BUTTON \"Open 10 November\" 24x24",
+     "main:BUTTON \"Open 11 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 109x22",
+     "main:BUTTON \"Open 12 November\" 24x24",
+     "main:BUTTON \"Open 13 November\" 24x24",
+     "main:BUTTON \"Open 14 November\" 24x24",
+     "main:BUTTON \"Open 15 November\" 24x24",
+     "main:BUTTON \"Open 16 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 109x22",
+     "main:BUTTON \"Open 17 November\" 24x24",
+     "main:BUTTON \"Open 18 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 109x22",
+     "main:BUTTON \"Open 19 November\" 24x24",
+     "main:BUTTON \"Open 20 November\" 24x24",
+     "main:BUTTON \"Open 21 November\" 24x24",
+     "main:BUTTON \"Open 22 November\" 24x24",
+     "main:BUTTON \"Open 23 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 109x22",
+     "main:BUTTON \"Open 24 November\" 24x24",
+     "main:BUTTON \"Open 25 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 109x22",
+     "main:BUTTON \"Open 26 November\" 24x24",
+     "main:BUTTON \"Open 27 November\" 24x24",
+     "main:BUTTON \"Open 28 November\" 24x24",
+     "main:BUTTON \"Open 29 November\" 24x24",
+     "main:BUTTON \"Open 30 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 109x22",
+     "main:BUTTON \"Open 1 December\" 24x24",
+     "main:BUTTON \"Open 2 December\" 24x24",
+     "main:BUTTON \"Open 3 December\" 24x24",
+     "main:BUTTON \"Open 4 December\" 24x24",
+     "main:BUTTON \"Open 5 December\" 24x24",
+     "main:BUTTON \"Open 6 December\" 24x24"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "13,",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "19",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "250,000",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 5,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".bg-secondary"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 14,
+      "t": [
+       "button[aria-label=\"Open 26 October\"]",
+       "button[aria-label=\"Open 27 October\"]",
+       "button[aria-label=\"Open 28 October\"]"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 9,
+      "t": [
+       ".bg-card\\/40.border-border\\/50.group\\/cell:nth-child(8) > .min-h-0.gap-\\[3px\\].f",
+       ".bg-card\\/40.border-border\\/50.group\\/cell:nth-child(10) > .min-h-0.gap-\\[3px\\].",
+       ".bg-card\\/40.border-border\\/50.group\\/cell:nth-child(15) > .min-h-0.gap-\\[3px\\]."
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-teacher-home-month-1280-light.png",
+   "kb": 113
+  },
+  "teacher-home-month-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 28,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 6,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": null,
+    "htmlClass": "light",
+    "smallTargets": [
+     "other:BUTTON \"Collapse the menu\" 32x32",
+     "nav:BUTTON \"Dashboard\" 207x36",
+     "nav:BUTTON \"Schedule\" 207x36",
+     "nav:BUTTON \"Leaderboard\" 207x36",
+     "nav:BUTTON \"Payroll\" 207x36",
+     "nav:BUTTON \"Assignments\" 207x36",
+     "nav:BUTTON \"Attendance\" 207x36",
+     "nav:BUTTON \"Journal\" 207x36",
+     "nav:BUTTON \"Exam Reports\" 207x36",
+     "nav:BUTTON \"Vocabulary Audit\" 207x36",
+     "nav:BUTTON \"Smart Upload\" 207x36",
+     "nav:BUTTON \"Transcripts\" 207x36",
+     "nav:BUTTON \"Resources\" 207x36",
+     "nav:BUTTON \"Flipbooks\" 207x36",
+     "nav:BUTTON \"Language Support\" 207x36",
+     "other:BUTTON \"Sign Out\" 207x40",
+     "header:BUTTON \"Quick jump…\n⌘K\" 177x36",
+     "header:BUTTON \"Notifications\" 40x40",
+     "header:BUTTON \"Change Password\" 170x36",
+     "main:A \"Video homework progress →\" 207x36",
+     "main:A \"Mark All\" 97x36",
+     "main:BUTTON \"Mark All\" 97x36",
+     "main:A \"View Full Schedule\" 152x40",
+     "main:BUTTON \"View Full Schedule\" 152x40",
+     "main:BUTTON \"Schedule\" 220x32",
+     "main:BUTTON \"Leaderboards\" 220x32",
+     "main:BUTTON \"Previous\" 33x33",
+     "main:BUTTON \"Today\" 59x33",
+     "main:BUTTON \"Next\" 33x33",
+     "main:BUTTON \"November 2026\" 178x33",
+     "main:BUTTON \"Month\" 84x29",
+     "main:BUTTON \"Week\" 78x29",
+     "main:BUTTON \"Day\" 68x29",
+     "main:BUTTON \"List\" 66x29",
+     "main:BUTTON \"Attendance up to date\" 194x33",
+     "main:BUTTON \"Class\" 81x33",
+     "main:BUTTON \"Teacher\" 98x33",
+     "main:BUTTON \"Scheduled\" 90x33",
+     "main:BUTTON \"Held\" 59x33",
+     "main:BUTTON \"Open 26 October\" 24x24",
+     "main:BUTTON \"Open 27 October\" 24x24",
+     "main:BUTTON \"Open 28 October\" 24x24",
+     "main:BUTTON \"Open 29 October\" 24x24",
+     "main:BUTTON \"Open 30 October\" 24x24",
+     "main:BUTTON \"Open 31 October\" 24x24",
+     "main:BUTTON \"Open 1 November\" 24x24",
+     "main:BUTTON \"Open 2 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 109x22",
+     "main:BUTTON \"Open 3 November\" 24x24",
+     "main:BUTTON \"Open 4 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 109x22",
+     "main:BUTTON \"Open 5 November\" 24x24",
+     "main:BUTTON \"Open 6 November\" 24x24",
+     "main:BUTTON \"Open 7 November\" 24x24",
+     "main:BUTTON \"Open 8 November\" 24x24",
+     "main:BUTTON \"Open 9 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 109x22",
+     "main:BUTTON \"Open 10 November\" 24x24",
+     "main:BUTTON \"Open 11 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, H\" 109x22",
+     "main:BUTTON \"Open 12 November\" 24x24",
+     "main:BUTTON \"Open 13 November\" 24x24",
+     "main:BUTTON \"Open 14 November\" 24x24",
+     "main:BUTTON \"Open 15 November\" 24x24",
+     "main:BUTTON \"Open 16 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 109x22",
+     "main:BUTTON \"Open 17 November\" 24x24",
+     "main:BUTTON \"Open 18 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 109x22",
+     "main:BUTTON \"Open 19 November\" 24x24",
+     "main:BUTTON \"Open 20 November\" 24x24",
+     "main:BUTTON \"Open 21 November\" 24x24",
+     "main:BUTTON \"Open 22 November\" 24x24",
+     "main:BUTTON \"Open 23 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 109x22",
+     "main:BUTTON \"Open 24 November\" 24x24",
+     "main:BUTTON \"Open 25 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 109x22",
+     "main:BUTTON \"Open 26 November\" 24x24",
+     "main:BUTTON \"Open 27 November\" 24x24",
+     "main:BUTTON \"Open 28 November\" 24x24",
+     "main:BUTTON \"Open 29 November\" 24x24",
+     "main:BUTTON \"Open 30 November\" 24x24",
+     "main:BUTTON \"Starters 1 (Mon-Wed), 17:30, S\" 109x22",
+     "main:BUTTON \"Open 1 December\" 24x24",
+     "main:BUTTON \"Open 2 December\" 24x24",
+     "main:BUTTON \"Open 3 December\" 24x24",
+     "main:BUTTON \"Open 4 December\" 24x24",
+     "main:BUTTON \"Open 5 December\" 24x24",
+     "main:BUTTON \"Open 6 December\" 24x24"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "13,",
+     "14",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "17:30",
+     "18",
+     "19",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "2026",
+     "21",
+     "22",
+     "23",
+     "24",
+     "25",
+     "250,000",
+     "26",
+     "26",
+     "27",
+     "27",
+     "28",
+     "28",
+     "29",
+     "29",
+     "3",
+     "3",
+     "30",
+     "30",
+     "31",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "6",
+     "7",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 5,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".bg-secondary"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 14,
+      "t": [
+       "button[aria-label=\"Open 26 October\"]",
+       "button[aria-label=\"Open 27 October\"]",
+       "button[aria-label=\"Open 28 October\"]"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 9,
+      "t": [
+       ".bg-card\\/40.border-border\\/50.group\\/cell:nth-child(8) > .min-h-0.gap-\\[3px\\].f",
+       ".bg-card\\/40.border-border\\/50.group\\/cell:nth-child(10) > .min-h-0.gap-\\[3px\\].",
+       ".bg-card\\/40.border-border\\/50.group\\/cell:nth-child(15) > .min-h-0.gap-\\[3px\\]."
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".break-words"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-teacher-home-month-1280-dark.png",
+   "kb": 113
+  },
+  "lb-star-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-lg > .bg-hec-action.text-hec-on-action.hover\\:bg-hec-action\\/90"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-star-375-light.png",
+   "kb": 59
+  },
+  "lb-star-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12",
+     "13",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "2026",
+     "25",
+     "3",
+     "3",
+     "3",
+     "30",
+     "32",
+     "4",
+     "4",
+     "5",
+     "6",
+     "6",
+     "6",
+     "7",
+     "7",
+     "70",
+     "8",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-lg > .bg-hec-action.text-hec-on-action.hover\\:bg-hec-action\\/90"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-star-375-dark.png",
+   "kb": 60
+  },
+  "lb-star-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "11",
+     "11",
+     "14",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "20",
+     "2026",
+     "2026",
+     "25",
+     "25",
+     "3",
+     "3",
+     "30",
+     "30",
+     "32",
+     "32",
+     "39",
+     "4",
+     "4",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "70",
+     "70",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       "button[aria-label=\"Show Book points\"]",
+       "button[aria-label=\"Show Bolt points\"]",
+       "button[aria-label=\"Show Flame points\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-star-1280-light.png",
+   "kb": 199
+  },
+  "lb-star-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "11",
+     "11",
+     "14",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "20",
+     "2026",
+     "2026",
+     "25",
+     "25",
+     "3",
+     "3",
+     "30",
+     "30",
+     "32",
+     "32",
+     "39",
+     "4",
+     "4",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "70",
+     "70",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       "button[aria-label=\"Show Book points\"]",
+       "button[aria-label=\"Show Bolt points\"]",
+       "button[aria-label=\"Show Flame points\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-lb-star-1280-dark.png",
+   "kb": 199
+  },
+  "board-starboard-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "11",
+     "11",
+     "14",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "20",
+     "2026",
+     "2026",
+     "25",
+     "25",
+     "3",
+     "3",
+     "30",
+     "30",
+     "32",
+     "32",
+     "39",
+     "4",
+     "4",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "70",
+     "70",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       "button[aria-label=\"Show Book points\"]",
+       "button[aria-label=\"Show Bolt points\"]",
+       "button[aria-label=\"Show Flame points\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-board-starboard-1280-light.png"
+  },
+  "board-highscores-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"Show all points\" 62x37",
+     "header:BUTTON \"Show Homework points only\" 70x37",
+     "header:BUTTON \"Show Participation points only\" 68x37",
+     "header:BUTTON \"Show Reading points only\" 76x37",
+     "header:BUTTON \"Show Vocabulary points only\" 77x37",
+     "header:BUTTON \"REVEAL\" 107x37",
+     "main:BUTTON \"Show Homework points only\" 204x24",
+     "main:BUTTON \"Show Participation points only\" 204x24",
+     "main:BUTTON \"Show Reading points only\" 204x24",
+     "main:BUTTON \"Show Vocabulary points only\" 204x24"
+    ],
+    "numbers": [
+     "+14",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "10",
+     "11",
+     "11",
+     "11",
+     "11",
+     "15",
+     "15",
+     "18",
+     "18",
+     "18",
+     "18",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "20",
+     "2026",
+     "2026",
+     "25",
+     "25",
+     "3",
+     "3",
+     "30",
+     "30",
+     "32",
+     "32",
+     "39",
+     "39",
+     "39",
+     "4",
+     "4",
+     "4",
+     "4",
+     "5",
+     "5",
+     "6",
+     "6",
+     "70",
+     "70",
+     "8"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 8,
+      "t": [
+       "header > div:nth-child(2) > button[aria-label=\"Show Homework points only\"][type=",
+       "header > div:nth-child(2) > button[aria-label=\"Show Participation points only\"][",
+       "header > div:nth-child(2) > button[aria-label=\"Show Reading points only\"][type=\""
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-board-highscores-1280-light.png"
+  },
+  "board-nightleague-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:enrollments:select": 1,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "header:BUTTON \"ALL\" 56x30",
+     "header:BUTTON \"BOOK\" 66x30",
+     "header:BUTTON \"BOLT\" 63x30",
+     "header:BUTTON \"FLAME\" 71x30",
+     "header:BUTTON \"WORDS\" 75x30",
+     "header:BUTTON \"REVEAL\" 88x37",
+     "main:BUTTON \"Show Homework standings\" 209x26",
+     "main:BUTTON \"Show Participation standings\" 209x26",
+     "main:BUTTON \"Show Reading standings\" 209x26",
+     "main:BUTTON \"Show Vocabulary standings\" 209x26"
+    ],
+    "numbers": [
+     "+14",
+     "+38",
+     "+38",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "10",
+     "11",
+     "11",
+     "11",
+     "11",
+     "12",
+     "12",
+     "15",
+     "15",
+     "18",
+     "18",
+     "18",
+     "18",
+     "18",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20",
+     "20",
+     "2026",
+     "25",
+     "25",
+     "3",
+     "3",
+     "30",
+     "30",
+     "30",
+     "32",
+     "32",
+     "38",
+     "38",
+     "39",
+     "39",
+     "39",
+     "4",
+     "4",
+     "4",
+     "4",
+     "40",
+     "40",
+     "5",
+     "5",
+     "5",
+     "6",
+     "6",
+     "70",
+     "70",
+     "8",
+     "8",
+     "8",
+     "9",
+     "9",
+     "9",
+     "9"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 4,
+     "serious": 3
+    },
+    "rules": [
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 4,
+      "t": [
+       "button[aria-label=\"Show Homework standings\"]",
+       "button[aria-label=\"Show Participation standings\"]",
+       "button[aria-label=\"Show Reading standings\"]"
+      ]
+     },
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-board-nightleague-1280-light.png"
+  },
+  "student-lb-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 34,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 3,
+     "from:classes:select": 2,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "function:class-leaderboard:select": 2,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/18",
+     "1/3",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "19",
+     "196",
+     "196",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20/36",
+     "200",
+     "2026",
+     "2026",
+     "3",
+     "4",
+     "9",
+     "96"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-student-lb-375-light.png",
+   "kb": 36
+  },
+  "student-lb-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 34,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 3,
+     "from:classes:select": 2,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "function:class-leaderboard:select": 2,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/18",
+     "1/3",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "19",
+     "196",
+     "196",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20/36",
+     "200",
+     "2026",
+     "2026",
+     "3",
+     "4",
+     "9",
+     "96"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-student-lb-375-dark.png",
+   "kb": 37
+  },
+  "student-lb-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 34,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 3,
+     "from:classes:select": 2,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "function:class-leaderboard:select": 2,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/18",
+     "1/3",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "19",
+     "196",
+     "196",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20/36",
+     "200",
+     "2026",
+     "2026",
+     "3",
+     "4",
+     "4",
+     "9",
+     "96"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-student-lb-1280-light.png",
+   "kb": 55
+  },
+  "student-lb-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 34,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 3,
+     "from:classes:select": 2,
+     "from:daily_login_rewards:select": 2,
+     "from:enrollments:select": 5,
+     "from:families:select": 1,
+     "from:language_support_set_classes:select": 1,
+     "from:lesson_overviews:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 1,
+     "from:site_announcements:select": 1,
+     "from:student_login_streaks:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 3,
+     "from:user_roles:select": 2,
+     "function:calculate-tuition:select": 1,
+     "function:class-leaderboard:select": 2,
+     "rpc:get_student_homeworks:select": 2,
+     "rpc:get_student_weekly_stats:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "+1",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+15",
+     "+20",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0/0",
+     "0/0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1/18",
+     "1/3",
+     "15",
+     "16",
+     "17",
+     "17:30",
+     "17:30",
+     "18",
+     "18:00",
+     "18:00",
+     "19",
+     "196",
+     "196",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "2",
+     "20/36",
+     "200",
+     "2026",
+     "2026",
+     "3",
+     "4",
+     "4",
+     "9",
+     "96"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "after-student-lb-1280-dark.png",
+   "kb": 56
+  },
+  "family-375-light": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 3,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 5,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "2"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-family-375-light.png",
+   "kb": 41
+  },
+  "family-375-dark": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 3,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 5,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "2"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "after-family-375-dark.png",
+   "kb": 42
+  },
+  "family-1280-light": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 3,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 5,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "2"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-family-1280-light.png",
+   "kb": 78
+  },
+  "family-1280-dark": {
+   "errors": [],
+   "requests": {
+    "count": 17,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 3,
+     "from:profiles:select": 1,
+     "from:site_announcements:select": 1,
+     "from:students:select": 5,
+     "from:teachers:select": 1,
+     "from:user_roles:select": 2,
+     "function:admin-unlock:select": 1,
+     "function:manage-admin-users:select": 1,
+     "rpc:ai_actions_list:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "dark",
+    "smallTargets": [],
+    "numbers": [
+     "2"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "list",
+      "impact": "serious",
+      "n": 1,
+      "t": [
+       ".text-sm"
+      ]
+     },
+     {
+      "id": "listitem",
+      "impact": "serious",
+      "n": 2,
+      "t": [
+       ".contents:nth-child(1) > li:nth-child(1)",
+       ".contents:nth-child(2) > li"
+      ]
+     }
+    ]
+   },
+   "shot": "after-family-1280-dark.png",
+   "kb": 78
+  }
+ }
+}
