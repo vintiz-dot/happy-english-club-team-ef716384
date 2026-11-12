@@ -80,7 +80,7 @@ Status: todo / running / review / PASS / FAIL / reverted / blocked-owner. Model 
 | B2b | CPU-only performance | sonnet / opus, fable decides | docs/evidence/B2b-*.md | todo | |
 | B3 | Monitor design, no code | fable / fable critic | docs/LESSON_MONITOR_DESIGN.md | todo | |
 | B-GATE | docs/LESSON_MONITOR_REPORT.md, then STOP | fable | docs/LESSON_MONITOR_REPORT.md | todo | |
-| C1 | Recorder architecture, schema, RLS, consent | fable / fable critic | docs/evidence/C1-architecture.md; recorder migration; scripts/pgtest/recorder.test.mjs | critic FAIL (opus, 3df105d: 2 blockers, 5 majors, all executed) -> revision 1 running (opus) | docs/evidence/C1-architecture.md, 50ce61b |
+| C1 | Recorder architecture, schema, RLS, consent | fable / fable critic | docs/evidence/C1-architecture.md; recorder migration; scripts/pgtest/recorder.test.mjs | revision 1 merged (opus, 9bda367): F1-F15 fixed, suite 284/0 (conductor re-ran), 35/35 mutants caught; second review running; C2 launched | docs/evidence/C1-architecture.md, 50ce61b |
 | C2 | Capture core | opus / fable | src/lib/recorder/ | todo | |
 | C3 | Plug-and-play UI | sonnet / opus | src/components/recorder/ | todo | |
 | C4 | Tests | sonnet / opus | recorder tests | todo | |
@@ -154,9 +154,9 @@ Units are rough effort weights; a unit counts as done only when merged AND check
 | D money integrity | 18.5 | 9.5 | D0, D1 design, D1 build + revision, D2 design, D2 SQL guard. Left: review 2, edge functions + review, D3 dialogs + review, D4 design/build/review, D5 audit/tests/owner SQL |
 | A overhaul | 12.0 | 7.9 | A0, A1, A2.1, A2.2 (shipped), A3.1, A3.2, A3.3, A3.4, A4.1, A4.2, A4.5 (merged; G5 pending). Left: A1, A2, A3, A4 (system, dashboard, dark mode + a11y), A5 |
 | B lesson monitor evaluation | 10.5 | 3.7 | vendor research, audio prep, harness, vendor proxy built (deploy running). Left: B1, B2, B2b, B3, report |
-| C class recorder | 8.0 | 1.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
+| C class recorder | 8.0 | 2.5 | C1 architecture + migration + tests. Left: critic, C2, C3, C4, C5 |
 | Final gates and report | 2.0 | 0 | |
-| **Total** | **51.0** | **22.6** | **44%** |
+| **Total** | **51.0** | **23.6** | **46%** |
 
 Log: 2026-11-12 07:45 - 19%.
 Log: 2026-11-12 08:00 - 20% (A0 merged).
@@ -250,3 +250,6 @@ Log: 2026-11-12 - 44% (A4.2 merged; design checkpoint reached).
 
 - 2026-11-12 A4.2 student dashboard restyle merged (opus, 4342df9). DESIGN CHECKPOINT: before/after at 375 and 1280, light and dark, in docs/evidence/A4/ and sent to the owner. Agent's numbers: inside the dashboard and its bottom bar axe reports nothing at any impact; whole page critical 2 -> 1 and serious 2 -> 0 (1 on dark 1280), the remainder in Layout's header (unlabelled icon buttons, one 4.32:1 subtitle); no horizontal overflow; no clipped text incl. the long Vietnamese name at 320; targets under 44 px: 0 in the dashboard, 3 left in the header; requests identical (33), every on-screen number equal, no query/hook/handler line changed; reduced motion honoured. Conductor looked at phone-light and desktop-dark: calm ivory / deep ink, serif name, one brass progress line, the speech bubble no longer covers the name. Open points for the owner: the level title shows twice in the hero; the mascot greets by the FAMILY name ("Hey Nguyễn"); the purple assistant button (Layout) sits over the hero; the bottom tab reads "Home" here and "Dashboard" elsewhere until rollout; the larger "young" scale is decided from date of birth. HELD: nothing from A4.1/A4.2 goes to main and no other screen is restyled until the owner approves (Q3).
 - INCIDENT 2026-11-12 ~11:30: part of the SHARED node_modules in the main checkout was deleted (scoped folders from the start of the alphabet up to @electric-sql, including @dnd-kit and @electric-sql/pglite). Cause not established; the pattern matches a recursive delete that followed a worktree's node_modules junction. Effect: type checks failed with missing @dnd-kit, and any pgtest run in that window would have failed to load pglite. Conductor ran `npm install` in the main checkout (11 packages restored, `npm ls` clean, no tracked file changed). Running agents were told to re-run anything that failed in that window and reminded to remove their link ONLY with `cmd //c rmdir node_modules`.
+Log: 2026-11-12 - 46% (C1 revision merged).
+
+- 2026-11-12 C1 revision 1 merged (opus, 9bda367): all 15 critic findings fixed. Start/stop are server timestamps and laptop times only claims; each chunk must fit a chunk length, a per-format byte floor, the server clock and the window; `complete` re-checks stored objects; workstream D reads `counts_as_held_evidence` (verified audio covering at least half the lesson). A cover teacher reads only the session they covered. Consent must be under the current wording; a wording change switches every class off. Capture window 5 min before start to end + 10 min grace, enforced on the server. Delete paths fail closed when storage cannot be seen. Conductor re-ran the recorder suite: 284 passed, 0 failed. Agent's full run 2250/33/0 and 35/35 mutants caught. Second critic (opus) and C2 capture core (opus) launched together; brief shared in docs/evidence/C-common-brief.md.
