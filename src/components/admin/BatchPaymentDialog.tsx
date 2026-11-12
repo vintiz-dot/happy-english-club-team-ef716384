@@ -220,8 +220,8 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
           {/* Global controls - collapsible row */}
           <div className={iv("shrink-0 grid grid-cols-1 min-[400px]:grid-cols-2 gap-3", "shrink-0 grid grid-cols-2 gap-3")}>
             <div className={iv("min-w-0 space-y-2", "space-y-1")}>
-              <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Date</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={iv("", "h-8")} />
+              <Label htmlFor="batch-payment-date" className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Date</Label>
+              <Input id="batch-payment-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={iv("", "h-8")} />
             </div>
             <div className={iv("min-w-0 space-y-2", "space-y-1")}>
               <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Method</Label>

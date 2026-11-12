@@ -339,8 +339,9 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
 
           {/* Month Selection */}
           <div className="space-y-2">
-            <Label>Tuition month</Label>
+            <Label htmlFor="smart-family-month">Tuition month</Label>
             <Input
+              id="smart-family-month"
               type="month"
               value={formData.month}
               onChange={(e) => setFormData({ ...formData, month: e.target.value })}

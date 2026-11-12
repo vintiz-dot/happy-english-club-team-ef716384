@@ -279,8 +279,8 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
             {/* Date & Method */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Date</Label>
-                <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                <Label htmlFor="record-payment-date">Date</Label>
+                <Input id="record-payment-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label>Method</Label>

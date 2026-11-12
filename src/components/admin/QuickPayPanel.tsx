@@ -283,8 +283,9 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
         {/* Top controls */}
         <div className={iv("grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-4 gap-4", "grid grid-cols-2 sm:grid-cols-4 gap-3")}>
           <div className={iv("min-w-0 space-y-2", "space-y-1")}>
-            <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Payment date</Label>
+            <Label htmlFor="quickpay-date" className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Payment date</Label>
             <Input
+              id="quickpay-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
@@ -366,11 +367,22 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
                   isDone && "bg-emerald-50 dark:bg-emerald-950/20"
                 )}
               >
-                <Checkbox
-                  checked={!isSkipped}
-                  onCheckedChange={() => toggleRow(item.student_id)}
-                  className="shrink-0"
-                />
+                {ivory ? (
+                  <label className="-m-3 flex min-h-hec-target min-w-hec-target shrink-0 cursor-pointer items-center justify-center">
+                    <Checkbox
+                      checked={!isSkipped}
+                      onCheckedChange={() => toggleRow(item.student_id)}
+                      className="shrink-0"
+                      aria-label={`Include ${studentName}`}
+                    />
+                  </label>
+                ) : (
+                  <Checkbox
+                    checked={!isSkipped}
+                    onCheckedChange={() => toggleRow(item.student_id)}
+                    className="shrink-0"
+                  />
+                )}
                 <Avatar className={iv("h-11 w-11 shrink-0", "h-9 w-9 shrink-0")}>
                   <AvatarImage src={getAvatarUrl((item.students as any)?.avatar_url) || undefined} />
                   <AvatarFallback className={iv("bg-hec-sunken text-hec-caption text-hec-ink-soft", "text-xs")}>

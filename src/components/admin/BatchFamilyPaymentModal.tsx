@@ -405,8 +405,9 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
                 {tuitionMonth.field}
                 <div className={iv("grid grid-cols-1 min-[400px]:grid-cols-2 gap-3", "grid grid-cols-2 gap-3")}>
                   <div className={iv("min-w-0 space-y-2", "space-y-1.5")}>
-                    <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Tuition month</Label>
+                    <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")} htmlFor="batch-family-month">Tuition month</Label>
                     <Input
+                      id="batch-family-month"
                       type="month"
                       value={sharedSettings.month}
                       onChange={e => setSharedSettings(p => ({ ...p, month: e.target.value }))}
@@ -427,16 +428,18 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
                     </Select>
                   </div>
                   <div className={iv("min-w-0 space-y-2", "space-y-1.5")}>
-                    <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Date</Label>
+                    <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")} htmlFor="batch-family-date">Date</Label>
                     <Input
+                      id="batch-family-date"
                       type="date"
                       value={sharedSettings.occurredAt}
                       onChange={e => setSharedSettings(p => ({ ...p, occurredAt: e.target.value }))}
                     />
                   </div>
                   <div className={iv("min-w-0 space-y-2", "space-y-1.5")}>
-                    <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Memo (optional)</Label>
+                    <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")} htmlFor="batch-family-memo">Memo (optional)</Label>
                     <Input
+                      id="batch-family-memo"
                       value={sharedSettings.memo}
                       onChange={e => setSharedSettings(p => ({ ...p, memo: e.target.value }))}
                       placeholder="Batch payment note"
