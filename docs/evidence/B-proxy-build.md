@@ -1,6 +1,6 @@
 # B-proxy-build: temporary vendor evaluation proxy (audit-eval-proxy)
 
-Where I am / next step: everything built and committed; audit-eval suite 179/0, edge typecheck 5/0; full `node scripts/pgtest/run.mjs` running for the final totals. Next: record the totals below, remove the node_modules link, hand back. NOT deployed, migration NOT applied (the conductor does both after review).
+Where I am / next step: DONE. Everything built, tested (full run 2336/34, 0 failed) and committed; node_modules link removed. Next step belongs to the conductor: review, then the deploy checklist at the end of this file. NOT deployed, migration NOT applied (the conductor does both after review).
 
 Builder: B-proxy implementer, 2026-11-12. Authority: owner decision D-10 (vendor rule lifted for the evaluation; codes only, most private settings each vendor offers, hard caps, teardown first). TEMPORARY: everything below is removed by `scripts/lesson-eval/teardown_audit_eval.md`.
 
@@ -103,4 +103,4 @@ The function writes its estimate per call into `audit_eval_runs.cost_estimate_us
 
 ## Final totals
 
-(filled in after the full run)
+Full `node scripts/pgtest/run.mjs` on this branch (merged with claude/hec-conductor-setup-efbaa5), 2026-11-12: **2336 assertions across 34 suites, 0 suite(s) failed** = baseline 2157 / 33 + the new "audit eval proxy (TEMP)" suite 179 / 0. Edge functions typecheck 5 / 0 (inside the run and alone).
