@@ -276,8 +276,8 @@ export function SiblingDiscountCompute() {
                 <Card key={result.family_id} className={isDisabled ? 'opacity-60' : ''}>
                   <CardContent className="pt-6">
                     <div className="space-y-3">
-                      <div className={iv("flex items-start justify-between gap-3", "flex items-center justify-between")}>
-                        <div className={iv("min-w-0 flex-1 space-y-1", "space-y-1")}>
+                      <div className={iv("flex flex-wrap-reverse items-start justify-between gap-3", "flex items-center justify-between")}>
+                        <div className={iv("min-w-0 flex-1 basis-56 space-y-1", "space-y-1")}>
                           <div className={iv("flex flex-wrap items-center gap-2", "flex items-center gap-2")}>
                             <Users className={iv("h-4 w-4 shrink-0 text-hec-ink-soft", "h-4 w-4")} />
                             <span className={iv("min-w-0 whitespace-normal break-words hyphens-none text-hec-body font-semibold text-hec-ink", "font-semibold")}>{result.family_name || 'Unknown Family'}</span>
@@ -293,7 +293,7 @@ export function SiblingDiscountCompute() {
                             )}
                           </div>
                           {result.students && result.students.length > 0 && (
-                            <div className={iv("whitespace-normal break-words text-hec-caption text-hec-ink-soft ml-6", "text-xs text-muted-foreground ml-6")}>
+                            <div className={iv("whitespace-normal break-words text-hec-caption text-hec-ink-soft", "text-xs text-muted-foreground ml-6")}>
                               Members: {result.students.map(s => s.name).join(', ')}
                             </div>
                           )}
