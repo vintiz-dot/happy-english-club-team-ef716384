@@ -226,6 +226,7 @@ export function LogSpendButton({ studentId, classId, studentName, cashOnHand }: 
       <Button
         size="icon"
         variant="destructive-quiet"
+        className="-ml-5"
         onClick={(e) => { e.stopPropagation(); setOpen(true); }}
         title="Log Spend"
         aria-label={`Log Spend for ${studentName}`}
