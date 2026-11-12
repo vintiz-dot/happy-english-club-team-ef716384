@@ -165,3 +165,8 @@ What this says (aggregate only):
 - The scorer works end to end on real voices: per-threshold accuracy, false-accept (wrong child shown), false-reject, unknown rate, EER, and a fail-closed threshold rule that flags too little evidence (about 300 independent turns with no false accept are needed to show 1 %; each set has 100-120).
 - An off-the-shelf adult-trained ECAPA with 20-60 s enrolment is weak on these children: EER 26-39 %. At a threshold low enough to name most children it shows a wrong child on 14-18 % of turns; at the 1 % false-accept point it names only 11-53 % and leaves the rest UNKNOWN. Room/S500 degradation costs a lot (accuracy at T=0.5: 0.62 clean vs 0.40-0.48 degraded). Under the hard rule (low confidence stays UNKNOWN), this baseline would mostly say UNKNOWN - B2 should try more enrolment audio, child-adapted or other embedding models, and turn-length effects.
 - The EER differences between sets are within noise at ~100 turns; do not rank them.
+
+## 8. Sixth lesson file, lesson code L3 (2026-11-12)
+
+The owner added a sixth file to `lessons\` (an .m4a; referred to here only as **L3**, its file name is not used in the repo). Roster unknown.
+`extract.py` (default, skips existing) -> converted only L3; `ALL CHECKS PASSED`; 64 sources, 28 duplicates (unchanged), lessons now 6 WAVs / 612.9 min. L3 source: AAC, 48000 Hz, 1 channel, 68 kbps, 4604.2 s (76.7 min); WAV 4604.2 s; SHA-256 af000bb5bdb4... (unique).
