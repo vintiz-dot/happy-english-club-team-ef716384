@@ -145,11 +145,6 @@ export function durationWords(ms: number | null | undefined): string {
   return h ? (m ? `${h} h ${m} min` : `${h} h`) : `${m} min`;
 }
 
-/** The tab title while recording: never hidden by scrolling or another tab. */
-export function documentTitle(base: string, recording: boolean): string {
-  return recording ? `● Recording - ${base}` : base;
-}
-
 // ---------------------------------------------------------------- uploads
 
 export interface UploadLike {

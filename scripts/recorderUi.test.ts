@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
-  addMinutes, browserCheck, clock, consentGaps, describeInputs, documentTitle, durationWords, errorView, hanoiDate, hanoiMs,
+  addMinutes, browserCheck, clock, consentGaps, describeInputs, durationWords, errorView, hanoiDate, hanoiMs,
   hhmm, isBluetoothLabel, lessonHeadline, lessonPhase, levelWord, meterFraction, minutesLeft, nextAfter, pairProblems, pickLesson,
   recordingStatusLabel, refusalView, retentionText, stopConfirmText, suggestRoles, swapWarning, uploadMbps, uploadSpeedLine,
   uploadStatus, validReason, batteryLine, type LessonLike,
@@ -47,7 +47,7 @@ describe("time and headline", () => {
     expect(stopConfirmText(l, at("10:35"))).toBe("Stop recording? The lesson has ended.");
     expect(minutesLeft(l, at("11:00"))).toBe(0);
   });
-  test("clock, durations, title", () => {
+  test("clock and durations", () => {
     expect(clock(65_000)).toBe("01:05");
     expect(clock(3_725_000)).toBe("1:02:05");
     expect(durationWords(92 * 60000)).toBe("1 h 32 min");

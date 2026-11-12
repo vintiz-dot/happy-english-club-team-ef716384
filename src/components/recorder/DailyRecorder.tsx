@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
-  clock, documentTitle, errorView, hanoiDate, hhmm, lessonHeadline, lessonPhase, lessonTimes, nextAfter, pickLesson, stopConfirmText,
+  clock, errorView, hanoiDate, hhmm, lessonHeadline, lessonPhase, lessonTimes, nextAfter, pickLesson, stopConfirmText,
   trackName, uploadMbps, uploadSpeedLine, uploadStatus, addMinutes, type ErrorView, type LessonLike,
 } from "@/lib/recorderUi";
 import type { ChunkMeta, DeviceProfile, Level, ProfileResolution, RecorderError, RecorderState, TrackRole, UploadProgress, MarkerKind } from "@/lib/recorder";
@@ -80,13 +80,14 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
     return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
   }, []);
 
-  // The tab title says "Recording" while capturing, whatever is scrolled or focused.
+  // The tab title: the ENGINE prefixes "● RECORDING - " / "◌ ARMED - " on every state change
+  // (controller.ts setState), so this screen only sets the base title and never adds a second prefix.
   const capturing = CAPTURING.includes(state);
   useEffect(() => {
-    const base = "Class recorder";
-    document.title = documentTitle(base, capturing);
-    return () => { document.title = base; };
-  }, [capturing]);
+    const before = document.title;
+    if (!/^(● RECORDING|◌ ARMED) - /.test(document.title)) document.title = "Class recorder";
+    return () => { document.title = before.replace(/^(● RECORDING|◌ ARMED) - /, ""); };
+  }, []);
 
   useEffect(() => () => { void rec.current?.dispose(); }, []);
   const active = state === "armed" || capturing || SAVING.includes(state);
