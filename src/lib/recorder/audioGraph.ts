@@ -24,10 +24,15 @@ export class AudioGraph {
   lastContextTime = 0;
   onBatch: ((b: PcmBatch) => void) | null = null;
   onTick: ((frame: number, contextTime: number) => void) | null = null;
+  /** C2 revision (B1): the context left (or re-entered) "running" - suspended, interrupted, closed. */
+  onStateChange: ((state: string) => void) | null = null;
   /** Frames delivered by the worklet while forwarding (frames_written basis). */
   framesDelivered = 0;
 
-  private constructor(ctx: AudioContext) { this.ctx = ctx; }
+  private constructor(ctx: AudioContext) {
+    this.ctx = ctx;
+    try { ctx.addEventListener("statechange", () => this.onStateChange?.(ctx.state)); } catch { /* old browsers */ }
+  }
 
   static async create(sampleRate = 48000): Promise<AudioGraph> {
     if (typeof AudioContext === "undefined" || typeof AudioWorkletNode === "undefined") throw new RecorderError("unsupported", "This browser has no AudioWorklet");
@@ -68,7 +73,8 @@ export class AudioGraph {
     }
   }
 
-  forward(on: boolean) { this.node?.port.postMessage({ type: "forward", on }); }
+  forward(on: boolean) { this.forwarding = on; this.node?.port.postMessage({ type: "forward", on }); }
+  forwarding = false;
 
   /** Route a microphone into its worklet input (0 = teacher, 1 = room). */
   connect(role: TrackRole, stream: MediaStream) {

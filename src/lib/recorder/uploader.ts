@@ -44,6 +44,14 @@ export interface UploadProgress {
    */
   late: number;
   lateMs: number;
+  /** Ruling (a): chunks the server stored but flagged below the byte floor (silence): never evidence. */
+  belowFloor?: number;
+  /** C2 revision (B4): the Stop has not reached the server yet (it is being retried). Set by the controller. */
+  stopPending?: boolean;
+  /** The server refused the Stop for good (with its message). Set by the controller. */
+  stopRefused?: string | null;
+  /** C2 revision (M3): chunks held in memory because the browser would not store them yet. Set by the controller. */
+  heldInMemory?: number;
 }
 
 export interface UploaderOptions {
@@ -54,9 +62,19 @@ export interface UploaderOptions {
   lateToleranceMs?: number;
   onChunk?: (c: ChunkMeta) => void;
   onError?: (e: RecorderError, c?: ChunkMeta) => void;
+  /**
+   * C2 revision (M3): is this (track, seq) still on its way into the store
+   * (held in memory)? Then a later seq waits instead of the gap being taken
+   * for a hole.
+   */
+  isHeld?: (recordingId: string, track: TrackRole, seq: number) => boolean;
 }
 
-/** Refusals after which no later chunk of the track can be accepted either. */
+/**
+ * Refusals after which no later chunk of the track can be accepted either.
+ * (below_byte_floor stays here for an old server; the revised server flags
+ * such a chunk instead of refusing it - ruling (a) - and refuses only < 40 bytes.)
+ */
 const TRACK_ENDING: ServerRefusal[] = ["stop_requested", "after_stop", "after_window", "span_too_long", "below_byte_floor", "conflicting_chunk"];
 /** Refusals that stop the whole recording. */
 const HALTING: ServerRefusal[] = ["recording_closed", "not_your_recording", "not_started", "no_longer_teaching"];
@@ -111,7 +129,15 @@ export class Uploader {
       unregistered: chunks.filter((c) => c.state === "captured").length,
       late: chunks.filter((c) => c.late).length,
       lateMs: chunks.filter((c) => c.late).reduce((s, c) => s + (c.tEndMs - c.tStartMs), 0),
+      belowFloor: chunks.filter((c) => c.belowFloor).length,
     };
+  }
+
+  /** The first seq missing below `upTo` in a track's local chunks (a hole), or null. */
+  private firstMissing(chunks: ChunkMeta[], upTo: number): number | null {
+    const have = new Set(chunks.map((c) => c.seq));
+    for (let s = 0; s < upTo; s++) if (!have.has(s)) return s;
+    return null;
   }
 
   /**
@@ -134,6 +160,18 @@ export class Uploader {
       const due = (c: ChunkMeta) => (c.nextAttemptAt ?? 0) <= this.now();
       // 1. The lowest unregistered chunk (seq order keeps the server's rows contiguous).
       const reg = open.find((c) => c.state === "captured");
+      if (reg) {
+        // C2 revision (M3): never register k+1 while k is missing locally. A
+        // seq still held in memory waits; one that is gone is a hole, and the
+        // track ends there, so the part before it can still complete.
+        const missing = this.firstMissing(chunks, reg.seq);
+        if (missing !== null) {
+          if (this.o.isHeld?.(rec.id, track, missing)) return;
+          await this.endTrackAt(fresh, track, missing, "local_store_failed");
+          this.o.onError?.(new RecorderError("local_store_failed", `Chunk ${missing} of the ${track} track was never stored on this laptop: the ${track} track ends there, the part before it is kept`), reg);
+          continue;
+        }
+      }
       if (reg && due(reg)) { if (await this.step(fresh, reg, state)) continue; if (state.offline || state.halted) return; }
       // 2. The oldest registered chunk still to upload / confirm.
       const up = open.find((c) => (c.state === "registered" || c.state === "uploaded") && due(c));
@@ -147,13 +185,18 @@ export class Uploader {
     try {
       if (c.state === "captured") {
         const windowMs = Date.parse(rec.captureClosesAt) - Date.parse(rec.startedAtServer!);
+        // Ruling (a): the byte floor is no longer a local refusal - the server
+        // stores a below-floor chunk and flags it - so it is not checked here.
         const v = checkChunkLocally(c.byteSize, c.tStartMs, c.tEndMs, {
-          chunkMs: rec.chunkMs, minBytesPerSec: rec.minBytesPerSec, clockToleranceMs: rec.clockToleranceMs, windowMs,
+          chunkMs: rec.chunkMs, minBytesPerSec: 0, clockToleranceMs: rec.clockToleranceMs, windowMs,
         });
         if (v.ok === false) {
           // (strict is off in this repo, so the union is not narrowed: read it explicitly.)
           const refusal = (v as { refusal: "span_too_long" | "below_byte_floor" | "after_window" | "bad_span" }).refusal;
-          await this.refuse(rec, c, refusal === "bad_span" ? "span_too_long" : refusal, true);
+          const r: ServerRefusal = refusal === "bad_span" ? "span_too_long" : refusal;
+          await this.refuse(rec, c, r, true);
+          // m9: a local refusal is reported like a server one.
+          this.o.onError?.(new RecorderError("server_refused", `Chunk ${c.seq} of the ${c.track} track would be refused (${r}): the track ends there, its audio is kept here`, { refusal: r }), c);
           return true;
         }
         const r = await this.backend.registerChunk({ recording: rec.id, track: c.track, seq: c.seq, byteSize: c.byteSize, sha256: c.sha256, tStartMs: c.tStartMs, tEndMs: c.tEndMs });
@@ -163,6 +206,7 @@ export class Uploader {
         // (cut at createdAt, registered now) so the UI can warn either way.
         // (revision 2: late = registered more than late_after_ms after the chunk ENDS; createdAt is when it was cut, i.e. its end)
         c.late = typeof (r as any).late === "boolean" ? (r as any).late : c.registeredAt - c.createdAt > (rec.lateAfterMs ?? this.lateToleranceMs);
+        if (typeof r.below_floor === "boolean") c.belowFloor = r.below_floor;
         c.state = r.confirmed ? "confirmed" : "registered";
         if (r.confirmed) c.confirmedAt = this.now();
       } else if (c.state === "registered") {
@@ -205,6 +249,21 @@ export class Uploader {
       c.nextAttemptAt = this.now() + backoffDelay(c.attempts, { maxMs: this.o.maxBackoffMs ?? 60000, random: this.random });
       await this.store.updateChunk(c);
       return false;
+    }
+  }
+
+  /** End a track at `seq` (a hole): every chunk from there is not counted. Bytes are kept. */
+  private async endTrackAt(rec: LocalRecording, track: TrackRole, seq: number, reason: string) {
+    const fresh = (await this.store.getRecording(rec.id)) ?? rec;
+    const t = fresh.tracks.find((x) => x.track === track);
+    if (t && (t.refusedFromSeq === undefined || seq < t.refusedFromSeq)) {
+      t.refusedFromSeq = seq; t.refusedReason = reason;
+      if (!fresh.discontinuities.some((d) => d.kind === "local_store_failed" && d.track === track)) {
+        const F = Math.round((rec.sampleRate * rec.chunkMs) / 1000);
+        fresh.discontinuities.push({ t_ms: Math.floor((seq * F * 1000) / rec.sampleRate), kind: "local_store_failed", wall_gap_ms: rec.chunkMs, track });
+      }
+      fresh.updatedAt = this.now();
+      await this.store.putRecording(fresh);
     }
   }
 

@@ -75,13 +75,16 @@ export { supabaseBackend, BUCKET, type RecorderBackend, type SupabaseLike } from
 export { Uploader, type UploadProgress } from "./uploader";
 export { Recorder, type RecorderOptions } from "./controller";
 export { BrowserCaptureSource, type CaptureSource } from "./captureSource";
-export type { RecorderEvents } from "./events";
+export { inlineEncoder, workerEncoder, type ChunkEncoder, type EncodedChunk, type WorkerLike } from "./encoderClient";
+export type { RecorderEvents, HeldAudio } from "./events";
 
 import { Recorder, type RecorderOptions } from "./controller";
 import { BrowserCaptureSource } from "./captureSource";
 import { supabaseBackend, type SupabaseLike, type RecorderBackend } from "./backend";
 import { openIdbStore, MemoryStore, type RecorderStore } from "./store";
 import { getInstallId, type DeviceProfile } from "./devices";
+import { workerEncoder, type ChunkEncoder } from "./encoderClient";
+import { RecorderError } from "./errors";
 
 export interface CreateRecorderOptions extends Partial<Omit<RecorderOptions, "backend" | "store" | "source" | "userId" | "installId" | "profile">> {
   /** The app's supabase client (signed in as the teacher), or a ready backend. */
@@ -93,15 +96,27 @@ export interface CreateRecorderOptions extends Partial<Omit<RecorderOptions, "ba
   sampleRate?: number;
 }
 
+/** The encoder Worker (M6). Vite bundles `./encodeWorker.ts` from this exact expression. */
+function defaultEncoder(onFallback: (why: string) => void): ChunkEncoder | undefined {
+  if (typeof Worker === "undefined") return undefined;
+  return workerEncoder(() => new Worker(new URL("./encodeWorker.ts", import.meta.url), { type: "module" }) as any, onFallback);
+}
+
 /** Build a recorder with the browser defaults. Call inside the teacher's click. */
 export async function createRecorder(o: CreateRecorderOptions): Promise<Recorder> {
   const backend = o.backend ?? (o.client ? supabaseBackend(o.client) : null);
   if (!backend) throw new Error("createRecorder needs a client or a backend");
   let store = o.store;
+  let durable = o.durable !== false;
   if (!store) {
+    // m1: without IndexedDB there is no crash safety. The engine still runs
+    // (a check screen needs it) but says so and refuses to arm.
     try { store = await openIdbStore(); }
-    catch { store = new MemoryStore(); }
+    catch { store = new MemoryStore(); durable = false; }
   }
   const source = await BrowserCaptureSource.create(o.sampleRate ?? 48000);
-  return new Recorder({ ...o, backend, store, source, userId: o.userId, installId: getInstallId(), profile: o.profile });
+  let rec: Recorder | null = null;
+  const encoder = o.encoder ?? defaultEncoder((why) => rec?.events.emit("error", new RecorderError("internal", `Audio is encoded on the page itself (${why}): it may slow the page`)));
+  rec = new Recorder({ ...o, backend, store, source, encoder, durable, userId: o.userId, installId: getInstallId(), profile: o.profile });
+  return rec;
 }
