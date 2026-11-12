@@ -287,7 +287,7 @@ export async function armTick(): Promise<void> {
       const err = e as RecorderError;
       // A stated "no" (switched off, cancelled, not your class, window over): this lesson is done for today.
       if (err?.code === "server_refused" && !err.retryable) updateReady(s.userId, date, (x) => { if (!x.armed.includes(lesson.sessionId)) x.armed.push(lesson.sessionId); });
-      else { d.retryAt = now + 30_000; d.problem = err?.code === "storage_low" || err?.code === "not_durable" ? err.message : null; }
+      else { d.retryAt = now + 30_000; d.problem = err?.code === "storage_low" || err?.code === "not_durable" ? String(err.message).replace(/^Not armed:\s*/i, "") : null; }
     }
   } finally {
     d.arming = false;
