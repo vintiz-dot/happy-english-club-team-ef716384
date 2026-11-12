@@ -265,14 +265,15 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
           <Loading message="Loading calendar" />
         ) : (
           <>
-            <div className={c("grid grid-cols-7 gap-1 text-hec-caption font-medium text-hec-ink-soft", "grid grid-cols-7 gap-1 text-xs text-muted-foreground font-medium")}>
+            <div className={c("-mx-2 grid grid-cols-7 gap-0.5 text-hec-caption font-medium text-hec-ink-soft sm:mx-0 sm:gap-1", "grid grid-cols-7 gap-1 text-xs text-muted-foreground font-medium")}>
               {weekdayHeaders.map((h) => (
                 <div key={h} className="px-2 py-1 text-center">
                   {h}
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-2">
+            {/* Ivory at 375: the grid borrows the card padding and a 2 px gap so seven columns keep 44 px targets (R08). */}
+            <div className={c("-mx-2 grid grid-cols-7 gap-0.5 sm:mx-0 sm:gap-2", "grid grid-cols-7 gap-2")}>
               {cells.map((d) => {
                 const dayAssignments = assignmentsByDate[d] || [];
                 const isCurrentMonth = d.startsWith(currentMonth);
@@ -283,7 +284,7 @@ export function AssignmentCalendar({ onSelectAssignment, role, classId }: Assign
                     onClick={() => dayAssignments.length > 0 && setSelectedDate(d)}
                     className={
                       ivory
-                        ? `relative min-h-[80px] rounded-hec-md border p-2 transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${
+                        ? `relative min-h-16 rounded-hec-md border p-1 sm:min-h-[80px] sm:p-2 transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${
                             isToday(d) ? "border-hec-ink bg-hec-surface ring-1 ring-hec-ink" : isCurrentMonth ? "border-hec-line bg-hec-surface" : "border-hec-line bg-hec-paper"
                           } ${dayAssignments.length > 0 ? "cursor-pointer hover:bg-hec-sunken" : "cursor-default"}`
                         : `glass-sm rounded-lg p-2 min-h-[80px] transition-all hover:scale-[1.02] relative ${
