@@ -414,12 +414,12 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
                     />
                   </div>
                   <div className={iv("min-w-0 space-y-2", "space-y-1.5")}>
-                    <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Method</Label>
+                    <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")} htmlFor="batch-family-method">Method</Label>
                     <Select
                       value={sharedSettings.method}
                       onValueChange={v => setSharedSettings(p => ({ ...p, method: v }))}
                     >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger id="batch-family-method"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Cash">Cash</SelectItem>
                         <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>

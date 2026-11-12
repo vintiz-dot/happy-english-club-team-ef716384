@@ -224,9 +224,9 @@ export const BatchPaymentDialog = ({ open, onClose, items, month, onSuccess }: B
               <Input id="batch-payment-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={iv("", "h-8")} />
             </div>
             <div className={iv("min-w-0 space-y-2", "space-y-1")}>
-              <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Method</Label>
+              <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")} htmlFor="batch-payment-method">Method</Label>
               <Select value={method} onValueChange={setMethod}>
-                <SelectTrigger className={iv("", "h-8")}><SelectValue /></SelectTrigger>
+                <SelectTrigger id="batch-payment-method" className={iv("", "h-8")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Cash">Cash</SelectItem>
                   <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>

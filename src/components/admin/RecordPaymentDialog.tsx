@@ -283,9 +283,9 @@ export const RecordPaymentDialog = ({ open, onClose, item, month, onSuccess }: R
                 <Input id="record-payment-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Method</Label>
+                <Label htmlFor="record-payment-method">Method</Label>
                 <Select value={method} onValueChange={setMethod}>
-                  <SelectTrigger>
+                  <SelectTrigger id="record-payment-method">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

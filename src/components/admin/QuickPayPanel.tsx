@@ -293,9 +293,9 @@ export function QuickPayPanel({ month }: QuickPayPanelProps) {
             />
           </div>
           <div className={iv("min-w-0 space-y-2", "space-y-1")}>
-            <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")}>Method</Label>
+            <Label className={iv("text-hec-small font-medium text-hec-ink", "text-xs")} htmlFor="quickpay-method">Method</Label>
             <Select value={method} onValueChange={setMethod}>
-              <SelectTrigger className={iv("", "h-9")}>
+              <SelectTrigger id="quickpay-method" className={iv("", "h-9")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
