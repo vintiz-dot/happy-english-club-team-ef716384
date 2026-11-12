@@ -307,6 +307,7 @@ const LAB_OVERLAYS = [
   { id: 'ui-select', text: 'Lab option Alpha', open: (p) => p.locator('#lab-select-trigger').click() },
   { id: 'ui-dialog', text: 'lab dialog body', open: (p) => p.locator('#lab-dialog-trigger').click() },
   { id: 'ui-dropdown-menu', text: 'Lab menu item', open: (p) => p.locator('#lab-menu-trigger').click() },
+  { id: 'ui-alert-dialog', text: 'lab alert body', open: (p) => p.locator('#lab-alert-trigger').click() },
   { id: 'ui-sheet', text: 'lab sheet body', open: (p) => p.locator('#lab-sheet-trigger').click() },
   { id: 'ui-tooltip', text: 'Lab tooltip text', open: async (p) => { await p.locator('#lab-tip-trigger').focus(); } },
 ];
@@ -353,7 +354,9 @@ async function overlays(size) {
       await page.evaluate(() => document.exitFullscreen()).catch(() => {}); await sleep(900);
       const v1 = await hintVisible(page, 'Lab tooltip text'); const d1 = await textInDom(page, 'Lab tooltip text');
       const conn = await page.evaluate(() => { const n = [...document.querySelectorAll('[data-radix-popper-content-wrapper]')].find((e) => e.textContent.includes('Lab tooltip text')); return n ? n.isConnected : null; });
-      gate('M5.H8.tooltip-open-across-exit', S, !d1 || v1, { v0, v1, d1, conn }, `tooltip open in fullscreen (visible ${v0}), fullscreen ends: ${d1 ? 'still open, connected ' + conn + ', visible ' + v1 : 'closed itself'}`);
+      // A2.3 diagnostics: where the open tooltip is after fullscreen ends, and what covers its centre
+      const dbg = await page.evaluate(() => { const n = [...document.querySelectorAll('[data-radix-popper-content-wrapper]')].find((e) => e.textContent.includes('Lab tooltip text')); if (!n) return null; const c = n.firstElementChild || n; const r = c.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return { parent: n.parentElement?.tagName + (n.parentElement?.id ? '#' + n.parentElement.id : ''), rect: [r.left, r.top, r.width, r.height].map(Math.round), opacity: getComputedStyle(c).opacity, state: c.getAttribute('data-state'), wrapperTransform: n.style.transform, hit: hit ? hit.tagName + (hit.id ? '#' + hit.id : '') : null, focusOnTrigger: document.activeElement?.id === 'lab-tip-trigger', viewport: [innerWidth, innerHeight] }; });
+      gate('M5.H8.tooltip-open-across-exit', S, !d1 || v1, { v0, v1, d1, conn, dbg }, `tooltip open in fullscreen (visible ${v0}), fullscreen ends: ${d1 ? 'still open, connected ' + conn + ', visible ' + v1 : 'closed itself'}`);
     }
     if (page.__errors?.length) record('page-errors.lab', S, 'INFO', page.__errors.slice(0, 5), `${page.__errors.length} page error(s): ${page.__errors[0]}`);
   } catch (e) {
@@ -423,10 +426,11 @@ async function hints(size) {
   {
     const { ctx, page } = await newPage(size, { live: '1' });
     try {
-      await page.goto(BASE + '/__lab'); await page.waitForSelector('#lab-hud button[title^="Last engaged"]', { timeout: 90000 });
+      // A2.3: the chip's hint is no longer a title= attribute; a chip with points today is one that shows "Last engaged"
+      await page.goto(BASE + '/__lab'); await page.waitForSelector('#lab-hud button', { timeout: 90000 });
       await page.__throttle();
-      const chip = page.locator('#lab-hud button[title^="Last engaged"]').first();
-      await hintMatrix(page, S, 'HUD-chip-last-engaged', chip, 'Last engaged', { native: true });
+      const chip = page.locator('#lab-hud button').filter({ hasText: /\+\d/ }).first();
+      await hintMatrix(page, S, 'HUD-chip-last-engaged', chip, 'Last engaged', { native: /title="?Last engaged/.test(await chip.evaluate((b) => b.outerHTML)) });
       await hintMatrix(page, S, 'ui-tooltip-primitive', page.locator('#lab-tip-trigger'), 'Lab tooltip text');
     } catch (e) { record('hints.lab.error', S, 'FAIL', String(e), 'scenario aborted: ' + String(e).split('\n')[0]); } finally { await ctx.close(); }
   }
@@ -439,7 +443,9 @@ async function hints(size) {
       await page.__throttle();
       const st = await live.evaluate((b) => ({ disabled: b.disabled, pe: getComputedStyle(b).pointerEvents, name: (b.getAttribute('aria-label') || b.innerText || '').trim() }));
       record('M6.Leaderboards-live.state', S, 'INFO', st, `Live button disabled=${st.disabled}, pointer-events=${st.pe}, visible name "${st.name}"`);
-      await hintMatrix(page, S, 'Leaderboards-live-reason', live, 'No session in progress for this class');
+      // A2.3: the disabled button may sit in a focusable wrapper; the outermost of the two is the trigger
+      const liveTrigger = page.locator(':is(span[tabindex="0"], button):has(svg.lucide-zap)').first();
+      await hintMatrix(page, S, 'Leaderboards-live-reason', liveTrigger, 'No session in progress for this class');
     } catch (e) { record('hints.leaderboards.error', S, 'FAIL', String(e), 'scenario aborted: ' + String(e).split('\n')[0]); } finally { await ctx.close(); }
   }
   // (c) TeacherBooks' two icon buttons with native title= (TeacherBooks.tsx:439, :515)
@@ -494,7 +500,10 @@ async function hud(size) {
     gate('M7.open-popover-kept', S, kept.open && kept.sameFocus && kept.connected, { focused, ...kept, commits: o1.commits - o0.commits, requests: o1.reqs - o0.reqs }, `open StudentActionPopover (focus on "${focused}") across an unrelated event (+${o1.commits - o0.commits} commits, +${o1.reqs - o0.reqs} queries): still open=${kept.open}, focus kept=${kept.sameFocus}, focused node connected=${kept.connected}`);
     await closeOverlay(page);
     if (flag('idle-minute')) {
+      const openTips = () => page.evaluate(() => ({ tooltips: document.querySelectorAll('[role=tooltip]').length, focus: (document.activeElement?.textContent || document.activeElement?.tagName || '').trim().slice(0, 20) }));
+      const t0 = await openTips();
       const i0 = await snap(); await sleep(61000); const i1 = await snap();
+      record('M7.idle-minute.state', S, 'INFO', t0, `at the start of the idle window: open tooltips ${t0.tooltips}, focus on "${t0.focus}"`);
       record('M7.idle-minute', S, 'INFO', { commits: i1.commits - i0.commits, requests: i1.reqs - i0.reqs }, `61 s idle: HUD commits ${i1.commits - i0.commits}, HUD queries ${i1.reqs - i0.reqs} (30 s tick at LiveEngagementHUD.tsx:46-49, 60 s refetchInterval at :54)`);
     } else record('M7.idle-minute', S, 'NOTMEASURED', null, 'run with --idle-minute to measure the 61 s idle window');
   } catch (e) {
@@ -547,6 +556,62 @@ async function targets(size) {
   }
 }
 
+// ================================================================= 5b. NEUTRALITY outside fullscreen (A2.3): where each overlay's content is portalled
+// With no fullscreen element the shared ui/* primitives must behave exactly as before: content portalled
+// to document.body. Records the chain from body to the content and its rect, so before/after can be diffed.
+async function neutral(size) {
+  const S = size.join('x');
+  const { ctx, page } = await newPage(size, { live: '1', touch: false });
+  try {
+    await page.goto(BASE + '/__lab'); await page.waitForSelector('#lab-hud button', { timeout: 90000 }); await sleep(1500);
+    for (const o of LAB_OVERLAYS) {
+      await o.open(page); await sleep(900);
+      const pos = await page.evaluate((t) => {
+        const own = (e) => [...e.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('');
+        const el = [...document.body.querySelectorAll('*')].filter((e) => own(e).includes(t) && getComputedStyle(e).position !== 'absolute').pop(); // last: portals are appended after the app
+        if (!el) return null;
+        let root = el; while (root.parentElement && root.parentElement !== document.body) root = root.parentElement;
+        const chain = []; for (let n = el; n && n !== document.body; n = n.parentElement) chain.unshift(n.tagName.toLowerCase() + (n.getAttribute('role') ? `[role=${n.getAttribute('role')}]` : '') + (n.hasAttribute('data-radix-popper-content-wrapper') ? '[popper]' : ''));
+        const r = el.getBoundingClientRect();
+        return { portalParent: root.parentElement ? root.parentElement.tagName : null, rootIsLab: root.id === 'root' || !!root.querySelector('#fs-host'), chain: chain.join('>'), rect: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)], fs: !!document.fullscreenElement };
+      }, o.text);
+      gate(`N.${o.id}.portal-parent`, S, !!pos && pos.portalParent === 'BODY' && !pos.rootIsLab && !pos.fs, pos, pos ? `no fullscreen: content portalled to ${pos.portalParent} (own body child, not the app root: ${!pos.rootIsLab}); chain ${pos.chain}; rect ${pos.rect.join(',')}` : 'content not found');
+      await closeOverlay(page);
+      if (o.id === 'ui-tooltip') await page.locator('#lab-tip-trigger').blur().catch(() => {});
+    }
+  } catch (e) {
+    record('neutral.error', S, 'FAIL', String(e), 'scenario aborted: ' + String(e).split('\n')[0]);
+  } finally { await ctx.close(); }
+}
+
+// ================================================================= 5c. CLICK-THROUGH (A2.3): the same writes before and after
+// award +1 and custom 7 on SkillButton (onTap args), then +1 skill and a -1 correction in StudentActionPopover
+// (fake-client requests). The list is recorded; compare the before / after results files.
+async function clickthrough(size) {
+  const S = size.join('x');
+  const { ctx, page } = await newPage(size, { live: '1', touch: false });
+  try {
+    await page.goto(BASE + '/__lab'); await page.waitForSelector('#lab-hud button', { timeout: 90000 }); await sleep(2500);
+    const n0 = await page.evaluate(() => window.__requests.length);
+    await page.locator('#lab-skill button').first().click(); await sleep(700);
+    await page.locator('[data-radix-popper-content-wrapper] button', { hasText: '+1' }).first().click(); await sleep(700);
+    await page.locator('#lab-skill button').first().click(); await sleep(700);
+    await page.locator('[data-radix-popper-content-wrapper] input[type=number]').fill('7');
+    await page.locator('[data-radix-popper-content-wrapper] input[type=number]').press('Enter'); await sleep(700);
+    await page.locator('#sap-trigger').click(); await sleep(1500);
+    await page.getByRole('dialog').getByRole('button', { name: /Skills/ }).click(); await sleep(700);
+    await page.getByRole('dialog').getByRole('button').filter({ hasText: /Speaking/ }).first().click(); await sleep(1500);
+    await page.getByRole('dialog').getByRole('button', { name: /Skills/ }).click(); await sleep(700);
+    const corr = page.getByRole('dialog').locator('p', { hasText: 'Corrections (-1)' }).locator('xpath=..').getByRole('button').first();
+    await corr.click(); await sleep(1500);
+    const out = await page.evaluate((n0) => ({ taps: window.__taps.map((a) => a.join(':')), writes: window.__requests.slice(n0).filter((r) => r.method !== 'select').map((r) => `${r.kind}:${r.name}:${r.method}`) }), n0);
+    record('CT.click-through', S, 'INFO', out, `onTap calls [${out.taps.join(', ')}]; fake-client writes [${out.writes.join(', ')}]`);
+    gate('CT.click-through.taps', S, out.taps.join('|') === 'speaking:1|speaking:7', out.taps, `SkillButton onTap calls ${JSON.stringify(out.taps)} (expected speaking:1, speaking:7)`);
+  } catch (e) {
+    record('clickthrough.error', S, 'FAIL', String(e), 'scenario aborted: ' + String(e).split('\n')[0]);
+  } finally { await ctx.close(); }
+}
+
 // ================================================================= 6. STATIC: native title= hints on screens the fake cannot populate
 function staticHints() {
   const items = [
@@ -575,6 +640,8 @@ try {
     if (want('hints')) { await hints(size); saveResults(); }
     if (want('targets')) { await targets(size); saveResults(); }
     if (want('hud') && size.join('x') === '1024x768') { await hud(size); saveResults(); }
+    if (want('neutral')) { await neutral(size); saveResults(); }
+    if (want('clickthrough') && size.join('x') === '1024x768') { await clickthrough(size); saveResults(); }
   }
 } finally {
   saveResults();

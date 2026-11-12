@@ -1,14 +1,20 @@
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronRight, ShieldAlert } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronRight, Loader2, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReasonField } from "./Fields";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  checkReason,
+  cleanReason,
+  ERROR_TEXT,
+  REASON_MIN,
   describeEvidence,
   filterOverrides,
   formatClock,
@@ -66,7 +72,9 @@ async function loadOverrides(): Promise<Loaded> {
  * Cancellations that went through the guard: who, when, why, what the system
  * knew at the time, and whether anyone still has to look at them. Reads the
  * append-only audit tables through the signed-in admin's own client (RLS
- * admits admins only). It writes nothing.
+ * admits admins only). Its one write is the review sign-off (an appended
+ * audit event, record_session_override_event 'reviewed'); it never changes
+ * a lesson, a bill or pay.
  */
 export default function CancelOverridesReview() {
   const [state, setState] = useState<ReviewFilters["state"]>("needs_review");
@@ -174,7 +182,7 @@ export default function CancelOverridesReview() {
         {data && rows.length > 0 && (
           <ul className="space-y-2" aria-label="Overrides">
             {rows.map((r) => (
-              <OverrideItem key={r.override_id} row={r} names={data.names} className={className(r.class_id)} />
+              <OverrideItem key={r.override_id} row={r} names={data.names} className={className(r.class_id)} onReviewed={() => void refetch()} />
             ))}
           </ul>
         )}
@@ -186,7 +194,7 @@ export default function CancelOverridesReview() {
 
 const ACTION_WORD: Record<string, string> = { cancel: "Cancelled", delete: "Deleted", move: "Moved", uncancel: "Restored" };
 
-function OverrideItem({ row, names, className }: { row: OverrideRow; names: Record<string, string>; className: string }) {
+function OverrideItem({ row, names, className, onReviewed }: { row: OverrideRow; names: Record<string, string>; className: string; onReviewed: () => void }) {
   const [open, setOpen] = useState(false);
   const id = useId();
   const items = row.evidence?.items ?? [];
@@ -281,8 +289,60 @@ function OverrideItem({ row, names, className }: { row: OverrideRow; names: Reco
               </ul>
             </section>
           )}
+
+          {queued && <MarkReviewed overrideId={row.override_id} onDone={onReviewed} />}
         </div>
       )}
     </li>
+  );
+}
+
+/**
+ * Sign-off for one override: record_session_override_event(kind 'reviewed')
+ * with a note that meets the same reason rule as a cancellation. It appends
+ * an event to the audit log; it changes no lesson, bill or pay. Whether the
+ * reviewer must be a different admin is the owner's decision; for now the
+ * database accepts the admin's own review.
+ */
+function MarkReviewed({ overrideId, onDone }: { overrideId: string; onDone: () => void }) {
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const inFlight = useRef(false);
+  const check = checkReason(note);
+  const submit = async () => {
+    if (!check.ok || inFlight.current) return;
+    inFlight.current = true;
+    setBusy(true);
+    setErr(null);
+    try {
+      const { error } = await db.rpc("record_session_override_event", {
+        p_override_id: overrideId,
+        p_kind: "reviewed",
+        p_payload: { note: cleanReason(note) },
+      });
+      if (error) {
+        setErr(`${error.code === "HC010" ? ERROR_TEXT.reason_too_short : "The review was not recorded."} (code: ${error.code ?? "unknown"})`);
+        return;
+      }
+      onDone();
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+  };
+  return (
+    <section aria-label="Review this override" className="space-y-3 rounded-xl border border-border p-3">
+      <ReasonField label="Review note (required)" help="What you checked and what you found. At least 15 characters." value={note} onChange={setNote} min={REASON_MIN} disabled={busy} />
+      {err && (
+        <p role="alert" className="break-words text-sm font-medium">
+          {err}
+        </p>
+      )}
+      <Button variant="outline" className="min-h-11 w-full sm:w-auto" disabled={!check.ok || busy} onClick={() => void submit()}>
+        {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
+        Mark as reviewed
+      </Button>
+    </section>
   );
 }

@@ -3,8 +3,13 @@ import {
   actionLabel,
   buildBulkConfirm,
   bulkAckReady,
+  bulkRowIndex,
   canSubmit,
   checkReason,
+  COPY,
+  OUTCOME_UNKNOWN_TEXT,
+  UNKNOWN_OUTCOME_CODES,
+  isSessionRelatedQuery,
   cleanReason,
   consequenceRows,
   describeEvidence,
@@ -87,6 +92,22 @@ test("typed date: wrong, partial, short year and impossible dates never match", 
   }
   expect(typedDateMatches("31/02/2026", "2026-02-28")).toBe(false);
 });
+test("typed date: calendar edges, read as plain dates (no UTC shift in UTC+7)", () => {
+  expect(typedDateMatches("29/02/2028", "2028-02-29")).toBe(true);
+  expect(typedDateMatches("29/02/2027", "2027-03-01")).toBe(false); // not a date, never rolled over
+  expect(typedDateMatches("31/12/2026", "2026-12-31")).toBe(true);
+  expect(typedDateMatches("01/01/2027", "2026-12-31")).toBe(false);
+  expect(typedDateMatches("1/1/2027", "2027-01-01")).toBe(true);
+  // a timestamp from the server is read by its calendar part, not converted
+  expect(typedDateMatches("01/01/2027", "2027-01-01T00:30:00+07:00")).toBe(true);
+  expect(typedDateMatches("31/12/2026", "2027-01-01T00:30:00+07:00")).toBe(false);
+  expect(typedDateMatches(" 12 / 11 / 2026 ", "2026-11-12")).toBe(true);
+  expect(typedDateMatches("12/11/26", "2026-11-12")).toBe(false);
+  expect(typedDateMatches("12/11/2026 x", "2026-11-12")).toBe(false);
+  expect(typedDateMatches("", "2026-11-12")).toBe(false);
+  expect(typedDateMatches("12/11/2026", "")).toBe(false);
+  expect(lessonDateForTyping("2027-01-01T00:30:00+07:00")).toBe("01/01/2027");
+});
 test("typed date: a leading zero or not, the same lesson", () => {
   expect(typedDateMatches("05/09/2026", "2026-09-05")).toBe(true);
   expect(typedDateMatches("5/9/2026", "2026-09-05")).toBe(true);
@@ -151,14 +172,84 @@ test("an unknown error shows its code", () => {
   expect(errorText("weird_new_code")).toContain("weird_new_code");
   expect(errorText("weird_new_code", "boom")).toContain("boom");
 });
-test("parseInvokeError reads error.context.json() and prefers a body in data", async () => {
-  const body = { ok: false, code: "token_stale", message: "x", preview: base() };
-  const err = { name: "FunctionsHttpError", context: { json: async () => body } };
-  expect((await parseInvokeError(err)).code).toBe("token_stale");
+/*
+ * Error objects shaped like @supabase/functions-js 2.75 (dist/module/types.js,
+ * FunctionsClient.js): FunctionsError(message, name, context). HttpError and
+ * RelayError carry the fetch Response as `context`; FetchError carries the
+ * thrown fetch exception. A real Response is used so json()/bodyUsed behave.
+ */
+class FunctionsError extends Error {
+  context: any;
+  constructor(message: string, name: string, context: any) {
+    super(message);
+    this.name = name;
+    this.context = context;
+  }
+}
+const httpErr = (status: number, body: string, type = "application/json") =>
+  new FunctionsError("Edge Function returned a non-2xx status code", "FunctionsHttpError", new Response(body, { status, headers: { "Content-Type": type } }));
+const relayErr = (status: number) =>
+  new FunctionsError("Relay Error invoking the Edge Function", "FunctionsRelayError", new Response("relay says no", { status, headers: { "x-relay-error": "true" } }));
+const fetchErr = (inner: Error) => new FunctionsError("Failed to send a request to the Edge Function", "FunctionsFetchError", inner);
+
+test("parseInvokeError: FunctionsHttpError with the guard's own body reads context.json()", async () => {
+  const fresh = base();
+  const e = await parseInvokeError(httpErr(409, JSON.stringify({ ok: false, code: "token_stale", message_key: "sessionGuard.error.token_stale", preview: fresh })));
+  expect(e.code).toBe("token_stale");
+  expect(e.ok).toBe(false);
+  expect(e.status).toBe(409);
+  expect(e.preview?.token).toBe(fresh.token);
+  expect((await parseInvokeError(httpErr(503, JSON.stringify({ ok: false, code: "guard_not_installed" })))).code).toBe("guard_not_installed");
+});
+test("parseInvokeError: a body already in data is preferred", async () => {
   expect((await parseInvokeError(null, { ok: false, code: "use_cancel" })).code).toBe("use_cancel");
-  expect((await parseInvokeError({ name: "FunctionsFetchError", message: "Failed to fetch" })).code).toBe("network");
+});
+test("parseInvokeError: gateway bodies are mapped by status and never overwrite our code", async () => {
+  // Supabase gateway on an expired JWT: numeric code
+  const jwt = await parseInvokeError(httpErr(401, JSON.stringify({ code: 401, message: "Invalid JWT" })));
+  expect(jwt.code).toBe("unauthorized");
+  expect(jwt.message).toBe("Invalid JWT");
+  // Function not deployed: the platform's string code is not one of ours
+  expect((await parseInvokeError(httpErr(404, JSON.stringify({ code: "NOT_FOUND", message: "Requested function was not found" })))).code).toBe("function_missing");
+  // HTML from a proxy, and an empty 500
+  expect((await parseInvokeError(httpErr(502, "<html>Bad gateway</html>", "text/html"))).code).toBe("http_error");
+  expect((await parseInvokeError(httpErr(500, ""))).code).toBe("http_error");
+  expect((await parseInvokeError(httpErr(546, JSON.stringify({ code: "WORKER_LIMIT", message: "limit" })))).code).toBe("http_error");
+});
+test("parseInvokeError: a body that was already read is not read again", async () => {
+  const e = httpErr(409, JSON.stringify({ ok: false, code: "slot_taken" }));
+  await e.context.text();
+  const out = await parseInvokeError(e);
+  expect(out.code).toBe("http_error");
+  expect(out.status).toBe(409);
+});
+test("parseInvokeError: FunctionsRelayError has the relay's body, not the function's", async () => {
+  const e = await parseInvokeError(relayErr(502));
+  expect(e.code).toBe("relay");
+  expect(e.status).toBe(502);
+});
+test("parseInvokeError: FunctionsFetchError has no body (network, abort)", async () => {
+  expect((await parseInvokeError(fetchErr(new TypeError("Failed to fetch")))).code).toBe("network");
+  const abort = new Error("The operation was aborted");
+  abort.name = "AbortError";
+  expect((await parseInvokeError(fetchErr(abort))).code).toBe("network");
+});
+test("parseInvokeError: anything thrown that is not a FunctionsError", async () => {
+  expect((await parseInvokeError(new TypeError("Failed to fetch"))).code).toBe("network");
   expect((await parseInvokeError({ message: "weird" })).code).toBe("unexpected");
-  expect((await parseInvokeError({ context: { json: async () => { throw new Error("no"); } } })).code).toBe("unexpected");
+  expect((await parseInvokeError(undefined)).code).toBe("unexpected");
+});
+test("a confirm that ended without a clear answer is never told 'Nothing was changed'", () => {
+  for (const c of ["network", "relay", "unexpected", "http_error"]) {
+    expect(UNKNOWN_OUTCOME_CODES.has(c)).toBe(true);
+    expect(ERROR_TEXT[c]).not.toContain("Nothing was changed");
+  }
+  expect(OUTCOME_UNKNOWN_TEXT).toContain("cannot tell whether");
+  expect(UNKNOWN_OUTCOME_CODES.has("token_stale")).toBe(false);
+  expect(UNKNOWN_OUTCOME_CODES.has("reason_too_short")).toBe(false);
+});
+test("review wording does not promise a second administrator", () => {
+  expect(COPY.reviewNote).toBe("This change is recorded for review.");
 });
 
 /* stale diff */
@@ -207,18 +298,55 @@ test("adapter: preview.invoices_before and the older tuition[] shape both read",
 test("figures not requested produce no rows", () => {
   expect(consequenceRows({ fetched: false, reason: "not_requested" })).toEqual([]);
 });
-test("payroll line is the calculate-payroll figure, or says it was not fetched", () => {
-  const ok = payrollLine({
-    tuition: [],
-    payroll: { fetched: true, month: "2026-11", teacher_id: "t1", response: { payrollData: [{ teacherId: "t0", totalAmountActual: 1 }, { teacherId: "t1", totalAmountActual: 4500000, sessionsCountActual: 9 }] } },
-  });
-  expect(ok.fetched).toBe(true);
-  expect(ok.text).toContain(formatVnd(4500000));
-  expect(ok.text).toContain("9 lessons");
-  expect(payrollLine({ payroll: { fetched: false, reason: "calculate_payroll_failed", error: "x" } }).fetched).toBe(false);
-  expect(payrollLine({ payroll: { fetched: false, reason: "lesson_not_held" } }).text).toContain("not marked Held");
-  expect(payrollLine({ payroll: { fetched: true, month: "2026-11", teacher_id: "zz", response: { payrollData: [{ teacherId: "a" }, { teacherId: "b" }] } } }).fetched).toBe(false);
+test("teacher pay: a preview never shows a pay figure, whatever the server sends", () => {
+  const final = payrollLine({ pay_line: { available: false, reason: "not fetched in a preview" } });
+  expect(final.fetched).toBe(false);
+  expect(final.text).toBe("Pay is recalculated by Payroll after the change.");
+  // An older server that still sends a payroll figure: it is NOT shown.
+  const old = payrollLine({ payroll: { fetched: true, month: "2026-11", teacher_id: "t1", response: { payrollData: [{ teacherId: "t1", totalAmountActual: 4500000 }] } } });
+  expect(old.text).not.toContain(formatVnd(4500000));
   expect(payrollLine(null).fetched).toBe(false);
+});
+
+test("final contract: consequences.invoices_before entries carry `bill` or null", () => {
+  const c = {
+    source: "stored",
+    affected_students: [{ student_id: "a", month: "2026-11", mark: { status: "Present", marked_by_person: true } }, { student_id: "b", month: "2026-12", mark: null }],
+    invoices_before: [
+      { student_id: "a", month: "2026-11", bill: { total_amount: 1800000, discount_amount: 0, recorded_payment: 1800000, confirmation_status: "confirmed", status: "paid", tuition_frozen: false } },
+      { student_id: "b", month: "2026-12", bill: null },
+      { student_id: "c", month: "2026-11", bill: { total_amount: 0, discount_amount: 0, recorded_payment: 0, status: "issued", confirmation_status: "auto_approved", tuition_frozen: true } },
+    ],
+    after: { available: false, reason: "worked out after the change" },
+    pay_line: { available: false, reason: "x" },
+  };
+  const rows = consequenceRows(c as any, base());
+  expect(rows[0].nowText).toBe(`Current bill for 2026-11: ${formatVnd(1800000)} (paid, confirmed); paid this month ${formatVnd(1800000)}`);
+  // no bill saved: said in words, never 0 and never "not available"
+  expect(rows[1].nowText).toBe("No bill saved yet for 2026-12");
+  expect(rows[1].fetched).toBe(true);
+  // a real zero bill is a figure, shown as given
+  expect(rows[2].nowText).toContain(formatVnd(0));
+  expect(rows[2].frozen).toBe(true);
+  expect(totalsRow(rows).notFetched).toBe(0);
+});
+
+test("stale diff names a bill change", () => {
+  const a = base({ invoices_before: [{ student_id: "a", month: "2026-11", total_amount: 1, confirmation_status: "confirmed" }] });
+  const b = base({ invoices_before: [{ student_id: "a", month: "2026-11", total_amount: 1, confirmation_status: "auto_approved" }] });
+  expect(stalePreviewDiff(a, b).join(" ")).toContain("family bill");
+});
+
+test("new codes of the final contract have wording", () => {
+  expect(errorText("rate_limited")).toContain("Nothing was changed");
+  expect(errorText("outside_criteria")).toContain("not sent");
+});
+
+test("query refresh covers the lesson screens the old dialogs' parents refetched", () => {
+  for (const k of ["calendar-sessions", "class-sessions", "student-lessons-all", "lesson-overview", "today-agenda", "teacher-lost-income", "lost-revenue", "excused-absences", "student-tuition", "payroll"]) {
+    expect(isSessionRelatedQuery([k])).toBe(true);
+  }
+  expect(isSessionRelatedQuery(["announcements"])).toBe(false);
 });
 
 /* refresh */
@@ -285,6 +413,31 @@ test("bulk result: both response shapes normalise", () => {
   expect(a.refused[0].code).toBe("token_stale");
   expect(a.stopped?.code).toBe("retry");
   expect(normaliseBulkResult({ done: [{ id: "1" }] }).done.length).toBe(1);
+});
+test("bulk result: per-lesson bill retry targets and evidence lessons left alone", () => {
+  const r = normaliseBulkResult({
+    canceled: [{ id: "1", override_id: "o1" }, { id: "2", override_id: "o2" }, { id: "3", override_id: "o3" }],
+    needs_ack: [{ id: "9" }],
+    held_ignored: 2,
+    tuition: {
+      status: "failed",
+      per_session: [
+        { id: "1", override_id: "o1", status: "refreshed" },
+        { id: "2", override_id: "o2", status: "failed", failed: [{ student_id: "s", month: "2026-11" }] },
+        { id: "3", override_id: "o3", status: "none" },
+        { id: "4", status: "failed" }, // no override id: cannot be retried from here
+      ],
+      failed: [{ student_id: "s", month: "2026-11" }],
+    },
+  });
+  expect(r.tuitionRetry).toEqual([{ id: "2", override_id: "o2" }]);
+  expect(r.leftAlone).toBe(3);
+  expect(normaliseBulkResult({}).tuitionRetry).toEqual([]);
+});
+test("bulk: rows are indexed so each result line names its lesson", () => {
+  const b = normaliseBulkPreview({ batch_id: "b", plain: [row("1")], needs_ack: [row("2")], refused: [row("3")] });
+  expect(Object.keys(bulkRowIndex(b)).sort()).toEqual(["1", "2", "3"]);
+  expect(bulkRowIndex(null)).toEqual({});
 });
 
 /* review screen */

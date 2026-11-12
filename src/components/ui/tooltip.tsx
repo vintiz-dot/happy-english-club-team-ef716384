@@ -2,6 +2,8 @@ import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 
 import { cn } from "@/lib/utils";
+import { useOverlayContainer } from "@/hooks/useFullscreenContainer";
+import { useIvory } from "@/hooks/useIvory";
 
 /**
  * Nova tooltip system
@@ -13,6 +15,12 @@ import { cn } from "@/lib/utils";
  *   moves between tips (skipDelayDuration)
  * - RichTooltipContent: icon + title + description + keyboard shortcut
  *   for live-teaching surfaces that need data, not just a label
+ * - Touch: Radix opens tooltips on hover and keyboard focus only, so a tap
+ *   never showed one. A tap with a finger or pen now toggles the tooltip;
+ *   a tap anywhere else or Escape closes it. Mouse and keyboard behave as
+ *   before (the tap state is separate and only a touch/pen click sets it).
+ * - Fullscreen: content portals into the fullscreen element while there is
+ *   one (useFullscreenContainer), and to document.body otherwise.
  */
 
 const TooltipProvider = ({
@@ -27,9 +35,95 @@ const TooltipProvider = ({
   />
 );
 
-const Tooltip = TooltipPrimitive.Root;
+interface TouchToggle {
+  toggle: () => void;
+  triggerRef: React.MutableRefObject<HTMLElement | null>;
+}
+const TouchToggleContext = React.createContext<TouchToggle | null>(null);
 
-const TooltipTrigger = TooltipPrimitive.Trigger;
+const Tooltip = ({
+  open: openProp,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Root>) => {
+  const controlled = openProp !== undefined;
+  // Radix's own open state (hover / focus), held here instead of inside Radix
+  // so the tap state can be OR-ed in. Same transitions as uncontrolled Radix.
+  const [radixOpen, setRadixOpen] = React.useState(defaultOpen ?? false);
+  const [tapOpen, setTapOpen] = React.useState(false);
+  const triggerRef = React.useRef<HTMLElement | null>(null);
+
+  const handleOpenChange = React.useCallback(
+    (next: boolean) => {
+      if (!controlled) setRadixOpen(next);
+      onOpenChange?.(next);
+    },
+    [controlled, onOpenChange],
+  );
+
+  React.useEffect(() => {
+    if (!tapOpen) return;
+    const onDown = (e: PointerEvent) => {
+      const t = triggerRef.current;
+      if (t && e.target instanceof Node && t.contains(e.target)) return; // the trigger toggles itself
+      setTapOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setTapOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      document.removeEventListener("pointerdown", onDown, true);
+      document.removeEventListener("keydown", onKey, true);
+    };
+  }, [tapOpen]);
+
+  const touch = React.useMemo<TouchToggle>(() => ({ toggle: () => setTapOpen((o) => !o), triggerRef }), []);
+
+  if (controlled) {
+    // the caller owns the state: unchanged, no tap toggle
+    return <TooltipPrimitive.Root open={openProp} onOpenChange={onOpenChange} {...props} />;
+  }
+  return (
+    <TouchToggleContext.Provider value={touch}>
+      <TooltipPrimitive.Root open={radixOpen || tapOpen} onOpenChange={handleOpenChange} {...props} />
+    </TouchToggleContext.Provider>
+  );
+};
+
+const TooltipTrigger = React.forwardRef<
+  React.ElementRef<typeof TooltipPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>
+>(({ onPointerDown, onClick, ...props }, ref) => {
+  const touch = React.useContext(TouchToggleContext);
+  const lastPointer = React.useRef("");
+  const setRef = React.useCallback(
+    (node: HTMLButtonElement | null) => {
+      if (touch) touch.triggerRef.current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref) ref.current = node;
+    },
+    [ref, touch],
+  );
+  return (
+    <TooltipPrimitive.Trigger
+      ref={setRef}
+      onPointerDown={(e) => {
+        lastPointer.current = e.pointerType;
+        onPointerDown?.(e);
+      }}
+      onClick={(e) => {
+        onClick?.(e);
+        if (touch && (lastPointer.current === "touch" || lastPointer.current === "pen")) touch.toggle();
+        lastPointer.current = "";
+      }}
+      {...props}
+    />
+  );
+});
+TooltipTrigger.displayName = TooltipPrimitive.Trigger.displayName;
 
 interface TooltipContentProps
   extends React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> {
@@ -40,20 +134,25 @@ const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   TooltipContentProps
 >(({ className, sideOffset = 6, container, ...props }, ref) => {
-  const portalContainer =
-    container ?? (document.fullscreenElement as HTMLElement) ?? undefined;
+  const [fullscreen, contentRef] = useOverlayContainer(ref);
+  const portalContainer = container ?? fullscreen;
+  const ivory = useIvory();
   return (
     <TooltipPrimitive.Portal container={portalContainer}>
       <TooltipPrimitive.Content
-        ref={ref}
+        ref={contentRef}
         sideOffset={sideOffset}
         className={cn(
-          "nova-tip z-[9999] rounded-xl px-3 py-1.5 text-xs font-medium",
-          "bg-popover/85 backdrop-blur-2xl text-popover-foreground",
-          "ring-1 ring-border/60",
-          "shadow-[0_12px_32px_-8px_rgba(59,130,246,0.30),0_4px_12px_-4px_rgba(0,0,0,0.20)]",
-          "[transform-origin:var(--radix-tooltip-content-transform-origin)]",
-          "animate-spring-in data-[state=closed]:animate-spring-out",
+          ivory
+            ? "z-[9999] max-w-[calc(100vw-2rem)] rounded-hec-sm bg-hec-action px-3 py-2 text-hec-caption text-hec-on-action shadow-hec-2 animate-in fade-in-0 duration-hec-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
+            : cn(
+                "nova-tip z-[9999] rounded-xl px-3 py-1.5 text-xs font-medium",
+                "bg-popover/85 backdrop-blur-2xl text-popover-foreground",
+                "ring-1 ring-border/60",
+                "shadow-[0_12px_32px_-8px_rgba(59,130,246,0.30),0_4px_12px_-4px_rgba(0,0,0,0.20)]",
+                "[transform-origin:var(--radix-tooltip-content-transform-origin)]",
+                "animate-spring-in data-[state=closed]:animate-spring-out",
+              ),
           className,
         )}
         {...props}
@@ -74,7 +173,30 @@ interface RichTooltipContentProps extends Omit<TooltipContentProps, "title"> {
 const RichTooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   RichTooltipContentProps
->(({ icon: Icon, title, description, shortcut, className, ...props }, ref) => (
+>(({ icon: Icon, title, description, shortcut, className, ...props }, ref) => {
+  const ivory = useIvory();
+  if (ivory) {
+    // Ivory: the tooltip recipe (ink chip), one quiet icon, no gradient, text wraps.
+    return (
+      <TooltipContent ref={ref} className={cn("max-w-[260px]", className)} {...props}>
+        <span className="flex items-start gap-2">
+          {Icon && <Icon className="mt-0.5 h-4 w-4 shrink-0 text-hec-on-action/80" />}
+          <span className="min-w-0">
+            <span className="flex items-center gap-2 font-medium">
+              <span className="min-w-0 break-words">{title}</span>
+              {shortcut && (
+                <kbd className="shrink-0 rounded-hec-sm border border-hec-on-action/30 px-1 font-mono text-hec-caption text-hec-on-action/80">
+                  {shortcut}
+                </kbd>
+              )}
+            </span>
+            {description && <span className="mt-1 block text-hec-on-action/80">{description}</span>}
+          </span>
+        </span>
+      </TooltipContent>
+    );
+  }
+  return (
   <TooltipContent
     ref={ref}
     className={cn("max-w-[260px] px-3.5 py-2.5", className)}
@@ -103,7 +225,8 @@ const RichTooltipContent = React.forwardRef<
       </span>
     </span>
   </TooltipContent>
-));
+  );
+});
 RichTooltipContent.displayName = "RichTooltipContent";
 
 export { Tooltip, TooltipTrigger, TooltipContent, RichTooltipContent, TooltipProvider };

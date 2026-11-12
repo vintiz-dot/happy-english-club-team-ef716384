@@ -38,6 +38,7 @@ import {
   Users, Link2, ExternalLink, RotateCw, Coins,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ClassOption { id: string; name: string }
 interface StudentOption { id: string; full_name: string; linked_user_id?: string | null }
@@ -1043,9 +1044,11 @@ export default function TeacherSmartUpload() {
                             onChange={(e) => setReviewNotes((p) => ({ ...p, [w.id]: e.target.value }))}
                           />
                           {w.storage_path && (
+                            <Tooltip>
+                            <TooltipTrigger asChild>
                             <button
                               type="button"
-                              title="Draft personalized feedback with AI (uses the image + this student's learning journey)"
+                              aria-label="Draft personalized feedback with AI"
                               disabled={feedbackMutation.isPending}
                               onClick={() => feedbackMutation.mutate(w)}
                               className="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-lg text-white bg-gradient-to-br from-violet-500 to-indigo-600 shadow-[0_3px_10px_-3px_rgba(139,92,246,0.7)] transition-transform hover:scale-110 active:scale-95 disabled:opacity-50"
@@ -1056,6 +1059,11 @@ export default function TeacherSmartUpload() {
                                 <Sparkles className="h-3.5 w-3.5" />
                               )}
                             </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Draft personalized feedback with AI (uses the image + this student's learning journey)
+                            </TooltipContent>
+                            </Tooltip>
                           )}
                         </div>
                         <div className="flex gap-2">

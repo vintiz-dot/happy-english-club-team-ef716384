@@ -18,6 +18,7 @@ import { lazyRetry } from "./lib/lazyRetry";
 import { AppLoader } from "./components/AppLoader";
 const AnnouncementRenderer = lazyRetry(() => import("./components/announcements/AnnouncementRenderer").then((m) => ({ default: m.AnnouncementRenderer })));
 import { AuthProvider } from "@/hooks/useAuth";
+import { IvoryScope } from "@/components/theme/IvoryScope";
 
 // Lazy-load every route — keeps initial bundle small and speeds up navigation
 const Index = lazy(() => import("./pages/Index"));
@@ -96,6 +97,8 @@ function AppContent() {
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            {/* The "Ivory" design system on migrated routes + the theme choice (src/lib/ivoryScope.ts) */}
+            <IvoryScope>
             <ProfilePicker />
             <Suspense fallback={null}><AnnouncementRenderer /></Suspense>
             <StartupGuard>
@@ -169,6 +172,7 @@ function AppContent() {
                 </Routes>
               </Suspense>
             </StartupGuard>
+            </IvoryScope>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

@@ -474,9 +474,12 @@ BEGIN
            'tuition_frozen', i.tuition_frozen, 'carry_in_credit', i.carry_in_credit, 'carry_in_debt', i.carry_in_debt,
            'carry_out_credit', i.carry_out_credit, 'carry_out_debt', i.carry_out_debt,
            'class_breakdown', i.class_breakdown) ORDER BY i.id::text COLLATE "C"), '[]'::jsonb),
-         -- Review change 6: the token covers the bill fields the admin is shown.
+         -- Review change 6: the token covers the bill fields the admin is shown
+         -- (D-review-3 F-1: the preview now shows these stored figures, so the
+         -- discount and base are covered as well).
          md5(COALESCE(jsonb_agg(jsonb_build_array(i.id, i.total_amount, i.recorded_payment, i.status,
-                                                  i.confirmation_status, i.tuition_frozen)
+                                                  i.confirmation_status, i.tuition_frozen,
+                                                  i.discount_amount, i.base_amount)
                                 ORDER BY i.id::text COLLATE "C")::text, ''))
     INTO v_invoices, v_inv_fp
     FROM public.invoices i
@@ -548,7 +551,8 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $
        AND l.diff -> 'old' ->> 'status' IN ('Present', 'Late')
        AND (l.diff -> 'old' ->> 'marked_by') IS NOT NULL
        AND (l.operation = 'DELETE'      -- a re-parent is reported by the next branch instead
-            OR (l.diff -> 'new' ->> 'session_id') IS NOT DISTINCT FROM (l.diff -> 'old' ->> 'session_id'))
+            OR (l.diff -> 'new' ->> 'session_id') IS NOT DISTINCT FROM (l.diff -> 'old' ->> 'session_id')
+               AND (l.diff -> 'new' ->> 'student_id') IS NOT DISTINCT FROM (l.diff -> 'old' ->> 'student_id'))
        AND (l.operation = 'DELETE'
             OR (l.diff -> 'new' ->> 'status') IS DISTINCT FROM (l.diff -> 'old' ->> 'status')
                AND (l.diff -> 'new' ->> 'status') NOT IN ('Present', 'Late')
@@ -559,13 +563,16 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $
              'old_status', l.diff -> 'old' ->> 'status', 'new_status', l.diff -> 'new' ->> 'status',
              'old_marked_by_person', (l.diff -> 'old' ->> 'marked_by') IS NOT NULL,
              'new_session_id', l.diff -> 'new' ->> 'session_id',
+             'new_student_id', l.diff -> 'new' ->> 'student_id',
              'actor_user_id', l.actor_user_id, 'occurred_at', l.occurred_at)
       FROM public.audit_log l
      WHERE l.entity = 'attendance'
        AND l.operation = 'UPDATE'
        AND l.occurred_at >= now() - interval '30 days'
        AND l.diff -> 'old' ->> 'session_id' = p_session_id::text
-       AND (l.diff -> 'new' ->> 'session_id') IS DISTINCT FROM (l.diff -> 'old' ->> 'session_id')
+       -- D-review-3 F-10: a mark re-pointed at another CHILD is erased too.
+       AND ((l.diff -> 'new' ->> 'session_id') IS DISTINCT FROM (l.diff -> 'old' ->> 'session_id')
+            OR (l.diff -> 'new' ->> 'student_id') IS DISTINCT FROM (l.diff -> 'old' ->> 'student_id'))
     UNION ALL
     SELECT jsonb_build_object('what', 'session_status', 'operation', l.operation,
              'old_status', l.diff -> 'old' ->> 'status', 'new_status', l.diff -> 'new' ->> 'status',
@@ -1071,7 +1078,13 @@ BEGIN
     'installed_at', (SELECT min(created_at) FROM public.session_cancel_override_events WHERE kind = 'guard_installed'),
     'update_trigger', v_upd::text, 'delete_trigger', v_del::text, 'truncate_trigger', v_trunc::text,
     'evidence_function', v_ev, 'recording_helper_stable', v_rec,
-    'ok', COALESCE(v_upd = 'O' AND v_del = 'O' AND v_trunc = 'O' AND v_ev AND v_rec, false));
+    -- D-review-3 F-7: what the rebuild wanted to remove and the guard kept,
+    -- so the banner can say so (written by log_session_automation_refused).
+    'automation_refused_30d', (SELECT count(*)::int FROM public.session_cancel_override_events
+                                WHERE kind = 'automation_refused' AND created_at >= now() - interval '30 days'),
+    'automation_refused_last', (SELECT max(created_at) FROM public.session_cancel_override_events
+                                 WHERE kind = 'automation_refused'),
+    'ok',COALESCE(v_upd = 'O' AND v_del = 'O' AND v_trunc = 'O' AND v_ev AND v_rec, false));
 END $fn$;
 
 -- ---------------------------------------------------------------- 7

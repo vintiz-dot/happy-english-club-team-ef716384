@@ -1,0 +1,105 @@
+{
+ "when": "2026-11-12T04:45:22.383Z",
+ "base": "vite dev server + fake Supabase client + local stand-in book (NOT production, NOT the real book hosts)",
+ "cpu": "4x (CDP Emulation.setCPUThrottlingRate)",
+ "network": "Fast 3G-like (CDP Network.emulateNetworkConditions latency 562.5 ms, 180 KB/s down, 84 KB/s up) applied after the app shell has loaded, plus a 562 ms delay on every book.html request",
+ "checks": [
+  {
+   "id": "M7.attendance-subscription-filter",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": [
+    {
+     "channel": "hud-c-0001",
+     "table": "point_transactions",
+     "event": "INSERT",
+     "filter": "class_id=eq.c-0001"
+    },
+    {
+     "channel": "hud-c-0001",
+     "table": "attendance",
+     "event": "*",
+     "filter": null
+    }
+   ],
+   "detail": "HUD realtime subscriptions: point_transactions(INSERT) filter=class_id=eq.c-0001; attendance(*) filter=NONE"
+  },
+  {
+   "id": "M7.unrelated-single",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": [
+    {
+     "delivered": 1,
+     "commits": 0,
+     "requests": 4
+    },
+    {
+     "delivered": 1,
+     "commits": 0,
+     "requests": 4
+    },
+    {
+     "delivered": 1,
+     "commits": 0,
+     "requests": 4
+    }
+   ],
+   "detail": "each unrelated attendance event (another class's session): delivered to 1/1/1 HUD handler(s), HUD commits 0/0/0, HUD queries 4/4/4"
+  },
+  {
+   "id": "M7.unrelated-burst",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "commits": 0,
+    "requests": 4
+   },
+   "detail": "5 unrelated attendance events in ~1 s: HUD commits 0, HUD queries 4 (gate: <= 1 commit and <= 1 refetch = 4 queries per 2 s)"
+  },
+  {
+   "id": "M7.related-control",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "commits": 0,
+    "requests": 4
+   },
+   "detail": "control: a point for THIS class -> HUD commits 0, queries 4"
+  },
+  {
+   "id": "M7.open-popover-kept",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "focused": "Present",
+    "open": true,
+    "sameFocus": true,
+    "connected": true,
+    "commits": 0,
+    "requests": 4
+   },
+   "detail": "open StudentActionPopover (focus on \"Present\") across an unrelated event (+0 commits, +4 queries): still open=true, focus kept=true, focused node connected=true"
+  },
+  {
+   "id": "M7.idle-minute.state",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "tooltips": 1,
+    "focus": "Nguyên"
+   },
+   "detail": "at the start of the idle window: open tooltips 1, focus on \"Nguyên\""
+  },
+  {
+   "id": "M7.idle-minute",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "commits": 23,
+    "requests": 4
+   },
+   "detail": "61 s idle: HUD commits 23, HUD queries 4 (30 s tick at LiveEngagementHUD.tsx:46-49, 60 s refetchInterval at :54)"
+  }
+ ]
+}

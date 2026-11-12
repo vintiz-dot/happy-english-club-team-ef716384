@@ -10,9 +10,10 @@ import {
 } from "@/lib/sessionGuard";
 
 /**
- * What the change would do to bills and pay. Every figure is what
- * calculate-tuition / calculate-payroll returned; nothing is calculated
- * here. The totals row counts bills; it never adds money up.
+ * What the change would touch. Every figure is a bill exactly as SAVED
+ * (the preview is read-only and calls no calculator); nothing is
+ * calculated here. The totals row counts bills; it never adds money up.
+ * Teacher pay is never shown as a figure in a preview.
  */
 export function useStudentNames(ids: string[]) {
   const key = [...new Set(ids)].sort();
@@ -33,7 +34,8 @@ export function ConsequenceTable({ preview, consequences }: { preview: GuardPrev
   const names = useStudentNames(rows.map((r) => r.studentId));
   const totals = totalsRow(rows);
   const pay = payrollLine(consequences);
-  const kids = preview.affected?.length ?? 0;
+  // Children, not (child, month) pairs: a move across months lists a child twice.
+  const kids = new Set((consequences?.affected_students ?? preview.affected ?? []).map((a) => a.student_id)).size;
   const requested = consequences?.reason !== "not_requested";
 
   return (
@@ -88,10 +90,7 @@ export function ConsequenceTable({ preview, consequences }: { preview: GuardPrev
       {requested && rows.length === 0 && <p className="text-sm text-muted-foreground">No family bill depends on this lesson.</p>}
       {!requested && <p className="text-sm text-muted-foreground">Bill figures were not requested for this check. Check Tuition after the change.</p>}
 
-      <p className="rounded-xl border border-border bg-muted/30 p-3 text-sm break-words">
-        <span className="font-medium">Teacher pay. </span>
-        {pay.text}
-      </p>
+      <p className="text-sm text-muted-foreground">{pay.text}</p>
 
       {preview.action === "move" || preview.change ? <MoveNotes preview={preview} /> : null}
     </section>
