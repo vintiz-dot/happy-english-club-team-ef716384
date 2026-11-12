@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Moon, Music4, Orbit, Pause, Play, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import {
   MOOD_LABELS,
   music,
@@ -49,6 +50,7 @@ const WIDTH_OPTIONS = [
  * is allowed to look at.
  */
 function Ribbon({ playing, tone }: { playing: boolean; tone: StudioTone }) {
+  const ivory = useIvory();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameRef = useRef<number | null>(null);
 
@@ -147,7 +149,7 @@ function Ribbon({ playing, tone }: { playing: boolean; tone: StudioTone }) {
     <canvas
       ref={canvasRef}
       aria-hidden
-      className="h-14 w-full rounded-xl bg-studio-stage"
+      className={ivory ? "h-14 w-full rounded-hec-md bg-hec-sunken" : "h-14 w-full rounded-xl bg-studio-stage"}
     />
   );
 }
@@ -156,6 +158,9 @@ export function BackgroundMusic() {
   const [state, setState] = useState<MusicState>(() => music.getState());
 
   useEffect(() => music.subscribe(setState), []);
+  // Ivory on a listed route (src/lib/ivoryScope.ts); the studio look elsewhere, unchanged.
+  // The mood tones and the ribbon's colours are the tool's own (A4.6 plan, section 3).
+  const ivory = useIvory();
 
   if (!state.supported) {
     return (
@@ -165,7 +170,7 @@ export function BackgroundMusic() {
         title="Background music"
         description="This browser has no Web Audio support, so there is nothing to play."
       >
-        <div className="studio-stage grid min-h-[120px] place-items-center p-4 text-center text-sm text-ink-soft">
+        <div className={ivory ? "grid min-h-[120px] place-items-center rounded-hec-lg border border-hec-line bg-hec-sunken p-4 text-center text-hec-small text-hec-ink-soft" : "studio-stage grid min-h-[120px] place-items-center p-4 text-center text-sm text-ink-soft"}>
           Try Chrome, Edge, Safari or Firefox.
         </div>
       </ToolCard>
@@ -182,8 +187,8 @@ export function BackgroundMusic() {
       description="Music that composes itself and never repeats."
       action={
         state.playing ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[hsl(var(--studio-ink))] px-2.5 py-1 text-[0.6875rem] font-bold uppercase tracking-wider text-[hsl(var(--studio-card))]">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+          <span className={ivory ? "inline-flex items-center gap-2 rounded-full border border-hec-line bg-hec-sunken px-3 py-1 text-hec-caption font-medium text-hec-ink-soft" : "inline-flex items-center gap-1.5 rounded-full bg-[hsl(var(--studio-ink))] px-2.5 py-1 text-[0.6875rem] font-bold uppercase tracking-wider text-[hsl(var(--studio-card))]"}>
+            <span className={ivory ? "h-1.5 w-1.5 rounded-full bg-current" : "h-1.5 w-1.5 animate-pulse rounded-full bg-current"} />
             Playing
           </span>
         ) : null
@@ -199,37 +204,62 @@ export function BackgroundMusic() {
               type="button"
               onClick={() => music.toggle(mood)}
               aria-pressed={active}
-              className={cn(
-                "studio-focus group flex flex-col items-start gap-2 rounded-2xl border p-3 text-left transition-all",
-                active
-                  ? "border-transparent bg-[hsl(var(--studio-ink))] text-[hsl(var(--studio-card))] shadow-studio"
-                  : "border-studio bg-studio-stage hover:-translate-y-0.5 hover:shadow-studio",
-              )}
+              className={
+                ivory
+                  ? cn(
+                      "group flex min-h-hec-target min-w-0 flex-col items-start gap-2 rounded-hec-md border p-3 text-left transition-colors duration-hec-1 ease-hec",
+                      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+                      active
+                        ? "border-hec-action bg-hec-action text-hec-on-action shadow-hec-1"
+                        : "border-hec-line bg-hec-raised text-hec-ink hover:bg-hec-sunken",
+                    )
+                  : cn(
+                      "studio-focus group flex flex-col items-start gap-2 rounded-2xl border p-3 text-left transition-all",
+                      active
+                        ? "border-transparent bg-[hsl(var(--studio-ink))] text-[hsl(var(--studio-card))] shadow-studio"
+                        : "border-studio bg-studio-stage hover:-translate-y-0.5 hover:shadow-studio",
+                    )
+              }
             >
               <span
-                className={cn(
-                  "grid h-8 w-8 place-items-center rounded-xl transition-colors",
-                  active
-                    ? "bg-[hsl(var(--studio-card)/0.18)] text-[hsl(var(--studio-card))]"
-                    : "bg-[hsl(var(--studio-ink)/0.06)] text-ink",
-                )}
+                className={
+                  ivory
+                    ? cn(
+                        "grid h-8 w-8 place-items-center rounded-hec-sm transition-colors duration-hec-1 ease-hec",
+                        active ? "bg-hec-on-action/15 text-hec-on-action" : "bg-hec-sunken text-hec-ink",
+                      )
+                    : cn(
+                        "grid h-8 w-8 place-items-center rounded-xl transition-colors",
+                        active
+                          ? "bg-[hsl(var(--studio-card)/0.18)] text-[hsl(var(--studio-card))]"
+                          : "bg-[hsl(var(--studio-ink)/0.06)] text-ink",
+                      )
+                }
               >
                 <Icon className="h-4 w-4" aria-hidden />
               </span>
               <span className="min-w-0">
                 <span
-                  className={cn(
-                    "block truncate text-sm font-bold",
-                    active ? "text-[hsl(var(--studio-card))]" : "text-ink",
-                  )}
+                  className={
+                    ivory
+                      ? cn("block truncate text-hec-small font-semibold", active ? "text-hec-on-action" : "text-hec-ink")
+                      : cn(
+                          "block truncate text-sm font-bold",
+                          active ? "text-[hsl(var(--studio-card))]" : "text-ink",
+                        )
+                  }
                 >
                   {MOOD_LABELS[mood].name}
                 </span>
                 <span
-                  className={cn(
-                    "block text-[0.6875rem] leading-tight",
-                    active ? "text-[hsl(var(--studio-card)/0.7)]" : "text-ink-faint",
-                  )}
+                  className={
+                    ivory
+                      ? cn("block text-hec-caption", active ? "text-hec-on-action/80" : "text-hec-ink-soft")
+                      : cn(
+                          "block text-[0.6875rem] leading-tight",
+                          active ? "text-[hsl(var(--studio-card)/0.7)]" : "text-ink-faint",
+                        )
+                  }
                 >
                   {MOOD_LABELS[mood].blurb}
                 </span>
@@ -270,7 +300,7 @@ export function BackgroundMusic() {
       </div>
 
       <div className="mb-3 flex items-center gap-3">
-        <span className="w-14 shrink-0 text-xs font-semibold text-ink-soft">Speakers</span>
+        <span className={ivory ? "w-14 shrink-0 text-hec-small font-medium text-hec-ink-soft" : "w-14 shrink-0 text-xs font-semibold text-ink-soft"}>Speakers</span>
         <Segmented
           ariaLabel="Speaker layout"
           size="sm"
