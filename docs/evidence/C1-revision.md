@@ -1,6 +1,6 @@
 # C1 Revision 1 - class recorder fixes (F1-F15)
 
-**Where I am / next step:** session restarted after d2f987c. Recorder suite re-run: 284 passed, 0 failed. The full run (2250/33/0) finished before the restart, and no code has changed since. Mutation run: 23 of 35 done before the restart, all caught. Next: run the remaining 12, write the table, clean up.
+**Where I am / next step:** session restarted after d2f987c. Recorder suite re-run: 284 passed, 0 failed. The full run (2250/33/0) finished before the restart, and no code has changed since. Mutation run: 29 of 35 done, all caught (table below). The last 6 (F11 x3, F12, F14, F15) "crashed" because, at 11:11, something outside this worktree removed `@electric-sql/pglite` from the main checkout's node_modules, which this worktree links to. Those 6 results are void. Next: re-run them when pglite is back, then clean up.
 
 Files touched (only these): `supabase/migrations/20261112100000_class_recorder.sql` (edited in place: never applied), `scripts/pgtest/recorder.test.mjs`, `docs/evidence/C1-architecture.md` (Revision 1 changelog at the top; sections 3, 4, 5.5, 6, 7, 8, 9.1), this file. Written and tested, NOT applied to any database.
 
