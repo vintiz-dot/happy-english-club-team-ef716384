@@ -155,9 +155,9 @@ export function ClassMonitorCard({ classId }: ClassMonitorCardProps) {
             </AnimatePresence>
 
             {/* Assignment controls */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-                <SelectTrigger className="min-w-0 flex-1" aria-label="Student to make class monitor">
+                <SelectTrigger className="min-w-0 flex-1 basis-40" aria-label="Student to make class monitor">
                   <SelectValue placeholder="Select a student..." />
                 </SelectTrigger>
                 <SelectContent>
