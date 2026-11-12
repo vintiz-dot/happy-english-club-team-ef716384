@@ -395,7 +395,7 @@ function MacroView({
                       : i === 2 ? "bg-hec-sunken text-hec-ink"
                       : "bg-hec-sunken text-hec-ink-soft",
                   )}>{i + 1}</span>
-                  <span className="min-w-0 flex-1 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{memberName(row.studentId)}</span>
+                  <span className="min-w-0 flex-1 basis-40 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{memberName(row.studentId)}</span>
                   <span className="text-hec-caption tabular-nums text-hec-ink-soft">{row.saves} saves · {row.correct}/{row.correct + row.incorrect} correct</span>
                   <Badge variant="secondary" className="shrink-0 whitespace-nowrap tabular-nums">+{row.points} pts</Badge>
                 </div>
