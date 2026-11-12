@@ -35,13 +35,16 @@ import { makeClient, httpTransport } from "/fake-client.js";
 window.R = R;
 window.mkBackend = (uid) => R.supabaseBackend(makeClient(httpTransport(location.origin, () => uid)));
 // Build a recorder on Chrome's two fake inputs: teacher = "Fake Audio Input 1", room = "Fake Audio Input 2".
-window.setup = async ({ uid, format = "flac", chunkMs = 10000, tap = false }) => {
+// Long main-thread tasks (M6 measurement): every task over 50 ms, with its length.
+window.longTasks = [];
+try { new PerformanceObserver((l) => { for (const e of l.getEntries()) window.longTasks.push(e.duration); }).observe({ type: "longtask", buffered: true }); } catch {}
+window.setup = async ({ uid, format = "flac", chunkMs = 10000, tap = false, inline = false }) => {
   const s = await navigator.mediaDevices.getUserMedia({ audio: true });
   s.getTracks().forEach((t) => t.stop());
   const devs = R.realInputs((await navigator.mediaDevices.enumerateDevices()).map((d) => ({ deviceId: d.deviceId, groupId: d.groupId, label: d.label, kind: d.kind })));
   const pick = (d) => ({ deviceId: d.deviceId, groupId: d.groupId, label: d.label });
   const profile = { version: 1, installId: R.getInstallId(), userId: uid, teacher: pick(devs[0]), room: pick(devs[1]), checks: {}, verifiedAt: null };
-  const rec = await R.createRecorder({ backend: mkBackend(uid), userId: uid, profile, format, chunkMs, storageRefuseBytes: 0, storageWarnBytes: 0 });
+  const rec = await R.createRecorder({ backend: mkBackend(uid), userId: uid, profile, format, chunkMs, storageRefuseBytes: 0, storageWarnBytes: 0, storageStopBytes: 0, ...(inline ? { encoder: R.inlineEncoder() } : {}) });
   const log = { errors: [], states: [], chunks: [], health: [], constraints: [], ups: [], storage: [] };
   rec.on("error", (e) => log.errors.push({ code: e.code, refusal: e.refusal ?? null, message: e.message }));
   rec.on("state", (e) => log.states.push(e.state));
@@ -145,6 +148,9 @@ try {
 export async function startHarness() {
   const server = createFakeServer();
   const recorderJs = await bundleRecorder({ platform: "browser" });
+  // The encoder Worker (M6): createRecorder asks for new URL("./encodeWorker.ts", import.meta.url),
+  // which Vite bundles in the app; here it is served bundled at that path.
+  const workerJs = await bundleRecorder({ platform: "browser", entry: "encodeWorker.ts" });
   const clientJs = readFileSync(resolve(repo, "scripts/recorder/fake-supabase-client.mjs"), "utf8");
   const http = createServer(async (req, res) => {
     try {
@@ -159,7 +165,7 @@ export async function startHarness() {
         res.end(JSON.stringify(out));
         return;
       }
-      const types = { "/": ["text/html", PAGE], "/noclick": ["text/html", NOCLICK], "/autostart": ["text/html", AUTOSTART], "/recorder.js": ["text/javascript", recorderJs], "/fake-client.js": ["text/javascript", clientJs] };
+      const types = { "/": ["text/html", PAGE], "/noclick": ["text/html", NOCLICK], "/autostart": ["text/html", AUTOSTART], "/recorder.js": ["text/javascript", recorderJs], "/encodeWorker.ts": ["text/javascript", workerJs], "/fake-client.js": ["text/javascript", clientJs] };
       const t = types[req.url.split("?")[0]];
       if (!t) { res.writeHead(404); res.end(); return; }
       res.writeHead(200, { "content-type": t[0], "cache-control": "no-store" });
