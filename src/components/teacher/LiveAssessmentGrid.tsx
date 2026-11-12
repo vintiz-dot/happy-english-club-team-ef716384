@@ -243,7 +243,7 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">Loading students...</div>
+        <div className="text-hec-body text-hec-ink-soft">Loading students...</div>
       </div>
     );
   }
@@ -251,8 +251,8 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
   if (students.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
-        <p className="text-muted-foreground">No students enrolled in this class</p>
+        <Users className="h-12 w-12 text-hec-ink-faint mb-4" aria-hidden />
+        <p className="text-hec-body text-hec-ink-soft">No students enrolled in this class</p>
       </div>
     );
   }
@@ -260,7 +260,7 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
   return (
     <div className="space-y-4">
       {/* Bulk Selection Controls */}
-      <div className="flex flex-wrap items-center gap-3 p-3 rounded-2xl bg-gradient-to-r from-muted/40 to-muted/20 border border-border/30 backdrop-blur-sm">
+      <div className="flex flex-wrap items-center gap-2 p-3 rounded-hec-lg bg-hec-sunken border border-hec-line">
         <Button
           variant={bulkMode ? "default" : "outline"}
           size="sm"
@@ -268,10 +268,8 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
             setBulkMode(!bulkMode);
             if (!bulkMode) selectNone();
           }}
-          className={cn(
-            "gap-2 rounded-xl transition-all",
-            bulkMode && "shadow-md"
-          )}
+          aria-pressed={bulkMode}
+          className="gap-2"
         >
           {bulkMode ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
           Bulk Mode
@@ -279,14 +277,14 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
         
         {bulkMode && (
           <>
-            <Button variant="ghost" size="sm" onClick={selectAll} className="rounded-xl text-xs">
+            <Button variant="ghost" size="sm" onClick={selectAll}>
               Select All
             </Button>
-            <Button variant="ghost" size="sm" onClick={selectNone} className="rounded-xl text-xs">
+            <Button variant="ghost" size="sm" onClick={selectNone}>
               Clear
             </Button>
             {selectedStudents.size > 0 && (
-              <span className="text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+              <span className="rounded-full border border-hec-line bg-hec-raised px-3 py-1 font-sans text-hec-caption font-medium tabular-nums text-hec-ink">
                 {selectedStudents.size} selected
               </span>
             )}
@@ -337,7 +335,7 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
 
       {/* Bulk Action Bar */}
       {bulkMode && selectedStudents.size > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-max max-w-[calc(100vw-2rem)]">
           <RadialSkillMenu
             onSkillTap={(skill, points, subTag) => {
               const targetIds = Array.from(selectedStudents);
@@ -587,10 +585,10 @@ function SmartSkillPanel({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="rounded-2xl border border-border/60 bg-card/95 backdrop-blur-md shadow-2xl overflow-hidden">
+          <div className="rounded-hec-lg border border-hec-line bg-hec-raised text-hec-ink shadow-hec-2 overflow-hidden">
             {/* Drag handle bar — drag from anywhere in the header */}
             <div
-              className="flex items-center gap-3 px-3 sm:px-4 py-2.5 border-b border-border/40 cursor-grab active:cursor-grabbing select-none touch-none"
+              className="flex items-start gap-3 px-3 sm:px-4 py-2 border-b border-hec-line cursor-grab active:cursor-grabbing select-none touch-none"
               onMouseDown={(e) => {
                 if ((e.target as HTMLElement).closest("button")) return;
                 startDrag(e.clientX, e.clientY);
@@ -604,36 +602,36 @@ function SmartSkillPanel({
               aria-label="Drag to move"
             >
               {/* Visible grip indicator */}
-              <div className="flex flex-col gap-0.5 shrink-0 opacity-50">
+              <div className="flex flex-col gap-0.5 shrink-0 mt-4" aria-hidden>
                 <div className="flex gap-0.5">
-                  <span className="h-1 w-1 rounded-full bg-foreground" />
-                  <span className="h-1 w-1 rounded-full bg-foreground" />
-                  <span className="h-1 w-1 rounded-full bg-foreground" />
+                  <span className="h-1 w-1 rounded-full bg-hec-ink-faint" />
+                  <span className="h-1 w-1 rounded-full bg-hec-ink-faint" />
+                  <span className="h-1 w-1 rounded-full bg-hec-ink-faint" />
                 </div>
                 <div className="flex gap-0.5">
-                  <span className="h-1 w-1 rounded-full bg-foreground" />
-                  <span className="h-1 w-1 rounded-full bg-foreground" />
-                  <span className="h-1 w-1 rounded-full bg-foreground" />
+                  <span className="h-1 w-1 rounded-full bg-hec-ink-faint" />
+                  <span className="h-1 w-1 rounded-full bg-hec-ink-faint" />
+                  <span className="h-1 w-1 rounded-full bg-hec-ink-faint" />
                 </div>
               </div>
 
-              <Avatar className="h-9 w-9 shrink-0">
+              <Avatar className="h-11 w-11 shrink-0">
                 <AvatarImage src={activeStudent.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
+                <AvatarFallback className="bg-hec-sunken text-hec-ink-soft font-semibold text-hec-small">
                   {activeStudent.full_name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
 
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate">{activeStudent.full_name}</p>
+                <p className="whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{activeStudent.full_name}</p>
                 <p
                   className={cn(
-                    "text-xs",
+                    "font-sans text-hec-small tabular-nums",
                     activeStudent.todayPoints > 0
-                      ? "text-green-600"
+                      ? "text-hec-leaf"
                       : activeStudent.todayPoints < 0
-                      ? "text-red-600"
-                      : "text-muted-foreground"
+                      ? "text-hec-danger"
+                      : "text-hec-ink-soft"
                   )}
                 >
                   {activeStudent.todayPoints > 0 ? "+" : ""}
@@ -645,7 +643,7 @@ function SmartSkillPanel({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 px-2 text-[11px] text-muted-foreground"
+                  className="shrink-0 px-2"
                   onClick={resetPosition}
                   title="Reset to auto-position"
                 >
@@ -660,12 +658,12 @@ function SmartSkillPanel({
                 onClick={onClose}
                 aria-label="Close"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden />
               </Button>
             </div>
 
             {/* Body — non-draggable so taps land on the skill buttons */}
-            <div className="p-3 sm:p-4">
+            <div className="[&>div]:rounded-none [&>div]:border-0 [&>div]:shadow-none">
               <RadialSkillMenu
                 onSkillTap={onSkillTap}
                 onClose={onClose}
