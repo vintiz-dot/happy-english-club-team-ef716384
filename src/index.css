@@ -1828,7 +1828,7 @@ All colors MUST be HSL.
   /* Type. System fonts only. The serif stack starts with the families that
      are KNOWN to carry Vietnamese (U+1EA0-1EF9), so a name like "Nguyễn" is
      never drawn from two typefaces. */
-  --hec-font-display: ui-serif, "New York", "Palatino Linotype", "Noto Serif", "Times New Roman", serif;
+  --hec-font-display: ui-serif, "Palatino Linotype", "Noto Serif", "Times New Roman", serif;
   --hec-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable", "Segoe UI", Roboto,
     "Noto Sans", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
 

@@ -138,8 +138,8 @@ export default {
       fontFamily: {
         // System stacks, no web font. The fallback after the comma is what an
         // element outside the scope would get.
-        display: ["var(--hec-font-display, ui-serif, Georgia, serif)"],
-        serif: ["var(--hec-font-display, ui-serif, Georgia, serif)"],
+        display: ["var(--hec-font-display, ui-serif, serif)"],
+        serif: ["var(--hec-font-display, ui-serif, serif)"],
       },
       fontSize: {
         "hec-display": ["var(--hec-text-display)", { lineHeight: "var(--hec-leading-display)", letterSpacing: "-0.01em" }],
