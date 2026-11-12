@@ -19,7 +19,9 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { AssistantLauncher } from "@/components/chat/AssistantLauncher";
 import { AmbientBackground } from "@/components/fx/AmbientBackground";
 import { AiActionBanner } from "@/components/admin/AiActionBanner";
-import { motion } from "framer-motion";
+import { motion, MotionConfig } from "framer-motion";
+import { useIvory } from "@/hooks/useIvory";
+import { UserMenu } from "@/components/theme/UserMenu";
 
 interface LayoutProps {
   children: ReactNode;
@@ -41,6 +43,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
     return saved !== "true"; // collapsed = true means sidebar is closed
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const ivory = useIvory();
 
   // Persist sidebar state
   useEffect(() => {
@@ -118,6 +121,50 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   const navItems = getNavigationItems();
   const showSidebar = role === "admin" || role === "teacher";
 
+  // Student/Family layout, "Ivory" design system (the route is listed in
+  // src/lib/ivoryScope.ts). Solid paper, no glow; the controls are 44 px and
+  // labelled; a child's name in the switcher wraps, never cut.
+  if (!showSidebar && ivory) {
+    return (
+      <MotionConfig reducedMotion="user">
+        <div className="min-h-screen bg-hec-paper text-hec-ink">
+          <header className="sticky top-0 z-50 border-b border-hec-line bg-hec-paper">
+            <div className="container mx-auto flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 sm:py-3">
+              <div className="flex min-w-0 shrink-0 items-center gap-3">
+                <img src="/favicon.jpg" alt="Happy English Club" className="h-10 w-10 shrink-0 rounded-full border border-hec-line object-cover" />
+                <div className="hidden min-w-0 sm:block">
+                  <h1 className="font-display text-hec-h3 font-medium text-hec-ink">{title || "Education Manager"}</h1>
+                  <p className="hidden text-hec-caption text-hec-ink-soft md:block">Happy English Club</p>
+                </div>
+              </div>
+              {/* On a phone the switcher takes its own full-width row under the bar,
+                  so the name has room to wrap; from sm it sits inline (DESIGN_SYSTEM s.13). */}
+              <div className="order-last w-full empty:hidden sm:order-none sm:ml-auto sm:w-auto sm:max-w-xs [&>button]:h-auto [&>button]:w-full [&>button]:justify-start [&>button]:whitespace-normal [&>button]:py-2 [&>button]:text-left [&>button>span]:min-w-0 [&>button>span]:flex-1 [&>button>span]:break-words">
+                <ProfileSwitcher />
+              </div>
+              <div className="ml-auto flex shrink-0 items-center gap-2 sm:ml-0">
+                <PWAInstallButton variant="outline" />
+                <NotificationBell />
+                <ChangePassword />
+                <UserMenu name={userName} role={role} avatarUrl={avatarUrl} onSignOut={signOut} />
+              </div>
+            </div>
+          </header>
+          {role === "student" && <StudentNavBar />}
+          <main
+            className={
+              role === "student"
+                ? // Room below for the fixed bottom bar, the assistant button above it and the home indicator.
+                  "container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 pb-[calc(9rem+env(safe-area-inset-bottom))] md:pb-24"
+                : "container mx-auto overflow-x-clip px-4 py-4 md:py-6 lg:py-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-24"
+            }
+          >{children}</main>
+          <AssistantLauncher />
+        </div>
+      </MotionConfig>
+    );
+  }
+
   // Student/Family layout with sticky navbar
   if (!showSidebar) {
     return (
@@ -179,7 +226,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                 <LogOut className="h-4 w-4 mr-2 group-hover:text-red-500 transition-colors" />
                 Sign Out
               </Button>
-              <Button onClick={signOut} variant="outline" size="icon" className="sm:hidden group">
+              <Button onClick={signOut} variant="outline" size="icon" className="sm:hidden group" aria-label="Sign out">
                 <LogOut className="h-4 w-4 group-hover:text-red-500 transition-colors" />
               </Button>
             </div>
@@ -203,10 +250,14 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
     );
   }
 
-  // Admin/Teacher layout with sidebar
+  // Admin/Teacher layout with sidebar. On a route in the Ivory system the same
+  // markup takes the system's classes (IV.*); elsewhere it is unchanged.
+  const IV_FOCUS =
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
   return (
-    <div className="min-h-screen bg-background flex w-full">
-      <AmbientBackground intensity="subtle" />
+    <MotionConfig reducedMotion="user">
+    <div className={ivory ? "min-h-screen w-full flex bg-hec-paper text-hec-ink" : "min-h-screen bg-background flex w-full"}>
+      {!ivory && <AmbientBackground intensity="subtle" />}
       {/* Global Cmd+K / Ctrl+K command bar */}
       <CommandPalette />
       {/*
@@ -220,13 +271,21 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
       {/* Desktop Sidebar — liquid glass command rail */}
       <aside
         className={cn(
-          "hidden md:flex flex-col border-r border-border/60 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55 transition-all duration-300 sticky top-0 h-screen",
-          sidebarOpen ? "w-56" : "w-16"
+          ivory
+            ? "hidden md:flex flex-col border-r border-hec-line bg-hec-surface sticky top-0 h-screen"
+            : "hidden md:flex flex-col border-r border-border/60 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55 transition-all duration-300 sticky top-0 h-screen",
+          sidebarOpen ? (ivory ? "w-60" : "w-56") : ivory ? "w-[4.5rem]" : "w-16"
         )}
       >
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-border/60 flex items-center justify-between">
+        <div className={ivory ? "flex items-center justify-between gap-2 border-b border-hec-line p-3" : "p-4 border-b border-border/60 flex items-center justify-between"}>
           {sidebarOpen && (
+            ivory ? (
+              <div className="flex min-w-0 items-center gap-3">
+                <img src="/favicon.jpg" alt="Happy English Club" className="h-9 w-9 shrink-0 rounded-full border border-hec-line object-cover" />
+                <span className="font-display text-hec-h3 font-medium text-hec-ink">Happy English</span>
+              </div>
+            ) : (
             <div className="flex items-center gap-2">
               <div className="h-9 w-9 rounded-full p-[2px] bg-[conic-gradient(from_140deg,#3b82f6,#22d3ee,#facc15,#3b82f6)] shadow-[0_0_14px_-4px_rgba(59,130,246,0.5)]">
                 <div className="h-full w-full rounded-full overflow-hidden bg-card">
@@ -235,12 +294,15 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
               </div>
               <span className="font-semibold text-sm text-shimmer">Happy English</span>
             </div>
+            )
           )}
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 group"
+            className={ivory ? "shrink-0" : "h-8 w-8 group"}
             onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label={sidebarOpen ? "Collapse the menu" : "Expand the menu"}
+            aria-expanded={sidebarOpen}
           >
             {sidebarOpen ? (
               <ChevronLeft className="h-4 w-4 group-hover:text-royalGreen dark:group-hover:text-royalGreen-light transition-colors" />
@@ -258,7 +320,25 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                 ? location.pathname + location.search === item.path
                 : location.pathname === item.path && !location.search;
               
-              const buttonContent = (
+              const buttonContent = ivory ? (
+                // Ivory nav item (DESIGN_SYSTEM s.15): 44 px, sunken wash when current, a brass mark at the left edge.
+                <button
+                  type="button"
+                  aria-current={isActive ? "page" : undefined}
+                  aria-label={sidebarOpen ? undefined : item.label}
+                  className={cn(
+                    "relative flex min-h-hec-target w-full items-center gap-3 rounded-hec-md px-3 text-left text-hec-small transition-colors duration-hec-1 ease-hec",
+                    IV_FOCUS,
+                    !sidebarOpen && "justify-center px-0",
+                    isActive ? "bg-hec-sunken font-medium text-hec-ink" : "text-hec-ink-soft hover:bg-hec-sunken hover:text-hec-ink",
+                  )}
+                  onClick={() => navigate(item.path)}
+                >
+                  {isActive && <span aria-hidden className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-hec-brass" />}
+                  <item.icon className="h-5 w-5 shrink-0" aria-hidden />
+                  {sidebarOpen && <span className="min-w-0">{item.label}</span>}
+                </button>
+              ) : (
                 <button
                   type="button"
                   className={cn(
@@ -306,6 +386,30 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
         </nav>
 
         {/* Sidebar Footer */}
+        {ivory ? (
+          <div className="space-y-1 border-t border-hec-line p-2">
+            {sidebarOpen && userName && (
+              <div className="flex items-start gap-3 px-3 py-2">
+                <Avatar className="h-8 w-8 shrink-0 border border-hec-line">
+                  <AvatarImage src={avatarUrl || undefined} alt="" />
+                  <AvatarFallback className="bg-hec-sunken text-hec-caption text-hec-ink">{initialsOf(userName)}</AvatarFallback>
+                </Avatar>
+                {/* A name wraps, never cut (DESIGN_SYSTEM s.13). */}
+                <span className="min-w-0 flex-1 whitespace-normal break-words text-hec-small font-medium text-hec-ink">{userName}</span>
+              </div>
+            )}
+            <PWAInstallButton className="w-full" sidebarOpen={sidebarOpen} variant="ghost" />
+            <Button
+              variant="ghost"
+              className={cn("w-full justify-start gap-3 text-hec-ink-soft", !sidebarOpen && "justify-center px-0")}
+              onClick={signOut}
+              aria-label={sidebarOpen ? undefined : "Sign out"}
+            >
+              <LogOut className="h-5 w-5 shrink-0" aria-hidden />
+              {sidebarOpen && <span>Sign out</span>}
+            </Button>
+          </div>
+        ) : (
         <div className="p-2 border-t border-border/60 space-y-2">
           {sidebarOpen && userName && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl glass-sm">
@@ -328,32 +432,41 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
             {sidebarOpen && <span>Sign Out</span>}
           </Button>
         </div>
+        )}
       </aside>
 
       {/* Mobile Header + Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile Header */}
-        <header className="md:hidden sticky top-0 z-50 border-b bg-card/95 backdrop-blur shadow-sm">
-          <div className="px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="group" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+        <header className={ivory ? "md:hidden sticky top-0 z-50 border-b border-hec-line bg-hec-paper" : "md:hidden sticky top-0 z-50 border-b bg-card/95 backdrop-blur shadow-sm"}>
+          <div className={ivory ? "flex items-center justify-between gap-2 px-4 py-2" : "px-4 py-3 flex items-center justify-between"}>
+            <div className={ivory ? "flex min-w-0 items-center gap-2" : "flex items-center gap-3"}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="group"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label={mobileMenuOpen ? "Close the menu" : "Open the menu"}
+                aria-expanded={mobileMenuOpen}
+              >
                 {mobileMenuOpen ? (
                   <X className="h-5 w-5 group-hover:text-royalGreen dark:group-hover:text-royalGreen-light transition-colors" />
                 ) : (
                   <Menu className="h-5 w-5 group-hover:text-royalGreen dark:group-hover:text-royalGreen-light transition-colors" />
                 )}
               </Button>
-              <span className="font-semibold">{title || "Dashboard"}</span>
+              <span className={ivory ? "min-w-0 font-display text-hec-h3 font-medium text-hec-ink" : "font-semibold"}>{title || "Dashboard"}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className={ivory ? "flex shrink-0 items-center gap-2" : "flex items-center gap-2"}>
               <NotificationBell />
               <ChangePassword />
+              {ivory && <UserMenu name={userName} role={role} avatarUrl={avatarUrl} onSignOut={signOut} />}
             </div>
           </div>
-          
+
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <nav className="border-t bg-card p-2 space-y-1">
+            <nav className={ivory ? "max-h-[calc(100dvh-4rem)] space-y-1 overflow-y-auto border-t border-hec-line bg-hec-surface p-2" : "border-t bg-card p-2 space-y-1"}>
               {navItems.map((item) => {
                 const isActive = item.path.includes('?') 
                   ? location.pathname + location.search === item.path
@@ -362,9 +475,10 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                   <Button
                     key={item.path}
                     variant={isActive ? "secondary" : "ghost"}
+                    aria-current={isActive ? "page" : undefined}
                     className={cn(
                       "w-full justify-start gap-3 group",
-                      isActive && "bg-blue-600/15 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400"
+                      isActive && (ivory ? "font-medium" : "bg-blue-600/15 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400")
                     )}
                     onClick={() => {
                       navigate(item.path);
@@ -405,7 +519,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
         />
 
         {/* Main Content */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
+        <main className={ivory ? "flex-1 overflow-auto px-4 py-4 pb-24 sm:px-6 md:py-6 lg:px-8 lg:py-8" : "flex-1 p-4 md:p-6 lg:p-8 overflow-auto"}>
           {/* What the assistant set up, until the admin says it looks right or undoes it */}
           <AiActionBanner />
           {children}
@@ -416,6 +530,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
           Stays mounted across pages so it can be triggered mid-lesson. */}
       {(role === "teacher" || role === "admin") && <ClassroomToolsLauncher />}
     </div>
+    </MotionConfig>
   );
 };
 
