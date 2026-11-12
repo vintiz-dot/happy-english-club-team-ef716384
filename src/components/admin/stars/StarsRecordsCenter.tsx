@@ -292,7 +292,7 @@ function DateFilter({ from, to, onChange }: {
 
 function ChildCell({ record, compact, onLink }: { record: StarsRecord; compact: boolean; onLink: (ref: string) => void }) {
   return (
-    <div className="flex min-w-0 items-start gap-2">
+    <div className="flex min-w-0 flex-wrap items-start gap-2">
       <div className="min-w-[9rem] flex-1">
         <p className={cn("whitespace-normal break-words hyphens-none text-balance font-medium", record.childRef ? "text-hec-ink" : "text-hec-ink-soft")}>{record.childName}</p>
         {!compact && record.childRef && !record.childLinked && record.pixelPalName && (
