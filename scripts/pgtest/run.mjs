@@ -108,6 +108,8 @@ const SUITES = [
   // The app's own types. `tsc --noEmit` at the root checks nothing - see
   // the file - so this is the type check, not that.
   { name: "app typecheck", file: "app-typecheck.test.mjs", migrations: [] },
+  // The public sign-up form offers no staff role (audit F-01).
+  { name: "signup form (F-01)", file: "signup-form.test.mjs", migrations: [] },
   // Nor this: the assistant's chat function, run against a stand-in for
   // PostgREST that knows the real schema, and a scripted model. It checks
   // what the model is told about who is asking, and that every tool's
@@ -277,6 +279,13 @@ const SUITES = [
     name: "classmate rows (F-16)",
     file: "classmate-rows.test.mjs",
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113130000_classmate_rows_private.sql"],
+  },
+  // The same suite with 20261113150000 pasted on top: class skill figures
+  // for a family as a summary that names no child.
+  {
+    name: "class skill summary",
+    file: "classmate-rows.test.mjs",
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113130000_classmate_rows_private.sql", "20261113150000_class_skill_summary_without_names.sql"],
   },
   // F-21: creator-owned write policies, and what a stored link may be.
   {

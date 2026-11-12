@@ -11,12 +11,18 @@
 -- buckets, and the staff-only edge functions.
 --
 -- THE RULE NOW. Client metadata is never an authority.
---   * requested 'teacher' or 'admin' (any case, any padding): the account is
---     created with NO row in user_roles. It can sign in and read nothing; an
---     admin grants the role (Users screen), or the admin function that
---     created the account inserts it explicitly a moment later.
---   * anything else - 'student', 'family', absent, or a value that is not a
---     role at all: exactly one row, `student`. `family` is not granted from
+--   * requested 'teacher' (any case, any padding): the account is created
+--     with NO row in user_roles. It can sign in and read nothing; an admin
+--     grants the role (Users screen), or the admin function that created the
+--     account inserts it explicitly a moment later.
+--   * anything else - 'student', 'family', 'admin', absent, or a value that
+--     is not a role at all: exactly one row, `student`. 'admin' was already
+--     answered with `student` before this file, and it must stay so: parents
+--     really do pick "Admin" on the form (17 live non-admin accounts carry
+--     that metadata, 14 of them linked to a family or child), and an account
+--     with no role sees a blank page - which linking it to a family does not
+--     cure. `admin` itself is still never granted here.
+--     `family` is not granted from
 --     the form: no live account holds it (every family login in production
 --     holds `student` and reaches its children through families.primary_user_id
 --     / students.linked_user_id), so `student` is the tested path. An unlinked
@@ -25,16 +31,17 @@
 --     new account. It used to copy the requested value, which is how 17 live
 --     accounts came to carry users.role = 'admin' without being admins.
 --
--- WHY "NO ROW" FOR STAFF RATHER THAN `student`. The admin functions that
--- create staff call auth.admin.createUser({ user_metadata: { role } }) and then
--- insert the role themselves with the service key:
---   create-teacher, create-teaching-assistant  -> 'teacher'
---   manage-admin-users (create)                -> 'admin'
--- With no row from the trigger they end with exactly the role they insert,
--- which is what create-teacher / create-teaching-assistant produce today (the
+-- WHY "NO ROW" FOR TEACHER RATHER THAN `student`. The admin functions that
+-- create teaching staff call auth.admin.createUser({ user_metadata: { role:
+-- "teacher" } }) and then insert the role themselves with the service key
+-- (create-teacher, create-teaching-assistant). With no row from the trigger
+-- they end with exactly `teacher`, which is what they produce today (the
 -- trigger used to insert 'teacher' and the function's own insert then hit the
--- unique key and was ignored). No edge function has to be redeployed for this
--- migration, in either order.
+-- unique key and was ignored); `student` here would leave every new teacher
+-- and TA holding {student, teacher}, a state no live staff account has.
+-- manage-admin-users (create) sends 'admin' and inserts `admin` itself: it
+-- ends {admin, student}, exactly as on live today. No edge function has to be
+-- redeployed for this migration, in either order.
 --
 -- ALSO HERE, SAME ROOT CAUSE. Policy "Only admins can manage custom_quests"
 -- (20260109111521) is FOR ALL TO public USING (users.role = 'admin') - the
@@ -83,10 +90,16 @@ BEGIN
   VALUES (NEW.id, 'student'::public.app_role)
   ON CONFLICT (id) DO NOTHING;
 
-  IF v_requested IN ('teacher', 'admin') THEN
-    -- A staff role is granted by an admin, never by a sign-up. No row.
-    RAISE WARNING 'handle_new_user: account % asked for role "%"; no role granted', NEW.id, v_requested;
+  IF v_requested = 'teacher' THEN
+    -- The teacher role is granted by an admin, never by a sign-up. No row:
+    -- create-teacher / create-teaching-assistant insert it a moment later.
+    RAISE WARNING 'handle_new_user: account % asked for role "teacher"; no role granted', NEW.id;
   ELSE
+    -- Everything else, a request for admin included, is a student - as the
+    -- function before this one already answered a request for admin.
+    IF v_requested = 'admin' THEN
+      RAISE WARNING 'handle_new_user: account % asked for role "admin"; given student', NEW.id;
+    END IF;
     INSERT INTO public.user_roles (user_id, role)
     VALUES (NEW.id, 'student'::public.app_role)
     ON CONFLICT (user_id, role) DO NOTHING;

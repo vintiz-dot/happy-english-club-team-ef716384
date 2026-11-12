@@ -167,10 +167,18 @@ eq("custom_quests keeps exactly the has_role policy and the signed-in read", S1.
 
 // ---------------------------------------------------------------- AFTER
 console.log("=== after: a self-service sign-up ===");
-for (const asked of ["teacher", "admin", "Teacher", "ADMIN", "  teacher ", "tEaChEr\n"]) {
+for (const asked of ["teacher", "Teacher", "TEACHER", "  teacher ", "tEaChEr\n"]) {
   const u = await signUp({ role: asked });
   eq(`asks for ${JSON.stringify(asked)}: account is created with NO role`, { err: u.err, ...(await state(u.id)) }, { err: null, roles: [], legacy: "student" });
   eq(`  ...and holds none of the four roles`, [await has(u.id, "teacher"), await has(u.id, "admin"), await has(u.id, "family"), await has(u.id, "student")], [false, false, false, false]);
+}
+// A request for admin is answered with student, exactly as before this
+// migration: parents do pick "Admin" on the form, and an account with no role
+// sees a blank page that linking it to a family does not cure.
+for (const asked of ["admin", "Admin", "ADMIN", " admin\t"]) {
+  const u = await signUp({ role: asked });
+  eq(`asks for ${JSON.stringify(asked)}: student, never admin`, { err: u.err, ...(await state(u.id)), admin: await has(u.id, "admin") },
+    { err: null, roles: ["student"], legacy: "student", admin: false });
 }
 for (const [label, meta] of [["student", { role: "student" }], ["family", { role: "family" }], ["nothing (no role key)", { full_name: "x" }],
   ["no metadata at all", undefined], ["an empty string", { role: "" }], ["a value that is not a role", { role: "headmaster" }],
@@ -215,7 +223,7 @@ let createdTeacherId = null;
   // manage-admin-users 'create' :318-336
   const u = await signUp({ role: "admin" });
   const e = await insertRole(u.id, "admin");
-  eq("manage-admin-users create: createUser(role admin) + insert admin -> admin", { e, roles: await rolesOf(u.id) }, { e: null, roles: ["admin"] });
+  eq("manage-admin-users create: createUser(role admin) + insert admin -> admin + student, as on live today", { e, roles: await rolesOf(u.id) }, { e: null, roles: ["admin", "student"] });
   ok("  ...and that admin can manage custom quests", (await as(u.id, `INSERT INTO public.custom_quests (title) VALUES ('ok')`)).err === null);
   // 'bootstrap' :97-120 sends no metadata.
   const b = await signUp(undefined);
@@ -241,6 +249,17 @@ let createdTeacherId = null;
   const fam = await signUp({ role: "family" });
   await q(`INSERT INTO public.families (primary_user_id) VALUES ($1)`, [fam.id]);          // manage-admin-users linkToFamily
   eq("form (family) + linkToFamily: student, as every family login in production", await rolesOf(fam.id), ["student"]);
+  // The parent who picked "Admin" on the old form (or a stale page): linkToFamily
+  // grants no role, so the trigger's answer is all this account will ever hold.
+  const adm = await signUp({ role: "admin" });
+  eq("form said Admin, before linking: student (a dashboard, not a blank page)", await rolesOf(adm.id), ["student"]);
+  await q(`INSERT INTO public.families (primary_user_id) VALUES ($1)`, [adm.id]);
+  eq("form said Admin + linkToFamily: still student, and not an admin", [await rolesOf(adm.id), await has(adm.id, "admin")], [["student"], false]);
+  ok("  ...and it cannot write custom quests", (await as(adm.id, `INSERT INTO public.custom_quests (title) VALUES ('x')`)).err !== null);
+  // A stale page asking for teacher, linked to a family: no role until an admin sets one.
+  const stale = await signUp({ role: "teacher" });
+  await q(`INSERT INTO public.families (primary_user_id) VALUES ($1)`, [stale.id]);
+  eq("a stale page asked for teacher + linkToFamily: no role (the one case left for Admin > Users > set role)", await rolesOf(stale.id), []);
   const st = await signUp({ role: "student" });
   // link-student-user :304-314 inserts student only when the account has no role.
   if (!(await rolesOf(st.id)).length) await insertRole(st.id, "student");
@@ -317,6 +336,43 @@ console.log("=== scripts/CHECK-unlinked-accounts.sql ===");
   ok("no row's text carries an email address", !rows.some((r) => /@/.test(`${r.what} ${r.detail ?? ""}`)));
   eq("it wrote nothing", (await one(`SELECT (SELECT count(*) FROM public.users)::int + (SELECT count(*) FROM public.user_roles)::int n`)).n, n0);
   ok("the file contains no write statement", !/\b(insert|update|delete|alter|drop|truncate|grant|revoke)\b/i.test(sql.replace(/--.*$/gm, "")));
+}
+
+console.log("=== scripts/FIX-remove-unbacked-teacher-role.sql (the accounts no migration changes) ===");
+{
+  const file = readFileSync(new URL("../FIX-remove-unbacked-teacher-role.sql", import.meta.url), "utf8").replace(/\r/g, "");
+  const ZERO = "00000000-0000-0000-0000-000000000000";
+  const live = file.split("\n").filter((l) => !l.startsWith("--")).join("\n").trim();
+  const A = (id) => live.replaceAll(ZERO, id);
+  const bLines = file.split("\n").filter((l) => /^-- +(UPDATE public|SET role|WHERE ur|AND (ur|NOT)|RETURNING ur)/.test(l)).map((l) => l.slice(3));
+  const B = (id) => bLines.join("\n").replaceAll(ZERO, id);
+  ok("the file holds exactly one live statement (A) and one commented alternative (B)",
+    (live.match(/;/g) || []).length === 1 && /^DELETE FROM public\.user_roles/.test(live) && bLines.length === 7 && /^UPDATE public\.user_roles/.test(bLines[0]));
+  ok("as shipped (the all-zero id) it changes nothing", (await q(A(ZERO))).length === 0);
+  const all0 = (await one(`SELECT count(*)::int n FROM public.user_roles`)).n;
+  // The pre-fix self-made teacher: role teacher, no record.
+  ok("before: the self-made teacher holds teacher", await has(oldTeacher.id, "teacher"));
+  const real = await q(A(createdTeacherId));
+  eq("A on a teacher who has a teacher record: 0 rows, role kept", [real.length, await rolesOf(createdTeacherId)], [0, ["teacher"]]);
+  const ta = (await one(`SELECT user_id FROM public.teaching_assistants LIMIT 1`)).user_id;
+  eq("A on a TA (assistant record): 0 rows, role kept", [(await q(A(ta))).length, await rolesOf(ta)], [0, ["teacher"]]);
+  const gone = await q(A(oldTeacher.id));
+  eq("A on the self-made teacher: one row, the teacher role is gone, nothing else touched",
+    [gone.length, gone[0]?.removed_role, await rolesOf(oldTeacher.id), (await one(`SELECT count(*)::int n FROM public.user_roles`)).n], [1, "teacher", [], all0 - 1]);
+  eq("  ...running it again: 0 rows", (await q(A(oldTeacher.id))).length, 0);
+  // B: the same kind of account, made a student instead.
+  await q(`ALTER TABLE auth.users DISABLE TRIGGER on_auth_user_created`);
+  const P1 = randomUUID(), P2 = randomUUID();
+  await q(`INSERT INTO auth.users (id) VALUES ($1), ($2)`, [P1, P2]);
+  await q(`ALTER TABLE auth.users ENABLE TRIGGER on_auth_user_created`);
+  await q(`INSERT INTO public.user_roles (user_id, role) VALUES ($1,'teacher'), ($2,'teacher'), ($2,'student')`, [P1, P2]);
+  const made = await q(B(P1));
+  eq("B on a self-made teacher: now a student, and only a student", [made.length, made[0]?.new_role, await rolesOf(P1)], [1, "student", ["student"]]);
+  eq("B on a real teacher: 0 rows", (await q(B(createdTeacherId))).length, 0);
+  let dup = null; try { await q(B(P2)); } catch (e) { dup = e.message; }
+  ok("B on an account that already holds student too: refused by the unique key, nothing changed", dup !== null && /duplicate key|unique/.test(dup) && (await rolesOf(P2)).join() === "student,teacher", dup ?? "ran");
+  eq("  ...A works for that one", [(await q(A(P2))).length, await rolesOf(P2)], [1, ["student"]]);
+  ok("neither statement names any account: the id is all zeros until the owner puts one in", !/[1-9a-f]{8}-[0-9a-f]{4}/.test(file));
 }
 
 console.log("=== the rollback in docs/evidence/S1-security-fixes.md ===");
