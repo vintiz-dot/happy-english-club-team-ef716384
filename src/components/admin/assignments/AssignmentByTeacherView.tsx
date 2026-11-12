@@ -54,7 +54,7 @@ export function AssignmentByTeacherView({ byTeacher }: Props) {
         return (
           <Card key={ts.teacherId} className="space-y-4 p-4 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 basis-56">
                 <h3 className="whitespace-normal break-words hyphens-none text-balance text-hec-h3 font-semibold text-hec-ink">{ts.teacherName}</h3>
                 <p className="text-hec-small tabular-nums text-hec-ink-soft">{ts.classCount} classes · {ts.assignmentCount} assignments</p>
               </div>

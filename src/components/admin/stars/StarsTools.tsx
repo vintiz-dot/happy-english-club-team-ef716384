@@ -716,7 +716,7 @@ export function StarsTools({
               <ul className="divide-y divide-hec-line">
                 {linkedNow.map((entry) => (
                   <li key={entry.ref} className="flex flex-wrap items-center justify-between gap-2 py-2 text-hec-small text-hec-ink">
-                    <span className={cn("min-w-0 flex-1", NAME)}><span className="text-hec-ink-soft">{entry.label}</span> is <strong className="font-medium">{entry.studentName}</strong></span>
+                    <span className={cn("min-w-0 flex-1 basis-56", NAME)}><span className="text-hec-ink-soft">{entry.label}</span> is <strong className="font-medium">{entry.studentName}</strong></span>
                     <Button size="sm" variant="ghost" className="gap-1" disabled={unlink.isPending} onClick={() => unlink.mutate(entry.ref)}>
                       <Undo2 className="h-4 w-4" /> Undo
                     </Button>

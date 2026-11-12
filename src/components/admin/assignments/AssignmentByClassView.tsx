@@ -55,7 +55,7 @@ export function AssignmentByClassView({ byClass, enrolledPerClass }: Props) {
             <Collapsible key={cs.classId} open={isOpen} onOpenChange={() => toggle(cs.classId)}>
               <Card className="overflow-hidden">
                 <CollapsibleTrigger className="flex min-h-hec-target w-full cursor-pointer flex-wrap items-start justify-between gap-3 p-4 text-left transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken/60 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hec-ring">
-                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <div className="flex min-w-0 flex-1 basis-56 items-start gap-3">
                     <ChevronRight className={`mt-1 h-4 w-4 shrink-0 text-hec-ink-soft transition-transform duration-hec-1 ease-hec ${isOpen ? "rotate-90" : ""}`} />
                     <div className="min-w-0 flex-1 text-left">
                       {/* Class and teacher names wrap, never cut (DESIGN_SYSTEM s.13). */}
