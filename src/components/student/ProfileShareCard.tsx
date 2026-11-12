@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { getAvatarUrl } from "@/lib/avatars";
 import { getLevelTitle } from "@/lib/levelUtils";
 import { Share2, Download, Star, Zap, Flame } from "lucide-react";
-import html2canvas from "html2canvas";
 import { toast } from "sonner";
 
 interface ProfileShareCardProps {
@@ -32,6 +31,7 @@ export function ProfileShareCard({
     if (!cardRef.current) return;
     setSaving(true);
     try {
+      const { default: html2canvas } = await import("html2canvas");
       const canvas = await html2canvas(cardRef.current, {
         backgroundColor: null,
         scale: 2,
