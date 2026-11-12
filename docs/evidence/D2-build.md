@@ -161,7 +161,7 @@ Return shape of the three single RPCs:
 
 ### `session_cancel_guard_status() -> jsonb` (admin only)
 
-`{ "installed_at", "update_trigger", "delete_trigger", "truncate_trigger" ('O' enabled, 'D' disabled, null missing), "evidence_function": bool, "recording_helper_stable": bool, "ok": bool }`. Red banner unless `ok`.
+`{ "installed_at", "update_trigger", "delete_trigger", "truncate_trigger" ('O' enabled, 'D' disabled, null missing), "evidence_function": bool, "recording_helper_stable": bool, "automation_refused_30d": int, "automation_refused_last": timestamptz|null, "ok": bool }`. Red banner unless `ok`; an amber line when `automation_refused_30d > 0` ("the nightly rebuild wanted to remove N lessons and the guard kept them").
 
 ### `log_session_automation_refused(p_session_id uuid, p_source text) -> uuid` (service_role only)
 
@@ -230,3 +230,11 @@ node scripts/pgtest/run.mjs
 ```
 
 Mutation check of the guard (17 scratch copies of the migration, never committed), all caught (exit 1): no txid check (2 FAIL), no session check (5), no action check (2), signed-in lane open (4), no destination-started check (1), no destination-lock check (1), token without affected (3), token without invoices (2), no HC050 check (2), insert guard off (3), no erased_recently (4), bulk cap 500 (1), no own-reason rule (1), B-1 regression (2). Three were caught as a CRASH rather than FAIL lines (flag not consumed, confirm skipped, delete with evidence), because a fixture-level checked call outside `tryIt` threw; caught, but a crash hides later cases - worth hardening in a later pass.
+
+## Changelog - ship fixes (D-review-3), 20261112091000 edited in place (never applied)
+
+Details and evidence: docs/evidence/D-ship-fixes.md.
+
+1. `_session_change_assess`: the bill fingerprint in the token also covers `discount_amount` and `base_amount` (the preview now shows the stored bills, F-1; review-1 change 6 "the token covers what is shown").
+2. `_session_erased_recently`: a mark re-pointed at another CHILD (`UPDATE attendance SET student_id = ...`) is reported as `attendance_reparented` (new field `new_student_id`), and no longer also by the ordinary branch (F-10).
+3. `session_cancel_guard_status()`: adds `automation_refused_30d` and `automation_refused_last` so the banner can show refused rebuild deletes (F-7; the rebuild must still call `log_session_automation_refused`, patch in D-ship-fixes.md).

@@ -2,9 +2,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
 import {
-  BULK_PREVIEW_CAP, bulkCancelChunks, bulkPreview, callerClient, cleanItems, corsHeaders, fail, fetchConsequences,
+  BULK_PREVIEW_CAP, bulkCancelChunks, bulkConfirmItems, bulkPreview, callerClient, corsHeaders, fail, outsideCriteria,
+  storedConsequences,
   guardError, isUuid, json, mapDbError, preview, readReason, refreshAndRecord, refreshDone, rpc,
-  studentsAndMonths, type GuardError,
+  type GuardError,
 } from '../_lib/session-guard.ts';
 
 // Cancel, un-cancel, delete and move go through the checked RPCs of
@@ -67,7 +68,15 @@ Deno.serve(async (req) => {
         actor_user_id: user.id,
         diff: { reason: 'session_management_rate_limit', ip: clientIP }
       });
-      return rateLimitResponse(userRateCheck.resetAt, corsHeaders);
+      // Same status and headers as rateLimitResponse, plus the contract's
+      // code / message_key (D-review-3 F-8).
+      const limited = rateLimitResponse(userRateCheck.resetAt, corsHeaders);
+      const retryAfter = Math.ceil((userRateCheck.resetAt - Date.now()) / 1000);
+      return new Response(JSON.stringify({
+        ok: false, code: 'rate_limited', message_key: 'sessionGuard.error.rate_limited',
+        message: 'Too many lesson changes in a minute. Nothing was changed; wait and try again.',
+        error: 'Rate limit exceeded. Please try again later.', retryAfter,
+      }), { status: 429, headers: limited.headers });
     }
 
     // Input validation
@@ -104,14 +113,27 @@ Deno.serve(async (req) => {
       if ('error' in r) {
         if (r.error.code === 'token_stale') {
           const fresh = await preview(asCaller, id, op, change);
-          return fail(r.error, { preview: 'data' in fresh ? fresh.data : null });
+          return fail(r.error, { preview: 'data' in fresh ? fresh.data : null,
+                                 consequences: 'data' in fresh ? storedConsequences(fresh.data) : null });
         }
         return fail(r.error);
       }
       const result = r.data;
-      const tuition = await refreshAndRecord(supabase, asCaller, result?.override_id, result?.refresh_pairs ?? []);
-      await audit(auditAction, id, { override_id: result?.override_id, tier: result?.tier, reason: params.p_reason,
-                                     review_required: result?.review_required, tuition_status: tuition.status });
+      // The change is committed from here on (D-review-3 F-9): an exception
+      // in the after-work must not be reported as a failed change.
+      let tuition: any;
+      try {
+        tuition = await refreshAndRecord(supabase, asCaller, result?.override_id, result?.refresh_pairs ?? []);
+      } catch (e) {
+        tuition = { status: 'failed', results: [], failed: [{ student_id: null, month: null, error: String((e as Error)?.message ?? e) }],
+                    event_recorded: false, event_error: 'unexpected' };
+      }
+      try {
+        await audit(auditAction, id, { override_id: result?.override_id, tier: result?.tier, reason: params.p_reason,
+                                       review_required: result?.review_required, tuition_status: tuition.status });
+      } catch (e) {
+        console.error('audit entry after a committed change failed:', (e as Error)?.message ?? e);
+      }
       return json({ ok: true, result, tuition });
     };
 
@@ -144,20 +166,12 @@ Deno.serve(async (req) => {
         }
         change = { date: c.date, start_time: hhmmss(c.start_time), end_time: hhmmss(c.end_time) };
       }
-      // First read: who is on the register and which months (and is the guard there at all).
-      const first = await preview(asCaller, data.id, op, change);
-      if ('error' in first) return fail(first.error);
-      let consequences: any = { fetched: false, reason: 'not_requested' };
-      if (data.figures !== false) {
-        const session = await loadSession(data.id);
-        const { students, months } = studentsAndMonths(first.data);
-        // calculate-tuition saves the canonical bill as it always does, so it
-        // runs BEFORE the preview that issues the token.
-        consequences = await fetchConsequences(supabase, session, students, months);
-      }
-      const final = data.figures === false ? first : await preview(asCaller, data.id, op, change);
-      if ('error' in final) return fail(final.error);
-      return json({ ok: true, preview: final.data, consequences });
+      // ONE read-only call (D-review-3 F-1): no calculate-tuition, no
+      // calculate-payroll, nothing written. The bills shown are the stored
+      // ones the token already covers. `figures` is accepted and ignored.
+      const p = await preview(asCaller, data.id, op, change);
+      if ('error' in p) return fail(p.error);
+      return json({ ok: true, preview: p.data, consequences: storedConsequences(p.data) });
     }
 
     // ----------------------------------------------- cancel / force-cancel
@@ -353,11 +367,23 @@ Deno.serve(async (req) => {
       }
 
       const rr = readReason(data.reason); if ('error' in rr) return fail(rr.error);
-      const items = cleanItems(data.items);
-      if ('error' in items) return fail(items.error);
+      // Same shape as bulk-cancel-sessions (D-review-3 F-4): plain items are
+      // {id, token} only; a lesson that needs acknowledging comes in
+      // held_items with include_held: true and its own confirm: true.
+      const split = bulkConfirmItems(data.items, data.held_items, data.include_held);
+      if ('error' in split) return fail(split.error, split.extra ?? {});
+      // The criteria the audit row records are enforced (F-5).
+      const outside = await outsideCriteria(supabase, split.items.map((i) => i.id),
+        { from: from_date, to: to_date, class_id: isUuid(class_id) ? class_id : null,
+          teacher_id: isUuid(teacher_id) ? teacher_id : null });
+      const items = { items: split.items.filter((i) => !outside.has(i.id)) };
       const batchId = isUuid(data.batch_id) ? data.batch_id : crypto.randomUUID();
       let done: any[] = [], refused: any[] = [], not_attempted: any[] = [], chunkError: GuardError | null = null;
-      if (op === 'cancel') {
+      const outsideRefused = [...outside].map((id) => ({ id, code: 'outside_criteria',
+        message_key: 'sessionGuard.error.outside_criteria', sqlstate: null }));
+      if (items.items.length === 0) {
+        // nothing left to send
+      } else if (op === 'cancel') {
         ({ done, refused, not_attempted, chunkError } = await bulkCancelChunks(asCaller, items.items, rr.reason, batchId,
           { attached: { source: 'manage-session', via_action: 'bulk-delete' } }));
       } else {
@@ -381,6 +407,7 @@ Deno.serve(async (req) => {
                       refresh_pairs: r?.refresh_pairs ?? [] });
         }
       }
+      refused = [...outsideRefused, ...refused];
       // Nothing went through and the database refused the whole request: say so plainly.
       if (chunkError && done.length === 0 && refused.length === 0) return fail(chunkError, { not_attempted });
       const tuition = await refreshDone(supabase, asCaller, done);
@@ -390,7 +417,7 @@ Deno.serve(async (req) => {
       });
       return json({
         ok: !chunkError, partial: !!chunkError || refused.length > 0, op, batch_id: batchId,
-        done: done.map(({ refresh_pairs: _p, ...d }) => d), refused, not_attempted,
+        done: done.map(({ refresh_pairs: _p, ...d }) => d), refused, not_attempted, held_ignored: split.held_ignored,
         stopped: chunkError ? { code: chunkError.code, message_key: chunkError.message_key, message: chunkError.message } : null,
         tuition,
       });
@@ -410,6 +437,8 @@ Deno.serve(async (req) => {
         created_by: user.id,
       }).select().single();
 
+      // A taken slot is the admin's to fix, not a server error (D-review-3 F-6).
+      if (error?.code === '23505') return fail(mapDbError(error));
       if (error) throw error;
 
       await supabase.from('audit_log').insert({
