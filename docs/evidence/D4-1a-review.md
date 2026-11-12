@@ -2,7 +2,7 @@
 
 Reviewed: commit e3367ffe (branch `worktree-agent-a8fa73ee4063a7b1b`), detached. Review only: no code change, no push, nothing applied. Live access (`aswgmbefikhsnhogtryv`): read-only catalog queries only (function md5 / flags / grants, trigger list, policies, index list, `reltuples`, migration names). No row about a person was read.
 
-**Where I am / next step:** sections 1-2 written. Next: sections 3-7 (live diff, floors on old lessons, design questions, tests and my mutants, the apply brief), then the verdict.
+**Where I am / next step:** COMPLETE - sections 1-7 and the verdict (APPLY WITH CHANGES: C-1 to C-4 and the brief's updates). Next step is not mine: the builder revises file 1; a short re-check of the trigger functions, the new cases and the mutant run; then the conductor's apply.
 
 `M` = `supabase/migrations/20261113100000_d4_floors.sql`. Probes marked "executed" were run by me in pglite against the real migration files (script kept outside the repo); they print facts and change nothing in the tree.
 
@@ -27,12 +27,12 @@ Findings: **C-n** = change I ask for before the apply; **N-n** = note / can foll
 | Delete / un-sign a person's mark | refused on the person lane (HC025), kept on the service lane | `M:422-442` |
 | Present -> Excused / Absent | kept | `M:435-441` |
 | Re-point a mark to another lesson or child | refused, every lane (HC024) | `M:410-414` |
-| Point row: delete, re-date, re-class, unlink, type, points to 0, `created_by`, child | kept, for the linked lesson and every lesson of that class-day | `M:452-476`; my R3 caught |
-| Transcript: delete, unlink, re-date, re-class, status -> failed, audio path removed | kept | `M:489-512`; my R1, R2 caught |
+| Point row: delete, re-date, re-class, unlink, type, points to 0, `created_by`, child | kept, for the linked lesson and every lesson of that class-day | `M:452-476` (code right; "points to 0" has no test: my R3 survived, section 6) |
+| Transcript: delete, unlink, re-date, re-class, status -> failed, audio path removed | kept | `M:489-512`; my R1 caught; "audio path removed" has no test (R2 survived) |
 | Truncating transcript text | not evidence (D1 does not read `raw_text`) | - |
 | Homework deleted / re-dated / re-classed | kept for the day it was set | `M:528-539`; my R9 caught |
 | Submission deleted, `graded_at` cleared or moved | kept for the day it was graded | `M:543-554` |
-| Lesson un-held, or moved to another date | kept (`zz0_` runs before D2's trigger) | `M:664-667`; my R10 caught |
+| Lesson un-held, or moved to another date | kept (`zz0_` runs before D2's trigger) | `M:664-667`; the date-move half has no test (my R10 survived) |
 | Lesson re-classed | impossible for a started or marked lesson (D2: HC021, no checked path) | live `session_change_guard` |
 | Lesson deleted and re-created | a lesson with evidence, now or once, cannot be deleted unless it was cancelled first (`M:775-781`); the cancel holds the evidence in its override row | - |
 | Service-role writer | every keep fires on every lane; D1 answers the service lane | `M:319-325` |
@@ -132,3 +132,92 @@ What stays uncovered is the past, not the future: evidence removed BEFORE the pa
 | 11 | Accept. |
 | 12 | Accept, but say plainly what the rollback leaves (section 6). |
 | 13 | Accept; the prelude work for the money-input migrations is step 1b's, and its budget stands. |
+
+---
+
+## 6. Tests, my mutants, the rollback
+
+**Full run, by me, on this commit** (`node scripts/pgtest/run.mjs`, node_modules linked by junction): 4691 assertions across 50 suites, 0 suite(s) failed - the builder's figure exactly. The four D4 suites: `d4 floors` 198 passed, `d4 D2 carry-over` 275, `d4 deployed functions` 37, `d4 rollback` 22, 0 failed; D2's own suites unchanged at 266 / 135 / 143. App typecheck: the suite "app typecheck" (it runs `tsc --noEmit -p tsconfig.app.json` and asserts the source was loaded) 3 passed, 0 failed; I did not run tsc a second time by hand.
+
+**Twelve mutants of my own on the migration** (one textual change each, the preflight's own-body literals re-computed as the builder's runner does, suites `d4-floors` and where relevant `d4-d2-carryover`):
+
+| # | Mutant | Verdict |
+|---|---|---|
+| R1 | transcript keep ignores a status change (-> failed) | caught (`G-8 a same-day transcript marked failed ...`) |
+| R2 | transcript keep ignores `audio_storage_path` | **SURVIVED** |
+| R3 | point keep ignores a `points` change (5 -> 0) | **SURVIVED** |
+| R4 | bill floor ignores un-freezing | caught |
+| R5 | bill floor ignores un-confirming | caught |
+| R6 | a re-keyed bill leaves no floor | caught |
+| R7 | floor rows can be deleted | caught |
+| R8 | attendance keep ignores a signature-only change (`marked_by -> NULL`, same status: the sync's restore) | **SURVIVED** |
+| R9 | homework keep ignores a re-dated homework | caught (column sweep) |
+| R10 | lesson keep ignores a date move | **SURVIVED** (both suites) |
+| R11 | move destination ignores the bill floor | caught |
+| R12 | HC025 also on the service lane | caught (sync restore case) |
+
+8 caught, 4 survived. In all four the migration is right and the suite does not notice it being wrong. The "column sweep" changes each column to another valid value, not to the value that lowers D1, which is why R2 and R3 slip through. **C-4:** four cases, each must go red under its mutant: (R2) a `failed` transcript that has audio, audio path cleared -> floor; (R3) a participation row's points set to 0 -> floor; (R8) service lane sets `marked_by` NULL on a Present row, status unchanged -> floor STRONG; (R10) a lesson whose only evidence is same-day points, moved to another date through the checked path -> floor SOFT and the tier it had. These matter more once C-2 rewrites exactly these conditions.
+
+**Rollback** (`scripts/ROLLBACK-d4-1-floors.sql`, suite `d4 rollback`, 22 passed in my run): drops the seven floor / keep triggers; re-pasting `20261112091000` restores both D2 bodies at the D-release md5 and the D-release check is 66 of 66. Safe on live today: all 25 D functions there still have the D-release md5, so the re-paste writes over nothing newer. **It does not "leave no object behind", and should say so in one line:** after it, live keeps the two floor tables with their rows, guards and policies (right: history is never dropped), 13 functions that nothing calls and no API role can execute, and `audit_point_transactions`. That is harmless and a second paste of the migration re-attaches everything; but the brief's rollback paragraph should list what remains so nobody is surprised by it in the catalog.
+
+---
+
+## 7. The live-apply brief (`D4-1a-live-apply-brief.md`), against live as it is today
+
+Pre-checks, run by me read-only:
+
+| Brief step | Live today | Verdict |
+|---|---|---|
+| 1.1 D release as applied | 25 of 25 functions at the expected md5; 9 of 9 triggers present and enabled (relations and their parts not re-compared by me) | passes for what I checked |
+| 1.2 no D4 object yet | both tables NULL; 0 of the four named functions | passes |
+| 1.4 BEFORE triggers on `invoices` | `keep_frozen_invoice_amounts`, `update_invoices_updated_at` - both sort before `zz_invoice_state_floor` | passes |
+| 1.4 other tables | `attendance`: `guard_attendance_enrollment`, `guard_cancelled_session_attendance`, `update_attendance_updated_at` (BEFORE), `audit_attendance` (AFTER); `point_transactions`: `validate_homework_point_date` (BEFORE), `trigger_update_points_from_transaction` (AFTER), no audit trigger yet; `class_transcripts`: none; `homeworks` / `homework_submissions`: notify and updated-at triggers only; `sessions`: the D2 three plus the pre-existing five | nothing collides by name; every `zz_` / `zz0_` name sorts last among BEFORE triggers of its table, and `zz0_` before D2's `zz_` |
+| 1.6 cron | `stars-sync` (active), `rebuild-upcoming-sessions` (active) | record |
+| preflight's own checks | both replaced bodies at the D2 md5; `audit_log.changed_fields` and its gin index exist | will pass |
+
+**Does anything applied since D2 matter?** No. Live's migration list since D2 holds `class_recordings_scope` and `homework_bucket_scope` (storage and recording access), and the tuition release and `pause_enrollment` change replaced no D-release function (25 of 25 above). The file reads none of them. On live, order is the order of applying (`apply_migration` stamps its own version), so the shared date prefix has no effect there.
+
+**C-3 (change before apply; mechanical). The file NAME collides in the repository.** The conductor branch already has `20261113100000_signup_role_from_server_only.sql`, and `...110000`, `...120000`, `...130000`, `...140000` are taken too. Two files with one 14-digit version is a duplicate key for any tool that reads the folder as migrations, and "sorts after" is undefined between them. Nothing in pgtest breaks (suites name their files), but fix it before the merge. Names that are free and keep the build order:
+
+| Step | File |
+|---|---|
+| 1a | `20261113150000_d4_floors.sql` |
+| 1b | `20261113151000_d4_core_register.sql` |
+| 2 | `20261113152000_d4_class_fee_history.sql` |
+| 3A | `20261113153000_d4_lesson_pay_guard.sql` |
+| 3B | `20261113154000_d4_money_inputs_guard.sql` |
+| 4 | `20261113155000_d4_change_approvals.sql` |
+
+I found no "corrected names" recorded anywhere in the tree (the conductor branch's design still lists `...091000` to `...095000`, which sort BEFORE file 1); the table above is my proposal, not a confirmation of someone else's list. The name appears in the migration's header comment, the rollback script, `d4-prelude.mjs` (`FLOORS`), `run.mjs`, `guard-fingerprint.mjs`, the design and the brief; no function body contains it, so no body md5 moves.
+
+Other points on the brief:
+- **N-4. Add a lock timeout.** `CREATE TRIGGER` needs a table lock on `attendance`, `sessions`, `invoices`, `point_transactions`, `homeworks`, `homework_submissions`, `class_transcripts`. If a sync page or a register save is mid-transaction, the paste waits, and every later write to that table queues behind the paste. Put `SET LOCAL lock_timeout = '5s';` after `BEGIN` (a refused paste installs nothing and is simply repeated), and start the paste just after a `stars-sync` tick, not on the five-minute mark.
+- After the merge with the conductor branch, re-run `d4-floors`: its policy pin reads the real migration files, and `classmate_rows_private` / `creator_rows_need_class_staff` (new there) may change who can write the evidence tables. A red pin there is a question to answer, not noise.
+- Step 3's table of 29 md5 values must be regenerated after C-1 / C-2 (three trigger functions and the `zz0_` trigger definition change; the two replaced bodies and the other functions do not).
+- Add to step 4, for the morning after: `select count(*), count(*) filter (where level = 'STRONG') from session_evidence_floor` and the count of `invoice_state_floor` (numbers only). A count in the tens on day one would mean the keep is recording ordinary work (C-2) and should be looked at before it accumulates.
+- Verification by md5 of every created and replaced object, the 64-of-66 check, the read-only probes with the publishable key, the "what means roll back" sentence, and the two-paste rollback are all there and are right. `apply_migration` with a file that has its own `BEGIN ... COMMIT` and a trailing SELECT is how D2 was applied (`D-live-apply.md`).
+
+---
+
+## Verdict for step 1a: APPLY WITH CHANGES
+
+The design is built faithfully; both routes it was written for are closed; nothing new can stop a register, a point, a homework or a payment; the two live bodies are replaced by supersets of exactly what is live; rollback is proven. Before the paste, precisely:
+
+1. **C-1** `zz0_session_evidence_keep` also fires when `start_time` changes (`M:665-666`), with the un-start probe as a case ending at tier 3.
+2. **C-2** the attendance, point, transcript and homework triggers call the keep only when what the row proves for that lesson goes down; the attendance cause carries `old_marked_by` / `new_marked_by`. Cases: `processing -> analyzed`, a re-sign with the same status, and Absent -> Present each leave no floor row.
+3. **C-3** rename file 1 to a free version (`20261113150000_d4_floors.sql`) and fix the later names in the design.
+4. **C-4** four cases for the surviving mutants R2, R3, R8, R10.
+5. Regenerate `D4-release-fingerprint.*` and the brief's md5 table; add the lock timeout (N-4) and the one line on what the rollback leaves.
+
+Can follow the apply: N-1 (homework deleted / re-classed: grading-day floor), N-2 (the `stars_homework_map` static check), N-3 (skip the keep only for a cancelled lesson), DQ-1 in step 1b, DQ-10 in step 3A, the optional insert-only backfill from `audit_log`.
+
+A short re-check of the revised file (the diff of the trigger functions, the new cases, the mutant run) is enough; the two replaced bodies need no second review if their md5 stays `6c1b8c86...` / `5f589166...`.
+
+## Not checked
+
+- No write was made on live, so the triggers were never exercised there; timings are pglite's.
+- The 4 D-release relations and their 28 parts on live (the brief's step 1.1 does it).
+- Probe P3 (a `stars_homework_map` row) failed on my own fixture's column type; N-2 is reasoned from D1's text and the live policy, not executed.
+- The live cascade from `homeworks` to `homework_submissions` (N-1's second half) is reasoned from `M:549`; the test prelude has no such foreign key.
+- The src card was read as a diff, not rendered.
+- `scripts/sessionGuard.test.ts` (bun) was not run.
