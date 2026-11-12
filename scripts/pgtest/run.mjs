@@ -44,6 +44,9 @@ const m = (name) => join(migrations, name);
 const SUITES = [
   { name: "family payment month", file: "family-payment-month.test.mjs", migrations: [] },
   { name: "dated enrollment discounts", file: "enrollment-discounts.test.mjs", migrations: [] },
+  // The admin tuition list reads the calculator instead of summing invoice
+  // rows itself: both real handlers beside the old browser sum, case by case.
+  { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },
   {
     name: "cancelled lessons",
     file: "cancelled-lessons.test.mjs",
