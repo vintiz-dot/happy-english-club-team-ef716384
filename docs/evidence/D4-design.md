@@ -203,4 +203,424 @@ New:
 
 Preview refusals (`refuse_code`, returned by the preview and raised as HC015 by the apply): `not_held`, `already_held`, `not_started`, `same_teacher`, `teacher_not_found`, `bad_change`, `not_frozen`, `not_found`, `nothing_to_change`.
 
+---
+
+## (c) Migration objects
+
+Four files under `supabase/migrations/`, pasted in this order. Each: `BEGIN; ... COMMIT;`, a preflight `DO` block that refuses loudly and installs nothing when something it reads is missing (D2's pattern, `20261112091000:53-118`), `CREATE OR REPLACE` / `IF NOT EXISTS` / `DROP TRIGGER IF EXISTS` throughout, safe to paste twice, changes no existing row. Every new table: RLS on, `REVOKE ALL ... FROM PUBLIC, anon, authenticated, service_role`, then `GRANT SELECT ... TO authenticated` (policy: admins) and `GRANT ALL ... TO service_role` (house rule; the triggers still refuse its writes). No partial unique index is used as a conflict target anywhere; the two upserts below name a PRIMARY KEY.
+
+### c.0 `20261113085000_d4_prelude.sql` (tiny; written first so the two big files do not depend on each other)
+
+```sql
+-- Who is writing. One definition for every D4 guard. D2's own lanes are not changed.
+CREATE OR REPLACE FUNCTION public._caller_lane() RETURNS text
+LANGUAGE sql STABLE SET search_path = public AS $fn$
+  SELECT CASE
+    WHEN auth.uid() IS NOT NULL THEN 'person'
+    WHEN NULLIF(auth.role(), '') = 'service_role' THEN 'service'
+    WHEN NULLIF(auth.role(), '') IS NULL
+     AND session_user::text NOT IN ('authenticator', 'authenticated', 'anon')
+     AND COALESCE(NULLIF(current_setting('role', true), ''), 'none')
+           NOT IN ('authenticator', 'authenticated', 'anon') THEN 'owner'
+    ELSE 'unknown'            -- treated everywhere as a person with no acknowledgement
+  END
+$fn$;   -- the same positive test as D1's "internal" (20261112090000:249-256), split in two
+
+-- Extension points for approvals, in the manner of session_recording_evidence:
+-- created ONLY IF MISSING, so re-pasting this file never undoes c.3.
+--   change_approval_needed(p_impact jsonb) RETURNS jsonb   -> '{"required": false, "reasons": []}'
+--   _change_request_claim(p_request uuid, p_kind text, p_fingerprint text) RETURNS uuid
+--        -> RAISE 'approvals are not installed' (55000)
+```
+`REVOKE ALL` on all three from every API role (they are called only from definer functions).
+
+### c.1 `20261113090000_d4_session_guard_ext.sql` (M1)
+
+Preflight: both D migrations present (`session_change_guard`, `session_held_evidence`, the three `zz_` triggers enabled), `_caller_lane`, `audit_row_change`, `stars_sync_held_flips`, every column read below.
+
+**Table changes**
+```sql
+ALTER TABLE public.session_cancel_overrides
+  DROP CONSTRAINT IF EXISTS session_cancel_overrides_action_check;
+ALTER TABLE public.session_cancel_overrides
+  ADD CONSTRAINT session_cancel_overrides_action_check CHECK (action IN
+    ('cancel','delete','move','uncancel','unhold','hold','reteach','retime','restaff','create'));
+ALTER TABLE public.session_cancel_overrides
+  ADD COLUMN IF NOT EXISTS approval_request_id uuid,
+  ADD COLUMN IF NOT EXISTS approved_by uuid;          -- both NULL unless c.3 is on
+
+CREATE TABLE IF NOT EXISTS public.session_evidence_floor (
+  session_id uuid PRIMARY KEY,                 -- no FK: outlives nothing, but must never block a delete
+  level      text NOT NULL CHECK (level IN ('SOFT','STRONG')),
+  families   jsonb NOT NULL,                   -- D1's families at capture, OR-ed over captures
+  first_at   timestamptz NOT NULL DEFAULT now(),
+  last_at    timestamptz NOT NULL DEFAULT now(),
+  causes     jsonb NOT NULL DEFAULT '[]'::jsonb,   -- newest 20: {at, table, op, row_id, actor_user_id, lane, summary}
+  CONSTRAINT session_evidence_floor_causes_size CHECK (pg_column_size(causes) < 32768)
+);
+-- trigger session_evidence_floor_monotonic BEFORE UPDATE OR DELETE: refuse DELETE; refuse an UPDATE that
+--   lowers level or changes session_id (HC040). BEFORE INSERT/UPDATE: only the table owner (the definer
+--   functions) may write - the body of session_cancel_audit_insert_guard, reused as is.
+-- BEFORE TRUNCATE: session_cancel_audit_append_only (reused).
+```
+
+**The floor writer**
+```sql
+CREATE OR REPLACE FUNCTION public._session_evidence_keep(p_session_id uuid, p_cause jsonb)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
+-- 1. session row; not found or NOT session_has_started(date, start_time) -> RETURN.
+-- 2. existing floor row with level 'STRONG' -> append the cause only, RETURN (no D1 call).
+-- 3. once per session per transaction: skip when p_session_id is already in the
+--    transaction-local list hec.floor_seen (set_config(..., true)); the cancel's excuse-all
+--    touches every row of a register and must cost one D1 call, not thirty.
+-- 4. BEGIN v := public.session_held_evidence(p_session_id);
+--          v_level := v ->> 'level'; v_fam := v -> 'families';
+--    EXCEPTION WHEN OTHERS THEN v_level := 'STRONG'; v_fam := '{"unknown": true}';   -- cannot read = strongest
+--    END;
+-- 5. v_level = 'NONE' -> RETURN.
+-- 6. INSERT ... ON CONFLICT (session_id) DO UPDATE
+--      SET level = CASE WHEN floor.level = 'STRONG' OR EXCLUDED.level = 'STRONG' THEN 'STRONG' ELSE 'SOFT' END,
+--          families = floor.families || <true keys of EXCLUDED.families>, last_at = now(),
+--          causes = <cause prepended, cut to 20>;
+$fn$;
+```
+Callers (all `BEFORE`, `FOR EACH ROW`, SECURITY DEFINER, named `zz_...` so they run after the existing guards and see the final row):
+
+| Trigger | On | Fires the keep when | Lessons it keeps for |
+|---|---|---|---|
+| `zz_attendance_evidence_guard` | attendance UPDATE, DELETE | `OLD.marked_by IS NOT NULL` and (DELETE, or status / marked_by changed) | `OLD.session_id` |
+| `zz_point_evidence_keep` | point_transactions UPDATE, DELETE | `OLD.type IN ('participation','correction') AND OLD.points > 0` and (DELETE, or any of `class_id, date, session_id, type, points, created_by, student_id, created_at` changed) | `OLD.session_id` if set, plus every lesson of `OLD.class_id` on `OLD.date` |
+| `zz_transcript_evidence_keep` | class_transcripts UPDATE, DELETE | DELETE, or any of `class_id, session_id, transcript_date, status, audio_storage_path, audio_duration_seconds, uploaded_by, created_at` changed | `OLD.session_id` if set, plus every lesson of `OLD.class_id` on `OLD.transcript_date` and on the Hanoi day of `OLD.created_at` |
+| `zz_homework_evidence_keep` | homeworks UPDATE, DELETE; homework_submissions UPDATE, DELETE | homeworks: DELETE or `class_id, created_at, created_by, due_date` changed; submissions: DELETE or `graded_at` set to NULL or `homework_id / student_id` changed | every lesson of the homework's class on the Hanoi day of its `created_at` and on its `due_date` |
+| (inside `session_change_guard`) | sessions UPDATE | kind is `unhold`, `cancel`, `move` or `delete` | `OLD.id` |
+
+Over-inclusion is harmless: the level stored is D1's answer for that lesson, so a lesson the row was not evidence for stores nothing it did not already have. Also `audit_point_transactions AFTER UPDATE OR DELETE ... audit_row_change()`.
+
+`zz_attendance_evidence_guard` also carries G-9 and G-10:
+```sql
+IF TG_OP = 'UPDATE' AND (OLD.session_id IS DISTINCT FROM NEW.session_id
+                      OR OLD.student_id IS DISTINCT FROM NEW.student_id) THEN
+  RAISE EXCEPTION 'attendance_identity' USING ERRCODE = 'HC024', DETAIL = '...';     -- every lane
+END IF;
+-- keep (table above)
+IF public._caller_lane() IN ('person','unknown') AND pg_trigger_depth() = 1
+   AND OLD.marked_by IS NOT NULL
+   AND EXISTS (SELECT 1 FROM public.sessions s WHERE s.id = OLD.session_id       -- parent gone = cascade
+                AND public.session_has_started(s.date, s.start_time)) THEN
+  IF TG_OP = 'DELETE' THEN RAISE ... 'HC025', DETAIL = 'kind=delete_mark'; END IF;
+  IF NEW.marked_by IS NULL THEN RAISE ... 'HC025', DETAIL = 'kind=unmark'; END IF;
+END IF;
+```
+
+**`session_change_kind(o, n)` - replaced, same signature.** The four existing tests are untouched; added after them:
+```sql
+IF o.status = 'Held' AND n.status = 'Scheduled' THEN v_kinds := v_kinds || 'unhold'; END IF;
+IF o.status = 'Scheduled' AND n.status = 'Held'
+   AND (NOT EXISTS (SELECT 1 FROM public.attendance a WHERE a.session_id = o.id AND a.marked_by IS NOT NULL)
+        OR EXISTS (SELECT 1 FROM public.session_cancel_overrides v          -- a lesson a person un-held is
+                    WHERE v.session_id = o.id AND v.action = 'unhold'))     -- re-held with a reason too
+THEN v_kinds := v_kinds || 'hold'; END IF;
+IF o.status = 'Held' AND o.teacher_id IS DISTINCT FROM n.teacher_id THEN v_kinds := v_kinds || 'reteach'; END IF;
+IF o.status = 'Held' AND NOT ('move' = ANY (v_kinds))
+   AND (o.start_time IS DISTINCT FROM n.start_time OR o.end_time IS DISTINCT FROM n.end_time)
+THEN v_kinds := v_kinds || 'retime'; END IF;
+-- more than one kind -> HC022, as today (so an un-hold cannot carry a teacher change with it)
+```
+The UPDATE trigger is re-created with two more columns in its WHEN clause: `OR OLD.end_time IS DISTINCT FROM NEW.end_time OR OLD.teacher_id IS DISTINCT FROM NEW.teacher_id`.
+
+**`session_change_guard()` - replaced.** Everything for `cancel / uncancel / reclass / move / delete / id change` stays byte-for-byte in behaviour. Added:
+- first, for kinds `unhold, cancel, move, delete`: `PERFORM public._session_evidence_keep(OLD.id, <cause>)`.
+- acknowledged lane, new checks: `unhold` -> `NEW.status = 'Scheduled'`; `hold` -> `NEW.status = 'Held'`; `reteach` -> `NEW.teacher_id = (o.change ->> 'new_teacher_id')::uuid`; `retime` -> new times equal `o.change`.
+- unacknowledged lane, new kinds, by `_caller_lane()`:
+
+| kind | person / unknown | service | owner |
+|---|---|---|---|
+| unhold | HC020 | allowed iff `NOT payroll_month_is_locked(month)` AND (`NOT session_has_started(...)` OR a `stars_sync_held_flips` row exists); else `NEW.status := OLD.status`, one `automation_refused` event (`payload: {session_id, source: 'unhold', lane}`), `RETURN NEW` | same rule as service |
+| hold | HC020 | allowed | allowed |
+| reteach, retime | HC020 | HC020 | allowed |
+
+- the automation lane for D2's `delete / reclass / move` reads the EFFECTIVE level (`session_evidence_floor` row present -> not NONE).
+
+**`_session_change_assess(s, p_action, p_change, p_uid)` - replaced, same signature.** Additions only:
+```sql
+v_floor := (SELECT to_jsonb(f) FROM public.session_evidence_floor f WHERE f.session_id = s.id);
+v_level_now := v_ev ->> 'level';
+v_level := CASE WHEN 'STRONG' IN (v_level_now, v_floor ->> 'level') THEN 'STRONG'
+                WHEN 'SOFT'   IN (v_level_now, v_floor ->> 'level') THEN 'SOFT' ELSE 'NONE' END;
+IF v_floor IS NOT NULL THEN        -- settled over every child on the register, not only billable rows
+  v_settled_src := v_settled_src OR EXISTS (<the settled test of session_month_tuition_settled,
+                                             without its status filter, for v_src_month>);
+END IF;
+-- new actions:
+--  'unhold'  refuse 'not_held' unless s.status = 'Held';     tier := session_change_tier(started, v_level, v_settled)
+--  'hold'    refuse 'already_held' / 'not_started';          tier := CASE WHEN locked THEN 3 ELSE 1 END
+--  'reteach' p_change {teacher_id}; refuse 'not_held', 'same_teacher', 'teacher_not_found';   pay tier as 'hold'
+--  'retime'  p_change {start_time, end_time}; refuse 'not_held', 'bad_change' (end <= start, or it is a move);  pay tier
+--  'restaff' p_change {staff:[{teaching_assistant_id, attended, absence_note}]}; refuse 'not_held', 'bad_change'; pay tier
+--  where locked := (v_ev -> 'settled' ->> 'payroll_month_locked')::boolean, NULL read as true.
+-- token: version 3; adds v_level_now, v_floor ->> 'level', jsonb_array_length(v_floor -> 'causes').
+-- output adds: 'level_now', 'floor', 'fingerprint' (the token's hash WITHOUT p_uid), and
+-- 'impact': {tier, closed_payroll, families, paid_vnd, signed_or_frozen}  -- stored figures only:
+--    families = distinct students.family_id over invoices_before rows that are paid / signed / frozen;
+--    paid_vnd = sum(recorded_payment) over the same rows.
+```
+`_session_review_required` gains: `unhold / hold / reteach / retime / restaff` are reviewed when `tier = 3`; `unhold` also by the existing STRONG rule. `_session_erased_recently` gains a fourth branch: the floor's `causes` of the last 30 days as `{what: 'points' | 'transcript' | 'homework', ...}`.
+
+**`_session_change_apply` - replaced; one more parameter, `p_request uuid` (the old 11-argument function is dropped in this file).** Changes:
+- action list extended; reason, lock, assess, token, confirm, correction reason exactly as today (confirm is required at T1+ for the new kinds).
+- approval hook after the token check (c.3 makes it real; with the prelude stub it never fires):
+```sql
+v_need := public.change_approval_needed(a -> 'impact');
+IF COALESCE((v_need ->> 'required')::boolean, true) THEN            -- NULL = required
+  IF p_request IS NULL THEN
+    RAISE EXCEPTION 'approval_required' USING ERRCODE = 'HC060', DETAIL = 'reasons=' || (v_need ->> 'reasons');
+  END IF;
+  v_actor := public._change_request_claim(p_request, 'session', a ->> 'fingerprint');   -- the requester
+  v_approver := v_uid;
+END IF;
+```
+- the row stores `actor_user_id = COALESCE(v_actor, v_uid)`, `approved_by`, `approval_request_id`; `refresh_pairs` gains the pairs of children named in `v_erased` (G-9 residue).
+- writes: `unhold` / `hold` -> `UPDATE sessions SET status = ..., updated_by`; `reteach` -> `teacher_id`, `is_manual = true`, `manual_reason = v_reason`; `retime` -> times; `restaff` -> replace the lesson's teaching-assistant rows with `p_change.staff`, then clear the flag itself and check `pg_trigger` for `zz_session_staff_guard` enabled (HC050 if not) - the roster trigger reads the flag without consuming it because one change is several rows.
+
+**New RPCs (admin JWT only; `GRANT EXECUTE ... TO authenticated`, not service_role)**
+```sql
+session_status_checked (p_session_id uuid, p_to text, p_reason text, p_token text,
+                        p_confirm boolean DEFAULT false, p_correction_reason text DEFAULT NULL, p_context jsonb DEFAULT '{}')
+session_teacher_checked(p_session_id uuid, p_new_teacher_id uuid, p_reason text, p_token text, p_confirm ..., p_correction_reason ..., p_context ...)
+session_time_checked   (p_session_id uuid, p_new_start time, p_new_end time, p_reason text, p_token text, ...)
+session_staff_checked  (p_session_id uuid, p_staff jsonb, p_reason text, p_token text, ...)
+session_create_preview (p_session jsonb) RETURNS jsonb          -- STABLE
+create_session_checked (p_session jsonb, p_reason text, p_token text, p_confirm ..., p_correction_reason ..., p_context ...)
+```
+`session_change_preview(p_session_id, p_action, p_change)` keeps its signature and accepts the five new actions. `create_session_checked` does not go through `_session_change_apply` (there is no row to lock): it validates class and teacher, forces `status = 'Scheduled'`, takes `pg_advisory_xact_lock(hashtextextended('session-create:' || class_id || ':' || date || ':' || start_time, 0))`, plans (enrolled children on that date via `student_enrolled_on`, their `tuition_month_state` when M2 is installed - else every child is read as T2, fail closed - stored bills, token), runs the approval hook, generates the id, writes the override (`action = 'create'`, `session_before = '{}'`, `level = 'NONE'`), sets the flag, inserts, and raises HC050 if the flag is still set.
+
+**New triggers on sessions and session_participants**
+```sql
+CREATE TRIGGER zz_session_insert_guard BEFORE INSERT ON public.sessions FOR EACH ROW
+  EXECUTE FUNCTION public.session_insert_guard();
+-- lane := _caller_lane()
+-- NEW.status <> 'Scheduled' AND lane <> 'owner'                      -> HC023
+-- session_has_started(NEW.date, NEW.start_time):
+--    owner -> pass;  service -> pass iff NEW.date >= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date else HC020 kind=create_past
+--    person/unknown -> flag names an override of this txid with action 'create' AND session_id = NEW.id
+--                      AND (session_before is '{}') -> consume, pass; else HC020 kind=create_past
+
+CREATE TRIGGER zz_session_staff_guard BEFORE INSERT OR UPDATE OR DELETE ON public.session_participants
+  FOR EACH ROW EXECUTE FUNCTION public.session_staff_guard();
+-- row is participant_type 'teaching_assistant'; parent lesson exists and is Held; pay-relevant change;
+-- NOT (month open AND lesson ended <= 7 days ago);  then:
+--    owner -> pass;  flag names a 'restaff' override of this txid for the parent lesson -> pass (not consumed)
+--    else HC020 kind=restaff
+```
+`session_cancel_guard_status()` also reports the two new sessions triggers, the roster trigger, the four keep triggers and the floor table (`ok` requires all). `session_cancel_tuition_pending` adds `'create'` to its action list (a backdated lesson bills children).
+
+### c.2 `20261113091000_d4_money_change_guard.sql` (M2)
+
+Preflight: `_caller_lane`, `session_change_reason_ok`, `session_cancel_audit_append_only`, `session_cancel_audit_insert_guard` (reused), `payroll_month_is_locked`, `student_enrolled_on`, every table and column read.
+
+**Tables**
+```sql
+CREATE TABLE IF NOT EXISTS public.money_change_overrides (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  txid bigint NOT NULL DEFAULT txid_current(),
+  actor_user_id uuid NOT NULL,
+  approved_by uuid, approval_request_id uuid,
+  entity text NOT NULL CHECK (entity IN ('enrollment','discount_assignment','referral_bonus','class_rate',
+                                         'pay_rate','invoice_freeze','attendance')),
+  op text NOT NULL,
+  target_id uuid NOT NULL,                 -- enrollment / assignment / bonus / class / staff / invoice / session id
+  student_ids uuid[] NOT NULL DEFAULT '{}',
+  reach_from date, reach_to date,          -- NULL = open on that side
+  via text NOT NULL CHECK (via IN ('single','bulk')), batch_id uuid,
+  tier int NOT NULL CHECK (tier BETWEEN 0 AND 3),
+  correction_mode boolean NOT NULL,
+  reason text, correction_reason text, confirmed boolean NOT NULL, token text NOT NULL,
+  row_before jsonb NOT NULL, change jsonb NOT NULL,
+  reach jsonb NOT NULL,                    -- [{student_id, month, past, state, tier, invoice_id}] / [{month, locked, held}]
+  invoices_before jsonb NOT NULL, refresh_pairs jsonb NOT NULL,
+  review_required boolean NOT NULL, attached jsonb NOT NULL DEFAULT '{}'::jsonb,
+  CONSTRAINT money_change_overrides_reason CHECK (tier = 0 OR reason IS NOT NULL),
+  CONSTRAINT money_change_overrides_correction CHECK (correction_mode = (tier = 3)
+                                                      AND (NOT correction_mode OR correction_reason IS NOT NULL)),
+  CONSTRAINT money_change_overrides_attached_size CHECK (pg_column_size(attached) < 131072)
+);
+CREATE TABLE IF NOT EXISTS public.money_change_events (            -- as session_cancel_override_events
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(), created_at timestamptz NOT NULL DEFAULT now(),
+  override_id uuid REFERENCES public.money_change_overrides(id) ON DELETE RESTRICT,
+  actor_user_id uuid,
+  kind text NOT NULL CHECK (kind IN ('guard_installed','tuition_refreshed','tuition_refresh_failed','reviewed','automation_refused')),
+  payload jsonb NOT NULL DEFAULT '{}'::jsonb,
+  CONSTRAINT money_change_events_payload_size CHECK (pg_column_size(payload) < 262144)
+);
+-- indexes: (entity, target_id, created_at DESC), (created_at DESC), (batch_id) , (review_required, created_at DESC);
+-- the three triggers per table that D2 puts on its audit tables (append-only, no truncate, insert guard).
+```
+
+**The reach functions (STABLE, SECURITY DEFINER, granted to nobody)**
+```sql
+tuition_month_state(p_student uuid, p_month text) RETURNS jsonb
+  -- past  := p_month < to_char((now() AT TIME ZONE 'Asia/Ho_Chi_Minh') - interval '7 days', 'YYYY-MM')
+  -- state := 'frozen'  if tuition_frozen
+  --          'signed'  if confirmation_status IN ('confirmed','adjusted')
+  --          'paid'    if COALESCE(recorded_payment,0) > 0 OR status::text IN ('paid','partial')
+  --          'issued'  if a row exists;  'none' otherwise
+  -- tier  := the table in b.0; for 'none' in a past month: 1 iff the child has an enrollment whose class has a
+  --          non-cancelled lesson in that month, else 0.  Any error -> tier 3 (the caller treats NULL as 3).
+tuition_reach(p_student uuid, p_class uuid, p_from date, p_to date) RETURNS jsonb
+  -- months := every month from p_from (NULL = the child's earliest enrollment start) to
+  --           GREATEST(COALESCE(p_to, current month end), last month that has an invoice row for the child)
+  --           that is past, or has an invoice row;   p_class NULL = any class
+  -- returns {tier (max), months:[tuition_month_state...], invoices_before:[<the 16 fields D2 copies>],
+  --          refresh_pairs:[{student_id, month}], fp (md5 over the 8 bill fields D2's token covers + states)}
+payroll_reach(p_teacher uuid, p_assistant uuid, p_from date, p_to date) RETURNS jsonb
+  -- months from p_from to LEAST(COALESCE(p_to, today), today) in which this person has a Held lesson
+  -- (sessions.teacher_id, or a payable teaching-assistant row); {tier: 3 if any locked, 1 if any Held before today, else 0, months:[...]}
+```
+
+**Acknowledgement test, one function used by every money trigger**
+```sql
+_money_ack(p_entities text[], p_target uuid, p_student uuid, p_from date, p_to date) RETURNS boolean
+  -- v := NULLIF(current_setting('hec.money_change_ack', true), '');  NULL -> false
+  -- EXISTS (SELECT 1 FROM money_change_overrides o WHERE o.id::text = v AND o.txid = txid_current()
+  --           AND o.entity = ANY (p_entities)
+  --           AND (p_target  IS NULL OR o.target_id = p_target OR p_student = ANY (o.student_ids))
+  --           AND (p_student IS NULL OR p_student = ANY (o.student_ids))
+  --           AND (o.reach_from IS NULL OR p_from >= o.reach_from)
+  --           AND (o.reach_to   IS NULL OR (p_to IS NOT NULL AND p_to <= o.reach_to)))
+  -- Not consumed: one checked change may write several rows (a weekday split ends one enrollment and starts
+  -- another and deletes placeholder marks). The flag is transaction-local and the row is tied to the txid.
+```
+
+**Triggers (all BEFORE, FOR EACH ROW, SECURITY DEFINER, `zz_` names)**
+
+| Trigger / function | On | Guarded when | Passes when |
+|---|---|---|---|
+| `zz_enrollment_money_guard` / `enrollment_money_guard()` | enrollments I, U, D | U with `student_id` or `class_id` changed -> HC121 `enrollment_identity` (all lanes but owner). Otherwise reach as G-12 and `tuition_reach(student, class, from, to).tier >= 1` | owner; `_money_ack(ARRAY['enrollment'], row id, student, from, to)`; else HC120 |
+| `zz_discount_money_guard` / `discount_money_guard()` | discount_assignments, referral_bonuses I, U, D | `tuition_reach(student, NULL, from, to).tier >= 1` | owner; ack for that entity |
+| `zz_discount_definition_guard` | discount_definitions U (type, value, cadence, any pricing column), D | an assignment of it has reach tier >= 1 | owner only; else HC121 `definition_in_use` |
+| `zz_class_money_guard` / `class_money_guard()` | classes U of `session_rate_vnd`; D | U: the class has a non-cancelled lesson before today with any register row. D: an enrollment exists -> HC121 `class_has_history` | owner; U with ack `class_rate` for this class |
+| `zz_pay_rate_money_guard` | staff_pay_rates I, U, D | `payroll_reach(staff, effective_from, next row's effective_from - 1).tier >= 1` (U: both old and new rows) | owner; ack `pay_rate` for this staff id |
+| `zz_staff_pay_mirror_guard` | teachers, teaching_assistants U of `pay_rate_type, hourly_rate_vnd, per_session_rate_vnd` | `payroll_reach(staff, '1900-01-01', today).tier >= 1` | owner; ack `pay_rate` for this staff id |
+| `zz_invoice_unfreeze_guard` | invoices U, `OLD.tuition_frozen AND NOT COALESCE(NEW.tuition_frozen, false)` | always | owner; ack `invoice_freeze` for this invoice |
+| `zz_attendance_money_guard` / `attendance_money_guard()` | attendance I, U, D | lane person / unknown, `pg_trigger_depth() = 1`, parent lesson exists and is not Canceled, billable(OLD) <> billable(NEW) (a missing row is not billable), `tuition_month_state(student, lesson month).tier >= 1` | `_money_ack(ARRAY['attendance','enrollment'], NULL, student, lesson date, lesson date)`; else HC025 `kind=retro_mark` |
+| `zz_student_delete_guard` | students D | a payment, a bill with `total_amount > 0` or `recorded_payment > 0`, or a mark with `marked_by IS NOT NULL` | owner only; else HC121 `student_has_history` |
+
+In every row "service" is refused exactly where a person without an acknowledgement is, and each such refusal on the service lane also writes a `money_change_events` row of kind `automation_refused` from an autonomous-free path: the trigger cannot insert and then raise, so the event is written by the edge function that received the error (`guarded-change-refresh` action `log-refused`, service role only) - same split as `log_session_automation_refused`.
+
+**The checked path**
+```sql
+money_change_preview(p_entity text, p_op text, p_args jsonb) RETURNS jsonb      -- STABLE, admin only
+money_change_checked(p_entity text, p_op text, p_args jsonb, p_reason text DEFAULT NULL, p_token text DEFAULT NULL,
+                     p_confirm boolean DEFAULT false, p_correction_reason text DEFAULT NULL,
+                     p_context jsonb DEFAULT '{}'::jsonb) RETURNS jsonb
+money_changes_checked_bulk(p_items jsonb, p_reason text, p_batch_id uuid, p_context jsonb DEFAULT '{}') RETURNS jsonb
+     -- <= 50 items {entity, op, args, token, confirm, reason, correction_reason}; ascending target id;
+     -- per-item refusals collected exactly as cancel_sessions_checked_bulk does (HC010-HC017, HC060, HC120, HC121, P0002)
+record_money_change_event(p_override_id uuid, p_kind text, p_payload jsonb DEFAULT '{}') RETURNS uuid
+money_change_guard_status() RETURNS jsonb
+change_enrollment_terms(p_enrollment_id uuid, p_terms jsonb, p_effective_date date) RETURNS jsonb   -- G-12 set_terms_from
+-- internal, granted to nobody:
+_money_change_plan (p_entity text, p_op text, p_args jsonb, p_uid uuid) RETURNS jsonb     -- STABLE
+_money_change_apply(p_entity text, p_op text, p_args jsonb, p_reason text, p_token text, p_confirm boolean,
+                    p_correction_reason text, p_context jsonb, p_via text, p_batch_id uuid, p_request uuid) RETURNS jsonb
+```
+`_money_change_plan` is the one place that knows what an (entity, op) means. It returns `{entity, op, target_id, student_ids, row_before, change, reach_from, reach_to, reach, tier, allowed, refuse_code, requires:{reason_min:15 or 0, confirm: tier>=1, correction_reason: tier=3}, invoices_before, refresh_pairs, marks:{excused, deleted}, impact, review_required, token, fingerprint}`. `token = sha256([1, entity, op, <args, keys sorted>, p_uid, tier, md5(row_before), reach.fp])`; `fingerprint` is the same without `p_uid`.
+
+Supported (entity, op) and what the apply does:
+
+| entity | op | args | write |
+|---|---|---|---|
+| enrollment | `enroll` | student_id, class_id, start_date, end_date?, allowed_days?, rate_override_vnd?, discount_* ? | INSERT |
+| | `set_start_date` | enrollment_id, start_date | UPDATE start_date |
+| | `end` | student_id, class_id, end_date | `end_enrollment(...)` |
+| | `set_days` | enrollment_id, allowed_days, effective_date | `change_enrollment_days(...)` |
+| | `transfer` | student_id, old_class_id, new_class_id, effective_date | `modify_enrollment_transfer(...)` |
+| | `pause` | the arguments of `pause_enrollment` | `pause_enrollment(...)` |
+| | `set_rate` | enrollment_id, rate_override_vnd | UPDATE (whole span) |
+| | `set_discount` | enrollment_id, discount_type, discount_value, discount_cadence | UPDATE (whole span) |
+| | `set_terms_from` | enrollment_id, effective_date, terms{rate_override_vnd, discount_*} | `change_enrollment_terms(...)` |
+| | `delete` | enrollment_id | DELETE |
+| discount_assignment / referral_bonus | `assign`, `set_end`, `edit`, `remove` | the row's columns | INSERT / UPDATE / DELETE |
+| class_rate | `set` | class_id, session_rate_vnd | UPDATE classes |
+| pay_rate | `set` | teacher_id or assistant_id, effective_from, pay_rate_type, rate, note | INSERT, or UPDATE of the same-date row; then the mirror columns |
+| | `remove` | rate row id | DELETE (never the last row of a person) |
+| invoice_freeze | `unfreeze` | invoice_id | UPDATE tuition_frozen = false |
+| attendance | `set_marks` | session_id, marks[{student_id, status}] (<= 60) | UPDATE / INSERT each mark with `marked_by = actor`, `marked_at = now()` |
+
+`_money_change_apply` order: admin check -> reason (required when the plan's tier >= 1; NULL allowed at T0) -> `pg_advisory_xact_lock(hashtextextended('money:' || entity || ':' || target, 0))` -> row locks (`attendance`: the session row first, D2's order; others: the target rows by ascending id) -> plan -> refuse codes (HC015) -> token (T1+: must match, HC011; T0: may be NULL) -> confirm (HC012) -> correction reason (HC013) -> approval hook (as in c.1, kind `'money'`) -> INSERT override -> `set_config('hec.money_change_ack', id, true)` -> the write -> `set_config(..., '', true)` -> check in `pg_trigger` that the entity's guard trigger exists and is enabled, else HC050 -> return `{override_id, entity, op, tier, review_required, refresh_pairs}`.
+`review_required := tier = 3 OR (tier = 2 AND via = 'bulk') OR <reach has a locked payroll month>`.
+
+Views `money_change_review_queue`, `money_change_tuition_pending` (security_invoker), mirroring D2's two.
+
+`ai_plan_check` (`20261107090000`) is re-created in this file with one added check per enrol / discount step: `tuition_reach(...)` tier >= 1 -> the step is refused on the card with code `needs_reason_path`. It is STABLE and stays STABLE (both reach functions are STABLE).
+
+### c.3 `20261113092000_d4_change_approvals.sql` (M3)
+
+Preflight: c.0, c.1 and c.2 present.
+
+```sql
+CREATE TABLE IF NOT EXISTS public.change_approval_settings (
+  id boolean PRIMARY KEY DEFAULT true CHECK (id),           -- one row
+  enabled boolean NOT NULL DEFAULT false,
+  on_tier3 boolean NOT NULL DEFAULT true,
+  on_closed_payroll boolean NOT NULL DEFAULT true,
+  on_unfreeze boolean NOT NULL DEFAULT true,
+  min_families int NOT NULL DEFAULT 3 CHECK (min_families >= 1),
+  min_paid_vnd bigint NOT NULL DEFAULT 5000000 CHECK (min_paid_vnd >= 0),
+  expiry_hours int NOT NULL DEFAULT 168 CHECK (expiry_hours BETWEEN 1 AND 720),
+  updated_at timestamptz NOT NULL DEFAULT now(), updated_by uuid
+);
+INSERT INTO public.change_approval_settings DEFAULT VALUES ON CONFLICT (id) DO NOTHING;
+-- BEFORE INSERT/UPDATE/DELETE trigger: only the owner lane or the definer functions of this file.
+
+CREATE TABLE IF NOT EXISTS public.change_approval_requests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  requested_by uuid NOT NULL,
+  kind text NOT NULL CHECK (kind IN ('session','money','settings')),
+  rpc text NOT NULL,                    -- which checked function this will run
+  params jsonb NOT NULL,                -- its exact arguments, reason and correction reason included, token excluded
+  target_key text NOT NULL,             -- 'session:<id>' | 'money:<entity>:<target>' | 'settings'
+  impact jsonb NOT NULL, reasons jsonb NOT NULL, preview jsonb NOT NULL,   -- what the requester was shown
+  fingerprint text NOT NULL,
+  expires_at timestamptz NOT NULL
+);
+CREATE TABLE IF NOT EXISTS public.change_approval_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(), created_at timestamptz NOT NULL DEFAULT now(),
+  txid bigint NOT NULL DEFAULT txid_current(),
+  request_id uuid NOT NULL REFERENCES public.change_approval_requests(id) ON DELETE RESTRICT,
+  actor_user_id uuid NOT NULL,
+  kind text NOT NULL CHECK (kind IN ('requested','approved','rejected','withdrawn','stale','applied')),
+  payload jsonb NOT NULL DEFAULT '{}'::jsonb
+);
+-- both append-only with the insert guard, as the override tables. A request's state is its newest event;
+-- "expired" is derived (pending AND now() > expires_at), never written.
+CREATE OR REPLACE VIEW public.change_approval_queue WITH (security_invoker = true) AS ...  -- request + state + age
+```
+Functions:
+```sql
+change_approval_needed(p_impact jsonb) RETURNS jsonb          -- REPLACES the prelude stub. STABLE.
+  -- s := the settings row.  NOT s.enabled -> {required:false}.   reasons := the true ones of:
+  --   'tier3'           s.on_tier3 AND (p_impact ->> 'tier')::int = 3
+  --   'closed_payroll'  s.on_closed_payroll AND (p_impact ->> 'closed_payroll')::boolean
+  --   'unfreeze'        s.on_unfreeze AND (p_impact ->> 'unfreeze')::boolean
+  --   'families'        (p_impact ->> 'families')::int >= s.min_families
+  --   'paid'            (p_impact ->> 'paid_vnd')::numeric >= s.min_paid_vnd AND s.min_paid_vnd > 0
+  --   'settings'        (p_impact ->> 'settings_loosen')::boolean
+  -- a missing or unreadable impact field counts as true (fail closed). required := reasons not empty.
+_change_request_claim(p_request uuid, p_kind text, p_fingerprint text) RETURNS uuid   -- REPLACES the stub
+  -- passes only when current_setting('hec.change_request_ok', true) = p_request::text AND an 'approved' event
+  -- of this request has txid = txid_current() AND the request's kind = p_kind AND fingerprint = p_fingerprint.
+  -- returns requested_by. Anything else: 42501.
+request_change_approval(p_kind text, p_rpc text, p_params jsonb, p_token text) RETURNS jsonb
+approval_request_preview(p_request_id uuid) RETURNS jsonb     -- STABLE
+approve_change_request(p_request_id uuid, p_token text, p_note text DEFAULT NULL) RETURNS jsonb
+reject_change_request(p_request_id uuid, p_note text) RETURNS jsonb
+withdraw_change_request(p_request_id uuid) RETURNS jsonb
+set_change_approval_settings(p_patch jsonb, p_reason text) RETURNS jsonb
+change_approval_status() RETURNS jsonb     -- {enabled, admins, single_admin, pending, expired, settings}
+```
+Their rules are section (e). One more trigger, active only while `enabled`: `zz_admin_grant_guard BEFORE INSERT OR UPDATE ON public.user_roles` - a row with `role = 'admin'` written on the person or service lane without a claimed request is refused with HC060 (otherwise an admin makes a second login and approves themselves).
+
 <!-- END -->
