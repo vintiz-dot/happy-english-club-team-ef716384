@@ -1,7 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
-import { invoicePaidLabel, paidLabel } from '../_lib/invoice-status.ts';
+import { labelAfterPayment, monthCharged, paidLabel } from '../_lib/invoice-status.ts';
+import { addToRecordedPayment, BILL_COLUMNS } from '../_lib/recorded-payment-write.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -262,32 +263,29 @@ Deno.serve(async (req) => {
           }
         ]);
 
-        // Update or create invoice
-        const { data: invoice } = await supabase
+        // Put it on the bill. Every write of recorded_payment is a compare-and-set
+        // on the value read (_lib/recorded-payment-write.ts): a second payment
+        // landing in between is re-read and kept, never overwritten.
+        const { data: invoice, error: invoiceReadError } = await supabase
           .from('invoices')
-          .select('id, paid_amount, total_amount, recorded_payment, carry_in_debt, carry_in_credit')
+          .select(BILL_COLUMNS)
           .eq('student_id', sibling.id)
           .eq('month', month)
-          .single();
+          .maybeSingle();
+        if (invoiceReadError) throw new Error(`Payment posted to the ledger but the bill could not be read: ${invoiceReadError.message}`);
 
+        const onExisting = (bill: any) => addToRecordedPayment(supabase, bill, applied, (fresh, newRecorded) => {
+          // The month's own money against what the month asks for (the one
+          // rule; an admin's 'credit' label is left alone).
+          const label = labelAfterPayment(fresh, newRecorded);
+          return { paid_amount: Number(fresh.paid_amount || 0) + applied, ...(label ? { status: label } : {}) };
+        });
         if (invoice) {
-          const newPaid = (invoice.paid_amount || 0) + applied;
-          const newRecorded = (invoice.recorded_payment || 0) + applied;
-          await supabase
-            .from('invoices')
-            .update({
-              paid_amount: newPaid,
-              // The month's own money against what the month asks for.
-              // paid_amount is cumulative: compared with one month's total
-              // it called nearly every part payment "paid".
-              status: invoicePaidLabel(invoice, newRecorded),
-              recorded_payment: newRecorded
-            })
-            .eq('id', invoice.id);
+          await onExisting(invoice);
         } else {
           // Create invoice so payment is tracked
           const sibData = sibling as any;
-          await supabase.from('invoices').insert({
+          const { error: insertError } = await supabase.from('invoices').insert({
             student_id: sibling.id,
             month,
             base_amount: sibData.baseAmount ?? 0,
@@ -297,8 +295,17 @@ Deno.serve(async (req) => {
             recorded_payment: applied,
             // No bill row yet, so nothing is recorded for the month and the
             // calculator's closing balance IS the month's payable.
-            status: paidLabel(applied, sibling.debt - sibling.credit),
+            status: paidLabel(applied, sibling.debt - sibling.credit,
+              monthCharged({ base_amount: sibData.baseAmount, total_amount: sibData.totalAmount })),
           });
+          if (insertError) {
+            // Another writer created the bill meanwhile: add to it instead.
+            if (insertError.code !== '23505') throw new Error(`Payment posted to the ledger but the bill could not be created: ${insertError.message}`);
+            const { data: created, error: reReadError } = await supabase
+              .from('invoices').select(BILL_COLUMNS).eq('student_id', sibling.id).eq('month', month).maybeSingle();
+            if (reReadError || !created) throw new Error('Payment posted to the ledger but the bill could not be read');
+            await onExisting(created);
+          }
         }
 
         // Log allocation

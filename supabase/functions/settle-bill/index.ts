@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
-import { invoicePaidLabel } from '../_lib/invoice-status.ts';
+import { WRITE_OFF_KEY_PREFIX } from '../_lib/invoice-status.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -69,56 +69,34 @@ Deno.serve(async (req) => {
     }
 
     // ── Balance ──────────────────────────────────────────────────────────
-    // The admin UI shows the CARRY-OVER balance, which exists even when the
-    // selected month has no invoice row yet (debt from earlier months). The
-    // old code demanded an invoice for the exact month and 400'd otherwise.
-    // Resolution order: exact-month invoice → latest invoice at-or-before the
-    // month (carry_out) → AR ledger balance (the double-entry ground truth).
-    const { data: invoice } = await supabase
+    // The balance is the month's own bill: its closing balance, kept by the
+    // carry trigger from what each month charged and what was recorded in it.
+    // That is the figure the Settle Bill dialog shows (carry-out debt, or
+    // carry-out credit as a negative). It used to be worked out from
+    // cumulative paid_amount, which for any family with paid earlier months
+    // already exceeds one month's charge: real debts were refused ("balance:
+    // 0") and credits that did not exist were offered for conversion.
+    //
+    // The bill is brought up to date first (as confirm-tuition does), so the
+    // balance is the one the screen showed, and a month without a bill row
+    // gets one.
+    const refresh = await supabase.functions.invoke('calculate-tuition', { body: { studentId, month } });
+    if (refresh.error) {
+      return respond({ error: `The bill could not be brought up to date: ${refresh.error.message}` }, 502);
+    }
+    if (refresh.data?.invoiceSaved === false) {
+      return respond({ error: 'This family\'s sibling discount for the month is still being worked out; try again in a moment' }, 409);
+    }
+    const { data: invoice, error: invoiceError } = await supabase
       .from('invoices')
-      .select('id, total_amount, paid_amount, recorded_payment, carry_in_debt, carry_in_credit')
+      .select('id, total_amount, carry_out_debt, carry_out_credit, tuition_frozen')
       .eq('student_id', studentId)
       .eq('month', month)
       .maybeSingle();
+    if (invoiceError) return respond({ error: 'Unable to read the bill for this month' }, 500);
+    if (!invoice) return respond({ error: 'There is no bill for this month - nothing to settle' }, 404);
 
-    let balance: number;
-    if (invoice) {
-      balance =
-        (invoice.total_amount - invoice.paid_amount) +
-        (invoice.carry_in_debt ?? 0) - (invoice.carry_in_credit ?? 0);
-    } else {
-      const { data: prevInvoice } = await supabase
-        .from('invoices')
-        .select('month, carry_out_debt, carry_out_credit')
-        .eq('student_id', studentId)
-        .lte('month', month)
-        .order('month', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (prevInvoice) {
-        balance = (prevInvoice.carry_out_debt ?? 0) - (prevInvoice.carry_out_credit ?? 0);
-      } else {
-        // No invoices at all — fall back to the AR account balance.
-        const { data: arAccount } = await supabase
-          .from('ledger_accounts')
-          .select('id')
-          .eq('student_id', studentId)
-          .eq('code', 'AR')
-          .maybeSingle();
-        if (!arAccount) {
-          return respond(
-            { error: 'No invoice or ledger history found for this student — nothing to settle' },
-            404,
-          );
-        }
-        const { data: arEntries } = await supabase
-          .from('ledger_entries')
-          .select('debit, credit')
-          .eq('account_id', arAccount.id);
-        balance = (arEntries || []).reduce((sum, e) => sum + (e.debit ?? 0) - (e.credit ?? 0), 0);
-      }
-    }
+    const balance = Number(invoice.carry_out_debt ?? 0) - Number(invoice.carry_out_credit ?? 0);
 
     // ── Ledger accounts ──────────────────────────────────────────────────
     // Ensure the accounts exist before mapping (same pattern as
@@ -154,11 +132,31 @@ Deno.serve(async (req) => {
       if (balance <= 0) {
         return respond({ error: `No outstanding debt to discount (balance: ${balance})` }, 400);
       }
-      settledAmount = Math.min(amount, balance);
+      // The write-off lowers what THIS month charges (both calculators add it
+      // as a discount line, see _lib/invoice-status.ts), so it can count only
+      // where that charge can move, and never past it.
+      if (invoice.tuition_frozen) {
+        return respond({
+          error: 'This bill is frozen: its charged figures cannot change, so a write-off would never show on it. Unfreeze it first, or write off on another month.',
+        }, 409);
+      }
+      // The bill was just recalculated, so its total is the charge left after
+      // any earlier write-off of the same month.
+      const room = Math.max(0, Number(invoice.total_amount ?? 0));
+      if (room <= 0) {
+        return respond({
+          error: `Nothing of ${month}'s own charge is left to write off. Debt carried in from an earlier month is written off on that month.`,
+        }, 400);
+      }
+      settledAmount = Math.min(amount, balance, room);
       await insertEntries([
         {
           tx_id: txId,
-          tx_key: `settlement-discount-${studentId}-${month}-${Date.now()}`,
+          // This key is what makes the write-off count on the bill: both
+          // calculators add only settlements whose ledger transaction starts
+          // WRITE_OFF_KEY_PREFIX (_lib/invoice-status.ts). The old function
+          // wrote 'settlement-discount-...', which stays ledger-only.
+          tx_key: `${WRITE_OFF_KEY_PREFIX}${studentId}-${month}-${Date.now()}`,
           account_id: accountMap.get('DISCOUNT'),
           debit: settledAmount,
           credit: 0,
@@ -178,24 +176,11 @@ Deno.serve(async (req) => {
           created_by: user.id,
         },
       ]);
-
-      if (invoice) {
-        const { error: invErr } = await supabase
-          .from('invoices')
-          .update({
-            paid_amount: invoice.paid_amount + settledAmount,
-            // The one label rule: the month's recorded payment against what
-            // the month asks for. A write-off posts to the ledger; it does
-            // not change recorded_payment or the bill's total, so it does
-            // not by itself make the bill "paid" - the bill's balance
-            // columns still show the debt, and the label must not say
-            // otherwise. (It used to compare cumulative paid_amount, which
-            // read "paid" for nearly any family with history.)
-            status: invoicePaidLabel(invoice),
-          })
-          .eq('id', invoice.id);
-        if (invErr) console.warn('invoice update failed (ledger already posted):', invErr.message);
-      }
+      // No invoice write here. The settlements row below IS the write-off on
+      // the bill: the recalculation after it lowers total_amount, the carry
+      // trigger moves the balance, and the label follows the one rule. (It
+      // used to add the write-off to cumulative paid_amount, which the next
+      // recalculation overwrote, so the debt never left the bill.)
     } else if (settlementType === 'voluntary_contribution') {
       // Credit balance conversion: DR AR / CR Contributions revenue.
       if (balance >= 0) {
@@ -271,12 +256,22 @@ Deno.serve(async (req) => {
       before_balance: balance,
       after_balance: afterBalance,
     });
-    if (settlementErr) console.warn('settlements insert failed (ledger already posted):', settlementErr.message);
+    if (settlementErr) {
+      // For a write-off the settlements row is what puts it on the bill; say
+      // so rather than report a settlement the bill will never show.
+      console.error('settlements insert failed (ledger already posted):', settlementErr.message);
+      return respond({
+        error: `The ledger entries were posted (transaction ${txId}) but the settlement record was not saved, so the bill does not show it: ${settlementErr.message}`,
+      }, 500);
+    }
 
-    // Trigger tuition recalc so invoices/carry-over reflect the settlement.
+    // Recalculate so the bill, its carry and its label reflect the settlement.
+    let billRefreshed = true;
     try {
-      await supabase.functions.invoke('calculate-tuition', { body: { studentId, month } });
+      const { error } = await supabase.functions.invoke('calculate-tuition', { body: { studentId, month } });
+      if (error) billRefreshed = false;
     } catch (e) {
+      billRefreshed = false;
       console.error('Failed to recalc tuition:', e);
     }
 
@@ -287,6 +282,7 @@ Deno.serve(async (req) => {
       amount: settledAmount,
       beforeBalance: balance,
       afterBalance,
+      billRefreshed,
     });
   } catch (error: any) {
     console.error('Error settling bill:', error);

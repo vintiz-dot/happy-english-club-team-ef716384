@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { labelAfterPayment } from "@/lib/invoiceStatus";
 
 interface IntegrityIssue {
   type: 'orphaned_ledger' | 'incorrect_invoice_status' | 'corrupted_contribution';
@@ -42,29 +43,26 @@ export function PaymentIntegrityRepair() {
         });
       }
 
-      // Check for invoices with incorrect status
+      // Check for invoices whose label disagrees with the month's own money.
+      // The rule is the one every writer uses (src/lib/invoiceStatus.ts, the
+      // mirror of the edge functions' copy): the month's recorded payment
+      // against its charge plus carry-in. It used to judge by cumulative
+      // paid_amount and expect 'draft' at zero, so it listed nearly every
+      // bill and Repair wrote labels the next calculation undid. An admin's
+      // 'credit' is never listed or changed.
       const { data: invoices } = await supabase
         .from('invoices')
-        .select('id, student_id, month, total_amount, paid_amount, status');
+        .select('id, student_id, month, base_amount, total_amount, recorded_payment, carry_in_debt, carry_in_credit, status');
 
       if (invoices) {
         for (const invoice of invoices) {
-          const owed = invoice.total_amount - invoice.paid_amount;
-          let expectedStatus: string;
+          const expectedStatus = labelAfterPayment(invoice);
 
-          if (invoice.paid_amount === 0) {
-            expectedStatus = 'draft';
-          } else if (owed <= 0) {
-            expectedStatus = 'paid';
-          } else {
-            expectedStatus = 'partial';
-          }
-
-          if (invoice.status !== expectedStatus) {
+          if (expectedStatus && invoice.status !== expectedStatus) {
             foundIssues.push({
               type: 'incorrect_invoice_status',
               entityId: invoice.id,
-              description: `Invoice ${invoice.id.slice(0, 8)}... (${invoice.month}) has status '${invoice.status}' but should be '${expectedStatus}' (paid: ${invoice.paid_amount}, total: ${invoice.total_amount})`,
+              description: `Invoice ${invoice.id.slice(0, 8)}... (${invoice.month}) has status '${invoice.status}' but should be '${expectedStatus}' (recorded this month: ${invoice.recorded_payment ?? 0}, total: ${invoice.total_amount})`,
               suggestedFix: `Update status to '${expectedStatus}'`
             });
           }
@@ -127,22 +125,13 @@ export function PaymentIntegrityRepair() {
       for (const issue of invoiceIssues) {
         const { data: invoice } = await supabase
           .from('invoices')
-          .select('total_amount, paid_amount')
+          .select('base_amount, total_amount, recorded_payment, carry_in_debt, carry_in_credit, status')
           .eq('id', issue.entityId)
           .single();
 
-        if (invoice) {
-          const owed = invoice.total_amount - invoice.paid_amount;
-          let correctStatus: 'draft' | 'partial' | 'paid' | 'issued';
-
-          if (invoice.paid_amount === 0) {
-            correctStatus = 'draft';
-          } else if (owed <= 0) {
-            correctStatus = 'paid';
-          } else {
-            correctStatus = 'partial';
-          }
-
+        // Re-read and judged again by the same rule; a bill set to 'credit' since the scan is left alone.
+        const correctStatus = invoice ? labelAfterPayment(invoice) : undefined;
+        if (invoice && correctStatus) {
           const { error } = await supabase
             .from('invoices')
             .update({ 

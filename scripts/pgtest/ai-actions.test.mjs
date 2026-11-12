@@ -6,7 +6,9 @@
 // click to undo - and undo refusing, with reasons, once a person has done
 // something that depends on it.
 import { PGlite } from "@electric-sql/pglite";
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 let pass = 0, fail = 0;
 const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${x ? " :: " + x : ""}`); c ? pass++ : fail++; };
@@ -330,6 +332,63 @@ console.log("=== recording tuition ===");
   await db.query("DELETE FROM public.monthly_finance_snapshots");
   ok("reopened, the undo works and the empty bill goes", (await undo(r3.action_id)).ok
     && (await one("SELECT count(*)::int AS n FROM public.invoices WHERE student_id = $1 AND month = $2", [lan, M1])).n === 0);
+
+  // T4: the label is the one rule (_lib/invoice-status.ts), through
+  // public.invoice_paid_label (migration 20261113090000): a month whose
+  // charge is covered by credit carried in, paid again on top, reads paid.
+  const saved = await one("SELECT recorded_payment, carry_in_credit FROM public.invoices WHERE student_id = $1 AND month = $2", [lan, M0]);
+  await db.query("UPDATE public.invoices SET recorded_payment = 0, carry_in_credit = 1000000 WHERE student_id = $1 AND month = $2", [lan, M0]);
+  const r4 = await apply(pay(50000));
+  inv = await one("SELECT recorded_payment, status FROM public.invoices WHERE student_id = $1 AND month = $2", [lan, M0]);
+  eq("T4: credit covers the month, 50.000 paid on top: paid (was partial)", [inv.recorded_payment, inv.status], [50000, "paid"]);
+  ok("T4: undone, nothing recorded and the credit still covers it: paid (was issued)", (await undo(r4.action_id)).ok
+    && (await one("SELECT status FROM public.invoices WHERE student_id = $1 AND month = $2", [lan, M0])).status === "paid");
+  await db.query("UPDATE public.invoices SET recorded_payment = $3, carry_in_credit = $4, status = 'issued' WHERE student_id = $1 AND month = $2",
+    [lan, M0, saved.recorded_payment, saved.carry_in_credit]);
+  const def = (await one("SELECT pg_get_functiondef('public.ai_action_apply(uuid, text, jsonb)'::regprocedure) AS d")).d
+    + (await one("SELECT pg_get_functiondef('public.ai_action_undo(uuid)'::regprocedure) AS d")).d;
+  ok("T4: ai_action_apply / undo state no label rule of their own any more",
+     (def.match(/public\.invoice_paid_label\(/g) || []).length === 2 && !/THEN 'paid'/.test(def));
+  const t4mig = process.argv.slice(2).find((f) => f.includes("20261113090000"));
+  let again = "not run";
+  try { await db.exec(readFileSync(t4mig, "utf8")); again = null; } catch (e) { again = e.message; }
+  const def2 = (await one("SELECT pg_get_functiondef('public.ai_action_apply(uuid, text, jsonb)'::regprocedure) AS d")).d
+    + (await one("SELECT pg_get_functiondef('public.ai_action_undo(uuid)'::regprocedure) AS d")).d;
+  ok("T4: the migration run a second time changes nothing", again === null && def2 === def, again);
+
+  // T4 r2 (review m1): an admin's credit label is kept by the assistant too.
+  await db.query("UPDATE public.invoices SET status = 'credit' WHERE student_id = $1 AND month = $2", [lan, M0]);
+  const r5 = await apply(pay(10000));
+  ok("T4: a bill an admin marked credit stays credit after the assistant records a payment, and after its undo",
+     (await one("SELECT status FROM public.invoices WHERE student_id = $1 AND month = $2", [lan, M0])).status === "credit"
+       && (await undo(r5.action_id)).ok
+       && (await one("SELECT status FROM public.invoices WHERE student_id = $1 AND month = $2", [lan, M0])).status === "credit");
+  await db.query("UPDATE public.invoices SET status = 'issued' WHERE student_id = $1 AND month = $2", [lan, M0]);
+
+  // T4 r2 (review section 2): the installed source lives in a file, and nothing re-creates it without the rule.
+  const refPath = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "docs", "sql", "ai_action_apply_undo.installed.sql");
+  const norm = (s) => s.replace(/\r\n/g, "\n").split("\n").map((l) => l.replace(/\s+$/, "")).join("\n").trim();
+  const installed = norm(`${(await one("SELECT pg_get_functiondef('public.ai_action_apply(uuid, text, jsonb)'::regprocedure) AS d")).d};\n\n`
+    + `${(await one("SELECT pg_get_functiondef('public.ai_action_undo(uuid)'::regprocedure) AS d")).d};`);
+  if (process.env.T4_WRITE_REFERENCE === "1") {
+    writeFileSync(refPath, `-- REFERENCE ONLY - do not paste. The source of public.ai_action_apply and\n`
+      + `-- public.ai_action_undo as installed after migrations 20261107090000 and\n`
+      + `-- 20261113090000 (the label patch). No migration holds this text any more:\n`
+      + `-- start any change to either function from here, and keep\n`
+      + `-- public.invoice_paid_label as its label. scripts/pgtest/ai-actions.test.mjs\n`
+      + `-- fails when the installed functions differ from the text below.\n\n${installed}\n`);
+  }
+  // The file is its header comment, one blank line, then the source.
+  const refText = existsSync(refPath) ? readFileSync(refPath, "utf8").replace(/\r\n/g, "\n") : "";
+  const ref = norm(refText.slice(refText.indexOf("\n\n") + 2));
+  ok("T4: docs/sql/ai_action_apply_undo.installed.sql is exactly the patched functions as installed",
+     ref === installed && ref.length > 1000,
+     ref === installed ? "" : ref.length ? "differs: regenerate with T4_WRITE_REFERENCE=1 only after checking the change is intended" : "file missing");
+  const migDir = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "supabase", "migrations");
+  const later = readdirSync(migDir).filter((f) => f > "20261113090000_invoice_paid_label.sql" && f.endsWith(".sql"))
+    .filter((f) => /FUNCTION\s+public\.ai_action_(apply|undo)\s*\(/i.test(readFileSync(join(migDir, f), "utf8")));
+  ok("T4: no later migration re-creates ai_action_apply / ai_action_undo without invoice_paid_label",
+     later.every((f) => /invoice_paid_label/.test(readFileSync(join(migDir, f), "utf8"))), later.join(", "));
 }
 
 console.log("=== families ===");

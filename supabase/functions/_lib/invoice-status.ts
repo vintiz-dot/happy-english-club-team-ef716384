@@ -1,3 +1,9 @@
+/*
+ * EDGE copy. Mirrored, byte for byte below this comment, by
+ * src/lib/invoiceStatus.ts (the admin payment screens); Deno cannot import
+ * from src/. scripts/pgtest/mirrors.test.mjs fails when the two differ.
+ * This file imports nothing - that is what makes the copy possible.
+ */
 // Which label columns calculate-tuition may write on a bill it is saving.
 //
 // calculate-tuition saves the bill every time anybody looks at it. It used
@@ -37,16 +43,24 @@ export interface ChargedFigures {
 
 // ---------------------------------------------------------------- paid label
 //
-// ONE rule for invoices.status, for every function that writes it
+// ONE rule for invoices.status, for every writer of it: the edge functions
 // (calculate-tuition, family-payment, smart-family-payment, settle-bill,
-// delete-payment). It is the rule the admin payment dialogs
-// (RecordPaymentDialog, QuickPayPanel, BatchPaymentDialog) and
-// ai_action_apply already used:
+// delete-payment) through this file; the admin screens (RecordPaymentDialog,
+// QuickPayPanel, BatchPaymentDialog, RecordedPaymentManager,
+// PaymentIntegrityRepair, InvoiceStatusManager) through its mirror
+// src/lib/invoiceStatus.ts; ai_action_apply / ai_action_undo through
+// public.invoice_paid_label (migration 20261113090000), which states the
+// same thing in SQL and is compared with this one by the test suite.
 //
 //   payable = this month's charge + debt carried in - credit carried in
-//   paid     when recorded_payment >= payable and payable > 0
+//   paid     when recorded_payment >= payable, and the month charged
+//            something (base or total > 0) or money was recorded in it
 //   partial  when recorded_payment > 0 otherwise
-//   issued   when nothing is recorded for the month
+//   issued   otherwise
+//
+// That is: nothing left to pay reads "paid". The one exception is a month
+// that neither charged nor received anything (no lessons, nothing paid),
+// which stays "issued" - there is nothing to call paid.
 //
 // `recorded_payment` is the money recorded IN that month. `paid_amount` is
 // cumulative across months and must never be compared with one month's
@@ -56,11 +70,11 @@ export interface ChargedFigures {
 // What follows from the rule, on purpose:
 //   - debt carried in: the month is paid only when the payment covers the
 //     debt as well as the month;
-//   - credit carried in that covers the whole month, nothing recorded:
-//     issued. Nothing was paid IN this month; that nothing is owed is read
-//     from the carry balances, not from this label;
-//   - a month with no charge: issued, or partial if money was recorded;
-//   - a frozen bill: the same rule on its saved total.
+//   - credit carried in that covers the month: paid, with or without money
+//     recorded in the month (before T4: issued / partial, which read to a
+//     person as "still owes");
+//   - a charge written off in full by Settle Bill, or discounted to 0: paid;
+//   - a frozen bill: the same rule on its saved figures.
 // The label is a label. Never branch on it for money.
 
 export type PaidLabel = "paid" | "partial" | "issued";
@@ -79,20 +93,97 @@ export function monthPayable(row: {
   return amount(row?.total_amount) + amount(row?.carry_in_debt) - amount(row?.carry_in_credit);
 }
 
-export function paidLabel(recordedPayment: unknown, payable: unknown): PaidLabel {
+/**
+ * @param recordedPayment the money recorded in the month
+ * @param payable         monthPayable of the bill
+ * @param charged         the month's charge before discounts (base_amount), or
+ *                        its total - anything above 0 means "the month charged something"
+ */
+export function paidLabel(recordedPayment: unknown, payable: unknown, charged: unknown): PaidLabel {
   const recorded = amount(recordedPayment);
   const due = amount(payable);
-  if (recorded >= due && due > 0) return "paid";
+  if (recorded >= due && (recorded > 0 || amount(charged) > 0)) return "paid";
   if (recorded > 0) return "partial";
   return "issued";
 }
 
+/** What a bill row charged, for paidLabel: base before discounts, or the total if that is larger. */
+export function monthCharged(row: { base_amount?: unknown; total_amount?: unknown }): number {
+  return Math.max(amount(row?.base_amount), amount(row?.total_amount));
+}
+
+type BillRow = {
+  base_amount?: unknown;
+  total_amount?: unknown;
+  carry_in_debt?: unknown;
+  carry_in_credit?: unknown;
+  recorded_payment?: unknown;
+  status?: unknown;
+};
+
 /** The label of a stored bill row, optionally with a different recorded payment (the one about to be saved). */
-export function invoicePaidLabel(
-  row: { total_amount?: unknown; carry_in_debt?: unknown; carry_in_credit?: unknown; recorded_payment?: unknown },
-  recordedPayment: unknown = row?.recorded_payment,
-): PaidLabel {
-  return paidLabel(recordedPayment, monthPayable(row));
+export function invoicePaidLabel(row: BillRow, recordedPayment: unknown = row?.recorded_payment): PaidLabel {
+  return paidLabel(recordedPayment, monthPayable(row), monthCharged(row));
+}
+
+/**
+ * The `status` a writer saves with a changed payment, or undefined when it
+ * must leave the column alone: an admin's 'credit' is never replaced by a
+ * payment path (calculate-tuition keeps it too, below).
+ */
+export function labelAfterPayment(row: BillRow, recordedPayment: unknown = row?.recorded_payment): PaidLabel | undefined {
+  return labelForPayment(row?.status, recordedPayment, monthPayable(row), monthCharged(row));
+}
+
+/** The same, from figures a screen already holds (its payable is the calculator's carry.payable). */
+export function labelForPayment(
+  storedStatus: unknown,
+  recordedPayment: unknown,
+  payable: unknown,
+  charged: unknown,
+): PaidLabel | undefined {
+  if (storedStatus === "credit") return undefined;
+  return paidLabel(recordedPayment, payable, charged);
+}
+
+// ---------------------------------------------------------- settle bill
+//
+// A Settle Bill write-off (settlement_type 'discount') lowers what the month
+// charges: both calculators add it as one more discount line, after every
+// other discount, never below 0.
+//
+// Only write-offs posted by the T4 settle-bill count, and they are known by
+// what that function writes, not by a date: their ledger transaction's key
+// starts WRITE_OFF_KEY_PREFIX. The settle-bill before T4 keyed its write-offs
+// 'settlement-discount-...', sized them from cumulative paid_amount and never
+// put them on a bill; those stay ledger-only whenever they were made (owner's
+// default: counting the four old ones would create credit on bills that
+// show no debt). A date cutoff would also count any write-off the OLD
+// function makes between the cutoff and the deploy.
+export const WRITE_OFF_KEY_PREFIX = "settlement-writeoff-";
+export const WRITE_OFF_NAME = "Settle Bill write-off";
+
+/**
+ * The month's write-off: the sum of its 'discount' settlements whose ledger
+ * transaction carries the T4 key. This is the ONLY place that filter is
+ * applied - the calculators read settlements and their ledger legs unfiltered.
+ */
+export function settledWriteOff(
+  settlements: Array<{ settlement_type?: unknown; amount?: unknown; tx_id?: unknown }> | null | undefined,
+  ledgerLegs: Array<{ tx_id?: unknown; tx_key?: unknown }> | null | undefined,
+): number {
+  const marked = new Set<string>();
+  for (const leg of ledgerLegs ?? []) {
+    if (String(leg?.tx_key ?? "").startsWith(WRITE_OFF_KEY_PREFIX)) marked.add(String(leg?.tx_id));
+  }
+  let sum = 0;
+  for (const s of settlements ?? []) {
+    if (s?.settlement_type !== "discount") continue;
+    if (!marked.has(String(s?.tx_id))) continue;
+    const a = amount(s?.amount);
+    if (a > 0) sum += a;
+  }
+  return sum;
 }
 
 export interface InvoiceLabelFields {

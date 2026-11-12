@@ -1,7 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
-import { invoicePaidLabel } from '../_lib/invoice-status.ts';
+import { labelAfterPayment, monthPayable } from '../_lib/invoice-status.ts';
+import { addToRecordedPayment } from '../_lib/recorded-payment-write.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -98,13 +99,14 @@ Deno.serve(async (req) => {
 
     if (invoiceError) throw invoiceError;
 
-    // "Open" is judged from the bill's own money, not from the stored
-    // status label: a label can be stale (an override, a payment edited
-    // since), and a bill wrongly labelled paid would be left out of the
-    // allocation while the ledger entry was still posted. A bill that IS
-    // paid stays out, as before - including one covered partly by credit
-    // carried in, where total - recorded alone would still look owed.
-    const invoices = (monthInvoices ?? []).filter((inv) => invoicePaidLabel(inv) !== 'paid');
+    // What a bill still asks for is judged from its own money, never from
+    // the stored label: the month's charge plus debt carried in, less credit
+    // carried in, less what is already recorded in the month. (It used to be
+    // total - recorded, which took a credit-covered month's charge again and
+    // could put nothing towards debt carried in.) A bill with nothing owed is
+    // not selected, so no zero allocation is written for it.
+    const owedOn = (inv: any) => Math.max(0, monthPayable(inv) - Number(inv.recorded_payment || 0));
+    const invoices = (monthInvoices ?? []).filter((inv) => owedOn(inv) > 0);
 
     // Calculate allocations based on mode
     let allocations: Array<{ studentId: string; amount: number; invoices: any[] }> = [];
@@ -115,8 +117,12 @@ Deno.serve(async (req) => {
       for (const allocation of manualAllocations) {
         if (remainingAmount <= 0) break;
         
-        const studentInvoices = invoices?.filter(inv => inv.student_id === allocation.studentId) || [];
+        // The admin chose this amount, so it goes on the child's bill for the
+        // month even where nothing is owed (the excess becomes credit through
+        // the carry) - never into the ledger alone.
+        const studentInvoices = (monthInvoices ?? []).filter(inv => inv.student_id === allocation.studentId);
         const appliedAmount = Math.min(allocation.amount, remainingAmount);
+        if (appliedAmount <= 0) continue;
         
         allocations.push({
           studentId: allocation.studentId,
@@ -131,7 +137,7 @@ Deno.serve(async (req) => {
       // Pro-rata by balance
       const studentBalances = new Map<string, number>();
       for (const inv of invoices || []) {
-        const owed = Math.max(0, inv.total_amount - (inv.recorded_payment || 0));
+        const owed = owedOn(inv);
         studentBalances.set(
           inv.student_id,
           (studentBalances.get(inv.student_id) || 0) + owed
@@ -166,7 +172,7 @@ Deno.serve(async (req) => {
       for (const inv of sortedInvoices) {
         if (remainingAmount <= 0) break;
         
-        const owed = Math.max(0, inv.total_amount - (inv.recorded_payment || 0));
+        const owed = owedOn(inv);
         const appliedAmount = Math.min(owed, remainingAmount);
         
         let existingAlloc = allocations.find(a => a.studentId === inv.student_id);
@@ -179,6 +185,21 @@ Deno.serve(async (req) => {
         existingAlloc.invoices.push(inv);
         remainingAmount -= appliedAmount;
       }
+    }
+
+    // Refuse before anything is written, rather than post money that lands
+    // nowhere: an allocation with no bill to go on, or a remainder with no
+    // instruction for it (it used to be dropped silently).
+    for (const a of allocations) {
+      if (a.amount > 0 && a.invoices.length === 0) {
+        throw new Error(`A student has no bill for ${month} to put ${a.amount} on; open their tuition for that month first`);
+      }
+    }
+    if (remainingAmount > 0 && !leftoverHandling) {
+      throw new Error(`${remainingAmount} is more than the selected bills owe for ${month}; choose what to do with the rest (voluntary contribution or unapplied cash)`);
+    }
+    if (remainingAmount > 0 && leftoverHandling === 'voluntary_contribution' && !consentGiven) {
+      throw new Error('Consent required for voluntary contribution');
     }
 
     // Create parent payment
@@ -254,23 +275,27 @@ Deno.serve(async (req) => {
         }
       ]);
 
-      // Apply to invoices (FIFO within student)
+      // Apply to invoices (FIFO within student). The bills record exactly
+      // what the ledger just posted for this student: each takes what it
+      // owes, and the last one takes whatever is left (a manual amount above
+      // what is owed becomes credit through the carry).
       let studentRemaining = allocation.amount;
-      for (const inv of allocation.invoices) {
+      for (const [k, inv] of allocation.invoices.entries()) {
         if (studentRemaining <= 0) break;
-        
-        const owed = Math.max(0, inv.total_amount - (inv.recorded_payment || 0));
-        const applied = Math.min(studentRemaining, owed);
-        const newPaid = (inv.recorded_payment || 0) + applied;
-        
-        await supabase
-          .from('invoices')
-          .update({
-            recorded_payment: newPaid,
-            status: invoicePaidLabel(inv, newPaid)
-          })
-          .eq('id', inv.id);
-        
+        const last = k === allocation.invoices.length - 1;
+        const applied = last ? studentRemaining : Math.min(studentRemaining, owedOn(inv));
+        if (applied <= 0) continue;
+        // Compare-and-set on the value read (_lib/recorded-payment-write.ts):
+        // another payment landing in between is re-read and kept.
+        try {
+          await addToRecordedPayment(supabase, inv, applied, (fresh, newRecorded) => {
+            const label = labelAfterPayment(fresh, newRecorded);
+            return label ? { status: label } : {};
+          });
+        } catch (e) {
+          throw new Error(`Payment posted to the ledger but the bill could not be updated: ${(e as Error).message}`);
+        }
+
         studentRemaining -= applied;
       }
 
