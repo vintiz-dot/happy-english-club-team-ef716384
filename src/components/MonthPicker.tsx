@@ -35,7 +35,8 @@ export function MonthPicker({ value, onChange, maxMonth, minMonth }: MonthPicker
 
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-[220px]">
+      {/* Named for a screen reader (axe button-name); the name starts with what is shown. */}
+      <SelectTrigger className="w-[220px]" aria-label={`${dayjs(value).format("MMMM YYYY")}, choose a month`}>
         <Calendar className="h-4 w-4 mr-2" />
         <SelectValue>{dayjs(value).format("MMMM YYYY")}</SelectValue>
       </SelectTrigger>
