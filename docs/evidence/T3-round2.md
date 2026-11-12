@@ -119,7 +119,13 @@ No migration.
 
 ## Row order
 
-**Where I am / next step:** code, test and this write-up done on branch `release/tuition-1b` (cut from 9804590; `release/tuition-1` is checked out in another worktree, so the work could not go on it directly). Next: the three checks on the final tree, then the numbers below.
+**Where I am / next step:** COMPLETE on branch `release/tuition-1b` (cut from 9804590; `release/tuition-1` is checked out in another worktree, so the work could not go on it directly). All three checks green on the final tree. Nothing pushed, nothing deployed, no database touched. Next step is the conductor's.
+
+Checks on the final code (node_modules by junction, removed with `cmd //c rmdir`):
+- `node scripts/pgtest/run.mjs`: 2684 assertions across 36 suites, 0 failed, exit 0 (was 2610 across 35: the new suite adds 74). Enrollment row order 74, invoice status 188 (golden compared; `git diff 9804590 -- scripts/pgtest/fixtures` is empty), tuition prior balance 267, dated enrollment discounts 22, shared-module mirrors 13, edge functions typecheck 5.
+- `npx --yes bun test scripts/tuitionRows.test.ts`: 46 pass, 0 fail.
+- `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0.
+- The first full run failed one suite, the edge typecheck: `inCreationOrder` over an untyped query result typed the rows too narrowly in calculate-tuition. Fixed with a type annotation (no behaviour change) and the whole run repeated.
 
 Why: the paged reads return rows in `id` order. The pre-deploy probe found one pair of overlapping enrollments of one student in one class (7 days, 2025-11; same override, days and discount; ids in the reverse of creation order). Which row prices a shared lesson must not depend on how the rows were fetched.
 
