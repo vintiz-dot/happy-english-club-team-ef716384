@@ -187,15 +187,15 @@ console.log("=== FLAC and WAV encoders ===");
     const got = new Int16Array(d.stdout.buffer, d.stdout.byteOffset, d.stdout.length / 2);
     ok("ffmpeg decodes our FLAC to the same samples", d.status === 0 && sameInt16(got, sine), d.stderr?.toString().slice(0, 200));
   } else console.log("  (ffmpeg not found: the independent-decoder check was skipped)");
-  // Real lesson audio, read in place (never copied into the repo): FLAC ratio at its native 16 kHz.
-  const lesson = "C:\\Users\\Dell\\hec-audio-eval\\work\\wav16k\\lessons\\242 Lang Street Lane 19.wav";
-  // Real lesson audio only when asked for (RECORDER_REAL_AUDIO=1): by default every test is synthetic.
-  if (process.env.RECORDER_REAL_AUDIO === "1" && existsSync(lesson)) {
-    const fd = openSync(lesson, "r"); const buf = Buffer.alloc(16000 * 2 * 60); readSync(fd, buf, 0, buf.length, 44 + 16000 * 2 * 600); closeSync(fd);
+  // An opt-in FLAC ratio check on a 16 kHz WAV (RECORDER_FLAC_CHECK=1). It reads the SYNTHETIC file made by
+  // make-synthetic-wav.mjs unless RECORDER_FLAC_FILE names another; no test reads a real lesson by default or in CI.
+  const lesson = process.env.RECORDER_FLAC_FILE ?? "C:/Users/Dell/hec-tools/c2r-harness/synthetic.wav";
+  if (process.env.RECORDER_FLAC_CHECK === "1" && existsSync(lesson)) {
+    const fd = openSync(lesson, "r"); const buf = Buffer.alloc(16000 * 2 * 60); readSync(fd, buf, 0, buf.length, 44); closeSync(fd);
     const x = new Int16Array(buf.buffer, buf.byteOffset, buf.length / 2);
     const t = performance.now(); const f = R.encodeFlac(x, 16000); const encMs = performance.now() - t;
-    ok("real lesson audio: FLAC is exact", sameInt16(decodeFlac(f).samples, x));
-    console.log(`  info: lesson minute 10-11 at 16 kHz: FLAC ${f.length} B vs ${x.length * 2} raw (${(100 * f.length / (x.length * 2)).toFixed(1)}%), encode ${encMs.toFixed(0)} ms for 60 s`);
+    ok("16 kHz sample file: FLAC is exact", sameInt16(decodeFlac(f).samples, x));
+    console.log(`  info: the first minute of the sample at 16 kHz: FLAC ${f.length} B vs ${x.length * 2} raw (${(100 * f.length / (x.length * 2)).toFixed(1)}%), encode ${encMs.toFixed(0)} ms for 60 s`);
   }
 }
 
@@ -571,7 +571,7 @@ console.log("=== reload mid-recording (tab crash): recover, nothing lost or dupl
   w.server.offline = true;              // the last chunks never left the laptop
   await src.play(27, a.r);              // 2 full chunks + 7 s in progress (one 5 s segment saved)
   const played = src.lastFrame;
-  await a.r.dispose();                  // the tab dies: no stop, no flush
+  a.r.kill();             // (kill: a tab that dies; dispose() would end the capture properly)                  // the tab dies: no stop, no flush
   w.server.offline = false;
   // The page is opened again: a new engine, the same IndexedDB.
   const b = recorder(w, store, new FakeSource());
@@ -706,7 +706,7 @@ console.log("=== the server refuses: switch off, consent, not a teacher, cancell
     await src.play(8, a.r);
     w.server.offline = true;                   // the last chunks never left the laptop...
     await src.play(17, a.r);
-    await a.r.dispose();                       // ...the tab dies...
+    a.r.kill();             // (kill: a tab that dies; dispose() would end the capture properly)                       // ...the tab dies...
     w.server.offline = false;
     const pendingBefore = (await store.listChunks(row.id)).filter((c) => c.state !== "confirmed").length;
     clock += 30 * 60000;                       // ...and is opened again after the window
@@ -1030,7 +1030,7 @@ console.log("=== M1: one laptop, two teachers ===");
   r.tick(); await r.settle();
   w.server.offline = true;
   await src.play(27, r);                                  // A's chunks are queued here...
-  await r.dispose();                                       // ...and A's tab dies
+  r.kill();             // (kill: a tab that dies; dispose() would end the capture properly)                                       // ...and A's tab dies
   w.server.offline = false;
   const heldA = await store.bytesHeld(row.id);
   const statesA = JSON.stringify((await store.listChunks(row.id)).map((c) => c.state));
@@ -1161,7 +1161,7 @@ class FlakyStore extends R.MemoryStore {
   r.tick(); await r.settle();
   w.server.offline = true;
   await src.play(35, r);
-  await r.dispose();
+  r.kill();             // (kill: a tab that dies; dispose() would end the capture properly)
   for (const k of [...store.chunks.keys()]) if (k === `${row.id}|teacher|000001`) { store.chunks.delete(k); store.bytes.delete(k); }
   w.server.offline = false;
   const b = recorder(w, store, new FakeSource());
@@ -1472,7 +1472,7 @@ console.log("=== N-M4 (P7) and mutant F: what an older engine left on the laptop
   r.tick(); await r.settle();
   w.server.offline = true;
   await src.play(25, r);
-  await r.dispose();
+  r.kill();             // (kill: a tab that dies; dispose() would end the capture properly)
   w.server.offline = false;
   // As the previous engine stored it: no owner.
   const old = await store.getRecording(row.id); delete old.ownerUserId; await store.putRecording(old);

@@ -52,6 +52,20 @@ export function checkChunkLocally(byteSize: number, tStartMs: number, tEndMs: nu
   return { ok: true };
 }
 
+/**
+ * C2 round 4 (R3-B1): the ONE limit on the audio a page may state as captured
+ * before the server's start (`pre_start_ms`): it may not reach back before the
+ * capture window opened, nor exceed the window. Exactly the migration's
+ * expression (`LEAST(max_duration_ms, started_at - capture_opens_at)` in the
+ * class_recordings update trigger); unit.test.mjs reads the SQL and compares,
+ * and the test fake implements the same rule.
+ */
+export function preStartLimitMs(o: { startedAt: string | number; captureOpensAt: string | number; maxDurationMs: number }): number {
+  const s = typeof o.startedAt === "number" ? o.startedAt : Date.parse(o.startedAt);
+  const w = typeof o.captureOpensAt === "number" ? o.captureOpensAt : Date.parse(o.captureOpensAt);
+  return Math.min(o.maxDurationMs, Math.max(0, Math.floor(s - w)));
+}
+
 /** Smallest byte count a chunk of this span may have. */
 export function byteFloor(spanMs: number, minBytesPerSec: number): number {
   return Math.ceil((minBytesPerSec * spanMs) / 1000);
