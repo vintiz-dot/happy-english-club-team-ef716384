@@ -167,10 +167,18 @@ eq("custom_quests keeps exactly the has_role policy and the signed-in read", S1.
 
 // ---------------------------------------------------------------- AFTER
 console.log("=== after: a self-service sign-up ===");
-for (const asked of ["teacher", "admin", "Teacher", "ADMIN", "  teacher ", "tEaChEr\n"]) {
+for (const asked of ["teacher", "Teacher", "TEACHER", "  teacher ", "tEaChEr\n"]) {
   const u = await signUp({ role: asked });
   eq(`asks for ${JSON.stringify(asked)}: account is created with NO role`, { err: u.err, ...(await state(u.id)) }, { err: null, roles: [], legacy: "student" });
   eq(`  ...and holds none of the four roles`, [await has(u.id, "teacher"), await has(u.id, "admin"), await has(u.id, "family"), await has(u.id, "student")], [false, false, false, false]);
+}
+// A request for admin is answered with student, exactly as before this
+// migration: parents do pick "Admin" on the form, and an account with no role
+// sees a blank page that linking it to a family does not cure.
+for (const asked of ["admin", "Admin", "ADMIN", " admin\t"]) {
+  const u = await signUp({ role: asked });
+  eq(`asks for ${JSON.stringify(asked)}: student, never admin`, { err: u.err, ...(await state(u.id)), admin: await has(u.id, "admin") },
+    { err: null, roles: ["student"], legacy: "student", admin: false });
 }
 for (const [label, meta] of [["student", { role: "student" }], ["family", { role: "family" }], ["nothing (no role key)", { full_name: "x" }],
   ["no metadata at all", undefined], ["an empty string", { role: "" }], ["a value that is not a role", { role: "headmaster" }],
@@ -215,7 +223,7 @@ let createdTeacherId = null;
   // manage-admin-users 'create' :318-336
   const u = await signUp({ role: "admin" });
   const e = await insertRole(u.id, "admin");
-  eq("manage-admin-users create: createUser(role admin) + insert admin -> admin", { e, roles: await rolesOf(u.id) }, { e: null, roles: ["admin"] });
+  eq("manage-admin-users create: createUser(role admin) + insert admin -> admin + student, as on live today", { e, roles: await rolesOf(u.id) }, { e: null, roles: ["admin", "student"] });
   ok("  ...and that admin can manage custom quests", (await as(u.id, `INSERT INTO public.custom_quests (title) VALUES ('ok')`)).err === null);
   // 'bootstrap' :97-120 sends no metadata.
   const b = await signUp(undefined);
@@ -241,6 +249,17 @@ let createdTeacherId = null;
   const fam = await signUp({ role: "family" });
   await q(`INSERT INTO public.families (primary_user_id) VALUES ($1)`, [fam.id]);          // manage-admin-users linkToFamily
   eq("form (family) + linkToFamily: student, as every family login in production", await rolesOf(fam.id), ["student"]);
+  // The parent who picked "Admin" on the old form (or a stale page): linkToFamily
+  // grants no role, so the trigger's answer is all this account will ever hold.
+  const adm = await signUp({ role: "admin" });
+  eq("form said Admin, before linking: student (a dashboard, not a blank page)", await rolesOf(adm.id), ["student"]);
+  await q(`INSERT INTO public.families (primary_user_id) VALUES ($1)`, [adm.id]);
+  eq("form said Admin + linkToFamily: still student, and not an admin", [await rolesOf(adm.id), await has(adm.id, "admin")], [["student"], false]);
+  ok("  ...and it cannot write custom quests", (await as(adm.id, `INSERT INTO public.custom_quests (title) VALUES ('x')`)).err !== null);
+  // A stale page asking for teacher, linked to a family: no role until an admin sets one.
+  const stale = await signUp({ role: "teacher" });
+  await q(`INSERT INTO public.families (primary_user_id) VALUES ($1)`, [stale.id]);
+  eq("a stale page asked for teacher + linkToFamily: no role (the one case left for Admin > Users > set role)", await rolesOf(stale.id), []);
   const st = await signUp({ role: "student" });
   // link-student-user :304-314 inserts student only when the account has no role.
   if (!(await rolesOf(st.id)).length) await insertRole(st.id, "student");
