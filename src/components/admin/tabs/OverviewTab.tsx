@@ -100,8 +100,8 @@ function ControlPanel({ icon: Icon, title, description, tone, delay = 0, childre
   // Trophy is a reward (brass); the points star is plain information.
   const toneIcon = tone === "amber" ? "text-hec-brass" : "text-hec-ink-soft";
   return (
-    <motion.div {...fadeUp} transition={{ duration: 0.3, delay }}>
-      <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 sm:p-6">
+    <motion.div {...fadeUp} transition={{ duration: 0.3, delay }} className="min-w-0">
+      <div className="min-w-0 rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1 sm:p-6">
         <div className="mb-4 flex items-center gap-3">
           <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-hec-md bg-hec-sunken ${toneIcon}`}>
             <Icon className="h-5 w-5" aria-hidden />
