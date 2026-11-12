@@ -30,14 +30,14 @@ Measured, not changed: no source file was modified. Every "After" cell is empty 
 
 | Check | Command | Baseline | After |
 |---|---|---|---|
-| App type check | `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | PASS, 0 errors, 213 s wall | |
+| App type check | `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | PASS, 0 errors, 213 s wall | PASS, exit 0 |
 | pgtest | `node scripts/pgtest/run.mjs` | PASS 1611 assertions, 30 suites, 0 failed, 473 s | |
-| payrollCalculation | `npx --yes bun test scripts/payrollCalculation.test.ts` | PASS 6 / 0 fail | |
-| enrolledMonths | `npx --yes bun test scripts/enrolledMonths.test.ts` | PASS 4 / 0 fail | |
-| paymentMonth | `npx --yes bun test scripts/paymentMonth.test.ts` | PASS 3 / 0 fail | |
-| restPaging | `npx --yes bun test scripts/restPaging.test.ts` | PASS 5 / 0 fail | |
-| siblingDiscount | `npx --yes bun test scripts/siblingDiscount.test.ts` | PASS 7 / 0 fail | |
-| siblingRetry | `npx --yes bun test scripts/siblingRetry.test.ts` | PASS 3 / 0 fail | |
+| payrollCalculation | `npx --yes bun test scripts/payrollCalculation.test.ts` | PASS 6 / 0 fail | in `scripts/*.test.ts` run: PASS |
+| enrolledMonths | `npx --yes bun test scripts/enrolledMonths.test.ts` | PASS 4 / 0 fail | in `scripts/*.test.ts` run: PASS |
+| paymentMonth | `npx --yes bun test scripts/paymentMonth.test.ts` | PASS 3 / 0 fail | in `scripts/*.test.ts` run: PASS |
+| restPaging | `npx --yes bun test scripts/restPaging.test.ts` | PASS 5 / 0 fail | in `scripts/*.test.ts` run: PASS |
+| siblingDiscount | `npx --yes bun test scripts/siblingDiscount.test.ts` | PASS 7 / 0 fail | in `scripts/*.test.ts` run: PASS |
+| siblingRetry | `npx --yes bun test scripts/siblingRetry.test.ts` | PASS 3 / 0 fail | in `scripts/*.test.ts` run: PASS |
 
 `bun` is not on PATH, but `npx --yes bun ...` works (bun v1.4.4, first run 34 s incl. download to the npm cache). `git status` stayed clean afterwards: package.json and lockfiles untouched. Total bun tests: 28 pass, 0 fail.
 
@@ -49,7 +49,7 @@ Per-suite (passed/failed): family payment month 6/0, dated enrollment discounts 
 
 | Metric | Baseline | After |
 |---|---|---|
-| Assertions / suites / failed suites | 1611 / 30 / 0 | |
+| Assertions / suites / failed suites | 1611 / 30 / 0 | not run (no SQL or edge function in release A1) |
 
 ### 1d. Production build
 
@@ -57,11 +57,11 @@ Command: `node node_modules/vite/bin/vite.js build` (exit 0, 90 s wall, "built i
 
 | Metric | Baseline | After |
 |---|---|---|
-| Total JS, gzip (147 JS files) | 1474.7 KiB (raw 5032.8 KiB) | |
-| **Initial-load JS gzip** (entry `index-lDZDr1uY.js`; `dist/index.html` has one `<script type=module>`, zero `modulepreload`, and the entry has no static imports of other chunks) | **216.3 KiB** (raw 694.5 KiB) | |
-| Initial CSS gzip (`index-CEIBNdKR.css`, only stylesheet) | 44.3 KiB (raw 299.8 KiB) | |
-| Files in dist/assets | 158 (147 JS, 1 CSS, 10 avatar PNG ~60 KiB each) | |
-| JS chunks over 500 kB raw | 3: Layout, index (entry), Admin | |
+| Total JS, gzip (147 JS files) | 1474.7 KiB (raw 5032.8 KiB) | 1521.3 KiB (raw 5084.0 KiB); up because code moved into lazy chunks (not loaded up front) |
+| **Initial-load JS gzip** (entry `index-lDZDr1uY.js`; `dist/index.html` has one `<script type=module>`, zero `modulepreload`, and the entry has no static imports of other chunks) | **216.3 KiB** (raw 694.5 KiB) | **163.4 KiB** (raw 533.9 KiB) |
+| Initial CSS gzip (`index-CEIBNdKR.css`, only stylesheet) | 44.3 KiB (raw 299.8 KiB) | 41.1 KiB (raw 276.3 KiB) |
+| Files in dist/assets | 158 (147 JS, 1 CSS, 10 avatar PNG ~60 KiB each) | 238 JS/CSS chunks |
+| JS chunks over 500 kB raw | 3: Layout, index (entry), Admin | 2: index (entry), Admin (Layout no longer over) |
 
 Top chunks by raw size (JS and CSS):
 
@@ -109,18 +109,18 @@ Produced by `node C:\Users\Dell\hec-tools\a0-harness\static-counts.mjs <repo roo
 
 | Metric | Definition | Baseline | After |
 |---|---|---|---|
-| `select('*')` in src | `grep -rEn "select\((['\"])\*\1\)" src --include=*.ts --include=*.tsx \| wc -l` (grep: 66; script, which also matches `select('*', {opts})`: 67) | 67 | |
-| `select('*')` in supabase/functions | same grep on `supabase/functions` (grep 24; script 25) | 25 | |
-| `.select()` no columns, src | `grep -rEn "\.select\(\s*\)" src` | 6 | |
-| `.select()` no columns, functions | same on `supabase/functions` | 9 | |
+| `select('*')` in src | `grep -rEn "select\((['\"])\*\1\)" src --include=*.ts --include=*.tsx \| wc -l` (grep: 66; script, which also matches `select('*', {opts})`: 67) | 67 | 67 |
+| `select('*')` in supabase/functions | same grep on `supabase/functions` (grep 24; script 25) | 25 | 25 |
+| `.select()` no columns, src | `grep -rEn "\.select\(\s*\)" src` | 6 | 6 |
+| `.select()` no columns, functions | same on `supabase/functions` | 9 | 9 |
 | `select('*, rel(...)')` in src (informational) | `grep -rEn "select\((['\"])\*," src` | 16 | |
-| `<img` total / without `alt` | script, tag-level multiline match; flags `alt=` or `{...spread}` as OK | 36 / 3 (HomeworkPdfDownload.tsx, vocabulary/ImageCarousel.tsx) | |
-| Icon-only `<Button>`/`<button>` total / without aria-label, aria-labelledby or title | script heuristic: element whose only child is a self-closing `<Icon />` or `<svg>`; misses icon + sr-only span and buttons built with other wrappers | 38 / 27 | |
-| `useQuery(` calls total / without `staleTime` in the call | script balanced-paren scan | 327 / 285 | |
+| `<img` total / without `alt` | script, tag-level multiline match; flags `alt=` or `{...spread}` as OK | 36 / 3 (HomeworkPdfDownload.tsx, vocabulary/ImageCarousel.tsx) | 36 / 3 |
+| Icon-only `<Button>`/`<button>` total / without aria-label, aria-labelledby or title | script heuristic: element whose only child is a self-closing `<Icon />` or `<svg>`; misses icon + sr-only span and buttons built with other wrappers | 38 / 27 | 38 / 27 |
+| `useQuery(` calls total / without `staleTime` in the call | script balanced-paren scan | 327 / 285 | 327 / 285 |
 | Global react-query default | `src/App.tsx`: `staleTime: 60_000, gcTime: 5 min, retry: 1, refetchOnWindowFocus: false` | so the 285 inherit 60 s | |
-| `: any` occurrences in src | `grep -rEo ": any\b" src --include=*.ts --include=*.tsx \| wc -l` | 749 | |
-| `as any` occurrences in src | `grep -rEo "as any\b" src ... \| wc -l` | 355 | |
-| Files over 800 lines (src) | script (counts `split('\n')`, i.e. wc -l + 1) | 12 (list below) | |
+| `: any` occurrences in src | `grep -rEo ": any\b" src --include=*.ts --include=*.tsx \| wc -l` | 749 | 750 (+1: `students: any[] | null` in src/hooks/useShellQueries.ts, A3.4) |
+| `as any` occurrences in src | `grep -rEo "as any\b" src ... \| wc -l` | 355 | 346 (-9) |
+| Files over 800 lines (src) | script (counts `split('\n')`, i.e. wc -l + 1) | 12 (list below) | 12 (same files; TeacherTranscripts 1756, SmartUpload 1099 from A2.3) |
 
 Files over 800 lines: `integrations/supabase/types.ts` 6821 (generated), `leaderboard/HighScores.tsx` 1916, `pages/TeacherTranscripts.tsx` 1724, `leaderboard/StarBoard.tsx` 1655, `leaderboard/NightLeague.tsx` 1518, `admin/tabs/StarsSyncTab.tsx` 1247, `pages/TeacherSmartUpload.tsx` 1090, `admin/stars/StarsRecordsCenter.tsx` 1075, `vocabulary/WordExplorer.tsx` 996, `admin/stars/StarsTools.tsx` 980, `lib/starsRecords.ts` 848, `pages/StudentDashboard.tsx` 841.
 
@@ -164,6 +164,25 @@ Request kinds per screen (375 light):
 
 Page errors seen (375 light): admin-tuition: Cannot read properties of undefined (reading 'name') | Cannot read properties of undefined (reading 'name') | Cannot read properties of undefined (reading 'name')
 
+
+## Part 2 - After (release/a1, same harness, run once)
+
+Caveat: the laptop was heavily shared with other agents' builds during this run (first loads were 2-8x the baseline in places), so timings are NOT comparable to the baseline and no timing verdict is claimed. Requests, overflow and axe are load-independent.
+
+| Screen | Req before -> after | 375 render/idle ms | Overflow at 375 | axe 375 |
+|---|---|---|---|---|
+| student-dashboard | 33 -> 28 | 7865 / 8280 | no | {"serious":2,"critical":1,"moderate":1} |
+| admin-tuition | 20 -> 15 | 1815 / 2193 | no | {"critical":1,"serious":2,"moderate":1} |
+| admin-attendance | 17 -> 14 | 2048 / 1953 | no | {"critical":1,"serious":1,"moderate":1} |
+| admin-class-sessions | 19 -> 16 | 2682 / 2808 | no | {"critical":1,"serious":1} |
+| admin-schedule | 16 -> 13 | 2043 / 2176 | no | {"critical":1,"serious":2,"moderate":1} |
+| teacher-dashboard | 27 -> 24 | 3693 / 4118 | no | {"serious":3,"critical":1,"moderate":1} |
+| board-starboard | 27 -> 24 | 3358 / 3414 | no | {"critical":2,"serious":1,"moderate":1} |
+| board-highscores | 27 -> 24 | 2883 / 2915 | no | {"critical":2,"serious":1,"moderate":1} |
+| board-nightleague | 27 -> 24 | 4504 / 4560 | no | {"critical":2,"serious":1,"moderate":1} |
+| student-leaderboard | 30 -> 25 | 4756 / 4908 | no | {"critical":1,"moderate":1,"serious":1} |
+| parent-view | 78 -> 19 | 2032 / 2873 | no | {"critical":1,"moderate":2} |
+| admin-payroll | 18 -> 15 | 5469 / 5478 | no | {"critical":1} |
 
 ## Not measured
 
