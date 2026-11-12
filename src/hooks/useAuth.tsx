@@ -112,7 +112,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     setStudentId(undefined);
-    await supabase.auth.signOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        // Server revoke failed (offline, 5xx): supabase-js keeps the local
+        // session, which would bounce the user back in from /auth.
+        await supabase.auth.signOut({ scope: "local" });
+      }
+    } catch {
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch {
+        /* fall through: state is cleared below */
+      }
+    }
+    setAuthState({ user: null, session: null, role: null, loading: false });
     navigate("/auth");
   };
 
