@@ -75,7 +75,7 @@ const TeacherProfile = () => {
     return (
       <Layout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold">Teacher not found</h2>
+          <h2 className="font-display text-hec-h1 font-medium text-hec-ink">Teacher not found</h2>
         </div>
       </Layout>
     );
@@ -87,56 +87,56 @@ const TeacherProfile = () => {
         {/* Header */}
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-4">
-                <Avatar className="w-16 h-16 ring-2 ring-border">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex min-w-0 items-start gap-4">
+                <Avatar className="h-16 w-16 shrink-0 border border-hec-line">
                   <AvatarImage src={getAvatarUrl(teacher.avatar_url) || undefined} alt={teacher.full_name} className="object-cover" />
-                  <AvatarFallback className="text-2xl bg-gradient-to-br from-primary/20 to-primary/10">
+                  <AvatarFallback className="bg-hec-sunken font-display text-hec-h2 text-hec-ink-soft">
                     {teacher.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-3xl font-bold">{teacher.full_name}</h1>
-                    <Badge variant={teacher.is_active ? "default" : "secondary"} className={teacher.is_active ? "bg-green-500" : ""}>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="min-w-0 whitespace-normal break-words hyphens-none text-balance font-display text-hec-h1 font-medium text-hec-ink">{teacher.full_name}</h1>
+                    <Badge variant={teacher.is_active ? "success" : "secondary"} className="shrink-0">
                       {teacher.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </div>
                   <div className="flex flex-col gap-1">
                     {teacher.user_id && teacher.linkedUserEmail && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-muted-foreground">Registered Email:</span>
-                        <span className="font-medium text-foreground">{teacher.linkedUserEmail}</span>
-                        <Badge variant="outline" className="text-xs">
+                      <div className="flex flex-wrap items-center gap-2 text-hec-small">
+                        <span className="text-hec-ink-soft">Registered Email:</span>
+                        <span className="min-w-0 break-all font-medium text-hec-ink">{teacher.linkedUserEmail}</span>
+                        <Badge variant="outline">
                           Linked
                         </Badge>
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col gap-1 text-muted-foreground">
+                  <div className="flex flex-col gap-1 text-hec-body text-hec-ink-soft">
                     {teacher.email && (
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        <span>{teacher.email}</span>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <Mail className="h-4 w-4 shrink-0" />
+                        <span className="min-w-0 break-all">{teacher.email}</span>
                       </div>
                     )}
                     {teacher.phone && (
                       <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        <span>{teacher.phone}</span>
+                        <Phone className="h-4 w-4 shrink-0" />
+                        <span className="tabular-nums">{teacher.phone}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4" />
-                      <span>{describeRate(teacher)}</span>
+                      <DollarSign className="h-4 w-4 shrink-0" />
+                      <span className="tabular-nums">{describeRate(teacher)}</span>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-hec-small tabular-nums text-hec-ink-soft">
                     Last updated: {new Date(teacher.updated_at).toLocaleDateString()}
                   </p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex shrink-0 flex-wrap gap-2">
                 <Button variant="outline" onClick={() => setShowLinkDialog(true)}>
                   <Link className="h-4 w-4 mr-2" />
                   {teacher.user_id ? 'Manage Link' : 'Connect to User'}
@@ -152,7 +152,7 @@ const TeacherProfile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="flex w-full flex-wrap">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="schedule">Schedule</TabsTrigger>
             <TabsTrigger value="classes">Classes</TabsTrigger>
