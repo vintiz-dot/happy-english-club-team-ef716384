@@ -26,5 +26,7 @@ Setup for every item: the school laptop, the real Anker S500 and the lapel recei
 | 18 | While recording, put the lesson material in full screen (a flipbook's full screen; the class screen). | The bar (state and Stop) is visible at the bottom of the full-screen view; Stop asks "Yes, stop recording" inside the bar and works without leaving full screen. | [ ] |
 | 19 | Reload the page (F5) in the MIDDLE of a recording, on any page. | "The page was reloaded during the lesson" while the part already recorded is saved; then "Recording" again for the rest of the lesson; the admin panel shows two recordings for that lesson, together covering it with only the reload gap. | [ ] |
 | 20 | Sign out at the end of the day, sign in again. | Ready is gone (the recorder asks for "Ready for today" again). | [ ] |
+| 21 | Switch a test class OFF (or leave one child without consent), press Ready, open another page. | At arming the bar says "This lesson will NOT be recorded: <reason>. Use the backup recorder." on every page and after a reload, until the lesson is over; the recorder page says the same. | [ ] |
+| 22 | Before Ready: the laptop's date, time and time zone. | Correct (Asia/Ho_Chi_Minh); a wrong date arms nothing. | [ ] |
 
 Tester: ____________  Date: ____________  Laptop / browser: ____________

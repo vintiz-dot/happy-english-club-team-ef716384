@@ -27,8 +27,9 @@
  * The bar is plain DOM (no React tree above the router to render into), built
  * from `floatingBarModel`, which is pure and tested.
  */
-import type { RecorderError, RecorderState } from "@/lib/recorder";
-import { addMinutes, DEFAULT_MINUTES, hanoiDate, lessonPhase, lessonTimes, nextAfter, pickLesson, type LessonLike, type WindowMinutes } from "@/lib/recorderUi";
+import type { RecorderError, RecorderState, ServerRefusal } from "@/lib/recorder";
+import { backoffDelay } from "@/lib/recorder/backoff";
+import { addMinutes, DEFAULT_MINUTES, hanoiDate, lessonPhase, lessonTimes, nextAfter, pickLesson, refusalView, type LessonLike, type WindowMinutes } from "@/lib/recorderUi";
 import type { RecorderLike } from "./engine";
 import { registerSignOutHook } from "./signOutGuard";
 
@@ -38,11 +39,18 @@ const BUSY: RecorderState[] = [...CAPTURING_STATES, "armed", ...SAVING_STATES];
 export const isBusy = (s: RecorderState) => BUSY.includes(s);
 /** The engine can take the next lesson (its own arm() refuses while capturing). */
 const CAN_ARM: RecorderState[] = ["ready", "complete", "abandoned", "error", "uploading", "finalizing"];
+/**
+ * C2 round 6 (R5-1): the only answers to an arm request that end that lesson
+ * for today - refusals the server STATES (the insert trigger's texts). Anything
+ * else (a 429, PostgREST "no rows", a timeout, an unclassified text) is retried
+ * with backoff, as the Start is, and the bar says so meanwhile.
+ */
+export const FINAL_ARM_REFUSALS: ServerRefusal[] = ["switch_off", "consent_missing", "session_canceled", "not_teacher", "no_longer_teaching", "window_closed", "already_live", "session_invalid"];
 
 // ------------------------------------------------------------ "Ready for today", per teacher, per day, this device
 
 export const READY_PREFIX = "hec-recorder-ready:";
-export interface ReadyRecord { date: string; armed: string[]; capturing?: string | null }
+export interface ReadyRecord { date: string; armed: string[]; capturing?: string | null; /** R5-1: lessons the server refused today, and its reason in plain words. */ refused?: Record<string, string> }
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem" | "key" | "length">;
 let storageOverride: StorageLike | null | undefined;
 /** Tests: a stand-in for localStorage (null = none). */
@@ -114,6 +122,13 @@ interface Day {
   timer: ReturnType<typeof setInterval> | null;
   interrupted: boolean;
   prepareAt: number;
+  /** R5-1: failed arm attempts that were not a stated refusal, and what to say meanwhile. */
+  armAttempts: number;
+  notArmed: string | null;
+  /** R5-1: a lesson the server refused today (not over yet): said until it is over. */
+  refusal: { className: string; reason: string } | null;
+  /** R5-2: the ARMED lesson's own start of capture (the next lesson's is in `next`). */
+  armedAt: { sessionId: string; className: string; at: string } | null;
 }
 
 interface Session {
@@ -136,6 +151,12 @@ export interface BarExtra {
   fullscreen?: boolean;
   /** The page was reloaded while capturing. */
   interrupted?: boolean;
+  /** R5-2: when the armed lesson starts recording. */
+  armedAt?: string | null;
+  /** R5-1: arming has not been confirmed yet; retrying (the reason). */
+  notArmed?: string | null;
+  /** R5-1: the server refused a lesson of today (final). */
+  refusal?: { className: string; reason: string } | null;
 }
 export interface BarModel { show: boolean; text: string; redDot: boolean; alert: boolean; stop: boolean; allowSound: boolean }
 
@@ -145,19 +166,24 @@ export function floatingBarModel(state: RecorderState, label: string, attached: 
   if (attached && !extra.fullscreen) return off;
   const what = label ? ` - ${label}` : "";
   const bar = (text: string, o: Partial<BarModel> = {}): BarModel => ({ ...off, show: true, text, allowSound: !!extra.needsClick, ...o });
+  const refused = (r: { className: string; reason: string }) => bar(`This lesson will NOT be recorded: ${r.reason} - ${r.className}. Use the backup recorder.`, { alert: true, allowSound: false });
   switch (state) {
     case "recording": return bar(`Recording${what}`, { redDot: true, stop: true });
     case "stalled": return bar(`NOT RECORDING - the audio stopped${what}`, { alert: true, stop: true });
     case "starting": return bar(`Saving on this laptop - waiting for the school server${what}`, { stop: true });
     case "armed": return extra.needsClick
       ? bar(`NOT READY - click "Allow sound" or this lesson is not recorded${what}`, { alert: true })
-      : bar(`Armed${what} - recording starts at ${extra.next?.at ?? "the lesson's start"} by itself`);
+      : bar(`Armed${what} - recording starts at ${extra.armedAt ?? "the lesson's start"} by itself`);
     case "stopping": case "uploading": case "finalizing":
+      if (extra.refusal) return refused(extra.refusal);
       if (extra.next && extra.problem) return bar(`NOT armed: ${extra.problem} - open the recorder`, { alert: true });
+      if (extra.next && extra.notArmed) return bar(`Not armed yet - retrying (${extra.notArmed}) - ${extra.next.className}`, { alert: true });
       return bar(extra.interrupted ? "The page was reloaded during the lesson: the recording so far is being saved - keep this tab open" : "Saving the recording - keep this tab open");
     default:
+      if (extra.refusal) return refused(extra.refusal);
       if (!extra.next) return off;
       if (extra.problem) return bar(`NOT armed: ${extra.problem} - open the recorder`, { alert: true });
+      if (extra.notArmed) return bar(`Not armed yet - retrying (${extra.notArmed}) - ${extra.next.className} should record from ${extra.next.at}`, { alert: true });
       if (extra.needsClick) return bar(`Ready for today - click "Allow sound" so ${extra.next.className} can be recorded at ${extra.next.at}`, { alert: true });
       return bar(`Ready for today - ${extra.next.className} records from ${extra.next.at} by itself. Keep this tab open.`);
   }
@@ -212,6 +238,7 @@ export function startDay(deps: DayDeps) {
   const d: Day = {
     deps, date: hanoiDate(now), lessons: null, lessonsAt: 0, w: DEFAULT_MINUTES, switches: new Map(), arming: false, retryAt: 0,
     lastArmed: null, next: null, problem: null, timer: null, interrupted: false, prepareAt: 0,
+    armAttempts: 0, notArmed: null, refusal: null, armedAt: null,
   };
   // A page that died while a lesson was capturing: the rest of that lesson is armed again
   // (the engine finishes the part already recorded). One the teacher Stopped stays done.
@@ -246,6 +273,10 @@ export async function armTick(): Promise<void> {
       catch { if (!d.lessons) return; }
     }
     if (current !== s) return;
+    // R5-1: a lesson the server refused today stays said, until it is over.
+    const refusedNow = (d.lessons ?? []).find((l) => ready.refused?.[l.sessionId] && lessonPhase(l, now, d.w) !== "over");
+    d.refusal = refusedNow ? { className: refusedNow.className, reason: ready.refused![refusedNow.sessionId] } : null;
+    if (d.armedAt && !(d.lessons ?? []).some((l) => l.sessionId === d.armedAt!.sessionId && lessonPhase(l, now, d.w) !== "over")) d.armedAt = null;
     // The first lesson not over, not armed today, and not switched off (a switched-off class is skipped calmly).
     let todo = (d.lessons ?? []).filter((l) => !ready.armed.includes(l.sessionId));
     let lesson: LessonLike | null = null;
@@ -280,14 +311,28 @@ export async function armTick(): Promise<void> {
     const stopAt = next ? lessonTimes(next, d.w).start : undefined;
     try {
       await s.rec.arm({ sessionId: lesson.sessionId, classId: lesson.classId, className: lesson.className, date: lesson.date, startTime: lesson.startTime, endTime: lesson.endTime, status: lesson.status ?? undefined }, { stopAt });
-      d.lastArmed = lesson.sessionId; d.retryAt = 0;
+      d.lastArmed = lesson.sessionId; d.retryAt = 0; d.armAttempts = 0; d.notArmed = null;
+      d.armedAt = { sessionId: lesson.sessionId, className: lesson.className, at: addMinutes(lesson.startTime, -d.w.preRoll) };
       s.label = lesson.className;
       updateReady(s.userId, date, (x) => { if (!x.armed.includes(lesson.sessionId)) x.armed.push(lesson.sessionId); });
     } catch (e) {
       const err = e as RecorderError;
-      // A stated "no" (switched off, cancelled, not your class, window over): this lesson is done for today.
-      if (err?.code === "server_refused" && !err.retryable) updateReady(s.userId, date, (x) => { if (!x.armed.includes(lesson.sessionId)) x.armed.push(lesson.sessionId); });
-      else { d.retryAt = now + 30_000; d.problem = err?.code === "storage_low" || err?.code === "not_durable" ? String(err.message).replace(/^Not armed:\s*/i, "") : null; }
+      if (err?.code === "server_refused" && !!err.refusal && FINAL_ARM_REFUSALS.includes(err.refusal)) {
+        // A refusal the server STATED: this lesson is done for today, and the teacher is told why, loudly.
+        const reason = refusalView(err.refusal).title;
+        updateReady(s.userId, date, (x) => {
+          if (!x.armed.includes(lesson.sessionId)) x.armed.push(lesson.sessionId);
+          x.refused = { ...(x.refused ?? {}), [lesson.sessionId]: reason };
+        });
+        d.refusal = { className: lesson.className, reason };
+        d.armAttempts = 0; d.notArmed = null;
+      } else {
+        // Anything else is retried with backoff (as the Start is) for as long as the lesson lasts, and said meanwhile.
+        d.armAttempts += 1;
+        d.retryAt = now + backoffDelay(d.armAttempts, { maxMs: 60000 });
+        if (err?.code === "storage_low" || err?.code === "not_durable") d.problem = String(err.message).replace(/^Not armed:\s*/i, "");
+        else d.notArmed = err?.code === "offline" ? "no connection" : "the school server has not confirmed it";
+      }
     }
   } finally {
     d.arming = false;
@@ -329,8 +374,10 @@ export function detachScreen() {
 }
 
 /** For tests and the screen: what the session holds. */
-export function sessionState(): { userId: string; state: RecorderState; attached: number; next: Day["next"]; problem: string | null; pending: number } | null {
-  return current ? { userId: current.userId, state: current.state, attached: current.attached, next: current.day?.next ?? null, problem: current.day?.problem ?? null, pending: current.pending } : null;
+export function sessionState(): { userId: string; state: RecorderState; attached: number; next: Day["next"]; problem: string | null; pending: number; notArmed: string | null; refusal: Day["refusal"]; armedAt: Day["armedAt"] } | null {
+  const c = current;
+  return c ? { userId: c.userId, state: c.state, attached: c.attached, next: c.day?.next ?? null, problem: c.day?.problem ?? null, pending: c.pending,
+    notArmed: c.day?.notArmed ?? null, refusal: c.day?.refusal ?? null, armedAt: c.day?.armedAt ?? null } : null;
 }
 
 export async function endSession() {
@@ -352,7 +399,7 @@ function teardown() {
 /** Kept while busy, while uploads of any recording are pending, or while Ready waits for a lesson today. */
 function keep(s: Session) {
   return s.holding || s.attached > 0 || isBusy(s.state) || s.pending > 0
-    || !!(s.day && readyFor(s.userId, s.day.date) && (s.day.next || s.day.lessons === null));
+    || !!(s.day && readyFor(s.userId, s.day.date) && (s.day.next || s.day.lessons === null || s.day.refusal));
 }
 function maybeEnd() {
   if (current && !keep(current)) void endSession();
@@ -444,6 +491,9 @@ export function barExtra(): BarExtra {
     needsClick: s.contextRunning === false,
     fullscreen: !!fullscreenEl(),
     interrupted: d?.interrupted ?? false,
+    armedAt: d?.armedAt?.at ?? null,
+    notArmed: d?.notArmed ?? null,
+    refusal: d?.refusal ?? null,
   };
 }
 
@@ -474,7 +524,7 @@ function redraw() {
   row.className = "max-w-3xl mx-auto flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3";
   const text = document.createElement("span");
   text.className = "text-lg font-bold break-words min-w-0";
-  text.textContent = `${m.redDot ? "● " : "⚠ "}${m.text}`;
+  text.textContent = `${m.redDot ? "● " : m.alert ? "⚠ " : ""}${m.text}`;
   row.appendChild(text);
   const button = (label: string, cls: string, fn: () => void) => {
     const b = document.createElement("button");

@@ -352,6 +352,15 @@ export function boardShow(board: BoardEntry[], now: number, max = 3): BoardEntry
   return board.filter((b) => !(b.code === "clipping" && now - b.lastAt > 60_000)).slice(0, max);
 }
 
+/**
+ * The error list as the recorder screen draws it. On the error screen the
+ * "This lesson is not being recorded" notice already carries the start
+ * failure's words, so the list leaves it out (C2 review 5: it was drawn twice).
+ */
+export function boardForScreen(board: BoardEntry[], now: number, state: string, max = 3): BoardEntry[] {
+  return boardShow(state === "error" ? board.filter((b) => b.code !== "start_failed") : board, now, max);
+}
+
 export function refusalView(r: ServerRefusal): ErrorView {
   switch (r) {
     case "switch_off":

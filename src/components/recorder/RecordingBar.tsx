@@ -5,7 +5,7 @@
  * capturing state; the red dot only while `recording`; `stalled` says NOT
  * RECORDING (C2 reviews 2 and 3).
  */
-import { AlertTriangle, CircleDot, Square } from "lucide-react";
+import { AlertTriangle, CircleDot, Clock, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { RecorderState } from "@/lib/recorder";
@@ -30,7 +30,10 @@ export function RecordingBar({ state, startingLong, elapsed, className, bothMics
         <span className="inline-flex items-center gap-2 text-lg font-bold break-words min-w-0">
           {state === "recording"
             ? <CircleDot className="h-6 w-6 shrink-0 text-destructive fill-destructive motion-safe:animate-pulse" aria-hidden data-red-dot="" />
-            : <AlertTriangle className="h-6 w-6 shrink-0 text-warning" aria-hidden />}
+            : loud
+              ? <AlertTriangle className="h-6 w-6 shrink-0 text-warning" aria-hidden data-warning-sign="" />
+              // A calm state (starting, under 5 s) needs no action: no warning sign (C2 review 5).
+              : <Clock className="h-6 w-6 shrink-0" aria-hidden />}
           {text}
         </span>
         <span className="tabular-nums text-lg">{elapsed}</span>
