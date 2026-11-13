@@ -77,5 +77,7 @@ Uploaded as `<function>/index.ts` + `_lib/<file>.ts`, entrypoint `<function>/ind
 | # | function | version | files against a9cbbe53 | probe A | probe B |
 |---|---|---|---|---|---|
 | 1 | calculate-tuition | 4 -> 5, ACTIVE, verify_jwt true (ezbr 94f8e79d) | 7 of 7 identical, byte for byte (index, rate-limit, auth, sibling-state, tuition-session, enrollment-discounts, invoice-status); file set exactly the manifest's | 401 gateway | 401 `{"error":"Unauthorized"}` from the function (23:53:17 UTC) |
+| 2 | calculate-tuition-bulk | 4 -> 5, ACTIVE, verify_jwt true (ezbr a36f32eb) | 6 of 6 identical, byte for byte (index, auth, sibling-state, tuition-session, enrollment-discounts, invoice-status); file set exactly the manifest's | 401 gateway | 401 `{"error":"Unauthorized"}` from the function (23:56:42 UTC) |
+| 3 | settle-bill | 4 -> 5, ACTIVE, verify_jwt true (ezbr dcf087e6) | 2 of 2 identical, byte for byte (index, invoice-status); file set exactly the manifest's | 401 gateway | 401 `{"error":"Unauthorized"}` from the function (23:58:52 UTC) |
 
-**Where I am / next step:** 1 of 7 live at v5 (calculate-tuition). Next: deploy 2 of 7 (calculate-tuition-bulk). The other six are v4.
+**Where I am / next step:** 3 of 7 live at v5 (calculate-tuition, calculate-tuition-bulk, settle-bill). Next: deploy 4 of 7 (delete-payment). delete-payment, smart-family-payment, family-payment, confirm-tuition are v4.
