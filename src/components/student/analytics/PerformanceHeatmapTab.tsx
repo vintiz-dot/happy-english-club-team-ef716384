@@ -202,6 +202,9 @@ export function PerformanceHeatmapTab({
     return SKILLS.map((skill) => {
       const summary = classSkillTotals[skill];
       const classBest = summary?.best || 1;
+      // No class figure: nobody assessed yet, or (for a family) fewer than
+      // three other children were - get_class_skill_summary withholds those.
+      const hasClassFigures = !!summary && summary.best > 0;
       const classAverage = summary && summary.students > 0 ? Math.round(summary.total / summary.students) : 0;
 
       const studentTotal = studentAssessments?.filter((a) => a.skill === skill).reduce((sum, a) => sum + a.score, 0) || 0;
@@ -234,6 +237,7 @@ export function PerformanceHeatmapTab({
         Icon: IconComponent,
         studentTotal,
         classBest,
+        hasClassFigures,
         classAverage,
         percentOfBest: Math.min(percentOfBest, 100),
         isLeader,
@@ -413,11 +417,11 @@ export function PerformanceHeatmapTab({
                         )}
                         <span className="flex items-center gap-1">
                           <Trophy className={iv("h-3 w-3 text-hec-brass", "h-3 w-3 text-yellow-500")} />
-                          Best: {skill.classBest}pts
+                          Best: {skill.hasClassFigures ? `${skill.classBest}pts` : "–"}
                         </span>
                         <span className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
-                          Avg: {skill.classAverage}pts
+                          Avg: {skill.hasClassFigures ? `${skill.classAverage}pts` : "–"}
                         </span>
                       </div>
                     </div>
@@ -454,7 +458,7 @@ export function PerformanceHeatmapTab({
                           );
                         })}
                         {skill.top3.length === 0 && (
-                          <p className={iv("text-hec-small text-hec-ink-soft text-center w-full py-2", "text-sm text-muted-foreground text-center w-full py-2")}>No data yet</p>
+                          <p className={iv("text-hec-small text-hec-ink-soft text-center w-full py-2", "text-sm text-muted-foreground text-center w-full py-2")}>{skill.studentTotal > 0 ? "Not shown for a small group" : "No data yet"}</p>
                         )}
                       </div>
                     </div>
