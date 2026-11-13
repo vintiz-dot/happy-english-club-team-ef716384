@@ -222,7 +222,7 @@ export function Stepper({
             if (Number.isFinite(next)) onChange(clamp(next));
           }}
           aria-label={label}
-          className={ivory ? cn("min-h-hec-target w-full min-w-0 bg-transparent text-center text-hec-body font-semibold tabular-nums text-hec-ink outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none", FOCUS) : "studio-focus w-full min-w-0 bg-transparent text-center text-base font-bold tabular-nums text-ink outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"}
+          className={ivory ? cn("min-h-hec-target w-full min-w-11 bg-transparent text-center text-hec-body font-semibold tabular-nums text-hec-ink outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none", FOCUS) : "studio-focus w-full min-w-0 bg-transparent text-center text-base font-bold tabular-nums text-ink outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"}
         />
         <button
           type="button"
@@ -345,7 +345,11 @@ export function StudioSlider({
         <SliderPrimitive.Track className={ivory ? "relative h-2 w-full grow overflow-hidden rounded-full bg-hec-sunken" : "relative h-1.5 w-full grow overflow-hidden rounded-full bg-[hsl(var(--studio-ink)/0.12)]"}>
           <SliderPrimitive.Range className={ivory ? "absolute h-full rounded-full bg-hec-brass" : "absolute h-full rounded-full bg-[hsl(var(--studio-ink))]"} />
         </SliderPrimitive.Track>
-        <SliderPrimitive.Thumb className={ivory ? cn("block h-6 w-6 rounded-full border-2 border-hec-brass bg-hec-raised shadow-hec-1 transition-colors duration-hec-1 ease-hec", FOCUS) : "studio-focus block h-4 w-4 rounded-full border-2 border-[hsl(var(--studio-ink))] bg-[hsl(var(--studio-card))] shadow-sm transition-transform hover:scale-110"} />
+        <SliderPrimitive.Thumb className={ivory ? cn(
+                // A 44 px target; the visible knob (24 px) is drawn by ::before.
+                "relative grid h-11 w-11 cursor-grab place-items-center rounded-full before:block before:h-6 before:w-6 before:rounded-full before:border-2 before:border-hec-brass before:bg-hec-raised before:shadow-hec-1 before:content-['']",
+                FOCUS,
+              ) : "studio-focus block h-4 w-4 rounded-full border-2 border-[hsl(var(--studio-ink))] bg-[hsl(var(--studio-card))] shadow-sm transition-transform hover:scale-110"} />
       </SliderPrimitive.Root>
       <span className={ivory ? "w-10 shrink-0 text-right text-hec-caption font-semibold tabular-nums text-hec-ink" : "w-10 shrink-0 text-right text-xs font-bold tabular-nums text-ink"}>
         {format ? format(value) : value}
