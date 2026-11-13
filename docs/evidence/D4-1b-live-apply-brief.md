@@ -28,7 +28,8 @@ Live step 1a was pasted with CRLF and is not in `supabase_migrations.schema_migr
 3. What the file reads exists (its preflight checks, check first): functions `student_enrolled_on(uuid,uuid,date)`, `session_change_reason_ok(text)`, `session_cancel_audit_append_only()`, `session_cancel_audit_insert_guard()`, `_session_require_admin()`, `_floor_mark_level(text,uuid)`; the step 1a BODIES the register relies on, which the preflight now requires and names if different: `select md5(replace(prosrc, E'\r', '')) from pg_proc where oid = 'public._caller_lane()'::regprocedure` = `66001c3b6eb716a6380e4155fba75409`, and for `public._floor_mark_level(text, uuid)` = `ed25e62b64c592f1ee6a026596eb11d0`; the `invoice_state_floor` columns `student_id, month, ever_paid, ever_signed, ever_frozen, max_recorded_payment`; columns `attendance.notes`, `students.family_id`, `session_participants.participant_type`, `payroll_periods.status`.
 4. Triggers on `attendance` (name, enabled) - record. `zz_attendance_money_guard` sorts after `zz_attendance_evidence_guard` and after every other BEFORE trigger there.
 5. Counts (numbers only): `attendance`, `invoices`, `sessions`.
-6. `select jobname, active from cron.job`: record. Note the time of the last `stars-sync` run and start step 2 just after a tick.
+6. Nobody can make a function with the name of one of the six enrolment RPCs (round 3: the guard recognises them from the call stack). `select r, n.nspname from unnest(array['authenticated','anon','service_role']) r, pg_namespace n where has_schema_privilege(r, n.oid, 'CREATE')` -> 0 rows, and `has_database_privilege(r, current_database(), 'CREATE')` false for all three (both true of live on 13 Nov 2026; TEMP is granted, and the guard refuses a pg_temp namesake). `select count(*) from pg_proc where proname in ('end_enrollment','pause_enrollment','modify_enrollment_transfer','ai_action_undo','ai_action_apply','stars_sync_resolve_conflict')` = 6, each in `public`, plpgsql, SECURITY DEFINER, signatures `end_enrollment(uuid,uuid,date)`, `pause_enrollment(uuid,uuid,date,date,text)`, `modify_enrollment_transfer(uuid,uuid,uuid,date)`, `ai_action_undo(uuid)`, `ai_action_apply(uuid,text,jsonb)`, `stars_sync_resolve_conflict(uuid,text)` (`oid::regprocedure`). Any difference: STOP - the ruling would fall back to refusing those RPCs, or worse.
+7. `select jobname, active from cron.job`: record. Note the time of the last `stars-sync` run and start step 2 just after a tick.
 
 ## Step 2 - apply
 
@@ -49,7 +50,7 @@ Live step 1a was pasted with CRLF and is not in `supabase_migrations.schema_migr
 | function | _money_change_exec | b5efef0f546d40e397daa3fd0648db06 | true | v | f/f/f |
 | function | _money_change_full_plan | 8f8b9abdec600f4365979c8798ec801c | true | s | f/f/f |
 | function | _money_change_plan | 3efa9ebcb79c47c65947f2636e07edd0 | true | s | f/f/f |
-| function | _money_enrollment_rpc_call (round 2, the conductor's ruling) | 8ec6677d24f9a3b253f93e4e1bab9138 | false | s | f/f/f |
+| function | _money_enrollment_rpc_call (the conductor's ruling; round 3: read from the call stack) | 8796eb026e4187149b639f7efa82e81d | false | s | f/f/f |
 | function | _money_exec__attendance | 06892532e541e2228c377bcddd54c390 | true | v | f/f/f |
 | function | _money_month_is_past | c7c81434cf2d4519f0252a8a4887d338 | false | s | f/f/f |
 | function | _money_plan__attendance | 2a0bbcd0f17ba5a75dcda1baa3947021 | true | s | f/f/f |
