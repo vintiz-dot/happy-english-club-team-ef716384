@@ -2,7 +2,7 @@
 
 Branch `release/recorder-1`, from `origin/main` f5987804. Code = C2 round 5 (309c26a6), review 5 PASS WITH CHANGES and fit for the hardware checks on live (`docs/evidence/C2-review-5.md`). Assembled by the reviewer; nothing pushed, applied or deployed: the conductor does that, in the order below.
 
-**Where I am / next step:** PENDING
+**Where I am / next step:** DONE. Branch built and checked; nothing pushed, applied or deployed. Next (conductor): section 3, steps 1-5, in order.
 
 ## 1. What the branch holds, and the leak check
 
@@ -36,8 +36,7 @@ Leak check: no path or line from the design rollout (no `ivory`, `hec-*` token, 
 
 ### 2a. The recorder page on main's current design
 
-PENDING
-
+Same harness as review 5 (`C:\Users\Dell\hec-tools\c2r5b-harness`: the real `TeacherRecorder` page in main's real `Layout`, main's `index.css` and Tailwind config, fake client, fake teacher / admin, scripted engine, no real data), pointed at this branch; shots in `C:\Users\Dell\hec-tools\c2r5b-harness\shots-main\`. States: setup needed, before Ready, armed, recording, stalled, cannot be sent, admin panel, the bar on another staff page (recording; Stop asked), full screen (1280). 375 and 1280: no page error, no horizontal overflow, nothing critical or serious from axe in the recorder's content (the "serious" on the other-page shots is the Layout breadcrumb's list markup, on main already), every recorder control >= 44 px; the bar is inside the full-screen element (`barInside: true`). Legible: staff routes are still on the old design on main, and the recorder's classes are the old design's tokens, so it looks as it did on the conductor branch. The render faults listed in review 5 section f (doubled notice, cramped phone header, warning sign on calm states, the Armed time) are the same here.
 ## 3. Apply and deploy, in order
 
 Paste the LF content as git stores it (`git show release/recorder-1:<path>`), not the CRLF working copy: the md5 below is of the LF bytes.
