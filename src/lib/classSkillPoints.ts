@@ -15,6 +15,10 @@
  * The fallbacks keep a browser that is ahead of the database working:
  *   summary missing -> `get_class_skill_points` (the database between the two
  *   migrations) -> the row query these panels used before either existed.
+ * A fallback is taken ONLY when the database says the function is not there.
+ * Any other failure (the network, a timeout) is thrown: once the migrations
+ * are in, the row query returns the family's own rows alone, and figures
+ * built from those would show the child as best in class.
  */
 import { supabase } from "@/integrations/supabase/client";
 
@@ -47,6 +51,12 @@ interface PerStudent {
   student_name: string | null;
   skill: string;
   total: number;
+}
+
+/** PostgREST's "no such function" (PGRST202), or Postgres's own (42883). */
+function functionMissing(error: { code?: string; message?: string } | null | undefined): boolean {
+  if (!error) return false;
+  return error.code === "PGRST202" || error.code === "42883" || /could not find the function/i.test(error.message ?? "");
 }
 
 function fromPerStudent(rows: PerStudent[]): ClassSkillFigures {
@@ -121,6 +131,7 @@ export async function fetchClassSkillFigures(
     }
     return { bySkill, classStudents };
   }
+  if (!functionMissing(summary.error)) throw summary.error ?? new Error("class skill summary: unexpected answer");
 
   const named = await (supabase as any).rpc("get_class_skill_points", args);
   if (!named.error && Array.isArray(named.data)) {
@@ -133,6 +144,8 @@ export async function fetchClassSkillFigures(
       })),
     );
   }
+
+  if (!functionMissing(named.error)) throw named.error ?? new Error("class skill points: unexpected answer");
 
   return fromRows(classId, from, to);
 }
