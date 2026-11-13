@@ -226,7 +226,7 @@ export default function NotificationBell() {
                             {notification.title}
                           </p>
                           {notification.message && (
-                            <p className={ivory ? "line-clamp-2 text-hec-caption font-normal text-hec-ink-soft" : "text-xs text-muted-foreground line-clamp-2"}>
+                            <p className={ivory ? "break-words text-hec-caption font-normal text-hec-ink-soft" :"text-xs text-muted-foreground line-clamp-2"}>
                               {notification.message}
                             </p>
                           )}
