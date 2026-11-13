@@ -250,3 +250,7 @@ verify_jwt = true
 
 [functions.parent-video-page]
 verify_jwt = false
+
+# Class recorder retention: the nightly job (runner token) or an admin only.
+[functions.recorder-retention]
+verify_jwt = true

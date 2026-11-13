@@ -1,0 +1,203 @@
+// C2 review 2 - the 14 probe scenarios (P1-P14) quoted in docs/evidence/C2-review-2.md.
+// Not a test suite and not product code: kept as text so the reviser can reproduce each finding.
+// To run: prepend lines 14-33, 295-401 and 773-787 of scripts/recorder/unit.test.mjs (the harness: world, FakeSource,
+// recorder, decodeTrack, started; fix the four relative imports), save as probe.mjs next to that file, then
+//   node scripts/recorder/probe.mjs            (all)      node scripts/recorder/probe.mjs P4,P5   (some)
+// Synthetic audio only (the FakeSource's sine + noise). Each scenario prints what it observed; none asserts.
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const say = (...a) => console.log("   ", ...a);
+const codes = (errors, from = 0) => { const m = {}; for (const e of errors.slice(from)) m[e.code] = (m[e.code] ?? 0) + 1; return JSON.stringify(m); };
+const only = process.argv[2];
+const P = async (name, fn) => { if (only && !only.split(",").some((o) => name.startsWith(o + " "))) return; console.log(`\n=== ${name}`); try { await fn(); } catch (e) { console.log("    THREW", e?.stack ?? e); } };
+
+await P("P1 second dead context in one lesson", async () => {
+  const { w, src, r, errors, states, row } = await started();
+  r.tick(); await r.settle(); await src.play(8, r);
+  src.stalled = true; src.resumeHeals = false; src.rebuildHeals = true;
+  await src.play(10, r, 24); await src.play(6, r);
+  say("after first death: state", r.state, "rebuilds", src.rebuilds);
+  src.stalled = true; src.resumeHeals = false; src.rebuildHeals = true;   // dies again; a rebuild WOULD heal it
+  await src.play(120, r, 24);
+  say("after second death, 120 s later: state", r.state, "rebuilds", src.rebuilds, "resumes", src.resumes, "errors", codes(errors));
+});
+
+await P("P2a offline for 10 min from the window opening, then back", async () => {
+  const { w, src, r, errors, states, row, store } = await started();
+  w.server.offline = true;
+  r.tick(); await r.settle();
+  const startClock = clock;
+  await src.play(600, r, 200);
+  say("after 10 min offline: state", r.state, "| distinct states", [...new Set(states)].join(","), "| errors", codes(errors));
+  say("sample messages:", [...new Set(errors.map((e) => e.message))].slice(0, 4));
+  say("local chunks", (await store.listChunks(row.id)).length, "segments", (await store.listSegments(row.id)).length, "pre frames held (s)", Math.round((r.active?.preFrames ?? 0) / 48000), "preDropped (s)", Math.round((r.active?.preDroppedFrames ?? 0) / 48000));
+  w.server.offline = false;
+  const n0 = errors.length;
+  await src.play(60, r, 200);
+  say("back online: state", r.state, "new errors", errors.slice(n0).filter((e) => e.code !== "offline").map((e) => `${e.code}: ${e.message}`));
+  await r.stop(); await r.settle();
+  const rows = w.server.chunkRows(row.id).filter((c) => c.track === "teacher");
+  say("server status", w.server.recordings.get(row.id).status, "teacher audio on server (s)", Math.round(rows.reduce((n, c) => n + (c.t_end_ms - c.t_start_ms), 0) / 1000), "of played (s)", Math.round((clock - startClock) / 1000));
+});
+
+await P("P2b offline until the window closes (whole lesson)", async () => {
+  const { w, src, r, errors, states, row, store } = await started({ lessonMs: 20 * 60000, endTime: "17:20" });
+  w.server.offline = true;
+  r.tick(); await r.settle();
+  await src.play(45 * 60, r, 400);
+  say("state", r.state, "| states", [...new Set(states)].join(","), "| errors", codes(errors));
+  say("final messages:", errors.filter((e) => e.code === "start_failed" || e.code === "start_delayed").map((e) => e.message));
+  const ch = await store.listChunks(row.id);
+  say("local audio kept (s, teacher)", Math.round(ch.filter((c) => c.track === "teacher").reduce((n, c) => n + (c.tEndMs - c.tStartMs), 0) / 1000), "| heldAudio", JSON.stringify(await r.heldAudio()));
+});
+
+await P("P3 one unclassified 4xx answer to Start", async () => {
+  const { w, src, r, errors, states, row } = await started();
+  w.server.failNext("update:class_recordings", 1, { message: "Too Many Requests", code: "429" });
+  r.tick(); await r.settle();
+  await src.play(30, r);
+  say("state", r.state, "| states", states.join(","), "| errors", errors.map((e) => `${e.code}/${e.refusal ?? ""}`).join(" "), "| source open", src.open, "| server", w.server.recordings.get(row.id).status);
+  await ticks(r, 20);
+  say("100 s later: state", r.state, "source open", src.open);
+});
+
+await P("P4 both microphones lost", async () => {
+  const { w, src, r, errors, states, row, health } = await started();
+  r.tick(); await r.settle(); await src.play(12, r);
+  src.dead.room = true; src.dead.teacher = true; src.devices = [];
+  src.onTrackEnded("room"); src.onTrackEnded("teacher");
+  await src.play(180, r, 100);
+  say("3 min with no microphone at all: state", r.state, "| errors", codes(errors), "| health", [...new Set(health.map((h) => h.kind + ":" + (h.track ?? "")))].join(" "));
+  const up = await r.uploadProgress(row.id);
+  say("chunks still being produced and sent:", up.total, "confirmed", up.confirmed, "belowFloor", up.belowFloor);
+});
+
+await P("P5 completes with a refused tail: what stays on the laptop", async () => {
+  const { w, src, r, errors, states, row, store } = await started();
+  r.tick(); await r.settle(); await src.play(25, r);
+  await r.marker("student_name", { label: "Nguyen Van A", studentId: null }).catch((e) => say("marker", e.message));
+  w.server.failNext("rpc:recorder_register_chunk", 1, { message: "This audio is from after Stop: refused" });
+  await src.play(22, r);
+  await r.stop(); await r.settle(); await ticks(r, 6);
+  say("server", w.server.recordings.get(row.id).status, "engine state", r.state, "errors", codes(errors));
+  say("local after complete: recording row", !!(await store.getRecording(row.id)), "chunk rows", (await store.listChunks(row.id)).map((c) => `${c.track}${c.seq}:${c.state}`).join(" "), "bytes held", await store.bytesHeld(row.id), "markers", (await store.listMarkers(row.id)).map((m) => m.label));
+  say("heldAudio()", JSON.stringify(await r.heldAudio()));
+  const so = await r.signOut().catch((e) => e.message);
+  say("signOut()", JSON.stringify(so), "| bytes still held after sign-out", await store.bytesHeld(row.id));
+  const h2 = recorder(w, store, new FakeSource());
+  const stuck = []; h2.r.on("stuck", (e) => stuck.push(e));
+  clock += 20 * 86400000;
+  await h2.r.prepare(); await h2.r.recover(); await h2.r.settle();
+  say("20 days later, next sign-in recover(): bytes held", await store.bytesHeld(row.id), "stuck events", stuck.length, "errors", codes(h2.errors));
+});
+
+await P("P6 health monitor across two lessons on one engine", async () => {
+  const H = new R.HealthMonitor({ sampleRate: 48000 });
+  const n = 2048, flat = () => new Float32Array(n), clip = () => Float32Array.from({ length: n }, (_, k) => (k % 2 ? 1 : -1));
+  let ev = [];
+  for (let i = 0, t = 5400000; i < 400; i++, t += 42.67) ev.push(...H.push(clip(), flat(), t));
+  say("lesson 1 (at 90 min: room dead, lapel clipping) events:", JSON.stringify([...new Set(ev.map((e) => e.kind + ":" + e.track))]));
+  H.resetSwap(); ev = [];                                       // all beginCapture does for the next lesson
+  for (let i = 0, t = 0; i < 1500; i++, t += 42.67) ev.push(...H.push(clip(), flat(), t));   // 64 s of lesson 2, same faults
+  say("lesson 2 (first 64 s, room still dead, lapel still clipping) events:", JSON.stringify([...new Set(ev.map((e) => e.kind + ":" + e.track))]));
+});
+
+await P("P7 a recording stored by the previous engine (no ownerUserId)", async () => {
+  const { w, src, r, row, store } = await started();
+  r.tick(); await r.settle(); await src.play(25, r);
+  const cur = await r.current();
+  await r.stop(); await r.settle();
+  const legacy = { ...cur, id: crypto.randomUUID(), phase: "complete" }; delete legacy.ownerUserId;
+  await store.putRecording(legacy);
+  await store.putMarker({ recordingId: legacy.id, clientMarkerId: crypto.randomUUID(), kind: "student_name", tMs: 1000, label: "Nguyen Van A read aloud", studentId: null, sent: true, attempts: 0 });
+  const legacy2 = { ...legacy, id: crypto.randomUUID(), phase: "stopped" }; await store.putRecording(legacy2);
+  await store.addChunk({ recordingId: legacy2.id, track: "teacher", seq: 0, startFrame: 0, endFrame: 480000, sampleRate: 48000, tStartMs: 0, tEndMs: 10000, byteSize: 4, sha256: "x", mime: "audio/flac", ext: "flac", encoding: "fixed", state: "captured", attempts: 0, createdAt: clock }, new Uint8Array(4));
+  const h2 = recorder(w, store, new FakeSource());
+  const rec = []; h2.r.on("recovered", (e) => rec.push(e));
+  await h2.r.prepare(); const ids = await h2.r.recover(); await h2.r.settle();
+  say("same teacher signs in: recovered", ids.length, JSON.stringify(rec), "| legacy complete row still stored", !!(await store.getRecording(legacy.id)), "its label", (await store.listMarkers(legacy.id)).map((m) => m.label), "| legacy unsent bytes still stored", await store.bytesHeld(legacy2.id), "heldAudio", (await h2.r.heldAudio()).length);
+});
+
+await P("P8 a slow answer to the clock measurement", async () => {
+  clock = T0; const w = world(); const store = new R.MemoryStore(), src = new FakeSource();
+  const orig = w.backend.serverTime.bind(w.backend);
+  let slow = 0;
+  w.backend.serverTime = async () => { const iso = await orig(); clock += slow; return iso; };   // answered at once, the answer travels `slow` ms
+  const h = recorder(w, store, src);
+  await h.r.prepare();
+  say("fast: serverNow - true", h.r.serverNow() - clock);
+  slow = 40000; await h.r.measureClock(); slow = 0;
+  say("answer delayed 40 s: serverNow - true (ms)", h.r.serverNow() - clock);
+  const row = await h.r.arm(E(w));
+  h.r.tick(); await h.r.settle(); await src.play(40, h.r);
+  say("then a normal, fast start: errors", h.errors.map((e) => `${e.code}: ${e.message}`).filter((m) => /start|ahead|later than/i.test(m)).slice(0, 3), "| state", h.r.state);
+  await h.r.stop(); await h.r.settle(); await ticks(h.r, 30);
+  say("server", w.server.recordings.get(row.id).status, "teacher seqs", seqs(w, row.id, "teacher").join(","), "errors", codes(h.errors));
+});
+
+await P("P9 the encoder never answers (hung worker, no error event)", async () => {
+  const hung = { kind: "worker", encode: () => new Promise(() => {}), close() {} };
+  const { w, src, r, errors, states, row, store } = await started({}, { opts: { encoder: hung } });
+  const soft = { tick: () => r.tick(), settle: () => Promise.race([r.settle(), sleep(3)]) };
+  r.tick(); await soft.settle();
+  await src.play(120, soft, 200);
+  say("2 min in: state", r.state, "| local chunks", (await store.listChunks(row.id)).length, "segments", (await store.listSegments(row.id)).length, "| server chunks", w.server.chunkRows(row.id).length, "| errors", codes(errors));
+  const stopped = await Promise.race([r.stop().then(() => "returned"), sleep(1500).then(() => "STILL PENDING after 1.5 s")]);
+  say("stop():", stopped, "| state", r.state, "| server", w.server.recordings.get(row.id).status);
+});
+
+await P("P10 label of the same device on another USB port", async () => {
+  for (const [a, b] of [["Echo Cancelling Speakerphone (Anker PowerConf S500)", "Echo Cancelling Speakerphone (2- Anker PowerConf S500)"], ["Microphone (2- USB Audio Device)", "Microphone (3- USB Audio Device)"], ["Microphone (Anker PowerConf S500)", "Echo Cancelling Speakerphone (Anker PowerConf S500)"]])
+    say(JSON.stringify(a), "vs", JSON.stringify(b), "->", R.normalizeLabel(a) === R.normalizeLabel(b) ? "same" : "DIFFERENT");
+});
+
+await P("P11 getUserMedia never answers on the re-open", async () => {
+  const { w, src, r, errors, row, health } = await started();
+  r.tick(); await r.settle(); await src.play(12, r);
+  const orig = src.reopen.bind(src); let hang = true;
+  src.reopen = (role, id) => hang ? new Promise(() => {}) : orig(role, id);
+  src.dead.room = true; src.onTrackEnded("room");
+  await src.play(30, r, 100);
+  hang = false; src.onDeviceChange?.();              // the device is fine again
+  await src.play(180, r, 100);
+  say("3 min after the device is back: restored?", health.some((h) => h.kind === "device_restored"), "| reopening flag", JSON.stringify(r.active?.reopening), "| state", r.state);
+});
+
+await P("P12 Stop landed, its answer and the read-back were lost", async () => {
+  const { w, src, r, errors, row, store } = await started();
+  r.tick(); await r.settle(); await src.play(25, r);
+  const stop = w.backend.stop.bind(w.backend), get = w.backend.getRecording.bind(w.backend);
+  let lose = 1, loseGet = 2;
+  w.backend.stop = async (...a) => { const row = await stop(...a); if (lose-- > 0) throw { message: "upstream request timeout", code: "503" }; return row; };
+  w.backend.getRecording = async (...a) => { if (lose < 1 && loseGet-- > 0) throw { message: "upstream request timeout", code: "503" }; return get(...a); };
+  await r.stop(); await r.settle();
+  await ticks(r, 40);
+  const loc = await store.getRecording(row.id);
+  say("server", w.server.recordings.get(row.id).status, "| engine", r.state, "| local", loc ? `stopPending=${loc.stopPending} stopRefused=${loc.stopRefused}` : "purged", "| errors", codes(errors), errors.filter((e) => e.code === "server_refused").map((e) => e.message).slice(0, 2));
+});
+
+await P("P13 a stall longer than late_after: are later chunks evidence?", async () => {
+  const { w, src, r, errors, row } = await started();
+  r.tick(); await r.settle(); await src.play(25, r);
+  src.stalled = true; src.resumeHeals = false; src.rebuildHeals = false;
+  await src.play(12 * 60, r, 24);                    // lid closed for 12 minutes
+  src.resumeHeals = true;
+  await src.play(65, r);
+  await r.stop(); await r.settle(); await ticks(r, 4);
+  const rows = w.server.chunkRows(row.id).filter((c) => c.track === "teacher").sort((a, b) => a.seq - b.seq);
+  say("server", w.server.recordings.get(row.id).status, "| teacher chunks late flags by seq:", rows.map((c) => `${c.seq}:${c.late ? "LATE" : "ok"}`).join(" "));
+});
+
+await P("P14 chunk boundaries, re-acquire and Stop: sample-exact?", async () => {
+  const { w, src, r, row } = await started();
+  r.tick(); await r.settle(); await src.play(17, r);
+  const t0 = r.active.chunker.t0Frame;
+  src.dead.room = true; src.onTrackEnded("room"); await src.play(9, r);
+  src.onDeviceChange?.(); await r.settle(); await src.play(13.3, r);
+  await r.stop(); await r.settle();
+  for (const t of ["teacher", "room"]) {
+    const d = await decodeTrack(w.server, row.id, t), want = src.expected(t, t0, d.samples.length);
+    say(t, "server", w.server.recordings.get(row.id).status, "decoded frames", d.samples.length, "expected", want.length, "equal", sameInt16(d.samples, want), "| chunk ms", d.rows.map((c) => c.t_end_ms - c.t_start_ms).join(","), "| tail frames not on server", src.lastFrame - t0 - d.samples.length);
+  }
+});
+process.exit(0);

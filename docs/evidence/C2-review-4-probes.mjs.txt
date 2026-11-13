@@ -1,0 +1,92 @@
+// C2 review 4 - probe scenarios V1-V7 quoted in docs/evidence/C2-review-4.md (text, not a test suite, not product code).
+// To run at 596ce69d: prepend lines 14-33, 296-403 and 775-789 of scripts/recorder/unit.test.mjs (fix the four relative imports),
+// save next to that file, then: node scripts/recorder/probe4.mjs [V1,V3]. Synthetic audio only.
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const say = (...a) => console.log("   ", ...a);
+const codes = (errors, from = 0) => { const m = {}; for (const e of errors.slice(from)) m[e.code] = (m[e.code] ?? 0) + 1; return JSON.stringify(m); };
+const only = process.argv[2];
+const P = async (name, fn) => { if (only && !only.split(",").some((o) => name.startsWith(o + " "))) return; console.log(`\n=== ${name}`); try { await fn(); } catch (e) { console.log("    THREW", e?.stack ?? e); } };
+const secs = (w, id, track = "teacher", f = () => true) => Math.round(w.server.chunkRows(id).filter((c) => c.track === track && f(c)).reduce((n, c) => n + c.t_end_ms - c.t_start_ms, 0) / 1000);
+
+await P("V1 three unclassified answers (429) to the pre-start statement, on an ordinary start", async () => {
+  const { w, src, r, errors, states, row, store } = await started();
+  const orig = w.backend.setPreStart.bind(w.backend); let n = 0;
+  w.backend.setPreStart = async (...a) => { if (n++ < 3) throw { message: "Too Many Requests", code: "429" }; return orig(...a); };
+  const st = w.backend.start.bind(w.backend);
+  w.backend.start = async (...a) => { clock += 400; return st(...a); };      // the Start takes 0.4 s, as any real one does
+  r.tick(); await r.settle(); await src.play(40, r);
+  say("pre_start the engine wanted to state (ms):", (await store.getRecording(row.id))?.preStartMs, "| calls", n);
+  say("state", r.state, "| states", [...new Set(states)].join(","), "| microphones open", src.open, "| server", w.server.recordings.get(row.id).status, "| chunks on server", w.server.chunkRows(row.id).length);
+  say("messages:", errors.filter((e) => e.code === "start_failed").map((e) => e.message));
+});
+
+await P("V2 offline for the first 35 minutes (the round-3 failure)", async () => {
+  const { w, src, r, errors, states, row } = await started();
+  w.server.offline = true;
+  r.tick(); await r.settle(); await src.play(35 * 60, r, 400);
+  w.server.offline = false; const n0 = errors.length;
+  await src.play(120, r, 200);
+  say("2 min after the network is back: state", r.state, "| pre_start_ms", w.server.recordings.get(row.id).pre_start_ms, "| errors since", codes(errors, n0));
+  await r.stop(); await r.settle(); await ticks(r, 30);
+  say("server", w.server.recordings.get(row.id).status, "| teacher s on server", secs(w, row.id), "| states", [...new Set(states)].join(","));
+});
+
+await P("V3 many short stalls: what the page tells the server about the filled silence", async () => {
+  const { w, src, r, row } = await started();
+  const calls = []; const orig = w.backend.setTrackCounts.bind(w.backend);
+  w.backend.setTrackCounts = async (id, track, c) => { calls.push({ track, ...c }); return orig(id, track, c); };
+  r.tick(); await r.settle();
+  for (let i = 0; i < 12; i++) {
+    await src.play(14, r);
+    src.stalled = true; src.resumeHeals = false; src.rebuildHeals = false;
+    await src.play(5, r, 24); src.resumeHeals = true; await src.play(2, r, 24);
+  }
+  await src.play(10, r);
+  await r.stop(); await r.settle(); await ticks(r, 4);
+  const man = manifestOf(w, row.id);
+  const padded = man.discontinuities.filter((d) => d.kind === "context_stall").reduce((n, d) => n + (d.padded_ms ?? 0), 0);
+  say("server", w.server.recordings.get(row.id).status, "| silence filled (s)", Math.round(padded / 1000), "| teacher s on server", secs(w, row.id), "below_floor", secs(w, row.id, "teacher", (c) => c.below_floor), "| stated per track:", calls.map((c) => `${c.track} total_ms ${c.total_ms} padded_ms ${c.padded_ms}`).join("; "));
+});
+
+await P("V4 a stated no after 3 minutes of waiting (switched off; consent missing)", async () => {
+  for (const msg of ["Recording is switched off for this class", "Recording needs consent from every child in this class"]) {
+    const { w, src, r, errors, row, store } = await started();
+    w.server.offline = true; r.tick(); await r.settle(); await src.play(180, r, 200);
+    w.server.offline = false;
+    w.server.failNext("update:class_recordings", 1, { message: msg, code: "P0001" });
+    await src.play(30, r, 200);
+    say(JSON.stringify(msg), "-> state", r.state, "| mics open", src.open, "| local row", !!(await store.getRecording(row.id)), "bytes", await store.bytesHeld(row.id), "| server chunks", w.server.chunkRows(row.id).length, "|", errors.filter((e) => e.code === "start_failed").map((e) => `${e.refusal}: ${e.message}`.slice(0, 150)));
+  }
+});
+
+await P("V5 the 14-day deletion of audio the server gave up", async () => {
+  const { w, src, r, errors, row, store } = await started({ lessonMs: 5 * 60000 });
+  w.server.offline = true; r.tick(); await r.settle(); await src.play(21 * 60, r, 400);
+  w.server.offline = false; await ticks(r, 6);
+  const h = await r.heldAudio();
+  say("the window closed offline: phase", (await store.getRecording(row.id))?.phase, "| held", h.map((x) => `${Math.round(x.bytes / 1e6)} MB deleteAt +${x.deleteAt ? Math.round((x.deleteAt - clock) / 86400000) : null} d`));
+  await r.dispose();
+  for (const days of [13, 2]) {
+    clock += days * 86400000;
+    const h2 = recorder(w, store, new FakeSource());
+    await h2.r.prepare(); await h2.r.recover(); await h2.r.settle();
+    say(`+${days} days, page opened: bytes held`, await store.bytesHeld(row.id), "| row", !!(await store.getRecording(row.id)), "| said", h2.errors.map((e) => e.message.slice(0, 110)));
+    await h2.r.dispose();
+  }
+});
+
+await P("V6 dispose() while recording (the user changes / the session ends)", async () => {
+  const { w, src, r, row } = await started();
+  r.tick(); await r.settle(); await src.play(25, r);
+  await r.dispose(); await sleep(50);
+  const sr = w.server.recordings.get(row.id);
+  say("microphones open", src.open, "| server", sr.status, "stop_reason", sr.stop_reason, "| teacher s on server", secs(w, row.id));
+});
+
+await P("V7 pre-start limit: the engine's function against the window", async () => {
+  const o = "2026-11-12T09:55:00.000Z";
+  for (const [s, max] of [["2026-11-12T10:30:00.000Z", 6300000], ["2026-11-12T12:00:00.000Z", 6300000], ["2026-11-12T09:50:00.000Z", 6300000]])
+    say("started", s, "max_duration", max, "-> limit ms", R.preStartLimitMs({ startedAt: s, captureOpensAt: o, maxDurationMs: max }));
+});
+process.exit(0);

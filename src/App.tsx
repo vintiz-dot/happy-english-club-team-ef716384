@@ -17,6 +17,7 @@ import { Suspense, lazy } from "react";
 import { lazyRetry } from "./lib/lazyRetry";
 import { AppLoader } from "./components/AppLoader";
 const AnnouncementRenderer = lazyRetry(() => import("./components/announcements/AnnouncementRenderer").then((m) => ({ default: m.AnnouncementRenderer })));
+const RecorderBoot = lazyRetry(() => import("./components/recorder/RecorderBoot").then((m) => ({ default: m.RecorderBoot })));
 import { AuthProvider } from "@/hooks/useAuth";
 import { IvoryScope } from "@/components/theme/IvoryScope";
 
@@ -58,6 +59,7 @@ const Vocabulary = lazy(() => import("./pages/Vocabulary"));
 const TeacherVocabularyAudit = lazy(() => import("./pages/TeacherVocabularyAudit"));
 const TeacherBooks = lazy(() => import("./pages/TeacherBooks"));
 const TeacherLanguageSupport = lazy(() => import("./pages/TeacherLanguageSupport"));
+const TeacherRecorder = lazy(() => import("./pages/TeacherRecorder"));
 const TeacherSmartUpload = lazy(() => import("./pages/TeacherSmartUpload"));
 const TeacherTranscripts = lazy(() => import("./pages/TeacherTranscripts"));
 const StudentMyWork = lazy(() => import("./pages/StudentMyWork"));
@@ -101,6 +103,7 @@ function AppContent() {
             <IvoryScope>
             <ProfilePicker />
             <Suspense fallback={null}><AnnouncementRenderer /></Suspense>
+            <Suspense fallback={null}><RecorderBoot /></Suspense>
             <StartupGuard>
               <Suspense fallback={<AppLoader />}>
                 <Routes>
@@ -144,6 +147,7 @@ function AppContent() {
                   <Route path="/teacher/vocabulary-audit" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherVocabularyAudit /></ProtectedRoute>} />
                   <Route path="/teacher/books" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherBooks /></ProtectedRoute>} />
                   <Route path="/teacher/language-support" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLanguageSupport /></ProtectedRoute>} />
+                  <Route path="/teacher/recorder" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherRecorder /></ProtectedRoute>} />
                   <Route path="/teacher/smart-upload" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherSmartUpload /></ProtectedRoute>} />
                   <Route path="/teacher/transcripts" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherTranscripts /></ProtectedRoute>} />
 

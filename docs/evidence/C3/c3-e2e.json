@@ -1,0 +1,550 @@
+{
+ "steps": [
+  [
+   "loaded",
+   1794475652067
+  ],
+  [
+   "recording",
+   1794475654966
+  ],
+  [
+   "stop",
+   1794475684939
+  ],
+  [
+   "saved",
+   1794475686086
+  ]
+ ],
+ "asserts": [
+  {
+   "name": "tab title says RECORDING once (the engine owns the prefix)",
+   "pass": true,
+   "detail": "● RECORDING - Class recorder"
+  },
+  {
+   "name": "both level meters live",
+   "pass": true,
+   "detail": [
+    {
+     "label": "My microphone level",
+     "now": 83,
+     "text": "Good"
+    },
+    {
+     "label": "Room microphone level",
+     "now": 83,
+     "text": "Good"
+    }
+   ]
+  },
+  {
+   "name": "stop asks first",
+   "pass": true,
+   "detail": "Stop recording? The lesson has 3 minutes left."
+  },
+  {
+   "name": "title back to normal",
+   "pass": true,
+   "detail": "Class recorder"
+  },
+  {
+   "name": "one recording, complete",
+   "pass": true,
+   "detail": [
+    {
+     "id": "ca4fd6df-4106-4301-8db4-fb8236057962",
+     "status": "complete",
+     "stop_reason": "manual",
+     "started_at": "2026-11-12T09:27:34.537Z",
+     "ended_at": "2026-11-12T09:28:05.846Z",
+     "manifest_path": "11111111-1111-4111-8111-111111111111/ca4fd6df-4106-4301-8db4-fb8236057962/manifest.json"
+    }
+   ]
+  },
+  {
+   "name": "stopped by the teacher",
+   "pass": true,
+   "detail": "manual"
+  },
+  {
+   "name": "teacher track chunks all confirmed",
+   "pass": true,
+   "detail": 3
+  },
+  {
+   "name": "room track chunks all confirmed",
+   "pass": true,
+   "detail": 3
+  },
+  {
+   "name": "markers reached the server",
+   "pass": true,
+   "detail": [
+    {
+     "kind": "roll_call_start",
+     "label": "Roll-call start",
+     "student_id": null,
+     "t_ms": 3626
+    },
+    {
+     "kind": "activity",
+     "label": "Activity",
+     "student_id": null,
+     "t_ms": 5504
+    },
+    {
+     "kind": "student_name",
+     "label": "Pham Minh Khang",
+     "student_id": "11111111-aaaa-4aaa-8aaa-000000000001",
+     "t_ms": 6272
+    },
+    {
+     "kind": "roll_call_end",
+     "label": "Roll-call end",
+     "student_id": null,
+     "t_ms": 8106
+    }
+   ]
+  },
+  {
+   "name": "name chip carries the child's id",
+   "pass": true
+  },
+  {
+   "name": "manifest stored",
+   "pass": true,
+   "detail": [
+    "anchors",
+    "app",
+    "chunk_ms",
+    "chunks_self_contained",
+    "class_id",
+    "discontinuities",
+    "ended_at_client",
+    "format",
+    "markers",
+    "purpose",
+    "recording_id",
+    "sample_rate",
+    "scheduled_end",
+    "scheduled_start",
+    "schema_version",
+    "server_offset_ms_at_end",
+    "server_offset_ms_at_start",
+    "session_date",
+    "session_id",
+    "started_at_client",
+    "started_at_server",
+    "stop_reason",
+    "timeline",
+    "tolerance_ms",
+    "tracks"
+   ]
+  },
+  {
+   "name": "manifest lists the markers",
+   "pass": true,
+   "detail": [
+    "roll_call_start",
+    "activity",
+    "student_name",
+    "roll_call_end"
+   ]
+  },
+  {
+   "name": "device profile saved to the server",
+   "pass": true,
+   "detail": 1
+  },
+  {
+   "name": "no page errors",
+   "pass": true,
+   "detail": []
+  }
+ ],
+ "server": {
+  "recordings": [
+   {
+    "id": "ca4fd6df-4106-4301-8db4-fb8236057962",
+    "status": "complete",
+    "stop_reason": "manual",
+    "started_at": "2026-11-12T09:27:34.537Z",
+    "ended_at": "2026-11-12T09:28:05.846Z",
+    "manifest_path": "11111111-1111-4111-8111-111111111111/ca4fd6df-4106-4301-8db4-fb8236057962/manifest.json"
+   }
+  ],
+  "chunks": [
+   {
+    "track": "teacher",
+    "seq": 0,
+    "confirmed": true,
+    "bytes": 443374
+   },
+   {
+    "track": "room",
+    "seq": 0,
+    "confirmed": true,
+    "bytes": 443374
+   },
+   {
+    "track": "teacher",
+    "seq": 1,
+    "confirmed": true,
+    "bytes": 473866
+   },
+   {
+    "track": "room",
+    "seq": 1,
+    "confirmed": true,
+    "bytes": 473866
+   },
+   {
+    "track": "teacher",
+    "seq": 2,
+    "confirmed": true,
+    "bytes": 505102
+   },
+   {
+    "track": "room",
+    "seq": 2,
+    "confirmed": true,
+    "bytes": 505102
+   }
+  ],
+  "markers": [
+   {
+    "kind": "roll_call_start",
+    "label": "Roll-call start",
+    "student_id": null,
+    "t_ms": 3626
+   },
+   {
+    "kind": "activity",
+    "label": "Activity",
+    "student_id": null,
+    "t_ms": 5504
+   },
+   {
+    "kind": "student_name",
+    "label": "Pham Minh Khang",
+    "student_id": "11111111-aaaa-4aaa-8aaa-000000000001",
+    "t_ms": 6272
+   },
+   {
+    "kind": "roll_call_end",
+    "label": "Roll-call end",
+    "student_id": null,
+    "t_ms": 8106
+   }
+  ],
+  "objects": 7,
+  "manifests": [
+   {
+    "anchors": [
+     {
+      "context_time": 0.0007080000000000001,
+      "date_now": 1794475654786,
+      "performance_now": 35689.89999997616,
+      "server_offset_ms": 3,
+      "t_ms": 0
+     },
+     {
+      "context_time": 10.291569,
+      "date_now": 1794475664820,
+      "performance_now": 45991.299999952316,
+      "server_offset_ms": 3,
+      "t_ms": 10000
+     },
+     {
+      "context_time": 10.411074,
+      "date_now": 1794475664951,
+      "performance_now": 46110.799999952316,
+      "server_offset_ms": 3,
+      "t_ms": 10000
+     },
+     {
+      "context_time": 20.490577,
+      "date_now": 1794475675024,
+      "performance_now": 56190.299999952316,
+      "server_offset_ms": 3,
+      "t_ms": 20000
+     },
+     {
+      "context_time": 20.571651,
+      "date_now": 1794475675119,
+      "performance_now": 56271.39999997616,
+      "server_offset_ms": 3,
+      "t_ms": 20000
+     },
+     {
+      "context_time": 30.150968,
+      "date_now": 1794475684721,
+      "performance_now": 65886.5,
+      "server_offset_ms": 3,
+      "t_ms": 29994
+     },
+     {
+      "context_time": 30.25041,
+      "date_now": 1794475684808,
+      "performance_now": 65973.29999995232,
+      "server_offset_ms": 3,
+      "t_ms": 29994
+     }
+    ],
+    "app": {
+     "device_profile_id": "92315904-b07c-4530-9d16-2c513ff2df26",
+     "install_id": "1facecfd-c1a1-437d-9fc9-9fbdc5012807",
+     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.0.0 Safari/537.36",
+     "version": "dev"
+    },
+    "chunk_ms": 10000,
+    "chunks_self_contained": true,
+    "class_id": "11111111-1111-4111-8111-111111111111",
+    "discontinuities": [],
+    "ended_at_client": "2026-11-12T09:28:05.124Z",
+    "format": "flac",
+    "markers": [
+     {
+      "client_marker_id": "3d353259-ab95-4ce2-9269-68a0784d1a83",
+      "kind": "roll_call_start",
+      "label": "Roll-call start",
+      "student_id": null,
+      "t_ms": 3626
+     },
+     {
+      "client_marker_id": "45c5bbd1-453f-4538-a822-bb94de8f1721",
+      "kind": "activity",
+      "label": "Activity",
+      "student_id": null,
+      "t_ms": 5504
+     },
+     {
+      "client_marker_id": "b4559c53-d5e5-469e-b7e6-b19b14669920",
+      "kind": "student_name",
+      "label": "Pham Minh Khang",
+      "student_id": "11111111-aaaa-4aaa-8aaa-000000000001",
+      "t_ms": 6272
+     },
+     {
+      "client_marker_id": "dcdee208-03a2-4188-bfc9-c364cf23e3ab",
+      "kind": "roll_call_end",
+      "label": "Roll-call end",
+      "student_id": null,
+      "t_ms": 8106
+     }
+    ],
+    "purpose": "lesson",
+    "recording_id": "ca4fd6df-4106-4301-8db4-fb8236057962",
+    "sample_rate": 48000,
+    "scheduled_end": "2026-11-12T09:30:55.101Z",
+    "scheduled_start": "2026-11-12T09:28:25.101Z",
+    "schema_version": 1,
+    "server_offset_ms_at_end": 3,
+    "server_offset_ms_at_start": 3,
+    "session_date": "2026-11-12",
+    "session_id": "4dffa334-a33a-4d8c-ac58-21720132bfbb",
+    "started_at_client": "2026-11-12T09:27:34.531Z",
+    "started_at_server": "2026-11-12T09:27:34.537Z",
+    "stop_reason": "manual",
+    "timeline": "exact",
+    "tolerance_ms": 0,
+    "tracks": [
+     {
+      "applied_settings": {
+       "autoGainControl": false,
+       "channelCount": 2,
+       "deviceId": "a5a48c3f329d7451a3bc7cce7513fbd0aaf46dbe082160360203242adbf9fefb",
+       "echoCancellation": false,
+       "groupId": "b0710700b9137aa351ec65a6cba66b8d01155a63d746c8befef2647b82b96e3c",
+       "latency": 0.01,
+       "noiseSuppression": false,
+       "sampleRate": 44100,
+       "sampleSize": 16,
+       "voiceIsolation": false
+      },
+      "chunk_count": 3,
+      "chunks": [
+       {
+        "byte_size": 443374,
+        "encoding": "fixed",
+        "path": "11111111-1111-4111-8111-111111111111/ca4fd6df-4106-4301-8db4-fb8236057962/teacher/000000.flac",
+        "seq": 0,
+        "sha256": "caafb061e2bd233e131869d77409e898a243f0a6fd43e96d5e9c8935557a3022",
+        "t_end_ms": 10000,
+        "t_start_ms": 0
+       },
+       {
+        "byte_size": 473866,
+        "encoding": "fixed",
+        "path": "11111111-1111-4111-8111-111111111111/ca4fd6df-4106-4301-8db4-fb8236057962/teacher/000001.flac",
+        "seq": 1,
+        "sha256": "6490147c47eaa30fed2495d32a0815020d447252ed9b8ff70c96df6e338c2acf",
+        "t_end_ms": 20000,
+        "t_start_ms": 10000
+       },
+       {
+        "byte_size": 505102,
+        "encoding": "fixed",
+        "path": "11111111-1111-4111-8111-111111111111/ca4fd6df-4106-4301-8db4-fb8236057962/teacher/000002.flac",
+        "seq": 2,
+        "sha256": "fe79fd7f842274a24df0c629fa5d1977fea704ba356fec3f8a0322b0c48ba8a2",
+        "t_end_ms": 29994,
+        "t_start_ms": 20000
+       }
+      ],
+      "closed_at_frame": null,
+      "constraints_not_honoured": [
+       "channelCount: 2 (channel 0 is recorded)"
+      ],
+      "device_hash": "8805462f2e14af94868d2cfad3ba11d3f33d7590d570f7751935227617d69f7e",
+      "device_label": "Fake Audio Input 1",
+      "frames_captured": 1439744,
+      "frames_written": 1439744,
+      "group_hash": "4cb5919443a56c072432208740115730e3cc78830b00f5d86143a5e7df8acd25",
+      "not_accepted": [],
+      "requested_constraints": {
+       "autoGainControl": false,
+       "channelCount": {
+        "ideal": 1
+       },
+       "deviceId": {
+        "exact": "a5a48c3f329d7451a3bc7cce7513fbd0aaf46dbe082160360203242adbf9fefb"
+       },
+       "echoCancellation": false,
+       "noiseSuppression": false,
+       "voiceIsolation": false
+      },
+      "total_bytes": 1422342,
+      "total_ms": 29994,
+      "track": "teacher"
+     },
+     {
+      "applied_settings": {
+       "autoGainControl": false,
+       "channelCount": 2,
+       "deviceId": "cadfada1785848ec684b4fcc81a332b9a39b4909ee91ff513c16fd4daba78c6e",
+       "echoCancellation": false,
+       "groupId": "f1860c581ec06480fa1be300721ce28ab05e5a36af78ee785dfe544208d35e2c",
+       "latency": 0.01,
+       "noiseSuppression": false,
+       "sampleRate": 44100,
+       "sampleSize": 16,
+       "voiceIsolation": false
+      },
+      "chunk_count": 3,
+      "chunks": [
+       {
+        "byte_size": 443374,
+        "encoding": "fixed",
+        "path": "11111111-1111-4111-8111-111111111111/ca4fd6df-4106-4301-8db4-fb8236057962/room/000000.flac",
+        "seq": 0,
+        "sha256": "caafb061e2bd233e131869d77409e898a243f0a6fd43e96d5e9c8935557a3022",
+        "t_end_ms": 10000,
+        "t_start_ms": 0
+       },
+       {
+        "byte_size": 473866,
+        "encoding": "fixed",
+        "path": "11111111-1111-4111-8111-111111111111/ca4fd6df-4106-4301-8db4-fb8236057962/room/000001.flac",
+        "seq": 1,
+        "sha256": "6490147c47eaa30fed2495d32a0815020d447252ed9b8ff70c96df6e338c2acf",
+        "t_end_ms": 20000,
+        "t_start_ms": 10000
+       },
+       {
+        "byte_size": 505102,
+        "encoding": "fixed",
+        "path": "11111111-1111-4111-8111-111111111111/ca4fd6df-4106-4301-8db4-fb8236057962/room/000002.flac",
+        "seq": 2,
+        "sha256": "fe79fd7f842274a24df0c629fa5d1977fea704ba356fec3f8a0322b0c48ba8a2",
+        "t_end_ms": 29994,
+        "t_start_ms": 20000
+       }
+      ],
+      "closed_at_frame": null,
+      "constraints_not_honoured": [
+       "channelCount: 2 (channel 0 is recorded)"
+      ],
+      "device_hash": "d29a3ea62985a7d7d4bd436dad8e06979620296562bc8fe44be9696bb24cfe07",
+      "device_label": "Fake Audio Input 2",
+      "frames_captured": 1439744,
+      "frames_written": 1439744,
+      "group_hash": "40e187fc8281b24b873cf68c1efe2020e7c9c07e437b8f2be5e1a0ab39c03cb1",
+      "not_accepted": [],
+      "requested_constraints": {
+       "autoGainControl": false,
+       "channelCount": {
+        "ideal": 1
+       },
+       "deviceId": {
+        "exact": "cadfada1785848ec684b4fcc81a332b9a39b4909ee91ff513c16fd4daba78c6e"
+       },
+       "echoCancellation": false,
+       "noiseSuppression": false,
+       "voiceIsolation": false
+      },
+      "room_device_dsp": "none reported",
+      "total_bytes": 1422342,
+      "total_ms": 29994,
+      "track": "room"
+     }
+    ]
+   }
+  ],
+  "profiles": 1
+ },
+ "engineMarkers": [],
+ "manifestSummary": {
+  "keys": [
+   "anchors",
+   "app",
+   "chunk_ms",
+   "chunks_self_contained",
+   "class_id",
+   "discontinuities",
+   "ended_at_client",
+   "format",
+   "markers",
+   "purpose",
+   "recording_id",
+   "sample_rate",
+   "scheduled_end",
+   "scheduled_start",
+   "schema_version",
+   "server_offset_ms_at_end",
+   "server_offset_ms_at_start",
+   "session_date",
+   "session_id",
+   "started_at_client",
+   "started_at_server",
+   "stop_reason",
+   "timeline",
+   "tolerance_ms",
+   "tracks"
+  ],
+  "tracks": [
+   {
+    "track": "teacher",
+    "chunks": 3,
+    "frames_captured": 1439744,
+    "frames_written": 1439744
+   },
+   {
+    "track": "room",
+    "chunks": 3,
+    "frames_captured": 1439744,
+    "frames_written": 1439744
+   }
+  ],
+  "markers": [
+   "roll_call_start",
+   "activity",
+   "student_name",
+   "roll_call_end"
+  ]
+ },
+ "passed": 14,
+ "failed": 0
+}

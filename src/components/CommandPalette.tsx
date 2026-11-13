@@ -87,6 +87,7 @@ export function CommandPalette() {
       { label: "Transcript Insights", path: "/teacher/transcripts", icon: AudioLines, keywords: "transcript lesson analysis engagement" },
       { label: "Flipbooks", path: "/teacher/books", icon: BookOpen },
       { label: "Language Support", path: "/teacher/language-support", icon: Languages, keywords: "picture pictures sentence esl symbols arasaac widgit reader" },
+      { label: "Class recorder", path: "/teacher/recorder", icon: AudioLines, keywords: "record recording microphone lapel s500 audio lesson" },
     ];
   }, [role]);
 
