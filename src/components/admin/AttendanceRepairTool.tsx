@@ -8,6 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Wrench, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { moneyErrorText, needsMoneyDialog } from "@/lib/moneyGuard";
+import { useMoneyChange } from "@/components/admin/money-guard/useMoneyChange";
+import { MoneyGuardDialog } from "@/components/admin/money-guard/MoneyGuardDialog";
 
 interface Student {
   id: string;
@@ -64,7 +67,26 @@ export function AttendanceRepairTool() {
     if (data) setEnrollments(data as any);
   };
 
-  const handlePreview = async () => {
+  // D4 step 1b (G-12): "Preview" only reads (it used to write the rows
+  // straight away). "Repair Attendance" writes through the checked path on
+  // the admin's own JWT; when old billed months are reached the server
+  // answers 409 with its preview and the money guard dialog asks for a reason.
+  const guard = useMoneyChange((result) => {
+    toast.success(`Repaired ${result?.written ?? 0} attendance records`);
+    setPreview(null);
+  });
+
+  const readBody = async (error: any): Promise<any> => {
+    try {
+      const ctx = error?.context;
+      const src = typeof ctx?.clone === "function" ? ctx.clone() : ctx;
+      return (await src?.json?.()) ?? null;
+    } catch {
+      return null;
+    }
+  };
+
+  const callRepair = async (previewOnly: boolean) => {
     if (!selectedStudent || !selectedClass || !startDate || !endDate) {
       toast.error("Please fill all fields");
       return;
@@ -79,20 +101,39 @@ export function AttendanceRepairTool() {
           startDate,
           endDate,
           defaultStatus,
+          preview: previewOnly,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        const body = await readBody(error);
+        if (!previewOnly && needsMoneyDialog(body)) {
+          guard.open(
+            { entity: "attendance", op: "repair",
+              args: { student_id: selectedStudent, class_id: selectedClass, from: startDate, to: endDate, status: defaultStatus } },
+            body.preview,
+          );
+          return;
+        }
+        throw new Error(moneyErrorText(body?.code, body?.kind, body?.error ?? body?.message ?? error.message));
+      }
 
-      setPreview(data);
-      toast.success(`Found ${data.inserted || 0} missing attendance records`);
+      if (previewOnly) {
+        setPreview(data);
+        toast.success(`Found ${data.sessions?.length || 0} missing attendance records`);
+      } else {
+        setPreview(null);
+        toast.success(data.message || `Repaired ${data.inserted || 0} attendance records`);
+      }
     } catch (error: any) {
-      toast.error(error.message || "Failed to preview");
-      setPreview(null);
+      toast.error(error.message || "Failed to repair attendance");
+      if (previewOnly) setPreview(null);
     } finally {
       setLoading(false);
     }
   };
+
+  const handlePreview = () => callRepair(!preview);
 
   const handleReset = () => {
     setPreview(null);
@@ -221,6 +262,10 @@ export function AttendanceRepairTool() {
           </Button>
         </div>
       </CardContent>
+      <MoneyGuardDialog
+        guard={guard}
+        names={Object.fromEntries(students.map((st) => [st.id, st.full_name]))}
+      />
     </Card>
   );
 }

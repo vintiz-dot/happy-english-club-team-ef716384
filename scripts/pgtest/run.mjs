@@ -149,6 +149,40 @@ const SUITES = [
     ],
     args: ["scripts/ROLLBACK-d4-1-floors.sql"],
   },
+  // D4 step 1b: the money guard's core and the register (G-11, G-12, DQ-1),
+  // the three functions driven per role, and the pure helpers.
+  {
+    name: "d4 register",
+    file: "d4-register.test.mjs",
+    expect: 116,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261106090000_attendance_enrollment_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261114090000_d4_floors.sql",
+      "20261114091000_d4_core_register.sql",
+    ],
+    args: ["scripts/ROLLBACK-d4-2-register.sql"],
+  },
+  {
+    name: "d4 functions register",
+    file: "d4-functions-register.test.mjs",
+    expect: 33,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261106090000_attendance_enrollment_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261114090000_d4_floors.sql",
+      "20261114091000_d4_core_register.sql",
+    ],
+  },
+  { name: "money guard lib", file: "money-guard-lib.test.mjs", expect: 33, migrations: [] },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.

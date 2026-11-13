@@ -10,6 +10,9 @@ import { toast } from "sonner";
 import { Calendar, Save, Users } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { moneyErrorText, needsMoneyDialog } from "@/lib/moneyGuard";
+import { useMoneyChange } from "@/components/admin/money-guard/useMoneyChange";
+import { MoneyGuardDialog } from "@/components/admin/money-guard/MoneyGuardDialog";
 
 interface PastAttendanceEditorProps {
   classId: string;
@@ -55,20 +58,46 @@ export function PastAttendanceEditor({ classId }: PastAttendanceEditorProps) {
     },
   });
 
+  // D4 step 1b: one mark-attendance call per lesson (a batch). A lesson more
+  // than a week old in a billed month answers 409 with the server's preview;
+  // the money guard dialog then asks for the reason and confirms through
+  // money_change_checked. Nothing here decides which changes need that.
+  const guard = useMoneyChange(() => {
+    queryClient.invalidateQueries({ queryKey: ["past-attendance-sessions", classId, selectedMonth] });
+    toast.success("Attendance updated, with your reason");
+  });
+
+  const readBody = async (error: any): Promise<any> => {
+    try {
+      const ctx = error?.context;
+      const src = typeof ctx?.clone === "function" ? ctx.clone() : ctx;
+      return (await src?.json?.()) ?? null;
+    } catch {
+      return null;
+    }
+  };
+
   const saveAttendanceMutation = useMutation({
-    mutationFn: async ({ sessionId, studentId, status }: { sessionId: string; studentId: string; status: string }) => {
+    mutationFn: async ({ sessionId, marks }: { sessionId: string; marks: Array<{ studentId: string; status: string }> }) => {
       const { error } = await supabase.functions.invoke("mark-attendance", {
-        body: {
-          sessionId,
-          studentId,
-          status,
-        },
+        body: { sessionId, batch: marks },
       });
-      if (error) throw error;
+      if (!error) return { saved: true };
+      const body = await readBody(error);
+      if (needsMoneyDialog(body)) {
+        guard.open(
+          { entity: "attendance", op: "set_marks",
+            args: { session_id: sessionId, marks: marks.map((m) => ({ student_id: m.studentId, status: m.status })) } },
+          body.preview,
+        );
+        return { saved: false, dialog: true };
+      }
+      throw new Error(moneyErrorText(body?.code, body?.kind, body?.error ?? error.message));
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["past-attendance-sessions", classId, selectedMonth] });
-      toast.success("Attendance updated");
+    onSuccess: (r) => {
+      if (r?.saved) {
+        queryClient.invalidateQueries({ queryKey: ["past-attendance-sessions", classId, selectedMonth] });
+      }
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update attendance");
@@ -77,15 +106,18 @@ export function PastAttendanceEditor({ classId }: PastAttendanceEditorProps) {
 
   const handleSaveAll = async () => {
     try {
-      const updates = [];
+      const saved: string[] = [];
+      let paused = false;
       for (const [sessionId, studentStatuses] of Object.entries(attendance)) {
-        for (const [studentId, status] of Object.entries(studentStatuses)) {
-          updates.push(saveAttendanceMutation.mutateAsync({ sessionId, studentId, status }));
-        }
+        const marks = Object.entries(studentStatuses).map(([studentId, status]) => ({ studentId, status }));
+        // One lesson at a time: a lesson that needs a reason opens the dialog
+        // for that lesson; the edits of the other lessons stay on screen.
+        const r = await saveAttendanceMutation.mutateAsync({ sessionId, marks });
+        if (r?.saved) saved.push(sessionId);
+        if (r?.dialog) { saved.push(sessionId); paused = true; break; }
       }
-      await Promise.all(updates);
-      setAttendance({});
-      toast.success("All attendance saved");
+      setAttendance((prev) => Object.fromEntries(Object.entries(prev).filter(([id]) => !saved.includes(id))));
+      if (!paused) toast.success("All attendance saved");
     } catch (error) {
       console.error("Error saving attendance:", error);
     }
@@ -213,6 +245,12 @@ export function PastAttendanceEditor({ classId }: PastAttendanceEditorProps) {
           <div className="py-8 text-center text-hec-body text-hec-ink-soft">No sessions found for this month</div>
         )}
       </CardContent>
+      <MoneyGuardDialog
+        guard={guard}
+        names={Object.fromEntries(
+          (sessions ?? []).flatMap((ss: any) => (ss.attendance ?? []).map((a: any) => [a.student_id, a.students?.full_name ?? "A child"])),
+        )}
+      />
     </Card>
   );
 }
