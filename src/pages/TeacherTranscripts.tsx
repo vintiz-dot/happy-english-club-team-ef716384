@@ -1444,7 +1444,7 @@ export default function TeacherTranscripts() {
                             >
                               {s.points > 0 ? `+${s.points}` : s.points}
                             </span>
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1 basis-48">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="min-w-0 whitespace-normal break-words text-hec-small font-semibold text-hec-ink">
                                   {s.students?.full_name || (
@@ -1564,8 +1564,8 @@ export default function TeacherTranscripts() {
                   {studentMetrics.map((m) => (
                     <Card key={`card-${m.id}`}>
                       <CardContent className="pt-4 space-y-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="min-w-0 whitespace-normal break-words text-hec-body font-semibold text-hec-ink">{m.students?.full_name || m.speaker_label}</p>
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <p className="min-w-0 flex-1 basis-40 whitespace-normal break-words text-hec-body font-semibold text-hec-ink">{m.students?.full_name || m.speaker_label}</p>
                           <div className="flex items-center gap-1 shrink-0">
                             {m.edited_by_teacher && (
                               <Badge variant="outline" className="text-hec-ink-soft">edited</Badge>
