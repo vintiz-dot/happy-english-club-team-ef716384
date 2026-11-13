@@ -1,0 +1,36 @@
+import React, { useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
+import App from "@/App.tsx";
+import "@/index.css";
+import "react-quill-new/dist/quill.snow.css";
+import { IvoryContext } from "@/hooks/useIvory";
+import { NewSiteMigrationOverlay } from "@/components/migration/NewSiteMigrationOverlay";
+
+// R20 harness only: NewSiteMigrationOverlay has no importer in the app, so the harness mounts it on top of the
+// page when localStorage fake_overlay=1. useIvory() follows <html data-hec-theme>, i.e. what IvoryScope decides
+// for the route underneath (listed -> the new design, unlisted -> the old one).
+function OverlayMount() {
+  const read = () => document.documentElement.getAttribute("data-hec-theme") === "ivory";
+  const [ivory, setIvory] = useState(read);
+  useEffect(() => {
+    const mo = new MutationObserver(() => setIvory(read()));
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-hec-theme"] });
+    setIvory(read());
+    return () => mo.disconnect();
+  }, []);
+  return (
+    <IvoryContext.Provider value={ivory}>
+      <NewSiteMigrationOverlay userId="u-student" onCompleted={() => {}} />
+    </IvoryContext.Provider>
+  );
+}
+
+let overlay = false;
+try { overlay = localStorage.getItem("fake_overlay") === "1"; } catch {}
+
+createRoot(document.getElementById("root")!).render(
+  <>
+    <App />
+    {overlay && <OverlayMount />}
+  </>,
+);
