@@ -1,6 +1,6 @@
 # S1 F-02 - live deploy log (nine AI / speech functions behind `requireSpender`)
 
-**Where I am / next step:** 13 Nov 2026, 09:28 Hanoi. 7 of 9 live and verified (word-enrichment, image-search, pronounce-syllables, pronounce-viseme, smart-dictation, smart-dictionary, sapling-grammar at v4). Next step: snapshot image-generate (8 of 9).
+**Where I am / next step:** 13 Nov 2026, 09:30 Hanoi. 8 of 9 live and verified (all but get-speech-token at v4). Next step: get-speech-token (9 of 9) - Hanoi time 09:30 is outside 16:30-21:00, so it goes now.
 
 Live project `aswgmbefikhsnhogtryv`. Source commit `1c736fff` (sheet: `docs/evidence/S1-phase2.md`, Part 3, step 3). Rollback copies: `C:\Users\Dell\hec-tools\f02-rollback\<function>\v3\` (outside the repo): every file `get_edge_function` returned, byte for byte, plus `_meta.json` (version, verify_jwt, entrypoint, ezbr_sha256). Written by `tools/extract.mjs`, which reads the tool result out of this session's own transcript - nothing re-typed on the saving or checking side. Compare: `tools/cmp.mjs`. Authorised by the owner (D-22, D-19). No git push, no SQL that writes, no migration.
 
@@ -21,3 +21,4 @@ Live project `aswgmbefikhsnhogtryv`. Source commit `1c736fff` (sheet: `docs/evid
 | 5 | smart-dictation | v3, verify_jwt true | identical except line endings | v4, ACTIVE, verify_jwt true (02:23 UTC) | 4 of 4 BYTE-IDENTICAL | 401 | 401 `{"error":"Unauthorized"}` |
 | 6 | smart-dictionary | v3, verify_jwt true | identical except line endings | v4, ACTIVE, verify_jwt true (02:26 UTC) | 4 of 4 BYTE-IDENTICAL | 401 | 401 `{"error":"Unauthorized"}` |
 | 7 | sapling-grammar | v3, verify_jwt true | identical except line endings | v4, ACTIVE, verify_jwt true (02:27 UTC) | 4 of 4 BYTE-IDENTICAL | 401 | 401 `{"error":"Unauthorized"}` |
+| 8 | image-generate | v3, verify_jwt true | identical except line endings | v4, ACTIVE, verify_jwt true (02:29 UTC) | 4 of 4 BYTE-IDENTICAL | 401 | 401 `{"error":"Unauthorized"}` |
