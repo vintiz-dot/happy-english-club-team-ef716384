@@ -154,13 +154,8 @@ export default function NotificationBell() {
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge
-              variant={ivory ? "default" : "destructive"}
-              className={
-                ivory
-                  ? // An unread count is not danger: ink, not red (DESIGN_SYSTEM s.14).
-                    "absolute -right-1 -top-1 h-5 min-w-5 justify-center px-1 py-0 leading-none tabular-nums"
-                  : "absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-              }
+              variant="destructive"
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
             >
               {unreadCount}
             </Badge>
