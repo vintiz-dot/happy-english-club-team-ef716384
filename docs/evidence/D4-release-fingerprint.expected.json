@@ -43,7 +43,7 @@
       },
       "identity": "public._attendance_money_guard()",
       "identity_arguments": "",
-      "md5_prosrc": "a2ae6b075adcf84c5f6515675ab253aa",
+      "md5_prosrc": "1fdb26b35d8efba25f5b253952be83b4",
       "proname": "_attendance_money_guard",
       "security_definer": true,
       "volatility": "v"
@@ -313,6 +313,22 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._money_enrollment_rpc_call()",
+      "identity_arguments": "",
+      "md5_prosrc": "8ec6677d24f9a3b253f93e4e1bab9138",
+      "proname": "_money_enrollment_rpc_call",
+      "security_definer": false,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._money_exec__attendance(p_plan jsonb, p_uid uuid)",
       "identity_arguments": "p_plan jsonb, p_uid uuid",
       "md5_prosrc": "06892532e541e2228c377bcddd54c390",
@@ -475,7 +491,7 @@
       },
       "identity": "public.d4_guard_status()",
       "identity_arguments": "",
-      "md5_prosrc": "9200020ecdd5a9f79b8c90b4e6dc7af1",
+      "md5_prosrc": "df2b7052707d4a8d06bdc307e6fe96a9",
       "proname": "d4_guard_status",
       "security_definer": true,
       "volatility": "s"
@@ -796,7 +812,7 @@
       ],
       "constraints": [
         {
-          "md5_def": "e48c0ecab6f65f33b06642bdea26518d",
+          "md5_def": "0ffdb5ec9b3755a17186cf1dde9decc4",
           "name": "money_change_events_kind_check",
           "type": "c"
         },

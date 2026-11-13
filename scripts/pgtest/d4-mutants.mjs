@@ -123,7 +123,7 @@ export const MUTANTS = [
   ['R12', "HC025 also on the service lane",
     "    IF v_lane IN ('person', 'unknown')\n       AND (TG_OP = 'DELETE' OR NEW.marked_by IS NULL) THEN", "    IF v_lane IN ('person', 'unknown', 'service')\n       AND (TG_OP = 'DELETE' OR NEW.marked_by IS NULL) THEN", ['floors']],
   ['C01', "G-11 rule 1 dropped (an upsert's BEFORE INSERT judged as a new row)",
-    "  IF TG_OP = 'INSERT' AND EXISTS (SELECT 1 FROM public.attendance a\n", "  IF false AND EXISTS (SELECT 1 FROM public.attendance a\n", ['register'], CORE],
+    "    IF FOUND THEN\n      RETURN NEW;\n    END IF;\n  END IF;\n", "    IF false THEN\n      RETURN NEW;\n    END IF;\n  END IF;\n", ['register'], CORE],
   ['C02', "G-11 rule 3 dropped (no free week)",
     "  IF public._lesson_in_free_week(s.date, s.start_time, s.end_time) THEN\n    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\n  END IF;\n\n  v_month", "  IF false THEN\n    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\n  END IF;\n\n  v_month", ['register'], CORE],
   ['C03', "teacher rule ignores a past month",
@@ -171,7 +171,26 @@ export const MUTANTS = [
   ['C24', "trigger-made writes are judged (the cancel's excuse-all)",
     "  IF pg_trigger_depth() > 1 THEN\n    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\n  END IF;\n  -- 1", "  -- 1", ['register'], CORE],
   ['C25', "an admin's old billed mark passes raw (rule 5 dropped)",
-    "    IF v_tier = 0 THEN\n      RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\n    END IF;\n    RAISE EXCEPTION", "    IF true THEN\n      RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\n    END IF;\n    RAISE EXCEPTION", ['register', 'fnreg'], CORE],
+    "    IF v_tier = 0 THEN\n      RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\n    END IF;\n    -- Conductor", "    IF true THEN\n      RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\n    END IF;\n    -- Conductor", ['register', 'fnreg'], CORE],
+  // round 2: the reviewer's three real survivors, and the round's own changes
+  ['X01', "DQ-1 refuses an equal level too (a cover re-saving an old mark unchanged)",
+    "         < public._floor_mark_level(v_old_status, v_old_by) THEN", "         <= public._floor_mark_level(v_old_status, v_old_by) THEN", ['register'], CORE],
+  ['X07', "record_money_change_event open to any signed-in user",
+    "  v_uid uuid := public._session_require_admin();\n  o public.money_change_overrides;\n  v_payload", "  v_uid uuid := auth.uid();\n  o public.money_change_overrides;\n  v_payload", ['register'], CORE],
+  ['F01', "mark-attendance: a teacher may un-bill a person's Present after the week in the current month",
+    "          return crossing && (past || unbillPerson);", "          return crossing && past;", ['fnreg'], 'supabase/functions/mark-attendance/index.ts'],
+  ['C26', "rule 1 sees the row without locking it (R-2 race)",
+    " WHERE a.session_id = NEW.session_id AND a.student_id = NEW.student_id FOR UPDATE;", " WHERE a.session_id = NEW.session_id AND a.student_id = NEW.student_id;", ['register'], CORE],
+  ['C27', "the ruling dropped: an enrolment RPC's backdated mark refused with a raw code",
+    "    IF v_rpc IS NOT NULL\n", "    IF false\n", ['register'], CORE],
+  ['C28', "the ruling widened: every admin statement treated as an enrolment RPC",
+    "  SELECT substring(lower(COALESCE(current_query(), '')) from\n", "  SELECT 'end_enrollment' WHERE true UNION ALL SELECT substring(lower(COALESCE(current_query(), '')) from\n", ['register'], CORE],
+  ['C29', "the ruling widened: an RPC's raw UPDATE of a person's mark (not Excused) passes",
+    "            OR (v_rpc = 'stars_sync_resolve_conflict' AND TG_OP = 'UPDATE' AND NEW.marked_by = v_uid)) THEN", "            OR TG_OP = 'UPDATE') THEN", ['register'], CORE],
+  ['C30', "preflight no longer checks the 1a bodies",
+    "IS DISTINCT FROM r.want THEN", "IS DISTINCT FROM r.want AND false THEN", ['register'], CORE],
+  ['C31', "preflight compares the raw md5 (live 1a is CRLF: a healthy database refused)",
+    "AND (SELECT md5(replace(p.prosrc, E'\\r', '')) FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig))", "AND (SELECT md5(p.prosrc) FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig))", ['register'], CORE],
 ];
 
 const D4_LITERALS = [/('[0-9a-f]{32}'\) THEN\s+-- this file)/g];
@@ -206,6 +225,32 @@ const results = [];
 const coreOriginal = readFileSync(migPath(CORE), 'utf8').replace(/\r\n/g, '\n');
 for (const [id, what, find, repl, suites, file] of MUTANTS) {
   if (only.length && !only.includes(id)) continue;
+  if (file && file.startsWith('supabase/functions/')) {
+    // an edge function: mutated in place for the run, the original bytes put back after
+    const fp = join(repo, file);
+    const before = readFileSync(fp);
+    const src = before.toString('utf8').replace(/\r\n/g, '\n');
+    const n = src.split(find).length - 1;
+    if (n !== 1) { results.push({ id, what, verdict: `BAD MUTANT (pattern found ${n} times)` }); console.log(`${id} BAD MUTANT (${n})`); continue; }
+    const by = [];
+    try {
+      writeFileSync(fp, src.replace(find, () => repl));
+      for (const s of suites) {
+        const r = await runSuite(SUITES[s], migPath(CORE), CORE);
+        if (r.code !== 0) {
+          const firstFail = r.out.split('\n').find((l) => l.includes('FAIL')) ?? r.out.split('\n').slice(-3).join(' ');
+          by.push(`${s}: ${firstFail.trim().slice(0, 160)}`);
+          break;
+        }
+      }
+    } finally {
+      writeFileSync(fp, before);
+    }
+    const verdict = by.length ? `CAUGHT by ${by[0]}` : `SURVIVED (${suites.join(', ')})`;
+    results.push({ id, what, verdict });
+    console.log(`${id} ${verdict}`);
+    continue;
+  }
   if (file === CORE) {
     const n = coreOriginal.split(find).length - 1;
     if (n !== 1) { results.push({ id, what, verdict: `BAD MUTANT (pattern found ${n} times)` }); console.log(`${id} BAD MUTANT (${n})`); continue; }

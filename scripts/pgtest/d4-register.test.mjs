@@ -491,6 +491,11 @@ await section('conductor ruling (1b review R-1): the live enrolment RPCs are rec
      (await events('enrollment_rpc_mark')).some((e) => e.payload.rpc === 'stars_sync_resolve_conflict' && e.payload.student_id === k2), r);
   r = await tryIt(() => asAdmin(`UPDATE attendance SET status='Excused', marked_by=$3 WHERE session_id=$1 AND student_id=$2`, [sid2, k2, ADMIN]));
   ok('a raw admin UPDATE of that mark to Excused (no RPC in the statement) is still HC025', r.code === 'HC025', r);
+  // only the conflict's own write passes: a mark signed by someone else, in a statement that names the RPC, is refused
+  await asSuper(`UPDATE attendance SET status='Excused', marked_by=$3 WHERE session_id=$1 AND student_id=$2`, [sid2, k2, tUid]);
+  r = await tryIt(() => asAdmin(`UPDATE attendance SET status='Present', marked_by=$3 WHERE session_id=$1 AND student_id=$2 /* stars_sync_resolve_conflict( */`, [sid2, k2, tUid]));
+  ok('a statement naming stars_sync_resolve_conflict that re-bills a mark signed by SOMEONE ELSE -> still HC025 (only the admin\'s own signed mark passes)',
+     r.code === 'HC025', r);
   const st = (await asAdmin(`SELECT public.d4_guard_status() r`)).rows[0].r;
   ok('the status card counts them (events_30d.enrollment_rpc_mark)', (st.events_30d?.enrollment_rpc_mark ?? 0) >= 5, st.events_30d);
 });
