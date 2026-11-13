@@ -1,0 +1,210 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
+import { afterAttendanceMarked } from '../_lib/attendance-effects.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const SingleEntry = z.object({
+  studentId: z.string().uuid(),
+  status: z.enum(['Present', 'Absent', 'Excused', 'Late']),
+  notes: z.string().max(500).optional(),
+});
+
+const RequestSchema = z.object({
+  sessionId: z.string().uuid(),
+  // Accept either a single entry or a batch
+  studentId: z.string().uuid().optional(),
+  status: z.enum(['Present', 'Absent', 'Excused', 'Late']).optional(),
+  notes: z.string().max(500).optional(),
+  batch: z.array(SingleEntry).optional(),
+});
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const clientIP = getClientIP(req);
+    const ipLimit = checkRateLimit(clientIP, 60, 60000, 'ip');
+    if (ipLimit.limited) return rateLimitResponse(ipLimit.resetAt, corsHeaders);
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const userLimit = checkRateLimit(user.id, 40, 60000, 'user');
+    if (userLimit.limited) return rateLimitResponse(userLimit.resetAt, corsHeaders);
+
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+
+    if (!roles?.some(r => ['admin', 'teacher'].includes(r.role))) {
+      return new Response(JSON.stringify({ error: 'Admin or teacher access required' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const requestBody = await req.json();
+    const validationResult = RequestSchema.safeParse(requestBody);
+    if (!validationResult.success) {
+      return new Response(JSON.stringify({ error: "Invalid input", details: validationResult.error.issues }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { sessionId } = validationResult.data;
+
+    // AUTHORIZATION, PART TWO: is this session actually yours?
+    //
+    // The role check above proves only that the caller is *a* teacher. It
+    // never related sessionId to them, so any teacher could mark attendance
+    // on any session in the school by posting another session's id - and this
+    // runs on the service-role key, so row-level security does not catch it.
+    // That is not a cosmetic write: marking attendance flips the session to
+    // Held, which feeds tuition recalculation and student point bonuses.
+    //
+    // Admins stay unrestricted. Everyone else has to pass the same two-tier
+    // test as the rest of the app - on the roster for the class, or covering
+    // it inside the window - so there is one definition of "your class" and
+    // it lives in the database.
+    const isAdmin = roles?.some((r) => r.role === 'admin') ?? false;
+
+    const { data: currentSession, error: currentSessionError } = await supabase
+      .from('sessions').select('status').eq('id', sessionId).maybeSingle();
+    if (currentSessionError || !currentSession) {
+      return new Response(JSON.stringify({ error: 'Session not found' }), {
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (currentSession.status === 'Canceled') {
+      return new Response(JSON.stringify({ error: 'Cancelled lessons cannot be marked. All students are Excused and uncharged.' }), {
+        status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!isAdmin) {
+      const { data: session, error: sessionError } = await supabase
+        .from('sessions')
+        .select('class_id')
+        .eq('id', sessionId)
+        .maybeSingle();
+
+      if (sessionError || !session) {
+        return new Response(JSON.stringify({ error: 'Session not found' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: teachesClass, error: accessError } = await supabase.rpc('is_teacher_of_class', {
+        user_id: user.id,
+        class_id: session.class_id,
+      });
+
+      // Fail closed: an error here must deny, not fall through to the write.
+      if (accessError || teachesClass !== true) {
+        console.warn(`mark-attendance denied: user ${user.id} does not teach class ${session.class_id}`);
+        return new Response(JSON.stringify({ error: 'You do not teach this class' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Normalize to entries array
+    let entries: Array<{ studentId: string; status: string; notes?: string }>;
+    if (validationResult.data.batch && validationResult.data.batch.length > 0) {
+      entries = validationResult.data.batch;
+    } else if (validationResult.data.studentId && validationResult.data.status) {
+      entries = [{ studentId: validationResult.data.studentId, status: validationResult.data.status, notes: validationResult.data.notes }];
+    } else {
+      return new Response(JSON.stringify({ error: 'Provide studentId+status or batch array' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`Marking attendance for ${entries.length} students in session ${sessionId}`);
+
+    // Batch upsert all attendance records at once
+    const now = new Date().toISOString();
+    const upsertRows = entries.map(e => ({
+      session_id: sessionId,
+      student_id: e.studentId,
+      status: e.status,
+      notes: e.notes || null,
+      marked_by: user.id,
+      marked_at: now,
+    }));
+
+    const { error: attendanceError } = await supabase
+      .from('attendance')
+      .upsert(upsertRows, { onConflict: 'session_id,student_id' });
+
+    if (attendanceError) {
+      if (attendanceError.code === '23514') {
+        return new Response(JSON.stringify({ error: 'Attendance was not saved: cancelled lessons must remain Excused.' }), {
+          status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      throw new Error(`Failed to mark attendance: ${attendanceError.message}`);
+    }
+
+    // Auto-mark session as Held
+    await supabase
+      .from('sessions')
+      .update({ status: 'Held' })
+      .eq('id', sessionId)
+      .eq('status', 'Scheduled');
+
+    // Get session info once for post-processing
+    const { data: sessionData } = await supabase
+      .from('sessions')
+      .select('date, class_id')
+      .eq('id', sessionId)
+      .single();
+
+    // Tuition for Absent/Excused, streaks for Present. Lives in
+    // _lib/attendance-effects.ts so the Stars sync runs the same code when
+    // a register is marked from Pixel Pal - one definition of what a mark
+    // does, not two that drift.
+    await afterAttendanceMarked(supabase, {
+      classId: sessionData?.class_id,
+      date: sessionData?.date,
+      entries,
+    });
+
+    console.log(`Attendance marked for ${entries.length} students`);
+
+    return new Response(
+      JSON.stringify({ success: true, count: entries.length }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error: any) {
+    console.error('Error marking attendance:', error);
+    return new Response(
+      JSON.stringify({ error: 'Failed to mark attendance' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});

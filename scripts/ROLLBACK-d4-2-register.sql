@@ -5,10 +5,18 @@
 -- zz_attendance_money_guard or attendance_requires_checked_path for a lesson
 -- of this week. Nothing is lost by rolling back; tell the conductor.
 --
--- ONE PASTE: this file drops the register's money guard trigger and nothing
--- else. Then redeploy the previous mark-attendance and repair-attendance
--- (git: the commit before step 1b), or leave the step 1b versions: with the
--- trigger gone their checked path still works but refuses nothing.
+-- TWO STEPS, BOTH REQUIRED:
+--   1. Paste this file: it drops the register's money guard trigger and
+--      nothing else.
+--   2. At once, redeploy the PREVIOUS repair-attendance and mark-attendance
+--      (live v3 before step 1b = origin/main f5987804; saved, LF, in
+--      docs/evidence/D4-1b-rollback-v3/<name>/index.ts.txt - deploy each as
+--      index.ts with its unchanged ../_lib imports, verify_jwt = true).
+--      NOT optional: with the trigger gone money_change_checked refuses
+--      everything (HC050), and the step 1b repair-attendance sends EVERY
+--      repair through it, so the repair tool stops working entirely; the
+--      step 1b mark-attendance's old-lesson dialog stops the same way.
+--      guarded-change-refresh may stay (it only refreshes bills).
 --
 -- WHAT STAYS, on purpose (scripts/pgtest/d4-register.test.mjs checks it):
 --   * money_change_overrides and money_change_events with their rows,
