@@ -14,10 +14,26 @@
 -- the range, and the three highest totals as bare numbers. No id, no name,
 -- and nothing that ties one skill's figures to another's, so a classmate's
 -- profile cannot be put back together from it.
---   A class where fewer than three children have assessments in the range
---   returns nothing to a family: a "best" or an "average" over one or two
---   children is that child's own score. Staff of the class and admins are
---   not held to that (they read the rows themselves).
+--
+-- WHAT A FAMILY IS HELD TO (S1 phase 2 review; staff of the class and admins
+-- are held to neither - they read the rows themselves):
+--   1. THREE OTHER CHILDREN PER SKILL. A skill's row is returned only when
+--      at least three children who are NOT in the caller's own family have a
+--      total in that skill in the range. The caller knows their own child's
+--      totals, so they do not count towards the three: in a class of three
+--      that includes their child, "best", the sum and the top list would be
+--      the other two children's scores. And the count is per skill, not per
+--      class: a skill only one child was assessed in would otherwise come
+--      back as best = total = that child's score (on live, 11 of the 48
+--      class-month-skill cells since August hold one or two children).
+--   2. WHOLE PERIODS ONLY. The range must be all time (both dates NULL) or
+--      exactly one calendar month - the two the panels ask for. Any other
+--      range returns nothing: with free dates, two overlapping ranges
+--      subtract to a single lesson, which is one child's score.
+-- What is still knowable, on purpose: the three highest totals of a skill
+-- are exact numbers belonging to unnamed children out of at least three
+-- the caller cannot tell apart; and someone who asks every day sees the
+-- current month's sums grow.
 -- Same door as before: admins, staff of the class, families with a child
 -- enrolled in it now. Everyone else gets no rows.
 --
@@ -62,7 +78,11 @@ AS $function$
     SELECT auth.uid() AS uid,
            coalesce(public.has_role(auth.uid(), 'admin'::public.app_role), false)
              OR coalesce(public.is_teacher_of_class(auth.uid(), p_class), false) AS staff,
-           coalesce(public.is_student_enrolled_in_class(auth.uid(), p_class), false) AS family
+           coalesce(public.is_student_enrolled_in_class(auth.uid(), p_class), false) AS family,
+           -- All time, or exactly one calendar month.
+           (p_from IS NULL AND p_to IS NULL)
+             OR coalesce(p_from = date_trunc('month', p_from)::date
+                         AND p_to = (date_trunc('month', p_from) + interval '1 month' - interval '1 day')::date, false) AS whole_period
   ),
   per AS (
     -- One total per child and skill. The child's id stops here.
@@ -70,21 +90,26 @@ AS $function$
       FROM public.skill_assessments sa, who
      WHERE sa.class_id = p_class
        AND who.uid IS NOT NULL
-       AND (who.staff OR who.family)
+       AND (who.staff OR (who.family AND who.whole_period))
        AND (p_from IS NULL OR sa.date >= p_from)
        AND (p_to IS NULL OR sa.date <= p_to)
      GROUP BY sa.student_id, sa.skill
   ),
-  size AS (SELECT count(DISTINCT student_id)::integer AS n FROM per)
+  kids AS (
+    -- Which of them the caller already knows: their own family's children.
+    SELECT k.student_id, public.is_family_student(k.student_id, who.uid) AS own
+      FROM (SELECT DISTINCT student_id FROM per) k, who
+  ),
+  size AS (SELECT count(*)::integer AS n FROM kids)
   SELECT per.skill,
          max(per.t)::integer,
          sum(per.t)::integer,
          count(*)::integer,
          size.n,
          (array_agg(per.t ORDER BY per.t DESC))[1:3]
-    FROM per, size, who
-   WHERE who.staff OR size.n >= 3
-   GROUP BY per.skill, size.n
+    FROM per JOIN kids ON kids.student_id = per.student_id, size, who
+   GROUP BY per.skill, size.n, who.staff
+  HAVING who.staff OR count(*) FILTER (WHERE NOT kids.own) >= 3
 $function$;
 
 REVOKE EXECUTE ON FUNCTION public.get_class_skill_summary(uuid, date, date) FROM PUBLIC, anon;
