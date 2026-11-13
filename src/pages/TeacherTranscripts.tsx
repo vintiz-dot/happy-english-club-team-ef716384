@@ -83,15 +83,18 @@ function useMyClasses(userId?: string) {
   });
 }
 
+// A CEFR estimate is a level: the system's brass level badge (DS s.15). The words carry the level; the old
+// per-level tints (sky / teal / emerald / violet at 15 %) failed 4.5:1 on the ivory surfaces.
+const CEFR_LEVEL_BADGE = "border-hec-brass/40 bg-transparent text-hec-brass";
 const CEFR_COLORS: Record<string, string> = {
-  "Pre-A1": "bg-slate-500/15 text-slate-600 border-slate-500/30",
-  A1: "bg-sky-500/15 text-sky-600 border-sky-500/30",
-  "A1+": "bg-sky-500/15 text-sky-700 border-sky-500/30",
-  A2: "bg-teal-500/15 text-teal-600 border-teal-500/30",
-  "A2+": "bg-teal-500/15 text-teal-700 border-teal-500/30",
-  B1: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
-  "B1+": "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
-  B2: "bg-violet-500/15 text-violet-600 border-violet-500/30",
+  "Pre-A1": CEFR_LEVEL_BADGE,
+  A1: CEFR_LEVEL_BADGE,
+  "A1+": CEFR_LEVEL_BADGE,
+  A2: CEFR_LEVEL_BADGE,
+  "A2+": CEFR_LEVEL_BADGE,
+  B1: CEFR_LEVEL_BADGE,
+  "B1+": CEFR_LEVEL_BADGE,
+  B2: CEFR_LEVEL_BADGE,
 };
 
 export default function TeacherTranscripts() {
@@ -1047,6 +1050,7 @@ export default function TeacherTranscripts() {
                           <div>
                             <p className="text-hec-small font-medium text-hec-ink mb-2">Summary</p>
                             <Textarea
+                              aria-label="Summary"
                               value={ovDraft.summary}
                               onChange={(e) => setOvDraft((d) => ({ ...d, summary: e.target.value }))}
                               className="min-h-[100px]"
@@ -1650,6 +1654,7 @@ export default function TeacherTranscripts() {
                             <div>
                               <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft mb-1">Contribution</p>
                               <Textarea
+                                aria-label="Contribution"
                                 value={metricDraft.contribution}
                                 onChange={(e) => setMetricDraft((d) => ({ ...d, contribution: e.target.value }))}
                                 className="min-h-[56px]"
@@ -1658,6 +1663,7 @@ export default function TeacherTranscripts() {
                             <div>
                               <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft mb-1">Teacher feedback</p>
                               <Textarea
+                                aria-label="Teacher feedback"
                                 value={metricDraft.teacher_feedback}
                                 onChange={(e) => setMetricDraft((d) => ({ ...d, teacher_feedback: e.target.value }))}
                                 className="min-h-[64px]"
@@ -1666,6 +1672,7 @@ export default function TeacherTranscripts() {
                             <div>
                               <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft mb-1">Next step</p>
                               <Textarea
+                                aria-label="Next step"
                                 value={metricDraft.recommendation}
                                 onChange={(e) => setMetricDraft((d) => ({ ...d, recommendation: e.target.value }))}
                                 className="min-h-[44px]"
