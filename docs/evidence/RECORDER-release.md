@@ -6,7 +6,7 @@ Branch `release/recorder-1`, from `origin/main` f5987804. Code = C2 round 5 (309
 
 ## 1. What the branch holds, and the leak check
 
-`git diff --stat origin/main..release/recorder-1`: 135 files, +19844 / -2. Every file is one of:
+`git diff --stat origin/main..release/recorder-1`: 135 files, +19844 / -2, before this file was added (136 with it). Every file is one of:
 
 - the recorder, new on main: `src/lib/recorder/**` (25), `src/lib/recorderUi.ts`, `src/components/recorder/**` (13, including the session owner `session.ts`, `RecorderBoot.tsx`, `signOutGuard.ts`), `src/pages/TeacherRecorder.tsx`;
 - `supabase/migrations/20261112100000_class_recorder.sql`, `supabase/migrations/20261112101000_recorder_retention_cron.sql`, `supabase/functions/recorder-retention/index.ts`;
