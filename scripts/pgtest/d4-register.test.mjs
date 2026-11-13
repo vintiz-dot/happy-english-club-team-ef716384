@@ -376,6 +376,14 @@ await section('the acknowledgement covers exactly the checked change', async () 
     SET LOCAL ROLE authenticated;
     UPDATE attendance SET status='Excused', marked_by='${ADMIN}' WHERE session_id='${s.sid}' AND student_id='${k3}'`);
   ok('A-8: an acknowledgement stored at T1 against a T2 write -> HC011 token_stale', e?.code === 'HC011', e);
+  // A real override from an EARLIER transaction named in the flag: a replay.
+  const k4 = await kid(s); await att(s, k4, 'Present', null); await inv(k4, s.month, { recorded: 540000 });
+  const a4 = { session_id: s.sid, marks: [{ student_id: k4, status: 'Absent' }] };
+  const p4 = await preview('attendance', 'set_marks', a4);
+  const r4 = await must('replay fixture', () => checked('attendance', 'set_marks', a4, { reason: R, token: p4.token, confirm: true }));
+  e = await script(ADMIN, 'authenticated', 'authenticated', `SELECT set_config('hec.money_change_ack', '${r4.override_id}', true);
+    UPDATE attendance SET status='Excused', marked_by='${ADMIN}' WHERE session_id='${s.sid}' AND student_id='${k4}'`);
+  ok('a replay: the flag names a real override of an earlier transaction -> HC025', e?.code === 'HC025' && (await mark(s, k4)).status === 'Absent', e);
 });
 
 // ---------------------------------------------------------------- the checked path
@@ -419,6 +427,10 @@ await section('money_change_checked: the order of checks', async () => {
   const r0 = await must('T0', () => checked('attendance', 'set_marks', { session_id: t.sid, marks: [{ student_id: kt, status: 'Excused' }] }));
   ok('T0 needs no reason and no token, and still writes one override row (every money write leaves a row)',
      r0.tier === 0 && !!r0.override_id && (await mark(t, kt)).status === 'Excused', r0);
+  const tc = await mk({ when: TODAY, start: TODAY.time, end: TODAY.end_time }); const kc2 = await kid(tc); await att(tc, kc2, 'Present', null);
+  await inv(kc2, tc.month, { conf: 'confirmed', recorded: 540000 });
+  const pc2 = await preview('attendance', 'set_marks', { session_id: tc.sid, marks: [{ student_id: kc2, status: 'Excused' }] });
+  ok('set_marks preview for TODAY\'s lesson with a confirmed bill: T0 (the week is free in the plan too)', pc2.tier === 0 && pc2.allowed, pc2.tier);
   r = await tryIt(() => checked('attendance', 'set_marks', { session_id: t.sid, marks: [{ student_id: kt, status: 'Present' }] }, { token: 'stale' }));
   ok('T0 with a token that does not match -> HC011 (a token is checked whenever one is sent)', r.code === 'HC011', r);
   // refuse codes
