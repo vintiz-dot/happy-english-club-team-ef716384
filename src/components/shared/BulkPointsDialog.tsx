@@ -232,7 +232,7 @@ export function BulkPointsDialog({
             <Label className={ivory ? LABEL_IVORY : "text-base font-semibold"}>
               Selected Students ({selectedStudents.length})
             </Label>
-            <ScrollArea className={ivory ? "h-24 rounded-hec-md border border-hec-line p-3 bg-hec-sunken" : "h-24 rounded-lg border p-3 bg-muted/50"}>
+            <ScrollArea className={ivory ? "h-32 rounded-hec-md border border-hec-line p-3 bg-hec-sunken" : "h-24 rounded-lg border p-3 bg-muted/50"}>
               <div className="flex flex-wrap gap-2">
                 {selectedStudents.map((student) => (
                   <div
