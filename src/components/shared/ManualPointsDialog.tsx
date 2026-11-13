@@ -288,7 +288,7 @@ export function ManualPointsDialog({ classId, trigger, isAdmin = false }: Manual
           {/* Category Selection */}
           <div className="space-y-3">
             <Label className={ivory ? LABEL_IVORY : "text-base font-semibold"}>Category *</Label>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div className={ivory ? "grid grid-cols-2 sm:grid-cols-3 gap-2" : "grid grid-cols-2 sm:grid-cols-5 gap-2"}>
               {[
                 { key: "skill", label: "Skill", desc: "Speaking, Listening, etc." },
                 { key: "behavior", label: "Behavior", desc: "Focus, Teamwork" },
