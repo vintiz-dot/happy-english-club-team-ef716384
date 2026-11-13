@@ -2,7 +2,23 @@
 
 Independent reviewer. Reviewing branch `worktree-agent-a8fa73ee4063a7b1b` at 0617d940 (detached; the builder's final tip a80d45b1 is reviewed in the last section). Read-only: no product code changed, nothing pushed, nothing applied. Live probes are catalog-only (project `aswgmbefikhsnhogtryv`, 2026-11-13 ~09:30 Hanoi).
 
-**Where I am / next step:** ROUND 2 COMPLETE (32d3ee21): APPLY WITH CHANGES - one change, the enrolment-RPC test (below). Not applied to live: the conductor's instruction was to apply only on APPLY. Next step is not mine.
+**Where I am / next step:** ROUND 3 COMPLETE (90a059c9): APPLY. The live apply is logged in `docs/evidence/D4-1b-live-apply.md`.
+
+## Round 3 (delta 32d3ee21..90a059c9): APPLY
+
+Only `_money_enrollment_rpc_call()` changed in the migration (`:399-436`): it reads `PG_CONTEXT`, takes the LAST line (the outermost frame), requires it to be exactly `PL/pgSQL function <one of the six live signatures> line N at SQL statement`, and requires that name to exist once in `pg_proc` (any schema), in `public`, plpgsql, SECURITY DEFINER. This is R2-1's fix, tighter than mine.
+
+Executed (scratch `probe6.mjs`, real files in pglite, as an admin on an old confirmed paid month), 9/9:
+- my three round-2 forgeries (quoted alias `"end_enrollment("`, literal `'pause_enrollment ('`, comment `/* ai_action_undo( */`) -> HC025;
+- legitimate `end_enrollment`, plain and called PostgREST-style inside a LATERAL subquery -> passes, mark removed, one `enrollment_rpc_mark`;
+- own 1, a forged frame: a definer function running client text whose last line is a fake `PL/pgSQL function end_enrollment(uuid,uuid,date) line 37 at SQL statement` (dynamic SQL, the line inside a comment) -> HC025: the real outermost frame (`run_text ... at EXECUTE`) is last, so the quoted text never is;
+- own 2, a legitimate RPC reached through a wrapper (not outermost) -> HC025: closed, not open. On live no function calls any of the six (checked: no body outside the six names them) and each of the six writes `attendance` in its own body (`att_writes` 1, 2, 1, 2, 0 for apply, 1 for resolve; apply's register rows come from the enrolment seed trigger at depth 2), so "outermost, at SQL statement" fits every live path;
+- own 3, a write made by a trigger fired inside `end_enrollment` (depth 2) -> passes unjudged with no event, as every trigger-made write does since round 1 (`:422`); not new;
+- own 4, a `pg_temp.end_enrollment` namesake -> the real one is judged (HC025), closed.
+
+Live (read-only): the six exist once each, all `public`, plpgsql, SECURITY DEFINER, with the six signatures. Builder's suite on 90a059c9: `d4-register` 140/140, `d4-functions-register` 34/34, fingerprint up to date, `--check-unchanged --after-rollback` 66/66, mutant C32 (puts `current_query()` back) caught. The `src` side did not change since round 2.
+
+**Verdict: APPLY.** Applied per the brief at 90a059c9: see `docs/evidence/D4-1b-live-apply.md`.
 
 ## Round 2 (delta a80d45b1..32d3ee21)
 
