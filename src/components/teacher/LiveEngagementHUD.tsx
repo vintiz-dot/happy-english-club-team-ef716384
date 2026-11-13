@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { StudentActionPopover } from "@/components/shared/StudentActionPopover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import { motion } from "framer-motion";
 import { Activity, Radio, MoonStar } from "lucide-react";
 
@@ -45,6 +46,7 @@ function minutesSince(iso: string | null): number | null {
 
 export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHistory }: Props) {
   const queryClient = useQueryClient();
+  const ivory = useIvory();
   const [, forceTick] = useState(0);
 
   // Recency colors need a clock even without new events.
@@ -167,33 +169,39 @@ export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHisto
   if (!students.length) return null;
 
   return (
-    <Card className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.03] to-blue-500/[0.03]">
+    <Card className={ivory ? undefined : "border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.03] to-blue-500/[0.03]"}>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm flex items-center gap-2">
+        <div className={ivory ? "flex flex-wrap items-center justify-between gap-2" : "flex items-center justify-between"}>
+          <CardTitle className={ivory ? "flex items-center gap-2 font-sans text-hec-h3 font-semibold" : "text-sm flex items-center gap-2"}>
+            {ivory ? (
+              <span className="inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-hec-leaf" aria-hidden />
+            ) : (
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-60" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500" />
             </span>
+            )}
             Live engagement
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="gap-1 text-xs">
-              <Activity className="h-3 w-3 text-emerald-500" />{active.length} active
+          <div className={ivory ? "flex flex-wrap items-center gap-2" : "flex items-center gap-2"}>
+            <Badge variant={ivory ? "success" : "outline"} className={ivory ? "gap-1 tabular-nums" : "gap-1 text-xs"}>
+              <Activity className={ivory ? "h-3.5 w-3.5" : "h-3 w-3 text-emerald-500"} />{active.length} active
             </Badge>
             {quiet.length > 0 && (
-              <Badge variant="outline" className="gap-1 text-xs text-amber-600 border-amber-500/40">
-                <MoonStar className="h-3 w-3" />{quiet.length} quiet
+              <Badge variant={ivory ? "warning" : "outline"} className={ivory ? "gap-1 tabular-nums" : "gap-1 text-xs text-amber-600 border-amber-500/40"}>
+                <MoonStar className={ivory ? "h-3.5 w-3.5" : "h-3 w-3"} />{quiet.length} quiet
               </Badge>
             )}
           </div>
         </div>
         {/* Engagement balance meter */}
-        <div className="h-1.5 rounded-full bg-muted overflow-hidden mt-2">
+        <div className={ivory ? "h-2 rounded-full bg-hec-sunken overflow-hidden mt-2" : "h-1.5 rounded-full bg-muted overflow-hidden mt-2"}>
           <motion.div
             animate={{ width: `${Math.round(balance * 100)}%` }}
             transition={{ duration: 0.6 }}
-            className={cn(
+            className={ivory
+              ? cn("h-full rounded-full", balance >= 0.7 ? "bg-hec-leaf" : balance >= 0.4 ? "bg-hec-warn" : "bg-hec-danger")
+              : cn(
               "h-full rounded-full",
               balance >= 0.7 ? "bg-emerald-500" : balance >= 0.4 ? "bg-amber-400" : "bg-red-400",
             )}
@@ -201,7 +209,7 @@ export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHisto
         </div>
       </CardHeader>
       <CardContent className="pt-1">
-        <div className="flex flex-wrap gap-1.5">
+        <div className={ivory ? "flex flex-wrap gap-2" : "flex flex-wrap gap-1.5"}>
           {students.map((s) => {
             const mins = minutesSince(s.lastActivityAt);
             const isAbsent = (s.attendance || "").toLowerCase() === "absent";
@@ -219,7 +227,16 @@ export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHisto
             // not a title= that only a mouse could ever show
             const chip = (
               <button
-                className={cn(
+                className={ivory
+                  ? cn(
+                      "flex min-h-hec-target items-center gap-2 rounded-full border px-3 text-hec-small font-medium transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+                      recency === "hot" && "border-hec-leaf/30 bg-hec-leaf-tint text-hec-ink hover:border-hec-leaf",
+                      recency === "warm" && "border-hec-line-strong bg-hec-surface text-hec-ink hover:bg-hec-sunken",
+                      recency === "cold" && "border-hec-warn/30 bg-hec-warn-tint text-hec-ink hover:border-hec-warn",
+                      recency === "none" && "border-dashed border-hec-line-strong bg-hec-surface text-hec-ink-soft hover:bg-hec-sunken",
+                      recency === "absent" && "border-hec-line bg-hec-sunken text-hec-ink-faint line-through",
+                    )
+                  : cn(
                   "flex items-center gap-1.5 rounded-full border pl-1.5 pr-2.5 py-1 text-xs font-medium transition-all hover:shadow-sm",
                   recency === "hot" && "border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
                   recency === "warm" && "border-cyan-500/40 bg-cyan-500/5",
@@ -229,7 +246,15 @@ export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHisto
                 )}
               >
                 <span
-                  className={cn(
+                  className={ivory
+                    ? cn(
+                        "h-2 w-2 rounded-full shrink-0",
+                        recency === "hot" && "bg-hec-leaf",
+                        recency === "warm" && "bg-hec-ink-soft",
+                        recency === "cold" && "bg-hec-warn",
+                        (recency === "none" || recency === "absent") && "bg-hec-ink-faint",
+                      )
+                    : cn(
                     "h-1.5 w-1.5 rounded-full shrink-0",
                     recency === "hot" && "bg-emerald-500",
                     recency === "warm" && "bg-cyan-400",
@@ -239,7 +264,7 @@ export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHisto
                 />
                 {s.name.split(" ").slice(-1)[0]}
                 {s.pointsToday !== 0 && (
-                  <span className={cn("font-bold", s.pointsToday > 0 ? "text-emerald-600" : "text-red-500")}>
+                  <span className={ivory ? cn("font-semibold tabular-nums", s.pointsToday > 0 ? "text-hec-leaf" : "text-hec-danger") : cn("font-bold", s.pointsToday > 0 ? "text-emerald-600" : "text-red-500")}>
                     {s.pointsToday > 0 ? `+${s.pointsToday}` : s.pointsToday}
                   </span>
                 )}
@@ -262,8 +287,8 @@ export function LiveEngagementHUD({ classId, canManagePoints = true, onViewHisto
           })}
         </div>
         {quiet.length > 0 && (
-          <p className="text-[11px] text-amber-600 mt-2 flex items-center gap-1.5">
-            <Radio className="h-3 w-3" />
+          <p className={ivory ? "text-hec-small text-hec-warn mt-2 flex items-start gap-2" : "text-[11px] text-amber-600 mt-2 flex items-center gap-1.5"}>
+            <Radio className={ivory ? "mt-1 h-3.5 w-3.5 shrink-0" : "h-3 w-3"} />
             Haven't engaged in {QUIET_MINUTES}+ min: {quiet.map((s) => s.name.split(" ").slice(-1)[0]).join(", ")}
           </p>
         )}

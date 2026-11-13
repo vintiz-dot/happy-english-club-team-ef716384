@@ -1,0 +1,1009 @@
+{
+ "when": "2026-11-12T23:54:23.014Z",
+ "base": "vite dev server + fake Supabase client + local stand-in book (NOT production, NOT the real book hosts)",
+ "cpu": "4x (CDP Emulation.setCPUThrottlingRate)",
+ "network": "Fast 3G-like (CDP Network.emulateNetworkConditions latency 562.5 ms, 180 KB/s down, 84 KB/s up) applied after the app shell has loaded, plus a 562 ms delay on every book.html request",
+ "checks": [
+  {
+   "id": "M5.control.SkillButton-popover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     183,
+     356,
+     62
+    ],
+    "hit": "BUTTON"
+   },
+   "detail": "not fullscreen (control): SkillButton-popover visible"
+  },
+  {
+   "id": "M5.control.StudentActionPopover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     250,
+     336,
+     245
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): StudentActionPopover visible"
+  },
+  {
+   "id": "M5.control.ui-popover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     604,
+     288,
+     58
+    ],
+    "hit": "P"
+   },
+   "detail": "not fullscreen (control): ui-popover visible"
+  },
+  {
+   "id": "M5.control.ui-select",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     130,
+     604,
+     162,
+     74
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): ui-select visible"
+  },
+  {
+   "id": "M5.control.ui-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     256,
+     332,
+     512,
+     104
+    ],
+    "hit": "H2#radix-:rb:"
+   },
+   "detail": "not fullscreen (control): ui-dialog visible"
+  },
+  {
+   "id": "M5.control.ui-dropdown-menu",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     380,
+     604,
+     128,
+     42
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): ui-dropdown-menu visible"
+  },
+  {
+   "id": "M5.control.ui-alert-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     256,
+     267,
+     512,
+     234
+    ],
+    "hit": "H2#radix-:rg:"
+   },
+   "detail": "not fullscreen (control): ui-alert-dialog visible"
+  },
+  {
+   "id": "M5.control.ui-sheet",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     640,
+     0,
+     384,
+     768
+    ],
+    "hit": "H2#radix-:rj:"
+   },
+   "detail": "not fullscreen (control): ui-sheet visible"
+  },
+  {
+   "id": "M5.control.ui-tooltip",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     722,
+     522,
+     107,
+     28
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): ui-tooltip visible"
+  },
+  {
+   "id": "M5.control.HUD-chip-StudentActionPopover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     191,
+     336,
+     245
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): HUD-chip-StudentActionPopover visible"
+  },
+  {
+   "id": "M5.control.SAP-skills-panel",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     -17,
+     336,
+     512
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): SAP-skills-panel visible"
+  },
+  {
+   "id": "M5.control.SAP-flag-panel",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     140,
+     336,
+     355
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): SAP-flag-panel visible"
+  },
+  {
+   "id": "M5.control.RadialSkillMenu-correction",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     325,
+     992,
+     226
+    ],
+    "hit": "BUTTON"
+   },
+   "detail": "not fullscreen (control): RadialSkillMenu-correction visible"
+  },
+  {
+   "id": "M5.control.LiveAssessmentGrid-panel",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     13,
+     493,
+     558,
+     65
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): LiveAssessmentGrid-panel visible"
+  },
+  {
+   "id": "M5.control.SkillPanel-point-popover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     521,
+     356,
+     62
+    ],
+    "hit": "BUTTON"
+   },
+   "detail": "not fullscreen (control): SkillPanel-point-popover visible"
+  },
+  {
+   "id": "M5.control.SkillPanel-correction-points",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     12,
+     492,
+     560,
+     225
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): SkillPanel-correction-points visible"
+  },
+  {
+   "id": "M5.control.Bulk-mode-skill-bar",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     362,
+     589,
+     300,
+     163
+    ],
+    "hit": "svg"
+   },
+   "detail": "not fullscreen (control): Bulk-mode-skill-bar visible"
+  },
+  {
+   "id": "M5.control.ReadingTheory-from-skill-panel",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     176,
+     38,
+     672,
+     691
+    ],
+    "hit": "path"
+   },
+   "detail": "not fullscreen (control): ReadingTheory-from-skill-panel visible"
+  },
+  {
+   "id": "M5.control.ManualPoints-sheet",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     544,
+     0,
+     480,
+     768
+    ],
+    "hit": "svg"
+   },
+   "detail": "not fullscreen (control): ManualPoints-sheet visible"
+  },
+  {
+   "id": "M5.control.ManualPoints-student-select",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     569,
+     201,
+     432,
+     202
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): ManualPoints-student-select visible"
+  },
+  {
+   "id": "M5.control.BulkPoints-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     176,
+     38,
+     672,
+     691
+    ],
+    "hit": "svg"
+   },
+   "detail": "not fullscreen (control): BulkPoints-dialog visible"
+  },
+  {
+   "id": "M5.control.BulkPoints-reason-select",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     201,
+     471,
+     624,
+     138
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): BulkPoints-reason-select visible"
+  },
+  {
+   "id": "M5.control.ReadingTheory-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     176,
+     38,
+     672,
+     691
+    ],
+    "hit": "path"
+   },
+   "detail": "not fullscreen (control): ReadingTheory-dialog visible"
+  },
+  {
+   "id": "M5.control.LogSpend-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     352,
+     267,
+     320,
+     234
+    ],
+    "hit": "H2#radix-:rt:"
+   },
+   "detail": "not fullscreen (control): LogSpend-dialog visible"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-enter",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "steps": 24,
+    "openBefore": true,
+    "fsOn": true,
+    "stillInDom": true,
+    "visFs": true,
+    "where": "inside the fullscreen element"
+   },
+   "detail": "tooltip open by keyboard (24 Tabs, visible true) then fullscreen on: tooltip still open, inside the fullscreen element, visible true"
+  },
+  {
+   "id": "M5.SkillButton-popover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     183,
+     356,
+     62
+    ],
+    "hit": "BUTTON",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SkillButton-popover visible (inside fullscreen true, topmost true, on screen true, rect 0,183,356,62), still fullscreen true"
+  },
+  {
+   "id": "M5.StudentActionPopover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     250,
+     336,
+     245
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: StudentActionPopover visible (inside fullscreen true, topmost true, on screen true, rect 0,250,336,245), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-popover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     604,
+     288,
+     58
+    ],
+    "hit": "P",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-popover visible (inside fullscreen true, topmost true, on screen true, rect 0,604,288,58), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     130,
+     604,
+     162,
+     74
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-select visible (inside fullscreen true, topmost true, on screen true, rect 130,604,162,74), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     256,
+     332,
+     512,
+     104
+    ],
+    "hit": "H2#radix-:rb:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-dialog visible (inside fullscreen true, topmost true, on screen true, rect 256,332,512,104), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-dropdown-menu",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     380,
+     604,
+     128,
+     42
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-dropdown-menu visible (inside fullscreen true, topmost true, on screen true, rect 380,604,128,42), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-alert-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     256,
+     267,
+     512,
+     234
+    ],
+    "hit": "H2#radix-:rg:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-alert-dialog visible (inside fullscreen true, topmost true, on screen true, rect 256,267,512,234), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-sheet",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     640,
+     0,
+     384,
+     768
+    ],
+    "hit": "H2#radix-:rj:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-sheet visible (inside fullscreen true, topmost true, on screen true, rect 640,0,384,768), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-tooltip",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     722,
+     522,
+     107,
+     28
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-tooltip visible (inside fullscreen true, topmost true, on screen true, rect 722,522,107,28), still fullscreen true"
+  },
+  {
+   "id": "M5.HUD-chip-StudentActionPopover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     191,
+     336,
+     245
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: HUD-chip-StudentActionPopover visible (inside fullscreen true, topmost true, on screen true, rect 0,191,336,245), still fullscreen true"
+  },
+  {
+   "id": "M5.SAP-skills-panel",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     -17,
+     336,
+     512
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SAP-skills-panel visible (inside fullscreen true, topmost true, on screen true, rect 0,-17,336,512), still fullscreen true"
+  },
+  {
+   "id": "M5.SAP-flag-panel",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     140,
+     336,
+     355
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SAP-flag-panel visible (inside fullscreen true, topmost true, on screen true, rect 0,140,336,355), still fullscreen true"
+  },
+  {
+   "id": "M5.RadialSkillMenu-correction",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     325,
+     992,
+     226
+    ],
+    "hit": "BUTTON",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: RadialSkillMenu-correction visible (inside fullscreen true, topmost true, on screen true, rect 16,325,992,226), still fullscreen true"
+  },
+  {
+   "id": "M5.LiveAssessmentGrid-panel",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     13,
+     493,
+     558,
+     65
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: LiveAssessmentGrid-panel visible (inside fullscreen true, topmost true, on screen true, rect 13,493,558,65), still fullscreen true"
+  },
+  {
+   "id": "M5.SkillPanel-point-popover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     521,
+     356,
+     62
+    ],
+    "hit": "BUTTON",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SkillPanel-point-popover visible (inside fullscreen true, topmost true, on screen true, rect 0,521,356,62), still fullscreen true"
+  },
+  {
+   "id": "M5.SkillPanel-correction-points",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     12,
+     492,
+     560,
+     225
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SkillPanel-correction-points visible (inside fullscreen true, topmost true, on screen true, rect 12,492,560,225), still fullscreen true"
+  },
+  {
+   "id": "M5.Bulk-mode-skill-bar",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     362,
+     589,
+     300,
+     163
+    ],
+    "hit": "svg",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: Bulk-mode-skill-bar visible (inside fullscreen true, topmost true, on screen true, rect 362,589,300,163), still fullscreen true"
+  },
+  {
+   "id": "M5.ReadingTheory-from-skill-panel",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     176,
+     38,
+     672,
+     691
+    ],
+    "hit": "path",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ReadingTheory-from-skill-panel visible (inside fullscreen true, topmost true, on screen true, rect 176,38,672,691), still fullscreen true"
+  },
+  {
+   "id": "M5.ManualPoints-sheet",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     544,
+     0,
+     480,
+     768
+    ],
+    "hit": "svg",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ManualPoints-sheet visible (inside fullscreen true, topmost true, on screen true, rect 544,0,480,768), still fullscreen true"
+  },
+  {
+   "id": "M5.ManualPoints-student-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     569,
+     201,
+     432,
+     202
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ManualPoints-student-select visible (inside fullscreen true, topmost true, on screen true, rect 569,201,432,202), still fullscreen true"
+  },
+  {
+   "id": "M5.BulkPoints-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     176,
+     38,
+     672,
+     691
+    ],
+    "hit": "svg",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: BulkPoints-dialog visible (inside fullscreen true, topmost true, on screen true, rect 176,38,672,691), still fullscreen true"
+  },
+  {
+   "id": "M5.BulkPoints-reason-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     201,
+     471,
+     624,
+     138
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: BulkPoints-reason-select visible (inside fullscreen true, topmost true, on screen true, rect 201,471,624,138), still fullscreen true"
+  },
+  {
+   "id": "M5.ReadingTheory-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     176,
+     38,
+     672,
+     691
+    ],
+    "hit": "path",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ReadingTheory-dialog visible (inside fullscreen true, topmost true, on screen true, rect 176,38,672,691), still fullscreen true"
+  },
+  {
+   "id": "M5.LogSpend-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     352,
+     267,
+     320,
+     234
+    ],
+    "hit": "H2#radix-:rt:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: LogSpend-dialog visible (inside fullscreen true, topmost true, on screen true, rect 352,267,320,234), still fullscreen true"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-exit",
+   "size": "1024x768",
+   "status": "FAIL",
+   "value": {
+    "v0": true,
+    "v1": false,
+    "d1": true,
+    "conn": true,
+    "dbg": {
+     "parent": "BODY",
+     "rect": [
+      722,
+      522,
+      107,
+      28
+     ],
+     "opacity": "1",
+     "state": "closed",
+     "wrapperTransform": "translate(722px, 522px)",
+     "hit": "DIV",
+     "focusOnTrigger": true,
+     "viewport": [
+      1024,
+      768
+     ]
+    }
+   },
+   "detail": "tooltip open in fullscreen (visible true), fullscreen ends: still open, connected true, visible false"
+  },
+  {
+   "id": "M5.TeacherBooks.classroom-tools-sheet",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "fsOn": "DIV (holds the book)",
+    "sheetVis": true
+   },
+   "detail": "fullscreen DIV (holds the book); classroom tools sheet visible=true"
+  },
+  {
+   "id": "M5.TeacherBooks.tool-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "text": "Starters 1 (Mon-Wed)",
+    "inFs": true,
+    "hit": true
+   },
+   "detail": "Select in a tool panel: first option \"Starters 1 (Mon-Wed)\" inside fullscreen=true, hit-testable=true"
+  }
+ ]
+}

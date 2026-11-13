@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import { PointFeedbackAnimation } from "./PointFeedbackAnimation";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -77,9 +78,111 @@ function AssessmentStudentCardImpl({
 }: AssessmentStudentCardProps) {
   const unavailable = isUnavailable(attendanceStatus);
   const gradientClass = AVATAR_GRADIENTS[hashIndex(studentId)];
+  const ivory = useIvory();
 
   const PointIcon =
     todayPoints > 0 ? TrendingUp : todayPoints < 0 ? TrendingDown : Minus;
+
+  if (ivory) {
+    // Ivory: a plain surface card, the whole name (it wraps), the state in words.
+    const ivoryCard = (
+      <div
+        data-student-card={studentId}
+        className={cn(
+          "relative flex h-full min-h-hec-target flex-col items-center gap-2 rounded-hec-lg border bg-hec-surface p-4 text-hec-ink shadow-hec-1",
+          "touch-manipulation select-none transition-shadow duration-hec-1 ease-hec",
+          unavailable
+            ? "cursor-not-allowed border-hec-line bg-hec-sunken text-hec-ink-faint"
+            : "cursor-pointer border-hec-line hover:shadow-hec-2",
+          bulkMode && isSelected && !unavailable && "border-hec-brass bg-hec-sunken"
+        )}
+        onClick={(e) => {
+          if (unavailable) return;
+          if (bulkMode) {
+            e.preventDefault();
+            onToggle(studentId);
+          }
+        }}
+      >
+        {bulkMode && !unavailable && (
+          <div className="absolute left-2 top-2 z-10">
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={() => onToggle(studentId)}
+              aria-label={`Select ${fullName}`}
+            />
+          </div>
+        )}
+
+        {unavailable && (
+          <div className="absolute right-2 top-2 z-10">
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full border px-2 py-0.5 text-hec-caption font-medium",
+                attendanceStatus === "Absent"
+                  ? "border-hec-danger/30 bg-hec-danger-tint text-hec-danger"
+                  : "border-hec-line bg-hec-sunken text-hec-ink-soft"
+              )}
+            >
+              {attendanceStatus}
+            </span>
+          </div>
+        )}
+
+        <div className="relative">
+          <Avatar className="h-14 w-14">
+            <AvatarImage src={avatarUrl || undefined} className="object-cover" />
+            <AvatarFallback className="bg-hec-sunken text-hec-body font-semibold text-hec-ink-soft">
+              {getInitials(fullName)}
+            </AvatarFallback>
+          </Avatar>
+          {attendanceStatus === "Present" && (
+            <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-hec-surface bg-hec-leaf" />
+          )}
+        </div>
+
+        <span className="w-full whitespace-normal break-words hyphens-none text-balance text-center text-hec-small font-semibold">
+          {fullName}
+        </span>
+
+        <div
+          className={cn(
+            "mt-auto inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-hec-caption font-semibold tabular-nums",
+            todayPoints > 0
+              ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf"
+              : todayPoints < 0
+                ? "border-hec-danger/30 bg-hec-danger-tint text-hec-danger"
+                : "border-hec-line bg-hec-sunken text-hec-ink-soft"
+          )}
+        >
+          <PointIcon className="h-3.5 w-3.5" />
+          <span>
+            {todayPoints > 0 ? "+" : ""}
+            {todayPoints}
+          </span>
+          <span className="font-medium">today</span>
+        </div>
+
+        <PointFeedbackAnimation
+          feedbacks={feedbacks}
+          onComplete={(id) => onFeedbackComplete(studentId, id)}
+        />
+      </div>
+    );
+
+    if (unavailable) return <div className="h-full">{ivoryCard}</div>;
+
+    return (
+      <div
+        className="h-full"
+        onClick={() => {
+          if (!bulkMode) onSelect(studentId);
+        }}
+      >
+        {ivoryCard}
+      </div>
+    );
+  }
 
   const card = (
     <div
