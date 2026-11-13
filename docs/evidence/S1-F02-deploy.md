@@ -1,6 +1,6 @@
 # S1 F-02 - live deploy log (nine AI / speech functions behind `requireSpender`)
 
-**Where I am / next step:** 13 Nov 2026, 09:30 Hanoi. 8 of 9 live and verified (all but get-speech-token at v4). Next step: get-speech-token (9 of 9) - Hanoi time 09:30 is outside 16:30-21:00, so it goes now.
+**Where I am / next step:** 13 Nov 2026, 09:33 Hanoi. 9 of 9 live at v4, files identical, probes 401/401. Next step: read the logs of the nine since 02:14 UTC for 5xx / boot errors.
 
 Live project `aswgmbefikhsnhogtryv`. Source commit `1c736fff` (sheet: `docs/evidence/S1-phase2.md`, Part 3, step 3). Rollback copies: `C:\Users\Dell\hec-tools\f02-rollback\<function>\v3\` (outside the repo): every file `get_edge_function` returned, byte for byte, plus `_meta.json` (version, verify_jwt, entrypoint, ezbr_sha256). Written by `tools/extract.mjs`, which reads the tool result out of this session's own transcript - nothing re-typed on the saving or checking side. Compare: `tools/cmp.mjs`. Authorised by the owner (D-22, D-19). No git push, no SQL that writes, no migration.
 
@@ -22,3 +22,6 @@ Live project `aswgmbefikhsnhogtryv`. Source commit `1c736fff` (sheet: `docs/evid
 | 6 | smart-dictionary | v3, verify_jwt true | identical except line endings | v4, ACTIVE, verify_jwt true (02:26 UTC) | 4 of 4 BYTE-IDENTICAL | 401 | 401 `{"error":"Unauthorized"}` |
 | 7 | sapling-grammar | v3, verify_jwt true | identical except line endings | v4, ACTIVE, verify_jwt true (02:27 UTC) | 4 of 4 BYTE-IDENTICAL | 401 | 401 `{"error":"Unauthorized"}` |
 | 8 | image-generate | v3, verify_jwt true | identical except line endings | v4, ACTIVE, verify_jwt true (02:29 UTC) | 4 of 4 BYTE-IDENTICAL | 401 | 401 `{"error":"Unauthorized"}` |
+| 9 | get-speech-token | v3, verify_jwt true | identical except line endings | v4, ACTIVE, verify_jwt true (02:31 UTC = 09:31 Hanoi, outside 16:30-21:00) | 4 of 4 BYTE-IDENTICAL | 401 | 401 `{"error":"Unauthorized"}` |
+
+All nine probed once more together at 02:32 UTC: the same 401 / 401 from each. No redeploy was needed and nothing was restored. Each `get_edge_function` after the deploy returned the four files as sent, `verify_jwt` true, and `requireSpender(req, corsHeaders, GATE)` straight after the OPTIONS block.
