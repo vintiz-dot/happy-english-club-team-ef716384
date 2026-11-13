@@ -2,7 +2,7 @@
 
 Branch `release/recorder-1`, from `origin/main` f5987804. Code = C2 round 6 (6db0d8f9; round 5 309c26a6 plus R5-1, R5-2 and the render faults), review 5 + its "Round 6" section: PASS, fit for the hardware checks on live (`docs/evidence/C2-review-5.md`). Assembled by the reviewer. Database and function steps 1-4 are run by the reviewer under D-22 (`docs/evidence/RECORDER-live-apply.md`); the push (step 5) is the conductor's.
 
-**Where I am / next step:** round 6 applied to the branch (section 0); checks re-run. Next: steps 1-4 on live, logged in `RECORDER-live-apply.md`.
+**Where I am / next step:** round 6 on the branch (section 0), checks re-run; steps 1-4 DONE on live 13 Nov 14:32-14:45 Hanoi and verified (`RECORDER-live-apply.md`). Next: step 5, the push (the conductor).
 
 ## 0. Round 6 rebuild
 
