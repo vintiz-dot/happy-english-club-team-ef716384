@@ -46,3 +46,31 @@ Verification (read-only):
 | `anon`: table grants on the recorder's tables / EXECUTE on recorder functions | 0 / 1: `recorder__audit_is_append_only()`, a trigger function (returns `trigger`; Postgres refuses to call it outside a trigger), not revoked in the file and given to `anon` by the project's default privileges | - | explained, harmless |
 
 No difference left unexplained. Step 2 done.
+
+## Step 3 - `20261112101000_recorder_retention_cron.sql` applied, 14:40 Hanoi (07:40 UTC)
+
+Before: the existing nightly job `rebuild-upcoming-sessions` uses the same public anon key and reads the runner token at run time, and `net._http_response` holds only 200s over the last 3 days (74), so the gateway accepts that key. `apply_migration` name `recorder_retention_cron`, query = the LF text (79 lines). Result `{"success":true}`; version `20261113074019`.
+
+| Check | Live | Expected |
+|---|---|---|
+| stored text: length, md5 | 4633, `c2fc2e172a7a265b04670037bfed53e3` | the file: 4633, `c2fc2e172a7a265b04670037bfed53e3` |
+| `recorder-retention` | `0 20 * * *`, active; command md5 `6d84f6db2f8bd566da08bd3102cb37bc`; reads the token with `select token from public.schedule_runner where id = 1` at run time | the `$cmd$` text of the file: md5 `6d84f6db2f8bd566da08bd3102cb37bc` |
+| `recorder-expire-stale` | `17 * * * *`, active; command md5 `082a2a18cb14821c7091e3e3aa42eafe` | the file: `082a2a18cb14821c7091e3e3aa42eafe` |
+| all cron jobs | `rebuild-upcoming-sessions`, `recorder-expire-stale`, `recorder-retention`, `stars-sync` | the two before + these two |
+
+Nothing for the owner to set: the runner token already exists (`schedule_runner` row 1, from 20261110160000; its value was never read here) and the anon key in the job is the public one. Step 3 done.
+
+## Step 4 - `recorder-retention` deployed, 14:42 Hanoi (07:42 UTC)
+
+`recorder-retention` did not exist before (function list checked). `deploy_edge_function` name `recorder-retention`, `verify_jwt: true`, entrypoint `recorder-retention/index.ts`, files `recorder-retention/index.ts` (LF, md5 `11c1dd787a0919cc28b7c80a2cecfb64`, from `release/recorder-1`) and `_lib/auth.ts` (main's, LF, md5 `879142b6783effc17089a3688b4e5ca7`). Result: ACTIVE, version 1, verify_jwt true, ezbr_sha256 `e7073892bedd91cfe62e54ec62b1283d670c24c2cfe0130c111fd10c3b39d12c`. It uses only `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, which the platform sets.
+
+- Script compare: `get_edge_function` returned both files; written out and compared byte for byte with the local LF files by a script (`.rel/cmpfn.mjs`): both IDENTICAL (same md5s as above).
+- Boot probes (no secret used: the public publishable key only): POST with no Authorization -> 401 (gateway); POST with the public key -> 401 `{"error":"Unauthorized"}` (the function's own `requireRole`, so it booted and imported `_lib/auth.ts`); the public key plus a wrong runner token -> 401; GET -> 405 (the function's own). Never 200.
+
+## Post-apply probes (public key, no sign-in)
+
+`class_recordings`, `recorder_child_consents`, `class_recording_chunks`, `recorder_audit_log`, `recorder_settings`, the view `recorder_session_evidence`: all 401 / 42501 permission denied. `rpc/recorder_server_time`, `rpc/recorder_expire_stale`: 401 / 42501. Storage list of `class-recorder-audio`: refused (400, AccessDenied; the message names `is_teacher_of_class`, from the existing `class-recordings` policies being evaluated for an anonymous caller, the same as for any bucket).
+
+## Result
+
+**RECORDER DATABASE AND FUNCTION LIVE.** Nothing records yet: 0 classes switched on, and recording needs an admin to switch a class on (every enrolled child with consent) and a teacher to press Ready in the app, which reaches teachers only with the push. Rollbacks were not needed and not run. Not done here: step 5, the push of `release/recorder-1` to main (the conductor's). The first nightly run is at 20:00 UTC tonight (03:00 Hanoi): hardware check 15 reads `net._http_response` for it tomorrow.
