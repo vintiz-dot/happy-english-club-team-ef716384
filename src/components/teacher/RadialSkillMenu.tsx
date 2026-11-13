@@ -77,7 +77,7 @@ export function RadialSkillMenu({ onSkillTap, onClose, onReadingTheoryClick }: R
           </Button>
           <span className={ivory ? "text-hec-small font-medium text-hec-ink-soft" : "text-sm font-medium text-muted-foreground"}>Select Reason</span>
         </div>
-        <div className={ivory ? "grid grid-cols-1 gap-2 min-[360px]:grid-cols-2" : "grid grid-cols-2 gap-2"}>
+        <div className={ivory ? "grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:grid-cols-3" : "grid grid-cols-2 gap-2"}>
           {CORRECTION_OPTIONS.map((option) => (
             <Button
               key={option.value}

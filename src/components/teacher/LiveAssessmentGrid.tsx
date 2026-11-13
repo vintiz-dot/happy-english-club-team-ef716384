@@ -598,7 +598,7 @@ function SmartSkillPanel({
           onClick={(e) => e.stopPropagation()}
         >
           <div className={ivory
-            ? "max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-hec-lg border border-hec-line bg-hec-raised text-hec-ink shadow-hec-3"
+            ? "max-h-[min(280px,calc(100dvh-1.5rem))] overflow-y-auto overscroll-contain rounded-hec-lg border border-hec-line bg-hec-raised text-hec-ink shadow-hec-3"
             : "rounded-2xl border border-border/60 bg-card/95 backdrop-blur-md shadow-2xl overflow-hidden"}>
             {/* Drag handle bar — drag from anywhere in the header */}
             <div
@@ -688,7 +688,10 @@ function SmartSkillPanel({
             </div>
 
             {/* Body — non-draggable so taps land on the skill buttons */}
-            <div className="p-3 sm:p-4">
+            <div className={ivory
+              // one frame, not two: the menu's own panel frame is dropped inside this panel
+              ? "p-3 sm:p-4 [&>div]:w-full [&>div]:border-0 [&>div]:bg-transparent [&>div]:p-0 [&>div]:shadow-none"
+              : "p-3 sm:p-4"}>
               <RadialSkillMenu
                 onSkillTap={onSkillTap}
                 onClose={onClose}
