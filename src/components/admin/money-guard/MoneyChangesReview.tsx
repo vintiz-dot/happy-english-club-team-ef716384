@@ -9,7 +9,7 @@ import { formatDay, formatClock } from "@/lib/sessionGuard";
  * through but recorded - an old billed mark changed on the service lane
  * (service_retro_mark: the Stars sync, or a function with the service key)
  * and passes from the SQL editor (owner_lane). Read-only; admins only by RLS.
- * Not mounted by this step: tabs/AutomationTab.tsx is the conductor's file.
+ * Mounted in tabs/AutomationTab.tsx (the admin page).
  */
 export function MoneyChangesReview() {
   const { data, isLoading, error } = useQuery({
@@ -63,6 +63,7 @@ export function MoneyChangesReview() {
             </section>
             <section aria-labelledby="mcr-e" className="space-y-2">
               <h3 id="mcr-e" className="text-sm font-semibold">Recorded instead of refused ({data.events.length})</h3>
+              <p className="text-xs text-muted-foreground">These recorded entries cannot be marked as reviewed yet; that arrives with the approvals step.</p>
               {data.events.length === 0 ? <p className="text-sm text-muted-foreground">Nothing recorded.</p> : (
                 <ul className="space-y-1.5">
                   {data.events.map((e: any) => (
