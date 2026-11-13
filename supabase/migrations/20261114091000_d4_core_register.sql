@@ -396,15 +396,44 @@ BEGIN
   RETURN true;
 END $fn$;
 
--- Which live admin RPC that writes the register as a side effect is this
--- statement calling (through PostgREST: SELECT ... "end_enrollment"(...)),
--- or NULL? Read from the statement the client sent; PostgREST passes values
--- as parameters, never in the text.
+-- Which live admin RPC that writes the register as a side effect is running
+-- this write, or NULL? Read from the SERVER's call stack (PG_CONTEXT), never
+-- from the client's text (1b review round 2, R2-1: an alias, a literal or a
+-- comment naming the RPC was enough for current_query()). It must be:
+--   * the OUTERMOST frame (the stack's last line): the client's statement
+--     called that function itself. Lines a client could influence (the
+--     "SQL statement ..." quotes of dynamic SQL) are never the last line;
+--   * exactly "PL/pgSQL function <name>(<argtypes>) line N at SQL statement",
+--     with the six live signatures as Postgres prints them;
+--   * the ONLY function of that name in any schema (pg_temp included), and it
+--     is public, plpgsql, SECURITY DEFINER. Otherwise NULL (judged as before).
+--     authenticated / anon / service_role cannot CREATE in any schema on live
+--     (checked 13 Nov 2026); they can make pg_temp functions, which this
+--     refuses - and a same-named function anywhere makes the real one judged
+--     as an ordinary write too (closed).
 CREATE OR REPLACE FUNCTION public._money_enrollment_rpc_call()
-RETURNS text LANGUAGE sql STABLE SET search_path = public AS $fn$
-  SELECT substring(lower(COALESCE(current_query(), '')) from
-    '(?:^|[^a-z0-9_])"?(end_enrollment|pause_enrollment|modify_enrollment_transfer|ai_action_undo|ai_action_apply|stars_sync_resolve_conflict)"?[[:space:]]*\(')
-$fn$;
+RETURNS text LANGUAGE plpgsql STABLE SET search_path = public AS $fn$
+DECLARE
+  v_ctx text;
+  v_lines text[];
+  v_name text;
+BEGIN
+  GET DIAGNOSTICS v_ctx = PG_CONTEXT;
+  v_lines := string_to_array(COALESCE(v_ctx, ''), E'\n');
+  v_name := substring(v_lines[array_length(v_lines, 1)] from
+    '^PL/pgSQL function (?:public\.)?(end_enrollment\(uuid,uuid,date\)|pause_enrollment\(uuid,uuid,date,date,text\)|modify_enrollment_transfer\(uuid,uuid,uuid,date\)|ai_action_undo\(uuid\)|ai_action_apply\(uuid,text,jsonb\)|stars_sync_resolve_conflict\(uuid,text\)) line [0-9]+ at SQL statement$');
+  IF v_name IS NULL THEN
+    RETURN NULL;
+  END IF;
+  v_name := split_part(v_name, '(', 1);
+  IF (SELECT count(*) FROM pg_catalog.pg_proc p WHERE p.proname = v_name) <> 1
+     OR NOT EXISTS (SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_language l ON l.oid = p.prolang
+                     WHERE p.proname = v_name AND p.pronamespace = 'public'::regnamespace
+                       AND p.prosecdef AND l.lanname = 'plpgsql') THEN
+    RETURN NULL;
+  END IF;
+  RETURN v_name;
+END $fn$;
 
 -- ---------------------------------------------------------------- 5
 -- G-11: the register and the bill. Direct statements only (trigger-made

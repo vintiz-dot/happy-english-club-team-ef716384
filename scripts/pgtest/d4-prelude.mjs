@@ -270,13 +270,21 @@ export const D4_ENROLMENT_RPCS = `
     homework_points integer NOT NULL DEFAULT 0, participation_points integer NOT NULL DEFAULT 0,
     updated_at timestamptz NOT NULL DEFAULT now(), UNIQUE (student_id, class_id, month));
   -- stand-in for stars_sync_resolve_conflict's register write ("take Pixel Pal's mark"):
-  -- the real one (20261104090000) needs the whole sync schema; this is its UPDATE, same name
-  CREATE OR REPLACE FUNCTION public.stars_sync_resolve_conflict(p_session uuid, p_student uuid, p_theirs text)
-    RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$
+  -- the real one (20261104090000) needs the whole sync schema; this is its UPDATE with the
+  -- LIVE signature (uuid, text), plpgsql, SECURITY DEFINER, search_path public - what the
+  -- guard recognises in the call stack
+  CREATE TABLE IF NOT EXISTS public.zz_stars_conflicts(
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), session_id uuid NOT NULL, student_id uuid NOT NULL, theirs text NOT NULL);
+  CREATE OR REPLACE FUNCTION public.stars_sync_resolve_conflict(p_conflict_id uuid, p_resolution text)
+    RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$
+  DECLARE v record;
   BEGIN
-    UPDATE public.attendance SET status = p_theirs, marked_by = auth.uid(), marked_at = now()
-     WHERE session_id = p_session AND student_id = p_student;
-    RETURN 'took_theirs';
+    SELECT * INTO v FROM public.zz_stars_conflicts WHERE id = p_conflict_id;
+    IF p_resolution = 'took_theirs' THEN
+      UPDATE public.attendance SET status = v.theirs, marked_by = auth.uid(), marked_at = now()
+       WHERE session_id = v.session_id AND student_id = v.student_id;
+    END IF;
+    RETURN jsonb_build_object('resolution', p_resolution);
   END $f$;
 `;
 

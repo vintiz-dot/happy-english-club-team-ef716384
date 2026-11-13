@@ -485,7 +485,8 @@ await section('conductor ruling (1b review R-1): the live enrolment RPCs are rec
      r.ok !== undefined && !(await mark({ sid }, k3)) && (await mark({ sid: sidNew }, k3))?.status === 'Present' &&
      ev3.length === 2 && ev3.every((e) => e.payload.rpc === 'modify_enrollment_transfer'), [r, ev3]);
   // stars_sync_resolve_conflict: an admin takes Pixel Pal's mark on an old billed lesson
-  r = await tryIt(() => asAdmin(`SELECT public.stars_sync_resolve_conflict($1, $2, 'Absent')`, [sid2, k2]));
+  const conflict = (await asSuper(`INSERT INTO zz_stars_conflicts(session_id, student_id, theirs) VALUES ($1,$2,'Absent') RETURNING id`, [sid2, k2])).rows[0].id;
+  r = await tryIt(() => asAdmin(`SELECT public.stars_sync_resolve_conflict($1, 'took_theirs')`, [conflict]));
   ok('stars_sync_resolve_conflict (admin takes the other mark on an old billed lesson): passes and is queued',
      r.ok !== undefined && (await mark({ sid: sid2 }, k2))?.status === 'Absent' &&
      (await events('enrollment_rpc_mark')).some((e) => e.payload.rpc === 'stars_sync_resolve_conflict' && e.payload.student_id === k2), r);
@@ -496,6 +497,47 @@ await section('conductor ruling (1b review R-1): the live enrolment RPCs are rec
   r = await tryIt(() => asAdmin(`UPDATE attendance SET status='Present', marked_by=$3 WHERE session_id=$1 AND student_id=$2 /* stars_sync_resolve_conflict( */`, [sid2, k2, tUid]));
   ok('a statement naming stars_sync_resolve_conflict that re-bills a mark signed by SOMEONE ELSE -> still HC025 (only the admin\'s own signed mark passes)',
      r.code === 'HC025', r);
+  // 1b review round 2 (R2-1): the RPC is read from the server's call stack, never from the client's text
+  const k4 = (await asSuper(`INSERT INTO students(full_name) VALUES ('k4') RETURNING id`)).rows[0].id;
+  await asSuper(`INSERT INTO enrollments(class_id, student_id, start_date) VALUES ($1,$2,$3)`, [cid, k4, d60.date]);
+  await asSuper(`INSERT INTO attendance(session_id,student_id,status,marked_by) VALUES ($1,$2,'Present',NULL)`, [sid, k4]);
+  await inv(k4, d30.month, { recorded: 540000 });
+  const nF = (await events('enrollment_rpc_mark')).length;
+  r = await tryIt(() => asAdmin(`WITH pgrst_source AS (UPDATE attendance SET status='Excused' WHERE session_id=$1 AND student_id=$2 RETURNING status)
+    SELECT status AS "end_enrollment(" FROM pgrst_source`, [sid, k4]));
+  ok('forgery 1: a PostgREST select alias "end_enrollment(" on a raw update -> HC025', r.code === 'HC025', r);
+  r = await tryIt(() => asAdmin(`DELETE FROM attendance WHERE session_id=$1 AND student_id=$2 AND 'pause_enrollment (' IS NOT NULL`, [sid, k4]));
+  ok('forgery 2: a string literal \'pause_enrollment (\' in a raw delete -> HC025', r.code === 'HC025', r);
+  r = await tryIt(() => asAdmin(`/* ai_action_undo( */ UPDATE attendance SET status='Excused' WHERE session_id=$1 AND student_id=$2`, [sid, k4]));
+  ok('forgery 3: a comment /* ai_action_undo( */ before a raw update -> HC025', r.code === 'HC025', r);
+  ok('  and none of them left an event (the mark still Present)', (await events('enrollment_rpc_mark')).length === nF &&
+     (await mark({ sid }, k4))?.status === 'Present', await mark({ sid }, k4));
+  // a function with the same name in another schema (and in pg_temp) is not the live RPC
+  await db.exec(`CREATE SCHEMA zz_other;
+    CREATE FUNCTION zz_other.end_enrollment(p_student_id uuid, p_class_id uuid, p_end_date date) RETURNS jsonb
+      LANGUAGE plpgsql SECURITY DEFINER SET search_path = zz_other, public AS $f$
+    BEGIN DELETE FROM public.attendance WHERE student_id = p_student_id AND marked_by IS NULL; RETURN '{}'::jsonb; END $f$;
+    GRANT USAGE ON SCHEMA zz_other TO authenticated; GRANT EXECUTE ON FUNCTION zz_other.end_enrollment(uuid, uuid, date) TO authenticated;`);
+  r = await tryIt(() => asAdmin(`SELECT zz_other.end_enrollment($1, $2, $3)`, [k4, cid, d35.date]));
+  ok('a same-named end_enrollment in ANOTHER schema (printed as end_enrollment(uuid,uuid,date) in the stack) -> HC025, mark kept',
+     r.code === 'HC025' && (await mark({ sid }, k4))?.status === 'Present', r);
+  await db.exec(`DROP SCHEMA zz_other CASCADE;
+    CREATE FUNCTION pg_temp.end_enrollment(p_student_id uuid, p_class_id uuid, p_end_date date) RETURNS jsonb
+      LANGUAGE plpgsql SECURITY DEFINER AS $f$
+    BEGIN DELETE FROM public.attendance WHERE student_id = p_student_id AND marked_by IS NULL; RETURN '{}'::jsonb; END $f$;
+    GRANT EXECUTE ON FUNCTION pg_temp.end_enrollment(uuid, uuid, date) TO authenticated;`);
+  r = await tryIt(() => asAdmin(`SELECT pg_temp.end_enrollment($1, $2, $3)`, [k4, cid, d35.date]));
+  ok('a same-named end_enrollment in pg_temp (TEMP is granted on live) -> HC025, mark kept',
+     r.code === 'HC025' && (await mark({ sid }, k4))?.status === 'Present', r);
+  await db.exec(`DROP FUNCTION pg_temp.end_enrollment(uuid, uuid, date);`);
+  // a definer function that EXECUTEs client text (none exists live): the text can put a forged frame
+  // line into the stack, but never as its LAST line (the outermost frame is the EXECUTing function)
+  await db.exec(`CREATE FUNCTION public.zz_exec(p_sql text) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$
+    BEGIN EXECUTE p_sql; END $f$; GRANT EXECUTE ON FUNCTION public.zz_exec(text) TO authenticated;`);
+  r = await tryIt(() => asAdmin(`SELECT public.zz_exec($1)`, [`UPDATE public.attendance SET status='Excused' WHERE session_id='${sid}' AND student_id='${k4}' /*\nPL/pgSQL function end_enrollment(uuid,uuid,date) line 9 at SQL statement\n*/`]));
+  ok('forgery 4: dynamic SQL whose text carries a frame line "PL/pgSQL function end_enrollment(uuid,uuid,date) line 9 at SQL statement" -> HC025 (only the outermost frame counts)',
+     r.code === 'HC025' && (await mark({ sid }, k4))?.status === 'Present', r);
+  await db.exec(`DROP FUNCTION public.zz_exec(text);`);
   const st = (await asAdmin(`SELECT public.d4_guard_status() r`)).rows[0].r;
   ok('the status card counts them (events_30d.enrollment_rpc_mark)', (st.events_30d?.enrollment_rpc_mark ?? 0) >= 5, st.events_30d);
 });
