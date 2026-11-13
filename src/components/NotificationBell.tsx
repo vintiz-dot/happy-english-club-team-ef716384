@@ -162,7 +162,7 @@ export default function NotificationBell() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className={ivory ? "w-80 p-0 md:w-96" : "w-80 md:w-96"} align="end">
+      <PopoverContent className={ivory ? "w-80 p-0 md:w-96" : "w-80 md:w-96"} align="end" aria-label={ivory ? "Notifications" : undefined}>
         <div className={ivory ? "space-y-2" : "space-y-3"}>
           <div className={ivory ? "sticky top-0 flex items-center justify-between gap-2 border-b border-hec-line bg-hec-raised px-4 py-2" : "flex items-center justify-between sticky top-0 bg-popover pb-2 border-b"}>
             <h4 className={ivory ? "text-hec-h3 font-semibold text-hec-ink" : "font-semibold text-base"}>Notifications</h4>

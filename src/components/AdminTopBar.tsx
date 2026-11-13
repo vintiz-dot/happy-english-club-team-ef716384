@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronRight, Command, Plus, Search, Plug} from "lucide-react";
 import {
@@ -173,8 +173,8 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
               ) : (
                 crumbs.map((c, idx) => {
                   const isLast = idx === crumbs.length - 1;
-                  return (
-                    <span key={`${c.label}-${idx}`} className="contents">
+                  const parts = (
+                    <>
                       <BreadcrumbItem>
                         {c.href && !isLast ? (
                           <BreadcrumbLink
@@ -192,6 +192,14 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
                           <ChevronRight className="h-3.5 w-3.5" />
                         </BreadcrumbSeparator>
                       )}
+                    </>
+                  );
+                  // Ivory: no wrapper, so each <li> is a direct child of the <ol> (a list a screen reader can count).
+                  return ivory ? (
+                    <Fragment key={`${c.label}-${idx}`}>{parts}</Fragment>
+                  ) : (
+                    <span key={`${c.label}-${idx}`} className="contents">
+                      {parts}
                     </span>
                   );
                 })
@@ -206,11 +214,11 @@ export function AdminTopBar({ title, rightSlot }: AdminTopBarProps) {
             size="sm"
             className={ivory ? "gap-2 px-3 text-hec-ink-soft" : "h-9 gap-2 text-muted-foreground"}
             onClick={() => setPaletteOpen(true)}
-            // Below lg the label is hidden: the icon button still needs a name.
-            aria-label={ivory ? "Quick jump" : undefined}
           >
             <Search className="h-3.5 w-3.5" />
             <span className="hidden lg:inline">Quick jump…</span>
+            {/* Ivory: below lg the label is hidden, so the button keeps a name for screen readers. */}
+            {ivory && <span className="sr-only lg:hidden">Quick jump</span>}
             <kbd className={ivory ? KBD_CLASS_IVORY : KBD_CLASS}>⌘K</kbd>
           </Button>
           {rightSlot}

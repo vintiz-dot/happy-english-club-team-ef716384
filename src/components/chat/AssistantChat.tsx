@@ -287,7 +287,14 @@ export function AssistantChat({ className }: { className?: string }) {
   return (
     <div className={cn("flex flex-col min-h-0", className)}>
       {/* Transcript */}
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1">
+      {/* Ivory: the scrolling transcript can be reached and scrolled with the keyboard. */}
+      <div
+        ref={scrollRef}
+        className={ivory ? "flex-1 min-h-0 overflow-y-auto space-y-3 rounded-hec-sm pr-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring" : "flex-1 min-h-0 overflow-y-auto space-y-3 pr-1"}
+        tabIndex={ivory ? 0 : undefined}
+        role={ivory ? "log" : undefined}
+        aria-label={ivory ? "Conversation" : undefined}
+      >
         {loadingHistory && messages.length === 0 && (
           <div className={ivory ? "flex items-center justify-center gap-2 py-12 text-hec-ink-soft" : "flex items-center justify-center py-10 text-muted-foreground gap-2"}>
             <Loader2 className="h-4 w-4 animate-spin" />
