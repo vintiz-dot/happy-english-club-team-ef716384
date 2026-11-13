@@ -184,7 +184,7 @@ export default function TeacherLeaderboards() {
                     onClick={() => canUseLiveMode && setViewMode("live")}
                     className="rounded-none gap-2"
                     disabled={!canUseLiveMode}
-                    aria-label={canUseLiveMode && remainingTime ? `Live, ${remainingTime} left` : "Live"}
+                    aria-label={canUseLiveMode && remainingTime ? `Live ${remainingTime} left` : "Live"}
                   >
                     <Zap className="h-4 w-4" />
                     <span className="hidden sm:inline">Live</span>
