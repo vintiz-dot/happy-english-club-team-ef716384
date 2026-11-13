@@ -836,7 +836,7 @@ export default function TeacherTranscripts() {
 
             {audioProgress && (
               <div className="flex items-center gap-2 rounded-hec-md border border-hec-line bg-hec-sunken px-3 py-2 text-hec-small text-hec-ink">
-                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                 <span className="truncate">
                   {audioProgress.stage === "uploading"
                     ? `Uploading ${audioProgress.fileName}…`
@@ -1316,12 +1316,12 @@ export default function TeacherTranscripts() {
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div>
-                        <CardTitle className="text-sm flex items-center gap-2">
+                        <CardTitle className="flex flex-wrap items-center gap-2">
                           <ImageIcon className="h-5 w-5 shrink-0 text-hec-ink-soft" />
                           Resources used
                           {resources.length > 0 && <Badge variant="secondary" className="tabular-nums">{resources.length}</Badge>}
                         </CardTitle>
-                        <CardDescription className="text-xs mt-1">
+                        <CardDescription className="mt-1">
                           Photos of the book pages, handouts or board work from this lesson.
                           Students see these inside the lesson.
                         </CardDescription>
@@ -1389,14 +1389,14 @@ export default function TeacherTranscripts() {
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <div>
-                          <CardTitle className="text-sm flex items-center gap-2">
+                          <CardTitle className="flex flex-wrap items-center gap-2">
                             <Coins className="h-5 w-5 shrink-0 text-hec-brass" />
                             Points called out in class
                             <Badge variant="secondary" className="tabular-nums">
                               {pointSuggestions.filter((s) => s.status === "suggested").length} pending
                             </Badge>
                           </CardTitle>
-                          <CardDescription className="text-xs mt-1">
+                          <CardDescription className="mt-1">
                             Awards the teacher announced during the lesson. Only students marked
                             present that day are eligible — nothing is granted until you apply it.
                           </CardDescription>
@@ -1501,14 +1501,14 @@ export default function TeacherTranscripts() {
                 {/* Talk-share / engagement balance */}
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-blue-500" />Engagement balance
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 shrink-0 text-hec-ink-soft" />Engagement balance
                     </CardTitle>
-                    <CardDescription className="text-xs">
+                    <CardDescription>
                       Share of student talk. Quiet students stand out immediately.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-2">
+                  <CardContent className="space-y-3">
                     {studentMetrics.map((m, i) => {
                       const share = m.participation_share || 0;
                       const isQuiet = share < 0.5 / Math.max(studentMetrics.length, 1);
@@ -1518,24 +1518,24 @@ export default function TeacherTranscripts() {
                           initial={{ opacity: 0, x: -8 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.04 }}
-                          className="flex items-center gap-3"
+                          className="flex flex-wrap items-center gap-x-3 gap-y-1"
                         >
-                          <span className="w-32 truncate text-sm font-medium shrink-0">
+                          <span className="w-full shrink-0 whitespace-normal break-words text-hec-small font-medium text-hec-ink sm:w-40">
                             {m.students?.full_name || m.speaker_label}
                           </span>
-                          <div className="flex-1 h-5 rounded-full bg-muted overflow-hidden">
+                          <div className="min-w-0 flex-1 h-2 rounded-full bg-hec-sunken overflow-hidden">
                             <motion.div
-                              initial={{ width: 0 }}
+                              initial={false}
                               animate={{ width: `${(share / maxShare) * 100}%` }}
                               transition={{ duration: 0.5, delay: i * 0.04 }}
-                              className={`h-full rounded-full ${isQuiet ? "bg-amber-400" : "bg-gradient-to-r from-cyan-500 to-blue-500"}`}
+                              className={`h-full rounded-full ${isQuiet ? "bg-hec-warn" : "bg-hec-brass"}`}
                             />
                           </div>
-                          <span className="w-12 text-right text-xs text-muted-foreground shrink-0">
+                          <span className="w-12 shrink-0 text-right text-hec-small text-hec-ink-soft tabular-nums">
                             {Math.round(share * 100)}%
                           </span>
                           {m.cefr_estimate && (
-                            <Badge variant="outline" className={`shrink-0 text-[10px] ${CEFR_COLORS[m.cefr_estimate] || ""}`}>
+                            <Badge variant="outline" className={`shrink-0 ${CEFR_COLORS[m.cefr_estimate] || ""}`}>
                               {m.cefr_estimate}
                             </Badge>
                           )}
@@ -1543,11 +1543,11 @@ export default function TeacherTranscripts() {
                       );
                     })}
                     {studentMetrics.length === 0 && (
-                      <p className="text-xs text-muted-foreground py-3">No student speech matched in this transcript.</p>
+                      <p className="text-hec-small text-hec-ink-soft py-3">No student speech matched in this transcript.</p>
                     )}
                     {unknownPct > 0 && (
-                      <p className="text-[11px] text-muted-foreground pt-1 flex items-center gap-1.5">
-                        <HelpCircle className="h-3 w-3 shrink-0" />
+                      <p className="text-hec-caption text-hec-ink-soft pt-1 flex items-start gap-2">
+                        <HelpCircle className="h-4 w-4 shrink-0" />
                         {unknownPct}% of the audio couldn't be attributed to a specific speaker
                         (overlapping voices / mono recorder) and is excluded from these shares.
                       </p>
@@ -1556,15 +1556,15 @@ export default function TeacherTranscripts() {
                 </Card>
 
                 {/* Per-student stat cards */}
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid sm:grid-cols-2 gap-4">
                   {studentMetrics.map((m) => (
                     <Card key={`card-${m.id}`}>
-                      <CardContent className="pt-4 space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-semibold text-sm truncate">{m.students?.full_name || m.speaker_label}</p>
+                      <CardContent className="pt-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="min-w-0 whitespace-normal break-words text-hec-body font-semibold text-hec-ink">{m.students?.full_name || m.speaker_label}</p>
                           <div className="flex items-center gap-1 shrink-0">
                             {m.edited_by_teacher && (
-                              <Badge variant="outline" className="text-[10px] text-violet-600 border-violet-500/40">edited</Badge>
+                              <Badge variant="outline" className="text-hec-ink-soft">edited</Badge>
                             )}
                             {m.cefr_estimate && (
                               <Badge variant="outline" className={CEFR_COLORS[m.cefr_estimate] || ""}>
@@ -1575,7 +1575,7 @@ export default function TeacherTranscripts() {
                               <Tooltip>
                               <TooltipTrigger asChild>
                               <Button
-                                variant="ghost" size="icon" className="h-6 w-6"
+                                variant="ghost" size="icon" className="text-hec-ink-soft"
                                 aria-label="Correct this feedback"
                                 onClick={() => {
                                   setMetricDraft({
@@ -1586,7 +1586,7 @@ export default function TeacherTranscripts() {
                                   setEditingMetricId(m.id);
                                 }}
                               >
-                                <Pencil className="h-3 w-3" />
+                                <Pencil className="h-4 w-4" />
                               </Button>
                               </TooltipTrigger>
                               <TooltipContent>Correct this feedback</TooltipContent>
@@ -1597,16 +1597,16 @@ export default function TeacherTranscripts() {
 
                         {/* Couldn't be matched to the roster — let the teacher say who it was */}
                         {!m.student_id && (
-                          <div className="rounded-lg bg-amber-500/5 ring-1 ring-amber-500/25 p-2 space-y-1.5">
-                            <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" />
+                          <div className="rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 space-y-2">
+                            <p className="text-hec-small text-hec-warn font-semibold flex items-start gap-2">
+                              <AlertTriangle className="h-4 w-4 shrink-0 mt-1" />
                               "{m.speaker_label}" isn't on the roster — who was this?
                             </p>
                             <Select
                               onValueChange={(sid) => assignSpeakerMutation.mutate({ metric: m, studentId: sid })}
                               disabled={assignSpeakerMutation.isPending}
                             >
-                              <SelectTrigger className="h-8 text-xs">
+                              <SelectTrigger aria-label={`Who was "${m.speaker_label}"?`}>
                                 <SelectValue placeholder="Assign to a student…" />
                               </SelectTrigger>
                               <SelectContent>
@@ -1618,27 +1618,27 @@ export default function TeacherTranscripts() {
                           </div>
                         )}
                         <div className="grid grid-cols-3 gap-2 text-center">
-                          <div className="rounded-xl bg-muted/50 p-2">
-                            <MessageSquareText className="h-3.5 w-3.5 mx-auto text-blue-500" />
-                            <p className="text-sm font-bold mt-0.5">{m.utterance_count}</p>
-                            <p className="text-[10px] text-muted-foreground">turns</p>
+                          <div className="rounded-hec-md bg-hec-sunken p-2">
+                            <MessageSquareText className="h-4 w-4 mx-auto text-hec-ink-soft" />
+                            <p className="text-hec-body font-semibold text-hec-ink tabular-nums mt-1">{m.utterance_count}</p>
+                            <p className="text-hec-caption text-hec-ink-soft">turns</p>
                           </div>
-                          <div className="rounded-xl bg-muted/50 p-2">
-                            <HelpCircle className="h-3.5 w-3.5 mx-auto text-violet-500" />
-                            <p className="text-sm font-bold mt-0.5">{m.questions_asked}</p>
-                            <p className="text-[10px] text-muted-foreground">questions</p>
+                          <div className="rounded-hec-md bg-hec-sunken p-2">
+                            <HelpCircle className="h-4 w-4 mx-auto text-hec-ink-soft" />
+                            <p className="text-hec-body font-semibold text-hec-ink tabular-nums mt-1">{m.questions_asked}</p>
+                            <p className="text-hec-caption text-hec-ink-soft">questions</p>
                           </div>
-                          <div className="rounded-xl bg-muted/50 p-2">
-                            <AlertTriangle className="h-3.5 w-3.5 mx-auto text-amber-500" />
-                            <p className="text-sm font-bold mt-0.5">{m.errors_count}</p>
-                            <p className="text-[10px] text-muted-foreground">errors</p>
+                          <div className="rounded-hec-md bg-hec-sunken p-2">
+                            <AlertTriangle className="h-4 w-4 mx-auto text-hec-ink-soft" />
+                            <p className="text-hec-body font-semibold text-hec-ink tabular-nums mt-1">{m.errors_count}</p>
+                            <p className="text-hec-caption text-hec-ink-soft">errors</p>
                           </div>
                         </div>
                         {Array.isArray(m.highlights) && m.highlights.length > 0 && (
                           <div className="pt-1 space-y-1">
                             {m.highlights.map((h: string, i: number) => (
-                              <p key={i} className="text-xs text-muted-foreground flex gap-1.5">
-                                <Star className="h-3 w-3 text-amber-400 shrink-0 mt-0.5" />{h}
+                              <p key={i} className="text-hec-small text-hec-ink-soft flex gap-2">
+                                <Star className="h-4 w-4 text-hec-brass shrink-0 mt-1" />{h}
                               </p>
                             ))}
                           </div>
@@ -1648,39 +1648,39 @@ export default function TeacherTranscripts() {
                         {editingMetricId === m.id ? (
                           <div className="space-y-2">
                             <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Contribution</p>
+                              <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft mb-1">Contribution</p>
                               <Textarea
                                 value={metricDraft.contribution}
                                 onChange={(e) => setMetricDraft((d) => ({ ...d, contribution: e.target.value }))}
-                                className="min-h-[56px] text-xs"
+                                className="min-h-[56px]"
                               />
                             </div>
                             <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Teacher feedback</p>
+                              <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft mb-1">Teacher feedback</p>
                               <Textarea
                                 value={metricDraft.teacher_feedback}
                                 onChange={(e) => setMetricDraft((d) => ({ ...d, teacher_feedback: e.target.value }))}
-                                className="min-h-[64px] text-xs"
+                                className="min-h-[64px]"
                               />
                             </div>
                             <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Next step</p>
+                              <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft mb-1">Next step</p>
                               <Textarea
                                 value={metricDraft.recommendation}
                                 onChange={(e) => setMetricDraft((d) => ({ ...d, recommendation: e.target.value }))}
-                                className="min-h-[44px] text-xs"
+                                className="min-h-[44px]"
                               />
                             </div>
                             <div className="flex gap-2">
                               <Button
-                                size="sm" className="h-7 text-xs gap-1"
+                                size="sm" className="gap-2"
                                 disabled={saveMetricMutation.isPending}
                                 onClick={() => saveMetricMutation.mutate(m.id)}
                               >
-                                {saveMetricMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                                {saveMetricMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                                 Save
                               </Button>
-                              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditingMetricId(null)}>
+                              <Button variant="ghost" size="sm" onClick={() => setEditingMetricId(null)}>
                                 Cancel
                               </Button>
                             </div>
@@ -1688,22 +1688,22 @@ export default function TeacherTranscripts() {
                         ) : (
                         <>
                         {m.contribution && (
-                          <p className="text-xs text-muted-foreground pt-1">
-                            <span className="font-semibold text-foreground">Contribution:</span> {m.contribution}
+                          <p className="text-hec-small text-hec-ink-soft pt-1">
+                            <span className="font-semibold text-hec-ink">Contribution:</span> {m.contribution}
                           </p>
                         )}
                         {m.teacher_feedback && (
-                          <div className="rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/5 ring-1 ring-blue-500/20 px-2.5 py-2">
-                            <p className="text-[10px] uppercase tracking-wide font-bold text-blue-600 dark:text-blue-300 flex items-center gap-1">
-                              <Sparkles className="h-3 w-3" />Teacher feedback
+                          <div className="rounded-hec-md border border-hec-line bg-hec-sunken px-3 py-2">
+                            <p className="text-hec-caption uppercase tracking-wider font-medium text-hec-ink-soft flex items-center gap-1">
+                              <Sparkles className="h-4 w-4" />Teacher feedback
                             </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{m.teacher_feedback}</p>
+                            <p className="text-hec-small text-hec-ink mt-1">{m.teacher_feedback}</p>
                           </div>
                         )}
                         {m.recommendation && (
-                          <p className="text-xs pt-0.5">
-                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">Next step:</span>{" "}
-                            <span className="text-muted-foreground">{m.recommendation}</span>
+                          <p className="text-hec-small pt-1">
+                            <span className="font-semibold text-hec-ink">Next step:</span>{" "}
+                            <span className="text-hec-ink-soft">{m.recommendation}</span>
                           </p>
                         )}
                         </>
@@ -1717,12 +1717,12 @@ export default function TeacherTranscripts() {
                 {errors.length > 0 && (
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      <CardTitle className="flex flex-wrap items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 shrink-0 text-hec-warn" />
                         Flagged errors → flashcards
-                        <Badge variant="secondary">{errors.length}</Badge>
+                        <Badge variant="secondary" className="tabular-nums">{errors.length}</Badge>
                       </CardTitle>
-                      <CardDescription className="text-xs">
+                      <CardDescription>
                         Each error was logged and turned into a spaced-repetition card on the student's deck.
                       </CardDescription>
                     </CardHeader>
@@ -1730,18 +1730,18 @@ export default function TeacherTranscripts() {
                       <ScrollArea className="max-h-72">
                         <div className="space-y-2 pr-3">
                           {errors.map((e) => (
-                            <div key={e.id} className="rounded-xl border p-2.5 text-sm">
+                            <div key={e.id} className="rounded-hec-md border border-hec-line p-3 text-hec-small">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-medium text-xs">{e.students?.full_name}</span>
-                                <Badge variant="outline" className="text-[10px] capitalize">{e.error_type}</Badge>
+                                <span className="min-w-0 whitespace-normal break-words font-medium text-hec-ink">{e.students?.full_name}</span>
+                                <Badge variant="outline" className="capitalize">{e.error_type}</Badge>
                                 {e.cefr_topic && (
-                                  <Badge variant="outline" className="text-[10px] text-blue-600 border-blue-500/40">
+                                  <Badge variant="outline" className="text-hec-ink-soft">
                                     {e.cefr_topic}
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-red-500/90 line-through text-xs mt-1">{e.error_text}</p>
-                              <p className="text-emerald-600 text-xs">{e.corrected_text}</p>
+                              <p className="text-hec-danger line-through mt-1">{e.error_text}</p>
+                              <p className="text-hec-leaf">{e.corrected_text}</p>
                             </div>
                           ))}
                         </div>
