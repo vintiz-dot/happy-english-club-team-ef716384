@@ -221,3 +221,21 @@ A short re-check of the revised file (the diff of the trigger functions, the new
 - The live cascade from `homeworks` to `homework_submissions` (N-1's second half) is reasoned from `M:549`; the test prelude has no such foreign key.
 - The src card was read as a diff, not rendered.
 - `scripts/sessionGuard.test.ts` (bun) was not run.
+
+---
+
+## Round 2 - delta check of revision 1 (`git diff e3367ffe..707a9b82`)
+
+Verdict: **APPLY.** Checked on a detached checkout of 707a9b82; nothing changed by me.
+
+| Change | What I checked | Result |
+|---|---|---|
+| C-1 un-start | The trigger's WHEN now includes `start_time`; the function keeps on un-hold, date move, or started -> not started (`session_has_started` on OLD vs NEW). My probe P1 re-run: after the checked move to a later time today the floor is STRONG (`unstarted: true`); after the teacher deletes the point and the admin excuses the marks the cancel preview is `tier 3, level STRONG, level_now NONE, review true`. | closed |
+| C-2 real lowering only | Each trigger compares what the row proves for the lesson before and after (`_floor_mark_level`, `_floor_point_level`, `_floor_transcript_level`; homework by class and Hanoi day) and calls the keep only when it goes down. Probes re-run: `processing -> analyzed` no floor, review false; re-sign with the same status no floor; Absent -> Present no floor. The register cause carries `old_marked_by` / `new_marked_by`. 15 changed marks: 44 ms with the trigger, 48 without (pglite). | done |
+| C-3 file name | `supabase/migrations/20261114090000_d4_floors.sql`; no other file has that version; `...091000` to `...095000` reserved in the design. | done |
+| C-4 test gaps | My mutants re-written for the new text and re-run, plus one for the un-start: **13 of 13 caught** (R2 audio path, R3 points to 0, R8 signature only, R10 date move now each have a named case). | done |
+| C-5 | `D4-release-fingerprint.expected.json`: 18 functions, 12 triggers, 2 relations. The two replaced bodies are unchanged: `6c1b8c86c47d3193d42f13adf56dcdc2`, `5f58916650251e14a89a45455746fd6f`. `SET LOCAL lock_timeout = '5s'` after `BEGIN` in the migration and in the rollback. The rollback header lists what stays (2 tables with their guards and policies, 16 functions, `audit_point_transactions`) and why (history; dropping functions between the two pastes would break the D4 assess). **Accepted.** | done |
+
+Full run by me on 707a9b82: `4710 assertions across 50 suites, 0 suite(s) failed`. The three new helper functions are in the REVOKE list. Still open, as ruled (can follow): N-1, N-2, N-3, DQ-1 (step 1b), DQ-10 (step 3A).
+
+Live pre-check done during this round (read-only): D release 62 of 62 object digests equal to the expected file (25 functions, 9 triggers, 4 relations x 7 parts); no D4 object present.
