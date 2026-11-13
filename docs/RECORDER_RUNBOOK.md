@@ -35,6 +35,8 @@ The recorder makes a sound recording of your lesson with two microphones (the cl
 | **NOT RECORDING - the audio stopped** | The sound stopped coming in (a microphone pulled out, the laptop slept). | Check both plugs. It usually comes back by itself within seconds. If not, use the backup recorder. |
 | **Not plugged in** / **Unplugged - plug it back in** | A microphone is missing. | Plug it back in (any USB port). The recorder finds it again by itself. |
 | **NOT armed: a microphone is not plugged in** | Your next lesson will not record. | Plug the microphone in. Open the recorder to check. |
+| **Not armed yet - retrying** | The school server has not confirmed the lesson yet (often the Wi-Fi). It keeps trying by itself. | Check the Wi-Fi. If it still says this when the lesson starts, use the backup recorder. |
+| **This lesson will NOT be recorded: (reason). Use the backup recorder.** | The school's server refused this lesson (switched off, permission missing, not your class). It is final for today. | Use the backup recorder. Tell the office the reason shown. |
 | **Allow sound** button | The page was reloaded and the browser wants one click before it may use sound. | Click **Allow sound**. Without it the next lesson is not recorded. |
 | **Too loud - clipping** | Your microphone is too loud. | Turn the gain down on the clip-on receiver. |
 | **... is silent** | A microphone sends nothing (muted or off). | Turn it on / unmute it. |
@@ -57,4 +59,6 @@ Start the backup (the quick recorder the school already uses) as well as this on
 
 - **Ready for today** is yours, for today, on this laptop. It stays if you move between pages or the page reloads. It goes when you sign out, and tomorrow you press it again.
 - Do not sign out during a lesson: the app will refuse while recording.
+- If a lesson is moved to another time after the bar says **Armed**, press **Stop**, then **Ready for today** again.
+- Check the laptop's date and time are right before pressing Ready.
 - Unsent audio that the server has given up is deleted from the laptop by itself 14 days later. This happens when the recorder is opened on that laptop (or the app is opened with Ready pressed); a laptop nobody opens keeps it longer.
