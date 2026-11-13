@@ -96,6 +96,59 @@ const SUITES = [
       "20261112091000_session_cancel_guard.sql",
     ],
   },
+  // D4 step 1a (docs/evidence/D4-design.md f.2): the two floors, D2's own
+  // suite re-run with them, the functions as deployed today against them,
+  // and the rollback back to the D release. Each pins its assertion count.
+  {
+    name: "d4 floors",
+    file: "d4-floors.test.mjs",
+    expect: 213,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261114090000_d4_floors.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+    ],
+  },
+  {
+    name: "d4 D2 carry-over",
+    file: "d4-d2-carryover.test.mjs",
+    expect: 275,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261114090000_d4_floors.sql",
+    ],
+  },
+  {
+    name: "d4 deployed functions",
+    file: "d4-deployed-functions.test.mjs",
+    expect: 37,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261114090000_d4_floors.sql",
+    ],
+  },
+  {
+    name: "d4 rollback",
+    file: "d4-rollback.test.mjs",
+    expect: 26,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261114090000_d4_floors.sql",
+    ],
+    args: ["scripts/ROLLBACK-d4-1-floors.sql"],
+  },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.
@@ -322,11 +375,17 @@ const SUITES = [
   },
 ];
 
+// D4 (docs/evidence/D4-design.md f.1): a suite may pin `expect`, the number
+// of assertions it must report; FEWER is a failure, because a suite that
+// silently loaded nothing passes with nothing. `args` are extra files,
+// relative to the repo root, passed after the migrations.
+const repoRoot = resolve(here, "..", "..");
+
 const run = (suite) =>
   new Promise((done) => {
     const child = spawn(
       process.execPath,
-      [join(here, suite.file), ...suite.migrations.map(m)],
+      [join(here, suite.file), ...suite.migrations.map(m), ...(suite.args ?? []).map((a) => join(repoRoot, a))],
       { stdio: ["ignore", "pipe", "pipe"] },
     );
     let out = "";
@@ -343,7 +402,11 @@ for (const suite of SUITES) {
   const summary = r.out.trim().split("\n").pop() ?? "";
   const counted = /^(\d+) passed, (\d+) failed$/.exec(summary);
   if (counted) total += Number(counted[1]);
-  if (r.code === 0) {
+  const short = suite.expect !== undefined && (!counted || Number(counted[1]) < suite.expect);
+  if (short && r.code === 0) {
+    failed += 1;
+    console.log(`  FAIL  ${suite.name.padEnd(24)} ${summary} (expected at least ${suite.expect} passing assertions)`);
+  } else if (r.code === 0) {
     console.log(`  ok    ${suite.name.padEnd(24)} ${summary}`);
   } else {
     failed += 1;

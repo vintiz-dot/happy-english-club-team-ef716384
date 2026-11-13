@@ -30,6 +30,7 @@ Read IN FULL for this revision (revision 1 had read them only through the review
 | **R-12** approval splitting | Impact is per batch, plus the same person's T2+ changes of the last 24 hours. One request per batch. | e |
 | **R-13** rollback | One script per migration, a test that the D-release fingerprint is 66/66 again, and the symptom that means "roll back". | f.7 |
 | **R-14** family and sibling fields | Guarded with an over-inclusive reach (every child of the old and new family). | b.4 G-19 |
+| *Build 1a (implementer; conductor's ruling after the 1a review, C-3)* | File names: `20261113090000` and `20261113100000` are taken (the latter by `signup_role_from_server_only`) and `20261113150000` is reserved for another security fix. D4's files are `20261114090000_d4_floors.sql` (1a), and reserved `20261114091000` (1b), `20261114092000` (2), `20261114093000` (3A), `20261114094000` (3B), `20261114095000` (4), in build order. Rollback of 1a: `scripts/ROLLBACK-d4-1-floors.sql`. | c, h |
 
 Advised items adopted: A-1 (owner-lane passes leave an event), A-2 (`session_effective_level`), A-3, A-5, A-6, A-8, A-9, A-10, A-12, A-13, A-14, A-15, A-16, A-17, A-18, A-19, A-20, A-21, plus removing the money tables from the import whitelist outright. A-4 adopted inside approvals. A-11 (backfill of floors from `audit_log`) is offered as an owner-run, insert-only script, not in a migration. Not adopted: A-7 (a move into the past is already reasoned and reviewed by D2; raising its tier would mean replacing a third live function) and A-22 (dated fees remove the fee-typo case it was for).
 
@@ -237,7 +238,7 @@ D2's codes keep their meaning for both guards: HC010, HC011, HC012, HC013, HC015
 - **What D4 does to live D1/D2 objects - the whole list:** file 1 replaces the bodies of `_session_change_assess(public.sessions, text, jsonb, uuid)` and `_session_erased_recently(uuid)`, same signatures, same grants (none). Nothing else of D1 or D2 is replaced, altered, dropped or re-granted: not `session_held_evidence`, not `session_change_kind`, not `session_change_guard`, not `_session_change_apply`, not the five public RPCs, not the two tables, three triggers, two views. File 6 ADDS one trigger to `session_cancel_overrides`.
 - **Preflight of file 1:** `md5(prosrc)` of the two functions it replaces must equal the values in `docs/evidence/D-release-fingerprint.expected.json` (pasted into the file as literals) or D4's own; anything else -> "the live function is not the one D4 was designed against; nothing was changed".
 
-### c.1 `20261113090000_d4_floors.sql` - the two floors (ships alone: step 1a)
+### c.1 `20261114090000_d4_floors.sql` - the two floors (ships alone: step 1a)
 
 ```sql
 CREATE OR REPLACE FUNCTION public._caller_lane() RETURNS text LANGUAGE sql STABLE SET search_path = public AS $fn$
@@ -313,7 +314,7 @@ v_settled_src := v_settled_src OR EXISTS (SELECT 1 FROM public.attendance a
 ```
 `level` in the output stays the effective one, so `session_cancel_overrides.level`, the review rule and every screen work unchanged. `_session_erased_recently` gains one UNION branch: the floor's causes of the last 30 days (`what: 'points' | 'transcript' | 'homework' | 'attendance' | 'session_status'`).
 
-### c.2 `20261113091000_d4_core_register.sql` - the money guard's core and the register (step 1b)
+### c.2 `20261114091000_d4_core_register.sql` - the money guard's core and the register (step 1b)
 
 Preflight: file 1; `session_change_reason_ok`; the two audit-guard functions of D2 (reused); `payroll_month_is_locked`; `student_enrolled_on`.
 
@@ -372,7 +373,7 @@ Apply order: admin -> reason (T1+; NULL allowed at T0) -> `pg_advisory_xact_lock
 
 This file's entity: **`attendance`**, ops `set_marks {session_id, marks[<=60]}` (writes `marked_by = actor`; the dialog says "this is recorded as your mark") and `repair {student_id, class_id, from, to, status}` (rows as `repair-attendance` writes them). Trigger `zz_attendance_money_guard` = the seven rules of G-11; its INSERT branch begins `IF EXISTS (SELECT 1 FROM attendance WHERE session_id = NEW.session_id AND student_id = NEW.student_id) THEN RETURN NEW; END IF;`.
 
-### c.3 `20261113092000_d4_class_fee_history.sql` (step 2)
+### c.3 `20261114092000_d4_class_fee_history.sql` (step 2)
 
 ```sql
 CREATE TABLE IF NOT EXISTS public.class_fee_history (
@@ -395,7 +396,7 @@ class_fee_on(p_class uuid, p_date date) RETURNS integer        -- STABLE: the ro
 ```
 First-of-month rows mean a class has one fee per month, so `class_breakdown[].session_rate_vnd` keeps its meaning. `refresh_pairs` = the reached (child, month) pairs from `effective_from` on; a row dated next month has none.
 
-### c.4 `20261113093000_d4_lesson_pay_guard.sql` (step 3A)
+### c.4 `20261114093000_d4_lesson_pay_guard.sql` (step 3A)
 
 ```sql
 session_pay_change_kind(o public.sessions, n public.sessions) RETURNS text    -- STABLE. NULL = nothing of ours
@@ -421,11 +422,11 @@ CREATE TRIGGER zz_session_staff_guard BEFORE INSERT OR UPDATE OR DELETE ON publi
 --   exec 'reteach' also sets is_manual = true, manual_reason = reason (a Held lesson is never rebuilt; no schedule meaning).
 ```
 
-### c.5 `20261113094000_d4_money_inputs_guard.sql` (step 3B)
+### c.5 `20261114094000_d4_money_inputs_guard.sql` (step 3B)
 
 Triggers `zz_enrollment_money_guard`, `zz_discount_money_guard` (assignments and bonuses, with `discount_identity`), `zz_discount_definition_guard`, `zz_pay_rate_money_guard`, `zz_staff_pay_mirror_guard` (reach = dates before the person's earliest history row only), `zz_invoice_unfreeze_guard`, `zz_family_link_guard` (on `students` for `family_id` / `sibling_discount_from`, on `families` for `sibling_percent_override`), `zz_student_delete_guard`, `zz_class_delete_guard`; `audit_families` (the table is not in the audit list); `change_enrollment_terms(p_enrollment_id uuid, p_terms jsonb, p_effective_date date)`; the plan / exec pairs for `enrollment`, `discount_assignment`, `referral_bonus`, `pay_rate`, `invoice_freeze`, `family_link` with the ops of b.4. `ai_plan_check` is NOT touched.
 
-### c.6 `20261113095000_d4_change_approvals.sql` (step 4) - objects; rules in (e)
+### c.6 `20261114095000_d4_change_approvals.sql` (step 4) - objects; rules in (e)
 
 ```sql
 change_approval_settings (one row: enabled false, on_tier3 true, on_closed_payroll true, on_unfreeze true,
@@ -621,12 +622,12 @@ Owner's paste order inside every step: **migration first, then that step's funct
 | Step | Ships alone? | Migration | Functions | `src` | Tests it owns |
 |---|---|---|---|---|---|
 | **0 Tooling** (conductor or first implementer) | yes (no behaviour) | - | - | - | `d4-prelude.mjs`; `expect` in `run.mjs`; `guard-fingerprint.mjs` generalised; the mutation runner entries |
-| **1a The floors** - closes F-11 and the bill-label route (P8, P9, P10, P19) | **yes. SQL plus one card. The first thing to ship.** | `20261113090000_d4_floors.sql`; `ROLLBACK-d4-1-floors.sql` | none | `src/lib/sessionGuard.ts` (two fields, one list), `session-guard/EvidenceCards.tsx` | `d4-floors`, `d4-d2-carryover`, `d4-deployed-functions` (first version), `d4-rollback` (first version) |
-| **1b Core and register** - closes `repair-attendance` and old register marks (P11, P12) | yes, after 1a | `20261113091000_d4_core_register.sql`; rollback 2 | `_lib/session-guard.ts` (ALL new codes, once), `_lib/money-guard.ts`, `guarded-change-refresh`, `repair-attendance`, `mark-attendance` | `src/lib/moneyGuard.ts`, `money-guard/**`, `PastAttendanceEditor.tsx`, the Attendance Repair screen | `d4-register`, `d4-functions-register`, `money-guard-lib` (first part) |
-| **2 Dated class fees** (P17) | yes, after 1b | `20261113092000_d4_class_fee_history.sql`; rollback 3 | `_lib/class-fee.ts`, `calculate-tuition`, `calculate-tuition-bulk`, `_lib/projected-per-class.ts` | `class/ClassSettings.tsx`, `class/ClassFeeHistory.tsx` | `d4-class-fee`; the existing `invoice-status` golden gate, untouched |
-| **3A Lessons** (P1-P7) | yes, after 1b | `20261113093000_d4_lesson_pay_guard.sql`; rollback 4 | `manage-session`, `bulk-cancel-sessions`, `schedule-sessions` | `src/lib/lessonPayGuard.ts`, `SessionActionsModal`, `class/AttendanceDrawer`, `class/SessionDetailDrawer`, `EditSessionModal`, `AddSessionModal`, `TeacherScheduleTransfer`, `SessionGenerator*`, `session-guard/{api.ts, useGuardedChange.ts, GuardDialog.tsx}` | `d4-lesson-pay`, `d4-functions-lessons`, `d4-stars-interplay` |
-| **3B Money inputs** (P13-P16, P18, P20-P22) | yes, after 1b (independent of 2 and 3A) | `20261113094000_d4_money_inputs_guard.sql`; rollback 5 | `update-enrollment-rate`, `create-family`, `manage-demo-student`, `admin-data-import` | `src/lib/moneyInputs.ts` and the screens listed under step 3B in (d) | `d4-money-inputs`, `d4-functions-inputs`, `d4-reach-oracle` |
-| **4 Approvals** | yes, after 3A and 3B | `20261113095000_d4_change_approvals.sql`; rollback 6 | none | `src/lib/approvals.ts`, `approvals/**`, the `requestApproval()` additions, `CancelOverridesReview.tsx`, `payroll/PayrollMonthLock.tsx` | `d4-approvals` |
+| **1a The floors** - closes F-11 and the bill-label route (P8, P9, P10, P19) | **yes. SQL plus one card. The first thing to ship.** | `20261114090000_d4_floors.sql`; `scripts/ROLLBACK-d4-1-floors.sql` | none | `src/lib/sessionGuard.ts` (two fields, one list), `session-guard/EvidenceCards.tsx` | `d4-floors`, `d4-d2-carryover`, `d4-deployed-functions` (first version), `d4-rollback` (first version) |
+| **1b Core and register** - closes `repair-attendance` and old register marks (P11, P12) | yes, after 1a | `20261114091000_d4_core_register.sql`; rollback 2 | `_lib/session-guard.ts` (ALL new codes, once), `_lib/money-guard.ts`, `guarded-change-refresh`, `repair-attendance`, `mark-attendance` | `src/lib/moneyGuard.ts`, `money-guard/**`, `PastAttendanceEditor.tsx`, the Attendance Repair screen | `d4-register`, `d4-functions-register`, `money-guard-lib` (first part) |
+| **2 Dated class fees** (P17) | yes, after 1b | `20261114092000_d4_class_fee_history.sql`; rollback 3 | `_lib/class-fee.ts`, `calculate-tuition`, `calculate-tuition-bulk`, `_lib/projected-per-class.ts` | `class/ClassSettings.tsx`, `class/ClassFeeHistory.tsx` | `d4-class-fee`; the existing `invoice-status` golden gate, untouched |
+| **3A Lessons** (P1-P7) | yes, after 1b | `20261114093000_d4_lesson_pay_guard.sql`; rollback 4 | `manage-session`, `bulk-cancel-sessions`, `schedule-sessions` | `src/lib/lessonPayGuard.ts`, `SessionActionsModal`, `class/AttendanceDrawer`, `class/SessionDetailDrawer`, `EditSessionModal`, `AddSessionModal`, `TeacherScheduleTransfer`, `SessionGenerator*`, `session-guard/{api.ts, useGuardedChange.ts, GuardDialog.tsx}` | `d4-lesson-pay`, `d4-functions-lessons`, `d4-stars-interplay` |
+| **3B Money inputs** (P13-P16, P18, P20-P22) | yes, after 1b (independent of 2 and 3A) | `20261114094000_d4_money_inputs_guard.sql`; rollback 5 | `update-enrollment-rate`, `create-family`, `manage-demo-student`, `admin-data-import` | `src/lib/moneyInputs.ts` and the screens listed under step 3B in (d) | `d4-money-inputs`, `d4-functions-inputs`, `d4-reach-oracle` |
+| **4 Approvals** | yes, after 3A and 3B | `20261114095000_d4_change_approvals.sql`; rollback 6 | none | `src/lib/approvals.ts`, `approvals/**`, the `requestApproval()` additions, `CancelOverridesReview.tsx`, `payroll/PayrollMonthLock.tsx` | `d4-approvals` |
 | **5 Review and release** | - | - | - | - | fresh fable review; mutation run; fingerprint files; `D4-release.md` with the apply order and the rollback sentences |
 
 3A and 3B can be built at the same time by two people: no file appears in both rows, the SQL dispatcher is not re-created by either (each adds its own `_money_plan__*` / `_money_exec__*`), the function code map and the shared dialog pieces (`Fields.tsx`, `MoneyGuardDialog.tsx`, `ReachTable.tsx`) are finished in step 1b and edited by neither, and each has its own functions test file. The only place both touch one TABLE is `attendance`, and both of its D4 triggers are step 1's. Shared files stay the conductor's, in small commits: `scripts/pgtest/run.mjs`, `supabase/config.toml` (one block for `guarded-change-refresh`), `types.ts`, `tabs/AutomationTab.tsx` (mounting the review and approvals screens), root `AGENTS.md`.
