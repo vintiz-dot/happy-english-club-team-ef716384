@@ -1,0 +1,7 @@
+# Templates, styles and data render identically on Windows and Linux only if
+# their bytes match, so text is LF everywhere.
+* text=auto eol=lf
+*.png binary
+*.woff2 binary
+*.pdf binary
+*.jpg binary

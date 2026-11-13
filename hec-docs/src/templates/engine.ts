@@ -6,11 +6,23 @@
 import nunjucks from "nunjucks";
 import path from "node:path";
 import { readdirSync } from "node:fs";
+import { pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 import QRCode from "qrcode";
 import { ROOT } from "../config.ts";
 import { formatDate, formatDateTime, formatNumber, sanitizeRich, printLinks, type DateInput } from "../format.ts";
 import type { Tenant } from "../tenant.ts";
+
+// Filter plugins: src/templates/filters/*.ts, each exporting `filters`.
+const FILTER_DIR = path.join(ROOT, "src", "templates", "filters");
+const pluginFilters: Record<string, (...args: never[]) => unknown> = {};
+for (const f of readdirSync(FILTER_DIR).filter((f) => f.endsWith(".ts")).sort()) {
+  const mod = (await import(pathToFileURL(path.join(FILTER_DIR, f)).href)) as { filters?: Record<string, (...args: never[]) => unknown> };
+  for (const [name, fn] of Object.entries(mod.filters ?? {})) {
+    if (name in pluginFilters) throw new Error(`filter "${name}" defined twice (${f})`);
+    pluginFilters[name] = fn;
+  }
+}
 
 export function createEnv(): nunjucks.Environment {
   const env = new nunjucks.Environment(
@@ -27,6 +39,7 @@ export function createEnv(): nunjucks.Environment {
   env.addFilter("cssstr", (v: unknown) =>
     new nunjucks.runtime.SafeString('"' + String(v ?? "").replace(/[\\"\n\r<>]/g, (c) => "\\" + c.charCodeAt(0).toString(16) + " ") + '"'));
   env.addFilter("pad", (v: unknown, n: number) => String(v ?? "").padStart(n, "0"));
+  for (const [name, fn] of Object.entries(pluginFilters)) env.addFilter(name, fn as (...args: unknown[]) => unknown);
   // Extra generic component stylesheets (components/css/*.css) are linked by
   // every page after hec.css, in name order. Add a component by adding a file.
   env.addGlobal("componentStyles", readdirSync(path.join(ROOT, "components", "css")).filter((f) => f.endsWith(".css")).sort());
