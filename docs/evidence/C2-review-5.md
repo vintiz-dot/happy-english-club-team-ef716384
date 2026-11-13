@@ -147,3 +147,35 @@ Changes, in order:
 For the hardware list, add: (21) switch a test class OFF (or leave a child without consent) and press Ready: today nothing records and NOTHING says why (R5-1) - confirm, then check again after the fix; (22) laptop date and time correct before Ready.
 
 **Where I am / next step:** review 5 DONE. Next: part 2, `release/recorder-1`.
+
+## Round 6 (6db0d8f9) - delta check
+
+`git diff 309c26a6..6db0d8f9`, recorder paths only (the rest is the conductor branch merged in): `session.ts`, `DailyRecorder.tsx`, `RecordingBar.tsx`, `RecorderHeader.tsx` (new), `RecorderAdminPanel.tsx`, `TeacherRecorder.tsx`, `recorderUi.ts`, `screens.test.mjs`, the runbook, the checklist, `C2-round6.md`; 11 files, +292 / -43. No change to the engine (`src/lib/recorder`), either migration or `recorder-retention`. Run in a fresh detached worktree `.claude/worktrees/c2r6`.
+
+**R5-1 - closed.** `armTick` now ends a lesson for the day only on `FINAL_ARM_REFUSALS` (switch_off, consent_missing, session_canceled, not_teacher, no_longer_teaching, window_closed, already_live, session_invalid), all texts the insert trigger states. Everything else gets `armAttempts` and the shared backoff (1 s doubling, 60 s cap) for as long as the lesson lasts, with `notArmed` set; a stated refusal is written into the day's Ready record (`refused: {sessionId: plain-words reason}`, no names) and shown until that lesson is over. My probe (`scratchpad/probe-r6.mjs`, the real `session.ts` and `toRecorderError`):
+```
+429 x6 then ok        t+0s "Not armed yet - retrying (the school server has not confirmed it) - Class A should record from 09:55" [alert]; ARMED at t+65s after 7 calls
+'no rows' x6 then ok  the same; ARMED at t+60s
+504 timeout x6        the same; ARMED at t+55s
+unclassified x6       the same; ARMED at t+75s
+stated (consent)      "This lesson will NOT be recorded: Waiting for parents' permission - Class A. Use the backup recorder." [alert]; 1 call, not retried
+  10 min later        the same
+  after a reload      (new session, same storage) the same, 0 calls
+  after A is over     "Ready for today - Class B records from 13:55 by itself."
+```
+One 429, "no rows" or timeout never drops a lesson silently; a stated refusal is said, survives a reload, and the bar shows something throughout. On the page: "Not armed yet - retrying" (warn notice) and "This lesson will NOT be recorded: <reason>" (error notice), seen in the browser below.
+
+**R5-2 - closed.** `armedAt` holds the armed lesson's own capture start; probe: "Armed - recording starts at 09:55" at the arming pass, +5 s and +10 min (lesson B at 14:00 present).
+
+**Render faults - closed.** `boardForScreen` leaves the start failure out of the list on the error screen (seen: one notice); `RecorderHeader` stacks on a phone (seen at 375: title and line on their own rows, "Microphones" below); the admin class card stacks on a phone; the bar and `RecordingBar` carry the warning sign only on alerts (seen: "Armed - ..." with no sign); the "Allow sound" help no longer says "reloaded".
+
+Suites at 6db0d8f9: screens render 118 / 0, screens logic 30 / 0 (the engine, SQL and the rest are unchanged from round 5 and are re-run in full on the release branch: section "Round 6 release" of `RECORDER-release.md`).
+
+Seen in a browser (harness `c2r5b-harness`, shots in `C:\Users\Dell\hec-tools\c2r5b-harness\shots-r6\`, 375 and 1280, no page error, no overflow, nothing critical / serious from axe in the recorder's content): arm answered 429 - page "Not armed yet - retrying", other page bar "Not armed yet - retrying (...) - Starters 1 should record from 08:55" as an alert; arm refused (consent) - page error notice, other page bar "This lesson will NOT be recorded: Waiting for parents' permission - Starters 1. Use the backup recorder.", and the same notice after a real page reload; armed bar "recording starts at 08:55"; error and cannot-be-sent with one notice; header at 375 fixed; admin panel at 375.
+
+New minors (none blocks):
+- R6-1: `notArmed` is cleared only by a success or a stated refusal. If lesson A's whole window passes while retrying, the next lesson inherits it: probe at 11:11, "Not armed yet - retrying (...) - Class B should record from 13:55" although B has not been tried. Loud, not silent; it clears at B's first successful arm. Fix: clear `notArmed` when the lesson it was about is no longer the one being armed.
+- R6-2: a lesson that is never armed during its window ends without a final "was not recorded" line (the bar said "retrying" throughout, so the teacher was told).
+- R6-3: the page shows "Not armed yet" only in state `ready`; after a first lesson completes (state `complete`) with the page open, a failing arm of the next lesson shows on neither the page nor the bar (the bar is hidden while the page is attached). Rare; the page's own Status line also stays hidden.
+
+**Round 6 verdict: PASS. Fit to go on live for the owner's hardware checks.** R6-1..3 go to the next round.
