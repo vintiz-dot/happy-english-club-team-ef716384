@@ -65,6 +65,7 @@ function AssignStudentCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label={selected ? `Assigned student: ${selected.full_name}` : "Assign student"}
           className="h-auto w-full justify-between py-2 font-normal"
         >
           <span className={cn("min-w-0 flex-1 whitespace-normal break-words text-left", selected ? "text-hec-ink" : "text-hec-ink-faint")}>
@@ -73,7 +74,7 @@ function AssignStudentCombobox({
           <ChevronsUpDown className="h-4 w-4 shrink-0 text-hec-ink-soft" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" aria-label="Choose the student">
         <Command>
           <CommandInput placeholder="Search students…" className="h-11 text-hec-body" />
           <CommandList>
@@ -118,12 +119,12 @@ function TeamPicker({
     <div className="space-y-2">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" role="combobox" disabled={disabled} className="w-full justify-between font-normal">
+          <Button variant="outline" role="combobox" disabled={disabled} aria-label={`Team members: ${label}`} className="w-full justify-between font-normal">
             <span className={cn("min-w-0 whitespace-normal text-left", value.length === 0 ? "text-hec-ink-faint" : "text-hec-ink")}>{label}</span>
             <ChevronsUpDown className="h-4 w-4 shrink-0 text-hec-ink-soft" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" aria-label="Choose the team members">
           <Command>
             <CommandInput placeholder="Search students…" className="h-11 text-hec-body" />
             <CommandList>
