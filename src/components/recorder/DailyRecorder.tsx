@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
-  boardAdd, boardClear, boardShow, clock, hanoiDate, type BoardEntry, hhmm, lessonHeadline, lessonPhase, pickLesson, stopConfirmText,
+  boardAdd, boardClear, boardForScreen, clock, hanoiDate, type BoardEntry, hhmm, lessonHeadline, lessonPhase, pickLesson, stopConfirmText,
   trackName, uploadMbps, uploadSpeedLine, uploadStatus, addMinutes, type LessonLike,
 } from "@/lib/recorderUi";
 import type { ChunkMeta, DeviceProfile, HeldAudio, Level, ProfileResolution, RecorderError, RecorderState, TrackRole, UploadProgress, MarkerKind } from "@/lib/recorder";
@@ -28,7 +28,7 @@ import type { RecorderLike } from "./engine";
 import { dayDeps, fetchClassSwitch, fetchEnrolled, fetchRecorderSettings, fetchTodayLessons } from "./data";
 import { LevelMeter, MicTick, Notice, Status } from "./pieces";
 import { NotRecordedNotice, RecordingBar } from "./RecordingBar";
-import { adopt, attachScreen, CAPTURING_STATES, detachScreen, pressReady, readyFor, sessionFor, setLessonLabel, setPrepared, startDay } from "./session";
+import { adopt, attachScreen, CAPTURING_STATES, detachScreen, pressReady, readyFor, sessionFor, sessionState, setLessonLabel, setPrepared, startDay } from "./session";
 
 // `stalled` is a capturing state: Stop stays, the screen must not be left (C2 review 2, item 1).
 const CAPTURING: RecorderState[] = CAPTURING_STATES;   // one list, shared with the floating bar (tested)
@@ -248,7 +248,8 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
       bothMicsGone={unplugged.size + lost.size >= 2} onStop={() => setConfirmStop(true)} />
   ) : null;
 
-  const shown = boardShow(board, tick);
+  // The start failure is said once, by the notice below, on the error screen (C2 review 5).
+  const shown = boardForScreen(board, tick, state);
   const errorBox = shown.length ? (
     <div className="space-y-3">
       {shown.map((e) => (
@@ -335,6 +336,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
   }
 
   const switchOff = switchQ.isSuccess && !switchOn;
+  const ss = sessionState();
 
   return (
     <div className={cn("space-y-5", capturing && "pb-28")}>
@@ -382,12 +384,23 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
                 {clicked ? "Allow sound" : "Ready for today"}
               </Button>
               <p className="text-sm text-muted-foreground">{clicked
-                ? "The page was reloaded: one click lets the browser use sound again. Without it the next lesson is not recorded."
+                ? "The browser has not allowed sound yet: one more click lets it. Without it the next lesson is not recorded."
                 : "One click lets the browser use sound. Then recording starts by itself for each of today's lessons, on any page of this tab."}</p>
             </div>
           ) : null}
 
-          {clicked && (state === "ready" || state === "armed") && lesson ? (
+          {/* R5-1: what the session found while arming (it arms on any page; the page only reads it, every second). */}
+          {ss?.refusal ? (
+            <Notice tone="error" title={`This lesson will NOT be recorded: ${ss.refusal.reason}`} role="alert">
+              {`${ss.refusal.className}: the school's server refused to get it ready. Use the backup recorder for this lesson.`}
+            </Notice>
+          ) : null}
+          {!ss?.refusal && ss?.notArmed && state === "ready" ? (
+            <Notice tone="warn" title="Not armed yet - retrying" role="status">
+              {`The recorder could not get the lesson ready (${ss.notArmed}). It keeps trying by itself. If this stays until the lesson starts, use the backup recorder.`}
+            </Notice>
+          ) : null}
+          {clicked && (state === "ready" || state === "armed") && lesson && !ss?.refusal && !(ss?.notArmed && state === "ready") ? (
             <Status
               live
               line={{ tone: "ok", text: state === "armed"

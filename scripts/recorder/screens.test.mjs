@@ -19,6 +19,9 @@ import { RecordingBar, NotRecordedNotice } from "@/components/recorder/Recording
 export * as S from "@/components/recorder/session";
 export * as G from "@/components/recorder/signOutGuard";
 export * as U from "@/lib/recorderUi";
+export * as ER from "@/lib/recorder/errors";
+import { RecorderHeader } from "@/components/recorder/RecorderHeader";
+export const header = (p) => renderToStaticMarkup(createElement(RecorderHeader, { onMicrophones: () => {}, onToggleAdmin: () => {}, ...p }));
 export const bar = (p) => renderToStaticMarkup(createElement(RecordingBar, { elapsed: "01:00", className: "Starters 1", startingLong: false, onStop: () => {}, ...p }));
 export const notice = (body) => renderToStaticMarkup(createElement(NotRecordedNotice, { body }));
 `;
@@ -32,7 +35,7 @@ const file = resolve(repo, `.screens-test.${process.pid}.mjs`);
 writeFileSync(file, out.outputFiles[0].text);
 let M;
 try { M = await import(pathToFileURL(file).href); } finally { (await import("node:fs")).unlinkSync(file); }
-const { S, G, U, bar, notice } = M;
+const { S, G, U, ER, header, bar, notice } = M;
 
 
 let pass = 0, fail = 0;
@@ -253,17 +256,16 @@ await S.endSession();
   await S.endSession();
 }
 {
-  // Refusals at arming: a stated one ends that lesson for today; anything else is tried again in 30 s.
+  // Refusals at arming: a stated one ends that lesson for today; anything else is retried with backoff (round 6, R5-1).
   store.m.clear(); T = H("09:45");
   const r = armRec(); S.adopt("t-a", r); S.pressReady("t-a", DATE); S.setPrepared({ contextRunning: true, devicesOk: true });
   r.armFail = { code: "server_unavailable", retryable: true, message: "503" };
   S.startDay(day([L("s1", "10:00", "11:00")])); await flush();
+  const n0 = r.arms.length;
   T = H("09:45") + 10_000; await S.armTick(); await flush();
-  const n1 = r.arms.length;
-  T = H("09:45") + 31_000; await S.armTick(); await flush();
-  ok("R4-2: a failed arm (503) is tried again after 30 s, not at once and not never", n1 === 1 && r.arms.length === 2, `${n1} ${r.arms.length}`);
+  ok("R4-2: a failed arm (503) is tried again, not never", n0 === 1 && r.arms.length === 2, `${n0} ${r.arms.length}`);
   r.armFail = { code: "server_refused", retryable: false, refusal: "consent_missing", message: "consent" };
-  T = H("09:46") + 30_000; await S.armTick(); await flush(); const n2 = r.arms.length;
+  T = H("09:47"); await S.armTick(); await flush(); const n2 = r.arms.length;
   T = H("09:50"); await S.armTick(); await flush();
   ok("R4-2: a stated refusal ends that lesson for today (not retried)", n2 === 3 && r.arms.length === n2 && S.readyFor("t-a", DATE)?.armed.includes("s1"), `${n2} ${r.arms.length}`);
   await S.endSession();
@@ -307,6 +309,107 @@ ok("full screen: Stop is there while capturing", S.floatingBarModel("stalled", "
   ok("full screen: the bar is moved into document.fullscreenElement and listens for fullscreenchange", /fullscreenEl\(\) \?\? document\.body/.test(src) && /addEventListener\("fullscreenchange"/.test(src));
   ok("the bar's Stop asks again in the bar, not with a browser dialog (which would leave full screen)", !/window\.confirm\("Stop recording/.test(src) && /Yes, stop recording/.test(src));
   ok("the bar sits above dialogs and stays clickable under a modal", /zIndex = "2147483647"/.test(src) && /pointerEvents = "auto"/.test(src));
+}
+
+console.log("=== R5-1: a failed or refused arm is never silent ===");
+{
+  S.setStorageForTests(store);
+  const answers = [
+    ["429 Too Many Requests", { message: "Too Many Requests", code: "429" }],
+    ["PostgREST no rows", { message: "JSON object requested, multiple (or no) rows returned", code: "PGRST116", details: "The result contains 0 rows" }],
+    ["a 503", { message: "Service Unavailable", status: 503 }],
+  ];
+  for (const [label, raw] of answers) {
+    store.m.clear(); T = H("09:45");
+    const r = armRec(); S.adopt("t-a", r); S.pressReady("t-a", DATE); S.setPrepared({ contextRunning: true, devicesOk: true });
+    let fails = 6; const orig = r.arm;
+    r.arm = async (entry, opts) => { if (fails-- > 0) { r.arms.push({ entry, opts }); throw ER.toRecorderError(raw); } return orig(entry, opts); };
+    S.startDay(day([L("s1", "10:00", "11:00")])); await flush();
+    const seen = [];
+    for (let i = 0; i < 80 && r.state !== "armed"; i++) {
+      T += 5000; await S.armTick(); await flush();
+      seen.push(model());
+    }
+    ok(`R5-1 ${label} x6: not dropped for the day - retried until armed`, r.state === "armed" && r.arms.length >= 6 && !S.readyFor("t-a", DATE).refused, `${r.state} ${r.arms.length}`);
+    const pre = seen.slice(0, -1);
+    ok(`R5-1 ${label}: the bar is shown on every pass while not armed`, pre.length > 0 && pre.every((m) => m?.show), JSON.stringify(pre.find((m) => !m?.show)));
+    ok(`R5-1 ${label}: ...and says plainly "Not armed yet - retrying", as an alert`, pre.every((m) => m.alert && /Not armed yet - retrying/.test(m.text)), pre[0]?.text);
+    const m = model();
+    ok(`R5-1 ${label}: once armed, the bar says Armed (no retry message)`, /Armed/.test(m.text) && !/retrying/.test(m.text), m.text);
+    await S.endSession();
+  }
+  {
+    // Backoff: with every answer a 429 for 10 minutes, far fewer attempts than 5-second passes.
+    store.m.clear(); T = H("09:41");
+    const r = armRec(); S.adopt("t-a", r); S.pressReady("t-a", DATE); S.setPrepared({ contextRunning: true, devicesOk: true });
+    r.arm = async (entry, opts) => { r.arms.push({ entry, opts, at: T }); throw ER.toRecorderError({ message: "Too Many Requests", code: "429" }); };
+    S.startDay(day([L("s1", "10:00", "11:00")])); await flush();
+    for (let i = 0; i < 120; i++) { T += 5000; await S.armTick(); await flush(); }
+    const gaps = r.arms.slice(1).map((a, i) => a.at - r.arms[i].at);
+    ok("R5-1: arm retried with backoff (gaps grow to the 60 s cap, never stop)", r.arms.length >= 10 && r.arms.length < 40 && Math.max(...gaps) <= 65000 && gaps[gaps.length - 1] > gaps[0], JSON.stringify(gaps.map((g) => g / 1000)));
+    ok("R5-1: still trying in the capture window, bar still saying so", /Not armed yet - retrying/.test(model()?.text ?? ""), model()?.text);
+    await S.endSession();
+  }
+  for (const [label, raw, reason] of [
+    ["consent missing", { message: "Recording needs consent from every child in this class", code: "P0001" }, /permission/i],
+    ["switched off", { message: "Recording is switched off for this class", code: "P0001" }, /switched off/i],
+    ["not your class", { message: "Only a teacher of this class can record it", code: "P0001" }, /not yours/i],
+  ]) {
+    store.m.clear(); T = H("09:45");
+    const r = armRec(); S.adopt("t-a", r); S.pressReady("t-a", DATE); S.setPrepared({ contextRunning: true, devicesOk: true });
+    r.arm = async (entry, opts) => { r.arms.push({ entry, opts }); throw ER.toRecorderError(raw); };
+    S.startDay(day([L("s1", "10:00", "11:00")])); await flush();
+    T += 5000; await S.armTick(); await flush();
+    const m = model();
+    ok(`R5-1 stated (${label}): final - not asked again`, r.arms.length === 1 && S.readyFor("t-a", DATE).armed.includes("s1"));
+    ok(`R5-1 stated (${label}): the bar says "This lesson will NOT be recorded: <reason>. Use the backup recorder." as an alert`, !!m?.show && m.alert && /This lesson will NOT be recorded: /.test(m.text) && reason.test(m.text) && /Use the backup recorder/.test(m.text), m?.text);
+    T = H("10:30"); await S.armTick(); await flush();
+    ok(`R5-1 stated (${label}): still said during the lesson, on any page`, /NOT be recorded/.test(model()?.text ?? "") && S.sessionState()?.refusal?.className === "Class s1");
+    await S.endSession();
+    const r2 = armRec("idle");
+    await S.boot({ userId: "t-a", createRecorder: async () => r2, day: day([L("s1", "10:00", "11:00")]) }); await flush();
+    ok(`R5-1 stated (${label}): after a reload it is still said (not a silent miss)`, /NOT be recorded/.test(model()?.text ?? "") && r2.arms.length === 0, model()?.text);
+    T = H("11:11"); await S.armTick(); await flush();
+    ok(`R5-1 stated (${label}): once the lesson is over the message goes`, !model()?.show || !/NOT be recorded/.test(model()?.text ?? ""));
+    await S.endSession();
+  }
+}
+
+console.log("=== R5-2: the Armed bar shows the ARMED lesson's time ===");
+{
+  store.m.clear(); T = H("09:00");
+  const r = armRec(); S.adopt("t-a", r); S.pressReady("t-a", DATE); S.setPrepared({ contextRunning: true, devicesOk: true });
+  S.startDay(day([L("a", "10:00", "11:00"), L("b", "14:00", "15:00")])); await flush();
+  T = H("09:45"); await S.armTick(); await flush();
+  ok("R5-2: at the arming pass: starts at 09:55", /starts at 09:55/.test(model()?.text ?? ""), model()?.text);
+  for (const dt of [5000, 10000, 60000, 5 * 60000]) {
+    T = H("09:45") + dt; await S.armTick(); await flush();
+    ok(`R5-2: ${dt / 1000} s later still 09:55 (not the next lesson's 13:55)`, /starts at 09:55/.test(model()?.text ?? "") && !/13:55/.test(model()?.text ?? ""), model()?.text);
+  }
+  await S.endSession();
+  store.m.clear(); T = H("09:45");
+  const r2 = armRec(); S.adopt("t-a", r2); S.pressReady("t-a", DATE); S.setPrepared({ contextRunning: true, devicesOk: true });
+  S.startDay(day([L("a", "10:00", "11:00")])); await flush(); T += 5000; await S.armTick(); await flush();
+  ok("R5-2: the only lesson of the day: still its own time five seconds later", /starts at 09:55/.test(model()?.text ?? ""), model()?.text);
+  await S.endSession();
+}
+
+console.log("=== review 5 render faults ===");
+{
+  const b = [{ key: "a", code: "start_failed", count: 1, lastAt: 0, view: {} }, { key: "b", code: "offline", count: 1, lastAt: 0, view: {} }];
+  ok("the error screen does not draw the start failure twice (the notice carries it)", U.boardForScreen(b, 0, "error").every((e) => e.code !== "start_failed") && U.boardForScreen(b, 0, "error").length === 1);
+  ok("...other screens keep it on the list", U.boardForScreen(b, 0, "ready").some((e) => e.code === "start_failed"));
+  const dsrc = (await import("node:fs")).readFileSync(resolve(repo, "src/components/recorder/DailyRecorder.tsx"), "utf8");
+  ok("DailyRecorder draws its list through boardForScreen", /boardForScreen\(board, tick, state\)/.test(dsrc) && !/boardShow\(/.test(dsrc));
+  ok("starting (calm): no warning sign; stalled and the long start: the sign", !bar({ state: "starting" }).includes("data-warning-sign") && bar({ state: "stalled" }).includes("data-warning-sign") && bar({ state: "starting", startingLong: true }).includes("data-warning-sign"));
+  const ssrc = (await import("node:fs")).readFileSync(resolve(repo, "src/components/recorder/session.ts"), "utf8");
+  ok("the floating bar: the warning sign only on alerts", /m\.redDot \? "● " : m\.alert \? "⚠ " : ""/.test(ssrc));
+  ok("calm floating states are not alerts (Ready, Armed, Saving)", [["ready", { next: { className: "X", at: "09:55" } }], ["armed", { armedAt: "09:55" }], ["uploading", {}]].every(([st, ex]) => { const x = S.floatingBarModel(st, "", false, ex); return x.show && !x.alert; }));
+  const h = header({ showMicrophones: true, isAdmin: true, adminView: false });
+  ok("phone header: the title block is its own row (flex-col), side by side only from sm", /data-recorder-header="" class="[^"]*flex-col[^"]*sm:flex-row/.test(h) || /class="[^"]*flex-col[^"]*sm:flex-row[^"]*" data-recorder-header/.test(h), h.slice(0, 200));
+  ok("phone header: the buttons are in their own wrapping group, both 44 px", /data-header-actions/.test(h) && (h.match(/min-h-11/g) ?? []).length === 2 && /Microphones/.test(h) && /Admin panel/.test(h));
+  const asrc = (await import("node:fs")).readFileSync(resolve(repo, "src/components/recorder/RecorderAdminPanel.tsx"), "utf8");
+  ok("admin class card: the switch button goes below the name on a phone", /flex flex-col gap-3 sm:flex-row sm:items-start" data-class-card-head/.test(asrc));
 }
 S.setStorageForTests(undefined);
 
