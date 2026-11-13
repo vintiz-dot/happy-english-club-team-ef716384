@@ -1,0 +1,123 @@
+admin-1280-dark topbar identical (4222 chars)
+admin-1280-dark pwa identical (1093 chars)
+admin-1280-dark fab identical (789 chars)
+admin-1280-light topbar identical (4222 chars)
+admin-1280-light pwa identical (1093 chars)
+admin-1280-light fab identical (789 chars)
+apalette-1280-dark dialog identical (20535 chars)
+apalette-1280-light dialog identical (20535 chars)
+fam-1280-light chat identical (4448 chars)
+fam-1280-light bell identical (1068 chars)
+fam-375-light chat identical (4448 chars)
+fam-375-light bell identical (1068 chars)
+fam-bell-1280-light popper identical (2100 chars)
+fam-bell-375-light popper identical (2098 chars)
+sbell-1280-dark popper DIFF at 345 
+  A: dix-ID" class="z-[100] max-w-[calc(100vw-2rem)] rounded-hec-md border border-hec-line bg-hec-raised p-4 text-hec-ink shadow-hec-2 outline-none data-[state=open]:animate-in data-[state=closed]:animate- 
+  B: dix-ID" class="z-[100] max-w-[calc(100vw-2rem)] rounded-hec-md border border-hec-line bg-hec-raised text-hec-ink shadow-hec-2 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out 
+sbell-1280-light popper DIFF at 345 
+  A: dix-ID" class="z-[100] max-w-[calc(100vw-2rem)] rounded-hec-md border border-hec-line bg-hec-raised p-4 text-hec-ink shadow-hec-2 outline-none data-[state=open]:animate-in data-[state=closed]:animate- 
+  B: dix-ID" class="z-[100] max-w-[calc(100vw-2rem)] rounded-hec-md border border-hec-line bg-hec-raised text-hec-ink shadow-hec-2 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out 
+sbell-375-dark popper DIFF at 343 
+  A: dix-ID" class="z-[100] max-w-[calc(100vw-2rem)] rounded-hec-md border border-hec-line bg-hec-raised p-4 text-hec-ink shadow-hec-2 outline-none data-[state=open]:animate-in data-[state=closed]:animate- 
+  B: dix-ID" class="z-[100] max-w-[calc(100vw-2rem)] rounded-hec-md border border-hec-line bg-hec-raised text-hec-ink shadow-hec-2 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out 
+sbell-375-light popper DIFF at 343 
+  A: dix-ID" class="z-[100] max-w-[calc(100vw-2rem)] rounded-hec-md border border-hec-line bg-hec-raised p-4 text-hec-ink shadow-hec-2 outline-none data-[state=open]:animate-in data-[state=closed]:animate- 
+  B: dix-ID" class="z-[100] max-w-[calc(100vw-2rem)] rounded-hec-md border border-hec-line bg-hec-raised text-hec-ink shadow-hec-2 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out 
+schat-1280-dark chat DIFF at 161 
+  A: min-h-0 overflow-y-auto space-y-3 pr-1"><div class="py-6 text-center space-y-3"><div class="mx-auto h-11 w-11 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-cent 
+  B: min-h-0 overflow-y-auto space-y-3 pr-1"><div class="py-6 text-center space-y-3"><div class="mx-auto grid h-11 w-11 place-items-center rounded-hec-md bg-hec-sunken text-hec-brass"><svg xmlns="http://ww
+schat-1280-light chat DIFF at 161 
+  A: min-h-0 overflow-y-auto space-y-3 pr-1"><div class="py-6 text-center space-y-3"><div class="mx-auto h-11 w-11 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-cent 
+  B: min-h-0 overflow-y-auto space-y-3 pr-1"><div class="py-6 text-center space-y-3"><div class="mx-auto grid h-11 w-11 place-items-center rounded-hec-md bg-hec-sunken text-hec-brass"><svg xmlns="http://ww
+schat-375-dark chat DIFF at 161 
+  A: min-h-0 overflow-y-auto space-y-3 pr-1"><div class="py-6 text-center space-y-3"><div class="mx-auto h-11 w-11 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-cent 
+  B: min-h-0 overflow-y-auto space-y-3 pr-1"><div class="py-6 text-center space-y-3"><div class="mx-auto grid h-11 w-11 place-items-center rounded-hec-md bg-hec-sunken text-hec-brass"><svg xmlns="http://ww
+schat-375-light chat DIFF at 161 
+  A: min-h-0 overflow-y-auto space-y-3 pr-1"><div class="py-6 text-center space-y-3"><div class="mx-auto h-11 w-11 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-cent 
+  B: min-h-0 overflow-y-auto space-y-3 pr-1"><div class="py-6 text-center space-y-3"><div class="mx-auto grid h-11 w-11 place-items-center rounded-hec-md bg-hec-sunken text-hec-brass"><svg xmlns="http://ww
+schat-hist-1280-dark chat DIFF at 192 
+  A: -3 pr-1"><div class="flex justify-end" style="opacity: 1; transform: none;"><div class="max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap bg-gradient-to-r from-violet-6 
+  B: -3 pr-1"><div class="flex justify-end" style="opacity: 1; transform: none;"><div class="max-w-[85%] whitespace-pre-wrap break-words rounded-hec-lg px-4 py-2 text-hec-small rounded-br-hec-sm bg-hec-act
+schat-hist-1280-light chat DIFF at 192 
+  A: -3 pr-1"><div class="flex justify-end" style="opacity: 1; transform: none;"><div class="max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap bg-gradient-to-r from-violet-6 
+  B: -3 pr-1"><div class="flex justify-end" style="opacity: 1; transform: none;"><div class="max-w-[85%] whitespace-pre-wrap break-words rounded-hec-lg px-4 py-2 text-hec-small rounded-br-hec-sm bg-hec-act
+schat-hist-375-dark chat DIFF at 192 
+  A: -3 pr-1"><div class="flex justify-end" style="opacity: 1; transform: none;"><div class="max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap bg-gradient-to-r from-violet-6 
+  B: -3 pr-1"><div class="flex justify-end" style="opacity: 1; transform: none;"><div class="max-w-[85%] whitespace-pre-wrap break-words rounded-hec-lg px-4 py-2 text-hec-small rounded-br-hec-sm bg-hec-act
+schat-hist-375-light chat DIFF at 192 
+  A: -3 pr-1"><div class="flex justify-end" style="opacity: 1; transform: none;"><div class="max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap bg-gradient-to-r from-violet-6 
+  B: -3 pr-1"><div class="flex justify-end" style="opacity: 1; transform: none;"><div class="max-w-[85%] whitespace-pre-wrap break-words rounded-hec-lg px-4 py-2 text-hec-small rounded-br-hec-sm bg-hec-act
+sdash-1280-dark bell identical (1129 chars)
+sdash-1280-light bell identical (1129 chars)
+sdash-375-dark bell identical (1129 chars)
+sdash-375-light bell identical (1129 chars)
+tbell-1280-dark popper identical (5425 chars)
+tbell-1280-light popper identical (5425 chars)
+tbell-375-dark popper identical (5423 chars)
+tbell-375-light popper identical (5423 chars)
+tdash-1280-dark fab identical (789 chars)
+tdash-1280-dark pwa identical (1093 chars)
+tdash-1280-dark bell identical (1433 chars)
+tdash-1280-light fab identical (789 chars)
+tdash-1280-light pwa identical (1093 chars)
+tdash-1280-light bell identical (1433 chars)
+tdash-375-dark fab identical (789 chars)
+tdash-375-dark pwa identical (1093 chars)
+tdash-375-dark bell identical (1433 chars)
+tdash-375-light fab identical (789 chars)
+tdash-375-light pwa identical (1093 chars)
+tdash-375-light bell identical (1433 chars)
+tools-1280-dark sheet identical (59145 chars)
+tools-1280-light sheet identical (59145 chars)
+tools-375-dark sheet identical (59145 chars)
+tools-375-light sheet identical (59145 chars)
+tools-ai-1280-dark sheet identical (95363 chars)
+tools-ai-1280-light sheet identical (95363 chars)
+tools-ai-375-dark sheet identical (90226 chars)
+tools-ai-375-light sheet identical (95363 chars)
+tools-ai-hist-1280-dark sheet identical (95615 chars)
+tools-ai-hist-1280-light sheet identical (95615 chars)
+tools-ai-hist-375-dark sheet identical (95615 chars)
+tools-ai-hist-375-light sheet identical (95615 chars)
+tools-att-1280-dark sheet identical (95363 chars)
+tools-att-1280-light sheet identical (95363 chars)
+tools-att-375-dark sheet identical except mount timing -> board: mounted in before only
+tools-att-375-light sheet identical except mount timing -> board: mounted in before only
+tools-music-1280-dark sheet identical (59145 chars)
+tools-music-1280-light sheet identical (59145 chars)
+tools-music-375-dark sheet identical (59145 chars)
+tools-music-375-light sheet identical (59145 chars)
+tools-select-1280-dark sheet identical (90266 chars)
+tools-select-1280-dark popper identical (2682 chars)
+tools-select-1280-light sheet identical (90266 chars)
+tools-select-1280-light popper identical (2682 chars)
+tools-select-375-dark sheet identical except mount timing -> attendance: mounted in before only
+tools-select-375-dark popper identical (2680 chars)
+tools-select-375-light sheet identical (64814 chars)
+tools-select-375-light popper identical (2680 chars)
+tools-spin-1280-dark sheet identical (60153 chars)
+tools-spin-1280-light sheet identical (60153 chars)
+tools-spin-375-dark sheet identical (60153 chars)
+tools-spin-375-light sheet identical (60153 chars)
+tools-spin-edit-1280-dark sheet identical (59639 chars)
+tools-spin-edit-1280-light sheet identical (59639 chars)
+tools-spin-edit-375-dark sheet identical (59639 chars)
+tools-spin-edit-375-light sheet identical (59639 chars)
+tools-spin-screen-1280-dark screen identical (5278 chars)
+tools-spin-screen-1280-light screen identical (5278 chars)
+tools-spin-screen-375-dark screen identical (5313 chars)
+tools-spin-screen-375-light screen identical (5313 chars)
+tools-teams-1280-dark sheet identical (92327 chars)
+tools-teams-1280-light sheet identical (92327 chars)
+tools-teams-375-dark sheet identical (71010 chars)
+tools-teams-375-light sheet identical (71010 chars)
+tools-teams-screen-1280-dark screen identical (3461 chars)
+tools-teams-screen-1280-light screen identical (3461 chars)
+tools-teams-screen-375-dark screen identical (3461 chars)
+tools-teams-screen-375-light screen identical (3461 chars)
+tpalette-1280-dark dialog identical (17132 chars)
+tpalette-1280-light dialog identical (17132 chars)
+tpalette-375-dark dialog identical (17132 chars)
+tpalette-375-light dialog identical (17132 chars)
+before vs afterL: 83 identical, 3 identical except a Deferred tool's mount timing, 12 differ, 0 missing
