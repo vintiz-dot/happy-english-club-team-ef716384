@@ -358,12 +358,17 @@ await section('the acknowledgement covers exactly the checked change', async () 
     UPDATE attendance SET status='Absent', marked_by='${ADMIN}' WHERE session_id='${s.sid}' AND student_id='${k}';
     UPDATE attendance SET status='Excused', marked_by='${ADMIN}' WHERE session_id='${s.sid}' AND student_id='${k}'`);
   ok('control: the acknowledged status for that child passes', e === null && (await mark(s, k)).status === 'Excused', e);
-  e = await script(null, '', null, `DO $x$ DECLARE v uuid; BEGIN ${ins(2, { marks: [{ student_id: k2, status: 'Excused' }] })} INTO v;
+  const k5 = await kid(s); await att(s, k5, 'Present', null); await inv(k5, s.month, { recorded: 540000 });
+  e = await script(null, '', null, `DO $x$ DECLARE v uuid; BEGIN
+      INSERT INTO money_change_overrides(actor_user_id,entity,op,target_id,student_ids,reach_from,reach_to,via,tier,
+        correction_mode,reason,confirmed,token,row_before,change,reach,invoices_before,refresh_pairs,impact,review_required)
+      VALUES ('${ADMIN}','attendance','set_marks','${s.sid}',ARRAY['${k5}']::uuid[],'${s.date}','${s.date}','single',2,false,
+        'test reason long enough',true,'x','[]','{"marks":[{"student_id":"${k5}","status":"Absent"}]}','{}','[]','[]','{}',false) RETURNING id INTO v;
       PERFORM set_config('hec.money_change_ack', v::text, true); PERFORM set_config('test.uid', '${ADMIN}', true);
       PERFORM set_config('test.jwt_role', 'authenticated', true); END $x$;
     SET LOCAL ROLE authenticated;
-    UPDATE attendance SET status='Present', marked_by='${ADMIN}' WHERE session_id='${s.sid}' AND student_id='${k}'`);
-  ok('an acknowledgement with another status (Excused acknowledged, Present written) -> HC025', e?.code === 'HC025', e);
+    UPDATE attendance SET status='Excused', marked_by='${ADMIN}' WHERE session_id='${s.sid}' AND student_id='${k5}'`);
+  ok('an acknowledgement for this child with another status (Absent acknowledged, Excused written) -> HC025', e?.code === 'HC025' && (await mark(s, k5)).status === 'Present', e);
   // A-8: the row says T1, the trigger finds T2 (a payment landed in between) -> HC011.
   const k3 = await kid(s); await att(s, k3, 'Present', null); await inv(k3, s.month, { recorded: 540000 });
   e = await script(null, '', null, `DO $x$ DECLARE v uuid; BEGIN
@@ -384,6 +389,25 @@ await section('the acknowledgement covers exactly the checked change', async () 
   e = await script(ADMIN, 'authenticated', 'authenticated', `SELECT set_config('hec.money_change_ack', '${r4.override_id}', true);
     UPDATE attendance SET status='Excused', marked_by='${ADMIN}' WHERE session_id='${s.sid}' AND student_id='${k4}'`);
   ok('a replay: the flag names a real override of an earlier transaction -> HC025', e?.code === 'HC025' && (await mark(s, k4)).status === 'Absent', e);
+});
+
+await section('trigger-made writes are not judged (the seed of a new lesson)', async () => {
+  // As live: an AFTER INSERT trigger on sessions seeds the register of the
+  // enrolled children (20251012065759, trg_attendance_after_session_ins).
+  await db.exec(`CREATE OR REPLACE FUNCTION public._test_seed_after_session_ins() RETURNS trigger LANGUAGE plpgsql
+      SECURITY DEFINER SET search_path = public AS $f$ BEGIN
+        PERFORM public._attendance_seed_for_class_dates(NEW.class_id, NEW.date, NEW.date); RETURN NULL; END $f$;
+    DROP TRIGGER IF EXISTS trg_attendance_after_session_ins ON public.sessions;
+    CREATE TRIGGER trg_attendance_after_session_ins AFTER INSERT ON public.sessions FOR EACH ROW
+      EXECUTE FUNCTION public._test_seed_after_session_ins();`);
+  const s = await mk({ when: OLDPAST });
+  const k = await kid(s); await inv(k, s.month, { recorded: 540000 });
+  const r = await tryIt(() => asAdmin(`INSERT INTO sessions(class_id,date,start_time,end_time,status,teacher_id)
+      VALUES ($1,$2,'08:00','09:00','Scheduled',gen_random_uuid()) RETURNING id`, [s.cid, OLDPAST.date]));
+  const seeded = r.ok ? (await asSuper(`SELECT status, marked_by FROM attendance WHERE session_id=$1 AND student_id=$2`, [r.ok.rows[0].id, k])).rows[0] : null;
+  ok('an admin creates a lesson in a paid past month: the seed trigger\'s Present rows (depth 2) are not judged here (G-7, step 3A, guards the lesson)',
+     r.ok !== undefined && seeded?.status === 'Present' && seeded.marked_by === null, [r, seeded]);
+  await db.exec(`DROP TRIGGER trg_attendance_after_session_ins ON public.sessions; DROP FUNCTION public._test_seed_after_session_ins();`);
 });
 
 // ---------------------------------------------------------------- the checked path
