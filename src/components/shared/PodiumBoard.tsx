@@ -333,7 +333,7 @@ function PodiumPlace({
           )}
         >
           {entry.students?.full_name}
-          {isSelf && <span className={ivory ? "ml-1 font-normal text-hec-ink-soft" : "ml-1 text-ink-faint"}>(you)</span>}
+          {isSelf && <span className={ivory ? "ml-1 inline-block whitespace-nowrap font-normal text-hec-ink-soft" : "ml-1 text-ink-faint"}>(you)</span>}
         </p>
 
         <p
@@ -429,7 +429,7 @@ function BoardRow({
           : "flex cursor-pointer items-center gap-3 rounded-2xl border border-studio bg-studio-card px-3 py-2.5 transition-all",
         ivory ? "hover:shadow-hec-2" : "hover:-translate-y-0.5 hover:shadow-studio",
         isSelf && (ivory ? "border-hec-brass ring-1 ring-hec-brass" : "ring-2 ring-[hsl(var(--studio-ink))]"),
-        isSelected && !isSelf && (ivory ? "border-hec-brass bg-hec-sunken" : "ring-2 ring-[hsl(var(--studio-sky-ink))]"),
+        isSelected && !isSelf && (ivory ? "border-hec-brass ring-1 ring-hec-brass" : "ring-2 ring-[hsl(var(--studio-sky-ink))]"),
       )}
     >
       {canManagePoints && (
