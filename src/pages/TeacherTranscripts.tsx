@@ -1317,9 +1317,9 @@ export default function TeacherTranscripts() {
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div>
                         <CardTitle className="text-sm flex items-center gap-2">
-                          <ImageIcon className="h-4 w-4 text-pink-500" />
+                          <ImageIcon className="h-5 w-5 shrink-0 text-hec-ink-soft" />
                           Resources used
-                          {resources.length > 0 && <Badge variant="secondary">{resources.length}</Badge>}
+                          {resources.length > 0 && <Badge variant="secondary" className="tabular-nums">{resources.length}</Badge>}
                         </CardTitle>
                         <CardDescription className="text-xs mt-1">
                           Photos of the book pages, handouts or board work from this lesson.
@@ -1339,8 +1339,8 @@ export default function TeacherTranscripts() {
                             e.target.value = "";
                           }}
                         />
-                        <span className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors hover:bg-muted ${resourceUploading ? "opacity-50 pointer-events-none" : ""}`}>
-                          {resourceUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+                        <span className={`inline-flex min-h-hec-target items-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised px-4 text-hec-body font-medium text-hec-ink cursor-pointer transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken ${resourceUploading ? "opacity-50 pointer-events-none" : ""}`}>
+                          {resourceUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
                           Add photos
                         </span>
                       </label>
@@ -1348,30 +1348,30 @@ export default function TeacherTranscripts() {
                   </CardHeader>
                   <CardContent>
                     {resources.length === 0 ? (
-                      <p className="text-xs text-muted-foreground py-2">
+                      <p className="text-hec-small text-hec-ink-soft py-2">
                         No resource photos yet — add the pages or handouts you used and they'll appear on every student's lesson page.
                       </p>
                     ) : (
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {resources.map((r) => (
-                          <div key={r.id} className="relative group rounded-xl border overflow-hidden">
+                          <div key={r.id} className="relative group rounded-hec-md border border-hec-line overflow-hidden">
                             {r.url ? (
                               <a href={r.url} target="_blank" rel="noreferrer">
                                 <img src={r.url} alt={r.caption || "resource"} loading="lazy" className="h-24 w-full object-cover" />
                               </a>
                             ) : (
-                              <div className="h-24 w-full bg-muted flex items-center justify-center">
-                                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                              <div className="h-24 w-full bg-hec-sunken flex items-center justify-center">
+                                <ImageIcon className="h-5 w-5 text-hec-ink-faint" />
                               </div>
                             )}
                             <Tooltip>
                             <TooltipTrigger asChild>
                             <button
                               onClick={() => deleteResourceMutation.mutate(r)}
-                              className="absolute top-1 right-1 rounded-md bg-black/60 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute top-1 right-1 flex min-h-hec-target min-w-hec-target items-center justify-center rounded-hec-md bg-hec-raised text-hec-danger shadow-hec-1 opacity-0 transition-opacity duration-hec-1 ease-hec group-hover:opacity-100 group-focus-within:opacity-100 hover:bg-hec-danger-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                               aria-label="Remove"
                             >
-                              <XCircle className="h-3.5 w-3.5" />
+                              <XCircle className="h-5 w-5" />
                             </button>
                             </TooltipTrigger>
                             <TooltipContent>Remove</TooltipContent>
@@ -1385,14 +1385,14 @@ export default function TeacherTranscripts() {
 
                 {/* Deciphered point awards — teacher reviews, then applies */}
                 {pointSuggestions.length > 0 && (
-                  <Card className="border-amber-500/25">
+                  <Card>
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <div>
                           <CardTitle className="text-sm flex items-center gap-2">
-                            <Coins className="h-4 w-4 text-amber-500" />
+                            <Coins className="h-5 w-5 shrink-0 text-hec-brass" />
                             Points called out in class
-                            <Badge variant="secondary">
+                            <Badge variant="secondary" className="tabular-nums">
                               {pointSuggestions.filter((s) => s.status === "suggested").length} pending
                             </Badge>
                           </CardTitle>
@@ -1404,14 +1404,14 @@ export default function TeacherTranscripts() {
                         {eligibleSuggestions.length > 0 && (
                           <Button
                             size="sm"
-                            className="gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600"
+                            className="w-full gap-2 sm:w-auto"
                             disabled={applyAllMutation.isPending}
                             onClick={() => applyAllMutation.mutate()}
                           >
                             {applyAllMutation.isPending ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              <CheckCircle2 className="h-4 w-4" />
                             )}
                             Apply all present ({eligibleSuggestions.length})
                           </Button>
@@ -1425,67 +1425,69 @@ export default function TeacherTranscripts() {
                         return (
                           <div
                             key={s.id}
-                            className={`rounded-xl border p-2.5 flex items-start gap-3 ${
-                              s.status === "applied" ? "opacity-70 bg-emerald-500/5 border-emerald-500/25"
-                              : s.status === "dismissed" ? "opacity-45"
-                              : "bg-card"
+                            className={`rounded-hec-md border p-3 flex flex-wrap items-start gap-3 ${
+                              s.status === "applied" ? "border-hec-leaf/30 bg-hec-leaf-tint"
+                              : s.status === "dismissed" ? "border-dashed border-hec-line bg-hec-sunken"
+                              : "border-hec-line bg-hec-surface"
                             }`}
                           >
                             <span
-                              className={`shrink-0 rounded-lg px-2 py-1 text-sm font-black tabular-nums ${
+                              className={`shrink-0 whitespace-nowrap rounded-hec-sm px-2 py-1 text-hec-small font-semibold tabular-nums ${
                                 s.points > 0
-                                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                                  : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                                  ? "bg-hec-leaf-tint text-hec-leaf"
+                                  : "bg-hec-danger-tint text-hec-danger"
                               }`}
                             >
                               {s.points > 0 ? `+${s.points}` : s.points}
                             </span>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-sm font-semibold">
+                                <span className="min-w-0 whitespace-normal break-words text-hec-small font-semibold text-hec-ink">
                                   {s.students?.full_name || (
-                                    <span className="text-muted-foreground">“{s.speaker_label}” — not on roster</span>
+                                    <span className="text-hec-ink-soft">“{s.speaker_label}” — not on roster</span>
                                   )}
                                 </span>
                                 {attended(s) ? (
-                                  <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40">
+                                  <Badge variant="outline" className="border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">
                                     {s.attendance_status}
                                   </Badge>
                                 ) : (
-                                  <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/40 gap-1">
+                                  <Badge variant="outline" className="gap-1 border-hec-warn/30 bg-hec-warn-tint text-hec-warn">
                                     <AlertTriangle className="h-3 w-3" />
                                     {s.attendance_status === "no_session" ? "no session that day" : s.attendance_status}
                                   </Badge>
                                 )}
                                 {s.status === "applied" && (
-                                  <Badge className="text-[10px] bg-emerald-500/15 text-emerald-600 border-emerald-500/30">applied</Badge>
+                                  <Badge className="border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">applied</Badge>
                                 )}
                                 {s.status === "dismissed" && (
-                                  <Badge variant="outline" className="text-[10px]">dismissed</Badge>
+                                  <Badge variant="outline" className="text-hec-ink-soft">dismissed</Badge>
                                 )}
                               </div>
-                              <p className="text-xs text-muted-foreground italic mt-0.5 truncate" title={s.quote}>
+                              <p className="text-hec-small text-hec-ink-soft italic mt-1 truncate" title={s.quote}>
                                 “{s.quote}”{s.reason ? ` — ${s.reason}` : ""}
                               </p>
                             </div>
                             {isPending && (
-                              <div className="flex gap-1 shrink-0">
+                              <div className="flex gap-2 shrink-0">
                                 <Button
                                   size="sm"
-                                  className="h-7 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  variant="outline"
+                                  className="gap-2"
                                   disabled={!canApply || applyMutation.isPending}
                                   title={!s.student_id ? "No roster match" : !canApply ? "Student wasn't present" : "Create the point transaction"}
                                   onClick={() => applyMutation.mutate(s)}
                                 >
-                                  <CheckCircle2 className="h-3 w-3" />Apply
+                                  <CheckCircle2 className="h-4 w-4" />Apply
                                 </Button>
                                 <Button
                                   size="sm" variant="ghost"
-                                  className="h-7 gap-1 text-xs text-muted-foreground"
+                                  className="text-hec-ink-soft"
+                                  aria-label="Dismiss"
                                   disabled={dismissMutation.isPending}
                                   onClick={() => dismissMutation.mutate(s)}
                                 >
-                                  <XCircle className="h-3 w-3" />
+                                  <XCircle className="h-5 w-5" />
                                 </Button>
                               </div>
                             )}
