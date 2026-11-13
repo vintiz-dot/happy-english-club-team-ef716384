@@ -154,7 +154,7 @@ const SUITES = [
   {
     name: "d4 register",
     file: "d4-register.test.mjs",
-    expect: 129,
+    expect: 132,
     migrations: [
       "20261009130000_audit_every_admin_action.sql",
       "20261027090000_cancelled_lesson_attendance_guard.sql",

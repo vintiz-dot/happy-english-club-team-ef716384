@@ -469,8 +469,30 @@ await section('conductor ruling (1b review R-1): the live enrolment RPCs are rec
      (await events('enrollment_rpc_mark')).some((e) => e.payload.rpc === 'pause_enrollment' && e.payload.student_id === k2), r);
   r = await tryIt(() => asAdmin(`UPDATE attendance SET status='Present', marked_by=$3 WHERE session_id=$1 AND student_id=$2`, [sid2, k2, ADMIN]));
   ok('only the RPC\'s own rows: a raw admin re-bill of that old mark is still HC025', r.code === 'HC025', r);
+  // modify_enrollment_transfer backdated: placeholders removed in the old class, Present seeded in the new one
+  const cid2 = randomUUID();
+  await db.query(`INSERT INTO classes VALUES ($1,$2)`, [cid2, tUid]);
+  const k3 = (await asSuper(`INSERT INTO students(full_name) VALUES ('k3') RETURNING id`)).rows[0].id;
+  await asSuper(`INSERT INTO enrollments(class_id, student_id, start_date) VALUES ($1,$2,$3)`, [cid, k3, d60.date]);
+  await asSuper(`INSERT INTO attendance(session_id,student_id,status,marked_by) VALUES ($1,$2,'Present',NULL)`, [sid, k3]);
+  const sidNew = (await asSuper(`INSERT INTO sessions(class_id,date,start_time,end_time,status,teacher_id) VALUES ($1,$2,'10:00','11:00','Held',gen_random_uuid()) RETURNING id`, [cid2, d30.date])).rows[0].id;
+  await inv(k3, d30.month, {});
+  await asSuper(`DELETE FROM attendance WHERE session_id=$1 AND student_id=$2`, [sidNew, k3]);
+  const n3 = (await events('enrollment_rpc_mark')).length;
+  r = await tryIt(() => asAdmin(`SELECT public.modify_enrollment_transfer($1, $2, $3, $4)`, [k3, cid, cid2, d35.date]));
+  const ev3 = (await events('enrollment_rpc_mark')).slice(n3);
+  ok('modify_enrollment_transfer backdated into a billed month: passes, both register writes queued',
+     r.ok !== undefined && !(await mark({ sid }, k3)) && (await mark({ sid: sidNew }, k3))?.status === 'Present' &&
+     ev3.length === 2 && ev3.every((e) => e.payload.rpc === 'modify_enrollment_transfer'), [r, ev3]);
+  // stars_sync_resolve_conflict: an admin takes Pixel Pal's mark on an old billed lesson
+  r = await tryIt(() => asAdmin(`SELECT public.stars_sync_resolve_conflict($1, $2, 'Absent')`, [sid2, k2]));
+  ok('stars_sync_resolve_conflict (admin takes the other mark on an old billed lesson): passes and is queued',
+     r.ok !== undefined && (await mark({ sid: sid2 }, k2))?.status === 'Absent' &&
+     (await events('enrollment_rpc_mark')).some((e) => e.payload.rpc === 'stars_sync_resolve_conflict' && e.payload.student_id === k2), r);
+  r = await tryIt(() => asAdmin(`UPDATE attendance SET status='Excused', marked_by=$3 WHERE session_id=$1 AND student_id=$2`, [sid2, k2, ADMIN]));
+  ok('a raw admin UPDATE of that mark to Excused (no RPC in the statement) is still HC025', r.code === 'HC025', r);
   const st = (await asAdmin(`SELECT public.d4_guard_status() r`)).rows[0].r;
-  ok('the status card counts them (events_30d.enrollment_rpc_mark)', (st.events_30d?.enrollment_rpc_mark ?? 0) >= 2, st.events_30d);
+  ok('the status card counts them (events_30d.enrollment_rpc_mark)', (st.events_30d?.enrollment_rpc_mark ?? 0) >= 5, st.events_30d);
 });
 
 // ---------------------------------------------------------------- the checked path

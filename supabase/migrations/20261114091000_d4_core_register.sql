@@ -396,13 +396,14 @@ BEGIN
   RETURN true;
 END $fn$;
 
--- Is this statement one of the live admin enrolment RPCs (called through
--- PostgREST as SELECT ... "end_enrollment"(...))? Read from the statement the
--- client sent; PostgREST passes values as parameters, never in the text.
+-- Which live admin RPC that writes the register as a side effect is this
+-- statement calling (through PostgREST: SELECT ... "end_enrollment"(...)),
+-- or NULL? Read from the statement the client sent; PostgREST passes values
+-- as parameters, never in the text.
 CREATE OR REPLACE FUNCTION public._money_enrollment_rpc_call()
-RETURNS boolean LANGUAGE sql STABLE SET search_path = public AS $fn$
-  SELECT COALESCE(lower(current_query()) ~
-    '(^|[^a-z0-9_])"?(end_enrollment|pause_enrollment|modify_enrollment_transfer|ai_action_undo|ai_action_apply)"?[[:space:]]*\(', false)
+RETURNS text LANGUAGE sql STABLE SET search_path = public AS $fn$
+  SELECT substring(lower(COALESCE(current_query(), '')) from
+    '(?:^|[^a-z0-9_])"?(end_enrollment|pause_enrollment|modify_enrollment_transfer|ai_action_undo|ai_action_apply|stars_sync_resolve_conflict)"?[[:space:]]*\(')
 $fn$;
 
 -- ---------------------------------------------------------------- 5
@@ -439,6 +440,7 @@ DECLARE
   v_tier int;
   v_teacher_refuse boolean;
   v_ok boolean;
+  v_rpc text;
 BEGIN
   IF pg_trigger_depth() > 1 THEN
     RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
@@ -542,19 +544,22 @@ BEGIN
     -- their own checked path, the live admin enrolment RPCs that write the
     -- register as a side effect (end_enrollment, modify_enrollment_transfer:
     -- remove placeholder marks / seed new ones; pause_enrollment: Excused;
-    -- ai_action_undo: remove placeholder marks; ai_action_apply) are recorded
-    -- and queued for review, not refused - only for the rows those RPCs
-    -- write (an unsigned row removed or seeded, or a mark set to Excused).
-    IF public._money_enrollment_rpc_call()
+    -- ai_action_undo: remove placeholder marks; ai_action_apply;
+    -- stars_sync_resolve_conflict: the admin takes Pixel Pal's mark) are
+    -- recorded and queued for review, not refused - only for the rows those
+    -- RPCs write (an unsigned row removed or seeded, a mark set to Excused,
+    -- or the conflict's one mark signed by the admin).
+    v_rpc := public._money_enrollment_rpc_call();
+    IF v_rpc IS NOT NULL
        AND ((TG_OP = 'DELETE' AND OLD.marked_by IS NULL)
             OR (TG_OP = 'INSERT' AND NEW.marked_by IS NULL)
-            OR v_new_status = 'Excused') THEN
+            OR v_new_status = 'Excused'
+            OR (v_rpc = 'stars_sync_resolve_conflict' AND TG_OP = 'UPDATE' AND NEW.marked_by = v_uid)) THEN
       INSERT INTO public.money_change_events (kind, actor_user_id, payload)
       VALUES ('enrollment_rpc_mark', v_uid, jsonb_build_object('session_id', s.id, 'student_id', v_kid, 'lesson_date', s.date,
                 'old_status', v_old_status, 'new_status', v_new_status, 'old_marked_by', v_old_by,
                 'new_marked_by', CASE WHEN TG_OP = 'DELETE' THEN NULL ELSE NEW.marked_by END, 'op', TG_OP, 'tier', v_tier,
-                'rpc', substring(lower(current_query()) from
-                  '(end_enrollment|pause_enrollment|modify_enrollment_transfer|ai_action_undo|ai_action_apply)')));
+                'rpc', v_rpc));
       RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
     END IF;
     RAISE EXCEPTION 'attendance_requires_checked_path' USING ERRCODE = 'HC025',

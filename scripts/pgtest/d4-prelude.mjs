@@ -263,6 +263,21 @@ export const D4_ENROLMENT_RPCS = `
     from_date date NOT NULL, to_date date NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), created_by uuid, memo text);
   CREATE OR REPLACE FUNCTION public.pause_enrollment(p_student_id uuid, p_class_id uuid, p_from_date date, p_to_date date, p_memo text DEFAULT NULL)
     RETURNS jsonb LANGUAGE sql AS $f$ SELECT '{}'::jsonb $f$;
+  -- modify_enrollment_transfer moves points by month
+  ALTER TABLE public.point_transactions ADD COLUMN IF NOT EXISTS month text;
+  CREATE TABLE IF NOT EXISTS public.student_points(
+    student_id uuid NOT NULL, class_id uuid NOT NULL, month text NOT NULL,
+    homework_points integer NOT NULL DEFAULT 0, participation_points integer NOT NULL DEFAULT 0,
+    updated_at timestamptz NOT NULL DEFAULT now(), UNIQUE (student_id, class_id, month));
+  -- stand-in for stars_sync_resolve_conflict's register write ("take Pixel Pal's mark"):
+  -- the real one (20261104090000) needs the whole sync schema; this is its UPDATE, same name
+  CREATE OR REPLACE FUNCTION public.stars_sync_resolve_conflict(p_session uuid, p_student uuid, p_theirs text)
+    RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$
+  BEGIN
+    UPDATE public.attendance SET status = p_theirs, marked_by = auth.uid(), marked_at = now()
+     WHERE session_id = p_session AND student_id = p_student;
+    RETURN 'took_theirs';
+  END $f$;
 `;
 
 /**
