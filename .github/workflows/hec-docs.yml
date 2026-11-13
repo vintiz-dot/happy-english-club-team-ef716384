@@ -15,13 +15,17 @@ jobs:
     runs-on: ubuntu-24.04
     container:
       image: mcr.microsoft.com/playwright:v1.58.2-noble
-      options: --user 1001
+      options: --user 1001 --ipc=host
     defaults:
       run:
         working-directory: hec-docs
     env:
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
       HEC_DOCS_SILENT: "1"
+      # Docker's default seccomp profile blocks the namespaces Chromium's
+      # sandbox needs. CI renders only the repo's own fixtures, so it runs
+      # without it; production keeps it on (see README, Security).
+      HEC_DOCS_CHROMIUM_SANDBOX: "false"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,7 +41,15 @@ jobs:
       - name: Unit + snapshot tests
         run: npm run test:unit && npm run test:snapshot
       - name: End-to-end (CLI + HTTP API)
-        run: npm run test:e2e
+        # On failure, surface the tail of the output as an annotation, which is
+        # readable without signing in to GitHub.
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! npm run test:e2e 2>&1 | tee e2e.log; then
+            echo "::error title=e2e::$(grep -E 'not ok|Error|error|expected|actual|✖' e2e.log | tail -40 | tr '\n' ' ' | cut -c1-3500)"
+            exit 1
+          fi
       - name: Quality gates (parity, a11y, fonts, regression, determinism)
         # Fails on any unreviewed visual diff against qa/baselines.
         run: npm run qa

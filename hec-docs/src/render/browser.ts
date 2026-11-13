@@ -44,6 +44,11 @@ export function getBrowser(): Promise<Browser> {
       })
       .catch((err) => {
         browserPromise = null;
+        const msg = String((err as Error)?.message ?? err);
+        log.error("browser.launch_failed", { error: msg.slice(0, 500), sandbox: config.chromiumSandbox });
+        if (/sandbox/i.test(msg) && config.chromiumSandbox) {
+          throw new Error(`Chromium could not start its sandbox. In a container, run with Chrome's seccomp profile or --cap-add=SYS_ADMIN; for trusted input only, HEC_DOCS_CHROMIUM_SANDBOX=false. Cause: ${msg}`);
+        }
         throw err;
       });
   }

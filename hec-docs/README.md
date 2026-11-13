@@ -86,7 +86,7 @@ How requests are handled:
 | `HEC_DOCS_IDEMPOTENCY_TTL_MS` | 24 h | In-memory store |
 | `HEC_DOCS_DEFAULT_TENANT` / `HEC_DOCS_TENANTS_DIR` | hec / ./tenants | |
 | `HEC_DOCS_LOG_LEVEL` | info | JSON lines on stderr; never document data |
-| `HEC_DOCS_CHROMIUM_SANDBOX` | true | Leave on; the image runs as an unprivileged user |
+| `HEC_DOCS_CHROMIUM_SANDBOX` | true | Leave on in production. Under Docker's default seccomp profile, Chromium's sandbox cannot start as a non-root user: run the container with Chrome's seccomp profile (`--security-opt seccomp=chrome.json`) or `--cap-add=SYS_ADMIN`. CI sets it to false because it only renders the repo's own fixtures. |
 
 ## Security
 
@@ -111,7 +111,7 @@ Send `generatedAt` in production calls. If it is omitted, it defaults to now.
 
 **A layout variant**
 1. Add it to `variants` in `templates/<type>/template.json` (at most 4).
-2. Add the `{% if variant == "…" %}` branch in `document.njk`, built from existing components.
+2. Add an `if variant == "…"` branch in `document.njk` (see `templates/homework/document.njk`), built from existing components.
 3. Add `fixtures/<variant>.json`.
 4. Run `npm run qa -- --only <type> --update-baselines`, review the PNGs in `qa/baselines/<type>/`, and commit them.
 5. Bump the template's minor version and add a CHANGELOG entry.
@@ -120,7 +120,7 @@ Send `generatedAt` in production calls. If it is omitted, it defaults to now.
 1. Create `templates/<type>/` with:
    - `template.json`: type, semver version, output, `documentTitle`, `lang`, variants, `filename` strategy, `keyField`, `brandStrings`
    - `schema.json`: JSON Schema 2020-12, `$id` ending `/<type>/<version>`, strict `additionalProperties: false`
-   - `document.njk`: `{% extends "layouts/page.njk" %}`, `{% import "ui.njk" as ui %}`
+   - `document.njk`: extends `layouts/page.njk` and imports `ui.njk` as `ui` (copy the first lines of `templates/homework/document.njk`)
    - `fixtures/`
 2. Add a filename strategy in `src/filenames.ts` if the app already names the file. Copy its function; do not tidy it.
 3. If you are replacing an existing generator, capture its output as `qa/before/<name>/dom.txt` and point a fixture at it (`"before": "<name>"`), so parity is proven, not assumed.
