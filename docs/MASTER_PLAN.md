@@ -407,3 +407,7 @@ Log: 2026-11-12 - 72% (C3 recorder screens merged).
   F-02 (nine AI / speech functions) is next: deploy, not a migration.
 - Usage: the Fable model limit was reached (recorder reviewer stopped); the session now runs on Opus 5.5. Agents are restarted on Opus.
 - Progress: 93% (47.5 of 51).
+- 2026-11-13 09:31 (Hanoi) - S1 F-02 LIVE AND VERIFIED: the nine AI / speech functions v3 -> v4 from 1c736fff (get-speech-token last, outside lesson hours); verify_jwt now true on all nine (was false on word-enrichment, image-search, pronounce-syllables, pronounce-viseme); live before = main apart from CRLF; every file read back byte-identical; probes 401 without a token and 401 from the function with the public key; no 5xx or boot errors. Rollback: hec-tools\f02-rollback\<function>\v3. NOT VERIFIED: a signed-in teacher or student using vocabulary, image search, speaking practice, the recorder; the 403 role cases.
+  ALL SIX AUDIT FINDINGS OF S1 ARE NOW CLOSED ON LIVE (F-01, F-02, F-14, F-15, F-16, F-21), plus the two unbacked teacher roles removed.
+- D4 step 1b built (a80d45b1; 5903/62/0; 25 mutants caught); independent review running.
+- Progress: 94% (48.0 of 51).
