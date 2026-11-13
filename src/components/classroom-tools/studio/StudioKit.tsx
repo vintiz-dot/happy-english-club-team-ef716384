@@ -72,7 +72,7 @@ export function ToolCard({
         >
           <Icon className="h-5 w-5" strokeWidth={2} aria-hidden />
         </span>
-        <div className={ivory ? "min-w-[10rem] flex-1" : "min-w-0 flex-1"}>
+        <div className={ivory ? "min-w-[8rem] flex-1" : "min-w-0 flex-1"}>
           <h3 className={ivory ? "font-display text-hec-h2 font-medium text-hec-ink" : "studio-title text-[1.3rem] leading-tight"}>{title}</h3>
           <p className={ivory ? "mt-1 text-hec-small text-hec-ink-soft" : "mt-0.5 text-[0.8125rem] leading-snug text-ink-soft"}>{description}</p>
         </div>

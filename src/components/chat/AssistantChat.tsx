@@ -389,7 +389,8 @@ export function AssistantChat({ className }: { className?: string }) {
             rows={1}
             disabled={busy}
           />
-          <div className={ivory ? "flex flex-col gap-2" : "flex flex-col gap-1"}>
+          {/* Ivory: Send sits at the bottom, level with the field; "new conversation" above it. */}
+          <div className={ivory ? "flex flex-col-reverse gap-2" : "flex flex-col gap-1"}>
             <Button
               size="icon"
               // Ivory: the primary (ink) button, 44 px, named; no gradient.
