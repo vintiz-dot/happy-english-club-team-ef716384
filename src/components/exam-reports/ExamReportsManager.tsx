@@ -13,6 +13,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useIvory } from "@/hooks/useIvory";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { PlaceholderCard } from "@/components/ui/loading";
 
@@ -39,6 +40,9 @@ export function ExamReportsManager({
   title = "Exam Reports",
 }: ExamReportsManagerProps) {
   const { toast } = useToast();
+  // Rendered on teacher and admin routes; the new classes only on an ivory (listed) route, the old ones verbatim elsewhere.
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
   const qc = useQueryClient();
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
@@ -100,25 +104,25 @@ export function ExamReportsManager({
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h2 className="flex items-center gap-2 font-display text-hec-h1 font-medium text-hec-ink">
-            <FileText className="h-6 w-6 shrink-0 text-hec-ink-soft" aria-hidden="true" />
+          <h2 className={iv("flex items-center gap-2 font-display text-hec-h1 font-medium text-hec-ink", "text-2xl font-bold flex items-center gap-2")}>
+            <FileText className={iv("h-6 w-6 shrink-0 text-hec-ink-soft", "h-6 w-6 text-primary")} aria-hidden={ivory ? true : undefined} />
             {title}
           </h2>
-          <p className="mt-2 text-hec-small text-hec-ink-soft">Create, edit and share exam reports with students.</p>
+          <p className={iv("mt-2 text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>Create, edit and share exam reports with students.</p>
         </div>
-        <Button className="min-h-hec-target w-full md:w-auto" onClick={() => { setEditing(null); setEditorOpen(true); }}>
-          <Plus className="h-4 w-4" aria-hidden="true" /> New report
+        <Button className={iv("min-h-hec-target w-full md:w-auto", "")} onClick={() => { setEditing(null); setEditorOpen(true); }}>
+          <Plus className={iv("h-4 w-4", "h-4 w-4 mr-2")} aria-hidden={ivory ? true : undefined} /> New report
         </Button>
       </div>
 
       {!fixedStudentId && !fixedClassId && (
-        <div className="relative w-full sm:max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hec-ink-faint" aria-hidden="true" />
+        <div className={iv("relative w-full sm:max-w-md", "relative max-w-md")}>
+          <Search className={iv("absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-hec-ink-faint", "h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground")} aria-hidden={ivory ? true : undefined} />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by title, student or class…"
-            aria-label="Search by title, student or class"
+            aria-label={ivory ? "Search by title, student or class" : undefined}
             className="pl-9"
           />
         </div>
@@ -128,7 +132,7 @@ export function ExamReportsManager({
         <PlaceholderCard rows={3} />
       ) : filtered.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center text-hec-body text-hec-ink-soft">
+          <CardContent className={iv("p-8 text-center text-hec-body text-hec-ink-soft", "p-8 text-center text-muted-foreground")}>
             No exam reports yet. Click "New report" to create the first one.
           </CardContent>
         </Card>
@@ -138,22 +142,22 @@ export function ExamReportsManager({
             <Card key={r.id}>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="break-words">{r.title}</CardTitle>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {r.students?.full_name && <Badge variant="secondary" className="whitespace-normal break-words">{r.students.full_name}</Badge>}
-                      {r.classes?.name && <Badge variant="outline" className="whitespace-normal break-words">{r.classes.name}</Badge>}
-                      {r.exam_date && <Badge variant="outline" className="tabular-nums">Exam: {format(new Date(r.exam_date), "MMM d, yyyy")}</Badge>}
-                      {r.file_name && <Badge variant="outline" className="gap-1"><FileText className="h-3 w-3" aria-hidden="true" /> PDF</Badge>}
+                  <div className={iv("min-w-0 flex-1", "min-w-0")}>
+                    <CardTitle className={iv("break-words", "text-lg truncate")}>{r.title}</CardTitle>
+                    <div className={iv("mt-2 flex flex-wrap gap-2", "flex flex-wrap gap-2 mt-1.5")}>
+                      {r.students?.full_name && <Badge variant="secondary" className={iv("whitespace-normal break-words", "")}>{r.students.full_name}</Badge>}
+                      {r.classes?.name && <Badge variant="outline" className={iv("whitespace-normal break-words", "")}>{r.classes.name}</Badge>}
+                      {r.exam_date && <Badge variant="outline" className={iv("tabular-nums", "")}>Exam: {format(new Date(r.exam_date), "MMM d, yyyy")}</Badge>}
+                      {r.file_name && <Badge variant="outline" className="gap-1"><FileText className="h-3 w-3" aria-hidden={ivory ? true : undefined} /> PDF</Badge>}
                     </div>
                   </div>
                   {canEdit(r) && (
-                    <div className="flex shrink-0 gap-2">
-                      <Button variant="ghost" size="icon" className="min-h-hec-target min-w-hec-target" aria-label={`Edit ${r.title}`} onClick={() => { setEditing(r); setEditorOpen(true); }}>
-                        <Pencil className="h-5 w-5" aria-hidden="true" />
+                    <div className={iv("flex shrink-0 gap-2", "flex gap-1 shrink-0")}>
+                      <Button variant="ghost" size="icon" className={iv("min-h-hec-target min-w-hec-target", "")} aria-label={ivory ? `Edit ${r.title}` : undefined} onClick={() => { setEditing(r); setEditorOpen(true); }}>
+                        <Pencil className={iv("h-5 w-5", "h-4 w-4")} aria-hidden={ivory ? true : undefined} />
                       </Button>
-                      <Button variant="ghost" size="icon" className="min-h-hec-target min-w-hec-target text-hec-danger hover:bg-hec-danger-tint hover:text-hec-danger" aria-label={`Delete ${r.title}`} onClick={() => setDeleteId(r.id)}>
-                        <Trash2 className="h-5 w-5" aria-hidden="true" />
+                      <Button variant="ghost" size="icon" className={iv("min-h-hec-target min-w-hec-target text-hec-danger hover:bg-hec-danger-tint hover:text-hec-danger", "")} aria-label={ivory ? `Delete ${r.title}` : undefined} onClick={() => setDeleteId(r.id)}>
+                        <Trash2 className={iv("h-5 w-5", "h-4 w-4 text-destructive")} aria-hidden={ivory ? true : undefined} />
                       </Button>
                     </div>
                   )}
@@ -162,12 +166,12 @@ export function ExamReportsManager({
               {r.content_html && (
                 <CardContent className="pt-0">
                   <div
-                    className="prose prose-sm max-w-none break-words text-hec-ink"
+                    className={iv("prose prose-sm max-w-none break-words text-hec-ink", "prose prose-sm max-w-none dark:prose-invert text-foreground")}
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(r.content_html) }}
                   />
                 </CardContent>
               )}
-              <CardContent className="pt-0 text-hec-caption text-hec-ink-soft tabular-nums">
+              <CardContent className={iv("pt-0 text-hec-caption text-hec-ink-soft tabular-nums", "pt-0 text-xs text-muted-foreground")}>
                 Created {format(new Date(r.created_at), "MMM d, yyyy")}
               </CardContent>
             </Card>
@@ -191,8 +195,8 @@ export function ExamReportsManager({
             <AlertDialogDescription>This cannot be undone. The attached PDF will also be removed.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep the report</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90">Delete the report</AlertDialogAction>
+            <AlertDialogCancel>{ivory ? "Keep the report" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className={iv("bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90", "")}>{ivory ? "Delete the report" : "Delete"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
