@@ -20,6 +20,7 @@ import { ParticipationPoints } from "@/components/admin/ParticipationPoints";
 import { SessionActionsModal } from "../SessionActionsModal";
 import { useIvory } from "@/hooks/useIvory";
 import { cn } from "@/lib/utils";
+import { functionRefusalText } from "@/lib/moneyGuard";
 
 const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
@@ -126,7 +127,8 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
       const { error } = await supabase.functions.invoke("mark-attendance", {
         body: { sessionId: session.id, batch },
       });
-      if (error) throw error;
+      // D4: an old billed lesson answers 409 with its reason and next step.
+      if (error) throw new Error(await functionRefusalText(error, "Failed to save attendance"));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["session-students", session?.id] });

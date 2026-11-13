@@ -249,6 +249,47 @@ export const D4_EVIDENCE_RLS = `
 `;
 
 /**
+ * What the live enrolment RPCs need beyond D2's prelude, so the REAL
+ * 20261106100001 (end_enrollment, ...) and 20261113120000 (pause_enrollment)
+ * can be loaded after it: the enrolment columns they write, pause_windows,
+ * and a stub of pause_enrollment for the latter's preflight (replaced by it).
+ */
+export const D4_ENROLMENT_RPCS = `
+  ALTER TABLE public.enrollments ADD COLUMN IF NOT EXISTS id uuid NOT NULL DEFAULT gen_random_uuid(),
+    ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now(), ADD COLUMN IF NOT EXISTS created_by uuid,
+    ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now(), ADD COLUMN IF NOT EXISTS updated_by uuid;
+  CREATE TABLE IF NOT EXISTS public.pause_windows(
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid NOT NULL, class_id uuid NOT NULL,
+    from_date date NOT NULL, to_date date NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), created_by uuid, memo text);
+  CREATE OR REPLACE FUNCTION public.pause_enrollment(p_student_id uuid, p_class_id uuid, p_from_date date, p_to_date date, p_memo text DEFAULT NULL)
+    RETURNS jsonb LANGUAGE sql AS $f$ SELECT '{}'::jsonb $f$;
+  -- modify_enrollment_transfer moves points by month
+  ALTER TABLE public.point_transactions ADD COLUMN IF NOT EXISTS month text;
+  CREATE TABLE IF NOT EXISTS public.student_points(
+    student_id uuid NOT NULL, class_id uuid NOT NULL, month text NOT NULL,
+    homework_points integer NOT NULL DEFAULT 0, participation_points integer NOT NULL DEFAULT 0,
+    updated_at timestamptz NOT NULL DEFAULT now(), UNIQUE (student_id, class_id, month));
+  -- stand-in for stars_sync_resolve_conflict's register write ("take Pixel Pal's mark"):
+  -- the real one (20261104090000) needs the whole sync schema; this is its UPDATE with the
+  -- LIVE signature (uuid, text), plpgsql, SECURITY DEFINER, search_path public - what the
+  -- guard recognises in the call stack
+  CREATE TABLE IF NOT EXISTS public.zz_stars_conflicts(
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), session_id uuid NOT NULL, student_id uuid NOT NULL, theirs text NOT NULL,
+    signer uuid);   -- test only: a write signed by someone else, which the live function never makes
+  CREATE OR REPLACE FUNCTION public.stars_sync_resolve_conflict(p_conflict_id uuid, p_resolution text)
+    RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$
+  DECLARE v record;
+  BEGIN
+    SELECT * INTO v FROM public.zz_stars_conflicts WHERE id = p_conflict_id;
+    IF p_resolution = 'took_theirs' THEN
+      UPDATE public.attendance SET status = v.theirs, marked_by = COALESCE(v.signer, auth.uid()), marked_at = now()
+       WHERE session_id = v.session_id AND student_id = v.student_id;
+    END IF;
+    RETURN jsonb_build_object('resolution', p_resolution);
+  END $f$;
+`;
+
+/**
  * A fresh pglite with D2's prelude, the D4 blocks asked for, then the named
  * migration files in order (real files, read as they are on disk).
  */

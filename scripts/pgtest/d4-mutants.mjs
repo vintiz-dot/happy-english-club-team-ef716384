@@ -18,10 +18,15 @@ import { join, resolve } from 'node:path';
 import { makeDb, migPath, repo, AUDIT, CANCEL, D1, D2, FLOORS } from './d4-prelude.mjs';
 
 const FREEZE = '20261106120000_invoice_tuition_freeze.sql';
+const ENROL = '20261106090000_attendance_enrollment_guard.sql';
+const CORE = '20261114091000_d4_core_register.sql';
+const ROLLBACK2 = join(repo, 'scripts', 'ROLLBACK-d4-2-register.sql');
 const SUITES = {
   floors: { file: 'd4-floors.test.mjs', migs: [AUDIT, CANCEL, D1, D2, FLOORS, FREEZE] },
   carry: { file: 'd4-d2-carryover.test.mjs', migs: [AUDIT, CANCEL, D1, D2, FLOORS] },
   deployed: { file: 'd4-deployed-functions.test.mjs', migs: [AUDIT, CANCEL, D1, D2, FLOORS] },
+  register: { file: 'd4-register.test.mjs', migs: [AUDIT, CANCEL, ENROL, D1, D2, FREEZE, FLOORS, CORE], args: [ROLLBACK2] },
+  fnreg: { file: 'd4-functions-register.test.mjs', migs: [AUDIT, CANCEL, ENROL, D1, D2, FREEZE, FLOORS, CORE] },
 };
 
 // [id, what it breaks, find (must occur exactly once), replace, suites]
@@ -117,6 +122,82 @@ export const MUTANTS = [
     "                          OR EXISTS (SELECT 1 FROM unnest(v_kids) AS k(id)\n                                       JOIN public.invoice_state_floor f", "                          OR false AND EXISTS (SELECT 1 FROM unnest(v_kids) AS k(id)\n                                       JOIN public.invoice_state_floor f", ['floors']],
   ['R12', "HC025 also on the service lane",
     "    IF v_lane IN ('person', 'unknown')\n       AND (TG_OP = 'DELETE' OR NEW.marked_by IS NULL) THEN", "    IF v_lane IN ('person', 'unknown', 'service')\n       AND (TG_OP = 'DELETE' OR NEW.marked_by IS NULL) THEN", ['floors']],
+  ['C01', "G-11 rule 1 dropped (an upsert's BEFORE INSERT judged as a new row)",
+    "    IF FOUND THEN\n      RETURN NEW;\n    END IF;\n  END IF;\n", "    IF false THEN\n      RETURN NEW;\n    END IF;\n  END IF;\n", ['register'], CORE],
+  ['C02', "G-11 rule 3 dropped (no free week)",
+    "  IF public._lesson_in_free_week(s.date, s.start_time, s.end_time) THEN\n    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\n  END IF;\n\n  v_month", "  IF false THEN\n    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\n  END IF;\n\n  v_month", ['register'], CORE],
+  ['C03', "teacher rule ignores a past month",
+    "  v_teacher_refuse := public._money_month_is_past(v_month) OR v_unbill_person;", "  v_teacher_refuse := v_unbill_person;", ['register'], CORE],
+  ['C04', "A-6 dropped (a person's Present un-billed in an unbilled month passes)",
+    "  IF v_unbill_person AND v_tier < 1 THEN v_tier := 1; END IF;", "", ['register'], CORE],
+  ['C05', "the service lane is refused like a person",
+    "  IF v_lane = 'service' THEN\n    -- 7", "  IF false THEN\n    -- 7", ['register'], CORE],
+  ['C06', "service_retro_mark not written",
+    "    IF v_tier > 0 OR v_teacher_refuse THEN\n      INSERT INTO public.money_change_events (kind, payload)\n      VALUES ('service_retro_mark'", "    IF false THEN\n      INSERT INTO public.money_change_events (kind, payload)\n      VALUES ('service_retro_mark'", ['register'], CORE],
+  ['C07', "owner_lane event not written",
+    "    IF v_tier > 0 THEN\n      INSERT INTO public.money_change_events (kind, payload)\n      VALUES ('owner_lane'", "    IF false THEN\n      INSERT INTO public.money_change_events (kind, payload)\n      VALUES ('owner_lane'", ['register'], CORE],
+  ['C08', "DQ-1 dropped (one-off cover lowers an old mark)",
+    "     AND NOT public._lesson_in_free_week(s.date, s.start_time, s.end_time)\n     AND public._floor_mark_level(", "     AND false\n     AND public._floor_mark_level(", ['register'], CORE],
+  ['C09', "DQ-1 also refuses the class's regular teacher",
+    "                                             OR public.is_teacher_of_class(v_uid, s.class_id)), false)\n     AND NOT public._lesson_in_free_week", "                                             ), false)\n     AND NOT public._lesson_in_free_week", ['register'], CORE],
+  ['C10', "the acknowledgement does not check the status written",
+    "                            WHERE m ->> 'student_id' = v_kid::text AND m ->> 'status' = v_new_status))", "                            WHERE m ->> 'student_id' = v_kid::text))", ['register'], CORE],
+  ['C11', "the acknowledgement does not compare tiers (A-8)",
+    "  IF o.tier < COALESCE(p_tier, 3) THEN", "  IF false THEN", ['register'], CORE],
+  ['C12', "the acknowledgement accepts a row of another transaction (replay)",
+    "   WHERE ov.id::text = v_ack AND ov.txid = txid_current() AND ov.entity = ANY (p_entities);", "   WHERE ov.id::text = v_ack AND ov.entity = ANY (p_entities);", ['register'], CORE],
+  ['C13', "tuition_month_state ignores the bill floor's signature",
+    "      WHEN COALESCE(i.confirmation_status IN ('confirmed', 'adjusted'), false) OR COALESCE(f.ever_signed, false) THEN 'signed'", "      WHEN COALESCE(i.confirmation_status IN ('confirmed', 'adjusted'), false) THEN 'signed'", ['register'], CORE],
+  ['C14', "a past month with no bill but a lesson is T0",
+    "             THEN 1 ELSE 0 END\n        END;", "             THEN 0 ELSE 0 END\n        END;", ['register'], CORE],
+  ['C15', "a confirmed current month is T0",
+    "      v_tier := CASE WHEN v_state IN ('frozen', 'signed') THEN 2 ELSE 0 END;", "      v_tier := 0;", ['register'], CORE],
+  ['C16', "no confirmation needed",
+    "  IF v_tier >= 1 AND NOT COALESCE(p_confirm, false) THEN", "  IF false THEN", ['register'], CORE],
+  ['C17', "the token is not checked",
+    "  IF (v_tier >= 1 OR p_token IS NOT NULL) AND p_token IS DISTINCT FROM v ->> 'token' THEN", "  IF false THEN", ['register'], CORE],
+  ['C18', "HC050 dropped (writes with the trigger disabled)",
+    "  IF v_enabled IS DISTINCT FROM 'O' THEN", "  IF false THEN", ['register'], CORE],
+  ['C19', "bulk: a T2 item rides on the batch reason",
+    "  IF p_via = 'bulk' AND v_tier >= 2 AND NOT", "  IF false AND v_tier >= 2 AND NOT", ['register'], CORE],
+  ['C20', "a T2 bulk change is not reviewed",
+    "    'review_required', v_tier = 3 OR (v_tier = 2 AND p_via = 'bulk')", "    'review_required', v_tier = 3", ['register'], CORE],
+  ['C21', "the plan ignores the free week",
+    "      SELECT j.*, CASE WHEN j.crossing AND NOT public._lesson_in_free_week(s.date, s.start_time, s.end_time)", "      SELECT j.*, CASE WHEN j.crossing", ['register'], CORE],
+  ['C22', "repair ignores the enrollment (Present outside it)",
+    "             CASE WHEN public.student_enrolled_on(v_kid, v_class, ss.date) THEN v_status ELSE 'Excused' END AS status", "             v_status AS status", ['register'], CORE],
+  ['C23', "the service role may run the checked path",
+    "TO authenticated;\nGRANT EXECUTE ON FUNCTION public.log_money_automation_refused", "TO authenticated, service_role;\nGRANT EXECUTE ON FUNCTION public.log_money_automation_refused", ['register'], CORE],
+  ['C24', "trigger-made writes are judged (the cancel's excuse-all)",
+    "  IF pg_trigger_depth() > 1 THEN\n    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\n  END IF;\n  -- 1", "  -- 1", ['register'], CORE],
+  ['C25', "an admin's old billed mark passes raw (rule 5 dropped)",
+    "    IF v_tier = 0 THEN\n      RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\n    END IF;\n    -- Conductor", "    IF true THEN\n      RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\n    END IF;\n    -- Conductor", ['register', 'fnreg'], CORE],
+  // round 2: the reviewer's three real survivors, and the round's own changes
+  ['X01', "DQ-1 refuses an equal level too (a cover re-saving an old mark unchanged)",
+    "         < public._floor_mark_level(v_old_status, v_old_by) THEN", "         <= public._floor_mark_level(v_old_status, v_old_by) THEN", ['register'], CORE],
+  ['X07', "record_money_change_event open to any signed-in user",
+    "  v_uid uuid := public._session_require_admin();\n  o public.money_change_overrides;\n  v_payload", "  v_uid uuid := auth.uid();\n  o public.money_change_overrides;\n  v_payload", ['register'], CORE],
+  ['F01', "mark-attendance: a teacher may un-bill a person's Present after the week in the current month",
+    "          return crossing && (past || unbillPerson);", "          return crossing && past;", ['fnreg'], 'supabase/functions/mark-attendance/index.ts'],
+  ['C26', "rule 1 sees the row without locking it (R-2 race)",
+    " WHERE a.session_id = NEW.session_id AND a.student_id = NEW.student_id FOR UPDATE;", " WHERE a.session_id = NEW.session_id AND a.student_id = NEW.student_id;", ['register'], CORE],
+  ['C27', "the ruling dropped: an enrolment RPC's backdated mark refused with a raw code",
+    "    IF v_rpc IS NOT NULL\n", "    IF false\n", ['register'], CORE],
+  ['C28', "the ruling widened: every admin statement treated as an enrolment RPC",
+    "  IF v_name IS NULL THEN\n    RETURN NULL;\n  END IF;\n  v_name := split_part", "  IF v_name IS NULL THEN\n    RETURN 'end_enrollment';\n  END IF;\n  v_name := split_part", ['register'], CORE],
+  ['C29', "the ruling widened: an RPC's raw UPDATE of a person's mark (not Excused) passes",
+    "            OR (v_rpc = 'stars_sync_resolve_conflict' AND TG_OP = 'UPDATE' AND NEW.marked_by = v_uid)) THEN", "            OR TG_OP = 'UPDATE') THEN", ['register'], CORE],
+  ['C30', "preflight no longer checks the 1a bodies",
+    "IS DISTINCT FROM r.want THEN", "IS DISTINCT FROM r.want AND false THEN", ['register'], CORE],
+  ['C31', "preflight compares the raw md5 (live 1a is CRLF: a healthy database refused)",
+    "AND (SELECT md5(replace(p.prosrc, E'\\r', '')) FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig))", "AND (SELECT md5(p.prosrc) FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig))", ['register'], CORE],
+  // round 3 (review R2-1): the RPC from the server's call stack, not the client's text
+  ['C32', "current_query() restored (the client's text decides: alias / literal / comment forgeries pass)",
+    "  GET DIAGNOSTICS v_ctx = PG_CONTEXT;\n", "  RETURN substring(lower(COALESCE(current_query(), '')) from '(?:^|[^a-z0-9_])\"?(end_enrollment|pause_enrollment|modify_enrollment_transfer|ai_action_undo|ai_action_apply|stars_sync_resolve_conflict)\"?[[:space:]]*\\(');\n  GET DIAGNOSTICS v_ctx = PG_CONTEXT;\n", ['register'], CORE],
+  ['C33', "a same-named function in another schema or pg_temp is taken for the live RPC (uniqueness dropped)",
+    "  IF (SELECT count(*) FROM pg_catalog.pg_proc p WHERE p.proname = v_name) <> 1\n     OR NOT EXISTS", "  IF NOT EXISTS", ['register'], CORE],
+  ['C34', "any frame of the stack counts, not the outermost (dynamic SQL text can forge a frame line)",
+    "v_lines[array_length(v_lines, 1)]", "(SELECT x FROM unnest(v_lines) x WHERE x ~ '^PL/pgSQL function (?:public\\.)?(end_enrollment|pause_enrollment|modify_enrollment_transfer|ai_action_undo|ai_action_apply|stars_sync_resolve_conflict)\\(' LIMIT 1)", ['register'], CORE],
 ];
 
 const D4_LITERALS = [/('[0-9a-f]{32}'\) THEN\s+-- this file)/g];
@@ -136,8 +217,8 @@ async function patchLiterals(text) {
   return { text: out };
 }
 
-const runSuite = (suite, floorsPath) => new Promise((done) => {
-  const args = [join(repo, 'scripts', 'pgtest', suite.file), ...suite.migs.map((f) => (f === FLOORS ? floorsPath : migPath(f)))];
+const runSuite = (suite, mutatedPath, target = FLOORS) => new Promise((done) => {
+  const args = [join(repo, 'scripts', 'pgtest', suite.file), ...suite.migs.map((f) => (f === target ? mutatedPath : migPath(f))), ...(suite.args ?? [])];
   const child = spawn(process.execPath, args, { stdio: ['ignore', 'pipe', 'pipe'] });
   let out = '';
   child.stdout.on('data', (d) => (out += d));
@@ -148,8 +229,54 @@ const runSuite = (suite, floorsPath) => new Promise((done) => {
 const only = process.argv.slice(2);
 const original = readFileSync(migPath(FLOORS), 'utf8').replace(/\r\n/g, '\n');
 const results = [];
-for (const [id, what, find, repl, suites] of MUTANTS) {
+const coreOriginal = readFileSync(migPath(CORE), 'utf8').replace(/\r\n/g, '\n');
+for (const [id, what, find, repl, suites, file] of MUTANTS) {
   if (only.length && !only.includes(id)) continue;
+  if (file && file.startsWith('supabase/functions/')) {
+    // an edge function: mutated in place for the run, the original bytes put back after
+    const fp = join(repo, file);
+    const before = readFileSync(fp);
+    const src = before.toString('utf8').replace(/\r\n/g, '\n');
+    const n = src.split(find).length - 1;
+    if (n !== 1) { results.push({ id, what, verdict: `BAD MUTANT (pattern found ${n} times)` }); console.log(`${id} BAD MUTANT (${n})`); continue; }
+    const by = [];
+    try {
+      writeFileSync(fp, src.replace(find, () => repl));
+      for (const s of suites) {
+        const r = await runSuite(SUITES[s], migPath(CORE), CORE);
+        if (r.code !== 0) {
+          const firstFail = r.out.split('\n').find((l) => l.includes('FAIL')) ?? r.out.split('\n').slice(-3).join(' ');
+          by.push(`${s}: ${firstFail.trim().slice(0, 160)}`);
+          break;
+        }
+      }
+    } finally {
+      writeFileSync(fp, before);
+    }
+    const verdict = by.length ? `CAUGHT by ${by[0]}` : `SURVIVED (${suites.join(', ')})`;
+    results.push({ id, what, verdict });
+    console.log(`${id} ${verdict}`);
+    continue;
+  }
+  if (file === CORE) {
+    const n = coreOriginal.split(find).length - 1;
+    if (n !== 1) { results.push({ id, what, verdict: `BAD MUTANT (pattern found ${n} times)` }); console.log(`${id} BAD MUTANT (${n})`); continue; }
+    const p = resolve(tmpdir(), `d4-mutant-${id}-${process.pid}.sql`);
+    writeFileSync(p, coreOriginal.replace(find, () => repl));
+    const by = [];
+    for (const s of suites) {
+      const r = await runSuite(SUITES[s], p, CORE);
+      if (r.code !== 0) {
+        const firstFail = r.out.split('\n').find((l) => l.includes('FAIL')) ?? r.out.split('\n').slice(-3).join(' ');
+        by.push(`${s}: ${firstFail.trim().slice(0, 160)}`);
+        break;
+      }
+    }
+    const verdict = by.length ? `CAUGHT by ${by[0]}` : `SURVIVED (${suites.join(', ')})`;
+    results.push({ id, what, verdict });
+    console.log(`${id} ${verdict}`);
+    continue;
+  }
   const pairs = Array.isArray(find) ? find : [[find, repl]];
   const counts = pairs.map(([f]) => original.split(f).length - 1);
   if (counts.some((n) => n !== 1)) { results.push({ id, what, verdict: `BAD MUTANT (pattern found ${counts.join('/')} times)` }); console.log(`${id} BAD MUTANT (${counts})`); continue; }

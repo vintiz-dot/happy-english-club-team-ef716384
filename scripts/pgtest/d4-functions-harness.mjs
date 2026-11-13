@@ -39,7 +39,7 @@ export function functionsHarness({ as, asSuper }) {
       : as(null, 'anon', 'anon', sql, params);
 
     const from = (table) => {
-      const q = { table, op: 'select', cols: '*', values: null, filters: [], one: null, ret: false };
+      const q = { table, op: 'select', cols: '*', values: null, filters: [], one: null, ret: false, onConflict: null };
       const where = (params) => q.filters.length === 0 ? '' : ' WHERE ' + q.filters.map((f) => {
         params.push(f.v);
         const n = `$${params.length}`;
@@ -59,9 +59,15 @@ export function functionsHarness({ as, asSuper }) {
         } else if (q.op === 'delete') {
           sql = `DELETE FROM public.${table} t${where(params)} RETURNING to_jsonb(t) j`;
         } else {
-          const ks = Object.keys(q.values).filter((k) => q.values[k] !== undefined);
-          const ph = ks.map((k) => { params.push(val(q.values[k])); return `$${params.length}`; });
-          sql = `INSERT INTO public.${table} AS t (${ks.join(', ')}) VALUES (${ph.join(', ')}) RETURNING to_jsonb(t) j`;
+          // insert / upsert, one row or many (PostgREST takes an array)
+          const rows = Array.isArray(q.values) ? q.values : [q.values];
+          const ks = [...new Set(rows.flatMap((r) => Object.keys(r).filter((k) => r[k] !== undefined)))];
+          const tuples = rows.map((r) => `(${ks.map((k) => { params.push(r[k] === undefined ? null : val(r[k])); return `$${params.length}`; }).join(', ')})`);
+          const keyCols = q.onConflict ? q.onConflict.split(',').map((c) => c.trim()) : [];
+          const onConflict = q.op === 'upsert' && q.onConflict
+            ? ` ON CONFLICT (${q.onConflict}) DO UPDATE SET ${ks.filter((k) => !keyCols.includes(k)).map((k) => `${k} = EXCLUDED.${k}`).join(', ')}`
+            : '';
+          sql = `INSERT INTO public.${table} AS t (${ks.join(', ')}) VALUES ${tuples.join(', ')}${onConflict} RETURNING to_jsonb(t) j`;
         }
         if (q.op !== 'select') log.writes.push({ table, op: q.op, who, uid });
         else log.reads.push({ table, who });
@@ -83,6 +89,7 @@ export function functionsHarness({ as, asSuper }) {
         update(v) { q.op = 'update'; q.values = v; return b; },
         delete() { q.op = 'delete'; return b; },
         insert(v) { q.op = 'insert'; q.values = v; return b; },
+        upsert(v, o) { q.op = 'upsert'; q.values = v; q.onConflict = o?.onConflict ?? null; return b; },
         eq(c, v) { q.filters.push({ op: 'eq', c, v }); return b; },
         neq(c, v) { q.filters.push({ op: 'neq', c, v }); return b; },
         gte(c, v) { q.filters.push({ op: 'gte', c, v }); return b; },

@@ -198,6 +198,9 @@ verify_jwt = true
 [functions.get-speech-token]
 verify_jwt = true
 
+[functions.guarded-change-refresh]
+verify_jwt = true
+
 [functions.image-generate]
 verify_jwt = true
 
