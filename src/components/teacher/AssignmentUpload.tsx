@@ -285,10 +285,10 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
   return (
     <div className="space-y-6">
       {/* Create Form */}
-      <Card className="shadow-md">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
+            <Upload className="h-5 w-5 text-hec-ink-soft" aria-hidden="true" />
             Upload New Assignment
           </CardTitle>
           <CardDescription>Create a new assignment for your students</CardDescription>
@@ -301,7 +301,7 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
                 value={formData.class_id}
                 onValueChange={(value) => setFormData({ ...formData, class_id: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger id="class">
                   <SelectValue placeholder="Select a class" />
                 </SelectTrigger>
                 <SelectContent>
@@ -316,12 +316,12 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Type</Label>
+                <Label htmlFor="submission_type">Type</Label>
                 <Select
                   value={formData.submission_type}
                   onValueChange={(value) => setFormData({ ...formData, submission_type: value })}
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="submission_type"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="standard">📝 Written / file</SelectItem>
                     <SelectItem value="video">🎥 Video (recorded in the app)</SelectItem>
@@ -330,12 +330,12 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
               </div>
               {formData.submission_type === "video" && (
                 <div className="space-y-2">
-                  <Label>Longest video</Label>
+                  <Label htmlFor="video_minutes">Longest video</Label>
                   <Select
                     value={formData.video_minutes}
                     onValueChange={(value) => setFormData({ ...formData, video_minutes: value })}
                   >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="video_minutes"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {["1", "2", "3", "4", "5"].map((m) => (
                         <SelectItem key={m} value={m}>{m === "1" ? "1 minute" : `${m} minutes`}</SelectItem>
@@ -346,7 +346,7 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
               )}
             </div>
             {formData.submission_type === "video" && (
-              <p className="text-xs text-muted-foreground -mt-1">
+              <p className="text-hec-caption text-hec-ink-soft">
                 Students record in the app. The AI drafts a rubric from your instructions and a report for each video; you approve before families see anything.
               </p>
             )}
@@ -364,7 +364,7 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
 
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <Suspense fallback={<div className="h-40 border rounded-md flex items-center justify-center text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" />Loading editor...</div>}>
+              <Suspense fallback={<div className="flex h-40 items-center justify-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised text-hec-body text-hec-ink-faint"><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />Loading editor...</div>}>
                 <ReactQuill
                   theme="snow"
                   value={formData.description}
@@ -405,13 +405,13 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
                 accept="*/*"
               />
               {file && (
-                <p className="text-sm text-muted-foreground">
+                <p className="break-words text-hec-small text-hec-ink-soft">
                   Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
                 </p>
               )}
             </div>
 
-            <Button type="submit" disabled={createMutation.isPending} className="w-full min-h-[44px]">
+            <Button type="submit" disabled={createMutation.isPending} className="min-h-hec-target w-full">
               {createMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -426,45 +426,45 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
       </Card>
 
       {/* Existing Assignments */}
-      <Card className="shadow-md">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+            <FileText className="h-5 w-5 text-hec-ink-soft" aria-hidden="true" />
             Your Assignments
           </CardTitle>
           <CardDescription>View all assignments you've created</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 py-8 text-hec-body text-hec-ink-soft">
               <Loader2 className="h-5 w-5 animate-spin" />
               Loading assignments...
             </div>
           ) : teacherError ? (
-            <p className="text-center text-destructive py-8">Failed to load teacher data. Please refresh.</p>
+            <p className="py-8 text-center text-hec-body text-hec-danger">Failed to load teacher data. Please refresh.</p>
           ) : classIds.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No classes assigned yet.</p>
+            <p className="py-8 text-center text-hec-body text-hec-ink-soft">No classes assigned yet.</p>
           ) : filteredHomeworks.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No assignments yet. Create one above!</p>
+            <p className="py-8 text-center text-hec-body text-hec-ink-soft">No assignments yet. Create one above!</p>
           ) : (
             <div className="space-y-4">
               {filteredHomeworks.map((hw) => (
-                <Card key={hw.id} className="p-3 sm:p-4 hover:shadow-md transition-shadow long-list-item">
+                <Card key={hw.id} className="long-list-item p-4 sm:p-6">
                   <div className="space-y-3">
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-base md:text-lg break-words">{hw.title}</h3>
-                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                        <Badge variant="secondary" className="text-xs max-w-full truncate">
+                      <h3 className="break-words text-hec-h3 font-semibold text-hec-ink">{hw.title}</h3>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" className="max-w-full whitespace-normal break-words text-left">
                           {hw.classes?.name || "Unknown Class"}
                         </Badge>
                         {hw.submission_type === "video" && (
-                          <Badge className="text-xs flex items-center gap-1 bg-rose-600">
-                            <Video className="h-3 w-3" /> Video
+                          <Badge variant="outline" className="flex items-center gap-1">
+                            <Video className="h-3 w-3" aria-hidden="true" /> Video
                           </Badge>
                         )}
                         {hw.due_date && (
-                          <Badge variant="outline" className="text-xs flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
+                          <Badge variant="outline" className="flex items-center gap-1 tabular-nums">
+                            <Calendar className="h-3 w-3" aria-hidden="true" />
                             Due {format(new Date(hw.due_date), "MMM dd, yyyy")}
                           </Badge>
                         )}
@@ -473,7 +473,7 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
 
                     {hw.body && (
                       <div
-                        className="text-sm text-muted-foreground line-clamp-2 prose prose-sm max-w-none break-words"
+                        className="prose prose-sm max-w-none break-words text-hec-small text-hec-ink-soft line-clamp-2"
                         dangerouslySetInnerHTML={{ __html: sanitizeHtml(hw.body) }}
                       />
                     )}
@@ -486,25 +486,25 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
                             variant="outline"
                             size="sm"
                             onClick={() => viewFile(file.storage_key)}
-                            className="text-xs min-h-[36px] max-w-full"
+                            className="h-auto min-h-hec-target max-w-full py-2"
                           >
-                            <Eye className="h-3 w-3 mr-1 shrink-0" />
-                            <span className="truncate">{file.file_name}</span>
+                            <Eye className="h-4 w-4 shrink-0" aria-hidden="true" />
+                            <span className="min-w-0 whitespace-normal break-words text-left">{file.file_name}</span>
                           </Button>
                         ))}
                       </div>
                     )}
 
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-hec-caption text-hec-ink-faint">
                       Created {format(new Date(hw.created_at), "MMM dd, yyyy 'at' h:mm a")}
                     </p>
 
-                    <div className="grid grid-cols-2 sm:flex gap-2 pt-2 border-t">
+                    <div className="grid grid-cols-2 gap-2 border-t border-hec-line pt-4 sm:flex sm:flex-wrap">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setEditingHomeworkId(hw.id)}
-                        className="min-h-[44px] sm:flex-1"
+                        className="min-h-hec-target sm:flex-1"
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
@@ -513,7 +513,7 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
                         variant="secondary"
                         size="sm"
                         onClick={() => setGradingHomeworkId(hw.id)}
-                        className="min-h-[44px] sm:flex-1"
+                        className="min-h-hec-target sm:flex-1"
                       >
                         <Users className="h-4 w-4 mr-2" />
                         Grade
@@ -524,7 +524,7 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
                             variant="default"
                             size="sm"
                             onClick={() => setVideosHomeworkId(hw.id)}
-                            className="min-h-[44px] sm:flex-1"
+                            className="min-h-hec-target sm:flex-1"
                           >
                             <Video className="h-4 w-4 mr-2" />
                             Review videos
@@ -533,7 +533,7 @@ export function AssignmentUpload({ classFilter }: AssignmentUploadProps) {
                             variant="outline"
                             size="sm"
                             onClick={() => setRubricHomeworkId(hw.id)}
-                            className="min-h-[44px] sm:flex-1"
+                            className="min-h-hec-target sm:flex-1"
                           >
                             <ListChecks className="h-4 w-4 mr-2" />
                             Rubric
