@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import {
   ActionButton,
   Segmented,
@@ -99,27 +100,33 @@ function TeamCard({
   big?: boolean;
 }) {
   const tone = TEAM_TONES[index % TEAM_TONES.length];
+  const ivory = useIvory();
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: index * 0.06, type: "spring", stiffness: 260, damping: 22 }}
-      className="overflow-hidden rounded-2xl border border-studio bg-studio-card shadow-studio"
+      // Ivory: one 8 px rise, no spring (DESIGN_SYSTEM s.9). The team colours are the tool's own.
+      initial={ivory ? { opacity: 0, y: 8 } : { opacity: 0, y: 12, scale: 0.97 }}
+      animate={ivory ? { opacity: 1, y: 0 } : { opacity: 1, y: 0, scale: 1 }}
+      transition={ivory ? { delay: index * 0.06, duration: 0.24, ease: [0.22, 1, 0.36, 1] } : { delay: index * 0.06, type: "spring", stiffness: 260, damping: 22 }}
+      className={ivory ? "overflow-hidden rounded-hec-md border border-hec-line bg-hec-surface shadow-hec-1" : "overflow-hidden rounded-2xl border border-studio bg-studio-card shadow-studio"}
     >
       <div
         className={cn(
-          "flex items-center justify-between gap-2 px-3 py-2",
+          ivory ? "flex items-center justify-between gap-2 px-3 py-2" : "flex items-center justify-between gap-2 px-3 py-2",
           toneClass(tone),
         )}
       >
-        <span className={cn("studio-title", big ? "text-2xl" : "text-base")}>
+        <span className={ivory ? cn("font-display font-medium", big ? "text-hec-h1" : "text-hec-h3") : cn("studio-title", big ? "text-2xl" : "text-base")}>
           {TEAM_NAMES[index] ?? `Team ${index + 1}`}
         </span>
         <span
-          className={cn(
-            "rounded-full bg-[hsl(0_0%_100%/0.45)] px-2 py-0.5 font-bold tabular-nums dark:bg-[hsl(0_0%_0%/0.25)]",
-            big ? "text-sm" : "text-[0.6875rem]",
-          )}
+          className={
+            ivory
+              ? cn("shrink-0 rounded-full bg-hec-raised px-2 py-1 font-semibold leading-none tabular-nums text-hec-ink", big ? "text-hec-small" : "text-hec-caption")
+              : cn(
+                  "rounded-full bg-[hsl(0_0%_100%/0.45)] px-2 py-0.5 font-bold tabular-nums dark:bg-[hsl(0_0%_0%/0.25)]",
+                  big ? "text-sm" : "text-[0.6875rem]",
+                )
+          }
         >
           {members.length}
         </span>
@@ -128,22 +135,27 @@ function TeamCard({
         {members.map((m) => (
           <li
             key={m.id}
-            className={cn(
-              "flex items-center gap-2 rounded-xl px-2 py-1 text-ink",
-              big ? "gap-3 text-xl" : "text-sm",
-            )}
+            className={
+              ivory
+                ? cn("flex items-start gap-2 rounded-hec-sm px-2 py-1 text-hec-ink", big ? "gap-3 text-xl" : "text-hec-small")
+                : cn(
+                    "flex items-center gap-2 rounded-xl px-2 py-1 text-ink",
+                    big ? "gap-3 text-xl" : "text-sm",
+                  )
+            }
           >
             <span
               className={cn(
-                "grid shrink-0 place-items-center rounded-full font-bold",
+                ivory ? "grid shrink-0 place-items-center rounded-full font-semibold" : "grid shrink-0 place-items-center rounded-full font-bold",
                 toneClass(tone),
-                big ? "h-10 w-10 text-base" : "h-6 w-6 text-[0.625rem]",
+                ivory ? (big ? "h-10 w-10 text-hec-body" : "h-7 w-7 text-hec-caption") : big ? "h-10 w-10 text-base" : "h-6 w-6 text-[0.625rem]",
               )}
               aria-hidden
             >
               {initials(m.name)}
             </span>
-            <span className="truncate">{m.name}</span>
+            {/* A child's name: it wraps, never cut (DESIGN_SYSTEM s.13). */}
+            <span className={ivory ? "min-w-0 flex-1 self-center whitespace-normal break-words hyphens-none text-balance" : "truncate"}>{m.name}</span>
           </li>
         ))}
       </ul>
@@ -162,6 +174,8 @@ export function TeamMaker() {
   const [teams, setTeams] = useState<Member[][] | null>(null);
   const [projecting, setProjecting] = useState(false);
   const [source, setSource] = useState<"present" | "roster" | null>(null);
+  const ivory = useIvory();
+  const labelCls = ivory ? "mb-2 block text-hec-small font-medium text-hec-ink" : "mb-1.5 block text-xs font-semibold text-ink-soft";
 
   const { data: classes = [], isLoading: classesLoading } = useQuery({
     queryKey: ["team-maker-classes", user?.id],
@@ -276,9 +290,10 @@ export function TeamMaker() {
           {/* Controls */}
           <div className="space-y-3">
             <div>
-              <span className="mb-1.5 block text-xs font-semibold text-ink-soft">Class</span>
+              <span className={labelCls}>Class</span>
               <Select value={classId} onValueChange={setClassId} disabled={classesLoading}>
-                <SelectTrigger className="h-11 rounded-2xl border-studio bg-studio-stage text-sm font-semibold text-ink focus:ring-0 focus:ring-offset-0">
+                {/* Ivory: the Select primitive's own recipe (44 px, 3:1 edge, brass ring); no overrides. */}
+                <SelectTrigger className={ivory ? undefined :"h-11 rounded-2xl border-studio bg-studio-stage text-sm font-semibold text-ink focus:ring-0 focus:ring-offset-0"}>
                   <SelectValue placeholder={classesLoading ? "Loading…" : "Pick a class"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -292,7 +307,7 @@ export function TeamMaker() {
             </div>
 
             <div>
-              <span className="mb-1.5 block text-xs font-semibold text-ink-soft">Split by</span>
+              <span className={labelCls}>Split by</span>
               <Segmented
                 ariaLabel="Split by"
                 size="sm"
@@ -303,7 +318,7 @@ export function TeamMaker() {
             </div>
 
             <div>
-              <span className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              <span className={labelCls}>
                 {mode === "teams" ? "Number of teams" : "Students per team"}
               </span>
               <Segmented
@@ -319,9 +334,9 @@ export function TeamMaker() {
               />
             </div>
 
-            <div className="flex items-center gap-2 rounded-2xl border border-studio bg-studio-stage px-3 py-2 text-xs text-ink-soft">
-              <Users className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span className="truncate">
+            <div className={ivory ? "flex min-h-hec-target items-center gap-2 rounded-hec-md border border-hec-line bg-hec-sunken px-3 py-2 text-hec-small text-hec-ink-soft" : "flex items-center gap-2 rounded-2xl border border-studio bg-studio-stage px-3 py-2 text-xs text-ink-soft"}>
+              <Users className={ivory ? "h-4 w-4 shrink-0" : "h-3.5 w-3.5 shrink-0"} aria-hidden />
+              <span className={ivory ? "min-w-0 tabular-nums" : "truncate"}>
                 {poolLoading
                   ? "Counting…"
                   : `${members.length} ${members.length === 1 ? "student" : "students"}`}
@@ -341,8 +356,8 @@ export function TeamMaker() {
             </ActionButton>
 
             {source === "roster" && teams && (
-              <p className="flex items-start gap-1.5 text-[0.6875rem] leading-snug text-ink-faint">
-                <Info className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+              <p className={ivory ? "flex items-start gap-2 text-hec-caption text-hec-ink-soft" : "flex items-start gap-1.5 text-[0.6875rem] leading-snug text-ink-faint"}>
+                <Info className={ivory ? "mt-0.5 h-4 w-4 shrink-0" : "mt-0.5 h-3 w-3 shrink-0"} aria-hidden />
                 Built from the enrolled roster — no attendance marked today yet.
               </p>
             )}
@@ -357,7 +372,7 @@ export function TeamMaker() {
             </div>
           ) : (
             <Stage className="min-h-[200px] p-6 text-center">
-              <p className="max-w-[22ch] text-sm text-ink-faint">{emptyMessage}</p>
+              <p className={ivory ? "max-w-[22ch] text-hec-small text-hec-ink-soft" : "max-w-[22ch] text-sm text-ink-faint"}>{emptyMessage}</p>
             </Stage>
           )}
         </div>
