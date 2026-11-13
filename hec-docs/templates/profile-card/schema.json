@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hec-docs.invalid/schemas/profile-card/1.0.0",
+  "title": "Profile card input",
+  "description": "Mirrors ProfileShareCardProps. The level title is derived from level by the levelTitle filter (exact port of getLevelTitle).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "level", "totalXp", "currentStreak"],
+  "properties": {
+    "variant": { "enum": ["landscape", "square"] },
+    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "avatarUrl": {
+      "type": ["string", "null"],
+      "maxLength": 1500000,
+      "pattern": "^data:image/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$",
+      "description": "Avatar as a data: URI (no network at render). Null or omitted shows initials."
+    },
+    "level": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "totalXp": { "type": "integer", "minimum": 0 },
+    "currentStreak": { "type": "integer", "minimum": 0 },
+    "statusMessage": { "type": ["string", "null"], "maxLength": 160 }
+  }
+}

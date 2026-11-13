@@ -1,0 +1,18 @@
+{
+  "$comment": "Stress case for the split variant.",
+  "generatedAt": "2026-11-13T10:00:00+07:00",
+  "data": {
+    "variant": "bilingual-split",
+    "studentName": "Nguyễn Hoàng Phương Quỳnh Trâm Anh",
+    "className": "Flyers Advanced B – Thứ 2/4/6 (Lớp nâng cao buổi tối)",
+    "siblings": [
+      "Nguyễn Hoàng Gia Bảo Minh",
+      "Nguyễn Hoàng Thảo Nguyên",
+      "Nguyễn Hoàng Đăng Khôi"
+    ],
+    "loginEmail": "nguyen.hoang.phuong.quynh.tram.anh.family@hec.example.test",
+    "code": "R4WN-9ZHT",
+    "expiresAt": "2026-11-20T10:30:00+07:00",
+    "claimUrl": "http://127.0.0.1:5199/claim"
+  }
+}

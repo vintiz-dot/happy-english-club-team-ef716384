@@ -1,0 +1,23 @@
+/* code-box: a short credential or reference, set large and unambiguous. */
+.code-box {
+  background: var(--color-surface);
+  border: var(--border-rule) solid var(--color-gold);
+  border-top: 3pt solid var(--color-accent-deep);
+  border-radius: var(--border-radius);
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  break-inside: avoid;
+}
+.code-box__label { margin-bottom: var(--space-0-5); }
+.code-box__value {
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--size-3xl);
+  line-height: 1.1;
+  letter-spacing: 0.14em;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1, "zero" 1;
+  color: var(--color-ink);
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.code-box__value--long { font-size: var(--size-xl); white-space: normal; overflow-wrap: anywhere; }

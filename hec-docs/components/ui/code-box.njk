@@ -1,0 +1,7 @@
+{# Large tabular code in a framed box. label is shown as an eyebrow. #}
+{% macro code_box(label, code, cls="") %}
+<div class="code-box {{ cls }}">
+  <span class="eyebrow code-box__label">{{ label }}</span>
+  <div class="code-box__value{% if code | length > 12 %} code-box__value--long{% endif %}">{{ code }}</div>
+</div>
+{% endmacro %}

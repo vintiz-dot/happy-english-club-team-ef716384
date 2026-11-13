@@ -1,0 +1,53 @@
+{% extends "layouts/page.njk" %}
+{% import "ui.njk" as ui %}
+{% import "ui/code-box.njk" as cb %}
+{% set split = variant == "bilingual-split" %}
+{% set expiryText = data.expiresAt | datetime("en-US", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) %}
+{% set runningTitle = "Access Card" %}
+{% set siblings = data.siblings if data.siblings is defined and data.siblings else [] %}
+{% block body %}
+{{ ui.header(tenant, "", "Access Card") }}
+<div class="flow">
+
+<section class="stack" aria-label="Student">
+  <span class="eyebrow">Student</span>
+  <h1 class="doc-title">{{ data.studentName }}</h1>
+  {% if data.className %}<p class="muted">{{ data.className }}</p>{% endif %}
+  {% if siblings | length %}<p class="small muted">This login also covers: {{ siblings | join(", ") }}</p>{% endif %}
+</section>
+
+<div class="equal">
+  <div class="field">
+    <span class="eyebrow field__label">Your login</span>
+    <div class="field__value">{{ data.loginEmail | escape | replace("@", "@<wbr>") | replace(".", ".<wbr>") }}</div>
+  </div>
+  {{ cb.code_box("One-time code", data.code) }}
+</div>
+
+<div class="panel">
+  <div class="bilingual{% if split %} bilingual--split{% endif %}">
+    <ol class="steps">
+      <li class="steps__item"><span class="steps__n">1.</span><span>Go to <strong>{{ data.claimUrl }}</strong></span></li>
+      <li class="steps__item"><span class="steps__n">2.</span><span>Enter the one-time code above</span></li>
+      <li class="steps__item"><span class="steps__n">3.</span><span>Choose your own password — then sign in with your login</span></li>
+    </ol>
+    <p class="bilingual__sub" lang="vi">Truy cập <strong>{{ data.claimUrl }}</strong>, nhập mã một lần ở trên, rồi tự đặt mật khẩu của bạn. Mã chỉ dùng được một lần.</p>
+  </div>
+</div>
+
+<aside class="callout callout--praise">
+  <div class="bilingual{% if split %} bilingual--split{% endif %}">
+    <div class="bilingual__lead">
+      <span class="bilingual__mark" aria-hidden="true">!</span>
+      <p>Keep this card private — it works <strong>once</strong> and expires on <strong>{{ expiryText }}</strong>. The school never knows your password. If you lose it, ask us for a new card.</p>
+    </div>
+    <p class="bilingual__sub" lang="vi">Giữ riêng thẻ này. Mã dùng một lần và hết hạn ngày {{ expiryText }}.</p>
+  </div>
+</aside>
+
+</div>
+<div class="closing">
+  {{ ui.signature(tenant, true) }}
+  {{ ui.qr_footer(brand) }}
+</div>
+{% endblock %}

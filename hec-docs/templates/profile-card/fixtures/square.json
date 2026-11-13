@@ -1,0 +1,14 @@
+{
+  "$comment": "Same values; includes a small generated avatar as a data: URI.",
+  "before": "share-card",
+  "generatedAt": "2026-11-13T10:00:00+07:00",
+  "data": {
+    "variant": "square",
+    "name": "Nguyễn Thị Minh Anh",
+    "level": 5,
+    "totalXp": 1240,
+    "currentStreak": 12,
+    "statusMessage": "Mình thích học tiếng Anh! I love English 📚",
+    "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAADIElEQVR4Ae3BPY4iSRCA0W9DJZy4QUq0zxU4CU67e4g8QByi3XE4Cea6+IuU1rrh4OwKYzSjHraHn8qKAuK9P/45/PUvKYyQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKdTAjGmrjMWLMUcDM6Kt0ou2ys+8GHMwMAPaKlPTVjnxYkQaCKKtMgfaKt95MaY2MDFtlbnSVjnxYkxlYCLaKo9CW+XEi9GbMAFtlUekrdLbQEfaKo9OW+XEi9GD0Im2yjPRVulB6EBb5Rlpq4xNGJm2yjPTVhmTMCJtlVegrTIWYSTaKq9EW2UMwgi0VV6Rtsq9hDtpq7wybZV7CHfQVkmgrXIrIYUSbqStkn7QVrmFcANtlfQrbZVrCSmUcCVtlfT/tFWuIaRQwhW0VdLvaatcSkihhAtpq6TLaatcQkihhBRKSKEGLqCt0sty43x22Cq9LDfOZ4et0oO2ihfjK0Kg5cY5Z7lxelhunHOWGyeKkEIJKZSQQgkplBDosFXOOWyVHg5b5ZzDVokyEOywVaZ02CpzIqRQQgolpFADnR33az5brHbM1XG/5rPFakcvQkfH/Zpzjvs1c3TcrznnuF/Ti9DJcb/mK8f9mjk57td85bhf04OQQgkX8GKk63kxfmdghr79+Te9vH+8MSdCCiV0sljt+MpitWNOFqsdX1msdvQgXMiLca3Fasc5i9WOOVqsdpyzWO24lhfjEgOdLVY7HslitWNKwhW8GOn3vBiXEmbo/eONHt4/3pibgSt5MbRVenv/eOMReTGuIaRQwg28GOlXXoxrCTfyYqQfvBi3EFIo4Q5ejARejFsJd/JivDIvxj2EEXgxXpEX417CSLwYr8SLMQZhRF6MV+DFGIswMi/GM/NijEnowIvxjLwYYxM68WI8Ey9GDwMdeTFOtFUelRejJ2ECXoxH5MXobWAiXowTbZW582JMZWBiXowTbZW58WJMbSCIF+M7bZUoXoxIAzPgxTjRVpmKF2MOBmbEi/EzbZWxeDHmaGDGvBjPTkihhBRKSKGEFEpIof4DXYnXbiF52mwAAAAASUVORK5CYII="
+  }
+}

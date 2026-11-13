@@ -1,0 +1,23 @@
+{
+  "type": "profile-card",
+  "version": "1.0.0",
+  "title": "Profile Card",
+  "description": "The student profile share card (PNG): name, level title and achievement stats. Replaces src/components/student/ProfileShareCard.tsx.",
+  "output": "png",
+  "documentTitle": "{{ data.name }} - Profile Card",
+  "lang": "en",
+  "variantField": "variant",
+  "defaultVariant": "landscape",
+  "variants": {
+    "landscape": {
+      "description": "388 x 304 at 2x (776 x 608 px), the original share-card size."
+    },
+    "square": {
+      "description": "540 x 540 at 2x (1080 x 1080 px), for social feeds."
+    }
+  },
+  "filename": "profile-card",
+  "keyField": "name",
+  "raster": { "width": 540, "height": 540, "scale": 2 },
+  "brandStrings": []
+}

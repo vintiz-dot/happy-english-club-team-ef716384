@@ -1,0 +1,12 @@
+{
+  "$comment": "Long name and status, level above 10, 5-digit XP. No before baseline.",
+  "generatedAt": "2026-11-13T10:00:00+07:00",
+  "data": {
+    "variant": "landscape",
+    "name": "Nguyễn Hoàng Phương Quỳnh Trâm Anh",
+    "level": 12,
+    "totalXp": 18450,
+    "currentStreak": 134,
+    "statusMessage": "Hôm nay mình đã học được rất nhiều từ mới và mình muốn kể cho cả lớp nghe! I had a wonderful day at school today."
+  }
+}
