@@ -411,3 +411,7 @@ Log: 2026-11-12 - 72% (C3 recorder screens merged).
   ALL SIX AUDIT FINDINGS OF S1 ARE NOW CLOSED ON LIVE (F-01, F-02, F-14, F-15, F-16, F-21), plus the two unbacked teacher roles removed.
 - D4 step 1b built (a80d45b1; 5903/62/0; 25 mutants caught); independent review running.
 - Progress: 94% (48.0 of 51).
+- 2026-11-13 afternoon - Merged: R16 (f5a772ba), R17 (49119a96), R18, R19 - each with the three-way inertness proof (legacy literals, DOM byte-identical on unlisted routes, pixels). Staff rollout: R09-R19 done; R20 running; then R21 (staff flip) and a staff release gate that compares against origin/main.
+  Found by R19, pre-existing, for R21 or a follow-up: opening a class screen while the book is fullscreen drops fullscreen (ui/sheet portals to body); Ctrl+K opens both palettes at once.
+  D4 1b: round 2 review found a real bypass (enrolment RPCs recognised from client statement text via current_query(); three forgeries executed); replacing with a PG_CONTEXT call-stack check; nothing applied. Recorder: round 6 done (6db0d8f9); final check, rebuild of release/recorder-1 and live apply running.
+- Progress: 96% (49.0 of 51).
