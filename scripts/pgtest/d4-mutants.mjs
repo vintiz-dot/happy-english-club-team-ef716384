@@ -184,13 +184,20 @@ export const MUTANTS = [
   ['C27', "the ruling dropped: an enrolment RPC's backdated mark refused with a raw code",
     "    IF v_rpc IS NOT NULL\n", "    IF false\n", ['register'], CORE],
   ['C28', "the ruling widened: every admin statement treated as an enrolment RPC",
-    "  SELECT substring(lower(COALESCE(current_query(), '')) from\n", "  SELECT 'end_enrollment' WHERE true UNION ALL SELECT substring(lower(COALESCE(current_query(), '')) from\n", ['register'], CORE],
+    "  IF v_name IS NULL THEN\n    RETURN NULL;\n  END IF;\n  v_name := split_part", "  IF v_name IS NULL THEN\n    RETURN 'end_enrollment';\n  END IF;\n  v_name := split_part", ['register'], CORE],
   ['C29', "the ruling widened: an RPC's raw UPDATE of a person's mark (not Excused) passes",
     "            OR (v_rpc = 'stars_sync_resolve_conflict' AND TG_OP = 'UPDATE' AND NEW.marked_by = v_uid)) THEN", "            OR TG_OP = 'UPDATE') THEN", ['register'], CORE],
   ['C30', "preflight no longer checks the 1a bodies",
     "IS DISTINCT FROM r.want THEN", "IS DISTINCT FROM r.want AND false THEN", ['register'], CORE],
   ['C31', "preflight compares the raw md5 (live 1a is CRLF: a healthy database refused)",
     "AND (SELECT md5(replace(p.prosrc, E'\\r', '')) FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig))", "AND (SELECT md5(p.prosrc) FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig))", ['register'], CORE],
+  // round 3 (review R2-1): the RPC from the server's call stack, not the client's text
+  ['C32', "current_query() restored (the client's text decides: alias / literal / comment forgeries pass)",
+    "  GET DIAGNOSTICS v_ctx = PG_CONTEXT;\n", "  RETURN substring(lower(COALESCE(current_query(), '')) from '(?:^|[^a-z0-9_])\"?(end_enrollment|pause_enrollment|modify_enrollment_transfer|ai_action_undo|ai_action_apply|stars_sync_resolve_conflict)\"?[[:space:]]*\\(');\n  GET DIAGNOSTICS v_ctx = PG_CONTEXT;\n", ['register'], CORE],
+  ['C33', "a same-named function in another schema or pg_temp is taken for the live RPC (uniqueness dropped)",
+    "  IF (SELECT count(*) FROM pg_catalog.pg_proc p WHERE p.proname = v_name) <> 1\n     OR NOT EXISTS", "  IF NOT EXISTS", ['register'], CORE],
+  ['C34', "any frame of the stack counts, not the outermost (dynamic SQL text can forge a frame line)",
+    "v_lines[array_length(v_lines, 1)]", "(SELECT x FROM unnest(v_lines) x WHERE x ~ '^PL/pgSQL function (?:public\\.)?(end_enrollment|pause_enrollment|modify_enrollment_transfer|ai_action_undo|ai_action_apply|stars_sync_resolve_conflict)\\(' LIMIT 1)", ['register'], CORE],
 ];
 
 const D4_LITERALS = [/('[0-9a-f]{32}'\) THEN\s+-- this file)/g];

@@ -274,14 +274,15 @@ export const D4_ENROLMENT_RPCS = `
   -- LIVE signature (uuid, text), plpgsql, SECURITY DEFINER, search_path public - what the
   -- guard recognises in the call stack
   CREATE TABLE IF NOT EXISTS public.zz_stars_conflicts(
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), session_id uuid NOT NULL, student_id uuid NOT NULL, theirs text NOT NULL);
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), session_id uuid NOT NULL, student_id uuid NOT NULL, theirs text NOT NULL,
+    signer uuid);   -- test only: a write signed by someone else, which the live function never makes
   CREATE OR REPLACE FUNCTION public.stars_sync_resolve_conflict(p_conflict_id uuid, p_resolution text)
     RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$
   DECLARE v record;
   BEGIN
     SELECT * INTO v FROM public.zz_stars_conflicts WHERE id = p_conflict_id;
     IF p_resolution = 'took_theirs' THEN
-      UPDATE public.attendance SET status = v.theirs, marked_by = auth.uid(), marked_at = now()
+      UPDATE public.attendance SET status = v.theirs, marked_by = COALESCE(v.signer, auth.uid()), marked_at = now()
        WHERE session_id = v.session_id AND student_id = v.student_id;
     END IF;
     RETURN jsonb_build_object('resolution', p_resolution);

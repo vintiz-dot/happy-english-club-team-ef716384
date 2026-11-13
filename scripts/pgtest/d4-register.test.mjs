@@ -492,11 +492,12 @@ await section('conductor ruling (1b review R-1): the live enrolment RPCs are rec
      (await events('enrollment_rpc_mark')).some((e) => e.payload.rpc === 'stars_sync_resolve_conflict' && e.payload.student_id === k2), r);
   r = await tryIt(() => asAdmin(`UPDATE attendance SET status='Excused', marked_by=$3 WHERE session_id=$1 AND student_id=$2`, [sid2, k2, ADMIN]));
   ok('a raw admin UPDATE of that mark to Excused (no RPC in the statement) is still HC025', r.code === 'HC025', r);
-  // only the conflict's own write passes: a mark signed by someone else, in a statement that names the RPC, is refused
+  // only the conflict's own write passes: the RPC itself writing a mark signed by someone else is refused
   await asSuper(`UPDATE attendance SET status='Excused', marked_by=$3 WHERE session_id=$1 AND student_id=$2`, [sid2, k2, tUid]);
-  r = await tryIt(() => asAdmin(`UPDATE attendance SET status='Present', marked_by=$3 WHERE session_id=$1 AND student_id=$2 /* stars_sync_resolve_conflict( */`, [sid2, k2, tUid]));
-  ok('a statement naming stars_sync_resolve_conflict that re-bills a mark signed by SOMEONE ELSE -> still HC025 (only the admin\'s own signed mark passes)',
-     r.code === 'HC025', r);
+  const other = (await asSuper(`INSERT INTO zz_stars_conflicts(session_id, student_id, theirs, signer) VALUES ($1,$2,'Present',$3) RETURNING id`, [sid2, k2, tUid])).rows[0].id;
+  r = await tryIt(() => asAdmin(`SELECT public.stars_sync_resolve_conflict($1, 'took_theirs')`, [other]));
+  ok('stars_sync_resolve_conflict writing a re-bill signed by SOMEONE ELSE (not the admin) -> still HC025 (only the admin\'s own signed mark passes)',
+     r.code === 'HC025' && (await mark({ sid: sid2 }, k2))?.status === 'Excused', r);
   // 1b review round 2 (R2-1): the RPC is read from the server's call stack, never from the client's text
   const k4 = (await asSuper(`INSERT INTO students(full_name) VALUES ('k4') RETURNING id`)).rows[0].id;
   await asSuper(`INSERT INTO enrollments(class_id, student_id, start_date) VALUES ($1,$2,$3)`, [cid, k4, d60.date]);

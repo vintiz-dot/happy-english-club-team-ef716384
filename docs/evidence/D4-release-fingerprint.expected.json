@@ -315,7 +315,7 @@
       },
       "identity": "public._money_enrollment_rpc_call()",
       "identity_arguments": "",
-      "md5_prosrc": "8ec6677d24f9a3b253f93e4e1bab9138",
+      "md5_prosrc": "8796eb026e4187149b639f7efa82e81d",
       "proname": "_money_enrollment_rpc_call",
       "security_definer": false,
       "volatility": "s"
