@@ -1,0 +1,12 @@
+/* Table cell helpers for `.t`: alignment and quiet/positive figures. */
+.t th.cell--center, .t td.cell--center { text-align: center; font-variant-numeric: tabular-nums lining-nums; }
+.t td.cell--soft { color: var(--color-muted); }
+.t td.cell--positive { color: var(--color-positive); font-weight: var(--font-weight-medium); }
+.t td.cell--date { white-space: nowrap; font-variant-numeric: tabular-nums lining-nums; }
+.t tr.cell--subtotal td { font-weight: var(--font-weight-semibold); border-top: var(--border-rule) solid var(--color-ink); border-bottom: var(--border-rule) solid var(--color-ink); background: var(--color-surface); }
+.t tr.cell--subtotal td.cell--soft { font-weight: var(--font-weight-regular); }
+/* A long table never starts a page with a lone row: the first rows stay
+   together with the heading above. */
+.t.t--keep-start tbody tr:nth-child(-n+3) { break-after: avoid; }
+/* ...and never ends one with its closing row alone. */
+.t.t--keep-end tbody tr:nth-last-child(-n+2) { break-before: avoid; }

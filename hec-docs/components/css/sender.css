@@ -1,0 +1,5 @@
+/* Sender: the issuing organisation's name and postal lines, as printed under
+   a letterhead. Line breaks in the address are kept. */
+.sender { margin: 0; break-inside: avoid; }
+.sender__name { font-family: var(--font-family-display); font-weight: var(--font-weight-semibold); font-size: var(--size-md); color: var(--color-ink); margin: 0 0 2pt; }
+.sender__lines { margin: 0; white-space: pre-line; font-size: var(--size-sm); line-height: var(--leading-body); color: var(--color-ink-soft); }

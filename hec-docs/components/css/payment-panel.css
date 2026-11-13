@@ -1,0 +1,47 @@
+/* Payment panel (ui/payment-panel.njk): bank details beside a scannable
+   code, framed in a gold hairline; kept whole on one page. */
+.pay {
+  margin: var(--space-3) 0 var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  border: var(--border-hairline) solid var(--color-gold);
+  border-top: var(--border-strong) solid var(--color-ink);
+  border-radius: var(--border-radius);
+  background: var(--color-surface);
+  break-inside: avoid;
+}
+.pay__title {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--size-lg);
+  line-height: var(--leading-tight);
+  color: var(--color-ink);
+}
+.pay__body { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.pay__details { flex: 1 1 60mm; margin: 0; }
+.pay__row { padding: 4pt 0; border-bottom: var(--border-hairline) solid var(--color-rule); break-inside: avoid; }
+.pay__row:last-child { border-bottom: none; }
+.pay__row dt {
+  display: block;
+  font-size: var(--size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+.pay__row dd { margin: 1pt 0 0; font-size: var(--size-base); color: var(--color-ink); overflow-wrap: anywhere; }
+.pay__strong { font-weight: var(--font-weight-semibold); font-size: var(--size-md); font-variant-numeric: tabular-nums lining-nums; letter-spacing: 0.02em; }
+.pay__qr {
+  flex: none;
+  margin: 0;
+  padding: var(--space-1);
+  background: var(--color-paper);
+  border: var(--border-hairline) solid var(--color-rule);
+  border-radius: var(--border-radius);
+}
+.pay__qr img { display: block; width: 32mm; height: 32mm; object-fit: contain; image-rendering: pixelated; }
+.pay__empty { margin: 0; font-size: var(--size-sm); font-style: italic; color: var(--color-ink-soft); }
+.pay--compact { margin: 0; }
+.pay--compact .pay__body { flex-direction: column; align-items: stretch; gap: var(--space-1); }
+.pay--compact .pay__details { flex: none; }
+.pay--compact .pay__qr { align-self: center; }
+.pay--compact .pay__qr img { width: 28mm; height: 28mm; }

@@ -1,0 +1,20 @@
+{#
+  Money summary: a short ledger of labelled figures under a breakdown table,
+  from the first adjustment to the amount due. Import with
+    {% import "ui/money-summary.njk" as msum %}
+  rows: [{ label, value, kind }] in reading order. kind:
+    line    small adjustment (a discount)
+    strong  a subtotal that matters (this month's charges)
+    sub     soft supporting figure (prior balance, a payment)
+    credit  a figure in the family's favour
+    total   the figure the period comes to
+    due     the amount still to pay: the clearest figure on the page
+  cls: "msum--hero" sets it as a standalone panel with the due figure large.
+#}
+{% macro money_summary(rows, cls="", label="") %}
+<dl class="msum {{ cls }}"{% if label %} aria-label="{{ label }}"{% endif %}>
+  {% for r in rows %}
+  <div class="msum__row{% if r.kind %} msum__row--{{ r.kind }}{% endif %}"><dt class="msum__label">{{ r.label }}</dt><dd class="msum__value">{{ r.value }}</dd></div>
+  {% endfor %}
+</dl>
+{% endmacro %}

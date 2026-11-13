@@ -1,0 +1,25 @@
+{#
+  Payment panel: how to pay, with an optional scannable code. Import with
+    {% import "ui/payment-panel.njk" as pay %}
+  rows: [{ label, value, cls }]   (cls "pay__strong" sets the figure to copy)
+  qr: a data: URI image, qrAlt its alt text. empty: text shown when there
+  are no rows (details not configured). cls "pay--compact" stacks the code
+  under the details for a narrow column.
+#}
+{% macro payment_panel(title, rows, qr="", qrAlt="", empty="", cls="") %}
+<section class="pay {{ cls }}" aria-label="{{ title }}">
+  <h2 class="pay__title">{{ title }}</h2>
+  {% if rows | length %}
+  <div class="pay__body">
+    <dl class="pay__details">
+      {% for r in rows %}
+      <div class="pay__row"><dt>{{ r.label }}</dt> <dd{% if r.cls %} class="{{ r.cls }}"{% endif %}>{{ r.value }}</dd></div>
+      {% endfor %}
+    </dl>
+    {% if qr %}<div class="pay__qr"><img src="{{ qr }}" alt="{{ qrAlt }}"></div>{% endif %}
+  </div>
+  {% else %}
+  <p class="pay__empty">{{ empty }}</p>
+  {% endif %}
+</section>
+{% endmacro %}

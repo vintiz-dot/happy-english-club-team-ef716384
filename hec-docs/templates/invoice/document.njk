@@ -1,0 +1,127 @@
+{#
+  Tuition invoice. Port of src/components/invoice/InvoicePrintView.tsx: every
+  string, figure and date in the original order. Formatting is the app's own
+  (filters/invoice-formatter.ts: formatVND, formatDate, formatMonth).
+  Variants change placement only. summary-first lifts the balance and the
+  payment details to the top of page 1 with grid placement; the DOM, and so
+  the tagged reading order, stays the original order.
+#}
+{% extends "layouts/page.njk" %}
+{% import "ui.njk" as ui %}
+{% import "ui/money-summary.njk" as msum %}
+{% import "ui/payment-panel.njk" as pay %}
+{% import "ui/meta-stack.njk" as meta %}
+{% import "ui/addressee.njk" as addr %}
+{% macro vnd(n) %}{{ n | invoiceVND }} ₫{% endmacro %}
+{% set inv = data.invoice %}
+{% set bank = data.bankInfo %}
+{% set first = variant == "summary-first" %}
+{% set orgName = (bank.org_name if bank else "") or "Happy English Club" %}
+{% set orgAddress = (bank.org_address if bank else "") or "" %}
+{% set runningTitle = inv.invoice_number ~ " · " ~ inv.student.full_name %}
+
+{# Class breakdown figures (net falls back to gross, as `??` did). #}
+{% set nets = [] %}
+{% for c in inv.classes %}{% set _ = nets.push(c.net_amount_vnd if c.net_amount_vnd is number else c.amount_vnd) %}{% endfor %}
+
+{# Balance rows, in the original table order after Subtotal. #}
+{% set credit = inv.paid_to_date_vnd >= 0 %}
+{% set rows = [] %}
+{% for d in inv.discounts %}{% set _ = rows.push({ label: d.label, value: vnd(d.amount_vnd), kind: "line" }) %}{% endfor %}
+{% set _ = rows.push({ label: "Current Month Charges", value: vnd(inv.total_due_vnd), kind: "strong" }) %}
+{% set _ = rows.push({ label: "Prior Balance " ~ ("(Credit)" if credit else "(Debt)"), value: vnd(inv.paid_to_date_vnd), kind: ("credit" if credit else "sub") }) %}
+{% set _ = rows.push({ label: "Final Payable", value: vnd(inv.final_payable_vnd), kind: "total" }) %}
+{% set _ = rows.push({ label: "Current Month Recorded Payment", value: vnd(inv.recorded_payment_vnd or 0), kind: "credit" }) %}
+{% set _ = rows.push({ label: "Outstanding Balance", value: vnd(inv.balance_vnd), kind: "due" }) %}
+
+{% set bankRows = [] %}
+{% if bank %}
+  {% set bankRows = [
+    { label: "Bank Name:", value: bank.bank_name },
+    { label: "Account Number:", value: bank.account_number, cls: "pay__strong" },
+    { label: "Account Name:", value: bank.account_name }
+  ] %}
+{% endif %}
+
+{% block body %}
+{{ ui.header(tenant, "Tuition invoice", "") }}
+
+<div{% if first %} class="rgrid"{% endif %}>
+  <div class="split avoid{{ ' rgrid__r1' if first }}">
+    <div class="sender">
+      {% if orgName != tenant.name %}<div class="sender__name">{{ orgName }}</div>{% endif %}
+      {% if orgAddress %}<p class="sender__lines">{{ orgAddress }}</p>{% endif %}
+    </div>
+    {{ meta.meta_stack([
+      { label: "INVOICE #", value: inv.invoice_number },
+      { label: "ISSUE DATE", value: inv.issue_date | invoiceDate("en-US") },
+      { label: "BILLING PERIOD", value: inv.billing_period | invoiceMonth }
+    ]) }}
+  </div>
+
+  {% call addr.addressee("Bill To:", ("rgrid__r2" if first else "")) %}
+    <p class="addressee__lead">Parents/Guardians of <strong>{{ inv.student.full_name }}</strong></p>
+    {% if inv.family and inv.family.name %}<p class="addressee__line">{{ inv.family.name }}</p>{% endif %}
+    <p class="addressee__line">{{ inv.bill_to_text if inv.bill_to_text else "" }}</p>
+    <p class="addressee__note">This invoice includes all scheduled sessions for the month.</p>
+  {% endcall %}
+
+  <section{% if first %} class="avoid rgrid__r4"{% endif %} aria-label="Class Breakdown">
+    {{ ui.section("Class Breakdown") }}
+    <table class="t t--keep-start t--keep-end">
+      <thead>
+        <tr><th scope="col">Class</th><th scope="col" class="cell--center">Sessions</th><th scope="col" class="num">Gross</th><th scope="col" class="num">Net</th></tr>
+      </thead>
+      <tbody>
+        {% for c in inv.classes %}
+        {% set net = nets[loop.index0] %}
+        <tr>
+          <td>{{ c.class_name }}</td>
+          <td class="cell--center">{{ c.sessions_count }}</td>
+          <td class="num cell--soft">{{ vnd(c.amount_vnd) }}</td>
+          <td class="num{{ ' cell--positive' if net < c.amount_vnd }}">{{ vnd(net) }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="cell--subtotal">
+          <td colspan="2">Subtotal</td>
+          <td class="num cell--soft">{{ vnd(inv.subtotal_vnd) }}</td>
+          <td class="num">{{ vnd(nets | sum) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  {{ msum.money_summary(rows, ("msum--hero rgrid__start rgrid__r3 rgrid__stretch" if first else ""), "Balance") }}
+
+  <section{% if first %} class="rgrid__r5"{% endif %} aria-label="Session Details">
+    {{ ui.section("Session Details") }}
+    <table class="t t--keep-start">
+      <thead>
+        <tr><th scope="col">Date</th><th scope="col">Class</th><th scope="col" class="cell--center">Status</th><th scope="col" class="num">Unit Price</th><th scope="col" class="num">Line Total</th></tr>
+      </thead>
+      <tbody>
+        {% for s in inv.sessions %}
+        <tr>
+          <td class="cell--date">{{ s.date | invoiceDate }}</td>
+          <td>{{ s.class_name }}</td>
+          <td class="cell--center">{{ s.status }}</td>
+          <td class="num">{{ vnd(s.unit_price_vnd) }}</td>
+          <td class="num">{{ vnd(s.line_total_vnd) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  {{ pay.payment_panel("Payment Instructions:", bankRows,
+       qr=(bank.vietqr_image if bank and bank.vietqr_image else ""), qrAlt="VietQR Payment Code",
+       empty="Bank information not configured. Please contact administration for payment details.",
+       cls=("pay--compact rgrid__end rgrid__r3 rgrid__stretch" if first else "")) }}
+
+  <div class="closing{{ ' rgrid__r6' if first }}">
+    {% call ui.callout("note") %}{{ tenant.reassurance.tuition }}{% endcall %}
+    {{ ui.signature(tenant) }}
+    {% call ui.colophon() %}{% if orgAddress %}<span>{{ orgAddress }} • </span>{% endif %}<span>This is a computer-generated invoice.</span>{% endcall %}
+  </div>
+</div>
+{% endblock %}

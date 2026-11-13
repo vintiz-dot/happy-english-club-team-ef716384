@@ -1,0 +1,24 @@
+{
+  "type": "invoice",
+  "version": "1.0.0",
+  "title": "Tuition Invoice",
+  "description": "A month's tuition invoice for one student: class breakdown, balance, session details, payment instructions with the VietQR code. Replaces src/components/invoice/InvoicePrintView.tsx (single print) and the PDFs inside the TuitionBulkDownload.tsx ZIP.",
+  "output": "pdf",
+  "documentTitle": "{{ data.invoice.invoice_number }} - {{ data.invoice.student.full_name }} - Tuition Invoice",
+  "lang": "en",
+  "variantField": "variant",
+  "defaultVariant": "standard",
+  "variants": {
+    "standard": {
+      "description": "Statement-like: every block in the original order, totals set under the class breakdown, payment details after the session list."
+    },
+    "summary-first": {
+      "description": "The balance panel and the payment details sit side by side at the top of page 1, before the class and session tables. Same text; the tagged reading order stays the original order."
+    }
+  },
+  "filename": "invoice",
+  "keyField": "invoice.student.id",
+  "brandStrings": [
+    "Tuition invoice"
+  ]
+}

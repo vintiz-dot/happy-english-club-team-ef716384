@@ -1,0 +1,13 @@
+{#
+  Meta stack: a document's reference figures (number, dates) set right,
+  label over value; the first is the lead. Import with
+    {% import "ui/meta-stack.njk" as meta %}
+  rows: [{ label, value }]
+#}
+{% macro meta_stack(rows, cls="") %}
+<dl class="mstack {{ cls }}">
+  {% for r in rows %}
+  <div class="mstack__row{% if loop.first %} mstack__row--lead{% endif %}"><dt>{{ r.label }}</dt><dd>{{ r.value }}</dd></div>
+  {% endfor %}
+</dl>
+{% endmacro %}

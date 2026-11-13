@@ -1,0 +1,12 @@
+{#
+  Addressee: who a document is for. Import with
+    {% import "ui/addressee.njk" as addr %}
+  {% call addr.addressee("Bill To:") %} ...lines... {% endcall %}
+  Inside, use .addressee__lead, .addressee__line, .addressee__note.
+#}
+{% macro addressee(label, cls="") %}
+<section class="addressee {{ cls }}" aria-label="{{ label }}">
+  <div class="addressee__label">{{ label }}</div>
+  {{ caller() }}
+</section>
+{% endmacro %}

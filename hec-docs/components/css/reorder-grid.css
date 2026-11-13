@@ -1,0 +1,13 @@
+/* Reorder grid: places blocks visually without changing the DOM (reading)
+   order. Children span both columns unless placed; rows set by class. */
+.rgrid { display: grid; grid-template-columns: 1fr 1fr; column-gap: var(--space-3); align-items: start; }
+.rgrid > * { grid-column: 1 / -1; min-width: 0; }
+.rgrid > .rgrid__start { grid-column: 1; }
+.rgrid > .rgrid__end { grid-column: 2; }
+.rgrid > .rgrid__r1 { grid-row: 1; }
+.rgrid > .rgrid__r2 { grid-row: 2; }
+.rgrid > .rgrid__r3 { grid-row: 3; }
+.rgrid > .rgrid__r4 { grid-row: 4; }
+.rgrid > .rgrid__r5 { grid-row: 5; }
+.rgrid > .rgrid__r6 { grid-row: 6; }
+.rgrid > .rgrid__stretch { align-self: stretch; }
