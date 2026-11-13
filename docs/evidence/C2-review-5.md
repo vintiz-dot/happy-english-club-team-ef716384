@@ -1,9 +1,9 @@
 # C2 review 5 - delta review of round 5 (`git diff 596ce69d..309c26a6`, recorder files only) and the first look at the screens
 
-Reviewed commit: 309c26a6 (`worktree-agent-a4803c8e10a251526`). Code read and run in the detached worktree `.claude/worktrees/c2r2`; this file is committed on `claude/hec-conductor-setup-efbaa5`.
+Reviewed commit: 309c26a6 (`worktree-agent-a4803c8e10a251526`). Sections a-e were written by the first reviewer (code run in `.claude/worktrees/c2r2`, committed on `claude/hec-conductor-setup-efbaa5` as 37fa20c6 / 9dadf20d); it stopped at a usage limit during section f. A second reviewer took over on branch `c2-review-5` (from the conductor branch), re-ran R5-1's probe and did section f and the verdict in a fresh detached worktree `.claude/worktrees/c2r5` at 309c26a6.
 Review only: no product code changed, nothing pushed, deployed or applied. Synthetic audio only.
 
-**Where I am / next step:** set up. Next: sections a-b (engine and session delta).
+**Where I am / next step:** sections a-e committed; R5-1 re-probed (below). Next: section f (suites, mutants, screens).
 
 ## a. R4-1: what ends a recording at the pre-start statement
 
@@ -34,6 +34,18 @@ Read: `session.ts` (`armTick`, `startDay`, `boot`, `followUser`, `keep`), `Recor
 consent missing on arm | arm calls 1 | stored {"date":"2026-11-13","armed":["s1"]} | next null problem null | bar {"show":false,...}
 ```
 One "Too Many Requests" (or PostgREST's "no rows") to the arm insert: the lesson is not recorded, nothing says so, and because it is stored, a reload or a second press of Ready does not bring it back that day (signing out and in does: it clears Ready). And a STATED no (consent missing, not your class) is just as silent: the teacher pressed Ready and is never told why nothing records. This is review 2's N-B2 and review 4's R4-1 a third time, in the newest code, and this time with no message at all. Fix (small): final only for the stated list (`switch_off`, `consent_missing`, `session_canceled`, `not_teacher`, `no_longer_teaching`, `window_closed`, `already_live`, `session_invalid`), everything else retried in 30 s as the other branch already does; in both cases set `d.problem` and show the refusal's own view on the bar and the page. Test: the probe above.
+
+Re-probed by the second reviewer (scratchpad `probe-r51.mjs`: the real `session.ts`, and the arm error built by the real `toRecorderError` from the raw answer, so the classification is the engine's own; Ready at 09:45 for a 10:00 lesson, a pass, then a pass 60 s later):
+```
+429 Too Many Requests on the arm insert  | code server_refused/unknown retryable false         | arm calls 1 | stored {"date":"2026-11-13","armed":["s1"]} | problem null | bar not shown
+PostgREST no rows (PGRST116)             | code server_refused/unknown retryable false         | arm calls 1 | stored {"date":"2026-11-13","armed":["s1"]} | problem null | bar not shown
+stated: consent missing                  | code server_refused/consent_missing retryable false | arm calls 1 | stored {"date":"2026-11-13","armed":["s1"]} | problem null | bar not shown
+stated: switched off                     | code server_refused/switch_off retryable false      | arm calls 1 | stored {"date":"2026-11-13","armed":["s1"]} | problem null | bar not shown
+503 (control)                            | code server_unavailable/- retryable true            | arm calls 2 | stored {"date":"2026-11-13","armed":[]}     | problem null | bar "Ready for today - Starters 1 records from 09:55 by itself. ..."
+```
+Confirmed. One more consequence: the PAGE does not know either. `DailyRecorder` picks its lesson with `pickLesson` without reading `armed[]`, and the engine stays `ready`, so in the arm window the page shows "Getting the lesson ready..." until the lesson is over. (Round 4's page called `showError` on a failed arm; round 5 removed that effect and nothing replaced the message.) Note also the 503 row: while arming keeps failing, the bar keeps saying "records from 09:55 by itself" with no problem set; after the arm window that is not true. The fix above (`d.problem` on every failed arm) covers it.
+
+R5-1 fails SAFE for the children (nothing is recorded, nothing is kept, no audio goes anywhere); it fails the teacher (a lesson silently not recorded). See the verdict.
 
 ## c. Full screen
 
