@@ -690,7 +690,8 @@ function SmartSkillPanel({
             {/* Body — non-draggable so taps land on the skill buttons */}
             <div className={ivory
               // one frame, not two: the menu's own panel frame is dropped inside this panel
-              ? "p-3 sm:p-4 [&>div]:w-full [&>div]:border-0 [&>div]:bg-transparent [&>div]:p-0 [&>div]:shadow-none"
+              // pb-16 below sm: the last row can scroll up clear of the floating tools button at the bottom right
+              ? "p-3 pb-16 sm:p-4 [&>div]:w-full [&>div]:border-0 [&>div]:bg-transparent [&>div]:p-0 [&>div]:shadow-none"
               : "p-3 sm:p-4"}>
               <RadialSkillMenu
                 onSkillTap={onSkillTap}
