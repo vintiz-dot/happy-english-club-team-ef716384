@@ -73,3 +73,30 @@ Who can reach audio (unchanged since review 2, re-read):
 - READ an object or a recording's rows: an admin, a standing teacher of that class, the teacher of that recording's own session (`recorder_can_listen`); the recorder for their own OPEN recording's rows. Nothing once the recording is `deleted`.
 - **No family or student path**: no policy names a parent, student or TA; `recorder_is_class_teacher` reads only `classes.default_teacher_id` and the weekly slots' teachers; the consents table is admin-read only.
 - **Service role**: not used by the browser. Used only by `recorder-retention` (gate: the runner token or an admin's own JWT; `verify_jwt = true`) to list / remove objects under `{class}/{recording}/` for recordings the database lists as due, and to call the migration's functions - none of which a caller could do under RLS.
+
+## f. Suites, mutants, screens
+
+Run by the second reviewer in `.claude/worktrees/c2r5` (detached at 309c26a6, `node_modules` a junction to the main checkout's, removed afterwards).
+
+| Suite | Result |
+|---|---|
+| `node scripts/pgtest/run.mjs` | **5141 assertions across 53 suites, 0 failed**, exit 0 (the author's figure exactly) |
+| - recorder engine (`scripts/recorder/unit.test.mjs`) | 504 / 0 |
+| - recorder screens logic / render | 30 / 0, 74 / 0 |
+| - class recorder SQL / class recordings scope / retention / cron | 423 / 0, 89 / 0, 37 / 0, 22 / 0 |
+| - edge functions typecheck / app typecheck (inside run.mjs) | 5 / 0, 3 / 0 |
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | exit 0 |
+
+Mutants of my own - **5 of 5 CAUGHT**. Engine mutants are copies under `c2r5/.probe/` run with `RECORDER_SRC`; session mutants were made in place in `c2r5` and restored by copy (sha256 of `session.ts` before = after = `1cddc2b160999362...`).
+
+| # | Mutant | Result |
+|---|---|---|
+| Y1 | `FINAL_PRE_START_REFUSALS` gains `"unknown"`: an unclassified answer (a 429, "no rows") ends the recording at the pre-start statement | CAUGHT 475 / 29 ("R4-1 429 x 8: after 40 s still capturing", "never 'cannot be sent'", ...) |
+| Y2 | a stated pre-start refusal PURGES the local audio instead of holding it (`purgeRecording` after the abandon) - the "silently dropped" question | CAUGHT 502 / 2 ("the audio is not dropped: kept on the laptop, listed, with its deletion date") |
+| Y3 | pre-start backoff ceiling 60 s -> 300 s | CAUGHT 500 / 4 (gaps `[5,5,5,10,14,26,34,94]` > 60 s + one pass) |
+| Y4 | `readyFor` ignores the date (a Ready from yesterday counts today) | CAUGHT 73 / 1 ("and per day (tomorrow it is not set)") - one assertion on `readyFor` only; no test drives a session through midnight. Minor. |
+| Y5 | `followUser` does not clear the previous teacher's Ready on a change of user (shared laptop) | CAUGHT 71 / 3 |
+
+Not run: `scripts/recorder/browser.test.mjs` (real Chrome with fake devices; not in run.mjs). R5-1 has no test (by construction: the suite's arm-failure case throws `server_unavailable`, the one shape that is retried).
+
+**Where I am / next step:** suites and mutants done. Next: the screens in a browser.
