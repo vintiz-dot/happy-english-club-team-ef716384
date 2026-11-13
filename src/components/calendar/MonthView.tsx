@@ -306,7 +306,7 @@ function DayCell({
                 +{hidden} more
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" className={ivory ? "w-72 max-w-[calc(100vw-2rem)] p-2" : "w-64 p-2"}>
+            <PopoverContent align="start" aria-label={ivory ? date.format("dddd D MMMM") : undefined} className={ivory ? "w-72 max-w-[calc(100vw-2rem)] p-2" : "w-64 p-2"}>
               <p className={ivory ? "px-1 pb-2 text-hec-small font-semibold text-hec-ink" : "px-1 pb-1.5 text-xs font-semibold"}>
                 {date.format("dddd D MMMM")}
               </p>

@@ -88,7 +88,7 @@ function MultiSelect({
           <ChevronDown className={ivory ? "h-4 w-4 text-hec-ink-soft" : "h-3.5 w-3.5 opacity-60"} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className={ivory ? "w-72 max-w-[calc(100vw-2rem)] p-2" : "w-56 p-1.5"}>
+      <PopoverContent align="start" aria-label={ivory ? label : undefined} className={ivory ? "w-72 max-w-[calc(100vw-2rem)] p-2" : "w-56 p-1.5"}>
         <div className={ivory ? "max-h-72 space-y-1 overflow-y-auto" : "max-h-64 space-y-0.5 overflow-y-auto"}>
           {options.map((option) => (
             <label
