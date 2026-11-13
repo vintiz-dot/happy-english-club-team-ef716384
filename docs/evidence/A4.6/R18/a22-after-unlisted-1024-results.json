@@ -1,0 +1,177 @@
+{
+ "when": "2026-11-13T05:40:55.850Z",
+ "base": "vite dev server + fake Supabase client + local stand-in book (NOT production, NOT the real book hosts)",
+ "cpu": "4x (CDP Emulation.setCPUThrottlingRate)",
+ "network": "Fast 3G-like (CDP Network.emulateNetworkConditions latency 562.5 ms, 180 KB/s down, 84 KB/s up) applied after the app shell has loaded, plus a 562 ms delay on every book.html request",
+ "checks": [
+  {
+   "id": "flipbook.error",
+   "size": "375x812",
+   "status": "FAIL",
+   "value": "TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:5428/teacher/books\", waiting until \"load\"\u001b[22m\n",
+   "detail": "scenario aborted: TimeoutError: page.goto: Timeout 30000ms exceeded."
+  },
+  {
+   "id": "M1.select-book",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": 2,
+   "detail": "loads so far 2 (first book + the deliberate switch to book B)"
+  },
+  {
+   "id": "M9.parent-cost",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "longtasks": 1,
+    "longMs": 71,
+    "frames": 1197,
+    "p95": 17,
+    "max": 417,
+    "over50": 6
+   },
+   "detail": "50 turns in 20871 ms wall: parent long tasks 1 (71 ms), rAF frames 1197, p95 17 ms, max 417 ms, frames >50 ms 6"
+  },
+  {
+   "id": "M9.parent-heap",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "before": 12351712,
+    "after": 12405508
+   },
+   "detail": "parent JS heap after GC 11.8 -> 11.8 MiB over 50 turns"
+  },
+  {
+   "id": "M4.history",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "added": 47,
+    "page": 51,
+    "loads": 0
+   },
+   "detail": "50 turns added 47 entries to the TAB's history (history.length 3 -> 50; Chrome caps history.length at 50); book on page 51; extra loads during turns 0"
+  },
+  {
+   "id": "M9.parent-heap-3runs",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": [
+    12351712,
+    12405508,
+    12450036,
+    12479744
+   ],
+   "detail": "parent JS heap after GC across 3 x 50 turns: 11.8 -> 11.8 -> 11.9 -> 11.9 MiB; book page now 51"
+  },
+  {
+   "id": "M1.token-refresh",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "loads": 0,
+    "page": [
+     51,
+     51
+    ],
+    "book": [
+     "Stand-in book B (Phonics)",
+     "Stand-in book B (Phonics)"
+    ]
+   },
+   "detail": "TOKEN_REFRESHED: +0 iframe load(s); page 51 -> 51; book \"Stand-in book B (Phonics)\" -> \"Stand-in book B (Phonics)\""
+  },
+  {
+   "id": "M2.fullscreen-kept",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "before": "DIV (holds the book)",
+    "after": "DIV (holds the book)"
+   },
+   "detail": "fullscreenElement before DIV (holds the book) -> after TOKEN_REFRESHED DIV (holds the book)"
+  },
+  {
+   "id": "M1.visibility",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "loads": 0,
+    "page": [
+     51,
+     51
+    ],
+    "book": [
+     "Stand-in book B (Phonics)",
+     "Stand-in book B (Phonics)"
+    ]
+   },
+   "detail": "hidden->visible (fake emits SIGNED_IN as auth-js does): +0 load(s); page 51 -> 51; book \"Stand-in book B (Phonics)\" -> \"Stand-in book B (Phonics)\""
+  },
+  {
+   "id": "M3.tab-switch",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "loads": 0,
+    "page": [
+     51,
+     51
+    ]
+   },
+   "detail": "Presenter -> Settings -> Presenter: +0 load(s); page 51 -> 51"
+  },
+  {
+   "id": "M3.title-edit",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "d": 0,
+    "page": [
+     51,
+     51
+    ],
+    "book": [
+     "Stand-in book B (Phonics)",
+     "Stand-in book B (Phonics) (edited)"
+    ]
+   },
+   "detail": "title-only edit path: +0 load(s) (tab round trip alone +0, so the edit itself adds 0); page 51 -> 51"
+  },
+  {
+   "id": "M3.url-edit",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "d": 1,
+    "page": [
+     51,
+     1
+    ],
+    "book": [
+     "Stand-in book B (Phonics) (edited)",
+     "Stand-in book B (Phonics) (edited)"
+    ]
+   },
+   "detail": "URL edit path: +1 load(s) (tab round trip alone +0; a URL change is a legitimate reload, expected exactly 1 after the fix)"
+  },
+  {
+   "id": "M4.back",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "url": [
+     "http://127.0.0.1:5428/teacher/books",
+     "http://127.0.0.1:5428/teacher/books"
+    ],
+    "page": [
+     6,
+     5
+    ],
+    "historyLength": 50
+   },
+   "detail": "browser Back from book page 6: app URL unchanged; book page 6 -> 5"
+  }
+ ]
+}

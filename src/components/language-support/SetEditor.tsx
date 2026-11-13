@@ -211,17 +211,17 @@ export function SetEditor({ set, onSaved, onDeleted }: Props) {
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">{set ? "Edit set" : "New set"}</CardTitle>
+          <CardTitle>{set ? "Edit set" : "New set"}</CardTitle>
           <CardDescription>A set is a short list of sentences with pictures. Children read it one sentence at a time.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="ls-title">Name</Label>
+            <div className="space-y-2">
+              <Label htmlFor="ls-title" className="text-hec-small font-medium leading-normal text-hec-ink">Name</Label>
               <Input id="ls-title" value={title} maxLength={120} placeholder="Week 3: farm animals" onChange={(e) => touch(setTitle)(e.target.value)} />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ls-desc">Note for children (optional)</Label>
+            <div className="space-y-2">
+              <Label htmlFor="ls-desc" className="text-hec-small font-medium leading-normal text-hec-ink">Note for children (optional)</Label>
               <Input id="ls-desc" value={description} onChange={(e) => touch(setDescription)(e.target.value)} placeholder="Read and look at the pictures" />
             </div>
           </div>
@@ -230,7 +230,7 @@ export function SetEditor({ set, onSaved, onDeleted }: Props) {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Sentences</CardTitle>
+          <CardTitle>Sentences</CardTitle>
           <CardDescription>
             Pictures sit over the words they came from. Tap a picture to change it. Ringed pictures are the ones to double-check.
           </CardDescription>
@@ -244,20 +244,20 @@ export function SetEditor({ set, onSaved, onDeleted }: Props) {
               placeholder={"The cat sits on the mat.\nTwo birds fly in the sky."}
               aria-label="Type sentences, one per line"
             />
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <Button onClick={addSentences} disabled={building || !draft.trim()}>
-                {building ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Wand2 className="h-4 w-4 mr-1.5" />}
+                {building ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                 Add with pictures
               </Button>
               <Button variant="outline" onClick={() => fileRef.current?.click()}>
-                <FileUp className="h-4 w-4 mr-1.5" /> Import a set file
+                <FileUp className="h-4 w-4" /> Import a set file
               </Button>
               <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ""; }} />
             </div>
           </div>
 
           {sentences.length === 0 ? (
-            <p className="text-sm text-muted-foreground rounded-lg border border-dashed p-6 text-center">
+            <p className="rounded-hec-md border border-dashed border-hec-line-strong p-6 text-center text-hec-small text-hec-ink-soft">
               No sentences yet. Type one above, one per line.
             </p>
           ) : (
@@ -265,18 +265,18 @@ export function SetEditor({ set, onSaved, onDeleted }: Props) {
               {sentences.map((sentence, si) => {
                 const flags = flagsIn(sentence);
                 return (
-                  <li key={`${si}-${sentence.text}`} className="rounded-xl border p-3">
+                  <li key={`${si}-${sentence.text}`} className="rounded-hec-md border border-hec-line p-3">
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <span className="text-xs text-muted-foreground">#{si + 1}</span>
+                      <span className="text-hec-caption text-hec-ink-soft tabular-nums">#{si + 1}</span>
                       <div className="flex items-center gap-2">
                         {flags.length > 0 && (
-                          <Badge variant="outline" className="gap-1 border-amber-400 text-amber-700 dark:text-amber-300" title={flags.join("\n")}>
+                          <Badge variant="outline" className="gap-1 border-hec-warn/30 bg-hec-warn-tint text-hec-warn" title={flags.join("\n")}>
                             <AlertTriangle className="h-3 w-3" /> {flags.length} to check
                           </Badge>
                         )}
-                        <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Remove sentence"
+                        <Button variant="ghost" size="icon" className="text-hec-ink-soft" aria-label="Remove sentence"
                           onClick={() => { setSentences((a) => a.filter((_, i) => i !== si)); setDirty(true); }}>
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-5 w-5" />
                         </Button>
                       </div>
                     </div>
@@ -287,7 +287,7 @@ export function SetEditor({ set, onSaved, onDeleted }: Props) {
             </ol>
           )}
           {toCheck > 0 && (
-            <p className="text-xs text-amber-700 dark:text-amber-300">
+            <p className="text-hec-small text-hec-warn">
               {toCheck} picture{toCheck === 1 ? "" : "s"} to double-check. The picture finder guesses; you decide what a child sees.
             </p>
           )}
@@ -295,22 +295,22 @@ export function SetEditor({ set, onSaved, onDeleted }: Props) {
       </Card>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="lg" onClick={() => save.mutate()} disabled={save.isPending || (!dirty && !!set)}>
-          {save.isPending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Save className="h-4 w-4 mr-1.5" />}
+        <Button size="lg" className="w-full sm:w-auto" onClick={() => save.mutate()} disabled={save.isPending || (!dirty && !!set)}>
+          {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {set ? "Save changes" : "Save set"}
         </Button>
-        {set && !dirty && <span className="text-sm text-muted-foreground flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> Saved</span>}
+        {set && !dirty && <span className="text-hec-small text-hec-ink-soft flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-hec-leaf" /> Saved</span>}
         {set && (
-          <Button variant="ghost" className="ml-auto text-destructive" disabled={del.isPending}
+          <Button variant="destructive-quiet" className="ml-auto" disabled={del.isPending}
             onClick={() => { if (window.confirm(`Delete “${set.title}”? Children will no longer see it.`)) del.mutate(); }}>
-            <Trash2 className="h-4 w-4 mr-1.5" /> Delete set
+            <Trash2 className="h-4 w-4" /> Delete set
           </Button>
         )}
       </div>
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Which classes can use it?</CardTitle>
+          <CardTitle>Which classes can use it?</CardTitle>
           <CardDescription>
             {set
               ? "Switch it on for any of your classes. Children in those classes find it under Picture Reader."
@@ -319,14 +319,14 @@ export function SetEditor({ set, onSaved, onDeleted }: Props) {
         </CardHeader>
         <CardContent>
           {!set ? null : classes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">You have no classes yet.</p>
+            <p className="text-hec-small text-hec-ink-soft">You have no classes yet.</p>
           ) : (
             <>
-              <ul className="divide-y">
+              <ul className="divide-y divide-hec-line">
                 {classes.map((c) => (
-                  <li key={c.id} className="flex items-center justify-between gap-3 py-2.5">
-                    <Label htmlFor={`ls-class-${c.id}`} className="text-sm font-medium cursor-pointer flex-1">{c.name}</Label>
-                    <span className="text-xs text-muted-foreground">{live[c.id] ? "On" : "Off"}</span>
+                  <li key={c.id} className="flex min-h-hec-target items-center justify-between gap-3 py-2">
+                    <Label htmlFor={`ls-class-${c.id}`} className="min-w-0 flex-1 cursor-pointer break-words text-hec-body font-medium leading-normal text-hec-ink">{c.name}</Label>
+                    <span className="shrink-0 text-hec-caption text-hec-ink-soft">{live[c.id] ? "On" : "Off"}</span>
                     <Switch
                       id={`ls-class-${c.id}`}
                       checked={!!live[c.id]}
@@ -336,7 +336,7 @@ export function SetEditor({ set, onSaved, onDeleted }: Props) {
                   </li>
                 ))}
               </ul>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-hec-small text-hec-ink-soft mt-2 tabular-nums">
                 {dirty ? "Save your changes before switching classes. " : ""}
                 On for {activeCount} of {classes.length} class{classes.length === 1 ? "" : "es"}.
               </p>
@@ -345,7 +345,7 @@ export function SetEditor({ set, onSaved, onDeleted }: Props) {
         </CardContent>
       </Card>
 
-      <p className="text-xs text-muted-foreground">{ATTRIBUTION}</p>
+      <p className="text-hec-caption text-hec-ink-soft">{ATTRIBUTION}</p>
 
       <PictogramPicker cell={pickedCell} lexicon={lexicon} onClose={() => setPicking(null)} onPick={choose} onRemove={remove} />
     </div>
