@@ -205,12 +205,17 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
   // Calculate total points
   const studentTotal = studentSkills ? Object.values(studentSkills).reduce((a, b) => a + b, 0) : 0;
   const classHighestTotal = classHighest?.maxPerSkill ? Object.values(classHighest.maxPerSkill).reduce((a, b) => a + b, 0) : 0;
+  // A family is given no class figure for a skill that fewer than three other
+  // children were assessed in (get_class_skill_summary). Then there is no
+  // "best" to compare with: say so rather than show the child as the leader.
+  const classFigureFor = (skill: string) => (classHighest?.maxPerSkill?.[skill] ?? 0) > 0;
+  const classFiguresComplete = SKILLS.every(skill => (studentSkills?.[skill] ?? 0) === 0 || classFigureFor(skill));
 
   // Find skills where student is the leader
   const leaderSkills = SKILLS.filter(skill => {
     const score = studentSkills?.[skill] ?? 0;
     const highest = classHighest?.maxPerSkill?.[skill] ?? 0;
-    return score >= highest && score > 0;
+    return highest > 0 && score >= highest && score > 0;
   });
 
   // Find strongest skill (highest score)
@@ -398,8 +403,12 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
             </div>
             <div className={iv("text-hec-caption text-hec-ink-soft tabular-nums", "text-xs text-muted-foreground")}>
               Total: <span className={iv("font-semibold text-hec-ink", "font-bold text-foreground")}>{studentTotal}</span>
-              <span className="mx-1">/</span>
-              <span className={iv("text-hec-ink", "text-yellow-500")}>{classHighestTotal}</span>
+              {classFiguresComplete && (
+                <>
+                  <span className="mx-1">/</span>
+                  <span className={iv("text-hec-ink", "text-yellow-500")}>{classHighestTotal}</span>
+                </>
+              )}
             </div>
           </div>
 
@@ -409,8 +418,9 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
               const score = studentSkills?.[skill] ?? 0;
               const highest = classHighest?.maxPerSkill?.[skill] ?? 1;
               const avg = classAverage?.[skill] ?? 0;
-              const percentage = highest > 0 ? Math.round((score / highest) * 100) : 0;
-              const isLeader = score >= highest && score > 0;
+              const hasClassFigure = classFigureFor(skill);
+              const percentage = highest > 0 ? Math.round((score / highest) * 100) : score > 0 ? 100 : 0;
+              const isLeader = hasClassFigure && score >= highest && score > 0;
               const aboveAvg = score > avg;
               
               return (
@@ -474,7 +484,7 @@ export function RadarChartTab({ studentId, classId, selectedMonth }: RadarChartT
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={iv("text-hec-h3 font-semibold tabular-nums text-hec-ink", "text-lg font-black text-foreground")}>{score}</span>
-                          <span className={iv("text-hec-caption tabular-nums text-hec-ink-soft", "text-xs text-muted-foreground")}>/ {highest}</span>
+                          <span className={iv("text-hec-caption tabular-nums text-hec-ink-soft", "text-xs text-muted-foreground")}>/ {hasClassFigure ? highest : "–"}</span>
                         </div>
                       </div>
                       
