@@ -1,0 +1,68 @@
+{#
+  Base page for every PDF document. Templates extend this and fill:
+    set runningTitle    - (top-level variable) running header text on pages 2+
+    block body          - the document
+  Brand chrome (logo lockup, tagline footer, page numbers) comes from here and
+  the shared stylesheet, never from a template.
+#}
+<!doctype html>
+<html lang="{{ doc.lang }}">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>{% block title %}{{ doc.title }}{% endblock %}</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>{{ tenant.css | safe }}</style>
+<link rel="stylesheet" href="/components/hec.css">
+{% for s in componentStyles %}<link rel="stylesheet" href="/components/css/{{ s }}">
+{% endfor %}
+{% set v = tenant.vars %}
+<style>
+@page {
+  size: A4;
+  margin: {{ v["page-margin-top"] | safe }} {{ v["page-margin-outer"] | safe }} {{ v["page-margin-bottom"] | safe }} {{ v["page-margin-inner"] | safe }};
+  background: {{ v["color-paper"] | safe }};
+  @top-left {
+    content: "";
+    width: 9mm;
+    margin-bottom: 4mm;
+    background: url("/tenant/{{ tenant.logo.file }}") left bottom / contain no-repeat;
+  }
+  @top-right {
+    content: {{ (runningTitle if runningTitle is defined else doc.title) | cssstr }};
+    vertical-align: bottom;
+    margin-bottom: 5mm;
+    font-family: {{ v["font-family-body"] | safe }};
+    font-size: {{ v["size-xs"] | safe }};
+    letter-spacing: 0.04em;
+    color: {{ v["color-muted"] | safe }};
+  }
+  @bottom-left {
+    content: {{ tenant.tagline | cssstr }};
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: {{ v["font-family-display"] | safe }};
+    font-style: italic;
+    font-weight: 500;
+    font-size: {{ v["size-sm"] | safe }};
+    color: {{ v["color-ink-soft"] | safe }};
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: {{ v["font-family-body"] | safe }};
+    font-size: {{ v["size-xs"] | safe }};
+    color: {{ v["color-muted"] | safe }};
+  }
+}
+@page :first {
+  @top-left { content: none; background: none; }
+  @top-right { content: none; }
+}
+</style>
+</head>
+<body class="doc doc--{{ doc.type }} variant--{{ variant }}">
+{% block body %}{% endblock %}
+</body>
+</html>

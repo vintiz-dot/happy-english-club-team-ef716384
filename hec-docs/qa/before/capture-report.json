@@ -1,0 +1,501 @@
+[
+  {
+    "doc": "access-card",
+    "ok": true,
+    "files": [
+      {
+        "file": "Nguyễn Thị Minh Anh - Access Card.pdf",
+        "bytes": 155301,
+        "pages": [
+          {
+            "w": 910,
+            "h": 1287,
+            "images": 1,
+            "textItems": 0,
+            "mm": [
+              210.0015555555555,
+              297.00008333333335
+            ]
+          }
+        ],
+        "fonts": [
+          "Helvetica",
+          "Helvetica-Bold",
+          "Helvetica-Oblique",
+          "Helvetica-BoldOblique",
+          "Courier",
+          "Courier-Bold",
+          "Courier-Oblique",
+          "Courier-BoldOblique",
+          "Times-Roman",
+          "Times-Bold",
+          "Times-Italic",
+          "Times-BoldItalic",
+          "ZapfDingbats",
+          "Symbol"
+        ],
+        "pdftotextChars": 0
+      }
+    ],
+    "names": [
+      "Nguyễn Thị Minh Anh - Access Card.pdf"
+    ],
+    "logs": [],
+    "h2c": [
+      {
+        "w": 794,
+        "h": 510,
+        "opts": {
+          "scale": 2,
+          "backgroundColor": "#ffffff",
+          "useCORS": true,
+          "logging": false,
+          "onclone": "fn"
+        }
+      }
+    ],
+    "domChars": 692
+  },
+  {
+    "doc": "invoice-single",
+    "ok": true,
+    "files": [
+      {
+        "file": "Education Manager - Happy English Club.pdf",
+        "bytes": 799,
+        "pages": [
+          {
+            "w": 909,
+            "h": 1287,
+            "images": 0,
+            "textItems": 0,
+            "mm": [
+              209.88865255555555,
+              297.01065961111107
+            ]
+          }
+        ],
+        "fonts": [],
+        "pdftotextChars": 0
+      },
+      {
+        "file": "Education Manager - Happy English Club (background graphics on).pdf",
+        "bytes": 997,
+        "pages": [
+          {
+            "w": 909,
+            "h": 1287,
+            "images": 0,
+            "textItems": 0,
+            "mm": [
+              209.88865255555555,
+              297.01065961111107
+            ]
+          }
+        ],
+        "fonts": [],
+        "pdftotextChars": 0
+      }
+    ],
+    "names": [
+      "Education Manager - Happy English Club.pdf",
+      "Education Manager - Happy English Club (background graphics on).pdf"
+    ],
+    "logs": [
+      "error: `DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.\n\nIf you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.\n\nFor more information, see https://radix-ui.com/primitives/docs/components/dialog",
+      "warning: Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."
+    ],
+    "note": "window.print called 1x",
+    "domChars": 1769
+  },
+  {
+    "doc": "invoice-bulk",
+    "ok": true,
+    "files": [
+      {
+        "file": "Nguyen_Thi_Minh_Anh_2026-11.pdf",
+        "bytes": 1166868,
+        "pages": [
+          {
+            "w": 910,
+            "h": 1287,
+            "images": 1,
+            "textItems": 0,
+            "mm": [
+              210.0015555555555,
+              297.00008333333335
+            ]
+          }
+        ],
+        "fonts": [
+          "Helvetica",
+          "Helvetica-Bold",
+          "Helvetica-Oblique",
+          "Helvetica-BoldOblique",
+          "Courier",
+          "Courier-Bold",
+          "Courier-Oblique",
+          "Courier-BoldOblique",
+          "Times-Roman",
+          "Times-Bold",
+          "Times-Italic",
+          "Times-BoldItalic",
+          "ZapfDingbats",
+          "Symbol"
+        ],
+        "pdftotextChars": 0
+      },
+      {
+        "file": "Nguyen__uc_Bao_2026-11.pdf",
+        "bytes": 922112,
+        "pages": [
+          {
+            "w": 910,
+            "h": 1287,
+            "images": 1,
+            "textItems": 0,
+            "mm": [
+              210.0015555555555,
+              297.00008333333335
+            ]
+          }
+        ],
+        "fonts": [
+          "Helvetica",
+          "Helvetica-Bold",
+          "Helvetica-Oblique",
+          "Helvetica-BoldOblique",
+          "Courier",
+          "Courier-Bold",
+          "Courier-Oblique",
+          "Courier-BoldOblique",
+          "Times-Roman",
+          "Times-Bold",
+          "Times-Italic",
+          "Times-BoldItalic",
+          "ZapfDingbats",
+          "Symbol"
+        ],
+        "pdftotextChars": 0
+      }
+    ],
+    "names": [
+      "Nguyen_Thi_Minh_Anh_2026-11.pdf",
+      "Nguyen__uc_Bao_2026-11.pdf"
+    ],
+    "zip": "invoices-2026-11-2.zip",
+    "logs": [
+      "error: `DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.\n\nIf you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.\n\nFor more information, see https://radix-ui.com/primitives/docs/components/dialog",
+      "warning: Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."
+    ],
+    "h2c": [
+      {
+        "w": 646,
+        "h": 1721,
+        "opts": {
+          "scale": 2,
+          "useCORS": true,
+          "backgroundColor": "#ffffff",
+          "logging": false,
+          "windowWidth": 646
+        }
+      },
+      {
+        "w": 646,
+        "h": 1470,
+        "opts": {
+          "scale": 2,
+          "useCORS": true,
+          "backgroundColor": "#ffffff",
+          "logging": false,
+          "windowWidth": 646
+        }
+      }
+    ],
+    "domChars": 2842
+  },
+  {
+    "doc": "homework",
+    "ok": true,
+    "files": [
+      {
+        "file": "Unit_6__My_Weekend___B_i_t_p_v__nh__tu_n_2_homework.pdf",
+        "bytes": 371269,
+        "pages": [
+          {
+            "w": 910,
+            "h": 1287,
+            "images": 1,
+            "textItems": 0,
+            "mm": [
+              210.0015555555555,
+              297.00008333333335
+            ]
+          }
+        ],
+        "fonts": [
+          "Helvetica",
+          "Helvetica-Bold",
+          "Helvetica-Oblique",
+          "Helvetica-BoldOblique",
+          "Courier",
+          "Courier-Bold",
+          "Courier-Oblique",
+          "Courier-BoldOblique",
+          "Times-Roman",
+          "Times-Bold",
+          "Times-Italic",
+          "Times-BoldItalic",
+          "ZapfDingbats",
+          "Symbol"
+        ],
+        "pdftotextChars": 0
+      }
+    ],
+    "names": [
+      "Unit_6__My_Weekend___B_i_t_p_v__nh__tu_n_2_homework.pdf"
+    ],
+    "logs": [],
+    "h2c": [
+      {
+        "w": 720,
+        "h": 1023,
+        "opts": {
+          "backgroundColor": "#ffffff",
+          "scale": 1.5,
+          "useCORS": true,
+          "allowTaint": false,
+          "logging": false,
+          "foreignObjectRendering": false,
+          "width": 720,
+          "height": 1023,
+          "windowWidth": 720,
+          "windowHeight": 1023
+        }
+      }
+    ],
+    "domChars": 1573
+  },
+  {
+    "doc": "report-bulk",
+    "ok": true,
+    "files": [
+      {
+        "file": "Nguyễn Thị Minh Anh - Progress Report.pdf",
+        "bytes": 400486,
+        "pages": [
+          {
+            "w": 910,
+            "h": 1287,
+            "images": 1,
+            "textItems": 0,
+            "mm": [
+              210.0015555555555,
+              297.00008333333335
+            ]
+          }
+        ],
+        "fonts": [
+          "Helvetica",
+          "Helvetica-Bold",
+          "Helvetica-Oblique",
+          "Helvetica-BoldOblique",
+          "Courier",
+          "Courier-Bold",
+          "Courier-Oblique",
+          "Courier-BoldOblique",
+          "Times-Roman",
+          "Times-Bold",
+          "Times-Italic",
+          "Times-BoldItalic",
+          "ZapfDingbats",
+          "Symbol"
+        ],
+        "pdftotextChars": 0
+      }
+    ],
+    "names": [
+      "Nguyễn Thị Minh Anh - Progress Report.pdf"
+    ],
+    "logs": [],
+    "h2c": [
+      {
+        "w": 794,
+        "h": 1110,
+        "opts": {
+          "scale": 2,
+          "backgroundColor": "#ffffff",
+          "useCORS": true,
+          "logging": false,
+          "onclone": "fn"
+        }
+      }
+    ],
+    "domChars": 2126
+  },
+  {
+    "doc": "report-print",
+    "ok": true,
+    "files": [
+      {
+        "file": "Education Manager - Happy English Club.pdf",
+        "bytes": 105010,
+        "pages": [
+          {
+            "w": 911,
+            "h": 1288,
+            "images": 3,
+            "textItems": 101,
+            "mm": [
+              210.22732627777773,
+              297.34933333333333
+            ]
+          },
+          {
+            "w": 911,
+            "h": 1288,
+            "images": 0,
+            "textItems": 7,
+            "mm": [
+              210.22732627777773,
+              297.34933333333333
+            ]
+          }
+        ],
+        "fonts": [
+          "AAAAAA+SegoeUIBlack",
+          "BAAAAA+SegoeUI",
+          "CAAAAA+SegoeUI-Bold",
+          "DAAAAA+SegoeUI-Semibold"
+        ],
+        "pdftotextChars": 1714
+      },
+      {
+        "file": "Education Manager - Happy English Club (background graphics on).pdf",
+        "bytes": 107072,
+        "pages": [
+          {
+            "w": 911,
+            "h": 1288,
+            "images": 3,
+            "textItems": 101,
+            "mm": [
+              210.22732627777773,
+              297.34933333333333
+            ]
+          },
+          {
+            "w": 911,
+            "h": 1288,
+            "images": 0,
+            "textItems": 7,
+            "mm": [
+              210.22732627777773,
+              297.34933333333333
+            ]
+          }
+        ],
+        "fonts": [
+          "AAAAAA+SegoeUIBlack",
+          "BAAAAA+SegoeUI",
+          "CAAAAA+SegoeUI-Bold",
+          "DAAAAA+SegoeUI-Semibold"
+        ],
+        "pdftotextChars": 1714
+      }
+    ],
+    "names": [
+      "Education Manager - Happy English Club.pdf",
+      "Education Manager - Happy English Club (background graphics on).pdf"
+    ],
+    "logs": [],
+    "domChars": 2126
+  },
+  {
+    "doc": "statement",
+    "ok": true,
+    "files": [
+      {
+        "file": "Education Manager - Happy English Club.pdf",
+        "bytes": 88250,
+        "pages": [
+          {
+            "w": 911,
+            "h": 1288,
+            "images": 1,
+            "textItems": 149,
+            "mm": [
+              210.22732627777773,
+              297.34933333333333
+            ]
+          }
+        ],
+        "fonts": [
+          "AAAAAA+SegoeUIBlack",
+          "BAAAAA+SegoeUI",
+          "CAAAAA+SegoeUI-Bold",
+          "DAAAAA+SegoeUI-Semibold"
+        ],
+        "pdftotextChars": 950
+      },
+      {
+        "file": "Education Manager - Happy English Club (background graphics on).pdf",
+        "bytes": 88272,
+        "pages": [
+          {
+            "w": 911,
+            "h": 1288,
+            "images": 1,
+            "textItems": 149,
+            "mm": [
+              210.22732627777773,
+              297.34933333333333
+            ]
+          }
+        ],
+        "fonts": [
+          "AAAAAA+SegoeUIBlack",
+          "BAAAAA+SegoeUI",
+          "CAAAAA+SegoeUI-Bold",
+          "DAAAAA+SegoeUI-Semibold"
+        ],
+        "pdftotextChars": 950
+      }
+    ],
+    "names": [
+      "Education Manager - Happy English Club.pdf",
+      "Education Manager - Happy English Club (background graphics on).pdf"
+    ],
+    "logs": [],
+    "domChars": 1174
+  },
+  {
+    "doc": "share-card",
+    "ok": true,
+    "files": [
+      {
+        "file": "Nguyễn Thị Minh Anh-profile.png",
+        "bytes": 112242,
+        "png": {
+          "w": 776,
+          "h": 608
+        }
+      }
+    ],
+    "names": [
+      "Nguyễn Thị Minh Anh-profile.png"
+    ],
+    "logs": [],
+    "h2c": [
+      {
+        "w": 388,
+        "h": 303,
+        "opts": {
+          "backgroundColor": null,
+          "scale": 2
+        }
+      }
+    ],
+    "domChars": 147
+  }
+]

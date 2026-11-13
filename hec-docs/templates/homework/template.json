@@ -1,0 +1,27 @@
+{
+  "type": "homework",
+  "version": "1.0.0",
+  "title": "Homework",
+  "description": "A class homework sheet: title, class details, the teacher's instructions. Replaces src/components/homework/HomeworkPdfDownload.tsx.",
+  "output": "pdf",
+  "documentTitle": "{{ data.homework.title }} - Homework",
+  "lang": "en",
+  "variantField": "variant",
+  "defaultVariant": "standard",
+  "variants": {
+    "standard": {
+      "description": "Instruction-led sheet; the body flows across pages. Matches the original layout order."
+    },
+    "writing-space": {
+      "description": "Adds generous ruled writing space after the instructions, for written answers on paper."
+    },
+    "prompt-card": {
+      "description": "Short speaking or discussion prompts set large in a card, for reading aloud."
+    }
+  },
+  "filename": "homework",
+  "keyField": "homework.id",
+  "brandStrings": [
+    "Homework"
+  ]
+}

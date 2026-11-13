@@ -1,0 +1,43 @@
+{
+  "_note": "Made-up. Responses of the manage-student-access function (search / status / issue) as StudentAccessManager consumes them. AccessCardDocument props = { studentName: issue.student_name, className: search hit classes[0], siblings: issue.siblings, loginEmail: issue.login_email, code: issue.code, expiresAt: issue.expires_at, claimUrl: origin + '/claim' }.",
+  "search": {
+    "students": [
+      {
+        "id": "11111111-1111-4111-8111-000000000001",
+        "full_name": "Nguyễn Thị Minh Anh",
+        "classes": [
+          "Movers B – Thứ 3/5",
+          "Phonics Fun – Thứ 7"
+        ],
+        "has_account": true,
+        "login_email": "minhanh.nguyen@hec.example.test",
+        "has_synthetic_login": true
+      }
+    ]
+  },
+  "status": {
+    "student": {
+      "id": "11111111-1111-4111-8111-000000000001",
+      "full_name": "Nguyễn Thị Minh Anh"
+    },
+    "has_account": true,
+    "login_email": "minhanh.nguyen@hec.example.test",
+    "suggested_email": "minhanh.nguyen@hec.example.test",
+    "siblings": [
+      "Nguyễn Đức Bảo"
+    ],
+    "outstanding_code": null,
+    "blocked": false,
+    "blocked_reason": null
+  },
+  "issue": {
+    "student_name": "Nguyễn Thị Minh Anh",
+    "login_email": "minhanh.nguyen@hec.example.test",
+    "code": "K7QM-4XPA",
+    "expires_at": "2026-11-20T10:30:00+07:00",
+    "siblings": [
+      "Nguyễn Đức Bảo"
+    ],
+    "created_account": false
+  }
+}

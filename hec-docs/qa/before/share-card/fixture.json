@@ -1,0 +1,11 @@
+{
+  "_note": "Made-up. ProfileShareCard props as StudentDashboard passes them (level = calculateLevel(totalXp).level). Rendered inside the Ivory scope like /student/dashboard, in a 420px card column.",
+  "props": {
+    "name": "Nguyễn Thị Minh Anh",
+    "avatarUrl": "/src/assets/avatars/avatar-018.png",
+    "level": 5,
+    "totalXp": 1240,
+    "currentStreak": 12,
+    "statusMessage": "Mình thích học tiếng Anh! I love English 📚"
+  }
+}

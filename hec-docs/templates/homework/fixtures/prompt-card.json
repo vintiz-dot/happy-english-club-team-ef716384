@@ -1,0 +1,16 @@
+{
+  "$comment": "Short speaking prompt.",
+  "generatedAt": "2026-11-13T10:00:00+07:00",
+  "data": {
+    "variant": "prompt-card",
+    "homework": {
+      "id": "hw-prompt-1",
+      "title": "Speaking: Talk about your favourite place in Hà Nội",
+      "body": "<p><strong>Prepare a 1-minute talk.</strong></p><ul><li>Where is it?</li><li>Who do you go there with?</li><li>What do you do there?</li><li>Why do you like it?</li></ul><p>Record yourself and bring the recording to class.</p>",
+      "due_date": "2026-11-18",
+      "created_at": "2026-11-13T08:00:00+07:00"
+    },
+    "className": "Flyers A – Thứ 2/4/6",
+    "teacherName": ""
+  }
+}

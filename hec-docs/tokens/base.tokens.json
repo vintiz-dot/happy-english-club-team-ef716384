@@ -1,0 +1,79 @@
+{
+  "$description": "HEC Docs design tokens (W3C Design Tokens Community Group format). Tenants override any leaf in tenants/<id>/theme.json under \"tokens\". Compiled to CSS custom properties named --<path joined by '-'>.",
+  "color": {
+    "$type": "color",
+    "paper": { "$value": "#FBF8F1", "$description": "Warm ivory page. Light backgrounds only." },
+    "surface": { "$value": "#F4EEE0", "$description": "Quiet panel tint (callouts, table heads)." },
+    "surface-strong": { "$value": "#ECE3CE" },
+    "ink": { "$value": "#14213D", "$description": "Deep navy: headings and body text. 15:1 on paper." },
+    "ink-soft": { "$value": "#34405E", "$description": "Secondary text. 10:1 on paper." },
+    "muted": { "$value": "#59617A", "$description": "Captions, labels. 5.7:1 on paper (AA)." },
+    "accent": { "$value": "#FFF200", "$description": "HEC yellow (logo master). Fills only, never text on paper." },
+    "accent-deep": { "$value": "#E9B300", "$description": "Print-safe yellow for bars and the logo swoosh." },
+    "gold": { "$value": "#B8975A", "$description": "Fine hairlines and ornaments. Decorative only." },
+    "gold-ink": { "$value": "#7A5C1E", "$description": "Gold used as text (eyebrows). 5.6:1 on paper." },
+    "rule": { "$value": "#DCCFB4", "$description": "Table and field rules." },
+    "positive": { "$value": "#2E6A4C" },
+    "negative": { "$value": "#9A2F2A" }
+  },
+  "font": {
+    "family": {
+      "$type": "fontFamily",
+      "display": { "$value": ["Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji"] },
+      "body": { "$value": ["Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji"] }
+    },
+    "weight": {
+      "$type": "fontWeight",
+      "regular": { "$value": 400 },
+      "medium": { "$value": 500 },
+      "semibold": { "$value": 600 },
+      "bold": { "$value": 700 }
+    }
+  },
+  "size": {
+    "$type": "dimension",
+    "$description": "Modular type scale, ratio 1.25, base 9.5pt.",
+    "xs": { "$value": "7.5pt" },
+    "sm": { "$value": "8.5pt" },
+    "base": { "$value": "9.5pt" },
+    "md": { "$value": "11.5pt" },
+    "lg": { "$value": "14.5pt" },
+    "xl": { "$value": "18pt" },
+    "2xl": { "$value": "22.5pt" },
+    "3xl": { "$value": "28pt" }
+  },
+  "leading": {
+    "$type": "number",
+    "tight": { "$value": 1.15 },
+    "body": { "$value": 1.5 },
+    "loose": { "$value": 1.7 }
+  },
+  "space": {
+    "$type": "dimension",
+    "$description": "8pt grid.",
+    "0-5": { "$value": "4pt" },
+    "1": { "$value": "8pt" },
+    "2": { "$value": "16pt" },
+    "3": { "$value": "24pt" },
+    "4": { "$value": "32pt" },
+    "5": { "$value": "40pt" },
+    "6": { "$value": "48pt" },
+    "8": { "$value": "64pt" }
+  },
+  "page": {
+    "$type": "dimension",
+    "width": { "$value": "210mm" },
+    "height": { "$value": "297mm" },
+    "margin-top": { "$value": "20mm" },
+    "margin-bottom": { "$value": "22mm" },
+    "margin-inner": { "$value": "18mm" },
+    "margin-outer": { "$value": "18mm" }
+  },
+  "border": {
+    "$type": "dimension",
+    "hairline": { "$value": "0.5pt" },
+    "rule": { "$value": "0.75pt" },
+    "strong": { "$value": "1.5pt" },
+    "radius": { "$value": "3pt" }
+  }
+}

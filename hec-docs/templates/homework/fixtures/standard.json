@@ -1,0 +1,17 @@
+{
+  "$comment": "Same made-up homework as qa/before/homework (captured from the original generator). Teacher resolved from the fake classes row.",
+  "before": "homework",
+  "generatedAt": "2026-11-13T10:00:00+07:00",
+  "data": {
+    "variant": "standard",
+    "homework": {
+      "id": "55555555-5555-4555-8555-000000000001",
+      "title": "Unit 6: My Weekend – Bài tập về nhà tuần 2",
+      "body": "<h2>Unit 6 – My Weekend / Cuối tuần của em</h2>\n<p>Hello everyone! This week we practise the <strong>past simple</strong> and talk about what we did at the weekend. Bố mẹ vui lòng nhắc con hoàn thành trước thứ Năm nhé.</p>\n<h3>Task 1 – Vocabulary (Từ vựng)</h3>\n<ul>\n  <li>Copy each word <em>three times</em> in your notebook: <strong>visited, played, watched, cooked, cleaned</strong>.</li>\n  <li>Draw a small picture next to each word.</li>\n  <li>Say the words aloud to your parents – chú ý âm cuối <u>-ed</u>.</li>\n</ul>\n<h3>Task 2 – Reading</h3>\n<ol>\n  <li>Read the story “Lan’s Saturday” on page 42 of the Student Book.</li>\n  <li>Underline every verb in the past simple.</li>\n  <li>Answer questions 1–5 on page 43 in full sentences.</li>\n</ol>\n<blockquote>Remember: regular verbs add <strong>-ed</strong> (play → played), but irregular verbs change (go → went, eat → ate). Đừng quên động từ bất quy tắc!</blockquote>\n<h3>Task 3 – Writing</h3>\n<p>Write 6–8 sentences about your weekend. Use at least four verbs from the table below.</p>\n<table>\n  <thead><tr><th>Verb</th><th>Past simple</th><th>Example</th></tr></thead>\n  <tbody>\n    <tr><td>go</td><td>went</td><td>I went to Hồ Tây with my grandma.</td></tr>\n    <tr><td>eat</td><td>ate</td><td>We ate phở bò for breakfast.</td></tr>\n    <tr><td>see</td><td>saw</td><td>I saw a big kite in the park.</td></tr>\n    <tr><td>have</td><td>had</td><td>We had a picnic near the lake.</td></tr>\n  </tbody>\n</table>\n<h3>Task 4 – Listening</h3>\n<p>Listen to the audio and repeat after the speaker: <a href=\"https://example.test/hec/unit6-listening\">Unit 6 listening track</a>. Then record yourself reading Task 3 and send it to the teacher.</p>\n<p>Extra (không bắt buộc): try the online game at <a href=\"https://example.test/games/past-simple\">https://example.test/games/past-simple</a>.</p>\n<p>Great work, everyone – see you on Tuesday! 🌟</p>",
+      "due_date": "2026-11-19T23:59:00+07:00",
+      "created_at": "2026-11-12T16:20:00+07:00"
+    },
+    "className": "Movers B – Thứ 3/5",
+    "teacherName": "Trần Thu Hương"
+  }
+}

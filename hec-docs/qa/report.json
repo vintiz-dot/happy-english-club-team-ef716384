@@ -1,0 +1,188 @@
+{
+  "generatedBy": "scripts/qa.ts",
+  "rows": [
+    {
+      "type": "homework",
+      "fixture": "prompt-card",
+      "variant": "prompt-card",
+      "filename": "Speaking__Talk_about_your_favourite_place_in_H__N_i_homework.pdf",
+      "pages": 1,
+      "bytes": 73127,
+      "ms": 2143,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 2143,
+            "bytes": 73127
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 50,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "regression": {
+          "ok": false,
+          "detail": [
+            "p1: no baseline"
+          ]
+        }
+      }
+    },
+    {
+      "type": "homework",
+      "fixture": "standard",
+      "variant": "standard",
+      "filename": "Unit_6__My_Weekend___B_i_t_p_v__nh__tu_n_2_homework.pdf",
+      "pages": 2,
+      "bytes": 132281,
+      "ms": 4464,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": false,
+          "detail": {
+            "ms": 4464,
+            "bytes": 132281
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": [
+            "time>3s"
+          ]
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 94,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Italic",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold",
+            "NotoEmoji-Regular",
+            "NotoSansMath-Regular"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 322
+          }
+        },
+        "regression": {
+          "ok": false,
+          "detail": [
+            "p1: no baseline",
+            "p2: no baseline"
+          ]
+        }
+      }
+    },
+    {
+      "type": "homework",
+      "fixture": "writing-space",
+      "variant": "writing-space",
+      "filename": "Unit_6__My_Weekend___B_i_t_p_v__nh__tu_n_2_homework.pdf",
+      "pages": 2,
+      "bytes": 132368,
+      "ms": 9229,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": false,
+          "detail": {
+            "ms": 9229,
+            "bytes": 132368
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": [
+            "time>3s"
+          ]
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 94,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Italic",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold",
+            "NotoEmoji-Regular",
+            "NotoSansMath-Regular"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 322
+          }
+        },
+        "regression": {
+          "ok": false,
+          "detail": [
+            "p1: no baseline",
+            "p2: no baseline"
+          ]
+        }
+      }
+    }
+  ]
+}
