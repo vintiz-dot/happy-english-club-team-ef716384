@@ -1,0 +1,85 @@
+admin-1280-dark                req eq num eq axe 1/2 -> 1/0 button-name:1 | overflow false | small in dialog/popper 0  | long name clipped 0/2
+admin-1280-light               req eq num eq axe 1/2 -> 1/0 button-name:1 | overflow false | small in dialog/popper 0  | long name clipped 0/2
+apalette-1280-dark             req eq num eq axe 1/2 -> 1/1 aria-dialog-name:1,aria-required-children:1 | overflow false | small in dialog/popper 0  | long name clipped 0/2
+apalette-1280-light            req eq num eq axe 1/2 -> 1/1 aria-dialog-name:1,aria-required-children:1 | overflow false | small in dialog/popper 0  | long name clipped 0/2
+fam-1280-light                 req eq num eq axe 0/0 -> 0/0  | overflow false | small in dialog/popper 0  | long name clipped 0/2
+fam-375-light                  req eq num eq axe 0/1 -> 0/1 scrollable-region-focusable:1 | overflow false | small in dialog/popper 0  | long name clipped 0/2
+fam-bell-1280-light            req eq num eq axe 0/1 -> 0/1 aria-dialog-name:1 | overflow false | small in dialog/popper 0  | long name clipped 0/1
+fam-bell-375-light             req eq num eq axe 0/1 -> 0/1 aria-dialog-name:1 | overflow false | small in dialog/popper 0  | long name clipped 0/1
+sbell-1280-dark                req eq num eq axe 0/2 -> 0/1 label-content-name-mismatch:4 | overflow false | small in dialog/popper 0  | long name clipped 1/10
+sbell-1280-light               req eq num eq axe 0/2 -> 0/1 label-content-name-mismatch:4 | overflow false | small in dialog/popper 0  | long name clipped 1/10
+sbell-375-dark                 req eq num eq axe 0/1 -> 0/0  | overflow false | small in dialog/popper 0  | long name clipped 0/9
+sbell-375-light                req eq num eq axe 0/1 -> 0/0  | overflow false | small in dialog/popper 0  | long name clipped 0/9
+schat-1280-dark                req eq num eq axe 0/1 -> 0/1 label-content-name-mismatch:4 | overflow false | small in dialog/popper 0  | long name clipped 1/8
+schat-1280-light               req eq num eq axe 0/1 -> 0/1 label-content-name-mismatch:4 | overflow false | small in dialog/popper 0  | long name clipped 1/8
+schat-375-dark                 req eq num eq axe 0/0 -> 0/0  | overflow false | small in dialog/popper 0  | long name clipped 0/7
+schat-375-light                req eq num eq axe 0/0 -> 0/0  | overflow false | small in dialog/popper 0  | long name clipped 0/7
+schat-hist-1280-dark           req eq num eq axe 0/1 -> 0/1 label-content-name-mismatch:4 | overflow false | small in dialog/popper 0  | long name clipped 1/9
+schat-hist-1280-light          req eq num eq axe 0/1 -> 0/1 label-content-name-mismatch:4 | overflow false | small in dialog/popper 0  | long name clipped 1/9
+schat-hist-375-dark            req eq num eq axe 0/0 -> 0/0  | overflow false | small in dialog/popper 0  | long name clipped 0/8
+schat-hist-375-light           req eq num eq axe 0/0 -> 0/0  | overflow false | small in dialog/popper 0  | long name clipped 0/8
+sdash-1280-dark                req eq num eq axe 0/1 -> 0/1 label-content-name-mismatch:4 | overflow false | small in dialog/popper 0  | long name clipped 1/8
+sdash-1280-light               req eq num eq axe 0/1 -> 0/1 label-content-name-mismatch:4 | overflow false | small in dialog/popper 0  | long name clipped 1/8
+sdash-375-dark                 req eq num eq axe 0/0 -> 0/0  | overflow false | small in dialog/popper 0  | long name clipped 0/7
+sdash-375-light                req eq num eq axe 0/0 -> 0/0  | overflow false | small in dialog/popper 0  | long name clipped 0/7
+tbell-1280-dark                req eq num eq axe 0/5 -> 0/2 color-contrast:2,label-content-name-mismatch:3 | overflow false | small in dialog/popper 0  | long name clipped 0/5
+tbell-1280-light               req eq num eq axe 0/5 -> 0/2 color-contrast:28,label-content-name-mismatch:3 | overflow false | small in dialog/popper 0  | long name clipped 0/5
+tbell-375-dark                 req eq num eq axe 1/3 -> 1/2 button-name:4,color-contrast:1,label-content-name-mismatch:3 | overflow false | small in dialog/popper 0  | long name clipped 0/5
+tbell-375-light                req eq num eq axe 1/3 -> 1/2 button-name:4,color-contrast:26,label-content-name-mismatch:3 | overflow false | small in dialog/popper 0  | long name clipped 0/5
+tdash-1280-dark                req eq num eq axe 0/4 -> 0/2 color-contrast:2,label-content-name-mismatch:3 | overflow false | small in dialog/popper 0  | long name clipped 0/3
+tdash-1280-light               req eq num eq axe 0/4 -> 0/2 color-contrast:28,label-content-name-mismatch:3 | overflow false | small in dialog/popper 0  | long name clipped 0/3
+tdash-375-dark                 req eq num eq axe 1/2 -> 1/2 button-name:4,color-contrast:1,label-content-name-mismatch:3 | overflow false | small in dialog/popper 0  | long name clipped 0/3
+tdash-375-light                req eq num eq axe 1/2 -> 1/2 button-name:4,color-contrast:26,label-content-name-mismatch:3 | overflow false | small in dialog/popper 0  | long name clipped 0/3
+tools-1280-dark                req eq num eq axe 0/2 -> 0/1 color-contrast:2 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-1280-light               req eq num eq axe 0/2 -> 0/1 color-contrast:29 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-375-dark                 req eq num eq axe 0/2 -> 0/1 color-contrast:1 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-375-light                req eq num eq axe 0/2 -> 0/1 color-contrast:27 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-ai-1280-dark             req eq num eq axe 1/2 -> 1/1 button-name:2,color-contrast:2 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/9
+tools-ai-1280-light            req eq num eq axe 1/2 -> 1/1 button-name:2,color-contrast:28 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/9
+tools-ai-375-dark              req eq num eq axe 1/2 -> 1/1 button-name:2,color-contrast:1 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/9
+tools-ai-375-light             req DIFF num eq axe 1/2 -> 1/1 button-name:2,color-contrast:26 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/9
+tools-ai-hist-1280-dark        req eq num eq axe 1/2 -> 1/1 button-name:2,color-contrast:2 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/10
+tools-ai-hist-1280-light       req eq num eq axe 1/2 -> 1/1 button-name:2,color-contrast:28 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/10
+tools-ai-hist-375-dark         req eq num eq axe 1/3 -> 1/1 button-name:2,color-contrast:1 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/10
+tools-ai-hist-375-light        req DIFF num DIFF axe 1/3 -> 1/1 button-name:1,color-contrast:26 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/6
+tools-all-1280-dark            req eq num eq axe 1/2 -> 1/1 button-name:2,color-contrast:2 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/9
+tools-all-1280-light           req eq num eq axe 1/2 -> 1/1 button-name:2,color-contrast:29 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/9
+tools-all-375-dark             req eq num eq axe 1/2 -> 1/1 button-name:2,color-contrast:1 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/9
+tools-all-375-light            req eq num eq axe 1/2 -> 1/1 button-name:2,color-contrast:27 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/9
+tools-att-1280-dark            req DIFF num eq axe 1/2 -> 1/1 button-name:2,color-contrast:2 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/9
+tools-att-1280-light           req DIFF num eq axe 1/2 -> 1/1 button-name:2,color-contrast:28 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/9
+tools-att-375-dark             req DIFF num DIFF axe 1/2 -> 1/1 button-name:1,color-contrast:1 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/6
+tools-att-375-light            req DIFF num DIFF axe 1/2 -> 1/1 button-name:1,color-contrast:26 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/6
+tools-music-1280-dark          req eq num eq axe 0/2 -> 0/1 color-contrast:2 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-music-1280-light         req eq num eq axe 0/2 -> 0/1 color-contrast:29 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-music-375-dark           req eq num eq axe 0/2 -> 0/1 color-contrast:1 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-music-375-light          req eq num eq axe 0/2 -> 0/1 color-contrast:26 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-select-1280-dark         req DIFF num DIFF axe 0/1 -> 0/1 color-contrast:2 | overflow false | small in dialog/popper 0  | long name clipped 0/5
+tools-select-1280-light        req DIFF num DIFF axe 0/1 -> 0/1 color-contrast:29 | overflow false | small in dialog/popper 0  | long name clipped 0/7
+tools-select-375-dark          req DIFF num DIFF axe 0/1 -> 0/1 color-contrast:1 | overflow false | small in dialog/popper 0  | long name clipped 0/5
+tools-select-375-light         req DIFF num DIFF axe 0/1 -> 0/1 color-contrast:26 | overflow false | small in dialog/popper 0  | long name clipped 0/7
+tools-spin-1280-dark           req eq num eq axe 0/2 -> 0/1 color-contrast:2 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-spin-1280-light          req eq num eq axe 0/2 -> 0/1 color-contrast:29 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-spin-375-dark            req eq num eq axe 0/2 -> 0/1 color-contrast:1 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-spin-375-light           req eq num eq axe 0/2 -> 0/1 color-contrast:26 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-spin-edit-1280-dark      req eq num eq axe 0/2 -> 0/1 color-contrast:2 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-spin-edit-1280-light     req eq num eq axe 0/2 -> 0/1 color-contrast:29 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-spin-edit-375-dark       req eq num eq axe 0/2 -> 0/1 color-contrast:1 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-spin-edit-375-light      req eq num eq axe 0/2 -> 0/1 color-contrast:26 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-spin-screen-1280-dark    req eq num eq axe 0/3 -> 0/1 color-contrast:2 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-spin-screen-1280-light   req eq num eq axe 0/3 -> 0/1 color-contrast:29 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-spin-screen-375-dark     req eq num eq axe 0/3 -> 0/1 color-contrast:1 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-spin-screen-375-light    req eq num eq axe 0/3 -> 0/1 color-contrast:26 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/3
+tools-teams-1280-dark          req DIFF num DIFF axe 1/2 -> 1/1 button-name:1,color-contrast:2 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/5
+tools-teams-1280-light         req DIFF num DIFF axe 1/2 -> 1/1 button-name:1,color-contrast:29 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/7
+tools-teams-375-dark           req DIFF num DIFF axe 1/2 -> 1/1 button-name:1,color-contrast:1 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/5
+tools-teams-375-light          req DIFF num DIFF axe 1/2 -> 1/1 button-name:1,color-contrast:26 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/5
+tools-teams-screen-1280-dark   req DIFF num DIFF axe 1/3 -> 1/1 button-name:1,color-contrast:2 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/9
+tools-teams-screen-1280-light  req DIFF num DIFF axe 1/3 -> 1/1 button-name:1,color-contrast:29 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/7
+tools-teams-screen-375-dark    req DIFF num DIFF axe 1/3 -> 1/1 button-name:1,color-contrast:1 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/7
+tools-teams-screen-375-light   req DIFF num DIFF axe 1/3 -> 1/1 button-name:1,color-contrast:26 | overflow false | small in dialog/popper 1 dialog:BUTTON "Custom length…" 98x16 | long name clipped 0/7
+tpalette-1280-dark             req eq num eq axe 0/2 -> 0/2 aria-dialog-name:1,color-contrast:2 | overflow false | small in dialog/popper 0  | long name clipped 0/3
+tpalette-1280-light            req eq num eq axe 0/2 -> 0/2 aria-dialog-name:1,color-contrast:28 | overflow false | small in dialog/popper 0  | long name clipped 0/3
+tpalette-375-dark              req eq num eq axe 0/2 -> 0/2 aria-dialog-name:1,color-contrast:1 | overflow false | small in dialog/popper 0  | long name clipped 0/3
+tpalette-375-light             req eq num eq axe 0/2 -> 0/2 aria-dialog-name:1,color-contrast:26 | overflow false | small in dialog/popper 0  | long name clipped 0/3
+runs 84 requests equal 66 numbers equal 69

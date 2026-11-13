@@ -1,0 +1,5 @@
+admin-1280-dark.png: 110265 px differ (15457 > 16) of 1024000
+admin-1280-light.png: 114315 px differ (2865 > 16) of 1024000
+tools-spin-1280-dark.png: 1535 px differ (0 > 16) of 1024000
+tools-spin-1280-light.png: 1916 px differ (0 > 16) of 1024000
+before vs afterL3: 0 pairs pixel-identical, 4 differ

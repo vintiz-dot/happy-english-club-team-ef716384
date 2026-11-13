@@ -22,6 +22,7 @@ import {
 import { createPortal } from "react-dom";
 import { Minimize2, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import { QuietButton } from "./StudioKit";
 
 /**
@@ -79,6 +80,7 @@ export function ClassScreen({
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
   const container = useContext(ClassScreenContainerContext);
+  const ivory = useIvory();
 
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -133,19 +135,26 @@ export function ClassScreen({
       aria-label={title}
       {...{ [CLASS_SCREEN_ATTR]: "" }}
       onPointerDown={(e) => e.stopPropagation()}
-      className={cn(
-        "studio-surface pointer-events-auto fixed inset-0 z-[120] flex flex-col",
-        "animate-in fade-in duration-200",
-      )}
+      className={
+        ivory
+          ? // Solid paper (no grain), one 240 ms fade. The title carries a class
+            // name, so it wraps instead of being cut.
+            "pointer-events-auto fixed inset-0 z-[120] flex flex-col bg-hec-paper text-hec-ink animate-in fade-in duration-hec-2"
+          : cn(
+              "studio-surface pointer-events-auto fixed inset-0 z-[120] flex flex-col",
+              "animate-in fade-in duration-200",
+            )
+      }
     >
-      <div className="flex items-center justify-between gap-4 px-6 py-4 sm:px-10">
-        <h2 className="studio-title truncate text-2xl sm:text-3xl">{title}</h2>
-        <QuietButton onClick={close} size="md" aria-label="Leave class screen">
+      <div className={ivory ? "flex items-start justify-between gap-4 px-6 py-4 sm:px-12" : "flex items-center justify-between gap-4 px-6 py-4 sm:px-10"}>
+        <h2 className={ivory ? "min-w-0 flex-1 whitespace-normal break-words hyphens-none text-balance font-display text-hec-h1 font-medium text-hec-ink sm:text-hec-display" : "studio-title truncate text-2xl sm:text-3xl"}>{title}</h2>
+        {/* Ivory: the accessible name starts with the visible word "Exit" (WCAG 2.5.3). */}
+        <QuietButton onClick={close} size="md" aria-label={ivory ? "Exit the class screen" : "Leave class screen"} className={ivory ? "shrink-0" : undefined}>
           <Minimize2 className="h-4 w-4" aria-hidden />
           Exit
         </QuietButton>
       </div>
-      <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-6 pb-10 sm:px-10">
+      <div className={ivory ? "flex min-h-0 flex-1 items-center justify-center overflow-auto px-6 pb-12 sm:px-12" : "flex min-h-0 flex-1 items-center justify-center overflow-auto px-6 pb-10 sm:px-10"}>
         {children}
       </div>
     </div>,

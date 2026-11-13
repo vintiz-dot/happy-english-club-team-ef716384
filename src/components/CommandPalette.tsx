@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIvory } from "@/hooks/useIvory";
 import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput,
   CommandItem, CommandList, CommandSeparator, CommandShortcut,
@@ -20,6 +21,16 @@ import {
   NotebookPen, Sparkles, FileBarChart2, ListTodo,
   Languages,
 } from "lucide-react";
+
+// ui/command has no ivory branch: on a listed route the palette's parts take the
+// system's menu recipe from here (DESIGN_SYSTEM s.15); elsewhere nothing is passed.
+const INPUT_IVORY = "text-hec-body text-hec-ink placeholder:text-hec-ink-faint";
+const EMPTY_IVORY = "py-6 text-center text-hec-small text-hec-ink-soft";
+const GROUP_IVORY =
+  "text-hec-ink [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-hec-caption [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-hec-ink-soft";
+// A student or class name wraps here, never cut.
+const ITEM_IVORY = "min-h-hec-target rounded-hec-sm px-3 text-hec-body text-hec-ink [overflow-wrap:anywhere]";
+const ICON_IVORY = "mr-2 h-4 w-4 shrink-0 text-hec-ink-soft";
 
 interface JumpTarget {
   label: string;
@@ -33,6 +44,7 @@ export function CommandPalette() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const ivory = useIvory();
 
   const enabled = role === "admin" || role === "teacher";
 
@@ -119,19 +131,22 @@ export function CommandPalette() {
         placeholder="Jump to a page, search students or classes…"
         value={query}
         onValueChange={setQuery}
+        className={ivory ? INPUT_IVORY : undefined}
       />
       <CommandList>
-        <CommandEmpty>No results.</CommandEmpty>
+        {/* CommandEmpty lets a passed className replace its own, so it gets one only on a listed route. */}
+        <CommandEmpty {...(ivory ? { className: EMPTY_IVORY } : {})}>No results.</CommandEmpty>
 
         {(found?.students?.length ?? 0) > 0 && (
-          <CommandGroup heading="Students">
+          <CommandGroup heading="Students" className={ivory ? GROUP_IVORY : undefined}>
             {found!.students.map((s: any) => (
               <CommandItem
                 key={s.id}
                 value={`student ${s.full_name}`}
                 onSelect={() => go(`/students/${s.id}`)}
+                className={ivory ? ITEM_IVORY : undefined}
               >
-                <GraduationCap className="mr-2 h-4 w-4 text-blue-500" />
+                <GraduationCap className={ivory ? ICON_IVORY : "mr-2 h-4 w-4 text-blue-500"} />
                 {s.full_name}
               </CommandItem>
             ))}
@@ -139,7 +154,7 @@ export function CommandPalette() {
         )}
 
         {(found?.classes?.length ?? 0) > 0 && (
-          <CommandGroup heading="Classes">
+          <CommandGroup heading="Classes" className={ivory ? GROUP_IVORY : undefined}>
             {found!.classes.map((c: any) => (
               <CommandItem
                 key={c.id}
@@ -147,8 +162,9 @@ export function CommandPalette() {
                 onSelect={() =>
                   go(role === "admin" ? `/admin/classes/${c.id}` : `/teacher/classes/${c.id}`)
                 }
+                className={ivory ? ITEM_IVORY : undefined}
               >
-                <School className="mr-2 h-4 w-4 text-emerald-500" />
+                <School className={ivory ? ICON_IVORY : "mr-2 h-4 w-4 text-emerald-500"} />
                 {c.name}
               </CommandItem>
             ))}
@@ -156,28 +172,29 @@ export function CommandPalette() {
         )}
 
         {((found?.students?.length ?? 0) > 0 || (found?.classes?.length ?? 0) > 0) && (
-          <CommandSeparator />
+          <CommandSeparator className={ivory ? "bg-hec-line" : undefined} />
         )}
 
-        <CommandGroup heading="Go to">
+        <CommandGroup heading="Go to" className={ivory ? GROUP_IVORY : undefined}>
           {pages.map((p) => (
             <CommandItem
               key={p.path + p.label}
               value={`${p.label} ${p.keywords ?? ""}`}
               onSelect={() => go(p.path)}
+              className={ivory ? ITEM_IVORY : undefined}
             >
-              <p.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+              <p.icon className={ivory ? ICON_IVORY : "mr-2 h-4 w-4 text-muted-foreground"} />
               {p.label}
             </CommandItem>
           ))}
         </CommandGroup>
 
-        <CommandSeparator />
-        <CommandGroup heading="Tips">
-          <CommandItem value="shortcut help keyboard" onSelect={() => setOpen(false)}>
-            <Sparkles className="mr-2 h-4 w-4 text-violet-500" />
+        <CommandSeparator className={ivory ? "bg-hec-line" : undefined} />
+        <CommandGroup heading="Tips" className={ivory ? GROUP_IVORY : undefined}>
+          <CommandItem value="shortcut help keyboard" onSelect={() => setOpen(false)} className={ivory ? ITEM_IVORY : undefined}>
+            <Sparkles className={ivory ? ICON_IVORY : "mr-2 h-4 w-4 text-violet-500"} />
             Press Ctrl+K anywhere to open this bar
-            <CommandShortcut>Ctrl K</CommandShortcut>
+            <CommandShortcut className={ivory ? "pl-2 text-hec-caption tracking-wider text-hec-ink-soft" : undefined}>Ctrl K</CommandShortcut>
           </CommandItem>
         </CommandGroup>
       </CommandList>
