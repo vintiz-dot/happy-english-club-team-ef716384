@@ -2,7 +2,22 @@
 
 Independent reviewer. Reviewing branch `worktree-agent-a8fa73ee4063a7b1b` at 0617d940 (detached; the builder's final tip a80d45b1 is reviewed in the last section). Read-only: no product code changed, nothing pushed, nothing applied. Live probes are catalog-only (project `aswgmbefikhsnhogtryv`, 2026-11-13 ~09:30 Hanoi).
 
-**Where I am / next step:** sections 1-7 and 9 written; full `run.mjs` and my mutants running; next: section 8 results, the final tip, verdict.
+**Where I am / next step:** COMPLETE (review commits rebased onto the final tip a80d45b1). Next step is not mine: the conductor makes the changes below, then applies with the corrected brief.
+
+## Verdict: APPLY WITH CHANGES
+
+Must change before the live apply:
+1. **Brief, md5 comparisons (section 9).** Live 1a was pasted with CRLF; every raw `md5(prosrc)` of 1a differs from the expected JSON, so brief steps 1.1, 3.1 and 3.2 STOP on a healthy database. Compare `md5(replace(prosrc, E'\r', ''))` (18/18 equal today), and send 1b with LF via `apply_migration` as the brief says. Step 5: "at least one `guard_installed` row" (a re-apply adds one, `:1162`).
+2. **Preflight requires the 1a bodies it depends on** (section 5a): LF md5 of `_caller_lane` (66001c3b...) and `_floor_mark_level` (ed25e62b...) and the four `invoice_state_floor` columns, compared CR-stripped; refuse otherwise. Then regenerate nothing else (the preflight is a DO block, not a fingerprinted body).
+3. **Rollback 2 wording** (section 6): script header and brief rollback step 2 - after rollback 2 the new `repair-attendance` refuses EVERY repair (HC050); redeploying the previous `repair-attendance` is part of the rollback, not optional.
+4. **Day-one note for R-1** (section 1): until step 3B, ending, pausing or transferring an enrolment backdated more than a week into a month with a bill is refused (`HC025 retro_mark`, toasted raw by `ModifyEnrollmentModal`); the way through is to set those lessons' marks to Excused in Past Attendance with a reason first. Put it in the brief's "expected" list and tell the owner; a one-line mapping of HC025 in `ModifyEnrollmentModal` is better still.
+5. **Three missing cases** (section 8, current code behaves correctly - probe4 - but nothing pins it): a cover re-saving an old mark unchanged passes (X01); `record_money_change_event` as a teacher -> 42501 (X07); `mark-attendance` teacher, current month, lesson > 7 days, a person's Present -> Excused -> 409 (F01).
+
+Recommended (can follow in 3A/3B): R-2 rule-1 race fix (`PERFORM ... FOR UPDATE`); S-1 the two class drawers read the 409 body; PastAttendanceEditor keeps the paused lesson's edits.
+
+## Final tip a80d45b1
+
+Reviewed: `MoneyChangesReview` mounted in `AutomationTab` under "Money changes" (existing components untouched); one-line note that recorded entries cannot be signed off until step 4; `[functions.guarded-change-refresh] verify_jwt = true`. On this tip: `tsc --noEmit -p tsconfig.app.json` exit 0, `money-guard-lib` 33/33. Full `node scripts/pgtest/run.mjs` on 0617d940 (a80d45b1 changes no SQL, function or test): **5903 assertions across 62 suites, 0 failed** (d4 register 119, d4 functions register 33, money guard lib 33, edge functions typecheck 5, app typecheck green).
 
 Reviewer probes (scratchpad, not committed): `probe.mjs` (28 cases, 28 pass), `probe2.mjs` (rule 1, delete + insert), `probe3.mjs` (live `end_enrollment` under the guard), `mut.mjs` (15 mutants). All run the real migration files in pglite with the d4 prelude.
 
