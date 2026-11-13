@@ -1,0 +1,89 @@
+{% extends "layouts/page.njk" %}
+{% import "ui.njk" as ui %}
+{% set audit = data.audit %}
+{% set s = audit | statementModel %}
+{% set dense = " t--dense" if variant == "compact" else "" %}
+{% set runningTitle = audit.student.name %}
+{% block body %}
+{{ ui.header(tenant, "", "Account Statement") }}
+
+<h1 class="doc-title">{{ audit.student.name }}{% if s.period %} <span class="doc-title__aside">&middot; {{ s.period }}</span>{% endif %}</h1>
+<p class="doc-lede">{{ s.rangeLine }}</p>
+
+<table class="t t--money{{ dense }}">
+  <thead>
+    <tr>
+      <td>Month</td>
+      <td class="num">Sessions</td>
+      <td class="num">Gross</td>
+      <td class="num">Discount</td>
+      <td class="num">Charged</td>
+      <td class="num">Paid</td>
+      <td class="num">Balance</td>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in s.rows %}
+    <tr>
+      <td class="t__label">{{ r.month }}</td>
+      <td class="num">{{ r.sessions }}{% if r.excused %}<span class="num__aside">{{ r.excused }}</span>{% endif %}</td>
+      <td class="num">{{ r.gross }}</td>
+      <td class="num">{{ r.discount }}</td>
+      <td class="num">{{ r.charged }}</td>
+      <td class="num">{{ r.paid }}</td>
+      <td class="num num--strong">{{ r.balance }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="t__total">
+      <td class="t__label">Total</td>
+      <td colspan="3"></td>
+      <td class="num">{{ s.totalCharged }}</td>
+      <td class="num">{{ s.totalPaid }}</td>
+      <td class="num">{{ s.totalBalance }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="table-note">Balance is cumulative. A positive figure means the account is in credit; a negative figure is the amount outstanding at the end of that month.</p>
+
+{% if s.hasEvents %}
+<section class="stmt-payments">
+  {{ ui.section("Payments received", "", 3) }}
+  <table class="t t--money{{ dense }}">
+    <thead>
+      <tr>
+        <td>Paid on</td>
+        <td>Entered</td>
+        <td>Method</td>
+        <td>Recorded by</td>
+        <td class="num">Amount</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in s.payments %}
+      <tr>
+        <td class="t__label">{{ p.paidOn }}</td>
+        <td class="t__label">{{ p.entered }}</td>
+        <td>{{ p.method }}</td>
+        <td>{{ p.by }}</td>
+        <td class="num">{{ p.amount }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if s.showCaveat %}
+<p class="table-note">Some entries predate this system&rsquo;s record of who entered them and are shown as &ldquo;not recorded&rdquo;.</p>
+{% endif %}
+
+<div class="closing">
+  {% call ui.callout("note") %}{{ tenant.reassurance.tuition }}{% endcall %}
+  <div class="closing-row">
+    {{ ui.signature(tenant) }}
+    {{ ui.qr_footer(brand) }}
+  </div>
+  {% call ui.colophon() %}Hanoi English &middot; hanoienglish.com<br>{{ tenant.footer }} &middot; statement for {{ audit.student.name }}{% endcall %}
+</div>
+{% endblock %}

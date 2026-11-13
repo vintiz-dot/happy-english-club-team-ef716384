@@ -1,0 +1,24 @@
+{
+  "type": "statement",
+  "version": "1.0.0",
+  "title": "Account Statement",
+  "description": "A student's account statement: every billed month, what was taken off, what was paid and the running balance, then the payments received. Replaces src/components/admin/reports/StudentStatementPrint.tsx.",
+  "output": "pdf",
+  "documentTitle": "{{ data.audit.student.name }} - Account Statement",
+  "lang": "en",
+  "variantField": "variant",
+  "defaultVariant": "standard",
+  "variants": {
+    "standard": {
+      "description": "Comfortable rows, for a few months to a year of history."
+    },
+    "compact": {
+      "description": "Tighter rows and smaller figures, for long histories that should stay on few pages."
+    }
+  },
+  "filename": "statement",
+  "keyField": "audit.student.id",
+  "brandStrings": [
+    "Hanoi English · hanoienglish.com"
+  ]
+}

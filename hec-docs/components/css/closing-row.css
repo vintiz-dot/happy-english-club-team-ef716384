@@ -1,0 +1,5 @@
+/* Sign-off on the left, QR footer on the right, sharing one baseline: the
+   compact closing for short documents. */
+.closing-row { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-2); break-inside: avoid; }
+.closing-row .sign { margin: 0; }
+.closing-row .qrf { margin: 0; padding: 0; border-top: none; flex: none; }

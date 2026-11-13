@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hec-docs.invalid/schemas/statement/1.0.0",
+  "title": "Account statement document input",
+  "description": "Mirrors StudentAudit (src/hooks/useStudentAudit.ts) as StudentStatementPrint receives it. Fields the statement does not print are still declared, so the app can send the audit unchanged.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["audit"],
+  "properties": {
+    "variant": { "enum": ["standard", "compact"] },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["student", "months", "events", "actors", "totals", "caveats"],
+      "properties": {
+        "student": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "name"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+            "familyId": { "type": ["string", "null"] }
+          }
+        },
+        "months": { "type": "array", "maxItems": 120, "items": { "$ref": "#/$defs/month" } },
+        "events": { "type": "array", "maxItems": 1000, "items": { "$ref": "#/$defs/event" } },
+        "actors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string", "maxLength": 200 },
+              "email": { "type": ["string", "null"] },
+              "known": { "type": "boolean" }
+            }
+          }
+        },
+        "totals": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["charged", "paid", "balance"],
+          "properties": {
+            "charged": { "type": "number" },
+            "paid": { "type": "number" },
+            "balance": { "type": "number" },
+            "outstanding": { "type": "number" },
+            "credit": { "type": "number" },
+            "months": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "caveats": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["unattributedEvents"],
+          "properties": {
+            "scalarPayments": { "type": "boolean" },
+            "auditOnlyEvents": { "type": "integer", "minimum": 0 },
+            "unattributedEvents": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "nullableString": { "type": ["string", "null"] },
+    "month": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["month", "baseAmount", "discountAmount", "charged", "paid"],
+      "properties": {
+        "month": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$", "description": "YYYY-MM" },
+        "invoiceId": { "type": "string" },
+        "invoiceNumber": { "$ref": "#/$defs/nullableString" },
+        "source": { "enum": ["snapshot", "invoice"] },
+        "closedAt": { "$ref": "#/$defs/nullableString" },
+        "closedBy": { "$ref": "#/$defs/nullableString" },
+        "baseAmount": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "charged": { "type": "number" },
+        "paid": { "type": "number" },
+        "carryInCredit": { "type": "number" },
+        "carryInDebt": { "type": "number" },
+        "carryOutCredit": { "type": "number" },
+        "carryOutDebt": { "type": "number" },
+        "status": { "$ref": "#/$defs/nullableString" },
+        "confirmationStatus": { "$ref": "#/$defs/nullableString" },
+        "confirmedAt": { "$ref": "#/$defs/nullableString" },
+        "confirmedBy": { "$ref": "#/$defs/nullableString" },
+        "updatedAt": { "$ref": "#/$defs/nullableString" },
+        "updatedBy": { "$ref": "#/$defs/nullableString" },
+        "classes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "classId": { "type": "string" },
+              "className": { "type": "string" },
+              "sessionsCountStored": { "type": "number" },
+              "amount": { "type": "number" }
+            }
+          }
+        },
+        "attendance": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["billedSessions", "excused"],
+          "properties": {
+            "present": { "type": "number" },
+            "absent": { "type": "number" },
+            "late": { "type": "number" },
+            "excused": { "type": "number" },
+            "billedSessions": { "type": "number" },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "date": { "type": "string" },
+                  "className": { "type": "string" },
+                  "status": { "type": "string" },
+                  "billed": { "type": "boolean" },
+                  "markedAt": { "$ref": "#/$defs/nullableString" },
+                  "markedBy": { "$ref": "#/$defs/nullableString" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "recordedAt"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["payment", "correction", "confirmation", "adjustment"] },
+        "label": { "type": "string" },
+        "amount": { "type": ["number", "null"] },
+        "occurredAt": { "type": ["string", "null"], "description": "When the money moved; null when only the entry date was kept." },
+        "recordedAt": { "type": "string", "description": "When the row was written." },
+        "month": { "$ref": "#/$defs/nullableString" },
+        "method": { "type": ["string", "null"], "maxLength": 200 },
+        "memo": { "$ref": "#/$defs/nullableString" },
+        "actorId": { "$ref": "#/$defs/nullableString" },
+        "provenance": { "enum": ["payments", "ledger", "audit_log"] },
+        "exact": { "type": "boolean" }
+      }
+    }
+  }
+}
