@@ -134,6 +134,18 @@ await section('mark-attendance: a teacher, rule 6 in the function', async () => 
   const k2 = await kid(s); await att(s, k2, 'Present', null);
   r = await call(markFn, tu.tok, { sessionId: s.sid, studentId: k2, status: 'Absent' });
   ok('the class teacher, the same old lesson, Present -> Absent (no crossing) -> 200', r.status === 200, r.body);
+  // F01: the CURRENT month, the lesson ended more than 7 days ago, a person's Present -> Excused
+  const C = await clock(-9);
+  if (C.date.slice(0, 7) === TODAY.date.slice(0, 7)) {
+    const c = await mk({ when: C, teacher: tu.id }); const kc = await kid(c); await att(c, kc, 'Present', tu.id);
+    log.writes = [];
+    r = await call(markFn, tu.tok, { sessionId: c.sid, studentId: kc, status: 'Excused' });
+    ok('the class teacher, THIS month, a lesson 9 days old, un-billing a person\'s Present -> 409 "ask an administrator", nothing written',
+       r.status === 409 && r.body.kind === 'retro_mark_staff' && (await mark(c, kc)).status === 'Present' &&
+       !log.writes.some((w) => w.table === 'attendance'), r.body);
+  } else {
+    ok('the class teacher, THIS month, a lesson 9 days old (not testable in the first 9 days of a month: covered by the past-month case)', true);
+  }
   const other = await person('teacher');
   r = await call(markFn, other.tok, { sessionId: s.sid, studentId: k2, status: 'Present' });
   ok('a teacher who does not teach the class (one-off cover, old lesson) -> 403', r.status === 403, r.body);

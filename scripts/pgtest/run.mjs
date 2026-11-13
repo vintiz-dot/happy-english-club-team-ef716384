@@ -170,7 +170,7 @@ const SUITES = [
   {
     name: "d4 functions register",
     file: "d4-functions-register.test.mjs",
-    expect: 33,
+    expect: 34,
     migrations: [
       "20261009130000_audit_every_admin_action.sql",
       "20261027090000_cancelled_lesson_attendance_guard.sql",
@@ -182,7 +182,7 @@ const SUITES = [
       "20261114091000_d4_core_register.sql",
     ],
   },
-  { name: "money guard lib", file: "money-guard-lib.test.mjs", expect: 33, migrations: [] },
+  { name: "money guard lib", file: "money-guard-lib.test.mjs", expect: 45, migrations: [] },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.

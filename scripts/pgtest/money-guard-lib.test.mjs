@@ -3,7 +3,7 @@
 // supabase/functions/_lib/money-guard.ts (the teacher rule's clock, the
 // refresh resume), bundled with esbuild and run in node. No database.
 import { build } from 'esbuild';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -88,6 +88,43 @@ const done = edge.pairsDone([{ payload: { attached: { results: [{ student_id: 'a
 ok('pairsDone: only pairs that refreshed ok count as done', done.has('a:m') && !done.has('b:m') && done.size === 1);
 ok('readAck: strings and a true boolean only', JSON.stringify(edge.readAck({ reason: 'r', token: 7, confirm: 'yes' })) ===
    JSON.stringify({ reason: 'r', token: null, confirm: false, correction_reason: null }) && edge.readAck(null) === null);
+
+// round 2: PastAttendanceEditor keeps the edits of the lesson whose dialog opened
+const edits = { a: { k1: 'Present' }, b: { k2: 'Excused' }, c: { k3: 'Absent' } };
+const after = lib.editsAfterSave(edits, ['a']);   // a saved, b opened the dialog (not saved), c not reached
+ok('editsAfterSave: the saved lesson leaves; the dialog\'s lesson and the unreached one keep their edits',
+   JSON.stringify(Object.keys(after)) === JSON.stringify(['b', 'c']) && after.b.k2 === 'Excused');
+ok('editsAfterSave: confirming the dialog (its target saved) then clears that lesson only',
+   JSON.stringify(Object.keys(lib.editsAfterSave(after, ['b']))) === JSON.stringify(['c']));
+const editor = readFileSync(resolve(repo, 'src/components/admin/PastAttendanceEditor.tsx'), 'utf8');
+ok('PastAttendanceEditor: the dialog branch does not count its lesson as saved, and the save-all keeps unsaved edits',
+   /if \(r\?\.dialog\) \{ paused = true; break; \}/.test(editor) && !/dialog\)\s*\{\s*saved\.push/.test(editor) &&
+   /setAttendance\(\(prev\) => editsAfterSave\(prev, saved\)\)/.test(editor) &&
+   /result\?\.target_id\) setAttendance\(\(prev\) => editsAfterSave\(prev, \[String\(result\.target_id\)\]\)\)/.test(editor));
+
+// round 2: the server's sentence, never a raw code
+ok('rpcErrorText: HC025 retro_mark -> the reason sentence', lib.rpcErrorText({ code: 'HC025', message: 'attendance_requires_checked_path',
+   details: 'kind=retro_mark; tier=1; ...' }, 'Failed') === lib.MONEY_ERROR_TEXT.retro_mark);
+ok('rpcErrorText: a bare snake_case message -> the fallback, not the code', lib.rpcErrorText({ code: 'P0001', message: 'some_code' }, 'Failed to end enrollment') === 'Failed to end enrollment');
+ok('rpcErrorText: an ordinary sentence is kept', lib.rpcErrorText({ code: 'P0001', message: 'Active enrollment not found' }, 'F') === 'Active enrollment not found');
+const resp = (b) => ({ context: { clone() { return this; }, json: async () => b } });
+ok('functionRefusalText: a 409 retro_mark -> the sentence and where to give the reason',
+   (await lib.functionRefusalText(resp({ code: 'attendance_requires_checked_path', kind: 'retro_mark' }), 'F')) ===
+   `${lib.MONEY_ERROR_TEXT.retro_mark} Open the class's Past Attendance to give the reason.`);
+ok('functionRefusalText: a teacher\'s 409 -> "ask an administrator"',
+   /ask an administrator/.test(await lib.functionRefusalText(resp({ code: 'attendance_requires_checked_path', kind: 'retro_mark_staff', error: 'x' }), 'F')));
+ok('functionRefusalText: the function\'s own sentence, else the fallback (never "non-2xx")',
+   (await lib.functionRefusalText(resp({ error: 'Lesson not found' }), 'F')) === 'Lesson not found' &&
+   (await lib.functionRefusalText({ message: 'Edge Function returned a non-2xx status code' }, 'Failed to save attendance')) === 'Failed to save attendance');
+for (const f of ['src/components/admin/class/AttendanceDrawer.tsx', 'src/components/admin/class/SessionDetailDrawer.tsx']) {
+  const t = readFileSync(resolve(repo, f), 'utf8');
+  ok(`${f.split('/').pop()}: every mark-attendance refusal is shown with its reason (functionRefusalText), not rethrown raw`,
+     /invoke\("mark-attendance"[^]*?\}\);\s*(\/\/.*\s*)?if \(error\) throw new Error\(await functionRefusalText\(error, /.test(t) &&
+     (t.match(/invoke\("mark-attendance"/g) ?? []).length === (t.match(/functionRefusalText\(error, /g) ?? []).length);
+}
+const mem = readFileSync(resolve(repo, 'src/components/admin/ModifyEnrollmentModal.tsx'), 'utf8');
+ok('ModifyEnrollmentModal: every failure toast goes through rpcErrorText',
+   (mem.match(/rpcErrorText\(error, /g) ?? []).length === 4 && !/toast\.error\(error\.message/.test(mem));
 
 const { pass, fail } = counts();
 console.log(`\n${pass} passed, ${fail} failed`);
