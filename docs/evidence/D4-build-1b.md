@@ -1,6 +1,6 @@
 # D4 build - step 1b (the money guard's core and the register)
 
-**Where I am / next step:** built and tested; mutation run and full suite run __STATUS__. Next step is not mine: the independent review of 1b, then the conductor's live apply with `D4-1b-live-apply-brief.md` (after 1a is live).
+**Where I am / next step:** COMPLETE: built and tested; mutation run and full suite run green (25/25 mutants caught; 5903 assertions, 0 failed). Next step is not mine: the independent review of 1b, then the conductor's live apply with `D4-1b-live-apply-brief.md` (after 1a is live).
 
 Implementer only: nothing pushed, nothing deployed, nothing applied to any database. Merged `claude/hec-conductor-setup-efbaa5` (9841c6aa) first.
 
@@ -39,15 +39,43 @@ Trigger-made writes (depth > 1: the seeds, the cancel's excuse-all, a cascade) a
 
 | Suite | Assertions | Covers |
 |---|---|---|
-| `d4-register` | __N_REG__ | preflight; install (no row rewritten, idempotent, nothing of D1/D2/1a replaced or re-granted, only the listed triggers added, search_path on every function, grants, RLS, lock timeout, no partial unique index); `tuition_month_state` over the b.0 table and the bill floor; `tuition_reach` (family-wide) and `payroll_reach`; R-4 bulk upserts of an unchanged register in a paid past month (teacher and admin) and a non-crossing upsert pass, a crossing upsert is judged; the free week on every lane with a confirmed bill; rules 5 / 6 / A-6 / A-3; rule 7 and the owner lane with their events; D2's cancel in a paid past month; DQ-1 (cover refused after the week, free inside it, the regular teacher free, a rise not refused); the acknowledgement (forged, other child, other status, lower tier -> HC011, a replay from an earlier transaction); the checked path's order (42501 for teacher / parent / service role, HC010 / HC011 / HC012 / HC013, a bill recalculated between preview and confirm, T3 in the review queue, T0 with no reason still one row, a token always checked when sent, refuse codes, `not_installed`, `bad_entity`); HC050 with the trigger disabled and the status card; bulk (HC017, review of T2 bulk, HC016); G-12 repair (raw refused, preview, reason, rows as before, nothing left, Excused outside the enrolment, this week T0 with a confirmed bill, `no_enrollment`, `bad_args`); events, review note, automation log, append-only; rollback 2 (trigger gone, tables stay, raw passes, checked path HC050, safe twice, re-paste). |
+| `d4-register` | 119 | preflight; install (no row rewritten, idempotent, nothing of D1/D2/1a replaced or re-granted, only the listed triggers added, search_path on every function, grants, RLS, lock timeout, no partial unique index); `tuition_month_state` over the b.0 table and the bill floor; `tuition_reach` (family-wide) and `payroll_reach`; R-4 bulk upserts of an unchanged register in a paid past month (teacher and admin) and a non-crossing upsert pass, a crossing upsert is judged; the free week on every lane with a confirmed bill; rules 5 / 6 / A-6 / A-3; rule 7 and the owner lane with their events; D2's cancel in a paid past month; DQ-1 (cover refused after the week, free inside it, the regular teacher free, a rise not refused); the acknowledgement (forged, other child, other status, lower tier -> HC011, a replay from an earlier transaction); the checked path's order (42501 for teacher / parent / service role, HC010 / HC011 / HC012 / HC013, a bill recalculated between preview and confirm, T3 in the review queue, T0 with no reason still one row, a token always checked when sent, refuse codes, `not_installed`, `bad_entity`); HC050 with the trigger disabled and the status card; bulk (HC017, review of T2 bulk, HC016); G-12 repair (raw refused, preview, reason, rows as before, nothing left, Excused outside the enrolment, this week T0 with a confirmed bill, `no_enrollment`, `bad_args`); events, review note, automation log, append-only; rollback 2 (trigger gone, tables stay, raw passes, checked path HC050, safe twice, re-paste). |
 | `d4-functions-register` | 33 | repair-attendance per caller (no auth, teacher, parent, the service key itself), preview writes nothing, 409 with the preview and nothing written, short reason, stale token, acknowledged repair as the admin (RPC on the caller's client, no service write), nothing missing, this week T0, `no_enrollment`, bad body; mark-attendance admin on the admin's client (attendance and Held flip), admin old billed -> 409 with the `set_marks` preview and no service retry, a non-crossing old change passes; teacher today / old past month (409, nothing written, no bill read) / non-crossing; cover teacher, parent, no auth; guarded-change-refresh 25 then 5 with the events, teacher 403, unknown 404, log-refused admin 403 / service ok, bad action. |
 | `money-guard-lib` | 33 | the dialog's requirements and button, the ack body, the reach rows, the mark lines, which 409 opens the dialog, every refusal's wording says what to do next; the function side's Hanoi clock (the 7-day line, an overnight lesson, an unreadable time counted as old), the past month, the refresh resume, `readAck`. |
 
-Full run: __RUN__. App typecheck: clean (`tsc --noEmit -p tsconfig.app.json`, exit 0, and the suite "app typecheck"). `edge-functions.test.mjs`: 104 files type-check (the three new / changed functions included).
+Full run: `node scripts/pgtest/run.mjs` -> 5903 assertions across 62 suites, 0 failed (d4 register 119, d4 functions register 33, money guard lib 33; d4 floors 213, d4 D2 carry-over 275, d4 deployed functions 37, d4 rollback 26 unchanged; session guard functions green with the extended `_lib/session-guard.ts`). App typecheck: clean (`tsc --noEmit -p tsconfig.app.json`, exit 0, and the suite "app typecheck"). `edge-functions.test.mjs`: 104 files type-check (the three new / changed functions included).
 
 ## Mutations (file 2; `node scripts/pgtest/d4-mutants.mjs C01 ... C25`)
 
-__MUT__
+| Mutant | Breaks | Verdict |
+|---|---|---|
+| C01 | G-11 rule 1 dropped (an upsert's BEFORE INSERT judged as a new row) | CAUGHT by register: FAIL R-4 a PostgREST-shaped bulk upsert re-saving an unchanged register of a past PAID month (T2): passes |
+| C02 | G-11 rule 3 dropped (no free week) | CAUGHT by register: FAIL   the admin puts it back: allowed |
+| C03 | teacher rule ignores a past month | CAUGHT by register: FAIL teacher, lesson in a past month: HC025 "ask an administrator", with nothing about the bill in the error |
+| C04 | A-6 dropped (a person's Present un-billed in an unbilled month passes) | CAUGHT by register: FAIL A-6: a PERSON's Present un-billed after the week, nothing billed: the admin still needs a reason (T1) |
+| C05 | the service lane is refused like a person | CAUGHT by register: FAIL service lane, old lesson, billed month: the write goes through AND one service_retro_mark event names it |
+| C06 | service_retro_mark not written | CAUGHT by register: FAIL service lane, old lesson, billed month: the write goes through AND one service_retro_mark event names it |
+| C07 | owner_lane event not written | CAUGHT by register: FAIL owner lane (SQL editor): passes, and one owner_lane event (A-1) |
+| C08 | DQ-1 dropped (one-off cover lowers an old mark) | CAUGHT by register: FAIL a cover teacher (not a teacher of the class) lowering a person's Present to Absent, lesson 40 days old: HC025 cover_staff, "ask an administrator" |
+| C09 | DQ-1 also refuses the class's regular teacher | CAUGHT by register: FAIL R-4 an upsert Present -> Absent (both charged, no crossing): passes |
+| C10 | the acknowledgement does not check the status written | SURVIVED the first run (the case also changed the child); a same-child case added; re-run: CAUGHT by register (an acknowledgement for this child with another status) |
+| C11 | the acknowledgement does not compare tiers (A-8) | CAUGHT by register: FAIL A-8: an acknowledgement stored at T1 against a T2 write -> HC011 token_stale |
+| C12 | the acknowledgement accepts a row of another transaction (replay) | CAUGHT by register: FAIL a replay: the flag names a real override of an earlier transaction -> HC025 |
+| C13 | tuition_month_state ignores the bill floor's signature | CAUGHT by register: FAIL the bill floor: a payment reset and an un-confirm leave the past month at T3 (signed), state from the floor |
+| C14 | a past month with no bill but a lesson is T0 | CAUGHT by register: FAIL past month, no bill, the child's class taught that month -> T1 |
+| C15 | a confirmed current month is T0 | CAUGHT by register: FAIL tuition_month_state current month, confirmed -> T2 |
+| C16 | no confirmation needed | CAUGHT by register: FAIL no confirmation -> HC012 |
+| C17 | the token is not checked | CAUGHT by register: FAIL a wrong token -> HC011 |
+| C18 | HC050 dropped (writes with the trigger disabled) | CAUGHT by register: FAIL trigger disabled: money_change_checked -> HC050, nothing written |
+| C19 | bulk: a T2 item rides on the batch reason | CAUGHT by register: FAIL bulk: a T2 item with only the batch reason -> refused HC017; the T1 item done (via bulk) |
+| C20 | a T2 bulk change is not reviewed | CAUGHT by register: FAIL bulk: with its own reason, done; a T2 change made in bulk goes to review |
+| C21 | the plan ignores the free week | CAUGHT by register: FAIL set_marks preview for TODAY's lesson with a confirmed bill: T0 (the week is free in the plan too) |
+| C22 | repair ignores the enrollment (Present outside it) | CAUGHT by register: FAIL a lesson outside the enrollment is repaired as Excused, and that is T0 |
+| C23 | the service role may run the checked path | CAUGHT by register: FAIL RPCs: authenticated only (not anon, not service_role); log_money_automation_refused: service_role only; the rest: nobody |
+| C24 | trigger-made writes are judged | SURVIVED the first run (the cancel's excuse-all is also passed by "cancelled lesson"); a case with the live seed trigger added; re-run: CAUGHT by register (the seed of a new lesson, depth 2) |
+| C25 | an admin's old billed mark passes raw (rule 5 dropped) | CAUGHT by register: FAIL admin, lesson 40 days old, paid past month, raw Present -> Excused: HC025 retro_mark (tier 2) |
+
+25 mutants of file 2: 23 caught on the first run, 2 survivors (C10, C24) each caught after a new case; 25/25 caught.
 
 ## Design questions (each built the fail-closed way)
 
