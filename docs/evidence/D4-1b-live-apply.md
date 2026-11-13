@@ -2,7 +2,7 @@
 
 Procedure: `docs/evidence/D4-1b-live-apply-brief.md` at 90a059c9, after the independent review's round 3 verdict APPLY (`docs/evidence/D4-1b-review.md`). Authority as relayed by the conductor: owner D-9, D-19, D-22. Window: outside 16:30-21:00 Hanoi.
 
-**Where I am / next step:** step 1 passed; step 2 (apply).
+**Where I am / next step:** STOPPED AT STEP 2. Pre-checks passed; `apply_migration` was refused by this session's permission check; nothing was applied, no function deployed, live unchanged. Next step is not mine: the conductor or owner applies it (the pre-checks below and the files' md5s stand; re-run step 1 if anything lands first).
 
 ## Step 1 - pre-checks (read-only), 2026-11-13 14:21 Hanoi
 
@@ -19,3 +19,11 @@ Method for every fingerprint comparison: the fingerprint `.sql` wrapped to one m
 7. cron: stars-sync active (last run 14:20:00), rebuild-upcoming-sessions active. No other active client query.
 
 All as expected.
+
+## Step 2 - apply: STOPPED (not applied), 14:27 Hanoi
+
+One `apply_migration` call (name `d4_core_register`, the file's text at 90a059c9) was refused by the session's permission check before it reached the database: "Permission for this action was denied by the Claude Code auto mode classifier. Reason: [Destructive or Unwanted Actions]". As instructed: no retry, no other route (no `execute_sql` of the file, no deploy).
+
+Confirmed read-only straight afterwards (14:27): `money_change_overrides` / `money_change_events` NULL, `zz_attendance_money_guard` 0, the 1b functions 0, no `d4_core_register` row in `supabase_migrations.schema_migrations`; counts attendance 6289, invoices 708, sessions 876, point_transactions 6930 (as in step 1). Live is exactly as in step 1; nothing to roll back. Steps 3-5 (fingerprint, the three functions, probes) not started.
+
+For whoever applies: the files and md5s are in step 1; the fingerprint comparison is easiest as in step 1's method (expected after the apply: D4 67/67 equal; D release 37 equal plus exactly `_session_change_assess` / `_session_erased_recently` different). Apply outside 16:30-21:00 Hanoi.
