@@ -59,7 +59,7 @@ function filterClass(cls: string): string {
 
 export function sanitizeRich(html: string): string {
   if (!html) return "";
-  return sanitizeHtml(html, {
+  return softenNbsp(sanitizeHtml(html, {
     allowedTags: RICH_TAGS,
     allowedAttributes: { "*": ["href", "class", "style", "data-list"] },
     allowedStyles: {
@@ -96,9 +96,17 @@ export function sanitizeRich(html: string): string {
         return { tagName, attribs: a };
       },
     },
-    // A single &nbsp; between two words is a pasted space (softenNbsp).
-    textFilter: (text) => text.replace(/(\S) (?=\S)/g, "$1 ").replace(/(\S)&nbsp;(?=\S)/g, "$1 "),
-  });
+  }));
+}
+
+/**
+ * softenNbsp: a single no-break space between two words is a pasted space,
+ * not a layout choice. Applied per text run (between tags), like the app's
+ * per-text-node walk.
+ */
+const NBSP_BETWEEN_WORDS = /(\S)\u00a0(?=\S)/g;
+function softenNbsp(html: string): string {
+  return html.replace(/(^|>)([^<]+)/g, (_, lead: string, text: string) => lead + text.replace(NBSP_BETWEEN_WORDS, "$1 "));
 }
 
 function decodeEntities(s: string): string {

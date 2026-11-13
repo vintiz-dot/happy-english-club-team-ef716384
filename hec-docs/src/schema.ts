@@ -31,7 +31,10 @@ function toFieldErrors(errs: ErrorObject[] | null | undefined): FieldError[] {
   return (errs ?? []).map((e) => {
     let p = e.instancePath;
     let message = e.message ?? "is invalid";
-    if (e.keyword === "required") p += `/${(e.params as { missingProperty: string }).missingProperty}`, (message = "is required");
+    if (e.keyword === "required") {
+      p += `/${(e.params as { missingProperty: string }).missingProperty}`;
+      message = "is required";
+    }
     if (e.keyword === "additionalProperties") {
       p += `/${(e.params as { additionalProperty: string }).additionalProperty}`;
       message = "is not an allowed field";
@@ -49,10 +52,16 @@ export async function validatorFor(schemaPath: string): Promise<Validator> {
   let p = compiled.get(schemaPath);
   if (!p) {
     p = readFile(schemaPath, "utf8").then((s) => {
-      const schema = JSON.parse(s);
+      let schema;
+      try {
+        schema = JSON.parse(s);
+      } catch (e) {
+        throw new Error(`${schemaPath}: ${(e as Error).message}`);
+      }
       return ajv.getSchema(schema.$id) ?? ajv.compile(schema);
     });
     compiled.set(schemaPath, p);
+    p.catch(() => compiled.delete(schemaPath));
   }
   const fn = await p;
   return (data, subject) => {

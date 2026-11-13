@@ -1,0 +1,8 @@
+node_modules
+out
+.out
+dist
+qa
+test/snapshot/__snapshots__/**/*.pdf
+*.log
+.git

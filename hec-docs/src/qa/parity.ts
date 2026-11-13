@@ -19,7 +19,7 @@ export interface ParityReport {
 export function words(text: string): string[] {
   return text
     .normalize("NFC")
-    .replace(/[  ]/g, " ")
+    .replace(/[\u00a0\u202f]/g, " ")
     // Split punctuation that layout may detach (bullets, separators) into tokens.
     .replace(/([•·→—–|/()[\]:,;"“”])/g, " $1 ")
     .split(/\s+/)

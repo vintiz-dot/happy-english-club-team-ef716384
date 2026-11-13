@@ -1,0 +1,60 @@
+name: hec-docs
+
+on:
+  push:
+    paths: ["hec-docs/**", ".github/workflows/hec-docs.yml"]
+  pull_request:
+    paths: ["hec-docs/**", ".github/workflows/hec-docs.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    # Same pinned browser as the Dockerfile, so rasters match the committed baselines.
+    runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
+      options: --user 1001
+    defaults:
+      run:
+        working-directory: hec-docs
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      HEC_DOCS_SILENT: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: hec-docs/package-lock.json
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Type-check
+        run: npm run typecheck
+      - name: Unit + snapshot tests
+        run: npm run test:unit && npm run test:snapshot
+      - name: End-to-end (CLI + HTTP API)
+        run: npm run test:e2e
+      - name: Quality gates (parity, a11y, fonts, regression, determinism)
+        # Fails on any unreviewed visual diff against qa/baselines.
+        run: npm run qa
+      - name: Dependency audit
+        run: npm audit --omit=dev --audit-level=high
+      - name: Upload QA output on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hec-docs-qa
+          path: |
+            hec-docs/qa/out
+            hec-docs/qa/report.json
+  image:
+    runs-on: ubuntu-24.04
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --target test hec-docs
+      - run: docker build --target runtime -t hec-docs:${{ github.sha }} hec-docs

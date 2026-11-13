@@ -37,6 +37,7 @@ export async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T, i:
 /** Keep a file name inside its directory and legal on Windows and Linux. */
 export function safeOutName(name: string): string {
   const base = path.basename(name.replace(/\\/g, "/"));
+  // eslint-disable-next-line no-control-regex -- control characters are exactly what we strip
   const cleaned = base.replace(/[<>:"/\\|?*\u0000-\u001f]/g, "-").replace(/^\.+/, "").trim();
   return cleaned || "document";
 }

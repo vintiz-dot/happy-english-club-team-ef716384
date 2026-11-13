@@ -5,6 +5,7 @@
 //   fixtures/*.json sample inputs used by tests, QA and the contact sheet
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
+import { existsSync } from "node:fs";
 import { ROOT } from "../config.ts";
 import { validatorFor, type Validator } from "../schema.ts";
 
@@ -45,6 +46,8 @@ async function load(): Promise<Map<string, TemplateEntry>> {
   for (const e of await readdir(dir, { withFileTypes: true })) {
     if (!e.isDirectory() || !TYPE.test(e.name)) continue;
     const tdir = path.join(dir, e.name);
+    // A folder without a manifest is a family still being written: skip it.
+    if (!existsSync(path.join(tdir, "template.json"))) continue;
     const manifest = JSON.parse(await readFile(path.join(tdir, "template.json"), "utf8")) as TemplateManifest;
     if (manifest.type !== e.name) throw new Error(`templates/${e.name}/template.json declares type "${manifest.type}"`);
     if (!/^\d+\.\d+\.\d+$/.test(manifest.version)) throw new Error(`templates/${e.name}: version must be semver`);

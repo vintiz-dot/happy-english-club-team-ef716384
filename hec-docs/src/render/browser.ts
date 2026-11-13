@@ -83,7 +83,7 @@ async function readAsset(abs: string): Promise<Buffer> {
   let b = assetCache.get(abs);
   if (!b) {
     b = await readFile(abs);
-    if (process.env.NODE_ENV === "production" || /[\/]fonts[\/]/.test(abs)) assetCache.set(abs, b);
+    if (process.env.NODE_ENV === "production" || /[\\/]fonts[\\/]/.test(abs)) assetCache.set(abs, b);
   }
   return b;
 }
