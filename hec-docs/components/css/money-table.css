@@ -1,24 +1,13 @@
 /* Money table: a ledger of figures. Text columns left, figure columns right
    with tabular lining numerals, a clear Total row that stays with the row
-   above it, and a compact density for long histories. Builds on `.t`.
-   Header cells are styled <td>s inside <thead>: Chromium's tagged-PDF export
-   numbers <th> structure elements in a run-dependent order, which makes the
-   output differ byte for byte between renders. */
+   above it, and a compact density for long histories. Builds on `.t`
+   (whose th styles the header row). */
 .t--money td.num { white-space: nowrap; }
 .t--money td.t__label { white-space: nowrap; }
 .t--money td.num--strong { font-weight: var(--font-weight-semibold); }
 .t--money .num__aside { color: var(--color-muted); font-weight: var(--font-weight-regular); }
-.t--money thead td {
-  text-align: left;
-  font-size: var(--size-xs);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.04em;
-  color: var(--color-muted);
-  border-bottom: var(--border-rule) solid var(--color-ink);
-  background: transparent !important;
-  vertical-align: bottom;
-}
-.t--money thead td.num { text-align: right; }
+.t--money thead th { vertical-align: bottom; }
+.t--money thead th.num { text-align: right; }
 .t--money tr.t__total { break-before: avoid; }
 .t--money tbody tr.t__total td { padding-top: 6pt; padding-bottom: 6pt; }
 .t--money tbody tr.t__total td:first-child { letter-spacing: 0.02em; }

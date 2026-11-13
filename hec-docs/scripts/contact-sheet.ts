@@ -66,7 +66,7 @@ section:first-of-type { break-before: auto; }
 .before { flex: none; border-right: 0.5pt solid var(--color-rule); padding-right: 10mm; }
 figure { margin: 0; width: 62mm; break-inside: avoid; }
 figure img { width: 100%; border: 0.5pt solid var(--color-rule); display: block; background: #fff; }
-figcaption { margin-top: 2pt; color: var(--color-muted); line-height: 1.35; }
+figcaption { margin-top: 2pt; color: var(--color-muted); line-height: 1.35; overflow-wrap: anywhere; }
 .k { font-size: 7pt; letter-spacing: .06em; text-transform: uppercase; color: var(--color-gold-ink); margin-bottom: 3pt; font-weight: 600; }
 </style></head><body>
 <h1>HEC Docs: before and after</h1>

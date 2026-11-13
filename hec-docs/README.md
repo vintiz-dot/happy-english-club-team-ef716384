@@ -137,6 +137,7 @@ Send `generatedAt` in production calls. If it is omitted, it defaults to now.
 - `npm test` runs the unit, snapshot and end-to-end (CLI and API) suites.
 - `npm run qa` runs every fixture through the gates. It writes `qa/REPORT.md`, `qa/report.json`, and rasters (including grayscale) in `qa/out/`.
 - `npm run contact-sheet` writes `qa/contact-sheet.pdf` (before and after).
+- `npm run bench` writes `qa/BENCHMARK.md` (warm, best of 3).
 
 | Gate | How |
 |---|---|

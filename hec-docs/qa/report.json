@@ -2,13 +2,13 @@
   "generatedBy": "scripts/qa.ts",
   "rows": [
     {
-      "type": "homework",
-      "fixture": "prompt-card",
-      "variant": "prompt-card",
-      "filename": "Speaking__Talk_about_your_favourite_place_in_H__N_i_homework.pdf",
+      "type": "access-card",
+      "fixture": "bilingual-split",
+      "variant": "bilingual-split",
+      "filename": "Nguyễn Thị Minh Anh - Access Card.pdf",
       "pages": 1,
-      "bytes": 73127,
-      "ms": 2143,
+      "bytes": 95597,
+      "ms": 2934,
       "gates": {
         "determinism": {
           "ok": true
@@ -16,8 +16,228 @@
         "performance": {
           "ok": true,
           "detail": {
-            "ms": 2143,
-            "bytes": 73127
+            "ms": 2258,
+            "bytes": 95597
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 65,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 147
+          }
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "access-card",
+      "fixture": "long-names-split",
+      "variant": "bilingual-split",
+      "filename": "Nguyễn Hoàng Phương Quỳnh Trâm Anh - Access Card.pdf",
+      "pages": 1,
+      "bytes": 100756,
+      "ms": 1893,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1847,
+            "bytes": 100756
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 70,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "access-card",
+      "fixture": "long-names",
+      "variant": "standard",
+      "filename": "Nguyễn Hoàng Phương Quỳnh Trâm Anh - Access Card.pdf",
+      "pages": 1,
+      "bytes": 100864,
+      "ms": 2468,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1862,
+            "bytes": 100864
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 70,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "access-card",
+      "fixture": "standard",
+      "variant": "standard",
+      "filename": "Nguyễn Thị Minh Anh - Access Card.pdf",
+      "pages": 1,
+      "bytes": 95788,
+      "ms": 1655,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1655,
+            "bytes": 95788
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 65,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 147
+          }
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "homework",
+      "fixture": "prompt-card",
+      "variant": "prompt-card",
+      "filename": "Speaking__Talk_about_your_favourite_place_in_H__N_i_homework.pdf",
+      "pages": 1,
+      "bytes": 73032,
+      "ms": 1180,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1180,
+            "bytes": 73032
           }
         },
         "layout": {
@@ -47,10 +267,8 @@
           "detail": "A4 portrait, grayscale rasters in qa/out"
         },
         "regression": {
-          "ok": false,
-          "detail": [
-            "p1: no baseline"
-          ]
+          "ok": true,
+          "detail": "byte-identical to baseline"
         }
       }
     },
@@ -60,24 +278,22 @@
       "variant": "standard",
       "filename": "Unit_6__My_Weekend___B_i_t_p_v__nh__tu_n_2_homework.pdf",
       "pages": 2,
-      "bytes": 132281,
-      "ms": 4464,
+      "bytes": 132184,
+      "ms": 2104,
       "gates": {
         "determinism": {
           "ok": true
         },
         "performance": {
-          "ok": false,
+          "ok": true,
           "detail": {
-            "ms": 4464,
-            "bytes": 132281
+            "ms": 2104,
+            "bytes": 132184
           }
         },
         "layout": {
           "ok": true,
-          "detail": [
-            "time>3s"
-          ]
+          "detail": []
         },
         "accessibility": {
           "ok": true,
@@ -111,11 +327,8 @@
           }
         },
         "regression": {
-          "ok": false,
-          "detail": [
-            "p1: no baseline",
-            "p2: no baseline"
-          ]
+          "ok": true,
+          "detail": "byte-identical to baseline"
         }
       }
     },
@@ -125,24 +338,22 @@
       "variant": "writing-space",
       "filename": "Unit_6__My_Weekend___B_i_t_p_v__nh__tu_n_2_homework.pdf",
       "pages": 2,
-      "bytes": 132368,
-      "ms": 9229,
+      "bytes": 132271,
+      "ms": 1959,
       "gates": {
         "determinism": {
           "ok": true
         },
         "performance": {
-          "ok": false,
+          "ok": true,
           "detail": {
-            "ms": 9229,
-            "bytes": 132368
+            "ms": 1752,
+            "bytes": 132271
           }
         },
         "layout": {
           "ok": true,
-          "detail": [
-            "time>3s"
-          ]
+          "detail": []
         },
         "accessibility": {
           "ok": true,
@@ -176,11 +387,927 @@
           }
         },
         "regression": {
-          "ok": false,
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "invoice",
+      "fixture": "bulk-1-summary-first",
+      "variant": "summary-first",
+      "filename": "Nguyen_Thi_Minh_Anh_2026-11.pdf",
+      "pages": 2,
+      "bytes": 172845,
+      "ms": 2079,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1888,
+            "bytes": 172845
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 254,
+            "figures": 2,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
           "detail": [
-            "p1: no baseline",
-            "p2: no baseline"
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Medium",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold"
           ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 358
+          }
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "invoice",
+      "fixture": "bulk-2-standard",
+      "variant": "standard",
+      "filename": "Nguyen__uc_Bao_2026-11.pdf",
+      "pages": 2,
+      "bytes": 152763,
+      "ms": 2370,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 2191,
+            "bytes": 152763
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 186,
+            "figures": 2,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 256
+          }
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "invoice",
+      "fixture": "bulk-2-summary-first",
+      "variant": "summary-first",
+      "filename": "Nguyen__uc_Bao_2026-11.pdf",
+      "pages": 2,
+      "bytes": 152379,
+      "ms": 1917,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1836,
+            "bytes": 152379
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 186,
+            "figures": 2,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 256
+          }
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "invoice",
+      "fixture": "no-bank-info",
+      "variant": "standard",
+      "filename": "Nguyen__uc_Bao_2026-11.pdf",
+      "pages": 2,
+      "bytes": 149972,
+      "ms": 2453,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1940,
+            "bytes": 149972
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 171,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Italic",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "invoice",
+      "fixture": "single-standard",
+      "variant": "standard",
+      "filename": "Nguyen_Thi_Minh_Anh_2026-11.pdf",
+      "pages": 2,
+      "bytes": 173218,
+      "ms": 2159,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 2159,
+            "bytes": 173218
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 254,
+            "figures": 2,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Medium",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 358
+          }
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "invoice",
+      "fixture": "stress-standard",
+      "variant": "standard",
+      "filename": "Tran_Ngoc_Bao_Chau_Nguyen_Hoang_Phuong_Anh_2026-11.pdf",
+      "pages": 4,
+      "bytes": 305072,
+      "ms": 2699,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 2699,
+            "bytes": 305072
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 701,
+            "figures": 2,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Medium",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "invoice",
+      "fixture": "stress-summary-first",
+      "variant": "summary-first",
+      "filename": "Tran_Ngoc_Bao_Chau_Nguyen_Hoang_Phuong_Anh_2026-11.pdf",
+      "pages": 4,
+      "bytes": 303969,
+      "ms": 2724,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 2724,
+            "bytes": 303969
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 701,
+            "figures": 2,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Medium",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "profile-card",
+      "fixture": "landscape",
+      "variant": "landscape",
+      "filename": "Nguyễn Thị Minh Anh-profile.png",
+      "pages": 1,
+      "bytes": 58964,
+      "ms": 946,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 873,
+            "bytes": 58964
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 27
+          }
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "profile-card",
+      "fixture": "long-landscape",
+      "variant": "landscape",
+      "filename": "Nguyễn Hoàng Phương Quỳnh Trâm Anh-profile.png",
+      "pages": 1,
+      "bytes": 83131,
+      "ms": 939,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 907,
+            "bytes": 83131
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "profile-card",
+      "fixture": "long-square",
+      "variant": "square",
+      "filename": "Nguyễn Hoàng Phương Quỳnh Trâm Anh-profile.png",
+      "pages": 1,
+      "bytes": 112135,
+      "ms": 1054,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1054,
+            "bytes": 112135
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "profile-card",
+      "fixture": "square",
+      "variant": "square",
+      "filename": "Nguyễn Thị Minh Anh-profile.png",
+      "pages": 1,
+      "bytes": 83172,
+      "ms": 1128,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1128,
+            "bytes": 83172
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 27
+          }
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "progress-report",
+      "fixture": "compact",
+      "variant": "compact",
+      "filename": "Nguyễn Thị Minh Anh - Progress Report.pdf",
+      "pages": 2,
+      "bytes": 139015,
+      "ms": 2183,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1791,
+            "bytes": 139015
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 132,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Medium",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold",
+            "NotoSansMath-Regular"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 364
+          }
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "progress-report",
+      "fixture": "full",
+      "variant": "full",
+      "filename": "Nguyễn Thị Minh Anh - Progress Report.pdf",
+      "pages": 2,
+      "bytes": 138589,
+      "ms": 1925,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1925,
+            "bytes": 138589
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 132,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Medium",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold",
+            "NotoSansMath-Regular"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 364
+          }
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "progress-report",
+      "fixture": "sparse",
+      "variant": "full",
+      "filename": "Lê Hoàng Phúc - Progress Report.pdf",
+      "pages": 1,
+      "bytes": 74172,
+      "ms": 1197,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1172,
+            "bytes": 74172
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 53,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Medium",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "statement",
+      "fixture": "compact",
+      "variant": "compact",
+      "filename": "Nguyễn Thị Minh Anh - Account Statement.pdf",
+      "pages": 1,
+      "bytes": 123546,
+      "ms": 1648,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1648,
+            "bytes": 123546
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 190,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold",
+            "NotoSansMath-Regular"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 207
+          }
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "statement",
+      "fixture": "long-history-compact",
+      "variant": "compact",
+      "filename": "Trần Bảo Châu - Account Statement.pdf",
+      "pages": 3,
+      "bytes": 306827,
+      "ms": 2511,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 2511,
+            "bytes": 306827
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 978,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold",
+            "NotoSansMath-Regular"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "statement",
+      "fixture": "long-history",
+      "variant": "standard",
+      "filename": "Trần Bảo Châu - Account Statement.pdf",
+      "pages": 4,
+      "bytes": 331017,
+      "ms": 3568,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 2534,
+            "bytes": 331017
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": [
+            "time>3s"
+          ]
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 978,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold",
+            "NotoSansMath-Regular"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
+        }
+      }
+    },
+    {
+      "type": "statement",
+      "fixture": "standard",
+      "variant": "standard",
+      "filename": "Nguyễn Thị Minh Anh - Account Statement.pdf",
+      "pages": 1,
+      "bytes": 123664,
+      "ms": 1828,
+      "gates": {
+        "determinism": {
+          "ok": true
+        },
+        "performance": {
+          "ok": true,
+          "detail": {
+            "ms": 1736,
+            "bytes": 123664
+          }
+        },
+        "layout": {
+          "ok": true,
+          "detail": []
+        },
+        "accessibility": {
+          "ok": true,
+          "detail": {
+            "structElements": 190,
+            "figures": 1,
+            "lang": "en"
+          }
+        },
+        "fonts": {
+          "ok": true,
+          "detail": [
+            "BeVietnamPro-Bold",
+            "BeVietnamPro-Regular",
+            "BeVietnamPro-SemiBold",
+            "CormorantGaramond-Bold",
+            "CormorantGaramond-MediumItalic",
+            "CormorantGaramond-SemiBold",
+            "NotoSansMath-Regular"
+          ]
+        },
+        "print": {
+          "ok": true,
+          "detail": "A4 portrait, grayscale rasters in qa/out"
+        },
+        "parity": {
+          "ok": true,
+          "detail": {
+            "words": 207
+          }
+        },
+        "regression": {
+          "ok": true,
+          "detail": "byte-identical to baseline"
         }
       }
     }

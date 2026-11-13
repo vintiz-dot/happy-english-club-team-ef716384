@@ -3,7 +3,7 @@
 // pins every value that would otherwise differ between runs (dates, producer,
 // document ID) and adds the language / title metadata, so the same input
 // gives byte-identical output.
-import { PDFDocument, PDFName, PDFString, PDFHexString, PDFArray, PDFBool, PDFDict } from "pdf-lib";
+import { PDFDocument, PDFName, PDFString, PDFHexString, PDFArray, PDFBool, PDFDict, PDFRef } from "pdf-lib";
 import { createHash } from "node:crypto";
 import { openIsolatedPage, ASSET_ORIGIN, type AssetMount } from "./browser.ts";
 
@@ -99,44 +99,99 @@ async function finalize(raw: Buffer, meta: PdfMeta): Promise<{ pdf: Buffer; page
     arr.push(PDFHexString.of(hex));
     doc.context.trailerInfo.ID = arr;
   };
-  setId("0".repeat(32));
-  const draft = await doc.save({ useObjectStreams: false, updateFieldAppearances: false });
-  setId(createHash("sha256").update(draft).digest("hex").slice(0, 32));
-  const bytes = await doc.save({ useObjectStreams: false, updateFieldAppearances: false });
-  return { pdf: Buffer.from(bytes), pages: doc.getPageCount() };
+  // Save once with a placeholder, then write the hash over it in place: the
+  // hex string has a fixed length, so no offsets move.
+  const PLACEHOLDER = "F".repeat(32);
+  setId(PLACEHOLDER);
+  const bytes = Buffer.from(await doc.save({ useObjectStreams: false, updateFieldAppearances: false }));
+  const id = createHash("sha256").update(bytes).digest("hex").slice(0, 32).toUpperCase();
+  const marker = Buffer.from(`<${PLACEHOLDER}>`);
+  const at = bytes.lastIndexOf(marker);
+  if (at < 0 || bytes.indexOf(marker) === bytes.lastIndexOf(marker)) throw new Error("PDF ID placeholder not found twice");
+  for (let p = bytes.indexOf(marker); p !== -1; p = bytes.indexOf(marker, p + 1)) bytes.write(id, p + 1, "latin1");
+  return { pdf: bytes, pages: doc.getPageCount() };
 }
 
 /**
- * Chromium names structure elements after DOM node ids ("node00000033"),
- * which come from a per-process counter and so differ between runs. Map
- * them to their rank: order is preserved, so the ID tree stays sorted.
+ * Chromium names structure elements after DOM node ids ("node00000033").
+ * Those come from a per-process counter, and table header cells are not even
+ * numbered in a stable order, so the raw numbers differ between runs. Number
+ * them by first appearance in a depth-first walk of the structure tree
+ * (stable, because the tree follows the document), rewrite every reference
+ * (/ID, table /Headers), and rebuild the ID tree as one sorted leaf.
  */
 function normaliseStructIds(doc: PDFDocument): void {
   const RE = /^node(\d+)$/;
-  const found = new Set<number>();
-  const visit = (o: unknown, fn: (s: PDFString | PDFHexString) => PDFString | PDFHexString | void, depth = 0): unknown => {
-    if (depth > 64) return o;
-    if (o instanceof PDFString || o instanceof PDFHexString) return fn(o) ?? o;
-    if (o instanceof PDFArray) {
-      for (let i = 0; i < o.size(); i++) o.set(i, visit(o.get(i), fn, depth + 1) as never);
-    } else if (o instanceof PDFDict) {
-      for (const [k, v] of o.entries()) o.set(k, visit(v, fn, depth + 1) as never);
+  const ctx = doc.context;
+  const deref = (o: unknown) => (o instanceof PDFRef ? ctx.lookup(o) : o);
+  const root = deref(doc.catalog.get(PDFName.of("StructTreeRoot")));
+  if (!(root instanceof PDFDict)) return;
+
+  // 1. Order of first appearance in the structure tree.
+  const order = new Map<string, number>();
+  const elementRef = new Map<string, PDFRef>();
+  const seen = new Set<unknown>();
+  const walk = (node: unknown, depth: number) => {
+    const n = deref(node);
+    const ref = node instanceof PDFRef ? node : undefined;
+    if (depth > 512 || seen.has(n)) return;
+    seen.add(n);
+    if (n instanceof PDFArray) {
+      for (let i = 0; i < n.size(); i++) walk(n.get(i), depth + 1);
+      return;
     }
+    if (!(n instanceof PDFDict)) return;
+    const id = n.lookup(PDFName.of("ID"));
+    if (id instanceof PDFString || id instanceof PDFHexString) {
+      const t = id.decodeText();
+      if (RE.test(t) && !order.has(t)) {
+        order.set(t, order.size + 1);
+        if (ref) elementRef.set(t, ref);
+      }
+    }
+    const k = n.get(PDFName.of("K"));
+    if (k) walk(k, depth + 1);
+  };
+  walk(root.get(PDFName.of("K")), 0);
+
+  // 2. Rewrite every string that names a node, anywhere in the file.
+  const rewrite = (o: unknown, depth = 0): unknown => {
+    if (depth > 64) return o;
+    if (o instanceof PDFString || o instanceof PDFHexString) {
+      const t = o.decodeText();
+      if (RE.test(t)) {
+        if (!order.has(t)) order.set(t, order.size + 1); // outside the tree: append
+        return PDFString.of(`node${String(order.get(t)).padStart(8, "0")}`);
+      }
+      return o;
+    }
+    if (o instanceof PDFArray) for (let i = 0; i < o.size(); i++) o.set(i, rewrite(o.get(i), depth + 1) as never);
+    else if (o instanceof PDFDict) for (const [k, v] of o.entries()) o.set(k, rewrite(v, depth + 1) as never);
     return o;
   };
-  const objects = doc.context.enumerateIndirectObjects();
-  for (const [, obj] of objects) {
-    visit(obj, (s) => {
-      const m = RE.exec(s.decodeText());
-      if (m) found.add(Number(m[1]));
-    });
+  for (const [, obj] of ctx.enumerateIndirectObjects()) rewrite(obj);
+
+  // 3. Rebuild the ID tree from the walk. Chromium's own ID tree keys are
+  //    themselves run-dependent, so it is dropped rather than patched.
+  const dropTree = (node: unknown, depth: number) => {
+    const n = deref(node);
+    if (n instanceof PDFDict && depth < 32) {
+      const kids = n.lookup(PDFName.of("Kids"));
+      if (kids instanceof PDFArray) for (let i = 0; i < kids.size(); i++) dropTree(kids.get(i), depth + 1);
+    }
+    if (node instanceof PDFRef) ctx.delete(node);
+  };
+  dropTree(root.get(PDFName.of("IDTree")), 0);
+  root.delete(PDFName.of("IDTree"));
+  const ids = [...order.keys()].filter((k) => elementRef.has(k));
+  if (!ids.length) return;
+  const newName = (t: string) => `node${String(order.get(t)).padStart(8, "0")}`;
+  const names = PDFArray.withContext(ctx);
+  for (const t of ids.sort((x, y) => order.get(x)! - order.get(y)!)) {
+    names.push(PDFString.of(newName(t)));
+    names.push(elementRef.get(t)!);
   }
-  if (!found.size) return;
-  const rank = new Map([...found].sort((a, b) => a - b).map((n, i) => [n, i + 1]));
-  for (const [, obj] of objects) {
-    visit(obj, (s) => {
-      const m = RE.exec(s.decodeText());
-      if (m) return PDFString.of(`node${String(rank.get(Number(m[1]))).padStart(8, "0")}`);
-    });
-  }
+  // A root leaf carries no /Limits (ISO 32000-1, 7.9.6). Zero-padded names
+  // in numeric order are also in byte order, as a name tree requires.
+  root.set(PDFName.of("IDTree"), ctx.register(ctx.obj({ Names: names })));
 }

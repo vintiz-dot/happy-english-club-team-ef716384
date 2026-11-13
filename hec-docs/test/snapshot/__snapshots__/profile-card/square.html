@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>Profile Card</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>:root {
+  --color-paper: #FBF8F1;
+  --color-surface: #F4EEE0;
+  --color-surface-strong: #ECE3CE;
+  --color-ink: #14213D;
+  --color-ink-soft: #34405E;
+  --color-muted: #59617A;
+  --color-accent: #FFF200;
+  --color-accent-deep: #E9B300;
+  --color-gold: #B8975A;
+  --color-gold-ink: #7A5C1E;
+  --color-rule: #DCCFB4;
+  --color-positive: #2E6A4C;
+  --color-negative: #9A2F2A;
+  --font-family-display: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-family-body: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --size-xs: 7.5pt;
+  --size-sm: 8.5pt;
+  --size-base: 9.5pt;
+  --size-md: 11.5pt;
+  --size-lg: 14.5pt;
+  --size-xl: 18pt;
+  --size-2xl: 22.5pt;
+  --size-3xl: 28pt;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
+  --leading-loose: 1.7;
+  --space-1: 8pt;
+  --space-2: 16pt;
+  --space-3: 24pt;
+  --space-4: 32pt;
+  --space-5: 40pt;
+  --space-6: 48pt;
+  --space-8: 64pt;
+  --space-0-5: 4pt;
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 20mm;
+  --page-margin-bottom: 22mm;
+  --page-margin-inner: 18mm;
+  --page-margin-outer: 18mm;
+  --border-hairline: 0.5pt;
+  --border-rule: 0.75pt;
+  --border-strong: 1.5pt;
+  --border-radius: 3pt;
+}
+</style>
+<link rel="stylesheet" href="/components/hec.css">
+<link rel="stylesheet" href="/components/css/addressee.css">
+<link rel="stylesheet" href="/components/css/avatar.css">
+<link rel="stylesheet" href="/components/css/bilingual.css">
+<link rel="stylesheet" href="/components/css/cell.css">
+<link rel="stylesheet" href="/components/css/closing-row.css">
+<link rel="stylesheet" href="/components/css/code-box.css">
+<link rel="stylesheet" href="/components/css/evidence-list.css">
+<link rel="stylesheet" href="/components/css/field.css">
+<link rel="stylesheet" href="/components/css/keepsake-card.css">
+<link rel="stylesheet" href="/components/css/level-badge.css">
+<link rel="stylesheet" href="/components/css/meta-stack.css">
+<link rel="stylesheet" href="/components/css/money-summary.css">
+<link rel="stylesheet" href="/components/css/money-table.css">
+<link rel="stylesheet" href="/components/css/ornament.css">
+<link rel="stylesheet" href="/components/css/payment-panel.css">
+<link rel="stylesheet" href="/components/css/prose.css">
+<link rel="stylesheet" href="/components/css/reorder-grid.css">
+<link rel="stylesheet" href="/components/css/sender.css">
+<link rel="stylesheet" href="/components/css/skill-matrix.css">
+<link rel="stylesheet" href="/components/css/stat-tile.css">
+<link rel="stylesheet" href="/components/css/steps.css">
+<link rel="stylesheet" href="/components/css/title-aside.css">
+</head>
+<body class="doc doc--profile-card variant--square">
+<div class="keepsake keepsake--square"  data-capture>
+  <div class="keepsake__main" data-qa-fit="profile-card">
+    <div class="avatar avatar--lg avatar--image" data-initials="NT"><img class="avatar__img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAADIElEQVR4Ae3BPY4iSRCA0W9DJZy4QUq0zxU4CU67e4g8QByi3XE4Cea6+IuU1rrh4OwKYzSjHraHn8qKAuK9P/45/PUvKYyQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKdTAjGmrjMWLMUcDM6Kt0ou2ys+8GHMwMAPaKlPTVjnxYkQaCKKtMgfaKt95MaY2MDFtlbnSVjnxYkxlYCLaKo9CW+XEi9GbMAFtlUekrdLbQEfaKo9OW+XEi9GD0Im2yjPRVulB6EBb5Rlpq4xNGJm2yjPTVhmTMCJtlVegrTIWYSTaKq9EW2UMwgi0VV6Rtsq9hDtpq7wybZV7CHfQVkmgrXIrIYUSbqStkn7QVrmFcANtlfQrbZVrCSmUcCVtlfT/tFWuIaRQwhW0VdLvaatcSkihhAtpq6TLaatcQkihhBRKSKEGLqCt0sty43x22Cq9LDfOZ4et0oO2ihfjK0Kg5cY5Z7lxelhunHOWGyeKkEIJKZSQQgkplBDosFXOOWyVHg5b5ZzDVokyEOywVaZ02CpzIqRQQgolpFADnR33az5brHbM1XG/5rPFakcvQkfH/Zpzjvs1c3TcrznnuF/Ti9DJcb/mK8f9mjk57td85bhf04OQQgkX8GKk63kxfmdghr79+Te9vH+8MSdCCiV0sljt+MpitWNOFqsdX1msdvQgXMiLca3Fasc5i9WOOVqsdpyzWO24lhfjEgOdLVY7HslitWNKwhW8GOn3vBiXEmbo/eONHt4/3pibgSt5MbRVenv/eOMReTGuIaRQwg28GOlXXoxrCTfyYqQfvBi3EFIo4Q5ejARejFsJd/JivDIvxj2EEXgxXpEX417CSLwYr8SLMQZhRF6MV+DFGIswMi/GM/NijEnowIvxjLwYYxM68WI8Ey9GDwMdeTFOtFUelRejJ2ECXoxH5MXobWAiXowTbZW582JMZWBiXowTbZW58WJMbSCIF+M7bZUoXoxIAzPgxTjRVpmKF2MOBmbEi/EzbZWxeDHmaGDGvBjPTkihhBRKSKGEFEpIof4DXYnXbiF52mwAAAAASUVORK5CYII=" alt=""></div>
+    <div class="keepsake__text">
+      <h1 class="keepsake__name">Nguyễn Thị Minh Anh</h1>
+      <div class="keepsake__bar" aria-hidden="true"></div>
+<p class="keepsake__status">"Mình thích học tiếng Anh! I love English 📚"</p>      <div class="keepsake__rank">
+        <span class="keepsake__title">Scholar Knight</span>
+        <span class="keepsake__lv">LV 5</span>
+      </div>
+    </div>
+  </div>
+  <div class="keepsake__stats stat-row">
+    <div class="stat-tile">
+  <span class="stat-tile__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+  </span>
+  <span class="stat-tile__value">1240</span>
+  <span class="stat-tile__label">Total XP</span>
+</div>
+
+    <div class="stat-tile">
+  <span class="stat-tile__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>
+  </span>
+  <span class="stat-tile__value">5</span>
+  <span class="stat-tile__label">Level</span>
+</div>
+
+    <div class="stat-tile">
+  <span class="stat-tile__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M12 22c4 0 7-2.8 7-7 0-3-1.6-5-3.2-6.8-.6 1.3-1.3 2-2.3 2.3C14 7 12.8 4 10 2 10 6 5 8.4 5 15c0 4.2 3 7 7 7z"/></svg>
+  </span>
+  <span class="stat-tile__value">12</span>
+  <span class="stat-tile__label">Streak</span>
+</div>
+
+  </div>
+  <div class="keepsake__foot">
+    <img class="keepsake__logo" src="/tenant/assets/logo.svg" alt="Happy English Club logo">
+    <div class="keepsake__brand">
+      <div class="keepsake__wm">Happy English Club ✨</div>
+      <div class="keepsake__tag">Learning, an endless journey to perfection</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
