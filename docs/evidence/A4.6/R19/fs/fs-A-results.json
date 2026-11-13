@@ -915,6 +915,7 @@
    "from:user_roles:select",
    "from:user_roles:select",
    "from:video_submissions:select",
+   "from:video_submissions:select",
    "function:calculate-payroll:select"
   ]
  }

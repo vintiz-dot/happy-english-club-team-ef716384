@@ -126,7 +126,10 @@ const jump = async (p, name) => { await p.getByRole('navigation', { name: 'Jump 
 const card = (p, title) => p.locator('section', { has: p.getByRole('heading', { name: title, exact: true }) });
 const spin = async (p) => { await card(p, 'Spinner').getByRole('button', { name: 'Spin', exact: true }).click(); await sleep(p, 5500); };
 const mix = async (p) => { await jump(p, 'Teams'); await card(p, 'Team maker').getByRole('button', { name: /Mix teams/ }).click(); await sleep(p, 1500); };
+// every Deferred tool mounted: scroll the panel to the end in steps, then back to the top
+const mountAll = async (p) => { await openTools(p); for (let i = 0; i < 30; i++) { const done = await p.evaluate(() => { const sc = [...document.querySelectorAll('[role=dialog] .overflow-y-auto')].find((e) => e.querySelector('[data-tool]')); if (!sc) return true; sc.scrollBy(0, 400); return sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 2; }); await sleep(p, 700); if (done) break; } await sleep(p, 3000); await p.evaluate(() => { const sc = [...document.querySelectorAll('[role=dialog] .overflow-y-auto')].find((e) => e.querySelector('[data-tool]')); if (sc) sc.scrollTop = 0; }); await sleep(p, 800); };
 const S = [
+  { id: 'tools-all', route: '/teacher/dashboard', role: 'teacher', action: mountAll, dom: ['sheet'] },
   { id: 'tdash', route: '/teacher/dashboard', role: 'teacher', pwa: true, dom: ['fab', 'pwa', 'bell'] },
   { id: 'tools', route: '/teacher/dashboard', role: 'teacher', action: openTools, dom: ['sheet'] },
   { id: 'tools-music', route: '/teacher/dashboard', role: 'teacher', action: async (p) => { await openTools(p); await jump(p, 'Music'); }, dom: ['sheet'] },

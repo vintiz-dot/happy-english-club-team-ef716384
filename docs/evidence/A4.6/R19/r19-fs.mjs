@@ -89,6 +89,7 @@ for (const [w, h] of SIZES) {
     await page.keyboard.press('Escape'); await page.waitForTimeout(500);
     await step('sheet-after-select', '[role=dialog] h2');
     await card('Team maker').getByRole('button', { name: /Mix teams/ }).click(); await page.waitForTimeout(1500);
+    await page.locator('[data-tool="teams"] li', { hasText: 'Nguyễn Hoàng Phương Thảo Nguyên' }).first().scrollIntoViewIfNeeded(); await page.waitForTimeout(400);
     await step('teams-dealt', 'text=Nguyễn Hoàng Phương Thảo Nguyên');
     await shot('teams');
     // Music, attendance, Ask AI
@@ -125,10 +126,10 @@ for (const [w, h] of SIZES) {
     await card('Team maker').getByRole('button', { name: /Show on/ }).click(); await page.waitForTimeout(1800);
     await step('teams-class-screen', '[data-class-screen] h2', { fsIsScreen: await page.evaluate(() => !!document.fullscreenElement?.hasAttribute('data-class-screen')) });
     await step('teams-class-screen-name', '[data-class-screen] li:last-child span:last-child');
-    await step('teams-class-screen-exit', '[data-class-screen] button[aria-label="Leave class screen"]');
+    await step('teams-class-screen-exit', '[data-class-screen] button[aria-label$="class screen"]');
     results.dom['teams-screen@' + S] = (await page.evaluate(DOM)).screen;
     await shot('teams-screen');
-    await page.locator('[data-class-screen] button[aria-label="Leave class screen"]').click(); await page.waitForTimeout(1200);
+    await page.locator('[data-class-screen] button[aria-label$="class screen"]').click(); await page.waitForTimeout(1200);
     rec('teams-class-screen-closed', S, !(await page.locator('[data-class-screen]').count()) && !(await page.evaluate(() => !!document.fullscreenElement)), {});
     rec('sheet-open-after-exit', S, !!(await page.getByRole('navigation', { name: 'Jump to a tool' }).count()), {});
     await jump('Spinner');
