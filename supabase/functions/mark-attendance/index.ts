@@ -2,6 +2,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { checkRateLimit, getClientIP, rateLimitResponse } from '../_lib/rate-limit.ts';
 import { afterAttendanceMarked } from '../_lib/attendance-effects.ts';
+import { attendanceRefusalKind, callerClient, mapDbError } from '../_lib/session-guard.ts';
+import { BILLABLE, lessonEndedMoreThanAWeekAgo, monthIsPast, moneyPreview } from '../_lib/money-guard.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -146,7 +148,18 @@ Deno.serve(async (req) => {
 
     console.log(`Marking attendance for ${entries.length} students in session ${sessionId}`);
 
-    // Batch upsert all attendance records at once
+    // D4 step 1b (docs/evidence/D4-design.md b.3, G-11). WHO WRITES:
+    // - an ADMIN writes with their own JWT (a client built from their
+    //   Authorization header), so the database judges an old billed mark
+    //   (HC025) and the screen asks for a reason; never retried on the
+    //   service key.
+    // - a TEACHER writes with the service key as before, after this
+    //   function applies G-11 rule 6 itself from the lesson's date and the
+    //   stored marks (never the bill): a change across the billable line on
+    //   a lesson that ended more than 7 days ago is refused when the
+    //   lesson's month is past or a person's Present / Late is being
+    //   un-billed. A slip past this check is still recorded by the database
+    //   (service_retro_mark).
     const now = new Date().toISOString();
     const upsertRows = entries.map(e => ({
       session_id: sessionId,
@@ -157,7 +170,40 @@ Deno.serve(async (req) => {
       marked_at: now,
     }));
 
-    const { error: attendanceError } = await supabase
+    if (!isAdmin) {
+      const { data: lesson } = await supabase
+        .from('sessions').select('date, start_time, end_time').eq('id', sessionId).maybeSingle();
+      if (!lesson) {
+        return new Response(JSON.stringify({ error: 'Session not found' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (lessonEndedMoreThanAWeekAgo(lesson.date, lesson.start_time, lesson.end_time)) {
+        const { data: stored, error: storedError } = await supabase
+          .from('attendance').select('student_id, status, marked_by').eq('session_id', sessionId);
+        if (storedError) throw new Error(`Failed to read the register: ${storedError.message}`);
+        const byStudent = new Map((stored ?? []).map((a: any) => [a.student_id, a]));
+        const past = monthIsPast(String(lesson.date).slice(0, 7));
+        const refused = entries.some((e) => {
+          const old: any = byStudent.get(e.studentId);
+          const crossing = BILLABLE.has(old?.status ?? '') !== BILLABLE.has(e.status);
+          const unbillPerson = !!old?.marked_by && (old.status === 'Present' || old.status === 'Late') && !BILLABLE.has(e.status);
+          return crossing && (past || unbillPerson);
+        });
+        if (refused) {
+          return new Response(JSON.stringify({
+            error: 'This lesson is more than a week old. Please ask an administrator to change it.',
+            code: 'attendance_requires_checked_path', kind: 'retro_mark_staff',
+          }), { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+      }
+    }
+
+    const writer = isAdmin
+      ? callerClient(createClient, Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_ANON_KEY') ?? '', authHeader)
+      : supabase;
+
+    const { error: attendanceError } = await writer
       .from('attendance')
       .upsert(upsertRows, { onConflict: 'session_id,student_id' });
 
@@ -167,11 +213,24 @@ Deno.serve(async (req) => {
           status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+      if (attendanceError.code === 'HC025' || attendanceError.code === 'HC024') {
+        // Nothing was saved (one statement). For an admin: the preview of the
+        // same change through the checked path, so the screen can ask for a reason.
+        const m = mapDbError(attendanceError);
+        const p = isAdmin
+          ? await moneyPreview(writer, 'attendance', 'set_marks', {
+              session_id: sessionId, marks: entries.map((e) => ({ student_id: e.studentId, status: e.status })) })
+          : null;
+        return new Response(JSON.stringify({
+          error: m.message, code: m.code, kind: attendanceRefusalKind((attendanceError as any).details ?? (attendanceError as any).detail),
+          preview: p && 'data' in p ? p.data : null,
+        }), { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
       throw new Error(`Failed to mark attendance: ${attendanceError.message}`);
     }
 
-    // Auto-mark session as Held
-    await supabase
+    // Auto-mark session as Held (as the writer above)
+    await writer
       .from('sessions')
       .update({ status: 'Held' })
       .eq('id', sessionId)
