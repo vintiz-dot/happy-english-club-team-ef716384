@@ -1,6 +1,6 @@
 # S1 F-02 - live deploy log (nine AI / speech functions behind `requireSpender`)
 
-**Where I am / next step:** 13 Nov 2026, 09:20 Hanoi. 3 of 9 live and verified (word-enrichment, image-search, pronounce-syllables at v4). Next step: snapshot pronounce-viseme (4 of 9).
+**Where I am / next step:** 13 Nov 2026, 09:22 Hanoi. 4 of 9 live and verified (word-enrichment, image-search, pronounce-syllables, pronounce-viseme at v4). Next step: snapshot smart-dictation (5 of 9).
 
 Live project `aswgmbefikhsnhogtryv`. Source commit `1c736fff` (sheet: `docs/evidence/S1-phase2.md`, Part 3, step 3). Rollback copies: `C:\Users\Dell\hec-tools\f02-rollback\<function>\v3\` (outside the repo): every file `get_edge_function` returned, byte for byte, plus `_meta.json` (version, verify_jwt, entrypoint, ezbr_sha256). Written by `tools/extract.mjs`, which reads the tool result out of this session's own transcript - nothing re-typed on the saving or checking side. Compare: `tools/cmp.mjs`. Authorised by the owner (D-22, D-19). No git push, no SQL that writes, no migration.
 
@@ -17,3 +17,4 @@ Live project `aswgmbefikhsnhogtryv`. Source commit `1c736fff` (sheet: `docs/evid
 | 1 | word-enrichment | v3, verify_jwt false | index.ts BYTE-IDENTICAL | v4, ACTIVE, verify_jwt true, entrypoint `word-enrichment/index.ts` (02:15 UTC) | 4 of 4 BYTE-IDENTICAL (index, ai-gate, auth, rate-limit - trailing spaces kept) | 401 | 401 `{"error":"Unauthorized"}` (the function: booted) |
 | 2 | image-search | v3, verify_jwt false | index.ts BYTE-IDENTICAL | v4, ACTIVE, verify_jwt true, entrypoint `image-search/index.ts` (02:17 UTC) | 4 of 4 BYTE-IDENTICAL | 401 | 401 `{"error":"Unauthorized"}` |
 | 3 | pronounce-syllables | v3, verify_jwt false | index.ts identical except line endings (live CRLF, main LF) | v4, ACTIVE, verify_jwt true (02:19 UTC) | 4 of 4 BYTE-IDENTICAL | 401 | 401 `{"error":"Unauthorized"}` |
+| 4 | pronounce-viseme | v3, verify_jwt false | identical except line endings | v4, ACTIVE, verify_jwt true (02:21 UTC) | 4 of 4 BYTE-IDENTICAL | 401 | 401 `{"error":"Unauthorized"}` (booted with the npm Speech SDK import) |
