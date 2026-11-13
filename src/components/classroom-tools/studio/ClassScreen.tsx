@@ -148,7 +148,8 @@ export function ClassScreen({
     >
       <div className={ivory ? "flex items-start justify-between gap-4 px-6 py-4 sm:px-12" : "flex items-center justify-between gap-4 px-6 py-4 sm:px-10"}>
         <h2 className={ivory ? "min-w-0 flex-1 whitespace-normal break-words hyphens-none text-balance font-display text-hec-h1 font-medium text-hec-ink sm:text-hec-display" : "studio-title truncate text-2xl sm:text-3xl"}>{title}</h2>
-        <QuietButton onClick={close} size="md" aria-label="Leave class screen" className={ivory ? "shrink-0" : undefined}>
+        {/* Ivory: the accessible name starts with the visible word "Exit" (WCAG 2.5.3). */}
+        <QuietButton onClick={close} size="md" aria-label={ivory ? "Exit the class screen" : "Leave class screen"} className={ivory ? "shrink-0" : undefined}>
           <Minimize2 className="h-4 w-4" aria-hidden />
           Exit
         </QuietButton>

@@ -345,7 +345,7 @@ export function StudioSlider({
         <SliderPrimitive.Track className={ivory ? "relative h-2 w-full grow overflow-hidden rounded-full bg-hec-sunken" : "relative h-1.5 w-full grow overflow-hidden rounded-full bg-[hsl(var(--studio-ink)/0.12)]"}>
           <SliderPrimitive.Range className={ivory ? "absolute h-full rounded-full bg-hec-brass" : "absolute h-full rounded-full bg-[hsl(var(--studio-ink))]"} />
         </SliderPrimitive.Track>
-        <SliderPrimitive.Thumb className={ivory ? cn(
+        <SliderPrimitive.Thumb aria-label={ivory ? label : undefined} className={ivory ? cn(
                 // A 44 px target; the visible knob (24 px) is drawn by ::before.
                 "relative grid h-11 w-11 cursor-grab place-items-center rounded-full before:block before:h-6 before:w-6 before:rounded-full before:border-2 before:border-hec-brass before:bg-hec-raised before:shadow-hec-1 before:content-['']",
                 FOCUS,
