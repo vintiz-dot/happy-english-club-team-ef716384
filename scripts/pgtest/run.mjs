@@ -108,6 +108,8 @@ const SUITES = [
   // The app's own types. `tsc --noEmit` at the root checks nothing - see
   // the file - so this is the type check, not that.
   { name: "app typecheck", file: "app-typecheck.test.mjs", migrations: [] },
+  // The public sign-up form offers no staff role (audit F-01).
+  { name: "signup form (F-01)", file: "signup-form.test.mjs", migrations: [] },
   // Nor this: the assistant's chat function, run against a stand-in for
   // PostgREST that knows the real schema, and a scripted model. It checks
   // what the model is told about who is asking, and that every tool's

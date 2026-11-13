@@ -21,7 +21,11 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
-type UserRole = "admin" | "teacher" | "family" | "student";
+// What a visitor may say they are when they join. It is a note for the school
+// and nothing more: the database gives every self-made account the student
+// role and no access to any child until an admin links it (migration
+// 20261113100000). Staff accounts are created by an admin, never here.
+type UserRole = "family" | "student";
 
 // The only demo account permitted in this app. It is a student-role sandbox
 // (own-row RLS + enrolled solely in "Demo Class"), locked behind a password
@@ -359,11 +363,12 @@ const Auth = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="teacher">Teacher</SelectItem>
                     <SelectItem value="family">Family</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  The school links your account to your child before you can see anything. Teachers and staff: the school creates your login.
+                </p>
               </div>
             )}
 
