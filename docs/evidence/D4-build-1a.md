@@ -1,6 +1,6 @@
 # D4 build - step 0 (tooling) and step 1a (the two floors)
 
-**Where I am / next step:** COMPLETE (steps 0 and 1a built and tested; mutation run 24/24 caught). Next step is not mine: the independent review of 1a, then the conductor's live apply with `D4-1a-live-apply-brief.md`.
+**Where I am / next step:** REVISION 1 COMPLETE (after `D4-1a-review.md`, APPLY WITH CHANGES): C-1 to C-4 and item 5 done; 43/43 mutants caught; suites green. Next step is not mine: the reviewer's short re-check, then the conductor's live apply with `D4-1a-live-apply-brief.md`.
 
 Implementer only: nothing pushed, nothing deployed, nothing applied to any database. Worktree reset to `claude/hec-conductor-setup-efbaa5` (f49d185) first.
 
@@ -38,7 +38,71 @@ Nothing else of D1 / D2 changed: `guard-fingerprint.mjs --check-unchanged` -> 66
 
 Full run: `node scripts/pgtest/run.mjs` -> 4691 assertions across 50 suites, 0 failed (d4 floors 198, d4 D2 carry-over 275, d4 deployed functions 37, d4 rollback 22; D2's own suites 266 / 135 / 143 unchanged and green). App typecheck (`tsc --noEmit -p tsconfig.app.json`): clean (exit 0, no output; also run by the suite "app typecheck").
 
-## Mutations (`node scripts/pgtest/d4-mutants.mjs`)
+## Revision 1 - the review's changes (D4-1a-review.md, conductor's message)
+
+| Change | Done | Where |
+|---|---|---|
+| C-3 file names | `supabase/migrations/20261114090000_d4_floors.sql`; `20261114091000` / `092000` / `093000` / `094000` / `095000` reserved for 1b / 2 / 3A / 3B / 4 (the reviewer's `20261113150000` is reserved elsewhere, and `20261113100000` is `signup_role_from_server_only`). References fixed in the suites, `run.mjs`, `d4-prelude.mjs`, `guard-fingerprint.mjs`, the rollback script, the brief, and `D4-design.md` (c), (h) and its change log. | commit 0d82e657 |
+| C-1 same-day un-start | `zz0_session_evidence_keep` now also fires on `start_time`; inside, the keep runs for an un-hold, a date change, or an UN-START (started before, not started after: `session_has_started` over OLD and NEW date + start time). `end_time` cannot change "started" and duration is not a column, so they are left out (a time edit that leaves a lesson started is not a lowering). Case: the reviewer's exact sequence (today, 3 Present, paid, linked point -> tier 3; checked move later today; point deleted, marks excused) ends at tier 3 with a STRONG floor whose cause says `unstarted`. | commit 0425d254 |
+| C-2 false removals | Every keep trigger now works out what the row proves for each lesson (D1's own rules: `_floor_mark_level`, `_floor_point_level`, `_floor_transcript_level`, and the homework / submission day test) before AND after the write, and keeps only where it goes down. The register cause carries `old_marked_by` / `new_marked_by`. Cases, each asserting NO floor: transcript `processing -> analyzed`; a register re-saved by another person with the same status; Absent -> Present; plus a point raised and a homework renamed. A real lowering (Present -> Absent with a new signature) still floors and names both signatures. The token case now adds its cause through the owner's insert-only route (since C-2 every keep follows a change D1's hash already sees). | commit 0425d254 |
+| C-4 test gaps | Four cases: R2 a failed transcript's audio path cleared -> STRONG floor; R3 points set to 0 -> SOFT; R8 service lane un-signs a Present mark, status unchanged -> STRONG, cause names the old signature; R10 a points-only lesson moved to another PAST day through the checked path -> SOFT floor, tier 2 (a future move would also be an un-start, which hides this mutant). | commit 0425d254 |
+| 5 fingerprint, lock timeout, rollback | `D4-release-fingerprint.*` regenerated (18 functions, 12 triggers, 2 relations; the two replaced bodies unchanged at `6c1b8c86...` / `5f589166...`). `SET LOCAL lock_timeout = '5s'` right after `BEGIN` in the migration and in the rollback script. The rollback keeps leaving the two tables (history; their guard needs `_floor_table_guard`), the 16 functions (no API role can run them; nothing calls them after the D2 re-paste; dropping them between the pastes would break the D4 assess) and `audit_point_transactions` (refuses nothing): justified in the script header and asserted as an exact list by `d4-rollback`. Brief rewritten to the final state. | commits 0425d254, c1389c8b, 652d8446 |
+
+Checks after revision 1: `node scripts/pgtest/run.mjs` -> 4710 assertions across 50 suites, 0 failed (d4 floors 213, d4 D2 carry-over 275, d4 deployed functions 37, d4 rollback 26; app typecheck and edge-functions typecheck green). File 1 now creates 16 functions (13 + the three own-proof helpers); with the 2 replaced the D4 fingerprint covers 32 objects. The sections below "Mutations, first build" describe the first build; counts there are superseded by this paragraph.
+
+Rulings recorded: DQ-1 adopted for step 1b (HC025 for a one-off cover teacher or assistant changing a mark more than a week old; the lesson's regular staff pass); DQ-10 closes in step 3A; the others stand. N-1, N-2, N-3 of the review can follow and were not built.
+
+### Mutations after revision 1 (`node scripts/pgtest/d4-mutants.mjs`, 43 mutants: my 24 re-pointed at the revised code, 7 new for C-1 / C-2, the reviewer's 12 re-stated as R01-R12)
+
+| Mutant | Breaks | Verdict |
+|---|---|---|
+| M01 | a caller D1 refuses writes a floor (R-6) | CAUGHT by floors: FAIL   and NO floor row is written |
+| M02 | a D1 error is stored as STRONG (R-6) | CAUGHT by floors: FAIL R-6 D1 raising (recorder helper VOLATILE, 55000): an unlinked same-day transcript deleted -> floor SOFT T, source row |
+| M03 | the cancel's excuse-all writes a floor | CAUGHT by floors: FAIL a cancel writes no floor (the excuse-all is a trigger-made write) |
+| M04 | deleting a CANCELLED lesson reads the effective level (D2 5.3 step 9 broken) | CAUGHT by floors: FAIL a cancelled lesson WITH a floor: delete allowed (level now NONE), the floor still raises the tier (SOFT -> T2, review) |
+| M05 | the lesson guard's settled does not read the bill floor | CAUGHT by floors: FAIL G-9 recorded_payment reset to 0 (RecordedPaymentManager "reset to 0"): floor ever_paid, the lesson's cancel stays T3 |
+| M06 | the bill floor skips recorded_payment | CAUGHT by floors: FAIL owner: bill floor ever_paid true -> false -> HC040 |
+| M07 | the effective level ignores a STRONG floor | CAUGHT by floors: FAIL V7 after: the tier does NOT drop - still 3; level STRONG (effective), level_now NONE |
+| M08 | HC024 dropped (a mark can be re-pointed) | CAUGHT by floors: FAIL HC024 admin (person): re-pointing a mark at another lesson |
+| M09 | HC025 only for DELETE (un-signing a mark passes) | CAUGHT by floors: FAIL HC025 admin (person): un-signing a person's mark (unmark) |
+| M10 | the point keep ignores a re-dated row | CAUGHT by floors: FAIL V7   the floor names both removals (points re-dated, transcript unlinked) by the teacher |
+| M11 | the transcript keep ignores an unlinked row | CAUGHT by floors: FAIL V7   the floor names both removals (points re-dated, transcript unlinked) by the teacher |
+| M12 | the submission keep ignores a cleared graded_at | CAUGHT by floors: FAIL G-8 a graded submission: graded_at cleared (teacher): D1 drops SOFT -> NONE; floor SOFT; the preview keeps SOFT |
+| M13 | the lesson keep ignores Held -> Scheduled | CAUGHT by floors: FAIL fixture: an un-held lesson has a SOFT floor |
+| M14 | the floor's causes are not in erased_recently (no review) | CAUGHT by floors: FAIL V7   review_required, and erased_recently lists the floor's causes |
+| M15 | the token does not cover the floor's causes | CAUGHT by floors: FAIL token v3: a floor cause added between preview and confirm -> HC011 |
+| M16 | the G-10 residue is not refreshed | CAUGHT by floors: FAIL the re-pointed child (90 days ago) is in refresh_pairs and invoices_before |
+| M17 | a floor may be lowered | CAUGHT by floors: FAIL owner: lowering STRONG -> SOFT -> HC040 |
+| M18 | a lesson that has not started gets a floor | CAUGHT by floors: FAIL a lesson that has not started gets no floor |
+| M19 | with a floor, settled is judged over billable rows only | CAUGHT by floors: FAIL with a floor, an excused child never named by a cause still makes the lesson settled: T3 (not T2) |
+| M20 | causes are not capped | CAUGHT by floors: FAIL causes are capped at the newest 20 (oldest dropped) |
+| M21 | a deleted bill leaves no floor | CAUGHT by floors: FAIL G-9 a deleted bill: the floor row survives with every flag the bill had |
+| M22 | the floor table guard lets the service role write | CAUGHT by floors: FAIL service_role (GRANT ALL) cannot INSERT directly -> HC041 |
+| M23 | the keep returns before D1 for every person (no floor from admins / teachers) | CAUGHT by floors: FAIL fixture: an un-held lesson has a SOFT floor |
+| M24 | the sessions keep fires on a cancel (Held -> Canceled) | CAUGHT by floors: FAIL a cancel writes no floor (the excuse-all is a trigger-made write) |
+| M25 | C-1: the lesson trigger ignores a start_time change | CAUGHT by floors: FAIL C-1 the checked move to a later time today (the lesson now "has not started") keeps a STRONG floor first |
+| M26 | C-1: an un-start is not kept | CAUGHT by floors: FAIL C-1 the checked move to a later time today (the lesson now "has not started") keeps a STRONG floor first |
+| M27 | C-2: the register keeps on any change, not only a lowering | CAUGHT by floors: FAIL C-2 a register re-saved by another person (same status, new signature) writes no floor |
+| M28 | C-2: the transcript keeps on any change | CAUGHT by floors: FAIL C-2 a transcript going processing -> analyzed (every analysed upload) writes no floor |
+| M29 | C-2: the register cause does not name the old signature | CAUGHT by floors: FAIL C-2 Present -> Absent is a lowering: floor STRONG; the cause carries old_marked_by and new_marked_by |
+| M30 | C-2: a point keeps on any change | CAUGHT by floors: FAIL C-2 a point raised and a homework renamed write no floor |
+| M31 | C-2: a homework keeps on any change | CAUGHT by floors: FAIL C-2 a point raised and a homework renamed write no floor |
+| R01 | transcript keep ignores a status change (-> failed) | CAUGHT by floors: FAIL G-8 a same-day transcript marked failed with no audio (service): D1 drops SOFT -> NONE; floor SOFT; the preview keeps SOFT |
+| R02 | transcript keep ignores audio_storage_path | CAUGHT by floors: FAIL R2 its audio path cleared -> floor STRONG |
+| R03 | point keep ignores a points change (5 -> 0) | CAUGHT by floors: FAIL R3 a participation row set to 0 points -> floor SOFT |
+| R04 | bill floor ignores un-freezing | CAUGHT by floors: FAIL G-9 unfrozen by an admin: floor ever_frozen, the lesson's cancel stays T3 |
+| R05 | bill floor ignores un-confirming | CAUGHT by floors: FAIL G-9 confirmation_status confirmed -> auto_approved: floor ever_signed, the lesson's cancel stays T3 |
+| R06 | a re-keyed bill leaves no floor | CAUGHT by floors: FAIL G-9 a bill moved to another month counts as removed from the old one |
+| R07 | floor rows can be deleted | CAUGHT by floors: FAIL service role: DELETE of an evidence floor -> HC040 |
+| R08 | attendance keep ignores a signature-only change | CAUGHT by floors: FAIL R8 service lane sets marked_by NULL on a Present row, status unchanged -> floor STRONG, cause names the old signature |
+| R09 | homework keep ignores a re-dated homework | CAUGHT by floors: FAIL sweep homeworks.created_at: lowered D1 SOFT -> NONE with no floor |
+| R10 | lesson keep ignores a date move | CAUGHT by floors: FAIL R10 moved to another (past) date through the checked path -> floor SOFT, and the cancel keeps tier 2 |
+| R11 | move destination ignores the bill floor | CAUGHT by floors: FAIL a move into a month whose bill was paid and reset: destination tuition true, reviewed |
+| R12 | HC025 also on the service lane | CAUGHT by floors: FAIL the Stars sync's restore (service lane, marked_by back to NULL) passes |
+
+43 caught, 0 survived.
+
+## Mutations, first build (before revision 1)
 
 | Mutant | Breaks | Verdict |
 |---|---|---|
@@ -271,7 +335,7 @@ Re-pointing a mark (`session_id` / `student_id`): no writer in `src`, `supabase/
 ## Design questions (each built the fail-closed way; for the conductor)
 
 1. **DQ-1 (real hole, needs a ruling).** Live RLS lets a lesson's own teacher and its assistants UPDATE / DELETE its marks at any date (`teacher_attendance_update` / `_delete`, 20260403050441), while D1 accepts them only through `is_teacher_of_class` (sessions within 7 days). Under the rule "a caller D1 refuses writes no floor" (built as instructed), a cover teacher or assistant changing Present -> Absent / Excused on a lesson older than a week lowers the evidence with NO floor (deleting and un-signing are still HC025). The design's own policy pin would have failed on day one; it is built as a pin of the CURRENT write policies with these two named as known, so any further loosening goes red. Options: (a) for such callers store the row's own proof; (b) HC025 for a D1-refused person changing a person's mark on a started lesson (consistent with "a week", G-11 rule 6). I recommend (b) with step 1b.
-2. **Later file names.** `20261113091000`..`20261113095000` (steps 1b-4) now sort BEFORE `20261114090000`; they must be renamed after it (e.g. `2026111310x000`). Only file 1 was renamed, as instructed; noted in the design's change log.
+2. **Later file names.** Resolved in revision 1 (C-3): `20261114091000`..`20261114095000`.
 3. **`hec.floor_seen` not built.** Skipping D1 for a lesson already kept in the transaction would leave evidence added and then removed later in the same transaction unrecorded; D1 is called per qualifying row until the floor is STRONG (then only the cause is appended). Cost: one D1 call per changed person's mark, point, transcript or homework row on a started lesson.
 4. **Own proof of a date move (zz0).** The design says SOFT R; a move of a lesson that was never Held proves nothing, so own proof is SOFT only when the lesson was Held (D1, when it answers, decides anyway).
 5. **Homework submissions:** the keep fires on any `graded_at` change (a regrade moves the evidence off the old day) and on `homework_id` / `student_id` changes, not only on clearing.
