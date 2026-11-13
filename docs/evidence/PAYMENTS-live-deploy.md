@@ -1,6 +1,6 @@
 # Payments release (T4) - live deploy log
 
-**Where I am / next step:** RESUMED (second agent). Migration applied by the conductor. Step A (start state) passed; next is step B, deploy 1 of 7 (calculate-tuition). See "RESUMED" below. (The first run, below, stopped at step 2: `apply_migration` refused by the permission system; nothing was changed by it.)
+**Where I am / next step:** DONE - all seven functions are live at v5 from `release/payments-1` a9cbbe53, each identical to the repo byte for byte and booted; money sums unchanged. LIVE AND VERIFIED - ready for the push to main. See "RESUMED" below. (The first run, below, stopped at step 2: `apply_migration` refused by the permission system; nothing was changed by it.)
 
 ## Step 1 - pre-checks (read-only, 2026-11-12 21:54 UTC)
 
@@ -82,5 +82,36 @@ Uploaded as `<function>/index.ts` + `_lib/<file>.ts`, entrypoint `<function>/ind
 | 4 | delete-payment | 4 -> 5, ACTIVE, verify_jwt true (ezbr bffba619) | 3 of 3 identical, byte for byte (index, invoice-status, recorded-payment-write); file set exactly the manifest's | 401 gateway | 400 `{"error":"Unauthorized"}` from the function (00:02:22 UTC, 13 Nov) |
 | 5 | smart-family-payment | 4 -> 5, ACTIVE, verify_jwt true (ezbr 1bae1e97) | 4 of 4 identical, byte for byte (index, rate-limit, invoice-status, recorded-payment-write) - trailing spaces kept; file set exactly the manifest's | 401 gateway | 400 `{"error":"Unauthorized"}` from the function (00:05:04 UTC) |
 | 6 | family-payment | 4 -> 5, ACTIVE, verify_jwt true (ezbr 64fa5447) | 4 of 4 identical, byte for byte (index, rate-limit, invoice-status, recorded-payment-write) - trailing spaces kept; file set exactly the manifest's | 401 gateway | 400 `{"error":"Unauthorized"}` from the function (00:08:30 UTC) |
+| 7 | confirm-tuition | 4 -> 5, ACTIVE, verify_jwt true (ezbr cc8c3368) | 3 of 3 identical, byte for byte (index, auth, invoice-status) - trailing spaces kept; file set exactly the manifest's | 401 gateway | 401 `{"error":"Unauthorized"}` from the function (00:10:45 UTC) |
 
-**Where I am / next step:** 6 of 7 live at v5. Next: deploy 7 of 7 (confirm-tuition), which is still v4.
+All seven probed once more together, 00:11:11 to 00:11:59 UTC: the same seven answers (A 401 gateway for all; B 401 for calculate-tuition, bulk, settle-bill, confirm-tuition; B 400 `{"error":"Unauthorized"}` for delete-payment, smart-family-payment, family-payment - the same codes v4 gave before the deploy, see step A). No redeploy was needed for any function and nothing was restored from the v4 copies. No `deploy_edge_function` call was refused.
+
+The first `get_edge_function` answer (calculate-tuition, 62 KB) was too large for the transcript and was saved by the harness to a file; `verify.mjs` read that file. The other six were read from the transcript's tool results.
+
+## Step D - after all seven (read-only, 00:12:07 UTC 13 Nov)
+
+| figure | before (23:43 UTC) | after (00:12 UTC) |
+|---|---|---|
+| bills | 708 | 708 |
+| sum `recorded_payment` | 864,719,903 | 864,719,903 - UNCHANGED |
+| sum `total_amount` | 884,051,800 | 884,051,800 - UNCHANGED |
+| sum `base_amount` / `discount_amount` / `paid_amount` | 950,702,000 / 67,174,200 / 5,178,349,523 | the same three |
+| `status` | draft 10, issued 557, paid 115, partial 26 | the same |
+| `confirmation_status` | auto_approved 497, confirmed 156, needs_review 55 | the same |
+| newest `invoices.updated_at` | 20:41:23 UTC 12 Nov | the same; 0 bills updated since 23:43 |
+| ledger keys `settlement-writeoff%` | 0 | 0 |
+| recorded_payment NULL / negative | 0 / 0 | 0 / 0 |
+| payments | 14 | 14 |
+| `ai_action_apply` / `ai_action_undo` md5 | b7981cd0... / 944c9035... | the same |
+
+Nothing moved: no bill has been recalculated since the deploy (no tuition screen opened, no payment recorded), so no label has changed yet. The label changes the review counted (about 461, towards issued 136 / paid 499 / partial 73) appear as bills are opened.
+
+Logs, 23:40 UTC to the time of reading (`query_logs`, counts only):
+- Requests to the seven (`function_edge_logs`): only my own probes (curl). At v5: 401 x4 each for calculate-tuition, calculate-tuition-bulk, settle-bill, confirm-tuition; 401 x2 and 400 x2 each for delete-payment, smart-family-payment, family-payment. (At v4, my baseline probe: the same codes, once.) No 5xx. No request from the app reached any of the seven in the window.
+- Runtime events for the seven (`function_logs`): Boot and Shutdown (EarlyDrop) only; v5 boot times 38 to 45 ms, one smart-family-payment boot 456 ms; no boot error, no worker error.
+- Error-level lines from the seven: 6 at v5 (2 each from delete-payment, smart-family-payment, family-payment) and 3 at v4, all mine - the functions' own `console.error` for the public-key probes ("Unauthorized"), at the probe times.
+- Not one of the seven, noted only: stars-sync (v3, untouched) logged 35 error-level lines over 7 calls that all answered 200.
+
+Not exercised: a signed-in call to any of the seven (the probes stop at the gate), so the new code past authentication has booted but not run on live - the compare-and-set write, the new settle-bill balance and write-off key, delete-payment's bill reversal, the label rule on a real save. Nothing pushed; no SQL that writes; no migration from this run. Rollback copies remain at `C:\Users\Dell\hec-tools\payments-rollback\<function>\v4\`.
+
+**Where I am / next step:** DONE. All seven are live at v5 from `release/payments-1` a9cbbe53, each identical to the repo byte for byte and booted; money sums and label counts unchanged. LIVE AND VERIFIED - ready for the push to main (the conductor's step; nothing pushed from here).
