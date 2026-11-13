@@ -3,7 +3,7 @@
 Reviewed commit: 309c26a6 (`worktree-agent-a4803c8e10a251526`). Sections a-e were written by the first reviewer (code run in `.claude/worktrees/c2r2`, committed on `claude/hec-conductor-setup-efbaa5` as 37fa20c6 / 9dadf20d); it stopped at a usage limit during section f. A second reviewer took over on branch `c2-review-5` (from the conductor branch), re-ran R5-1's probe and did section f and the verdict in a fresh detached worktree `.claude/worktrees/c2r5` at 309c26a6.
 Review only: no product code changed, nothing pushed, deployed or applied. Synthetic audio only.
 
-**Where I am / next step:** sections a-e committed; R5-1 re-probed (below). Next: section f (suites, mutants, screens).
+**Where I am / next step:** DONE - verdict PASS WITH CHANGES, fit for the owner's hardware checks on live (see the end). Next: part 2, `release/recorder-1` (`docs/evidence/RECORDER-release.md`).
 
 ## a. R4-1: what ends a recording at the pre-start statement
 
@@ -99,4 +99,51 @@ Mutants of my own - **5 of 5 CAUGHT**. Engine mutants are copies under `c2r5/.pr
 
 Not run: `scripts/recorder/browser.test.mjs` (real Chrome with fake devices; not in run.mjs). R5-1 has no test (by construction: the suite's arm-failure case throws `server_unavailable`, the one shape that is retried).
 
-**Where I am / next step:** suites and mutants done. Next: the screens in a browser.
+### The screens, seen in a browser (first time)
+
+Harness `C:\Users\Dell\hec-tools\c2r5b-harness` (a copy of the first reviewer's `c2r5-harness`, extended): Vite on 127.0.0.1:5372 serving the REAL `src/pages/TeacherRecorder.tsx` inside the REAL staff `Layout` (with the app's Timer / NoiseMeter / StudentProfile providers), the Supabase client aliased to a fake holding made-up names, `@/hooks/useAuth` aliased to a fake teacher (or admin), and a scripted fake engine (no microphone; the only audio is a synthesised tone in the wizard). No sign-in, no network beyond localhost, no real child, no real lesson file. "Another staff page" is a route rendered in the same Layout without the recorder screen. Playwright Chromium, 375x812 and 1280x800, axe-core and a 44 px target probe. Screenshots and `c3-results.json` in `C:\Users\Dell\hec-tools\c2r5b-harness\shots\` (not committed). The first reviewer's run of the bare component (`c2r5-harness\out`) had a blank first screenshot: Vite's first-load dependency reload; the copy warms up first.
+
+Reached (both sizes, no page error, no horizontal overflow at 375, axe: nothing critical/serious in the recorder's own content):
+
+| State | What it shows |
+|---|---|
+| setup needed | "Set up the microphones first" + button |
+| microphone wizard (start) | step 1 |
+| before Ready / Ready | lesson headline, both microphones ready, "Ready for today"; then "Ready. The recorder gets this lesson ready at 08:40" |
+| armed | "Armed. Recording starts by itself at 08:55. You can open other pages ..." |
+| starting > 5 s | "Saving on this laptop" alert, no red dot |
+| recording | red dot, timer, meters, markers, Stop |
+| stalled | NOT RECORDING alert, Stop |
+| error (switched off) | "This lesson is not being recorded ... DELETED" |
+| cannot be sent | "This recording CANNOT be sent ... use the backup recorder ... kept on this laptop for 14 days" |
+| no sound after Ready | "Allow sound" button |
+| admin panel | classes, consent gaps, switch |
+| R5-1 (arm answered 429) | page: "Getting the lesson ready..." for ever; other page: NO bar at all |
+| bar on another staff page | Ready (records from 08:55), Armed, Recording, NOT RECORDING, Stop asked ("Keep recording" / "Yes, stop recording"), Allow sound |
+| full screen (1280) | the app's root put in real full screen by a click: `fullscreen: true, barInside: true`, bar "Recording - Starters 1 - Stop", "Open the recorder" hidden |
+
+Render faults found:
+1. **R5-2 (minor, real): the Armed bar gives the wrong time.** Seen as "Armed - Starters 1 (Mon-Wed) - recording starts at the lesson's start by itself" (no time). Cause: once a lesson is armed it is in `armed[]`, so the next 5-second `armTick` sets `d.next` to the lesson AFTER it (or null), and the bar prints that. Probe (`.probe/probe-r52.mjs`, lessons A 10:00 and B 14:00): at the arming pass "Armed - recording starts at 09:55", five seconds later "Armed - recording starts at 13:55" - the next lesson's time under the armed lesson's name. The author's test reads the bar only on the arming pass. Fix: keep the armed lesson's start for the armed state (e.g. `d.armedAt` set in the arm branch).
+2. The "This lesson is not being recorded" notice is drawn TWICE on the error and cannot-be-sent screens (the message board at the top, and `NotRecordedNotice` lower down). Cosmetic.
+3. Phone (375): the page header puts the title, subtitle and "Microphones" button on one row; the subtitle is squeezed to a one-word column. Admin panel at 375: the class card's name and status share a row with "Switch on..." (label cut to "Switch on..."). Legible, cramped.
+4. The bar prefixes calm states (Ready, Armed, Saving) with the warning sign; only alerts should carry it.
+5. The Layout's own round launcher (bottom right) sits under the bar at 1280 and over page text at 375 - the shell's, not the recorder's, but the two collide while the bar shows.
+6. The "Allow sound" help text always says "The page was reloaded"; it also shows when the first click itself did not get sound.
+
+axe "serious" on the other-page shots are the Layout breadcrumb's `list` / `listitem` rules, and every sub-44 px target is the Layout's (sidebar 36 px rows, bell 40 px, Change Password 36 px): the shell's, not this change. The recorder's own buttons and bar are all >= 44 px.
+
+Not reached: the phone-size full screen (the harness's trigger button sat under the Layout header; 1280 proves the mechanism); a page reloaded mid-lesson ("The page was reloaded during the lesson"); Saving / Saved on the bar; "NOT armed: a microphone is not plugged in"; storage low; offline; the wizard's later steps; anything with real microphones, a real sleep or a real lid (hardware list).
+
+## Verdict
+
+**PASS WITH CHANGES. Fit to go on LIVE for the owner's hardware checks**, on these grounds: R4-1 and R4-2 are done as asked and hold under 5 of 5 new mutants; nothing reaches audio that should not (section e, unchanged since review 4); every failure found fails toward NOT recording, never toward recording without the switch and consent or toward losing or exposing audio; the hardware checks use a test class with no children and the quick recorder alongside.
+
+Changes, in order:
+1. **R5-1 (MAJOR) before any lesson depends on the recorder**: a failed or refused arm is silent and a 429 / "no rows" ends the lesson for the day. Final only for the stated list; everything else retried in 30 s; `d.problem` set either way and shown on the bar and the page. Add the probe as a test.
+2. R5-2: the Armed bar's time.
+3. The doubled notice; the phone header; the warning sign on calm states.
+4. Minors from a-b: tie the other final texts to the migration as `pre_start_refused` is; `abandonedAt` from the server clock; the session's "today" from `serverNow()`; a test through midnight; runbook line "if a lesson is moved after Armed, press Stop and Ready again".
+
+For the hardware list, add: (21) switch a test class OFF (or leave a child without consent) and press Ready: today nothing records and NOTHING says why (R5-1) - confirm, then check again after the fix; (22) laptop date and time correct before Ready.
+
+**Where I am / next step:** review 5 DONE. Next: part 2, `release/recorder-1`.
