@@ -25,6 +25,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, ArrowRightLeft, Pause, StopCircle, Settings } from "lucide-react";
 import { format } from "date-fns";
+import { rpcErrorText } from "@/lib/moneyGuard";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -176,7 +177,7 @@ export function ModifyEnrollmentModal({
       onOpenChange(false);
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to transfer enrollment");
+      toast.error(rpcErrorText(error, "Failed to transfer enrollment"));
     },
   });
 
@@ -214,7 +215,7 @@ export function ModifyEnrollmentModal({
       onOpenChange(false);
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to pause enrollment");
+      toast.error(rpcErrorText(error, "Failed to pause enrollment"));
     },
   });
 
@@ -249,7 +250,7 @@ export function ModifyEnrollmentModal({
       onOpenChange(false);
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to end enrollment");
+      toast.error(rpcErrorText(error, "Failed to end enrollment"));
     },
   });
 
@@ -303,7 +304,7 @@ export function ModifyEnrollmentModal({
       onOpenChange(false);
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to update settings");
+      toast.error(rpcErrorText(error, "Failed to update settings"));
     },
   });
 

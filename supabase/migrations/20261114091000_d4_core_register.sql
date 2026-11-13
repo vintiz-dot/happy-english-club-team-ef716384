@@ -74,6 +74,17 @@ BEGIN
   IF to_regclass('public.invoice_state_floor') IS NULL THEN
     v_missing := v_missing || 'table public.invoice_state_floor (paste 20261114090000_d4_floors first)'::text;
   END IF;
+  -- The step 1a bodies this file relies on, as reviewed (md5 of the LF text:
+  -- live 1a was pasted with CRLF, so CR is stripped before comparing).
+  FOR r IN SELECT * FROM (VALUES
+      ('public._caller_lane()', '66001c3b6eb716a6380e4155fba75409'),
+      ('public._floor_mark_level(text, uuid)', 'ed25e62b64c592f1ee6a026596eb11d0')) AS t(sig, want)
+  LOOP
+    IF to_regprocedure(r.sig) IS NOT NULL
+       AND (SELECT md5(replace(p.prosrc, E'\r', '')) FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig)) IS DISTINCT FROM r.want THEN
+      v_missing := v_missing || ('function ' || r.sig || ' is not the step 1a body (expected md5 ' || r.want || ')');
+    END IF;
+  END LOOP;
   FOR r IN
     SELECT * FROM (VALUES
       ('sessions',             ARRAY['id','class_id','date','start_time','end_time','status','teacher_id']),
@@ -83,7 +94,8 @@ BEGIN
       ('enrollments',          ARRAY['class_id','student_id','start_date','end_date']),
       ('students',             ARRAY['id','family_id']),
       ('session_participants', ARRAY['session_id','teaching_assistant_id','participant_type']),
-      ('payroll_periods',      ARRAY['month','status'])
+      ('payroll_periods',      ARRAY['month','status']),
+      ('invoice_state_floor',  ARRAY['student_id','month','ever_paid','ever_signed','ever_frozen','max_recorded_payment'])
     ) AS t(tbl, cols)
   LOOP
     IF to_regclass('public.' || r.tbl) IS NULL THEN
@@ -160,7 +172,7 @@ CREATE TABLE IF NOT EXISTS public.money_change_events (
   override_id   uuid REFERENCES public.money_change_overrides(id) ON DELETE RESTRICT,
   actor_user_id uuid,
   kind          text NOT NULL CHECK (kind IN ('guard_installed','tuition_refreshed','tuition_refresh_failed','reviewed',
-                                              'automation_refused','service_retro_mark','owner_lane')),
+                                              'automation_refused','service_retro_mark','owner_lane','enrollment_rpc_mark')),
   payload       jsonb NOT NULL DEFAULT '{}'::jsonb,
   CONSTRAINT money_change_events_payload_size CHECK (pg_column_size(payload) < 262144)
 );
@@ -384,6 +396,15 @@ BEGIN
   RETURN true;
 END $fn$;
 
+-- Is this statement one of the live admin enrolment RPCs (called through
+-- PostgREST as SELECT ... "end_enrollment"(...))? Read from the statement the
+-- client sent; PostgREST passes values as parameters, never in the text.
+CREATE OR REPLACE FUNCTION public._money_enrollment_rpc_call()
+RETURNS boolean LANGUAGE sql STABLE SET search_path = public AS $fn$
+  SELECT COALESCE(lower(current_query()) ~
+    '(^|[^a-z0-9_])"?(end_enrollment|pause_enrollment|modify_enrollment_transfer|ai_action_undo|ai_action_apply)"?[[:space:]]*\(', false)
+$fn$;
+
 -- ---------------------------------------------------------------- 5
 -- G-11: the register and the bill. Direct statements only (trigger-made
 -- writes - the seeds, the cancel's excuse-all - are not judged). In order:
@@ -422,10 +443,14 @@ BEGIN
   IF pg_trigger_depth() > 1 THEN
     RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
   END IF;
-  -- 1
-  IF TG_OP = 'INSERT' AND EXISTS (SELECT 1 FROM public.attendance a
-                                   WHERE a.session_id = NEW.session_id AND a.student_id = NEW.student_id) THEN
-    RETURN NEW;
+  -- 1 (the row is locked, not just seen: a concurrent, uncommitted delete of
+  -- it is waited for, and if it commits the INSERT is judged as a new row)
+  IF TG_OP = 'INSERT' THEN
+    PERFORM 1 FROM public.attendance a
+     WHERE a.session_id = NEW.session_id AND a.student_id = NEW.student_id FOR UPDATE;
+    IF FOUND THEN
+      RETURN NEW;
+    END IF;
   END IF;
 
   SELECT ss.id, ss.class_id, ss.date, ss.start_time, ss.end_time, ss.status INTO s
@@ -511,6 +536,25 @@ BEGIN
   IF v_admin THEN
     -- 5
     IF v_tier = 0 THEN
+      RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+    END IF;
+    -- Conductor's ruling (D4 1b review, R-1): until step 3B gives enrolments
+    -- their own checked path, the live admin enrolment RPCs that write the
+    -- register as a side effect (end_enrollment, modify_enrollment_transfer:
+    -- remove placeholder marks / seed new ones; pause_enrollment: Excused;
+    -- ai_action_undo: remove placeholder marks; ai_action_apply) are recorded
+    -- and queued for review, not refused - only for the rows those RPCs
+    -- write (an unsigned row removed or seeded, or a mark set to Excused).
+    IF public._money_enrollment_rpc_call()
+       AND ((TG_OP = 'DELETE' AND OLD.marked_by IS NULL)
+            OR (TG_OP = 'INSERT' AND NEW.marked_by IS NULL)
+            OR v_new_status = 'Excused') THEN
+      INSERT INTO public.money_change_events (kind, actor_user_id, payload)
+      VALUES ('enrollment_rpc_mark', v_uid, jsonb_build_object('session_id', s.id, 'student_id', v_kid, 'lesson_date', s.date,
+                'old_status', v_old_status, 'new_status', v_new_status, 'old_marked_by', v_old_by,
+                'new_marked_by', CASE WHEN TG_OP = 'DELETE' THEN NULL ELSE NEW.marked_by END, 'op', TG_OP, 'tier', v_tier,
+                'rpc', substring(lower(current_query()) from
+                  '(end_enrollment|pause_enrollment|modify_enrollment_transfer|ai_action_undo|ai_action_apply)')));
       RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
     END IF;
     RAISE EXCEPTION 'attendance_requires_checked_path' USING ERRCODE = 'HC025',
@@ -1084,7 +1128,7 @@ BEGIN
     'invoice_floors', (SELECT count(*)::int FROM public.invoice_state_floor),
     'events_30d', (SELECT COALESCE(jsonb_object_agg(kind, n), '{}'::jsonb) FROM (
         SELECT kind, count(*)::int n FROM public.money_change_events
-         WHERE kind IN ('automation_refused', 'service_retro_mark', 'owner_lane') AND created_at >= now() - interval '30 days'
+         WHERE kind IN ('automation_refused', 'service_retro_mark', 'owner_lane', 'enrollment_rpc_mark') AND created_at >= now() - interval '30 days'
          GROUP BY kind) q),
     'installed_at', (SELECT min(created_at) FROM public.money_change_events WHERE kind = 'guard_installed'));
 END $fn$;
@@ -1133,6 +1177,7 @@ REVOKE ALL ON FUNCTION
   public.payroll_reach(uuid, uuid, date, date),
   public._money_ack(text[], uuid, uuid, date, date, int),
   public._attendance_money_guard(),
+  public._money_enrollment_rpc_call(),
   public._money_plan__attendance(text, jsonb, uuid),
   public._money_exec__attendance(jsonb, uuid),
   public._money_change_plan(text, text, jsonb, uuid),

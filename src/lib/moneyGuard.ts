@@ -180,6 +180,64 @@ export function markLines(p: MoneyPlan | null | undefined): Array<{ studentId: s
   }));
 }
 
+const SQLSTATE_TO_CODE: Record<string, string> = {
+  HC024: "attendance_identity",
+  HC025: "attendance_requires_checked_path",
+  HC050: "guard_broken",
+  HC060: "approval_required",
+  HC120: "money_requires_checked_path",
+};
+
+/**
+ * The sentence for a database refusal reached through supabase.rpc (an
+ * enrolment RPC, say): the server's own wording for every D4 code, with the
+ * next step - never the raw code. Anything else keeps its message.
+ */
+export function rpcErrorText(error: any, fallback: string): string {
+  const code = SQLSTATE_TO_CODE[String(error?.code ?? "")];
+  if (code) {
+    const kind = /kind=([a-z_]+)/.exec(String(error?.details ?? error?.detail ?? ""))?.[1] ?? null;
+    return moneyErrorText(code, kind);
+  }
+  const msg = String(error?.message ?? "");
+  return msg && !/^[a-z_]+$/.test(msg) ? msg : fallback;
+}
+
+/**
+ * The sentence for an edge function's non-2xx answer (supabase-js keeps the
+ * JSON body on error.context): the register refusals worded with their next
+ * step; otherwise the function's own sentence; never "non-2xx status code".
+ */
+export async function functionRefusalText(error: any, fallback: string): Promise<string> {
+  let body: any = null;
+  try {
+    const ctx = error?.context;
+    const src = typeof ctx?.clone === "function" ? ctx.clone() : ctx;
+    body = (await src?.json?.()) ?? null;
+  } catch {
+    body = null;
+  }
+  if (body?.code === "attendance_requires_checked_path" || body?.code === "attendance_identity") {
+    const text = moneyErrorText(body.code, body.kind ?? null);
+    return body.kind === "retro_mark" || (!body.kind && body.preview)
+      ? `${text} Open the class's Past Attendance to give the reason.`
+      : text;
+  }
+  if (body && typeof body.error === "string" && body.error.trim()) return body.error;
+  if (body && typeof body.message === "string" && body.message.trim()) return body.message;
+  return fallback;
+}
+
+/**
+ * Pending edits after a "save all" over several lessons: a lesson that saved
+ * leaves the list; a lesson whose save opened the reason dialog KEEPS its
+ * edits (they are still on screen if the dialog is cancelled), and so does
+ * every lesson not reached.
+ */
+export function editsAfterSave<T>(edits: Record<string, T>, savedLessonIds: string[]): Record<string, T> {
+  return Object.fromEntries(Object.entries(edits).filter(([id]) => !savedLessonIds.includes(id)));
+}
+
 /** A 409 body from mark-attendance / repair-attendance that the dialog can take over. */
 export function needsMoneyDialog(body: any): boolean {
   return !!body && body.code === "attendance_requires_checked_path" && !!body.preview && body.preview.allowed !== false

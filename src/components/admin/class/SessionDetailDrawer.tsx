@@ -22,6 +22,7 @@ import { ParticipationPoints } from "@/components/admin/ParticipationPoints";
 import { CancelSessionDialog } from "@/components/admin/CancelSessionDialog";
 import { DeleteSessionDialog } from "@/components/admin/DeleteSessionDialog";
 import { cn } from "@/lib/utils";
+import { functionRefusalText } from "@/lib/moneyGuard";
 
 interface SessionDetailDrawerProps {
   session: any;
@@ -138,7 +139,8 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
           status,
         },
       });
-      if (error) throw error;
+      // D4: an old billed lesson answers 409 with its reason and next step.
+      if (error) throw new Error(await functionRefusalText(error, "Failed to save attendance"));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["session-students", session?.id] });

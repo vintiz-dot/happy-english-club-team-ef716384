@@ -7,7 +7,7 @@
 // evidence tables' row security.
 import { PGlite } from '@electric-sql/pglite';
 import { randomUUID } from 'node:crypto';
-import { harness, makeDb, sqlOf } from './d4-prelude.mjs';
+import { harness, makeDb, sqlOf, migPath, D4_ENROLMENT_RPCS } from './d4-prelude.mjs';
 
 const files = process.argv.slice(2);
 if (files.length !== 9) {
@@ -32,6 +32,25 @@ await section('preflight', async () => {
       (SELECT count(*)::int FROM pg_trigger WHERE tgname = 'zz_attendance_money_guard') n`)).rows[0];
   ok('preflight:   and installs nothing', t.a === null && t.n === 0, t);
   await bare.close();
+});
+
+await section('preflight: the step 1a bodies it relies on', async () => {
+  const x = await makeDb(PGlite, { people: true, migrations: base });
+  await x.exec(`CREATE OR REPLACE FUNCTION public._caller_lane() RETURNS text LANGUAGE sql STABLE SET search_path = public AS $f$ SELECT 'owner' $f$;`);
+  let msg = null;
+  try { await x.exec(sqlOf(coreF)); } catch (e) { msg = e.message; }
+  await x.exec('ROLLBACK').catch(() => {});
+  ok('a _caller_lane that is not the reviewed 1a body -> refused, naming it, nothing installed',
+     /_caller_lane\(\) is not the step 1a body/.test(msg ?? '') &&
+     (await x.query(`SELECT to_regclass('public.money_change_overrides') a`)).rows[0].a === null, msg);
+  await x.close();
+  const y = await makeDb(PGlite, { people: true, migrations: base });
+  const def = (await y.query(`SELECT pg_get_functiondef('public._floor_mark_level(text, uuid)'::regprocedure) d`)).rows[0].d;
+  await y.exec(def.replace(/\n/g, '\r\n'));
+  msg = null;
+  try { await y.exec(sqlOf(coreF)); } catch (e) { msg = e.message; }
+  ok('the same 1a body pasted with CRLF (as live) is accepted (md5 of the CR-stripped text)', msg === null, msg);
+  await y.close();
 });
 
 db = await makeDb(PGlite, { people: true, rls: true, migrations: base });
@@ -94,6 +113,9 @@ await section('install', async () => {
      t.every((r) => r.rls && r.s && !r.i && !r.an && r.si), t);
   const src = sqlOf(coreF);
   ok('the paste fails fast: SET LOCAL lock_timeout = \'5s\' right after BEGIN', /BEGIN;\s*(--[^\n]*\n\s*)*SET LOCAL lock_timeout = '5s';/.test(src));
+  const g = (await db.query(`SELECT prosrc FROM pg_proc WHERE proname = '_attendance_money_guard'`)).rows[0].prosrc;
+  ok('rule 1 LOCKS the existing row (FOR UPDATE) before passing an INSERT (a concurrent delete is waited for, R-2)',
+     /PERFORM 1 FROM public\.attendance a\s+WHERE a\.session_id = NEW\.session_id AND a\.student_id = NEW\.student_id FOR UPDATE;\s+IF FOUND THEN\s+RETURN NEW;/.test(g));
   ok('no partial unique index on the new tables', (await db.query(`SELECT count(*)::int n FROM pg_index i WHERE i.indrelid IN
       ('public.money_change_overrides'::regclass, 'public.money_change_events'::regclass) AND i.indisunique AND i.indpred IS NOT NULL`)).rows[0].n === 0);
 });
@@ -324,6 +346,8 @@ await section('DQ-1: one-off cover staff, a mark more than a week old', async ()
   let r = await tryIt(() => asCoverRaw(`UPDATE attendance SET status='Absent' WHERE session_id=$1 AND student_id=$2`, [s.sid, k]));
   ok('a cover teacher (not a teacher of the class) lowering a person\'s Present to Absent, lesson 40 days old: HC025 cover_staff, "ask an administrator"',
      r.code === 'HC025' && /cover_staff/.test(r.detail ?? '') && /ask an administrator/.test(r.detail ?? ''), r);
+  r = await tryIt(() => asCoverRaw(`UPDATE attendance SET status='Present', marked_by=$3 WHERE session_id=$1 AND student_id=$2`, [s.sid, k, s.teacher]));
+  ok('a cover teacher RE-SAVING the old mark unchanged (same status, same signature): passes', r.ok !== undefined, r);
   const t = await mk({ when: TODAY, start: TODAY.time, end: TODAY.end_time }); const kt = await kid(t); await att(t, kt, 'Present', t.teacher);
   r = await tryIt(() => asCoverRaw(`UPDATE attendance SET status='Absent' WHERE session_id=$1 AND student_id=$2`, [t.sid, kt]));
   ok('the same cover teacher inside the week: allowed (the ordinary register stays free)', r.ok !== undefined, r);
@@ -408,6 +432,45 @@ await section('trigger-made writes are not judged (the seed of a new lesson)', a
   ok('an admin creates a lesson in a paid past month: the seed trigger\'s Present rows (depth 2) are not judged here (G-7, step 3A, guards the lesson)',
      r.ok !== undefined && seeded?.status === 'Present' && seeded.marked_by === null, [r, seeded]);
   await db.exec(`DROP TRIGGER trg_attendance_after_session_ins ON public.sessions; DROP FUNCTION public._test_seed_after_session_ins();`);
+});
+
+await section('conductor ruling (1b review R-1): the live enrolment RPCs are recorded, not refused, until step 3B', async () => {
+  // live state: 20261106100000 dropped the enrolment-side trigger that turned these rows Excused first
+  await db.exec(sqlOf(migPath('20261106100000_attendance_guard_no_auto_changes.sql')));
+  await db.exec(D4_ENROLMENT_RPCS);
+  await db.exec(sqlOf(migPath('20261106100001_date_aware_enrollment_changes.sql')));
+  await db.exec(sqlOf(migPath('20261113120000_pause_enrollment_admin_only.sql')));
+  // The reviewer's probe3: an enrolment ended 35 days back; a seeded Present on a lesson 30 days ago; that month's bill issued.
+  const cid = randomUUID(), tUid = randomUUID();
+  await db.query(`INSERT INTO classes VALUES ($1,$2)`, [cid, tUid]);
+  const d30 = await clock(-30), d35 = await clock(-35), d60 = await clock(-60);
+  const sid = (await asSuper(`INSERT INTO sessions(class_id,date,start_time,end_time,status,teacher_id) VALUES ($1,$2,'17:30','19:00','Held',gen_random_uuid()) RETURNING id`, [cid, d30.date])).rows[0].id;
+  const k = (await asSuper(`INSERT INTO students(full_name) VALUES ('k') RETURNING id`)).rows[0].id;
+  await asSuper(`INSERT INTO enrollments(class_id, student_id, start_date) VALUES ($1,$2,$3)`, [cid, k, d60.date]);
+  await asSuper(`INSERT INTO attendance(session_id,student_id,status,marked_by) VALUES ($1,$2,'Present',NULL)`, [sid, k]);
+  await inv(k, d30.month, {});
+  let r = await tryIt(() => asAdmin(`DELETE FROM attendance WHERE session_id=$1 AND student_id=$2`, [sid, k]));
+  ok('control: the same delete made raw by an admin is still HC025', r.code === 'HC025', r);
+  const n0 = (await events('enrollment_rpc_mark')).length;
+  r = await tryIt(() => asAdmin(`SELECT public.end_enrollment($1, $2, $3)`, [k, cid, d35.date]));
+  const ev = (await events('enrollment_rpc_mark')).slice(n0);
+  ok('end_enrollment backdated into a billed month: passes, the placeholder mark is removed, and one enrollment_rpc_mark event is queued',
+     r.ok !== undefined && !(await mark({ sid }, k)) && ev.length === 1 && ev[0].payload.rpc === 'end_enrollment' &&
+     ev[0].payload.student_id === k && ev[0].actor_user_id === ADMIN, [r, ev]);
+  // pause_enrollment over an old billed lesson where a teacher marked the child Present
+  const sid2 = (await asSuper(`INSERT INTO sessions(class_id,date,start_time,end_time,status,teacher_id) VALUES ($1,$2,'08:00','09:00','Held',gen_random_uuid()) RETURNING id`, [cid, d30.date])).rows[0].id;
+  const k2 = (await asSuper(`INSERT INTO students(full_name) VALUES ('k2') RETURNING id`)).rows[0].id;
+  await asSuper(`INSERT INTO enrollments(class_id, student_id, start_date) VALUES ($1,$2,$3)`, [cid, k2, d60.date]);
+  await asSuper(`INSERT INTO attendance(session_id,student_id,status,marked_by) VALUES ($1,$2,'Present',$3)`, [sid2, k2, tUid]);
+  await inv(k2, d30.month, { recorded: 540000 });
+  r = await tryIt(() => asAdmin(`SELECT public.pause_enrollment($1, $2, $3, $4, 'Away for surgery')`, [k2, cid, d30.date, d30.date]));
+  ok('pause_enrollment over an old paid month (a person\'s Present -> Excused): passes and is queued',
+     r.ok !== undefined && (await mark({ sid: sid2 }, k2))?.status === 'Excused' &&
+     (await events('enrollment_rpc_mark')).some((e) => e.payload.rpc === 'pause_enrollment' && e.payload.student_id === k2), r);
+  r = await tryIt(() => asAdmin(`UPDATE attendance SET status='Present', marked_by=$3 WHERE session_id=$1 AND student_id=$2`, [sid2, k2, ADMIN]));
+  ok('only the RPC\'s own rows: a raw admin re-bill of that old mark is still HC025', r.code === 'HC025', r);
+  const st = (await asAdmin(`SELECT public.d4_guard_status() r`)).rows[0].r;
+  ok('the status card counts them (events_30d.enrollment_rpc_mark)', (st.events_30d?.enrollment_rpc_mark ?? 0) >= 2, st.events_30d);
 });
 
 // ---------------------------------------------------------------- the checked path
@@ -554,6 +617,8 @@ await section('events, review, automation log', async () => {
   ok('tuition_refreshed: the bills now re-read by SQL beside what was attached', e.payload.invoices_after.length === 1 && e.actor_user_id === ADMIN, e.payload);
   let r = await tryIt(() => asAdmin(`SELECT public.record_money_change_event($1,'reviewed','{"note":"ok"}')`, [res.override_id]));
   ok('a review note under 15 characters -> HC010', r.code === 'HC010', r);
+  r = await tryIt(() => as(t.teacher, 'authenticated', 'authenticated', `SELECT public.record_money_change_event($1,'tuition_refreshed','{}')`, [res.override_id]));
+  ok('record_money_change_event by a teacher -> 42501 (admins only)', r.code === '42501', r);
   r = await tryIt(() => asAdmin(`SELECT public.record_money_change_event($1,'owner_lane','{}')`, [res.override_id]));
   ok('an event kind only the triggers write -> HC015', r.code === 'HC015', r);
   r = await tryIt(() => asAdmin(`SELECT public.log_money_automation_refused('attendance', gen_random_uuid(), 'x')`));

@@ -249,6 +249,23 @@ export const D4_EVIDENCE_RLS = `
 `;
 
 /**
+ * What the live enrolment RPCs need beyond D2's prelude, so the REAL
+ * 20261106100001 (end_enrollment, ...) and 20261113120000 (pause_enrollment)
+ * can be loaded after it: the enrolment columns they write, pause_windows,
+ * and a stub of pause_enrollment for the latter's preflight (replaced by it).
+ */
+export const D4_ENROLMENT_RPCS = `
+  ALTER TABLE public.enrollments ADD COLUMN IF NOT EXISTS id uuid NOT NULL DEFAULT gen_random_uuid(),
+    ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now(), ADD COLUMN IF NOT EXISTS created_by uuid,
+    ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now(), ADD COLUMN IF NOT EXISTS updated_by uuid;
+  CREATE TABLE IF NOT EXISTS public.pause_windows(
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), student_id uuid NOT NULL, class_id uuid NOT NULL,
+    from_date date NOT NULL, to_date date NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), created_by uuid, memo text);
+  CREATE OR REPLACE FUNCTION public.pause_enrollment(p_student_id uuid, p_class_id uuid, p_from_date date, p_to_date date, p_memo text DEFAULT NULL)
+    RETURNS jsonb LANGUAGE sql AS $f$ SELECT '{}'::jsonb $f$;
+`;
+
+/**
  * A fresh pglite with D2's prelude, the D4 blocks asked for, then the named
  * migration files in order (real files, read as they are on disk).
  */

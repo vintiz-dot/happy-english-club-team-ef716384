@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Calendar, Save, Users } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { moneyErrorText, needsMoneyDialog } from "@/lib/moneyGuard";
+import { editsAfterSave, moneyErrorText, needsMoneyDialog } from "@/lib/moneyGuard";
 import { useMoneyChange } from "@/components/admin/money-guard/useMoneyChange";
 import { MoneyGuardDialog } from "@/components/admin/money-guard/MoneyGuardDialog";
 
@@ -62,7 +62,9 @@ export function PastAttendanceEditor({ classId }: PastAttendanceEditorProps) {
   // than a week old in a billed month answers 409 with the server's preview;
   // the money guard dialog then asks for the reason and confirms through
   // money_change_checked. Nothing here decides which changes need that.
-  const guard = useMoneyChange(() => {
+  const guard = useMoneyChange((result) => {
+    // The lesson whose dialog was confirmed is saved now: its edits leave the screen.
+    if (result?.target_id) setAttendance((prev) => editsAfterSave(prev, [String(result.target_id)]));
     queryClient.invalidateQueries({ queryKey: ["past-attendance-sessions", classId, selectedMonth] });
     toast.success("Attendance updated, with your reason");
   });
@@ -114,9 +116,9 @@ export function PastAttendanceEditor({ classId }: PastAttendanceEditorProps) {
         // for that lesson; the edits of the other lessons stay on screen.
         const r = await saveAttendanceMutation.mutateAsync({ sessionId, marks });
         if (r?.saved) saved.push(sessionId);
-        if (r?.dialog) { saved.push(sessionId); paused = true; break; }
+        if (r?.dialog) { paused = true; break; }   // its edits stay until the dialog is confirmed
       }
-      setAttendance((prev) => Object.fromEntries(Object.entries(prev).filter(([id]) => !saved.includes(id))));
+      setAttendance((prev) => editsAfterSave(prev, saved));
       if (!paused) toast.success("All attendance saved");
     } catch (error) {
       console.error("Error saving attendance:", error);
