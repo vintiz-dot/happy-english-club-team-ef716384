@@ -2,9 +2,40 @@
 
 Independent reviewer. Reviewing branch `worktree-agent-a8fa73ee4063a7b1b` at 0617d940 (detached; the builder's final tip a80d45b1 is reviewed in the last section). Read-only: no product code changed, nothing pushed, nothing applied. Live probes are catalog-only (project `aswgmbefikhsnhogtryv`, 2026-11-13 ~09:30 Hanoi).
 
-**Where I am / next step:** COMPLETE (review commits rebased onto the final tip a80d45b1). Next step is not mine: the conductor makes the changes below, then applies with the corrected brief.
+**Where I am / next step:** ROUND 2 COMPLETE (32d3ee21): APPLY WITH CHANGES - one change, the enrolment-RPC test (below). Not applied to live: the conductor's instruction was to apply only on APPLY. Next step is not mine.
 
-## Verdict: APPLY WITH CHANGES
+## Round 2 (delta a80d45b1..32d3ee21)
+
+Verdict: **APPLY WITH CHANGES** - one change, R2-1. Everything else in the delta is right.
+
+**R2-1 (must change): the enrolment-RPC exemption can be forged.** `_money_enrollment_rpc_call()` (`20261114091000:403-407`) decides "this write is end/pause/transfer/undo/apply/resolve" from `current_query()`, i.e. the TEXT the client sent. That text is the client's, not the server's: any statement that contains `end_enrollment(` (or one of the other five names followed by `(`) anywhere - a quoted column alias, a string literal, a comment - is treated as that RPC. Executed (scratch `probe5.mjs`, pglite, real files, as an admin on an old confirmed paid month): the plain `UPDATE attendance SET status='Excused'` is HC025; the SAME update wrapped the way PostgREST renders `PATCH ...&select="end_enrollment(":status` (`... AS "end_enrollment(" FROM pgrst_source`) PASSES, status now Excused, one `enrollment_rpc_mark` event; a DELETE of the seeded Present carrying the literal `'pause_enrollment ('` PASSES; an UPDATE preceded by `/* ai_action_undo( */` PASSES. Reach: the exemption sits inside the admin branch (rule 5), so it lets an ADMIN un-bill an old billed month without the reason dialog (recorded, not refused) - exactly the bypass. Through PostgREST the route is a client-chosen select alias or embedded name (PostgREST accepts quoted field names and writes them into the statement; I did not drive live PostgREST, and filter values are parameters as the builder says). Raw SQL text is owner-lane anyway; the hole is the PostgREST text.
+
+Smallest robust replacement, executed: read the server's own call stack instead of the client's text. Only the helper's body changes; the six live RPCs (all `plpgsql`, `SECURITY DEFINER`, checked on live) are NOT touched:
+
+```sql
+CREATE OR REPLACE FUNCTION public._money_enrollment_rpc_call()
+RETURNS text LANGUAGE plpgsql STABLE SET search_path = public AS $fn$
+DECLARE c text;
+BEGIN
+  GET DIAGNOSTICS c = PG_CONTEXT;   -- one line per executing frame: "PL/pgSQL function name(argtypes) line N at ..."
+  RETURN substring(c from '(?:^|\n)PL/pgSQL function (?:public\.)?(end_enrollment|pause_enrollment|modify_enrollment_transfer|ai_action_undo|ai_action_apply|stars_sync_resolve_conflict)\([^)]*\) line [0-9]+ at ');
+END $fn$;
+```
+
+A frame line exists only while that function is really executing; nothing a PostgREST caller sends is written into one. With this body (scratch copy `core-ctx.sql`): `d4-register` 133/133 (all the builder's end / pause / transfer / resolve / raw cases, payload `rpc` still the bare name) and `probe5` 5/5 - the legitimate `end_enrollment` passes and records, the alias, literal and comment forgeries are all HC025. Residual: the "SQL statement ..." lines of the stack quote function-body text, so a person-callable function that EXECUTEs client-supplied SQL containing a newline and that frame text could still forge; none exists that writes `attendance`. A transaction-local setting (`set_config('hec.lane', ...)`) would also be robust but needs all six live RPC bodies replaced - more surface, no gain. After the change: regenerate the fingerprint (the helper's md5 and the brief's table row), add the three forgery cases to `d4-register` (alias, literal, comment -> HC025) and a mutant that puts `current_query()` back.
+
+The rest of the delta, checked:
+- Required change 1 (CR-stripped md5): the brief's new section and both fingerprint files now compute `md5(replace(prosrc, E'\r',''))`. The D-release `.sql` changed (one expression and a comment) while its expected JSON did not - right, since the D bodies are LF; `--check-unchanged --after-rollback` 66/66. Step 5 now "at least one `guard_installed`".
+- Change 2 (preflight): `:77-87` requires the LF md5 of `_caller_lane` (66001c3b) and `_floor_mark_level` (ed25e62b), CR stripped, and the six `invoice_state_floor` columns (`:98`). Matches live (section 9).
+- Change 3 (rollback): script header and brief step 2 make the redeploy of the previous `repair-attendance` / `mark-attendance` REQUIRED; the live v3 texts are saved LF under `docs/evidence/D4-1b-rollback-v3/`.
+- Change 4 (R-1): the conductor's ruling - recorded (`enrollment_rpc_mark`), not refused, only for the rows those RPCs write (unsigned delete / insert, Excused, the resolve's own signed mark); `ModifyEnrollmentModal` words any refusal through `rpcErrorText`. Right in intent; R2-1 is about HOW the RPC is recognised.
+- Change 5 (cases): X01, X07, F01 added and, with C26-C31, caught (builder's 77/77).
+- R-2: rule 1 now `PERFORM ... FOR UPDATE; IF FOUND` (`:449-456`) - the fix I proposed; a self-deleted or concurrently deleted row is judged as an insert.
+- S-1: both drawers read the 409 body through `functionRefusalText` (reason plus "Open the class's Past Attendance"). PastAttendanceEditor keeps the dialog lesson's edits until confirmed (`editsAfterSave`).
+- Runs on 32d3ee21 (mine): `d4-register` 133/133, `d4-functions-register` 34/34, `money-guard-lib` 45/45, `edge-functions` 5/5, fingerprint "up to date", `--check-unchanged` only the two replaced functions, `--after-rollback` 66/66, `tsc --noEmit -p tsconfig.app.json` exit 0; `probe.mjs` 28/28 (one run missed the 2 ms/row perf line at 2.2 under machine load, the next was under). Full `run.mjs` not repeated (builder: 5930/62/0).
+- Live, 12:51 Hanoi: still no 1b object (`money_change_overrides` NULL, no `zz_attendance_money_guard`). Not applied by me (verdict not APPLY).
+
+## Verdict (round 1): APPLY WITH CHANGES
 
 Must change before the live apply:
 1. **Brief, md5 comparisons (section 9).** Live 1a was pasted with CRLF; every raw `md5(prosrc)` of 1a differs from the expected JSON, so brief steps 1.1, 3.1 and 3.2 STOP on a healthy database. Compare `md5(replace(prosrc, E'\r', ''))` (18/18 equal today), and send 1b with LF via `apply_migration` as the brief says. Step 5: "at least one `guard_installed` row" (a re-apply adds one, `:1162`).
