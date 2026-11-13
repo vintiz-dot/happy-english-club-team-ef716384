@@ -765,12 +765,12 @@ export default function TeacherTranscripts() {
     <Layout title="Transcript Insights">
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
-            <AudioLines className="h-6 w-6 text-white" />
+          <div className="h-11 w-11 shrink-0 rounded-hec-lg bg-hec-sunken flex items-center justify-center">
+            <AudioLines className="h-6 w-6 text-hec-ink-soft" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Transcript Insights</h1>
-            <p className="text-sm text-muted-foreground">
+          <div className="min-w-0">
+            <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Transcript Insights</h1>
+            <p className="text-hec-small text-hec-ink-soft">
               Upload the lesson transcript — or the raw recording — and engagement, CEFR signals,
               flagged errors, and point awards are extracted instantly.
             </p>
@@ -782,7 +782,7 @@ export default function TeacherTranscripts() {
           <CardContent className="pt-6 space-y-3">
             <div className="flex flex-col md:flex-row gap-3">
               <Select value={classId} onValueChange={(v) => { setClassId(v); setSelectedId(null); }}>
-                <SelectTrigger className="md:w-64"><SelectValue placeholder="Select class" /></SelectTrigger>
+                <SelectTrigger className="md:w-64" aria-label="Class"><SelectValue placeholder="Select class" /></SelectTrigger>
                 <SelectContent>
                   {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
@@ -835,7 +835,7 @@ export default function TeacherTranscripts() {
             </div>
 
             {audioProgress && (
-              <div className="flex items-center gap-2 text-xs text-cyan-700 dark:text-cyan-300 rounded-lg bg-cyan-500/10 ring-1 ring-cyan-500/25 px-3 py-2">
+              <div className="flex items-center gap-2 rounded-hec-md border border-hec-line bg-hec-sunken px-3 py-2 text-hec-small text-hec-ink">
                 <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
                 <span className="truncate">
                   {audioProgress.stage === "uploading"
@@ -848,7 +848,7 @@ export default function TeacherTranscripts() {
                 </span>
               </div>
             )}
-            <p className="text-[11px] text-muted-foreground -mt-1">
+            <p className="text-hec-caption text-hec-ink-soft -mt-1">
               Recordings up to 25MB (roughly 45–60 min at typical voice-memo quality). Longer lessons:
               split into two recordings and upload each separately.
             </p>
@@ -857,17 +857,17 @@ export default function TeacherTranscripts() {
               placeholder={"Lesson plan / notes (optional but recommended)…\n\nTarget vocabulary, book & pages, the activities you ran. This is fed to the transcriber so names and terms come out right, and to the analyzer so it judges the lesson against what you planned."}
               value={lessonContext}
               onChange={(e) => setLessonContext(e.target.value)}
-              className="min-h-[72px] text-xs"
+              className="min-h-[72px]"
             />
 
             <Textarea
               placeholder={'Paste the transcript here…\n\nWorks with raw classroom-recorder transcripts (no speaker labels needed — students are identified from names called out in class), or labeled formats: Zoom/Teams WebVTT, SRT, "Anna: I go to the park yesterday"'}
               value={rawText}
               onChange={(e) => setRawText(e.target.value)}
-              className="min-h-[120px] font-mono text-xs"
+              className="min-h-[120px] font-mono"
             />
             <Button
-              className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 text-white"
+              className="w-full gap-2 sm:w-auto"
               disabled={uploadMutation.isPending || !classId || rawText.trim().length < 40}
               onClick={() => uploadMutation.mutate()}
             >
@@ -884,13 +884,13 @@ export default function TeacherTranscripts() {
           {/* Transcript list */}
           <Card className="h-fit">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <FileText className="h-4 w-4" />Lessons
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 shrink-0 text-hec-ink-soft" />Lessons
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-1.5">
+            <CardContent className="space-y-2">
               {transcripts.length === 0 && (
-                <p className="text-xs text-muted-foreground py-4 text-center">
+                <p className="text-hec-small text-hec-ink-soft py-4 text-center">
                   {classId ? "No transcripts yet for this class." : "Choose a class to see its transcripts."}
                 </p>
               )}
@@ -898,38 +898,39 @@ export default function TeacherTranscripts() {
                 <button
                   key={t.id}
                   onClick={() => setSelectedId(t.id)}
-                  className={`w-full text-left rounded-xl border p-2.5 transition-colors hover:bg-muted/50
-                    ${selectedId === t.id ? "border-blue-500/50 bg-blue-500/5" : ""}`}
+                  aria-current={selectedId === t.id ? "true" : undefined}
+                  className={`w-full min-h-hec-target text-left rounded-hec-md border p-3 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring
+                    ${selectedId === t.id ? "border-hec-brass bg-hec-sunken" : "border-hec-line"}`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium truncate">{t.title || "Untitled lesson"}</p>
+                    <p className="min-w-0 text-hec-small font-medium text-hec-ink truncate">{t.title || "Untitled lesson"}</p>
                     {isStalled(t) ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span>
-                            <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" aria-hidden="true" />
+                            <AlertTriangle className="h-4 w-4 text-hec-warn shrink-0" aria-hidden="true" />
                             <span className="sr-only">This run was cut off — open it and hit Retry</span>
                           </span>
                         </TooltipTrigger>
                         <TooltipContent>This run was cut off — open it and hit Retry</TooltipContent>
                       </Tooltip>
                     ) : t.status === "processing" ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500 shrink-0" />
+                      <Loader2 className="h-4 w-4 animate-spin text-hec-ink-soft shrink-0" />
                     ) : t.status === "failed" ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span>
-                            <AlertTriangle className="h-3.5 w-3.5 text-red-500 shrink-0" aria-hidden="true" />
+                            <AlertTriangle className="h-4 w-4 text-hec-danger shrink-0" aria-hidden="true" />
                             <span className="sr-only">{t.error_message || "Analysis failed"}</span>
                           </span>
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">{t.error_message || "Analysis failed"}</TooltipContent>
                       </Tooltip>
                     ) : (
-                      <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40">ready</Badge>
+                      <Badge variant="outline" className="shrink-0 border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">ready</Badge>
                     )}
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{t.transcript_date}</p>
+                  <p className="text-hec-caption text-hec-ink-soft mt-1 tabular-nums">{t.transcript_date}</p>
                 </button>
               ))}
             </CardContent>
@@ -939,7 +940,7 @@ export default function TeacherTranscripts() {
           <div className="space-y-4 min-w-0">
             {!selected ? (
               <Card>
-                <CardContent className="py-16 text-center text-sm text-muted-foreground">
+                <CardContent className="py-16 text-center text-hec-small text-hec-ink-soft">
                   Select a lesson to see its engagement dashboard.
                 </CardContent>
               </Card>
@@ -947,11 +948,11 @@ export default function TeacherTranscripts() {
               <>
                 {/* Stalled run — killed before it could record an error */}
                 {isStalled(selected) && (
-                  <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 space-y-1.5">
-                    <p className="text-sm font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                  <div className="rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 space-y-2">
+                    <p className="text-hec-small font-semibold text-hec-warn flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 shrink-0" />This run was cut off
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-hec-small text-hec-ink-soft">
                       It's been processing for over 10 minutes, which means the job hit the
                       platform's time limit before it could finish or record an error. Your
                       recording is safe in storage —{" "}
@@ -962,32 +963,32 @@ export default function TeacherTranscripts() {
 
                 {/* Full failure reason — no more hunting in a hover tooltip */}
                 {selected.status === "failed" && (
-                  <div className="rounded-xl border border-red-500/40 bg-red-500/5 p-3 space-y-1.5">
-                    <p className="text-sm font-semibold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                  <div className="rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-3 space-y-2">
+                    <p className="text-hec-small font-semibold text-hec-danger flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 shrink-0" />
                       {selected.source_format === "audio" ? "Transcription failed" : "Analysis failed"}
                     </p>
-                    <p className="text-xs text-muted-foreground break-words">
+                    <p className="text-hec-small text-hec-ink-soft break-words">
                       {selected.error_message || "No error detail was recorded — the function may have been cut off by a platform time limit (common for recordings near the 25MB cap). Retrying often succeeds."}
                     </p>
                   </div>
                 )}
 
-                <div className="flex items-center justify-end gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   {selected.source_format === "audio" && selected.status !== "analyzed" && (
                     <Tooltip>
                     <TooltipTrigger asChild>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-1.5 text-cyan-700 dark:text-cyan-300 border-cyan-500/40"
+                      className="gap-2"
                       disabled={retryTranscriptionMutation.isPending}
                       onClick={() => retryTranscriptionMutation.mutate(selected.id)}
                     >
                       {retryTranscriptionMutation.isPending ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Mic className="h-3.5 w-3.5" />
+                        <Mic className="h-4 w-4" />
                       )}
                       Retry transcription
                     </Button>
@@ -1000,14 +1001,14 @@ export default function TeacherTranscripts() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1.5"
+                    className="gap-2"
                     disabled={reanalyzeMutation.isPending || selected.status === "processing"}
                     onClick={() => reanalyzeMutation.mutate(selected.id)}
                   >
                     {reanalyzeMutation.isPending ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Sparkles className="h-3.5 w-3.5" />
+                      <Sparkles className="h-4 w-4" />
                     )}
                     Re-analyze
                   </Button>
