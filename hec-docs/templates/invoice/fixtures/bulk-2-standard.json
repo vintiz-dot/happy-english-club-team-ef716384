@@ -29,7 +29,7 @@
       "discounts": [],
       "subtotal_vnd": 1000000,
       "total_due_vnd": 1000000,
-      "paid_to_date_vnd": -0,
+      "paid_to_date_vnd": 0,
       "final_payable_vnd": 1000000,
       "balance_vnd": 500000,
       "recorded_payment_vnd": 500000,

@@ -25,11 +25,14 @@
 {% for c in inv.classes %}{% set _ = nets.push(c.net_amount_vnd if c.net_amount_vnd is number else c.amount_vnd) %}{% endfor %}
 
 {# Balance rows, in the original table order after Subtotal. #}
+{# The app's adapter sets credit > 0 ? credit : -debt, so "no prior balance" is
+   JavaScript's -0 and prints "-0 ₫". JSON cannot carry -0, so rebuild it here. #}
+{% set priorBalance = inv.paid_to_date_vnd if inv.paid_to_date_vnd != 0 else (0 * -1) %}
 {% set credit = inv.paid_to_date_vnd >= 0 %}
 {% set rows = [] %}
 {% for d in inv.discounts %}{% set _ = rows.push({ label: d.label, value: vnd(d.amount_vnd), kind: "line" }) %}{% endfor %}
 {% set _ = rows.push({ label: "Current Month Charges", value: vnd(inv.total_due_vnd), kind: "strong" }) %}
-{% set _ = rows.push({ label: "Prior Balance " ~ ("(Credit)" if credit else "(Debt)"), value: vnd(inv.paid_to_date_vnd), kind: ("credit" if credit else "sub") }) %}
+{% set _ = rows.push({ label: "Prior Balance " ~ ("(Credit)" if credit else "(Debt)"), value: vnd(priorBalance), kind: ("credit" if credit else "sub") }) %}
 {% set _ = rows.push({ label: "Final Payable", value: vnd(inv.final_payable_vnd), kind: "total" }) %}
 {% set _ = rows.push({ label: "Current Month Recorded Payment", value: vnd(inv.recorded_payment_vnd or 0), kind: "credit" }) %}
 {% set _ = rows.push({ label: "Outstanding Balance", value: vnd(inv.balance_vnd), kind: "due" }) %}

@@ -198,7 +198,7 @@ strong, b { font-weight: var(--font-weight-semibold); }
 /* ---------- Meter ------------------------------------------------------------ */
 .meter { margin: 0 0 var(--space-1); break-inside: avoid; }
 .meter__head { display: flex; justify-content: space-between; font-size: var(--size-sm); margin-bottom: 2pt; }
-.meter__label { font-weight: var(--font-weight-medium); text-transform: capitalize; }
+.meter__label { font-weight: var(--font-weight-medium); }
 .meter__value { font-variant-numeric: tabular-nums; color: var(--color-ink-soft); }
 .meter__track { height: 4pt; background: var(--color-surface-strong); border-radius: 2pt; overflow: hidden; }
 .meter__fill { height: 100%; background: var(--color-ink); border-radius: 2pt; }
