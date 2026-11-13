@@ -1,0 +1,81 @@
+admin-1280-dark.png: 80737 px differ (508 > 16) of 1024000
+admin-1280-light.png: 85324 px differ (486 > 16) of 1024000
+apalette-1280-dark.png: 83482 px differ (0 > 16) of 1024000
+apalette-1280-light.png: 29197 px differ (0 > 16) of 1024000
+fam-1280-light.png: 663 px differ (81 > 16) of 1024000
+fam-375-light.png: 108 px differ (68 > 16) of 304500
+fam-bell-1280-light.png: 859 px differ (655 > 16) of 1024000
+fam-bell-375-light.png: 0 px differ (0 > 16) of 304500
+before-sbell-1280-dark.png: no noise twin
+before-sbell-1280-light.png: no noise twin
+before-sbell-375-dark.png: no noise twin
+before-sbell-375-light.png: no noise twin
+before-schat-1280-dark.png: no noise twin
+before-schat-1280-light.png: no noise twin
+before-schat-375-dark.png: no noise twin
+before-schat-375-light.png: no noise twin
+before-schat-hist-1280-dark.png: no noise twin
+before-schat-hist-1280-light.png: no noise twin
+before-schat-hist-375-dark.png: no noise twin
+before-schat-hist-375-light.png: no noise twin
+sdash-1280-dark.png: 2424 px differ (0 > 16) of 1024000
+sdash-1280-light.png: 32 px differ (0 > 16) of 1024000
+sdash-375-dark.png: 0 px differ (0 > 16) of 304500
+sdash-375-light.png: 4 px differ (0 > 16) of 304500
+tbell-1280-dark.png: 428 px differ (174 > 16) of 1024000
+tbell-1280-light.png: 268 px differ (130 > 16) of 1024000
+tbell-375-dark.png: 120 px differ (104 > 16) of 304500
+tbell-375-light.png: 120 px differ (104 > 16) of 304500
+tdash-1280-dark.png: 685 px differ (459 > 16) of 1024000
+tdash-1280-light.png: 34731 px differ (2530 > 16) of 1024000
+tdash-375-dark.png: 0 px differ (0 > 16) of 304500
+tdash-375-light.png: 0 px differ (0 > 16) of 304500
+tools-1280-dark.png: 1321 px differ (0 > 16) of 1024000
+tools-1280-light.png: 1293 px differ (0 > 16) of 1024000
+tools-375-dark.png: 0 px differ (0 > 16) of 304500
+tools-375-light.png: 14 px differ (0 > 16) of 304500
+tools-ai-1280-dark.png: 558117 px differ (180711 > 16) of 1024000
+tools-ai-1280-light.png: 557958 px differ (180711 > 16) of 1024000
+tools-ai-375-dark.png: 0 px differ (0 > 16) of 304500
+tools-ai-375-light.png: 0 px differ (0 > 16) of 304500
+tools-ai-hist-1280-dark.png: 2276 px differ (0 > 16) of 1024000
+tools-ai-hist-1280-light.png: 485 px differ (0 > 16) of 1024000
+tools-ai-hist-375-dark.png: 0 px differ (0 > 16) of 304500
+tools-ai-hist-375-light.png: 0 px differ (0 > 16) of 304500
+tools-att-1280-dark.png: 6 px differ (0 > 16) of 1024000
+tools-att-1280-light.png: 1294 px differ (0 > 16) of 1024000
+tools-att-375-dark.png: 0 px differ (0 > 16) of 304500
+tools-att-375-light.png: 0 px differ (0 > 16) of 304500
+tools-music-1280-dark.png: 1220 px differ (0 > 16) of 1024000
+tools-music-1280-light.png: 1302 px differ (0 > 16) of 1024000
+tools-music-375-dark.png: 0 px differ (0 > 16) of 304500
+tools-music-375-light.png: 0 px differ (0 > 16) of 304500
+tools-select-1280-dark.png: 2038 px differ (0 > 16) of 1024000
+tools-select-1280-light.png: 1595 px differ (0 > 16) of 1024000
+tools-select-375-dark.png: 0 px differ (0 > 16) of 304500
+tools-select-375-light.png: 0 px differ (0 > 16) of 304500
+tools-spin-1280-dark.png: 1803 px differ (0 > 16) of 1024000
+tools-spin-1280-light.png: 1317 px differ (0 > 16) of 1024000
+tools-spin-375-dark.png: 0 px differ (0 > 16) of 304500
+tools-spin-375-light.png: 0 px differ (0 > 16) of 304500
+tools-spin-edit-1280-dark.png: 1538 px differ (0 > 16) of 1024000
+tools-spin-edit-1280-light.png: 4 px differ (0 > 16) of 1024000
+tools-spin-edit-375-dark.png: 173 px differ (0 > 16) of 304500
+tools-spin-edit-375-light.png: 0 px differ (0 > 16) of 304500
+tools-spin-screen-1280-dark.png: 0 px differ (0 > 16) of 1024000
+tools-spin-screen-1280-light.png: 0 px differ (0 > 16) of 1024000
+tools-spin-screen-375-dark.png: 0 px differ (0 > 16) of 304500
+tools-spin-screen-375-light.png: 0 px differ (0 > 16) of 304500
+tools-teams-1280-dark.png: 6789 px differ (0 > 16) of 1024000
+tools-teams-1280-light.png: 1118 px differ (0 > 16) of 1024000
+tools-teams-375-dark.png: 48 px differ (0 > 16) of 304500
+tools-teams-375-light.png: 0 px differ (0 > 16) of 304500
+tools-teams-screen-1280-dark.png: 11612 px differ (0 > 16) of 1024000
+tools-teams-screen-1280-light.png: 0 px differ (0 > 16) of 1024000
+tools-teams-screen-375-dark.png: 130 px differ (0 > 16) of 304500
+tools-teams-screen-375-light.png: 0 px differ (0 > 16) of 304500
+tpalette-1280-dark.png: 184 px differ (0 > 16) of 1024000
+tpalette-1280-light.png: 198 px differ (0 > 16) of 1024000
+tpalette-375-dark.png: 0 px differ (0 > 16) of 304500
+tpalette-375-light.png: 13 px differ (0 > 16) of 304500
+before vs noise: 26 pairs pixel-identical, 42 differ
