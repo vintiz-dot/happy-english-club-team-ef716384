@@ -184,14 +184,16 @@ export default function TeacherLeaderboards() {
                     onClick={() => canUseLiveMode && setViewMode("live")}
                     className="rounded-none gap-2"
                     disabled={!canUseLiveMode}
-                    aria-label={canUseLiveMode && remainingTime ? `Live ${remainingTime} left` : "Live"}
                   >
+                    {/* The name comes from the content (no aria-label): "Live" is read at every width, and the
+                        visible time is part of it, so the name always contains what is on the button. */}
                     <Zap className="h-4 w-4" />
-                    <span className="hidden sm:inline">Live</span>
+                    <span className="sr-only sm:not-sr-only">Live</span>
                     {canUseLiveMode && remainingTime && (
                       <span className="ml-1 flex items-center gap-1 whitespace-nowrap rounded-full border border-current px-2 text-hec-caption tabular-nums">
                         <Clock className="h-3 w-3" />
                         {remainingTime}
+                        <span className="sr-only"> left</span>
                       </span>
                     )}
                   </Button>
