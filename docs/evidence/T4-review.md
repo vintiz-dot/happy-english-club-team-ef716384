@@ -184,4 +184,90 @@ m1 SQL writers overwrite `credit`; m2 delete-payment with no bill found still re
 4. One publish for the browser (with T4-M1, and T4-M3 if taken).
 5. Tell the owner: 461 stored labels will change as bills are opened (25 more than under the rule live today: 16 issued -> paid, 9 partial -> paid; no downgrade from the rule); three child-months (Sep, Oct, Nov 2026) newly count as settled for the lesson-cancellation guard; an old write-off does not show on its bill.
 
-**Where I am / next step:** review complete; nothing left to do.
+**Where I am / next step:** round 1 complete; round 2 below.
+
+---
+
+# Round 2 - delta 713bc1e..5fc361b
+
+Review only, as before. Live read again on 13 Nov with aggregates only.
+
+**Where I am / next step (round 2):** Part 1 complete - verdict PASS (R2-d below). Part 2, the release assembly, is written up in `docs/evidence/PAYMENTS-release.md`.
+
+## R2-a. The three majors
+
+**T4-M1 - closed.** `src/lib/functionError.ts` reads the function's JSON body from `error.context` (cloned, falls back to the generic message). Used by all five callers of a payment function: `LedgerBalanceInspector.tsx:188`, `SettleBillModal.tsx:76`, `BatchFamilyPaymentModal.tsx:291`, `FamilyPaymentModal.tsx:242`, `SmartFamilyPaymentModal.tsx:263`. Settle Bill now toasts the amount the function returned, says when it was capped, and warns on `billRefreshed: false` (`SettleBillModal.tsx:78-89`). Unit-tested (`scripts/functionError.test.ts`).
+
+**T4-M2 - closed, and better than what I asked for.** The date constant is gone. A write-off counts only when its settlement's ledger transaction has a leg whose `tx_key` starts `settlement-writeoff-` (`_lib/invoice-status.ts:164-187`, the one place the filter lives; both calculators read the month's `discount` settlements and their legs unfiltered and fail closed on either read: `calculate-tuition/index.ts:157-162`, `:187-195`; `calculate-tuition-bulk/index.ts:218-229`). Only the new settle-bill writes that key (`settle-bill/index.ts:159`).
+- Live: ledger legs with a key starting `settlement-writeoff`: **0**. Legs keyed `settlement-discount-`: 2 (the two old write-offs). Settlements: 4, 2 of type discount, 0 with a NULL `tx_id`.
+- The settle-bill live until the deploy (v4, 93ca410) writes `settlement-discount-` / `settlement-contribution-` / `settlement-unapplied-` only (`git show 93ca410:supabase/functions/settle-bill/index.ts` lines 161, 208, 237). It cannot produce a counted write-off, whenever it runs. The deploy-window risk of round 1 is gone, and no pre-deploy recount is needed.
+- Grep for the prefix: only settle-bill, the mirrored helper pair and the owner check SQL.
+
+**T4-M3 / R2-m6 - closed for lost updates.** One mirrored module (`_lib/recorded-payment-write.ts` / `src/lib/recordedPaymentWrite.ts`, registered in `mirrors.test.mjs`): `UPDATE ... WHERE id = ? AND recorded_payment = <value read> RETURNING id`.
+
+| # | path | write | guard |
+|---|---|---|---|
+| 1 | RecordPaymentDialog (payment and correction) | `setRecordedPayment`, expected = the value the screen showed | conflict: toast, both queries invalidated, nothing written |
+| 2 | QuickPayPanel | same, per row | conflicting rows listed, not patched into the cache, list refetched |
+| 3 | BatchPaymentDialog | same, per row | same |
+| 4 | RecordedPaymentManager edit | same | toast and reload |
+| 5 | RecordedPaymentManager reverse | same | toast and reload |
+| 6 | smart-family-payment | `addToRecordedPayment` (`:277-282`); a bill created meanwhile (23505) is re-read and added to (`:301-308`) | re-read, retry once, then fail loudly |
+| 7 | family-payment | `addToRecordedPayment` (`:291-297`) | same |
+| 8 | delete-payment | `addToRecordedPayment` with a negative delta and a guard that the fresh bill still holds the payment (`:227-241`) | same |
+
+No write of `recorded_payment` is left outside the module (grep over `src` and `supabase/functions`): the only other one is smart-family-payment's INSERT of a bill that does not exist, which cannot overwrite anything and falls back to the compare-and-set on a duplicate key. A bill with no row yet goes in by INSERT (no longer an upsert that overwrote), then compare-and-set on the duplicate. `ai_action_apply` / `undo` lock the row (`FOR UPDATE`), unchanged.
+
+- Can the retry double-apply? No. The second attempt runs only when the first UPDATE answered successfully with zero rows, which is proof it wrote nothing. A timeout or transport error surfaces as `error` and throws without retrying. On the admin screens there is no retry at all; an admin who clicks again after an unseen success is refused by the compare (the bill no longer holds what the screen showed).
+- `recorded_payment` is an integer, never NULL on live (0 of 708), so equality is exact.
+- The two-writer tests do interleave: the suite's client runs a hook between the writer's read and its UPDATE / INSERT (`beforeNextInvoiceWrite`), in which the second writer completes; covered for the dialogs' function (stale 0 against a saved 200,000; no bill on either screen), two Smart Family Payments, two Family Payments, delete-payment with a payment landing, and settle-bill with a payment landing. The dialogs are tested through the shared function plus a source check that each file writes only through it, not by rendering the components.
+
+Remaining, not blocking:
+- **R2-n1 (MINOR). Ledger and bill can still diverge, now loudly instead of silently.** smart-family-payment and family-payment post the ledger pair first and the bill second; delete-payment reverses the ledger first. There is no transaction and no compensating step. If the compare-and-set misses twice (two other writes on the same bill inside one request's few milliseconds), or delete-payment's fresh-bill guard refuses, the function fails with "posted to the ledger but the bill could not be updated": the ledger holds the payment, the bill does not, later siblings of that payment are not processed, and the payment row stays. Before round 2 the same race lost the money silently, so this is strictly better, and it needs three writers on one bill at once. The end state is one SQL function per payment (ledger and bill in one transaction). Say so in AGENTS.md; do not block.
+- R2-n2 (MINOR). After such a failure, deleting that payment is refused if the bill holds less than it "put there", but if the bill holds as much from OTHER money, delete-payment would take that off. Same three-writer precondition.
+- R2-n3 (MINOR). Batch / QuickPay list the children whose bills conflicted in the toast; fine on an admin screen.
+
+## R2-b. Surviving mutations, and "names no bill"
+
+- d2 (leftover classed as allocation), d4 (no already-reversed refusal): each now has a case (`invoice-status.test.mjs`, "T4 r2 - the mutations the review left alive"); the ledger stand-in enforces UNIQUE `tx_key`. Re-run by me in R2-d.
+- h4 is gone by construction: one filter, in `settledWriteOff`.
+- New refusal (`delete-payment/index.ts:190-197`): a payment with allocation transactions but no bill amount. A payment that is leftover-only (all of it unapplied cash) is not refused: it is reversed in the ledger and deleted, and no bill changes, which is right.
+- Could it strand a real payment? Live, all 14 payments classified with the function's own rule: names no bill **0**; a named bill missing **0**; already reversed **0**; a named bill now holds less than the payment put there **3** (refused with the Recorded Payment Manager message, by design: those bills were edited since); deletable now **11**. No ledger leg on live has a NULL month. Nothing is stranded by the new refusal.
+
+## R2-c. The migration, re-checked
+
+Change since round 1: the replacement is now `(CASE WHEN invoices.status = 'credit' THEN invoices.status ELSE public.invoice_paid_label(...) END)` (`20261113090000:90-93`), so the assistant's payment and undo keep an admin's `credit` (closes T4-m1; suite case in ai-actions). Everything else in the DO block is as reviewed.
+
+- **Applies on live as-is: YES.** Live today: `ai_action_apply` md5(prosrc) 7179f282e4ce1d8cfb9541c6c8560635, `ai_action_undo` 77175a4cb698a06b8ebfe7f75c5f8dc0 (unchanged since round 1); the migration's pattern matches exactly once in each; neither is patched; `invoice_paid_label` does not exist; both SECURITY DEFINER, `search_path=public`, ACL postgres + authenticated + service_role.
+- **Expected after applying** (computed on live, read-only, by running the migration's own `regexp_replace` over the installed text): `ai_action_apply` md5(prosrc) **b7981cd00c7136d5b7c6b9a829fe309b** (7029 chars), `ai_action_undo` **944c9035dbb2b70afd142c465c9f7530** (9793 chars). Whitespace-normalised: 1b0e0df35f614bb17b4e9fee4e37e92a and 96bd4918b1ed8c0291588596072fdc69, **equal to the two bodies in `docs/sql/ai_action_apply_undo.installed.sql`** (hashed from the file). The raw hashes differ from the file's only because live was pasted with CRLF.
+- Fail closed: unchanged (exactly one match or RAISE). A database patched by the ROUND 1 form of this migration (plain call, no `credit` arm) would hold neither the old CASE nor the new replacement, so this one would stop there rather than guess; live was never patched, so it does not arise.
+- Idempotent: the replacement text is searched for verbatim before anything else; suite runs the file twice.
+- `docs/sql/ai_action_apply_undo.installed.sql` = what the migration produces: asserted in `ai-actions.test.mjs` against `pg_get_functiondef` of both functions (line endings and trailing spaces normalised); the same suite fails if a later migration re-creates either function without `invoice_paid_label`. The migration's header now says where the source lives. This closes the "no file holds the source" point of round 1.
+
+## R2-d. Suites and mutations, run by me at 5fc361b
+
+| command | result |
+|---|---|
+| `node scripts/pgtest/run.mjs` | **3584 assertions across 41 suites, 0 suite(s) failed** (invoice status 268, AI admin actions 79, mirrors 19, edge functions typecheck 5, app typecheck 3) - the implementer's totals |
+| `npm run test:bun` (run as `node scripts/run-bun-tests.mjs`) | **159 pass, 0 fail**, 710 expect() calls, 12 files |
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | exit 0 |
+
+Mutations (same method as round 1; mirrored files mutated in both copies). 11 run: **10 caught, 1 survived.**
+
+| # | mutation | result |
+|---|---|---|
+| c1 | `setRecordedPayment` without the compare | caught (2) |
+| c2 | `addToRecordedPayment` without the compare | caught (3: smart, family, delete) |
+| c3 | the retry keeps the stale bill instead of the re-read one | caught (3) |
+| c4 | no retry | caught (3) |
+| c5 | a miss reported as saved | caught (3) |
+| c6 | a screen conflict reported as ok | caught (2) |
+| c7 | delete-payment: no check that the RE-READ bill still holds the payment | **survived** - no case has the bill fall below the payment between delete-payment's first read and its retry. Add one; the code is right. |
+| w1 | a write-off counted whatever its ledger key | caught (2) |
+| d2 | leftover classed as an allocation (round 1 survivor) | caught |
+| d4 | no "already reversed" refusal (round 1 survivor) | caught |
+| d5 | no "names no bill" refusal | caught |
+
+## Round 2 verdict: PASS
+
+All three majors are closed; the migration still applies on live as-is, fails closed and is idempotent; no remaining read-then-write of `recorded_payment`. Follow-ups, none blocking: R2-n1 (ledger first, bill second, no transaction: a double miss now fails loudly with the ledger posted - one SQL function per payment is the end state), R2-n2, R2-n3, a test for c7, and round 1's m3, m5, m7-m11 and the two owner questions, which this round did not set out to change.

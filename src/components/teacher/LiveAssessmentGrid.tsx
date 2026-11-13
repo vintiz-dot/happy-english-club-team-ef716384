@@ -15,6 +15,7 @@ import { awardPoints, getTodaySession } from "@/lib/pointsHelper";
 import { SKILL_ICONS } from "@/lib/skillConfig";
 import { LucideIcon, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIvory } from "@/hooks/useIvory";
 import { AssessmentStudentCard } from "./AssessmentStudentCard";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -49,6 +50,7 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
   const [activeStudent, setActiveStudent] = useState<StudentCard | null>(null);
   const [readingTheoryOpen, setReadingTheoryOpen] = useState(false);
   const [feedbacks, setFeedbacks] = useState<Record<string, FeedbackItem[]>>({});
+  const ivory = useIvory();
 
   const today = dayjs().format("YYYY-MM-DD");
 
@@ -243,7 +245,7 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">Loading students...</div>
+        <div className={ivory ? "text-hec-ink-soft" : "text-muted-foreground"}>Loading students...</div>
       </div>
     );
   }
@@ -251,8 +253,8 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
   if (students.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
-        <p className="text-muted-foreground">No students enrolled in this class</p>
+        <Users className={ivory ? "h-12 w-12 text-hec-ink-faint mb-4" : "h-12 w-12 text-muted-foreground/50 mb-4"} />
+        <p className={ivory ? "text-hec-ink-soft" : "text-muted-foreground"}>No students enrolled in this class</p>
       </div>
     );
   }
@@ -260,7 +262,9 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
   return (
     <div className="space-y-4">
       {/* Bulk Selection Controls */}
-      <div className="flex flex-wrap items-center gap-3 p-3 rounded-2xl bg-gradient-to-r from-muted/40 to-muted/20 border border-border/30 backdrop-blur-sm">
+      <div className={ivory
+        ? "flex flex-wrap items-center gap-2 p-3 rounded-hec-lg border border-hec-line bg-hec-sunken"
+        : "flex flex-wrap items-center gap-3 p-3 rounded-2xl bg-gradient-to-r from-muted/40 to-muted/20 border border-border/30 backdrop-blur-sm"}>
         <Button
           variant={bulkMode ? "default" : "outline"}
           size="sm"
@@ -268,25 +272,28 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
             setBulkMode(!bulkMode);
             if (!bulkMode) selectNone();
           }}
-          className={cn(
+          className={ivory ? "gap-2" : cn(
             "gap-2 rounded-xl transition-all",
             bulkMode && "shadow-md"
           )}
+          aria-pressed={ivory ? bulkMode : undefined}
         >
           {bulkMode ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
           Bulk Mode
         </Button>
-        
+
         {bulkMode && (
           <>
-            <Button variant="ghost" size="sm" onClick={selectAll} className="rounded-xl text-xs">
+            <Button variant="ghost" size="sm" onClick={selectAll} className={ivory ? undefined : "rounded-xl text-xs"}>
               Select All
             </Button>
-            <Button variant="ghost" size="sm" onClick={selectNone} className="rounded-xl text-xs">
+            <Button variant="ghost" size="sm" onClick={selectNone} className={ivory ? undefined : "rounded-xl text-xs"}>
               Clear
             </Button>
             {selectedStudents.size > 0 && (
-              <span className="text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+              <span className={ivory
+                ? "inline-flex items-center rounded-full border border-hec-brass/40 px-3 py-1 text-hec-caption font-medium tabular-nums text-hec-brass"
+                : "text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full"}>
                 {selectedStudents.size} selected
               </span>
             )}
@@ -295,7 +302,9 @@ export function LiveAssessmentGrid({ classId, sessionId }: LiveAssessmentGridPro
       </div>
 
       {/* Student Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+      <div className={ivory
+        ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 items-stretch"
+        : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"}>
         {students.map((student) => (
           <AssessmentStudentCard
             key={student.id}
@@ -444,6 +453,7 @@ function SmartSkillPanel({
   const [hasUserMoved, setHasUserMoved] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const ivory = useIvory();
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
   const panelWidth = isMobile
@@ -587,10 +597,14 @@ function SmartSkillPanel({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="rounded-2xl border border-border/60 bg-card/95 backdrop-blur-md shadow-2xl overflow-hidden">
+          <div className={ivory
+            ? "max-h-[min(280px,calc(100dvh-1.5rem))] overflow-y-auto overscroll-contain rounded-hec-lg border border-hec-line bg-hec-raised text-hec-ink shadow-hec-3"
+            : "rounded-2xl border border-border/60 bg-card/95 backdrop-blur-md shadow-2xl overflow-hidden"}>
             {/* Drag handle bar — drag from anywhere in the header */}
             <div
-              className="flex items-center gap-3 px-3 sm:px-4 py-2.5 border-b border-border/40 cursor-grab active:cursor-grabbing select-none touch-none"
+              className={ivory
+                ? "flex items-start gap-3 px-3 sm:px-4 py-2 border-b border-hec-line cursor-grab active:cursor-grabbing select-none touch-none"
+                : "flex items-center gap-3 px-3 sm:px-4 py-2.5 border-b border-border/40 cursor-grab active:cursor-grabbing select-none touch-none"}
               onMouseDown={(e) => {
                 if ((e.target as HTMLElement).closest("button")) return;
                 startDrag(e.clientX, e.clientY);
@@ -604,30 +618,39 @@ function SmartSkillPanel({
               aria-label="Drag to move"
             >
               {/* Visible grip indicator */}
-              <div className="flex flex-col gap-0.5 shrink-0 opacity-50">
+              <div className={ivory ? "mt-4 flex flex-col gap-0.5 shrink-0 text-hec-ink-faint" : "flex flex-col gap-0.5 shrink-0 opacity-50"} aria-hidden={ivory ? true : undefined}>
                 <div className="flex gap-0.5">
-                  <span className="h-1 w-1 rounded-full bg-foreground" />
-                  <span className="h-1 w-1 rounded-full bg-foreground" />
-                  <span className="h-1 w-1 rounded-full bg-foreground" />
+                  <span className={ivory ? "h-1 w-1 rounded-full bg-current" : "h-1 w-1 rounded-full bg-foreground"} />
+                  <span className={ivory ? "h-1 w-1 rounded-full bg-current" : "h-1 w-1 rounded-full bg-foreground"} />
+                  <span className={ivory ? "h-1 w-1 rounded-full bg-current" : "h-1 w-1 rounded-full bg-foreground"} />
                 </div>
                 <div className="flex gap-0.5">
-                  <span className="h-1 w-1 rounded-full bg-foreground" />
-                  <span className="h-1 w-1 rounded-full bg-foreground" />
-                  <span className="h-1 w-1 rounded-full bg-foreground" />
+                  <span className={ivory ? "h-1 w-1 rounded-full bg-current" : "h-1 w-1 rounded-full bg-foreground"} />
+                  <span className={ivory ? "h-1 w-1 rounded-full bg-current" : "h-1 w-1 rounded-full bg-foreground"} />
+                  <span className={ivory ? "h-1 w-1 rounded-full bg-current" : "h-1 w-1 rounded-full bg-foreground"} />
                 </div>
               </div>
 
-              <Avatar className="h-9 w-9 shrink-0">
+              <Avatar className={ivory ? "mt-1 h-9 w-9 shrink-0" : "h-9 w-9 shrink-0"}>
                 <AvatarImage src={activeStudent.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
+                <AvatarFallback className={ivory ? "bg-hec-sunken font-semibold text-hec-caption text-hec-ink-soft" : "bg-primary/10 text-primary font-semibold text-xs"}>
                   {activeStudent.full_name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
 
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate">{activeStudent.full_name}</p>
+                <p className={ivory ? "whitespace-normal break-words hyphens-none text-balance text-hec-body font-semibold text-hec-ink" : "font-semibold text-sm truncate"}>{activeStudent.full_name}</p>
                 <p
-                  className={cn(
+                  className={ivory
+                    ? cn(
+                        "text-hec-small tabular-nums",
+                        activeStudent.todayPoints > 0
+                          ? "text-hec-leaf"
+                          : activeStudent.todayPoints < 0
+                          ? "text-hec-danger"
+                          : "text-hec-ink-soft"
+                      )
+                    : cn(
                     "text-xs",
                     activeStudent.todayPoints > 0
                       ? "text-green-600"
@@ -645,7 +668,7 @@ function SmartSkillPanel({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 px-2 text-[11px] text-muted-foreground"
+                  className={ivory ? "shrink-0 text-hec-small text-hec-ink-soft" : "h-8 px-2 text-[11px] text-muted-foreground"}
                   onClick={resetPosition}
                   title="Reset to auto-position"
                 >
@@ -656,16 +679,20 @@ function SmartSkillPanel({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0"
+                className={ivory ? "shrink-0" : "h-8 w-8 shrink-0"}
                 onClick={onClose}
                 aria-label="Close"
               >
-                <X className="h-4 w-4" />
+                <X className={ivory ? "h-5 w-5" : "h-4 w-4"} />
               </Button>
             </div>
 
             {/* Body — non-draggable so taps land on the skill buttons */}
-            <div className="p-3 sm:p-4">
+            <div className={ivory
+              // one frame, not two: the menu's own panel frame is dropped inside this panel
+              // pb-16 below sm: the last row can scroll up clear of the floating tools button at the bottom right
+              ? "p-3 pb-16 sm:p-4 [&>div]:w-full [&>div]:border-0 [&>div]:bg-transparent [&>div]:p-0 [&>div]:shadow-none"
+              : "p-3 sm:p-4"}>
               <RadialSkillMenu
                 onSkillTap={onSkillTap}
                 onClose={onClose}

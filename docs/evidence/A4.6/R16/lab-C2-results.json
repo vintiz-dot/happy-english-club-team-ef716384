@@ -1,0 +1,4314 @@
+{
+ "when": "2026-11-13T01:30:55.128Z",
+ "base": "vite dev server + fake Supabase client + local stand-in book (NOT production, NOT the real book hosts)",
+ "cpu": "4x (CDP Emulation.setCPUThrottlingRate)",
+ "network": "Fast 3G-like (CDP Network.emulateNetworkConditions latency 562.5 ms, 180 KB/s down, 84 KB/s up) applied after the app shell has loaded, plus a 562 ms delay on every book.html request",
+ "checks": [
+  {
+   "id": "M5.control.SkillButton-popover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     315,
+     219,
+     394,
+     62
+    ],
+    "hit": "BUTTON"
+   },
+   "detail": "not fullscreen (control): SkillButton-popover visible"
+  },
+  {
+   "id": "M5.control.StudentActionPopover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     230,
+     336,
+     304
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): StudentActionPopover visible"
+  },
+  {
+   "id": "M5.control.ui-popover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     644,
+     288,
+     58
+    ],
+    "hit": "P"
+   },
+   "detail": "not fullscreen (control): ui-popover visible"
+  },
+  {
+   "id": "M5.control.ui-select",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     130,
+     644,
+     175,
+     98
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): ui-select visible"
+  },
+  {
+   "id": "M5.control.ui-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     256,
+     325,
+     512,
+     119
+    ],
+    "hit": "H2#radix-:rb:"
+   },
+   "detail": "not fullscreen (control): ui-dialog visible"
+  },
+  {
+   "id": "M5.control.ui-dropdown-menu",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     374,
+     644,
+     140,
+     54
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): ui-dropdown-menu visible"
+  },
+  {
+   "id": "M5.control.ui-alert-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     288,
+     265,
+     448,
+     239
+    ],
+    "hit": "H2#radix-:rg:"
+   },
+   "detail": "not fullscreen (control): ui-alert-dialog visible"
+  },
+  {
+   "id": "M5.control.ui-sheet",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     640,
+     0,
+     384,
+     768
+    ],
+    "hit": "H2#radix-:rj:"
+   },
+   "detail": "not fullscreen (control): ui-sheet visible"
+  },
+  {
+   "id": "M5.control.ui-tooltip",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     720,
+     554,
+     111,
+     36
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): ui-tooltip visible"
+  },
+  {
+   "id": "M5.control.HUD-chip-StudentActionPopover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     225,
+     336,
+     304
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): HUD-chip-StudentActionPopover visible"
+  },
+  {
+   "id": "M5.control.SAP-skills-panel",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     -19,
+     336,
+     553
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): SAP-skills-panel visible"
+  },
+  {
+   "id": "M5.control.SAP-flag-panel",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     123,
+     336,
+     410
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): SAP-flag-panel visible"
+  },
+  {
+   "id": "M5.control.RadialSkillMenu-correction",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     363,
+     992,
+     209
+    ],
+    "hit": "SECTION#lab-radial"
+   },
+   "detail": "not fullscreen (control): RadialSkillMenu-correction visible"
+  },
+  {
+   "id": "M5.control.LiveAssessmentGrid-panel",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     13,
+     493,
+     558,
+     64
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): LiveAssessmentGrid-panel visible"
+  },
+  {
+   "id": "M5.control.SkillPanel-point-popover",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     507,
+     394,
+     62
+    ],
+    "hit": "BUTTON"
+   },
+   "detail": "not fullscreen (control): SkillPanel-point-popover visible"
+  },
+  {
+   "id": "M5.control.SkillPanel-correction-points",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     12,
+     492,
+     560,
+     194
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): SkillPanel-correction-points visible"
+  },
+  {
+   "id": "M5.control.Bulk-mode-skill-bar",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     336,
+     587,
+     352,
+     165
+    ],
+    "hit": "svg"
+   },
+   "detail": "not fullscreen (control): Bulk-mode-skill-bar visible"
+  },
+  {
+   "id": "M5.control.ReadingTheory-from-skill-panel",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     176,
+     38,
+     672,
+     691
+    ],
+    "hit": "path"
+   },
+   "detail": "not fullscreen (control): ReadingTheory-from-skill-panel visible"
+  },
+  {
+   "id": "M5.control.ManualPoints-sheet",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     544,
+     0,
+     480,
+     768
+    ],
+    "hit": "svg"
+   },
+   "detail": "not fullscreen (control): ManualPoints-sheet visible"
+  },
+  {
+   "id": "M5.control.ManualPoints-student-select",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     569,
+     199,
+     433,
+     274
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): ManualPoints-student-select visible"
+  },
+  {
+   "id": "M5.control.BulkPoints-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     176,
+     38,
+     672,
+     691
+    ],
+    "hit": "svg"
+   },
+   "detail": "not fullscreen (control): BulkPoints-dialog visible"
+  },
+  {
+   "id": "M5.control.BulkPoints-reason-select",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     201,
+     491,
+     624,
+     186
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): BulkPoints-reason-select visible"
+  },
+  {
+   "id": "M5.control.ReadingTheory-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     176,
+     38,
+     672,
+     691
+    ],
+    "hit": "path"
+   },
+   "detail": "not fullscreen (control): ReadingTheory-dialog visible"
+  },
+  {
+   "id": "M5.control.LogSpend-dialog",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     352,
+     242,
+     320,
+     285
+    ],
+    "hit": "H2#radix-:rt:"
+   },
+   "detail": "not fullscreen (control): LogSpend-dialog visible"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-enter",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "steps": 24,
+    "openBefore": true,
+    "fsOn": true,
+    "stillInDom": true,
+    "visFs": true,
+    "where": "inside the fullscreen element"
+   },
+   "detail": "tooltip open by keyboard (24 Tabs, visible true) then fullscreen on: tooltip still open, inside the fullscreen element, visible true"
+  },
+  {
+   "id": "M5.SkillButton-popover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     315,
+     219,
+     394,
+     62
+    ],
+    "hit": "BUTTON",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SkillButton-popover visible (inside fullscreen true, topmost true, on screen true, rect 315,219,394,62), still fullscreen true"
+  },
+  {
+   "id": "M5.StudentActionPopover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     230,
+     336,
+     304
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: StudentActionPopover visible (inside fullscreen true, topmost true, on screen true, rect 0,230,336,304), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-popover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     644,
+     288,
+     58
+    ],
+    "hit": "P",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-popover visible (inside fullscreen true, topmost true, on screen true, rect 0,644,288,58), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     130,
+     644,
+     175,
+     98
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-select visible (inside fullscreen true, topmost true, on screen true, rect 130,644,175,98), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     256,
+     325,
+     512,
+     119
+    ],
+    "hit": "H2#radix-:rb:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-dialog visible (inside fullscreen true, topmost true, on screen true, rect 256,325,512,119), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-dropdown-menu",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     374,
+     644,
+     140,
+     54
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-dropdown-menu visible (inside fullscreen true, topmost true, on screen true, rect 374,644,140,54), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-alert-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     288,
+     265,
+     448,
+     239
+    ],
+    "hit": "H2#radix-:rg:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-alert-dialog visible (inside fullscreen true, topmost true, on screen true, rect 288,265,448,239), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-sheet",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     640,
+     0,
+     384,
+     768
+    ],
+    "hit": "H2#radix-:rj:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-sheet visible (inside fullscreen true, topmost true, on screen true, rect 640,0,384,768), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-tooltip",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     720,
+     554,
+     111,
+     36
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-tooltip visible (inside fullscreen true, topmost true, on screen true, rect 720,554,111,36), still fullscreen true"
+  },
+  {
+   "id": "M5.HUD-chip-StudentActionPopover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     225,
+     336,
+     304
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: HUD-chip-StudentActionPopover visible (inside fullscreen true, topmost true, on screen true, rect 0,225,336,304), still fullscreen true"
+  },
+  {
+   "id": "M5.SAP-skills-panel",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     -19,
+     336,
+     553
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SAP-skills-panel visible (inside fullscreen true, topmost true, on screen true, rect 0,-19,336,553), still fullscreen true"
+  },
+  {
+   "id": "M5.SAP-flag-panel",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     123,
+     336,
+     410
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SAP-flag-panel visible (inside fullscreen true, topmost true, on screen true, rect 0,123,336,410), still fullscreen true"
+  },
+  {
+   "id": "M5.RadialSkillMenu-correction",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     363,
+     992,
+     209
+    ],
+    "hit": "SECTION#lab-radial",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: RadialSkillMenu-correction visible (inside fullscreen true, topmost true, on screen true, rect 16,363,992,209), still fullscreen true"
+  },
+  {
+   "id": "M5.LiveAssessmentGrid-panel",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     13,
+     493,
+     558,
+     64
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: LiveAssessmentGrid-panel visible (inside fullscreen true, topmost true, on screen true, rect 13,493,558,64), still fullscreen true"
+  },
+  {
+   "id": "M5.SkillPanel-point-popover",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     507,
+     394,
+     62
+    ],
+    "hit": "BUTTON",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SkillPanel-point-popover visible (inside fullscreen true, topmost true, on screen true, rect 0,507,394,62), still fullscreen true"
+  },
+  {
+   "id": "M5.SkillPanel-correction-points",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     12,
+     492,
+     560,
+     194
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SkillPanel-correction-points visible (inside fullscreen true, topmost true, on screen true, rect 12,492,560,194), still fullscreen true"
+  },
+  {
+   "id": "M5.Bulk-mode-skill-bar",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     336,
+     587,
+     352,
+     165
+    ],
+    "hit": "svg",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: Bulk-mode-skill-bar visible (inside fullscreen true, topmost true, on screen true, rect 336,587,352,165), still fullscreen true"
+  },
+  {
+   "id": "M5.ReadingTheory-from-skill-panel",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     176,
+     38,
+     672,
+     691
+    ],
+    "hit": "path",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ReadingTheory-from-skill-panel visible (inside fullscreen true, topmost true, on screen true, rect 176,38,672,691), still fullscreen true"
+  },
+  {
+   "id": "M5.ManualPoints-sheet",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     544,
+     0,
+     480,
+     768
+    ],
+    "hit": "svg",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ManualPoints-sheet visible (inside fullscreen true, topmost true, on screen true, rect 544,0,480,768), still fullscreen true"
+  },
+  {
+   "id": "M5.ManualPoints-student-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     569,
+     199,
+     433,
+     274
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ManualPoints-student-select visible (inside fullscreen true, topmost true, on screen true, rect 569,199,433,274), still fullscreen true"
+  },
+  {
+   "id": "M5.BulkPoints-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     176,
+     38,
+     672,
+     691
+    ],
+    "hit": "svg",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: BulkPoints-dialog visible (inside fullscreen true, topmost true, on screen true, rect 176,38,672,691), still fullscreen true"
+  },
+  {
+   "id": "M5.BulkPoints-reason-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     201,
+     491,
+     624,
+     186
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: BulkPoints-reason-select visible (inside fullscreen true, topmost true, on screen true, rect 201,491,624,186), still fullscreen true"
+  },
+  {
+   "id": "M5.ReadingTheory-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     176,
+     38,
+     672,
+     691
+    ],
+    "hit": "path",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ReadingTheory-dialog visible (inside fullscreen true, topmost true, on screen true, rect 176,38,672,691), still fullscreen true"
+  },
+  {
+   "id": "M5.LogSpend-dialog",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     352,
+     242,
+     320,
+     285
+    ],
+    "hit": "H2#radix-:rt:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: LogSpend-dialog visible (inside fullscreen true, topmost true, on screen true, rect 352,242,320,285), still fullscreen true"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-exit",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "v0": true,
+    "v1": true,
+    "d1": true,
+    "conn": true,
+    "dbg": {
+     "parent": "BODY",
+     "rect": [
+      720,
+      554,
+      111,
+      36
+     ],
+     "opacity": "1",
+     "state": "closed",
+     "wrapperTransform": "translate(720px, 554px)",
+     "hit": "DIV",
+     "focusOnTrigger": true,
+     "viewport": [
+      1024,
+      768
+     ]
+    }
+   },
+   "detail": "tooltip open in fullscreen (visible true), fullscreen ends: still open, connected true, visible true"
+  },
+  {
+   "id": "M5.TeacherBooks.classroom-tools-sheet",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "fsOn": "DIV (holds the book)",
+    "sheetVis": true
+   },
+   "detail": "fullscreen DIV (holds the book); classroom tools sheet visible=true"
+  },
+  {
+   "id": "M5.TeacherBooks.tool-select",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "text": "Starters 1 (Mon-Wed)",
+    "inFs": true,
+    "hit": true
+   },
+   "detail": "Select in a tool panel: first option \"Starters 1 (Mon-Wed)\" inside fullscreen=true, hit-testable=true"
+  },
+  {
+   "id": "M8.media",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "hoverNone": true,
+    "coarse": true
+   },
+   "detail": "(hover: none)=true, (pointer: coarse)=true"
+  },
+  {
+   "id": "M8.HUD-chips",
+   "size": "1024x768 touch",
+   "status": "PASS",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.SkillButton-popover",
+   "size": "1024x768 touch",
+   "status": "PASS",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.RadialSkillMenu-all-stages",
+   "size": "1024x768 touch",
+   "status": "PASS",
+   "value": {
+    "total": 19,
+    "small": []
+   },
+   "detail": "0 of 19 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.StudentActionPopover",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-main",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-skills",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 10,
+    "small": []
+   },
+   "detail": "0 of 10 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-flag",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-HUD",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-grid",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 1,
+    "small": []
+   },
+   "detail": "0 of 1 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-skill-panel",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 9,
+    "small": []
+   },
+   "detail": "0 of 9 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-skill-panel-correction",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-econ",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-attendance-list",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 0,
+    "small": []
+   },
+   "detail": "0 of 0 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-attendance-mark",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-manual-sheet",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 18,
+    "small": []
+   },
+   "detail": "0 of 18 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-bulk-dialog",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 17,
+    "small": []
+   },
+   "detail": "0 of 17 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-rt-dialog",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 9,
+    "small": []
+   },
+   "detail": "0 of 9 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-logspend-dialog",
+   "size": "1024x768 touch",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.media",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "hoverNone": false,
+    "coarse": false
+   },
+   "detail": "(hover: none)=false, (pointer: coarse)=false"
+  },
+  {
+   "id": "M8.HUD-chips",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.SkillButton-popover",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.RadialSkillMenu-all-stages",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 19,
+    "small": []
+   },
+   "detail": "0 of 19 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.StudentActionPopover",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-main",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-skills",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 10,
+    "small": []
+   },
+   "detail": "0 of 10 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-flag",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-HUD",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-grid",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 1,
+    "small": []
+   },
+   "detail": "0 of 1 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-skill-panel",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 9,
+    "small": []
+   },
+   "detail": "0 of 9 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-skill-panel-correction",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-econ",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-attendance-list",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 0,
+    "small": []
+   },
+   "detail": "0 of 0 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-attendance-mark",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-manual-sheet",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 18,
+    "small": []
+   },
+   "detail": "0 of 18 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-bulk-dialog",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 17,
+    "small": []
+   },
+   "detail": "0 of 17 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-rt-dialog",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 9,
+    "small": []
+   },
+   "detail": "0 of 9 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-logspend-dialog",
+   "size": "1024x768 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "N.SkillButton-popover.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>button",
+    "rect": [
+     532,
+     208,
+     44,
+     44
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>button; rect 532,208,44,44"
+  },
+  {
+   "id": "N.StudentActionPopover.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>div>p",
+    "rect": [
+     69,
+     223,
+     158,
+     26
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>div>p; rect 69,223,158,26"
+  },
+  {
+   "id": "N.ui-popover.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>p",
+    "rect": [
+     17,
+     621,
+     254,
+     24
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>p; rect 17,621,254,24"
+  },
+  {
+   "id": "N.ui-select.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span",
+    "rect": [
+     167,
+     618,
+     121,
+     26
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span; rect 167,618,121,26"
+  },
+  {
+   "id": "N.ui-dialog.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     281,
+     393,
+     462,
+     26
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 281,393,462,26"
+  },
+  {
+   "id": "N.ui-dropdown-menu.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=menu]>div[role=menuitem]",
+    "rect": [
+     379,
+     609,
+     130,
+     44
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=menu]>div[role=menuitem]; rect 379,609,130,44"
+  },
+  {
+   "id": "N.ui-alert-dialog.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=alertdialog]>p",
+    "rect": [
+     313,
+     333,
+     398,
+     26
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=alertdialog]>p; rect 313,333,398,26"
+  },
+  {
+   "id": "N.ui-sheet.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     665,
+     51,
+     335,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 665,51,335,20"
+  },
+  {
+   "id": "N.ui-tooltip.portal-parent",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div",
+    "rect": [
+     720,
+     514,
+     111,
+     36
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div; rect 720,514,111,36"
+  },
+  {
+   "id": "CT.click-through",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "taps": [
+     "speaking:1",
+     "speaking:7"
+    ],
+    "writes": [
+     "from:skill_assessments:insert",
+     "from:point_transactions:insert",
+     "from:point_transactions:insert"
+    ]
+   },
+   "detail": "onTap calls [speaking:1, speaking:7]; fake-client writes [from:skill_assessments:insert, from:point_transactions:insert, from:point_transactions:insert]"
+  },
+  {
+   "id": "CT.click-through.taps",
+   "size": "1024x768",
+   "status": "PASS",
+   "value": [
+    "speaking:1",
+    "speaking:7"
+   ],
+   "detail": "SkillButton onTap calls [\"speaking:1\",\"speaking:7\"] (expected speaking:1, speaking:7)"
+  },
+  {
+   "id": "CT.r16",
+   "size": "1024x768",
+   "status": "INFO",
+   "value": {
+    "r16": [
+     "SAP Present: function:mark-attendance:select",
+     "SAP Quick +5: from:point_transactions:insert",
+     "SAP flag: from:student_error_log:insert, from:srs_cards:insert",
+     "Panel Speaking +2: from:skill_assessments:insert, from:point_transactions:insert",
+     "Panel correction -3: from:point_transactions:insert",
+     "Bulk bar Focus +1: from:skill_assessments:insert, from:point_transactions:insert",
+     "Economy approve: from:economy_transactions:update, from:students:update",
+     "Log spend 3: from:economy_transactions:insert, from:students:update",
+     "Bulk dialog +10 Speaking: from:skill_assessments:insert, from:point_transactions:insert",
+     "Manual sheet -1 correction: from:point_transactions:insert",
+     "RT dialog score 9: from:point_transactions:insert",
+     "Attendance mark + save: from:attendance:upsert, from:sessions:update"
+    ],
+    "taps": [
+     "speaking:1",
+     "speaking:7"
+    ]
+   },
+   "detail": "SAP Present: function:mark-attendance:select | SAP Quick +5: from:point_transactions:insert | SAP flag: from:student_error_log:insert, from:srs_cards:insert | Panel Speaking +2: from:skill_assessments:insert, from:point_transactions:insert | Panel correction -3: from:point_transactions:insert | Bulk bar Focus +1: from:skill_assessments:insert, from:point_transactions:insert | Economy approve: from:economy_transactions:update, from:students:update | Log spend 3: from:economy_transactions:insert, from:students:update | Bulk dialog +10 Speaking: from:skill_assessments:insert, from:point_transactions:insert | Manual sheet -1 correction: from:point_transactions:insert | RT dialog score 9: from:point_transactions:insert | Attendance mark + save: from:attendance:upsert, from:sessions:update"
+  },
+  {
+   "id": "M5.control.HUD-chip-StudentActionPopover",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     225,
+     336,
+     304
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): HUD-chip-StudentActionPopover visible"
+  },
+  {
+   "id": "M5.control.SAP-skills-panel",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     -19,
+     336,
+     553
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): SAP-skills-panel visible"
+  },
+  {
+   "id": "M5.control.SAP-flag-panel",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     590,
+     336,
+     410
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): SAP-flag-panel visible"
+  },
+  {
+   "id": "M5.control.RadialSkillMenu-correction",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     363,
+     736,
+     209
+    ],
+    "hit": "SECTION#lab-radial"
+   },
+   "detail": "not fullscreen (control): RadialSkillMenu-correction visible"
+  },
+  {
+   "id": "M5.control.LiveAssessmentGrid-panel",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     197,
+     109,
+     558,
+     64
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): LiveAssessmentGrid-panel visible"
+  },
+  {
+   "id": "M5.control.SkillPanel-point-popover",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     79,
+     123,
+     394,
+     62
+    ],
+    "hit": "BUTTON"
+   },
+   "detail": "not fullscreen (control): SkillPanel-point-popover visible"
+  },
+  {
+   "id": "M5.control.SkillPanel-correction-points",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     196,
+     108,
+     560,
+     194
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): SkillPanel-correction-points visible"
+  },
+  {
+   "id": "M5.control.Bulk-mode-skill-bar",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     208,
+     843,
+     352,
+     165
+    ],
+    "hit": "svg"
+   },
+   "detail": "not fullscreen (control): Bulk-mode-skill-bar visible"
+  },
+  {
+   "id": "M5.control.ReadingTheory-from-skill-panel",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     48,
+     107,
+     672,
+     809
+    ],
+    "hit": "path"
+   },
+   "detail": "not fullscreen (control): ReadingTheory-from-skill-panel visible"
+  },
+  {
+   "id": "M5.control.ManualPoints-sheet",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     288,
+     0,
+     480,
+     1024
+    ],
+    "hit": "svg"
+   },
+   "detail": "not fullscreen (control): ManualPoints-sheet visible"
+  },
+  {
+   "id": "M5.control.ManualPoints-student-select",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     313,
+     199,
+     433,
+     274
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): ManualPoints-student-select visible"
+  },
+  {
+   "id": "M5.control.BulkPoints-dialog",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     48,
+     51,
+     672,
+     922
+    ],
+    "hit": "svg"
+   },
+   "detail": "not fullscreen (control): BulkPoints-dialog visible"
+  },
+  {
+   "id": "M5.control.BulkPoints-reason-select",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     73,
+     762,
+     624,
+     186
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): BulkPoints-reason-select visible"
+  },
+  {
+   "id": "M5.control.ReadingTheory-dialog",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     48,
+     107,
+     672,
+     809
+    ],
+    "hit": "path"
+   },
+   "detail": "not fullscreen (control): ReadingTheory-dialog visible"
+  },
+  {
+   "id": "M5.control.LogSpend-dialog",
+   "size": "768x1024",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     224,
+     370,
+     320,
+     285
+    ],
+    "hit": "H2#radix-:rt:"
+   },
+   "detail": "not fullscreen (control): LogSpend-dialog visible"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-enter",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "steps": 24,
+    "openBefore": true,
+    "fsOn": true,
+    "stillInDom": true,
+    "visFs": true,
+    "where": "inside the fullscreen element"
+   },
+   "detail": "tooltip open by keyboard (24 Tabs, visible true) then fullscreen on: tooltip still open, inside the fullscreen element, visible true"
+  },
+  {
+   "id": "M5.SkillButton-popover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     187,
+     219,
+     394,
+     62
+    ],
+    "hit": "BUTTON",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SkillButton-popover visible (inside fullscreen true, topmost true, on screen true, rect 187,219,394,62), still fullscreen true"
+  },
+  {
+   "id": "M5.StudentActionPopover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     590,
+     336,
+     304
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: StudentActionPopover visible (inside fullscreen true, topmost true, on screen true, rect 0,590,336,304), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-popover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     644,
+     288,
+     58
+    ],
+    "hit": "P",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-popover visible (inside fullscreen true, topmost true, on screen true, rect 0,644,288,58), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-select",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     130,
+     644,
+     175,
+     98
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-select visible (inside fullscreen true, topmost true, on screen true, rect 130,644,175,98), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-dialog",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     128,
+     453,
+     512,
+     119
+    ],
+    "hit": "H2#radix-:rb:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-dialog visible (inside fullscreen true, topmost true, on screen true, rect 128,453,512,119), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-dropdown-menu",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     374,
+     644,
+     140,
+     54
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-dropdown-menu visible (inside fullscreen true, topmost true, on screen true, rect 374,644,140,54), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-alert-dialog",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     160,
+     393,
+     448,
+     239
+    ],
+    "hit": "H2#radix-:rg:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-alert-dialog visible (inside fullscreen true, topmost true, on screen true, rect 160,393,448,239), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-sheet",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     384,
+     0,
+     384,
+     1024
+    ],
+    "hit": "H2#radix-:rj:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-sheet visible (inside fullscreen true, topmost true, on screen true, rect 384,0,384,1024), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-tooltip",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     11,
+     610,
+     111,
+     36
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-tooltip visible (inside fullscreen true, topmost true, on screen true, rect 11,610,111,36), still fullscreen true"
+  },
+  {
+   "id": "M5.HUD-chip-StudentActionPopover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     225,
+     336,
+     304
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: HUD-chip-StudentActionPopover visible (inside fullscreen true, topmost true, on screen true, rect 0,225,336,304), still fullscreen true"
+  },
+  {
+   "id": "M5.SAP-skills-panel",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     -19,
+     336,
+     553
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SAP-skills-panel visible (inside fullscreen true, topmost true, on screen true, rect 0,-19,336,553), still fullscreen true"
+  },
+  {
+   "id": "M5.SAP-flag-panel",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     590,
+     336,
+     410
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SAP-flag-panel visible (inside fullscreen true, topmost true, on screen true, rect 0,590,336,410), still fullscreen true"
+  },
+  {
+   "id": "M5.RadialSkillMenu-correction",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     363,
+     736,
+     209
+    ],
+    "hit": "SECTION#lab-radial",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: RadialSkillMenu-correction visible (inside fullscreen true, topmost true, on screen true, rect 16,363,736,209), still fullscreen true"
+  },
+  {
+   "id": "M5.LiveAssessmentGrid-panel",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     197,
+     109,
+     558,
+     64
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: LiveAssessmentGrid-panel visible (inside fullscreen true, topmost true, on screen true, rect 197,109,558,64), still fullscreen true"
+  },
+  {
+   "id": "M5.SkillPanel-point-popover",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     79,
+     123,
+     394,
+     62
+    ],
+    "hit": "BUTTON",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SkillPanel-point-popover visible (inside fullscreen true, topmost true, on screen true, rect 79,123,394,62), still fullscreen true"
+  },
+  {
+   "id": "M5.SkillPanel-correction-points",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     196,
+     108,
+     560,
+     194
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SkillPanel-correction-points visible (inside fullscreen true, topmost true, on screen true, rect 196,108,560,194), still fullscreen true"
+  },
+  {
+   "id": "M5.Bulk-mode-skill-bar",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     208,
+     843,
+     352,
+     165
+    ],
+    "hit": "svg",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: Bulk-mode-skill-bar visible (inside fullscreen true, topmost true, on screen true, rect 208,843,352,165), still fullscreen true"
+  },
+  {
+   "id": "M5.ReadingTheory-from-skill-panel",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     48,
+     107,
+     672,
+     809
+    ],
+    "hit": "path",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ReadingTheory-from-skill-panel visible (inside fullscreen true, topmost true, on screen true, rect 48,107,672,809), still fullscreen true"
+  },
+  {
+   "id": "M5.ManualPoints-sheet",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     288,
+     0,
+     480,
+     1024
+    ],
+    "hit": "svg",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ManualPoints-sheet visible (inside fullscreen true, topmost true, on screen true, rect 288,0,480,1024), still fullscreen true"
+  },
+  {
+   "id": "M5.ManualPoints-student-select",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     313,
+     199,
+     433,
+     274
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ManualPoints-student-select visible (inside fullscreen true, topmost true, on screen true, rect 313,199,433,274), still fullscreen true"
+  },
+  {
+   "id": "M5.BulkPoints-dialog",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     48,
+     51,
+     672,
+     922
+    ],
+    "hit": "svg",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: BulkPoints-dialog visible (inside fullscreen true, topmost true, on screen true, rect 48,51,672,922), still fullscreen true"
+  },
+  {
+   "id": "M5.BulkPoints-reason-select",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     73,
+     762,
+     624,
+     186
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: BulkPoints-reason-select visible (inside fullscreen true, topmost true, on screen true, rect 73,762,624,186), still fullscreen true"
+  },
+  {
+   "id": "M5.ReadingTheory-dialog",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     48,
+     107,
+     672,
+     809
+    ],
+    "hit": "path",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ReadingTheory-dialog visible (inside fullscreen true, topmost true, on screen true, rect 48,107,672,809), still fullscreen true"
+  },
+  {
+   "id": "M5.LogSpend-dialog",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     224,
+     370,
+     320,
+     285
+    ],
+    "hit": "H2#radix-:rt:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: LogSpend-dialog visible (inside fullscreen true, topmost true, on screen true, rect 224,370,320,285), still fullscreen true"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-exit",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "v0": true,
+    "v1": false,
+    "d1": false,
+    "conn": null,
+    "dbg": null
+   },
+   "detail": "tooltip open in fullscreen (visible true), fullscreen ends: closed itself"
+  },
+  {
+   "id": "M5.TeacherBooks.classroom-tools-sheet",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "fsOn": "DIV (holds the book)",
+    "sheetVis": true
+   },
+   "detail": "fullscreen DIV (holds the book); classroom tools sheet visible=true"
+  },
+  {
+   "id": "M5.TeacherBooks.tool-select",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "text": "Starters 1 (Mon-Wed)",
+    "inFs": true,
+    "hit": true
+   },
+   "detail": "Select in a tool panel: first option \"Starters 1 (Mon-Wed)\" inside fullscreen=true, hit-testable=true"
+  },
+  {
+   "id": "M8.media",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "hoverNone": true,
+    "coarse": true
+   },
+   "detail": "(hover: none)=true, (pointer: coarse)=true"
+  },
+  {
+   "id": "M8.HUD-chips",
+   "size": "768x1024 touch",
+   "status": "PASS",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.SkillButton-popover",
+   "size": "768x1024 touch",
+   "status": "PASS",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.RadialSkillMenu-all-stages",
+   "size": "768x1024 touch",
+   "status": "PASS",
+   "value": {
+    "total": 19,
+    "small": []
+   },
+   "detail": "0 of 19 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.StudentActionPopover",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-main",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-skills",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 10,
+    "small": []
+   },
+   "detail": "0 of 10 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-flag",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-HUD",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-grid",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 1,
+    "small": []
+   },
+   "detail": "0 of 1 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-skill-panel",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 9,
+    "small": []
+   },
+   "detail": "0 of 9 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-skill-panel-correction",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-econ",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-attendance-list",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 0,
+    "small": []
+   },
+   "detail": "0 of 0 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-attendance-mark",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-manual-sheet",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 18,
+    "small": []
+   },
+   "detail": "0 of 18 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-bulk-dialog",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 17,
+    "small": []
+   },
+   "detail": "0 of 17 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-rt-dialog",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 9,
+    "small": []
+   },
+   "detail": "0 of 9 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-logspend-dialog",
+   "size": "768x1024 touch",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.media",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "hoverNone": false,
+    "coarse": false
+   },
+   "detail": "(hover: none)=false, (pointer: coarse)=false"
+  },
+  {
+   "id": "M8.HUD-chips",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.SkillButton-popover",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.RadialSkillMenu-all-stages",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 19,
+    "small": []
+   },
+   "detail": "0 of 19 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.StudentActionPopover",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-main",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-skills",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 10,
+    "small": []
+   },
+   "detail": "0 of 10 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-flag",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-HUD",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-grid",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 1,
+    "small": []
+   },
+   "detail": "0 of 1 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-skill-panel",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 9,
+    "small": []
+   },
+   "detail": "0 of 9 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-skill-panel-correction",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-econ",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-attendance-list",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 0,
+    "small": []
+   },
+   "detail": "0 of 0 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-attendance-mark",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-manual-sheet",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 18,
+    "small": []
+   },
+   "detail": "0 of 18 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-bulk-dialog",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 17,
+    "small": []
+   },
+   "detail": "0 of 17 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-rt-dialog",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 9,
+    "small": []
+   },
+   "detail": "0 of 9 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-logspend-dialog",
+   "size": "768x1024 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "N.SkillButton-popover.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>button",
+    "rect": [
+     404,
+     208,
+     44,
+     44
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>button; rect 404,208,44,44"
+  },
+  {
+   "id": "N.StudentActionPopover.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>div>p",
+    "rect": [
+     69,
+     563,
+     158,
+     26
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>div>p; rect 69,563,158,26"
+  },
+  {
+   "id": "N.ui-popover.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>p",
+    "rect": [
+     17,
+     621,
+     254,
+     24
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>p; rect 17,621,254,24"
+  },
+  {
+   "id": "N.ui-select.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span",
+    "rect": [
+     167,
+     618,
+     121,
+     26
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span; rect 167,618,121,26"
+  },
+  {
+   "id": "N.ui-dialog.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     153,
+     521,
+     462,
+     26
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 153,521,462,26"
+  },
+  {
+   "id": "N.ui-dropdown-menu.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=menu]>div[role=menuitem]",
+    "rect": [
+     379,
+     609,
+     130,
+     44
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=menu]>div[role=menuitem]; rect 379,609,130,44"
+  },
+  {
+   "id": "N.ui-alert-dialog.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=alertdialog]>p",
+    "rect": [
+     185,
+     461,
+     398,
+     26
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=alertdialog]>p; rect 185,461,398,26"
+  },
+  {
+   "id": "N.ui-sheet.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     409,
+     51,
+     335,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 409,51,335,20"
+  },
+  {
+   "id": "N.ui-tooltip.portal-parent",
+   "size": "768x1024",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div",
+    "rect": [
+     11,
+     570,
+     111,
+     36
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div; rect 11,570,111,36"
+  },
+  {
+   "id": "M5.control.HUD-chip-StudentActionPopover",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     236,
+     336,
+     304
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): HUD-chip-StudentActionPopover visible"
+  },
+  {
+   "id": "M5.control.SAP-skills-panel",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     58,
+     336,
+     553
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): SAP-skills-panel visible"
+  },
+  {
+   "id": "M5.control.SAP-flag-panel",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     201,
+     336,
+     410
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): SAP-flag-panel visible"
+  },
+  {
+   "id": "M5.control.RadialSkillMenu-correction",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     440,
+     343,
+     243
+    ],
+    "hit": "BUTTON"
+   },
+   "detail": "not fullscreen (control): RadialSkillMenu-correction visible"
+  },
+  {
+   "id": "M5.control.LiveAssessmentGrid-panel",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     13,
+     525,
+     349,
+     90
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): LiveAssessmentGrid-panel visible"
+  },
+  {
+   "id": "M5.control.SkillPanel-point-popover",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     509,
+     343,
+     114
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): SkillPanel-point-popover visible"
+  },
+  {
+   "id": "M5.control.SkillPanel-correction-points",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     12,
+     524,
+     351,
+     212
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): SkillPanel-correction-points visible"
+  },
+  {
+   "id": "M5.control.Bulk-mode-skill-bar",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     631,
+     343,
+     165
+    ],
+    "hit": "path"
+   },
+   "detail": "not fullscreen (control): Bulk-mode-skill-bar visible"
+  },
+  {
+   "id": "M5.control.ReadingTheory-from-skill-panel",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     41,
+     343,
+     731
+    ],
+    "hit": "H2#radix-:r1n:"
+   },
+   "detail": "not fullscreen (control): ReadingTheory-from-skill-panel visible"
+  },
+  {
+   "id": "M5.control.ManualPoints-sheet",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     65,
+     375,
+     747
+    ],
+    "hit": "H2#radix-:rn:"
+   },
+   "detail": "not fullscreen (control): ManualPoints-sheet visible"
+  },
+  {
+   "id": "M5.control.ManualPoints-student-select",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     257,
+     345,
+     274
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): ManualPoints-student-select visible"
+  },
+  {
+   "id": "M5.control.BulkPoints-dialog",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     41,
+     343,
+     731
+    ],
+    "hit": "svg"
+   },
+   "detail": "not fullscreen (control): BulkPoints-dialog visible"
+  },
+  {
+   "id": "M5.control.BulkPoints-reason-select",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     41,
+     434,
+     295,
+     186
+    ],
+    "hit": "DIV"
+   },
+   "detail": "not fullscreen (control): BulkPoints-reason-select visible"
+  },
+  {
+   "id": "M5.control.ReadingTheory-dialog",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     41,
+     343,
+     731
+    ],
+    "hit": "H2#radix-:r16:"
+   },
+   "detail": "not fullscreen (control): ReadingTheory-dialog visible"
+  },
+  {
+   "id": "M5.control.LogSpend-dialog",
+   "size": "375x812",
+   "status": "INFO",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     277,
+     343,
+     258
+    ],
+    "hit": "H2#radix-:rt:"
+   },
+   "detail": "not fullscreen (control): LogSpend-dialog visible"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-enter",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "steps": 24,
+    "openBefore": true,
+    "fsOn": true,
+    "stillInDom": true,
+    "visFs": true,
+    "where": "inside the fullscreen element"
+   },
+   "detail": "tooltip open by keyboard (24 Tabs, visible true) then fullscreen on: tooltip still open, inside the fullscreen element, visible true"
+  },
+  {
+   "id": "M5.SkillButton-popover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     245,
+     343,
+     114
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SkillButton-popover visible (inside fullscreen true, topmost true, on screen true, rect 16,245,343,114), still fullscreen true"
+  },
+  {
+   "id": "M5.StudentActionPopover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     307,
+     336,
+     304
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: StudentActionPopover visible (inside fullscreen true, topmost true, on screen true, rect 0,307,336,304), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-popover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     721,
+     288,
+     58
+    ],
+    "hit": "P",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-popover visible (inside fullscreen true, topmost true, on screen true, rect 0,721,288,58), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-select",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     130,
+     571,
+     175,
+     98
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-select visible (inside fullscreen true, topmost true, on screen true, rect 130,571,175,98), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-dialog",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     347,
+     343,
+     119
+    ],
+    "hit": "H2#radix-:rb:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-dialog visible (inside fullscreen true, topmost true, on screen true, rect 16,347,343,119), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-dropdown-menu",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     87,
+     671,
+     140,
+     54
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-dropdown-menu visible (inside fullscreen true, topmost true, on screen true, rect 87,671,140,54), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-alert-dialog",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     287,
+     343,
+     239
+    ],
+    "hit": "H2#radix-:rg:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-alert-dialog visible (inside fullscreen true, topmost true, on screen true, rect 16,287,343,239), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-sheet",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     94,
+     0,
+     281,
+     812
+    ],
+    "hit": "H2#radix-:rj:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-sheet visible (inside fullscreen true, topmost true, on screen true, rect 94,0,281,812), still fullscreen true"
+  },
+  {
+   "id": "M5.ui-tooltip",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     104,
+     727,
+     111,
+     36
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ui-tooltip visible (inside fullscreen true, topmost true, on screen true, rect 104,727,111,36), still fullscreen true"
+  },
+  {
+   "id": "M5.HUD-chip-StudentActionPopover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     219,
+     336,
+     304
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: HUD-chip-StudentActionPopover visible (inside fullscreen true, topmost true, on screen true, rect 0,219,336,304), still fullscreen true"
+  },
+  {
+   "id": "M5.SAP-skills-panel",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     41,
+     336,
+     553
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SAP-skills-panel visible (inside fullscreen true, topmost true, on screen true, rect 0,41,336,553), still fullscreen true"
+  },
+  {
+   "id": "M5.SAP-flag-panel",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     184,
+     336,
+     410
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SAP-flag-panel visible (inside fullscreen true, topmost true, on screen true, rect 0,184,336,410), still fullscreen true"
+  },
+  {
+   "id": "M5.RadialSkillMenu-correction",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     423,
+     343,
+     243
+    ],
+    "hit": "BUTTON",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: RadialSkillMenu-correction visible (inside fullscreen true, topmost true, on screen true, rect 16,423,343,243), still fullscreen true"
+  },
+  {
+   "id": "M5.LiveAssessmentGrid-panel",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     13,
+     525,
+     349,
+     90
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: LiveAssessmentGrid-panel visible (inside fullscreen true, topmost true, on screen true, rect 13,525,349,90), still fullscreen true"
+  },
+  {
+   "id": "M5.SkillPanel-point-popover",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     509,
+     343,
+     114
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SkillPanel-point-popover visible (inside fullscreen true, topmost true, on screen true, rect 0,509,343,114), still fullscreen true"
+  },
+  {
+   "id": "M5.SkillPanel-correction-points",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     12,
+     524,
+     351,
+     212
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: SkillPanel-correction-points visible (inside fullscreen true, topmost true, on screen true, rect 12,524,351,212), still fullscreen true"
+  },
+  {
+   "id": "M5.Bulk-mode-skill-bar",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     631,
+     343,
+     165
+    ],
+    "hit": "path",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: Bulk-mode-skill-bar visible (inside fullscreen true, topmost true, on screen true, rect 16,631,343,165), still fullscreen true"
+  },
+  {
+   "id": "M5.ReadingTheory-from-skill-panel",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     41,
+     343,
+     731
+    ],
+    "hit": "H2#radix-:r1n:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ReadingTheory-from-skill-panel visible (inside fullscreen true, topmost true, on screen true, rect 16,41,343,731), still fullscreen true"
+  },
+  {
+   "id": "M5.ManualPoints-sheet",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     0,
+     65,
+     375,
+     747
+    ],
+    "hit": "H2#radix-:rn:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ManualPoints-sheet visible (inside fullscreen true, topmost true, on screen true, rect 0,65,375,747), still fullscreen true"
+  },
+  {
+   "id": "M5.ManualPoints-student-select",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     257,
+     345,
+     274
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ManualPoints-student-select visible (inside fullscreen true, topmost true, on screen true, rect 16,257,345,274), still fullscreen true"
+  },
+  {
+   "id": "M5.BulkPoints-dialog",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     41,
+     343,
+     731
+    ],
+    "hit": "svg",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: BulkPoints-dialog visible (inside fullscreen true, topmost true, on screen true, rect 16,41,343,731), still fullscreen true"
+  },
+  {
+   "id": "M5.BulkPoints-reason-select",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     41,
+     434,
+     295,
+     186
+    ],
+    "hit": "DIV",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: BulkPoints-reason-select visible (inside fullscreen true, topmost true, on screen true, rect 41,434,295,186), still fullscreen true"
+  },
+  {
+   "id": "M5.ReadingTheory-dialog",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     41,
+     343,
+     731
+    ],
+    "hit": "H2#radix-:r16:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: ReadingTheory-dialog visible (inside fullscreen true, topmost true, on screen true, rect 16,41,343,731), still fullscreen true"
+  },
+  {
+   "id": "M5.LogSpend-dialog",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "vis": true,
+    "inFs": true,
+    "top": true,
+    "onScreen": true,
+    "rect": [
+     16,
+     277,
+     343,
+     258
+    ],
+    "hit": "H2#radix-:rt:",
+    "stillFs": true
+   },
+   "detail": "in fullscreen: LogSpend-dialog visible (inside fullscreen true, topmost true, on screen true, rect 16,277,343,258), still fullscreen true"
+  },
+  {
+   "id": "M5.H8.tooltip-open-across-exit",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "v0": false,
+    "v1": false,
+    "d1": false,
+    "conn": null,
+    "dbg": null
+   },
+   "detail": "tooltip open in fullscreen (visible false), fullscreen ends: closed itself"
+  },
+  {
+   "id": "M5.TeacherBooks.classroom-tools-sheet",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "fsOn": "DIV (holds the book)",
+    "sheetVis": true
+   },
+   "detail": "fullscreen DIV (holds the book); classroom tools sheet visible=true"
+  },
+  {
+   "id": "M5.TeacherBooks.tool-select",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "text": "Starters 1 (Mon-Wed)",
+    "inFs": true,
+    "hit": true
+   },
+   "detail": "Select in a tool panel: first option \"Starters 1 (Mon-Wed)\" inside fullscreen=true, hit-testable=true"
+  },
+  {
+   "id": "M8.media",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "hoverNone": true,
+    "coarse": true
+   },
+   "detail": "(hover: none)=true, (pointer: coarse)=true"
+  },
+  {
+   "id": "M8.HUD-chips",
+   "size": "375x812 touch",
+   "status": "PASS",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.SkillButton-popover",
+   "size": "375x812 touch",
+   "status": "PASS",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.RadialSkillMenu-all-stages",
+   "size": "375x812 touch",
+   "status": "PASS",
+   "value": {
+    "total": 19,
+    "small": []
+   },
+   "detail": "0 of 19 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.StudentActionPopover",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-main",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-skills",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 10,
+    "small": []
+   },
+   "detail": "0 of 10 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-flag",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-HUD",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-grid",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 1,
+    "small": []
+   },
+   "detail": "0 of 1 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-skill-panel",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 9,
+    "small": []
+   },
+   "detail": "0 of 9 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-skill-panel-correction",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-econ",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-attendance-list",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 0,
+    "small": []
+   },
+   "detail": "0 of 0 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-attendance-mark",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-manual-sheet",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 18,
+    "small": []
+   },
+   "detail": "0 of 18 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-bulk-dialog",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 17,
+    "small": []
+   },
+   "detail": "0 of 17 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-rt-dialog",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 9,
+    "small": []
+   },
+   "detail": "0 of 9 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-logspend-dialog",
+   "size": "375x812 touch",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.media",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "hoverNone": false,
+    "coarse": false
+   },
+   "detail": "(hover: none)=false, (pointer: coarse)=false"
+  },
+  {
+   "id": "M8.HUD-chips",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.SkillButton-popover",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.RadialSkillMenu-all-stages",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 19,
+    "small": []
+   },
+   "detail": "0 of 19 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.StudentActionPopover",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-main",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-skills",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 10,
+    "small": []
+   },
+   "detail": "0 of 10 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-SAP-flag",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-HUD",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 6,
+    "small": []
+   },
+   "detail": "0 of 6 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-grid",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 1,
+    "small": []
+   },
+   "detail": "0 of 1 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-skill-panel",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 9,
+    "small": []
+   },
+   "detail": "0 of 9 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-skill-panel-correction",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 7,
+    "small": []
+   },
+   "detail": "0 of 7 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-econ",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-attendance-list",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 0,
+    "small": []
+   },
+   "detail": "0 of 0 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-attendance-mark",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-manual-sheet",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 18,
+    "small": []
+   },
+   "detail": "0 of 18 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-bulk-dialog",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 17,
+    "small": []
+   },
+   "detail": "0 of 17 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-rt-dialog",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 9,
+    "small": []
+   },
+   "detail": "0 of 9 interactive targets under 44x44"
+  },
+  {
+   "id": "M8.R16-logspend-dialog",
+   "size": "375x812 mouse",
+   "status": "INFO",
+   "value": {
+    "total": 3,
+    "small": []
+   },
+   "detail": "0 of 3 interactive targets under 44x44"
+  },
+  {
+   "id": "N.SkillButton-popover.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>button",
+    "rect": [
+     270,
+     234,
+     44,
+     44
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>button; rect 270,234,44,44"
+  },
+  {
+   "id": "N.StudentActionPopover.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>div>div>p",
+    "rect": [
+     69,
+     300,
+     158,
+     26
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>div>div>p; rect 69,300,158,26"
+  },
+  {
+   "id": "N.ui-popover.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=dialog]>p",
+    "rect": [
+     17,
+     698,
+     254,
+     24
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=dialog]>p; rect 17,698,254,24"
+  },
+  {
+   "id": "N.ui-select.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span",
+    "rect": [
+     167,
+     695,
+     121,
+     26
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=listbox]>div[role=presentation]>div[role=option]>span; rect 167,695,121,26"
+  },
+  {
+   "id": "N.ui-dialog.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     41,
+     415,
+     293,
+     26
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 41,415,293,26"
+  },
+  {
+   "id": "N.ui-dropdown-menu.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div[role=menu]>div[role=menuitem]",
+    "rect": [
+     92,
+     722,
+     130,
+     44
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div[role=menu]>div[role=menuitem]; rect 92,722,130,44"
+  },
+  {
+   "id": "N.ui-alert-dialog.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=alertdialog]>p",
+    "rect": [
+     41,
+     355,
+     293,
+     26
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=alertdialog]>p; rect 41,355,293,26"
+  },
+  {
+   "id": "N.ui-sheet.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[role=dialog]>p",
+    "rect": [
+     119,
+     51,
+     232,
+     20
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[role=dialog]>p; rect 119,51,232,20"
+  },
+  {
+   "id": "N.ui-tooltip.portal-parent",
+   "size": "375x812",
+   "status": "PASS",
+   "value": {
+    "portalParent": "BODY",
+    "rootIsLab": false,
+    "chain": "div[popper]>div",
+    "rect": [
+     104,
+     684,
+     111,
+     36
+    ],
+    "fs": false
+   },
+   "detail": "no fullscreen: content portalled to BODY (own body child, not the app root: true); chain div[popper]>div; rect 104,684,111,36"
+  }
+ ]
+}

@@ -188,23 +188,24 @@ export function GradeOfflineDialog({ homeworkId, isOpen, onClose, onSuccess }: G
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-lg max-h-[85vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="flex max-h-[85dvh] w-[calc(100vw-2rem)] max-w-lg flex-col overflow-hidden p-0">
         {/* ---- HEADER ---- */}
-        <div className="px-4 pt-5 pb-3 sm:px-6 border-b shrink-0">
+        <div className="shrink-0 border-b border-hec-line px-4 pb-3 pt-6 sm:px-6">
           <DialogHeader>
             {selectedStudent ? (
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 shrink-0"
+                  className="min-h-hec-target min-w-hec-target shrink-0 p-0"
                   onClick={() => setSelectedStudent(null)}
+                  aria-label="Back to the list of students"
                 >
-                  <ArrowLeft className="h-4 w-4" />
+                  <ArrowLeft className="h-5 w-5" aria-hidden="true" />
                 </Button>
-                <div className="min-w-0">
-                  <DialogTitle className="text-base truncate">Grade Offline</DialogTitle>
-                  <DialogDescription className="truncate">{selectedStudent.full_name}</DialogDescription>
+                <div className="min-w-0 flex-1">
+                  <DialogTitle>Grade Offline</DialogTitle>
+                  <DialogDescription className="whitespace-normal break-words hyphens-none text-balance">{selectedStudent.full_name}</DialogDescription>
                 </div>
               </div>
             ) : (
@@ -220,30 +221,30 @@ export function GradeOfflineDialog({ homeworkId, isOpen, onClose, onSuccess }: G
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-6">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
+              <Loader2 className="h-8 w-8 animate-spin text-hec-ink-faint" aria-hidden="true" />
             </div>
           ) : students.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground text-sm">All students have submitted online! 🎉</p>
+              <p className="text-hec-body text-hec-ink-soft">All students have submitted online! 🎉</p>
             </div>
           ) : !selectedStudent ? (
             /* ===== STUDENT PICKER ===== */
             <div className="space-y-2">
-              <Label className="text-sm font-semibold">Select Student</Label>
+              <Label className="text-hec-small font-semibold text-hec-ink">Select Student</Label>
               <div className="space-y-2">
                 {students.map((student) => (
                   <Card
                     key={student.id}
-                    className="p-3 cursor-pointer transition-all hover:shadow-md active:scale-[0.98] border-muted"
+                    className="min-h-hec-target cursor-pointer p-3 transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2"
                     onClick={() => setSelectedStudent(student)}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <GraduationCap className="h-5 w-5 text-primary" />
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-hec-sunken">
+                        <GraduationCap className="h-5 w-5 text-hec-ink-soft" aria-hidden="true" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{student.full_name}</p>
-                        <Badge variant="outline" className="text-[10px]">
+                        <p className="whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{student.full_name}</p>
+                        <Badge variant="outline" className="mt-1">
                           No submission
                         </Badge>
                       </div>
@@ -255,23 +256,23 @@ export function GradeOfflineDialog({ homeworkId, isOpen, onClose, onSuccess }: G
           ) : (
             /* ===== GRADING FORM ===== */
             <div className="space-y-4">
-              <div className="bg-primary/5 p-3 rounded-lg">
-                <p className="font-medium text-sm">Grading: {selectedStudent.full_name}</p>
+              <div className="rounded-hec-md bg-hec-sunken p-3">
+                <p className="break-words text-hec-body font-medium text-hec-ink">Grading: {selectedStudent.full_name}</p>
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="offline-grade" className="text-sm">Grade *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="offline-grade" className="text-hec-small font-medium text-hec-ink">Grade *</Label>
                 <Input
                   id="offline-grade"
                   value={grade}
                   onChange={(e) => setGrade(e.target.value)}
                   placeholder="e.g., A, B+, 95/100"
-                  className="h-10"
+                  className="text-hec-body"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="offline-points" className="text-sm">Points (-100 to 100)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="offline-points" className="text-hec-small font-medium text-hec-ink">Points (-100 to 100)</Label>
                 <Input
                   id="offline-points"
                   type="number"
@@ -281,28 +282,28 @@ export function GradeOfflineDialog({ homeworkId, isOpen, onClose, onSuccess }: G
                   value={points}
                   onChange={(e) => setPoints(e.target.value)}
                   placeholder="Optional leaderboard points"
-                  className="h-10"
+                  className="text-hec-body"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="offline-feedback" className="text-sm">Teacher Feedback</Label>
+              <div className="space-y-2">
+                <Label htmlFor="offline-feedback" className="text-hec-small font-medium text-hec-ink">Teacher Feedback</Label>
                 <Textarea
                   id="offline-feedback"
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   placeholder="Optional feedback for the student..."
                   rows={3}
-                  className="text-sm"
+                  className="text-hec-body"
                 />
               </div>
 
-              <div className="flex gap-2 pt-2 pb-1">
-                <Button onClick={handleSubmitGrade} disabled={submitting} className="flex-1 h-11 font-semibold">
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              <div className="flex flex-col gap-2 pb-1 pt-2 sm:flex-row">
+                <Button onClick={handleSubmitGrade} disabled={submitting} className="min-h-hec-target w-full sm:flex-1">
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
                   Submit Grade
                 </Button>
-                <Button onClick={() => setSelectedStudent(null)} variant="outline" disabled={submitting} className="h-11">
+                <Button onClick={() => setSelectedStudent(null)} variant="outline" disabled={submitting} className="min-h-hec-target w-full sm:w-auto">
                   Cancel
                 </Button>
               </div>

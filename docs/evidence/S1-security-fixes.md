@@ -1,6 +1,6 @@
 # S1 security fixes (F-01, F-14, F-15, F-16, F-21, F-02)
 
-**Where I am / next step:** 13 Nov 2026. COMPLETE for this batch: F-01, F-14, F-15, F-16, F-21 (five migrations) and F-02 (nine functions) are built, tested and written up below. `node scripts/pgtest/run.mjs`: 4198 assertions across 47 suites, 0 failed (it includes the app type check, `tsc --noEmit -p tsconfig.app.json`, and the edge-function type check). The exact steps for applying are in `docs/evidence/S1-live-apply-brief.md`. Next step is the owner's: the decisions table at the end. Then the conductor applies each migration and deploys the nine functions.
+**Where I am / next step:** 13 Nov 2026, ROUND 2 COMPLETE (after `docs/evidence/S1-review.md`). F-14 and F-15: approved as built, being applied by another agent, files untouched. F-01: corrected - a request for `admin` gets `student` as on live, only `teacher` gets no role; family self-registration walked end to end (F-01 section, "Round 2"). New: `20261113150000` (class skill figures as a nameless summary), three clean browser release branches from `origin/main`, the F-02 deploy steps, and a per-account fix for the two teacher accounts with no record - all under "Round 2" at the end of this file. Apply steps: `docs/evidence/S1-live-apply-brief.md`. Nothing applied, deployed or pushed by me. Next step is the owner's: the round-2 decisions table at the very end.
 
 Build and test only. **Nothing here has been applied to live, deployed or pushed.** The live database was read read-only (catalog, aggregate counts). No row about a person was selected; no secret was read.
 
@@ -8,10 +8,11 @@ Each fix is its own migration so the owner can approve, and the conductor apply,
 
 | Finding | Migration | Suite (`node scripts/pgtest/run.mjs`) | Code that ships with it |
 |---|---|---|---|
-| F-01 | `supabase/migrations/20261113100000_signup_role_from_server_only.sql` | `signup-role.test.mjs` (80) | `src/pages/Auth.tsx` (form offers Student / Family only); `student-create-migration-account` (upsert; needs a deploy) |
+| F-01 | `supabase/migrations/20261113100000_signup_role_from_server_only.sql` | `signup-role.test.mjs` (98), `signup-form.test.mjs` (4) | `src/pages/Auth.tsx` (form offers Student / Family only); `student-create-migration-account` (upsert; needs a deploy) |
 | F-14 | `supabase/migrations/20261113110000_homework_bucket_scope.sql` | `homework-bucket-scope.test.mjs` (141) | none |
 | F-15 | `supabase/migrations/20261113120000_pause_enrollment_admin_only.sql` | `pause-enrollment.test.mjs` (37) | none |
 | F-16 | `supabase/migrations/20261113130000_classmate_rows_private.sql` | `classmate-rows.test.mjs` (77) | `src/lib/classSkillPoints.ts`, `RadarChartTab`, `PerformanceHeatmapTab`, `StudentAnalyticsModal` |
+| F-16, review | `supabase/migrations/20261113150000_class_skill_summary_without_names.sql` | `classmate-rows.test.mjs` with the third file (111) | the same four files (round-2 version) |
 | F-21 | `supabase/migrations/20261113140000_creator_rows_need_class_staff.sql` | `creator-rows.test.mjs` (123) | `src/lib/safeUrl.ts` and the five places a stored link is rendered |
 | F-02 | none (edge functions) | `ai-gate.test.mjs` (250) | `_lib/ai-gate.ts`, the nine functions, `supabase/config.toml` |
 
@@ -71,13 +72,13 @@ So after F-14 a just-registered account sees no child's data. Nothing else neede
 | The sign-up asked for | Before | After |
 |---|---|---|
 | `teacher` (any case / padding) | `user_roles`: **teacher**; `users.role`: teacher | **no role row**; `users.role`: student |
-| `admin` | student (downgraded) | **no role row** |
+| `admin` | student (downgraded) | student - unchanged (round 2) |
 | `family` | **family** | student |
 | `student`, nothing, `null` | student | student |
 | a value that is not a role (`"headmaster"`, a number, an object) | the sign-up fails with a database error | student |
 
-- **`teacher` and `admin` are never granted by a sign-up.** The account exists, can sign in, holds no role and passes no `has_role` test; an admin grants the role in Admin > Users, or the admin function that created the account inserts it a moment later.
-- **Why no row rather than `student`:** `create-teacher`, `create-teaching-assistant` and `manage-admin-users create` send the staff role as metadata and then insert the role themselves. With no row from the trigger they end with exactly the role they insert - for teachers and TAs that is byte-for-byte today's end state - and **no edge function has to be redeployed for the migration, in either order**.
+- **`teacher` and `admin` are never granted by a sign-up.** A request for `teacher` leaves the account with no role: it exists, can sign in and passes no `has_role` test; an admin grants the role in Admin > Users, or the admin function that created the account inserts it a moment later. A request for `admin` is answered with `student`, exactly as live answers it today (round 2, after review: real parents pick "Admin" on the form; see "Round 2" below).
+- **Why no row for `teacher` rather than `student`:** `create-teacher` and `create-teaching-assistant` send `teacher` as metadata and then insert the role themselves. With no row from the trigger they end with exactly `teacher` - byte-for-byte today's end state; `student` there would leave every new teacher and TA holding both. `manage-admin-users create` sends `admin` and inserts `admin`: it ends `{admin, student}`, as on live today. **No edge function has to be redeployed for the migration, in either order.**
 - **`family` from the form becomes `student`.** Safe, and the tested path: no live account holds `family`, and the app treats the two alike (`ProtectedRoute`, `ivoryScope`, `Dashboard`). `student` from the form is safe because an unlinked `student` reads no child's rows (above) once F-14 is applied. Until F-14 is applied, a new sign-up can still read homework files - F-14 is the fix for that, and the reason both are in this batch.
 - `public.users.role` (legacy, NOT NULL) is always `student` for a new account. Nothing in `src/` reads it; `calendar-events` reads it but is not called by the browser.
 - **Same root cause, same migration:** policy `"Only admins can manage custom_quests"` is `FOR ALL TO public USING (users.role = 'admin')` - the legacy column. 20260312152157 meant to replace it but dropped a policy named "...modify..." instead, so both stand. The 17 accounts above can insert, change and delete custom quests through it (0 rows live; quests are shown to children). The migration drops it; `"Only admins can modify custom_quests"` (has_role) stays.
@@ -93,7 +94,8 @@ Also changed in the browser: the form's picker offers Student and Family only, w
 | A stranger signing up as "Family" / "Student" | that role; reads every homework file (F-14) | student; reads nothing about any child once F-14 is applied |
 | A real parent signing up, then linked by an admin | student (or family) + link | student + link - the same as every family login today |
 | A teacher made by an admin | `{teacher}` | `{teacher}` |
-| An admin made by an admin | `{admin, student}` | `{admin}` (2 live admins already hold `admin` alone) |
+| An admin made by an admin | `{admin, student}` | `{admin, student}` |
+| A parent who picks "Admin" on the old form or a stale page | student | student |
 | A front-desk card account | `{student}` | `{student}` |
 | 17 accounts with legacy `users.role = admin` | may write `custom_quests` | may not |
 
@@ -102,13 +104,15 @@ Also changed in the browser: the form's picker offers Student and Family only, w
 | Risk | Test in `signup-role.test.mjs` |
 |---|---|
 | create-teacher / create-TA leave the account without a role | replays `createUser(role teacher)` + the function's insert -> exactly `{teacher}`, no error |
-| manage-admin-users create / bootstrap | `{admin}` / `{admin, student}`, and that admin can write custom quests |
+| manage-admin-users create / bootstrap | `{admin, student}` both, and that admin can write custom quests |
+| a parent who picked "Admin", before and after `linkToFamily` | `{student}`, not an admin, cannot write quests |
+| a stale page asking for `teacher`, then `linkToFamily` | no role - the one case left for Admin > Users |
 | front-desk card (`upsert`) | `{student}`, upsert does not fail |
 | demo student | delete + insert + users upsert -> `{student}` |
 | form + linkToFamily, form + link-student-user | `{student}` |
 | an account that asked for teacher, later linked by an admin to a child / to a teacher record / role changed in Admin > Users | `{student}` / `{teacher}` / `{teacher}` |
 | the "claim" account | its plain insert conflicts - recorded as broken before and after (not a regression); the code fix is an upsert |
-| sign-up with odd metadata (number, object, array, null, homoglyph, `"student,teacher"`, role in app_metadata, other spellings of the key) | never more than `student`; staff spellings give no role |
+| sign-up with odd metadata (number, object, array, null, homoglyph, `"student,teacher"`, role in app_metadata, other spellings of the key) | never more than `student`; spellings of `teacher` give no role, spellings of `admin` give `student` |
 | a role-less account grants itself a role | refused by RLS on `user_roles` |
 | existing accounts rewritten | every `users` / `user_roles` row compared before and after the paste |
 | legacy-admin account loses reading of quests | still reads; can no longer write; a real admin can |
@@ -123,7 +127,7 @@ Not tested here, and why: GoTrue itself (the suite inserts into `auth.users` as 
 
 ```sql
 -- P1  the function is the new one: expect t, t
-SELECT prosrc ~ 'v_requested IN \(''teacher'', ''admin''\)' AS new_body,
+SELECT prosrc ~ 'IF v_requested = ''teacher'' THEN' AS new_body,
        NOT has_function_privilege('authenticated', oid, 'EXECUTE') AS not_callable
   FROM pg_proc WHERE oid = 'public.handle_new_user()'::regprocedure;
 -- P2  the trigger is still there: expect 1 row, on_auth_user_created, enabled 'O'
@@ -133,16 +137,37 @@ SELECT policyname, cmd FROM pg_policies WHERE schemaname = 'public' AND tablenam
 -- P4  no account changed: expect the same numbers as before the paste (13 Nov: teacher 8, admin 3, family 0)
 SELECT role, count(*) FROM public.user_roles GROUP BY 1 ORDER BY 1;
 ```
-Then, by hand (the owner or the conductor with a throw-away mailbox): join on the form, confirm the mail, and check in Admin > Users that the account shows `student`; create a teacher in Admin > Teachers and check it shows `teacher` only.
+Then, by hand (the owner or the conductor with a throw-away mailbox): join on the form, confirm the mail, and check in Admin > Users that the account shows `student`; by a direct sign-up request with `role: "admin"` -> `student`, with `role: "teacher"` -> no role; create a teacher in Admin > Teachers and check it shows `teacher` only. Remove the test accounts afterwards.
 
-### The dashboard setting to consider: turn public sign-ups off
+### Round 2 (after the review, 13 Nov): what changed, and family self-registration walked end to end
 
-Supabase dashboard > Authentication > Sign In / Providers > "Allow new users to sign up" -> off (`disable_signup: true`).
+Owner fact: **new families do register themselves in the app, and public sign-up stays on.** So `handle_new_user` is the only control over what a self-made account holds, and its answer for each requested value has to be exactly right. My earlier recommendation to switch sign-ups off is withdrawn.
 
-- What it stops: `supabase.auth.signUp` - the "Join the club" form answers "Signups not allowed for this instance". A parent can no longer make an account alone and wait to be linked. That path was last used on 2026-05-13; since October new families get a front-desk card (6 accounts).
-- What keeps working: everything an admin does - `auth.admin.createUser` is not affected - so create-teacher, create-teaching-assistant, manage-admin-users, front-desk cards and their redemption, the demo student, the "claim" account; signing in; password reset.
-- Also remove the "Join the club" tab then, or it only shows an error.
-- **Recommended default: turn it off**, after this migration is applied (the migration is still needed: the setting can be switched back on by anyone with dashboard access, and the trigger is what decides the role).
+Change made (review, change 1): a request for `admin` gets `student`, as the live function gives today; only a request for `teacher` gets no role. As first built, a parent who picked "Admin" (17 live non-admin accounts carry that metadata, 14 of them linked) would have held no role, seen a blank page, and stayed on it after being linked to a family, because `linkToFamily` grants nothing. Suite: 86 assertions, including that parent before and after linking.
+
+Order (review, change 2): the build with the new form must be live BEFORE this migration - branch `release/s1-signup-form`. After it the only way to ask for `teacher` is a stale page or a hand-made request.
+
+**The walk, against the corrected migration** (code re-read on this branch; the database half is asserted by the suite):
+
+| Step | Code | What the parent meets |
+|---|---|---|
+| 1. Register | `Auth.tsx` "Join the club": email, password, "I am a" Student / Family -> `signUp({ options: { data: { role } } })` | "Account created!". Email confirmation is on, so no session yet; the confirmation mail arrives. Unchanged. |
+| 2. In the database | `handle_new_user` | `users` row (`student`) and one `user_roles` row: `student` - whether they chose Student or Family (or Admin from an old page). |
+| 3. First sign-in | `Dashboard.tsx:19-28` -> `/student/dashboard`; `StudentDashboard.tsx:350-361` (role student, no child) | The "new student" demo dashboard: a welcome page and the class catalogue. A page with content, not a blank one. |
+| 4. Unlinked, what they can read | every policy asks for a link (measured on live by the reviewer as an unlinked `student`) | 8 classes, avatars, announcements, 2 teacher rows, the payroll month list, their own account rows. No child, family, bill, payment, attendance, points or report. Homework files: 0 once F-14 is applied (being applied now). |
+| 5. Linking | the school, in Admin > Users: "link to family" (`linkToFamily` sets `families.primary_user_id`) or "link to student" (`link-student-user` sets `students.linked_user_id`) | Nothing for the parent to do. There is no self-service link for a self-made account (so today, not caused by this fix). |
+| 6. Children appear | `useShellQueries.ts:44-72`: the family whose `primary_user_id` is this account -> its active children; else children with this `linked_user_id`. Row access by `can_view_student`. | Next page load: the child's dashboard; with two or more children, the profile picker. Tuition, homework, attendance, lessons as for every existing family. |
+
+**What a newly registered parent sees, plainly, and what is lost compared with today.**
+
+- A parent who chooses **Student** (the form's default): nothing changes. `student` before, `student` after.
+- A parent who chooses **Family**: today they get the role `family` and land on `/family/dashboard` - before linking a line saying no students are linked yet, please contact the school; after linking, a parents' page listing their children. After the fix they get `student` and land on the student dashboard instead (step 3), then the same screens as the 31 active family logins, **all of which hold `student`; no live account holds `family`**. So no existing family loses anything, and a new one gets what every existing one has.
+- What that new "Family" parent does lose, compared with a new "Family" parent today:
+  1. the parents' page `/family/dashboard` as a landing (still reachable only by role `family`);
+  2. announcements addressed to "families" (`useAnnouncements.ts:121` shows them to role `family` only) - 0 such announcements are active on live;
+  3. the school's bank details: `bank_info` is readable by an admin, by role `family`, or by an account that is some child's `linked_user_id`. A parent linked as a family's primary login and holding `student` reads none. **This is already the state of 26 of the 31 active family primary logins** (counted on live): they cannot read the bank details row the tuition / invoice screens use (`StudentAccountInfo.tsx:53`, `fetchInvoiceData.ts:39`). Not caused by this fix, but a new "Family" parent now joins them rather than escaping it.
+- If the school wants the parents' page or the bank details for a family, the safe way is an admin setting the role to Family in Admin > Users **after** linking - never the form: an unlinked `family` account reads the bank details, and homework files until F-14 is in.
+- The better fix for item 3, for the owner to decide (not built here): let `bank_info` be read by any account that can view at least one child (`can_view_student`), which covers all 31 family logins at once and no unlinked account.
 
 ### Rollback
 
@@ -680,7 +705,8 @@ Rollback: redeploy the nine from `origin/main` with their previous `verify_jwt` 
 | # | Decision | Recommended default |
 |---|---|---|
 | 1 | Apply F-01, F-14, F-15 (three pastes) | Yes, today, in that order. No real family or teacher sees a difference. |
-| 2 | Turn off public sign-ups in Supabase Auth, and remove the "Join the club" tab | Yes. New families get a front-desk card, as they have since October. |
+| 2 | (withdrawn) Public sign-ups stay on - owner. The sign-up form build (`release/s1-signup-form`) goes live before the F-01 paste. | - |
+| 2b | 26 of 31 family primary logins cannot read the school's bank details (`bank_info` asks for role `family` or a child's own login). Let any account that can view a child read it? | Yes, as a small separate migration. |
 | 3 | F-16: a family can no longer open a classmate's skills, attendance and point history in the board pop-up (name and points stay) | Yes. Ship the browser change with the paste. |
 | 4 | F-21: creators lose control of rows outside their classes (live: only the former admin login is affected - 25 rows it can no longer read as a `student`) | Yes. |
 | 5 | F-02: the Vocabulary page stops working for visitors who are not signed in; four functions go behind the gateway check | Yes. |
@@ -691,3 +717,108 @@ Rollback: redeploy the nine from `origin/main` with their previous `verify_jwt` 
 - Nothing is applied, deployed or pushed.
 - No real browser run: every screen claim above is from reading the code and from SQL / handler tests. The post-apply hand checks are listed per finding.
 - Out of this batch, noted on the way: `get_student_homeworks` lets a teacher with any lesson ever in a class read that child's homework (F-04); `teacher_rate_on` / `assistant_rate_on` (F-17); `recompute_student_points` / `refresh_invoice_carry` unchecked (F-20); `resource_class_access` any-teacher (F-18); the `homework` bucket has no size or type limit (F-19); `calendar-events` reads the legacy `users.role` (unused by the browser); new staff accounts get `users.role = student` in that legacy column.
+
+---
+
+## Round 2 (after `docs/evidence/S1-review.md`)
+
+**Where this stands:** F-14 and F-15 were approved as built and are being applied by another agent; their files are untouched since. F-01 is corrected (above, "Round 2" inside the F-01 section). Below: the class skill summary (the review's open point on F-16), the browser release branches, the F-02 deploy steps, and the two teacher accounts with no teacher record.
+
+### Class skill figures without names - `20261113150000_class_skill_summary_without_names.sql`
+
+The review's finding: `get_class_skill_points` (added by the F-16 migration) hands every family of a class every classmate's per-skill total with id and name - the figures the classmate pop-up no longer shows, one RPC call away.
+
+Choice made, of the two offered: **the child's own totals plus a class summary with no names** (not "names with total points", which the board already gives through `class-leaderboard`). Reason: the two panels need exactly three class figures - best, average, top three - and none of them needs to say whose they are.
+
+- `get_class_skill_summary(class, from, to)` returns one row per skill: `best`, `total` and `students` (for the average), `class_students`, and `top` = the three highest totals as bare integers. No id, no name, and nothing linking one skill's figures to another's.
+- A family gets nothing for a class where fewer than three children have assessments in the range: a best or average over two children is the other child's score. Staff of the class and admins are not held to that.
+- `get_class_skill_points` is dropped by the same file.
+- The child's own totals never went through either function: the panels read the child's own rows.
+
+In the browser (`src/lib/classSkillPoints.ts`, `RadarChartTab`, `PerformanceHeatmapTab`): class best and class average are unchanged figures; "Top 3 in <skill>" shows three medals with points and "#1 / #2 / #3" in place of first names, with "You" on the child's own entry. Teachers and admins opening the same pop-up from their boards still see names (they read the rows). The lib asks for the summary, then the named function, then rows, so it works against every state of the database.
+
+| Who | `get_class_skill_points` (F-16 as built) | After `20261113150000` |
+|---|---|---|
+| A family of the class | every classmate: id, name, total per skill | per skill: best, sum, counts, top three numbers |
+| A family, class with fewer than 3 assessed children | the other children's totals by name | nothing |
+| Teacher / TA of the class, admin | the same named rows | the summary (and the rows themselves, as always) |
+| Family of another class, unlinked, role-less, anon | nothing | nothing |
+
+Tests: `classmate-rows.test.mjs` run with the third migration (suite "class skill summary" in `run.mjs`): before - a parent gets classmates' per-skill totals by name; after - the function is gone, the summary's result type has no uuid or name column, its figures equal what the panel used to add up from rows (best, rounded average, top three), nothing in the answer matches an id or a surname; 0 rows for a teacher of another class, another class's family, an unlinked account, a role-less account, no uid; anon cannot call; a class of two returns nothing to a family and everything to its teacher, three returns figures, a month with fewer than three assessed returns nothing; classmates' rows still closed and the child's own totals still readable; pasted twice; refused before `20261113130000`; rollback block run and the old function restored byte for byte (md5), then re-pasted.
+
+Order: paste right after `20261113130000` (its preflight insists on it). Between the two a family can call the named function. Do not paste `20261113130000` again afterwards (it recreates the named function); if it happens, paste this file again. Browser first, as for F-16.
+
+Probes (read-only):
+```sql
+-- expect one row: get_class_skill_summary, definer t, anon f, authenticated t - and no get_class_skill_points
+SELECT proname, prosecdef, has_function_privilege('anon', oid, 'EXECUTE') anon, has_function_privilege('authenticated', oid, 'EXECUTE') authenticated
+  FROM pg_proc WHERE proname IN ('get_class_skill_summary', 'get_class_skill_points');
+```
+
+<!-- rollback class-skill-summary -->
+```sql
+-- Brings back get_class_skill_points exactly as 20261113130000 defines it and
+-- drops the summary. THIS REOPENS the review's point: classmates' per-skill
+-- totals by name for every family of the class.
+BEGIN;
+CREATE OR REPLACE FUNCTION public.get_class_skill_points(p_class uuid, p_from date DEFAULT NULL, p_to date DEFAULT NULL)
+RETURNS TABLE (student_id uuid, student_name text, skill text, total integer)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+  SELECT sa.student_id, s.full_name, sa.skill::text, sum(sa.score)::integer
+    FROM public.skill_assessments sa
+    JOIN public.students s ON s.id = sa.student_id
+   WHERE sa.class_id = p_class
+     AND (p_from IS NULL OR sa.date >= p_from)
+     AND (p_to IS NULL OR sa.date <= p_to)
+     AND auth.uid() IS NOT NULL
+     AND (   coalesce(public.has_role(auth.uid(), 'admin'::public.app_role), false)
+          OR coalesce(public.is_teacher_of_class(auth.uid(), p_class), false)
+          OR coalesce(public.is_student_enrolled_in_class(auth.uid(), p_class), false))
+   GROUP BY sa.student_id, s.full_name, sa.skill
+$function$;
+REVOKE EXECUTE ON FUNCTION public.get_class_skill_points(uuid, date, date) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_class_skill_points(uuid, date, date) TO authenticated;
+DROP FUNCTION IF EXISTS public.get_class_skill_summary(uuid, date, date);
+COMMIT;
+```
+
+### The browser builds that must be live before their migrations (three clean branches from `origin/main` 705dea85; not pushed)
+
+Each was cut from `origin/main`, contains only the files listed, and passed `tsc --noEmit -p tsconfig.app.json` and `vite build` on that branch. Every file taken is identical on `origin/main` and on the commit the security change was written against (checked with `git diff origin/main 6703938 -- <files>`: empty), so nothing unshipped rides along - no design batch, no other work.
+
+| Branch | Tip | Files | Must be live before |
+|---|---|---|---|
+| `release/s1-signup-form` | `6707d97d` | `src/pages/Auth.tsx` (the picker offers Student and Family; a line telling staff the school creates their login), `scripts/pgtest/signup-form.test.mjs` (new), `scripts/pgtest/run.mjs` (registers it) | F-01 `20261113100000` |
+| `release/s1-f16-browser` | `7f9d562f` | `src/lib/classSkillPoints.ts` (new), `src/components/student/analytics/RadarChartTab.tsx`, `src/components/student/analytics/PerformanceHeatmapTab.tsx`, `src/components/student/StudentAnalyticsModal.tsx` | F-16 `20261113130000` and `20261113150000` |
+| `release/s1-f21-browser` | `3d5c8193` | `src/lib/safeUrl.ts` (new), `src/components/resources/ResourceCard.tsx`, `src/components/student/MyWorkGallery.tsx`, `src/pages/StudentLessonDetail.tsx`, `src/pages/TeacherResources.tsx`, `src/pages/TeacherSmartUpload.tsx` | F-21 `20261113140000` |
+
+Against today's database each is invisible: the form simply lacks two options; the skill panels fall back to the query they use now and the pop-up's row probe still finds a classmate (old policy), so the tabs stay; the link helper only refuses a link that is not http(s), and all 41 stored links are. The three touch different files and can be merged in any order or together.
+
+`release/s1-f16-browser` carries the round-2 version of the panels (summary first), so one browser deploy covers both F-16 migrations.
+
+### F-02 deploy steps
+
+Rewritten in `docs/evidence/S1-live-apply-brief.md` as the review asked: for each of the nine functions snapshot the live function, compare it with the pre-gate base (`6703938`), then deploy; `get-speech-token` last and outside lesson hours; the full file list per function (its `index.ts`, `_lib/ai-gate.ts`, `_lib/auth.ts`, `_lib/rate-limit.ts` - the whole import closure, re-checked: each `index.ts` has one relative import, `ai-gate.ts` two, the other two none). The saved snapshot, not `origin/main`, is the rollback.
+
+### The two `teacher` accounts with no teacher record
+
+No migration here changes an existing account, so these two (created 2025-10-16 and 2026-03-23) keep what any teacher-role account reads. The reviewer measured it as one of them: 41 learning profiles, 217 student-work files, the staff list, the lesson-resources and resources buckets, and the 99 homework files until F-14 is in. If either is not a member of staff, F-01 is still open for that account.
+
+- `scripts/CHECK-unlinked-accounts.sql` (unchanged; read-only) lists them under "1 teacher role, no teacher or assistant record": account id, creation date, last sign-in date. No email, name or phone.
+- `scripts/FIX-remove-unbacked-teacher-role.sql`: one statement per account, for the owner to approve with the account's id pasted in. A removes the `teacher` role; B (commented) turns it into `student` for a parent the school knows. Both carry the guard "has no teacher and no assistant record", so on a real teacher or TA they change 0 rows; as shipped the id is all zeros and nothing happens. The audit trigger on `user_roles` records the change. Tested in `signup-role.test.mjs`: real teacher 0 rows, TA 0 rows, self-made teacher 1 row and nothing else touched, repeat 0 rows, B's duplicate-key refusal.
+- If the account IS staff, do neither: link or create their teacher record.
+
+### Owner decisions after round 2
+
+| # | Decision | Recommended default |
+|---|---|---|
+| A | The two `teacher` accounts with no teacher record: look each up; for one that is not staff, approve statement A of the FIX script with its id | Do this first; it is the only way F-01 can already have been used. |
+| B | Class skill figures for families as a nameless summary (`20261113150000`), instead of classmates' totals by name | Yes, pasted straight after F-16. The top three then shows points, not first names, to families. |
+| C | Families get no class figures where fewer than three children were assessed in the period | Yes (a "best" over two children is the other child's score). |
+| D | New parents who pick "Family" get `student` and the same screens as every existing family; the parents' page is reached only if an admin sets the role after linking | Accept. |
+| E | 26 of 31 family logins cannot read the school's bank details (`bank_info`) - found while walking registration, not caused by it | Fix in a small separate migration (readable by any account that can view a child). |
+| F | An account with no role sees a blank page; `linkToFamily` grants no role (review, "not blocking") | Small follow-ups: a sentence instead of the blank page; `linkToFamily` gives `student` to a role-less account. |

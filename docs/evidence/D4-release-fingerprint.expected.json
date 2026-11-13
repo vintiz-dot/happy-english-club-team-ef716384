@@ -1,0 +1,581 @@
+{
+  "functions": [
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._attendance_evidence_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "0348195c51404b1da3185e8626361946",
+      "proname": "_attendance_evidence_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._caller_lane()",
+      "identity_arguments": "",
+      "md5_prosrc": "66001c3b6eb716a6380e4155fba75409",
+      "proname": "_caller_lane",
+      "security_definer": false,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._floor_causes_push(a jsonb, c jsonb)",
+      "identity_arguments": "a jsonb, c jsonb",
+      "md5_prosrc": "e2dc36c5617b4ae8d6a10d839c4d4139",
+      "proname": "_floor_causes_push",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._floor_families_or(a jsonb, b jsonb)",
+      "identity_arguments": "a jsonb, b jsonb",
+      "md5_prosrc": "fa920fcd0ebd6f3dd4b2b281835e30e5",
+      "proname": "_floor_families_or",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._floor_mark_level(p_status text, p_marked_by uuid)",
+      "identity_arguments": "p_status text, p_marked_by uuid",
+      "md5_prosrc": "ed25e62b64c592f1ee6a026596eb11d0",
+      "proname": "_floor_mark_level",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._floor_point_level(p_lesson uuid, p_class uuid, p_date date, r_class uuid, r_date date, r_session uuid, r_type text, r_points integer, r_created_by uuid)",
+      "identity_arguments": "p_lesson uuid, p_class uuid, p_date date, r_class uuid, r_date date, r_session uuid, r_type text, r_points integer, r_created_by uuid",
+      "md5_prosrc": "dad4fd7df357fb823b5fcfd9db0d5921",
+      "proname": "_floor_point_level",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._floor_table_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "79be4d195d4dbb559094061b90f7f5fd",
+      "proname": "_floor_table_guard",
+      "security_definer": false,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._floor_transcript_level(p_lesson uuid, p_class uuid, p_date date, r_class uuid, r_session uuid, r_tdate date, r_created timestamp with time zone, r_status text, r_audio text)",
+      "identity_arguments": "p_lesson uuid, p_class uuid, p_date date, r_class uuid, r_session uuid, r_tdate date, r_created timestamp with time zone, r_status text, r_audio text",
+      "md5_prosrc": "3c8c752f920eeab0611b6fe33cc66101",
+      "proname": "_floor_transcript_level",
+      "security_definer": false,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._homework_evidence_keep()",
+      "identity_arguments": "",
+      "md5_prosrc": "2639cb97dfbad79959c8295ffef922fd",
+      "proname": "_homework_evidence_keep",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._invoice_state_floor()",
+      "identity_arguments": "",
+      "md5_prosrc": "3eb44221c7f4a9f81cef3451be5bf62f",
+      "proname": "_invoice_state_floor",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._point_evidence_keep()",
+      "identity_arguments": "",
+      "md5_prosrc": "0003dc7cfe5783c02b3d7875deba5751",
+      "proname": "_point_evidence_keep",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_change_assess(s sessions, p_action text, p_change jsonb, p_uid uuid)",
+      "identity_arguments": "s sessions, p_action text, p_change jsonb, p_uid uuid",
+      "md5_prosrc": "6c1b8c86c47d3193d42f13adf56dcdc2",
+      "proname": "_session_change_assess",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_erased_recently(p_session_id uuid)",
+      "identity_arguments": "p_session_id uuid",
+      "md5_prosrc": "5f58916650251e14a89a45455746fd6f",
+      "proname": "_session_erased_recently",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_evidence_keep(p_session_id uuid, p_cause jsonb, p_own_level text, p_own_family text)",
+      "identity_arguments": "p_session_id uuid, p_cause jsonb, p_own_level text, p_own_family text",
+      "md5_prosrc": "e2f854c4b223039803fe2fccb39c842b",
+      "proname": "_session_evidence_keep",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._session_evidence_keep_trg()",
+      "identity_arguments": "",
+      "md5_prosrc": "8c2cfa6ad9ef61853ffc8b07134dcc8b",
+      "proname": "_session_evidence_keep_trg",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._transcript_evidence_keep()",
+      "identity_arguments": "",
+      "md5_prosrc": "6874f3d1d42b899885b3589f1919bbcf",
+      "proname": "_transcript_evidence_keep",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.invoice_floor_state(p_student uuid, p_month text)",
+      "identity_arguments": "p_student uuid, p_month text",
+      "md5_prosrc": "84301619d6d062bd3cd05e68d72b2fa5",
+      "proname": "invoice_floor_state",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public.session_effective_level(p_session_id uuid, p_d1 jsonb)",
+      "identity_arguments": "p_session_id uuid, p_d1 jsonb",
+      "md5_prosrc": "b66e757e4a26fd7d0177c48e76b9e404",
+      "proname": "session_effective_level",
+      "security_definer": true,
+      "volatility": "s"
+    }
+  ],
+  "informational": {
+    "view_definitions_md5": {},
+    "view_options": {}
+  },
+  "relations": {
+    "invoice_state_floor": {
+      "columns": [
+        {
+          "default": null,
+          "name": "student_id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "month",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": "false",
+          "name": "ever_paid",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "false",
+          "name": "ever_signed",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "false",
+          "name": "ever_frozen",
+          "not_null": true,
+          "type": "boolean"
+        },
+        {
+          "default": "0",
+          "name": "max_recorded_payment",
+          "not_null": true,
+          "type": "numeric"
+        },
+        {
+          "default": "now()",
+          "name": "first_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "now()",
+          "name": "last_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "'[]'::jsonb",
+          "name": "causes",
+          "not_null": true,
+          "type": "jsonb"
+        }
+      ],
+      "constraints": [
+        {
+          "md5_def": "1c2abbe99fe1278510ece8197edf6ae2",
+          "name": "invoice_state_floor_causes_size",
+          "type": "c"
+        },
+        {
+          "md5_def": "f24f077676b9468ec8c5b6f72169481d",
+          "name": "invoice_state_floor_pkey",
+          "type": "p"
+        }
+      ],
+      "force_row_level_security": false,
+      "kind": "r",
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "md5_qual": "9825a11ce3360af9af9d6bd1d3d426c0",
+          "md5_with_check": null,
+          "name": "invoice_state_floor_admin_read",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "DELETE",
+          "INSERT",
+          "REFERENCES",
+          "SELECT",
+          "TRIGGER",
+          "TRUNCATE",
+          "UPDATE"
+        ]
+      },
+      "row_level_security": true
+    },
+    "session_evidence_floor": {
+      "columns": [
+        {
+          "default": null,
+          "name": "session_id",
+          "not_null": true,
+          "type": "uuid"
+        },
+        {
+          "default": null,
+          "name": "level",
+          "not_null": true,
+          "type": "text"
+        },
+        {
+          "default": "'{}'::jsonb",
+          "name": "families",
+          "not_null": true,
+          "type": "jsonb"
+        },
+        {
+          "default": "now()",
+          "name": "first_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "now()",
+          "name": "last_at",
+          "not_null": true,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "'[]'::jsonb",
+          "name": "causes",
+          "not_null": true,
+          "type": "jsonb"
+        }
+      ],
+      "constraints": [
+        {
+          "md5_def": "1c2abbe99fe1278510ece8197edf6ae2",
+          "name": "session_evidence_floor_causes_size",
+          "type": "c"
+        },
+        {
+          "md5_def": "a737bd2aa6226d11fe3c32f373753193",
+          "name": "session_evidence_floor_level_check",
+          "type": "c"
+        },
+        {
+          "md5_def": "11548a038bec24612dac663cd1deeebd",
+          "name": "session_evidence_floor_pkey",
+          "type": "p"
+        }
+      ],
+      "force_row_level_security": false,
+      "kind": "r",
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "md5_qual": "9825a11ce3360af9af9d6bd1d3d426c0",
+          "md5_with_check": null,
+          "name": "session_evidence_floor_admin_read",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "privileges": {
+        "anon": [],
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "DELETE",
+          "INSERT",
+          "REFERENCES",
+          "SELECT",
+          "TRIGGER",
+          "TRUNCATE",
+          "UPDATE"
+        ]
+      },
+      "row_level_security": true
+    }
+  },
+  "triggers": [
+    {
+      "enabled": "O",
+      "function": "_attendance_evidence_guard",
+      "md5_def": "c549c6cb9cc88724f8c713bead7711d8",
+      "name": "zz_attendance_evidence_guard",
+      "table": "attendance",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "_transcript_evidence_keep",
+      "md5_def": "93d9bd56bf5d06b094a1b0d1b5ef4ce2",
+      "name": "zz_transcript_evidence_keep",
+      "table": "class_transcripts",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "_homework_evidence_keep",
+      "md5_def": "6d350cd10049b56fa962b37319dc437e",
+      "name": "zz_homework_evidence_keep",
+      "table": "homework_submissions",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "_homework_evidence_keep",
+      "md5_def": "06cf1c8f068cb73b34546a80806ac9bf",
+      "name": "zz_homework_evidence_keep",
+      "table": "homeworks",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "_floor_table_guard",
+      "md5_def": "fcebe4fe947f1bb4d23726f4f5835ebd",
+      "name": "invoice_state_floor_guard",
+      "table": "invoice_state_floor",
+      "tgtype": 31
+    },
+    {
+      "enabled": "O",
+      "function": "_floor_table_guard",
+      "md5_def": "a2840097fe5a129e4a62b56285ea3aa9",
+      "name": "invoice_state_floor_no_truncate",
+      "table": "invoice_state_floor",
+      "tgtype": 34
+    },
+    {
+      "enabled": "O",
+      "function": "_invoice_state_floor",
+      "md5_def": "a7b36725c6d00981621d2642776f5e38",
+      "name": "zz_invoice_state_floor",
+      "table": "invoices",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "audit_row_change",
+      "md5_def": "363bb3a1fdda8534cb5c569712c780ec",
+      "name": "audit_point_transactions",
+      "table": "point_transactions",
+      "tgtype": 25
+    },
+    {
+      "enabled": "O",
+      "function": "_point_evidence_keep",
+      "md5_def": "995e44005575c574c0ddf006f368660f",
+      "name": "zz_point_evidence_keep",
+      "table": "point_transactions",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "_floor_table_guard",
+      "md5_def": "4abb4fb178d587b038182404ca0e4ddc",
+      "name": "session_evidence_floor_guard",
+      "table": "session_evidence_floor",
+      "tgtype": 31
+    },
+    {
+      "enabled": "O",
+      "function": "_floor_table_guard",
+      "md5_def": "af78eb2a78387b3cdec0131779be49c6",
+      "name": "session_evidence_floor_no_truncate",
+      "table": "session_evidence_floor",
+      "tgtype": 34
+    },
+    {
+      "enabled": "O",
+      "function": "_session_evidence_keep_trg",
+      "md5_def": "0886607a6e0dc5e58ef6498e6771e540",
+      "name": "zz0_session_evidence_keep",
+      "table": "sessions",
+      "tgtype": 19
+    }
+  ]
+}

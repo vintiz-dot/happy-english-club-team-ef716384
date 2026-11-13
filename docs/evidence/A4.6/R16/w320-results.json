@@ -1,0 +1,2151 @@
+{
+ "label": "w320",
+ "runs": {
+  "tdash-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Needs attendance\" 130x32",
+     "main:BUTTON \"Held\" 58x32",
+     "main:BUTTON \"Unknown, 00:00 to 00:00, Needs\" 52x32"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "00:00",
+     "00:00",
+     "00:00",
+     "00:00",
+     "00:00",
+     "01:00",
+     "02:00",
+     "03:00",
+     "04:00",
+     "05:00",
+     "06:00",
+     "07:00",
+     "08:00",
+     "09:00",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "10:00",
+     "11",
+     "11:00",
+     "12",
+     "12:00",
+     "13",
+     "13,",
+     "13:00",
+     "14",
+     "14:00",
+     "15",
+     "15",
+     "15:00",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "20:00",
+     "21:00",
+     "22:00",
+     "23:00",
+     "23:59",
+     "23:59",
+     "250,000",
+     "4",
+     "9",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".px-2.rounded-md.h-7:nth-child(1)",
+       ".shadow-sm",
+       ".px-2.rounded-md.h-7:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 26,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".border-l.relative.border-border\\/40:nth-child(2) > .saturate-\\[0\\.5\\].opacity-6",
+       ".border-l.relative.border-border\\/40:nth-child(4) > .saturate-\\[0\\.5\\].opacity-6",
+       ".ring-2.ring-warning\\/70.ring-offset-1:nth-child(49)"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tdash-320-light.png",
+   "kb": 30
+  },
+  "tdash-agenda-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Needs attendance\" 130x32",
+     "main:BUTTON \"Held\" 58x32",
+     "main:BUTTON \"Unknown, 00:00 to 00:00, Needs\" 52x32"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "00:00",
+     "00:00",
+     "00:00",
+     "00:00",
+     "00:00",
+     "01:00",
+     "02:00",
+     "03:00",
+     "04:00",
+     "05:00",
+     "06:00",
+     "07:00",
+     "08:00",
+     "09:00",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "10:00",
+     "11",
+     "11:00",
+     "12",
+     "12:00",
+     "13",
+     "13,",
+     "13:00",
+     "14",
+     "14:00",
+     "15",
+     "15",
+     "15:00",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "20:00",
+     "21:00",
+     "22:00",
+     "23:00",
+     "23:59",
+     "23:59",
+     "250,000",
+     "4",
+     "9",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".px-2.rounded-md.h-7:nth-child(1)",
+       ".shadow-sm",
+       ".px-2.rounded-md.h-7:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 26,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".border-l.relative.border-border\\/40:nth-child(2) > .saturate-\\[0\\.5\\].opacity-6",
+       ".border-l.relative.border-border\\/40:nth-child(4) > .saturate-\\[0\\.5\\].opacity-6",
+       ".ring-2.ring-warning\\/70.ring-offset-1:nth-child(49)"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tdash-agenda-320-light.png",
+   "kb": 36
+  },
+  "tdash-actions-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Needs attendance\" 130x32",
+     "main:BUTTON \"Held\" 58x32",
+     "main:BUTTON \"Unknown, 00:00 to 00:00, Needs\" 52x32"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "00:00",
+     "00:00",
+     "00:00",
+     "00:00",
+     "00:00",
+     "01:00",
+     "02:00",
+     "03:00",
+     "04:00",
+     "05:00",
+     "06:00",
+     "07:00",
+     "08:00",
+     "09:00",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "10:00",
+     "11",
+     "11:00",
+     "12",
+     "12:00",
+     "13",
+     "13,",
+     "13:00",
+     "14",
+     "14:00",
+     "15",
+     "15",
+     "15:00",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "20:00",
+     "21:00",
+     "22:00",
+     "23:00",
+     "23:59",
+     "23:59",
+     "250,000",
+     "4",
+     "9",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".px-2.rounded-md.h-7:nth-child(1)",
+       ".shadow-sm",
+       ".px-2.rounded-md.h-7:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 26,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".border-l.relative.border-border\\/40:nth-child(2) > .saturate-\\[0\\.5\\].opacity-6",
+       ".border-l.relative.border-border\\/40:nth-child(4) > .saturate-\\[0\\.5\\].opacity-6",
+       ".ring-2.ring-warning\\/70.ring-offset-1:nth-child(49)"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tdash-actions-320-light.png",
+   "kb": 35
+  },
+  "tdash-leader-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "00:00",
+     "00:00",
+     "00:00",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12000",
+     "13,",
+     "2",
+     "2026",
+     "2026",
+     "23:59",
+     "250,000",
+     "36000",
+     "4"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 2,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .studio-focus.justify-end.text-center > .",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .studio-focus.justify-end.text-center > .",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .studio-focus.justify-end.text-center > ."
+      ]
+     },
+     {
+      "id": "image-alt",
+      "impact": "critical",
+      "n": 7,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .studio-focus.justify-end.text-center > .",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .studio-focus.justify-end.text-center > .",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .studio-focus.justify-end.text-center > ."
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tdash-leader-320-light.png",
+   "kb": 69
+  },
+  "tdash-pending-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "00:00",
+     "00:00",
+     "00:00",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12000",
+     "13,",
+     "2",
+     "2026",
+     "2026",
+     "23:59",
+     "250,000",
+     "36000",
+     "4"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 2,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .studio-focus.justify-end.text-center > .",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .studio-focus.justify-end.text-center > .",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .studio-focus.justify-end.text-center > ."
+      ]
+     },
+     {
+      "id": "image-alt",
+      "impact": "critical",
+      "n": 7,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .studio-focus.justify-end.text-center > .",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .studio-focus.justify-end.text-center > .",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .studio-focus.justify-end.text-center > ."
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tdash-pending-320-light.png",
+   "kb": 51
+  },
+  "tdash-manual-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "00:00",
+     "00:00",
+     "00:00",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12000",
+     "13,",
+     "2",
+     "2026",
+     "2026",
+     "23:59",
+     "250,000",
+     "36000",
+     "4"
+    ],
+    "dialogNumbers": [
+     "+1",
+     "+10",
+     "-1",
+     "-10"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .studio-focus.justify-end.text-center > .",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .studio-focus.justify-end.text-center > .",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .studio-focus.justify-end.text-center > ."
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tdash-manual-320-light.png",
+   "kb": 34
+  },
+  "tdash-logspend-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "00:00",
+     "00:00",
+     "00:00",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "12000",
+     "13,",
+     "2",
+     "2026",
+     "2026",
+     "23:59",
+     "250,000",
+     "36000",
+     "4"
+    ],
+    "dialogNumbers": [
+     "1",
+     "36000"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "serious": 1
+    },
+    "rules": [
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .studio-focus.justify-end.text-center > .",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .studio-focus.justify-end.text-center > .",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .studio-focus.justify-end.text-center > ."
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tdash-logspend-320-light.png",
+   "kb": 60
+  },
+  "tdash-bulk-320-light": {
+   "errors": [
+    "Cannot read properties of undefined (reading 'charAt')",
+    "Cannot read properties of undefined (reading 'charAt')"
+   ],
+   "requests": {
+    "count": 24,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:families:select": 2,
+     "from:homework_submissions:select": 1,
+     "from:homeworks:select": 1,
+     "from:notifications:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 5,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 4,
+     "from:user_roles:select": 2,
+     "from:video_submissions:select": 1,
+     "function:calculate-payroll:select": 1
+    }
+   },
+   "actionError": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Add points', exact: true }).first()\u001b[22m\n",
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Needs attendance\" 130x32",
+     "main:BUTTON \"Held\" 58x32",
+     "main:BUTTON \"Unknown, 00:00 to 00:00, Needs\" 52x32"
+    ],
+    "numbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "00:00",
+     "00:00",
+     "00:00",
+     "00:00",
+     "00:00",
+     "01:00",
+     "02:00",
+     "03:00",
+     "04:00",
+     "05:00",
+     "06:00",
+     "07:00",
+     "08:00",
+     "09:00",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "10:00",
+     "11",
+     "11:00",
+     "12",
+     "12:00",
+     "13",
+     "13,",
+     "13:00",
+     "14",
+     "14:00",
+     "15",
+     "15",
+     "15:00",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2",
+     "2",
+     "2026",
+     "20:00",
+     "21:00",
+     "22:00",
+     "23:00",
+     "23:59",
+     "23:59",
+     "250,000",
+     "4",
+     "9",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".px-2.rounded-md.h-7:nth-child(1)",
+       ".shadow-sm",
+       ".px-2.rounded-md.h-7:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 26,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".border-l.relative.border-border\\/40:nth-child(2) > .saturate-\\[0\\.5\\].opacity-6",
+       ".border-l.relative.border-border\\/40:nth-child(4) > .saturate-\\[0\\.5\\].opacity-6",
+       ".ring-2.ring-warning\\/70.ring-offset-1:nth-child(49)"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tdash-bulk-320-light.png",
+   "kb": 30
+  },
+  "tclass-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 23,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 2,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32",
+     "main:BUTTON \"Needs attendance\" 130x32",
+     "main:BUTTON \"Held\" 58x32",
+     "main:BUTTON \"Unknown, 00:00 to 00:00, Needs\" 52x32"
+    ],
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "-1",
+     "00:00",
+     "00:00",
+     "01:00",
+     "02:00",
+     "03:00",
+     "04:00",
+     "05:00",
+     "06:00",
+     "07:00",
+     "08:00",
+     "09:00",
+     "1",
+     "1",
+     "10",
+     "10",
+     "10:00",
+     "11",
+     "11:00",
+     "12",
+     "12:00",
+     "13",
+     "13:00",
+     "14",
+     "14:00",
+     "15",
+     "15",
+     "15:00",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2",
+     "20:00",
+     "21:00",
+     "22:00",
+     "23:00",
+     "23:59",
+     "3",
+     "3",
+     "4",
+     "9",
+     "9"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".px-2.rounded-md.h-7:nth-child(1)",
+       ".bg-hec-action",
+       ".px-2.rounded-md.h-7:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 26,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".border-l.relative.border-border\\/40:nth-child(2) > .saturate-\\[0\\.5\\].opacity-6",
+       ".border-l.relative.border-border\\/40:nth-child(4) > .saturate-\\[0\\.5\\].opacity-6",
+       ".ring-2.ring-warning\\/70.ring-offset-1:nth-child(49)"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tclass-320-light.png",
+   "kb": 44
+  },
+  "tclass-sap-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 23,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 2,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32",
+     "main:BUTTON \"Needs attendance\" 130x32",
+     "main:BUTTON \"Held\" 58x32",
+     "main:BUTTON \"Unknown, 00:00 to 00:00, Needs\" 52x32"
+    ],
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "-1",
+     "00:00",
+     "00:00",
+     "01:00",
+     "02:00",
+     "03:00",
+     "04:00",
+     "05:00",
+     "06:00",
+     "07:00",
+     "08:00",
+     "09:00",
+     "1",
+     "1",
+     "10",
+     "10",
+     "10:00",
+     "11",
+     "11:00",
+     "12",
+     "12:00",
+     "13",
+     "13:00",
+     "14",
+     "14:00",
+     "15",
+     "15",
+     "15:00",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2",
+     "20:00",
+     "21:00",
+     "22:00",
+     "23:00",
+     "23:59",
+     "3",
+     "3",
+     "4",
+     "9",
+     "9"
+    ],
+    "dialogNumbers": [
+     "+1",
+     "+5",
+     "30",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".rounded-md.px-2.h-7:nth-child(1)",
+       ".bg-hec-action",
+       ".rounded-md.px-2.h-7:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 26,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".border-l.relative.border-border\\/40:nth-child(2) > .saturate-\\[0\\.5\\].opacity-6",
+       ".border-l.relative.border-border\\/40:nth-child(4) > .saturate-\\[0\\.5\\].opacity-6",
+       ".ring-2.ring-warning\\/70.ring-offset-1:nth-child(49)"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tclass-sap-320-light.png",
+   "kb": 47
+  },
+  "tclass-sap-skills-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 23,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 2,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32",
+     "main:BUTTON \"Needs attendance\" 130x32",
+     "main:BUTTON \"Held\" 58x32",
+     "main:BUTTON \"Unknown, 00:00 to 00:00, Needs\" 52x32"
+    ],
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "-1",
+     "00:00",
+     "00:00",
+     "01:00",
+     "02:00",
+     "03:00",
+     "04:00",
+     "05:00",
+     "06:00",
+     "07:00",
+     "08:00",
+     "09:00",
+     "1",
+     "1",
+     "10",
+     "10",
+     "10:00",
+     "11",
+     "11:00",
+     "12",
+     "12:00",
+     "13",
+     "13:00",
+     "14",
+     "14:00",
+     "15",
+     "15",
+     "15:00",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2",
+     "20:00",
+     "21:00",
+     "22:00",
+     "23:00",
+     "23:59",
+     "3",
+     "3",
+     "4",
+     "9",
+     "9"
+    ],
+    "dialogNumbers": [
+     "+1",
+     "+1",
+     "-1",
+     "30",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".rounded-md.px-2.h-7:nth-child(1)",
+       ".bg-hec-action",
+       ".rounded-md.px-2.h-7:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 26,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".border-l.relative.border-border\\/40:nth-child(2) > .saturate-\\[0\\.5\\].opacity-6",
+       ".border-l.relative.border-border\\/40:nth-child(4) > .saturate-\\[0\\.5\\].opacity-6",
+       ".ring-2.ring-warning\\/70.ring-offset-1:nth-child(49)"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tclass-sap-skills-320-light.png",
+   "kb": 44
+  },
+  "tclass-sap-flag-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 23,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 2,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"9 – 15 Nov\" 115x32",
+     "main:BUTTON \"Needs attendance\" 130x32",
+     "main:BUTTON \"Held\" 58x32",
+     "main:BUTTON \"Unknown, 00:00 to 00:00, Needs\" 52x32"
+    ],
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "-1",
+     "00:00",
+     "00:00",
+     "01:00",
+     "02:00",
+     "03:00",
+     "04:00",
+     "05:00",
+     "06:00",
+     "07:00",
+     "08:00",
+     "09:00",
+     "1",
+     "1",
+     "10",
+     "10",
+     "10:00",
+     "11",
+     "11:00",
+     "12",
+     "12:00",
+     "13",
+     "13:00",
+     "14",
+     "14:00",
+     "15",
+     "15",
+     "15:00",
+     "16:00",
+     "17:00",
+     "17:30",
+     "17:30",
+     "18:00",
+     "18:30",
+     "18:30",
+     "19:00",
+     "2",
+     "2",
+     "20:00",
+     "21:00",
+     "22:00",
+     "23:00",
+     "23:59",
+     "3",
+     "3",
+     "4",
+     "9",
+     "9"
+    ],
+    "dialogNumbers": [
+     "30",
+     "4"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "serious": 2
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 4,
+      "t": [
+       ".rounded-md.px-2.h-7:nth-child(1)",
+       ".shadow-sm",
+       ".rounded-md.px-2.h-7:nth-child(3)"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 26,
+      "t": [
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(1)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(2)",
+       ".right-2.-translate-y-1\\/2.text-muted-foreground\\/70:nth-child(3)"
+      ]
+     },
+     {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".border-l.relative.border-border\\/40:nth-child(2) > .saturate-\\[0\\.5\\].opacity-6",
+       ".border-l.relative.border-border\\/40:nth-child(4) > .saturate-\\[0\\.5\\].opacity-6",
+       ".ring-2.ring-warning\\/70.ring-offset-1:nth-child(49)"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tclass-sap-flag-320-light.png",
+   "kb": 46
+  },
+  "tclass-settings-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 23,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 2,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"\" 44x24"
+    ],
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "-1",
+     "1",
+     "1",
+     "10",
+     "100",
+     "3",
+     "3"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "moderate": 1
+    },
+    "rules": []
+   },
+   "shot": "w320-tclass-settings-320-light.png",
+   "kb": 36
+  },
+  "tclass-leader-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 23,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:classes:select": 2,
+     "from:enrollments:select": 2,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:students:select": 3,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20",
+     "main:BUTTON \"Select student\" 20x20"
+    ],
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "-1",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "10",
+     "12000",
+     "2026",
+     "3",
+     "3",
+     "36000",
+     "4"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 2,
+     "serious": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".data-\\[placeholder\\]\\:text-hec-ink-faint"
+      ]
+     },
+     {
+      "id": "color-contrast",
+      "impact": "serious",
+      "n": 3,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .studio-focus.group.justify-end > .px-2.p",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .studio-focus.group.justify-end > .px-2.p",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .studio-focus.group.justify-end > .px-2.p"
+      ]
+     },
+     {
+      "id": "image-alt",
+      "impact": "critical",
+      "n": 7,
+      "t": [
+       ".order-2.flex-1.min-w-0:nth-child(1) > .studio-focus.group.justify-end > .px-2.p",
+       ".order-2.flex-1.min-w-0:nth-child(2) > .studio-focus.group.justify-end > .px-2.p",
+       ".order-2.flex-1.min-w-0:nth-child(3) > .studio-focus.group.justify-end > .px-2.p"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tclass-leader-320-light.png",
+   "kb": 64
+  },
+  "tlive-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 29,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:economy_transactions:select": 1,
+     "from:enrollments:select": 3,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "-1",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "12"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-lg > .rounded-none.gap-1\\.5.disabled\\:pointer-events-none"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tlive-320-light.png",
+   "kb": 41
+  },
+  "tlive-panel-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 29,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:economy_transactions:select": 1,
+     "from:enrollments:select": 3,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "+4",
+     "-1",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "12"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-lg > .rounded-none.gap-1\\.5.disabled\\:pointer-events-none"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tlive-panel-320-light.png",
+   "kb": 47
+  },
+  "tlive-skillpop-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 29,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:economy_transactions:select": 1,
+     "from:enrollments:select": 3,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "+4",
+     "-1",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "12"
+    ],
+    "dialogNumbers": [
+     "+1",
+     "+10",
+     "+2",
+     "+3",
+     "+5"
+    ]
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-lg > .rounded-none.gap-1\\.5.disabled\\:pointer-events-none"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tlive-skillpop-320-light.png",
+   "kb": 48
+  },
+  "tlive-correction-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 29,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:economy_transactions:select": 1,
+     "from:enrollments:select": 3,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "+4",
+     "-1",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "12"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-lg > .rounded-none.gap-1\\.5.disabled\\:pointer-events-none"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tlive-correction-320-light.png",
+   "kb": 42
+  },
+  "tlive-deduct-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 29,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:economy_transactions:select": 1,
+     "from:enrollments:select": 3,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "+4",
+     "-1",
+     "-1",
+     "-2",
+     "-3",
+     "-5",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "12"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-lg > .rounded-none.gap-1\\.5.min-w-hec-target"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tlive-deduct-320-light.png",
+   "kb": 40
+  },
+  "tlive-bulk-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 29,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:economy_transactions:select": 1,
+     "from:enrollments:select": 3,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [
+     "main:BUTTON \"Select Nguyễn Minh Anh\" 16x16",
+     "main:BUTTON \"Select Trần Bảo Châu\" 16x16",
+     "main:BUTTON \"Select Lê Gia Hân\" 16x16",
+     "main:BUTTON \"Select Hoàng Thảo Nguyên\" 16x16",
+     "main:BUTTON \"Select Vũ Quốc Bảo\" 16x16",
+     "main:BUTTON \"Select Nguyễn Hoàng Phương Thả\" 16x16"
+    ],
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "-1",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "12",
+     "6"
+    ],
+    "dialogNumbers": []
+   },
+   "axe": {
+    "byImpact": {
+     "critical": 1,
+     "moderate": 1
+    },
+    "rules": [
+     {
+      "id": "button-name",
+      "impact": "critical",
+      "n": 1,
+      "t": [
+       ".rounded-lg > .rounded-none.gap-1\\.5.disabled\\:pointer-events-none"
+      ]
+     }
+    ]
+   },
+   "shot": "w320-tlive-bulk-320-light.png",
+   "kb": 47
+  },
+  "tlive-rt-320-light": {
+   "errors": [],
+   "requests": {
+    "count": 29,
+    "kinds": {
+     "from:announcement_dismissals:select": 1,
+     "from:attendance:select": 1,
+     "from:class_monitors:select": 1,
+     "from:classes:select": 3,
+     "from:economy_transactions:select": 1,
+     "from:enrollments:select": 3,
+     "from:families:select": 2,
+     "from:notifications:select": 1,
+     "from:point_transactions:select": 1,
+     "from:profiles:select": 1,
+     "from:sessions:select": 3,
+     "from:site_announcements:select": 1,
+     "from:student_points:select": 1,
+     "from:students:select": 4,
+     "from:teachers:select": 3,
+     "from:user_roles:select": 2
+    }
+   },
+   "probe": {
+    "overflow": false,
+    "htmlAttr": "ivory",
+    "htmlClass": "light",
+    "smallTargets": [],
+    "numbers": [
+     "+2",
+     "+3",
+     "+4",
+     "-1",
+     "0",
+     "0",
+     "0",
+     "0",
+     "1",
+     "12"
+    ],
+    "dialogNumbers": [
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0"
+    ]
+   },
+   "axe": {
+    "byImpact": {},
+    "rules": []
+   },
+   "shot": "w320-tlive-rt-320-light.png",
+   "kb": 44
+  }
+ }
+}

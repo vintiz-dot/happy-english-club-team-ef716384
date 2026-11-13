@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SKILL_ICONS } from "@/lib/skillConfig";
 import { useIvory } from "@/hooks/useIvory";
-import { fetchClassSkillPoints } from "@/lib/classSkillPoints";
+import { fetchClassSkillFigures } from "@/lib/classSkillPoints";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PerformanceHeatmapTabProps {
   studentId: string;
@@ -49,6 +50,8 @@ export function PerformanceHeatmapTab({
   // Opened from the teacher/admin class board too (not migrated yet): old classes there.
   // Skill colours are chart palette and stay in both.
   const ivory = useIvory();
+  const { role: viewerRole } = useAuth();
+  const viewerIsStaff = viewerRole === "teacher" || viewerRole === "admin";
   const iv = (n: string, o: string) => (ivory ? n : o);
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
   const [compareStudentId, setCompareStudentId] = useState<string | null>(null);
@@ -100,21 +103,13 @@ export function PerformanceHeatmapTab({
 
   // Fetch ALL class skill totals
   const { data: classSkillTotals, isLoading: loadingClassTotals } = useQuery({
-    queryKey: ["class-skill-totals", classId, selectedMonth],
+    queryKey: ["class-skill-totals", classId, selectedMonth, viewerIsStaff],
     queryFn: async () => {
-      // Per-student totals with a name, not rows: classmates' assessment rows
-      // (and the teacher's comments on them) are private.
-      const data = await fetchClassSkillPoints(classId, monthStartStr, monthEndStr);
-
-      const totals: Record<string, Record<string, { total: number; studentName: string }>> = {};
-      data.forEach((entry) => {
-        const skill = entry.skill;
-        const sid = entry.student_id;
-        if (!totals[skill]) totals[skill] = {};
-        if (!totals[skill][sid]) totals[skill][sid] = { total: 0, studentName: entry.student_name };
-        totals[skill][sid].total += entry.total;
-      });
-      return totals;
+      // A summary per skill - best, average, the top three totals - not rows
+      // and not classmates' totals by name: those are private to each child's
+      // family (src/lib/classSkillPoints.ts). Staff still get names.
+      const figures = await fetchClassSkillFigures(classId, { from: monthStartStr, to: monthEndStr, staff: viewerIsStaff });
+      return figures.bySkill;
     },
   });
 
@@ -205,25 +200,25 @@ export function PerformanceHeatmapTab({
     if (!classSkillTotals) return [];
 
     return SKILLS.map((skill) => {
-      const skillData = classSkillTotals[skill] || {};
-      const allTotals = Object.entries(skillData).map(([id, data]) => ({
-        studentId: id,
-        studentName: data.studentName,
-        total: data.total,
-      }));
-
-      const sortedByTotal = [...allTotals].sort((a, b) => b.total - a.total);
-      const classLeader = sortedByTotal[0] || null;
-      const classBest = classLeader?.total || 1;
-      const top3 = sortedByTotal.slice(0, 3);
-
-      const classAverage = allTotals.length > 0
-        ? Math.round(allTotals.reduce((sum, s) => sum + s.total, 0) / allTotals.length)
-        : 0;
+      const summary = classSkillTotals[skill];
+      const classBest = summary?.best || 1;
+      // No class figure: nobody assessed yet, or (for a family) fewer than
+      // three other children were - get_class_skill_summary withholds those.
+      const hasClassFigures = !!summary && summary.best > 0;
+      const classAverage = summary && summary.students > 0 ? Math.round(summary.total / summary.students) : 0;
 
       const studentTotal = studentAssessments?.filter((a) => a.skill === skill).reduce((sum, a) => sum + a.score, 0) || 0;
       const percentOfBest = classBest > 0 ? Math.round((studentTotal / classBest) * 100) : 0;
-      const isLeader = classLeader?.studentId === studentId;
+      const isLeader = !!summary && summary.best > 0 && studentTotal >= summary.best;
+
+      // The three highest totals. A name comes with them only for staff; for
+      // a family the one entry that is this child's own is marked instead.
+      let ownMarked = false;
+      const top3 = (summary?.top ?? []).map((t, i) => {
+        const isMe = t.studentId ? t.studentId === studentId : !ownMarked && studentTotal > 0 && t.total === studentTotal;
+        if (isMe) ownMarked = true;
+        return { key: t.studentId ?? `rank-${i}`, total: t.total, isMe, label: t.name ? t.name.split(" ")[0] : isMe ? "You" : `#${i + 1}` };
+      });
 
       // Improvement calculation
       const prevTotal = prevMonthTotals[skill] || 0;
@@ -242,7 +237,7 @@ export function PerformanceHeatmapTab({
         Icon: IconComponent,
         studentTotal,
         classBest,
-        classLeader,
+        hasClassFigures,
         classAverage,
         percentOfBest: Math.min(percentOfBest, 100),
         isLeader,
@@ -422,11 +417,11 @@ export function PerformanceHeatmapTab({
                         )}
                         <span className="flex items-center gap-1">
                           <Trophy className={iv("h-3 w-3 text-hec-brass", "h-3 w-3 text-yellow-500")} />
-                          Best: {skill.classBest}pts
+                          Best: {skill.hasClassFigures ? `${skill.classBest}pts` : "–"}
                         </span>
                         <span className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
-                          Avg: {skill.classAverage}pts
+                          Avg: {skill.hasClassFigures ? `${skill.classAverage}pts` : "–"}
                         </span>
                       </div>
                     </div>
@@ -447,23 +442,23 @@ export function PerformanceHeatmapTab({
                       <div className="flex gap-2">
                         {skill.top3.map((s, i) => {
                           const RankIcon = RANK_ICONS[i];
-                          const isMe = s.studentId === studentId;
+                          const isMe = s.isMe;
                           return (
                             <motion.div
-                              key={s.studentId}
+                              key={s.key}
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: i * 0.1 }}
                               className={`flex-1 min-w-0 p-2 rounded-hec-md text-center ${isMe ? iv("bg-hec-sunken border border-hec-brass/40", "bg-primary/10 border border-primary/30") : iv("bg-hec-sunken", "bg-muted/30")}`}
                             >
                               <RankIcon className={`h-5 w-5 mx-auto ${ivory ? RANK_COLORS_IVORY[i] : RANK_COLORS[i]}`} />
-                              <p className={ivory ? "text-hec-caption font-medium text-hec-ink whitespace-normal break-words hyphens-none mt-1" : "text-xs font-medium truncate mt-1"}>{s.studentName.split(" ")[0]}</p>
+                              <p className={ivory ? "text-hec-caption font-medium text-hec-ink whitespace-normal break-words hyphens-none mt-1" : "text-xs font-medium truncate mt-1"}>{s.label}</p>
                               <p className={iv("text-hec-caption tabular-nums text-hec-ink-soft", "text-xs text-muted-foreground")}>{s.total}pts</p>
                             </motion.div>
                           );
                         })}
                         {skill.top3.length === 0 && (
-                          <p className={iv("text-hec-small text-hec-ink-soft text-center w-full py-2", "text-sm text-muted-foreground text-center w-full py-2")}>No data yet</p>
+                          <p className={iv("text-hec-small text-hec-ink-soft text-center w-full py-2", "text-sm text-muted-foreground text-center w-full py-2")}>{skill.studentTotal > 0 ? "Not shown for a small group" : "No data yet"}</p>
                         )}
                       </div>
                     </div>

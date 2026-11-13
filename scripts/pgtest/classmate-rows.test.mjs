@@ -536,5 +536,177 @@ console.log("=== the rollback file ===");
   eq("closing it again", await reachAll(), AFTER);
 }
 
+// ---------------------------------------------------------------- 20261113150000
+// Run only when the summary migration is passed as well (its own entry in
+// run.mjs): class skill figures for a family without any child named.
+const SUM_MIG = MIGS.find((f) => f.includes("class_skill_summary_without_names"));
+if (SUM_MIG) {
+  console.log("=== 20261113150000: the class summary names nobody ===");
+  const sumText = readFileSync(SUM_MIG, "utf8");
+  const NOV = ["2026-11-01", "2026-11-30"];
+  {
+    const named = await as(PA, `SELECT student_name, skill, total FROM public.get_class_skill_points($1, $2, $3) WHERE student_id <> $4 ORDER BY 1, 2`, [CA, ...NOV, A1]);
+    eq("before it: a parent gets every classmate's per-skill total, by name, from get_class_skill_points", named.rows,
+      [{ student_name: "H1 Pham", skill: "reading", total: 4 }, { student_name: "H1 Pham", skill: "speaking", total: 3 },
+       { student_name: "M1 Tran", skill: "reading", total: 4 }, { student_name: "M1 Tran", skill: "speaking", total: 9 }]);
+  }
+  const fns = async () => q(`SELECT p.proname n, pg_get_function_result(p.oid) r, p.provolatile v, p.prosecdef d, p.proconfig::text c, md5(p.prosrc) m,
+    has_function_privilege('anon', p.oid, 'EXECUTE') a, has_function_privilege('authenticated', p.oid, 'EXECUTE') u
+    FROM pg_proc p WHERE p.proname IN ('get_class_skill_points', 'get_class_skill_summary') ORDER BY 1`);
+  const P_BEFORE = await pols(), R_BEFORE = await rowCounts(), F_BEFORE = await fns();
+  let s1 = null; try { await db.exec(sumText); } catch (e) { s1 = e.message; }
+  ok("the migration applies after 20261113130000", s1 === null, s1 ?? "");
+  const F1 = await fns();
+  let s2 = null; try { await db.exec(sumText); } catch (e) { s2 = e.message; }
+  ok("and applies a second time", s2 === null, s2 ?? "");
+  eq("the second paste changes nothing", await fns(), F1);
+  eq("get_class_skill_points is gone; get_class_skill_summary is STABLE, SECURITY DEFINER, search_path pinned, authenticated yes, anon no",
+    F1.map(({ m, ...rest }) => rest),
+    [{ n: "get_class_skill_summary", r: "TABLE(skill text, best integer, total integer, students integer, class_students integer, top integer[])",
+       v: "s", d: true, c: "{search_path=public}", a: false, u: true }]);
+  eq("no policy and no row changed", [await pols(), await rowCounts()], [P_BEFORE, R_BEFORE]);
+  ok("no column of the result can carry an id or a name (text skill, integers, an integer array)",
+    !/uuid|name/.test(F1[0].r.replace("TABLE(skill text", "")));
+
+  const summary = async (who, cls, range = NOV, role = "authenticated") =>
+    as(who, `SELECT * FROM public.get_class_skill_summary($1, $2, $3) ORDER BY skill`, [cls, ...range], role);
+  const A_OF_THREE = [{ skill: "reading", best: 4, total: 12, students: 3, class_students: 3, top: [4, 4, 4] },
+                      { skill: "speaking", best: 9, total: 15, students: 3, class_students: 3, top: [9, 3, 3] }];
+  {
+    // Class A as it stands: A1 (the caller's own), M1 and H1. Three children
+    // are assessed, but the caller knows one of them: what is left is two.
+    eq("a class of exactly three where the caller's own child is one: the parent gets nothing (best, sum and top would be the other two's scores)",
+      (await summary(PA, CA)).rows, []);
+    eq("  ...nor does the child's own login, all time", (await summary(KID, CA, [null, null])).rows, []);
+    eq("  ...nor the login linked to H1 only", (await summary(HL, CA)).rows, []);
+    eq("  ...its teacher gets the figures", (await summary(TEA, CA)).rows, A_OF_THREE);
+    eq("  ...and so does an admin", (await summary(ADMIN, CA)).rows, A_OF_THREE);
+  }
+  // Two more families join class A: five assessed children, four of them not the caller's.
+  const PX = await mk("student"), PY = await mk("student");
+  const FX = await fam(PX), FY = await fam(PY);
+  const X1 = await kid("X1 Dang", FX, [CA]), Y1 = await kid("Y1 Bui", FY, [CA]);
+  for (const [k, rd, sp, oct] of [[X1, 6, 5, 1], [Y1, 1, 8, 1]]) {
+    await q(`INSERT INTO public.skill_assessments (student_id, class_id, skill, score, date) VALUES
+      ($1,$2,'reading',$3,'2026-11-10'),($1,$2,'speaking',$4,'2026-11-10'),($1,$2,'speaking',$5,'2026-10-06')`, [k, CA, rd, sp, oct]);
+  }
+  const month = await summary(PA, CA);
+  eq("a parent of class A, November, five children assessed: per skill the best, the sum, how many children, the class size and the top three totals",
+    month.rows, [{ skill: "reading", best: 6, total: 19, students: 5, class_students: 5, top: [6, 4, 4] },
+                 { skill: "speaking", best: 9, total: 28, students: 5, class_students: 5, top: [9, 8, 5] }]);
+  {
+    // The same figures the panels computed from classmates' rows before F-16, worked out here without RLS.
+    const truth = await q(`WITH per AS (SELECT student_id, skill, sum(score)::int t FROM public.skill_assessments
+        WHERE class_id = $1 AND date BETWEEN $2 AND $3 GROUP BY 1, 2)
+      SELECT skill, max(t)::int best, round(avg(t))::int average, (array_agg(t ORDER BY t DESC))[1:3] top FROM per GROUP BY skill ORDER BY skill`, [CA, ...NOV]);
+    eq("class best, class average and the top three equal what the panel used to add up from rows",
+      month.rows.map((r) => ({ skill: r.skill, best: r.best, average: Math.round(r.total / r.students), top: r.top })), truth);
+    const all = await summary(KID, CA, [null, null]);
+    eq("all time, by the child's own login (RadarChartTab's class best)", all.rows.map((r) => [r.skill, r.best, r.class_students]), [["reading", 6, 5], ["speaking", 11, 5]]);
+    eq("a whole month of 31 days (October) is a whole period", (await summary(PA, CA, ["2026-10-01", "2026-10-31"])).rows,
+      [{ skill: "speaking", best: 2, total: 8, students: 5, class_students: 5, top: [2, 2, 2] }]);
+    ok("nothing in the answer is a child's id or name", !/[0-9a-f]{8}-[0-9a-f]{4}|Nguyen|Tran|Pham|Dang|Bui|Le\b/.test(JSON.stringify([month.rows, all.rows])));
+  }
+  for (const [label, who, role, n] of [["teacher A", TEA, "authenticated", 2], ["admin", ADMIN, "authenticated", 2], ["a classmate's parent", PM, "authenticated", 2],
+    ["the login linked to H1 only", HL, "authenticated", 2],
+    ["teacher B (another class)", TEB, "authenticated", 0], ["family 2 (class B only)", PB, "authenticated", 0], ["an account linked to nothing", NEW, "authenticated", 0],
+    ["an account with no role", NOROLE, "authenticated", 0], ["no uid", null, "authenticated", 0]]) {
+    eq(`class A's summary for ${label}: ${n} rows`, (await summary(who, CA, NOV, role)).rows.length, n);
+  }
+  {
+    const anon = await summary(null, CA, NOV, "anon");
+    ok("anon cannot call it", anon.err !== null && /permission denied/.test(anon.err), anon.err ?? "callable");
+    const old = await as(PA, `SELECT * FROM public.get_class_skill_points($1)`, [CA]);
+    ok("get_class_skill_points no longer exists for anyone to call", old.err !== null && /does not exist/.test(old.err), old.err ?? "still there");
+    const mate = await as(PA, `SELECT count(*)::int n FROM public.skill_assessments WHERE student_id = $1`, [M1]);
+    eq("and a classmate's rows are still closed (20261113130000 is untouched)", mate.rows[0].n, 0);
+    const own = await as(PA, `SELECT skill, sum(score)::int t FROM public.skill_assessments WHERE student_id = $1 AND class_id = $2 AND date BETWEEN $3 AND $4 GROUP BY 1 ORDER BY 1`, [A1, CA, ...NOV]);
+    eq("the child's own totals still come from the child's own rows", own.rows, [{ skill: "reading", t: 4 }, { skill: "speaking", t: 3 }]);
+  }
+  {
+    // Whole periods only. With free dates two ranges subtract to one lesson:
+    // the 10 Nov lesson is X1's and Y1's scores and nobody else's.
+    for (const [label, range] of [["half a month", ["2026-11-01", "2026-11-15"]], ["a single day", ["2026-11-10", "2026-11-10"]],
+      ["a month less its last day", ["2026-11-01", "2026-11-29"]], ["a month and a day", ["2026-11-01", "2026-12-01"]],
+      ["two months", ["2026-10-01", "2026-11-30"]], ["a month that does not start on the 1st", ["2026-11-02", "2026-11-30"]],
+      ["open at the start", [null, "2026-11-30"]], ["open at the end", ["2026-11-01", null]],
+      ["the end of another month", ["2026-11-01", "2026-10-31"]]]) {
+      eq(`a family asking for ${label}: nothing`, (await summary(PA, CA, range)).rows, []);
+    }
+    eq("  ...the class's teacher may still ask for any range", (await summary(TEA, CA, ["2026-11-10", "2026-11-10"])).rows.map((r) => [r.skill, r.total, r.students]),
+      [["reading", 7, 2], ["speaking", 13, 2]]);
+  }
+  {
+    // The three are counted per skill, not per class: a skill few children
+    // were assessed in is those children's own scores.
+    await q(`INSERT INTO public.skill_assessments (student_id, class_id, skill, score, date) VALUES ($1,$2,'writing',5,'2026-11-10')`, [M1, CA]);
+    const skills = async (who) => (await summary(who, CA)).rows.map((r) => r.skill);
+    eq("a skill only one child was assessed in is not handed to a family (it is that child's score)", await skills(PA), ["reading", "speaking"]);
+    eq("  ...the teacher sees it", (await summary(TEA, CA)).rows.find((r) => r.skill === "writing"), { skill: "writing", best: 5, total: 5, students: 1, class_students: 5, top: [5] });
+    await q(`INSERT INTO public.skill_assessments (student_id, class_id, skill, score, date) VALUES ($1,$3,'writing',2,'2026-11-10'),($2,$3,'writing',7,'2026-11-10')`, [H1, X1, CA]);
+    eq("three children assessed in it, none of them the caller's: the family gets it", (await summary(PA, CA)).rows.find((r) => r.skill === "writing"),
+      { skill: "writing", best: 7, total: 14, students: 3, class_students: 5, top: [7, 5, 2] });
+    eq("  ...but a parent of one of the three does not (the other two would be all that is left)", await skills(PM), ["reading", "speaking"]);
+    eq("  ...nor the parent of another of them", await skills(PX), ["reading", "speaking"]);
+    await q(`DELETE FROM public.skill_assessments WHERE skill = 'writing'`);
+  }
+  {
+    // A small class, and brothers and sisters in the same class.
+    const PS = await mk("student");
+    const FS = await fam(PS);
+    const tS = (await one(`SELECT id FROM public.teachers WHERE user_id = $1`, [TEA])).id;
+    const CS = (await one(`INSERT INTO public.classes (name, default_teacher_id) VALUES ('Small class', $1) RETURNING id`, [tS])).id;
+    const S1 = await kid("S1 Vo", FS, [CS]), S2 = await kid("S2 Do", F3, [CS]);
+    for (const [k, score] of [[S1, 2], [S2, 7]]) await q(`INSERT INTO public.skill_assessments (student_id, class_id, skill, score, date) VALUES ($1,$2,'speaking',$3,'2026-11-05')`, [k, CS, score]);
+    eq("a class where only two children have assessments: a family gets nothing (a best over two is the other child's score)", (await summary(PS, CS)).rows, []);
+    eq("  ...its teacher still gets the figures", (await summary(TEA, CS)).rows, [{ skill: "speaking", best: 7, total: 9, students: 2, class_students: 2, top: [7, 2] }]);
+    const S3 = await kid("S3 Ly", F2, [CS]);
+    await q(`INSERT INTO public.skill_assessments (student_id, class_id, skill, score, date) VALUES ($1,$2,'speaking',5,'2026-11-05')`, [S3, CS]);
+    eq("  ...three assessed, one of them the caller's own: still nothing", (await summary(PS, CS)).rows, []);
+    const S4 = await kid("S4 Mai", F5, [CS]);
+    await q(`INSERT INTO public.skill_assessments (student_id, class_id, skill, score, date) VALUES ($1,$2,'speaking',4,'2026-11-05')`, [S4, CS]);
+    eq("  ...with three children besides their own, the family gets them", (await summary(PS, CS)).rows,
+      [{ skill: "speaking", best: 7, total: 18, students: 4, class_students: 4, top: [7, 5, 4] }]);
+    eq("  ...but not for a month in which nobody was assessed", (await summary(PS, CS, ["2026-10-01", "2026-10-31"])).rows, []);
+    // S4 turns out to be S1's sister: the family now knows two of the four.
+    await q(`UPDATE public.students SET family_id = $2 WHERE id = $1`, [S4, FS]);
+    eq("  ...a brother or sister in the same class does not count towards the three either", (await summary(PS, CS)).rows, []);
+    await q(`UPDATE public.students SET family_id = $2 WHERE id = $1`, [S4, F5]);
+    // A child who has left the class: the family is no longer let in at all.
+    await q(`UPDATE public.enrollments SET end_date = '2026-11-06' WHERE student_id = $1 AND class_id = $2`, [S1, CS]);
+    eq("  ...and a family whose child has left the class gets nothing", (await summary(PS, CS)).rows, []);
+  }
+  {
+    // The browser's order of asking, src/lib/classSkillPoints.ts.
+    const lib = readFileSync(new URL("../../src/lib/classSkillPoints.ts", import.meta.url), "utf8");
+    const iSum = lib.indexOf('rpc("get_class_skill_summary"'), iNamed = lib.indexOf('rpc("get_class_skill_points"'), iRows = lib.lastIndexOf("return fromRows(");
+    ok("the browser asks for the summary first, then the named function (a database between the two migrations), then rows", iSum > 0 && iNamed > iSum && iRows > iNamed);
+    ok("and only staff are sent straight to the rows", /if \(opts\.staff\) return fromRows\(/.test(lib));
+  }
+  {
+    // Out of order: without 20261113130000 it refuses.
+    await db.exec(LIVE);                       // roll F-16 back: is_family_student is gone
+    let e = null; try { await db.exec(sumText); } catch (x) { e = x.message; }
+    await db.exec("ROLLBACK").catch(() => {});
+    ok("pasted before 20261113130000 it refuses and changes nothing", e !== null && /20261113130000/.test(e) && (await fns()).length === 0, e ?? "installed");
+    await db.exec(fixText);
+    await db.exec(sumText);
+  }
+  {
+    const ev = readFileSync(new URL("../../docs/evidence/S1-security-fixes.md", import.meta.url), "utf8");
+    const m = /<!-- rollback class-skill-summary -->\s*```sql\s*([\s\S]*?)```/.exec(ev);
+    ok("the evidence file carries its rollback block", !!m);
+    if (m) {
+      let e = null; try { await db.exec(m[1]); } catch (x) { e = x.message; }
+      ok("it runs", e === null, e ?? "");
+      const back = await fns();
+      eq("get_class_skill_points is back exactly as 20261113130000 defines it (same body, same grants), the summary gone",
+        back, F_BEFORE);
+      let e2 = null; try { await db.exec(sumText); } catch (x) { e2 = x.message; }
+      ok("and the migration pastes again", e2 === null && (await fns()).map((f) => f.n).join() === "get_class_skill_summary", e2 ?? "");
+    }
+  }
+}
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

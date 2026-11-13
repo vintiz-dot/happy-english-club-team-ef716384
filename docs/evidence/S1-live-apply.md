@@ -180,3 +180,60 @@ Logs from the F-14 apply (21:54:55 UTC) to 22:01:
 - An admin opening an orphaned or any other file, and using the Pause tab.
 
 If a homework screen fails for a real user: `docs/evidence/S1-F14-rollback.sql` (reopens F-14).
+
+---
+
+# Part D - F-01, `20261113100000_signup_role_from_server_only.sql`
+
+Source: commit 42cf0dd4 (the migration corrected after the review: only a request for `teacher` gets no role; `admin` gets `student`). Asked for by the conductor after F-14 / F-15; owner approval D-18.
+
+**Part D, where I am / next step:** started. Next: D1 pre-checks (read-only). F-01 not applied yet.
+
+Conditions of the review, as I could check them: (1) the diff 9ad0a53a -> 42cf0dd4 of the migration is exactly review Change 1 (`IF v_requested IN ('teacher', 'admin')` became `IF v_requested = 'teacher'`, a WARNING for `admin`, header reworded); (2) `src/pages/Auth.tsx` at 6707d97d offers Student and Family only. That 6707d97d is what is deployed is the conductor's statement; I did not check the deploy.
+
+## D1 - F-01 pre-checks (read-only, 22:43 UTC 12 Nov = 05:43 13 Nov Hanoi) - PASS, with one difference from the write-up, explained
+
+`public.handle_new_user()`: returns trigger, SECURITY DEFINER, `search_path=public`, owner postgres; EXECUTE postgres and service_role only (anon, authenticated, PUBLIC: no).
+
+| md5(prosrc) | value | length |
+|---|---|---|
+| CR removed | `b2979d905a52445265d16091df7111b2` = the brief's and the review's value | 562 |
+| as stored (CRLF body) | `34791d30cc008922180015eb1a9674f2` | 582 |
+
+Trigger on `auth.users`: one, `on_auth_user_created AFTER INSERT ... FOR EACH ROW EXECUTE FUNCTION handle_new_user()`, enabled (`O`). No other trigger calls the function.
+
+What the file relies on: `user_roles` has `UNIQUE (user_id, role)`; `users` has `PRIMARY KEY (id)`; `has_role(uuid, app_role)` exists (md5 `dcfc17cf...`); `app_role` = admin, teacher, family, student.
+
+`custom_quests` policies on live (RLS on, 0 rows in the table):
+- `"Only admins can manage custom_quests"` ALL, TO public, USING `(EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::app_role))))`, no WITH CHECK - the one the migration drops (legacy column).
+- `"Only admins can modify custom_quests"` ALL, TO authenticated, USING and WITH CHECK `has_role(auth.uid(), 'admin'::app_role)` - stays.
+
+**Difference from the write-up:** `S1-security-fixes.md` probe P3 (and the suite's prelude) expect a third policy, "Signed-in users can read custom_quests". It is not on live. Explained: `20261110140000_scope_staff_quest_and_homework_reads.sql` dropped it on purpose. It is not something the migration reads, checks or changes, and the migration's effect is the same either way: after it the table is admin-only through `has_role`. The only screen that uses the table is the admin `XPSettingsManager`. I went on; the write-up's P3 line is stale and should say one policy.
+
+Counts (aggregates):
+
+| | before |
+|---|---|
+| `auth.users` | 76 (newest created 2026-11-10) |
+| `public.users` | 76 - by legacy `role`: admin 18, family 14, student 37, teacher 7 |
+| `user_roles` rows | 75 - admin 3, student 64, teacher 8 |
+| accounts with no `user_roles` row | 2 |
+| accounts with no `users` row | 0 |
+| fingerprint of every (user, role) in `user_roles` and every (id, role) in `users` | `05beb3b8dc8439d8b267d0242d904568` |
+
+Saved, each written only after its md5 equalled live:
+- `C:\Users\Dell\hec-tools\s1-rollback\handle_new_user-before.sql` - `pg_get_functiondef`, md5 `a5552534cfd400dad594a3d16043c448`, 740 chars.
+- `C:\Users\Dell\hec-tools\s1-rollback\custom_quests-policy-before.sql` - the dropped policy, md5(qual) `d1ea70dc084d0a1b9453c120b5e53e35`.
+The tested rollback is the fenced block under "rollback F-01" in `S1-security-fixes.md` (same body, LF endings; same policy).
+
+Expected after apply, computed before applying: suite `signup-role.test.mjs` at 42cf0dd4 run to its first `db.exec(fixText)` with the LF blobs (its own check that the "before" function is production's passed): md5(prosrc) `bd45aa3de0f1b6fb6a613cf9f3901f52`, 1122 chars. Junction made and removed as before; `git status` clean.
+
+## D2 - apply `signup_role_from_server_only` - NOT DONE: STOPPED
+
+The `apply_migration` call was refused before it reached Supabase, by the session's own permission check ("Production Deploy"), not by the database. I did not try another route (no DDL through `execute_sql`): that would be going round the refusal.
+
+Confirmed read-only at 22:45 UTC that nothing changed: `handle_new_user` md5 (CR removed) still `b2979d905a52445265d16091df7111b2`; both `custom_quests` policies still there; no `signup_role_from_server_only` row in `schema_migrations`; 76 accounts; account fingerprint still `05beb3b8dc8439d8b267d0242d904568`.
+
+**Part D: STOPPED AT D2. F-01 is NOT live.** D3-D5 not run. No rollback needed. F-14 and F-15 are untouched and still live.
+
+To finish: the owner allows `apply_migration` for this session (or pastes the LF blob `git show 42cf0dd4:supabase/migrations/20261113100000_signup_role_from_server_only.sql` into the SQL editor). Then D3 expects md5(prosrc) of `handle_new_user` = `bd45aa3de0f1b6fb6a613cf9f3901f52` (1122 chars), the trigger still attached, one `custom_quests` policy left ("Only admins can modify custom_quests", `has_role`), and every count in D1 unchanged.

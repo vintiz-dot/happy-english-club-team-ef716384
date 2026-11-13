@@ -205,10 +205,10 @@ export function VideoReviewPanel({
   };
 
   if (isLoading) {
-    return <div className="flex items-center gap-2 text-muted-foreground py-6"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>;
+    return <div className="flex items-center gap-2 py-6 text-hec-body text-hec-ink-soft"><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Loading…</div>;
   }
   if (!v) {
-    return <p className="text-sm text-muted-foreground py-4">This child has not sent a video yet.</p>;
+    return <p className="py-4 text-hec-body text-hec-ink-soft">This child has not sent a video yet.</p>;
   }
 
   // "uploaded" means the browser asked for a draft; if nothing has picked it
@@ -222,21 +222,21 @@ export function VideoReviewPanel({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-semibold">{v.students?.full_name}</span>
-        <Badge variant="outline">{v.homeworks?.title}</Badge>
+        <span className="min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-semibold text-hec-ink">{v.students?.full_name}</span>
+        <Badge variant="outline" className="whitespace-normal break-words">{v.homeworks?.title}</Badge>
         {v.attempt > 1 && <Badge variant="secondary">Take {v.attempt}</Badge>}
-        {v.status === "approved" && <Badge className="bg-emerald-600">Approved</Badge>}
+        {v.status === "approved" && <Badge variant="success">Approved</Badge>}
         {v.status === "returned" && <Badge variant="secondary">Sent back</Badge>}
       </div>
 
-      <SignedVideo ref={player} path={v.video_path} posterPath={v.frame_paths?.[0]} className="w-full rounded-xl bg-black aspect-video" />
+      <SignedVideo ref={player} path={v.video_path} posterPath={v.frame_paths?.[0]} className="w-full rounded-hec-lg bg-black aspect-video" />
 
       {working && (
-        <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 text-sm">
-          <Loader2 className="h-4 w-4 animate-spin" />
+        <div className="flex flex-wrap items-center gap-2 rounded-hec-md bg-hec-sunken p-3 text-hec-small text-hec-ink">
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
           {STAGES[v.processing_stage] ?? "Preparing the draft"}… you can watch the video meanwhile.
           {v.status === "uploaded" && (
-            <Button size="sm" variant="outline" className="ml-auto" onClick={() => rerun.mutate()} disabled={rerun.isPending}>
+            <Button size="sm" variant="outline" className="ml-auto min-h-hec-target" onClick={() => rerun.mutate()} disabled={rerun.isPending}>
               Start now
             </Button>
           )}
@@ -252,38 +252,38 @@ export function VideoReviewPanel({
       )}
 
       {stalled && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-400/50 bg-amber-50 dark:bg-amber-950/30 p-3 text-sm">
-          <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-          <span className="flex-1">The AI draft has not started. You can grade it yourself below, or try again.</span>
-          <Button size="sm" variant="outline" onClick={() => rerun.mutate()} disabled={rerun.isPending}>
+        <div className="flex flex-wrap items-center gap-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 text-hec-small text-hec-ink">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-hec-warn" aria-hidden="true" />
+          <span className="min-w-0 flex-1">The AI draft has not started. You can grade it yourself below, or try again.</span>
+          <Button size="sm" variant="outline" className="min-h-hec-target" onClick={() => rerun.mutate()} disabled={rerun.isPending}>
             {rerun.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Start now"}
           </Button>
         </div>
       )}
 
       {v.duration_seconds != null ? (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-hec-caption text-hec-ink-soft tabular-nums">
           Recorded length {formatTimestamp(Number(v.duration_seconds))}
           {v.video_mime ? ` · ${v.video_mime}` : ""}
         </p>
       ) : null}
 
       {v.status === "failed" && (
-        <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
-          <AlertTriangle className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
-          <div className="flex-1">
+        <div className="flex flex-wrap items-start gap-2 rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-3 text-hec-small text-hec-ink">
+          <AlertTriangle className="mt-1 h-4 w-4 shrink-0 text-hec-danger" aria-hidden="true" />
+          <div className="min-w-0 flex-1 break-words">
             The AI draft could not be made: {v.error || "unknown error"}. You can still grade it yourself below, or try again.
           </div>
-          <Button size="sm" variant="outline" onClick={() => rerun.mutate()} disabled={rerun.isPending}>
-            <RefreshCw className="h-3.5 w-3.5 mr-1" /> Retry
+          <Button size="sm" variant="outline" className="min-h-hec-target" onClick={() => rerun.mutate()} disabled={rerun.isPending}>
+            <RefreshCw className="h-4 w-4" aria-hidden="true" /> Retry
           </Button>
         </div>
       )}
 
       {a?.teacher_attention && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-400/50 bg-amber-50 dark:bg-amber-950/30 p-3 text-sm">
-          <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-600 shrink-0" />
-          <span>{a.teacher_attention}</span>
+        <div className="flex items-start gap-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 text-hec-small text-hec-ink">
+          <AlertTriangle className="mt-1 h-4 w-4 shrink-0 text-hec-warn" aria-hidden="true" />
+          <span className="min-w-0 break-words">{a.teacher_attention}</span>
         </div>
       )}
 
@@ -291,17 +291,17 @@ export function VideoReviewPanel({
         <>
           {/* Scores */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold flex items-center gap-1.5">
-                <Sparkles className="h-4 w-4 text-primary" /> Scores {a && !a.approved_at && <span className="text-xs font-normal text-muted-foreground">(AI draft - adjust freely)</span>}
+            <div className="flex items-start justify-between gap-4">
+              <Label className="flex min-w-0 flex-wrap items-center gap-2 text-hec-small font-semibold text-hec-ink">
+                <Sparkles className="h-4 w-4 shrink-0 text-hec-brass" aria-hidden="true" /> Scores {a && !a.approved_at && <span className="text-hec-caption font-normal text-hec-ink-soft">(AI draft - adjust freely)</span>}
               </Label>
-              <span className="text-lg font-bold">{score}<span className="text-xs text-muted-foreground">/100</span></span>
+              <span className="shrink-0 whitespace-nowrap text-hec-h2 font-semibold text-hec-ink tabular-nums">{score}<span className="text-hec-caption text-hec-ink-soft">/100</span></span>
             </div>
             {(scores.length ? scores : criteria.map((c) => ({ key: c.key, label: c.label, score: 0, max: CRITERION_MAX } as CriterionScore))).map((s, i) => (
-              <div key={s.key} className="rounded-lg border p-2.5 space-y-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium">{s.label}</span>
-                  <div className="flex gap-1">
+              <div key={s.key} className="space-y-2 rounded-hec-md border border-hec-line p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="min-w-0 break-words text-hec-small font-medium text-hec-ink">{s.label}</span>
+                  <div className="flex gap-1" role="group" aria-label={s.label}>
                     {Array.from({ length: CRITERION_MAX + 1 }, (_, n) => (
                       <button
                         key={n}
@@ -310,25 +310,26 @@ export function VideoReviewPanel({
                           const base = prev.length ? prev : criteria.map((c) => ({ key: c.key, label: c.label, score: 0, max: CRITERION_MAX } as CriterionScore));
                           return base.map((x, j) => (j === i ? { ...x, score: n } : x));
                         })}
-                        className={`h-7 w-7 rounded-md text-xs font-semibold border ${s.score === n ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-muted"}`}
+                        aria-pressed={s.score === n}
+                        className={`min-h-hec-target min-w-hec-target rounded-hec-sm border text-hec-small font-semibold tabular-nums transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${s.score === n ? "border-hec-action bg-hec-action text-hec-on-action" : "border-hec-line-strong bg-hec-raised text-hec-ink hover:bg-hec-sunken"}`}
                       >
                         {n}
                       </button>
                     ))}
                   </div>
                 </div>
-                {s.comment && <p className="text-xs text-muted-foreground">{s.comment}</p>}
+                {s.comment && <p className="break-words text-hec-caption text-hec-ink-soft">{s.comment}</p>}
                 {s.evidence && s.evidence.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {s.evidence.map((e, k) => (
                       <button
                         key={k}
                         type="button"
                         onClick={() => seek(e.t)}
-                        className="text-left text-xs rounded-md bg-muted px-2 py-1 hover:bg-muted/70"
+                        className="min-h-hec-target rounded-hec-sm bg-hec-sunken px-3 py-2 text-left text-hec-caption text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                         title={e.t !== null ? "Jump to this moment" : undefined}
                       >
-                        {e.t !== null && <span className="font-mono text-primary mr-1">{formatTimestamp(e.t)}</span>}
+                        {e.t !== null && <span className="mr-1 font-mono text-hec-brass tabular-nums">{formatTimestamp(e.t)}</span>}
                         “{e.quote}”
                       </button>
                     ))}
@@ -340,69 +341,70 @@ export function VideoReviewPanel({
 
           {/* Pronunciation, measured */}
           {pron && (
-            <div className="rounded-lg border p-3 space-y-2">
-              <Label className="text-sm font-semibold">Pronunciation (Azure, measured while recording)</Label>
+            <div className="space-y-2 rounded-hec-md border border-hec-line p-3">
+              <Label className="text-hec-small font-semibold text-hec-ink">Pronunciation (Azure, measured while recording)</Label>
               <div className="grid grid-cols-3 gap-2 text-center">
                 {[["Accuracy", pron.accuracy], ["Fluency", pron.fluency], ["Rhythm", pron.prosody]].map(([label, val]) => (
-                  <div key={label as string} className="rounded-md bg-muted/50 py-1.5">
-                    <div className="text-base font-bold">{val ?? "-"}</div>
-                    <div className="text-[10px] text-muted-foreground">{label}</div>
+                  <div key={label as string} className="rounded-hec-sm bg-hec-sunken py-2">
+                    <div className="text-hec-h3 font-semibold text-hec-ink tabular-nums">{val ?? "-"}</div>
+                    <div className="text-hec-caption text-hec-ink-soft">{label}</div>
                   </div>
                 ))}
               </div>
               {pron.weak_words?.length > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="break-words text-hec-caption text-hec-ink-soft">
                   Harder words: {pron.weak_words.map((w: any) => w.word).join(", ")}
                 </p>
               )}
-              <p className="text-[10px] text-muted-foreground">Less reliable for young children's voices - trust your ears first.</p>
+              <p className="text-hec-caption text-hec-ink-soft">Less reliable for young children's voices - trust your ears first.</p>
             </div>
           )}
 
           {/* Grade */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-sm">Grade</Label>
+            <div className="space-y-2">
+              <Label htmlFor="vr-grade" className="text-hec-small font-medium text-hec-ink">Grade</Label>
               <Select value={grade} onValueChange={(val) => { setGrade(val); setGradeTouched(true); }}>
-                <SelectTrigger className="h-10"><SelectValue placeholder="Choose a grade" /></SelectTrigger>
+                <SelectTrigger id="vr-grade"><SelectValue placeholder="Choose a grade" /></SelectTrigger>
                 <SelectContent>
                   {VIDEO_GRADE_BANDS.map((b) => <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <label className="flex items-center gap-2 text-sm sm:pt-7">
+            <label className="flex min-h-hec-target items-center gap-2 text-hec-small text-hec-ink sm:mt-8">
               <Checkbox checked={awardPoints} onCheckedChange={(c) => setAwardPoints(c === true)} />
               Award {score} homework points
             </label>
           </div>
 
           {/* Words for the family */}
-          <div className="space-y-1.5">
-            <Label className="text-sm">Feedback for the child</Label>
-            <Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} rows={4} className="text-sm" />
+          <div className="space-y-2">
+            <Label htmlFor="vr-feedback" className="text-hec-small font-medium text-hec-ink">Feedback for the child</Label>
+            <Textarea id="vr-feedback" value={feedback} onChange={(e) => setFeedback(e.target.value)} rows={4} className="text-hec-body" />
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-sm">Note for the parent (Vietnamese)</Label>
-            <Textarea value={parentNote} onChange={(e) => setParentNote(e.target.value)} rows={3} className="text-sm" />
+          <div className="space-y-2">
+            <Label htmlFor="vr-parent-note" className="text-hec-small font-medium text-hec-ink">Note for the parent (Vietnamese)</Label>
+            <Textarea id="vr-parent-note" value={parentNote} onChange={(e) => setParentNote(e.target.value)} rows={3} className="text-hec-body" />
           </div>
 
           {/* Knowledge gaps */}
           <div className="space-y-2">
-            <Label className="text-sm font-semibold">Knowledge gaps to track</Label>
-            <p className="text-xs text-muted-foreground">Ticked items go into the child's error log and become practice cards.</p>
-            {gaps.length === 0 && <p className="text-xs text-muted-foreground">None suggested.</p>}
+            <Label className="text-hec-small font-semibold text-hec-ink">Knowledge gaps to track</Label>
+            <p className="text-hec-caption text-hec-ink-soft">Ticked items go into the child's error log and become practice cards.</p>
+            {gaps.length === 0 && <p className="text-hec-caption text-hec-ink-soft">None suggested.</p>}
             {gaps.map((g, i) => (
-              <div key={i} className="flex items-start gap-2 rounded-lg border p-2">
+              <div key={i} className="flex items-start gap-3 rounded-hec-md border border-hec-line p-3">
                 <Checkbox
-                  className="mt-2"
+                  className="mt-3"
+                  aria-label="Track this gap"
                   checked={g.keep}
                   onCheckedChange={(c) => setGaps((prev) => prev.map((x, j) => (j === i ? { ...x, keep: c === true } : x)))}
                 />
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  <Input value={g.error_text} onChange={(e) => setGaps((p) => p.map((x, j) => (j === i ? { ...x, error_text: e.target.value } : x)))} placeholder="What was said" className="h-8 text-xs" />
-                  <Input value={g.corrected_text} onChange={(e) => setGaps((p) => p.map((x, j) => (j === i ? { ...x, corrected_text: e.target.value } : x)))} placeholder="Correct form / tip" className="h-8 text-xs" />
-                  <div className="sm:col-span-2 flex gap-1.5 text-[11px] text-muted-foreground">
-                    <Badge variant="outline" className="text-[10px]">{g.error_type}</Badge>
+                <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2">
+                  <Input value={g.error_text} onChange={(e) => setGaps((p) => p.map((x, j) => (j === i ? { ...x, error_text: e.target.value } : x)))} placeholder="What was said" aria-label="What was said" className="text-hec-body" />
+                  <Input value={g.corrected_text} onChange={(e) => setGaps((p) => p.map((x, j) => (j === i ? { ...x, corrected_text: e.target.value } : x)))} placeholder="Correct form / tip" aria-label="Correct form / tip" className="text-hec-body" />
+                  <div className="flex flex-wrap items-center gap-2 text-hec-caption text-hec-ink-soft sm:col-span-2">
+                    <Badge variant="outline">{g.error_type}</Badge>
                     {g.cefr_topic && <span>{g.cefr_topic}</span>}
                   </div>
                 </div>
@@ -412,6 +414,7 @@ export function VideoReviewPanel({
               type="button"
               variant="ghost"
               size="sm"
+              className="min-h-hec-target"
               onClick={() => setGaps((p) => [...p, { error_type: "grammar", error_text: "", corrected_text: "", cefr_topic: "", severity: 1, keep: true }])}
             >
               + Add a gap
@@ -420,16 +423,16 @@ export function VideoReviewPanel({
 
           {/* Transcript */}
           {a?.transcript_segments?.length > 0 && (
-            <div className="rounded-lg border">
-              <button type="button" onClick={() => setShowTranscript((s) => !s)} className="flex w-full items-center justify-between p-2.5 text-sm font-medium">
+            <div className="rounded-hec-md border border-hec-line">
+              <button type="button" onClick={() => setShowTranscript((s) => !s)} aria-expanded={showTranscript} className="flex min-h-hec-target w-full items-center justify-between rounded-hec-md px-3 text-hec-small font-medium text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
                 Transcript
-                <ChevronDown className={`h-4 w-4 transition-transform ${showTranscript ? "rotate-180" : ""}`} />
+                <ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform duration-hec-2 ease-hec ${showTranscript ? "rotate-180" : ""}`} />
               </button>
               {showTranscript && (
-                <div className="max-h-56 overflow-y-auto px-2.5 pb-2.5 space-y-1">
+                <div className="max-h-72 space-y-1 overflow-y-auto px-2 pb-2">
                   {a.transcript_segments.map((s: any, i: number) => (
-                    <button key={i} type="button" onClick={() => seek(s.start)} className="block w-full text-left text-xs hover:bg-muted rounded px-1 py-0.5">
-                      <span className="font-mono text-primary mr-1.5">{formatTimestamp(s.start)}</span>{s.text}
+                    <button key={i} type="button" onClick={() => seek(s.start)} className="block min-h-hec-target w-full rounded-hec-sm px-2 py-2 text-left text-hec-small text-hec-ink transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
+                      <span className="mr-2 font-mono text-hec-brass tabular-nums">{formatTimestamp(s.start)}</span>{s.text}
                     </button>
                   ))}
                 </div>
@@ -437,40 +440,41 @@ export function VideoReviewPanel({
             </div>
           )}
           {a?.visual_notes?.summary && (
-            <p className="text-xs text-muted-foreground"><span className="font-medium">On screen:</span> {a.visual_notes.summary}</p>
+            <p className="break-words text-hec-caption text-hec-ink-soft"><span className="font-medium text-hec-ink">On screen:</span> {a.visual_notes.summary}</p>
           )}
 
           {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-2 pt-1">
+          <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:flex-wrap">
             <Button
-              className="h-11 flex-1 font-semibold"
+              className="min-h-hec-target flex-1"
               onClick={() => approve.mutate()}
               disabled={approve.isPending || !grade || !feedback.trim()}
             >
-              {approve.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+              {approve.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
               {v.status === "approved" ? "Update & re-send" : "Approve & send to family"}
             </Button>
             {v.status !== "approved" && (
-              <Button variant="outline" className="h-11" onClick={() => setShowReturn((s) => !s)}>
-                <Undo2 className="h-4 w-4 mr-2" /> Ask to re-record
+              <Button variant="outline" className="min-h-hec-target" onClick={() => setShowReturn((s) => !s)}>
+                <Undo2 className="h-4 w-4" aria-hidden="true" /> Ask to re-record
               </Button>
             )}
             {a && v.status !== "approved" && (
-              <Button variant="ghost" className="h-11" onClick={() => rerun.mutate()} disabled={rerun.isPending}>
-                <RefreshCw className="h-4 w-4 mr-2" /> New draft
+              <Button variant="ghost" className="min-h-hec-target" onClick={() => rerun.mutate()} disabled={rerun.isPending}>
+                <RefreshCw className="h-4 w-4" aria-hidden="true" /> New draft
               </Button>
             )}
           </div>
           {showReturn && (
-            <div className="space-y-2 rounded-lg border p-3">
-              <Label className="text-sm">A kind note for the child (they will see this)</Label>
+            <div className="space-y-2 rounded-hec-md border border-hec-line p-3">
+              <Label htmlFor="vr-return-note" className="text-hec-small font-medium text-hec-ink">A kind note for the child (they will see this)</Label>
               <Textarea
+                id="vr-return-note"
                 value={returnNote}
                 onChange={(e) => setReturnNote(e.target.value)}
                 rows={2}
                 placeholder="e.g. I couldn't hear you clearly - try again somewhere quieter!"
               />
-              <Button size="sm" onClick={() => sendBack.mutate()} disabled={sendBack.isPending || !returnNote.trim()}>
+              <Button size="sm" className="min-h-hec-target w-full sm:w-auto" onClick={() => sendBack.mutate()} disabled={sendBack.isPending || !returnNote.trim()}>
                 Send back
               </Button>
             </div>

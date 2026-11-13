@@ -1,0 +1,7 @@
+asg-list-375-light numbers+requests equal 17
+asg-list-1280-light numbers+requests equal 17
+asg-grade-375-light numbers+requests equal 111
+asg-grade-1280-light numbers+requests equal 111
+asg-grade-dialog-375-light numbers+requests equal 111
+asg-grade-dialog-1280-light numbers+requests equal 111
+ALL true
