@@ -50,6 +50,30 @@ Note: after rollback 2, `money_change_checked` refuses everything with HC050 (by
 
 **Finding S-1.** Two other admin screens call `mark-attendance` and do not read the new 409: `class/AttendanceDrawer.tsx:126-129` and `class/SessionDetailDrawer.tsx:134-141` (`if (error) throw error` -> toast "Edge Function returned a non-2xx status code"). An admin correcting an old billed lesson there gets no reason and no dialog. (`StudentActionPopover` is today-only.)
 
+## 8. Runs and my mutants
+
+My 15 mutants (`mut.mjs`; migration mutants as a scratch copy in the suites' file list, function mutants applied to the worktree file and restored byte for byte - `git status` clean afterwards):
+
+| Mutant | Breaks | Verdict |
+|---|---|---|
+| X01 | DQ-1 refuses an equal level too (`<` -> `<=`) | SURVIVED - no case for a cover re-saving an old mark unchanged |
+| X02 | the free week is 8 days | CAUGHT (register) |
+| X03 | `tuition_month_state` fails open (error -> tier 0) | CAUGHT (register) |
+| X04 | the ack ignores the child | SURVIVED - equivalent: the op check (`:474-479`) re-checks the child for set_marks, and repair's exec writes one child only |
+| X05 | `tuition_reach` not widened to the family | CAUGHT (register) |
+| X06 | a T3 change not reviewed | CAUGHT (register) |
+| X07 | `record_money_change_event` open to any signed-in user | SURVIVED - no non-admin case for this RPC |
+| X08 | service lane, old past-month mark at tier 0 not recorded | SURVIVED - near-equivalent (tier 0 in a past month only for a child not enrolled in the class) |
+| X09 | token does not cover the bills (reach fp dropped) | CAUGHT (register) |
+| X10 | bulk cap 51 | CAUGHT (register, probe) |
+| F01 | `mark-attendance`: teacher may un-bill a person's Present after the week in the current month | SURVIVED - the functions suite has no current-month un-bill case |
+| F02 | `mark-attendance`: admin writes with the service key | CAUGHT (fnreg) |
+| F03 | `repair-attendance` accepts the service key | SURVIVED - equivalent: the RPC refuses a uid-less caller (42501) |
+| F04 | `repair-attendance` ignores `preview` | CAUGHT (fnreg) |
+| F05 | refresh open to any signed-in user | CAUGHT (fnreg) |
+
+9 caught, 6 survived (3 equivalent or near; 3 real gaps: X01, X07, F01).
+
 ## 9. Live catalog today (read-only)
 
 | Check | Value |
