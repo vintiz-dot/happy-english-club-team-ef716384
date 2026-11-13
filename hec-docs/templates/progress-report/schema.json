@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hec-docs.invalid/schemas/progress-report/1.0.0",
+  "title": "Progress report document input",
+  "description": "Mirrors ReportDocument props { studentName, report: student_reports.report, latest: student_reports row }: the report JSON plus the row's narrative, period and source counts, flattened beside it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["studentName", "report"],
+  "properties": {
+    "variant": { "enum": ["full", "compact"] },
+    "studentName": { "type": "string", "minLength": 1, "maxLength": 200, "description": "students.full_name; printed as is and used for the filename." },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "student_reports.report. Every section is optional; an absent section prints nothing (strengths and growth areas print their headings, as the original does).",
+      "properties": {
+        "cefr": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["level"],
+          "properties": {
+            "level": { "type": "string", "minLength": 1, "maxLength": 12 },
+            "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "0-1; printed as a rounded percentage when a number." },
+            "rationale": { "type": ["string", "null"], "maxLength": 4000 }
+          }
+        },
+        "skill_matrix": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "description": "Printed in the fixed order speaking, listening, reading, writing, grammar, vocabulary; a missing skill is skipped.",
+          "properties": {
+            "speaking": { "$ref": "#/$defs/skill" },
+            "listening": { "$ref": "#/$defs/skill" },
+            "reading": { "$ref": "#/$defs/skill" },
+            "writing": { "$ref": "#/$defs/skill" },
+            "grammar": { "$ref": "#/$defs/skill" },
+            "vocabulary": { "$ref": "#/$defs/skill" }
+          }
+        },
+        "strengths": {
+          "type": ["array", "null"],
+          "maxItems": 30,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["area"],
+            "properties": {
+              "area": { "type": "string", "maxLength": 300 },
+              "evidence": { "type": ["string", "null"], "maxLength": 2000 }
+            }
+          }
+        },
+        "weaknesses": {
+          "type": ["array", "null"],
+          "maxItems": 30,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["area"],
+            "properties": {
+              "area": { "type": "string", "maxLength": 300 },
+              "evidence": { "type": ["string", "null"], "maxLength": 2000 },
+              "recommendation": { "type": ["string", "null"], "maxLength": 2000 }
+            }
+          }
+        },
+        "learning_styles": {
+          "type": ["array", "null"],
+          "maxItems": 20,
+          "items": { "type": "string", "maxLength": 200 }
+        },
+        "recommendations": {
+          "type": ["array", "null"],
+          "maxItems": 30,
+          "items": { "type": "string", "maxLength": 2000 }
+        }
+      }
+    },
+    "narrative": { "type": ["string", "null"], "maxLength": 20000, "description": "student_reports.narrative; blank lines start paragraphs (white-space: pre-line)." },
+    "period_start": { "type": ["string", "null"], "maxLength": 40, "description": "Printed as stored (e.g. 2026-08-15), only when period_end is also set." },
+    "period_end": { "type": ["string", "null"], "maxLength": 40 },
+    "source_counts": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["transcript_metrics", "logged_errors", "vocab_words", "approved_work_samples", "attendance_records"],
+      "properties": {
+        "transcript_metrics": { "type": "integer", "minimum": 0 },
+        "logged_errors": { "type": "integer", "minimum": 0 },
+        "vocab_words": { "type": "integer", "minimum": 0 },
+        "approved_work_samples": { "type": "integer", "minimum": 0 },
+        "attendance_records": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "skill": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["score"],
+      "properties": {
+        "score": { "type": "number", "minimum": 0, "maximum": 5, "description": "Printed as score/5, JavaScript number formatting (3.5, 4)." },
+        "note": { "type": ["string", "null"], "maxLength": 2000 }
+      }
+    }
+  }
+}

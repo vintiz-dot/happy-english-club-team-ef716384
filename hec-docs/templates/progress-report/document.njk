@@ -1,0 +1,142 @@
+{#
+  Progress report. Content, order and wording are ReportDocument.tsx
+  (BrandHeader + ReportBody + footer line); only the presentation is new.
+  Brand-layer additions (reassurance, encouragement, sign-off, QR footer and
+  the "Reporting period" label) are registered in template.json brandStrings.
+#}
+{% extends "layouts/page.njk" %}
+{% import "ui.njk" as ui %}
+{% set report = data.report %}
+{% set compact = variant == "compact" %}
+{% set SKILLS = ["speaking", "listening", "reading", "writing", "grammar", "vocabulary"] %}
+{% set hasPeriod = data.period_start and data.period_end %}
+{% set runningTitle = data.studentName ~ " · Progress Report" %}
+{% block body %}
+{# BrandHeader: the shared header lockup, with the letterhead's own sub line. #}
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="/tenant/{{ tenant.logo.file }}" alt="{{ tenant.logo.alt }}">
+    <div class="hdr__brand">
+      <div class="hdr__name">{{ tenant.name }}</div>
+      <div class="hdr__sub">Hanoi English · hanoienglish.com</div>
+    </div>
+  </div>
+  <div class="hdr__doc">
+    <div class="hdr__title">Progress Report</div>
+  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+
+{% if hasPeriod %}
+  {% set periodLabel %}<span class="ornament">·</span> Reporting period{% endset %}
+  {{ ui.identity(data.studentName, [{ label: periodLabel | safe, value: data.period_start ~ " → " ~ data.period_end }]) }}
+{% else %}
+  {{ ui.identity(data.studentName) }}
+{% endif %}
+
+{# CEFR headline #}
+{% if report.cefr %}
+<section class="level" aria-label="Estimated CEFR level">
+  <div class="level__mark">{{ report.cefr.level }}</div>
+  <div class="level__body">
+    <p class="level__title">Estimated CEFR level{% if report.cefr.confidence is number %} <span class="level__aside">· {{ (report.cefr.confidence * 100) | round }}% confidence</span>{% endif %}</p>
+    <p class="level__note">{{ report.cefr.rationale or "" }}</p>
+  </div>
+</section>
+{% endif %}
+
+{# Skill matrix #}
+{% if report.skill_matrix %}
+<section aria-label="Skill matrix">
+  {{ ui.section("Skill matrix") }}
+  <div class="skills{% if compact %} skills--3{% endif %}">
+    {% for skill in SKILLS %}
+      {% set s = report.skill_matrix[skill] %}
+      {% if s %}
+      <div class="skills__item">
+        {{ ui.meter(s.score, 5, skill | capitalize, s.score ~ "/5") }}
+        {% if s.note %}<p class="skills__note">{{ s.note }}</p>{% endif %}
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# Strengths / growth areas: always both, as in the original. #}
+<div class="split findings">
+  <section class="panel ev-panel" aria-label="Strengths">
+    {{ ui.section("Strengths", level=3) }}
+    <ul class="ev">
+      {% for s in (report.strengths or []) %}
+      <li class="ev__item">
+        <p class="ev__area">{{ s.area }}</p>
+        <p class="ev__detail">{{ s.evidence or "" }}</p>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="panel panel--outline ev-panel" aria-label="Growth areas">
+    {{ ui.section("Growth areas", level=3) }}
+    <ul class="ev">
+      {% for w in (report.weaknesses or []) %}
+      <li class="ev__item">
+        <p class="ev__area">{{ w.area }}</p>
+        <p class="ev__detail">{{ w.evidence or "" }}</p>
+        {% if w.recommendation %}<p class="ev__next">→ {{ w.recommendation }}</p>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+
+{# Learning styles + recommendations #}
+{% set styles = report.learning_styles or [] %}
+{% set recs = report.recommendations or [] %}
+{% if styles | length or recs | length %}
+<div class="{{ 'split findings-pair' if (compact and styles | length and recs | length) else 'stack-sections' }}">
+  {% if styles | length %}
+  <section aria-label="Learning styles">
+    {{ ui.section("Learning styles") }}
+    <ul class="chips">
+      {% for l in styles %}<li class="chip">{{ l }}</li>{% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+  {% if recs | length %}
+  <section class="ev-steps" aria-label="Next steps for the teacher">
+    {{ ui.section("Next steps for the teacher") }}
+    <ol class="steps">
+      {% for r in recs %}<li class="steps__item"><span class="steps__n">{{ loop.index }}.</span><span>{{ r }}</span></li>{% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+</div>
+{% endif %}
+
+{# Narrative #}
+{% if data.narrative %}
+<section aria-label="Report narrative">
+  {{ ui.section("Report narrative") }}
+  <div class="prose">
+    {% for para in data.narrative | preLineParagraphs %}<p>{% for line in para %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if data.source_counts %}
+{% set c = data.source_counts %}
+<p class="ev-summary">Evidence: {{ c.transcript_metrics }} transcript metrics · {{ c.logged_errors }} errors · {{ c.vocab_words }} words · {{ c.approved_work_samples }} work samples · {{ c.attendance_records }} attendance records</p>
+{% endif %}
+
+<div class="closing">
+  {% call ui.callout("praise") %}{{ tenant.reassurance.report }}{% endcall %}
+  {{ ui.encourage(brand) }}
+  <div class="closing-row">
+    {{ ui.signature(tenant) }}
+    {{ ui.qr_footer(brand) }}
+  </div>
+  {% call ui.colophon() %}Generated by Happy English Club · hanoienglish.com · {{ doc.generatedAt | date("en-US") }}{% endcall %}
+</div>
+{% endblock %}

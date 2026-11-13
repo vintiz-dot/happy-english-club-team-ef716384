@@ -1,0 +1,4 @@
+/* Prose: plain-text paragraphs (no markup), set for comfortable reading. */
+.prose { font-size: var(--size-base); color: var(--color-ink-soft); }
+.prose p { margin: 0 0 var(--space-1); line-height: var(--leading-loose); }
+.prose p:last-child { margin-bottom: 0; }

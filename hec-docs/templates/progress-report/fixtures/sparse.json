@@ -1,0 +1,19 @@
+{
+  "$comment": "Made-up. A first report with little evidence yet: no CEFR estimate, three skills only (one without a note), no growth areas, no learning styles, no next steps, no narrative, no period and no source counts. Proves the optional blocks disappear cleanly; Strengths and Growth areas keep their headings as in the original. No before capture exists for this input, so it carries no parity gate.",
+  "generatedAt": "2026-11-13T10:00:00+07:00",
+  "data": {
+    "variant": "full",
+    "studentName": "Lê Hoàng Phúc",
+    "report": {
+      "skill_matrix": {
+        "speaking": { "score": 2.5, "note": "Answers with single words; growing in confidence." },
+        "listening": { "score": 3 },
+        "vocabulary": { "score": 2, "note": "Knows colours, numbers to 20 and classroom objects." }
+      },
+      "strengths": [
+        { "area": "Joins in every lesson", "evidence": "Present at all 6 lessons since joining on 20 Oct." }
+      ],
+      "weaknesses": []
+    }
+  }
+}

@@ -1,0 +1,18 @@
+/* Evidence list: titled findings, each with its evidence and an optional
+   follow-up, and a one-line evidence summary. */
+.ev { margin: 0; padding: 0; list-style: none; }
+.ev__item { break-inside: avoid; margin: 0 0 var(--space-1); }
+.ev__item:last-child { margin-bottom: 0; }
+.ev__area { font-weight: var(--font-weight-semibold); font-size: var(--size-base); color: var(--color-ink); margin: 0; }
+.ev__detail { font-size: var(--size-sm); line-height: var(--leading-body); color: var(--color-ink-soft); margin: 1pt 0 0; }
+.ev__next { font-size: var(--size-sm); line-height: var(--leading-body); color: var(--color-gold-ink); margin: 2pt 0 0; }
+.ev-panel { break-inside: avoid; }
+.ev-panel .sec--3 { margin-top: 0; padding-bottom: var(--space-0-5); border-bottom: var(--border-hairline) solid var(--color-gold); margin-bottom: var(--space-1); }
+
+/* Numbered steps use steps.css; inside a report they sit at the small size. */
+.ev-steps .steps__item { font-size: var(--size-sm); color: var(--color-ink-soft); padding: 2pt 0; }
+
+.ev-summary { margin: var(--space-2) 0 0; font-size: var(--size-xs); color: var(--color-muted); text-align: center; font-variant-numeric: tabular-nums; }
+.findings { margin: var(--space-3) 0 0; gap: var(--space-2); align-items: start; }
+.stack-sections { margin: 0; }
+.findings-pair { break-inside: avoid; margin-top: var(--space-1); }
