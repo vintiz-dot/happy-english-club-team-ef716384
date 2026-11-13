@@ -1021,42 +1021,42 @@ export default function TeacherTranscripts() {
                   <Card>
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
-                          <Sparkles className="h-4 w-4 text-blue-500" />Lesson summary
+                        <CardTitle className="flex flex-wrap items-center gap-2">
+                          <Sparkles className="h-5 w-5 shrink-0 text-hec-ink-soft" />Lesson summary
                           {overview && (
-                            <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40">
+                            <Badge variant="outline" className="border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">
                               shared with students
                             </Badge>
                           )}
                           {overview?.edited_by_teacher && (
-                            <Badge variant="outline" className="text-[10px] text-violet-600 border-violet-500/40">
+                            <Badge variant="outline" className="text-hec-ink-soft">
                               your edit
                             </Badge>
                           )}
                         </CardTitle>
                         {!editingOverview && (
-                          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs shrink-0" onClick={startEditOverview}>
-                            <Pencil className="h-3 w-3" />Edit
+                          <Button variant="ghost" size="sm" className="gap-2 shrink-0" onClick={startEditOverview}>
+                            <Pencil className="h-4 w-4" />Edit
                           </Button>
                         )}
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-2.5">
+                    <CardContent className="space-y-3">
                       {editingOverview ? (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">Summary</p>
+                            <p className="text-hec-small font-medium text-hec-ink mb-2">Summary</p>
                             <Textarea
                               value={ovDraft.summary}
                               onChange={(e) => setOvDraft((d) => ({ ...d, summary: e.target.value }))}
-                              className="min-h-[100px] text-sm"
+                              className="min-h-[100px]"
                             />
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">Materials used</p>
-                            <div className="space-y-1.5">
+                            <p className="text-hec-small font-medium text-hec-ink mb-2">Materials used</p>
+                            <div className="space-y-2">
                               {ovDraft.materials.map((m, i) => (
-                                <div key={i} className="flex gap-1.5">
+                                <div key={i} className="flex flex-wrap gap-2">
                                   <Input
                                     placeholder="Book / handout"
                                     value={m.name}
@@ -1065,7 +1065,7 @@ export default function TeacherTranscripts() {
                                       next[i] = { ...next[i], name: e.target.value };
                                       return { ...d, materials: next };
                                     })}
-                                    className="flex-1 h-8 text-xs"
+                                    className="min-w-0 flex-1 basis-40"
                                   />
                                   <Input
                                     placeholder="Pages"
@@ -1075,40 +1075,41 @@ export default function TeacherTranscripts() {
                                       next[i] = { ...next[i], pages: e.target.value };
                                       return { ...d, materials: next };
                                     })}
-                                    className="w-24 h-8 text-xs"
+                                    className="w-24"
                                   />
                                   <Button
-                                    variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground"
+                                    variant="ghost" size="icon" className="shrink-0 text-hec-ink-soft"
+                                    aria-label="Remove this material"
                                     onClick={() => setOvDraft((d) => ({ ...d, materials: d.materials.filter((_, x) => x !== i) }))}
                                   >
-                                    <XCircle className="h-3.5 w-3.5" />
+                                    <XCircle className="h-5 w-5" />
                                   </Button>
                                 </div>
                               ))}
                               <Button
-                                variant="outline" size="sm" className="h-7 text-xs gap-1"
+                                variant="outline" size="sm" className="gap-2"
                                 onClick={() => setOvDraft((d) => ({ ...d, materials: [...d.materials, { name: "", pages: "" }] }))}
                               >
-                                <BookOpen className="h-3 w-3" />Add material
+                                <BookOpen className="h-4 w-4" />Add material
                               </Button>
                             </div>
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">Homework</p>
+                            <p className="text-hec-small font-medium text-hec-ink mb-2">Homework</p>
                             <Textarea
                               placeholder="No homework assigned"
                               value={ovDraft.homework}
                               onChange={(e) => setOvDraft((d) => ({ ...d, homework: e.target.value }))}
-                              className="min-h-[56px] text-sm"
+                              className="min-h-[56px]"
                             />
                           </div>
                           <div className="flex gap-2">
                             <Button
-                              size="sm" className="gap-1.5"
+                              size="sm" className="gap-2"
                               disabled={saveOverviewMutation.isPending}
                               onClick={() => saveOverviewMutation.mutate()}
                             >
-                              {saveOverviewMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                              {saveOverviewMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                               Save
                             </Button>
                             <Button variant="ghost" size="sm" onClick={() => setEditingOverview(false)}>Cancel</Button>
@@ -1116,50 +1117,50 @@ export default function TeacherTranscripts() {
                         </div>
                       ) : (
                       <>
-                      <p className="text-sm leading-relaxed text-muted-foreground">{overview?.summary ?? selected.summary}</p>
+                      <p className="text-hec-body text-hec-ink-soft">{overview?.summary ?? selected.summary}</p>
 
                       {/* Did the lesson actually cover its title? */}
                       {selected.title_covered !== null && selected.title_covered !== undefined && (
-                        <div className={`rounded-xl px-3 py-2 ring-1 ${
+                        <div className={`rounded-hec-md border px-3 py-2 ${
                           selected.title_covered
-                            ? "bg-emerald-500/5 ring-emerald-500/25"
-                            : "bg-amber-500/5 ring-amber-500/25"
+                            ? "border-hec-leaf/30 bg-hec-leaf-tint"
+                            : "border-hec-warn/30 bg-hec-warn-tint"
                         }`}>
-                          <p className={`text-xs font-bold flex items-center gap-1.5 ${
-                            selected.title_covered ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                          <p className={`text-hec-small font-semibold flex flex-wrap items-center gap-2 ${
+                            selected.title_covered ? "text-hec-leaf" : "text-hec-warn"
                           }`}>
-                            {selected.title_covered ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
+                            {selected.title_covered ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <AlertTriangle className="h-4 w-4 shrink-0" />}
                             {selected.title_covered ? "Lesson title covered" : "Title not clearly covered"}
-                            {selected.title && <span className="font-normal text-muted-foreground">— "{selected.title}"</span>}
+                            {selected.title && <span className="font-normal text-hec-ink-soft">— "{selected.title}"</span>}
                           </p>
                           {selected.title_note && (
-                            <p className="text-xs text-muted-foreground mt-1">{selected.title_note}</p>
+                            <p className="text-hec-small text-hec-ink-soft mt-1">{selected.title_note}</p>
                           )}
                           {Array.isArray(selected.title_evidence) && selected.title_evidence.length > 0 && (
-                            <ul className="mt-1.5 space-y-0.5">
+                            <ul className="mt-2 space-y-1">
                               {selected.title_evidence.map((q: string, i: number) => (
-                                <li key={i} className="text-[11px] text-muted-foreground italic">"{q}"</li>
+                                <li key={i} className="text-hec-caption text-hec-ink-soft italic">"{q}"</li>
                               ))}
                             </ul>
                           )}
                         </div>
                       )}
                       {Array.isArray(overview?.materials) && overview.materials.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <BookOpen className="h-3.5 w-3.5 text-blue-500" />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <BookOpen className="h-4 w-4 shrink-0 text-hec-ink-soft" />
                           {overview.materials.map((m: any, i: number) => (
-                            <Badge key={i} variant="secondary" className="font-normal text-xs">
+                            <Badge key={i} variant="secondary" className="font-normal">
                               {m.name}{m.pages ? ` · p.${m.pages}` : ""}
                             </Badge>
                           ))}
                         </div>
                       )}
                       {overview?.homework && (
-                        <p className="text-xs flex items-start gap-1.5">
-                          <NotebookPen className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                        <p className="text-hec-small flex items-start gap-2">
+                          <NotebookPen className="h-4 w-4 text-hec-ink-soft shrink-0 mt-1" />
                           <span>
-                            <span className="font-semibold">Homework:</span>{" "}
-                            <span className="text-muted-foreground">{overview.homework}</span>
+                            <span className="font-semibold text-hec-ink">Homework:</span>{" "}
+                            <span className="text-hec-ink-soft">{overview.homework}</span>
                           </span>
                         </p>
                       )}
@@ -1186,24 +1187,24 @@ export default function TeacherTranscripts() {
                   return (
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-indigo-500" />
+                        <CardTitle className="flex items-center gap-2">
+                          <FileText className="h-5 w-5 shrink-0 text-hec-ink-soft" />
                           Lesson report
                         </CardTitle>
-                        <CardDescription className="text-xs mt-1">
+                        <CardDescription className="mt-1">
                           A grounded, chronological account built from the whole transcript — quotes are verbatim.
                         </CardDescription>
                       </CardHeader>
-                      <CardContent className="space-y-4 text-sm">
+                      <CardContent className="space-y-6 text-hec-small">
                         {Array.isArray(lr.objectives) && lr.objectives.length > 0 && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <ListChecks className="h-3.5 w-3.5 text-emerald-500" /> Objectives worked on
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <ListChecks className="h-4 w-4 shrink-0 text-hec-ink-soft" /> Objectives worked on
                             </p>
                             <ul className="space-y-1">
                               {lr.objectives.map((o: string, i: number) => (
-                                <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
-                                  <span className="text-emerald-500 mt-0.5">•</span>
+                                <li key={i} className="flex items-start gap-2 text-hec-ink-soft">
+                                  <span className="text-hec-ink-faint" aria-hidden="true">•</span>
                                   <span>{o}</span>
                                 </li>
                               ))}
@@ -1213,15 +1214,15 @@ export default function TeacherTranscripts() {
 
                         {Array.isArray(lr.chronology) && lr.chronology.length > 0 && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <Clock className="h-3.5 w-3.5 text-blue-500" /> How the lesson unfolded
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <Clock className="h-4 w-4 shrink-0 text-hec-ink-soft" /> How the lesson unfolded
                             </p>
-                            <ol className="relative space-y-2 border-l border-border/60 pl-4">
+                            <ol className="relative space-y-3 border-l border-hec-line pl-4">
                               {lr.chronology.map((c: any, i: number) => (
                                 <li key={i} className="relative">
-                                  <span className="absolute -left-[21px] top-1 h-2 w-2 rounded-full bg-blue-500/70 ring-2 ring-background" />
-                                  <p className="font-semibold text-foreground/90">{c.phase}</p>
-                                  <p className="text-muted-foreground text-[13px] leading-relaxed">{c.detail}</p>
+                                  <span className="absolute -left-[21px] top-2 h-2 w-2 rounded-full bg-hec-brass ring-2 ring-hec-surface" />
+                                  <p className="font-semibold text-hec-ink">{c.phase}</p>
+                                  <p className="text-hec-ink-soft text-hec-small">{c.detail}</p>
                                 </li>
                               ))}
                             </ol>
@@ -1230,19 +1231,19 @@ export default function TeacherTranscripts() {
 
                         {Array.isArray(lr.engagement) && lr.engagement.length > 0 && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <MessageSquareText className="h-3.5 w-3.5 text-violet-500" /> Student moments
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <MessageSquareText className="h-4 w-4 shrink-0 text-hec-ink-soft" /> Student moments
                             </p>
                             <ul className="space-y-2">
                               {lr.engagement.map((e: any, i: number) => (
-                                <li key={i} className="rounded-lg bg-muted/40 px-3 py-2 ring-1 ring-border/50">
-                                  <p className="text-[13px] italic text-foreground/90">
+                                <li key={i} className="rounded-hec-md border border-hec-line bg-hec-sunken px-3 py-2">
+                                  <p className="text-hec-small italic text-hec-ink">
                                     "{e.quote}"
                                     {e.student && (
-                                      <span className="not-italic font-semibold text-muted-foreground"> — {e.student}</span>
+                                      <span className="not-italic font-semibold text-hec-ink-soft"> — {e.student}</span>
                                     )}
                                   </p>
-                                  {e.note && <p className="text-xs text-muted-foreground mt-0.5">{e.note}</p>}
+                                  {e.note && <p className="text-hec-small text-hec-ink-soft mt-1">{e.note}</p>}
                                 </li>
                               ))}
                             </ul>
@@ -1251,13 +1252,13 @@ export default function TeacherTranscripts() {
 
                         {Array.isArray(lr.misconceptions) && lr.misconceptions.length > 0 && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Misconceptions & confusions
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <AlertTriangle className="h-4 w-4 shrink-0 text-hec-warn" /> Misconceptions & confusions
                             </p>
                             <ul className="space-y-1">
                               {lr.misconceptions.map((m: string, i: number) => (
-                                <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
-                                  <span className="text-amber-500 mt-0.5">•</span>
+                                <li key={i} className="flex items-start gap-2 text-hec-ink-soft">
+                                  <span className="text-hec-warn" aria-hidden="true">•</span>
                                   <span>{m}</span>
                                 </li>
                               ))}
@@ -1267,13 +1268,13 @@ export default function TeacherTranscripts() {
 
                         {Array.isArray(lr.interventions) && lr.interventions.length > 0 && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <Lightbulb className="h-3.5 w-3.5 text-yellow-500" /> Teacher feedback & interventions
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <Lightbulb className="h-4 w-4 shrink-0 text-hec-ink-soft" /> Teacher feedback & interventions
                             </p>
                             <ul className="space-y-1">
                               {lr.interventions.map((it: string, i: number) => (
-                                <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
-                                  <span className="text-yellow-500 mt-0.5">•</span>
+                                <li key={i} className="flex items-start gap-2 text-hec-ink-soft">
+                                  <span className="text-hec-ink-faint" aria-hidden="true">•</span>
                                   <span>{it}</span>
                                 </li>
                               ))}
@@ -1283,22 +1284,22 @@ export default function TeacherTranscripts() {
 
                         {lr.general_understanding && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <GraduationCap className="h-3.5 w-3.5 text-teal-500" /> General understanding
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <GraduationCap className="h-4 w-4 shrink-0 text-hec-ink-soft" /> General understanding
                             </p>
-                            <p className="text-muted-foreground text-[13px] leading-relaxed">{lr.general_understanding}</p>
+                            <p className="text-hec-ink-soft text-hec-small">{lr.general_understanding}</p>
                           </section>
                         )}
 
                         {Array.isArray(lr.next_steps) && lr.next_steps.length > 0 && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <ArrowRight className="h-3.5 w-3.5 text-pink-500" /> Next steps
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <ArrowRight className="h-4 w-4 shrink-0 text-hec-ink-soft" /> Next steps
                             </p>
                             <ul className="space-y-1">
                               {lr.next_steps.map((n: string, i: number) => (
-                                <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
-                                  <span className="text-pink-500 mt-0.5">→</span>
+                                <li key={i} className="flex items-start gap-2 text-hec-ink-soft">
+                                  <span className="text-hec-ink-faint" aria-hidden="true">→</span>
                                   <span>{n}</span>
                                 </li>
                               ))}
