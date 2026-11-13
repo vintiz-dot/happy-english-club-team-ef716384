@@ -2,7 +2,7 @@
 
 Base: merged `claude/hec-conductor-setup-efbaa5` (f4fe32bf). Synthetic audio only (`RECORDER_REAL_AUDIO`, `RECORDER_FLAC_CHECK`, `RECORDER_WAV` unset). No apply, no deploy, no push. No migration changed this round.
 
-**Where I am / next step:** code, tests and docs done; engine suite and mutation runs in progress. Next: record their results here, full `run.mjs`, clean up.
+**Where I am / next step:** DONE. Suites green, 10 of 10 mutants caught, node_modules link removed, no process left. Next: review 5.
 
 ## 1. R4-1: only a refusal the server STATES ends a recording at the pre-start statement
 
@@ -42,4 +42,29 @@ Base: merged `claude/hec-conductor-setup-efbaa5` (f4fe32bf). Synthetic audio onl
 
 ## 6. Suites and mutations
 
-(results below)
+| Suite | Result |
+|---|---|
+| `node scripts/pgtest/run.mjs` | **5141 assertions across 53 suites, 0 failed**, exit 0 |
+| - recorder engine (`unit.test.mjs`) | 504 / 0 (445 in round 4) |
+| - recorder screens logic / render | 30 / 0, 74 / 0 (26 in round 4) |
+| - class recorder SQL / retention / cron | 423 / 0, 37 / 0, 22 / 0 (no migration changed) |
+| - app typecheck (`tsc -p tsconfig.app.json`) / edge functions typecheck | 3 / 0, 5 / 0 |
+
+The first engine run found two real things, both fixed: a given-up recording was asked for its pre-start again on the next pass ("cannot be sent" said twice) - now `sendPreStart` returns at once for an abandoned recording, and the test asserts the message once; and the backoff gap check allowed no drive-pass granularity (a 68 s gap at a 60 s cap with passes ~8 s apart) - tolerance one pass.
+
+Mutations - **10 of 10 CAUGHT**. Engine mutants are copies outside the repo (`RECORDER_SRC`, scratchpad); session mutants were made in place and restored by the script (worktree clean afterwards).
+
+| # | Mutant | Result |
+|---|---|---|
+| E1 | pre-start: any non-retryable answer final again (the round-4 rule) | CAUGHT 475/29 |
+| E2 | pre-start: the trigger's text not classified | CAUGHT 496/8 |
+| E3 | pre-start: no backoff | CAUGHT 496/8 |
+| E4 | purge: 'never finished' counted as a 'no' | CAUGHT 502/2 |
+| S1 | Ready does not keep the session (arming back in the page) | CAUGHT 53/21 |
+| S2 | Ready shared across users | CAUGHT 73/1 |
+| S3 | a lesson armed today armed again after a reload | CAUGHT 67/7 |
+| S4 | back-to-back: no arming while the first uploads | CAUGHT 73/1 |
+| S5 | full screen: bar hidden while the screen is attached | CAUGHT 72/2 |
+| S6 | sign-out does not clear Ready | CAUGHT 73/1 |
+
+Not done here: `browser.test.mjs` (needs the harness browser), and nothing has been rendered in a real browser - hardware checklist items 1, 17, 18 and 19 are the first.
