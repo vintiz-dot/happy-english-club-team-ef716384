@@ -148,8 +148,8 @@ for (const mode of ['pro-rata', 'oldest-first']) {
   probe('P3m manual', r.status === 200 && b2.recorded_payment === 450000 && b2.carry_out_credit === 50000
       && b1.recorded_payment === 450000 && b1.carry_out_credit === 50000 && allocSum(p.id) === 900000,
     'manual 0 / 450,000 of 900,000: the 450,000 not split out goes on the first selected (Child One): both 450,000, 50,000 credit each', { r: r.body, b1: money(b1), b2: money(b2) });
-  probe('P3m-wording', r.body.creditOnBill?.amount === 450000,
-    '  (wording) the response calls all 450,000 "credit on the bill" though Child One owed 400,000 of it - only 50,000 is credit', r.body.creditOnBill);
+  probe('P3m-wording', r.body.creditOnBill?.amount === 50000 && r.body.leftoverAmount === 450000,
+    '  (FIXED N2) the response reports 450,000 not split out and only 50,000 of it as credit', r.body);
 }
 
 // ---- P4 smart, two children: the extra goes to the highest-debt child, as the screen says
@@ -174,13 +174,13 @@ for (const mode of ['pro-rata', 'oldest-first']) {
   const b1 = await bill(S1), b2 = await bill(S2), b3 = await bill(S3);
   probe('P5a', r.status === 200 && b1.recorded_payment + b2.recorded_payment + b3.recorded_payment === 1000000 && b1.carry_out_credit === 0,
     'pro-rata 1,000,000 over three children owing 400,000 each: all 1,000,000 on bills, no credit (money right)', { r: r.body, b: [money(b1), money(b2), money(b3)] });
-  probe('P5b', r.body.leftoverAmount === 1 && r.body.creditOnBill?.amount === 1,
-    '  (wording) but the response and ledger memo report 1 VND "beyond what the bills owe, kept as credit" (a rounding remainder; the bills still owe 200,000)', r.body);
+  probe('P5b', r.body.leftoverAmount === 0 && r.body.creditOnBill === null,
+    '  (FIXED N1) nothing reported as left over or as credit: the rounding remainder went to a bill that still owes', r.body);
   await family2({ three: true });
   memoryWrites = [];
   const r2 = await call('family-payment', { month: MONTH, familyId: FAMILY, selectedStudentIds: [S1, S2, S3], amount: 1000000, allocationMode: 'pro-rata', ...PAYX, leftoverHandling: 'unapplied_cash' });
-  probe('P5c', r2.status === 400 && moneyW().length === 0,
-    '  an old tab (unapplied_cash) paying 1,000,000 pro-rata, LESS than owed, is refused as if it overpaid (safe, nothing written; message untrue)', r2.body);
+  probe('P5c', r2.status === 200,
+    '  (FIXED N1) an old tab (unapplied_cash) paying 1,000,000 pro-rata, LESS than owed, pays', r2.body);
 }
 
 // ---- P6 deleting a payment made BEFORE the change (allocation + unapplied-cash pair)
@@ -240,8 +240,8 @@ for (const [alloc, credit] of [['smart-family', 'smart-family-credit'], ['family
   const r = await call('family-payment', { month: MONTH, familyId: FAMILY, selectedStudentIds: [S1], amount: 500000, allocationMode: 'oldest-first', ...PAYX, ...CREDITX });
   const [p] = familyPayments();
   const legs = txsOf(p?.id).flat();
-  probe('P9', r.status === 200 && legs.some((e) => e.account_id === 'acc-BANK' && e.debit === 500000) && !legs.some((e) => e.account_id === 'acc-CASH'),
-    "(pre-existing) family-payment with method 'Cash' (what FamilyPaymentModal sends) debits BANK, not CASH; smart-family-payment lower-cases", legs.map((e) => e.account_id));
+  probe('P9', r.status === 200 && legs.some((e) => e.account_id === 'acc-CASH' && e.debit === 500000) && !legs.some((e) => e.account_id === 'acc-BANK'),
+    "(FIXED N5) family-payment with method 'Cash' (what FamilyPaymentModal sends) debits CASH", legs.map((e) => e.account_id));
 }
 
 await db.close();
