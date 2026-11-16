@@ -38,10 +38,20 @@ export function ClassCatalog({ studentId }: ClassCatalogProps) {
       const teacherIds = [...new Set(data.filter(c => c.default_teacher_id).map(c => c.default_teacher_id!))];
       let teacherMap: Record<string, { name: string; bio: string | null }> = {};
       if (teacherIds.length > 0) {
-        const { data: teachers } = await supabase
-          .from("teachers")
-          .select("id, full_name, bio")
-          .in("id", teacherIds);
+        // Name and bio only, through the catalogue function (audit F-17: the
+        // teachers row also carries pay). Falls back to the table while the
+        // database does not have the function yet.
+        const { data: viaFn, error: fnErr } = await (supabase.rpc as any)("get_class_catalog_teachers", {
+          p_teacher_ids: teacherIds,
+        });
+        let teachers: Array<{ id: string; full_name: string; bio: string | null }> | null = fnErr ? null : (viaFn as any[]);
+        if (!teachers) {
+          const { data } = await supabase
+            .from("teachers")
+            .select("id, full_name, bio")
+            .in("id", teacherIds);
+          teachers = data;
+        }
         teacherMap = Object.fromEntries((teachers || []).map(t => [t.id, { name: t.full_name, bio: t.bio }]));
       }
 
