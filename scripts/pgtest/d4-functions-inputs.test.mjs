@@ -307,7 +307,11 @@ await section('admin-data-import: the money tables are not importable (G-20)', a
      r.status === 200 && r.body.dryRun && r.body.counts.enrollments === 1 && r.body.counts.attendance === 1 &&
      JSON.stringify(Object.keys(r.body.not_imported).sort()) === JSON.stringify(['attendance', 'discount_assignments', 'discount_definitions', 'enrollments', 'sessions']) &&
      (await count('families')) === before.f, r);
-  const m = mark();
+  let m = mark();
+  r = await callUrl(importFn, admin.tok, { tables, dryRun: true });
+  ok('the screen\'s "Dry run" box travels in the body: nothing is written (it used to import)',
+     r.status === 200 && r.body.dryRun === true && (await count('families')) === before.f && since(m).writes.filter((w) => w.table !== 'audit_log').length === 0, r);
+  m = mark();
   r = await callUrl(importFn, admin.tok, { tables });
   const s = since(m);
   ok('import: families and classes are imported', r.status === 200 && r.body.results.families.imported === 1 && r.body.results.classes.imported === 1 &&

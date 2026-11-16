@@ -1044,6 +1044,13 @@ await section('step 1b\'s register guard, with file 5 over it', async () => {
   r = await withAck({ entity: 'enrollment', op: 'pause', target: k, students: [k], tier: 3, change: { class_ids: [c.cid] } },
     `UPDATE attendance SET status='Present', marked_by='${ADMIN}' WHERE session_id='${c.s.old}' AND student_id='${k}'`);
   ok('  and one that IS still passes only the rows those RPCs write (Excused, or an unsigned row): billing a child back is HC025', r.code === 'HC025', r);
+  await asSuper(`UPDATE attendance SET status='Present', marked_by=$3 WHERE session_id=$1 AND student_id=$2`, [c.s.old, k, c.teacherUid]);
+  r = await withAck({ entity: 'enrollment', op: 'set_rate', target: k, students: [k], tier: 3, change: { class_ids: [c.cid] } },
+    `UPDATE attendance SET status='Excused' WHERE session_id='${c.s.old}' AND student_id='${k}'`);
+  ok('  not even for a row an enrolment RPC could write (an old billed mark set to Excused under a set_rate): HC025', r.code === 'HC025', r);
+  r = await withAck({ entity: 'enrollment', op: 'pause', target: k, students: [k], tier: 3, change: { class_ids: [c.cid] } },
+    `UPDATE attendance SET status='Excused' WHERE session_id='${c.s.old}' AND student_id='${k}'`);
+  ok('  the same write under a pause\'s acknowledgement passes (what the checked pause does)', r.ok === true, r);
 });
 
 // ---------------------------------------------------------------- rollback
