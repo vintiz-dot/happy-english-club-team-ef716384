@@ -349,6 +349,49 @@ await section('a row between two rows reaches only its own window', async () => 
      JSON.stringify(monthsOf(p.refresh_pairs)) === JSON.stringify([M(months.past2)]), { tier: p.tier, pairs: p.reach.pairs });
 });
 
+// The review's P2 / P3 / P7 / P8 (docs/evidence/D4-2-review.md T-1), copied
+// from scripts/pgtest/review/d4-2-probe.mjs: they kill V01-V04.
+await section('review P2 / P3: the reach covers every month in the window and every charged mark', async () => {
+  const c = await mkClass(100000, 'P2');
+  const k = await kid(c);
+  await att(await lesson(c, months.past2_lesson), k, 'Present', TEACHER);
+  await att(await lesson(c, months.past_lesson), k, 'Present', TEACHER);
+  await inv(k, M(months.past2), { recorded: 600000 });          // paid      -> T2
+  await inv(k, M(months.past), { conf: 'confirmed' });          // confirmed -> T3
+  const p = await preview('set', { class_id: c, effective_from: months.past2, session_rate_vnd: 120000 });
+  ok('P2: a row at past2 with no later row reaches past2 AND the confirmed month after it: T3, both months refreshed (V01)', p.tier === 3 &&
+     JSON.stringify(monthsOf(p.refresh_pairs)) === JSON.stringify([M(months.past2), M(months.past)]), { tier: p.tier, m: monthsOf(p.refresh_pairs) });
+  const c3 = await mkClass(100000, 'P3');
+  const k3 = await kid(c3);
+  await att(await lesson(c3, months.past_lesson), k3, 'Absent', TEACHER);
+  await inv(k3, M(months.past), { recorded: 600000 });
+  const p3 = await preview('set', { class_id: c3, effective_from: months.past, session_rate_vnd: 120000 });
+  ok('P3: a child whose only charged mark is Absent is reached: T2, in student_ids (V02)', p3.tier === 2 && (p3.student_ids ?? []).includes(k3), { tier: p3.tier });
+});
+
+await section('review P7 / P8: an acknowledgement of one month, and another trigger\'s delete', async () => {
+  const c = await mkClass(100000, 'P7');
+  const ins = `INSERT INTO money_change_overrides(actor_user_id,entity,op,target_id,student_ids,reach_from,reach_to,via,tier,correction_mode,reason,confirmed,token,row_before,change,reach,invoices_before,refresh_pairs,impact,review_required)
+    VALUES ('${ADMIN}','class_fee','set','${c}','{}'::uuid[],'${months.past2}',NULL,'single',0,false,'test reason long enough',true,'x','{}',
+    '${JSON.stringify({ class_id: c, effective_from: months.past2, session_rate_vnd: 130000 })}','{}','[]','[]','{}',false) RETURNING id`;
+  const e = await script(null, '', null, `DO $x$ DECLARE v uuid; BEGIN ${ins} INTO v;
+      PERFORM set_config('hec.money_change_ack', v::text, true); PERFORM set_config('test.jwt_role', 'service_role', true); END $x$;
+    SET LOCAL ROLE service_role; INSERT INTO class_fee_history(class_id, effective_from, session_rate_vnd) VALUES ('${c}','${months.next}',130000)`);
+  ok('P7: the acknowledgement of past2 used for a row at next month (same transaction) -> HC120 (V03)', e?.code === 'HC120', e);
+  const c8 = await mkClass(100000, 'P8');
+  await asSuper(`INSERT INTO class_fee_history(class_id, effective_from, session_rate_vnd) VALUES ($1,$2,120000)`, [c8, months.past]);
+  await db.exec(`CREATE TABLE IF NOT EXISTS public.zz_del_relay(class_id uuid, effective_from date);
+    CREATE OR REPLACE FUNCTION public.zz_del_relay_trg() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$
+    BEGIN DELETE FROM public.class_fee_history WHERE class_id = NEW.class_id AND effective_from = NEW.effective_from; RETURN NULL; END $f$;
+    DROP TRIGGER IF EXISTS zz_del_relay ON public.zz_del_relay;
+    CREATE TRIGGER zz_del_relay AFTER INSERT ON public.zz_del_relay FOR EACH ROW EXECUTE FUNCTION public.zz_del_relay_trg();
+    GRANT ALL ON public.zz_del_relay TO service_role`);
+  const r = await tryIt(() => asService(`INSERT INTO zz_del_relay VALUES ($1,$2)`, [c8, months.past]));
+  ok('P8: another trigger (depth 2) deleting a dated row of a live class, service lane -> HC120, the row stays (V04)', r.code === 'HC120' &&
+     (await hist(c8)).some((x) => x.f === months.past), r);
+  await db.exec(`DROP TABLE zz_del_relay; DROP FUNCTION zz_del_relay_trg()`);
+});
+
 await section('remove', async () => {
   let p = await preview('remove', { class_id: C, effective_from: '1900-01-01' });
   ok('the 1900 row: not allowed (baseline_row)', p.allowed === false && p.refuse_code === 'baseline_row', p.refuse_code);
@@ -682,8 +725,34 @@ await section('the Fee history screen (src/lib/classFee.ts and the two screens)'
      .every((k) => typeof lib.CLASS_FEE_REFUSALS[k] === 'string' && lib.CLASS_FEE_REFUSALS[k].length > 30));
   ok('the dialog\'s summary comes from the plan\'s own figures', lib.feeChangeSummary({ change: { effective_from: '2026-09-01', window_to: '2026-11-30',
      fee_before: 200000, fee_after: 210000, lessons: 3 } }, (n) => String(n)) === 'From September 2026 until November 2026: 200000 becomes 210000 a lesson (3 lessons with a charged mark).');
+  // S-2 (review): the dialog is decided from the plan alone.
+  const t0 = { tier: 0, approval: { required: false }, invoices_before: [], refresh_pairs: [] };
+  ok('feeNeedsDialog: only a new fee that reaches NO bill goes straight through',
+     lib.feeNeedsDialog('set', t0) === false &&
+     lib.feeNeedsDialog('set', { ...t0, invoices_before: [{ id: 'i' }] }) === true &&
+     lib.feeNeedsDialog('set', { ...t0, refresh_pairs: [{ student_id: 's', month: '2026-12' }] }) === true &&
+     lib.feeNeedsDialog('remove', t0) === true && lib.feeNeedsDialog('set', { ...t0, tier: 1 }) === true &&
+     lib.feeNeedsDialog('set', { ...t0, approval: { required: true } }) === true && lib.feeNeedsDialog('set', null) === true);
+  const intro0 = lib.feeDialogIntro({ ...t0, refresh_pairs: [{}, {}], change: { effective_from: '2026-12-01', fee_before: 1, fee_after: 2, lessons: 2 } }, (n) => String(n));
+  const intro1 = lib.feeDialogIntro({ ...t0, tier: 2, refresh_pairs: [], change: { effective_from: '2026-09-01', fee_before: 1, fee_after: 2 } }, (n) => String(n));
+  ok('the dialog\'s wording comes from the plan (bills reached, tier), not from the calendar',
+     /reaches 2 bills already worked out/.test(intro0) && /recorded with your name/.test(intro0) &&
+     /No bill already worked out changes/.test(intro1) && /kept with your reason/.test(intro1), { intro0, intro1 });
+  ok('decision 7: the month box starts at the class\'s first lesson or creation, never 1900 (a typed 1900 is refused)',
+     lib.feeMonthMin('2025-03-04T10:00:00Z', '2025-01-08') === '2025-01' && lib.feeMonthMin(null, null) === '2000-01' &&
+     lib.feeMonthMin('1900-01-01', null) === '2000-01' && lib.feeMonthAllowed('1900-01', '2025-01') === false &&
+     lib.feeMonthAllowed('2024-12', '2025-01') === false && lib.feeMonthAllowed('2025-01', '2025-01') && !lib.feeMonthAllowed('2025-13', '2000-01'));
   const settings = readFileSync(resolve(repo, 'src/components/admin/class/ClassSettings.tsx'), 'utf8');
   const screen = readFileSync(resolve(repo, 'src/components/admin/class/ClassFeeHistory.tsx'), 'utf8');
+  const MOJIBAKE = [Buffer.from([0xc3, 0xa2, 0xe2, 0x82, 0xac]), Buffer.from([0xc3, 0xb0, 0xc5, 0xb8]), Buffer.from([0xef, 0xbb, 0xbf])];
+  const touched = ['src/components/admin/class/ClassSettings.tsx', 'src/components/admin/class/ClassFeeHistory.tsx', 'src/lib/classFee.ts',
+    'src/components/admin/money-guard/MoneyGuardDialog.tsx'];
+  ok('S-1: no re-encoded bytes (mojibake of an em dash or an emoji, or a BOM) in the screens this step touched; the em dashes and the bank emoji of ClassSettings are intact',
+     touched.every((f) => { const b = readFileSync(resolve(repo, f)); return MOJIBAKE.every((m) => !b.includes(m)); }) &&
+     settings.includes('e.g. Class A1 — Morning') && settings.includes('\u{1F3E6} Classroom Economy'));
+  ok('S-2: the screen decides the dialog with feeNeedsDialog and words it with feeDialogIntro; no calendar-based note',
+     /feeNeedsDialog\(req\.op, plan\)/.test(screen) && /feeDialogIntro\(plan, formatVnd\)/.test(screen) &&
+     !/isPastMonth|pastWarning|futureNote|thisMonthNote|today\.slice\(0, 7\)/.test(screen) && /min=\{minMonth\}/.test(screen));
   ok('ClassSettings no longer writes the fee (no session_rate_vnd in its update) and shows the Fee history instead',
      !/session_rate_vnd\s*:/.test(settings) && /<ClassFeeHistory classId=\{classId\} \/>/.test(settings));
   ok('ClassFeeHistory writes only through the money guard: no insert / update / delete / upsert of a table, no calculate-tuition call',
