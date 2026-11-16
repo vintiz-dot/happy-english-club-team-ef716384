@@ -6,7 +6,7 @@ Independent reviewer. Reviewed branch `worktree-agent-a36ad2752b190053b` at d3cd
 
 ## Verdict: APPLY WITH CHANGES
 
-The database file and the three readers are right and fail closed; I could not get a fee row, or `classes.session_rate_vnd`, changed past the checked path by any caller I could reach, and the golden gate is real. Two changes, both in the SCREENS (the migration and the functions can go as they are):
+The database file and the three readers are right and fail closed; I could not get a fee row, or `classes.session_rate_vnd`, changed past the checked path by any caller I could reach, and the golden gate is real. Three blockers: two in the SCREENS and one in the TESTS (the migration and the functions can go as they are):
 
 | # | Change | Kind |
 |---|---|---|
@@ -16,7 +16,8 @@ The database file and the three readers are right and fail closed; I could not g
 | F-2 | Rollback 3 header: say that with the step-2 calculators deployed the mirror prices nothing | nice-to-have |
 | F-3 | Policy `class_fee_history_staff_read` tests `has_role(.., 'teacher')` | nice-to-have |
 | F-4 | Mirror guard is `UPDATE OF session_rate_vnd`: a future BEFORE trigger rewriting the fee would not be judged | nice-to-have |
-| F-5 | Pinning gaps found by my mutants (see section 9) | nice-to-have (add the cases) |
+| T-1 | Mutants V01 (reach tier over the first month only) and V02 (Absent not reached) survive `d4-class-fee`: add my P2 / P3 cases | **blocker** (tests only) |
+| F-5 | V03 / V04 survive too: add P7 / P8 | nice-to-have |
 | OQ-1 | A fee row reaching a PAID bill of the current month (or of last month during the first 7 days) is T0: re-priced with no reason | owner question |
 
 Monthly re-level of the mirror: **not needed before go-live** (section 4).
@@ -56,9 +57,9 @@ Needs schema drift to happen, and today's readers select no embedded relation, s
 
 ### F-4 (nice-to-have) The mirror guard's column list
 
-`20261114092000:387`: `BEFORE UPDATE OF session_rate_vnd`. Postgres fires a column trigger only when the column is in the statement's SET list, so a BEFORE trigger that rewrites `NEW.session_rate_vnd` during another update is not judged. Probe P11 (a hypothetical `aa_probe_fee` trigger) - PENDING output. None exists today (the triggers on `classes` are `update_classes_updated_at`, `enforce_class_update_column_scope` and this file's two). Fix: drop `OF session_rate_vnd`; the `WHEN (OLD.session_rate_vnd IS DISTINCT FROM NEW.session_rate_vnd)` clause already limits it, and a BEFORE trigger's WHEN sees what earlier triggers did.
+`20261114092000:387`: `BEFORE UPDATE OF session_rate_vnd`. Postgres fires a column trigger only when the column is in the statement's SET list, so a BEFORE trigger that rewrites `NEW.session_rate_vnd` during another update is not judged. Probe P11 (a hypothetical `aa_probe_fee` BEFORE trigger setting the fee to 1 when a class is renamed, run as the service role): `NOTE ... not judged by zz_class_fee_mirror_guard (column list) -- {"v":1}` - the fee changed, no HC120. None exists today (the triggers on `classes` are `update_classes_updated_at`, `enforce_class_update_column_scope` and this file's two). Fix: drop `OF session_rate_vnd`; the `WHEN (OLD.session_rate_vnd IS DISTINCT FROM NEW.session_rate_vnd)` clause already limits it, and a BEFORE trigger's WHEN sees what earlier triggers did.
 
-### F-5 Pinning gaps - see section 9.
+### T-1 / F-5 Pinning gaps - see section 9.
 
 ### OQ-1 (owner question) A fee change that reaches money already paid, with no reason
 
@@ -154,7 +155,23 @@ No fee or tuition computed in the browser (tested by the builder's static check;
 
 ## 9. Mutants
 
-Builder: K01-K32 all caught (their table). I re-ran K05, K07, K09, K18, K26, K30 and added V01-V05 (`scripts/pgtest/d4-mutants.mjs`): PENDING.
+Builder: K01-K32 all caught (their table). I re-ran a sample through their runner and added V01-V05 to `scripts/pgtest/d4-mutants.mjs` (my branch); `scripts/pgtest/review/d4-2-probe-mutants.mjs` runs my probe against the same V mutants. `git status` clean after the function mutants (restored byte for byte).
+
+| Mutant | Breaks | `d4-class-fee` | my probe |
+|---|---|---|---|
+| K05 | raw T0 write by the service role passes | CAUGHT | - |
+| K07 | ack does not check the fee | CAUGHT | - |
+| K09 | ack's tier not compared (A-8) | CAUGHT | - |
+| K18 | any trigger-made write passes | CAUGHT | - |
+| K26 | calculate-tuition at the mirror | CAUGHT | - |
+| K30 | any read error taken for "no table" | CAUGHT | - |
+| **V01** | reach tier over the FIRST reached month only | **SURVIVED** | CAUGHT (P2: tier 2 instead of 3, the confirmed later month not refreshed) |
+| **V02** | an Absent mark not counted as reached | **SURVIVED** | CAUGHT (P3: tier 0 instead of 2 - a paid past month re-priced with no reason) |
+| V03 | the trigger does not compare the acknowledged month | SURVIVED | CAUGHT (P7) |
+| V04 | any trigger-made DELETE passes | SURVIVED | CAUGHT (P8) |
+| V05 | the trigger's tier fails open on NULL | SURVIVED | SURVIVED - equivalent (`_class_fee_reach` always returns a tier or raises) |
+
+The code is right in all five; the suite does not hold it. V01 and V02 would let a later edit silently UNDER-tier a correction of paid / confirmed months, which is the thing this step exists to prevent, so **adding P2 and P3 as cases to `d4-class-fee` is a required change (tests only, blocker for the merge)**; P7 and P8 (V03, V04) nice-to-have. All four cases are in `scripts/pgtest/review/d4-2-probe.mjs`, ready to copy.
 
 ## 10. The 15 open decisions (the notes list 15)
 
