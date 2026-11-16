@@ -81,7 +81,12 @@ New suite `scripts/pgtest/removed-money-features.test.mjs` (registered in `run.m
 
 ### Results (run once at the end, on this branch)
 
-RESULTS_PLACEHOLDER
+| command | result |
+|---|---|
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | exit 0, 0 `error TS` |
+| `npm run test:bun` (`node scripts/run-bun-tests.mjs`) | 166 pass, 0 fail, 738 expect() calls, 13 files |
+| `node scripts/pgtest/run.mjs` | **6154 assertions across 63 suites, 0 suite(s) failed**, exit 0. Invoice status 274 (golden compared, golden file unchanged), removed money features 35, family payment month 6, shared-module mirrors 19, edge functions typecheck 5, app typecheck 3 |
+| `git diff --stat 3e636879 -- scripts/pgtest/fixtures supabase/functions/_lib supabase/functions/calculate-tuition supabase/functions/calculate-tuition-bulk supabase/functions/delete-payment src/lib supabase/migrations` | empty |
 
 ## 5. Follow-up: removing the calculators' write-off reader (NOT done here)
 
