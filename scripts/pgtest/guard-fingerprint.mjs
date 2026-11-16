@@ -73,6 +73,9 @@ const RELEASES = {
   },
 };
 
+/** The D4 build (prelude, baseline, files in migration order), for d4-apply-chain.test.mjs. */
+export const D4_BUILD = { prelude: RELEASES.d4.prelude, baseline: RELEASES.d4.baseline, files: D4_FILES, mig };
+
 const q = (db, sql) => db.query(sql).then((r) => r.rows);
 
 // ---- catalog snapshot used only to decide WHICH objects to fingerprint ----
