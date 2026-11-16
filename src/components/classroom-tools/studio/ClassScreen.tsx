@@ -97,7 +97,9 @@ export function ClassScreen({
       /* refused (iOS, permissions policy) — overlay still stands */
     });
     return () => {
-      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      // Only our own fullscreen: over a book already presented fullscreen,
+      // leaving the class screen returns to the book, still fullscreen.
+      if (document.fullscreenElement === el) document.exitFullscreen().catch(() => {});
     };
   }, [open]);
 
@@ -121,7 +123,7 @@ export function ClassScreen({
   }, [open]);
 
   const close = useCallback(() => {
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    if (document.fullscreenElement === hostRef.current) document.exitFullscreen().catch(() => {});
     onClose();
   }, [onClose]);
 
