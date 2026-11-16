@@ -11,6 +11,8 @@
 //
 //   node scripts/pgtest/d4-mutants-3b.mjs            every mutant
 //   node scripts/pgtest/d4-mutants-3b.mjs S04 F02    only these
+// Migration mutants run four at a time (each has its own scratch copy and its
+// own database); function mutants run one at a time, after them.
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -197,43 +199,51 @@ const firstFail = (out) => (out.split('\n').find((l) => l.includes('FAIL')) ?? o
 const only = process.argv.slice(2);
 const original = readFileSync(migPath(INPUTS), 'utf8').replace(/\r\n/g, '\n');
 const results = [];
-for (const [id, what, find, repl, suites, file] of MUTANTS) {
-  if (only.length && !only.includes(id)) continue;
+const wanted = MUTANTS.filter(([id]) => only.length === 0 || only.includes(id));
+
+async function migrationMutant([id, what, find, repl, suites]) {
   let verdict;
-  if (file) {
-    const fp = join(repo, file);
-    const before = readFileSync(fp);
-    const src = before.toString('utf8').replace(/\r\n/g, '\n');
-    const n = src.split(find).length - 1;
-    if (n !== 1) verdict = `BAD MUTANT (pattern found ${n} times)`;
-    else {
-      const by = [];
-      try {
-        writeFileSync(fp, src.replace(find, () => repl));
-        for (const s of suites) {
-          const r = await runSuite(SUITES[s], migPath(INPUTS));
-          if (r.code !== 0) { by.push(`${s}: ${firstFail(r.out)}`); break; }
-        }
-      } finally { writeFileSync(fp, before); }
-      verdict = by.length ? `CAUGHT by ${by[0]}` : `SURVIVED (${suites.join(', ')})`;
+  const n = original.split(find).length - 1;
+  if (n !== 1) verdict = `BAD MUTANT (pattern found ${n} times)`;
+  else {
+    const p = resolve(tmpdir(), `d4-3b-mutant-${id}-${process.pid}.sql`);
+    writeFileSync(p, patchOwnMd5(original.replace(find, () => repl)));
+    const by = [];
+    for (const s of suites) {
+      const r = await runSuite(SUITES[s], p);
+      if (r.code !== 0) { by.push(`${s}: ${firstFail(r.out)}`); break; }
     }
-  } else {
-    const n = original.split(find).length - 1;
-    if (n !== 1) verdict = `BAD MUTANT (pattern found ${n} times)`;
-    else {
-      const p = resolve(tmpdir(), `d4-3b-mutant-${id}-${process.pid}.sql`);
-      writeFileSync(p, patchOwnMd5(original.replace(find, () => repl)));
-      const by = [];
-      for (const s of suites) {
-        const r = await runSuite(SUITES[s], p);
-        if (r.code !== 0) { by.push(`${s}: ${firstFail(r.out)}`); break; }
-      }
-      verdict = by.length ? `CAUGHT by ${by[0]}` : `SURVIVED (${suites.join(', ')})`;
-    }
+    verdict = by.length ? `CAUGHT by ${by[0]}` : `SURVIVED (${suites.join(', ')})`;
   }
   results.push({ id, what, verdict });
   console.log(`${id} ${verdict}`);
 }
+{
+  const queue = wanted.filter((m) => !m[5]);
+  await Promise.all(Array.from({ length: 4 }, async () => { while (queue.length > 0) await migrationMutant(queue.shift()); }));
+}
+for (const [id, what, find, repl, suites, file] of wanted.filter((m) => m[5])) {
+  let verdict;
+  const fp = join(repo, file);
+  const before = readFileSync(fp);
+  const src = before.toString('utf8').replace(/\r\n/g, '\n');
+  const n = src.split(find).length - 1;
+  if (n !== 1) verdict = `BAD MUTANT (pattern found ${n} times)`;
+  else {
+    const by = [];
+    try {
+      writeFileSync(fp, src.replace(find, () => repl));
+      for (const s of suites) {
+        const r = await runSuite(SUITES[s], migPath(INPUTS));
+        if (r.code !== 0) { by.push(`${s}: ${firstFail(r.out)}`); break; }
+      }
+    } finally { writeFileSync(fp, before); }
+    verdict = by.length ? `CAUGHT by ${by[0]}` : `SURVIVED (${suites.join(', ')})`;
+  }
+  results.push({ id, what, verdict });
+  console.log(`${id} ${verdict}`);
+}
+results.sort((a, b) => MUTANTS.findIndex((m) => m[0] === a.id) - MUTANTS.findIndex((m) => m[0] === b.id));
 console.log('\n| Mutant | Breaks | Verdict |\n|---|---|---|');
 for (const r of results) console.log(`| ${r.id} | ${r.what} | ${r.verdict.replace(/\|/g, '/')} |`);
 const survivors = results.filter((r) => !r.verdict.startsWith('CAUGHT'));
