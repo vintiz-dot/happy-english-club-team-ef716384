@@ -130,7 +130,7 @@ function pkg() {
   const app = join(BUILD, "app");
   rmSync(BUILD, { recursive: true, force: true });
   mkdirSync(app, { recursive: true });
-  cpSync(SRC, app, { recursive: true, filter: (p) => !/demo-(feed\.js|video\.mp4)$/.test(p) });
+  cpSync(SRC, app, { recursive: true, filter: (p) => !/demo-(feed\.js|video\.mp4|loader\.js)$/.test(p) });
   const conf = readFileSync(join(SRC, "config.js"), "utf8").replace(/token:\s*""/, `token: "${token}"`).replace(/screen:\s*""/, 'screen: "tv"');
   if (!conf.includes(token)) throw new Error("Could not write the token into config.js");
   writeFileSync(join(app, "config.js"), conf);
