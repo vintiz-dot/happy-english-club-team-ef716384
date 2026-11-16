@@ -21,12 +21,15 @@ const FREEZE = '20261106120000_invoice_tuition_freeze.sql';
 const ENROL = '20261106090000_attendance_enrollment_guard.sql';
 const CORE = '20261114091000_d4_core_register.sql';
 const ROLLBACK2 = join(repo, 'scripts', 'ROLLBACK-d4-2-register.sql');
+const FEE = '20261114092000_d4_class_fee_history.sql';
+const ROLLBACK3 = join(repo, 'scripts', 'ROLLBACK-d4-3-class-fee.sql');
 const SUITES = {
   floors: { file: 'd4-floors.test.mjs', migs: [AUDIT, CANCEL, D1, D2, FLOORS, FREEZE] },
   carry: { file: 'd4-d2-carryover.test.mjs', migs: [AUDIT, CANCEL, D1, D2, FLOORS] },
   deployed: { file: 'd4-deployed-functions.test.mjs', migs: [AUDIT, CANCEL, D1, D2, FLOORS] },
   register: { file: 'd4-register.test.mjs', migs: [AUDIT, CANCEL, ENROL, D1, D2, FREEZE, FLOORS, CORE], args: [ROLLBACK2] },
   fnreg: { file: 'd4-functions-register.test.mjs', migs: [AUDIT, CANCEL, ENROL, D1, D2, FREEZE, FLOORS, CORE] },
+  fee: { file: 'd4-class-fee.test.mjs', migs: [AUDIT, CANCEL, ENROL, D1, D2, FREEZE, FLOORS, CORE, FEE], args: [ROLLBACK3] },
 };
 
 // [id, what it breaks, find (must occur exactly once), replace, suites]
@@ -198,6 +201,77 @@ export const MUTANTS = [
     "  IF (SELECT count(*) FROM pg_catalog.pg_proc p WHERE p.proname = v_name) <> 1\n     OR NOT EXISTS", "  IF NOT EXISTS", ['register'], CORE],
   ['C34', "any frame of the stack counts, not the outermost (dynamic SQL text can forge a frame line)",
     "v_lines[array_length(v_lines, 1)]", "(SELECT x FROM unnest(v_lines) x WHERE x ~ '^PL/pgSQL function (?:public\\.)?(end_enrollment|pause_enrollment|modify_enrollment_transfer|ai_action_undo|ai_action_apply|stars_sync_resolve_conflict)\\(' LIMIT 1)", ['register'], CORE],
+  // D4 step 2 (file 3, the dated class fee; docs/evidence/D4-build-2.md)
+  ['K01', "the fee resolver takes the newest row regardless of date",
+    "   WHERE h.class_id = p_class AND h.effective_from <= p_date\n", "   WHERE h.class_id = p_class\n", ['fee'], FEE],
+  ['K02', "a fee row need not start on the first of a month",
+    "CHECK (effective_from = DATE '1900-01-01' OR EXTRACT(DAY FROM effective_from) = 1)", "CHECK (true)", ['fee'], FEE],
+  ['K03', "refresh_pairs of a fee row include months before its date",
+    "     WHERE s.class_id = p_class AND s.date >= p_from AND (v_next IS NULL OR s.date < v_next)", "     WHERE s.class_id = p_class AND (v_next IS NULL OR s.date < v_next)", ['fee'], FEE],
+  ['K04', "the window runs past the next row",
+    "     WHERE s.class_id = p_class AND s.date >= p_from AND (v_next IS NULL OR s.date < v_next)", "     WHERE s.class_id = p_class AND s.date >= p_from", ['fee'], FEE],
+  ['K05', "the design's literal 'T0 passes': a raw T0 write by the service role leaves no override row",
+    "  RAISE EXCEPTION 'money_change_requires_checked_path' USING ERRCODE = 'HC120',\n    DETAIL = 'entity=class_fee; tier=' || v_tier",
+    "  IF v_tier = 0 THEN RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END; END IF;\n  RAISE EXCEPTION 'money_change_requires_checked_path' USING ERRCODE = 'HC120',\n    DETAIL = 'entity=class_fee; tier=' || v_tier", ['fee'], FEE],
+  ['K06', "the service role is let through on the history",
+    "  IF public._caller_lane() = 'owner' THEN\n    IF v_tier > 0 THEN\n      INSERT INTO public.money_change_events (kind, payload)\n      VALUES ('owner_lane', jsonb_build_object('table', 'class_fee_history'",
+    "  IF public._caller_lane() IN ('owner', 'service') THEN\n    IF v_tier > 0 THEN\n      INSERT INTO public.money_change_events (kind, payload)\n      VALUES ('owner_lane', jsonb_build_object('table', 'class_fee_history'", ['fee'], FEE],
+  ['K07', "the acknowledgement does not check the fee written",
+    "AND o.op = 'set' AND (o.change ->> 'session_rate_vnd')::int = NEW.session_rate_vnd)", "AND o.op = 'set')", ['fee'], FEE],
+  ['K08', "the acknowledgement does not check the op",
+    "         AND ((TG_OP <> 'DELETE' AND o.op = 'set' AND", "         AND ((TG_OP <> 'DELETE' AND", ['fee'], FEE],
+  ['K09', "the acknowledgement's tier is not compared (A-8)",
+    "  IF public._money_ack(ARRAY['class_fee'], v_class, NULL, v_from, NULL, v_tier) THEN", "  IF public._money_ack(ARRAY['class_fee'], v_class, NULL, v_from, NULL, 0) THEN", ['fee'], FEE],
+  ['K10', "the 1900 row may be deleted",
+    "  IF TG_OP = 'DELETE' AND OLD.effective_from = DATE '1900-01-01' THEN\n    RAISE", "  IF false THEN\n    RAISE", ['fee'], FEE],
+  ['K11', "a fee row may change class or month",
+    "  IF TG_OP = 'UPDATE' AND (OLD.class_id IS DISTINCT FROM NEW.class_id", "  IF false AND (OLD.class_id IS DISTINCT FROM NEW.class_id", ['fee'], FEE],
+  ['K12', "the mirror takes any value",
+    "  IF v_fee IS NOT NULL AND NEW.session_rate_vnd = v_fee THEN", "  IF true THEN", ['fee'], FEE],
+  ['K13', "the mirror guard fires on a save that sends the fee unchanged",
+    "  FOR EACH ROW WHEN (OLD.session_rate_vnd IS DISTINCT FROM NEW.session_rate_vnd)\n", "  FOR EACH ROW\n", ['fee'], FEE],
+  ['K14', "a fee change that moves no fee is still judged by its reach",
+    "  v_moves boolean := p_fee_before IS DISTINCT FROM p_fee_after;", "  v_moves boolean := true;", ['fee'], FEE],
+  ['K15', "the exec does not bring the mirror level",
+    "  UPDATE public.classes c SET session_rate_vnd = public.class_fee_on(c.id, v_today)\n   WHERE c.id = v_class", "  UPDATE public.classes c SET session_rate_vnd = c.session_rate_vnd\n   WHERE c.id = v_class", ['fee'], FEE],
+  ['K16', "the exec writes with the mirror's guard switched off",
+    "   WHERE t.tgrelid = 'public.classes'::regclass AND t.tgname = 'zz_class_fee_mirror_guard';\n  IF v_enabled IS DISTINCT FROM 'O' THEN",
+    "   WHERE t.tgrelid = 'public.classes'::regclass AND t.tgname = 'zz_class_fee_mirror_guard';\n  IF false THEN", ['fee'], FEE],
+  ['K17', "an Excused mark counts as reached",
+    "AND a.status::text IN ('Present', 'Absent', 'Late');", "AND a.status::text IN ('Present', 'Absent', 'Late', 'Excused');", ['fee'], FEE],
+  ['K18', "any trigger-made write passes (not only the baseline and the cascade)",
+    "  IF pg_trigger_depth() > 1 THEN\n    IF TG_OP = 'INSERT'", "  IF pg_trigger_depth() > 1 THEN\n    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\n    IF TG_OP = 'INSERT'", ['fee'], FEE],
+  ['K19', "the owner lane leaves no event",
+    "  IF public._caller_lane() = 'owner' THEN\n    IF v_tier > 0 THEN\n      INSERT INTO public.money_change_events (kind, payload)\n      VALUES ('owner_lane', jsonb_build_object('table', 'class_fee_history'",
+    "  IF public._caller_lane() = 'owner' THEN\n    IF false THEN\n      INSERT INTO public.money_change_events (kind, payload)\n      VALUES ('owner_lane', jsonb_build_object('table', 'class_fee_history'", ['fee'], FEE],
+  ['K20', "preflight no longer checks the 1b bodies",
+    "IS DISTINCT FROM r.want THEN", "IS DISTINCT FROM r.want AND false THEN", ['fee'], FEE],
+  ['K21', "preflight compares the raw md5 (a CRLF paste of 1b refused)",
+    "AND (SELECT md5(replace(p.prosrc, E'\\r', '')) FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig))", "AND (SELECT md5(p.prosrc) FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig))", ['fee'], FEE],
+  ['K22', "a fee function callable by authenticated",
+    "FROM PUBLIC, anon, authenticated, service_role;\n\nNOTIFY", "FROM PUBLIC, anon, authenticated, service_role;\nGRANT EXECUTE ON FUNCTION public.class_fee_on(uuid, date) TO authenticated;\n\nNOTIFY", ['fee'], FEE],
+  ['K23', "authenticated may insert into the history",
+    "GRANT SELECT ON public.class_fee_history TO authenticated;", "GRANT SELECT, INSERT ON public.class_fee_history TO authenticated;", ['fee'], FEE],
+  ['K24', "TRUNCATE of the history allowed",
+    "BEGIN\n  RAISE EXCEPTION 'money_change_refused' USING ERRCODE = 'HC121',\n    DETAIL = 'code=fee_history_truncate", "BEGIN\n  RETURN NULL;\n  RAISE EXCEPTION 'money_change_refused' USING ERRCODE = 'HC121',\n    DETAIL = 'code=fee_history_truncate", ['fee'], FEE],
+  ['K25', "the baseline is not inserted for existing classes",
+    "SELECT c.id, DATE '1900-01-01', COALESCE(c.session_rate_vnd, 0), 'Baseline: the fee when dated fees were installed'\n  FROM public.classes c\n WHERE NOT EXISTS",
+    "SELECT c.id, DATE '1900-01-01', COALESCE(c.session_rate_vnd, 0), 'Baseline: the fee when dated fees were installed'\n  FROM public.classes c\n WHERE false AND NOT EXISTS", ['fee'], FEE],
+  // the functions (mutated in place for the run, restored after)
+  ['K26', "calculate-tuition prices every lesson at the mirror again",
+    "      const defaultRate = classFeeOn(feeHistory, s.class_id, s.date, Number(classData?.session_rate_vnd ?? 0));", "      const defaultRate = Number(classData?.session_rate_vnd ?? 0);", ['fee'], 'supabase/functions/calculate-tuition/index.ts'],
+  ['K27', "calculate-tuition-bulk prices every lesson at the mirror again",
+    "          const defaultRate = classFeeOn(feeHistory, s.class_id, s.date, Number(classInfo?.session_rate_vnd ?? 0));", "          const defaultRate = Number(classInfo?.session_rate_vnd ?? 0);", ['fee'], 'supabase/functions/calculate-tuition-bulk/index.ts'],
+  ['K28', "projected-per-class at the mirror again",
+    "        sum + classFeeOn(feeHistory, enrollment.class_id, s.date, enrollment.classes?.session_rate_vnd || 0), 0);", "        sum + (enrollment.classes?.session_rate_vnd || 0), 0);", ['fee'], 'supabase/functions/_lib/projected-per-class.ts'],
+  ['K29', "classFeeOn takes the newest row regardless of the lesson's date",
+    "  for (const r of rows) if (r.from <= d) return r.fee;", "  return rows[0].fee;", ['fee'], 'supabase/functions/_lib/class-fee.ts'],
+  ['K30', "any history read error is taken for 'no table' (the past silently at today's fee)",
+    "  if (!error) return false;\n  const code", "  return true;\n  const code", ['fee'], 'supabase/functions/_lib/class-fee.ts'],
+  ['K31', "a missing table by code alone is not recognised",
+    "  if (code === \"42P01\" || code === \"PGRST205\") return true;", "  if (false) return true;", ['fee'], 'supabase/functions/_lib/class-fee.ts'],
+  ['K32', "the class breakdown reports the mirror, not the month's fee",
+    "      const sessionRate = classFeeOn(feeHistory, classId, startDate, Number(classData?.session_rate_vnd ?? 0));", "      const sessionRate = Number(classData?.session_rate_vnd ?? 0);", ['fee'], 'supabase/functions/calculate-tuition/index.ts'],
 ];
 
 const D4_LITERALS = [/('[0-9a-f]{32}'\) THEN\s+-- this file)/g];
@@ -230,6 +304,7 @@ const only = process.argv.slice(2);
 const original = readFileSync(migPath(FLOORS), 'utf8').replace(/\r\n/g, '\n');
 const results = [];
 const coreOriginal = readFileSync(migPath(CORE), 'utf8').replace(/\r\n/g, '\n');
+const feeOriginal = readFileSync(migPath(FEE), 'utf8').replace(/\r\n/g, '\n');
 for (const [id, what, find, repl, suites, file] of MUTANTS) {
   if (only.length && !only.includes(id)) continue;
   if (file && file.startsWith('supabase/functions/')) {
@@ -258,14 +333,15 @@ for (const [id, what, find, repl, suites, file] of MUTANTS) {
     console.log(`${id} ${verdict}`);
     continue;
   }
-  if (file === CORE) {
-    const n = coreOriginal.split(find).length - 1;
+  if (file === CORE || file === FEE) {
+    const text0 = file === CORE ? coreOriginal : feeOriginal;
+    const n = text0.split(find).length - 1;
     if (n !== 1) { results.push({ id, what, verdict: `BAD MUTANT (pattern found ${n} times)` }); console.log(`${id} BAD MUTANT (${n})`); continue; }
     const p = resolve(tmpdir(), `d4-mutant-${id}-${process.pid}.sql`);
-    writeFileSync(p, coreOriginal.replace(find, () => repl));
+    writeFileSync(p, text0.replace(find, () => repl));
     const by = [];
     for (const s of suites) {
-      const r = await runSuite(SUITES[s], p, CORE);
+      const r = await runSuite(SUITES[s], p, file);
       if (r.code !== 0) {
         const firstFail = r.out.split('\n').find((l) => l.includes('FAIL')) ?? r.out.split('\n').slice(-3).join(' ');
         by.push(`${s}: ${firstFail.trim().slice(0, 160)}`);

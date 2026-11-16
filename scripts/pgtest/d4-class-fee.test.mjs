@@ -395,6 +395,19 @@ await section('raw writes to the history', async () => {
   ok('nor change class - HC121', r.code === 'HC121', r);
   r = await tryIt(() => asSuper(`DELETE FROM class_fee_history WHERE class_id=$1 AND effective_from='1900-01-01'`, [C]));
   ok('the 1900 row is never deleted - HC121 baseline_row, even for the owner', r.code === 'HC121' && /baseline_row/.test(r.detail ?? ''), r);
+  // A write made by some OTHER trigger (depth 2) is judged like any other:
+  // only the baseline of a new class and the cascade of a deleted one pass.
+  await db.exec(`CREATE TABLE IF NOT EXISTS public.zz_fee_relay(class_id uuid, effective_from date, fee int);
+    CREATE OR REPLACE FUNCTION public.zz_fee_relay_trg() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$
+    BEGIN INSERT INTO public.class_fee_history(class_id, effective_from, session_rate_vnd) VALUES (NEW.class_id, NEW.effective_from, NEW.fee); RETURN NULL; END $f$;
+    DROP TRIGGER IF EXISTS zz_fee_relay ON public.zz_fee_relay;
+    CREATE TRIGGER zz_fee_relay AFTER INSERT ON public.zz_fee_relay FOR EACH ROW EXECUTE FUNCTION public.zz_fee_relay_trg();
+    GRANT ALL ON public.zz_fee_relay TO service_role`);
+  r = await tryIt(() => asService(`INSERT INTO zz_fee_relay VALUES ($1,$2,1)`, [C, months.next]));
+  ok('a fee row written by some other trigger (depth 2) on the service lane -> HC120', r.code === 'HC120', r);
+  r = await tryIt(() => asService(`INSERT INTO zz_fee_relay VALUES ($1,'1900-01-01',1)`, [C]));
+  ok('  a second "baseline" for a class that has rows, by some other trigger -> refused too (the 1900 row exists)', r.code === '23505' || r.code === 'HC120', r);
+  await db.exec(`DROP TABLE zz_fee_relay; DROP FUNCTION zz_fee_relay_trg()`);
 });
 
 await section('the acknowledgement covers exactly the checked change', async () => {
@@ -443,6 +456,9 @@ await section('the mirror: classes.session_rate_vnd is "the fee now"', async () 
   await asSuper(`UPDATE classes SET session_rate_vnd = 1 WHERE id=$1`, [C]);
   ok('the owner may (recorded: one owner_lane event naming the column)', (await mirror(C)) === 1 &&
      (await events('owner_lane')).length === ev0 + 1 && (await events('owner_lane')).at(-1).payload.column === 'session_rate_vnd');
+  r = await tryIt(() => asAdmin(`UPDATE classes SET name = 'C again', session_rate_vnd = session_rate_vnd WHERE id=$1`, [C]));
+  ok('with the mirror out of level, saving the other settings (fee sent unchanged) still passes: the guard fires only on a change',
+     r.ok !== undefined && (await mirror(C)) === 1, r);
   r = await tryIt(() => asAdmin(`UPDATE classes SET session_rate_vnd = public_fee FROM (SELECT 200000 AS public_fee) q WHERE id=$1`, [C]));
   ok('an admin bringing it back level with the history for today -> passes (prices nothing new)', r.ok !== undefined && (await mirror(C)) === 200000, r);
   const neu = await mkClass(175000);
