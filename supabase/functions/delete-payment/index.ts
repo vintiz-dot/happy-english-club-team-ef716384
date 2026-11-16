@@ -39,6 +39,13 @@ interface DeletePaymentRequest {
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 
 function keyKind(key: string, id: string): 'allocation' | 'leftover' | null {
+  // scripts/CREDIT-past-unapplied-cash.sql (owner, OVERPAYMENT) moved a past
+  // payment's unapplied cash onto a bill: its cash leg (the marker key, AR
+  // credited on the month of the bill it used) put money on that bill, so it
+  // comes off with the payment; its reclass of the old pair is ledger-only.
+  // Checked first: 'past-leftover-credit-<id>' contains no other prefix.
+  if (key === `past-leftover-credit-${id}`) return 'allocation';
+  if (key === `past-leftover-credit-${id}-reclass`) return 'leftover';
   const own = (prefix: string) => key === `${prefix}-${id}` || key.startsWith(`${prefix}-${id}-`);
   if (own('payment') || own('family-payment') || own('smart-family')) return 'allocation';
   if (own('family-contribution') || own('family-credit') || own('smart-family-contribution') || own('smart-family-credit')) return 'leftover';

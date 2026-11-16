@@ -65,6 +65,9 @@ const SUITES = [
   // is a 410 stub that touches nothing, nothing can create either any more,
   // and the preflight for dropping the write-off reader counts zero.
   { name: "removed money features", file: "removed-money-features.test.mjs", expect: 37, migrations: [] },
+  // scripts/CREDIT-past-unapplied-cash.sql (owner: credit the past leftovers) run for real,
+  // with the real smart-family-payment and delete-payment over the same pglite.
+  { name: "past leftover credit", file: "past-leftover-credit.test.mjs", expect: 29, migrations: [] },
   // The admin tuition list reads the calculator instead of summing invoice
   // rows itself: both real handlers beside the old browser sum, case by case.
   { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },
