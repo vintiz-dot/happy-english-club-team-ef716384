@@ -17,7 +17,7 @@
 -- WHAT THIS ADDS
 --   table     class_fee_history (class_id, effective_from, session_rate_vnd,
 --             note, created_at, created_by); plain UNIQUE (class_id,
---             effective_from); RLS: staff read, NO write policy, SELECT only
+--             effective_from); RLS: admins read, NO write policy, SELECT only
 --             for authenticated
 --   rows      ONLY in the new table: a 1900-01-01 row per class, with the
 --             class's fee today. No class, lesson, mark or bill is touched.
@@ -169,10 +169,13 @@ CREATE TABLE IF NOT EXISTS public.class_fee_history (
 );
 
 ALTER TABLE public.class_fee_history ENABLE ROW LEVEL SECURITY;
+-- Admins only (review F-3): the screen is admin-only and the calculators use
+-- the service key; "holds the teacher role" is not a scope (root AGENTS.md).
 DROP POLICY IF EXISTS class_fee_history_staff_read ON public.class_fee_history;
-CREATE POLICY class_fee_history_staff_read ON public.class_fee_history
+DROP POLICY IF EXISTS class_fee_history_admin_read ON public.class_fee_history;
+CREATE POLICY class_fee_history_admin_read ON public.class_fee_history
   FOR SELECT TO authenticated
-  USING (public.has_role(auth.uid(), 'admin'::public.app_role) OR public.has_role(auth.uid(), 'teacher'::public.app_role));
+  USING (public.has_role(auth.uid(), 'admin'::public.app_role));
 -- No INSERT / UPDATE / DELETE policy and no such grant for authenticated: the
 -- rows are written by the checked op and the baseline trigger only. GRANTs
 -- are explicit (20260712023825 revoked the defaults on public).

@@ -257,6 +257,8 @@ export const MUTANTS = [
   ['K25', "the baseline is not inserted for existing classes",
     "SELECT c.id, DATE '1900-01-01', COALESCE(c.session_rate_vnd, 0), 'Baseline: the fee when dated fees were installed'\n  FROM public.classes c\n WHERE NOT EXISTS",
     "SELECT c.id, DATE '1900-01-01', COALESCE(c.session_rate_vnd, 0), 'Baseline: the fee when dated fees were installed'\n  FROM public.classes c\n WHERE false AND NOT EXISTS", ['fee'], FEE],
+  ['K34', "F-3 undone: teachers read every class's fee history",
+    "  USING (public.has_role(auth.uid(), 'admin'::public.app_role));", "  USING (public.has_role(auth.uid(), 'admin'::public.app_role) OR public.has_role(auth.uid(), 'teacher'::public.app_role));", ['fee'], FEE],
   // the functions (mutated in place for the run, restored after)
   ['K26', "calculate-tuition prices every lesson at the mirror again",
     "      const defaultRate = classFeeOn(feeHistory, s.class_id, s.date, Number(classData?.session_rate_vnd ?? 0));", "      const defaultRate = Number(classData?.session_rate_vnd ?? 0);", ['fee'], 'supabase/functions/calculate-tuition/index.ts'],

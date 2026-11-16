@@ -151,7 +151,8 @@ await section('install', async () => {
         AND pg_get_constraintdef(oid) = 'UNIQUE (class_id, effective_from)'`)).rows[0].n === 1);
   ok('the paste fails fast: SET LOCAL lock_timeout = \'5s\' right after BEGIN', /BEGIN;\s*(--[^\n]*\n\s*)*SET LOCAL lock_timeout = '5s';/.test(sqlOf(feeF)));
   const n = async (uid) => (await as(uid, 'authenticated', 'authenticated', `SELECT count(*)::int n FROM class_fee_history`)).rows[0].n;
-  ok('staff read the history (admin, teacher); a parent reads none', (await n(ADMIN)) === 2 && (await n(TEACHER)) === 2 && (await n(PARENT)) === 0);
+  ok('F-3: admins read the history; a teacher and a parent read none', (await n(ADMIN)) === 2 && (await n(TEACHER)) === 0 && (await n(PARENT)) === 0);
+  ok('  the one policy names no role but admin (no has_role(.., \'teacher\'))', !/teacher/.test((await db.query(`SELECT qual FROM pg_policies WHERE tablename = 'class_fee_history'`)).rows[0].qual));
 });
 
 // ------------------------------------------------------------ fixtures

@@ -29,7 +29,7 @@
 -- functions keep reading class_fee_history, which stays.
 --
 -- WHAT STAYS, on purpose (scripts/pgtest/d4-class-fee.test.mjs checks it):
---   * class_fee_history with its rows, RLS, staff-read policy, its no-truncate
+--   * class_fee_history with its rows, RLS, admin-read policy, its no-truncate
 --     and audit triggers: the record of which fee held from when. Never dropped.
 --   * classes.class_fee_baseline (new classes still get their 1900 row, so a
 --     re-paste of the migration finds every class covered).
