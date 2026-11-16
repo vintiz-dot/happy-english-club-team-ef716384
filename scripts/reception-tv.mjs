@@ -4,6 +4,7 @@
 //   node scripts/reception-tv.mjs setup      one-off: install the LG CLI, add the TV, fetch its key
 //   node scripts/reception-tv.mjs package    build the .ipk (writes the display token into it)
 //   node scripts/reception-tv.mjs install    package + install + launch on the TV
+//   node scripts/reception-tv.mjs install-later  package now; the helper installs it when the TV is next on
 //   node scripts/reception-tv.mjs pair       one-off: accept the prompt on the TV so the helper may launch apps
 //   node scripts/reception-tv.mjs check      one pass of the helper (what `watch` does every few minutes)
 //   node scripts/reception-tv.mjs watch      run the helper for ever (Task Scheduler / systemd)
@@ -192,6 +193,36 @@ function ssap(requests, { pairing = false, timeoutMs = 15000 } = {}) {
   });
 }
 
+/**
+ * Find the TV by its MAC: ask the network who runs webOS (SSDP), which also
+ * fills the ARP table, then pick the responder whose MAC is the TV's.
+ * Returns its address, or null when it is not on the network (off).
+ */
+async function findTv() {
+  const responders = await new Promise((done) => {
+    const found = new Set();
+    const s = createSocket({ type: "udp4", reuseAddr: true });
+    const msg = Buffer.from('M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: "ssdp:discover"\r\nMX: 2\r\nST: ssdp:all\r\n\r\n');
+    s.on("message", (m, r) => { if (/webos/i.test(String(m))) found.add(r.address); });
+    s.on("error", () => { try { s.close(); } catch {} done(found); });
+    s.bind(() => {
+      for (let i = 0; i < 3; i++) setTimeout(() => s.send(msg, 1900, "239.255.255.250"), i * 300);
+      setTimeout(() => { try { s.close(); } catch {} done(found); }, 4000);
+    });
+  });
+  if (!responders.size) return null;
+  const mac = cfg.tvMac.toLowerCase().replace(/[:-]/g, "");
+  const table = platform() === "win32"
+    ? spawnSync("arp", ["-a"], { encoding: "utf8" }).stdout ?? ""
+    : spawnSync("ip", ["neigh"], { encoding: "utf8" }).stdout ?? "";
+  for (const line of table.split(/\r?\n/)) {
+    const ip = line.match(/(\d+\.\d+\.\d+\.\d+)/)?.[1];
+    const m = line.match(/([0-9a-f]{2}[:-]){5}[0-9a-f]{2}/i)?.[0]?.toLowerCase().replace(/[:-]/g, "");
+    if (ip && m === mac && responders.has(ip)) return ip;
+  }
+  return null;
+}
+
 function wake() {
   const mac = cfg.tvMac.split(/[:-]/).map((h) => parseInt(h, 16));
   const packet = Buffer.alloc(102, 0xff);
@@ -272,10 +303,34 @@ async function check() {
     const [info] = await ssap([["ssap://com.webos.applicationManager/getForegroundAppInfo"]]);
     front = info?.appId ?? "";
   } catch (e) {
+    // The router may have given the TV a new address (it did on 16 Nov):
+    // look for it by its MAC before deciding it is off.
+    const moved = await findTv().catch(() => null);
+    if (moved && moved !== cfg.tvIp) {
+      log(`TV found at a new address ${moved} (was ${cfg.tvIp})`);
+      cfg.tvIp = moved;
+      saveCfg();
+      try { ares("ares-setup-device", ["--modify", DEVICE, "--info", `host=${moved}`]); } catch (err) { log(`could not update the LG tools: ${err.message}`); }
+      return; // the next pass talks to it there
+    }
     log(`TV not answering (${e.message}); sending Wake-on-LAN`);
     await wake();
     saveState();
     return; // the next pass launches the app once the TV is up
+  }
+  // An update packaged while the TV was off (`install-later`) goes on now.
+  if (state.pendingInstall && existsSync(state.pendingInstall)) {
+    try {
+      ares("ares-install", ["--device", DEVICE, state.pendingInstall], { timeout: 300000 });
+      ares("ares-launch", ["--device", DEVICE, APP_ID]);
+      log(`display updated (${state.pendingInstall.split(/[\\/]/).pop()})`);
+      state.installedAt = new Date().toISOString();
+      delete state.pendingInstall;
+      saveState();
+      return;
+    } catch (e) {
+      log(`display update failed, will retry: ${e.message.split("\n").slice(-1)[0]}`);
+    }
   }
   if (front !== APP_ID) {
     try { await ssap([["ssap://system.launcher/launch", { id: APP_ID }]]); log(`display relaunched (was: ${front || "home screen"})`); }
@@ -423,6 +478,15 @@ try {
   }
   else if (cmd === "package") pkg();
   else if (cmd === "install") install();
+  else if (cmd === "install-later") {
+    // Package now; the helper installs it the next time the TV is reachable.
+    const ipk = pkg();
+    const keep = join(HOME, "pending.ipk");
+    cpSync(ipk, keep);
+    state.pendingInstall = keep;
+    saveState();
+    console.log(`The helper installs this on the TV when it next comes on: ${keep}`);
+  }
   else if (cmd === "pair") { console.log("Look at the TV and accept the prompt with the remote…"); await ssap([], { pairing: true }); console.log("Paired."); }
   else if (cmd === "check") await check();
   else if (cmd === "youtube-now") { feedCache.at = 0; await youtubeBreak({ force: true }); }

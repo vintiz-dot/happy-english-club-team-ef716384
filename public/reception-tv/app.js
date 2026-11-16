@@ -148,13 +148,19 @@
       var extra = ofKind("course");
       for (var x = 0; x < extra.length; x++) list.push({ t: ["Our Programmes", "Chương trình học"], html: feature(extra[x], "Programme · Khoá học") });
     }
+    // Albums and videos are spread through the loop (see the end of build).
+    // Videos take turns: VIDEOS_PER_LOOP a loop, moving on each time round.
+    var media = [];
     if (on("albums")) {
       var al = filter(ofKind("album"), function (x) { return x.images && x.images.length; });
-      for (var ai = 0; ai < al.length; ai++) list.push(albumScene(al[ai]));
+      for (var ai = 0; ai < al.length; ai++) media.push(albumScene(al[ai]));
     }
+    var vids = [];
     if (on("videos")) {
       var vs = filter(ofKind("video"), function (x) { return !!x.video_url; });
-      for (var vi = 0; vi < vs.length; vi++) list.push(videoScene(vs[vi]));
+      var take = Math.min(VIDEOS_PER_LOOP, vs.length);
+      for (var vi = 0; vi < take; vi++) vids.push(videoScene(vs[(videoOffset + vi) % vs.length]));
+      videoCount = vs.length;
     }
     if (on("photos")) {
       var ph = filter(ofKind("photo"), function (p) { return !!p.image_url; });
@@ -169,6 +175,21 @@
       var fb = chunk(f.feedback || [], 2);
       if (!fb.length) fb = [[]];
       for (var q = 0; q < fb.length; q++) list.push({ t: ["Families Say", "Phụ huynh nói gì"], html: feedback(f, fb[q]), secs: 1.3 });
+    }
+    // Mix: albums and videos alternate, one after every two other scenes.
+    var mix = [], mi = 0, vj = 0;
+    while (mi < media.length || vj < vids.length) {
+      if (mi < media.length) mix.push(media[mi++]);
+      if (vj < vids.length) mix.push(vids[vj++]);
+    }
+    if (mix.length) {
+      var core = list, out = [], gap = Math.max(1, Math.floor(core.length / (mix.length + 1))), k = 0;
+      for (var ci = 0; ci < core.length; ci++) {
+        out.push(core[ci]);
+        if ((ci + 1) % gap === 0 && k < mix.length && ci > 0) out.push(mix[k++]);
+      }
+      while (k < mix.length) out.push(mix[k++]);
+      list = out;
     }
     if (!list.length) list.push({ t: ["Welcome", "Chào mừng"], html: welcome(f) });
     return list;
@@ -297,13 +318,14 @@
   // A slideshow: up to 12 pictures a pass (an album keeps its place between
   // passes), about 6 s each with a slow pan, captions along the bottom.
   var albumOffset = {};
+  var VIDEOS_PER_LOOP = 4, videoOffset = 0, videoCount = 0;
   var PANS = ["pan-a", "pan-b", "pan-c", "pan-d"];
   function albumScene(a) {
     var all = a.images, per = Math.min(12, all.length);
     var start = albumOffset[a.id] || 0;
     var pics = [];
     for (var i = 0; i < per; i++) pics.push(all[(start + i) % all.length]);
-    albumOffset[a.id] = (start + per) % all.length;
+    var nextStart = (start + per) % all.length;
     var slides = "";
     for (var j = 0; j < pics.length; j++) {
       slides += '<div class="slide' + (j === 0 ? " show " + PANS[0] : "") + '"><img src="' + esc(pics[j].url) + '" alt=""></div>';
@@ -316,6 +338,7 @@
     return {
       t: ["Life at HEC", "Cuộc sống tại HEC"], html: html, maxMs: (pics.length * 6 + 6) * 1000,
       play: function (el, done) {
+        albumOffset[a.id] = nextStart; // the next pass shows the next pictures
         var k = 0, slidesEl = el.getElementsByClassName("slide");
         var cap = el.getElementsByClassName("album-caption")[0], cnt = el.getElementsByClassName("album-count")[0];
         var step = pics.length === 1 ? 8000 : 6000;
@@ -453,6 +476,12 @@
   function next() {
     if (!scenes.length) return;
     stopPlaying();
+    if (!HOLD && idx + 1 >= scenes.length && videoCount > VIDEOS_PER_LOOP && feed) {
+      // round again: the next videos take their turn
+      videoOffset = (videoOffset + VIDEOS_PER_LOOP) % videoCount;
+      scenes = build(feed);
+      idx = -1;
+    }
     idx = HOLD ? Math.min(scenes.length, +HOLD) - 1 : (idx + 1) % scenes.length;
     var sc = scenes[idx];
     var back = front === "scene-a" ? "scene-b" : "scene-a";
@@ -508,6 +537,8 @@
   }
 
   // ------------------------------------------------------------ start
+  // For checking the loop from the inspector: the scene titles in order.
+  window.__hecSceneTitles = function () { var o = []; for (var i = 0; i < scenes.length; i++) o.push(scenes[i].t[0]); return o; };
   window.addEventListener("resize", fit);
   fit();
   tick();
