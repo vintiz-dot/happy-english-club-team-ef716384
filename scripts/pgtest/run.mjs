@@ -417,6 +417,12 @@ const SUITES = [
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116095000_homework_grade_staff_only.sql"],
   },
   {
+    name: "child writes (F-19)",
+    file: "s2-f19-child-writes.test.mjs",
+    expect: 32,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261116096000_child_writes_own_rows_only.sql"],
+  },
+  {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
     migrations: ["20261022090000_assistant_absence_on_a_session.sql"],

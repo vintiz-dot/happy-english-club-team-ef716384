@@ -96,3 +96,20 @@ DROP TRIGGER IF EXISTS homework_submissions_grade_guard ON public.homework_submi
 DROP FUNCTION IF EXISTS public.homework_submissions_grade_guard();
 COMMIT;
 ```
+
+<!-- rollback F-19 -->
+```sql
+-- The two word-list policies as 20260801090000 created them, and no size
+-- limit on homework / submissions. THIS REOPENS F-19.
+BEGIN;
+DROP POLICY IF EXISTS "vocab_insert_own" ON public.student_vocabulary_entries;
+CREATE POLICY "vocab_insert_own" ON public.student_vocabulary_entries
+  FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "vocab_update_own_or_linked" ON public.student_vocabulary_entries;
+CREATE POLICY "vocab_update_own_or_linked" ON public.student_vocabulary_entries
+  FOR UPDATE TO authenticated
+  USING (user_id = auth.uid() OR (student_id IS NOT NULL AND public.is_linked_student(auth.uid(), student_id)))
+  WITH CHECK (user_id = auth.uid() OR (user_id IS NULL AND student_id IS NOT NULL AND public.is_linked_student(auth.uid(), student_id)));
+UPDATE storage.buckets SET file_size_limit = NULL WHERE id IN ('homework', 'submissions') AND file_size_limit = 52428800;
+COMMIT;
+```
