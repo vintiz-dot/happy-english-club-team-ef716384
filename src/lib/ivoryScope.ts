@@ -62,6 +62,15 @@ export const IVORY_ROUTES: IvoryRoute[] = [
   // Shared with the admin's tuition list (staff area, not flipped yet) and a
   // teacher's "access denied": only the student / parent view is in the system.
   { path: "/tuition", roles: ["student", "family"] },
+
+  // parent + public (R23)
+  { path: "/family/dashboard" },
+  { path: "/watch/:token" },
+  { path: "/claim" },
+  { path: "/auth" },
+  { path: "/auth/reset-password" },
+  // "/" is also the teacher hub (staff area): only the family hub is in the system.
+  { path: "/", roles: ["family"] },
 ];
 
 const trimSlash = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p);
