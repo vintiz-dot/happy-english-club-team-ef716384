@@ -95,7 +95,7 @@ function Grid({ ids, labels, current, onPick }: { ids: number[]; labels?: string
           onClick={() => onPick(id)}
           aria-label={labels?.[i] ? `Use the picture "${labels[i]}"` : `Use picture ${i + 1}`}
           aria-pressed={id === current}
-          className={`flex min-h-hec-target min-w-0 flex-col items-center gap-1 rounded-hec-md border bg-hec-raised p-2 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${id === current ? "border-hec-brass bg-hec-sunken" : "border-hec-line"}`}
+          className={`flex min-h-hec-target min-w-0 flex-col items-center gap-1 rounded-hec-md border p-2 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring ${id === current ? "border-hec-brass bg-hec-brass/15" : "border-hec-line bg-hec-raised"}`}
         >
           <img src={pictureUrl(id)} alt="" loading="lazy" className="h-16 w-16 object-contain" />
           {labels?.[i] && <span className="text-hec-caption text-hec-ink-soft truncate max-w-full">{labels[i]}</span>}
