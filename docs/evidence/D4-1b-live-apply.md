@@ -1,6 +1,6 @@
 # D4 step 1b - live apply, functions half (Step 4 and Step 5 of D4-1b-live-apply-brief.md)
 
-Where I am / next step: guarded-change-refresh (v2) and repair-attendance (v4) live and verified; next step is deploying mark-attendance.
+Where I am / next step: all three functions live and read back identical; next step is the Step 5 probes.
 
 Live project `aswgmbefikhsnhogtryv` (confirmed with get_project_url). Steps 1-3 (migration) were done earlier by the conductor; no migration is applied here. All times Hanoi (UTC+7).
 
@@ -41,3 +41,8 @@ Note: 09:01 Hanoi on a Monday; the brief prefers outside teaching hours. Proceed
 
 - 09:11 deployed: v3 -> v4. verify_jwt true; entrypoint repair-attendance/index.ts; files: repair-attendance/index.ts, _lib/auth.ts, _lib/session-guard.ts, _lib/money-guard.ts.
 - v4 read-back: all four EQUAL (0a5db73e..., 879142b6..., 9046deec..., 5fab2eca...). VERDICT: identical, first attempt.
+
+## Step 4c - mark-attendance - 2026-11-16 09:14 to 09:15
+
+- 09:14 deployed: v3 -> v4. verify_jwt true; entrypoint mark-attendance/index.ts; files: mark-attendance/index.ts, _lib/rate-limit.ts, _lib/attendance-effects.ts, _lib/session-guard.ts, _lib/money-guard.ts.
+- v4 read-back: all five EQUAL (3963244d..., aad3d996..., 597d0671..., 9046deec..., 5fab2eca...). VERDICT: identical, first attempt.
