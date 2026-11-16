@@ -66,10 +66,14 @@ Deno.serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const dryRun = url.searchParams.get('dryRun') === '1';
+    const dryRunParam = url.searchParams.get('dryRun') === '1';
     
     // Input validation
     const requestBody = await req.json();
+    // The screen's "Dry run" box travels in the body (supabase-js cannot add
+    // a query string to an invoke), the query parameter is kept for scripts.
+    // Either one makes it a dry run: nothing is written.
+    const dryRun = dryRunParam || requestBody?.dryRun === true;
     const validationResult = ImportDataSchema.safeParse(requestBody);
     
     if (!validationResult.success) {

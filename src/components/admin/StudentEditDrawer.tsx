@@ -13,6 +13,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { inputDbErrorText, isCheckedPathRefusal } from "@/lib/moneyInputs";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 const NO_FAMILY = "__none__";
 
@@ -83,37 +86,68 @@ export function StudentEditDrawer({ student, open, onOpenChange }: any) {
     onError: (error: any) => toast.error(error.message || "Failed to create family"),
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async () => {
-      const payload = {
-        full_name: formData.full_name.trim(),
-        email: formData.email.trim() || null,
-        phone: formData.phone.trim() || null,
-        notes: formData.notes.trim() || null,
-        is_active: formData.is_active,
-        family_id: formData.family_id === NO_FAMILY ? null : formData.family_id,
-        date_of_birth: formData.date_of_birth ? format(formData.date_of_birth, "yyyy-MM-dd") : null,
-      };
+  // D4 step 3B (G-19): the family is a money input (the sibling discount of
+  // every child of both families can move), so a change of family goes
+  // through the checked path as the signed-in admin first - at once when
+  // nothing billed is reached, with a reason when it is - and the other
+  // fields are saved after it.
+  const saveFields = async () => {
+    const payload = {
+      full_name: formData.full_name.trim(),
+      email: formData.email.trim() || null,
+      phone: formData.phone.trim() || null,
+      notes: formData.notes.trim() || null,
+      is_active: formData.is_active,
+      date_of_birth: formData.date_of_birth ? format(formData.date_of_birth, "yyyy-MM-dd") : null,
+    };
 
-      const { data, error } = await supabase
-        .from("students")
-        .update(payload)
-        .eq("id", student.id)
-        .select("id");
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        throw new Error("No changes were saved — your account may not have permission to edit this student.");
+    const { data, error } = await supabase
+      .from("students")
+      .update(payload)
+      .eq("id", student.id)
+      .select("id");
+    if (error) {
+      // deactivating ends the child's enrolments; with this month's bill signed off that needs a reason
+      throw new Error(isCheckedPathRefusal(error) && !formData.is_active
+        ? "This child's bill for this month is already signed off. Deactivate them from the Students list, where the reason is asked for."
+        : inputDbErrorText(error, "Failed to update student"));
+    }
+    if (!data || data.length === 0) {
+      throw new Error("No changes were saved — your account may not have permission to edit this student.");
+    }
+  };
+  const saved = () => {
+    toast.success("Student updated successfully");
+    queryClient.invalidateQueries({ queryKey: ["student-detail", student.id] });
+    queryClient.invalidateQueries({ queryKey: ["student-family", student.id] });
+    queryClient.invalidateQueries({ queryKey: ["students-list"] });
+    queryClient.invalidateQueries({ queryKey: ["students"] });
+    queryClient.invalidateQueries({ queryKey: ["families-list"] });
+    queryClient.invalidateQueries({ queryKey: ["family-detail"] });
+    onOpenChange(false);
+  };
+  const money = useMoneyInput(async () => {
+    try {
+      await saveFields();
+      saved();
+    } catch (error: any) {
+      toast.error(error.message || "The family was changed, but the other fields were not saved");
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (): Promise<"done" | "dialog"> => {
+      const family = formData.family_id === NO_FAMILY ? null : formData.family_id;
+      if (family !== (student.family_id ?? null)) {
+        const r = await money.run({ entity: "family_link", op: "set_family", args: { student_id: student.id, family_id: family } });
+        if (r.status === "refused") throw new Error(r.message);
+        if (r.status === "dialog") return "dialog";     // confirming the dialog saves the other fields
       }
+      await saveFields();
+      return "done";
     },
-    onSuccess: () => {
-      toast.success("Student updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["student-detail", student.id] });
-      queryClient.invalidateQueries({ queryKey: ["student-family", student.id] });
-      queryClient.invalidateQueries({ queryKey: ["students-list"] });
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      queryClient.invalidateQueries({ queryKey: ["families-list"] });
-      queryClient.invalidateQueries({ queryKey: ["family-detail"] });
-      onOpenChange(false);
+    onSuccess: (state) => {
+      if (state === "done") saved();
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update student");
@@ -262,6 +296,7 @@ export function StudentEditDrawer({ student, open, onOpenChange }: any) {
           </Button>
         </form>
       </SheetContent>
+      <MoneyInputDialog guard={money.guard} subject={student?.full_name} names={student?.id ? { [student.id]: student.full_name } : undefined} />
     </Sheet>
   );
 }

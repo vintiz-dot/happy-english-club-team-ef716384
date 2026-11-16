@@ -12,12 +12,23 @@ import { FamilyLinkDialog } from "@/components/admin/FamilyLinkDialog";
 import { FamilyMembersManager } from "@/components/admin/FamilyMembersManager";
 import { toast } from "sonner";
 import { useIvory } from "@/hooks/useIvory";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 const FamilyDetail = () => {
   const ivory = useIvory();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+  // D4 step 3B (G-19): removing a child from the family is a checked change
+  // made as the signed-in admin; it asks for a reason when a billed month of
+  // the child or a sibling is reached.
+  const removed = () => {
+    toast.success("Student removed from family");
+    queryClient.invalidateQueries({ queryKey: ["family-detail", id] });
+    queryClient.invalidateQueries({ queryKey: ["family-candidates"] });
+  };
+  const money = useMoneyInput(removed);
 
   // Children whose sibling discount is on hold, and until when. Its own
   // query, not part of the family one: before the column exists (the
@@ -228,17 +239,13 @@ const FamilyDetail = () => {
                           variant={ivory ? "destructive-quiet" : "ghost"}
                           size="sm"
                           onClick={async () => {
-                            const { error } = await supabase
-                              .from("students")
-                              .update({ family_id: null })
-                              .eq("id", student.id);
-                            if (error) {
-                              toast.error(error.message);
-                            } else {
-                              toast.success("Student removed from family");
-                              queryClient.invalidateQueries({ queryKey: ["family-detail", id] });
-                              queryClient.invalidateQueries({ queryKey: ["family-candidates"] });
-                            }
+                            const r = await money.run({
+                              entity: "family_link",
+                              op: "set_family",
+                              args: { student_id: student.id, family_id: null },
+                            });
+                            if (r.status === "refused") toast.error(r.message);
+                            else if (r.status === "done") removed();
                           }}
                         >
                           Remove
@@ -259,6 +266,11 @@ const FamilyDetail = () => {
           />
 
         </div>
+
+        <MoneyInputDialog
+          guard={money.guard}
+          names={Object.fromEntries(((family as any)?.students ?? []).map((s: any) => [s.id, s.full_name]))}
+        />
 
         {showLinkDialog && (
           <FamilyLinkDialog
