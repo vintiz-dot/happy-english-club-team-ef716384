@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, Undo, ArrowLeft } from "lucide-react";
 import { dayjs } from "@/lib/date";
-import { sanitizeHtml } from "@/lib/sanitize";
+import { sanitizeHtml, sanitizeSubmittedHtml } from "@/lib/sanitize";
 import { useAuth } from "@/hooks/useAuth";
 import { VideoReviewPanel } from "@/components/video-homework/VideoReviewPanel";
 
@@ -438,7 +438,7 @@ export function HomeworkGrading({ homeworkId, onClose }: HomeworkGradingProps) {
                 {selectedSubmission?.submission?.submission_text ? (
                   <div 
                     className="prose prose-sm max-w-none break-words rounded-hec-md border border-hec-line bg-hec-surface p-3 text-hec-small text-hec-ink [&_p]:text-hec-ink [&_strong]:text-hec-ink [&_em]:text-hec-ink [&_ul]:text-hec-ink [&_ol]:text-hec-ink [&_li]:text-hec-ink"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedSubmission.submission.submission_text) }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeSubmittedHtml(selectedSubmission.submission.submission_text) }}
                   />
                 ) : (
                   <div className="rounded-hec-md border border-dashed border-hec-line-strong bg-hec-sunken p-3 text-hec-small text-hec-ink-soft">
