@@ -53,12 +53,12 @@ Agreement with the B1 vendor transcripts of the same files (pooled; mean over th
 | English, silero VAD 0.5 | 0.131 | 0.08 | 0.823 | 0.87 | 0.816 | 0.92 |
 | English, no VAD | stopped: no output after 3 000 CPU-seconds on the first 187 s mix (Whisper's repetition/fallback loop on room noise); not usable | | | | | |
 | **English, silero VAD 0.25, no condition-on-previous-text** | **0.304** | **0.67** | **0.849** | **1.01** | 0.802 | 1.02 |
-| vendors among themselves, same files | 0.422 (0.29-0.54) | - | 0.863 (0.81-0.91) | - | 0.818 (0.75-0.87) | - |
+| vendors among themselves, same files | 0.422 (0.29-0.54) | - | 0.863 (0.81-0.91) | - | 0.815 (0.76-0.87) | - |
 
 Reading:
 - B1's poor local row was the VAD, not Whisper: at the default silero threshold 0.5 the room-degraded mixes lose 80-92 % of their words (one 193 s mix gave 0 words with English forced). Threshold 0.25 plus `condition_on_previous_text=False` brings the words back to 2/3 of the vendors' on the mixes and to parity on clips and the lesson slice. Adopted for every later run (`--lang en --vad on --vad-thr 0.25 --cond-prev off`).
 - Language auto and English gave identical clips and lesson output (auto detected English); no Vietnamese text came out of any small configuration (diacritic share 0.0 %). B1 found only Gemini writing Vietnamese (4 % of lesson words).
-- On the clean held-out clips and on the real lesson slice, local small agrees with the vendors about as well as they agree with each other (0.80-0.85 vs 0.82-0.86). On the synthetic mixes it is clearly below (0.30 vs 0.42), and so are the vendors' own figures low there.
+- On the clean held-out clips and on the real lesson slice, local small agrees with the vendors about as well as they agree with each other (0.80-0.85 vs 0.82-0.86; vendor figure on the lesson slice measured over the same 180 s). On the synthetic mixes it is clearly below (0.30 vs 0.42), and so are the vendors' own figures low there.
 - n is small (2 mixes, 6 clips, one 3-minute slice): these settle the configuration, not a ranking against vendors.
 
 Timings of these runs (all UNDER LOAD; for the record only): RTF 2.0 (B1 config) and 3.5 (adopted config) at 4 threads, other processes 84-85 % of the machine, free RAM falling to 0.02-0.13 GB; the process got 1.2-1.3 cores. Per-file RTF swung from 0.4 to 7.7 with the other agents' load, so none of these numbers is a speed figure.
@@ -72,7 +72,12 @@ Quality (agreement with the B1 vendors, UNCHECKED, same files as section 3):
 | small | 0.304 | 0.67 | 0.849 | 0.802 | 0 % |
 | medium | 0.339 | 0.59 | 0.854 | 0.827 | 0 % |
 | large-v3-turbo | 0.336 | 0.50 | **0.874** | **0.841** | 0 % |
-| vendors among themselves, same files | 0.422 (0.29-0.54) | - | 0.863 (0.81-0.91) | 0.818 (0.75-0.87) | Gemini only (B1) |
+| large-v3-turbo, greedy (beam 1), 8 threads | 0.348 | 0.59 | 0.873 | 0.848 | 0 % |
+| vendors among themselves, same files | 0.422 (0.29-0.54) | - | 0.863 (0.81-0.91) | 0.815 (0.76-0.87) | Gemini only (B1) |
+
+A longer real-lesson check (L2, first 600 s, the timing piece; vendor figures over the same 600 s): small 0.772 (words ratio 0.91), large-v3-turbo 0.795 (0.99-1.00), vendors among themselves 0.812 (0.77-0.87). On ten minutes of real classroom audio turbo sits inside the vendors' range, small at its lower edge. Thread count does not change the output (4 and 8 threads gave the same agreement to three decimals).
+
+Greedy decoding (beam 1) gave turbo the same agreement as beam 5 (clips 0.873 vs 0.874, lesson slice 0.848 vs 0.841, mixes 0.348 vs 0.336) for fewer CPU-seconds (4.77 vs 5.64 per audio second, measured at lighter load: others 47 %, free RAM >= 2.1 GB, 4.25 cores; wall RTF 1.12). On this evidence beam 5 buys nothing here.
 
 Cost (UNDER LOAD - see the load columns; wall RTF is not a speed figure):
 

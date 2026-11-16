@@ -467,12 +467,18 @@ def cmd_score(a) -> int:
     rows = []
     groups = ("synth", "clips", "lesson")
 
-    def pooled(x, y, fids):
+    def pooled(x, y, fids, span=None):
+        """span: {file_id: seconds} - compare only the first that many seconds (the local slice's length),
+        so the vendor-vs-vendor figure covers the same audio as the local row."""
         tm = ta = tb = n = 0
         for fid in fids:
             if fid not in x["files"] or fid not in y["files"]:
                 continue
-            p, q = b1.common_tokens(x["files"][fid], y["files"][fid])
+            if span:
+                t = span[fid]
+                p, q = b1.tokens_of(x["files"][fid], t), b1.tokens_of(y["files"][fid], t)
+            else:
+                p, q = b1.common_tokens(x["files"][fid], y["files"][fid])
             mm, la, lb = b1.agreement(p, q)
             tm, ta, tb, n = tm + mm, ta + la, tb + lb, n + 1
         return (b1.ratio(tm, ta, tb), n, ta, tb) if n else (None, 0, 0, 0)
@@ -493,7 +499,8 @@ def cmd_score(a) -> int:
             vn_list = sorted(ag)
             for i, x in enumerate(vn_list):
                 for y in vn_list[i + 1:]:
-                    r, n, _, _ = pooled(vend[x], vend[y], fids)
+                    r, n, _, _ = pooled(vend[x], vend[y], fids,
+                                        {f: s["files"][f].get("duration_s") or 1e9 for f in fids})
                     if n and r is not None:
                         vv.append(r)
             vi = sum(b1.is_vi(t) for f in fids for t in b1.tokens_of(s["files"][f]))
