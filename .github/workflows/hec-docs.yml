@@ -2,9 +2,9 @@ name: hec-docs
 
 on:
   push:
-    paths: ["hec-docs/**", ".github/workflows/hec-docs.yml"]
+    paths: ["hec-docs/**", "src/lib/hecDocs/**", "public/hec-docs/**", ".github/workflows/hec-docs.yml"]
   pull_request:
-    paths: ["hec-docs/**", ".github/workflows/hec-docs.yml"]
+    paths: ["hec-docs/**", "src/lib/hecDocs/**", "public/hec-docs/**", ".github/workflows/hec-docs.yml"]
 
 permissions:
   contents: read
