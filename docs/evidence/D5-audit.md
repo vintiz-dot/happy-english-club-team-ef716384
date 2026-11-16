@@ -1,4 +1,4 @@
-﻿# D5 - Money invariant audit
+# D5 - Money invariant audit
 
 **Where I am / next step:** DONE on branch `claude/d5-money-audit` (from conductor efcb3a64). Built: this audit, `scripts/CHECK-money-invariants.sql` (40 checks), `scripts/CHECK-past-cancellations-with-evidence.sql`, and four suites registered in `scripts/pgtest/run.mjs` (money invariants check 99, past cancellations check 20, money write paths 19, sibling hold 18). Next step is the conductor's: run the two CHECK scripts on live (read-only) and read the numbers against section 4. No product code, migration or function was changed.
 
