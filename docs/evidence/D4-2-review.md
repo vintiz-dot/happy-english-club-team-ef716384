@@ -2,7 +2,7 @@
 
 Independent reviewer. Reviewed branch `worktree-agent-a36ad2752b190053b` at d3cd451f (checked out here as `review-2`). The step-2 work is `b27bbf06..deaee11c` (19 files); `948ed67c` merges the conductor tip (test-date fix 02b571e6, PC2-harvest), which touches no step-2 file; `d3cd451f` edits only the build notes. pglite only: nothing applied, deployed or pushed; the live database was not looked at.
 
-**Where I am / next step:** COMPLETE except the numbers marked PENDING below (mutation run and full suite in progress). Next step is not mine: the builder makes the two blocker changes, the conductor rules on the owner question.
+**Where I am / next step:** COMPLETE. Next step is not mine: the builder makes the three blocker changes (S-1, S-2, T-1), the conductor puts OQ-1 to the owner. The migration and the functions need no change to be applied.
 
 ## Verdict: APPLY WITH CHANGES
 
@@ -147,7 +147,7 @@ Operational note for the owner (decision 14): until step 3B strips the column, a
 
 ## 7. Functions
 
-`git diff b27bbf06 deaee11c -- supabase/functions`: calculate-tuition 13 lines (import, the history in Wave 2's `Promise.all`, two pricing lines), bulk 18 lines (import, history via its paged `fetchChunked`, two pricing lines), projected-per-class 12 lines (import, one read, `select('id, date')`, the per-lesson sum). Nothing else changed. Missing table -> mirror (tested both codes, both calculators and projected). `watch-sibling-threshold` is unchanged but must be redeployed to bundle the new `_lib` (builder lists it). Edge-function typecheck: PENDING (full run).
+`git diff b27bbf06 deaee11c -- supabase/functions`: calculate-tuition 13 lines (import, the history in Wave 2's `Promise.all`, two pricing lines), bulk 18 lines (import, history via its paged `fetchChunked`, two pricing lines), projected-per-class 12 lines (import, one read, `select('id, date')`, the per-lesson sum). Nothing else changed. Missing table -> mirror (tested both codes, both calculators and projected). `watch-sibling-threshold` is unchanged but must be redeployed to bundle the new `_lib` (builder lists it). Edge-function typecheck: 5/0.
 
 ## 8. Screen
 
@@ -198,9 +198,13 @@ The code is right in all five; the suite does not hold it. V01 and V02 would let
 - **Removal of voluntary contributions / Settle Bill** (payment functions and screens): if it removes the `settledWriteOff` / `WRITE_OFF_KEY_PREFIX` write-off line, it edits `calculate-tuition/index.ts` and `calculate-tuition-bulk/index.ts` (in bulk the `invoice-status.ts` import sits on the line next to this branch's new import - a textual conflict) and probably `scripts/pgtest/invoice-status.test.mjs` / the golden file. Then `d4-class-fee.test.mjs` must be updated with it: its gate hard-codes `goldenLines.length === 36`, `passed >= 268` and the fixture names "plain month", "frozen bill", "no lessons in the month". Also `run.mjs`, root `AGENTS.md`.
 - **D4 step 3A** (sessions): `scripts/pgtest/run.mjs`, `d4-mutants.mjs` (SUITES, MUTANTS, the CORE|FEE branch), `d4-prelude.mjs`, `guard-fingerprint.mjs` (`D4_FILES`, rollback list), `docs/evidence/D4-release-fingerprint.sql` / `.expected.json` (regenerate after the merge; both steps add entries). 3A's `AddSessionModal.tsx` shows the mirror as the default rate (with a hard-coded '210,000' fallback) - display only, but 3A is the natural place to read the dated fee there. The AGENTS.md line "the class fee is read with `classFeeOn`, never from `classes.session_rate_vnd`" (design (h)) is not added yet; the conductor adds it at merge.
 
-## 12. Runs
+## 12. Runs (mine, on d3cd451f plus my review files)
 
-PENDING.
+- `node scripts/pgtest/run.mjs` (once): **0 suites failed**, 63 suites; the summary line says 6193 assertions because `stars sync core` ends its output with an expected logged stack trace, so its count is not parsed; run alone it is 75 passed, 0 failed -> **6268**, the builder's figure. `d4 class fee` 155/0, `invoice status` 268/0, `d4 rollback` 26/0 (fingerprints with file 3 and rollback 3), `edge functions typecheck` 5/0, `app typecheck` 3/0 (`tsc -p tsconfig.app.json`, source loaded).
+- `d4-class-fee` alone: 155 passed, 0 failed (golden gate in all four states as reported).
+- My probe `scripts/pgtest/review/d4-2-probe.mjs`: 18 passed, 0 failed, 4 notes (S-2 x2, the stale mirror, F-4).
+- Mutants: 6 of the builder's re-run, all caught; V01-V05 all survive the suite, 4 caught by the probe (section 9).
+- Not run: `npm run test:bun` (no step-2 file in it; builder 159/0).
 
 ## 13. Could not check
 
