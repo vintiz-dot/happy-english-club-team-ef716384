@@ -90,6 +90,11 @@ const parseOr = (expr) => expr.split(',').map((part) => {
 });
 async function tableRows(table) {
   if (mem[table]) return mem[table].map((r) => ({ ...r }));
+  // D4 step 2 (merged after this suite was built): the calculators also read class_fee_history.
+  // This database does not load 20261114092000, and a failed SELECT here would abort the
+  // transaction an edit runs in (25P02), which PostgREST's separate request never does. An
+  // empty history prices every lesson at the class's mirror - what a missing table does too.
+  if (table === 'class_fee_history' && (await q1(`SELECT to_regclass('public.class_fee_history') IS NULL AS missing`)).missing) return [];
   const rows = (await q(`SELECT to_jsonb(t) j FROM public.${table} t`)).map((r) => r.j);
   for (const [key, other, fk] of EMBED[table] ?? []) {
     const byId = new Map((await q(`SELECT to_jsonb(t) j FROM public.${other} t`)).map((r) => [r.j.id, r.j]));
