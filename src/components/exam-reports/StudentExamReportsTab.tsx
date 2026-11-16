@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { sanitizeHtml } from "@/lib/sanitize";
+import { RichTextView } from "@/components/rich-text";
 import { useToast } from "@/hooks/use-toast";
 
 interface StudentExamReportsTabProps {
@@ -141,9 +141,9 @@ function ExamReportCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {report.content_html && (
-          <div
+          <RichTextView
             className="prose prose-sm md:prose-base max-w-none dark:prose-invert text-foreground"
-            dangerouslySetInnerHTML={{ __html: sanitizeHtml(report.content_html) }}
+            html={report.content_html}
           />
         )}
 

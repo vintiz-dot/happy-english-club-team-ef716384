@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,9 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Upload, FileText, X } from "lucide-react";
 import { useIvory } from "@/hooks/useIvory";
-import "react-quill-new/dist/quill.snow.css";
-
-const ReactQuill = lazy(() => import("react-quill-new"));
+import { RichTextEditor } from "@/components/rich-text";
 
 const MAX_PDF_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -273,28 +271,15 @@ export function ExamReportEditor({
           </div>
 
           <div className={ivOnly("space-y-2")}>
-            <Label>Report content (optional)</Label>
-            <Suspense fallback={<div className={iv("flex h-40 items-center justify-center text-hec-ink-faint", "h-40 flex items-center justify-center")}><Loader2 className="h-5 w-5 animate-spin" aria-hidden={ivory ? true : undefined} /></div>}>
-              {/* Ivory: Quill paints its toolbar #444 and its picker menu white, unreadable in dark. These selectors
-                  are one class more specific than quill.snow.css's own, so they win without !important and Quill's
-                  hover / active / open states (more specific still) keep showing. */}
-              <div className={iv("rounded-hec-md bg-hec-raised [&_.ql-toolbar.ql-snow]:border-hec-line-strong [&_.ql-container.ql-snow]:border-hec-line-strong [&_.ql-toolbar_.ql-stroke]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-stroke-miter]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-formats_.ql-fill]:fill-hec-ink-soft [&_.ql-toolbar_.ql-picker]:text-hec-ink-soft [&_.ql-toolbar_.ql-picker-options]:bg-hec-raised [&_.ql-editor.ql-blank::before]:text-hec-ink-faint", "bg-background rounded-md")}>
-                <ReactQuill
-                  value={contentHtml}
-                  onChange={setContentHtml}
-                  theme="snow"
-                  modules={{
-                    toolbar: [
-                      [{ header: [1, 2, 3, false] }],
-                      ["bold", "italic", "underline", "strike"],
-                      [{ list: "ordered" }, { list: "bullet" }],
-                      ["link", "blockquote"],
-                      ["clean"],
-                    ],
-                  }}
-                />
-              </div>
-            </Suspense>
+            <Label id="exam-content-label" htmlFor="exam-content">Report content (optional)</Label>
+            <RichTextEditor
+              id="exam-content"
+              ariaLabelledBy="exam-content-label"
+              toolbar="homework"
+              value={contentHtml}
+              onChange={setContentHtml}
+              fallback={<div className={iv("flex h-40 items-center justify-center text-hec-ink-faint", "h-40 flex items-center justify-center")}><Loader2 className="h-5 w-5 animate-spin" aria-hidden={ivory ? true : undefined} /></div>}
+            />
           </div>
 
           <div className={ivOnly("space-y-2")}>
