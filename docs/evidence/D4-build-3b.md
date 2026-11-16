@@ -2,7 +2,9 @@
 
 **DONE - waiting for the conductor's review**
 
-**Where I am / next step:** COMPLETE - built, tested, mutants run (57 of 57 caught), full run green (6658 assertions, 66 suites, 0 failed). Pushed. Next step is not mine: the conductor's review.
+**Fix round 1 - where I am:** STARTED on branch `d4-3b-fix` (from `review-3b` 6390acf8, = the builder's 3b09300f + the review). Fixing B-1, B-2, M-1, N-1, N-2, N-4, N-5 and the reviewer's test gaps (R01, R02, R05, R09, R13) in place; N-3 is the calculator's and is not touched. Next: B-1.
+
+**Where I am / next step (build):** COMPLETE - built, tested, mutants run (57 of 57 caught), full run green (6658 assertions, 66 suites, 0 failed). Pushed. Next step is not mine: the conductor's review.
 
 Builder on PC2, branch `pc2/d4-3b` from origin/conductor/work 02b571e6 (steps 1a and 1b in it, both live). Nothing applied to any database, nothing deployed, no Supabase / Lovable / Cloudflare tool used; every test runs against the in-process Postgres of `scripts/pgtest`. No real user data.
 
