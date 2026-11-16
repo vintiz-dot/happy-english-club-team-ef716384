@@ -45,7 +45,7 @@ Harness `C:\Users\Dell\hec-tools\r23v-harness` (copy of r21-harness/preview-edit
 - `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0 (also after the TuitionCard fix).
 - `npm run test:bun`: 250 pass, 0 fail (18 files).
 - `node scripts/design-tokens-check.mjs`: PASS, 70 pairs x 2 themes.
-- `node scripts/pgtest/run.mjs`: see the PGTEST line below.
+- `node scripts/pgtest/run.mjs` (once): 6547 assertions, 69 suites, **1 suite failed: `ai spend gate (F-02)` 249/1** - "only the two functions that must be public still opt out of the gateway check" now also finds `reception-feed` (`verify_jwt = false` in `supabase/config.toml`, added by the Reception media commit e2873c44 that came in with the main merge). Not this release (R22/R23 touch no `supabase/` file); the conductor fails it the same way. Owner: the Reception work - either the test learns that the TV feed is public on purpose, or the feed goes behind the gateway. Everything else ok, including d4 floors 213/0, app typecheck, edge functions typecheck and the shared-module mirrors. `ivory-scope.test.mjs` is not in `run.mjs`; run on its own (above).
 
 ## For the conductor (not fixed here, not className work)
 - `parent-release` vs `origin/main` is not only R22/R23: the conductor's unreleased D4 / S2 work rides along (18 src files, 25 edge functions, 7 migrations - `20261114093000_d4_lesson_pay_guard` and `20261116092000..097000`). Pushing this branch to main ships those. R22/R23's own src files are the 11 listed above + `TuitionCard.tsx` (R23v).
