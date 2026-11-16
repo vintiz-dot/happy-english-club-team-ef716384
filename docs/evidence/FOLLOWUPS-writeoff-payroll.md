@@ -90,6 +90,7 @@ Rollback: redeploy the three from efcb3a64 (`git show efcb3a64:supabase/function
 | `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` | exit 0, 0 `error TS` |
 | `npm run test:bun` | 250 pass, 0 fail, 1801 expect() calls, 18 files |
 | `git diff efcb3a64 -- scripts/pgtest/fixtures` | empty |
+| `node scripts/recorder/unit.test.mjs` alone, no shim, 15-minute limit | timed out: 380 PASS, 0 FAIL, stalled at "N-B1 (P2b): offline for the whole capture window". No recorder file is in this branch's diff and the suite imports none of the changed files; it stalled the same way in another worktree at the same time, so this looks like machine load (many suites running in parallel), not this change. NOT verified green here. |
 
 ## 6. Not verified
 
