@@ -1,6 +1,6 @@
 # D4 build - step 3A (lessons: who is paid, P1-P7, G-1 to G-7)
 
-**Fix round 1 - where I am:** on branch `d4-3a-fix` (= `d4-3a-lessons` 856e493d + `review-3a` 10b10442). B-1, S-1, S-2, N-1..N-4, N-6, N-7, d4_guard_status and the merge note are done and committed; the section "Fix round 1" at the end has each finding -> change -> proof. Remaining: full run, mutants, fingerprint, apply brief's table (see that section's last line).
+**Fix round 1 - where I am:** on branch `d4-3a-fix` (= `d4-3a-lessons` 856e493d + `review-3a` 10b10442). COMPLETE. B-1, S-1, S-2, N-1..N-4, N-6, N-7, d4_guard_status and the merge note are done and committed; the section "Fix round 1" at the end has each finding -> change -> proof and the checks. Next step is not mine: the conductor's ruling, the merge with step 2, then `D4-3a-live-apply-brief.md`.
 
 **Where I am / next step (build, before the review):** COMPLETE: built and tested (65 suites green, app typecheck exit 0, bun 166/0, 40 of 41 mutants caught, fingerprint regenerated). Next step is not mine: the independent review of 3A, then the conductor's live apply (migration, then manage-session / bulk-cancel-sessions / schedule-sessions, then the screens, in one sitting).
 
@@ -173,6 +173,14 @@ Branch `d4-3a-fix`. The migration was edited in place (applied nowhere yet).
 | N-7 "Reload the list" | "Start the date range within the last week and transfer again; an older lesson's teacher is changed from that lesson's Actions menu, with a reason." | source check |
 | N-5, N-8, N-9, N-10 | Not changed; release-note text below | - |
 | `d4_guard_status()` (1b, live) lists none of the 3A triggers | Replaced in file 4 (section 5b) with the 1b body byte for byte plus the three names in its list (a disabled one reads `ok: false`; a dropped one is absent, as 1a's are before 1a). Grants untouched (CREATE OR REPLACE). The preflight refuses unless the live body, with that one insertion removed, has md5 df2b7052707d4a8d06bdc307e6fe96a9 (1b's, `D4-1b-live-apply-brief.md`) - so a second paste passes and any other body is refused. | `d4-lesson-pay`: the 1b body here is df2b7052; a foreign body refused, nothing installed; install: the only replaced function is d4_guard_status, body only, = 1b + the insertion; status lists the three `O` and `ok`; one disabled -> `ok false`. Mutants L38, L39 |
+
+### Checks (fix round 1, head bbdb9ff1 + this doc)
+
+- `node scripts/pgtest/run.mjs` (one run): **6349 assertions across 65 suites, 0 failed** - d4 lesson pay 143 (was 130), d4 functions lessons 74 (was 57), d4 stars interplay 19, session guard functions 135, d4 rollback 26 (fingerprint `--check`, `--check-unchanged`, `--after-rollback` 66/66), d4 register 140, d4 functions register 34, mirrors 19, edge functions typecheck 5, app typecheck 3.
+- `tsc --noEmit -p tsconfig.app.json`: exit 0. `npm run test:bun`: 166 pass, 0 fail.
+- Mutants run this round: L19 (find text updated to the new line), L36, L37, L38, L39, FL6, FL7: **7 of 7 CAUGHT** (L36 by the new P8 case). Every other 3A mutant's pattern still occurs exactly once in its file (checked); they were caught at the build and this round only added assertions, except the one re-stated pin at :424, which no mutant relied on (it asserted a pass that only a stricter retime could break). So 3A: 46 mutants (L01-L39, FL1-FL7), 46 caught.
+- Fingerprint regenerated (`guard-fingerprint.mjs --release d4`): 50 functions, 22 triggers, 6 relations; the diff against the build's file is exactly three md5s: `session_pay_change_kind`, `_session_pay_sentence`, `d4_guard_status`.
+- The review's 25 probes (`node docs/evidence/D4-3a-review-probes.mjs`) against the fixed file: P1b and P1c now OK (were GAP); P8a OK and P8b L36-KILLED as before; P3 CHANGED (N-4, now worded), P4 GAP(minor) (N-5), P7 DESIGN (N-10), P2b/P2c/P6b INFO (N-9): each as the review now expects; all others OK.
 
 ### Release-note text for N-5, N-8, N-9, N-10 and decision 1
 
