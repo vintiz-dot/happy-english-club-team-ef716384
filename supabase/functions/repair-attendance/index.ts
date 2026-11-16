@@ -1,143 +1,114 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { requireRole } from "../_lib/auth.ts";
+import { callerClient, fail, guardError, json } from "../_lib/session-guard.ts";
+import { moneyConfirm, moneyPreview, readAck } from "../_lib/money-guard.ts";
+
+// Seeds the missing register rows of one child in one class over a date
+// range (marked_by NULL, a note), the rows calculate-tuition bills from.
+//
+// D4 step 1b (docs/evidence/D4-design.md b.3 G-12): the LANE is the admin's
+// own JWT. The rows are written by money_change_checked('attendance',
+// 'repair') on a client built from the caller's Authorization header, so the
+// database judges them (zz_attendance_money_guard) and every repair leaves
+// one money_change_overrides row. The service key is used only to resolve
+// who is calling (requireRole); this function never writes with it, and a
+// call presenting the service key itself is refused.
+//
+// - preview: true  -> what would be written, the tier and the stored bills;
+//                     nothing written.
+// - T0 (this week's lessons, an unbilled current month, Excused rows): written.
+// - T1+ without `ack` -> 409 attendance_requires_checked_path with the
+//   preview, NOTHING written; the screen opens the dialog and sends the same
+//   request again with ack {reason, token, confirm, correction_reason}.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const InputSchema = z.object({
+  studentId: z.string().uuid(),
+  classId: z.string().uuid(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  defaultStatus: z.enum(["Present", "Absent", "Excused"]),
+  preview: z.boolean().optional(),
+  ack: z.object({
+    reason: z.string().max(1000).optional().nullable(),
+    token: z.string().max(200).optional().nullable(),
+    confirm: z.boolean().optional(),
+    correction_reason: z.string().max(1000).optional().nullable(),
+  }).optional(),
+});
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const url = Deno.env.get("SUPABASE_URL")!;
+    const service = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    // Admins only. This wrote attendance rows for any student in any class
-    // on the service role, with no check on who asked - and attendance is
-    // what calculate-tuition bills from, so it moves money.
-    const gate = await requireRole(req, supabase, ["admin"], corsHeaders);
+    // Admins only, with their own session: a service-key caller has no
+    // person to write as.
+    const gate = await requireRole(req, service, ["admin"], corsHeaders, { allowServiceRole: false });
     if (gate instanceof Response) return gate;
+    const asCaller = callerClient(createClient, url, Deno.env.get("SUPABASE_ANON_KEY") ?? "", req.headers.get("Authorization")!);
 
-    const InputSchema = z.object({
-      studentId: z.string().uuid(),
-      classId: z.string().uuid(),
-      startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      defaultStatus: z.enum(["Present", "Absent", "Excused"]),
+    const parsed = InputSchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) {
+      return fail(guardError(400, "bad_request", "studentId, classId, startDate, endDate and defaultStatus are required."));
+    }
+    const { studentId, classId, startDate, endDate, defaultStatus } = parsed.data;
+    const args = { student_id: studentId, class_id: classId, from: startDate, to: endDate, status: defaultStatus };
+
+    const p = await moneyPreview(asCaller, "attendance", "repair", args);
+    if ("error" in p) return fail(p.error);
+    const plan = p.data;
+    const sessions = (plan?.change?.lessons ?? []).map((l: any) => ({ id: l.session_id, date: l.date, status: l.status, tier: l.tier }));
+
+    if (plan?.refuse_code === "no_enrollment") {
+      return json({ error: "No enrollment found for this student in this class", code: "no_enrollment" }, 400);
+    }
+    if (plan?.refuse_code === "nothing_to_change") {
+      return json({ message: "All sessions already have attendance records", inserted: 0, sessions: [] });
+    }
+    if (!plan?.allowed) {
+      return fail(guardError(409, plan?.refuse_code ?? "refused", `Refused: ${plan?.refuse_code ?? "refused"}.`), { preview: plan });
+    }
+    if (parsed.data.preview) {
+      return json({ preview: true, message: `${sessions.length} attendance records would be added`, inserted: 0, sessions, plan });
+    }
+
+    const ack = readAck(parsed.data.ack);
+    if (plan.tier >= 1 && !ack) {
+      return json({
+        ok: false, code: "attendance_requires_checked_path", message_key: "moneyGuard.error.attendance_requires_checked_path",
+        message: "Some of these lessons are more than a week old and their month is billed. Give a reason to add them.",
+        preview: plan, sessions,
+      }, 409);
+    }
+
+    const r = await moneyConfirm(asCaller, "attendance", "repair", args, ack ?? { token: plan.token },
+      { source: "repair-attendance" });
+    if ("error" in r) {
+      // The token went stale or a reason is missing: give the fresh preview back.
+      const fresh = await moneyPreview(asCaller, "attendance", "repair", args);
+      return fail(r.error, { preview: "data" in fresh ? fresh.data : null });
+    }
+    return json({
+      message: `Repaired ${r.data?.written ?? 0} attendance records`,
+      inserted: r.data?.written ?? 0,
+      override_id: r.data?.override_id ?? null,
+      tier: r.data?.tier ?? null,
+      refresh_pairs: r.data?.refresh_pairs ?? [],
+      sessions,
     });
-
-    const { studentId, classId, startDate, endDate, defaultStatus } = InputSchema.parse(await req.json());
-
-    // Verify enrollment exists for date range
-    const { data: enrollments } = await supabase
-      .from("enrollments")
-      .select("start_date, end_date, allowed_days")
-      .eq("student_id", studentId)
-      .eq("class_id", classId);
-
-    // Hard rule (mirrored by the attendance_enrollment_guard trigger): only
-    // lessons inside an enrollment window AND on an enrolled weekday may be
-    // anything other than Excused.
-    const coversDate = (date: string) => {
-      const dow = new Date(`${date}T00:00:00Z`).getUTCDay();
-      return (enrollments ?? []).some((e: any) =>
-        e.start_date <= date &&
-        (e.end_date == null || e.end_date >= date) &&
-        (!e.allowed_days || e.allowed_days.length === 0 || e.allowed_days.includes(dow))
-      );
-    };
-
-    if (!enrollments || enrollments.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "No enrollment found for this student in this class" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
-    }
-
-    // Find sessions in range that don't have attendance
-    const { data: sessions } = await supabase
-      .from("sessions")
-      .select("id, date, status")
-      .eq("class_id", classId)
-      .gte("date", startDate)
-      .lte("date", endDate)
-      .neq("status", "Canceled");
-
-    if (!sessions || sessions.length === 0) {
-      return new Response(
-        JSON.stringify({ message: "No sessions found in date range", inserted: 0, sessions: [] }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
-    }
-
-    // Check which sessions already have attendance
-    const sessionIds = sessions.map(s => s.id);
-    const { data: existingAttendance } = await supabase
-      .from("attendance")
-      .select("session_id")
-      .in("session_id", sessionIds)
-      .eq("student_id", studentId);
-
-    const existingSessionIds = new Set(existingAttendance?.map(a => a.session_id) || []);
-    const missingSessions = sessions.filter(s => !existingSessionIds.has(s.id));
-
-    if (missingSessions.length === 0) {
-      return new Response(
-        JSON.stringify({ message: "All sessions already have attendance records", inserted: 0, sessions: [] }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
-    }
-
-    // Insert attendance records
-    const attendanceRecords = missingSessions.map(s => ({
-      session_id: s.id,
-      student_id: studentId,
-      status: coversDate(s.date) ? defaultStatus : "Excused",
-      marked_by: null,
-      notes: `Auto-repaired on ${new Date().toISOString().slice(0, 10)}`,
-    }));
-
-    const { data: inserted, error: insertError } = await supabase
-      .from("attendance")
-      .insert(attendanceRecords)
-      .select();
-
-    if (insertError) throw insertError;
-
-    // Log audit
-    await supabase
-      .from("audit_log")
-      .insert({
-        actor_user_id: null,
-        action: "repair_attendance",
-        entity: "attendance",
-        entity_id: studentId,
-        diff: {
-          student_id: studentId,
-          class_id: classId,
-          date_range: `${startDate} to ${endDate}`,
-          inserted_count: inserted?.length || 0,
-          sessions: missingSessions.map(s => ({ id: s.id, date: s.date })),
-        },
-      });
-
-    return new Response(
-      JSON.stringify({
-        message: `Repaired ${inserted?.length || 0} attendance records`,
-        inserted: inserted?.length || 0,
-        sessions: missingSessions.map(s => ({ id: s.id, date: s.date, status: defaultStatus })),
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-    );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("repair-attendance failed:", error);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      JSON.stringify({ error: "Repair failed. Nothing may have changed; reload and check.", code: "unexpected" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 },
     );
   }
 });

@@ -3,6 +3,7 @@ import { SessionGenerator } from "@/components/admin/SessionGenerator";
 import { ScheduleStatusCard } from "@/components/admin/ScheduleStatusCard";
 import { BulkSessionDelete } from "@/components/admin/BulkSessionDelete";
 import CancelOverridesReview from "@/components/admin/session-guard/CancelOverridesReview";
+import { MoneyChangesReview } from "@/components/admin/money-guard/MoneyChangesReview";
 import { BulkEnrollmentDateSetter } from "@/components/admin/BulkEnrollmentDateSetter";
 import { BulkRebuildSessions } from "@/components/admin/BulkRebuildSessions";
 import { TuitionBulkDownload } from "@/components/admin/TuitionBulkDownload";
@@ -126,6 +127,13 @@ const AutomationTab = () => {
             description="Who cancelled, deleted or moved a lesson that had evidence, why, and what still needs review."
           >
             <CancelOverridesReview />
+          </AdvancedSection>
+
+          <AdvancedSection
+            title="Money changes"
+            description="Changes to billed months made with a reason, and changes the database recorded instead of refusing."
+          >
+            <MoneyChangesReview />
           </AdvancedSection>
 
           <AdvancedSection
