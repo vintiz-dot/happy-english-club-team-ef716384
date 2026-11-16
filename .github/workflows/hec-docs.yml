@@ -44,7 +44,13 @@ jobs:
       - name: Type-check
         run: npm run typecheck
       - name: Unit + snapshot tests
-        run: npm run test:unit && npm run test:snapshot
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! { npm run test:unit && npm run test:snapshot; } 2>&1 | tee unit.log; then
+            echo "::error title=unit::$(grep -E 'not ok|Error|error|expected|actual|✖|differs' unit.log | tail -40 | tr '\n' ' ' | cut -c1-3500)"
+            exit 1
+          fi
       - name: End-to-end (CLI + HTTP API)
         # On failure, surface the tail of the output as an annotation, which is
         # readable without signing in to GitHub.
