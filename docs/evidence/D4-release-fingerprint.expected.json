@@ -89,6 +89,22 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._class_delete_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "e09b027a2c1eae98a5161e8bc8ee3595",
+      "proname": "_class_delete_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._class_fee_baseline()",
       "identity_arguments": "",
       "md5_prosrc": "636435cd6ddb337af51aaa44f1236d5f",
@@ -159,6 +175,70 @@
       "proname": "_class_fee_reach",
       "security_definer": true,
       "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._discount_definition_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "8ed3b4f73189a1468c4681c614b80a3b",
+      "proname": "_discount_definition_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._discount_money_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "8601d68d00941ba3ee5b13fdb6b6b21a",
+      "proname": "_discount_money_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._enrollment_money_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "85725992e44837ba7f3b93fe088b3613",
+      "proname": "_enrollment_money_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._family_link_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "29a38090c85537663bb4868d2a7c1ba1",
+      "proname": "_family_link_guard",
+      "security_definer": true,
+      "volatility": "v"
     },
     {
       "config": [
@@ -281,10 +361,42 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._invoice_frozen_keep_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "22bd4fd7da333584e8c5c74ea8ed163a",
+      "proname": "_invoice_frozen_keep_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._invoice_state_floor()",
       "identity_arguments": "",
       "md5_prosrc": "3eb44221c7f4a9f81cef3451be5bf62f",
       "proname": "_invoice_state_floor",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._invoice_unfreeze_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "a66d21b14fe5149e2bcb77d37f7370bc",
+      "proname": "_invoice_unfreeze_guard",
       "security_definer": true,
       "volatility": "v"
     },
@@ -393,12 +505,44 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._money_date(p text)",
+      "identity_arguments": "p text",
+      "md5_prosrc": "b84d745998882ed916f3411cfed11e33",
+      "proname": "_money_date",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._money_enrollment_rpc_call()",
       "identity_arguments": "",
-      "md5_prosrc": "8796eb026e4187149b639f7efa82e81d",
+      "md5_prosrc": "b63e90a3ef684c6e32c800401194e809",
       "proname": "_money_enrollment_rpc_call",
       "security_definer": false,
       "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_enrollment_terms(p_terms jsonb)",
+      "identity_arguments": "p_terms jsonb",
+      "md5_prosrc": "0b87e3d1554fc90518cbafd89cb7135a",
+      "proname": "_money_enrollment_terms",
+      "security_definer": false,
+      "volatility": "i"
     },
     {
       "config": [
@@ -441,6 +585,118 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._money_exec__discount(p_entity text, p_plan jsonb, p_uid uuid)",
+      "identity_arguments": "p_entity text, p_plan jsonb, p_uid uuid",
+      "md5_prosrc": "2f5a3a5c5406e23b47b21809f0fc63df",
+      "proname": "_money_exec__discount",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_exec__discount_assignment(p_plan jsonb, p_uid uuid)",
+      "identity_arguments": "p_plan jsonb, p_uid uuid",
+      "md5_prosrc": "10721fdfe402fcf709e81fd9f7c85b04",
+      "proname": "_money_exec__discount_assignment",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_exec__enrollment(p_plan jsonb, p_uid uuid)",
+      "identity_arguments": "p_plan jsonb, p_uid uuid",
+      "md5_prosrc": "dd3d4ecefbadfe5d485ce0af834bd9b7",
+      "proname": "_money_exec__enrollment",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_exec__family_link(p_plan jsonb, p_uid uuid)",
+      "identity_arguments": "p_plan jsonb, p_uid uuid",
+      "md5_prosrc": "5ac3ff6c97445e46ab6d9f2a32e60388",
+      "proname": "_money_exec__family_link",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_exec__invoice_freeze(p_plan jsonb, p_uid uuid)",
+      "identity_arguments": "p_plan jsonb, p_uid uuid",
+      "md5_prosrc": "6e30c1f6745a93c404acf1bcad6a9b0a",
+      "proname": "_money_exec__invoice_freeze",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_exec__pay_rate(p_plan jsonb, p_uid uuid)",
+      "identity_arguments": "p_plan jsonb, p_uid uuid",
+      "md5_prosrc": "0c2a5c26ab8ad254f8a3f0f29b504e05",
+      "proname": "_money_exec__pay_rate",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_exec__referral_bonus(p_plan jsonb, p_uid uuid)",
+      "identity_arguments": "p_plan jsonb, p_uid uuid",
+      "md5_prosrc": "6a57df845845894019213e11bd6d38a0",
+      "proname": "_money_exec__referral_bonus",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._money_exec__session(p_plan jsonb, p_uid uuid)",
       "identity_arguments": "p_plan jsonb, p_uid uuid",
       "md5_prosrc": "cabd2db1f4023cba61bf8d38780d4e34",
@@ -457,11 +713,171 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._money_family_kids(p_students uuid[])",
+      "identity_arguments": "p_students uuid[]",
+      "md5_prosrc": "f294a6bc9bcb1a0e2826cf0d23d8046e",
+      "proname": "_money_family_kids",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_family_reach(p_child uuid, p_old_family uuid, p_new_family uuid)",
+      "identity_arguments": "p_child uuid, p_old_family uuid, p_new_family uuid",
+      "md5_prosrc": "75113876321f7576e1049ef7149baacd",
+      "proname": "_money_family_reach",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_input_ack(p_entity text, p_student uuid, p_from date, p_to date, p_tier integer)",
+      "identity_arguments": "p_entity text, p_student uuid, p_from date, p_to date, p_tier integer",
+      "md5_prosrc": "9473b3313d861f5b41546690d2ef524c",
+      "proname": "_money_input_ack",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_input_gate(p_entity text, p_table text, p_tg_op text, p_row_id uuid, p_tier integer, p_acked boolean, p_next_step text)",
+      "identity_arguments": "p_entity text, p_table text, p_tg_op text, p_row_id uuid, p_tier integer, p_acked boolean, p_next_step text",
+      "md5_prosrc": "014b577b5d2e8dddcdd17b5ee4611a05",
+      "proname": "_money_input_gate",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_input_plan(p_entity text, p_op text, p_target uuid, p_before jsonb, p_change jsonb, p_reach jsonb, p_tier_floor integer, p_refuse text)",
+      "identity_arguments": "p_entity text, p_op text, p_target uuid, p_before jsonb, p_change jsonb, p_reach jsonb, p_tier_floor integer, p_refuse text",
+      "md5_prosrc": "e871a3b8a0be185559b7d81bd33b15cd",
+      "proname": "_money_input_plan",
+      "security_definer": false,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._money_month_is_past(p_month text)",
       "identity_arguments": "p_month text",
       "md5_prosrc": "c7c81434cf2d4519f0252a8a4887d338",
       "proname": "_money_month_is_past",
       "security_definer": false,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_pay_combine(a jsonb, b jsonb)",
+      "identity_arguments": "a jsonb, b jsonb",
+      "md5_prosrc": "9973dbcad0e1d5b00e275f8a71090956",
+      "proname": "_money_pay_combine",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_pay_mirror_reach(p_teacher uuid, p_assistant uuid, p_first date)",
+      "identity_arguments": "p_teacher uuid, p_assistant uuid, p_first date",
+      "md5_prosrc": "389c5c400866670c497f5661290cc559",
+      "proname": "_money_pay_mirror_reach",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_pay_rate_on(p_teacher uuid, p_assistant uuid, p_date date, p_skip uuid, p_add jsonb)",
+      "identity_arguments": "p_teacher uuid, p_assistant uuid, p_date date, p_skip uuid, p_add jsonb",
+      "md5_prosrc": "0616e5bdb8067f96d105851fe89a77f6",
+      "proname": "_money_pay_rate_on",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_pay_reach(p_teacher uuid, p_assistant uuid, p_from date, p_to date)",
+      "identity_arguments": "p_teacher uuid, p_assistant uuid, p_from date, p_to date",
+      "md5_prosrc": "a80f0b195ebef60f89da152ca83ec1a2",
+      "proname": "_money_pay_reach",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_pay_row_reach(p_teacher uuid, p_assistant uuid, p_from date, p_exclude uuid)",
+      "identity_arguments": "p_teacher uuid, p_assistant uuid, p_from date, p_exclude uuid",
+      "md5_prosrc": "9e0414e22a32ed3f366c4e2f992b3411",
+      "proname": "_money_pay_row_reach",
+      "security_definer": true,
       "volatility": "s"
     },
     {
@@ -505,12 +921,204 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._money_plan__discount(p_entity text, p_op text, p_args jsonb)",
+      "identity_arguments": "p_entity text, p_op text, p_args jsonb",
+      "md5_prosrc": "8839b4bc6d395110225b0ca1c35d00aa",
+      "proname": "_money_plan__discount",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_plan__discount_assignment(p_op text, p_args jsonb, p_uid uuid)",
+      "identity_arguments": "p_op text, p_args jsonb, p_uid uuid",
+      "md5_prosrc": "1aed03a81e566fa6a756ee2fbf436d3c",
+      "proname": "_money_plan__discount_assignment",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_plan__enrollment(p_op text, p_args jsonb, p_uid uuid)",
+      "identity_arguments": "p_op text, p_args jsonb, p_uid uuid",
+      "md5_prosrc": "cb9e129ee5485021c3137d3aee2e5fe9",
+      "proname": "_money_plan__enrollment",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_plan__family_link(p_op text, p_args jsonb, p_uid uuid)",
+      "identity_arguments": "p_op text, p_args jsonb, p_uid uuid",
+      "md5_prosrc": "8bdd8a7a760b08ed65fd6beb69097dfd",
+      "proname": "_money_plan__family_link",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_plan__invoice_freeze(p_op text, p_args jsonb, p_uid uuid)",
+      "identity_arguments": "p_op text, p_args jsonb, p_uid uuid",
+      "md5_prosrc": "9c4f583e0d0f729689c08bce2ea62a5e",
+      "proname": "_money_plan__invoice_freeze",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_plan__pay_rate(p_op text, p_args jsonb, p_uid uuid)",
+      "identity_arguments": "p_op text, p_args jsonb, p_uid uuid",
+      "md5_prosrc": "aa28af8b81495574af464d95444978a3",
+      "proname": "_money_plan__pay_rate",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_plan__referral_bonus(p_op text, p_args jsonb, p_uid uuid)",
+      "identity_arguments": "p_op text, p_args jsonb, p_uid uuid",
+      "md5_prosrc": "0156ce9527177b37aab481f4e0869440",
+      "proname": "_money_plan__referral_bonus",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._money_plan__session(p_op text, p_args jsonb, p_uid uuid)",
       "identity_arguments": "p_op text, p_args jsonb, p_uid uuid",
       "md5_prosrc": "e21f34e1392c0dd6f34f21b133271b87",
       "proname": "_money_plan__session",
       "security_definer": true,
       "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_span(o jsonb, n jsonb, p_start text, p_end text, p_other text[], p_lead integer)",
+      "identity_arguments": "o jsonb, n jsonb, p_start text, p_end text, p_other text[], p_lead integer",
+      "md5_prosrc": "608318266bf25a46ac5a4de896319e9c",
+      "proname": "_money_span",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_tuition_reach(p_students uuid[], p_class uuid, p_from date, p_to date)",
+      "identity_arguments": "p_students uuid[], p_class uuid, p_from date, p_to date",
+      "md5_prosrc": "1b134afbddd2c82f35e24768101146c1",
+      "proname": "_money_tuition_reach",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_unfreeze_tier(p_invoice_id uuid)",
+      "identity_arguments": "p_invoice_id uuid",
+      "md5_prosrc": "226e22c1c0715645fe69fc46c5e7e805",
+      "proname": "_money_unfreeze_tier",
+      "security_definer": true,
+      "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._money_uuid(p text)",
+      "identity_arguments": "p text",
+      "md5_prosrc": "22dcde6a13fd3802135d90e986dc35a4",
+      "proname": "_money_uuid",
+      "security_definer": false,
+      "volatility": "i"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._pay_rate_money_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "c5638802659cb1ca21037bcbdcc0f59b",
+      "proname": "_pay_rate_money_guard",
+      "security_definer": true,
+      "volatility": "v"
     },
     {
       "config": [
@@ -681,6 +1289,38 @@
         "authenticated": false,
         "service_role": false
       },
+      "identity": "public._staff_pay_mirror_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "cac197dfb3e26ebe30b5c19bbc29185a",
+      "proname": "_staff_pay_mirror_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
+      "identity": "public._student_delete_guard()",
+      "identity_arguments": "",
+      "md5_prosrc": "72ec5875fda2471e3c973b4339459603",
+      "proname": "_student_delete_guard",
+      "security_definer": true,
+      "volatility": "v"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": false
+      },
       "identity": "public._transcript_evidence_keep()",
       "identity_arguments": "",
       "md5_prosrc": "6874f3d1d42b899885b3589f1919bbcf",
@@ -703,6 +1343,22 @@
       "proname": "change_approval_needed",
       "security_definer": true,
       "volatility": "s"
+    },
+    {
+      "config": [
+        "search_path=public"
+      ],
+      "execute": {
+        "anon": false,
+        "authenticated": true,
+        "service_role": false
+      },
+      "identity": "public.change_enrollment_terms(p_enrollment_id uuid, p_terms jsonb, p_effective_date date)",
+      "identity_arguments": "p_enrollment_id uuid, p_terms jsonb, p_effective_date date",
+      "md5_prosrc": "0d25fcb5cb723cf23ebcc365a78bbb0b",
+      "proname": "change_enrollment_terms",
+      "security_definer": true,
+      "volatility": "v"
     },
     {
       "config": [
@@ -1835,10 +2491,66 @@
     },
     {
       "enabled": "O",
+      "function": "_class_delete_guard",
+      "md5_def": "2f790ddfb3c181634b51b25e9715d0c7",
+      "name": "zz_class_delete_guard",
+      "table": "classes",
+      "tgtype": 11
+    },
+    {
+      "enabled": "O",
       "function": "_class_fee_mirror_guard",
       "md5_def": "ebf1bd33b96da6dc97d67da86b06aafe",
       "name": "zz_class_fee_mirror_guard",
       "table": "classes",
+      "tgtype": 19
+    },
+    {
+      "enabled": "O",
+      "function": "_discount_money_guard",
+      "md5_def": "c5ef1e99461576ab85b838e1312f6fe2",
+      "name": "zz_discount_money_guard",
+      "table": "discount_assignments",
+      "tgtype": 31
+    },
+    {
+      "enabled": "O",
+      "function": "audit_row_change",
+      "md5_def": "f0d9fc0039f39f56d722fda6125cc17e",
+      "name": "audit_discount_definitions",
+      "table": "discount_definitions",
+      "tgtype": 29
+    },
+    {
+      "enabled": "O",
+      "function": "_discount_definition_guard",
+      "md5_def": "26aa5a51423fa572043933933e6da6f4",
+      "name": "zz_discount_definition_guard",
+      "table": "discount_definitions",
+      "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "_enrollment_money_guard",
+      "md5_def": "ef2e1a821049fe1e085db7e231cb6798",
+      "name": "zz_enrollment_money_guard",
+      "table": "enrollments",
+      "tgtype": 31
+    },
+    {
+      "enabled": "O",
+      "function": "audit_row_change",
+      "md5_def": "40b8ba1f06ea44a7524802940705ed40",
+      "name": "audit_families",
+      "table": "families",
+      "tgtype": 29
+    },
+    {
+      "enabled": "O",
+      "function": "_family_link_guard",
+      "md5_def": "def4276f02d1888ccceb45ae0ded57de",
+      "name": "zz_family_link_guard",
+      "table": "families",
       "tgtype": 19
     },
     {
@@ -1875,11 +2587,35 @@
     },
     {
       "enabled": "O",
+      "function": "_invoice_frozen_keep_guard",
+      "md5_def": "fed9ce823091c82a3f346d507794286b",
+      "name": "zz_invoice_frozen_delete_guard",
+      "table": "invoices",
+      "tgtype": 11
+    },
+    {
+      "enabled": "O",
+      "function": "_invoice_frozen_keep_guard",
+      "md5_def": "bfe5edef7f7a7baf8821a06b10ebaee8",
+      "name": "zz_invoice_frozen_keep_guard",
+      "table": "invoices",
+      "tgtype": 19
+    },
+    {
+      "enabled": "O",
       "function": "_invoice_state_floor",
       "md5_def": "a7b36725c6d00981621d2642776f5e38",
       "name": "zz_invoice_state_floor",
       "table": "invoices",
       "tgtype": 27
+    },
+    {
+      "enabled": "O",
+      "function": "_invoice_unfreeze_guard",
+      "md5_def": "67aeafe4f55e261d9a730df57483c036",
+      "name": "zz_invoice_unfreeze_guard",
+      "table": "invoices",
+      "tgtype": 19
     },
     {
       "enabled": "O",
@@ -1947,6 +2683,22 @@
     },
     {
       "enabled": "O",
+      "function": "audit_row_change",
+      "md5_def": "5d2204a3c40ea01d082fb945a1d31495",
+      "name": "audit_referral_bonuses",
+      "table": "referral_bonuses",
+      "tgtype": 29
+    },
+    {
+      "enabled": "O",
+      "function": "_discount_money_guard",
+      "md5_def": "f6cfee33a2bce332863b3c66b44d7ca7",
+      "name": "zz_discount_money_guard",
+      "table": "referral_bonuses",
+      "tgtype": 31
+    },
+    {
+      "enabled": "O",
       "function": "_floor_table_guard",
       "md5_def": "4abb4fb178d587b038182404ca0e4ddc",
       "name": "session_evidence_floor_guard",
@@ -1992,6 +2744,62 @@
       "name": "zz_session_insert_guard",
       "table": "sessions",
       "tgtype": 7
+    },
+    {
+      "enabled": "O",
+      "function": "_pay_rate_money_guard",
+      "md5_def": "036bd8e68eb35416a545f5b9bfe9e55e",
+      "name": "zz_pay_rate_money_guard",
+      "table": "staff_pay_rates",
+      "tgtype": 31
+    },
+    {
+      "enabled": "O",
+      "function": "_family_link_guard",
+      "md5_def": "bae6c54edf90cd5a60a5b79f80e2b0f7",
+      "name": "zz_family_link_guard",
+      "table": "students",
+      "tgtype": 19
+    },
+    {
+      "enabled": "O",
+      "function": "_student_delete_guard",
+      "md5_def": "6f6043e2332c453f5a03d4d6116b88b5",
+      "name": "zz_student_delete_guard",
+      "table": "students",
+      "tgtype": 11
+    },
+    {
+      "enabled": "O",
+      "function": "audit_row_change",
+      "md5_def": "578e421d4f6c80c3a143375924f66dba",
+      "name": "audit_teachers",
+      "table": "teachers",
+      "tgtype": 29
+    },
+    {
+      "enabled": "O",
+      "function": "_staff_pay_mirror_guard",
+      "md5_def": "f1db8ec0f6227ae8f3dc753af3ce15a9",
+      "name": "zz_staff_pay_mirror_guard",
+      "table": "teachers",
+      "tgtype": 19
+    },
+    {
+      "enabled": "O",
+      "function": "audit_row_change",
+      "md5_def": "06ae6615e6a8ceb18ca3c980989be7c3",
+      "name": "audit_teaching_assistants",
+      "table": "teaching_assistants",
+      "tgtype": 29
+    },
+    {
+      "enabled": "O",
+      "function": "_staff_pay_mirror_guard",
+      "md5_def": "0bf37a3d1b7a8e8f56c89fb4edf19748",
+      "name": "zz_staff_pay_mirror_guard",
+      "table": "teaching_assistants",
+      "tgtype": 19
     }
   ]
 }

@@ -11,6 +11,8 @@ import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Pencil, Check, X, Settings, ChevronRight } from "lucide-react";
 import { ModifyEnrollmentModal } from "../ModifyEnrollmentModal";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 /**
  * The student's name, linked to their profile.
@@ -45,19 +47,37 @@ const EnrollmentRow = ({ enrollment, onUpdate, onModify }: any) => {
   const [date, setDate] = useState(enrollment.start_date);
   const [saving, setSaving] = useState(false);
 
+  // D4 step 3B (G-13): the start date goes through the checked path as the
+  // signed-in admin. The server decides whether the days that move reach a
+  // billed month; when they do, the dialog asks for a reason.
+  const saved = () => {
+    toast.success("Enrollment date updated");
+    setEditing(false);
+    onUpdate();
+  };
+  const money = useMoneyInput(saved);
+  const moneyDialog = (
+    <MoneyInputDialog
+      guard={money.guard}
+      subject={enrollment.students?.full_name}
+      names={enrollment.students?.id ? { [enrollment.students.id]: enrollment.students.full_name } : undefined}
+    />
+  );
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("enrollments")
-        .update({ start_date: date })
-        .eq("id", enrollment.id);
-
-      if (error) throw error;
-
-      toast.success("Enrollment date updated");
-      setEditing(false);
-      onUpdate();
+      const r = await money.run({
+        entity: "enrollment",
+        op: "set_start_date",
+        args: { enrollment_id: enrollment.id, start_date: date },
+      });
+      if (r.status === "done") {
+        if (r.unchanged) setEditing(false);
+        else saved();
+      } else if (r.status === "refused") {
+        toast.error(r.message);
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to update date");
     } finally {
@@ -92,6 +112,7 @@ const EnrollmentRow = ({ enrollment, onUpdate, onModify }: any) => {
             <Pencil className="h-3 w-3" />
           </Button>
         </div>
+        {moneyDialog}
       </div>
     );
   }
@@ -128,6 +149,7 @@ const EnrollmentRow = ({ enrollment, onUpdate, onModify }: any) => {
           <X className="h-3 w-3" />
         </Button>
       </div>
+      {moneyDialog}
     </div>
   );
 };
@@ -138,6 +160,13 @@ const ClassEnrollments = ({ classId }: { classId: string }) => {
   const [enrolling, setEnrolling] = useState(false);
   const [modifyingEnrollment, setModifyingEnrollment] = useState<any>(null);
   const queryClient = useQueryClient();
+  // D4 step 3B (G-13): enrolling is a checked change. From today on it is
+  // tier 0 (no dialog); a start date in a month already taught opens the
+  // reason dialog, one child at a time.
+  const money = useMoneyInput(() => {
+    queryClient.invalidateQueries({ queryKey: ["class-enrollments", classId] });
+    queryClient.invalidateQueries({ queryKey: ["available-students", classId] });
+  });
 
   // Real-time subscription for enrollment changes
   useEffect(() => {
@@ -211,18 +240,20 @@ const ClassEnrollments = ({ classId }: { classId: string }) => {
 
     setEnrolling(true);
     try {
-      const enrollmentData = selected.map((studentId) => ({
-        class_id: classId,
-        student_id: studentId,
-        start_date: startDate,
-      }));
-
-      const { error } = await supabase.from("enrollments").insert(enrollmentData);
-
-      if (error) throw error;
-
-      toast.success(`Successfully enrolled ${selected.length} student(s)`);
-      setSelected([]);
+      const out = await money.runMany(selected.map((studentId) => ({
+        entity: "enrollment",
+        op: "enroll",
+        args: { class_id: classId, student_id: studentId, start_date: startDate },
+      })));
+      if (out.error) throw new Error(out.error);
+      if (out.refused.length > 0) toast.error(`${out.refused.length} could not be enrolled: ${out.refused[0].message}`);
+      if (out.done > 0) toast.success(`Successfully enrolled ${out.done} student(s)`);
+      if (out.needReason.length > 0) {
+        toast.message(`${out.needReason.length} enrolment(s) start in a month already taught: a reason is asked for each`);
+      }
+      // children still waiting for a reason, or refused, stay ticked
+      const left = new Set([...out.needReason, ...out.refused.map((x) => x.item)].map((i) => String(i.args.student_id)));
+      setSelected((prev) => prev.filter((id) => left.has(id)));
       refetchEnrollments();
     } catch (error: any) {
       console.error("Error enrolling students:", error);
@@ -319,6 +350,11 @@ const ClassEnrollments = ({ classId }: { classId: string }) => {
           </Button>
         </CardContent>
       </Card>
+      <MoneyInputDialog
+        guard={money.guard}
+        subject={availableStudents?.find((s) => s.id === money.guard.request?.args?.student_id)?.full_name}
+        names={Object.fromEntries((availableStudents ?? []).map((s) => [s.id, s.full_name]))}
+      />
     </div>
   );
 };

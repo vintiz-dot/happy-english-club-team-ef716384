@@ -20,6 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { INPUT_TEXT } from "@/lib/moneyInputs";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 interface EditEnrollmentDiscountModalProps {
   open: boolean;
@@ -46,6 +49,11 @@ export function EditEnrollmentDiscountModal({
   const [discountType, setDiscountType] = useState<string>(enrollment.discount_type || "");
   const [discountValue, setDiscountValue] = useState<string>(enrollment.discount_value?.toString() || "");
   const [discountCadence, setDiscountCadence] = useState<string>(enrollment.discount_cadence || "");
+  // D4 step 3B (G-14): a discount changes FROM A DATE by default - the months
+  // before it keep what they were charged. Today unless the admin picks another day.
+  const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const [fromDate, setFromDate] = useState<string>(today());
+  const [whole, setWhole] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -54,56 +62,55 @@ export function EditEnrollmentDiscountModal({
       // Map database "once" to UI "per_session"
       const uiCadence = enrollment.discount_cadence === "once" ? "per_session" : enrollment.discount_cadence;
       setDiscountCadence(uiCadence || "");
+      setFromDate(today());
     }
   }, [open, enrollment]);
 
+  // D4 step 3B (G-13 / G-14): the discount is written through the checked
+  // path as the signed-in admin. "From a date" splits the enrolment on that
+  // day (tier 0 from this month: no dialog). "Correct a mistake for the whole
+  // enrolment" reaches every month it covers and asks for a reason when one
+  // of them is billed. Either way one row records who, when, why, before and after.
+  const done = () => {
+    queryClient.invalidateQueries({ queryKey: ["student-enrollments", studentId] });
+    queryClient.invalidateQueries({ queryKey: ["student-tuition"] });
+    toast.success("Enrollment discount updated successfully");
+    onOpenChange(false);
+  };
+  const money = useMoneyInput(done);
+
   const updateMutation = useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
       // Map cadence values to match database enum
       const dbCadence = discountCadence === "per_session" ? "once" : discountCadence;
-      
+
       // If no discount type selected, clear all discount fields
-      const updates = discountType === "" || discountType === "none"
-        ? {
-            discount_type: null,
-            discount_value: null,
-            discount_cadence: null,
-            updated_by: user?.id,
-          }
+      const terms = discountType === "" || discountType === "none"
+        ? { discount_type: null, discount_value: null, discount_cadence: null }
         : {
             discount_type: discountType as "percent" | "amount",
             discount_value: parseInt(discountValue) || null,
             discount_cadence: dbCadence as "monthly" | "once",
-            updated_by: user?.id,
           };
 
-      const { error } = await supabase
-        .from("enrollments")
-        .update(updates)
-        .eq("id", enrollment.id);
-
-      if (error) throw error;
-
-      // Audit log
-      await supabase.from("audit_log").insert({
-        actor_user_id: user?.id,
-        action: "update",
-        entity: "enrollment_discount",
-        entity_id: enrollment.id,
-        diff: updates,
-      });
+      const r = await money.run(whole
+        ? { entity: "enrollment", op: "set_discount", args: { enrollment_id: enrollment.id, ...terms } }
+        : { entity: "enrollment", op: "set_terms_from", args: { enrollment_id: enrollment.id, terms, effective_date: fromDate } });
+      if (r.status === "refused") throw new Error(r.message);
+      return r;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["student-enrollments", studentId] });
-      queryClient.invalidateQueries({ queryKey: ["student-tuition"] });
-      toast.success("Enrollment discount updated successfully");
-      onOpenChange(false);
+    onSuccess: (r) => {
+      if (r.status === "done" && r.unchanged) {
+        toast.message("Nothing was changed");
+        onOpenChange(false);
+      } else if (r.status === "done") {
+        done();
+      }
+      // "dialog": the reason dialog is open; confirming it calls done()
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error updating enrollment discount:", error);
-      toast.error("Failed to update enrollment discount");
+      toast.error(error?.message || "Failed to update enrollment discount");
     },
   });
 
@@ -182,6 +189,29 @@ export function EditEnrollmentDiscountModal({
               </div>
             </>
           )}
+
+          <div>
+            <Label htmlFor="discountFrom">Applies from</Label>
+            <Input
+              id="discountFrom"
+              type="date"
+              value={fromDate}
+              disabled={whole}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
+            <p className="text-sm text-muted-foreground">
+              Lessons before this date keep the discount they had.
+            </p>
+            <label className="mt-2 flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={whole}
+                onChange={(e) => setWhole(e.target.checked)}
+              />
+              <span>{INPUT_TEXT.wholeEnrollment}</span>
+            </label>
+          </div>
         </div>
 
         <DialogFooter>
@@ -209,6 +239,7 @@ export function EditEnrollmentDiscountModal({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <MoneyInputDialog guard={money.guard} subject={enrollment.classes.name} />
     </Dialog>
   );
 }

@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { formatVND } from "@/hooks/useStudentMonthFinance";
 import { useIvory } from "@/hooks/useIvory";
 import { cn } from "@/lib/utils";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 type Bill = { id: string; month: string; total_amount: number | null; tuition_frozen: boolean; frozen_reason: string | null };
 
@@ -47,13 +49,44 @@ export function BillFreezePanel({ studentId, canEdit }: { studentId: string; can
   // Admin screens only (staff area not flipped yet): old classes unless the route is ivory.
   const ivory = useIvory();
 
+  // D4 step 3B (G-18): UNLOCKING goes through the checked path as the
+  // signed-in admin - always with a reason (it is never tier 0), a second one
+  // when the bill is paid or confirmed, and one row that records it. The
+  // database refuses a raw unlock. Locking is unchanged.
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: billFreezeKey(studentId) });
+    qc.invalidateQueries({ queryKey: ["student-month-finance"] });
+  };
+  const money = useMoneyInput((_result, request) => {
+    const bill = bills.find((b) => b.id === request.args.invoice_id);
+    toast({ title: bill ? `${monthLabel(bill.month)} unlocked` : "Bill unlocked" });
+    refresh();
+  });
+  const unlock = async (bill: Bill) => {
+    setSaving(true);
+    const r = await money.run({ entity: "invoice_freeze", op: "unfreeze", args: { invoice_id: bill.id } });
+    setSaving(false);
+    if (r.status === "refused") {
+      toast({ title: "Couldn't change the lock", description: r.message, variant: "destructive" });
+      refresh();
+    } else if (r.status === "done") {
+      refresh();
+    }
+  };
+
   const apply = async () => {
     if (!target) return;
     const freeze = !target.tuition_frozen;
+    if (!freeze) {
+      const bill = target;
+      setTarget(null);
+      await unlock(bill);
+      return;
+    }
     setSaving(true);
     const { data, error } = await supabase
       .from("invoices")
-      .update(freeze ? { tuition_frozen: true, frozen_reason: reason.trim() || null } : { tuition_frozen: false })
+      .update({ tuition_frozen: true, frozen_reason: reason.trim() || null })
       .eq("id", target.id)
       .select("tuition_frozen")
       .single();
@@ -108,7 +141,10 @@ export function BillFreezePanel({ studentId, canEdit }: { studentId: string; can
                       // Unlock lets the next recalculation change a charged bill and opens the
                       // confirm: destructive-quiet look (DS s.14). Lock stays quiet.
                       className={cn(ivory && b.tuition_frozen && "border border-hec-danger bg-transparent text-hec-danger hover:bg-hec-danger-tint hover:text-hec-danger")}
-                      onClick={() => { setTarget(b); setReason(""); }}
+                      onClick={() => {
+                        if (b.tuition_frozen) void unlock(b);     // the reason dialog is the confirmation
+                        else { setTarget(b); setReason(""); }
+                      }}
                     >
                       {b.tuition_frozen ? "Unlock" : "Lock"}
                     </Button>
@@ -147,6 +183,7 @@ export function BillFreezePanel({ studentId, canEdit }: { studentId: string; can
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <MoneyInputDialog guard={money.guard} />
     </Card>
   );
 }

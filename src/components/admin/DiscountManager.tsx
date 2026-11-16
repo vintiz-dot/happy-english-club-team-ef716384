@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -169,33 +171,43 @@ export function DiscountManager() {
     return { label: "Active", color: "bg-green-500 text-white" };
   };
 
+  // D4 step 3B (G-15): ending or removing a discount or a referral bonus is a
+  // checked change made as the signed-in admin. Ending from today reaches
+  // nothing billed (tier 0, no dialog); a change that reaches a billed month
+  // asks for a reason. Each change leaves its own row.
+  const entityOf = (table: string) => (table === "referral_bonuses" ? "referral_bonus" : "discount_assignment");
+  const refreshLists = () => {
+    queryClient.invalidateQueries({ queryKey: ["special-discount-assignments"] });
+    queryClient.invalidateQueries({ queryKey: ["referral-bonuses"] });
+  };
+  const changed = (op: string) => {
+    refreshLists();
+    toast({
+      title: "Success",
+      description: op === "remove" ? "Discount removed successfully" : "Discount ended successfully",
+    });
+    setEndingAssignment(null);
+    setRemovingAssignment(null);
+  };
+  const money = useMoneyInput((_result, request) => changed(request.op));
+  const change = async (table: string, op: "set_end" | "remove", args: Record<string, unknown>) => {
+    const r = await money.run({ entity: entityOf(table), op, args });
+    if (r.status === "refused") throw new Error(r.message);
+    if (r.status === "dialog") {
+      // the confirmation dialog steps aside for the reason dialog
+      setEndingAssignment(null);
+      setRemovingAssignment(null);
+    }
+    return r.status;
+  };
+
   const endAssignmentMutation = useMutation({
     mutationFn: async ({ id, table }: { id: string; table: string }) => {
       const yesterday = dayjs().tz().subtract(1, "day").format("YYYY-MM-DD");
-
-      const { error } = await supabase
-        .from(table as any)
-        .update({ effective_to: yesterday })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      // Audit log
-      await supabase.from("audit_log" as any).insert({
-        entity: table,
-        entity_id: id,
-        action: "end",
-        diff: { effective_to: yesterday },
-      });
+      return change(table, "set_end", { id, effective_to: yesterday });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["special-discount-assignments"] });
-      queryClient.invalidateQueries({ queryKey: ["referral-bonuses"] });
-      toast({
-        title: "Success",
-        description: "Discount ended successfully",
-      });
-      setEndingAssignment(null);
+    onSuccess: (status) => {
+      if (status === "done") changed("set_end");
     },
     onError: (error: any) => {
       toast({
@@ -207,26 +219,9 @@ export function DiscountManager() {
   });
 
   const removeAssignmentMutation = useMutation({
-    mutationFn: async ({ id, table }: { id: string; table: string }) => {
-      const { error } = await supabase.from(table as any).delete().eq("id", id);
-
-      if (error) throw error;
-
-      // Audit log
-      await supabase.from("audit_log" as any).insert({
-        entity: table,
-        entity_id: id,
-        action: "delete",
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["special-discount-assignments"] });
-      queryClient.invalidateQueries({ queryKey: ["referral-bonuses"] });
-      toast({
-        title: "Success",
-        description: "Discount removed successfully",
-      });
-      setRemovingAssignment(null);
+    mutationFn: async ({ id, table }: { id: string; table: string }) => change(table, "remove", { id }),
+    onSuccess: (status) => {
+      if (status === "done") changed("remove");
     },
     onError: (error: any) => {
       toast({
@@ -241,33 +236,35 @@ export function DiscountManager() {
     mutationFn: async (ids: string[]) => {
       const yesterday = dayjs().tz().subtract(1, "day").format("YYYY-MM-DD");
       const table = selectedTab === "special" ? "discount_assignments" : "referral_bonuses";
-
-      const { error } = await supabase
-        .from(table as any)
-        .update({ effective_to: yesterday })
-        .in("id", ids);
-
-      if (error) throw error;
-
-      // Audit log
-      await Promise.all(
-        ids.map((id) =>
-          supabase.from("audit_log" as any).insert({
-            entity: table,
-            entity_id: id,
-            action: "bulk_end",
-            diff: { effective_to: yesterday },
-          })
-        )
-      );
+      const out = await money.runMany(ids.map((id) => ({
+        entity: entityOf(table),
+        op: "set_end",
+        args: { id, effective_to: yesterday },
+      })));
+      if (out.error) throw new Error(out.error);
+      return out;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["special-discount-assignments"] });
-      queryClient.invalidateQueries({ queryKey: ["referral-bonuses"] });
-      toast({
-        title: "Success",
-        description: `${selectedAssignments.length} discounts ended successfully`,
-      });
+    onSuccess: (out) => {
+      refreshLists();
+      if (out.done > 0) {
+        toast({
+          title: "Success",
+          description: `${out.done} discounts ended successfully`,
+        });
+      }
+      if (out.refused.length > 0) {
+        toast({
+          title: `${out.refused.length} could not be ended`,
+          description: out.refused[0].message,
+          variant: "destructive",
+        });
+      }
+      if (out.needReason.length > 0) {
+        toast({
+          title: `${out.needReason.length} reach months already billed`,
+          description: "A reason is asked for each.",
+        });
+      }
       setSelectedAssignments([]);
       setBulkEndDialogOpen(false);
     },
@@ -634,6 +631,7 @@ export function DiscountManager() {
           studentId={editingAssignment.student_id}
         />
       )}
+      <MoneyInputDialog guard={money.guard} />
     </div>
   );
 }

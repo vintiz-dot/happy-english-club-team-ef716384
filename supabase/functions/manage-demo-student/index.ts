@@ -20,6 +20,15 @@
  *   status        → { enabled, password_set_at, account_exists }
  *   set_password  → { password } (min 10 chars); enables + provisions sandbox
  *   disable       → locks the account with a random password, enabled=false
+ *
+ * D4 step 3B (docs/evidence/D4-design.md b.5): this function is on the
+ * SERVICE lane and NOTHING is exempted for it. Its enrolment insert is dated
+ * today (tier 0, passes the enrolment guard as before). Its delete of the
+ * demo child's other enrolments passes while those reach no billed past
+ * month; when one does, the database refuses it (HC120 / HC121) and the
+ * function locks the demo account again, leaves it disabled and reports
+ * `demo_reset_needs_owner` - a demo login still enrolled in a real class
+ * would show real classmates' names, so it must not be handed out.
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
@@ -47,6 +56,26 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
+
+  /** The money guard (D4) refused an enrolment write of the sandbox reset. */
+  const guardRefused = (e: any) => !!e && (e.code === "HC120" || e.code === "HC121");
+  const needsOwner = async (uid: string, what: string, e: any) => {
+    console.warn(`manage-demo-student: ${what} refused by the money guard (${e?.code}); demo left disabled`);
+    // Fail closed: nobody is handed a demo login that is still in a real class.
+    await sb.auth.admin.updateUserById(uid, { password: crypto.randomUUID() + crypto.randomUUID() });
+    await sb.from("demo_access").upsert(
+      { id: true, enabled: false, updated_at: new Date().toISOString() },
+      { onConflict: "id" },
+    );
+    return respond({
+      success: false,
+      enabled: false,
+      code: "demo_reset_needs_owner",
+      error: "The demo student is enrolled in a real class whose months are already billed. " +
+        "That enrolment can only be removed with a reason (from the enrolment screen) or by the owner. " +
+        "The demo login was left switched off.",
+    }, 409);
+  };
 
   try {
     // ── Admin gate ───────────────────────────────────────────────────────
@@ -195,18 +224,22 @@ Deno.serve(async (req) => {
         // The demo student is enrolled in the sandbox class and NOTHING
         // else — a student in a real class would see that class's
         // leaderboard, i.e. real classmates' names.
-        await sb.from("enrollments").delete()
+        const { error: clearErr } = await sb.from("enrollments").delete()
           .eq("student_id", studentRow.id).neq("class_id", demoClass.id);
+        if (guardRefused(clearErr)) return await needsOwner(uid, "clearing the demo child's other enrolments", clearErr);
+        if (clearErr) throw new Error(`could not clear the demo child's other enrolments: ${clearErr.message}`);
 
         const { data: enr } = await sb
           .from("enrollments").select("id")
           .eq("class_id", demoClass.id).eq("student_id", studentRow.id).maybeSingle();
         if (!enr) {
-          await sb.from("enrollments").insert({
+          const { error: enrolErr } = await sb.from("enrollments").insert({
             class_id: demoClass.id,
             student_id: studentRow.id,
             start_date: new Date().toISOString().slice(0, 10),
           });
+          if (guardRefused(enrolErr)) return await needsOwner(uid, "enrolling the demo child in the Demo Class", enrolErr);
+          if (enrolErr) throw new Error(`could not enrol the demo child: ${enrolErr.message}`);
         }
 
         const { count } = await sb
