@@ -27,6 +27,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const ClaimAccess = lazy(() => import("./pages/ClaimAccess"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ParentVideos = lazy(() => import("./pages/ParentVideos"));
+const ReceptionFeedback = lazy(() => import("./pages/ReceptionFeedback"));
 const TeacherVideoDashboard = lazy(() => import("./pages/TeacherVideoDashboard"));
 const Students = lazy(() => import("./pages/Students"));
 const StudentDetail = lazy(() => import("./pages/StudentDetail"));
@@ -118,6 +119,7 @@ function AppContent() {
                   <Route path="/dashboard" element={<Dashboard />} />
                   {/* Public: a parent's secret link to their child's approved videos. */}
                   <Route path="/watch/:token" element={<ParentVideos />} />
+                  <Route path="/feedback" element={<ReceptionFeedback />} />
                   <Route path="/teacher/videos" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherVideoDashboard /></ProtectedRoute>} />
 
                   {/* Admin-only routes */}

@@ -1,0 +1,15 @@
+{
+  "id": "com.happyenglishclub.reception",
+  "version": "1.0.0",
+  "vendor": "Happy English Club",
+  "type": "web",
+  "main": "index.html",
+  "title": "HEC Reception",
+  "icon": "assets/icon.png",
+  "largeIcon": "assets/largeIcon.png",
+  "splashBackground": "assets/splash.png",
+  "bgColor": "#0b1b3a",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": true,
+  "requiredPermissions": ["time.query"]
+}

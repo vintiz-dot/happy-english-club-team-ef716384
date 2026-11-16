@@ -367,6 +367,13 @@ const SUITES = [
   // Language Support: the picture strip, set import and the easy video
   // recorder's helpers (no database), then the class-activation policies.
   { name: "language support lib", file: "language-support-lib.test.mjs", migrations: [] },
+  // Reception display: the public feedback form sends pending rows only;
+  // content, settings and approval are admin-only.
+  {
+    name: "reception display",
+    file: "reception-display.test.mjs",
+    migrations: ["20261116090000_reception_display.sql", "20261116100000_reception_media.sql"],
+  },
   {
     name: "language support",
     file: "language-support.test.mjs",
