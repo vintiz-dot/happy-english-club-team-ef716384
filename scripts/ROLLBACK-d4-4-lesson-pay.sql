@@ -8,17 +8,29 @@
 -- that failed on sessions. Nothing is lost by rolling back; tell the
 -- conductor.
 --
--- TWO STEPS, BOTH REQUIRED:
+-- THREE STEPS, ALL REQUIRED, in this order, in one sitting
+-- (docs/evidence/D4-3a-live-apply-brief.md "Rollback" has the exact files):
 --   1. Paste this file: it drops the three lesson-pay triggers and nothing
 --      else.
---   2. At once, redeploy the PREVIOUS manage-session (and, if they were
---      deployed with 3A, bulk-cancel-sessions and schedule-sessions) - the
---      versions before step 3A. NOT optional: with the triggers gone
---      money_change_checked refuses every 'session' change (HC050
---      guard_broken), and the step 3A manage-session sends the new actions
---      set-teacher / set-time / set-staff and a held lesson's status change
---      through it, so those screens stop saving until the old function is
---      back.
+--   2. At once, redeploy the PREVIOUS functions - the versions before step
+--      3A, saved in docs/evidence/D4-3a-rollback-before/: manage-session,
+--      and every other one that went out with 3A (bulk-cancel-sessions,
+--      schedule-sessions, mark-attendance v4). NOT optional: with the
+--      triggers gone money_change_checked refuses every 'session' change
+--      (HC050 guard_broken), and the step 3A manage-session sends the new
+--      actions set-teacher / set-time / set-staff and every acknowledged
+--      status change through it.
+--   3. Revert the step 3A SCREENS (git revert of the 3A src/ files, then
+--      the normal Cloudflare deploy). NOT optional either: the 3A screens
+--      open the lesson-pay check (PayGuardDialog) straight away for a Held
+--      -> Scheduled change (SessionActionsModal) and a Held lesson's time
+--      edit (EditSessionModal), and its first call is manage-session
+--      `pay-preview`, which the previous manage-session does not have (400
+--      bad_request): taking a lesson off Held, or changing a held lesson's
+--      time, would have no working route in the app.
+--   Steps 2 and 3 keep each other honest: the old screens against the new
+--   function would hit HC050; the new screens against the old function
+--   would hit 400. Only all three together are the behaviour of before 3A.
 --
 -- WHAT STAYS, on purpose (scripts/pgtest/d4-lesson-pay.test.mjs checks it):
 --   * every money_change_overrides / money_change_events row: the record of

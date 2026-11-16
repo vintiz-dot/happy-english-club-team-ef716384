@@ -109,9 +109,11 @@ EXECUTE for anon / authenticated / service_role: none on all nine. The preflight
 
 ## Rollback
 
+(Corrected in fix round 1, review B-1. The exact files, md5s and order are in `docs/evidence/D4-3a-live-apply-brief.md` "Rollback".)
+
 1. Paste `scripts/ROLLBACK-d4-4-lesson-pay.sql` (drops `zz2_session_pay_guard`, `zz_session_insert_guard`, `zz_session_staff_guard`).
-2. At once redeploy the previous `manage-session` (and `bulk-cancel-sessions`, `schedule-sessions` if they went out with 3A). Not optional: with the triggers gone `money_change_checked('session', ...)` refuses everything (HC050), and the 3A manage-session sends set-teacher / set-time / set-staff and every acknowledged status change through it.
-3. The screens may stay: against the old function a refused write is never returned (nothing refuses), so they behave as before; `pay-preview` / `set-*` would answer 400 bad_action from the old function.
+2. At once redeploy the previous functions: `manage-session`, `bulk-cancel-sessions`, `schedule-sessions` and `mark-attendance` as they were before 3A (saved with LF in `docs/evidence/D4-3a-rollback-before/`). Not optional: with the triggers gone `money_change_checked('session', ...)` refuses everything (HC050), and the 3A manage-session sends set-teacher / set-time / set-staff and every acknowledged status change through it.
+3. **Revert the 3A screens** (git revert of the 3A `src/` files, then the normal deploy). NOT optional - the first version of this section said "the screens may stay", which was wrong (review B-1): `SessionActionsModal` (Held -> Scheduled) and `EditSessionModal` (a Held lesson's time) open `PayGuardDialog` straight away, whose first call is `pay-preview`; the previous manage-session has no such action (400 `bad_request`), so taking a lesson off Held or changing a held lesson's time would have no route left in the app.
 Symptom that means "roll back": an admin or teacher cannot mark today's lesson Held, change today's teacher or assistants, or add a lesson for today or later, with an error naming one of the three triggers or kind=unhold / hold / reteach / retime / restaff / create_past; or a Stars page failing on sessions. `d4-lesson-pay` "rollback 4" and `guard-fingerprint.mjs --check-unchanged --after-rollback` (66/66) test it.
 
 ## Decisions the design left open (each built the fail-closed way) - FOR THE REVIEWER

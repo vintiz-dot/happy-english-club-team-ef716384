@@ -48,8 +48,11 @@
 -- REPLACES NOTHING of D1, D2, D4 file 1 or file 2. No row is changed.
 -- Safe to paste twice.
 --
--- Rollback: scripts/ROLLBACK-d4-4-lesson-pay.sql (drops the three triggers),
--- then redeploy manage-session of before 3A.
+-- Rollback (all three steps; docs/evidence/D4-3a-live-apply-brief.md):
+-- scripts/ROLLBACK-d4-4-lesson-pay.sql (drops the three triggers), then
+-- redeploy the functions of before 3A (docs/evidence/D4-3a-rollback-before/),
+-- then revert the 3A screens (their lesson-pay dialog needs the 3A
+-- manage-session's pay-preview).
 
 BEGIN;
 
