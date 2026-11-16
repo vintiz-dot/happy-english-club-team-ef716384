@@ -392,6 +392,15 @@ const SUITES = [
     file: "creator-rows.test.mjs",
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql"],
   },
+  // bank_info: a family's primary login reads the school's bank details
+  // (docs/evidence/FIX-streaks-bank-uploads.md, item 2). The live policy is
+  // the rollback block in that file, "before" and rollback under test.
+  {
+    name: "bank info family logins",
+    file: "bank-info-family.test.mjs",
+    migrations: ["20261116090000_bank_info_family_logins.sql"],
+    expect: 27,
+  },
   // F-02: the nine AI / speech / image-search functions, handler by handler:
   // no session, wrong role, right role, the per-account limit.
   { name: "ai spend gate (F-02)", file: "ai-gate.test.mjs", migrations: [] },
