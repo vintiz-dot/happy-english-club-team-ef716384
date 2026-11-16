@@ -99,6 +99,7 @@ export function inputChangeLines(plan: MoneyPlan | null | undefined): string[] {
   switch (key) {
     case "enrollment.enroll":
     case "enrollment.enroll_new":
+      if (!c.row) return [];      // several enrolments at once (Create Family): the screen lists them
       return [`Enrolled from ${day(c.row?.start_date)}${c.row?.end_date ? ` to ${day(c.row.end_date)}` : ""}.`];
     case "enrollment.set_start_date":
       return [`Start date: ${day(c.old_start_date)} -> ${day(c.start_date)}.`];

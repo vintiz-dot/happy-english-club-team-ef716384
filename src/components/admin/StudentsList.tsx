@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/lib/avatars";
+import { inputDbErrorText, inputErrorText, needsInputDialog } from "@/lib/moneyInputs";
+import { previewMoneyChange } from "@/components/admin/money-guard/api";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 interface StudentsListProps {
   searchQuery?: string;
@@ -99,17 +103,52 @@ export function StudentsList({ searchQuery = "", sortBy = "name-asc", filterClas
     },
   });
 
+  // D4 step 3B (b.5): deactivating a child ends their open enrolments today
+  // (a database trigger does it). The button asks the server first what that
+  // reaches ('enrollment' / 'end_all'). The usual answer is nothing - the
+  // child is deactivated as before. When this month's bill is already signed
+  // off, the dialog asks for a reason, ends the enrolments through the
+  // checked path, and only then deactivates.
+  const setInactive = async (studentId: string) => {
+    const { error } = await supabase
+      .from("students")
+      .update({ is_active: false })
+      .eq("id", studentId);
+    if (error) throw new Error(inputDbErrorText(error, "The student could not be deactivated."));
+  };
+  const deactivated = () => {
+    queryClient.invalidateQueries({ queryKey: ["students-list"] });
+    toast.success("Student deactivated successfully");
+  };
+  const deactivating = useRef<string | null>(null);
+  const money = useMoneyInput(async () => {
+    const studentId = deactivating.current;
+    deactivating.current = null;
+    if (!studentId) return;
+    try {
+      await setInactive(studentId);
+      deactivated();
+    } catch (error: any) {
+      toast.error("The enrolments were ended, but the student is still active: " + error.message);
+    }
+  });
+
   const deleteMutation = useMutation({
-    mutationFn: async (studentId: string) => {
-      const { error } = await supabase
-        .from("students")
-        .update({ is_active: false })
-        .eq("id", studentId);
-      if (error) throw error;
+    mutationFn: async (studentId: string): Promise<"done" | "dialog"> => {
+      const request = { entity: "enrollment", op: "end_all", args: { student_id: studentId } };
+      const p = await previewMoneyChange(request.entity, request.op, request.args);
+      if ("error" in p) throw new Error(inputErrorText(p.error.code, p.error.message));
+      if (p.plan.allowed && needsInputDialog(p.plan)) {
+        deactivating.current = studentId;
+        money.openDialog(request, p.plan);
+        return "dialog";
+      }
+      // nothing billed is reached (or there is no open enrolment): as before
+      await setInactive(studentId);
+      return "done";
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students-list"] });
-      toast.success("Student deactivated successfully");
+    onSuccess: (state) => {
+      if (state === "done") deactivated();
     },
     onError: (error) => {
       toast.error("Failed to deactivate student: " + error.message);
@@ -233,6 +272,11 @@ export function StudentsList({ searchQuery = "", sortBy = "name-asc", filterClas
           </ul>
         )}
       </CardContent>
+      <MoneyInputDialog
+        guard={money.guard}
+        subject={students?.find((s) => s.id === money.guard.request?.args?.student_id)?.full_name}
+        names={Object.fromEntries((students ?? []).map((s) => [s.id, s.full_name]))}
+      />
     </Card>
   );
 }
