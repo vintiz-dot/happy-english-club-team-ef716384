@@ -23,7 +23,8 @@ import { makeDb, sqlOf, migPath } from '../../scripts/pgtest/d4-prelude.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '..', '..');
-const SCRIPT = readFileSync(join(repo, 'scripts', 'CREDIT-past-unapplied-cash.sql'), 'utf8');
+// CREDIT_SCRIPT=<path> runs the probes against another copy of the script (used to try the F1 fix).
+const SCRIPT = readFileSync(process.env.CREDIT_SCRIPT || join(repo, 'scripts', 'CREDIT-past-unapplied-cash.sql'), 'utf8');
 
 let pass = 0, fail = 0;
 const results = [];
@@ -277,7 +278,7 @@ const dump = async () => JSON.stringify({
 });
 /** a dump with the per-run random values (ids, tx_ids, timestamps, reversal keys' entry ids) taken out, for comparing two runs */
 const shape = async () => {
-  const led = (await db.query(`SELECT regexp_replace(coalesce(tx_key, ''), '-[0-9a-f-]{36}$', '-<entry>') AS k, a.student_id, a.code::text AS code, debit, credit, month
+  const led = (await db.query(`SELECT regexp_replace(regexp_replace(coalesce(tx_key, ''), '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', '<uuid>', 'g'), '-[0-9]{10,}$', '-<ms>') AS k, a.student_id, a.code::text AS code, debit, credit, month
      FROM public.ledger_entries e JOIN public.ledger_accounts a ON a.id = e.account_id ORDER BY 1, 2, 3, 4, 5, 6`)).rows;
   const inv = (await db.query('SELECT student_id, month, total_amount, recorded_payment, paid_amount, status, carry_out_credit, carry_out_debt FROM public.invoices ORDER BY 1, 2')).rows;
   const pay = (await db.query('SELECT count(*)::int n FROM public.payments')).rows[0].n;
@@ -303,8 +304,8 @@ console.log('\nR1 live shape with D4 1a floors + 1b register installed');
   const r1 = await runScript();
   ok('R1b first run: 3 / 708,000 / 0', r1.ok && same(r1.row, { credited: 3, total: 708000, left: 0 }), r1);
   const floorRows = (await db.query('SELECT count(*)::int n FROM public.invoice_state_floor')).rows[0].n;
-  const events = (await db.query('SELECT count(*)::int n FROM public.money_change_events')).rows[0].n;
-  ok('R1c the floor records nothing (raising recorded_payment lowers nothing) and the register logs no event', floorRows === 0 && events === 0, { floorRows, events });
+  const events = (await db.query("SELECT count(*)::int n FROM public.money_change_events WHERE kind <> 'guard_installed'")).rows[0].n;
+  ok('R1c the floor records nothing (raising recorded_payment lowers nothing) and the register logs no event (beyond its own guard_installed row)', floorRows === 0 && events === 0, { floorRows, events });
   const a = await getBill(KA, CUR), b = await getBill(KB, CUR), c = await getBill(KC, '2026-09');
   ok('R1d bills: A 600,000 paid c/o 200,000; B frozen 400k/50k/350k kept, 358,000 paid c/o 8,000, still confirmed; C (Sep) 650,000 c/o 250,000',
     a.recorded_payment === 600000 && a.carry_out_credit === 200000 && a.status === 'paid'
@@ -536,8 +537,8 @@ console.log('\nR9 the order the header asks for matters: origin/main delete-paym
   await runScript();
   const d = await call('delete-payment-main', { paymentId: P.A, deleteReason: 'probe' });
   const n = await nets(KA);
-  ok('R9a (context) the OLD delete-payment ignores both new transactions: it leaves CASH +200,000 / AR -200,000 and the current bill at 600,000',
-    d.status === 200 && n.CASH === 200000 && n.AR === -200000 && (await getBill(KA, CUR)).recorded_payment === 600000, { n, cur: (await getBill(KA, CUR)).recorded_payment });
+  ok('R9a (context) the OLD delete-payment reverses the old pair but not the two new transactions: CASH +200,000, CREDIT +200,000 (a debit on a liability), AR -400,000, and the current bill keeps 600,000',
+    d.status === 200 && same(n, { AR: -400000, CASH: 200000, CREDIT: 200000 }) && (await getBill(KA, CUR)).recorded_payment === 600000, { n, cur: (await getBill(KA, CUR)).recorded_payment });
 }
 
 console.log('\nR10 the script never edits a historical ledger row and writes no payment row');
