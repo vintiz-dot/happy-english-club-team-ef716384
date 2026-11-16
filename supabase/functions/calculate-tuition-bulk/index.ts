@@ -4,7 +4,7 @@ import { requireRole } from "../_lib/auth.ts";
 import { resolveSiblingStates } from "../_lib/sibling-state.ts";
 import { isBillableTuitionSession } from "../_lib/tuition-session.ts";
 import { enrollmentDiscounts, enrollmentOn, inCreationOrder } from "../_lib/enrollment-discounts.ts";
-import { monthPayable, settledWriteOff } from "../_lib/invoice-status.ts";
+import { monthPayable } from "../_lib/invoice-status.ts";
 import { classFeeOn, indexClassFees, isMissingFeeHistory, type ClassFeeHistory } from "../_lib/class-fee.ts";
 
 const corsHeaders = {
@@ -277,25 +277,6 @@ Deno.serve(async (req) => {
       "student_id", studentIds,
       (q: any) => q.lte("effective_from", nextMonthStart).or(`effective_to.is.null,effective_to.gte.${startDate}`)
     );
-    // 8b. Settle Bill write-offs of this month (see _lib/invoice-status.ts).
-    const allSettlements: any[] = await fetchChunked(
-      supabase, "settlements",
-      "id, student_id, settlement_type, amount, tx_id",
-      "student_id", studentIds,
-      (q: any) => q.eq("month", month).eq("settlement_type", "discount")
-    );
-    // Their ledger legs say which the T4 settle-bill posted (settledWriteOff filters).
-    const settlementLegs: any[] = await fetchChunked(
-      supabase, "ledger_entries",
-      "id, tx_id, tx_key",
-      "tx_id", [...new Set(allSettlements.map((s) => s.tx_id).filter(Boolean))] as string[]
-    );
-    const settlementsByStudent = new Map<string, any[]>();
-    for (const s of allSettlements) {
-      const arr = settlementsByStudent.get(s.student_id) || [];
-      arr.push(s);
-      settlementsByStudent.set(s.student_id, arr);
-    }
     const referralsByStudent = new Map<string, any[]>();
     for (const r of allReferralBonuses) {
       const arr = referralsByStudent.get(r.student_id) || [];
@@ -474,13 +455,7 @@ Deno.serve(async (req) => {
         }
 
         let totalAmount = Math.max(0, baseAmount - totalDiscount);
-        // Settle Bill write-off: the same line, in the same place, as calculate-tuition.
         const frozenInv = currentInvoiceMap.get(sid);
-        const writeOff = Math.min(settledWriteOff(settlementsByStudent.get(sid), settlementLegs), totalAmount);
-        if (writeOff > 0 && !frozenInv?.tuition_frozen) {
-          totalDiscount += writeOff;
-          totalAmount -= writeOff;
-        }
         // A frozen bill keeps its saved figures whatever the enrollment says now.
         if (frozenInv?.tuition_frozen) {
           baseAmount = Number(frozenInv.base_amount ?? 0);

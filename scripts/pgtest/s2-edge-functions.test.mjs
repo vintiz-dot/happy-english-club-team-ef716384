@@ -7,9 +7,10 @@
 // and as it is now. The Supabase client is an in-memory stand-in; rpc
 // answers for is_teacher_of_class / can_view_student_in_class come from the
 // same class roster, so "staff of the class" means the same thing as in SQL.
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
+import { tmpdir } from "node:os";
 import { build } from "esbuild";
 import { repo, FUNCTIONS, SERVICE_KEY, tokenOf, world, reset, load, call, wrote, read } from "./s2-fn-harness.mjs";
 
@@ -19,7 +20,18 @@ const ok = (n, c, x) => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${!c && x !
 const eq = (n, got, want) => ok(n, JSON.stringify(got) === JSON.stringify(want), { got, want });
 const src = (name) => readFileSync(resolve(FUNCTIONS, name, "index.ts"), "utf8");
 const old = (name) => execFileSync("git", ["show", `${BASE}:supabase/functions/${name}/index.ts`], { cwd: repo, encoding: "utf8" });
-const both = async (name) => ({ before: await load(name, old(name)), after: await load(name, src(name)) });
+const both = async (name, baseLibs = []) => ({ before: await load(name, withBaseLibs(old(name), baseLibs)), after: await load(name, src(name)) });
+// A BASE function whose _lib file has since lost an export it imported is
+// bundled against BASE's copy of that file (calculate-tuition-bulk:
+// settledWriteOff, removed with the write-off reader, FOLLOWUPS-writeoff-payroll).
+function withBaseLibs(source, libs) {
+  for (const lib of libs) {
+    const p = resolve(tmpdir(), `s2-base-lib.${lib}.${process.pid}.ts`);
+    writeFileSync(p, execFileSync("git", ["show", `${BASE}:supabase/functions/_lib/${lib}.ts`], { cwd: repo, encoding: "utf8" }));
+    source = source.split(`"../_lib/${lib}.ts"`).join(JSON.stringify(p.replace(/\\/g, "/")));
+  }
+  return source;
+}
 
 // ---------------------------------------------------------------- people and classes
 const U = { admin: "u-admin", adminTeacher: "u-admin-teacher", teaA: "u-tea-a", ta: "u-ta-a", teaB: "u-tea-b", parent: "u-parent", kid: "u-kid", norole: "u-norole" };
@@ -38,7 +50,7 @@ const base = () => ({
 // ================================================================ F-04
 console.log("=== F-04 calculate-tuition-bulk: admin only ===");
 {
-  const f = await both("calculate-tuition-bulk");
+  const f = await both("calculate-tuition-bulk", ["invoice-status"]);
   const body = { studentIds: ["00000000-0000-4000-8000-0000000000a1"], month: "2026-11" };
   reset(base());
   const b = await call(f.before, "calculate-tuition-bulk", { token: tokenOf(U.teaB), body });

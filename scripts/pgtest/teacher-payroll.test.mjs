@@ -132,13 +132,26 @@ let log = [];
 // Make the read of cancelled lessons (Lost Income) fail: null, "error"
 // (PostgREST answers with an error) or "throw" (the request itself throws).
 let failCancelled = null;
+// FOLLOWUP (TA fail-closed): make any one read fail. { test(entry), mode }
+// where entry is the logged read ({ table, op, filters, select }) and mode
+// "error" (PostgREST answers with an error) or "throw" (the request throws).
+let failRead = null;
 const clone = (v) => JSON.parse(JSON.stringify(v));
 function fakeClient(key) {
   const who = key === SERVICE_KEY ? "service" : "other";
   const from = (table) => {
-    const st = { table, op: "select", filters: [], payload: null, single: null, order: null };
+    const st = { table, op: "select", filters: [], payload: null, single: null, order: null, select: "" };
+    // A filter on an embedded resource ("sessions.date") reads the row the
+    // foreign key points at. Only an !inner embed drops the parent row, as
+    // in PostgREST; a plain embed would keep it with the embed emptied.
+    const embedded = (r, k) => {
+      const [rel, col] = k.split(".");
+      if (table !== "session_participants" || rel !== "sessions") throw new Error(`stand-in: no embed ${table} -> ${rel}`);
+      return (db.sessions ?? []).find((s) => s.id === r.session_id)?.[col];
+    };
     const match = (r) => st.filters.every(([op, k, v]) => {
-      const x = r[k];
+      if (k.includes(".") && !st.select.includes(`${k.split(".")[0]}!inner(`)) return true;
+      const x = k.includes(".") ? embedded(r, k) : r[k];
       if (op === "eq") return x === v;
       if (op === "neq") return x !== v;
       if (op === "in") return v.includes(x);
@@ -149,6 +162,10 @@ function fakeClient(key) {
     });
     const exec = () => {
       log.push(clone({ client: who, table, op: st.op, filters: st.filters, single: st.single, payload: st.op === "select" ? undefined : st.payload }));
+      if (failRead && st.op === "select" && failRead.test({ table, filters: st.filters, select: st.select })) {
+        if (failRead.mode === "throw") throw new Error("connection reset while reading");
+        return { data: null, error: { code: "08006", message: "connection reset" } };
+      }
       if (failCancelled && table === "sessions" && st.op === "select" && st.filters.some(([op, k, v]) => op === "eq" && k === "status" && v === "Canceled")) {
         if (failCancelled === "throw") throw new Error("connection reset while reading cancelled lessons");
         return { data: null, error: { code: "08006", message: "connection reset" } };
@@ -169,7 +186,7 @@ function fakeClient(key) {
       return { data: rows, error: null };
     };
     const b = {
-      select() { return b; },
+      select(cols = "") { st.select = cols; return b; },
       upsert(p) { st.op = "upsert"; st.payload = p; return b; },
       insert(p) { st.op = "insert"; st.payload = p; return b; },
       update(p) { st.op = "update"; st.payload = p; return b; },
@@ -451,6 +468,33 @@ await section("the cancelled-lessons read fails", async () => {
     eq(`${mode}: close-payroll-month same total`, close.json?.totalAmountVnd, normalClose.json?.totalAmountVnd);
   }
   ok("the normal close booked lines at all (the comparison is not empty)", closeWrites(normalClose).length >= 2, closeWrites(normalClose));
+});
+
+// ============================================== FOLLOWUP: TA loop fail-closed
+// A pay read for an assistant is NOT a display figure: when it fails the
+// whole calculation fails, and so does the month close that asks for it -
+// rather than close the month without the TA (docs/evidence/FOLLOWUPS-writeoff-payroll.md).
+await section("a teaching assistant's lessons cannot be read: the call and the close fail", async () => {
+  const normalClose = await call(closeFn, tokenOf(U.admin), { month: "2026-10", action: "close" });
+  const tasLine = closeWrites(normalClose).find(([t, p]) => t === "payroll_lines" && JSON.stringify(p).includes(TA_1));
+  ok("the normal close books a line for TA_1", normalClose.status === 200 && !!tasLine, closeWrites(normalClose));
+  const parts = (e) => e.table === "session_participants";
+  for (const mode of ["error", "throw"]) {
+    failRead = { test: parts, mode };
+    const admin = await call(fn, tokenOf(U.admin), { month: "2026-10" });
+    const teacher = await call(fn, tokenOf(U.teacherA), { month: "2026-10" });
+    const close = await call(closeFn, tokenOf(U.admin), { month: "2026-10", action: "close" });
+    failRead = null;
+    ok(`${mode}: admin's October -> 500, no payrollData (was: 200 without the TA)`,
+      admin.status === 500 && !("payrollData" in (admin.json ?? {})), { status: admin.status, json: admin.json });
+    if (mode === "error") eq(`${mode}: the error says what could not be read`, admin.json?.error, "Payroll not calculated: a teaching assistant's lessons could not be read. Try again.");
+    ok(`${mode}: a teacher's own call reads no assistant and is unaffected`,
+      teacher.status === 200 && JSON.stringify(ids(teacher)) === JSON.stringify([T_A]) && !teacher.log.some(parts), { status: teacher.status, ids: ids(teacher) });
+    ok(`${mode}: close-payroll-month refuses to close October`, close.status === 500 && close.json?.status !== "locked", { status: close.status, json: close.json });
+    ok(`${mode}: and books nothing - no payroll line, no expenditure, no period lock`,
+      !close.log.some((e) => e.op !== "select" && ["payroll_lines", "expenditures", "payroll_periods"].includes(e.table)),
+      close.log.filter((e) => e.op !== "select").map((e) => [e.table, e.op]));
+  }
 });
 
 // ===================================================================== 3

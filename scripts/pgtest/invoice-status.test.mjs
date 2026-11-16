@@ -730,11 +730,12 @@ const familyPay = (amount, month = MONTH) => call('family-payment',
 const settle = (amount) => call('settle-bill',
   { studentId: S1, month: MONTH, settlementType: 'discount', amount, reason: 'hardship' });
 /**
- * Settle Bill is removed (D-23): settle-bill is a 410 stub. A write-off made
- * before the removal stays and still counts where it counted, so the cases
- * that follow put one in the fixture exactly as the T4 settle-bill wrote it:
- * the 'discount' settlements row and its ledger pair, keyed
- * 'settlement-writeoff-'. Live holds none (scripts/pgtest/removed-money-features.test.mjs).
+ * Settle Bill is removed (D-23): settle-bill is a 410 stub, and the
+ * calculators' write-off reader went after it (FOLLOWUPS-writeoff-payroll):
+ * live held no 'settlement-writeoff-' row (scripts/CHECK-writeoff-reader-removal.sql).
+ * The cases that follow put one in the fixture exactly as the T4 settle-bill
+ * wrote it - the 'discount' settlements row and its ledger pair, keyed
+ * 'settlement-writeoff-' - and assert that neither calculator counts it.
  */
 let writeOffSeq = 0;
 const historicWriteOff = (amount, month = MONTH) => {
@@ -933,8 +934,8 @@ console.log('\nRound 2 - the label after each payment path and the standard reca
   await editRecorded(MONTH, 810000); await calc();
   ok('  and 810,000 is paid', (await bill())?.status === 'paid' && (await bill())?.total_amount === 810000);
 
-  // ---- settle-bill (removed, D-23: a 410 stub). A write-off made before the
-  // removal still counts where it counted (see "T4 fault 2").
+  // ---- settle-bill (removed, D-23: a 410 stub). A write-off recorded before
+  // the removal no longer counts: the reader is gone (see "T4 fault 2").
   await reset(); world(); await calc();
   memoryWrites = []; invoiceWrites = [];
   const unsettled = await bill();
@@ -944,18 +945,20 @@ console.log('\nRound 2 - the label after each payment path and the standard reca
      r.status === 410 && r.body.error === 'Settle bill has been removed' && memoryWrites.length === 0 && invoiceWrites.length === 0
        && same(await bill(), unsettled), r);
   historicWriteOff(400000); await calc(); b = await bill();
-  ok('a write-off IN FULL made before the removal: the bill still carries it - charge 0, nothing owed',
-     b?.total_amount === 0 && b?.carry_out_debt === 0, money(b));
-  ok('  so the label is paid: nothing is left to pay (round 2: issued, with the 400,000 still on the bill)', b?.status === 'paid', money(b));
+  ok('a write-off IN FULL recorded before the removal is ignored: the bill as it was - 400,000 charged, 400,000 owed',
+     b?.total_amount === 400000 && b?.carry_out_debt === 400000 && same(money(b), money(unsettled)), money(b));
+  ok('  so the label stays issued: nothing was paid', b?.status === 'issued', money(b));
   await reset(); world(); await calc();
   await pay((await bill()).id, 100000, 'partial'); await calc();
+  const partPaid = money(await bill());
   historicWriteOff(100000); await calc(); b = await bill();
-  ok('a write-off IN PART on a part-paid bill: stays partial, 200,000 left',
-     b?.status === 'partial' && b?.recorded_payment === 100000 && b?.carry_out_debt === 200000, money(b));
+  ok('a write-off IN PART on a part-paid bill is ignored: stays partial, 300,000 left',
+     b?.status === 'partial' && b?.recorded_payment === 100000 && b?.carry_out_debt === 300000 && same(money(b), partPaid), money(b));
   await withHistory();
+  const withDebt = money(await bill());
   historicWriteOff(400000); await calc();
-  ok('a family with paid history: the write-off clears the real 400,000 debt (round 2: refused, "balance: 0")',
-     (await bill())?.carry_out_debt === 0, money(await bill()));
+  ok('a family with paid history: the write-off is ignored, the real 400,000 debt stands',
+     (await bill())?.carry_out_debt === 400000 && same(money(await bill()), withDebt), money(await bill()));
 
   // ---- delete-payment (T4 changed it: see "T4 fault 1" for the full set)
   const ledgerPayment = () => {
@@ -1265,7 +1268,7 @@ console.log('\nT4 fault 1 - deleting a payment takes it off the bill');
      r.status === 409 && (await bill())?.recorded_payment === 400000 && !memoryWrites.some((w) => w.table === 'payments'), { r: r.body });
 }
 
-console.log('\nT4 fault 2 - Settle Bill (removed, D-23): a write-off made before the removal counts on the bill');
+console.log('\nT4 fault 2 - Settle Bill (removed, D-23): a write-off recorded before the removal no longer counts (reader removed)');
 {
   await withHistory();
   memoryWrites = []; invoiceWrites = [];
@@ -1277,27 +1280,27 @@ console.log('\nT4 fault 2 - Settle Bill (removed, D-23): a write-off made before
        && same(await bill(), held), r);
   historicWriteOff(400000); await calc();
   let b = await bill();
-  ok('a family with a paid September, October unpaid, a 400,000 write-off made before the removal: charge 0, nothing owed',
-     b?.total_amount === 0 && b?.carry_out_debt === 0, money(b));
-  ok('  and it reads paid - nothing is left to pay (was: issued)', b?.status === 'paid', money(b));
+  ok('a family with a paid September, October unpaid, a 400,000 write-off recorded before the removal: ignored - 400,000 charged and owed',
+     b?.total_amount === 400000 && b?.carry_out_debt === 400000 && same(money(b), money(held)), money(b));
+  ok('  and it reads issued, as before the write-off', b?.status === 'issued', money(b));
   const one = await calc(); const many = await bulk();
-  ok('  both calculators show it as one discount line, "Settle Bill write-off", and agree',
-     one.body.totalAmount === 0 && one.body.discounts?.some((d) => d.name === 'Settle Bill write-off' && d.amount === 400000)
-       && many.body.results?.[0]?.totalAmount === 0 && many.body.results?.[0]?.totalDiscount === one.body.totalDiscount,
+  ok('  neither calculator shows a write-off line, and they agree on 400,000',
+     one.body.totalAmount === 400000 && !one.body.discounts?.some((d) => /write-off/i.test(String(d.name)) || d.isSettlement)
+       && many.body.results?.[0]?.totalAmount === 400000 && many.body.results?.[0]?.totalDiscount === one.body.totalDiscount,
      { one: one.body.discounts, many: many.body.results?.[0] });
 
   await reset(); world(); await calc();
   historicWriteOff(100000); await calc(); b = await bill();
-  ok('a write-off IN PART: 300,000 still owed, issued', b?.total_amount === 300000 && b?.carry_out_debt === 300000 && b?.status === 'issued', money(b));
+  ok('a write-off IN PART is ignored: 400,000 still owed, issued', b?.total_amount === 400000 && b?.carry_out_debt === 400000 && b?.status === 'issued', money(b));
   await editRecorded(MONTH, 300000); await calc(); b = await bill();
-  ok('  the rest paid: paid', b?.status === 'paid' && b?.carry_out_debt === 0, money(b));
+  ok('  300,000 paid on it: partial, 100,000 left (the write-off does not make up the rest)', b?.status === 'partial' && b?.carry_out_debt === 100000, money(b));
 
   await reset(); world();
   await seedBill(SEP, 400000, 100000, 'partial');            // 300,000 owed from September
   await calc();
   historicWriteOff(700000); await calc(); b = await bill();
-  ok('a recorded write-off larger than October\'s 400,000 charge counts only up to it: charge 0, September\'s 300,000 still owed',
-     b?.total_amount === 0 && b?.carry_out_debt === 300000 && b?.status === 'issued', money(b));
+  ok('a recorded write-off larger than October\'s 400,000 charge is ignored: 400,000 charged, 700,000 owed with September\'s 300,000',
+     b?.total_amount === 400000 && b?.carry_out_debt === 700000 && b?.status === 'issued', money(b));
 
   await reset(); world();
   await db.query(`INSERT INTO public.invoices (student_id, month, base_amount, discount_amount, total_amount, recorded_payment, status, tuition_frozen)
@@ -1305,8 +1308,8 @@ console.log('\nT4 fault 2 - Settle Bill (removed, D-23): a write-off made before
   historicWriteOff(100000); await calc();
   ok('a frozen bill keeps its saved charge whatever write-off is recorded for the month', (await bill())?.total_amount === 810000, money(await bill()));
 
-  // Which write-offs count is decided by what posted them, not by a date
-  // (T4 review M2): the old settle-bill keyed its ledger 'settlement-discount-'.
+  // Neither kind counts now: the old settle-bill's 'settlement-discount-'
+  // (never counted, T4 review M2) and the T4 'settlement-writeoff-' (reader removed).
   const oldStyle = (when) => {
     fixture.settlements = [{ id: 'old-1', student_id: S1, month: MONTH, settlement_type: 'discount', amount: 100000, tx_id: 'tx-old-wo', created_at: when }];
     fixture.ledger_entries = [
@@ -1323,20 +1326,22 @@ console.log('\nT4 fault 2 - Settle Bill (removed, D-23): a write-off made before
   await reset(); world(); oldStyle('2026-10-07T03:00:00.000Z');
   fixture.ledger_entries[0].tx_key = `settlement-writeoff-${S1}-${MONTH}-1`;
   const counted = await calc(); const countedBulk = await bulk();
-  ok('  the same row with the T4 key counts, in both (so the filter is the key alone)',
-     counted.body.totalAmount === 300000 && countedBulk.body.results?.[0]?.totalAmount === 300000, { one: counted.body.totalAmount, many: countedBulk.body.results?.[0]?.totalAmount });
+  ok('  the same row with the T4 key is ignored too, in both (was: counted, 300,000)',
+     counted.body.totalAmount === 400000 && countedBulk.body.results?.[0]?.totalAmount === 400000, { one: counted.body.totalAmount, many: countedBulk.body.results?.[0]?.totalAmount });
   await reset(); world(); oldStyle('2026-10-07T03:00:00.000Z');
   fixture.ledger_entries[0].tx_key = `settlement-writeoff-${S1}-${MONTH}-1`;
   failTables.add('ledger_entries');
   const s2 = await calc(); const m2 = await bulk();
   failTables.delete('ledger_entries');
-  ok('  their ledger legs cannot be read: both calculators fail', s2.status === 400 && m2.status === 400, { s2: s2.body, m2: m2.body });
+  ok('  their ledger legs cannot be read: neither calculator reads them any more, both price the month (was: both failed)',
+     s2.status === 200 && m2.status === 200 && s2.body.totalAmount === 400000 && m2.body.results?.[0]?.totalAmount === 400000, { s2: s2.body, m2: m2.body });
 
   await reset(); world(); await calc();
   await confirm([(await bill()).id]);
+  const confirmedBill = money(await bill());
   historicWriteOff(100000); await calc(); b = await bill();
-  ok('a confirmed bill whose write-off is read goes back to review with the before/after flag',
-     b?.confirmation_status === 'needs_review' && changedFlag(b)?.details?.difference === -100000, brief(b));
+  ok('a confirmed bill with a write-off recorded stays confirmed: its figures do not move, no before/after flag (was: back to review)',
+     b?.confirmation_status === 'confirmed' && !changedFlag(b) && same(money(b), confirmedBill), brief(b));
 
   // Voluntary contribution through Settle Bill: removed with it (D-23).
   await reset(); world();
@@ -1350,14 +1355,16 @@ console.log('\nT4 fault 2 - Settle Bill (removed, D-23): a write-off made before
   r = await settleAs('unapplied_cash', 250000, MONTH);
   ok('  and as unapplied cash: 410, nothing written', r.status === 410 && memoryWrites.length === 0 && invoiceWrites.length === 0, r);
 
-  // Fail closed on the new read.
+  // The settlements read is gone with the reader: a table that cannot be
+  // read no longer matters to either calculator.
   await reset(); world(); await calc();
-  const before = await bill();
-  failTables.add('settlements'); invoiceWrites = [];
+  const before = money(await bill());
+  failTables.add('settlements');
   const s = await calc(); const m = await bulk();
   failTables.delete('settlements');
-  ok('the month\'s settlements cannot be read: both calculators fail, nothing is written',
-     s.status === 400 && m.status === 400 && !m.body.results && invoiceWrites.length === 0 && same(await bill(), before), { s: s.body, m: m.body });
+  ok('the month\'s settlements cannot be read: neither calculator reads them any more, both price the month as before (was: both failed)',
+     s.status === 200 && m.status === 200 && s.body.totalAmount === 400000 && m.body.results?.[0]?.totalAmount === 400000
+       && same(money(await bill()), before), { s: s.body, m: m.body });
 }
 
 console.log('\nT4 fault 5 - nothing left to pay reads paid');
@@ -1627,13 +1634,14 @@ console.log('\nT4 r2 - the mutations the review left alive');
   ok('a payment whose allocation legs name no month (no bill to take it off): refused, nothing reversed or deleted',
      r.status === 409 && !memoryWrites.some((w) => w.table === 'ledger_entries' || w.table === 'payments'), r.body);
 
-  // h4 is gone by construction: the write-off filter is the ledger key, applied once (settledWriteOff);
-  // the two "old settle-bill" cases above fail if it is dropped.
-  ok('the write-off filter is applied in one place: neither calculator filters settlements by key or date in its query',
+  // h4 is gone by construction, and since the reader's removal there is no
+  // write-off filter at all: neither calculator reads settlements or their legs.
+  ok('no write-off reader is left: neither calculator reads settlements or ledger legs, nor filters by key or date; neither invoice-status copy exports the filter',
      ['calculate-tuition', 'calculate-tuition-bulk'].every((f) => {
        const t = readFileSync(join(repo, 'supabase', 'functions', f, 'index.ts'), 'utf8');
-       return !/settlement-writeoff/.test(t) && !/gte\(["']created_at/.test(t) && /settledWriteOff\(/.test(t);
-     }));
+       return !/settlement-writeoff|settledWriteOff|WRITE_OFF_|["']settlements["']|["']ledger_entries["']/.test(t) && !/gte\(["']created_at/.test(t);
+     }) && [join(libDir, 'invoice-status.ts'), join(repo, 'src', 'lib', 'invoiceStatus.ts')].every((p) =>
+       !/settledWriteOff|WRITE_OFF_KEY_PREFIX|WRITE_OFF_NAME/.test(readFileSync(p, 'utf8'))));
 }
 
 console.log('\nD-23 - voluntary contributions are removed (what happens to money beyond what is owed: OVERPAYMENT, below)');
