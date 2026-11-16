@@ -183,6 +183,26 @@ const SUITES = [
     ],
   },
   { name: "money guard lib", file: "money-guard-lib.test.mjs", expect: 45, migrations: [] },
+  // D4 step 2: dated class fees (G-16): the guards, the three calculators
+  // bundled, and invoice-status's golden figures re-run with no history
+  // table, with baseline rows and with a future row (all byte-identical).
+  {
+    name: "d4 class fee",
+    file: "d4-class-fee.test.mjs",
+    expect: 143,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261106090000_attendance_enrollment_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261114090000_d4_floors.sql",
+      "20261114091000_d4_core_register.sql",
+      "20261114092000_d4_class_fee_history.sql",
+    ],
+    args: ["scripts/ROLLBACK-d4-3-class-fee.sql"],
+  },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.
