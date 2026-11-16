@@ -108,9 +108,9 @@ export const IVORY_ROUTES: IvoryRoute[] = [
   { path: "/teacher/transcripts" },
   { path: "/teacher/videos" },
   { path: "/board-window/:classId" },
-  // Shared with the student and the parent: only the staff roles here. A
-  // family's /schedule flips with the parent area (R23).
-  { path: "/schedule", roles: ["admin", "teacher"] },
+  // Shared with the student and the parent: the staff roles flipped with R21,
+  // the family's and the student's view with R24.
+  { path: "/schedule", roles: ["admin", "teacher", "family", "student"] },
   { path: "/tuition", roles: ["admin", "teacher"] },
   { path: "/dashboard", roles: ["admin", "teacher"] },
   // Not listed on purpose: /teacher/recorder and /admin?tab=audit-clips (the
@@ -123,8 +123,9 @@ export const IVORY_ROUTES: IvoryRoute[] = [
   { path: "/claim" },
   { path: "/auth" },
   { path: "/auth/reset-password" },
-  // "/" is also the teacher hub (staff area): only the family hub is in the system.
-  { path: "/", roles: ["family"] },
+  // "/" is the family hub (R23) and the teacher hub (R24). Students and admins
+  // are redirected from it; signed out it sends to /auth.
+  { path: "/", roles: ["family", "teacher"] },
 ];
 
 const trimSlash = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p);

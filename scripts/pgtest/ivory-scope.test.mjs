@@ -58,8 +58,8 @@ for (const p of ["/teacher/dashboard", "/teacher/classes/c-1", "/teacher/payroll
 eq("teacher recorder stays old (owner has not released it)", isIvoryRoute("/teacher/recorder", "", undefined, false, "teacher"), false);
 eq("/schedule as admin", isIvoryRoute("/schedule", "", undefined, false, "admin"), true);
 eq("/schedule as teacher", isIvoryRoute("/schedule", "", undefined, false, "teacher"), true);
-eq("/schedule as family stays old (R23)", isIvoryRoute("/schedule", "", undefined, false, "family"), false);
-eq("/schedule as student stays old", isIvoryRoute("/schedule", "", undefined, false, "student"), false);
+eq("/schedule as family flipped (R24)", isIvoryRoute("/schedule", "", undefined, false, "family"), true);
+eq("/schedule as student flipped (R24)", isIvoryRoute("/schedule", "", undefined, false, "student"), true);
 eq("/schedule while the role is unknown stays old", isIvoryRoute("/schedule"), false);
 // R23, the parent + public flip
 eq("parent dashboard flipped (R23)", isIvoryRoute("/family/dashboard", "", undefined, false, "family"), true);
@@ -69,7 +69,7 @@ eq("sign-in flipped (R23)", isIvoryRoute("/auth"), true);
 eq("password reset flipped (R23)", isIvoryRoute("/auth/reset-password"), true);
 eq("claim flipped (R23)", isIvoryRoute("/claim"), true);
 eq("family hub on / flipped (R23)", isIvoryRoute("/", "", undefined, false, "family"), true);
-eq("teacher hub on / stays old", isIvoryRoute("/", "", undefined, false, "teacher"), false);
+eq("teacher hub on / flipped (R24)", isIvoryRoute("/", "", undefined, false, "teacher"), true);
 eq("/ while the role is unknown stays old", isIvoryRoute("/"), false);
 eq("OAuth consent not in the R23 list", isIvoryRoute("/.lovable/oauth/consent"), false);
 eq("/tuition as student", isIvoryRoute("/tuition", "", undefined, false, "student"), true);
