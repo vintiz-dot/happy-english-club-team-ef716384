@@ -150,7 +150,30 @@
 }
 .rte-content > * + * { margin-top: 0.6em; }
 .rte-content p, .rte-content li > p { margin: 0; }
+/* Real specificity here: a host's CSS reset (`ul { list-style: none }`) must not
+   take the bullets out of the writing area. */
+.rte-content ul, .rte-content ol { margin: 0; padding-left: 1.5em; }
+.rte-content ul { list-style: disc; }
+.rte-content ol { list-style: decimal; }
+.rte-content ul ul { list-style-type: circle; }
+.rte-content ol ol, .rte-content ul ol { list-style-type: lower-alpha; }
 .rte-content li { margin-top: 0.25em; }
+.rte-content .ql-indent-1 { margin-left: 1.5em; }
+.rte-content .ql-indent-2 { margin-left: 3em; }
+.rte-content .ql-indent-3 { margin-left: 4.5em; }
+.rte-content .ql-indent-4 { margin-left: 6em; }
+.rte-content .ql-indent-5 { margin-left: 7.5em; }
+.rte-content .ql-indent-6 { margin-left: 9em; }
+.rte-content .ql-indent-7 { margin-left: 10.5em; }
+.rte-content .ql-indent-8 { margin-left: 12em; }
+.rte-content .ql-align-center { text-align: center; }
+.rte-content .ql-align-right { text-align: right; }
+.rte-content .ql-align-justify { text-align: justify; }
+.rte-content a, .rte-content p { overflow-wrap: break-word; }
+/* Highlights are pale: their text is dark ink in both themes (--hec-on-brass is dark in both). */
+.rte-content [style*="background-color"]:not([style^="color"]):not([style*=" color"]):not([style*=";color"]) {
+  color: hsl(var(--hec-on-brass));
+}
 .rte-content li::marker { color: hsl(var(--hec-brass)); }
 .rte-content h1, .rte-content h2, .rte-content h3,
 .rte-content h4, .rte-content h5, .rte-content h6 {

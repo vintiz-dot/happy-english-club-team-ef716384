@@ -1,20 +1,20 @@
-/* Rich text, read-only (RichTextView) - and the same rules inside the editor.
+/* Rich text, read-only (RichTextView). (The editor has its own rules in rich-text.css.)
    Only what the STORED FORMAT needs to keep its meaning: Quill's flat-list
    markers, indents and alignment, nested lists, safe wrapping. Typography and
    colour come from the host's own classes. Every selector is wrapped in
    :where() so it has no specificity: a host stylesheet always wins. */
 
-:where(.rte-view, .rte-content) {
+:where(.rte-view) {
   overflow-wrap: break-word;
   word-break: normal;
   min-width: 0;
   max-width: 100%;
 }
-:where(.rte-view, .rte-content) :where(ul) { list-style-type: disc; }
-:where(.rte-view, .rte-content) :where(ol) { list-style-type: decimal; }
-:where(.rte-view, .rte-content) :where(ul, ol) :where(ul) { list-style-type: circle; }
-:where(.rte-view, .rte-content) :where(ul, ol) :where(ol) { list-style-type: lower-alpha; }
-:where(.rte-view, .rte-content) :where(ul, ol) { padding-left: 1.5em; }
+:where(.rte-view) :where(ul) { list-style-type: disc; }
+:where(.rte-view) :where(ol) { list-style-type: decimal; }
+:where(.rte-view) :where(ul, ol) :where(ul) { list-style-type: circle; }
+:where(.rte-view) :where(ul, ol) :where(ol) { list-style-type: lower-alpha; }
+:where(.rte-view) :where(ul, ol) { padding-left: 1.5em; }
 /* Like Quill's capped indents: past three levels a nested list stops eating the column. */
 :where(.rte-view) :where(ul, ol) :where(ul, ol) :where(ul, ol) :where(ul, ol) { padding-left: 0.5em; }
 
@@ -25,32 +25,26 @@
 :where(.rte-view) :where(li[data-list="unchecked"]) { list-style-type: "\2B1C  "; }
 
 /* Quill indents, drawn at most three deep (deeper rows are capped by the sanitiser). */
-:where(.rte-view, .rte-content) :where(.ql-indent-1) { margin-left: 0.75em; }
-:where(.rte-view, .rte-content) :where(.ql-indent-2) { margin-left: 1.5em; }
-:where(.rte-view, .rte-content) :where(.ql-indent-3) { margin-left: 2.25em; }
-:where(.rte-content) :where(.ql-indent-4) { margin-left: 3em; }
-:where(.rte-content) :where(.ql-indent-5) { margin-left: 3.75em; }
-:where(.rte-content) :where(.ql-indent-6) { margin-left: 4.5em; }
-:where(.rte-content) :where(.ql-indent-7) { margin-left: 5.25em; }
-:where(.rte-content) :where(.ql-indent-8) { margin-left: 6em; }
+:where(.rte-view) :where(.ql-indent-1) { margin-left: 0.75em; }
+:where(.rte-view) :where(.ql-indent-2) { margin-left: 1.5em; }
+:where(.rte-view) :where(.ql-indent-3) { margin-left: 2.25em; }
 @media (min-width: 640px) {
-  :where(.rte-view, .rte-content) :where(.ql-indent-1) { margin-left: 1.5em; }
-  :where(.rte-view, .rte-content) :where(.ql-indent-2) { margin-left: 3em; }
-  :where(.rte-view, .rte-content) :where(.ql-indent-3) { margin-left: 4.5em; }
+  :where(.rte-view) :where(.ql-indent-1) { margin-left: 1.5em; }
+  :where(.rte-view) :where(.ql-indent-2) { margin-left: 3em; }
+  :where(.rte-view) :where(.ql-indent-3) { margin-left: 4.5em; }
 }
-:where(.rte-view, .rte-content) :where(.ql-align-center) { text-align: center; }
-:where(.rte-view, .rte-content) :where(.ql-align-right) { text-align: right; }
+:where(.rte-view) :where(.ql-align-center) { text-align: center; }
+:where(.rte-view) :where(.ql-align-right) { text-align: right; }
 /* Justified text opens rivers on a phone; read it left-aligned (as before). */
 :where(.rte-view) :where(.ql-align-justify) { text-align: left; }
-:where(.rte-content) :where(.ql-align-justify) { text-align: justify; }
 
-:where(.rte-view, .rte-content) :where(a) { overflow-wrap: anywhere; }
-:where(.rte-view, .rte-content) :where(img) { max-width: 100%; height: auto; }
-:where(.rte-view, .rte-content) :where(pre) { white-space: pre-wrap; }
+:where(.rte-view) :where(a) { overflow-wrap: anywhere; }
+:where(.rte-view) :where(img) { max-width: 100%; height: auto; }
+:where(.rte-view) :where(pre) { white-space: pre-wrap; }
 
 /* A highlight is a pale colour: draw its text in dark ink in both themes
    (--hec-on-brass is dark in both), unless the writer also chose a text colour. */
-:where(.rte-view, .rte-content) :where([style*="background-color"]:not([style^="color"]):not([style*=" color"]):not([style*=";color"])) {
+:where(.rte-view) :where([style*="background-color"]:not([style^="color"]):not([style*=" color"]):not([style*=";color"])) {
   color: hsl(var(--hec-on-brass));
 }
 

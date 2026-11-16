@@ -296,11 +296,15 @@ export default function EditorImpl({
 
   useEffect(() => {
     if (!editor) return;
-    // Mod-K opens the link field (Tiptap has no default for it).
+    // Mod-K opens the link field (Tiptap has no default for it). While the
+    // writer is in the text, the editor owns it: the page's own Ctrl+K (a
+    // command palette) must not open on top. Without a link button it is left alone.
     const handler = (_view: unknown, event: globalThis.KeyboardEvent) => {
+      if (toolbar === "minimal") return false;
       if ((event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        if (toolbar !== "minimal") openLink();
+        event.stopPropagation();
+        openLink();
         return true;
       }
       return false;
