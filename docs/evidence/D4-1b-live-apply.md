@@ -1,6 +1,6 @@
 # D4 step 1b - live apply, functions half (Step 4 and Step 5 of D4-1b-live-apply-brief.md)
 
-Where I am / next step: deployed, read back and probed; last step is the log check covering 10 minutes after the last deploy (to 09:25).
+Where I am / next step: DONE - LIVE AND VERIFIED. Nothing pending from this run; the in-app checks of Step 5 (admin session) and the morning-after event count are for the conductor / owner.
 
 Live project `aswgmbefikhsnhogtryv` (confirmed with get_project_url). Steps 1-3 (migration) were done earlier by the conductor; no migration is applied here. All times Hanoi (UTC+7).
 
@@ -78,3 +78,10 @@ Noticed, not mine: `analyze-video-submission` went v3 -> v4 at 09:16:43 (another
 ## Logs 09:03 - 09:18 (function_edge_logs + function_logs, the three function ids)
 
 - Only my six probes (all 401) and one clean Boot per function at the new version (guarded-change-refresh v2, repair-attendance v4, mark-attendance v4). No error-level line, no boot error, no 5xx.
+
+## Final log check 09:03 - 09:26 (10+ minutes after the last deploy) and counts at 09:26
+
+- The three functions: only my six probes (401), one Boot and one normal Shutdown per function at the new versions. No error-level line, no boot error, no 5xx. No real traffic reached them in the window.
+- Counts at 09:26 unchanged: money_change_events guard_installed 1 (no other kind), money_change_overrides 0, attendance 6289, invoices 711, sessions 876.
+
+VERDICT: LIVE AND VERIFIED.
