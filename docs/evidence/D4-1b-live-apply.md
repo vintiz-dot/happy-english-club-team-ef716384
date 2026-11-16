@@ -1,6 +1,6 @@
 # D4 step 1b - live apply, functions half (Step 4 and Step 5 of D4-1b-live-apply-brief.md)
 
-Where I am / next step: pre-checks done; next step is deploying guarded-change-refresh.
+Where I am / next step: guarded-change-refresh live and verified (v2); next step is deploying repair-attendance.
 
 Live project `aswgmbefikhsnhogtryv` (confirmed with get_project_url). Steps 1-3 (migration) were done earlier by the conductor; no migration is applied here. All times Hanoi (UTC+7).
 
@@ -28,3 +28,11 @@ Versions before (list_edge_functions): repair-attendance v3 (verify_jwt true), m
 Counts before (09:01): money_change_events guard_installed = 1 (no other kind); money_change_overrides = 0; attendance = 6289; invoices = 711; sessions = 876.
 
 Note: 09:01 Hanoi on a Monday; the brief prefers outside teaching hours. Proceeding on the conductor's instruction.
+
+## Step 4a - guarded-change-refresh - 2026-11-16 09:04 to 09:09
+
+- 09:04 deployed v1 (new function; verify_jwt true; entrypoint guarded-change-refresh/index.ts; files: guarded-change-refresh/index.ts, _lib/auth.ts, _lib/session-guard.ts, _lib/money-guard.ts).
+- v1 read-back (get_edge_function, CR removed, md5 per file): index.ts, auth.ts, money-guard.ts EQUAL; session-guard.ts MISMATCH (4574c70c8d464240e0c82d72a77a0f9e, 22189 bytes): the repo file ends with a blank line (`}\n\n`) and my upload dropped it. Content otherwise identical (diff: only that final empty line). Not a code difference, but not byte for byte, so redeployed once.
+- 09:08 deployed v2 with the same four files, session-guard.ts with its final blank line.
+- v2 read-back: all four EQUAL to the repo LF md5 (b2b7b3a4..., 879142b6..., 9046deec..., 5fab2eca...). verify_jwt true. VERDICT: identical.
+- How compared: the get_edge_function result was taken from this session's transcript by a script, each file's content written to scratch with CR removed and md5'd against the repo LF file (no hand comparison).
