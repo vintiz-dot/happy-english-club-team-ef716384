@@ -186,6 +186,20 @@ Deno.serve(async (req) => {
           
           remainingAmount -= appliedAmount;
         }
+
+        // Rounding each share to whole VND can leave a few VND while the
+        // bills still owe (1,000,000 over three children owing 400,000 each
+        // leaves 1). That remainder goes to a bill that still owes, in
+        // order, so it is never taken for money beyond what the bills owe:
+        // only amount - totalOwed can be left over.
+        for (const a of allocations) {
+          if (remainingAmount <= 0) break;
+          const headroom = (studentBalances.get(a.studentId) || 0) - a.amount;
+          if (headroom <= 0) continue;
+          const add = Math.min(headroom, remainingAmount);
+          a.amount += add;
+          remainingAmount -= add;
+        }
       }
 
     } else {
@@ -220,6 +234,7 @@ Deno.serve(async (req) => {
     // the first write.
     const leftover = remainingAmount;
     const creditStudentId = selectedStudentIds[0];
+    let creditPart = 0;
     if (leftover > 0) {
       if (leftoverHandling === 'unapplied_cash') {
         return new Response(
@@ -243,6 +258,13 @@ Deno.serve(async (req) => {
         allocations.push(target);
       }
       if (target.invoices.length === 0) target.invoices = creditBills;
+      // How much of the leftover is really credit: only what lands above
+      // what the student's bill still owes. In oldest-first and pro-rata a
+      // leftover exists only once every bill is paid, so it is all of it; in
+      // a Manual split, money not split out first pays what the first
+      // selected student still owes (OVERPAYMENT review N2).
+      const owedThere = creditBills.reduce((sum, inv) => sum + owedOn(inv), 0);
+      creditPart = Math.max(0, target.amount + leftover - owedThere) - Math.max(0, target.amount - owedThere);
       target.amount += leftover;
       remainingAmount = 0;
     }
@@ -303,7 +325,10 @@ Deno.serve(async (req) => {
 
       const accountMap = new Map(accounts?.map(a => [a.code, a.id]));
       const allocationTxId = crypto.randomUUID();
-      const cashAccount = method === 'cash' ? accountMap.get('CASH') : accountMap.get('BANK');
+      // The screens send 'Cash'; compared case-insensitively, as
+      // smart-family-payment does (it was `=== 'cash'`, so every Family
+      // Payment in cash was debited to BANK; past rows stay as they are).
+      const cashAccount = method.toLowerCase() === 'cash' ? accountMap.get('CASH') : accountMap.get('BANK');
       // The bill is written only after its ledger pair is: never a bill
       // that records money the ledger does not (an insert with no account
       // id, or one that failed, used to go unnoticed).
@@ -322,7 +347,12 @@ Deno.serve(async (req) => {
           credit: 0,
           occurred_at: occurredAt,
           memo: `Family payment allocation (${i + 1}/${allocations.length})`
-            + (extra > 0 ? `, including ${extra} beyond what the bills owe, kept on the bill as credit` : ''),
+            + (extra <= 0 ? ''
+              : allocationMode === 'manual'
+                ? `, including ${extra} not split out (${creditPart > 0
+                  ? `${creditPart} of it beyond what the bill owes, kept as credit`
+                  : 'all of it towards what the bill owes'})`
+                : `, including ${extra} beyond what the bills owe, kept on the bill as credit`),
           month,
           created_by: user.id
         },
@@ -389,7 +419,9 @@ Deno.serve(async (req) => {
         leftoverHandling: leftover > 0 ? leftoverHandling : undefined,
         // Where the extra went: on this student's bill for the month, as
         // credit that their next bill opens with.
-        creditOnBill: leftover > 0 ? { studentId: creditStudentId, month, amount: leftover } : null
+        // (Manual split: only the part of the money not split out that lands
+        // above what that bill owed; null when none of it is credit.)
+        creditOnBill: creditPart > 0 ? { studentId: creditStudentId, month, amount: creditPart } : null
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
