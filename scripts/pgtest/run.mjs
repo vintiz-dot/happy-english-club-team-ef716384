@@ -188,7 +188,7 @@ const SUITES = [
   {
     name: "d4 lesson pay",
     file: "d4-lesson-pay.test.mjs",
-    expect: 130,
+    expect: 143,   // 130 at the build; fix round 1: S-1 (P1b, P1c), S-2 (P8), d4_guard_status
     migrations: [
       "20261009130000_audit_every_admin_action.sql",
       "20261027090000_cancelled_lesson_attendance_guard.sql",
@@ -205,7 +205,7 @@ const SUITES = [
   {
     name: "d4 functions lessons",
     file: "d4-functions-lessons.test.mjs",
-    expect: 57,
+    expect: 74,    // 57 at the build; fix round 1: S-1 move, N-1..N-7, the hand-offs
     migrations: [
       "20261009130000_audit_every_admin_action.sql",
       "20261027090000_cancelled_lesson_attendance_guard.sql",

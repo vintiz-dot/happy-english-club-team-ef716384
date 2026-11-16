@@ -1,6 +1,6 @@
 # D4 build - step 3A (lessons: who is paid, P1-P7, G-1 to G-7)
 
-**Fix round 1 - where I am:** STARTED on branch `d4-3a-fix` (= `d4-3a-lessons` 856e493d + `review-3a` 10b10442). Items B-1, S-1, S-2, N-1..N-10, d4_guard_status, merge note - none done yet.
+**Fix round 1 - where I am:** on branch `d4-3a-fix` (= `d4-3a-lessons` 856e493d + `review-3a` 10b10442). B-1, S-1, S-2, N-1..N-4, N-6, N-7, d4_guard_status and the merge note are done and committed; the section "Fix round 1" at the end has each finding -> change -> proof. Remaining: full run, mutants, fingerprint, apply brief's table (see that section's last line).
 
 **Where I am / next step (build, before the review):** COMPLETE: built and tested (65 suites green, app typecheck exit 0, bun 166/0, 40 of 41 mutants caught, fingerprint regenerated). Next step is not mine: the independent review of 3A, then the conductor's live apply (migration, then manage-session / bulk-cancel-sessions / schedule-sessions, then the screens, in one sitting).
 
@@ -154,6 +154,42 @@ Symptom that means "roll back": an admin or teacher cannot mark today's lesson H
 - **Admin, Teacher Schedule Transfer:** if a lesson in the list became held meanwhile, the transfer stops with a sentence saying how to change that lesson.
 - **Teachers:** nothing new on their screens. Their register saves and the automatic Held flip work as before (the service lane may hold); a direct write a teacher's session could make on a held lesson's status is refused by the database.
 - **Stars sync:** marks and withdrawals as before; an un-hold the sync wants in a closed payroll month (or with a person's Present left) is not done and is logged, never an error.
+
+## Fix round 1 (review `D4-3a-review.md`: APPLY WITH CHANGES)
+
+Branch `d4-3a-fix`. The migration was edited in place (applied nowhere yet).
+
+| Finding | Change | Proof |
+|---|---|---|
+| **B-1** rollback 4 leaves the 3A screens dead | Rollback 4 = script + previous functions + revert of the 3A screens: script header, migration header, this doc's "Rollback", and the new `D4-3a-live-apply-brief.md` (apply order, fingerprint table, the exact file lists). The functions of before 3A saved with LF in `docs/evidence/D4-3a-rollback-before/` (manage-session, bulk-cancel-sessions, schedule-sessions as at c132bf7b; mark-attendance = live v4, md5 3963244d... as `D4-1b-live-apply.md`). | doc; the brief's pre-check 4 compares the live functions with the saved copies before anything is sent |
+| **S-1** an old Scheduled lesson's times are free, then it is held | `session_pay_change_kind`: retime when `(o.status = 'Held' OR NOT _lesson_in_free_week(...)) AND NOT v_free AND times differ AND not a D2 move` (the reviewer's line); the refusal sentence names "a lesson more than a week ago". `manage-session move` with a token runs the checked retime whatever the status (it was Held-only: an acknowledged move of an old Scheduled lesson would have looped back to the refused plain write). `useGuardedChange` / `GuardDialog` gain `onPayCheck`: the D2 Move dialog hands a 409 with a pay kind to the lesson-pay check instead of showing it as an error; `EditSessionModal` (non-Held time path) and `GlobalCalendar` (drag-to-move, the same route, found while doing this) use it. | `d4-lesson-pay` G-5: the builder's pin at :424-426 re-stated as HC020 retime with the reason in a comment; P1b (admin raw lengthen refused; the register and the hold then pay the original 90 minutes) and P1c (the teacher under the LIVE policy "Teachers can update their sessions", swapped in for the prelude's, with a control write that reaches the row; the service flip then holds 90 minutes) are permanent cases; inside the week and future lessons stay free. `d4-functions-lessons`: move of an old Scheduled lesson -> 409 retime / set-time, then move with the acknowledgement -> 200, one retime override. Mutants L37, FL6. |
+| **S-2** L36 survived; the token does not cover the window | The review's P8 is a case in `d4-lesson-pay` ("the acknowledgement" section): an AFTER INSERT trigger on `money_change_overrides` locks the lesson's payroll month inside the apply, after the token check and before the exec. | HC011, teacher unchanged, no override row. Mutant L36 now CAUGHT (mutant notes in `d4-mutants.mjs` and the table below). |
+| N-1 Stars "take theirs" toast showed the raw code | `starsResolveRefusalText` (lessonPayGuard.ts); `StarsSyncTab` resolve's onError uses it | lib case + source check |
+| N-2 admin register save, Held flip refused silently | `mark-attendance`: ONLY the flip's error is captured and the success response gains `held: false, held_refused {code, message}` when it is refused (nothing else in the file changed; unchanged shape otherwise). `heldRefusedText`; AttendanceDrawer, SessionDetailDrawer, PastAttendanceEditor, StudentActionPopover show it as a warning | `d4-functions-lessons` drives mark-attendance over file 4: locked month -> 200, mark saved, still Scheduled, `held_refused.code = HC020`, the flip on the admin's client; open month -> Held and no new fields. Mutant FL7 |
+| N-3 TAClassAssignment failed whole with the raw code | assign: the batch upsert first; on HC020 restaff, lesson by lesson, and the refused ones queue the lesson-pay check (restaff, the lesson's whole list plus this assistant, absences kept); remove: the check with the list minus this assistant. R21 classes unchanged | source check |
+| N-4 HC022 "kinds=unhold,move" | `oneChangeText`: "This lesson is Held. Moving it to a time that has not started also takes it off Held ... Take it off Held first ..., then move it." Used by the D2 dialog's error banners | lib case |
+| N-6 hold sentence untrue in two cases | `PAY_COPY.meaning.hold` = "Marking it Held pays the teacher for this lesson." (always true); `payMeaning(op, plan)` prefixes the case from the plan's evidence (closed month / taken off Held before / nobody took the register); PayGuardDialog shows it | lib case |
+| N-7 "Reload the list" | "Start the date range within the last week and transfer again; an older lesson's teacher is changed from that lesson's Actions menu, with a reason." | source check |
+| N-5, N-8, N-9, N-10 | Not changed; release-note text below | - |
+| `d4_guard_status()` (1b, live) lists none of the 3A triggers | Replaced in file 4 (section 5b) with the 1b body byte for byte plus the three names in its list (a disabled one reads `ok: false`; a dropped one is absent, as 1a's are before 1a). Grants untouched (CREATE OR REPLACE). The preflight refuses unless the live body, with that one insertion removed, has md5 df2b7052707d4a8d06bdc307e6fe96a9 (1b's, `D4-1b-live-apply-brief.md`) - so a second paste passes and any other body is refused. | `d4-lesson-pay`: the 1b body here is df2b7052; a foreign body refused, nothing installed; install: the only replaced function is d4_guard_status, body only, = 1b + the insertion; status lists the three `O` and `ok`; one disabled -> `ok false`. Mutants L38, L39 |
+
+### Release-note text for N-5, N-8, N-9, N-10 and decision 1
+
+- N-5: a Stars withdrawal in a CLOSED payroll month leaves the lesson Held (correct, recorded as `automation_refused` with `payroll_month_locked: true`), but the sync's own note to the admin still says "so it is Scheduled again", and the flips row is gone. The money review screen's event is the true record. (The engine is outside D4.)
+- N-8: decision 18's count of 0 is not vacuous: `d4-functions-lessons` asserts the create's insert is on the admin's own client.
+- N-9: the insert guard's slot match also passes a lesson born `Canceled` at an already-taken slot, with no HC023 and no event. No money: a cancelled lesson is neither paid nor billed. Not tightened.
+- N-10: on the service lane a hold is always allowed (design b.1 G-2), so a teacher's register through `mark-attendance` can hold a lesson in a CLOSED payroll month, with nothing in `money_change_events`; the Payroll screen's `live` drift is the trace. A `service_hold_locked` event is a follow-up.
+- Decision 1: a T0 change through the old actions (inside the free week, or a hold with a register in an open month) leaves `audit_log` rows but no `money_change_overrides` row (design (g) says "a T0 row when done from the admin screens").
+
+### Merge note for the conductor (step 2 and the others)
+
+Shared with step 2 (`worktree-agent-a36ad2752b190053b`): `scripts/pgtest/run.mjs`, `scripts/pgtest/guard-fingerprint.mjs`, `scripts/pgtest/d4-mutants.mjs`, `docs/evidence/D4-release-fingerprint.sql`, `docs/evidence/D4-release-fingerprint.expected.json`. After the merge they must read:
+- `guard-fingerprint.mjs` `D4_FILES`, in migration order: `['20261114090000_d4_floors.sql', '20261114091000_d4_core_register.sql', '20261114092000_d4_class_fee_history.sql', '20261114093000_d4_lesson_pay_guard.sql', '20261114094000_d4_money_inputs_guard.sql']` (the last only once 3B is merged).
+- its after-rollback list, newest first: `['scripts/ROLLBACK-d4-5-money-inputs.sql', 'scripts/ROLLBACK-d4-4-lesson-pay.sql', 'scripts/ROLLBACK-d4-3-class-fee.sql', 'scripts/ROLLBACK-d4-2-register.sql', 'scripts/ROLLBACK-d4-1-floors.sql']` (5 only with 3B).
+- `run.mjs`: both sides' entries kept; 3A's three entries with `expect` 143 / 74 / 19 (this round). If step 2's file is in a 3A suite's migration list (it is not today), the counts do not change.
+- `d4-mutants.mjs`: both mutant lists kept (3A: L01-L39, FL1-FL7); the SUITES map gains step 2's suites beside 3A's.
+- The two fingerprint files: never hand-merged; regenerate with `node scripts/pgtest/guard-fingerprint.mjs --release d4`, then `--release d4 --check`, `--check-unchanged`, `--check-unchanged --after-rollback` (66/66). The regenerated table now also carries 3A's NEW md5 of `d4_guard_status` (1b's entry changes: expected).
+- 3A's preflight pins six 1a/1b bodies and `d4_guard_status`; neither step 2 nor 3B replaces any of them (grep at the review), so the order of 2 / 3A / 3B does not matter for it. If a later step replaces `d4_guard_status` again, it must pin 3A's body, not 1b's.
 
 ## Not verified
 

@@ -243,7 +243,8 @@ export const MUTANTS = [
   ['L18', "A-5 dropped: the teacher of an old lesson never Held changes raw",
     "     AND (o.status = 'Held' OR NOT COALESCE(public._lesson_in_free_week(o.date, o.start_time, o.end_time), false)) THEN", "     AND (o.status = 'Held') THEN", ['lesson'], LESSON],
   ['L19', "G-5 dropped: a held lesson's times change raw",
-    "  IF o.status = 'Held' AND NOT v_free\n     AND (o.start_time IS DISTINCT FROM n.start_time", "  IF false AND NOT v_free\n     AND (o.start_time IS DISTINCT FROM n.start_time", ['lesson', 'fnles'], LESSON],
+    "  IF (o.status = 'Held' OR NOT COALESCE(public._lesson_in_free_week(o.date, o.start_time, o.end_time), false))\n     AND NOT v_free\n     AND (o.start_time IS DISTINCT FROM n.start_time",
+    "  IF false\n     AND NOT v_free\n     AND (o.start_time IS DISTINCT FROM n.start_time", ['lesson', 'fnles'], LESSON],
   ['L20', "HC022 dropped: two changes ride together",
     "  IF cardinality(v_kinds) > 1 OR v_d2 IS NOT NULL THEN", "  IF false THEN", ['lesson'], LESSON],
   ['L21', "G-6 dropped: a held lesson's assistants change raw",
@@ -282,8 +283,19 @@ export const MUTANTS = [
     "  public._money_exec__session(jsonb, uuid)\nFROM PUBLIC, anon, authenticated, service_role;", "  public._money_exec__session(jsonb, uuid)\nFROM PUBLIC, anon, authenticated, service_role;\nGRANT EXECUTE ON FUNCTION public._money_exec__session(jsonb, uuid) TO authenticated;", ['lesson'], LESSON],
   ['L35', "preflight no longer checks the 1b bodies",
     "IS DISTINCT FROM r.want THEN", "IS DISTINCT FROM r.want AND false THEN", ['lesson'], LESSON],
+  // L36 SURVIVED in the build ("the token covers it"); review S-2 showed the token is checked before the
+  // lesson is locked. Fix round 1 put the review's probe P8 into d4-lesson-pay, which kills it.
   ['L36', "the exec writes without re-reading the lesson under its lock (the tier may have risen)",
     "     OR COALESCE((v_now ->> 'tier')::int, 3) > COALESCE((p_plan ->> 'tier')::int, 0) THEN", "     OR false THEN", ['lesson'], LESSON],
+  // fix round 1 (review S-1; d4_guard_status)
+  ['L37', "S-1 reverted: the times of an old lesson that is still Scheduled change raw (G-5 on Held only)",
+    "  IF (o.status = 'Held' OR NOT COALESCE(public._lesson_in_free_week(o.date, o.start_time, o.end_time), false))\n     AND NOT v_free",
+    "  IF (o.status = 'Held')\n     AND NOT v_free", ['lesson', 'fnles'], LESSON],
+  ['L38', "d4_guard_status does not list the 3A triggers (a disabled one reads ok)",
+    "                      'zz_attendance_money_guard',\n                      'zz2_session_pay_guard', 'zz_session_insert_guard', 'zz_session_staff_guard');",
+    "                      'zz_attendance_money_guard');", ['lesson'], LESSON],
+  ['L39', "the preflight no longer pins the live d4_guard_status body",
+    "IS DISTINCT FROM 'df2b7052707d4a8d06bdc307e6fe96a9' THEN", "IS DISTINCT FROM 'df2b7052707d4a8d06bdc307e6fe96a9' AND false THEN", ['lesson'], LESSON],
   // step 3A functions (manage-session), mutated in place and restored
   ['FL1', "manage-session: the Held <-> Scheduled plain write on the service key",
     "      const { error } = await asCaller.from('sessions').update({ status, updated_by: user.id }).eq('id', id);", "      const { error } = await supabase.from('sessions').update({ status, updated_by: user.id }).eq('id', id);", ['fnles'], 'supabase/functions/manage-session/index.ts'],
@@ -295,6 +307,11 @@ export const MUTANTS = [
     "        if ((p.data.tier ?? 3) >= 1) {", "        if (false) {", ['fnles'], 'supabase/functions/manage-session/index.ts'],
   ['FL5', "manage-session: update writes a Held <-> Scheduled status again",
     "      if (status !== undefined && status !== null && status !== oldSession.status) {", "      if (false) {", ['fnles'], 'supabase/functions/manage-session/index.ts'],
+  // fix round 1
+  ['FL6', "manage-session: move with the acknowledgement runs the checked retime only for a Held lesson (an old Scheduled one loops back to the refused plain write)",
+    "        if (hasToken()) {\n          return payChecked('retime',", "        if (hasToken() && s.status === 'Held') {\n          return payChecked('retime',", ['fnles'], 'supabase/functions/manage-session/index.ts'],
+  ['FL7', "mark-attendance: a refused Held flip is silent again (review N-2)",
+    "...(heldRefused ? { held: false, held_refused: heldRefused } : {})", "...({})", ['fnles'], 'supabase/functions/mark-attendance/index.ts'],
 ];
 
 const D4_LITERALS = [/('[0-9a-f]{32}'\) THEN\s+-- this file)/g];
