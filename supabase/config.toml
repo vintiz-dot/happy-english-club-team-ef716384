@@ -267,6 +267,3 @@ verify_jwt = true
 [functions.recorder-retention]
 verify_jwt = true
 
-# D4 step 1b: refreshes the bills a checked attendance change reached (admin JWT).
-[functions.guarded-change-refresh]
-verify_jwt = true
