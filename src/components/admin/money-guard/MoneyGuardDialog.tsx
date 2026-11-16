@@ -12,8 +12,13 @@ type Guard = ReturnType<typeof useMoneyChange>;
  * then a reason, a tick and (for a confirmed or frozen month) a correction
  * reason - exactly what the server's preview asks for. Reuses the session
  * guard's fields unchanged.
+ *
+ * `title`, `intro` and `submitLabel` let a screen of another entity (step 2's
+ * class fee history) word the same dialog; left out, it reads as before.
  */
-export function MoneyGuardDialog({ guard, names }: { guard: Guard; names?: Record<string, string> }) {
+export function MoneyGuardDialog({ guard, names, title, intro, submitLabel }: {
+  guard: Guard; names?: Record<string, string>; title?: string; intro?: string; submitLabel?: string;
+}) {
   const { request, plan, form, setForm, busy, error, close, submit, canSubmit } = guard;
   const op = request?.op ?? "set_marks";
   const req = moneyRequirements(plan);
@@ -22,8 +27,8 @@ export function MoneyGuardDialog({ guard, names }: { guard: Guard; names?: Recor
     <Dialog open={!!request} onOpenChange={(o) => !o && !busy && close()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{MONEY_COPY.title[op] ?? "Check this change"}</DialogTitle>
-          <DialogDescription>{MONEY_COPY.intro}</DialogDescription>
+          <DialogTitle>{title ?? MONEY_COPY.title[op] ?? "Check this change"}</DialogTitle>
+          <DialogDescription>{intro ?? MONEY_COPY.intro}</DialogDescription>
         </DialogHeader>
 
         {!plan && !error && <p className="text-sm text-muted-foreground">Checking...</p>}
@@ -67,7 +72,7 @@ export function MoneyGuardDialog({ guard, names }: { guard: Guard; names?: Recor
 
         <div className="flex flex-wrap justify-end gap-2 pt-2">
           <Button variant="outline" onClick={close} disabled={busy}>Keep as it was</Button>
-          <Button onClick={submit} disabled={!canSubmit || busy}>{MONEY_COPY.submit[op] ?? "Confirm"}</Button>
+          <Button onClick={submit} disabled={!canSubmit || busy}>{submitLabel ?? MONEY_COPY.submit[op] ?? "Confirm"}</Button>
         </div>
       </DialogContent>
     </Dialog>

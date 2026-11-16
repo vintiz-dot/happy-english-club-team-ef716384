@@ -15,12 +15,12 @@ import { PastAttendanceEditor } from "@/components/admin/PastAttendanceEditor";
 import { assertClassNameAvailable } from "@/components/admin/class/ClassAdminActions";
 import { useQueryClient } from "@tanstack/react-query";
 import { describePattern, parseWeeklySlots } from "@/lib/classSchedule";
+import ClassFeeHistory from "@/components/admin/class/ClassFeeHistory";
 
 const ClassSettings = ({ classId }: { classId: string }) => {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [defaultTeacherId, setDefaultTeacherId] = useState("");
-  const [sessionRate, setSessionRate] = useState(0);
   const [defaultStartTime, setDefaultStartTime] = useState("");
   const [defaultEndTime, setDefaultEndTime] = useState("");
   const [defaultSessionLength, setDefaultSessionLength] = useState(90);
@@ -71,7 +71,6 @@ const ClassSettings = ({ classId }: { classId: string }) => {
     if (classData) {
       setName(classData.name || "");
       setDefaultTeacherId(classData.default_teacher_id || "");
-      setSessionRate(classData.session_rate_vnd || 0);
       setDefaultSessionLength(classData.default_session_length_minutes || 90);
       setCurriculum((classData as any).curriculum || "");
       setAgeRange((classData as any).age_range || "");
@@ -101,7 +100,7 @@ const ClassSettings = ({ classId }: { classId: string }) => {
     try {
       // Validate the name only when it actually changed. Two classes in the
       // existing data could already share a name, and that must not block an
-      // admin who came here to edit the session rate.
+      // admin who came here to edit something else.
       const nameChanged = name.trim() !== (classData?.name ?? "");
       if (nameChanged) {
         // Throws on a blank name or a clash, before anything is written.
@@ -111,7 +110,8 @@ const ClassSettings = ({ classId }: { classId: string }) => {
       const updateData: any = {
         ...(nameChanged ? { name: name.trim() } : {}),
         default_teacher_id: defaultTeacherId || null,
-        session_rate_vnd: sessionRate,
+        // Not the fee: it is dated now and changes only through
+        // the Fee history below (D4 step 2); the column is its mirror.
         default_session_length_minutes: defaultSessionLength,
         curriculum: curriculum || null,
         age_range: ageRange || null,
@@ -219,7 +219,7 @@ const ClassSettings = ({ classId }: { classId: string }) => {
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Class A1 — Morning"
+                  placeholder="e.g. Class A1 â€” Morning"
                 />
                 <p className="text-xs text-muted-foreground">
                   Shown everywhere: schedules, reports, invoices and the student app.
@@ -242,15 +242,7 @@ const ClassSettings = ({ classId }: { classId: string }) => {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Session Rate (VND)</Label>
-                <Input
-                  type="number"
-                  value={sessionRate}
-                  onChange={(e) => setSessionRate(Number(e.target.value) || 0)}
-                  placeholder="Enter session rate"
-                />
-              </div>
+              <ClassFeeHistory classId={classId} />
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -266,7 +258,7 @@ const ClassSettings = ({ classId }: { classId: string }) => {
                       running two lengths. The weekly schedule now decides. */}
                   <p className="text-xs text-muted-foreground">
                     {weeklyPattern
-                      ? `Each day is checked against its own slot — this class runs ${weeklyPattern}. Used only for a one-off on a day the class doesn't normally run.`
+                      ? `Each day is checked against its own slot â€” this class runs ${weeklyPattern}. Used only for a one-off on a day the class doesn't normally run.`
                       : "Used for sessions on days this class has no weekly slot for. Set the weekly schedule to have each day checked against its own length."}
                   </p>
                 </div>
@@ -333,7 +325,7 @@ const ClassSettings = ({ classId }: { classId: string }) => {
               <Separator className="my-4" />
 
               {/* Economy Mode */}
-              <h3 className="text-lg font-semibold">🏦 Classroom Economy</h3>
+              <h3 className="text-lg font-semibold">ðŸ¦ Classroom Economy</h3>
               <p className="text-sm text-muted-foreground">Enable banking and currency system for this class</p>
 
               <div className="flex items-center justify-between">

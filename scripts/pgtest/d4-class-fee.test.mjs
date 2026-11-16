@@ -14,7 +14,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { harness, makeDb, sqlOf, repo } from './d4-prelude.mjs';
+import { harness, makeDb, sqlOf, repo, D4_CLASS_FEE } from './d4-prelude.mjs';
 
 const files = process.argv.slice(2);
 if (files.length !== 10) {
@@ -27,12 +27,10 @@ let db;
 const H = harness(() => db);
 const { ok, section, as, tryIt, must, script, clock } = H;
 
-// The live classes table carries the fee (20251012020423:9); D2's prelude has none.
-const CLASS_COLUMNS = `ALTER TABLE public.classes ADD COLUMN IF NOT EXISTS session_rate_vnd integer NOT NULL DEFAULT 210000,
-  ADD COLUMN IF NOT EXISTS name text;`;
+// The live classes table carries the fee (D4_CLASS_FEE); D2's prelude has none.
 async function freshDb(migs, { withClassFee = true } = {}) {
   const d = await makeDb(PGlite, { people: true, rls: true, migrations: [] });
-  await d.exec(CLASS_COLUMNS);
+  await d.exec(D4_CLASS_FEE);
   for (const m of migs) await d.exec(sqlOf(m));
   if (withClassFee) await d.exec(sqlOf(feeF));
   return d;
@@ -649,6 +647,34 @@ await section('_lib/class-fee.ts', async () => {
   ok('each of the three readers prices lessons through classFeeOn and reads the history once (no per-lesson query)',
      calls.every((s) => /classFeeOn\(feeHistory, [a-z.]+class_id, s\.date,/.test(s)) &&
      calls.every((s) => (s.match(/class_fee_history|readClassFeeHistory\(/g) ?? []).length === 1), calls.map((s) => (s.match(/class_fee_history|readClassFeeHistory\(/g) ?? []).length));
+});
+
+await section('the Fee history screen (src/lib/classFee.ts and the two screens)', async () => {
+  const lib = await bundleOf(resolve(repo, 'src', 'lib', 'classFee.ts'));
+  ok('feeMonthLabel: the baseline reads "the start", a month its name', lib.feeMonthLabel('1900-01-01') === 'the start' &&
+     lib.feeMonthLabel('2026-11-01') === 'November 2026' && lib.feeMonthLabel('2027-01') === 'January 2027');
+  ok('a new fee is offered from next month by default (nothing billed moves); December rolls the year',
+     lib.nextMonth('2026-11-16') === '2026-12' && lib.nextMonth('2026-12-31') === '2027-01' && lib.firstOfMonth('2026-12') === '2026-12-01');
+  const list = lib.feeRowsForList([{ effective_from: '2026-12-01', session_rate_vnd: 220000 }, { effective_from: '1900-01-01', session_rate_vnd: 200000 },
+    { effective_from: '2026-09-01', session_rate_vnd: 210000 }], '2026-11-16');
+  ok('the list: newest first, each row with the month it runs to; "now" on the row in force, "not in force yet" on a later one',
+     list.map((r) => r.effective_from).join() === '2026-12-01,2026-09-01,1900-01-01' && list[1].now && !list[0].now && list[0].upcoming &&
+     list[2].baseline && list[1].untilNext === 'December 2026' && list[0].untilNext === null, list);
+  ok('parseFee: whole VND only (spaces, dots and commas as thousands separators allowed)', lib.parseFee('220 000') === 220000 &&
+     lib.parseFee('220.000') === 220000 && lib.parseFee('-5') === null && lib.parseFee('1.5e3x') === null && lib.parseFee('') === null);
+  ok('every class-fee refusal is worded with what to do next', ['nothing_to_change', 'baseline_row', 'not_found', 'no_baseline', 'bad_args']
+     .every((k) => typeof lib.CLASS_FEE_REFUSALS[k] === 'string' && lib.CLASS_FEE_REFUSALS[k].length > 30));
+  ok('the dialog\'s summary comes from the plan\'s own figures', lib.feeChangeSummary({ change: { effective_from: '2026-09-01', window_to: '2026-11-30',
+     fee_before: 200000, fee_after: 210000, lessons: 3 } }, (n) => String(n)) === 'From September 2026 until November 2026: 200000 becomes 210000 a lesson (3 lessons with a charged mark).');
+  const settings = readFileSync(resolve(repo, 'src/components/admin/class/ClassSettings.tsx'), 'utf8');
+  const screen = readFileSync(resolve(repo, 'src/components/admin/class/ClassFeeHistory.tsx'), 'utf8');
+  ok('ClassSettings no longer writes the fee (no session_rate_vnd in its update) and shows the Fee history instead',
+     !/session_rate_vnd\s*:/.test(settings) && /<ClassFeeHistory classId=\{classId\} \/>/.test(settings));
+  ok('ClassFeeHistory writes only through the money guard: no insert / update / delete / upsert of a table, no calculate-tuition call',
+     !/\.(insert|update|delete|upsert)\(/.test(screen) && !/calculate-tuition/.test(screen) &&
+     /previewMoneyChange\(/.test(screen) && /confirmMoneyChange\(/.test(screen) && /entity: "class_fee", op: "set"/.test(screen) && /entity: "class_fee", op: "remove"/.test(screen));
+  ok('  and prices nothing: no arithmetic on a fee anywhere in the screen or its helpers',
+     !/session_rate_vnd\s*[*+\-/]|[*+/]\s*\w*\.?session_rate_vnd|fee\s*\*/.test(screen + readFileSync(resolve(repo, 'src/lib/classFee.ts'), 'utf8')));
 });
 
 // ------------------------------------------------------------ the golden gate
