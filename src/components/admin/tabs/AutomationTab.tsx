@@ -12,7 +12,6 @@ import { ManualTuitionRecalc } from "@/components/admin/ManualTuitionRecalc";
 import { LedgerBalanceInspector } from "@/components/admin/LedgerBalanceInspector";
 import { InvoiceStatusManager } from "@/components/admin/InvoiceStatusManager";
 import { PaymentIntegrityRepair } from "@/components/admin/PaymentIntegrityRepair";
-import { VoluntaryContributionRepair } from "@/components/admin/VoluntaryContributionRepair";
 import { GenerateTuition } from "@/components/admin/GenerateTuition";
 import { XPSettingsManager } from "@/components/admin/XPSettingsManager";
 import { dayjs } from "@/lib/date";
@@ -185,13 +184,6 @@ const AutomationTab = () => {
             description="Fix orphaned or mis-attributed payment rows."
           >
             <PaymentIntegrityRepair />
-          </AdvancedSection>
-
-          <AdvancedSection
-            title="Voluntary Contribution Repair"
-            description="Reattach detached voluntary contribution payments."
-          >
-            <VoluntaryContributionRepair />
           </AdvancedSection>
         </TabsContent>
 

@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { functionErrorMessage } from "@/lib/functionError";
 import { toast } from "sonner";
@@ -72,8 +70,9 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
     occurredAt: new Date().toISOString().slice(0, 10),
     memo: "",
     month: monthKey(),
-    leftoverHandling: "unapplied_cash" as "voluntary_contribution" | "unapplied_cash",
-    consentGiven: false,
+    // The one thing done with money beyond what the family owes (voluntary
+    // contributions were removed, D-23).
+    leftoverHandling: "unapplied_cash" as const,
   });
 
   const queryClient = useQueryClient();
@@ -239,11 +238,6 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
       return;
     }
 
-    if (leftoverAmount > 0 && formData.leftoverHandling === "voluntary_contribution" && !formData.consentGiven) {
-      toast.error("Parent consent required for voluntary contribution");
-      return;
-    }
-
     setLoading(true);
     try {
       const payload = {
@@ -254,7 +248,6 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
         memo: formData.memo,
         month: formData.month,
         leftoverHandling: leftoverAmount > 0 ? formData.leftoverHandling : undefined,
-        consentGiven: formData.consentGiven,
       };
 
       const { data, error } = await supabase.functions.invoke("smart-family-payment", { body: payload });
@@ -290,7 +283,6 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
       memo: "",
       month: monthKey(),
       leftoverHandling: "unapplied_cash",
-      consentGiven: false,
     });
   };
 
@@ -546,38 +538,11 @@ export function SmartFamilyPaymentModal({ open, onClose }: SmartFamilyPaymentMod
                       <p className={iv("font-medium tabular-nums", "font-medium")}>
                         Leftover amount: {formatVND(leftoverAmount)}
                       </p>
-                      <RadioGroup
-                        value={formData.leftoverHandling}
-                        onValueChange={(v: any) => setFormData({ ...formData, leftoverHandling: v })}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="unapplied_cash" id="unapplied" />
-                          <label htmlFor="unapplied" className={iv("flex min-h-hec-target items-center text-hec-small text-hec-ink", "text-sm")}>
-                            Store as unapplied cash (credit for future)
-                          </label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="voluntary_contribution" id="contribution" />
-                          <label htmlFor="contribution" className={iv("flex min-h-hec-target items-center text-hec-small text-hec-ink", "text-sm")}>
-                            Treat as voluntary contribution
-                          </label>
-                        </div>
-                      </RadioGroup>
-
-                      {formData.leftoverHandling === "voluntary_contribution" && (
-                        <div className={iv("flex items-center space-x-2 pt-2 border-t border-hec-warn/30", "flex items-center space-x-2 pt-2 border-t")}>
-                          <Checkbox
-                            id="consent"
-                            checked={formData.consentGiven}
-                            onCheckedChange={(checked) =>
-                              setFormData({ ...formData, consentGiven: checked as boolean })
-                            }
-                          />
-                          <label htmlFor="consent" className={iv("flex min-h-hec-target items-center text-hec-small text-hec-ink", "text-sm")}>
-                            Parent has given consent for voluntary contribution
-                          </label>
-                        </div>
-                      )}
+                      <p className={iv("text-hec-small text-hec-ink", "text-sm")}>
+                        It will be kept as unapplied cash: recorded in the ledger as a credit on{" "}
+                        {siblings[0]?.name ?? "the first child"}'s account (the child listed first). It is not put on
+                        any bill, so the bills and their balances will not show it.
+                      </p>
                     </div>
                   </AlertDescription>
                 </Alert>
