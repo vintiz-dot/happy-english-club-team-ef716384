@@ -119,6 +119,22 @@ export function apportion(weights: Map<string, number>, target: number): Map<str
   return out;
 }
 
+/**
+ * One class's pay for the month from a calculate-payroll answer, split as
+ * above: projected while the month is open, the paid totals once it is
+ * locked (the response's own `locked`). Null when the function did not answer
+ * - the screen says "figure unavailable" rather than pricing it. Used by the
+ * class calendar, which used to sum sessions.rate_override_vnd, a column the
+ * function ignores, and show that as the class's cost.
+ */
+export function classPayFrom(
+  response: { payrollData?: PayrollStaffRow[] | null; locked?: boolean | null } | null | undefined,
+  classId: string,
+): number | null {
+  if (!Array.isArray(response?.payrollData)) return null;
+  return splitPayrollByClass(response.payrollData, { locked: response.locked === true }).byClass.get(classId) ?? 0;
+}
+
 export function splitPayrollByClass(
   rows: PayrollStaffRow[] | null | undefined,
   opts: { locked: boolean },
