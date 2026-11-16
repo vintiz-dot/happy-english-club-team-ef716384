@@ -9,7 +9,7 @@ import "react-quill-new/dist/quill.snow.css";
 import { Loader2 } from "lucide-react";
 import { useIvory } from "@/hooks/useIvory";
 
-// Ivory: Quill paints its toolbar #444 and its picker menu white, unreadable in dark. These selectors are one class
+// Ivory: Quill paints its toolbar icons a fixed dark grey and its picker menu white, unreadable in dark. These selectors are one class
 // more specific than quill.snow.css's own, so they win without !important and Quill's hover / active / open states
 // (more specific still) keep showing. Same treatment as ExamReportEditor (PC2-harvest).
 const IVORY_QUILL = "rounded-hec-md bg-hec-raised [&_.ql-toolbar.ql-snow]:border-hec-line-strong [&_.ql-container.ql-snow]:border-hec-line-strong [&_.ql-toolbar_.ql-stroke]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-stroke-miter]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-formats_.ql-fill]:fill-hec-ink-soft [&_.ql-toolbar_.ql-picker]:text-hec-ink-soft [&_.ql-toolbar_.ql-picker-options]:bg-hec-raised [&_.ql-editor.ql-blank::before]:text-hec-ink-faint";
