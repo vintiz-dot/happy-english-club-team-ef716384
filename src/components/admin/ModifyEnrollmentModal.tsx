@@ -188,14 +188,15 @@ export function ModifyEnrollmentModal({
     void runNext();
   });
 
-  const start = async (list: Array<() => Promise<MoneyRequest | null>>, done: () => void | Promise<void>) => {
+  const start = async (list: Array<() => Promise<MoneyRequest | null>>, done: () => void | Promise<void>,
+    failed: (error: any) => void) => {
     steps.current = list;
     finished.current = () => { void done(); };
     setWorking(true);
     try {
       await runNext();
     } catch (error: any) {
-      toast.error(rpcErrorText(error, "Failed to change the enrollment"));
+      failed(error);        // the server's sentence, never a raw code (rpcErrorText)
     } finally {
       setWorking(false);
     }
@@ -218,20 +219,25 @@ export function ModifyEnrollmentModal({
     op: "transfer",
     args: { student_id: enrollment.student_id, old_class_id: enrollment.class_id, new_class_id: newClassId, effective_date: transferDate },
   })], () => afterChange("Transferred successfully.", [transferDate.slice(0, 7), monthAfter(transferDate)],
-    ["student-enrollments", "class-enrollments", "student-tuition"]));
+    ["student-enrollments", "class-enrollments", "student-tuition"]),
+    (error) => toast.error(rpcErrorText(error, "Failed to transfer enrollment")));
 
   const pause = () => start([async () => ({
     entity: "enrollment",
     op: "pause",
     args: { student_id: enrollment.student_id, class_id: enrollment.class_id, from: pauseFrom, to: pauseTo, memo: pauseMemo || null },
   })], () => afterChange("Paused successfully. The lessons in that window are Excused.", [pauseFrom.slice(0, 7)],
-    ["student-enrollments", "student-tuition", "pause-windows"]));
+    ["student-enrollments", "student-tuition", "pause-windows"]),
+    (error) => toast.error(rpcErrorText(error, "Failed to pause enrollment")));
 
   const end = () => start([async () => ({
     entity: "enrollment",
     op: "end",
     args: { student_id: enrollment.student_id, class_id: enrollment.class_id, end_date: endDate },
-  })], () => afterChange("Ended successfully.", [endDate.slice(0, 7)], ["student-enrollments", "class-enrollments", "student-tuition"]));
+  })], () => afterChange("Ended successfully.", [endDate.slice(0, 7)], ["student-enrollments", "class-enrollments", "student-tuition"]),
+    (error) => toast.error(rpcErrorText(error, "Failed to end enrollment")));
+
+  const settingsFailed = (error: any) => toast.error(rpcErrorText(error, "Failed to update settings"));
 
   const settingsChanges = () => {
     // Determine if allowed_days should be null (all days) or specific days
@@ -269,7 +275,7 @@ export function ModifyEnrollmentModal({
       return;
     }
     void start(list, () => afterChange("Enrollment settings updated", [daysFrom.slice(0, 7)],
-      ["student-enrollments", "enrollment-details", "student-tuition", "class-enrollments"]));
+      ["student-enrollments", "enrollment-details", "student-tuition", "class-enrollments"]), settingsFailed);
   };
 
   /** The second button: the rate was wrong all along. Reaches every month of the enrolment. */
@@ -284,7 +290,7 @@ export function ModifyEnrollmentModal({
       op: "set_rate",
       args: { enrollment_id: enrollment.id, rate_override_vnd: newRate },
     })], () => afterChange("Rate corrected for the whole enrollment", [format(new Date(), "yyyy-MM")],
-      ["student-enrollments", "enrollment-details", "student-tuition", "class-enrollments"]));
+      ["student-enrollments", "enrollment-details", "student-tuition", "class-enrollments"]), settingsFailed);
   };
 
   const handleConfirm = () => {
