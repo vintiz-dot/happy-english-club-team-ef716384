@@ -33,7 +33,16 @@ export function InvoiceDownloadButton({
       const { invoice, bankInfo } = await fetchInvoiceData(studentId, month);
       setInvoiceData(invoice);
       setBankInfo(bankInfo);
-      
+
+      // The premium invoice PDF from HEC Docs downloads straight away. The
+      // old preview + browser print opens only when that cannot be made.
+      const doc = await tryMakeDocument("invoice", await invoiceDocData(invoice, bankInfo, month));
+      if (doc) {
+        downloadBlob(doc.blob, doc.filename);
+        toast({ title: "Invoice downloaded", description: doc.filename });
+        return;
+      }
+
       toast({
         title: "Invoice Loaded",
         description: "Ready to print or save as PDF",
