@@ -36,6 +36,8 @@ export interface RichTextStrings {
   image: string;
   imageUploading: string;
   imageFailed: string;
+  /** Shown when a stored picture cannot be kept: the text is read-only so a save does not lose it. */
+  pictureLocked: string;
   clear: string;
   undo: string;
   redo: string;
@@ -80,6 +82,7 @@ export const RICH_TEXT_STRINGS_EN: RichTextStrings = {
   image: "Insert picture",
   imageUploading: "Uploading picture…",
   imageFailed: "The picture could not be uploaded",
+  pictureLocked: "This text holds a picture the editor cannot keep, so it cannot be changed here. Saving leaves the text and the picture exactly as they are.",
   clear: "Clear formatting",
   undo: "Undo",
   redo: "Redo",
@@ -122,6 +125,7 @@ export const RICH_TEXT_STRINGS_VI: RichTextStrings = {
   image: "Chèn ảnh",
   imageUploading: "Đang tải ảnh lên…",
   imageFailed: "Không tải được ảnh lên",
+  pictureLocked: "Nội dung này có một ảnh mà trình soạn thảo không giữ được, nên không thể sửa ở đây. Khi lưu, chữ và ảnh vẫn được giữ nguyên.",
   clear: "Xóa định dạng",
   undo: "Hoàn tác",
   redo: "Làm lại",

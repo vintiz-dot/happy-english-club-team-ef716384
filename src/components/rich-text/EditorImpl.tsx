@@ -9,8 +9,8 @@ import {
   ImagePlus, IndentDecrease, IndentIncrease, Italic, Link2, List, ListOrdered, Quote, Redo2, RemoveFormatting, Strikethrough,
   Subscript, Superscript, Underline, Undo2,
 } from "lucide-react";
-import { editorExtensions, allowedLink, type Align } from "./extensions";
-import { sanitizeRichHtml } from "./sanitize";
+import { editorExtensions, allowedLink, LOAD_META, type Align } from "./extensions";
+import { sanitizeRichHtml, unkeepablePictures } from "./sanitize";
 import { prepareForEditor, preparePaste } from "./legacy";
 import { formatCounter, resolveStrings, type RichTextStrings } from "./strings";
 import type { RichTextEditorProps, ToolbarPreset } from "./types";
@@ -190,8 +190,14 @@ export default function EditorImpl({
     setOwnTheme(!inherited);
   }, []);
   const [focusIndex, setFocusIndex] = useState(0);
+  // A stored picture the editor cannot hold (too big, or a kind it does not
+  // keep) would be lost by a save. Such a row is shown but not editable, so the
+  // caller saves it exactly as it was.
+  const locked = useMemo(() => unkeepablePictures(value) > 0, [value]);
+  const readOnly = disabled || locked;
+  const noticeId = `${uid}-notice`;
 
-  const describedBy = [maxLength ? counterId : null, ariaDescribedBy].filter(Boolean).join(" ") || undefined;
+  const describedBy = [locked ? noticeId : null, maxLength ? counterId : null, ariaDescribedBy].filter(Boolean).join(" ") || undefined;
   const contentAttributes: Record<string, string> = {
     role: "textbox",
     "aria-multiline": "true",
@@ -202,13 +208,13 @@ export default function EditorImpl({
   if (describedBy) contentAttributes["aria-describedby"] = describedBy;
   if (id) contentAttributes.id = id;
   if (placeholder) contentAttributes["aria-placeholder"] = placeholder;
-  if (disabled) contentAttributes["aria-disabled"] = "true";
+  if (readOnly) contentAttributes["aria-readonly"] = "true";
 
   const mountRef = useRef<HTMLDivElement>(null);
   const valueRef = useRef(value);
   valueRef.current = value;
-  const live = useRef({ disabled, autoFocus, onBlur, contentAttributes });
-  live.current = { disabled, autoFocus, onBlur, contentAttributes };
+  const live = useRef({ readOnly, autoFocus, onBlur, contentAttributes });
+  live.current = { readOnly, autoFocus, onBlur, contentAttributes };
   const [editor, setEditor] = useState<Editor | null>(null);
   // Created before paint, into our own element. A new schema (pictures on or
   // off, a different limit) needs a new editor; everything else updates in place.
@@ -221,7 +227,7 @@ export default function EditorImpl({
       element: mount,
       extensions: editorExtensions({ images, maxLength, placeholder: () => placeholderRef.current ?? "" }),
       content: prepareForEditor(sanitizeRichHtml(start, "store", { allowImages: images })),
-      editable: !opts.disabled,
+      editable: !opts.readOnly,
       autofocus: opts.autoFocus ? "end" : false,
       editorProps: {
         attributes: opts.contentAttributes,
@@ -246,12 +252,31 @@ export default function EditorImpl({
   useEffect(() => {
     if (!editor || value === lastHtml.current) return;
     lastHtml.current = value;
-    editor.commands.setContent(prepareForEditor(sanitizeRichHtml(value, "store", { allowImages: images })), { emitUpdate: false });
+    editor
+      .chain()
+      .setMeta(LOAD_META, true)
+      .setContent(prepareForEditor(sanitizeRichHtml(value, "store", { allowImages: images })), { emitUpdate: false })
+      .run();
   }, [value, editor, images]);
 
   useEffect(() => {
-    if (editor && editor.isEditable === disabled) editor.setEditable(!disabled, false);
-  }, [editor, disabled]);
+    if (editor && editor.isEditable === readOnly) editor.setEditable(!readOnly, false);
+  }, [editor, readOnly]);
+
+  // A click on the field's visible label puts the caret in the text (a
+  // contenteditable is not a labelable element, so the browser will not).
+  useEffect(() => {
+    if (!editor) return;
+    const labels = [
+      ...(ariaLabelledBy ? [document.getElementById(ariaLabelledBy)] : []),
+      ...(id ? Array.from(document.querySelectorAll<HTMLElement>(`label[for="${CSS.escape(id)}"]`)) : []),
+    ].filter((el, i, all): el is HTMLElement => !!el && all.indexOf(el) === i);
+    const focus = () => {
+      if (!editor.isDestroyed) editor.commands.focus();
+    };
+    labels.forEach((l) => l.addEventListener("click", focus));
+    return () => labels.forEach((l) => l.removeEventListener("click", focus));
+  }, [editor, ariaLabelledBy, id]);
 
   // Keep aria attributes current without recreating the editor.
   const attrKey = JSON.stringify(contentAttributes);
@@ -314,7 +339,7 @@ export default function EditorImpl({
   }, [editor, toolbar]);
 
   const run = (item: ItemId) => {
-    if (!editor || disabled) return;
+    if (!editor || unavailable(item)) return;
     const c = editor.chain().focus();
     switch (item) {
       case "bold": c.toggleBold().run(); break;
@@ -362,7 +387,7 @@ export default function EditorImpl({
   };
 
   const unavailable = (item: ItemId): boolean => {
-    if (disabled) return true;
+    if (readOnly) return true;
     if (!state) return false;
     if (item === "undo") return !state.canUndo;
     if (item === "redo") return !state.canRedo;
@@ -438,7 +463,7 @@ export default function EditorImpl({
   let index = -1;
   return (
     <div
-      className={["rte", disabled ? "rte-disabled" : "", className || ""].filter(Boolean).join(" ")}
+      className={["rte", readOnly ? "rte-disabled" : "", className || ""].filter(Boolean).join(" ")}
       ref={rootRef}
       data-hec-theme={ownTheme ? "ivory" : undefined}
       style={style}
@@ -474,7 +499,9 @@ export default function EditorImpl({
                   aria-expanded={opensPanel ? panel === item || (item === "link" && panel === "link") : undefined}
                   aria-controls={opensPanel && panel ? panelId : undefined}
                   title={shortcut ? `${name} (${shortcut})` : name}
-                  disabled={unavailable(item)}
+                  // Unavailable stays focusable (APG toolbar): the arrows reach every
+                  // button and the tab stop never sits on a control that cannot hold focus.
+                  aria-disabled={unavailable(item) || undefined}
                   // Keep the text selection (and the phone keyboard) while tapping a button.
                   onMouseDown={(e) => e.preventDefault()}
                   onFocus={() => setFocusIndex(i)}
@@ -489,7 +516,19 @@ export default function EditorImpl({
       </div>
 
       {panel === "link" && (
-        <div className="rte-panel" id={panelId} onKeyDown={(e) => e.key === "Escape" && (e.stopPropagation(), closePanel())}>
+        <div
+          className="rte-panel"
+          id={panelId}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.stopPropagation();
+              closePanel();
+            } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }}
+        >
           <label className="rte-panel-label" htmlFor={`${panelId}-url`}>{s.linkAddress}</label>
           <div className="rte-panel-row">
             <input
@@ -581,6 +620,11 @@ export default function EditorImpl({
         />
       )}
 
+      {locked && (
+        <p className="rte-notice" id={noticeId} role="status">
+          {s.pictureLocked}
+        </p>
+      )}
       <div ref={mountRef} className="rte-body" />
 
       {(maxLength || uploading !== "idle") && (

@@ -67,7 +67,8 @@
   border-color: hsl(var(--hec-line-strong));
   color: hsl(var(--hec-brass));
 }
-.rte-btn:disabled { cursor: not-allowed; opacity: 0.45; }
+.rte-btn[aria-disabled="true"] { cursor: not-allowed; opacity: 0.45; }
+.rte-btn[aria-disabled="true"]:hover { background: transparent; color: hsl(var(--hec-ink-soft)); }
 .rte-btn:focus-visible,
 .rte-text-btn:focus-visible,
 .rte-swatch:focus-visible,
@@ -132,6 +133,14 @@
 .rte-error { margin: 0; font-size: var(--hec-text-small); color: hsl(var(--hec-danger)); }
 
 /* Writing area. 16px+ so iOS never zooms in on focus. */
+.rte-notice {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid hsl(var(--hec-line));
+  background: hsl(var(--hec-warn-tint));
+  color: hsl(var(--hec-warn));
+  font-size: var(--hec-text-small);
+}
 .rte-body { display: flex; min-height: 0; }
 .rte-body > div { flex: 1; min-width: 0; }
 .rte-content {
@@ -203,7 +212,7 @@
 }
 .rte-content pre { padding: 0.6em 0.8em; }
 .rte-content pre code { padding: 0; background: none; }
-.rte-content img { display: block; border-radius: var(--hec-radius-sm); }
+.rte-content img { display: inline-block; max-width: 100%; height: auto; vertical-align: bottom; border-radius: var(--hec-radius-sm); }
 .rte-content img.ProseMirror-selectednode { outline: 2px solid hsl(var(--hec-ring)); }
 .rte-content p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
