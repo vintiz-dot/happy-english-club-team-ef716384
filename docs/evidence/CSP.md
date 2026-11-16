@@ -51,9 +51,14 @@ Not loaded, so not allowed:
 
 - **Analytics, Lovable scripts**: none in the build (`lovable-tagger` is development-only; `previewAuthStorage.ts` only
   `postMessage`s to `https://lovable.dev` when framed by the editor, which CSP does not govern).
-- **`eval` / `new Function`**: two copies in the bundle, neither reached. nunjucks compiles a template with `new Function` only
-  when it is not precompiled (`engine.generated.js` ships precompiled ones); jszip's `setImmediate` polyfill only when handed a
-  string. So no `'unsafe-eval'`. No WebAssembly.
+- **`eval` / `new Function`**: no `'unsafe-eval'`. nunjucks compiles a template with `new Function` only when it is not
+  precompiled (`engine.generated.js` ships precompiled ones); jszip's `setImmediate` polyfill only when handed a string. ONE is
+  reached: the engine's webpack shim `try { Function("return this")() || (0,eval)("this") } catch { window }`, run once each
+  time the HEC Docs engine loads. Refused, its `catch` returns `window`, and the engine works (proven below under enforcement).
+  `/csp-report` tags that one report `known: "global-this-probe"`. No WebAssembly.
+- **Inline event handlers**: one, `onerror="this.style.display='none'"` on the logo in the fallback homework PDF
+  (`HomeworkPdfDownload.tsx:192`). Allowed by `'unsafe-hashes'` plus its exact hash: only that exact code runs as an
+  attribute, which an attacker gains nothing from. The guard test finds every `on...="..."` in `src/` and requires each hash.
 - **`https://cdn.jsdelivr.net/npm/three@0.170.0/...`** (`VisemePlayer` 3D head): only when `VITE_VISEME_HEAD_URL` is set, which
   it is not in `.env`; and `GLTFLoader.js` imports the bare specifier `three`, which no browser resolves without an import map,
   so that path cannot work today. Left out; if it is ever wanted, the report will name it.
@@ -84,3 +89,53 @@ listener in every frame. Every request leaving 127.0.0.1 is answered by the harn
    ARASAAC API and pictures, dictionary fetch and mp3, translation, the printer, `data:` and `blob:` fetches, a Google Fonts
    stylesheet and font file, a `style=""` attribute, YouTube-nocookie and Google Slides iframes, a `blob:` PDF in an iframe
    (Chrome's PDF viewer works under `object-src 'none'`), a `blob:` worker and a `blob:` AudioWorklet module.
+
+## Ship plan
+
+**Step 1 - now: report-only.** Push `public/_headers` and `functions/csp-report.js` together. Report-only cannot block
+anything: every browser that understands it only posts what it WOULD have refused; one that does not simply ignores it.
+After the push (Cloudflare builds in about a minute), check the header is served and the endpoint answers:
+
+```
+curl -sI https://user.hanoienglish.com/ | grep -i content-security-policy-report-only
+curl -sI https://user.hanoienglish.com/service-worker.js | grep -ci content-security     # 0: the worker is exempt
+curl -s -o /dev/null -w "%{http_code}\n" -X POST -H "content-type: application/csp-report" \
+  --data '{"csp-report":{"document-uri":"https://user.hanoienglish.com/csp-selftest","effective-directive":"img-src","blocked-uri":"https://selftest.invalid/x.png"}}' \
+  https://user.hanoienglish.com/csp-report                                                # 204
+```
+
+A 204 means the Pages Function is live (a 200 with the app's HTML would mean the `functions/` folder was not picked up:
+then the project's root directory setting in Cloudflare is not the repo root).
+
+**How the conductor reads the reports.** Each report is one log line `csp-violation {"day","directive","blocked","screen",
+"source","line","disposition"[,"known"]}` - origins and screen paths only, ids replaced by `:id`, no query strings, referrer,
+script sample or policy text, browser-extension noise dropped.
+- Live: Cloudflare dashboard > Workers & Pages > the Pages project (happy-class-mate, going by the *.happy-class-mate.pages.dev previews) > the production deployment > Functions > real-time logs,
+  or `npx wrangler pages deployment tail --project-name happy-class-mate --search csp-violation`. Pages keeps no history of these.
+- Kept for 30 days (recommended, one dashboard step for the owner): create a KV namespace (e.g. `hec-csp-reports`), bind it to
+  the Pages project as `CSP_REPORTS` (Settings > Bindings, production), redeploy. Each key is
+  `day|disposition|directive|blocked origin|screen` with a count; Storage & databases > KV > the namespace lists them.
+  Without the binding the function only logs.
+- Zero reports is also visible without either: the project's Functions metrics show the number of `/csp-report` requests.
+- Expected, ignorable: `script-src eval` from `/assets/engine.generated-*.js` tagged `known: "global-this-probe"` (one per
+  HEC Docs PDF). Browser extensions and in-app browsers that inject scripts into pages (Facebook's, some Zalo builds) can
+  report `script-src-elem` for their own hosts - they are the browser's, not the app's, and enforcing simply stops them.
+- Anything else is a real gap: add the origin to the right directive in `public/_headers` (and to the guard test if the
+  app's code calls it), or list it as unsafe.
+
+**Step 2 - after a few days with no unexplained reports: enforce.** One line in `public/_headers`, the policy line under `/*`:
+
+```
+-  Content-Security-Policy-Report-Only: default-src 'self'; ...
++  Content-Security-Policy: default-src 'self'; ...
+```
+
+(rename the header, keep the value). The service-worker block already detaches both names, so nothing else changes.
+`node scripts/pgtest/csp-headers.test.mjs` passes either way and checks the switched file. Rolling back is the reverse rename.
+Enforcing also turns on `frame-ancestors 'self'` (browsers ignore it in report-only), which stops other sites framing the app.
+
+**Zalo and Facebook in-app browsers.** On Android both are the system WebView (Chromium); on iOS both are WKWebView (Safari's
+engine). Both implement CSP, including report-only, exactly as Chrome and Safari do, so in step 1 they only send reports and
+cannot be affected. Anything they inject through their native APIs (`evaluateJavascript`, WKUserScript) is outside page CSP;
+anything they add as `<script src>` to the page would be reported now and refused after step 2, which is harmless to the app.
+Not run on a device here.
