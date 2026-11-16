@@ -45,18 +45,18 @@ const ClassDetail = () => {
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Link to="/admin?tab=classes">
-            <Button variant="ghost" size="sm">
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/admin?tab=classes">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Classes
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
 
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{classData?.name || "Class"}</h1>
-            <p className="text-muted-foreground">Manage class details, enrollments, and homework</p>
+          <div className="min-w-0 flex-1">
+            <h1 className="whitespace-normal break-words hyphens-none text-balance font-display text-hec-h1 font-medium text-hec-ink">{classData?.name || "Class"}</h1>
+            <p className="text-hec-small text-hec-ink-soft">Manage class details, enrollments, and homework</p>
           </div>
           {classData && (
             <ClassAdminActions
@@ -71,7 +71,7 @@ const ClassDetail = () => {
         </div>
 
         <Tabs value={tab} onValueChange={handleTabChange}>
-          <TabsList>
+          <TabsList className="h-auto flex-wrap">
             <TabsTrigger value="calendar">Calendar</TabsTrigger>
             <TabsTrigger value="enrollments">Enrollments</TabsTrigger>
             <TabsTrigger value="homework">Homework</TabsTrigger>
