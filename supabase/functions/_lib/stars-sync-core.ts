@@ -170,7 +170,9 @@ export interface StreakBatch {
   /** Each row's generation, in the same order as ids. */
   generations: number[];
   classId: string;
-  /** The lesson, so a streak counts lessons rather than the days the queue was drained. */
+  /** The lesson: the streak is read from the register up to it, and its bonus linked to it. */
+  sessionId: string;
+  /** The lesson's date, for ordering the batches. */
   lessonDate: string | null;
   studentIds: string[];
 }
@@ -213,7 +215,7 @@ export function planDrain(raw: unknown, tuitionLimit: number): DrainPlan {
         ? r.lesson_date
         : null;
       const batch = lessons.get(r.session_id) ??
-        { ids: [], generations: [], classId: r.class_id, lessonDate, studentIds: [] };
+        { ids: [], generations: [], classId: r.class_id, sessionId: r.session_id, lessonDate, studentIds: [] };
       batch.ids.push(Number(r.id));
       batch.generations.push(generationOf(r));
       batch.studentIds.push(r.student_id);
