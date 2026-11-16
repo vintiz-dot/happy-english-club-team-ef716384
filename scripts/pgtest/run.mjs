@@ -285,6 +285,17 @@ const SUITES = [
   // Not a database test: the edge function's own decisions, and the
   // after-effects of a mark that mark-attendance and the sync share.
   { name: "stars sync core", file: "stars-sync-core.test.mjs", migrations: [] },
+  // Attendance streaks read from the register, the bonus once per child per
+  // lesson (docs/evidence/FIX-streaks-bank-uploads.md, item 1): the real
+  // attendance-effects.ts over pglite, the migration, the repair script
+  // compared with the TS rule, and the opt-in back-pay.
+  {
+    name: "attendance streaks",
+    file: "attendance-streaks.test.mjs",
+    migrations: ["20261116091000_attendance_streak_rule.sql"],
+    args: ["scripts/REPAIR-attendance-streaks.sql", "scripts/OPTIN-attendance-streak-backpay.sql"],
+    expect: 63,
+  },
   // Nor these: the admin screens' reasoning, without the screens. Who a
   // Pixel Pal child probably is, and how the record log is read and sliced.
   { name: "stars link tool", file: "stars-link.test.mjs", migrations: [] },

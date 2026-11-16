@@ -123,7 +123,6 @@ const fakeClient = (existingStreaks = []) => {
     functions: { invoke: async (name, { body }) => { calls.invoked.push({ name, body }); return { data: null, error: null }; } },
   };
 };
-const today = new Date().toISOString().split("T")[0];
 {
   const sb = fakeClient();
   await fx.afterAttendanceMarked(sb, { classId: "C", date: "2026-10-27", entries: [
@@ -134,47 +133,95 @@ const today = new Date().toISOString().split("T")[0];
   eq("  Late does not, as in HEC", sb.calls.invoked.some((c) => c.body.studentId === "minh"), false);
   eq("  and none of them touch streaks", sb.calls.upserts.length, 0);
 }
+// Streaks are read from the register now (16 Nov 2026): the full cases -
+// a bonus with its date and month, a retry that pays once, a late lesson
+// that cannot inflate, Absent / Excused, and the repair script against the
+// same rule - run against a real Postgres in attendance-streaks.test.mjs.
+// What stays here is the contract with the two callers, on a fake that
+// holds a small register.
+const registerClient = (register = [], { paid = [], failUpsert = false, failRead = false } = {}) => {
+  const calls = { invoked: [], upserts: [], inserts: [], reads: [] };
+  const builder = (table) => {
+    const f = {};
+    const b = {
+      select: () => b,
+      eq: (c, v) => { f[c] = v; return b; },
+      like: () => b,
+      in: (c, v) => { f[c] = v; return b; },
+      then: (res, rej) => {
+        calls.reads.push({ table, f: { ...f } });
+        if (failRead) return Promise.resolve({ data: null, error: new Error("read failed") }).then(res, rej);
+        let data = [];
+        if (table === "attendance") {
+          data = register.filter((r) => r.student === f.student_id && r.class === f["sessions.class_id"])
+            .map((r) => ({ session_id: r.session, status: r.status,
+                           sessions: { id: r.session, class_id: r.class, date: r.date, start_time: "17:00:00", status: "Held" } }));
+        } else if (table === "point_transactions") {
+          data = paid.map((student_id) => ({ student_id }));
+        }
+        return Promise.resolve({ data, error: null }).then(res, rej);
+      },
+      upsert: async (rows, opts) => { calls.upserts.push({ table, rows, opts }); return { error: failUpsert ? new Error("write failed") : null }; },
+      insert: async (rows) => { calls.inserts.push({ table, rows }); return { error: null }; },
+    };
+    return b;
+  };
+  return {
+    calls,
+    from: builder,
+    functions: { invoke: async (name, { body }) => { calls.invoked.push({ name, body }); return { data: null, error: null }; } },
+  };
+};
+const lessons5 = ["s1", "s2", "s3", "s4", "s5"].map((session, i) =>
+  ({ student: "apple", class: "C", session, date: `2026-10-2${i}`, status: "Present" }));
 {
-  const sb = fakeClient();
-  await fx.afterAttendanceMarked(sb, { classId: "C", date: "2026-10-27", entries: [{ studentId: "apple", status: "Present" }] });
+  const sb = registerClient(lessons5.slice(0, 1));
+  await fx.afterAttendanceMarked(sb, { classId: "C", date: "2026-10-20", sessionId: "s1", entries: [{ studentId: "apple", status: "Present" }] });
   const row = sb.calls.upserts[0]?.rows[0];
-  eq("a first Present starts a streak of 1", [row?.consecutive_days, row?.last_attendance_date], [1, today]);
+  eq("mark-attendance's call: a first Present is a streak of 1, dated by the lesson", [row?.consecutive_days, row?.last_attendance_date], [1, "2026-10-20"]);
   eq("  keyed so it updates rather than duplicates", sb.calls.upserts[0]?.opts, { onConflict: "student_id,class_id" });
+  eq("  read from the child's register in that class", sb.calls.reads.find((r) => r.table === "attendance")?.f,
+     { student_id: "apple", "sessions.class_id": "C" });
   eq("  and no bonus yet", sb.calls.inserts.length, 0);
 }
 {
-  const sb = fakeClient([{ student_id: "apple", consecutive_days: 4, last_attendance_date: "2026-01-01", bonuses_awarded: 0 }]);
-  await fx.afterAttendanceMarked(sb, { classId: "C", date: "2026-10-27", entries: [{ studentId: "apple", status: "Present" }] });
-  eq("the fifth consecutive lesson makes it 5", sb.calls.upserts[0]?.rows[0].consecutive_days, 5);
-  const bonus = sb.calls.inserts[0]?.rows[0];
-  eq("  and awards the 50-point bonus once", [bonus?.points, bonus?.type, sb.calls.inserts.length], [50, "participation", 1]);
-  eq("  recorded as awarded", sb.calls.upserts[0]?.rows[0].bonuses_awarded, 1);
+  const sb = registerClient(lessons5);
+  await fx.afterAttendanceMarked(sb, { classId: "C", date: "2026-10-24", sessionId: "s5", entries: [{ studentId: "apple", status: "Present" }] });
+  const bonus = sb.calls.inserts[0]?.rows;
+  eq("the fifth lesson pays the 50-point bonus, dated and linked to the lesson",
+     [bonus?.points, bonus?.type, bonus?.date, bonus?.month, bonus?.session_id, sb.calls.inserts.length],
+     [50, "participation", "2026-10-24", "2026-10", "s5", 1]);
+  eq("  the streak reads 5, one milestone", [sb.calls.upserts[0]?.rows[0].consecutive_days, sb.calls.upserts[0]?.rows[0].bonuses_awarded], [5, 1]);
 }
 {
-  const sb = fakeClient([{ student_id: "apple", consecutive_days: 5, last_attendance_date: today, bonuses_awarded: 1 }]);
-  await fx.afterAttendanceMarked(sb, { classId: "C", date: "2026-10-27", entries: [{ studentId: "apple", status: "Present" }] });
-  eq("marking again the same day does not advance the streak", sb.calls.upserts[0]?.rows[0].consecutive_days, 5);
-  eq("  nor pay the bonus twice", sb.calls.inserts.length, 0);
+  const sb = registerClient(lessons5, { paid: ["apple"] });
+  await fx.advanceStreaks(sb, { classId: "C", sessionId: "s5", entries: [{ studentId: "apple", status: "Present" }] });
+  eq("a bonus already paid for that lesson is not paid again", sb.calls.inserts.length, 0);
 }
 {
-  const sb = fakeClient();
-  await fx.afterAttendanceMarked(sb, { classId: null, date: null, entries: [
+  const sb = registerClient(lessons5);
+  await fx.advanceStreaks(sb, { classId: "C", lessonDate: "2026-10-24", entries: [{ studentId: "apple", status: "Present" }] });
+  eq("without the lesson, nothing is guessed", [sb.calls.upserts.length, sb.calls.inserts.length], [0, 0]);
+}
+{
+  const sb = registerClient();
+  await fx.afterAttendanceMarked(sb, { classId: null, date: null, sessionId: "s1", entries: [
     { studentId: "apple", status: "Present" }, { studentId: "johnny", status: "Absent" }] });
   eq("no class and no date: nothing is guessed", [sb.calls.upserts.length, sb.calls.invoked.length], [0, 0]);
 }
 {
-  const sb = fakeClient();
+  const sb = registerClient();
   sb.from = () => { throw new Error("database down"); };
   let threw = false;
   try {
-    await fx.afterAttendanceMarked(sb, { classId: "C", date: "2026-10-27", entries: [{ studentId: "apple", status: "Present" }] });
+    await fx.afterAttendanceMarked(sb, { classId: "C", date: "2026-10-27", sessionId: "s1", entries: [{ studentId: "apple", status: "Present" }] });
   } catch { threw = true; }
   ok("a failure in streaks never fails the mark that triggered it", !threw);
 }
 
 console.log("=== the two halves, separately - what the drain relies on ===");
 {
-  const sb = fakeClient();
+  const sb = registerClient();
   sb.functions.invoke = async (name, { body }) =>
     ({ data: null, error: body.studentId === "johnny" ? new Error("429 rate limited") : null });
   const failed = await fx.recalcTuition(sb, { date: "2026-10-27", entries: [
@@ -182,87 +229,19 @@ console.log("=== the two halves, separately - what the drain relies on ===");
   eq("recalcTuition reports how many calls were refused", failed, 1);
 }
 {
-  const sb = fakeClient();
-  eq("advanceStreaks reports success", await fx.advanceStreaks(sb, { classId: "C", entries: [{ studentId: "apple", status: "Present" }] }), true);
-  const bad = fakeClient();
-  const realFrom = bad.from;
-  bad.from = (table) => {
-    const b = realFrom(table);
-    b.upsert = async () => ({ error: new Error("write failed") });
-    return b;
-  };
+  eq("advanceStreaks reports success",
+     await fx.advanceStreaks(registerClient(lessons5.slice(0, 1)), { classId: "C", sessionId: "s1", entries: [{ studentId: "apple", status: "Present" }] }), true);
   eq("  and failure, when a write is refused - so the drain keeps the job",
-     await fx.advanceStreaks(bad, { classId: "C", entries: [{ studentId: "apple", status: "Present" }] }), false);
+     await fx.advanceStreaks(registerClient(lessons5.slice(0, 1), { failUpsert: true }), { classId: "C", sessionId: "s1", entries: [{ studentId: "apple", status: "Present" }] }), false);
 }
 {
-  // The bug this fixes in mark-attendance's own path: a failed read used
-  // to carry on with no streaks, and write every child back to 1.
-  const sb = fakeClient();
-  const realFrom = sb.from;
-  sb.from = (table) => {
-    const b = realFrom(table);
-    b.in = async () => ({ data: null, error: new Error("read failed") });
-    return b;
-  };
-  const ok2 = await fx.advanceStreaks(sb, { classId: "C", entries: [{ studentId: "apple", status: "Present" }] });
-  eq("a failed streak read stops, rather than resetting everyone's streak to 1",
-     [ok2, sb.calls.upserts.length], [false, 0]);
+  // A failed read used to carry on with no streaks, and write every child back to 1.
+  const sb = registerClient(lessons5, { failRead: true });
+  const ok2 = await fx.advanceStreaks(sb, { classId: "C", sessionId: "s5", entries: [{ studentId: "apple", status: "Present" }] });
+  eq("a failed read stops, rather than resetting anyone's streak", [ok2, sb.calls.upserts.length, sb.calls.inserts.length], [false, 0, 0]);
 }
 
-console.log("=== second review: streaks count lessons, bonuses are not lost ===");
-// Remembers what it is written, so each step reads the one before it - as
-// the drain does when it works through a child's backlog.
-const streakStore = () => {
-  const rows = new Map();
-  const sb = {
-    rows, bonuses: [], refuseBonus: false,
-    from: (table) => {
-      const b = {
-        select: () => b, eq: () => b,
-        in: async (_col, ids) => ({ data: [...rows.values()].filter((r) => ids.includes(r.student_id)), error: null }),
-        upsert: async (list) => { for (const r of list) rows.set(r.student_id, { ...r }); return { error: null }; },
-        insert: async (list) => {
-          if (sb.refuseBonus) return { error: new Error("insert refused") };
-          sb.bonuses.push(...list);
-          return { error: null };
-        },
-      };
-      return b;
-    },
-  };
-  return sb;
-};
-const present = [{ studentId: "apple", status: "Present" }];
-{
-  const sb = streakStore();
-  for (const d of ["2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-24"]) {
-    await fx.advanceStreaks(sb, { classId: "C", lessonDate: d, entries: present });
-  }
-  const r = sb.rows.get("apple");
-  eq("a backlog of five lessons drained in one run is five steps, not one",
-     [r.consecutive_days, r.last_attendance_date], [5, "2026-10-24"]);
-  eq("  and earns the fifth-lesson bonus", sb.bonuses.length, 1);
-  await fx.advanceStreaks(sb, { classId: "C", lessonDate: "2026-10-24", entries: present });
-  eq("working the same lesson again is not another step", sb.rows.get("apple").consecutive_days, 5);
-  eq("  nor another bonus", sb.bonuses.length, 1);
-  await fx.advanceStreaks(sb, { classId: "C", lessonDate: "2026-10-19", entries: present });
-  eq("an earlier lesson worked late still counts",
-     sb.rows.get("apple").consecutive_days, 6);
-  eq("  without moving the latest lesson back", sb.rows.get("apple").last_attendance_date, "2026-10-24");
-}
-{
-  const sb = streakStore();
-  sb.rows.set("apple", { student_id: "apple", consecutive_days: 4, last_attendance_date: "2026-10-23", bonuses_awarded: 0 });
-  sb.refuseBonus = true;
-  const first = await fx.advanceStreaks(sb, { classId: "C", lessonDate: "2026-10-24", entries: present });
-  eq("a refused bonus fails the job, so the drain keeps it", first, false);
-  eq("  the streak still moves to 5", sb.rows.get("apple").consecutive_days, 5);
-  eq("  but is not marked as having paid the bonus", sb.rows.get("apple").bonuses_awarded, 0);
-  sb.refuseBonus = false;
-  const again = await fx.advanceStreaks(sb, { classId: "C", lessonDate: "2026-10-24", entries: present });
-  eq("the retry pays it", [again, sb.bonuses.length, sb.rows.get("apple").bonuses_awarded], [true, 1, 1]);
-  eq("  without stepping the streak twice", sb.rows.get("apple").consecutive_days, 5);
-}
+console.log("=== the drain's batches ===");
 {
   const S = (id, session, date, generation = 0) => ({ id, kind: "streak", student_id: "k" + id, class_id: "C",
                                                        session_id: session, lesson_date: date, attempts: 0, generation });
@@ -270,6 +249,8 @@ const present = [{ studentId: "apple", status: "Present" }];
   eq("streak steps are worked in lesson order, whatever order they were queued in",
      plan.streaks.map((b) => b.lessonDate), ["2026-10-20", "2026-10-22", "2026-10-24"]);
   eq("  each carrying the generation it read", plan.streaks[2].generations, [2]);
+  eq("  and the lesson itself, which the streak is read up to and the bonus linked to",
+     plan.streaks.map((b) => b.sessionId), ["early", "mid", "late"]);
 }
 
 console.log("=== Pixel Pal's list of children ===");
