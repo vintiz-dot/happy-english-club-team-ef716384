@@ -129,6 +129,15 @@ BEGIN
              AND NOT EXISTS (SELECT 1 FROM public.invoices i WHERE i.student_id = p.student_id AND i.month <= v_month)) THEN
     RAISE EXCEPTION 'a child with a leftover has no bill for % or earlier. Nothing was changed.', v_month;
   END IF;
+  -- A payment that modify-payment rewrote (child payments, reversal- /
+  -- modified- keys) was already corrected; crediting it would count the money
+  -- twice and delete-payment could not take it back (review F1, CREDIT-review.md).
+  IF EXISTS (SELECT 1 FROM _plc p WHERE NOT p.reversed AND NOT p.credited AND (
+       EXISTS (SELECT 1 FROM public.payments c WHERE c.parent_payment_id::text = p.payment_id)
+    OR EXISTS (SELECT 1 FROM public.ledger_entries e
+                WHERE e.tx_key LIKE 'reversal-' || p.payment_id || '-%' OR e.tx_key LIKE 'modified-' || p.payment_id || '-%'))) THEN
+    RAISE EXCEPTION 'a leftover''s payment was modified since. Nothing was changed.';
+  END IF;
 
   -- -------------------------------------------------------------- credit
   FOR r IN SELECT * FROM _plc WHERE NOT reversed AND NOT credited ORDER BY src_month, payment_id LOOP
