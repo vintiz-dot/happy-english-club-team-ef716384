@@ -5,6 +5,20 @@ All notable changes to HEC Docs: the engine, and each template with its own semv
 - **Minor:** new variant or optional field.
 - **Patch:** visual change with the same data.
 
+## 2026-11-16: homework attachments
+
+- **A homework download now includes its attached PDFs.** The engine's `appendPdfs` adds them after the instructions, in upload order, for both the new and the fallback generator. A file that cannot be read (encrypted, damaged) is skipped with a warning; the instructions still download.
+- **"Download Invoice" downloads the PDF directly.** The old preview opens only when the new PDF cannot be made.
+
+## 2026-11-16: live in the app (Cloudflare, free plan)
+
+- **Printer Worker** (`worker/`): prints document HTML with Cloudflare Browser Rendering for signed-in users only. The browser session is locked to the app's own origin. It reuses an open browser and waits for a launch slot to stay inside the free plan's limits.
+- **The engine also builds for the browser** (`npm run build:app`). The pure parts (formatting, filters, brand helpers, PDF finishing) were split out, so the service and the app share one source. The service's PDFs are byte-identical to before, and the app engine's HTML equals the service's for all 25 fixtures.
+- **Undeclared fields are dropped.** Before validating, the app engine drops fields a template's schema does not declare (database rows carry extras). Templates can only print declared fields, so documents are unaffected.
+- **All seven app buttons now make HEC Docs documents,** with their old generators as a fallback:
+  - Two print-only buttons now download a PDF: the invoice "Print / Save as PDF" and the statement print. The report dialog's "Print" button is now "PDF".
+  - Filenames are unchanged.
+
 ## Engine 1.0.0 (2026-11-13)
 
 First release. HTML + CSS Paged Media → headless Chromium (Playwright 1.58.2, build 1208) → tagged PDF. Includes:

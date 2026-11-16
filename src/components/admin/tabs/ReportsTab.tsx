@@ -21,6 +21,7 @@ import { PageHero } from "@/components/quest/PageHero";
 import { StudentAuditRoster } from "@/components/admin/reports/StudentAuditRoster";
 import { StudentStatementPrint } from "@/components/admin/reports/StudentStatementPrint";
 import OperationalReports from "@/components/admin/reports/OperationalReports";
+import { tryMakeDocument, downloadBlob } from "@/lib/hecDocs";
 import type { StudentAudit } from "@/hooks/useStudentAudit";
 
 const ReportsTab = () => {
@@ -29,7 +30,14 @@ const ReportsTab = () => {
   // and there must only ever be one of it on the page.
   const [statement, setStatement] = useState<StudentAudit | null>(null);
 
-  const print = (audit: StudentAudit) => {
+  const print = async (audit: StudentAudit) => {
+    // The premium statement PDF from HEC Docs; the print view below stays as
+    // the fallback.
+    const doc = await tryMakeDocument("statement", { audit: audit as unknown as Record<string, unknown> });
+    if (doc) {
+      downloadBlob(doc.blob, doc.filename);
+      return;
+    }
     setStatement(audit);
     // Let React commit the portal before the browser snapshots the page;
     // printing in the same tick prints the previous student, or nothing.

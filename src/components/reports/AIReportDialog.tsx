@@ -29,6 +29,7 @@ import { Brain, Loader2, Sparkles, Printer } from "lucide-react";
 // Layout lives in ReportDocument so the dialog, the print copy and the bulk
 // PDF exporter can never drift apart.
 import { BrandHeader, ReportBody } from "./ReportDocument";
+import { tryMakeDocument, progressReportData, downloadBlob } from "@/lib/hecDocs";
 
 interface Props {
   studentId: string;
@@ -57,6 +58,20 @@ export function AIReportDialog({ studentId, studentName, classId, trigger }: Pro
   });
 
   const latest = reports.find((r) => r.status === "ready");
+
+  // The premium PDF from HEC Docs; the browser's print view stays as the fallback.
+  const [making, setMaking] = useState(false);
+  const downloadOrPrint = async () => {
+    if (!latest?.report) return window.print();
+    setMaking(true);
+    try {
+      const doc = await tryMakeDocument("progress-report", progressReportData(studentName, latest));
+      if (doc) downloadBlob(doc.blob, doc.filename);
+      else window.print();
+    } finally {
+      setMaking(false);
+    }
+  };
 
   const generateMutation = useMutation({
     mutationFn: async () => {
@@ -142,8 +157,8 @@ export function AIReportDialog({ studentId, studentName, classId, trigger }: Pro
           </Button>
           {latest && (
             <>
-              <Button variant="outline" onClick={() => window.print()}>
-                <Printer className="h-4 w-4" aria-hidden />Print
+              <Button variant="outline" className="gap-2" disabled={making} onClick={downloadOrPrint}>
+                {making ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Printer className="h-4 w-4" aria-hidden />}PDF
               </Button>
               <label className="ml-auto flex min-h-hec-target cursor-pointer items-center gap-2">
                 <span className="text-hec-small text-hec-ink-soft">Visible to student</span>
