@@ -482,7 +482,9 @@ function VideoEditor({ f, set }: { f: Partial<Item>; set: (k: keyof Item, v: any
       <div className="flex flex-wrap gap-2">
         <Button type="button" size="sm" variant={source === "upload" ? "default" : "outline"} onClick={() => choose("upload")}><Upload className="h-4 w-4 mr-1" /> Upload a file</Button>
         <Button type="button" size="sm" variant={source === "drive" ? "default" : "outline"} onClick={() => choose("drive")}><Film className="h-4 w-4 mr-1" /> Google Drive link</Button>
-        <Button type="button" size="sm" variant={source === "youtube" ? "default" : "outline"} onClick={() => choose("youtube")}><Youtube className="h-4 w-4 mr-1" /> YouTube link</Button>
+        {/* YouTube links are retired (owner, 16 Nov): the TV's YouTube app asks for a sign-in.
+            Download your own videos from YouTube Studio and upload them instead. Shown only to edit an old one. */}
+        {source === "youtube" && <Button type="button" size="sm" variant="default"><Youtube className="h-4 w-4 mr-1" /> YouTube link</Button>}
       </div>
 
       {source === "upload" && (
@@ -493,7 +495,7 @@ function VideoEditor({ f, set }: { f: Partial<Item>; set: (k: keyof Item, v: any
             {pct !== null ? `Uploading ${pct}%` : f.video_url ? "Replace the video" : "Choose a video"}
           </Button>
           {pct !== null && <Progress value={pct} aria-label="Video upload progress" />}
-          <p className="text-xs text-muted-foreground">MP4, iPhone MOV or WebM, up to 250 MB. Keep this window open until it reaches 100%.</p>
+          <p className="text-xs text-muted-foreground">MP4, iPhone MOV or WebM, up to 250 MB. Keep this window open until it reaches 100%. A video on HEC's YouTube channel: download it from YouTube Studio (Content › ⋮ › Download) and upload it here.</p>
         </div>
       )}
 
@@ -643,11 +645,6 @@ function ScreenPanel({ settings, onChange }: { settings: Settings; onChange: () 
                 </label>
               ))}
             </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Play a YouTube video every (minutes)</Label>
-            <Input type="number" min={2} max={240} value={f.youtube_every_minutes} onChange={(e) => setF({ ...f, youtube_every_minutes: Number(e.target.value) })} />
-            <p className="text-xs text-muted-foreground">YouTube videos play in the TV's YouTube app, one at a time, while the screen is on. Uploaded and Drive videos play inside the display.</p>
           </div>
           <div className="space-y-1.5"><Label>Feedback form link</Label><Input value={f.feedback_url} onChange={(e) => setF({ ...f, feedback_url: e.target.value })} />
             <p className="text-xs text-muted-foreground">Normally {defaultFeedbackUrl}</p></div>

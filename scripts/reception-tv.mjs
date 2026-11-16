@@ -4,6 +4,7 @@
 //   node scripts/reception-tv.mjs setup      one-off: install the LG CLI, add the TV, fetch its key
 //   node scripts/reception-tv.mjs package    build the .ipk (writes the display token into it)
 //   node scripts/reception-tv.mjs install    package + install + launch on the TV
+//   node scripts/reception-tv.mjs install-later  package now; the helper installs it when the TV is next on
 //   node scripts/reception-tv.mjs pair       one-off: accept the prompt on the TV so the helper may launch apps
 //   node scripts/reception-tv.mjs check      one pass of the helper (what `watch` does every few minutes)
 //   node scripts/reception-tv.mjs watch      run the helper for ever (Task Scheduler / systemd)
@@ -317,6 +318,20 @@ async function check() {
     saveState();
     return; // the next pass launches the app once the TV is up
   }
+  // An update packaged while the TV was off (`install-later`) goes on now.
+  if (state.pendingInstall && existsSync(state.pendingInstall)) {
+    try {
+      ares("ares-install", ["--device", DEVICE, state.pendingInstall], { timeout: 300000 });
+      ares("ares-launch", ["--device", DEVICE, APP_ID]);
+      log(`display updated (${state.pendingInstall.split(/[\\/]/).pop()})`);
+      state.installedAt = new Date().toISOString();
+      delete state.pendingInstall;
+      saveState();
+      return;
+    } catch (e) {
+      log(`display update failed, will retry: ${e.message.split("\n").slice(-1)[0]}`);
+    }
+  }
   if (front !== APP_ID) {
     try { await ssap([["ssap://system.launcher/launch", { id: APP_ID }]]); log(`display relaunched (was: ${front || "home screen"})`); }
     catch (e) { log(`could not launch the display: ${e.message}`); }
@@ -463,6 +478,15 @@ try {
   }
   else if (cmd === "package") pkg();
   else if (cmd === "install") install();
+  else if (cmd === "install-later") {
+    // Package now; the helper installs it the next time the TV is reachable.
+    const ipk = pkg();
+    const keep = join(HOME, "pending.ipk");
+    cpSync(ipk, keep);
+    state.pendingInstall = keep;
+    saveState();
+    console.log(`The helper installs this on the TV when it next comes on: ${keep}`);
+  }
   else if (cmd === "pair") { console.log("Look at the TV and accept the prompt with the remote…"); await ssap([], { pairing: true }); console.log("Paired."); }
   else if (cmd === "check") await check();
   else if (cmd === "youtube-now") { feedCache.at = 0; await youtubeBreak({ force: true }); }
