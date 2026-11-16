@@ -63,6 +63,8 @@ await section('preflight: the 1b bodies it relies on', async () => {
 });
 
 db = await makeDb(PGlite, { people: true, rls: false, migrations: base });
+// As live (20260323044859): the upsert target of EditSessionModal's assistant list.
+await db.exec(`ALTER TABLE public.session_participants ADD CONSTRAINT uq_session_ta UNIQUE (session_id, teaching_assistant_id)`);
 const fnsBefore = new Map((await db.query(`SELECT p.oid::regprocedure::text k, md5(p.prosrc) m, p.prosecdef, p.proconfig::text c,
    has_function_privilege('authenticated', p.oid, 'EXECUTE') au FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace`)).rows.map((r) => [r.k, r]));
 const trgBefore = (await db.query(`SELECT c.relname || '.' || t.tgname k, pg_get_triggerdef(t.oid) d, t.tgenabled::text e FROM pg_trigger t
@@ -447,6 +449,12 @@ await section('G-6 the assistants of a Held lesson', async () => {
   ok('  removed -> HC020', isKind(r, 'HC020', 'restaff'), r);
   r = await tryIt(() => asAdmin(`UPDATE session_participants SET absence_note='was late' WHERE session_id=$1`, [s.sid]));
   ok('  the absence note alone (not pay) -> allowed', r.ok !== undefined, r);
+  r = await tryIt(() => asAdmin(`INSERT INTO session_participants(session_id, participant_type, teaching_assistant_id) VALUES ($1,'teaching_assistant',$2)
+      ON CONFLICT (session_id, teaching_assistant_id) DO NOTHING`, [s.sid, a1]));
+  ok('R-4 for assistants: re-saving the unchanged list (an upsert, ON CONFLICT DO NOTHING, as EditSessionModal does) -> passes', r.ok !== undefined, r);
+  r = await tryIt(() => asAdmin(`INSERT INTO session_participants(session_id, participant_type, teaching_assistant_id, attended) VALUES ($1,'teaching_assistant',$2,false)
+      ON CONFLICT (session_id, teaching_assistant_id) DO UPDATE SET attended = EXCLUDED.attended`, [s.sid, a1]));
+  ok('  the same upsert changing `attended` is judged by its UPDATE -> HC020', isKind(r, 'HC020', 'restaff'), r);
   r = await tryIt(() => asService(`INSERT INTO session_participants(session_id, participant_type, teaching_assistant_id) VALUES ($1,'teaching_assistant',gen_random_uuid())`, [s.sid]));
   ok('the service lane -> HC020 (refused)', isKind(r, 'HC020', 'restaff'), r);
   const other = await mk({ when: OLD, status: 'Scheduled' });

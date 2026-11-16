@@ -427,6 +427,17 @@ BEGIN
   IF NOT v_ta THEN
     RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
   END IF;
+  -- An upsert's BEFORE INSERT fires before ON CONFLICT is resolved: when the
+  -- assistant is already on the lesson, the conflict branch (DO NOTHING, or
+  -- DO UPDATE judged below as an UPDATE) decides. Re-saving an unchanged
+  -- list is never refused (R-4's rule for assistants). The row is locked.
+  IF TG_OP = 'INSERT' AND NEW.teaching_assistant_id IS NOT NULL THEN
+    PERFORM 1 FROM public.session_participants sp
+     WHERE sp.session_id = NEW.session_id AND sp.teaching_assistant_id = NEW.teaching_assistant_id FOR UPDATE;
+    IF FOUND THEN
+      RETURN NEW;
+    END IF;
+  END IF;
   IF TG_OP = 'UPDATE'
      AND OLD.session_id IS NOT DISTINCT FROM NEW.session_id
      AND OLD.participant_type IS NOT DISTINCT FROM NEW.participant_type
