@@ -181,8 +181,9 @@ export function TuitionCard({ studentId }: { studentId: string }) {
                 <div className={cn(ivory ? "min-w-0 space-y-1 text-right" : "text-right space-y-1")}>
                   {currentMonth.discounts.map((discount, idx) => (
                     <div key={idx} className={cn(ivory ? "text-hec-caption tabular-nums text-hec-ink" : "text-xs text-muted-foreground")}>
-                      {discount.name}: -{discount.amount.toLocaleString('vi-VN')} ₫
-                      <Badge variant="secondary" className={cn(ivory ? "ml-2 tabular-nums" : "ml-2 text-xs")}>
+                      {/* The amount keeps its ₫ on its own line at 320 px; the badge is a figure too, so ink (R23v). */}
+                      {discount.name}:{" "}<span className={cn(ivory && "whitespace-nowrap")}>-{discount.amount.toLocaleString('vi-VN')} ₫</span>
+                      <Badge variant="secondary" className={cn(ivory ? "ml-2 whitespace-nowrap tabular-nums text-hec-ink" : "ml-2 text-xs")}>
                         {discount.value}{discount.type === 'percent' ? '%' : ' ₫'}
                       </Badge>
                       {discount.isSiblingWinner && discount.appliedToClass && (
