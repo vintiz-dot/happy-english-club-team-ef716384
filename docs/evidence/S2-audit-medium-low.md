@@ -7,6 +7,8 @@ Build and test only: nothing here was applied to the live database, deployed or 
 
 Files touched by the six other branches (`d4-3a-lessons`, `worktree-agent-a935...`, `-ae3a...`, `-a20e...`, `-addb...`, `origin/pc2/r22-r23`) were avoided; the only shared file is `scripts/pgtest/run.mjs` (S2 entries only). Deferred because another branch owns the file: F-13's `analyze-video-submission` re-run cap (ae3a, now merged into the conductor - free for a follow-up), F-24 (`src/pages/OAuthConsent.tsx`, pc2/r22-r23).
 
+Checks, run once at the end on the merged branch: `node scripts/pgtest/run.mjs` 6602 assertions across 72 suites, 0 failed (S2's seven: 42 + 60 + 38 + 35 + 32 + 30 + 92 = 329); `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` exit 0; `npm run test:bun` 190 pass, 0 fail.
+
 ## The 21 findings
 
 | Finding | Sev | Status | Fix | Where | Test (`node scripts/pgtest/run.mjs`) | Rollback |
