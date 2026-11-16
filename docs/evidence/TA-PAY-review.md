@@ -1,3 +1,3 @@
 # TA-PAY review (independent)
 
-Where I am / next step: branch review-ta-pay checked out at 18004f6a; next: merge claude/hec-conductor-setup-efbaa5, then read rules and diff.
+Where I am / next step: merged (no conflicts), diff read, 4 payroll suites green, 6 handler mutants run, attendance probe done, bun 250/0; waiting on full run.mjs and tsc; then write findings.
