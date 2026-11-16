@@ -63,4 +63,42 @@ with and without file 6 and comparing every answer, tier and row).
 
 ## Results
 
-(filled at the end of the build)
+- `d4 approvals` (new, pinned 141): **141 passed, 0 failed**. OFF: one scenario (previews and checked changes of
+  attendance T1-T3, a fee into a signed month, an unfreeze, a money batch, D2 cancel and bulk cancel, a pay carry, an
+  admin grant on the service lane) run on 1a..3B and on 1a..3B + 6 in two child processes: every answer, tier and
+  row identical; no request or event written; asking refused as not needed. ON: under / over 5,000,000 VND; HC060 and
+  nothing written; one request, HC063 for a second; requester cannot approve (HC061), reject, or use their token;
+  approver's preview, token, approve = apply, override names approver and asker; audit append-only; stale (payment
+  landed, mark changed) recorded and refused; expired HC064; reject needs a sentence; withdraw by the asker only;
+  tier3 via the fee plan (no tier in its impact) and a fee from next month not waiting; unfreeze; closed payroll (3A
+  reteach); D2 single and bulk through the insert trigger; 15-item batch refused whole then one request applied
+  whole; the 24-hour window (third single change waits; changes while off count; T1 never; approved changes not
+  counted again); pay carry and its stale double; admin grant by request only; an approval is not a vehicle (another
+  change in the approver's transaction, or a replay later: HC060); settings (two admins, loosen needs the other,
+  tighten at once); solo release (off by default, not before the delay, asker only, acknowledged by the other);
+  disabled trigger / missing row HC050 (A-15); rollback 6 reads as off, rows kept, re-paste on again.
+- `approvals lib` (new, pinned 35): 35 / 0 (wording of every reason the migration emits, request builders, queue,
+  settings mirror, static checks of the screens: only the nine RPCs, no table write, asked-by from the approval
+  record).
+- `d4 apply chain` extended (pin 238 -> 344): 344 / 0 - 2 -> 3A -> 3B -> 4 in all six orders of the first three and as
+  CRLF; step 4 refused early and installs nothing; second pastes; rollback 6 alone (exactly the three triggers go);
+  rollbacks 6..3 back to 1b (the five replaced 1b bodies differ, by design), 1b re-paste exact but for the two stubs,
+  re-install, rollbacks 6..1 + D2 = the D release.
+- Fingerprint `--release d4` regenerated: 129 functions, 57 triggers, 11 relations (step 4: 30 / 11 / 4).
+  `--release d4 --check` and `--check` up to date; `--check-unchanged`: only the two 1a functions differ;
+  `--check-unchanged --after-rollback` (rollbacks 6..1 + D2): 66 of 66.
+- Mutants A01-A30 (`node scripts/pgtest/d4-mutants.mjs A01 ... A30`; the runner patches file 6's own pins for a
+  mutated body): **30 / 30 caught**. A06 (claim without the this-transaction / this-caller check) survived the first
+  run and is caught by the replay case added for it.
+- `tsc --noEmit -p tsconfig.app.json`: exit 0 (also `app typecheck` 3/0 in the run).
+- Full `node scripts/pgtest/run.mjs` (05:00 Hanoi, clock moved back 8 hours for 3B's after-midnight edge): **8477
+  assertions across 88 suites, 1 failed: `d4 floors` 212 / 2**, the known 1a clock edge (C-1 move; the moved-back
+  clock landed after 20:00). Re-run alone on the real clock: **213 / 0**. Every other suite green, every pin met;
+  all earlier D4 suites unchanged (no existing suite edited apart from the apply chain, which step 4 owns by the brief).
+
+## Not verified
+
+- The live database, the deploys, the screens in a browser (pglite and the type-checker only).
+- Bulk screens, 3A's lesson-pay dialog and `manage-admin-users` are not wired for requests (decision 9).
+- `npm run test:bun` not run (no bun-tested file touched).
+- Root `AGENTS.md` rule ("approval is decided in `change_approval_needed` only") not added: conductor's file.
