@@ -22,13 +22,8 @@ import { toast } from "sonner";
 import { TAClassAssignment } from "./TAClassAssignment";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PayRateHistory } from "@/components/admin/staff/PayRateHistory";
-import {
-  describeQuantity,
-  describeRate,
-  payRateTypeOf,
-  totalPayVnd,
-} from "@/lib/payRate";
-import { durationMinutes } from "@/lib/sessionDuration";
+import { describeRate } from "@/lib/payRate";
+import { teacherPayrollView } from "@/lib/teacherPayrollView";
 
 interface TAProfileDrawerProps {
   ta: any;
@@ -55,45 +50,32 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
     }
   }, [ta]);
 
-  // Payroll-like stats for TA
-  const { data: taStats } = useQuery({
+  // The TA's month as calculate-payroll reports it (AGENTS.md: payroll is
+  // computed in ONE place). This used to price the month here, at the TA
+  // row's rate of TODAY, over every Held lesson the TA was rostered on -
+  // including lessons they were marked absent from, which the function does
+  // not pay. Now nothing is priced in the browser: the figures are the
+  // function's, through the same view the teacher screens use, picked by
+  // id. A closed month shows what it was paid at.
+  const { data: taView, isError: taStatsFailed } = useQuery({
     queryKey: ["ta-stats", ta?.id, selectedMonth],
     enabled: !!ta?.id,
     queryFn: async () => {
-      const [year, month] = selectedMonth.split("-");
-      const startDate = `${year}-${month}-01`;
-      const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-      const endDate = `${year}-${month}-${lastDay.toString().padStart(2, "0")}`;
-
-      const { data: participants, error } = await supabase
-        .from("session_participants")
-        .select("session_id, sessions!inner(date, start_time, end_time, status, classes!inner(name))")
-        .eq("teaching_assistant_id", ta.id)
-        .eq("participant_type", "teaching_assistant")
-        .gte("sessions.date", startDate)
-        .lte("sessions.date", endDate);
-
+      const { data, error } = await supabase.functions.invoke("calculate-payroll", {
+        body: { month: selectedMonth, teacherId: ta.id },
+      });
       if (error) throw error;
-
-      const sessions = participants || [];
-      const held = sessions.filter((p: any) => p.sessions?.status === "Held");
-      // durationMinutes rather than a dayjs diff: the diff goes negative on
-      // a session that crosses midnight and silently subtracts it from the
-      // TA's earnings. PayrollTab had the same bug and was fixed the same
-      // way; this copy was missed.
-      const minutes = held.map(
-        (p: any) => durationMinutes(p.sessions?.start_time, p.sessions?.end_time) ?? 0,
-      );
-      const totalMinutes = minutes.reduce((n: number, m: number) => n + m, 0);
-
-      return {
-        totalSessions: sessions.length,
-        heldSessions: held.length,
-        totalHours: totalMinutes / 60,
-        totalEarnings: totalPayVnd(ta, minutes),
-      };
+      return teacherPayrollView(data, ta.id);
     },
   });
+  // A figure the function did not send is "figure unavailable", never 0.
+  // A TA the function answered for with no row had no paid lessons.
+  const taFigures = taView?.found
+    ? taView
+    : taView?.answered
+      ? { ...taView, heldSessions: 0, scheduledSessions: 0, totalHours: 0, earned: 0 }
+      : null;
+  const unavailable = <span title="Figure unavailable"><span aria-hidden="true">—</span><span className="sr-only">Figure unavailable</span></span>;
 
   const handleSave = async () => {
     if (!ta?.id) return;
@@ -201,6 +183,19 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
                 </Select>
               </div>
 
+              {taFigures?.closed && (
+                <p className="text-xs text-muted-foreground">
+                  This month is closed: the totals are what it was paid at.
+                </p>
+              )}
+              {taFigures?.monthLocked && !taFigures.closed && taFigures.found && (
+                <p className="text-xs text-muted-foreground">
+                  This month is closed, but nothing was recorded for this assistant when it closed: the figures are calculated now, not what was paid.
+                </p>
+              )}
+              {taStatsFailed && (
+                <p className="text-xs text-muted-foreground">Payroll figures could not be loaded for this month.</p>
+              )}
               <div className="grid gap-3 grid-cols-2">
                 <Card>
                   <CardHeader className="pb-2">
@@ -208,7 +203,10 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
                       <Calendar className="h-3.5 w-3.5" />
                       Total Sessions
                     </CardDescription>
-                    <CardTitle className="text-2xl">{taStats?.totalSessions || 0}</CardTitle>
+                    {/* The lessons the TA is paid for, held or still to come
+                        (calculate-payroll's projected set) - not every row
+                        they are rostered on, cancelled and absent included. */}
+                    <CardTitle className="text-2xl">{taFigures ? taFigures.heldSessions + taFigures.scheduledSessions : unavailable}</CardTitle>
                   </CardHeader>
                 </Card>
                 <Card>
@@ -217,7 +215,7 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       Held Sessions
                     </CardDescription>
-                    <CardTitle className="text-2xl">{taStats?.heldSessions || 0}</CardTitle>
+                    <CardTitle className="text-2xl">{taFigures ? taFigures.heldSessions : unavailable}</CardTitle>
                   </CardHeader>
                 </Card>
                 <Card>
@@ -226,14 +224,16 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
                       <Clock className="h-3.5 w-3.5" />
                       {/* Hours are what an hourly TA is paid on; for a
                           per-session TA they are a fact that does not drive
-                          the money, so the count of lessons leads instead. */}
-                      {payRateTypeOf(ta) === "per_session" ? "Lessons Paid" : "Hours Worked"}
+                          the money, so the count of lessons leads instead.
+                          The basis is the month's, as the function reports it. */}
+                      {taFigures?.payBasis === "per_session" ? "Lessons Paid" : "Hours Worked"}
                     </CardDescription>
                     <CardTitle className="text-2xl">
-                      {describeQuantity(ta, {
-                        sessions: taStats?.heldSessions ?? 0,
-                        minutes: (taStats?.totalHours ?? 0) * 60,
-                      })}
+                      {!taFigures
+                        ? unavailable
+                        : taFigures.payBasis === "per_session"
+                          ? `${taFigures.heldSessions} ${taFigures.heldSessions === 1 ? "session" : "sessions"}`
+                          : `${+taFigures.totalHours.toFixed(2)} h`}
                     </CardTitle>
                   </CardHeader>
                 </Card>
@@ -243,7 +243,7 @@ export function TAProfileDrawer({ ta, onClose }: TAProfileDrawerProps) {
                       <DollarSign className="h-3.5 w-3.5" />
                       Earnings (VND)
                     </CardDescription>
-                    <CardTitle className="text-2xl">{((taStats?.totalEarnings || 0) / 1000).toFixed(0)}K</CardTitle>
+                    <CardTitle className="text-2xl">{taFigures ? `${(taFigures.earned / 1000).toFixed(0)}K` : unavailable}</CardTitle>
                   </CardHeader>
                 </Card>
               </div>

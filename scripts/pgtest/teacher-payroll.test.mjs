@@ -8,8 +8,9 @@
 // a refused call can be shown to have read no lesson and written nothing.
 //
 //   1. WHO GETS WHAT. A teacher gets their own row only, derived from the
-//      JWT; a teacherId naming somebody else is ignored. A TA, a parent, a
-//      pupil and no sign-in get nothing. An admin may ask for anyone, and
+//      JWT; a teacherId naming somebody else is ignored. A parent, a pupil,
+//      a staff login with no staff row and no sign-in get nothing; a TA gets
+//      their own row only (TA-PAY; ta-payroll.test.mjs). An admin may ask for anyone, and
 //      asking for one person now returns that person only.
 //   2. NOTHING ELSE MOVED. Every figure the function returned at BASE is
 //      returned unchanged; the only differences are the new fields
@@ -293,13 +294,20 @@ await section("no sign-in, families, pupils, assistants: nothing", async () => {
     ok(`${who}: no lesson read, nothing written, no payrollData`, sessionReads(r).length === 0 && writes(r).length === 0 && !r.json?.payrollData);
     ok(`${who}: no teacher's id or name in the answer`, !r.text.includes(T_A) && !r.text.includes("An Nguyen"));
   }
-  for (const who of ["ta", "noRow"]) {
-    const r = await call(fn, tokenOf(U[who]), { month: "2026-10", teacherId: T_A });
-    ok(`${who} (holds 'teacher', no teachers row) asking for T_A -> 403`, r.status === 403, r.status);
-    ok(`${who}: no lesson read, nothing written`, sessionReads(r).length === 0 && writes(r).length === 0);
-    ok(`${who}: nothing of T_A in the answer`, !r.text.includes(T_A) && !r.text.includes("An Nguyen"));
-    const own = await call(fn, tokenOf(U[who]), { month: "2026-10", teacherId: TA_1 });
-    ok(`${who} naming the TA id -> 403 too (TAs read no pay through this function)`, own.status === 403);
+  {
+    const r = await call(fn, tokenOf(U.noRow), { month: "2026-10", teacherId: T_A });
+    ok("noRow (holds 'teacher', no staff row at all) asking for T_A -> 403", r.status === 403, r.status);
+    ok("noRow: no lesson read, nothing written", sessionReads(r).length === 0 && writes(r).length === 0);
+    ok("noRow: nothing of T_A in the answer", !r.text.includes(T_A) && !r.text.includes("An Nguyen"));
+    const own = await call(fn, tokenOf(U.noRow), { month: "2026-10", teacherId: TA_1 });
+    ok("noRow naming the TA id -> 403 too", own.status === 403);
+  }
+  // TA-PAY: a TA now reads their OWN row (ta-payroll.test.mjs has the rest).
+  {
+    const r = await call(fn, tokenOf(U.ta), { month: "2026-10", teacherId: T_A });
+    ok("ta asking for T_A -> 200 with the TA's own row only", r.status === 200 && JSON.stringify(ids(r)) === JSON.stringify([TA_1]), { status: r.status, ids: ids(r) });
+    ok("ta: nothing of T_A in the answer", !r.text.includes(T_A) && !r.text.includes("An Nguyen"));
+    ok("ta: nothing written", writes(r).length === 0);
   }
 });
 
@@ -354,7 +362,9 @@ await section(`nothing else moved since ${BASE}`, async () => {
     ["teacher A, September (closed)", tokenOf(U.teacherA), { month: "2026-09" }],
     ["teacher B naming A", tokenOf(U.teacherB), { month: "2026-10", teacherId: T_A }],
     ["service role", SERVICE_KEY, { month: "2026-10" }],
-    ["TA", tokenOf(U.ta), { month: "2026-10" }],
+    // The TA's own call is TA-PAY's intended difference (403 at BASE, their
+    // own row now) and is compared below and in ta-payroll.test.mjs.
+    ["staff login with no staff row", tokenOf(U.noRow), { month: "2026-10" }],
     ["parent", tokenOf(U.parent), { month: "2026-10" }],
   ];
   for (const [label, token, body] of cases) {
@@ -376,6 +386,11 @@ await section(`nothing else moved since ${BASE}`, async () => {
     JSON.stringify(stripNew(rowOf(now, T_A))) === JSON.stringify(rowOf(before, T_A)));
   const archBefore = await call(baseFn, tokenOf(U.admin), { month: "2026-10", teacherId: T_ARCH });
   eq(`admin naming the archived teacher: at ${BASE} payrollData[0] was the TA`, ids(archBefore), [TA_1]);
+  // TA-PAY: the TA's own call.
+  const taBefore = await call(baseFn, tokenOf(U.ta), { month: "2026-10" });
+  const taNow = await call(fn, tokenOf(U.ta), { month: "2026-10" });
+  ok(`TA: at ${BASE} 403`, taBefore.status === 403, taBefore.status);
+  eq("  now their own row only", ids(taNow), [TA_1]);
 });
 
 // ===================================================================== new fields

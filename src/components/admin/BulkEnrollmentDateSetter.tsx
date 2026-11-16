@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { Calendar, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useIvory } from "@/hooks/useIvory";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 export const BulkEnrollmentDateSetter = () => {
   const [targetDate, setTargetDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -58,41 +60,44 @@ export const BulkEnrollmentDateSetter = () => {
     enabled: showPreview,
   });
 
+  // D4 step 3B (G-13): every start date goes through the checked path as
+  // the signed-in admin, 50 a call. A date that only moves days of this
+  // month is tier 0 and is made at once; one whose moved days reach a billed
+  // month opens the reason dialog, one enrolment at a time. Each change
+  // leaves its own row (who, when, why, before and after).
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["class-enrollments"] });
+    queryClient.invalidateQueries({ queryKey: ["enrollments"] });
+    queryClient.invalidateQueries({ queryKey: ["enrollment-bulk-preview"] });
+  };
+  const money = useMoneyInput(refresh);
+
   const updateMutation = useMutation({
     mutationFn: async () => {
       const enrollmentIds = previewData?.map((e) => e.id) || [];
-      
+
       if (enrollmentIds.length === 0) {
         throw new Error("No enrollments to update");
       }
 
-      const { error } = await supabase
-        .from("enrollments")
-        .update({ start_date: targetDate })
-        .in("id", enrollmentIds);
-
-      if (error) throw error;
-
-      // Audit log
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from("audit_log").insert({
-          entity: "enrollments",
-          action: "bulk_update_start_date",
-          actor_user_id: user.id,
-          diff: {
-            count: enrollmentIds.length,
-            new_start_date: targetDate,
-            class_filter: filterClass,
-          },
-        });
-      }
+      const out = await money.runMany(enrollmentIds.map((id) => ({
+        entity: "enrollment",
+        op: "set_start_date",
+        args: { enrollment_id: id, start_date: targetDate },
+      })));
+      if (out.error) throw new Error(out.error);
+      return out;
     },
-    onSuccess: () => {
-      toast.success(`Updated ${previewData?.length || 0} enrollment dates`);
-      setShowPreview(false);
-      queryClient.invalidateQueries({ queryKey: ["class-enrollments"] });
-      queryClient.invalidateQueries({ queryKey: ["enrollments"] });
+    onSuccess: (out) => {
+      if (out.done > 0) toast.success(`Updated ${out.done} enrollment dates`);
+      if (out.unchanged > 0 && out.done === 0 && out.needReason.length === 0) toast.message("Those enrolments already start on that date");
+      if (out.refused.length > 0) toast.error(`${out.refused.length} could not be changed: ${out.refused[0].message}`);
+      if (out.needReason.length > 0) {
+        toast.message(`${out.needReason.length} of these reach months already billed: a reason is asked for each`);
+      } else {
+        setShowPreview(false);
+      }
+      refresh();
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update enrollment dates");
@@ -195,6 +200,14 @@ export const BulkEnrollmentDateSetter = () => {
           </>
         )}
       </CardContent>
+      <MoneyInputDialog
+        guard={money.guard}
+        subject={(() => {
+          const e = previewData?.find((x) => x.id === money.guard.request?.args?.enrollment_id);
+          return e ? `${e.students?.full_name ?? ""} - ${e.classes?.name ?? ""}` : undefined;
+        })()}
+        names={Object.fromEntries((previewData ?? []).map((e) => [e.student_id, e.students?.full_name ?? "A child"]))}
+      />
     </Card>
   );
 };

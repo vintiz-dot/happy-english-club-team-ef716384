@@ -53,35 +53,49 @@ export default function TeacherPayroll() {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (!teacher) throw new Error("Not a teacher");
+      // A teaching assistant has this page too (TA-PAY). Same rule: the
+      // function finds the TA from the sign-in and answers with their own
+      // row only; the id is used here to pick that row and for live updates.
+      const { data: assistant } = teacher
+        ? { data: null }
+        : await supabase
+            .from("teaching_assistants")
+            .select("id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+      const staffId = teacher?.id ?? assistant?.id;
+      if (!staffId) throw new Error("Not a teacher or teaching assistant");
 
       const { data: payrollResult, error: payrollError } = await supabase.functions.invoke("calculate-payroll", {
-        body: { month, teacherId: teacher.id },
+        body: { month, teacherId: staffId },
       });
 
       if (payrollError) throw payrollError;
 
       return {
-        view: teacherPayrollView(payrollResult, teacher.id) as TeacherPayrollView,
-        teacherId: teacher.id,
+        view: teacherPayrollView(payrollResult, staffId) as TeacherPayrollView,
+        // Banking details are keyed by teacher_id; a TA has none here.
+        teacherId: teacher?.id ?? null,
+        assistantId: assistant?.id ?? null,
       };
     },
   });
 
   // Real-time subscription for sessions changes
   useEffect(() => {
-    if (!payrollData?.teacherId) return;
+    const teacherId = payrollData?.teacherId;
+    const assistantId = payrollData?.assistantId;
+    if (!teacherId && !assistantId) return;
 
+    // A TA's lessons are the session_participants rows naming them.
     const channel = supabase
       .channel('teacher-sessions-changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'sessions',
-          filter: `teacher_id=eq.${payrollData.teacherId}`,
-        },
+        teacherId
+          ? { event: '*', schema: 'public', table: 'sessions', filter: `teacher_id=eq.${teacherId}` }
+          : { event: '*', schema: 'public', table: 'session_participants', filter: `teaching_assistant_id=eq.${assistantId}` },
         () => {
           // Invalidate query when sessions change
           queryClient.invalidateQueries({ queryKey: ["teacher-payroll", month] });
@@ -92,7 +106,7 @@ export default function TeacherPayroll() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [payrollData?.teacherId, month]);
+  }, [payrollData?.teacherId, payrollData?.assistantId, month]);
 
   const prevMonth = () => {
     const newMonth = dayjs(month).subtract(1, "month").format("YYYY-MM");
@@ -227,7 +241,9 @@ export default function TeacherPayroll() {
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-hec-ink-soft">
-                Unable to load payroll data for {dayjs(month).format("MMMM YYYY")}
+                {view?.answered
+                  ? `No paid lessons for you in ${dayjs(month).format("MMMM YYYY")}`
+                  : `Unable to load payroll data for ${dayjs(month).format("MMMM YYYY")}`}
               </p>
             </CardContent>
           </Card>

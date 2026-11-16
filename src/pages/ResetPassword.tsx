@@ -80,18 +80,18 @@ const ResetPassword = () => {
   // ---- Loading state while Supabase processes the recovery token ----
   if (!ready) {
     return (
-      <div className="min-h-screen bg-night flex items-center justify-center p-5">
+      <div className="min-h-screen bg-hec-paper text-hec-ink flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-sm">
-          <div className="rounded-2xl bg-white/10 backdrop-blur-md p-8 ring-1 ring-white/20 text-center">
-            <div className="flex items-center justify-center gap-3 text-white mb-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-white/30 border-t-white" />
-              <span className="font-medium">Verifying reset link…</span>
+          <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-8 shadow-hec-1 text-center">
+            <div className="flex items-center justify-center gap-3 text-hec-ink mb-4">
+              <div className="animate-spin rounded-full h-6 w-6 shrink-0 border-2 border-hec-line border-t-hec-ink" />
+              <span className="text-hec-body font-medium">Verifying reset link…</span>
             </div>
-            <p className="text-sm text-white/50">
+            <p className="text-hec-small text-hec-ink-soft">
               If this takes too long, your reset link may have expired.{" "}
               <button
                 onClick={() => navigate("/auth")}
-                className="text-blue-300 hover:underline font-semibold"
+                className="inline-flex min-h-hec-target items-center rounded-hec-sm px-1 font-semibold text-hec-brass underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
               >
                 Request a new one
               </button>
@@ -105,17 +105,17 @@ const ResetPassword = () => {
   // ---- Success state ----
   if (success) {
     return (
-      <div className="min-h-screen bg-night flex items-center justify-center p-5">
+      <div className="min-h-screen bg-hec-paper text-hec-ink flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-sm text-center">
-          <div className="rounded-2xl bg-white/10 backdrop-blur-md p-8 ring-1 ring-white/20">
-            <div className="mx-auto h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4">
-              <CheckCircle className="h-8 w-8 text-emerald-400" />
+          <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-8 shadow-hec-1">
+            <div className="mx-auto h-16 w-16 rounded-full border border-hec-leaf/30 bg-hec-leaf-tint flex items-center justify-center mb-4">
+              <CheckCircle className="h-8 w-8 text-hec-leaf" />
             </div>
-            <h1 className="text-2xl font-extrabold text-white mb-2">Password Updated!</h1>
-            <p className="text-white/60 text-sm mb-4">
+            <h1 className="font-display text-hec-h1 font-medium text-hec-ink mb-2">Password Updated!</h1>
+            <p className="text-hec-small text-hec-ink-soft mb-4">
               Your password has been changed successfully. Redirecting you to the dashboard…
             </p>
-            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white mx-auto" />
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-hec-line border-t-hec-ink mx-auto" />
           </div>
         </div>
       </div>
@@ -124,45 +124,41 @@ const ResetPassword = () => {
 
   // ---- Main form ----
   return (
-    <div className="min-h-screen bg-night text-white flex items-center justify-center p-5">
-      {/* Aurora accents */}
-      <div className="fixed -top-32 -left-32 h-96 w-96 rounded-full bg-blue-500/30 blur-3xl pointer-events-none" />
-      <div className="fixed bottom-0 right-0 h-[28rem] w-[28rem] rounded-full bg-sky-500/20 blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen bg-hec-paper text-hec-ink flex items-center justify-center px-4 py-8">
       <div className="relative w-full max-w-sm">
         {/* Brand */}
         <div className="mb-8 flex items-center gap-3">
-          <div className="h-11 w-11 rounded-2xl bg-aurora flex items-center justify-center shadow-q3">
-            <GraduationCap className="h-5 w-5 text-white" />
+          <div className="h-11 w-11 shrink-0 rounded-hec-lg border border-hec-line bg-hec-raised flex items-center justify-center">
+            <GraduationCap className="h-5 w-5 text-hec-brass" />
           </div>
-          <div>
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/60">
+          <div className="min-w-0">
+            <p className="text-hec-caption font-medium tracking-wider uppercase text-hec-ink-soft">
               Happy English Club
             </p>
-            <p className="text-base font-extrabold">Set new password</p>
+            <p className="font-display text-hec-h3 font-medium text-hec-ink">Set new password</p>
           </div>
         </div>
 
         {/* Headline */}
-        <div className="mb-7">
-          <h1 className="text-3xl font-extrabold tracking-tight">Choose a new password</h1>
-          <p className="text-white/60 mt-1.5 text-sm">
+        <div className="mb-8">
+          <h1 className="font-display text-hec-display font-medium text-hec-ink">Choose a new password</h1>
+          <p className="mt-2 text-hec-body text-hec-ink-soft">
             Enter a strong password to secure your account.
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* New password */}
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label
               htmlFor="new-password"
-              className="text-xs font-semibold tracking-wide uppercase text-white/50"
+              className="text-hec-small font-medium text-hec-ink"
             >
               New Password
             </Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+              <Lock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-hec-ink-faint" />
               <Input
                 id="new-password"
                 type={showPassword ? "text" : "password"}
@@ -171,12 +167,13 @@ const ResetPassword = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="h-12 pl-10 pr-10 rounded-xl text-[15px] bg-white/10 border-white/20 text-white placeholder:text-white/30"
+                className="pl-10 pr-12"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-0 top-1/2 -translate-y-1/2 inline-flex min-h-hec-target min-w-hec-target items-center justify-center rounded-hec-md text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -188,19 +185,19 @@ const ResetPassword = () => {
                   {[1, 2, 3, 4].map((i) => (
                     <div
                       key={i}
-                      className={`h-1 flex-1 rounded-full transition-colors ${
+                      className={`h-1 flex-1 rounded-full transition-colors duration-hec-1 ease-hec ${
                         password.length >= i * 3
                           ? password.length >= 10
-                            ? "bg-emerald-400"
+                            ? "bg-hec-leaf"
                             : password.length >= 8
-                              ? "bg-amber-400"
-                              : "bg-rose-400"
-                          : "bg-white/10"
+                              ? "bg-hec-warn"
+                              : "bg-hec-danger-fill"
+                          : "bg-hec-sunken"
                       }`}
                     />
                   ))}
                 </div>
-                <span className="text-[10px] text-white/40">
+                <span className="shrink-0 text-hec-caption text-hec-ink-soft">
                   {password.length < 6
                     ? "Too short"
                     : password.length < 8
@@ -214,15 +211,15 @@ const ResetPassword = () => {
           </div>
 
           {/* Confirm password */}
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label
               htmlFor="confirm-password"
-              className="text-xs font-semibold tracking-wide uppercase text-white/50"
+              className="text-hec-small font-medium text-hec-ink"
             >
               Confirm Password
             </Label>
             <div className="relative">
-              <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+              <ShieldCheck className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-hec-ink-faint" />
               <Input
                 id="confirm-password"
                 type={showConfirm ? "text" : "password"}
@@ -231,28 +228,29 @@ const ResetPassword = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 minLength={6}
-                className={`h-12 pl-10 pr-10 rounded-xl text-[15px] bg-white/10 border-white/20 text-white placeholder:text-white/30 ${
+                className={`pl-10 pr-12 ${
                   confirmPassword.length > 0 && !passwordsMatch
-                    ? "border-rose-500 ring-1 ring-rose-500/50"
+                    ? "border-hec-danger"
                     : confirmPassword.length > 0 && passwordsMatch
-                      ? "border-emerald-500 ring-1 ring-emerald-500/50"
+                      ? "border-hec-leaf"
                       : ""
                 }`}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+                aria-label={showConfirm ? "Hide password" : "Show password"}
+                className="absolute right-0 top-1/2 -translate-y-1/2 inline-flex min-h-hec-target min-w-hec-target items-center justify-center rounded-hec-md text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
               >
                 {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
             {confirmPassword.length > 0 && !passwordsMatch && (
-              <p className="text-xs text-rose-400 mt-1">Passwords don't match</p>
+              <p className="text-hec-caption text-hec-danger mt-1">Passwords don't match</p>
             )}
             {confirmPassword.length > 0 && passwordsMatch && passwordValid && (
-              <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
-                <CheckCircle className="h-3 w-3" /> Passwords match
+              <p className="text-hec-caption text-hec-leaf mt-1 flex items-center gap-1">
+                <CheckCircle className="h-4 w-4 shrink-0" /> Passwords match
               </p>
             )}
           </div>
@@ -261,11 +259,11 @@ const ResetPassword = () => {
           <Button
             type="submit"
             disabled={!canSubmit}
-            className="w-full h-12 rounded-xl bg-aurora text-white font-bold shadow-q3 hover:opacity-95 active:scale-[0.99] transition-all disabled:opacity-50"
+            className="w-full"
           >
             {loading ? (
               <span className="flex items-center gap-2">
-                <div className="animate-spin h-4 w-4 rounded-full border-2 border-white/40 border-t-white" />
+                <div className="animate-spin h-4 w-4 rounded-full border-2 border-hec-on-action/40 border-t-hec-on-action" />
                 Updating…
               </span>
             ) : (
@@ -282,7 +280,7 @@ const ResetPassword = () => {
           <button
             type="button"
             onClick={() => navigate("/auth")}
-            className="text-sm text-white/50 hover:text-white/80 transition-colors"
+            className="inline-flex min-h-hec-target items-center rounded-hec-sm px-3 text-hec-small text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
           >
             ← Back to sign in
           </button>

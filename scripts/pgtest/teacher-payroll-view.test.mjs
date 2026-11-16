@@ -204,6 +204,54 @@ console.log("=== nothing on these screens can price a lesson ===");
   ok("TeacherProfilePayroll no longer queries sessions itself", !/\.from\("sessions"\)/.test(profile));
 }
 
+// ------------------------------------------------------------- TA-PAY
+console.log("=== TA-PAY: a TA's row, basis and rate ===");
+{
+  const TA = "ta-0001";
+  const taRow = (over = {}) => row({ teacherId: TA, staffType: "teaching_assistant", payRateType: "hourly", hourlyRate: 150000, ...over });
+  const v = view({ locked: false, payrollData: [taRow()] }, TA);
+  eq("a TA's own row is found by id", v.found, true);
+  eq("answered", v.answered, true);
+  eq("basis is the function's", v.payBasis, "hourly");
+  eq("rate is the function's headline rate", v.rateVnd, 150000);
+  eq("earned is the function's", v.earned, 1050000);
+  const ps = view({ locked: false, payrollData: [taRow({ payRateType: "per_session", hourlyRate: 80000 })] }, TA);
+  eq("per-session basis and rate", [ps.payBasis, ps.rateVnd], ["per_session", 80000]);
+  const noRate = view({ locked: false, payrollData: [taRow({ hourlyRate: undefined })] }, TA);
+  eq("no hourlyRate sent: rate 'figure unavailable'", noRate.rateVnd, null);
+  const noBasis = view({ locked: false, payrollData: [taRow({ payRateType: undefined })] }, TA);
+  eq("no basis sent: basis and rate unavailable (a number without its unit is not shown)", [noBasis.payBasis, noBasis.rateVnd], [null, null]);
+  const empty = view({ locked: false, payrollData: [] }, TA);
+  eq("the function answered with no row (no lessons): answered, not found", [empty.answered, empty.found], [true, false]);
+  eq("no answer at all: neither", [view(null, TA).answered, view(null, TA).found], [false, false]);
+  eq("a 403 body ({ error }) is not an answer", view({ error: "Teacher profile not found" }, TA).answered, false);
+  const other = view({ locked: false, payrollData: [taRow({ teacherId: "ta-0002", totalAmountActual: 99 })] }, TA);
+  eq("another TA's row is never shown as this TA's", [other.found, other.earned], [false, 0]);
+  const old = view({ locked: false, payrollData: [taRow({ lostIncome: undefined })] }, TA);
+  eq("lost income missing: 'figure unavailable'", old.lostIncome, null);
+}
+
+console.log("=== TA-PAY: nothing on the TA screens can price a lesson ===");
+{
+  const strip = (f) => readFileSync(resolve(repo, f), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\/.*$/gm, "");
+  for (const f of ["src/components/admin/ta/TAProfileDrawer.tsx", "src/pages/TeacherDashboard.tsx"]) {
+    const code = strip(f);
+    ok(`${f}: no sessionPayVnd / totalPayVnd / effectiveRateVnd / rateUnit / durationMinutes`, !/sessionPayVnd|totalPayVnd|effectiveRateVnd|rateUnit|durationMinutes|describeQuantity/.test(code));
+    ok(`${f}: imports no sessionDuration`, !/sessionDuration/.test(code));
+    ok(`${f}: reads pay through teacherPayrollView`, /teacherPayrollView\(/.test(code));
+    ok(`${f}: never takes payrollData[0]`, !/payrollData\?*\.?\[0\]/.test(code));
+  }
+  const drawer = strip("src/components/admin/ta/TAProfileDrawer.tsx");
+  ok("TAProfileDrawer: no lesson query of its own (session_participants / sessions)", !/from\("session_participants"\)|from\("sessions"\)/.test(drawer));
+  ok("TAProfileDrawer: the only payRate import is describeRate (the rate on record, in the header)", /import \{ describeRate \} from "@\/lib\/payRate"/.test(drawer));
+  ok("TAProfileDrawer: a missing figure is 'Figure unavailable', not 0", /Figure unavailable/.test(drawer) && !/totalEarnings \|\| 0/.test(drawer));
+  const dash = strip("src/pages/TeacherDashboard.tsx");
+  ok("TeacherDashboard: imports nothing from payRate", !/@\/lib\/payRate/.test(dash));
+  ok("TeacherDashboard: Earned / Projected are 'Figure unavailable' when the function did not answer", /Figure unavailable/.test(dash) && !/totalAmountActual \|\| 0|totalAmountProjected \|\| 0/.test(dash));
+  const page = strip("src/pages/TeacherPayroll.tsx");
+  ok("TeacherPayroll: a TA is looked up by their own sign-in", /from\("teaching_assistants"\)[\s\S]{0,80}\.eq\("user_id", user\.id\)/.test(page));
+}
+
 try { unlinkSync(sessionsTmp); } catch { /* ignore */ }
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

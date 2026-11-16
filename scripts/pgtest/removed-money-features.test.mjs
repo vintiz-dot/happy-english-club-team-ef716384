@@ -137,19 +137,26 @@ console.log('\nNothing in the app or the functions can create a voluntary contri
      /Voluntary contributions \(no longer offered\)/.test(read('src/components/admin/LedgerBalanceInspector.tsx'))
        && !/handleReverseContribution|reversingContribution/.test(read('src/components/admin/LedgerBalanceInspector.tsx')));
   ok('  the Automation tab offers no repair card for them', !/Voluntary/i.test(read('src/components/admin/tabs/AutomationTab.tsx')));
-  ok('the two payment screens that offered a choice now say what happens to a leftover',
-     ['FamilyPaymentModal.tsx', 'SmartFamilyPaymentModal.tsx'].every((f) => {
+  // OVERPAYMENT (owner's decision, after D-23): a leftover now goes on a
+  // bill as credit instead of unapplied cash; the screens say so.
+  ok('the three family payment screens say what happens to a leftover: credit on the child\'s next bill, no choice offered',
+     ['FamilyPaymentModal.tsx', 'SmartFamilyPaymentModal.tsx', 'BatchFamilyPaymentModal.tsx'].every((f) => {
        const t = read(`src/components/admin/${f}`);
-       return /It will be kept as unapplied cash/.test(t) && /It is not put on\s+any bill/.test(t) && !/RadioGroupItem value="unapplied_cash"/.test(t);
+       return /The extra \{[^}]+\} (₫ )?will show as credit on/.test(t) && /next bill\./.test(t)
+         && /"credit_next_bill"/.test(t) && !/unapplied_cash/.test(t) && !/RadioGroupItem value="(unapplied_cash|credit_next_bill)"/.test(t);
      }));
 
   for (const f of ['family-payment', 'smart-family-payment']) {
     const t = read(`supabase/functions/${f}/index.ts`);
     const refuse = t.indexOf("body?.leftoverHandling === 'voluntary_contribution'");
     const firstWrite = Math.min(...['.insert(', '.upsert(', '.update(', 'addToRecordedPayment('].map((w) => t.indexOf(w)).filter((i) => i >= 0));
-    ok(`${f}: the only leftover option is 'unapplied_cash', and the old one is refused (400) before the first write`,
-       /leftoverHandling: z\.enum\(\['unapplied_cash'\]\)\.optional\(\)/.test(t) && refuse > 0 && refuse < firstWrite
+    ok(`${f}: the leftover options are 'credit_next_bill' (and 'unapplied_cash', refused when there is a leftover); voluntary is refused (400) before the first write`,
+       /leftoverHandling: z\.enum\(\['credit_next_bill', 'unapplied_cash'\]\)\.optional\(\)/.test(t) && refuse > 0 && refuse < firstWrite
          && /status: 400/.test(t.slice(refuse, refuse + 400)) && !/consentGiven/.test(t));
+    const stale = t.indexOf("leftoverHandling === 'unapplied_cash'");
+    ok(`  ${f}: a leftover sent as 'unapplied_cash' (a screen from before) is refused (400) before the first write, and no unapplied-cash pair is posted any more`,
+       stale > 0 && stale < firstWrite && /UNAPPLIED_REPLACED/.test(t.slice(stale, stale + 200))
+         && !/family-credit-/.test(t) && !/accountMap\.get\(\s*['"]CREDIT['"]\s*\)/.test(t));
   }
   ok('delete-payment still recognises the contribution keys, so a payment made before the removal is deleted whole',
      /own\('family-contribution'\)/.test(read('supabase/functions/delete-payment/index.ts'))

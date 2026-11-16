@@ -1581,17 +1581,21 @@ console.log('\nT4 r2 - two payments on one bill at the same moment: neither is l
 
 console.log('\nT4 r2 - the mutations the review left alive');
 {
-  // d2: a payment with a leftover (unapplied cash) deleted - only the allocation comes off the bill.
+  // d2: a payment with a leftover deleted. OVERPAYMENT: the leftover now goes
+  // on the bill with the allocation (one smart-family- transaction), so the
+  // whole payment comes off the bill and its credit with it.
   await withHistory();
-  await smartPay(500000);                              // 400,000 on October, 100,000 left over as unapplied cash
+  await call('smart-family-payment', { familyId: FAMILY, amount: 500000, method: 'Cash', occurredAt: '2026-10-20T10:00:00.000Z',
+    month: MONTH, leftoverHandling: 'credit_next_bill' });   // 400,000 owed on October, 100,000 beyond it
   const [p] = familyPayments();
   const legs = (fixture.ledger_entries || []).filter((e) => String(e.tx_key || '').includes(p?.id));
-  ok('(setup: a 500,000 Smart Family Payment - 400,000 on the bill, a smart-family-credit leftover of 100,000)',
-     (await bill())?.recorded_payment === 400000 && legs.some((e) => e.tx_key.startsWith(`smart-family-credit-${p?.id}`)), legs.map((e) => e.tx_key));
+  ok('(setup: a 500,000 Smart Family Payment - all 500,000 on the bill, 100,000 of it carry credit, one smart-family- transaction, no smart-family-credit-)',
+     (await bill())?.recorded_payment === 500000 && (await bill())?.carry_out_credit === 100000
+       && legs.length === 1 && legs[0].tx_key.startsWith(`smart-family-${p?.id}-`), legs.map((e) => e.tx_key));
   let r = await delPay(p?.id); let b = await bill();
   const rev = reversalOf(p?.id);
-  ok('deleting a payment WITH a leftover: 400,000 off the bill (the leftover was never on it), all four legs reversed, balanced',
-     r.status === 200 && b?.recorded_payment === 0 && rev.length === 4 && balances(rev), { r: r.body, b: money(b), rev: rev.length });
+  ok('deleting a payment WITH a leftover: all 500,000 off the bill, the credit gone, both legs reversed, balanced',
+     r.status === 200 && b?.recorded_payment === 0 && b?.carry_out_credit === 0 && rev.length === 2 && balances(rev), { r: r.body, b: money(b), rev: rev.length });
 
   // d4: a retry when the bill still holds enough - only "already reversed" can stop it.
   await withHistory();
@@ -1627,7 +1631,7 @@ console.log('\nT4 r2 - the mutations the review left alive');
      }));
 }
 
-console.log('\nD-23 - voluntary contributions are removed; money beyond what is owed is unapplied cash');
+console.log('\nD-23 - voluntary contributions are removed (what happens to money beyond what is owed: OVERPAYMENT, below)');
 {
   const noWrites = () => memoryWrites.length === 0 && invoiceWrites.length === 0;
   const legsOf = (prefix) => {
@@ -1656,33 +1660,304 @@ console.log('\nD-23 - voluntary contributions are removed; money beyond what is 
   r = await smart(400000, { leftoverHandling: 'something_else' });
   ok('  an option that never existed: refused, nothing written', r.status === 400 && noWrites(), r);
 
+}
+
+// =====================================================================
+// OVERPAYMENT (owner's decision, docs/evidence/OVERPAYMENT-credit.md):
+// money a family pays beyond what the bills owe goes on a bill of the
+// payment month as recorded payment, on the child unapplied cash used to go
+// to, so the carry shows it as credit on that child's next bill. It is
+// folded into that child's allocation exactly as a Manual split amount
+// above what is owed is.
+// =====================================================================
+console.log('\nOVERPAYMENT - the extra goes on the bill and shows as credit on the next bill');
+{
+  const PAY = { method: 'Cash', occurredAt: '2026-10-20T10:00:00.000Z' };
+  const smart = (amount, extra = {}) => call('smart-family-payment', { familyId: FAMILY, amount, month: MONTH, ...PAY, ...extra });
+  const family = (amount, extra = {}) => call('family-payment',
+    { month: MONTH, familyId: FAMILY, selectedStudentIds: [S1], amount, allocationMode: 'oldest-first', ...PAY, ...extra });
+  const CREDIT = { leftoverHandling: 'credit_next_bill' };
+  const MONEY_TABLES = ['payments', 'ledger_entries', 'payment_allocations', 'audit_log'];
+  const moneyWrites = () => memoryWrites.filter((w) => MONEY_TABLES.includes(w.table));
+  const txOf = (prefix) => {
+    const ids = new Set((fixture.ledger_entries || []).filter((e) => String(e.tx_key || '').startsWith(prefix)).map((e) => e.tx_id));
+    return [...ids].map((id) => (fixture.ledger_entries || []).filter((e) => e.tx_id === id));
+  };
+  const shape = (legs) => legs.map((e) => ({ account: e.account_id, debit: e.debit, credit: e.credit, month: e.month }))
+    .sort((a, b) => (a.account < b.account ? -1 : 1));
+  const allocationsOf = (paymentId) => (fixture.payment_allocations || []).filter((a) => a.parent_payment_id === paymentId)
+    .map((a) => ({ student: a.student_id, amount: a.allocated_amount }));
+  const noCreditLegs = () => !(fixture.ledger_entries || []).some((e) => e.account_id === 'acc-CREDIT' || e.account_id === 'acc-REVENUE'
+    || /^(smart-)?family-credit-/.test(String(e.tx_key || '')));
+  const nextMonth = async () => {               // November opens with October's carry
+    await seedBill(NOV, 400000, 0);
+    return bill(S1, NOV);
+  };
+
+  // ---- Family Payment, 500,000 against 400,000 owed
   await withHistory();
-  r = await family(500000, { leftoverHandling: 'unapplied_cash' }); await calc();
+  let r = await family(500000, CREDIT); await calc();
   let b = await bill();
-  const fl = legsOf('family-credit-');
+  const [fp] = familyPayments();
+  const ftx = txOf(`family-payment-${fp?.id}-`);
   console.log(`    family-payment, 500,000 against 400,000 owed => ${r.status} ${JSON.stringify(r.body)} ; bill ${JSON.stringify(money(b))}`);
-  ok('Family Payment of 500,000 against 400,000 owed: 400,000 on the bill, paid, 100,000 reported left over as unapplied cash',
-     r.status === 200 && b?.recorded_payment === 400000 && b?.status === 'paid' && r.body.leftoverAmount === 100000 && r.body.leftoverHandling === 'unapplied_cash',
-     { r: r.body, b: money(b) });
-  ok('  the 100,000 is DR AR / CR CREDIT on the child\'s accounts; nothing goes to REVENUE and it is not on the bill (no carry credit)',
-     fl.length === 2 && fl.some((e) => e.account_id === 'acc-AR' && e.debit === 100000) && fl.some((e) => e.account_id === 'acc-CREDIT' && e.credit === 100000)
-       && !toRevenue() && b?.carry_out_credit === 0, { fl, b: money(b) });
+  ok('Family Payment of 500,000 against 400,000 owed: all 500,000 recorded on the October bill (was: 400,000, the rest ledger-only)',
+     r.status === 200 && b?.recorded_payment === 500000, { r: r.body, b: money(b) });
+  ok('  carry-out credit equals the extra, 100,000; nothing owed',
+     b?.carry_out_credit === 100000 && b?.carry_out_debt === 0, money(b));
+  ok('  the label is the one rule\'s (paidLabel): paid',
+     b?.status === 'paid' && T4.invoicePaidLabel(b) === b?.status, money(b));
+  ok('  the response says where the extra went: 100,000 on Child One\'s 2026-10 bill',
+     r.body.leftoverAmount === 100000 && r.body.leftoverHandling === 'credit_next_bill'
+       && same(r.body.creditOnBill, { studentId: S1, month: MONTH, amount: 100000 }), r.body);
+  ok('  ledger: ONE family-payment- transaction, DR cash/bank 500,000 / CR AR 500,000; no unapplied-cash pair, nothing to CREDIT or REVENUE',
+     ftx.length === 1 && ftx[0].length === 2 && ftx[0].some((e) => e.account_id === 'acc-AR' && e.credit === 500000 && e.debit === 0)
+       && ftx[0].some((e) => ['acc-CASH', 'acc-BANK'].includes(e.account_id) && e.debit === 500000 && e.credit === 0) && noCreditLegs(),
+     fixture.ledger_entries);
+  ok('  one allocation row of 500,000 for Child One', same(allocationsOf(fp?.id), [{ student: S1, amount: 500000 }]), allocationsOf(fp?.id));
+  let nov = await nextMonth();
+  ok('  November opens with 100,000 carry-in credit: its payable is 300,000 on a 400,000 charge (reduced by the extra)',
+     nov?.carry_in_credit === 100000 && T4.monthPayable(nov) === 300000 && nov?.carry_out_debt === 300000, money(nov));
+  const viaLeftover = { bill: money(b), legs: shape(ftx[0] || []), allocations: allocationsOf(fp?.id).map((a) => a.amount) };
 
+  // ---- the same money as a Manual split: the leftover path writes exactly what it writes
   await withHistory();
-  r = await smart(500000, { leftoverHandling: 'unapplied_cash' }); await calc();
+  r = await family(500000, { allocationMode: 'manual', manualAllocations: [{ studentId: S1, amount: 500000 }] }); await calc();
+  const [mp] = familyPayments();
+  const viaManual = { bill: money(await bill()), legs: shape(txOf(`family-payment-${mp?.id}-`)[0] || []), allocations: allocationsOf(mp?.id).map((a) => a.amount) };
+  ok('  the bill, the ledger pair and the allocation are exactly what a Manual split of 500,000 writes',
+     r.status === 200 && same(viaLeftover, viaManual), { viaLeftover, viaManual });
+
+  // ---- Smart Family Payment, 500,000 against 400,000 owed
+  await withHistory();
+  r = await smart(500000, CREDIT); await calc();
   b = await bill();
-  const sl = legsOf('smart-family-credit-');
-  ok('Smart Family Payment of 500,000 against 400,000 owed: 400,000 on the bill, 100,000 unapplied cash (DR AR / CR CREDIT), nothing to REVENUE, no carry credit',
-     r.status === 200 && r.body.leftover?.type === 'unapplied_cash' && r.body.leftover?.amount === 100000 && b?.recorded_payment === 400000
-       && sl.length === 2 && sl.some((e) => e.account_id === 'acc-AR' && e.debit === 100000) && sl.some((e) => e.account_id === 'acc-CREDIT' && e.credit === 100000)
-       && !toRevenue() && b?.carry_out_credit === 0, { r: r.body, sl, b: money(b) });
+  const [sp] = familyPayments();
+  const stx = txOf(`smart-family-${sp?.id}-`);
+  console.log(`    smart-family-payment, 500,000 against 400,000 owed => ${r.status} ; bill ${JSON.stringify(money(b))}`);
+  ok('Smart Family Payment of 500,000 against 400,000 owed: 500,000 recorded, carry-out credit 100,000, label paid by the rule',
+     r.status === 200 && b?.recorded_payment === 500000 && b?.carry_out_credit === 100000 && b?.status === 'paid' && T4.invoicePaidLabel(b) === 'paid',
+     { r: r.body, b: money(b) });
+  ok('  the response: leftover credit_next_bill, 100,000, on Child One',
+     r.body.leftover?.type === 'credit_next_bill' && r.body.leftover?.amount === 100000 && r.body.leftover?.studentId === S1
+       && r.body.allocations?.[0]?.creditOnBill === 100000, r.body);
+  ok('  ledger: ONE smart-family- transaction of 500,000 (DR cash / CR AR), one allocation of 500,000, no unapplied-cash pair',
+     stx.length === 1 && stx[0].length === 2 && stx[0].some((e) => e.account_id === 'acc-AR' && e.credit === 500000)
+       && stx[0].some((e) => e.account_id === 'acc-CASH' && e.debit === 500000) && noCreditLegs()
+       && same(allocationsOf(sp?.id), [{ student: S1, amount: 500000 }]), { legs: fixture.ledger_entries, alloc: allocationsOf(sp?.id) });
+  nov = await nextMonth();
+  ok('  November\'s payable is reduced by the extra: 300,000', nov?.carry_in_credit === 100000 && T4.monthPayable(nov) === 300000, money(nov));
 
+  // ---- nothing owed at all: the whole payment is credit
   await withHistory();
-  await editRecorded(MONTH, 400000); await calc();           // nothing owed
-  fixture.ledger_accounts = [];                              // and no ledger accounts to post a leftover to
-  r = await smart(100000, { leftoverHandling: 'unapplied_cash' });
-  ok('a leftover with no ledger account to go to fails loudly (it used to be dropped without a word)',
-     r.status === 400 && /could not be recorded as unapplied cash/.test(r.body.error), r.body);
+  await editRecorded(MONTH, 400000); await calc();
+  r = await family(150000, CREDIT);
+  b = await bill();
+  ok('nothing owed, 150,000 paid: all of it on the bill, 150,000 carry-out credit, still paid',
+     r.status === 200 && b?.recorded_payment === 550000 && b?.carry_out_credit === 150000 && b?.status === 'paid', { r: r.body, b: money(b) });
+
+  // ---- a concurrent payment on the same bill (compare-and-set) loses nothing
+  await withHistory();
+  beforeNextInvoiceWrite = { mode: 'update', fn: async () => {
+    await family(100000, { allocationMode: 'manual', manualAllocations: [{ studentId: S1, amount: 100000 }] }); } };
+  r = await family(500000, CREDIT);
+  b = await bill();
+  ok('Family Payment with an extra while a 100,000 payment lands on the same bill: 600,000 recorded, 200,000 credit - neither lost',
+     r.status === 200 && b?.recorded_payment === 600000 && b?.carry_out_credit === 200000 && b?.status === 'paid', { r: r.body, b: money(b) });
+  await withHistory();
+  beforeNextInvoiceWrite = { mode: 'update', fn: async () => { await smartPay(100000); } };
+  r = await smart(500000, CREDIT);
+  b = await bill();
+  ok('Smart Family Payment with an extra while another lands: 600,000 recorded, 200,000 credit - neither lost',
+     r.status === 200 && b?.recorded_payment === 600000 && b?.carry_out_credit === 200000, { r: r.body, b: money(b) });
+
+  // ---- refusals: before anything is written
+  await withHistory();
+  memoryWrites = []; invoiceWrites = [];
+  let held = await bill();
+  r = await family(500000, { leftoverHandling: 'unapplied_cash' });
+  ok('a screen opened before this change (sends unapplied_cash) with an extra: Family Payment 400, says it is credit now, nothing written',
+     r.status === 400 && /no longer kept as unapplied cash/.test(r.body.error) && memoryWrites.length === 0 && invoiceWrites.length === 0 && same(await bill(), held), r);
+  r = await smart(500000, { leftoverHandling: 'unapplied_cash' });
+  ok('  Smart Family Payment the same: 400, no payment, ledger, allocation or audit row, the bill\'s money unchanged',
+     r.status === 400 && /no longer kept as unapplied cash/.test(r.body.error) && moneyWrites().length === 0
+       && (await bill())?.recorded_payment === held.recorded_payment, { r, w: moneyWrites() });
+  r = await smart(500000);
+  ok('  an extra the screen did not show (no leftoverHandling): Smart Family Payment 400, nothing written (was: unapplied cash without a word)',
+     r.status === 400 && /did not say where it goes/.test(r.body.error) && moneyWrites().length === 0, { r, w: moneyWrites() });
+  r = await family(500000);
+  ok('  and Family Payment: 400, nothing written', r.status === 400 && /Nothing was recorded/.test(r.body.error) && moneyWrites().length === 0, r);
+  r = await family(400000, { leftoverHandling: 'unapplied_cash' });
+  ok('  the old value with NO extra (an old Batch tab paying the debt exactly) still pays: 400,000, paid',
+     r.status === 200 && (await bill())?.recorded_payment === 400000 && (await bill())?.status === 'paid', r.body);
+
+  // No bill for the child the extra goes to (Family Payment's first selected student).
+  await withHistory();
+  memoryWrites = []; invoiceWrites = [];
+  r = await call('family-payment', { month: MONTH, familyId: FAMILY, selectedStudentIds: [S2, S1], amount: 500000,
+    allocationMode: 'oldest-first', ...PAY, ...CREDIT });
+  ok('the first selected student has no 2026-10 bill: refused, says so, nothing written - no bill is made up to hold the money',
+     r.status === 400 && /no bill for 2026-10/.test(r.body.error) && memoryWrites.length === 0 && invoiceWrites.length === 0
+       && !(await bill(S2)), r.body);
+
+  // A sibling whose balance cannot be worked out may owe part of the extra.
+  await withHistory();
+  fixture.students.push({ id: S2, family_id: FAMILY, families: { id: FAMILY, sibling_percent_override: null }, full_name: 'Child Two', is_active: true });
+  const realCalc = handlers['calculate-tuition'];
+  handlers['calculate-tuition'] = async (req) => {
+    const body = await req.clone().json();
+    return body.studentId === S2 ? new Response(JSON.stringify({ error: 'synthetic failure' }), { status: 400 }) : realCalc(req);
+  };
+  memoryWrites = [];
+  try { r = await smart(500000, CREDIT); } finally { handlers['calculate-tuition'] = realCalc; }
+  ok('Smart Family Payment with an extra while one child\'s balance cannot be worked out: refused, nothing written (was: the extra parked as unapplied cash)',
+     r.status === 400 && /could not be worked out/.test(r.body.error) && moneyWrites().length === 0 && (await bill())?.recorded_payment === 0, { r, w: moneyWrites() });
+
+  // Ledger accounts missing: the bill is never written ahead of its ledger pair.
+  await withHistory();
+  fixture.ledger_accounts = [];
+  r = await smart(500000, CREDIT);
+  ok('a child with no ledger accounts: fails loudly and the bill is not changed (an insert with no account used to go unnoticed)',
+     r.status === 400 && /ledger accounts are missing/.test(r.body.error) && (await bill())?.recorded_payment === 0, r.body);
+
+  // Past unapplied-cash rows stay exactly as they are.
+  await withHistory();
+  const OLD = '88888888-8888-4888-8888-888888888888';
+  fixture.ledger_entries = [
+    { id: 'old-1', tx_id: 'tx-old', tx_key: `smart-family-credit-${OLD}-1`, account_id: 'acc-AR', debit: 100000, credit: 0, month: SEP },
+    { id: 'old-2', tx_id: 'tx-old', tx_key: null, account_id: 'acc-CREDIT', debit: 0, credit: 100000, month: SEP }];
+  const before = JSON.stringify(fixture.ledger_entries.map(({ ledger_accounts, ...e }) => e));
+  memoryWrites = [];
+  r = await smart(500000, CREDIT);
+  const after = JSON.stringify(fixture.ledger_entries.filter((e) => e.tx_id === 'tx-old').map(({ ledger_accounts, ...e }) => e));
+  ok('an unapplied-cash pair from before stays exactly as it was: not read onto a bill, not changed, not deleted',
+     r.status === 200 && after === before && !memoryWrites.some((w) => w.table === 'ledger_entries' && w.op !== 'insert')
+       && (await bill())?.recorded_payment === 500000 && (await bill(S1, SEP))?.recorded_payment === 400000, { r: r.body, after });
+}
+
+// =====================================================================
+// OVERPAYMENT review (docs/evidence/OVERPAYMENT-review.md): N1 pro-rata
+// rounding, N2 Manual-split wording, N3 an old-style payment deleted, N5
+// the cash account. Families of two and three priced children.
+// =====================================================================
+console.log('\nOVERPAYMENT review fixes - rounding, Manual split wording, old payments, the cash account');
+{
+  const S3 = '33333333-3333-4333-8333-333333333333';
+  await db.query('INSERT INTO public.students VALUES ($1) ON CONFLICT DO NOTHING', [S3]);
+  const PAY = { method: 'Cash', occurredAt: '2026-10-20T10:00:00.000Z' };
+  const allocSum = (pid) => (fixture.payment_allocations || []).filter((a) => a.parent_payment_id === pid).reduce((s, a) => s + a.allocated_amount, 0);
+  const legsOfPayment = (pid) => (fixture.ledger_entries || []).filter((e) => {
+    const tx = (fixture.ledger_entries || []).find((k) => k.tx_id === e.tx_id && String(k.tx_key || '').includes(pid) && !String(k.tx_key).startsWith('payment-reversal-'));
+    return !!tx;
+  });
+  /** Child One plus Child Two (and Three), each in Class A with four Present October lessons: 400,000 owed each. */
+  async function siblings(n) {
+    await withHistory();
+    const kids = [[S2, 'Child Two', 'b'], [S3, 'Child Three', 'c']].slice(0, n - 1);
+    for (const [id, name, tag] of kids) {
+      fixture.students.push({ id, family_id: FAMILY, families: { id: FAMILY, sibling_percent_override: null }, full_name: name, is_active: true });
+      fixture.enrollments.push({ ...fixture.enrollments[0], student_id: id });
+      for (const s of fixture.sessions) fixture.attendance.push({ session_id: s.id, student_id: id, status: 'Present' });
+      for (const code of ['AR', 'CASH', 'BANK', 'REVENUE', 'CREDIT', 'DISCOUNT']) fixture.ledger_accounts.push({ id: `acc${tag}-${code}`, student_id: id, code });
+      await calc(id);
+    }
+  }
+  const proRata = (amount, extra = {}) => call('family-payment', { month: MONTH, familyId: FAMILY, selectedStudentIds: [S1, S2, S3], amount,
+    allocationMode: 'pro-rata', ...PAY, ...extra });
+  const bills3 = async () => [await bill(S1), await bill(S2), await bill(S3)];
+  const sumRec = (bs) => bs.reduce((s, b) => s + Number(b?.recorded_payment || 0), 0);
+  const sumCredit = (bs) => bs.reduce((s, b) => s + Number(b?.carry_out_credit || 0), 0);
+
+  // ---- N1: pro-rata rounding is never "beyond what the bills owe"
+  await siblings(3);
+  let r = await proRata(1000000);
+  let bs = await bills3();
+  console.log(`    pro-rata 1,000,000 over three owing 400,000 => ${r.status} ${JSON.stringify(r.body)} ; recorded ${bs.map((b) => b?.recorded_payment)}`);
+  ok('N1 pro-rata 1,000,000 over three children owing 400,000 each, no leftover instruction: accepted (was: refused, "1 is more than the selected bills owe")',
+     r.status === 200, r.body);
+  ok('  all 1,000,000 on the three bills, no credit anywhere, 200,000 still owed in total',
+     sumRec(bs) === 1000000 && sumCredit(bs) === 0 && bs.reduce((s, b) => s + b.carry_out_debt, 0) === 200000, bs.map(money));
+  ok('  nothing reported as left over or as credit (was: 1 VND "kept on the bill as credit")',
+     r.body.leftoverAmount === 0 && r.body.creditOnBill === null && !(fixture.ledger_entries || []).some((e) => /beyond what/.test(String(e.memo || ''))), r.body);
+  const [p1] = familyPayments();
+  ok('  payment = allocations = 1,000,000', p1?.amount === 1000000 && allocSum(p1?.id) === 1000000, allocSum(p1?.id));
+
+  await siblings(3);
+  memoryWrites = [];
+  r = await proRata(1000000, { leftoverHandling: 'unapplied_cash' });
+  bs = await bills3();
+  ok('  the same from a screen opened before the change (sends unapplied_cash): pays, all 1,000,000 on bills (was: refused as if it overpaid)',
+     r.status === 200 && sumRec(bs) === 1000000 && sumCredit(bs) === 0, { r: r.body, bs: bs.map(money) });
+
+  await siblings(3);
+  r = await proRata(1200000);
+  bs = await bills3();
+  ok('N1 pro-rata 1,200,000 over three owing 400,000 each (exact): accepted with no instruction, each bill 400,000 and paid, no credit, nothing left over',
+     r.status === 200 && bs.every((b) => b?.recorded_payment === 400000 && b?.status === 'paid' && b?.carry_out_credit === 0)
+       && r.body.leftoverAmount === 0 && r.body.creditOnBill === null, { r: r.body, bs: bs.map(money) });
+
+  await siblings(3);
+  r = await proRata(1300000, { leftoverHandling: 'credit_next_bill' });
+  bs = await bills3();
+  ok('  pro-rata 1,300,000 (100,000 more than all three owe): each owed bill paid, exactly 100,000 credit on Child One\'s bill',
+     r.status === 200 && sumRec(bs) === 1300000 && bs[0]?.carry_out_credit === 100000 && bs[1]?.carry_out_credit === 0 && bs[2]?.carry_out_credit === 0
+       && r.body.leftoverAmount === 100000 && r.body.creditOnBill?.amount === 100000, { r: r.body, bs: bs.map(money) });
+
+  // ---- N2: Manual split - money not split out is credit only beyond what that child owes
+  await siblings(2);
+  r = await call('family-payment', { month: MONTH, familyId: FAMILY, selectedStudentIds: [S1, S2], amount: 900000, allocationMode: 'manual',
+    manualAllocations: [{ studentId: S1, amount: 0 }, { studentId: S2, amount: 450000 }], ...PAY, leftoverHandling: 'credit_next_bill' });
+  const b1 = await bill(S1), b2 = await bill(S2);
+  ok('N2 Manual 0 / 450,000 of 900,000: the 450,000 not split out goes on Child One\'s bill - 400,000 pays what they owe, 50,000 is credit',
+     r.status === 200 && b1?.recorded_payment === 450000 && b1?.carry_out_credit === 50000 && b2?.recorded_payment === 450000 && b2?.carry_out_credit === 50000,
+     { b1: money(b1), b2: money(b2) });
+  ok('  the response says 450,000 was not split out and only 50,000 of it is credit (was: all 450,000 "credit on the bill")',
+     r.body.leftoverAmount === 450000 && r.body.creditOnBill?.amount === 50000 && r.body.creditOnBill?.studentId === S1, r.body);
+  const memo = (fixture.ledger_entries || []).find((e) => e.debit === 450000 && /not split out/.test(String(e.memo || '')))?.memo || '';
+  ok('  and so does the ledger memo', /450000 not split out/.test(memo) && /50000 of it beyond what the bill owes/.test(memo), memo);
+  await siblings(2);
+  r = await call('family-payment', { month: MONTH, familyId: FAMILY, selectedStudentIds: [S1, S2], amount: 600000, allocationMode: 'manual',
+    manualAllocations: [{ studentId: S1, amount: 0 }, { studentId: S2, amount: 400000 }], ...PAY, leftoverHandling: 'credit_next_bill' });
+  ok('  Manual with 200,000 not split out against 400,000 owed: on Child One\'s bill, no credit, and none reported',
+     r.status === 200 && (await bill(S1))?.recorded_payment === 200000 && (await bill(S1))?.carry_out_credit === 0
+       && r.body.leftoverAmount === 200000 && r.body.creditOnBill === null, r.body);
+
+  // ---- N3 (the reviewer's P6): a payment made BEFORE this change - allocation + unapplied-cash pair - is deleted whole
+  for (const [alloc, credit] of [['smart-family', 'smart-family-credit'], ['family-payment', 'family-credit']]) {
+    await withHistory();
+    const OLDP = '77777777-7777-4777-8777-777777777777';
+    fixture.payments.push({ id: OLDP, student_id: S1, amount: 500000, method: 'Cash', family_id: FAMILY, parent_payment_id: null });
+    fixture.payment_allocations = [{ parent_payment_id: OLDP, student_id: S1, allocated_amount: 400000, allocation_order: 1 }];
+    fixture.ledger_entries.push(
+      { id: 'o1', tx_id: 'tx-oa', tx_key: `${alloc}-${OLDP}-${S1}-1`, account_id: 'acc-CASH', debit: 400000, credit: 0, month: MONTH },
+      { id: 'o2', tx_id: 'tx-oa', tx_key: null, account_id: 'acc-AR', debit: 0, credit: 400000, month: MONTH },
+      { id: 'o3', tx_id: 'tx-ol', tx_key: `${credit}-${OLDP}-1`, account_id: 'acc-AR', debit: 100000, credit: 0, month: MONTH },
+      { id: 'o4', tx_id: 'tx-ol', tx_key: null, account_id: 'acc-CREDIT', debit: 0, credit: 100000, month: MONTH });
+    await editRecorded(MONTH, 400000); await calc();
+    const d = await delPay(OLDP);
+    const b = await bill();
+    const rev = reversalOf(OLDP);
+    ok(`N3 an OLD payment (400,000 allocation + 100,000 ${credit}- pair) deleted: 400,000 off the bill, all 4 legs reversed incl. the CREDIT leg, balanced`,
+       d.status === 200 && b?.recorded_payment === 0 && rev.length === 4 && balances(rev)
+         && rev.some((e) => e.account_id === 'acc-CREDIT' && e.debit === 100000) && rev.some((e) => e.account_id === 'acc-CASH' && e.credit === 400000),
+       { d: d.body, b: money(b), rev });
+  }
+
+  // ---- N5: a cash payment debits CASH, however the method is spelled
+  for (const fn of ['family-payment', 'smart-family-payment']) {
+    for (const [method, account] of [['Cash', 'acc-CASH'], ['cash', 'acc-CASH'], ['CASH', 'acc-CASH'], ['Bank Transfer', 'acc-BANK'], ['Card', 'acc-BANK']]) {
+      await withHistory();
+      const body = fn === 'family-payment'
+        ? { month: MONTH, familyId: FAMILY, selectedStudentIds: [S1], amount: 400000, allocationMode: 'oldest-first', method, occurredAt: PAY.occurredAt }
+        : { familyId: FAMILY, amount: 400000, month: MONTH, method, occurredAt: PAY.occurredAt };
+      r = await call(fn, body);
+      const [p] = familyPayments();
+      const legs = legsOfPayment(p?.id);
+      ok(`N5 ${fn}, method '${method}': the 400,000 debit is on ${account.slice(4)}${fn === 'family-payment' && method === 'Cash' ? " (was: BANK - 'Cash' did not equal 'cash')" : ''}`,
+         r.status === 200 && legs.some((e) => e.account_id === account && e.debit === 400000)
+           && !legs.some((e) => e.debit > 0 && e.account_id !== account), legs.map((e) => [e.account_id, e.debit, e.credit]));
+    }
+  }
 }
 
 console.log('\nT4 - scripts/CHECK-payment-paths.sql counts what each fault touches, aggregates only, and writes nothing');

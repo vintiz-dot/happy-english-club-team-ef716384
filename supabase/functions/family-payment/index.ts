@@ -5,8 +5,14 @@ import { labelAfterPayment, monthPayable } from '../_lib/invoice-status.ts';
 import { addToRecordedPayment } from '../_lib/recorded-payment-write.ts';
 
 const VOLUNTARY_REMOVED =
-  'Voluntary contributions have been removed. Money paid beyond what the bills owe is kept as unapplied cash. '
+  'Voluntary contributions have been removed. Money paid beyond what the bills owe now goes on a bill as credit. '
   + 'Nothing was recorded: reload the page and post the payment again.';
+// A screen opened before the owner's decision (OVERPAYMENT) told the admin
+// the extra would be kept as unapplied cash, off every bill. It now goes on
+// a bill as credit, so what that screen said is no longer what happens.
+const UNAPPLIED_REPLACED =
+  'Money paid beyond what the bills owe now shows as credit on the next bill; it is no longer kept as unapplied cash. '
+  + 'Nothing was recorded: reload the page, check where the extra goes, and post the payment again.';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,9 +79,13 @@ Deno.serve(async (req) => {
         studentId: z.string().uuid(),
         amount: z.number().int().min(0)
       })).optional(),
-      // Money beyond what the selected bills owe has one outcome: unapplied
-      // cash (below). Voluntary contributions were removed (D-23).
-      leftoverHandling: z.enum(['unapplied_cash']).optional(),
+      // Money beyond what the selected bills owe has one outcome: it goes on
+      // the first selected student's bill for the month, where the carry
+      // makes it credit on their next bill (OVERPAYMENT, below). Voluntary
+      // contributions were removed (D-23); 'unapplied_cash' is what a screen
+      // opened before this change sends, and is refused when there is money
+      // left over.
+      leftoverHandling: z.enum(['credit_next_bill', 'unapplied_cash']).optional(),
     });
 
     const body = await req.json();
@@ -177,6 +187,20 @@ Deno.serve(async (req) => {
           
           remainingAmount -= appliedAmount;
         }
+
+        // Rounding each share to whole VND can leave a few VND while the
+        // bills still owe (1,000,000 over three children owing 400,000 each
+        // leaves 1). That remainder goes to a bill that still owes, in
+        // order, so it is never taken for money beyond what the bills owe:
+        // only amount - totalOwed can be left over.
+        for (const a of allocations) {
+          if (remainingAmount <= 0) break;
+          const headroom = (studentBalances.get(a.studentId) || 0) - a.amount;
+          if (headroom <= 0) continue;
+          const add = Math.min(headroom, remainingAmount);
+          a.amount += add;
+          remainingAmount -= add;
+        }
       }
 
     } else {
@@ -201,6 +225,51 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Money beyond what the selected bills owe (OVERPAYMENT, owner's
+    // decision): it goes on the FIRST SELECTED student's bill for the month,
+    // the same child unapplied cash used to go to, exactly as a Manual split
+    // amount above what is owed does - folded into that student's
+    // allocation, so it is one allocation row, one DR CASH/BANK / CR AR
+    // pair and one compare-and-set on the bill. The carry then turns it into
+    // credit on the student's next bill. Everything here is decided before
+    // the first write.
+    const leftover = remainingAmount;
+    const creditStudentId = selectedStudentIds[0];
+    let creditPart = 0;
+    if (leftover > 0) {
+      if (leftoverHandling === 'unapplied_cash') {
+        return new Response(
+          JSON.stringify({ error: UNAPPLIED_REPLACED }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (leftoverHandling !== 'credit_next_bill') {
+        throw new Error(`${leftover} is more than the selected bills owe for ${month}; confirm it is to go on the first selected student's bill as credit (leftoverHandling 'credit_next_bill'). Nothing was recorded.`);
+      }
+      // No bill for that student in the month: refuse. A bill is created and
+      // priced by calculate-tuition only (opening the student's tuition for
+      // the month); this function must not make one up to hold the money.
+      const creditBills = (monthInvoices ?? []).filter((inv) => inv.student_id === creditStudentId);
+      if (creditBills.length === 0) {
+        throw new Error(`The ${leftover} beyond what the bills owe goes on the first selected student's ${month} bill as credit, but they have no bill for ${month}. Nothing was recorded: open their tuition for ${month} first, or put a student who has one first.`);
+      }
+      let target = allocations.find((a) => a.studentId === creditStudentId);
+      if (!target) {
+        target = { studentId: creditStudentId, amount: 0, invoices: [] };
+        allocations.push(target);
+      }
+      if (target.invoices.length === 0) target.invoices = creditBills;
+      // How much of the leftover is really credit: only what lands above
+      // what the student's bill still owes. In oldest-first and pro-rata a
+      // leftover exists only once every bill is paid, so it is all of it; in
+      // a Manual split, money not split out first pays what the first
+      // selected student still owes (OVERPAYMENT review N2).
+      const owedThere = creditBills.reduce((sum, inv) => sum + owedOn(inv), 0);
+      creditPart = Math.max(0, target.amount + leftover - owedThere) - Math.max(0, target.amount - owedThere);
+      target.amount += leftover;
+      remainingAmount = 0;
+    }
+
     // Refuse before anything is written, rather than post money that lands
     // nowhere: an allocation with no bill to go on, or a remainder with no
     // instruction for it (it used to be dropped silently).
@@ -208,9 +277,6 @@ Deno.serve(async (req) => {
       if (a.amount > 0 && a.invoices.length === 0) {
         throw new Error(`A student has no bill for ${month} to put ${a.amount} on; open their tuition for that month first`);
       }
-    }
-    if (remainingAmount > 0 && !leftoverHandling) {
-      throw new Error(`${remainingAmount} is more than the selected bills owe for ${month}; confirm it is to be kept as unapplied cash (leftoverHandling 'unapplied_cash')`);
     }
 
     // Create parent payment
@@ -260,17 +326,34 @@ Deno.serve(async (req) => {
 
       const accountMap = new Map(accounts?.map(a => [a.code, a.id]));
       const allocationTxId = crypto.randomUUID();
+      // The screens send 'Cash'; compared case-insensitively, as
+      // smart-family-payment does (it was `=== 'cash'`, so every Family
+      // Payment in cash was debited to BANK; past rows stay as they are).
+      const cashAccount = method.toLowerCase() === 'cash' ? accountMap.get('CASH') : accountMap.get('BANK');
+      // The bill is written only after its ledger pair is: never a bill
+      // that records money the ledger does not (an insert with no account
+      // id, or one that failed, used to go unnoticed).
+      if (!cashAccount || !accountMap.get('AR')) {
+        throw new Error(`Payment recorded, but a student's ledger accounts are missing, so ${allocation.amount} was not posted to the ledger or their ${month} bill`);
+      }
+      const extra = allocation.studentId === creditStudentId ? leftover : 0;
 
       // Post ledger entries for this allocation
-      await supabase.from('ledger_entries').insert([
+      const { error: ledgerError } = await supabase.from('ledger_entries').insert([
         {
           tx_id: allocationTxId,
           tx_key: `family-payment-${parentPaymentId}-${allocation.studentId}-${Date.now()}`,
-          account_id: method === 'cash' ? accountMap.get('CASH') : accountMap.get('BANK'),
+          account_id: cashAccount,
           debit: allocation.amount,
           credit: 0,
           occurred_at: occurredAt,
-          memo: `Family payment allocation (${i + 1}/${allocations.length})`,
+          memo: `Family payment allocation (${i + 1}/${allocations.length})`
+            + (extra <= 0 ? ''
+              : allocationMode === 'manual'
+                ? `, including ${extra} not split out (${creditPart > 0
+                  ? `${creditPart} of it beyond what the bill owes, kept as credit`
+                  : 'all of it towards what the bill owes'})`
+                : `, including ${extra} beyond what the bills owe, kept on the bill as credit`),
           month,
           created_by: user.id
         },
@@ -285,11 +368,14 @@ Deno.serve(async (req) => {
           created_by: user.id
         }
       ]);
+      if (ledgerError) {
+        throw new Error(`Payment recorded, but ${allocation.amount} could not be posted to the ledger, so their ${month} bill was not changed: ${ledgerError.message}`);
+      }
 
       // Apply to invoices (FIFO within student). The bills record exactly
       // what the ledger just posted for this student: each takes what it
       // owes, and the last one takes whatever is left (a manual amount above
-      // what is owed becomes credit through the carry).
+      // what is owed, or the leftover, becomes credit through the carry).
       let studentRemaining = allocation.amount;
       for (const [k, inv] of allocation.invoices.entries()) {
         if (studentRemaining <= 0) break;
@@ -320,64 +406,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Handle leftover: unapplied cash, the one outcome. It is posted to the
-    // ledger as customer credit (DR AR / CR CREDIT) on the first selected
-    // student's accounts. It is NOT put on any bill: recorded_payment, the
-    // carry and the label do not change. (A Manual split puts money above
-    // what is owed on the bill instead, where it becomes credit through the
-    // carry.)
-    if (remainingAmount > 0 && leftoverHandling === 'unapplied_cash') {
-      const primaryStudentId = selectedStudentIds[0];
-
-      // The first student may have had no allocation, so its accounts may
-      // not exist yet (an insert with no account id used to fail silently).
-      for (const code of ['AR', 'CREDIT']) {
-        await supabase
-          .from('ledger_accounts')
-          .upsert(
-            { student_id: primaryStudentId, code },
-            { onConflict: 'student_id,code', ignoreDuplicates: true }
-          );
-      }
-      const { data: accounts } = await supabase
-        .from('ledger_accounts')
-        .select('id, code')
-        .eq('student_id', primaryStudentId);
-
-      const accountMap = new Map(accounts?.map(a => [a.code, a.id]));
-      if (!accountMap.get('AR') || !accountMap.get('CREDIT')) {
-        throw new Error(`Payment posted, but the ${remainingAmount} left over could not be recorded as unapplied cash: the student's ledger accounts are missing`);
-      }
-      const leftoverTxId = crypto.randomUUID();
-
-      const { error: leftoverError } = await supabase.from('ledger_entries').insert([
-        {
-          tx_id: leftoverTxId,
-          tx_key: `family-credit-${parentPaymentId}-${Date.now()}`,
-          account_id: accountMap.get('AR'),
-          debit: remainingAmount,
-          credit: 0,
-          occurred_at: occurredAt,
-          memo: `Unapplied cash from family payment`,
-          month,
-          created_by: user.id
-        },
-        {
-          tx_id: leftoverTxId,
-          account_id: accountMap.get('CREDIT'),
-          debit: 0,
-          credit: remainingAmount,
-          occurred_at: occurredAt,
-          memo: `Customer credit for future use`,
-          month,
-          created_by: user.id
-        }
-      ]);
-      if (leftoverError) {
-        throw new Error(`Payment posted, but the ${remainingAmount} left over could not be recorded as unapplied cash: ${leftoverError.message}`);
-      }
-    }
-
+    // The leftover was put on the first selected student's bill with their
+    // allocation, above. Nothing is posted as unapplied cash any more.
     return new Response(
       JSON.stringify({
         success: true,
@@ -386,8 +416,13 @@ Deno.serve(async (req) => {
           studentId: a.studentId,
           amount: a.amount
         })),
-        leftoverAmount: remainingAmount,
-        leftoverHandling
+        leftoverAmount: leftover,
+        leftoverHandling: leftover > 0 ? leftoverHandling : undefined,
+        // Where the extra went: on this student's bill for the month, as
+        // credit that their next bill opens with.
+        // (Manual split: only the part of the money not split out that lands
+        // above what that bill owed; null when none of it is credit.)
+        creditOnBill: creditPart > 0 ? { studentId: creditStudentId, month, amount: creditPart } : null
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

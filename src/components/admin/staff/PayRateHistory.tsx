@@ -44,6 +44,8 @@ import {
   recordEndsOn,
   type PayRateRecord,
 } from "@/lib/payHistory";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 export interface PayRateHistoryProps {
   staffId: string;
@@ -106,54 +108,50 @@ export function PayRateHistory({ staffId, staffType, staff, previewMinutes = DEF
   const reprices = isBackdated ? monthsRepricedBy(effectiveFrom, monthsOnRecord) : [];
   const error = payRateError(payRateType, rate);
 
+  // D4 step 3B (G-17): a rate is recorded through the checked path as the
+  // signed-in admin - a plain insert, or an update of the row for the same
+  // date, plus the staff row's "rate now", in one transaction. From today on
+  // it is tier 0. A rate dated before lessons that were already taught asks
+  // for a reason; one that reaches a closed payroll month asks for two and is
+  // reviewed. (The upsert this replaces named a conflict target.)
+  const saved = () => {
+    toast.success(
+      isBackdated
+        ? `Recorded from ${fmt(effectiveFrom)} — re-run payroll for the affected months to apply it`
+        : effectiveFrom === today
+          ? "Pay rate updated"
+          : `Saved — this takes effect on ${fmt(effectiveFrom)}`,
+    );
+    setRate("");
+    setNote("");
+    queryClient.invalidateQueries({ queryKey: ["staff-pay-rates", staffType, staffId] });
+    queryClient.invalidateQueries({ queryKey: ["teachers"] });
+    queryClient.invalidateQueries({ queryKey: ["teaching-assistants"] });
+  };
+  const money = useMoneyInput(saved);
+
   const save = useMutation({
     mutationFn: async () => {
       const amount = Number(rate) || 0;
-      const row = {
-        [subject]: staffId,
-        effective_from: effectiveFrom,
-        pay_rate_type: payRateType,
-        hourly_rate_vnd: payRateType === "hourly" ? amount : 0,
-        per_session_rate_vnd: payRateType === "per_session" ? amount : 0,
-        note: note.trim() || null,
-        created_by: (await supabase.auth.getUser()).data.user?.id ?? null,
-      };
-      // Upsert on (subject, effective_from): correcting a change you just
-      // entered for the same date is one rate, not two. The partial unique
-      // indexes in 20261021090000 are what this conflict target names.
-      const { error: insErr } = await supabase
-        .from("staff_pay_rates")
-        .upsert(row, { onConflict: `${subject},effective_from` });
-      if (insErr) throw insErr;
-
-      // The staff row mirrors the rate in force TODAY - the same split as
-      // classes.schedule_template against class_schedule_versions. Computed
-      // from the full list rather than from this edit, so a future-dated
-      // raise leaves it alone while a backdated correction moves it.
-      const next = rateOnDate([{ ...(row as PayRateRecord) }, ...sorted].sort(byEffectiveFromDesc), today, staff);
-      const { error: upErr } = await supabase
-        .from(staffType === "teacher" ? "teachers" : "teaching_assistants")
-        .update({
-          pay_rate_type: next.pay_rate_type,
-          hourly_rate_vnd: next.hourly_rate_vnd,
-          per_session_rate_vnd: next.per_session_rate_vnd,
-        })
-        .eq("id", staffId);
-      if (upErr) throw upErr;
+      const r = await money.run({
+        entity: "pay_rate",
+        op: "set",
+        args: {
+          [subject]: staffId,
+          effective_from: effectiveFrom,
+          pay_rate_type: payRateType,
+          hourly_rate_vnd: payRateType === "hourly" ? amount : 0,
+          per_session_rate_vnd: payRateType === "per_session" ? amount : 0,
+          note: note.trim() || null,
+        },
+      });
+      if (r.status === "refused") throw new Error(r.message);
+      return r;
     },
-    onSuccess: () => {
-      toast.success(
-        isBackdated
-          ? `Recorded from ${fmt(effectiveFrom)} — re-run payroll for the affected months to apply it`
-          : effectiveFrom === today
-            ? "Pay rate updated"
-            : `Saved — this takes effect on ${fmt(effectiveFrom)}`,
-      );
-      setRate("");
-      setNote("");
-      queryClient.invalidateQueries({ queryKey: ["staff-pay-rates", staffType, staffId] });
-      queryClient.invalidateQueries({ queryKey: ["teachers"] });
-      queryClient.invalidateQueries({ queryKey: ["teaching-assistants"] });
+    onSuccess: (r) => {
+      if (r.status === "done" && r.unchanged) toast.message("That rate is already recorded from that date");
+      else if (r.status === "done") saved();
+      // "dialog": the reason dialog is open; confirming it calls saved()
     },
     onError: (e: unknown) =>
       toast.error(e instanceof Error ? e.message : "Could not record the rate change"),
@@ -276,6 +274,7 @@ export function PayRateHistory({ staffId, staffType, staff, previewMinutes = DEF
           })}
         </div>
       </div>
+      <MoneyInputDialog guard={money.guard} />
     </div>
   );
 }

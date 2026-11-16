@@ -39,10 +39,8 @@
       style="position:absolute;right:0;bottom:0;width:2px;height:2px;opacity:0.01"></video>
   </div>
 
-  <script>
-    // Previews only: ?demo=1 shows made-up data; the packaged app never ships demo-feed.js.
-    if (/[?&]demo=1/.test(location.search)) document.write('<script src="demo-feed.js"><\/script>');
-  </script>
+  <!-- Previews only: ?demo=1 loads made-up data. A file, not an inline script, so the site's CSP allows it. -->
+  <script src="demo-loader.js"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>

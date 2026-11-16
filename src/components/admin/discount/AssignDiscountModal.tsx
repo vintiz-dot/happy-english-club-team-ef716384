@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 interface AssignDiscountModalProps {
   open: boolean;
@@ -46,6 +48,18 @@ export function AssignDiscountModal({ open, onOpenChange, studentId, onSuccess }
       return data;
     },
   });
+
+  // D4 step 3B (G-15): assigning a discount is a checked change made as the
+  // signed-in admin. From this month it is tier 0 (no dialog, one row
+  // written); from a month already billed the dialog asks for a reason.
+  const assigned = () => {
+    toast({ title: "Success", description: "Discount assigned to student" });
+    queryClient.invalidateQueries({ queryKey: ["discount-definitions-active"] });
+    onSuccess();
+    onOpenChange(false);
+    reset();
+  };
+  const money = useMoneyInput(assigned);
 
   const reset = () => {
     setDiscountDefId("");
@@ -94,34 +108,20 @@ export function AssignDiscountModal({ open, onOpenChange, studentId, onSuccess }
         defId = created.id;
       }
 
-      const { error } = await supabase.from("discount_assignments").insert({
-        student_id: studentId,
-        discount_def_id: defId,
-        effective_from: effectiveFrom,
-        effective_to: mode === "custom" && customCadence === "once" ? effectiveFrom : effectiveTo || null,
-        note: memo || null,
-      });
-
-      if (error) {
-        if (error.message?.includes("no_overlapping_assignments")) {
-          throw new Error("This discount already has an overlapping assignment for this student");
-        }
-        throw error;
-      }
-
-      await supabase.from("audit_log").insert({
+      const r = await money.run({
         entity: "discount_assignment",
-        entity_id: studentId,
-        action: "create",
-        diff: { discount_def_id: defId, effective_from: effectiveFrom, effective_to: effectiveTo, mode },
+        op: "assign",
+        args: {
+          student_id: studentId,
+          discount_def_id: defId,
+          effective_from: effectiveFrom,
+          effective_to: mode === "custom" && customCadence === "once" ? effectiveFrom : effectiveTo || null,
+          note: memo || null,
+        },
       });
-
-      toast({ title: "Success", description: "Discount assigned to student" });
-      queryClient.invalidateQueries({ queryKey: ["discount-definitions-active"] });
-
-      onSuccess();
-      onOpenChange(false);
-      reset();
+      if (r.status === "refused") throw new Error(r.message);
+      if (r.status === "done") assigned();
+      // "dialog": the reason dialog is open; confirming it calls assigned()
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
@@ -263,6 +263,7 @@ export function AssignDiscountModal({ open, onOpenChange, studentId, onSuccess }
           </Button>
         </div>
       </DialogContent>
+      <MoneyInputDialog guard={money.guard} subject={selectedDef?.name ?? (customName || undefined)} />
     </Dialog>
   );
 }

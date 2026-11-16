@@ -36,7 +36,7 @@ import { ClassLeaderboardShared } from "@/components/shared/ClassLeaderboardShar
 import { ManualPointsDialog } from "@/components/shared/ManualPointsDialog";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
-import { effectiveRateVnd, rateUnit } from "@/lib/payRate";
+import { teacherPayrollView } from "@/lib/teacherPayrollView";
 import { VideoReviewQueue } from "@/components/video-homework/VideoReviewQueue";
 
 export default function TeacherDashboard() {
@@ -186,7 +186,12 @@ export default function TeacherDashboard() {
     },
   });
 
-  const { data: payrollData } = useQuery({
+  // This month's figures are calculate-payroll's, for the signed-in person
+  // only (the function scopes a teacher or a TA by the JWT and ignores the
+  // teacherId sent). Picked by id through teacherPayrollView, never [0]. When
+  // the function did not answer - or a deploy older than TA-PAY answers a TA
+  // with 403 - the cards say "figure unavailable" rather than 0.
+  const { data: payrollView } = useQuery({
     queryKey: ["teacher-payroll", currentMonth, teacherId],
     enabled: !!teacherId,
     queryFn: async () => {
@@ -195,9 +200,12 @@ export default function TeacherDashboard() {
       });
 
       if (error) throw error;
-      return { ...data?.payrollData?.[0], teacherId };
+      return teacherPayrollView(data, teacherId);
     },
   });
+  // A TA the function answered for with no row had no paid lessons yet.
+  const payrollKnown = !!payrollView && (payrollView.found || payrollView.answered);
+  const unavailable = <span title="Figure unavailable"><span aria-hidden="true">—</span><span className="sr-only">Figure unavailable</span></span>;
 
   useEffect(() => {
     if (!teacherId) return;
@@ -233,8 +241,9 @@ export default function TeacherDashboard() {
     return "ongoing";
   };
 
-  const progressPercent = payrollData?.sessionsCountProjected 
-    ? Math.round((payrollData?.sessionsCountActual || 0) / payrollData.sessionsCountProjected * 100)
+  const projectedCount = (payrollView?.heldSessions ?? 0) + (payrollView?.scheduledSessions ?? 0);
+  const progressPercent = projectedCount
+    ? Math.round((payrollView?.heldSessions ?? 0) / projectedCount * 100)
     : 0;
 
   const containerVariants = {
@@ -340,10 +349,19 @@ export default function TeacherDashboard() {
 
                     <div className="flex flex-wrap items-baseline gap-2 text-hec-h3 font-semibold text-hec-ink">
                       <DollarSign className="h-5 w-5 shrink-0 self-center text-hec-ink-soft" />
-                      <span className="whitespace-nowrap tabular-nums">{effectiveRateVnd(teacherProfile).toLocaleString()} ₫</span>
-                      <span className="text-hec-small font-normal text-hec-ink-soft">
-                        /{rateUnit(teacherProfile)}
-                      </span>
+                      {/* This month's rate as calculate-payroll reports it,
+                          not the staff row's: the row is only today's and a
+                          dated change makes the two differ. */}
+                      {payrollView?.rateVnd != null && payrollView.payBasis ? (
+                        <>
+                          <span className="whitespace-nowrap tabular-nums">{payrollView.rateVnd.toLocaleString()} ₫</span>
+                          <span className="text-hec-small font-normal text-hec-ink-soft">
+                            /{payrollView.payBasis === "per_session" ? "session" : "hour"}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="whitespace-nowrap tabular-nums">{unavailable}</span>
+                      )}
                     </div>
                   </div>
 
@@ -431,7 +449,7 @@ export default function TeacherDashboard() {
                 </div>
               </div>
               <div className="space-y-1">
-                <p className={STAT_VALUE}>{((payrollData?.totalAmountActual || 0) / 1000).toFixed(0)}K</p>
+                <p className={STAT_VALUE}>{payrollKnown ? `${((payrollView?.earned ?? 0) / 1000).toFixed(0)}K` : unavailable}</p>
                 <p className="text-hec-small text-hec-ink-soft">Earned (VND)</p>
               </div>
             </CardContent>
@@ -447,11 +465,11 @@ export default function TeacherDashboard() {
                 <span className="text-hec-caption tabular-nums text-hec-ink-soft">{progressPercent}%</span>
               </div>
               <div className="space-y-2">
-                <p className={STAT_VALUE}>{((payrollData?.totalAmountProjected || 0) / 1000).toFixed(0)}K</p>
+                <p className={STAT_VALUE}>{payrollKnown ? `${((payrollView?.projectedTotal ?? 0) / 1000).toFixed(0)}K` : unavailable}</p>
                 <DurationVarianceNotice
                   className="mt-1"
-                  count={payrollData?.discrepancyCount || 0}
-                  varianceAmount={payrollData?.varianceAmountProjected}
+                  count={payrollView?.discrepancyCount ?? 0}
+                  varianceAmount={payrollView?.varianceAmount}
                 />
                 <p className="text-hec-small text-hec-ink-soft mb-2">Projected (VND)</p>
                 <Progress value={progressPercent} className="h-2" aria-label="Sessions held of those projected this month" />

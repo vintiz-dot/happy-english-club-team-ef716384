@@ -56,9 +56,10 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
     occurredAt: new Date().toISOString().slice(0, 10),
     memo: "",
     allocationMode: "oldest-first" as "oldest-first" | "pro-rata" | "manual",
-    // The one thing done with money beyond what the bills owe (voluntary
-    // contributions were removed, D-23).
-    leftoverHandling: "unapplied_cash" as const,
+    // The one thing done with money beyond what the bills owe: it goes on
+    // the first selected student's bill and shows as credit on their next
+    // bill (OVERPAYMENT; voluntary contributions were removed, D-23).
+    leftoverHandling: "credit_next_bill" as const,
   });
 
   const [manualAllocations, setManualAllocations] = useState<Record<string, string>>({});
@@ -177,12 +178,24 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
   const getPreview = () => {
     const totalAmount = parseInt(formData.amount) || 0;
     const totalBalance = getTotalBalance();
-    const leftover = Math.max(0, totalAmount - totalBalance);
-    
+    // A Manual split puts each typed amount on that student's bill; only
+    // what is not split out is left over (the function does the same).
+    const manualTotal = Array.from(selectedSiblings).reduce((sum, sid) => sum + (parseInt(manualAllocations[sid]) || 0), 0);
+    const leftover = formData.allocationMode === "manual"
+      ? Math.max(0, totalAmount - manualTotal)
+      : Math.max(0, totalAmount - totalBalance);
+    // Manual split: of the money not split out, only what lands above what
+    // the first selected student still owes becomes credit.
+    const firstId = Array.from(selectedSiblings)[0];
+    const firstOwes = firstId ? getStudentBalance(firstId) : 0;
+    const firstTyped = firstId ? parseInt(manualAllocations[firstId]) || 0 : 0;
+    const manualCredit = Math.max(0, firstTyped + leftover - firstOwes) - Math.max(0, firstTyped - firstOwes);
+
     return {
       totalAmount,
       totalBalance,
       leftover,
+      manualCredit,
       willApply: Math.min(totalAmount, totalBalance),
     };
   };
@@ -265,12 +278,14 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
       occurredAt: new Date().toISOString().slice(0, 10),
       memo: "",
       allocationMode: "oldest-first",
-      leftoverHandling: "unapplied_cash",
+      leftoverHandling: "credit_next_bill",
     });
     setManualAllocations({});
   };
 
   const preview = getPreview();
+  const firstSelectedName =
+    siblings.find((s) => s.id === Array.from(selectedSiblings)[0])?.full_name ?? "the first selected student";
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -491,10 +506,26 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
                       <p className="font-medium">
                         Leftover amount: {preview.leftover.toLocaleString()} ₫
                       </p>
-                      <p>
-                        It will be kept as unapplied cash: recorded in the ledger as a credit on{" "}
-                        {siblings.find((s) => s.id === Array.from(selectedSiblings)[0])?.full_name ?? "the first selected student"}'s
-                        {" "}account. It is not put on any bill, so the bills and their balances will not show it.
+                      {formData.allocationMode === "manual" ? (
+                        // Money not split out goes on the first selected
+                        // student's bill: it pays what they still owe first,
+                        // and only the rest is credit (as the function says).
+                        <p>
+                          The {preview.leftover.toLocaleString()} ₫ not split out goes on {firstSelectedName}'s bill:
+                          {" "}{preview.manualCredit > 0
+                            ? `${preview.manualCredit.toLocaleString()} ₫ of it is more than they owe and will show as credit on their next bill.`
+                            : "it pays what they still owe; none of it becomes credit."}
+                        </p>
+                      ) : (
+                        <p>
+                          The extra {preview.leftover.toLocaleString()} ₫ will show as credit on{" "}
+                          {firstSelectedName}'s next bill.
+                        </p>
+                      )}
+                      <p className={iv("text-hec-small text-hec-ink-soft", "text-sm text-muted-foreground")}>
+                        It is recorded on that student's {formData.month} bill (the first selected student); whatever is
+                        above what that bill owes carries to their next bill as credit. They need a {formData.month} bill:
+                        open their tuition for that month first if they have none.
                       </p>
                     </div>
                   </AlertDescription>

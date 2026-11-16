@@ -1,0 +1,115 @@
+auth-1280-dark | req same | numbers same(0) | axe c0/s0 | over no | small 1 | money 0 off 0
+auth-1280-light | req same | numbers same(0) | axe c0/s0 | over no | small 1 | money 0 off 0
+auth-375-dark | req same | numbers same(0) | axe c0/s0 | over no | small 1 | money 0 off 0
+auth-375-light | req same | numbers same(0) | axe c0/s0 | over no | small 1 | money 0 off 0
+auth-forgot-1280-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+auth-forgot-1280-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+auth-forgot-375-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+auth-forgot-375-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+auth-signup-1280-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+auth-signup-1280-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+auth-signup-375-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+auth-signup-375-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+auth-signup-open-1280-dark | req same | numbers same(0) | axe c0/s1 | over no | small 0 | money 0 off 0
+    axe aria-hidden-focus(serious) x1 .lg\:grid-cols-2
+auth-signup-open-1280-light | req same | numbers same(0) | axe c0/s1 | over no | small 0 | money 0 off 0
+    axe aria-hidden-focus(serious) x1 .lg\:grid-cols-2
+auth-signup-open-375-dark | req same | numbers same(0) | axe c0/s1 | over no | small 0 | money 0 off 0
+    axe aria-hidden-focus(serious) x1 .lg\:grid-cols-2
+auth-signup-open-375-light | req same | numbers same(0) | axe c0/s1 | over no | small 0 | money 0 off 0
+    axe aria-hidden-focus(serious) x1 .lg\:grid-cols-2
+claim-1280-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+claim-1280-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+claim-375-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+claim-375-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+claim-error-1280-dark | req same | numbers same(1) | axe c0/s0 | over no | small 0 | money 0 off 0
+claim-error-1280-light | req same | numbers same(1) | axe c0/s0 | over no | small 0 | money 0 off 0
+claim-error-375-dark | req same | numbers same(1) | axe c0/s0 | over no | small 0 | money 0 off 0
+claim-error-375-light | req same | numbers same(1) | axe c0/s0 | over no | small 0 | money 0 off 0
+fdash-1280-dark | req same | numbers same(51) | axe c0/s0 | over no | small 0 | money 0 off 0
+fdash-1280-light | req same | numbers same(51) | axe c0/s0 | over no | small 0 | money 0 off 0
+fdash-375-dark | req same | numbers same(51) | axe c0/s0 | over no | small 0 | money 0 off 0
+fdash-375-light | req same | numbers same(51) | axe c0/s0 | over no | small 0 | money 0 off 0
+fdash-empty-1280-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+fdash-empty-1280-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+fdash-empty-375-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+fdash-empty-375-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+fdash-scroll-1280-dark | req same | numbers same(51) | axe c0/s0 | over no | small 0 | money 0 off 0
+fdash-scroll-1280-light | req same | numbers same(51) | axe c0/s0 | over no | small 0 | money 0 off 0
+fdash-scroll-375-dark | req same | numbers same(51) | axe c0/s0 | over no | small 0 | money 0 off 0
+fdash-scroll-375-light | req same | numbers same(51) | axe c0/s0 | over no | small 0 | money 0 off 0
+fdash-switch-1280-dark | req same | numbers same(51) | axe c0/s1 | over no | small 0 | money 0 off 0
+    axe aria-hidden-focus(serious) x1 .min-h-screen
+fdash-switch-1280-light | req same | numbers same(51) | axe c0/s1 | over no | small 0 | money 0 off 0
+    axe aria-hidden-focus(serious) x1 .min-h-screen
+fdash-switch-375-dark | req same | numbers same(51) | axe c0/s1 | over no | small 0 | money 0 off 0
+    axe aria-hidden-focus(serious) x1 .min-h-screen
+fdash-switch-375-light | req same | numbers same(51) | axe c0/s1 | over no | small 0 | money 0 off 0
+    axe aria-hidden-focus(serious) x1 .min-h-screen
+index-family2-1280-dark | req same | numbers same(71) | axe c0/s0 | over no | small 0 | money 2 off 0
+index-family2-1280-light | req same | numbers same(71) | axe c0/s0 | over no | small 0 | money 2 off 0
+index-family2-375-dark | req same | numbers same(71) | axe c0/s0 | over no | small 0 | money 2 off 0
+index-family2-375-light | req same | numbers same(71) | axe c0/s0 | over no | small 0 | money 2 off 0
+index-family2-switch-1280-dark | req same | numbers same(71) | axe c0/s1 | over no | small 0 | money 2 off 0
+    axe aria-hidden-focus(serious) x1 .min-h-screen
+index-family2-switch-1280-light | req same | numbers same(71) | axe c0/s1 | over no | small 0 | money 2 off 0
+    axe aria-hidden-focus(serious) x1 .min-h-screen
+index-family2-switch-375-dark | req same | numbers same(71) | axe c0/s1 | over no | small 0 | money 2 off 0
+    axe aria-hidden-focus(serious) x1 .min-h-screen
+index-family2-switch-375-light | req same | numbers same(71) | axe c0/s1 | over no | small 0 | money 2 off 0
+    axe aria-hidden-focus(serious) x1 .min-h-screen
+index-family3-1280-dark | req same | numbers same(74) | axe c0/s0 | over no | small 0 | money 4 off 0
+index-family3-1280-light | req same | numbers same(74) | axe c0/s0 | over no | small 0 | money 4 off 0
+index-family3-375-dark | req same | numbers same(74) | axe c0/s0 | over no | small 0 | money 4 off 0
+index-family3-375-light | req same | numbers same(74) | axe c0/s0 | over no | small 0 | money 4 off 0
+index-teacher2-1280-dark | req same | numbers same(36) | axe c0/s3 | over no | small 57 | money 0 off 0
+    axe aria-command-name(serious) x4 span[aria-controls="ql-picker-options-0"]
+    axe color-contrast(serious) x6 .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1)
+    axe label-content-name-mismatch(serious) x2 .ring-primary\/40
+index-teacher2-1280-light | req same | numbers same(36) | axe c0/s3 | over no | small 57 | money 0 off 0
+    axe aria-command-name(serious) x4 span[aria-controls="ql-picker-options-0"]
+    axe color-contrast(serious) x6 .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1)
+    axe label-content-name-mismatch(serious) x2 .ring-primary\/40
+index-teacher2-375-dark | req same | numbers same(35) | axe c1/s3 | over no | small 40 | money 0 off 0
+    axe aria-command-name(serious) x4 span[aria-controls="ql-picker-options-0"]
+    axe button-name(critical) x4 .px-2.rounded-md.hover\:glass-sm:nth-child(1)
+    axe color-contrast(serious) x6 .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1)
+    axe label-content-name-mismatch(serious) x2 .ring-primary\/40
+index-teacher2-375-light | req same | numbers same(35) | axe c1/s3 | over no | small 40 | money 0 off 0
+    axe aria-command-name(serious) x4 span[aria-controls="ql-picker-options-0"]
+    axe button-name(critical) x4 .px-2.rounded-md.hover\:glass-sm:nth-child(1)
+    axe color-contrast(serious) x6 .right-2.-translate-y-1\/2.text-muted-foreground\/70:nth-child(1)
+    axe label-content-name-mismatch(serious) x2 .ring-primary\/40
+picker-1280-dark | req same | numbers same(54) | axe c0/s0 | over no | small 0 | money 0 off 0
+picker-1280-light | req same | numbers same(54) | axe c0/s0 | over no | small 0 | money 0 off 0
+picker-375-dark | req same | numbers same(54) | axe c0/s0 | over no | small 0 | money 0 off 0
+picker-375-light | req same | numbers same(54) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-1280-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-1280-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-375-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-375-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-match-1280-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-match-1280-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-match-375-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-match-375-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-typed-1280-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-typed-1280-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-typed-375-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-typed-375-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-wait-1280-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-wait-1280-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-wait-375-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+reset-wait-375-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+watch-1280-dark | req same | numbers same(6) | axe c0/s0 | over no | small 0 | money 0 off 0
+watch-1280-light | req same | numbers same(6) | axe c0/s0 | over no | small 0 | money 0 off 0
+watch-375-dark | req same | numbers same(6) | axe c0/s0 | over no | small 0 | money 0 off 0
+watch-375-light | req same | numbers same(6) | axe c0/s0 | over no | small 0 | money 0 off 0
+watch-empty-1280-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+watch-empty-1280-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+watch-empty-375-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+watch-empty-375-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+watch-expired-1280-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+watch-expired-1280-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+watch-expired-375-dark | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+watch-expired-375-light | req same | numbers same(0) | axe c0/s0 | over no | small 0 | money 0 off 0
+TOTAL runs 88, request diffs 0, number diffs 0

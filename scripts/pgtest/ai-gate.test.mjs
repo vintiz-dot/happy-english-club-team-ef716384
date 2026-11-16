@@ -273,10 +273,13 @@ console.log("=== the callers in src/, and the gateway setting ===");
     ok(`${name}: ${users.length} caller file(s) in src/, every one through supabase.functions.invoke (which sends the session's token), none by raw fetch`, viaInvoke && !rawFetch);
     ok(`${name}: verify_jwt = true in supabase/config.toml`, new RegExp(`\\[functions\\.${name}\\]\\nverify_jwt = true`).test(toml));
   }
-  eq("only the two functions that must be public still opt out of the gateway check",
-    [...toml.matchAll(/\[functions\.([a-z-]+)\]\nverify_jwt = false/g)].map((m) => m[1]).sort(), ["parent-video-page", "redeem-access-code"]);
+  // reception-feed (16 Nov 2026): the reception TV has no user session; the function checks a
+  // 48-hex display token from reception_settings (constant-time compare) and returns only screen
+  // data. It calls no AI vendor.
+  eq("only the functions that must be public still opt out of the gateway check",
+    [...toml.matchAll(/\[functions\.([a-z-]+)\]\nverify_jwt = false/g)].map((m) => m[1]).sort(), ["parent-video-page", "reception-feed", "redeem-access-code"]);
   // No page reachable before sign-in calls any of the nine.
-  const publicPages = ["src/pages/Auth.tsx", "src/pages/ResetPassword.tsx", "src/pages/ClaimAccess.tsx", "src/pages/ParentVideos.tsx", "src/pages/OAuthConsent.tsx", "src/pages/NotFound.tsx"];
+  const publicPages = ["src/pages/Auth.tsx", "src/pages/ResetPassword.tsx", "src/pages/ClaimAccess.tsx", "src/pages/ParentVideos.tsx", "src/pages/OAuthConsent.tsx", "src/pages/NotFound.tsx", "src/pages/ReceptionFeedback.tsx"];
   const offenders = publicPages.filter((p) => { try { const t = readFileSync(resolve(repo, p), "utf8"); return Object.keys(NINE).some((n) => t.includes(`"${n}"`)); } catch { return false; } });
   eq("no sign-in, reset, claim, consent or shared-video page calls any of the nine", offenders, []);
 }

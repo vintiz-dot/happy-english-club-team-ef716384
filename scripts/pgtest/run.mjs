@@ -64,7 +64,10 @@ const SUITES = [
   // Voluntary contributions and Settle Bill are removed (D-23): settle-bill
   // is a 410 stub that touches nothing, nothing can create either any more,
   // and the preflight for dropping the write-off reader counts zero.
-  { name: "removed money features", file: "removed-money-features.test.mjs", expect: 35, migrations: [] },
+  { name: "removed money features", file: "removed-money-features.test.mjs", expect: 37, migrations: [] },
+  // scripts/CREDIT-past-unapplied-cash.sql (owner: credit the past leftovers) run for real,
+  // with the real smart-family-payment and delete-payment over the same pglite.
+  { name: "past leftover credit", file: "past-leftover-credit.test.mjs", expect: 29, migrations: [] },
   // The admin tuition list reads the calculator instead of summing invoice
   // rows itself: both real handlers beside the old browser sum, case by case.
   { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },
@@ -187,6 +190,26 @@ const SUITES = [
     ],
   },
   { name: "money guard lib", file: "money-guard-lib.test.mjs", expect: 45, migrations: [] },
+  // D4 step 2: dated class fees (G-16): the guards, the three calculators
+  // bundled, and invoice-status's golden figures re-run with no history
+  // table, with baseline rows and with a future row (all byte-identical).
+  {
+    name: "d4 class fee",
+    file: "d4-class-fee.test.mjs",
+    expect: 174,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261106090000_attendance_enrollment_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261114090000_d4_floors.sql",
+      "20261114091000_d4_core_register.sql",
+      "20261114092000_d4_class_fee_history.sql",
+    ],
+    args: ["scripts/ROLLBACK-d4-3-class-fee.sql"],
+  },
   // D4 step 3A: who is paid for a lesson (G-1 to G-7), the two functions
   // driven per role, and the Stars engine's lesson statements on the guard.
   {
@@ -238,6 +261,81 @@ const SUITES = [
       "20261114093000_d4_lesson_pay_guard.sql",
     ],
   },
+  // D4 step 3B: the money inputs (G-13 to G-21) - enrolments, discounts, pay
+  // rates, unfreezing, family links, hard deletes - over the real enrolment
+  // RPC migrations; the four functions driven per role; and the oracle that
+  // does not trust the reach rules (the real calculators re-run after each
+  // edit made behind the guard's back).
+  {
+    name: "d4 money inputs",
+    file: "d4-money-inputs.test.mjs",
+    expect: 308,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261106090000_attendance_enrollment_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261114090000_d4_floors.sql",
+      "20261114091000_d4_core_register.sql",
+      "20261106100000_attendance_guard_no_auto_changes.sql",
+      "20261106100001_date_aware_enrollment_changes.sql",
+      "20261113120000_pause_enrollment_admin_only.sql",
+      "20260403051502_c6a09ad3-08c3-4ee2-ac06-2637acd66dff.sql",
+      "20261114094000_d4_money_inputs_guard.sql",
+    ],
+    args: ["scripts/ROLLBACK-d4-5-money-inputs.sql"],
+  },
+  {
+    name: "d4 functions inputs",
+    file: "d4-functions-inputs.test.mjs",
+    expect: 62,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261106090000_attendance_enrollment_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261114090000_d4_floors.sql",
+      "20261114091000_d4_core_register.sql",
+      "20261106100000_attendance_guard_no_auto_changes.sql",
+      "20261106100001_date_aware_enrollment_changes.sql",
+      "20261113120000_pause_enrollment_admin_only.sql",
+      "20260403051502_c6a09ad3-08c3-4ee2-ac06-2637acd66dff.sql",
+      "20261114094000_d4_money_inputs_guard.sql",
+    ],
+  },
+  {
+    name: "d4 reach oracle",
+    file: "d4-reach-oracle.test.mjs",
+    expect: 200,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261106090000_attendance_enrollment_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261114090000_d4_floors.sql",
+      "20261114091000_d4_core_register.sql",
+      "20261106100000_attendance_guard_no_auto_changes.sql",
+      "20261106100001_date_aware_enrollment_changes.sql",
+      "20261113120000_pause_enrollment_admin_only.sql",
+      "20260403051502_c6a09ad3-08c3-4ee2-ac06-2637acd66dff.sql",
+      "20261114094000_d4_money_inputs_guard.sql",
+    ],
+  },
+  // The wording of the money-input dialogs, and the static scans (no raw
+  // writer of a money input left in src, no service-key writer off the
+  // allow-list, nothing in the MCP tools).
+  { name: "money inputs lib", file: "money-inputs-lib.test.mjs", expect: 43, migrations: [] },
+  // D4 integration: steps 2, 3A, 3B pasted on 1a + 1b in the planned order,
+  // each alone and in every order; every later file's preflight pins still
+  // match; the fingerprint after each; the rollback chain back to 1b and to
+  // the D release. Builds its own databases (one child process per scenario).
+  { name: "d4 apply chain", file: "d4-apply-chain.test.mjs", expect: 238, migrations: [] },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.
@@ -276,6 +374,9 @@ const SUITES = [
   // teacher, an admin, a TA, a parent and nobody call it.
   { name: "teacher payroll view", file: "teacher-payroll-view.test.mjs", migrations: [] },
   { name: "teacher payroll function", file: "teacher-payroll.test.mjs", migrations: [] },
+  // TA-PAY: a teaching assistant reads their own row (JWT-scoped), and the
+  // TA screens show calculate-payroll's figures, open and closed month.
+  { name: "TA payroll function", file: "ta-payroll.test.mjs", migrations: [] },
   {
     name: "pay-rate history",
     file: "payhist.mjs",
@@ -520,6 +621,9 @@ const SUITES = [
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261021090000_staff_pay_rate_history.sql",
       "20261116093000_staff_pay_not_for_every_account.sql", "20261116094000_teacher_storage_by_class.sql", "20261113140000_creator_rows_need_class_staff.sql"],
   },
+  // F-23: public/_headers (the inline-script hash, the hosts the code fetches from, the service
+  // worker's exemption) and the /csp-report Pages Function. docs/evidence/CSP.md.
+  { name: "content security policy (F-23)", file: "csp-headers.test.mjs", migrations: [], expect: 30 },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",

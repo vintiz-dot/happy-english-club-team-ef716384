@@ -15,6 +15,8 @@ import { format } from "date-fns";
 import { Calculator, Loader2, Eye, CheckCircle2, AlertCircle, Users, Settings2 } from "lucide-react";
 import { formatVND } from "@/lib/invoice/formatter";
 import { useIvory } from "@/hooks/useIvory";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 interface PreviewResult {
   family_id: string;
@@ -116,30 +118,39 @@ export function SiblingDiscountCompute() {
     }
   };
 
+  // D4 step 3B (G-19): a family's sibling percentage is read at calculation
+  // time for every month, so it is a checked change made as the signed-in
+  // admin. A family with nothing billed yet: tier 0, saved at once. A family
+  // with billed months: the dialog asks for a reason.
+  const overrideSaved = async (percent: unknown) => {
+    toast({
+      title: "Saved",
+      description: Number(percent) === 0
+        ? "Sibling discount disabled for this family"
+        : `Sibling discount set to ${percent}%`,
+    });
+    // Re-run preview to get updated calculations
+    await handlePreview();
+  };
+  const money = useMoneyInput((_result, request) => {
+    void overrideSaved(request.args.percent);
+  });
+
   const handleSaveFamilyOverride = async (familyId: string) => {
     try {
       setSavingOverride(familyId);
       const override = familyOverrides[familyId];
-      
+
       // If disabled, set to 0; otherwise use the percent value
       const percentValue = override.disabled ? 0 : override.percent;
-      
-      const { error } = await supabase
-        .from('families')
-        .update({ sibling_percent_override: percentValue })
-        .eq('id', familyId);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Saved",
-        description: override.disabled 
-          ? "Sibling discount disabled for this family" 
-          : `Sibling discount set to ${percentValue}%`,
+
+      const r = await money.run({
+        entity: "family_link",
+        op: "set_sibling_percent",
+        args: { family_id: familyId, percent: percentValue },
       });
-      
-      // Re-run preview to get updated calculations
-      await handlePreview();
+      if (r.status === "refused") throw new Error(r.message);
+      if (r.status === "done" && !r.unchanged) await overrideSaved(percentValue);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -454,6 +465,10 @@ export function SiblingDiscountCompute() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <MoneyInputDialog
+        guard={money.guard}
+        subject={previewResults?.find((r) => r.family_id === money.guard.request?.args?.family_id)?.family_name}
+      />
     </>
   );
 }

@@ -203,29 +203,29 @@ export default function FamilyDashboard() {
 
   return (
     <Layout title="Family Dashboard">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="mx-auto max-w-6xl space-y-8">
         {/* Hero */}
-        <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-amber-400 to-pink-500 flex items-center justify-center shadow-md">
-            <Users className="h-6 w-6 text-white" />
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hec-lg border border-hec-line bg-hec-sunken">
+            <Users className="h-5 w-5 text-hec-ink-soft" />
           </div>
-          <div>
-            <h1 className="text-xl font-black">Your family at Happy English Club</h1>
-            <p className="text-xs text-muted-foreground">
+          <div className="min-w-0 flex-1 space-y-2">
+            <h1 className="text-balance font-display text-hec-display font-medium text-hec-ink">Your family at Happy English Club</h1>
+            <p className="text-hec-small text-hec-ink-soft">
               Progress, lessons and homework for your children — and an assistant for any question.
             </p>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-6 items-start">
+        <div className="grid items-start gap-6 lg:grid-cols-5">
           {/* Children column */}
-          <div className="lg:col-span-3 space-y-4">
+          <div className="space-y-4 lg:col-span-3">
             {isLoading && (
-              <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">Loading your children…</CardContent></Card>
+              <Card><CardContent className="py-12 text-center text-hec-body text-hec-ink-soft sm:py-12">Loading your children…</CardContent></Card>
             )}
             {!isLoading && children.length === 0 && (
               <Card>
-                <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                <CardContent className="py-12 text-center text-hec-body text-hec-ink-soft sm:py-12">
                   No students are linked to your family account yet — please contact the school.
                 </CardContent>
               </Card>
@@ -238,30 +238,30 @@ export default function FamilyDashboard() {
                 transition={{ delay: i * 0.06 }}
               >
                 <Card className="overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-full p-[2px] bg-gradient-to-br from-violet-500 via-blue-400 to-cyan-400">
-                        <Avatar className="h-12 w-12 ring-2 ring-background">
+                  <CardHeader className="pb-4 sm:pb-4">
+                    <div className="flex items-start gap-3">
+                      <div className="shrink-0 rounded-full">
+                        <Avatar className="h-12 w-12 border border-hec-line">
                           <AvatarImage src={kid.avatar_url || undefined} alt={kid.full_name} />
-                          <AvatarFallback>
+                          <AvatarFallback className="bg-hec-sunken text-hec-small font-medium text-hec-ink-soft">
                             {kid.full_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
                           </AvatarFallback>
                         </Avatar>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <CardTitle className="text-base">{kid.full_name}</CardTitle>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <CardTitle className="whitespace-normal break-words hyphens-none text-balance">{kid.full_name}</CardTitle>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
                           {kid.cefr && (
-                            <Badge className="bg-violet-500/15 text-violet-600 gap-1">
-                              <GraduationCap className="h-3 w-3" />{kid.cefr}
+                            <Badge variant="brass" className="gap-1">
+                              <GraduationCap className="h-4 w-4 shrink-0" />{kid.cefr}
                             </Badge>
                           )}
-                          <Badge variant="secondary" className="gap-1">
-                            <Star className="h-3 w-3 text-amber-500" />{kid.total_points} pts
+                          <Badge variant="secondary" className="gap-1 tabular-nums">
+                            <Star className="h-4 w-4 shrink-0 text-hec-brass" />{kid.total_points} pts
                           </Badge>
                           {kid.attendance.total > 0 && (
-                            <Badge variant="secondary" className="gap-1">
-                              <CalendarCheck className="h-3 w-3 text-emerald-500" />
+                            <Badge variant="secondary" className="gap-1 tabular-nums">
+                              <CalendarCheck className="h-4 w-4 shrink-0 text-hec-leaf" />
                               {kid.attendance.present}/{kid.attendance.total} classes (30d)
                             </Badge>
                           )}
@@ -271,31 +271,31 @@ export default function FamilyDashboard() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {kid.journey && (
-                      <div className="rounded-xl bg-muted/40 ring-1 ring-border/50 p-3">
-                        <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-1">
-                          <TrendingUp className="h-3 w-3 text-violet-500" />Learning journey
+                      <div className="rounded-hec-md border border-hec-line bg-hec-sunken p-4">
+                        <p className="mb-2 flex items-center gap-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
+                          <TrendingUp className="h-4 w-4 shrink-0" />Learning journey
                         </p>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{kid.journey}</p>
+                        <p className="text-hec-small text-hec-ink">{kid.journey}</p>
                       </div>
                     )}
                     {kid.lessons.length > 0 && (
                       <div className="space-y-2">
-                        <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                          <BookOpen className="h-3 w-3 text-blue-500" />Recent lessons
+                        <p className="flex items-center gap-2 text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">
+                          <BookOpen className="h-4 w-4 shrink-0" />Recent lessons
                         </p>
                         {kid.lessons.map((l, k) => (
-                          <div key={k} className="rounded-lg border px-3 py-2">
-                            <p className="text-xs font-semibold">
+                          <div key={k} className="rounded-hec-md border border-hec-line px-4 py-3">
+                            <p className="text-hec-small font-semibold text-hec-ink">
                               {l.title || "Lesson"}{" "}
-                              <span className="font-normal text-muted-foreground">· {l.lesson_date}</span>
+                              <span className="whitespace-nowrap font-normal tabular-nums text-hec-ink-soft">· {l.lesson_date}</span>
                             </p>
                             {l.summary && (
-                              <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{l.summary}</p>
+                              <p className="mt-1 line-clamp-2 text-hec-caption text-hec-ink-soft">{l.summary}</p>
                             )}
                             {l.homework && (
-                              <p className="text-[11px] mt-1 flex items-start gap-1">
-                                <NotebookPen className="h-3 w-3 text-amber-500 shrink-0 mt-0.5" />
-                                <span><span className="font-semibold">Homework:</span> {l.homework}</span>
+                              <p className="mt-2 flex items-start gap-2 text-hec-caption text-hec-ink">
+                                <NotebookPen className="mt-0.5 h-4 w-4 shrink-0 text-hec-ink-soft" />
+                                <span className="min-w-0"><span className="font-semibold">Homework:</span> {l.homework}</span>
                               </p>
                             )}
                           </div>
@@ -309,15 +309,15 @@ export default function FamilyDashboard() {
           </div>
 
           {/* Assistant column */}
-          <div className="lg:col-span-2 lg:sticky lg:top-24">
+          <div className="lg:sticky lg:top-24 lg:col-span-2">
             <Card className="flex flex-col h-[min(72vh,640px)]">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-violet-500" />
+              <CardHeader className="pb-2 sm:pb-2">
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 shrink-0 text-hec-ink-soft" />
                   Ask about your child
                 </CardTitle>
-                <CardDescription className="text-xs flex items-center gap-1">
-                  <MessageCircleQuestion className="h-3 w-3" />
+                <CardDescription className="flex items-start gap-2">
+                  <MessageCircleQuestion className="mt-0.5 h-4 w-4 shrink-0" />
                   English or Tiếng Việt — it only sees your own children's records.
                 </CardDescription>
               </CardHeader>

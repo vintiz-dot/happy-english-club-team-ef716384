@@ -61,11 +61,17 @@ eq("/schedule as teacher", isIvoryRoute("/schedule", "", undefined, false, "teac
 eq("/schedule as family stays old (R23)", isIvoryRoute("/schedule", "", undefined, false, "family"), false);
 eq("/schedule as student stays old", isIvoryRoute("/schedule", "", undefined, false, "student"), false);
 eq("/schedule while the role is unknown stays old", isIvoryRoute("/schedule"), false);
-eq("parent dashboard not migrated yet", isIvoryRoute("/family/dashboard", "", undefined, false, "family"), false);
-eq("parent videos not migrated yet", isIvoryRoute("/watch/abc"), false);
-eq("sign-in not migrated yet", isIvoryRoute("/auth"), false);
-eq("claim not migrated yet", isIvoryRoute("/claim"), false);
-eq("home not migrated yet", isIvoryRoute("/", "", undefined, false, "family"), false);
+// R23, the parent + public flip
+eq("parent dashboard flipped (R23)", isIvoryRoute("/family/dashboard", "", undefined, false, "family"), true);
+eq("parent videos flipped (R23)", isIvoryRoute("/watch/abc"), true);
+eq("parent videos needs a token", isIvoryRoute("/watch"), false);
+eq("sign-in flipped (R23)", isIvoryRoute("/auth"), true);
+eq("password reset flipped (R23)", isIvoryRoute("/auth/reset-password"), true);
+eq("claim flipped (R23)", isIvoryRoute("/claim"), true);
+eq("family hub on / flipped (R23)", isIvoryRoute("/", "", undefined, false, "family"), true);
+eq("teacher hub on / stays old", isIvoryRoute("/", "", undefined, false, "teacher"), false);
+eq("/ while the role is unknown stays old", isIvoryRoute("/"), false);
+eq("OAuth consent not in the R23 list", isIvoryRoute("/.lovable/oauth/consent"), false);
 eq("/tuition as student", isIvoryRoute("/tuition", "", undefined, false, "student"), true);
 eq("/tuition as family", isIvoryRoute("/tuition", "", undefined, false, "family"), true);
 eq("/tuition as admin (R21)", isIvoryRoute("/tuition", "", undefined, false, "admin"), true);

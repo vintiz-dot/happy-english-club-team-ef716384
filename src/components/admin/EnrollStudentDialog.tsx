@@ -22,6 +22,8 @@ import {
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { useMoneyInput } from "@/components/admin/money-guard/useMoneyInput";
+import { MoneyInputDialog } from "@/components/admin/money-guard/MoneyInputDialog";
 
 interface EnrollStudentDialogProps {
   open: boolean;
@@ -60,6 +62,17 @@ export function EnrollStudentDialog({
     (c) => !existingClassIds.includes(c.id)
   );
 
+  // D4 step 3B (G-13): enrolling is a checked change made as the signed-in
+  // admin. From today on it is tier 0 (no dialog, one row written); a start
+  // date in a month already taught opens the reason dialog.
+  const enrolled = () => {
+    toast.success("Student enrolled successfully");
+    onSuccess();
+    onOpenChange(false);
+    setClassId("");
+  };
+  const money = useMoneyInput(enrolled);
+
   const handleSubmit = async () => {
     if (!classId || !startDate) {
       toast.error("Please select a class and start date");
@@ -67,16 +80,13 @@ export function EnrollStudentDialog({
     }
     setSubmitting(true);
     try {
-      const { error } = await supabase.from("enrollments").insert({
-        student_id: studentId,
-        class_id: classId,
-        start_date: startDate,
+      const r = await money.run({
+        entity: "enrollment",
+        op: "enroll",
+        args: { student_id: studentId, class_id: classId, start_date: startDate },
       });
-      if (error) throw error;
-      toast.success("Student enrolled successfully");
-      onSuccess();
-      onOpenChange(false);
-      setClassId("");
+      if (r.status === "done") enrolled();
+      else if (r.status === "refused") toast.error(r.message);
     } catch (err: any) {
       toast.error(err.message || "Failed to enroll student");
     } finally {
@@ -133,6 +143,7 @@ export function EnrollStudentDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <MoneyInputDialog guard={money.guard} subject={classes?.find((c) => c.id === classId)?.name} />
     </Dialog>
   );
 }

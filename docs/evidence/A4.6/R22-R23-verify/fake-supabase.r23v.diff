@@ -1,0 +1,49 @@
+﻿diff --git a/C:/Users/Dell/hec-tools/r21-harness/preview-editor/fake-supabase.ts b/C:/Users/Dell/hec-tools/r23v-harness/preview/fake-supabase.ts
+index d30a74b7..e6569070 100644
+--- a/C:/Users/Dell/hec-tools/r21-harness/preview-editor/fake-supabase.ts
++++ b/C:/Users/Dell/hec-tools/r23v-harness/preview/fake-supabase.ts
+@@ -220,6 +220,8 @@ class Q implements PromiseLike<any> {
+   exec() {
+     track('from', this.table, this.method); if (this.method !== 'select') { const pl = Array.isArray(this.payload) ? this.payload[0] : this.payload; w.__payloads.push({ table: this.table, method: this.method, keys: pl ? Object.keys(pl).sort() : [], payload: copy(this.payload) }); }
+     let rows = (db[this.table] || []).filter((r) => this.filters.every((f) => matchFilter(r, f)));
++    // R23v: RLS stand-in - a family account reads only its own children (made-up family f-0001); fake_family_empty: none.
++    if (this.method === 'select' && this.table === 'students' && roleKey() === 'family') { let empty = false; try { empty = localStorage.getItem('fake_family_empty') === '1'; } catch {} rows = empty ? [] : rows.filter((r) => r.family_id === 'f-0001'); }
+     if (this.method !== 'select') {
+       const echo = Array.isArray(this.payload) ? this.payload : this.payload ? [this.payload] : [];
+       return { data: this.one ? (echo[0] ?? null) : copy(echo), error: null, count: null, status: 200, statusText: 'OK' };
+@@ -241,6 +243,22 @@ class Q implements PromiseLike<any> {
+ 
+ // edge function / rpc canned answers: only what is needed for screens to render; everything else returns empty.
+ function fnAnswer(name: string, body: any) {
++  // R23v: the family hub's TuitionCard reads calculate-tuition's top-level fields (made-up bills, family role only).
++  if (name === 'calculate-tuition' && roleKey() === 'family') {
++    const F: Record<string, any> = {
++      's-0001': { baseAmount: 1440000, sessionCount: 9, totalDiscount: 194000, totalAmount: 1246000, discounts: [{ name: 'Sibling discount', type: 'percent', value: 10, amount: 144000, isSiblingWinner: true, appliedToClass: 'c-0001' }, { name: 'Early payment', type: 'fixed', value: 50000, amount: 50000 }], siblingState: { status: 'assigned', percent: 10, isWinner: true, winnerClassId: 'c-0001' }, carry: { payable: 1096000 }, recorded_payment: 600000 },
++      's-0002': { baseAmount: 1600000, sessionCount: 8, totalDiscount: 0, totalAmount: 1600000, discounts: [], siblingState: { status: 'assigned', percent: 10, isWinner: false }, carry: { payable: 1450000 } },
++      's-0013': { baseAmount: 1800000, sessionCount: 10, totalDiscount: 0, totalAmount: 1800000, discounts: [], siblingState: { status: 'pending', percent: 0, isWinner: false, reason: 'pending' }, carry: { payable: 1950000 } },
++    };
++    return F[body?.studentId] || { baseAmount: 0, sessionCount: 0, totalDiscount: 0, totalAmount: 0, discounts: [], siblingState: null };
++  }
++  if (name === 'parent-video-page') {
++    if (body?.token === 't-empty') return { student: { name: 'Nguyễn Minh Anh' }, videos: [] };
++    return { student: { name: 'Nguyễn Hoàng Phương Thảo Nguyên' }, videos: [
++      { id: 'pv-1', title: 'My family - a short talk about my mother, my father and my little brother', date: '2026-11-10', url: 'data:video/mp4;base64,', grade: 'A', feedback: 'Clear voice and good eye contact.\nNext time: say "brother" with a softer "th".' },
++      { id: 'pv-2', title: 'Colours', date: '2026-11-03', url: 'data:video/mp4;base64,', grade: null, feedback: null },
++    ] };
++  }
+   if (name === 'calculate-tuition' || name === 'calculate-tuition-bulk') {
+     const inv = db.invoices.find((i) => i.student_id === body?.studentId) || db.invoices[0];
+     return { tuition: { baseAmount: inv.base_amount, discountAmount: inv.discount_amount, totalAmount: inv.total_amount, classBreakdown: [], siblingState: { status: 'resolved' } }, invoices: db.invoices.map((i) => ({ studentId: i.student_id, month: i.month, totalAmount: i.total_amount, baseAmount: i.base_amount, discountAmount: i.discount_amount, siblingState: { status: 'resolved' } })), siblingState: { status: 'resolved' } };
+@@ -309,9 +327,10 @@ const session = () => { const r = roleKey(); const id = userForRole(r); return i
+ export const supabase: any = {
+   from: (t: string) => new Q(t),
+   rpc: (name: string, args?: any) => { track('rpc', name); let hw = false; try { hw = localStorage.getItem('fake_hw') === '1'; } catch {} const data = name === 'get_student_homeworks' && hw ? { homeworks: (db.homeworks || []).map((h: any) => ({ ...h, classes: { name: (db.classes.find((c: any) => c.id === h.class_id) || {}).name } })), submissions: [] } : (name.startsWith('is_') || name.startsWith('has_') ? true : null); return new Promise((r) => setTimeout(() => r({ data, error: null }), 15)); },
+-  functions: { invoke: (name: string, opts?: any) => { track('function', name); return new Promise((r) => setTimeout(() => r({ data: fnAnswer(name, opts?.body), error: null }), 25)); } },
++  functions: { invoke: (name: string, opts?: any) => { track('function', name); if (name === 'parent-video-page' && opts?.body?.token === 't-expired') return new Promise((r) => setTimeout(() => r({ data: null, error: { message: 'Edge Function returned a non-2xx status code' } }), 25)); return new Promise((r) => setTimeout(() => r({ data: fnAnswer(name, opts?.body), error: null }), 25)); } },
+   auth: {
+-    getSession: async () => ({ data: { session: session() }, error: null }),
++    // R23v fake_guard_once: StartupGuard's session check fails (so a signed-in family can stay on /); every other caller gets the session.
++    getSession: async () => { let g = false; try { g = localStorage.getItem('fake_guard_once') === '1'; } catch {} if (g && /StartupGuard/.test(String(new Error().stack))) return { data: { session: null }, error: { message: 'fake guard' } }; return { data: { session: session() }, error: null }; },
+     getUser: async () => ({ data: { user: session()?.user ?? null }, error: null }),
+     onAuthStateChange: (cb: any) => { listeners.push(cb); setTimeout(() => cb('INITIAL_SESSION', session()), 0); return { data: { subscription: { unsubscribe() {} } } }; },
+     signOut: async () => ({ error: null }), refreshSession: async () => ({ data: { session: session() }, error: null }),
