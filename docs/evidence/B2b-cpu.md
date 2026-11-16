@@ -88,3 +88,20 @@ Reading:
 - large-v3-turbo is the best local model on every real-speech input (clips 0.874, lesson slice 0.841: at or above the vendors' own mutual agreement), and cheaper than medium (5.6 vs 7.7 CPU-seconds per audio second). Medium is dominated: slower than turbo and not better. On the synthetic mixes turbo writes fewer words (half the vendors'); all local models stay below the vendors there.
 - CPU-seconds per audio second are steadier than wall RTF under load, but NOT load-free: the same small configuration with identical output cost 2.55 and 3.09 CPU-s/s in two runs (hyper-thread siblings and caches shared with other agents make each CPU-second do less work). Treat them as upper bounds with about +-25 % noise.
 - Peak private memory (3-6 GB) is far above the working set (1-2 GB) because free RAM hit zero during every run and Windows trimmed the process; the private figure is what a server must reserve. An 8 GB machine runs turbo; 4 GB would be tight.
+
+## 5. Diarization and identification (4 threads, UNDER LOAD)
+
+Quality on B2's inputs (the six tuning mixes seed7_ov05_s500 + seed7_ov15_s500, 26.1 min, collar 0.25 s), recomputed in the same run as the timing: both reproduce B2 exactly.
+
+| diarizer | DER mean (B2) | DER pooled: miss / false alarm / confusion | clusters found vs true (6 mixes) | wall RTF on the mixes | CPU-s per audio s | others' CPU | free RAM min | peak working set / private |
+|---|---|---|---|---|---|---|---|---|
+| own: energy VAD + 1.5 s chunks + 3D-Speaker CAM++ + AHC, threshold 0.1 (B2's best) | **0.579** (0.579) | 0.568: 0.203 / 0.000 / 0.365 | 4/3, 4/3, 4/4, 5/3, 4/4, 5/5 | 0.095 | 0.17 | 77 % | 7.65 GB | 0.26 / 0.67 GB |
+| sherpa-onnx: pyannote segmentation-3.0 ONNX + WeSpeaker CAM++ + fast clustering, threshold 0.5 | 0.663 (0.663) | 0.684: 0.031 / 0.050 / 0.604 | 5/3, 16/3, 15/4, 6/3, 14/4, 15/5 | 0.749 | 1.99 | 75 % | 4.04 GB | 0.35 / 0.78 GB |
+| B1 vendors on the 5 % / 15 % room mixes, for comparison | azure-multilingual 0.297 / 0.452, azure en-vi 0.267 / 0.499, gemini 0.263 / 0.562, gpt-4o-diarize 0.516 / 0.691 (pooled DER by condition, B1 table a) | | | | | | | |
+
+On a real lesson (L2, first 10 min, UNVERIFIED - no reference): own diarizer 28 s wall (RTF 0.047, 0.15 CPU-s/s, 3.1 cores, others 61 %), 6 clusters (5 with >= 10 s); sherpa 348 s (RTF 0.58, 1.67 CPU-s/s), 31 clusters (9 with >= 10 s). Sherpa's native call holds the Python lock, so the per-second sampler got no samples in that run; its load figures are missing (the script now falls back to start/end counters).
+
+Identification (SpeechBrain ECAPA, B2's chosen model): embedding 132 turn-like spans (>= 1 s, <= 6 s) from L2's first 10 min = 383.7 s of speech took 474.6 s wall (RTF 1.24 per turn-second, 1.58 CPU-s per turn-second, 1.3 cores, others 84 %), peak 0.54 / 1.32 GB, model load 110 s. Scoring against 21 voiceprints with AS-norm is negligible next to that. No embedding was saved.
+Quality is B2's and unchanged (same model, same code, same units): closed-set top-1 68.4 %; at T = 6.0 (1 % false accept) about 18.5 % of single turns and about half of 10-s clusters named, the rest UNKNOWN; real-lesson clusters 0 named at T 6.0 (UNVERIFIED). Nothing in B2b changes that verdict; CPU is not the limit for identification, the enrolment audio is.
+
+Reading: local diarization is cheap on CPU (own diarizer about 1/20 of real time even under load) but poor (DER 0.57-0.66 vs 0.26-0.56 for the vendors on the same mixes). The diarizer, not the CPU, is the weak link of a local pipeline. Identification costs about one CPU-second and a half per second of cluster speech embedded; B2's matcher embeds at most 60 turns per cluster, so its cost is bounded per cluster, not per lesson minute.
