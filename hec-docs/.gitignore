@@ -5,3 +5,4 @@ dist/
 qa/out/
 qa/report-*.json
 *.log
+app/generated/

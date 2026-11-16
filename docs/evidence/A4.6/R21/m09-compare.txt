@@ -1,0 +1,60 @@
+auto-dates-1280-dark: req eq | main eq (74) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+auto-dates-1280-light: req eq | main eq (74) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+auto-dates-375-dark: req eq | main eq (74) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+auto-dates-375-light: req eq | main eq (74) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+auto-gen-1280-dark: req eq | main eq (1) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+auto-gen-1280-light: req eq | main eq (1) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+auto-gen-375-dark: req eq | main eq (1) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+auto-gen-375-light: req eq | main eq (1) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+close-month-1280-dark: req eq | main eq (18) | dialog eq (5) | amounts 13 serif 0 non-tab 0
+close-month-1280-light: req eq | main eq (18) | dialog eq (5) | amounts 13 serif 0 non-tab 0
+close-month-375-dark: req eq | main eq (18) | dialog eq (5) | amounts 13 serif 0 non-tab 0
+close-month-375-light: req eq | main eq (18) | dialog eq (5) | amounts 13 serif 0 non-tab 0
+fin-bulk-1280-dark: req eq | main eq (3) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+fin-bulk-1280-light: req eq | main eq (3) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+fin-bulk-375-dark: req eq | main eq (3) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+fin-bulk-375-light: req eq | main eq (3) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+fin-select-1280-dark: req eq | main eq (45) | dialog eq (0) | amounts 16 serif 0 non-tab 0
+fin-select-1280-light: req eq | main eq (45) | dialog eq (0) | amounts 16 serif 0 non-tab 0
+fin-select-375-dark: req eq | main eq (45) | dialog eq (0) | amounts 16 serif 0 non-tab 0
+fin-select-375-light: req eq | main eq (45) | dialog eq (0) | amounts 16 serif 0 non-tab 0
+fin-table-1280-dark: req eq | main eq (71) | dialog eq (0) | amounts 44 serif 0 non-tab 0
+fin-table-1280-light: req eq | main eq (71) | dialog eq (0) | amounts 44 serif 0 non-tab 0
+fin-table-375-dark: req eq | main eq (43) | dialog eq (0) | amounts 16 serif 0 non-tab 0 | ERR/ACT locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('radio', { name: 'Table view' }).first()[22m
+ ; locator.click: Timeout 30000ms
+fin-table-375-light: req eq | main eq (43) | dialog eq (0) | amounts 16 serif 0 non-tab 0 | ERR/ACT locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('radio', { name: 'Table view' }).first()[22m
+ ; locator.click: Timeout 30000ms
+fin-tuition-1280-dark: req eq | main eq (43) | dialog eq (0) | amounts 16 serif 0 non-tab 0
+fin-tuition-1280-light: req eq | main eq (43) | dialog eq (0) | amounts 16 serif 0 non-tab 0
+fin-tuition-375-dark: req eq | main eq (43) | dialog eq (0) | amounts 16 serif 0 non-tab 0
+fin-tuition-375-light: req eq | main eq (43) | dialog eq (0) | amounts 16 serif 0 non-tab 0
+fin-tuition-open-1280-dark: req eq | main eq (47) | dialog eq (0) | amounts 20 serif 0 non-tab 0
+fin-tuition-open-1280-light: req eq | main eq (47) | dialog eq (0) | amounts 20 serif 0 non-tab 0
+fin-tuition-open-375-dark: req eq | main eq (47) | dialog eq (0) | amounts 20 serif 0 non-tab 0
+fin-tuition-open-375-light: req eq | main eq (47) | dialog eq (0) | amounts 20 serif 0 non-tab 0
+review-1280-dark: req eq | main eq (18) | dialog eq (0) | amounts 9 serif 0 non-tab 0
+review-1280-light: req eq | main eq (18) | dialog eq (0) | amounts 9 serif 0 non-tab 0
+review-375-dark: req eq | main eq (18) | dialog eq (0) | amounts 9 serif 0 non-tab 0
+review-375-light: req eq | main eq (18) | dialog eq (0) | amounts 9 serif 0 non-tab 0
+review-open-1280-dark: req eq | main eq (22) | dialog eq (0) | amounts 13 serif 0 non-tab 0
+review-open-1280-light: req eq | main eq (22) | dialog eq (0) | amounts 13 serif 0 non-tab 0
+review-open-375-dark: req eq | main eq (22) | dialog eq (0) | amounts 13 serif 0 non-tab 0
+review-open-375-light: req eq | main eq (22) | dialog eq (0) | amounts 13 serif 0 non-tab 0
+student-tuition-1280-dark: req eq | main eq (38) | dialog eq (0) | amounts 13 serif 0 non-tab 0
+student-tuition-1280-light: req eq | main eq (38) | dialog eq (0) | amounts 13 serif 0 non-tab 0
+student-tuition-375-dark: req eq | main eq (38) | dialog eq (0) | amounts 13 serif 0 non-tab 0
+student-tuition-375-light: req eq | main eq (38) | dialog eq (0) | amounts 13 serif 0 non-tab 0
+student-tuition-open-1280-dark: req eq | main eq (42) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+student-tuition-open-1280-light: req eq | main eq (42) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+student-tuition-open-375-dark: req eq | main eq (42) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+student-tuition-open-375-light: req eq | main eq (42) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+tuition-admin-1280-dark: req eq | main eq (38) | dialog eq (0) | amounts 13 serif 0 non-tab 0
+tuition-admin-1280-light: req eq | main eq (38) | dialog eq (0) | amounts 13 serif 0 non-tab 0
+tuition-admin-375-dark: req eq | main eq (38) | dialog eq (0) | amounts 13 serif 0 non-tab 0
+tuition-admin-375-light: req eq | main eq (38) | dialog eq (0) | amounts 13 serif 0 non-tab 0
+runs 52: requests equal 52, <main> numbers equal 52, dialog numbers equal 52; amount nodes after 640: serif 0, not tabular 0; runs with an error/action error on either side 2
+amount colours after: [["rgb(239, 232, 215)",310],["rgb(189, 185, 173)",10],["rgb(19, 29, 53)",310],["rgb(68, 77, 100)",10]]

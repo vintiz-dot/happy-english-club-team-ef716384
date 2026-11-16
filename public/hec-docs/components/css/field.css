@@ -1,0 +1,13 @@
+/* field: a labelled value in an outlined box (eyebrow label, bold value). */
+.field {
+  border: var(--border-hairline) solid var(--color-gold);
+  border-radius: var(--border-radius);
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  break-inside: avoid;
+}
+.field__label { margin-bottom: var(--space-0-5); }
+.field__value { font-size: var(--size-md); font-weight: var(--font-weight-bold); line-height: var(--leading-tight); overflow-wrap: anywhere; }
+/* flow: even vertical rhythm between the direct children of a block. */
+.flow > * + * { margin-top: var(--space-2); }
+.flow--lg > * + * { margin-top: var(--space-3); }
+.equal { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: stretch; }

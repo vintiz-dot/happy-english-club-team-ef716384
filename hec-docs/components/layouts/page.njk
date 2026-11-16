@@ -11,10 +11,10 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
 <title>{% block title %}{{ doc.title }}{% endblock %}</title>
-<link rel="stylesheet" href="/fonts/fonts.css">
+<link rel="stylesheet" href="{{ assetBase }}/fonts/fonts.css">
 <style>{{ tenant.css | safe }}</style>
-<link rel="stylesheet" href="/components/hec.css">
-{% for s in componentStyles %}<link rel="stylesheet" href="/components/css/{{ s }}">
+<link rel="stylesheet" href="{{ assetBase }}/components/hec.css">
+{% for s in componentStyles %}<link rel="stylesheet" href="{{ assetBase }}/components/css/{{ s }}">
 {% endfor %}
 {% set v = tenant.vars %}
 <style>
@@ -26,7 +26,7 @@
     content: "";
     width: 9mm;
     margin-bottom: 4mm;
-    background: url("/tenant/{{ tenant.logo.file }}") left bottom / contain no-repeat;
+    background: url("{{ assetBase }}/tenant/{{ tenant.logo.file }}") left bottom / contain no-repeat;
   }
   @top-right {
     content: {{ (runningTitle if runningTitle is defined else doc.title) | cssstr }};

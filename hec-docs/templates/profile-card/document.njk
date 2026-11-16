@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
 <title>{{ doc.title }}</title>
-<link rel="stylesheet" href="/fonts/fonts.css">
+<link rel="stylesheet" href="{{ assetBase }}/fonts/fonts.css">
 <style>{{ tenant.css | safe }}</style>
-<link rel="stylesheet" href="/components/hec.css">
-{% for s in componentStyles %}<link rel="stylesheet" href="/components/css/{{ s }}">
+<link rel="stylesheet" href="{{ assetBase }}/components/hec.css">
+{% for s in componentStyles %}<link rel="stylesheet" href="{{ assetBase }}/components/css/{{ s }}">
 {% endfor %}
 </head>
 <body class="doc doc--{{ doc.type }} variant--{{ variant }}">
@@ -33,7 +33,7 @@
     {{ st.stat_tile(data.currentStreak, "Streak", "flame") }}
   </div>
   <div class="keepsake__foot">
-    <img class="keepsake__logo" src="/tenant/{{ tenant.logo.file }}" alt="{{ tenant.logo.alt }}">
+    <img class="keepsake__logo" src="{{ assetBase }}/tenant/{{ tenant.logo.file }}" alt="{{ tenant.logo.alt }}">
     <div class="keepsake__brand">
       <div class="keepsake__wm">Happy English Club ✨</div>
       <div class="keepsake__tag">{{ tenant.tagline }}</div>

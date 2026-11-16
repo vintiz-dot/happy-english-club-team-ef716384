@@ -14,14 +14,14 @@ export function AssignmentsOverview() {
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <BookOpen className="h-6 w-6" /> Assignments Overview
+          <h2 className="flex items-center gap-2 font-display text-hec-h1 font-medium text-hec-ink">
+            <BookOpen className="h-6 w-6 shrink-0 text-hec-ink-soft" aria-hidden /> Assignments Overview
           </h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 rounded-hec-lg" />)}
         </div>
-        <Skeleton className="h-[400px] rounded-xl" />
+        <Skeleton className="h-[400px] rounded-hec-lg" />
       </div>
     );
   }
@@ -31,14 +31,14 @@ export function AssignmentsOverview() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <BookOpen className="h-6 w-6" /> Assignments Overview
+        <h2 className="flex items-center gap-2 font-display text-hec-h1 font-medium text-hec-ink">
+          <BookOpen className="h-6 w-6 shrink-0 text-hec-ink-soft" aria-hidden /> Assignments Overview
         </h2>
-        <p className="text-muted-foreground">Comprehensive assignment analytics across all classes</p>
+        <p className="text-hec-small text-hec-ink-soft">Comprehensive assignment analytics across all classes</p>
       </div>
 
       <Tabs defaultValue="global" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="h-auto w-full flex-wrap sm:w-auto">
           <TabsTrigger value="global" className="gap-1.5">
             <BookOpen className="h-4 w-4" /> Global
           </TabsTrigger>

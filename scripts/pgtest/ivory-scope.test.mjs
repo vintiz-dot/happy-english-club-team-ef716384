@@ -43,16 +43,35 @@ eq("student dashboard, any tab", isIvoryRoute("/student/dashboard", "?tab=achiev
 eq("homework flipped (R08)", isIvoryRoute("/student/assignments"), true);
 eq("lesson detail flipped", isIvoryRoute("/student/lessons/l-1"), true);
 eq("vocabulary flipped, both paths", isIvoryRoute("/vocabulary") && isIvoryRoute("/student/vocabulary"), true);
-eq("admin not migrated yet", isIvoryRoute("/admin", "?tab=payroll"), false);
-eq("teacher not migrated yet", isIvoryRoute("/teacher/dashboard", "", undefined, false, "teacher"), false);
+// R21, the staff flip
+eq("admin payroll flipped (R21)", isIvoryRoute("/admin", "?tab=payroll"), true);
+eq("admin overview, no tab", isIvoryRoute("/admin"), true);
+eq("admin overview, ?tab=overview", isIvoryRoute("/admin", "?tab=overview"), true);
+for (const t of ["classes", "assignments", "journal", "exam-reports", "finance", "reports", "account", "automation", "data", "activity", "announcements", "stars-sync", "ai-actions"])
+  eq(`admin ?tab=${t}`, isIvoryRoute("/admin", `?tab=${t}`), true);
+eq("admin audit clips stays old (owner has not released it)", isIvoryRoute("/admin", "?tab=audit-clips"), false);
+eq("admin unknown tab stays old", isIvoryRoute("/admin", "?tab=nope"), false);
+for (const p of ["/admin/classes/c-1", "/admin/tuition-review", "/students", "/students/s-1", "/students/s-1/tuition", "/teachers", "/teachers/t-1", "/classes", "/families", "/families/f-1", "/board-window/c-1"])
+  eq(`${p} (admin)`, isIvoryRoute(p, "", undefined, false, "admin"), true);
+for (const p of ["/teacher/dashboard", "/teacher/classes/c-1", "/teacher/payroll", "/teacher/attendance", "/teacher/assignments", "/teacher/journal", "/teacher/exam-reports", "/teacher/leaderboards", "/teacher/resources", "/teacher/vocabulary-audit", "/teacher/books", "/teacher/language-support", "/teacher/smart-upload", "/teacher/transcripts", "/teacher/videos"])
+  eq(`${p} (teacher)`, isIvoryRoute(p, "", undefined, false, "teacher"), true);
+eq("teacher recorder stays old (owner has not released it)", isIvoryRoute("/teacher/recorder", "", undefined, false, "teacher"), false);
+eq("/schedule as admin", isIvoryRoute("/schedule", "", undefined, false, "admin"), true);
+eq("/schedule as teacher", isIvoryRoute("/schedule", "", undefined, false, "teacher"), true);
+eq("/schedule as family stays old (R23)", isIvoryRoute("/schedule", "", undefined, false, "family"), false);
+eq("/schedule as student stays old", isIvoryRoute("/schedule", "", undefined, false, "student"), false);
+eq("/schedule while the role is unknown stays old", isIvoryRoute("/schedule"), false);
 eq("parent dashboard not migrated yet", isIvoryRoute("/family/dashboard", "", undefined, false, "family"), false);
-eq("schedule (staff) not migrated yet", isIvoryRoute("/schedule", "", undefined, false, "student"), false);
+eq("parent videos not migrated yet", isIvoryRoute("/watch/abc"), false);
+eq("sign-in not migrated yet", isIvoryRoute("/auth"), false);
+eq("claim not migrated yet", isIvoryRoute("/claim"), false);
+eq("home not migrated yet", isIvoryRoute("/", "", undefined, false, "family"), false);
 eq("/tuition as student", isIvoryRoute("/tuition", "", undefined, false, "student"), true);
 eq("/tuition as family", isIvoryRoute("/tuition", "", undefined, false, "family"), true);
-eq("/tuition as admin stays old", isIvoryRoute("/tuition", "", undefined, false, "admin"), false);
-eq("/tuition as teacher stays old", isIvoryRoute("/tuition", "", undefined, false, "teacher"), false);
+eq("/tuition as admin (R21)", isIvoryRoute("/tuition", "", undefined, false, "admin"), true);
+eq("/tuition as teacher (R21)", isIvoryRoute("/tuition", "", undefined, false, "teacher"), true);
 eq("/tuition while the role is unknown stays old", isIvoryRoute("/tuition"), false);
-eq("/students/:id/tuition (admin) not listed", isIvoryRoute("/students/s-1/tuition", "", undefined, false, "admin"), false);
+eq("/dashboard as family stays old", isIvoryRoute("/dashboard", "", undefined, false, "family"), false);
 eq("an unscoped entry ignores the role", isIvoryRoute("/student/journal", "", undefined, false, "admin"), true);
 const R = [{ path: "/admin", tab: "payroll" }, { path: "/admin", tab: "" }, { path: "/student/lessons/:id" }];
 eq("tab entry matches its tab", isIvoryRoute("/admin", "?tab=payroll", R, false), true);

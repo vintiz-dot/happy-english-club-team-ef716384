@@ -17,10 +17,10 @@ const Students = () => {
 
   return (
     <Layout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Students</h1>
-          <p className="text-muted-foreground">Manage student records and enrollments</p>
+          <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Students</h1>
+          <p className="text-hec-small text-hec-ink-soft">Manage student records and enrollments</p>
         </div>
 
         {/* Search sits above the create form: finding a student is the common

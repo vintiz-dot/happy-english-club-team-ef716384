@@ -1,0 +1,74 @@
+fin-recurring-1280-dark: req eq | main eq (17) | dialog eq (0) | amounts 6 serif 0 non-tab 3 ["15.000.000 ₫","2.350.000 ₫","3.500.000 ₫"]
+fin-recurring-1280-light: req eq | main eq (17) | dialog eq (0) | amounts 6 serif 0 non-tab 3 ["15.000.000 ₫","2.350.000 ₫","3.500.000 ₫"]
+fin-recurring-375-dark: req eq | main eq (17) | dialog eq (0) | amounts 6 serif 0 non-tab 3 ["15.000.000 ₫","2.350.000 ₫","3.500.000 ₫"]
+fin-recurring-375-light: req eq | main eq (17) | dialog eq (0) | amounts 6 serif 0 non-tab 3 ["15.000.000 ₫","2.350.000 ₫","3.500.000 ₫"]
+fin-recurring-list-1280-dark: req eq | main eq (17) | dialog eq (0) | amounts 6 serif 0 non-tab 3 ["15.000.000 ₫","2.350.000 ₫","3.500.000 ₫"]
+fin-recurring-list-1280-light: req eq | main eq (17) | dialog eq (0) | amounts 6 serif 0 non-tab 3 ["15.000.000 ₫","2.350.000 ₫","3.500.000 ₫"]
+fin-recurring-list-375-dark: req eq | main eq (17) | dialog eq (0) | amounts 6 serif 0 non-tab 3 ["15.000.000 ₫","2.350.000 ₫","3.500.000 ₫"]
+fin-recurring-list-375-light: req eq | main eq (17) | dialog eq (0) | amounts 6 serif 0 non-tab 3 ["15.000.000 ₫","2.350.000 ₫","3.500.000 ₫"]
+fin-recurring-sheet-1280-dark: req eq | main eq (17) | dialog eq (0) | amounts 6 serif 0 non-tab 3 ["15.000.000 ₫","2.350.000 ₫","3.500.000 ₫"]
+fin-recurring-sheet-1280-light: req eq | main eq (17) | dialog eq (0) | amounts 6 serif 0 non-tab 3 ["15.000.000 ₫","2.350.000 ₫","3.500.000 ₫"]
+fin-recurring-sheet-375-dark: req eq | main eq (17) | dialog eq (0) | amounts 6 serif 0 non-tab 3 ["15.000.000 ₫","2.350.000 ₫","3.500.000 ₫"]
+fin-recurring-sheet-375-light: req eq | main eq (17) | dialog eq (0) | amounts 6 serif 0 non-tab 3 ["15.000.000 ₫","2.350.000 ₫","3.500.000 ₫"]
+fin-summary-1280-dark: req eq | main eq (21) | dialog eq (0) | amounts 14 serif 0 non-tab 0
+fin-summary-1280-light: req eq | main eq (21) | dialog eq (0) | amounts 14 serif 0 non-tab 0
+fin-summary-375-dark: req eq | main eq (21) | dialog eq (0) | amounts 14 serif 0 non-tab 0
+fin-summary-375-light: req eq | main eq (21) | dialog eq (0) | amounts 14 serif 0 non-tab 0
+fin-summary-closed-1280-dark: req eq | main eq (21) | dialog eq (0) | amounts 14 serif 0 non-tab 0
+fin-summary-closed-1280-light: req eq | main eq (21) | dialog eq (0) | amounts 14 serif 0 non-tab 0
+fin-summary-closed-375-dark: req eq | main eq (21) | dialog eq (0) | amounts 14 serif 0 non-tab 0
+fin-summary-closed-375-light: req eq | main eq (21) | dialog eq (0) | amounts 14 serif 0 non-tab 0
+fin-summary-costs-1280-dark: req eq | main eq (21) | dialog eq (0) | amounts 14 serif 0 non-tab 0
+fin-summary-costs-1280-light: req eq | main eq (21) | dialog eq (0) | amounts 14 serif 0 non-tab 0
+fin-summary-costs-375-dark: req eq | main eq (21) | dialog eq (0) | amounts 14 serif 0 non-tab 0
+fin-summary-costs-375-light: req eq | main eq (21) | dialog eq (0) | amounts 14 serif 0 non-tab 0
+pay-closed-1280-dark: req eq | main eq (47) | dialog eq (0) | amounts 19 serif 0 non-tab 0
+pay-closed-1280-light: req eq | main eq (47) | dialog eq (0) | amounts 19 serif 0 non-tab 0
+pay-closed-375-dark: req eq | main eq (47) | dialog eq (0) | amounts 19 serif 0 non-tab 0
+pay-closed-375-light: req eq | main eq (47) | dialog eq (0) | amounts 19 serif 0 non-tab 0
+pay-open-1280-dark: req eq | main eq (41) | dialog eq (0) | amounts 18 serif 0 non-tab 0
+pay-open-1280-light: req eq | main eq (41) | dialog eq (0) | amounts 18 serif 0 non-tab 0
+pay-open-375-dark: req eq | main eq (41) | dialog eq (0) | amounts 18 serif 0 non-tab 0
+pay-open-375-light: req eq | main eq (41) | dialog eq (0) | amounts 18 serif 0 non-tab 0
+pay-reopen-1280-dark: req eq | main eq (48) | dialog eq (0) | amounts 19 serif 0 non-tab 0
+pay-reopen-1280-light: req eq | main eq (48) | dialog eq (0) | amounts 19 serif 0 non-tab 0
+pay-reopen-375-dark: req eq | main eq (48) | dialog eq (0) | amounts 19 serif 0 non-tab 0
+pay-reopen-375-light: req eq | main eq (48) | dialog eq (0) | amounts 19 serif 0 non-tab 0
+t-payroll-1280-dark: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-1280-light: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-375-dark: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-375-light: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-cal-1280-dark: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-cal-1280-light: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-cal-375-dark: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-cal-375-light: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-closed-1280-dark: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-closed-1280-light: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-closed-375-dark: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-closed-375-light: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-figs-1280-dark: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-figs-1280-light: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-figs-375-dark: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-figs-375-light: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-figs-closed-1280-dark: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-figs-closed-1280-light: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-figs-closed-375-dark: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+t-payroll-figs-closed-375-light: req eq | main eq (116) | dialog eq (0) | amounts 17 serif 0 non-tab 0
+tp-payrate-1280-dark: req eq | main eq (10) | dialog eq (17) | amounts 6 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payrate-1280-light: req eq | main eq (10) | dialog eq (17) | amounts 6 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payrate-375-dark: req eq | main eq (10) | dialog eq (17) | amounts 6 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payrate-375-light: req eq | main eq (10) | dialog eq (17) | amounts 6 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payrate-backdated-1280-dark: req eq | main eq (10) | dialog eq (20) | amounts 6 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payrate-backdated-1280-light: req eq | main eq (10) | dialog eq (20) | amounts 6 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payrate-backdated-375-dark: req eq | main eq (10) | dialog eq (20) | amounts 6 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payrate-backdated-375-light: req eq | main eq (10) | dialog eq (20) | amounts 6 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payroll-1280-dark: req eq | main eq (51) | dialog eq (0) | amounts 12 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payroll-1280-light: req eq | main eq (51) | dialog eq (0) | amounts 12 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payroll-375-dark: req eq | main eq (51) | dialog eq (0) | amounts 12 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payroll-375-light: req eq | main eq (51) | dialog eq (0) | amounts 12 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payroll-classes-1280-dark: req eq | main eq (51) | dialog eq (0) | amounts 12 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payroll-classes-1280-light: req eq | main eq (51) | dialog eq (0) | amounts 12 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payroll-classes-375-dark: req eq | main eq (51) | dialog eq (0) | amounts 12 serif 0 non-tab 1 ["250,000 ₫ / session"]
+tp-payroll-classes-375-light: req eq | main eq (51) | dialog eq (0) | amounts 12 serif 0 non-tab 1 ["250,000 ₫ / session"]
+runs 72: requests equal 72, <main> numbers equal 72, dialog numbers equal 72; amount nodes after 948: serif 0, not tabular 52; runs with an error/action error on either side 0
+amount colours after: [["rgb(239, 232, 215)",344],["rgb(19, 29, 53)",344],["rgb(189, 185, 173)",130],["rgb(68, 77, 100)",130]]
