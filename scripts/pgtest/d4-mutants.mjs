@@ -20,13 +20,19 @@ import { makeDb, migPath, repo, AUDIT, CANCEL, D1, D2, FLOORS } from './d4-prelu
 const FREEZE = '20261106120000_invoice_tuition_freeze.sql';
 const ENROL = '20261106090000_attendance_enrollment_guard.sql';
 const CORE = '20261114091000_d4_core_register.sql';
+const LESSON = '20261114093000_d4_lesson_pay_guard.sql';
 const ROLLBACK2 = join(repo, 'scripts', 'ROLLBACK-d4-2-register.sql');
+const ROLLBACK4 = join(repo, 'scripts', 'ROLLBACK-d4-4-lesson-pay.sql');
 const SUITES = {
   floors: { file: 'd4-floors.test.mjs', migs: [AUDIT, CANCEL, D1, D2, FLOORS, FREEZE] },
   carry: { file: 'd4-d2-carryover.test.mjs', migs: [AUDIT, CANCEL, D1, D2, FLOORS] },
   deployed: { file: 'd4-deployed-functions.test.mjs', migs: [AUDIT, CANCEL, D1, D2, FLOORS] },
   register: { file: 'd4-register.test.mjs', migs: [AUDIT, CANCEL, ENROL, D1, D2, FREEZE, FLOORS, CORE], args: [ROLLBACK2] },
   fnreg: { file: 'd4-functions-register.test.mjs', migs: [AUDIT, CANCEL, ENROL, D1, D2, FREEZE, FLOORS, CORE] },
+  // step 3A
+  lesson: { file: 'd4-lesson-pay.test.mjs', migs: [AUDIT, CANCEL, ENROL, D1, D2, FREEZE, FLOORS, CORE, LESSON], args: [ROLLBACK4] },
+  fnles: { file: 'd4-functions-lessons.test.mjs', migs: [AUDIT, CANCEL, ENROL, D1, D2, FREEZE, FLOORS, CORE, LESSON] },
+  stars: { file: 'd4-stars-interplay.test.mjs', migs: [AUDIT, CANCEL, ENROL, D1, D2, FREEZE, FLOORS, CORE, LESSON] },
 };
 
 // [id, what it breaks, find (must occur exactly once), replace, suites]
@@ -198,6 +204,96 @@ export const MUTANTS = [
     "  IF (SELECT count(*) FROM pg_catalog.pg_proc p WHERE p.proname = v_name) <> 1\n     OR NOT EXISTS", "  IF NOT EXISTS", ['register'], CORE],
   ['C34', "any frame of the stack counts, not the outermost (dynamic SQL text can forge a frame line)",
     "v_lines[array_length(v_lines, 1)]", "(SELECT x FROM unnest(v_lines) x WHERE x ~ '^PL/pgSQL function (?:public\\.)?(end_enrollment|pause_enrollment|modify_enrollment_transfer|ai_action_undo|ai_action_apply|stars_sync_resolve_conflict)\\(' LIMIT 1)", ['register'], CORE],
+  // step 3A (file 4): who is paid for a lesson
+  ['L01', "G-1 dropped: an un-hold is not a kind",
+    "  IF o.status = 'Held' AND n.status = 'Scheduled' THEN\n    v_kinds := v_kinds || 'unhold'::text;", "  IF false THEN\n    v_kinds := v_kinds || 'unhold'::text;", ['lesson'], LESSON],
+  ['L02', "un-hold given the free week",
+    "  IF o.status = 'Held' AND n.status = 'Scheduled' THEN\n    v_kinds := v_kinds || 'unhold'::text;", "  IF o.status = 'Held' AND n.status = 'Scheduled' AND NOT v_free THEN\n    v_kinds := v_kinds || 'unhold'::text;", ['lesson'], LESSON],
+  ['L03', "the service lane's refused un-hold raises (would abort a sync page) instead of keeping Held",
+    "      NEW.status := OLD.status;", "      RAISE EXCEPTION 'kept' USING ERRCODE = 'HC020';", ['lesson', 'stars'], LESSON],
+  ['L04', "a kept un-hold leaves no automation_refused event",
+    "      VALUES ('automation_refused', jsonb_build_object('entity', 'session', 'kind', 'unhold'", "      VALUES ('reviewed', jsonb_build_object('entity', 'session', 'kind', 'unhold'", ['lesson', 'stars'], LESSON],
+  ['L05', "A-9 dropped: the sync's flip un-holds although a person's Present remains",
+    "      IF NOT v_locked AND (NOT v_started OR (v_flips AND NOT v_person_mark)) THEN", "      IF NOT v_locked AND (NOT v_started OR v_flips) THEN", ['lesson', 'stars'], LESSON],
+  ['L06', "the service lane un-holds any started lesson (no flip needed)",
+    "      IF NOT v_locked AND (NOT v_started OR (v_flips AND NOT v_person_mark)) THEN", "      IF NOT v_locked THEN", ['lesson', 'stars'], LESSON],
+  ['L07', "the service lane un-holds in a locked payroll month",
+    "      IF NOT v_locked AND (NOT v_started OR (v_flips AND NOT v_person_mark)) THEN", "      IF (NOT v_started OR (v_flips AND NOT v_person_mark)) THEN", ['lesson', 'stars'], LESSON],
+  ['L08', "G-2 dropped: a hold with nobody's register passes",
+    "     AND (NOT EXISTS (SELECT 1 FROM public.attendance a WHERE a.session_id = o.id AND a.marked_by IS NOT NULL)\n          OR EXISTS", "     AND (false\n          OR EXISTS", ['lesson', 'fnles'], LESSON],
+  ['L09', "A-5 dropped: a person's hold with marks in a locked month passes",
+    "          OR v_locked) THEN\n    v_kinds := v_kinds || 'hold'::text;", "          OR false) THEN\n    v_kinds := v_kinds || 'hold'::text;", ['lesson', 'stars'], LESSON],
+  ['L10', "a hold after a checked un-hold is not asked again",
+    "          OR EXISTS (SELECT 1 FROM public.money_change_overrides mo\n                      WHERE mo.entity = 'session' AND mo.op = 'unhold' AND mo.target_id = o.id)\n          OR v_locked) THEN",
+    "          OR v_locked) THEN", ['lesson'], LESSON],
+  ['L11', "the service lane's hold is refused (the sync and mark-attendance stop paying)",
+    "    IF v_kind = 'hold' THEN\n      RETURN NEW;", "    IF false THEN\n      RETURN NEW;", ['lesson', 'stars'], LESSON],
+  ['L12', "G-3 dropped: a lesson may be born Held or Canceled",
+    "  IF NEW.status IS DISTINCT FROM 'Scheduled' THEN\n    IF v_lane = 'owner' THEN", "  IF false THEN\n    IF v_lane = 'owner' THEN", ['lesson'], LESSON],
+  ['L13', "an upsert of an existing lesson is judged as a new lesson",
+    "  IF FOUND THEN\n    RETURN NEW;\n  END IF;\n\n  v_lane := public._caller_lane();\n  IF NEW.status", "  IF false THEN\n    RETURN NEW;\n  END IF;\n\n  v_lane := public._caller_lane();\n  IF NEW.status", ['lesson'], LESSON],
+  ['L14', "G-7 dropped: a lesson that has started is created raw by anyone",
+    "  IF v_lane = 'service' AND NEW.date >= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date THEN", "  IF true THEN", ['lesson', 'fnles'], LESSON],
+  ['L15', "the service lane may backdate a lesson",
+    "  IF v_lane = 'service' AND NEW.date >= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date THEN", "  IF v_lane = 'service' THEN", ['lesson'], LESSON],
+  ['L16', "G-4 dropped: a held lesson's teacher changes raw",
+    "  IF o.teacher_id IS DISTINCT FROM n.teacher_id AND NOT v_free", "  IF false AND NOT v_free", ['lesson', 'fnles'], LESSON],
+  ['L17', "A-19: the free week ignores a locked payroll month",
+    "  v_free := NOT v_locked AND COALESCE(public._lesson_in_free_week(o.date, o.start_time, o.end_time), false);", "  v_free := COALESCE(public._lesson_in_free_week(o.date, o.start_time, o.end_time), false);", ['lesson'], LESSON],
+  ['L18', "A-5 dropped: the teacher of an old lesson never Held changes raw",
+    "     AND (o.status = 'Held' OR NOT COALESCE(public._lesson_in_free_week(o.date, o.start_time, o.end_time), false)) THEN", "     AND (o.status = 'Held') THEN", ['lesson'], LESSON],
+  ['L19', "G-5 dropped: a held lesson's times change raw",
+    "  IF o.status = 'Held' AND NOT v_free\n     AND (o.start_time IS DISTINCT FROM n.start_time", "  IF false AND NOT v_free\n     AND (o.start_time IS DISTINCT FROM n.start_time", ['lesson', 'fnles'], LESSON],
+  ['L20', "HC022 dropped: two changes ride together",
+    "  IF cardinality(v_kinds) > 1 OR v_d2 IS NOT NULL THEN", "  IF false THEN", ['lesson'], LESSON],
+  ['L21', "G-6 dropped: a held lesson's assistants change raw",
+    "    IF NOT FOUND OR s.status <> 'Held' THEN\n      CONTINUE;", "    IF true THEN\n      CONTINUE;", ['lesson', 'fnles'], LESSON],
+  ['L22', "an assistant's absence (attended) is not pay",
+    "     AND OLD.attended IS NOT DISTINCT FROM NEW.attended THEN", "     THEN", ['lesson'], LESSON],
+  ['L23', "the assistants' free week ignores a locked payroll month",
+    "    IF NOT COALESCE(public.payroll_month_is_locked(to_char(s.date, 'YYYY-MM')), true)\n       AND COALESCE(public._lesson_in_free_week(s.date, s.start_time, s.end_time), false) THEN",
+    "    IF COALESCE(public._lesson_in_free_week(s.date, s.start_time, s.end_time), false) THEN", ['lesson'], LESSON],
+  ['L24', "the service lane may change a held lesson's assistants",
+    "    IF v_lane = 'owner' THEN\n      INSERT INTO public.money_change_events (kind, payload)\n      VALUES ('owner_lane', jsonb_build_object('table', 'session_participants'",
+    "    IF v_lane IN ('owner', 'service') THEN\n      INSERT INTO public.money_change_events (kind, payload)\n      VALUES ('owner_lane', jsonb_build_object('table', 'session_participants'", ['lesson'], LESSON],
+  ['L25', "an upsert re-saving an assistant already on the lesson is refused (R-4 for assistants)",
+    "    IF FOUND THEN\n      RETURN NEW;\n    END IF;\n  END IF;\n  IF TG_OP = 'UPDATE'", "    IF false THEN\n      RETURN NEW;\n    END IF;\n  END IF;\n  IF TG_OP = 'UPDATE'", ['lesson'], LESSON],
+  ['L26', "a backdated lesson with no bill reached is T0",
+    "      v_tier := GREATEST(1, COALESCE((public.tuition_reach(v_kids, n.class_id, n.date, n.date) ->> 'tier')::int, 3));",
+    "      v_tier := GREATEST(0, COALESCE((public.tuition_reach(v_kids, n.class_id, n.date, n.date) ->> 'tier')::int, 3));", ['lesson'], LESSON],
+  ['L27', "a backdated lesson ignores the bills it reaches (always T1)",
+    "      v_tier := GREATEST(1, COALESCE((public.tuition_reach(v_kids, n.class_id, n.date, n.date) ->> 'tier')::int, 3));",
+    "      v_tier := 1;", ['lesson'], LESSON],
+  ['L28', "an un-hold's tier is not D2's rule (always T1)",
+    "      v_tier := (public._session_change_assess(o, 'cancel', NULL, NULL) ->> 'tier')::int;", "      v_tier := 1;", ['lesson'], LESSON],
+  ['L29', "a hold in a locked month is T1, not T3",
+    "      v_tier := CASE WHEN public.payroll_month_is_locked(to_char(o.date, 'YYYY-MM')) THEN 3 ELSE 1 END;", "      v_tier := 1;", ['lesson'], LESSON],
+  ['L30', "the pay tier ignores payroll_reach (teacher, time, assistants always T3)",
+    "    ELSIF p_kind IN ('reteach', 'retime', 'restaff') THEN", "    ELSIF false THEN", ['lesson'], LESSON],
+  ['L31', "the checked teacher change does not mark the lesson manual with the reason",
+    "           is_manual = true, manual_reason = COALESCE(v_reason, 'Teacher changed (checked)')", "           is_manual = is_manual", ['lesson'], LESSON],
+  ['L32', "the trigger does not fire on an end_time change",
+    "     OR OLD.start_time IS DISTINCT FROM NEW.start_time OR OLD.end_time IS DISTINCT FROM NEW.end_time)\n  EXECUTE FUNCTION public.session_pay_guard();",
+    "     OR OLD.start_time IS DISTINCT FROM NEW.start_time)\n  EXECUTE FUNCTION public.session_pay_guard();", ['lesson'], LESSON],
+  ['L33', "an owner-lane pass leaves no owner_lane event (A-1)",
+    "    VALUES ('owner_lane', jsonb_build_object('table', 'sessions', 'kind', v_kind", "    VALUES ('reviewed', jsonb_build_object('table', 'sessions', 'kind', v_kind", ['lesson'], LESSON],
+  ['L34', "the session plan / exec callable by any signed-in user",
+    "  public._money_exec__session(jsonb, uuid)\nFROM PUBLIC, anon, authenticated, service_role;", "  public._money_exec__session(jsonb, uuid)\nFROM PUBLIC, anon;", ['lesson'], LESSON],
+  ['L35', "preflight no longer checks the 1b bodies",
+    "IS DISTINCT FROM r.want THEN", "IS DISTINCT FROM r.want AND false THEN", ['lesson'], LESSON],
+  ['L36', "the exec writes without re-reading the lesson under its lock (the tier may have risen)",
+    "     OR COALESCE((v_now ->> 'tier')::int, 3) > COALESCE((p_plan ->> 'tier')::int, 0) THEN", "     OR false THEN", ['lesson'], LESSON],
+  // step 3A functions (manage-session), mutated in place and restored
+  ['FL1', "manage-session: the Held <-> Scheduled plain write on the service key",
+    "      const { error } = await asCaller.from('sessions').update({ status, updated_by: user.id }).eq('id', id);", "      const { error } = await supabase.from('sessions').update({ status, updated_by: user.id }).eq('id', id);", ['fnles'], 'supabase/functions/manage-session/index.ts'],
+  ['FL2', "manage-session: a refused teacher change is not turned into the check (raw error)",
+    "        return (await payRefused(m, 'reteach', { session_id: id, teacher_id })) ?? fail(m);", "        return fail(m);", ['fnles'], 'supabase/functions/manage-session/index.ts'],
+  ['FL3', "manage-session: create on the service key",
+    "      const { data: newSession, error } = await asCaller.from('sessions').insert({", "      const { data: newSession, error } = await supabase.from('sessions').insert({", ['fnles'], 'supabase/functions/manage-session/index.ts'],
+  ['FL4', "manage-session: the T0 shortcut taken for a T1+ change",
+    "        if ((p.data.tier ?? 3) >= 1) {", "        if (false) {", ['fnles'], 'supabase/functions/manage-session/index.ts'],
+  ['FL5', "manage-session: update writes a Held <-> Scheduled status again",
+    "      if (status !== undefined && status !== null && status !== oldSession.status) {", "      if (false) {", ['fnles'], 'supabase/functions/manage-session/index.ts'],
 ];
 
 const D4_LITERALS = [/('[0-9a-f]{32}'\) THEN\s+-- this file)/g];
@@ -230,6 +326,7 @@ const only = process.argv.slice(2);
 const original = readFileSync(migPath(FLOORS), 'utf8').replace(/\r\n/g, '\n');
 const results = [];
 const coreOriginal = readFileSync(migPath(CORE), 'utf8').replace(/\r\n/g, '\n');
+const lessonOriginal = readFileSync(migPath(LESSON), 'utf8').replace(/\r\n/g, '\n');
 for (const [id, what, find, repl, suites, file] of MUTANTS) {
   if (only.length && !only.includes(id)) continue;
   if (file && file.startsWith('supabase/functions/')) {
@@ -258,14 +355,15 @@ for (const [id, what, find, repl, suites, file] of MUTANTS) {
     console.log(`${id} ${verdict}`);
     continue;
   }
-  if (file === CORE) {
-    const n = coreOriginal.split(find).length - 1;
+  if (file === CORE || file === LESSON) {
+    const base = file === CORE ? coreOriginal : lessonOriginal;
+    const n = base.split(find).length - 1;
     if (n !== 1) { results.push({ id, what, verdict: `BAD MUTANT (pattern found ${n} times)` }); console.log(`${id} BAD MUTANT (${n})`); continue; }
     const p = resolve(tmpdir(), `d4-mutant-${id}-${process.pid}.sql`);
-    writeFileSync(p, coreOriginal.replace(find, () => repl));
+    writeFileSync(p, base.replace(find, () => repl));
     const by = [];
     for (const s of suites) {
-      const r = await runSuite(SUITES[s], p, CORE);
+      const r = await runSuite(SUITES[s], p, file);
       if (r.code !== 0) {
         const firstFail = r.out.split('\n').find((l) => l.includes('FAIL')) ?? r.out.split('\n').slice(-3).join(' ');
         by.push(`${s}: ${firstFail.trim().slice(0, 160)}`);

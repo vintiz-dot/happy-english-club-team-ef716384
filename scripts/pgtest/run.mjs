@@ -183,6 +183,57 @@ const SUITES = [
     ],
   },
   { name: "money guard lib", file: "money-guard-lib.test.mjs", expect: 45, migrations: [] },
+  // D4 step 3A: who is paid for a lesson (G-1 to G-7), the two functions
+  // driven per role, and the Stars engine's lesson statements on the guard.
+  {
+    name: "d4 lesson pay",
+    file: "d4-lesson-pay.test.mjs",
+    expect: 130,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261106090000_attendance_enrollment_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261114090000_d4_floors.sql",
+      "20261114091000_d4_core_register.sql",
+      "20261114093000_d4_lesson_pay_guard.sql",
+    ],
+    args: ["scripts/ROLLBACK-d4-4-lesson-pay.sql"],
+  },
+  {
+    name: "d4 functions lessons",
+    file: "d4-functions-lessons.test.mjs",
+    expect: 57,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261106090000_attendance_enrollment_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261114090000_d4_floors.sql",
+      "20261114091000_d4_core_register.sql",
+      "20261114093000_d4_lesson_pay_guard.sql",
+    ],
+  },
+  {
+    name: "d4 stars interplay",
+    file: "d4-stars-interplay.test.mjs",
+    expect: 19,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261106090000_attendance_enrollment_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261114090000_d4_floors.sql",
+      "20261114091000_d4_core_register.sql",
+      "20261114093000_d4_lesson_pay_guard.sql",
+    ],
+  },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.

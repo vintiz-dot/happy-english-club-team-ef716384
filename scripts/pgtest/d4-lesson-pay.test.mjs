@@ -466,6 +466,10 @@ await section('G-6 the assistants of a Held lesson', async () => {
   const t = await mk({ when: TODAY });
   r = await tryIt(() => asAdmin(`INSERT INTO session_participants(session_id, participant_type, teaching_assistant_id) VALUES ($1,'teaching_assistant',gen_random_uuid())`, [t.sid]));
   ok('today\'s Held lesson, open month -> allowed (the free week)', r.ok !== undefined, r);
+  await asSuper(`INSERT INTO payroll_periods(month, status) VALUES ($1,'locked') ON CONFLICT (month) DO UPDATE SET status='locked'`, [TODAY.month]);
+  r = await tryIt(() => asAdmin(`INSERT INTO session_participants(session_id, participant_type, teaching_assistant_id) VALUES ($1,'teaching_assistant',gen_random_uuid())`, [t.sid]));
+  await asSuper(`DELETE FROM payroll_periods WHERE month=$1`, [TODAY.month]);
+  ok('  the same lesson in a LOCKED payroll month -> HC020 (the free week needs an open month)', isKind(r, 'HC020', 'restaff'), r);
   const a3 = randomUUID();
   let p = await preview('restaff', { session_id: s.sid, participants: [{ teaching_assistant_id: a1, attended: false }, { teaching_assistant_id: a3 }] });
   ok('preview: the whole list before / after, T1', p.kind === 'restaff' && p.tier === 1 && p.change.before.length === 1 &&
