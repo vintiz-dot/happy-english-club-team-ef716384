@@ -71,7 +71,7 @@ const SUITES = [
   // D5: scripts/CHECK-money-invariants.sql, the owner's read-only check of the
   // money invariants on live data - one broken row per check, each caught;
   // read-only; the fixture columns are the live ones; on the real triggers.
-  { name: "money invariants check", file: "money-invariants-check.test.mjs", expect: 94, migrations: [] },
+  { name: "money invariants check", file: "money-invariants-check.test.mjs", expect: 99, migrations: [] },
   // D5: scripts/CHECK-past-cancellations-with-evidence.sql on the real audit,
   // cancelled-lesson guard, D1 and D2 (it loads them itself, in paste order).
   { name: "past cancellations check", file: "past-cancellations-check.test.mjs", expect: 20, migrations: [] },

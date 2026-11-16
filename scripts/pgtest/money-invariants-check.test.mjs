@@ -301,6 +301,8 @@ const CASES = [
   ['M09/M10 a stored carry-out that is not the chain', `UPDATE public.invoices SET carry_out_credit = carry_out_credit + 1 WHERE id = '${B_OCT}'`, ['M09', 'M10']],
   ['M11 a stale label not written since T4', `UPDATE public.invoices SET status = 'partial', updated_at = '2026-11-01T00:00:00Z' WHERE id = '${B_SEP}'`, ['M11']],
   ['M12 a stale label written since T4', `UPDATE public.invoices SET status = 'issued', updated_at = '2026-11-15T00:00:00Z' WHERE id = '${B_OCT}'`, ['M11', 'M12']],
+  ['M11 negative: an admin\'s "credit" label is kept by every writer, never counted', `UPDATE public.invoices SET status = 'credit', updated_at = '2026-11-15T00:00:00Z' WHERE id = '${B_OCT}'`, []],
+  ['M11 negative: a draft bill is not labelled by the rule yet', `UPDATE public.invoices SET status = 'draft', updated_at = '2026-11-15T00:00:00Z' WHERE id = '${B_NOV}'`, []],
   ['M13 an audit row: figures changed while frozen', `INSERT INTO public.audit_log(entity, entity_id, operation, changed_fields, diff) VALUES
      ('invoices', '${B_SEP}', 'UPDATE', ARRAY['total_amount'], '{"old":{"tuition_frozen":true,"total_amount":600000},"new":{"tuition_frozen":true,"total_amount":650000}}')`, ['M13']],
   ['M14 a frozen bill whose breakdown moved since the freeze', `UPDATE public.invoices SET class_breakdown = '{"c":1}' WHERE id = '${B_SEP}'`, ['M14']],
@@ -325,6 +327,18 @@ const CASES = [
      INSERT INTO public.session_cancel_overrides(session_id, action, created_at) VALUES ('${X1}', 'cancel', '2026-11-14T03:00:00Z');
      INSERT INTO public.audit_log(entity, entity_id, operation, occurred_at, diff) VALUES
      ('sessions', '${X1}', 'UPDATE', '2026-11-14T03:00:00Z', '{"old":{"status":"Held","date":"2026-10-05"},"new":{"status":"Canceled","date":"2026-10-05"}}')`, []],
+  ['M20 a checked row of ANOTHER action (a move) does not excuse a cancel', `
+     INSERT INTO public.session_cancel_overrides(session_id, action, created_at) VALUES ('${X1}', 'move', '2026-11-14T03:00:00Z');
+     INSERT INTO public.audit_log(entity, entity_id, operation, occurred_at, diff) VALUES
+     ('sessions', '${X1}', 'UPDATE', '2026-11-14T03:00:00Z', '{"old":{"status":"Held","date":"2026-10-05"},"new":{"status":"Canceled","date":"2026-10-05"}}')`, ['M20']],
+  ['M20 a checked cancel of ANOTHER lesson at the same instant does not excuse it', `
+     INSERT INTO public.session_cancel_overrides(session_id, action, created_at) VALUES ('${XF}', 'cancel', '2026-11-14T03:00:00Z');
+     INSERT INTO public.audit_log(entity, entity_id, operation, occurred_at, diff) VALUES
+     ('sessions', '${X1}', 'UPDATE', '2026-11-14T03:00:00Z', '{"old":{"status":"Held","date":"2026-10-05"},"new":{"status":"Canceled","date":"2026-10-05"}}')`, ['M20']],
+  ['M20 a checked cancel a minute away does not excuse it', `
+     INSERT INTO public.session_cancel_overrides(session_id, action, created_at) VALUES ('${X1}', 'cancel', '2026-11-14T03:01:00Z');
+     INSERT INTO public.audit_log(entity, entity_id, operation, occurred_at, diff) VALUES
+     ('sessions', '${X1}', 'UPDATE', '2026-11-14T03:00:00Z', '{"old":{"status":"Held","date":"2026-10-05"},"new":{"status":"Canceled","date":"2026-10-05"}}')`, ['M20']],
   ['M21 an un-cancel with no checked row', `INSERT INTO public.audit_log(entity, entity_id, operation, occurred_at, diff) VALUES
      ('sessions', '${X2}', 'UPDATE', '2026-11-14T03:00:00Z', '{"old":{"status":"Canceled","date":"2026-10-12"},"new":{"status":"Scheduled","date":"2026-10-12"}}')`, ['M21']],
   ['M22 a Held lesson deleted with no checked row', `INSERT INTO public.audit_log(entity, entity_id, operation, occurred_at, diff) VALUES
