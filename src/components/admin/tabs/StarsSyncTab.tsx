@@ -120,9 +120,9 @@ interface RunSummary {
   warnings?: string[];
 }
 
-const STATUS_BADGE: Record<ReadinessStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  ready: { label: "Ready", variant: "default" },
-  partial: { label: "Works for now", variant: "outline" },
+const STATUS_BADGE: Record<ReadinessStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" }> = {
+  ready: { label: "Ready", variant: "success" },
+  partial: { label: "Works for now", variant: "warning" },
   paused: { label: "Paused", variant: "secondary" },
   blocked: { label: "Blocked", variant: "destructive" },
 };
@@ -564,10 +564,10 @@ export default function StarsSyncTab() {
   const loadError = connection.error || cursor.error || classMap.error || readiness.error || studentMap.error;
   if (loadError) {
     return (
-      <Card className="border-destructive/60">
+      <Card className="border-hec-danger/30">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
+          <CardTitle className="flex items-center gap-2 text-hec-h3">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-hec-danger" />
             Stars Sync could not be loaded
           </CardTitle>
           <CardDescription>
@@ -595,7 +595,7 @@ export default function StarsSyncTab() {
       />
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-hec-small text-hec-ink-soft">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading…
         </div>
       ) : (
@@ -604,32 +604,32 @@ export default function StarsSyncTab() {
           <Card>
             <CardContent className="space-y-4 pt-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={schedOn ? "default" : "secondary"}>{schedOn ? "Schedule on" : "Schedule off"}</Badge>
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={schedOn ? "success" : "secondary"}>{schedOn ? "Schedule on" : "Schedule off"}</Badge>
                     {st?.running && <Badge variant="outline"><Loader2 className="mr-1 h-3 w-3 animate-spin" />Running</Badge>}
-                    {(st?.open_conflicts ?? 0) > 0 && <Badge variant="destructive">{st?.open_conflicts} to settle</Badge>}
-                    {(st?.pending ?? 0) > 0 && <Badge variant="outline">{st?.pending} waiting</Badge>}
+                    {(st?.open_conflicts ?? 0) > 0 && <Badge variant="warning" className="tabular-nums">{st?.open_conflicts} to settle</Badge>}
+                    {(st?.pending ?? 0) > 0 && <Badge variant="outline" className="tabular-nums">{st?.pending} waiting</Badge>}
                     {(st?.effects_failing ?? 0) > 0 && (
                       <Badge variant="outline" title="Tuition or streak updates that were refused and will be retried">
                         {st?.effects_failing} follow-up{st?.effects_failing === 1 ? "" : "s"} retrying
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-hec-caption text-hec-ink-soft">
                     {cursor.data?.last_run_at
                       ? <>Last run {dayjs(cursor.data.last_run_at).format("D MMM, HH:mm")}
                           {cursor.data.last_run_by ? ` (${cursor.data.last_run_by})` : ""}: {cursor.data.last_error ? "failed" : describeCounts(lastSummary?.counts)}.</>
                       : "Never run."}
                   </p>
                   {cursor.data?.last_error && (
-                    <p className="text-xs font-medium text-destructive">{cursor.data.last_error}</p>
+                    <p className="break-words text-hec-caption font-medium text-hec-danger">{cursor.data.last_error}</p>
                   )}
                   {(lastSummary?.warnings ?? []).length > 0 && (
-                    <p className="text-xs text-warning">{lastSummary?.warnings?.join(" ")}</p>
+                    <p className="text-hec-caption text-hec-warn">{lastSummary?.warnings?.join(" ")}</p>
                   )}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <Button
                     onClick={() => runNow.mutate()}
                     disabled={runNow.isPending || !conn?.sync_from || st?.running || !fixesApplied}
@@ -639,7 +639,7 @@ export default function StarsSyncTab() {
                     Run now
                   </Button>
                   <div className="flex items-center gap-2">
-                    <Label htmlFor="stars-schedule" className="text-sm">Schedule</Label>
+                    <Label htmlFor="stars-schedule" className="text-hec-small font-medium text-hec-ink">Schedule</Label>
                     <Switch
                       id="stars-schedule"
                       checked={schedOn}
@@ -650,14 +650,14 @@ export default function StarsSyncTab() {
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-hec-caption text-hec-ink-soft">
                 "Run now" runs once, even with the schedule off — that is how the first,
                 supervised run happens. The schedule then repeats it every five minutes.
                 Turning it off loses nothing: records wait in Pixel Pal and arrive when it is back on.
               </p>
               {missing.length > 0 && (
-                <div className="rounded-md border border-warning/50 bg-warning/5 p-3 text-xs">
-                  <p className="mb-1 font-medium">Still to do</p>
+                <div className="rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 text-hec-small text-hec-ink">
+                  <p className="mb-1 flex items-center gap-2 font-medium"><AlertTriangle className="h-4 w-4 shrink-0 text-hec-warn" aria-hidden /> Still to do</p>
                   <ol className="list-decimal space-y-0.5 pl-4">
                     {missing.map((m) => <li key={m}>{m}</li>)}
                   </ol>
@@ -667,19 +667,19 @@ export default function StarsSyncTab() {
           </Card>
 
           <Tabs value={section} onValueChange={(value) => goSection(value as Section)} className="space-y-6">
-            <div className="overflow-x-auto">
-              <TabsList className="h-auto">
+            <div>
+              <TabsList className="h-auto w-full flex-wrap sm:w-auto">
                 <TabsTrigger value="records" className="gap-1.5">
                   <ListChecks className="h-4 w-4" /> Records
-                  {(st?.pending ?? 0) > 0 && <Badge variant="outline" className="ml-0.5 px-1.5 py-0 text-[11px]">{st?.pending}</Badge>}
+                  {(st?.pending ?? 0) > 0 && <Badge variant="outline" className="ml-0.5 px-2 py-0 tabular-nums">{st?.pending}</Badge>}
                 </TabsTrigger>
                 <TabsTrigger value="tools" className="gap-1.5">
                   <Wrench className="h-4 w-4" /> Tools
-                  {unlinkedChildren > 0 && <Badge variant="destructive" className="ml-0.5 px-1.5 py-0 text-[11px]">{unlinkedChildren}</Badge>}
+                  {unlinkedChildren > 0 && <Badge variant="warning" className="ml-0.5 px-2 py-0 tabular-nums">{unlinkedChildren}</Badge>}
                 </TabsTrigger>
                 <TabsTrigger value="settle" className="gap-1.5">
                   <Scale className="h-4 w-4" /> To settle
-                  {(st?.open_conflicts ?? 0) > 0 && <Badge variant="destructive" className="ml-0.5 px-1.5 py-0 text-[11px]">{st?.open_conflicts}</Badge>}
+                  {(st?.open_conflicts ?? 0) > 0 && <Badge variant="warning" className="ml-0.5 px-2 py-0 tabular-nums">{st?.open_conflicts}</Badge>}
                 </TabsTrigger>
                 <TabsTrigger value="setup" className="gap-1.5">
                   <Settings2 className="h-4 w-4" /> Setup
@@ -738,7 +738,7 @@ export default function StarsSyncTab() {
           <Card>
             <CardContent className="pt-6">
               {(conflicts.data ?? []).length === 0 ? (
-                <p className="py-4 text-sm text-muted-foreground">Nothing to settle.</p>
+                <p className="py-4 text-hec-small text-hec-ink-soft">Nothing to settle.</p>
               ) : (
                 <div className="space-y-2">
                   {(conflicts.data ?? []).map((c) => {
@@ -747,17 +747,17 @@ export default function StarsSyncTab() {
                     const child = (c.students as { full_name?: string } | null)?.full_name ?? "A child";
                     const lessonInfo = c.sessions as { date?: string; classes?: { name?: string } | null } | null;
                     return (
-                      <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
-                        <div className="text-sm">
-                          <span className="font-medium">{child}</span>
-                          <span className="text-muted-foreground">
+                      <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-hec-md border border-hec-line bg-hec-surface p-3">
+                        <div className="min-w-0 flex-1 basis-56 text-hec-small text-hec-ink">
+                          <span className="whitespace-normal break-words font-medium">{child}</span>
+                          <span className="text-hec-ink-soft">
                             {" "}· {theirs.homework_title ?? lessonInfo?.classes?.name ?? "lesson"} {lessonInfo?.date ? dayjs(lessonInfo.date).format("D MMM") : ""}
                           </span>
-                          <p className="text-xs">
+                          <p className="text-hec-caption">
                             HEC has <strong>{ours.status ?? "?"}</strong>, Pixel Pal says <strong>{theirs.status ?? "?"}</strong>.
                           </p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <Button size="sm" variant="outline" disabled={resolve.isPending}
                             onClick={() => resolve.mutate({ conflictId: c.id, resolution: "kept_ours" })}>
                             Keep HEC's
@@ -785,7 +785,7 @@ export default function StarsSyncTab() {
           <Card>
             <CardContent className="grid gap-5 pt-6 md:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="stars-from" className="text-sm">Sync lessons from</Label>
+                <Label htmlFor="stars-from" className="text-hec-small font-medium text-hec-ink">Sync lessons from</Label>
                 <div className="flex flex-wrap items-center gap-2">
                   <Input
                     id="stars-from"
@@ -812,9 +812,9 @@ export default function StarsSyncTab() {
                   </Button>
                 </div>
                 {fromDraft !== null && !fromValid && (
-                  <p className="text-xs text-destructive">Choose a full date between 2024 and a year from now.</p>
+                  <p className="text-hec-caption text-hec-danger">Choose a full date between 2024 and a year from now.</p>
                 )}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-hec-caption text-hec-ink-soft">
                   Nothing for a lesson before this date is imported. If anybody has been typing
                   Pixel Pal's points into HEC by hand, start after the last day they did —
                   otherwise those points are added twice.
@@ -822,7 +822,7 @@ export default function StarsSyncTab() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="stars-teacher" className="text-sm">Acts as</Label>
+                <Label htmlFor="stars-teacher" className="text-hec-small font-medium text-hec-ink">Acts as</Label>
                 <Select
                   value={conn?.default_teacher_id ?? NONE}
                   onValueChange={(v) => saveConnection.mutate({ default_teacher_id: v === NONE ? null : v })}
@@ -839,7 +839,7 @@ export default function StarsSyncTab() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-hec-caption text-hec-ink-soft">
                   Marks and points are recorded as this teacher, and only where they teach in
                   HEC. Nothing reaches money, families, staff or a class you have not mapped.
                   A class below can name its own teacher instead.
@@ -847,7 +847,7 @@ export default function StarsSyncTab() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="stars-cap-award" className="text-sm">Largest single award</Label>
+                <Label htmlFor="stars-cap-award" className="text-hec-small font-medium text-hec-ink">Largest single award</Label>
                 <Input
                   id="stars-cap-award"
                   type="number"
@@ -865,7 +865,7 @@ export default function StarsSyncTab() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="stars-cap-day" className="text-sm">Most points one child can gain from Pixel Pal in a day</Label>
+                <Label htmlFor="stars-cap-day" className="text-hec-small font-medium text-hec-ink">Most points one child can gain from Pixel Pal in a day</Label>
                 <Input
                   id="stars-cap-day"
                   type="number"
@@ -881,7 +881,7 @@ export default function StarsSyncTab() {
                     }
                   }}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-hec-caption text-hec-ink-soft">
                   A safety limit, not a judgement: a fault in another app must not be able to
                   award a child thousands of points. Awards over it are refused and listed below.
                 </p>
@@ -892,10 +892,10 @@ export default function StarsSyncTab() {
           {/* ------------------------------------------------- classes */}
           <SectionHeader title="Classes" subtitle="Any Pixel Pal class to any HEC class." />
           {notReady > 0 && (
-            <Card className="border-warning/60 bg-warning/5">
+            <Card className="border-hec-warn/30 bg-hec-warn-tint">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <AlertTriangle className="h-4 w-4 text-warning" />
+                <CardTitle className="flex items-start gap-2 text-hec-h3">
+                  <AlertTriangle className="mt-1 h-4 w-4 shrink-0 text-hec-warn" />
                   {notReady} class{notReady === 1 ? "" : "es"} will not sync as things stand
                 </CardTitle>
                 <CardDescription>Each row says why. Records for these classes wait until it is fixed.</CardDescription>
@@ -905,7 +905,7 @@ export default function StarsSyncTab() {
           <Card>
             <CardContent className="pt-6">
               {rows.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">No classes mapped yet.</p>
+                <p className="py-6 text-center text-hec-small text-hec-ink-soft">No classes mapped yet.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
@@ -926,14 +926,14 @@ export default function StarsSyncTab() {
                         return (
                           <TableRow key={r.stars_class_id}>
                             <TableCell className="font-mono text-xs">{r.stars_class_id}</TableCell>
-                            <TableCell className="font-medium">{r.class_name}</TableCell>
+                            <TableCell className="min-w-40 whitespace-normal break-words font-medium">{r.class_name}</TableCell>
                             <TableCell>
                               <Select
                                 value={own ?? NONE}
                                 onValueChange={(v) => updateClass.mutate({
                                   starsId: r.stars_class_id, patch: { teacher_id: v === NONE ? null : v } })}
                               >
-                                <SelectTrigger className="h-8 w-[180px] text-xs"><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="w-[180px]" aria-label={`Acts as, ${r.class_name}`}><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value={NONE}>Default ({teacherName(conn?.default_teacher_id)})</SelectItem>
                                   {(teachers.data ?? []).map((t) => (
@@ -957,12 +957,12 @@ export default function StarsSyncTab() {
                                 {(r.status === "partial" || r.status === "blocked") && <AlertTriangle className="mr-1 h-3 w-3" />}
                                 {badge.label}
                               </Badge>
-                              <p className="text-xs text-muted-foreground">{r.detail}</p>
+                              <p className="text-hec-caption text-hec-ink-soft">{r.detail}</p>
                             </TableCell>
                             <TableCell>
-                              <Button variant="ghost" size="icon" className="h-8 w-8"
+                              <Button variant="ghost" size="icon"
                                 aria-label={`Unmap ${r.class_name}`} onClick={() => setConfirmUnmapClass(r)}>
-                                <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                <Trash2 className="h-4 w-4 text-hec-danger" />
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -973,14 +973,14 @@ export default function StarsSyncTab() {
                 </div>
               )}
 
-              <div className="mt-6 grid gap-3 border-t pt-5 sm:grid-cols-[1fr_1fr_1fr_auto]">
+              <div className="mt-6 grid gap-3 border-t border-hec-line pt-5 sm:grid-cols-[1fr_1fr_1fr_auto]">
                 <div className="space-y-1.5">
-                  <Label htmlFor="new-stars-class" className="text-xs">Pixel Pal class number</Label>
+                  <Label htmlFor="new-stars-class" className="text-hec-small font-medium text-hec-ink">Pixel Pal class number</Label>
                   <Input id="new-stars-class" value={newClassStarsId} placeholder="e.g. 19"
                     onChange={(e) => setNewClassStarsId(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="new-hec-class" className="text-xs">HEC class</Label>
+                  <Label htmlFor="new-hec-class" className="text-hec-small font-medium text-hec-ink">HEC class</Label>
                   <Select value={newClassId} onValueChange={setNewClassId}>
                     <SelectTrigger id="new-hec-class"><SelectValue placeholder="Choose" /></SelectTrigger>
                     <SelectContent>
@@ -991,7 +991,7 @@ export default function StarsSyncTab() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="new-class-teacher" className="text-xs">Acts as</Label>
+                  <Label htmlFor="new-class-teacher" className="text-hec-small font-medium text-hec-ink">Acts as</Label>
                   <Select value={newClassTeacher} onValueChange={setNewClassTeacher}>
                     <SelectTrigger id="new-class-teacher"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -1014,7 +1014,7 @@ export default function StarsSyncTab() {
                 </div>
               </div>
               {usedStarsClassIds.has(newClassStarsId.trim()) && (
-                <p className="mt-2 text-xs text-destructive">That Pixel Pal class is already mapped.</p>
+                <p className="mt-2 text-hec-caption text-hec-danger">That Pixel Pal class is already mapped.</p>
               )}
             </CardContent>
           </Card>
@@ -1023,8 +1023,8 @@ export default function StarsSyncTab() {
           <SectionHeader title="Children" subtitle="Nothing syncs for a child who is not matched. That is deliberate." />
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <ClipboardPaste className="h-4 w-4" /> Match from Pixel Pal's list
+              <CardTitle className="flex items-center gap-2 text-hec-h3">
+                <ClipboardPaste className="h-4 w-4 shrink-0 text-hec-ink-soft" /> Match from Pixel Pal's list
               </CardTitle>
               <CardDescription>
                 Paste the list Pixel Pal gave you. Each child is offered only the children
@@ -1040,7 +1040,7 @@ export default function StarsSyncTab() {
                 placeholder='{ "classes": { … }, "students": { … }, "student_classes": { … } }'
                 className="min-h-[90px] font-mono text-xs"
               />
-              {pastedRoster.error && <p className="text-xs text-destructive">{pastedRoster.error}</p>}
+              {pastedRoster.error && <p className="text-hec-caption text-hec-danger">{pastedRoster.error}</p>}
               {pastedRows.length > 0 && (
                 <>
                   <div className="overflow-x-auto">
@@ -1062,16 +1062,16 @@ export default function StarsSyncTab() {
                           return (
                             <TableRow key={r.id}>
                               <TableCell className="font-mono text-xs">{r.id}</TableCell>
-                              <TableCell>{r.name}</TableCell>
-                              <TableCell className="text-xs text-muted-foreground">{r.starsClass ?? "—"}</TableCell>
+                              <TableCell className="min-w-32 whitespace-normal break-words">{r.name}</TableCell>
+                              <TableCell className="text-hec-caption text-hec-ink-soft">{r.starsClass ?? "—"}</TableCell>
                               <TableCell>
                                 {already ? (
-                                  <span className="text-xs"><CheckCircle2 className="mr-1 inline h-3 w-3 text-success" />{studentName(already)}</span>
+                                  <span className="whitespace-normal break-words text-hec-small"><CheckCircle2 className="mr-1 inline h-3 w-3 text-hec-leaf" />{studentName(already)}</span>
                                 ) : !hecClass ? (
-                                  <span className="text-xs text-muted-foreground">Map class {r.starsClass ?? "?"} first</span>
+                                  <span className="text-hec-caption text-hec-ink-soft">Map class {r.starsClass ?? "?"} first</span>
                                 ) : (
                                   <Select value={choice} onValueChange={(v) => setPicks((p) => ({ ...p, [r.id]: v }))}>
-                                    <SelectTrigger className="h-8 w-[220px] text-xs"><SelectValue placeholder="Choose" /></SelectTrigger>
+                                    <SelectTrigger className="w-[220px]" aria-label={`Child in HEC for ${r.name}`}><SelectValue placeholder="Choose" /></SelectTrigger>
                                     <SelectContent className="max-h-72">
                                       <SelectItem value={NONE}>Not yet</SelectItem>
                                       {pool
@@ -1089,8 +1089,8 @@ export default function StarsSyncTab() {
                       </TableBody>
                     </Table>
                   </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="min-w-0 flex-1 basis-56 text-hec-caption text-hec-ink-soft">
                       Check every nickname. A wrong match moves one child's marks and points onto another.
                     </p>
                     <Button
@@ -1107,11 +1107,11 @@ export default function StarsSyncTab() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Matched ({(studentMap.data ?? []).length})</CardTitle>
+              <CardTitle className="text-hec-h3">Matched (<span className="font-sans tabular-nums">{(studentMap.data ?? []).length}</span>)</CardTitle>
             </CardHeader>
             <CardContent>
               {(studentMap.data ?? []).length === 0 ? (
-                <p className="py-4 text-sm text-muted-foreground">No children matched yet.</p>
+                <p className="py-4 text-hec-small text-hec-ink-soft">No children matched yet.</p>
               ) : (
                 <div className="max-h-80 overflow-y-auto">
                   <Table>
@@ -1121,12 +1121,12 @@ export default function StarsSyncTab() {
                         .map((m) => (
                           <TableRow key={m.stars_student_id}>
                             <TableCell className="w-24 font-mono text-xs">{m.stars_student_id}</TableCell>
-                            <TableCell className="font-medium">{studentName(m.student_id)}</TableCell>
+                            <TableCell className="whitespace-normal break-words font-medium">{studentName(m.student_id)}</TableCell>
                             <TableCell className="w-10">
-                              <Button variant="ghost" size="icon" className="h-8 w-8"
+                              <Button variant="ghost" size="icon"
                                 aria-label={`Unmatch ${studentName(m.student_id)}`}
                                 onClick={() => setConfirmUnmatch(m.stars_student_id)}>
-                                <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                <Trash2 className="h-4 w-4 text-hec-danger" />
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -1135,7 +1135,7 @@ export default function StarsSyncTab() {
                   </Table>
                 </div>
               )}
-              <div className="mt-4 grid gap-3 border-t pt-4 sm:grid-cols-[1fr_1fr_auto]">
+              <div className="mt-4 grid gap-3 border-t border-hec-line pt-4 sm:grid-cols-[1fr_1fr_auto]">
                 <Input value={singleStarsId} placeholder="Pixel Pal number" aria-label="Pixel Pal student number"
                   onChange={(e) => setSingleStarsId(e.target.value)} />
                 <Select value={singleChildId} onValueChange={setSingleChildId}>
@@ -1215,11 +1215,11 @@ export default function StarsSyncTab() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
+            <AlertDialogCancel>Keep the class mapped</AlertDialogCancel>
+            <AlertDialogAction className="bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90" onClick={() => {
               if (confirmUnmapClass) removeClass.mutate(confirmUnmapClass.stars_class_id);
               setConfirmUnmapClass(null);
-            }}>Unmap</AlertDialogAction>
+            }}>Unmap the class</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1234,11 +1234,11 @@ export default function StarsSyncTab() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
+            <AlertDialogCancel>Keep the match</AlertDialogCancel>
+            <AlertDialogAction className="bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90" onClick={() => {
               if (confirmUnmatch) removeStudent.mutate(confirmUnmatch);
               setConfirmUnmatch(null);
-            }}>Unmatch</AlertDialogAction>
+            }}>Unmatch the child</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -17,6 +17,7 @@ import { InvoiceDownloadButton } from "@/components/invoice/InvoiceDownloadButto
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/lib/avatars";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useIvory } from "@/hooks/useIvory";
 
 interface TuitionStudentCardProps {
   item: any;
@@ -39,6 +40,8 @@ export function TuitionStudentCard({
 }: TuitionStudentCardProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
 
   const status = getPaymentStatus({
     carryOutDebt: item.carry_out_debt ?? 0,
@@ -63,10 +66,14 @@ export function TuitionStudentCard({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <div className={`border border-l-4 rounded-xl overflow-hidden bg-card transition-shadow hover:shadow-md ${borderColor[status] || ''} ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
+      {/* Ivory: a plain card with a hairline - the status badge (icon + word)
+          says the state, not a coloured edge; selected is the brass edge. */}
+      <div className={ivory
+        ? `overflow-hidden rounded-hec-lg border bg-hec-surface shadow-hec-1 ${isSelected ? "border-hec-brass ring-1 ring-hec-brass" : "border-hec-line"}`
+        : `border border-l-4 rounded-xl overflow-hidden bg-card transition-shadow hover:shadow-md ${borderColor[status] || ''} ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
         {/* Clickable header */}
         <CollapsibleTrigger asChild>
-          <button className="w-full text-left p-3 sm:p-4 flex items-center gap-3">
+          <button className={iv("flex min-h-hec-target w-full items-start gap-3 p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hec-ring", "w-full text-left p-3 sm:p-4 flex items-center gap-3")}>
             {selectionMode && (
               <Checkbox
                 checked={isSelected}
@@ -80,25 +87,25 @@ export function TuitionStudentCard({
             )}
 
             {/* Avatar */}
-            <Avatar className="h-9 w-9 ring-2 ring-background shadow-sm shrink-0">
+            <Avatar className={iv("h-10 w-10 shrink-0", "h-9 w-9 ring-2 ring-background shadow-sm shrink-0")}>
               <AvatarImage 
                 src={getAvatarUrl((item.students as any)?.avatar_url) || undefined} 
                 alt={studentName}
                 className="object-cover"
               />
-              <AvatarFallback className="bg-primary/10 text-primary font-medium text-xs">
+              <AvatarFallback className={iv("bg-hec-sunken text-hec-caption font-medium text-hec-ink-soft", "bg-primary/10 text-primary font-medium text-xs")}>
                 {studentName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
 
             {/* Name + class + badges */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-semibold text-sm truncate">{studentName}</span>
+              <div className={iv("flex flex-wrap items-center gap-2", "flex items-center gap-1.5 flex-wrap")}>
+                <span className={iv("whitespace-normal break-words hyphens-none text-balance text-hec-body font-semibold text-hec-ink", "font-semibold text-sm truncate")}>{studentName}</span>
                 {(item.students as any)?.is_active === false && (
                   <Badge
-                    variant="outline"
-                    className="text-[10px] px-1.5 py-0 border-muted-foreground/40 text-muted-foreground"
+                    variant={ivory ? "secondary" : "outline"}
+                    className={iv("", "text-[10px] px-1.5 py-0 border-muted-foreground/40 text-muted-foreground")}
                     title="No longer enrolled — shown because they were active during this month"
                   >
                     Inactive
@@ -106,49 +113,51 @@ export function TuitionStudentCard({
                 )}
                 {getTuitionStatusBadge(status, item.settled_in_month)}
                 {item.hasDiscount && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5 border-blue-300 text-blue-700">
+                  <Badge variant={ivory ? "secondary" : "outline"} className={iv("", "text-[10px] px-1.5 py-0 gap-0.5 border-blue-300 text-blue-700")}>
                     <Percent className="h-2.5 w-2.5" /> Disc
                   </Badge>
                 )}
                 {item.hasSiblings && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5 border-amber-300 text-amber-700">
+                  <Badge variant={ivory ? "secondary" : "outline"} className={iv("", "text-[10px] px-1.5 py-0 gap-0.5 border-amber-300 text-amber-700")}>
                     <Award className="h-2.5 w-2.5" /> Sib
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground truncate mt-0.5">{classNames}</p>
+              <p className={iv("mt-1 whitespace-normal break-words text-hec-small text-hec-ink-soft", "text-xs text-muted-foreground truncate mt-0.5")}>{classNames}</p>
             </div>
 
             {/* Balance + chevron */}
             <div className="text-right shrink-0">
-              <p className={`text-sm font-bold tabular-nums ${
+              <p className={ivory
+                ? `whitespace-nowrap font-sans text-hec-body font-semibold tabular-nums ${balance === 0 ? "text-hec-ink-soft" : "text-hec-ink"}`
+                : `text-sm font-bold tabular-nums ${
                 balance > 0 ? "text-destructive" : balance < 0 ? "text-emerald-600" : "text-muted-foreground"
               }`}>
                 {balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "Settled"}
               </p>
-              <p className="text-[10px] text-muted-foreground">Balance</p>
+              <p className={iv("text-hec-caption text-hec-ink-soft", "text-[10px] text-muted-foreground")}>Balance</p>
             </div>
-            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${open ? "rotate-180" : ""}`} />
+            <ChevronDown className={ivory ? `mt-1 h-5 w-5 shrink-0 text-hec-ink-soft transition-transform duration-hec-1 ease-hec ${open ? "rotate-180" : ""}` : `h-4 w-4 text-muted-foreground transition-transform shrink-0 ${open ? "rotate-180" : ""}`} />
           </button>
         </CollapsibleTrigger>
 
         {/* Expanded finance breakdown */}
         <CollapsibleContent>
-          <div className="border-t px-3 sm:px-4 py-3 space-y-3">
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-y-3 gap-x-2 text-center">
-              <FinanceCell label="Base" value={fmt(item.base_amount)} />
-              <FinanceCell label="Discount" value={item.discount_amount > 0 ? `−${fmt(item.discount_amount)}` : "—"} accent={item.discount_amount > 0 ? "green" : undefined} />
-              <FinanceCell label="Prior Bal." value={priorNet === 0 ? "—" : priorNet > 0 ? fmt(priorNet) : `+${fmt(Math.abs(priorNet))}`} accent={priorNet > 0 ? "red" : priorNet < 0 ? "green" : undefined} />
-              <FinanceCell label="Payable" value={fmt(item.finalPayable)} bold />
-              <FinanceCell label="Paid" value={fmt(item.recorded_payment ?? 0)} accent="blue" />
-              <FinanceCell label="Balance" value={balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "0 ₫"} accent={balance > 0 ? "red" : balance < 0 ? "green" : undefined} bold />
+          <div className={iv("space-y-4 border-t border-hec-line p-4", "border-t px-3 sm:px-4 py-3 space-y-3")}>
+            <div className={iv("grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-6", "grid grid-cols-3 sm:grid-cols-6 gap-y-3 gap-x-2 text-center")}>
+              <FinanceCell ivory={ivory} label="Base" value={fmt(item.base_amount)} />
+              <FinanceCell ivory={ivory} label="Discount" value={item.discount_amount > 0 ? `−${fmt(item.discount_amount)}` : "—"} accent={item.discount_amount > 0 ? "green" : undefined} />
+              <FinanceCell ivory={ivory} label="Prior Bal." value={priorNet === 0 ? "—" : priorNet > 0 ? fmt(priorNet) : `+${fmt(Math.abs(priorNet))}`} accent={priorNet > 0 ? "red" : priorNet < 0 ? "green" : undefined} />
+              <FinanceCell ivory={ivory} label="Payable" value={fmt(item.finalPayable)} bold />
+              <FinanceCell ivory={ivory} label="Paid" value={fmt(item.recorded_payment ?? 0)} accent="blue" />
+              <FinanceCell ivory={ivory} total label="Balance" value={balance > 0 ? fmt(balance) : balance < 0 ? `+${fmt(Math.abs(balance))}` : "0 ₫"} accent={balance > 0 ? "red" : balance < 0 ? "green" : undefined} bold />
             </div>
 
             {/* Smart Tuition Flags */}
-            <TuitionFlags item={item} />
+            <TuitionFlags item={item} ivory={ivory} />
 
             {/* Actions */}
-            <div className="flex gap-2 pt-1">
+            <div className={iv("flex flex-wrap gap-2", "flex gap-2 pt-1")}>
               <Button size="sm" onClick={onRecordPay} className="flex-1 sm:flex-none gap-1.5">
                 <CreditCard className="h-3.5 w-3.5" />
                 Record Pay
@@ -171,7 +180,17 @@ export function TuitionStudentCard({
   );
 }
 
-function FinanceCell({ label, value, accent, bold }: { label: string; value: string; accent?: "green" | "red" | "blue"; bold?: boolean }) {
+function FinanceCell({ label, value, accent, bold, ivory, total }: { label: string; value: string; accent?: "green" | "red" | "blue"; bold?: boolean; ivory?: boolean; total?: boolean }) {
+  if (ivory) {
+    // Ivory: every amount is ink, sans, tabular and never cut; the Balance is
+    // the one total of the card, under the 2 px ink rule.
+    return (
+      <div className={`min-w-0 ${total ? "border-t-2 border-hec-ink pt-2" : "pt-2"}`}>
+        <p className="text-hec-caption uppercase tracking-wider text-hec-ink-soft">{label}</p>
+        <p className={`whitespace-nowrap font-sans tabular-nums text-hec-ink ${total ? "text-hec-h3 font-semibold" : bold ? "text-hec-small font-semibold" : "text-hec-small"}`}>{value}</p>
+      </div>
+    );
+  }
   const color = accent === "green" ? "text-emerald-600" : accent === "red" ? "text-destructive" : accent === "blue" ? "text-blue-600" : "text-foreground";
   return (
     <div className="min-w-0">
@@ -181,7 +200,7 @@ function FinanceCell({ label, value, accent, bold }: { label: string; value: str
   );
 }
 
-function TuitionFlags({ item }: { item: any }) {
+function TuitionFlags({ item, ivory }: { item: any; ivory?: boolean }) {
   const flags: { label: string; detail: string; color: "green" | "orange" | "blue" }[] = [];
   
   // Check discount
@@ -253,8 +272,8 @@ function TuitionFlags({ item }: { item: any }) {
           <Tooltip key={i}>
             <TooltipTrigger asChild>
               <Badge
-                variant="outline"
-                className={`text-[10px] px-1.5 py-0.5 gap-1 cursor-help ${
+                variant={ivory ? (flag.color === "orange" ? "warning" : "secondary") : "outline"}
+                className={ivory ? "cursor-help" : `text-[10px] px-1.5 py-0.5 gap-1 cursor-help ${
                   flag.color === "green"
                     ? "border-emerald-300 text-emerald-700 bg-emerald-50"
                     : flag.color === "orange"
@@ -262,12 +281,12 @@ function TuitionFlags({ item }: { item: any }) {
                     : "border-blue-300 text-blue-700 bg-blue-50"
                 }`}
               >
-                <Info className="h-2.5 w-2.5" />
+                <Info className={ivory ? "h-3.5 w-3.5" : "h-2.5 w-2.5"} />
                 {flag.label}
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              <p className="text-xs max-w-[200px]">{flag.detail}</p>
+              <p className={ivory ? "max-w-[200px] text-hec-caption" : "text-xs max-w-[200px]"}>{flag.detail}</p>
             </TooltipContent>
           </Tooltip>
         ))}

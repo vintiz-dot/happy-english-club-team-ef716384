@@ -110,17 +110,17 @@ export function AdminJournalViewEnhanced() {
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList>
+        <TabsList className="h-auto w-full flex-wrap sm:w-auto">
           <TabsTrigger value="student">Student Journals</TabsTrigger>
           <TabsTrigger value="class">Class Journals</TabsTrigger>
           <TabsTrigger value="private">Private Journals</TabsTrigger>
         </TabsList>
 
         <TabsContent value="student" className="space-y-4">
-          <div className="flex justify-between items-center gap-4">
-            <div className="flex-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 flex-1">
               <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-                <SelectTrigger>
+                <SelectTrigger aria-label="Student">
                   <SelectValue placeholder="Select a student" />
                 </SelectTrigger>
                 <SelectContent>
@@ -154,10 +154,10 @@ export function AdminJournalViewEnhanced() {
         </TabsContent>
 
         <TabsContent value="class" className="space-y-4">
-          <div className="flex justify-between items-center gap-4">
-            <div className="flex-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 flex-1">
               <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-                <SelectTrigger>
+                <SelectTrigger aria-label="Class">
                   <SelectValue placeholder="Select a class" />
                 </SelectTrigger>
                 <SelectContent>

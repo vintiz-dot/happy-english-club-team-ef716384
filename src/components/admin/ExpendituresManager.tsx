@@ -324,7 +324,7 @@ export function ExpendituresManager({ selectedMonth }: { selectedMonth: string }
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">{exp.memo || "—"}</TableCell>
-                  <TableCell className="text-right font-medium">
+                  <TableCell className="text-right font-medium tabular-nums">
                     {formatVND(exp.amount)}
                   </TableCell>
                   <TableCell className="text-right">

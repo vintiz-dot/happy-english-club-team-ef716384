@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { dayjs, nowBangkok } from "@/lib/date";
 import { statusTreatment, type ClassColor } from "@/lib/classColors";
 import { describeVariance, formatSignedMinutes } from "@/lib/sessionDuration";
+import { eventAccessibleName } from "./lib/eventLabel";
+import { useIvory } from "@/hooks/useIvory";
 import {
   STATUS_META,
   colorKeyFor,
@@ -33,6 +35,10 @@ const SLOT_H = 32;
 const PX_PER_MIN = SLOT_H / SLOT_MIN;
 const GUTTER = "3.5rem";
 
+/** The `FOCUS` ring of docs/DESIGN_SYSTEM.md s.15. */
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
+
 /* ------------------------------------------------------------------ block */
 
 type ColorFor = (key: string) => ClassColor;
@@ -48,6 +54,7 @@ function EventBlock({
   draggable?: boolean;
   colorFor: ColorFor;
 }) {
+  const ivory = useIvory();
   const { event, top, height, leftPct, widthPct } = positioned;
   const statusKey = getStatusKey(event);
   const meta = STATUS_META[statusKey];
@@ -65,14 +72,19 @@ function EventBlock({
   const showTeacher = height >= 56;
   const showMeta = height >= 44;
 
-  const label = [
-    event.class_name,
-    `${formatTime(event.start_time)} to ${formatTime(event.end_time)}`,
-    meta.label,
-    variance ? describeVariance(variance) : null,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  // What the block shows, line by line; the name starts with exactly that,
+  // then adds what does not fit (times, teacher), the status and any note.
+  const metaText = `${formatTime(event.start_time)}–${formatTime(event.end_time)}${variance ? ` (${formatSignedMinutes(variance.deltaMinutes)})` : ""}${event.enrolled_count ? ` · ${event.enrolled_count}` : ""}`;
+  const teacherShown = showTeacher && !!event.teacher_name;
+  const label = eventAccessibleName(
+    [event.class_name, showMeta && metaText, teacherShown && event.teacher_name],
+    [
+      !showMeta && `${formatTime(event.start_time)} to ${formatTime(event.end_time)}`,
+      !teacherShown && event.teacher_name,
+      meta.label,
+      variance ? describeVariance(variance) : null,
+    ],
+  );
 
   return (
     <button
@@ -90,9 +102,11 @@ function EventBlock({
         width: `calc(${widthPct}% - 4px)`,
       }}
       className={cn(
-        "absolute overflow-hidden rounded-lg border pl-2 pr-1.5 py-1 text-left",
-        "transition-shadow hover:shadow-md",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+        ivory
+          ? "absolute overflow-hidden rounded-hec-sm border py-1 pl-2 pr-1 text-left"
+          : "absolute overflow-hidden rounded-lg border pl-2 pr-1.5 py-1 text-left",
+        ivory ? "transition-shadow duration-hec-1 ease-hec hover:shadow-hec-2" : "transition-shadow hover:shadow-md",
+        ivory ? FOCUS : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         color.tint,
         color.border,
         treatment.wrapper,
@@ -102,34 +116,43 @@ function EventBlock({
     >
       <span
         aria-hidden
-        className={cn("absolute inset-y-0 left-0 w-[3px] rounded-l-lg", color.rail)}
+        className={cn(ivory ? "absolute inset-y-0 left-0 w-[3px] rounded-l-hec-sm" : "absolute inset-y-0 left-0 w-[3px] rounded-l-lg", color.rail)}
       />
       <div className="flex items-start gap-1">
         <div
           className={cn(
-            "min-w-0 flex-1 truncate text-[11px] font-semibold leading-tight",
+            ivory
+              ? "min-w-0 flex-1 truncate text-hec-caption font-semibold leading-tight"
+              : "min-w-0 flex-1 truncate text-[11px] font-semibold leading-tight",
             color.text,
             treatment.label,
           )}
         >
           {event.class_name}
         </div>
-        {variance && <AlertTriangle className="h-3 w-3 shrink-0 text-warning" aria-hidden />}
+        {variance && <AlertTriangle className={ivory ? "h-3.5 w-3.5 shrink-0 text-hec-warn" : "h-3 w-3 shrink-0 text-warning"} aria-hidden />}
       </div>
+      {/* A space between the lines, so their text does not run together
+          ("...Nguyên17:30") for WCAG 2.5.3. White space between blocks is not drawn. */}
+      {" "}
       {showMeta && (
         <div
           className={cn(
-            "truncate text-[10px] leading-tight tabular-nums",
-            variance ? "font-medium text-warning" : "opacity-70",
+            ivory ? "truncate text-hec-caption leading-tight tabular-nums" : "truncate text-[10px] leading-tight tabular-nums",
+            variance
+              ? ivory ? "font-medium text-hec-warn" : "font-medium text-warning"
+              : ivory ? "text-hec-ink-soft" : "opacity-70",
           )}
         >
+          {/* Rendered as before (one string here moved the dash by a sub-pixel); metaText is the same text. */}
           {formatTime(event.start_time)}–{formatTime(event.end_time)}
           {variance ? ` (${formatSignedMinutes(variance.deltaMinutes)})` : ""}
           {event.enrolled_count ? ` · ${event.enrolled_count}` : ""}
         </div>
       )}
+      {" "}
       {showTeacher && event.teacher_name && (
-        <div className="truncate text-[10px] leading-tight opacity-60">{event.teacher_name}</div>
+        <div className={ivory ? "truncate text-hec-caption leading-tight text-hec-ink-soft" : "truncate text-[10px] leading-tight opacity-60"}>{event.teacher_name}</div>
       )}
     </button>
   );
@@ -138,6 +161,7 @@ function EventBlock({
 /* ------------------------------------------------------------- drop slots */
 
 function DropSlot({ dateStr, minutes }: { dateStr: string; minutes: number }) {
+  const ivory = useIvory();
   const { setNodeRef, isOver } = useDroppable({
     id: `slot:${dateStr}:${minutes}`,
     data: { date: dateStr, minutes },
@@ -146,7 +170,11 @@ function DropSlot({ dateStr, minutes }: { dateStr: string; minutes: number }) {
     <div
       ref={setNodeRef}
       style={{ height: SLOT_H }}
-      className={cn("transition-colors", isOver && "bg-primary/10 ring-1 ring-inset ring-primary/40")}
+      className={
+        ivory
+          ? cn("transition-colors duration-hec-1 ease-hec", isOver && "bg-hec-sunken ring-1 ring-inset ring-hec-brass")
+          : cn("transition-colors", isOver && "bg-primary/10 ring-1 ring-inset ring-primary/40")
+      }
     />
   );
 }
@@ -172,6 +200,7 @@ export default function TimeGridView({
   isMobile,
   colorFor,
 }: TimeGridViewProps) {
+  const ivory = useIvory();
   const { startMin, endMin } = useMemo(() => deriveTimeWindow(events), [events]);
   const bodyHeight = (endMin - startMin) * PX_PER_MIN;
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -211,7 +240,7 @@ export default function TimeGridView({
       <div style={{ minWidth: isMobile ? days.length * colMinWidth + 56 : undefined }}>
         {/* Day headers */}
         <div
-          className="grid border-b border-border/60"
+          className={ivory ? "grid border-b border-hec-line" : "grid border-b border-border/60"}
           style={{ gridTemplateColumns: `${GUTTER} repeat(${days.length}, minmax(0, 1fr))` }}
         >
           <div />
@@ -224,22 +253,30 @@ export default function TimeGridView({
                 type="button"
                 onClick={() => onOpenDay?.(day.format("YYYY-MM-DD"))}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 py-2 transition-colors hover:bg-muted/40",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                  ivory
+                    ? "flex min-h-hec-target min-w-0 flex-col items-center gap-1 rounded-hec-sm py-2 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken/60"
+                    : "flex flex-col items-center gap-0.5 py-2 transition-colors hover:bg-muted/40",
+                  ivory
+                    ? "focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hec-ring"
+                    : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                 )}
               >
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <span className={ivory ? "text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft" : "text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"}>
                   {day.format("ddd")}
                 </span>
                 <span
                   className={cn(
-                    "flex h-7 min-w-7 items-center justify-center rounded-lg px-1.5 text-sm font-semibold tabular-nums",
-                    isToday ? "bg-primary text-primary-foreground" : "text-foreground",
+                    ivory
+                      ? "flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-hec-small font-semibold tabular-nums"
+                      : "flex h-7 min-w-7 items-center justify-center rounded-lg px-1.5 text-sm font-semibold tabular-nums",
+                    isToday
+                      ? ivory ? "bg-hec-action text-hec-on-action" : "bg-primary text-primary-foreground"
+                      : ivory ? "text-hec-ink" : "text-foreground",
                   )}
                 >
                   {day.format("D")}
                 </span>
-                <span className="text-[10px] tabular-nums text-muted-foreground/70">
+                <span className={ivory ? "text-hec-caption tabular-nums text-hec-ink-faint" : "text-[10px] tabular-nums text-muted-foreground/70"}>
                   {count > 0 ? `${count}` : "—"}
                 </span>
               </button>
@@ -258,7 +295,7 @@ export default function TimeGridView({
               <div
                 key={m}
                 style={{ top: (m - startMin) * PX_PER_MIN }}
-                className="absolute right-2 -translate-y-1/2 text-[10px] font-medium tabular-nums text-muted-foreground/70"
+                className={ivory ? "absolute right-2 -translate-y-1/2 text-hec-caption tabular-nums text-hec-ink-faint" : "absolute right-2 -translate-y-1/2 text-[10px] font-medium tabular-nums text-muted-foreground/70"}
               >
                 {String(Math.floor(m / 60)).padStart(2, "0")}:00
               </div>
@@ -274,7 +311,10 @@ export default function TimeGridView({
             return (
               <div
                 key={dateStr}
-                className={cn(
+                className={
+                  ivory
+                    ? cn("relative border-l border-hec-line", isToday && "bg-hec-sunken/40")
+                    : cn(
                   "relative border-l border-border/40",
                   isToday && "bg-primary/[0.03]",
                 )}
@@ -287,7 +327,9 @@ export default function TimeGridView({
                     style={{ top: (m - startMin) * PX_PER_MIN }}
                     className={cn(
                       "pointer-events-none absolute inset-x-0 border-t",
-                      m % 60 === 0 ? "border-border/40" : "border-border/20",
+                      m % 60 === 0
+                        ? ivory ? "border-hec-line" : "border-border/40"
+                        : ivory ? "border-hec-line/50" : "border-border/20",
                     )}
                   />
                 ))}
@@ -317,8 +359,8 @@ export default function TimeGridView({
                     style={{ top: nowTop }}
                     aria-hidden
                   >
-                    <div className="relative border-t-2 border-destructive/70">
-                      <span className="absolute -left-1 -top-[5px] h-2 w-2 rounded-full bg-destructive" />
+                    <div className={ivory ? "relative border-t-2 border-hec-brass" : "relative border-t-2 border-destructive/70"}>
+                      <span className={ivory ? "absolute -left-1 -top-[5px] h-2 w-2 rounded-full bg-hec-brass" : "absolute -left-1 -top-[5px] h-2 w-2 rounded-full bg-destructive"} />
                     </div>
                   </div>
                 )}

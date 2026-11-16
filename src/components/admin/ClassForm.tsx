@@ -145,7 +145,7 @@ export function ClassForm({ onSuccess }: { onSuccess?: () => void }) {
           <div>
             <Label htmlFor="teacher">Teacher</Label>
             <Select value={teacherId} onValueChange={setTeacherId}>
-              <SelectTrigger>
+              <SelectTrigger id="teacher">
                 <SelectValue placeholder="Select Teacher" />
               </SelectTrigger>
               <SelectContent>
@@ -161,7 +161,7 @@ export function ClassForm({ onSuccess }: { onSuccess?: () => void }) {
           <div>
             <Label htmlFor="rate">Session Fee</Label>
             <Select value={sessionRate.toString()} onValueChange={(v) => setSessionRate(Number(v))}>
-              <SelectTrigger>
+              <SelectTrigger id="rate">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -220,7 +220,7 @@ export function ClassForm({ onSuccess }: { onSuccess?: () => void }) {
                     value={slot.dayOfWeek.toString()}
                     onValueChange={(v) => updateSlot(index, "dayOfWeek", Number(v))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-label="Day">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -237,6 +237,7 @@ export function ClassForm({ onSuccess }: { onSuccess?: () => void }) {
                   <Label>Start</Label>
                   <Input
                     type="time"
+                    aria-label="Start"
                     value={slot.startTime}
                     onChange={(e) => updateSlot(index, "startTime", e.target.value)}
                   />
@@ -259,6 +260,7 @@ export function ClassForm({ onSuccess }: { onSuccess?: () => void }) {
                   </Label>
                   <Input
                     type="time"
+                    aria-label="End"
                     value={slot.endTime}
                     onChange={(e) => updateSlot(index, "endTime", e.target.value)}
                   />

@@ -8,10 +8,10 @@ const Families = () => {
 
   return (
     <Layout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Families</h1>
-          <p className="text-muted-foreground">Manage family accounts and information</p>
+          <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Families</h1>
+          <p className="text-hec-small text-hec-ink-soft">Manage family accounts and information</p>
         </div>
 
         <FamilyForm onSuccess={() => queryClient.invalidateQueries({ queryKey: ["families-list"] })} />

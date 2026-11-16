@@ -58,6 +58,32 @@ export interface GuardPreview {
   review_required?: boolean;
   erased_recently?: any[];
   token?: string;
+  /** D4 (floors): D1's level as it reads NOW; `level` above is max(now, floor). Absent from a pre-D4 server. */
+  level_now?: GuardLevel;
+  /** D4 (floors): the strongest evidence this lesson once showed before someone removed it, or null. */
+  floor?: EvidenceFloor | null;
+}
+
+/** One removal the evidence floor recorded (server: session_evidence_floor.causes). */
+export interface FloorCause {
+  at?: string | null;
+  what?: string | null;
+  table?: string | null;
+  op?: string | null;
+  lane?: string | null;
+  level?: GuardLevel | null;
+  actor_user_id?: string | null;
+  old_status?: string | null;
+  new_status?: string | null;
+  source?: string | null;
+}
+
+export interface EvidenceFloor {
+  session_id?: string;
+  level: GuardLevel;
+  first_at?: string | null;
+  last_at?: string | null;
+  causes?: FloorCause[];
 }
 
 export interface TuitionFigure {
@@ -271,6 +297,7 @@ export const COPY = {
   stalePrompt: "Read what is different below, then confirm again. Nothing was changed.",
   reviewNote: "This change is recorded for review.",
   erasedNote: "Marks were removed before this change",
+  floorRemoved: "Recorded, and later removed",
   consequenceNotFetched: "not available",
   payRecalculated: "Pay is recalculated by Payroll after the change.",
   afterNotAvailable: "worked out after the change",
@@ -450,14 +477,76 @@ export function guidanceFor(p: GuardPreview): string {
   return p.level === "STRONG" ? COPY.strong : COPY.soft;
 }
 
-/** Evidence items in the order the server sent them, minus nothing. */
-export function evidenceList(p: GuardPreview): Array<{ key: string; text: string; strength: string; item: EvidenceItem }> {
-  return (p.evidence?.items ?? []).map((item, idx) => ({
+/** What a removal recorded by the evidence floor was, in words. */
+const FLOOR_WHAT: Record<string, (c: FloorCause) => string> = {
+  attendance: (c) =>
+    c.new_status
+      ? `A register mark was changed${c.old_status ? ` from ${c.old_status}` : ""} to ${c.new_status}`
+      : c.op === "DELETE"
+        ? "A register mark was removed"
+        : "A register mark was changed",
+  points: () => "Points awarded that day were removed or moved to another day",
+  transcript: () => "A class transcript was removed, unlinked or moved to another day",
+  homework: () => "Homework set that day, or a grade given that day, was removed or changed",
+  session_status: () => "The lesson was taken off Held, or moved to another day or a later time",
+};
+
+const FLOOR_WHO: Record<string, string> = {
+  person: "by a staff member",
+  service: "by an automatic process",
+  owner: "from the database console",
+};
+
+/**
+ * One floor cause in words, shown under the heading COPY.floorRemoved
+ * ("Recorded, and later removed"): "Points awarded that day were removed or
+ * moved to another day on 12 Nov 2026 at 18:05, by a staff member".
+ */
+export function describeFloorCause(c: FloorCause): string {
+  const what = (c.what && FLOOR_WHAT[c.what]?.(c)) ?? `${String(c.what ?? c.table ?? "a record").replace(/_/g, " ")} changed`;
+  const day = formatDay(c.at ?? null);
+  const at = formatClock(c.at ?? null);
+  const who = FLOOR_WHO[c.lane ?? ""] ?? "";
+  return `${what}${day ? ` on ${day}${at ? ` at ${at}` : ""}` : ""}${who ? `, ${who}` : ""}`;
+}
+
+/**
+ * Evidence items in the order the server sent them, minus nothing; then,
+ * marked `removed`, every removal the evidence floor recorded (D4), newest
+ * last, as the server sent them. Display only: the level and the tier are the
+ * server's.
+ */
+export function evidenceList(
+  p: GuardPreview,
+): Array<{ key: string; text: string; strength: string; item: EvidenceItem; removed?: boolean }> {
+  const now = (p.evidence?.items ?? []).map((item, idx) => ({
     key: `${item.type}-${idx}`,
     text: describeEvidence(item),
     strength: evidenceStrengthWord(item),
     item,
   }));
+  const removed = (p.floor?.causes ?? []).map((c, idx) => ({
+    key: `floor-${idx}`,
+    text: describeFloorCause(c),
+    strength: c.level === "STRONG" ? "Strong" : "Some",
+    item: { type: "floor_cause", label_key: "evidence.floor_cause", count: 1, at: c.at ?? null, actor_id: c.actor_user_id ?? null } as EvidenceItem,
+    removed: true,
+  }));
+  return [...now, ...removed];
+}
+
+/**
+ * The honest sentence when the lesson once had more evidence than it shows
+ * now (D4 floor): null when there is no floor. Wording only; whether the
+ * floor counts is decided by the server (preview.level, preview.tier).
+ */
+export function floorNote(p: GuardPreview): string | null {
+  if (!p.floor) return null;
+  const once = p.floor.level === "STRONG" ? "strong" : "some";
+  const now = p.level_now === "STRONG" ? "strong" : p.level_now === "SOFT" ? "some" : "no";
+  return p.level_now && p.level_now !== p.floor.level
+    ? `This lesson once had ${once} evidence that it took place; it shows ${now} evidence now because records were removed. The check below counts what it once had.`
+    : `This lesson once had ${once} evidence that it took place, and some of the records were later removed. The check below counts what it once had.`;
 }
 
 /* -------------------------------------------------------------- figures */

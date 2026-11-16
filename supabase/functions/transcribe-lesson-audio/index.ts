@@ -34,6 +34,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { safeParseJson, chunkArray } from "../_lib/text.ts";
+import { requireRole, callerHoldsClass } from "../_lib/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -418,6 +419,14 @@ Deno.serve(async (req) => {
   );
 
   try {
+    // Staff only, and only for a class they hold - checked BEFORE anything
+    // is read. This runs on the service role: it downloads a class's lesson
+    // audio (children's voices), sends it to OpenAI and writes the
+    // transcript into the row, all off a transcript_id in the body. verify_jwt
+    // alone let any token through, the public anon key included.
+    const gate = await requireRole(req, sb, ["admin", "teacher"], corsHeaders);
+    if (gate instanceof Response) return gate;
+
     const body = await req.json().catch(() => ({}));
     const transcriptId = String(body.transcript_id ?? "").trim() || null;
     if (!transcriptId) return respond({ success: false, error: "transcript_id is required" }, 400);
@@ -428,6 +437,34 @@ Deno.serve(async (req) => {
       .eq("id", transcriptId)
       .single();
     if (trErr || !tr) return respond({ success: false, error: "transcript not found" }, 404);
+
+    // The class comes from the row, never from the body.
+    if (!(await callerHoldsClass(sb, gate, tr.class_id))) {
+      console.warn(`transcribe-lesson-audio refused: caller ${gate.userId} transcript ${tr.id} class ${tr.class_id}`);
+      return respond({ success: false, error: "That transcript belongs to a class you do not hold." }, 403);
+    }
+    // A path in the body (the app sends none) must name this row's recording.
+    if (body.audio_storage_path !== undefined && body.audio_storage_path !== tr.audio_storage_path) {
+      return respond({ success: false, error: "audio_storage_path does not match this transcript" }, 400);
+    }
+    // The recording must be filed under the row's own class (`<class_id>/...`,
+    // the only path the app writes), so a row cannot point at another
+    // class's audio (T2 finding F1; also a CHECK on class_transcripts).
+    // Exactly `<class_id>/<file>`: two parts, no dot segments, backslash or
+    // percent-escape, so `<A>/../<B>/x.mp3` cannot reach another class's file
+    // when the storage client collapses the path (T2 review R1).
+    const audioParts = tr.audio_storage_path ? String(tr.audio_storage_path).split("/") : [];
+    if (
+      tr.audio_storage_path &&
+      (audioParts.length !== 2 ||
+        audioParts[0].toLowerCase() !== String(tr.class_id).toLowerCase() ||
+        audioParts.some((part) =>
+          !part || part === "." || part === ".." || part.includes("%") || part.includes(String.fromCharCode(92))
+        ))
+    ) {
+      console.warn(`transcribe-lesson-audio refused: transcript ${tr.id} audio path is not under class ${tr.class_id}`);
+      return respond({ success: false, error: "That recording is not filed under this transcript's class." }, 403);
+    }
     if (!tr.audio_storage_path) {
       await sb
         .from("class_transcripts")

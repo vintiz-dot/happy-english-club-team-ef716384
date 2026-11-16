@@ -35,27 +35,28 @@ function AdvancedSection({
   const [open, setOpen] = useState(defaultOpen);
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="surface-2 rounded-xl shadow-q1 ring-1 ring-border overflow-hidden">
+      <div className="overflow-hidden rounded-hec-lg border border-hec-line bg-hec-surface shadow-hec-1">
         <CollapsibleTrigger asChild>
           <button
             type="button"
-            className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-muted/40 transition-colors"
+            className="flex min-h-hec-target w-full items-center justify-between gap-3 rounded-hec-lg p-4 text-left transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken/60 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hec-ring"
           >
             <div className="min-w-0">
-              <p className="type-h2">{title}</p>
+              <p className="text-hec-h3 font-semibold text-hec-ink">{title}</p>
               {description && (
-                <p className="type-micro text-muted-foreground mt-0.5">{description}</p>
+                <p className="mt-1 text-hec-small text-hec-ink-soft">{description}</p>
               )}
             </div>
             <ChevronRight
-              className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${
+              aria-hidden
+              className={`h-5 w-5 shrink-0 text-hec-ink-soft transition-transform duration-hec-2 ease-hec ${
                 open ? "rotate-90" : ""
               }`}
             />
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="border-t p-4">{children}</div>
+          <div className="border-t border-hec-line p-4">{children}</div>
         </CollapsibleContent>
       </div>
     </Collapsible>
@@ -73,7 +74,7 @@ const AutomationTab = () => {
       />
 
       <Tabs defaultValue="bulk" className="space-y-6">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="bulk">Bulk Operations</TabsTrigger>
           <TabsTrigger value="repair">Repair & Debug</TabsTrigger>
           <TabsTrigger value="gamification">Gamification</TabsTrigger>

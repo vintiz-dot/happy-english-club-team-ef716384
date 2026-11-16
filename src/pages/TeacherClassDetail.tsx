@@ -166,7 +166,7 @@ export default function TeacherClassDetail() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-3">
               <Button asChild variant="outline">
                 <Link to="/classes">
                   <ArrowLeft className="h-4 w-4 mr-2" />
@@ -191,7 +191,7 @@ export default function TeacherClassDetail() {
         <LiveEngagementHUD classId={id!} />
       </div>
       <Tabs defaultValue="calendar" className="space-y-4">
-        <TabsList>
+        <TabsList className="h-auto flex-wrap">
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
           <TabsTrigger value="roster">Roster</TabsTrigger>
           <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
@@ -222,7 +222,7 @@ export default function TeacherClassDetail() {
               <SetMonitorControl classId={id!} roster={roster} />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {roster.map((student: any) => (
-                  <div key={student.id} className="border rounded-lg px-3 py-2">
+                  <div key={student.id} className="min-w-0 whitespace-normal break-words rounded-hec-md border border-hec-line bg-hec-surface px-3 py-2 text-hec-small text-hec-ink">
                     {student.full_name}
                   </div>
                 ))}
@@ -251,8 +251,8 @@ export default function TeacherClassDetail() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-center py-8 text-muted-foreground">
-                No materials yet. Go to <Link to="/teacher/assignments" className="text-primary hover:underline">Assignments</Link> to create materials for this class.
+              <p className="py-8 text-center text-hec-body text-hec-ink-soft">
+                No materials yet. Go to <Link to="/teacher/assignments" className="text-hec-brass underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">Assignments</Link> to create materials for this class.
               </p>
             </CardContent>
           </Card>

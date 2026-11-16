@@ -33,6 +33,12 @@
 
 import * as sdk from "npm:microsoft-cognitiveservices-speech-sdk@1.52.0";
 
+import { requireSpender, type SpendGate } from "../_lib/ai-gate.ts";
+
+// A signed-in account holding a role, and no more than 60 calls per
+// account in each window: Azure TTS with visemes per word.
+const GATE: SpendGate = { name: "pronounce-viseme", limit: 60, windowMs: 5 * 60_000 };
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -52,6 +58,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Who is asking, before anything is read or spent (audit F-02).
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
 
   try {
     const { word, voice, sentence } = await req.json();

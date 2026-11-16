@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { LucideIcon } from "lucide-react";
+import { useIvory } from "@/hooks/useIvory";
 
 interface FeedbackItem {
   id: string;
@@ -15,6 +16,7 @@ interface PointFeedbackAnimationProps {
 }
 
 export function PointFeedbackAnimation({ feedbacks, onComplete }: PointFeedbackAnimationProps) {
+  const ivory = useIvory();
   return (
     <AnimatePresence>
       {feedbacks.map((feedback) => {
@@ -37,10 +39,16 @@ export function PointFeedbackAnimation({ feedbacks, onComplete }: PointFeedbackA
             onAnimationComplete={() => onComplete(feedback.id)}
             className="absolute -top-2 left-0 right-0 flex justify-center pointer-events-none z-50"
           >
-            <div 
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-lg shadow-lg ${
-                isPositive 
-                  ? "bg-green-500/90 text-white" 
+            <div
+              className={ivory
+                ? `flex items-center gap-2 px-3 py-1 rounded-full font-semibold text-hec-h3 tabular-nums whitespace-nowrap shadow-hec-2 ${
+                    isPositive
+                      ? "bg-hec-leaf text-hec-paper"
+                      : "bg-hec-danger-fill text-hec-on-danger"
+                  }`
+                : `flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-lg shadow-lg ${
+                isPositive
+                  ? "bg-green-500/90 text-white"
                   : "bg-red-500/90 text-white"
               }`}
             >

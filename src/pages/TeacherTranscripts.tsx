@@ -83,15 +83,18 @@ function useMyClasses(userId?: string) {
   });
 }
 
+// A CEFR estimate is a level: the system's brass level badge (DS s.15). The words carry the level; the old
+// per-level tints (sky / teal / emerald / violet at 15 %) failed 4.5:1 on the ivory surfaces.
+const CEFR_LEVEL_BADGE = "border-hec-brass/40 bg-transparent text-hec-brass";
 const CEFR_COLORS: Record<string, string> = {
-  "Pre-A1": "bg-slate-500/15 text-slate-600 border-slate-500/30",
-  A1: "bg-sky-500/15 text-sky-600 border-sky-500/30",
-  "A1+": "bg-sky-500/15 text-sky-700 border-sky-500/30",
-  A2: "bg-teal-500/15 text-teal-600 border-teal-500/30",
-  "A2+": "bg-teal-500/15 text-teal-700 border-teal-500/30",
-  B1: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
-  "B1+": "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
-  B2: "bg-violet-500/15 text-violet-600 border-violet-500/30",
+  "Pre-A1": CEFR_LEVEL_BADGE,
+  A1: CEFR_LEVEL_BADGE,
+  "A1+": CEFR_LEVEL_BADGE,
+  A2: CEFR_LEVEL_BADGE,
+  "A2+": CEFR_LEVEL_BADGE,
+  B1: CEFR_LEVEL_BADGE,
+  "B1+": CEFR_LEVEL_BADGE,
+  B2: CEFR_LEVEL_BADGE,
 };
 
 export default function TeacherTranscripts() {
@@ -765,12 +768,12 @@ export default function TeacherTranscripts() {
     <Layout title="Transcript Insights">
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
-            <AudioLines className="h-6 w-6 text-white" />
+          <div className="h-11 w-11 shrink-0 rounded-hec-lg bg-hec-sunken flex items-center justify-center">
+            <AudioLines className="h-6 w-6 text-hec-ink-soft" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Transcript Insights</h1>
-            <p className="text-sm text-muted-foreground">
+          <div className="min-w-0">
+            <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Transcript Insights</h1>
+            <p className="text-hec-small text-hec-ink-soft">
               Upload the lesson transcript — or the raw recording — and engagement, CEFR signals,
               flagged errors, and point awards are extracted instantly.
             </p>
@@ -782,7 +785,7 @@ export default function TeacherTranscripts() {
           <CardContent className="pt-6 space-y-3">
             <div className="flex flex-col md:flex-row gap-3">
               <Select value={classId} onValueChange={(v) => { setClassId(v); setSelectedId(null); }}>
-                <SelectTrigger className="md:w-64"><SelectValue placeholder="Select class" /></SelectTrigger>
+                <SelectTrigger className="md:w-64" aria-label="Class"><SelectValue placeholder="Select class" /></SelectTrigger>
                 <SelectContent>
                   {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
@@ -835,8 +838,8 @@ export default function TeacherTranscripts() {
             </div>
 
             {audioProgress && (
-              <div className="flex items-center gap-2 text-xs text-cyan-700 dark:text-cyan-300 rounded-lg bg-cyan-500/10 ring-1 ring-cyan-500/25 px-3 py-2">
-                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+              <div className="flex items-center gap-2 rounded-hec-md border border-hec-line bg-hec-sunken px-3 py-2 text-hec-small text-hec-ink">
+                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                 <span className="truncate">
                   {audioProgress.stage === "uploading"
                     ? `Uploading ${audioProgress.fileName}…`
@@ -848,7 +851,7 @@ export default function TeacherTranscripts() {
                 </span>
               </div>
             )}
-            <p className="text-[11px] text-muted-foreground -mt-1">
+            <p className="text-hec-caption text-hec-ink-soft -mt-1">
               Recordings up to 25MB (roughly 45–60 min at typical voice-memo quality). Longer lessons:
               split into two recordings and upload each separately.
             </p>
@@ -857,17 +860,17 @@ export default function TeacherTranscripts() {
               placeholder={"Lesson plan / notes (optional but recommended)…\n\nTarget vocabulary, book & pages, the activities you ran. This is fed to the transcriber so names and terms come out right, and to the analyzer so it judges the lesson against what you planned."}
               value={lessonContext}
               onChange={(e) => setLessonContext(e.target.value)}
-              className="min-h-[72px] text-xs"
+              className="min-h-[72px]"
             />
 
             <Textarea
               placeholder={'Paste the transcript here…\n\nWorks with raw classroom-recorder transcripts (no speaker labels needed — students are identified from names called out in class), or labeled formats: Zoom/Teams WebVTT, SRT, "Anna: I go to the park yesterday"'}
               value={rawText}
               onChange={(e) => setRawText(e.target.value)}
-              className="min-h-[120px] font-mono text-xs"
+              className="min-h-[120px] font-mono"
             />
             <Button
-              className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 text-white"
+              className="w-full gap-2 sm:w-auto"
               disabled={uploadMutation.isPending || !classId || rawText.trim().length < 40}
               onClick={() => uploadMutation.mutate()}
             >
@@ -884,13 +887,13 @@ export default function TeacherTranscripts() {
           {/* Transcript list */}
           <Card className="h-fit">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <FileText className="h-4 w-4" />Lessons
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 shrink-0 text-hec-ink-soft" />Lessons
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-1.5">
+            <CardContent className="space-y-2">
               {transcripts.length === 0 && (
-                <p className="text-xs text-muted-foreground py-4 text-center">
+                <p className="text-hec-small text-hec-ink-soft py-4 text-center">
                   {classId ? "No transcripts yet for this class." : "Choose a class to see its transcripts."}
                 </p>
               )}
@@ -898,38 +901,39 @@ export default function TeacherTranscripts() {
                 <button
                   key={t.id}
                   onClick={() => setSelectedId(t.id)}
-                  className={`w-full text-left rounded-xl border p-2.5 transition-colors hover:bg-muted/50
-                    ${selectedId === t.id ? "border-blue-500/50 bg-blue-500/5" : ""}`}
+                  aria-current={selectedId === t.id ? "true" : undefined}
+                  className={`w-full min-h-hec-target text-left rounded-hec-md border p-3 transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring
+                    ${selectedId === t.id ? "border-hec-brass bg-hec-sunken" : "border-hec-line"}`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium truncate">{t.title || "Untitled lesson"}</p>
+                    <p className="min-w-0 text-hec-small font-medium text-hec-ink truncate">{t.title || "Untitled lesson"}</p>
                     {isStalled(t) ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span>
-                            <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" aria-hidden="true" />
+                            <AlertTriangle className="h-4 w-4 text-hec-warn shrink-0" aria-hidden="true" />
                             <span className="sr-only">This run was cut off — open it and hit Retry</span>
                           </span>
                         </TooltipTrigger>
                         <TooltipContent>This run was cut off — open it and hit Retry</TooltipContent>
                       </Tooltip>
                     ) : t.status === "processing" ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500 shrink-0" />
+                      <Loader2 className="h-4 w-4 animate-spin text-hec-ink-soft shrink-0" />
                     ) : t.status === "failed" ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span>
-                            <AlertTriangle className="h-3.5 w-3.5 text-red-500 shrink-0" aria-hidden="true" />
+                            <AlertTriangle className="h-4 w-4 text-hec-danger shrink-0" aria-hidden="true" />
                             <span className="sr-only">{t.error_message || "Analysis failed"}</span>
                           </span>
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">{t.error_message || "Analysis failed"}</TooltipContent>
                       </Tooltip>
                     ) : (
-                      <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40">ready</Badge>
+                      <Badge variant="outline" className="shrink-0 border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">ready</Badge>
                     )}
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{t.transcript_date}</p>
+                  <p className="text-hec-caption text-hec-ink-soft mt-1 tabular-nums">{t.transcript_date}</p>
                 </button>
               ))}
             </CardContent>
@@ -939,7 +943,7 @@ export default function TeacherTranscripts() {
           <div className="space-y-4 min-w-0">
             {!selected ? (
               <Card>
-                <CardContent className="py-16 text-center text-sm text-muted-foreground">
+                <CardContent className="py-16 text-center text-hec-small text-hec-ink-soft">
                   Select a lesson to see its engagement dashboard.
                 </CardContent>
               </Card>
@@ -947,11 +951,11 @@ export default function TeacherTranscripts() {
               <>
                 {/* Stalled run — killed before it could record an error */}
                 {isStalled(selected) && (
-                  <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 space-y-1.5">
-                    <p className="text-sm font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                  <div className="rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 space-y-2">
+                    <p className="text-hec-small font-semibold text-hec-warn flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 shrink-0" />This run was cut off
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-hec-small text-hec-ink-soft">
                       It's been processing for over 10 minutes, which means the job hit the
                       platform's time limit before it could finish or record an error. Your
                       recording is safe in storage —{" "}
@@ -962,32 +966,32 @@ export default function TeacherTranscripts() {
 
                 {/* Full failure reason — no more hunting in a hover tooltip */}
                 {selected.status === "failed" && (
-                  <div className="rounded-xl border border-red-500/40 bg-red-500/5 p-3 space-y-1.5">
-                    <p className="text-sm font-semibold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                  <div className="rounded-hec-md border border-hec-danger/30 bg-hec-danger-tint p-3 space-y-2">
+                    <p className="text-hec-small font-semibold text-hec-danger flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 shrink-0" />
                       {selected.source_format === "audio" ? "Transcription failed" : "Analysis failed"}
                     </p>
-                    <p className="text-xs text-muted-foreground break-words">
+                    <p className="text-hec-small text-hec-ink-soft break-words">
                       {selected.error_message || "No error detail was recorded — the function may have been cut off by a platform time limit (common for recordings near the 25MB cap). Retrying often succeeds."}
                     </p>
                   </div>
                 )}
 
-                <div className="flex items-center justify-end gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   {selected.source_format === "audio" && selected.status !== "analyzed" && (
                     <Tooltip>
                     <TooltipTrigger asChild>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-1.5 text-cyan-700 dark:text-cyan-300 border-cyan-500/40"
+                      className="gap-2"
                       disabled={retryTranscriptionMutation.isPending}
                       onClick={() => retryTranscriptionMutation.mutate(selected.id)}
                     >
                       {retryTranscriptionMutation.isPending ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Mic className="h-3.5 w-3.5" />
+                        <Mic className="h-4 w-4" />
                       )}
                       Retry transcription
                     </Button>
@@ -1000,14 +1004,14 @@ export default function TeacherTranscripts() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1.5"
+                    className="gap-2"
                     disabled={reanalyzeMutation.isPending || selected.status === "processing"}
                     onClick={() => reanalyzeMutation.mutate(selected.id)}
                   >
                     {reanalyzeMutation.isPending ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Sparkles className="h-3.5 w-3.5" />
+                      <Sparkles className="h-4 w-4" />
                     )}
                     Re-analyze
                   </Button>
@@ -1020,42 +1024,43 @@ export default function TeacherTranscripts() {
                   <Card>
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
-                          <Sparkles className="h-4 w-4 text-blue-500" />Lesson summary
+                        <CardTitle className="flex flex-wrap items-center gap-2">
+                          <Sparkles className="h-5 w-5 shrink-0 text-hec-ink-soft" />Lesson summary
                           {overview && (
-                            <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40">
+                            <Badge variant="outline" className="border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">
                               shared with students
                             </Badge>
                           )}
                           {overview?.edited_by_teacher && (
-                            <Badge variant="outline" className="text-[10px] text-violet-600 border-violet-500/40">
+                            <Badge variant="outline" className="text-hec-ink-soft">
                               your edit
                             </Badge>
                           )}
                         </CardTitle>
                         {!editingOverview && (
-                          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs shrink-0" onClick={startEditOverview}>
-                            <Pencil className="h-3 w-3" />Edit
+                          <Button variant="ghost" size="sm" className="gap-2 shrink-0" onClick={startEditOverview}>
+                            <Pencil className="h-4 w-4" />Edit
                           </Button>
                         )}
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-2.5">
+                    <CardContent className="space-y-3">
                       {editingOverview ? (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">Summary</p>
+                            <p className="text-hec-small font-medium text-hec-ink mb-2">Summary</p>
                             <Textarea
+                              aria-label="Summary"
                               value={ovDraft.summary}
                               onChange={(e) => setOvDraft((d) => ({ ...d, summary: e.target.value }))}
-                              className="min-h-[100px] text-sm"
+                              className="min-h-[100px]"
                             />
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">Materials used</p>
-                            <div className="space-y-1.5">
+                            <p className="text-hec-small font-medium text-hec-ink mb-2">Materials used</p>
+                            <div className="space-y-2">
                               {ovDraft.materials.map((m, i) => (
-                                <div key={i} className="flex gap-1.5">
+                                <div key={i} className="flex flex-wrap gap-2">
                                   <Input
                                     placeholder="Book / handout"
                                     value={m.name}
@@ -1064,7 +1069,7 @@ export default function TeacherTranscripts() {
                                       next[i] = { ...next[i], name: e.target.value };
                                       return { ...d, materials: next };
                                     })}
-                                    className="flex-1 h-8 text-xs"
+                                    className="min-w-0 flex-1 basis-40"
                                   />
                                   <Input
                                     placeholder="Pages"
@@ -1074,40 +1079,41 @@ export default function TeacherTranscripts() {
                                       next[i] = { ...next[i], pages: e.target.value };
                                       return { ...d, materials: next };
                                     })}
-                                    className="w-24 h-8 text-xs"
+                                    className="w-24"
                                   />
                                   <Button
-                                    variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground"
+                                    variant="ghost" size="icon" className="shrink-0 text-hec-ink-soft"
+                                    aria-label="Remove this material"
                                     onClick={() => setOvDraft((d) => ({ ...d, materials: d.materials.filter((_, x) => x !== i) }))}
                                   >
-                                    <XCircle className="h-3.5 w-3.5" />
+                                    <XCircle className="h-5 w-5" />
                                   </Button>
                                 </div>
                               ))}
                               <Button
-                                variant="outline" size="sm" className="h-7 text-xs gap-1"
+                                variant="outline" size="sm" className="gap-2"
                                 onClick={() => setOvDraft((d) => ({ ...d, materials: [...d.materials, { name: "", pages: "" }] }))}
                               >
-                                <BookOpen className="h-3 w-3" />Add material
+                                <BookOpen className="h-4 w-4" />Add material
                               </Button>
                             </div>
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">Homework</p>
+                            <p className="text-hec-small font-medium text-hec-ink mb-2">Homework</p>
                             <Textarea
                               placeholder="No homework assigned"
                               value={ovDraft.homework}
                               onChange={(e) => setOvDraft((d) => ({ ...d, homework: e.target.value }))}
-                              className="min-h-[56px] text-sm"
+                              className="min-h-[56px]"
                             />
                           </div>
                           <div className="flex gap-2">
                             <Button
-                              size="sm" className="gap-1.5"
+                              size="sm" className="gap-2"
                               disabled={saveOverviewMutation.isPending}
                               onClick={() => saveOverviewMutation.mutate()}
                             >
-                              {saveOverviewMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                              {saveOverviewMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                               Save
                             </Button>
                             <Button variant="ghost" size="sm" onClick={() => setEditingOverview(false)}>Cancel</Button>
@@ -1115,50 +1121,50 @@ export default function TeacherTranscripts() {
                         </div>
                       ) : (
                       <>
-                      <p className="text-sm leading-relaxed text-muted-foreground">{overview?.summary ?? selected.summary}</p>
+                      <p className="text-hec-body text-hec-ink-soft">{overview?.summary ?? selected.summary}</p>
 
                       {/* Did the lesson actually cover its title? */}
                       {selected.title_covered !== null && selected.title_covered !== undefined && (
-                        <div className={`rounded-xl px-3 py-2 ring-1 ${
+                        <div className={`rounded-hec-md border px-3 py-2 ${
                           selected.title_covered
-                            ? "bg-emerald-500/5 ring-emerald-500/25"
-                            : "bg-amber-500/5 ring-amber-500/25"
+                            ? "border-hec-leaf/30 bg-hec-leaf-tint"
+                            : "border-hec-warn/30 bg-hec-warn-tint"
                         }`}>
-                          <p className={`text-xs font-bold flex items-center gap-1.5 ${
-                            selected.title_covered ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                          <p className={`text-hec-small font-semibold flex flex-wrap items-center gap-2 ${
+                            selected.title_covered ? "text-hec-leaf" : "text-hec-warn"
                           }`}>
-                            {selected.title_covered ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
+                            {selected.title_covered ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <AlertTriangle className="h-4 w-4 shrink-0" />}
                             {selected.title_covered ? "Lesson title covered" : "Title not clearly covered"}
-                            {selected.title && <span className="font-normal text-muted-foreground">— "{selected.title}"</span>}
+                            {selected.title && <span className="font-normal text-hec-ink-soft">— "{selected.title}"</span>}
                           </p>
                           {selected.title_note && (
-                            <p className="text-xs text-muted-foreground mt-1">{selected.title_note}</p>
+                            <p className="text-hec-small text-hec-ink-soft mt-1">{selected.title_note}</p>
                           )}
                           {Array.isArray(selected.title_evidence) && selected.title_evidence.length > 0 && (
-                            <ul className="mt-1.5 space-y-0.5">
+                            <ul className="mt-2 space-y-1">
                               {selected.title_evidence.map((q: string, i: number) => (
-                                <li key={i} className="text-[11px] text-muted-foreground italic">"{q}"</li>
+                                <li key={i} className="text-hec-caption text-hec-ink-soft italic">"{q}"</li>
                               ))}
                             </ul>
                           )}
                         </div>
                       )}
                       {Array.isArray(overview?.materials) && overview.materials.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <BookOpen className="h-3.5 w-3.5 text-blue-500" />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <BookOpen className="h-4 w-4 shrink-0 text-hec-ink-soft" />
                           {overview.materials.map((m: any, i: number) => (
-                            <Badge key={i} variant="secondary" className="font-normal text-xs">
+                            <Badge key={i} variant="secondary" className="font-normal">
                               {m.name}{m.pages ? ` · p.${m.pages}` : ""}
                             </Badge>
                           ))}
                         </div>
                       )}
                       {overview?.homework && (
-                        <p className="text-xs flex items-start gap-1.5">
-                          <NotebookPen className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                        <p className="text-hec-small flex items-start gap-2">
+                          <NotebookPen className="h-4 w-4 text-hec-ink-soft shrink-0 mt-1" />
                           <span>
-                            <span className="font-semibold">Homework:</span>{" "}
-                            <span className="text-muted-foreground">{overview.homework}</span>
+                            <span className="font-semibold text-hec-ink">Homework:</span>{" "}
+                            <span className="text-hec-ink-soft">{overview.homework}</span>
                           </span>
                         </p>
                       )}
@@ -1185,24 +1191,24 @@ export default function TeacherTranscripts() {
                   return (
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-indigo-500" />
+                        <CardTitle className="flex items-center gap-2">
+                          <FileText className="h-5 w-5 shrink-0 text-hec-ink-soft" />
                           Lesson report
                         </CardTitle>
-                        <CardDescription className="text-xs mt-1">
+                        <CardDescription className="mt-1">
                           A grounded, chronological account built from the whole transcript — quotes are verbatim.
                         </CardDescription>
                       </CardHeader>
-                      <CardContent className="space-y-4 text-sm">
+                      <CardContent className="space-y-6 text-hec-small">
                         {Array.isArray(lr.objectives) && lr.objectives.length > 0 && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <ListChecks className="h-3.5 w-3.5 text-emerald-500" /> Objectives worked on
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <ListChecks className="h-4 w-4 shrink-0 text-hec-ink-soft" /> Objectives worked on
                             </p>
                             <ul className="space-y-1">
                               {lr.objectives.map((o: string, i: number) => (
-                                <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
-                                  <span className="text-emerald-500 mt-0.5">•</span>
+                                <li key={i} className="flex items-start gap-2 text-hec-ink-soft">
+                                  <span className="text-hec-ink-faint" aria-hidden="true">•</span>
                                   <span>{o}</span>
                                 </li>
                               ))}
@@ -1212,15 +1218,15 @@ export default function TeacherTranscripts() {
 
                         {Array.isArray(lr.chronology) && lr.chronology.length > 0 && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <Clock className="h-3.5 w-3.5 text-blue-500" /> How the lesson unfolded
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <Clock className="h-4 w-4 shrink-0 text-hec-ink-soft" /> How the lesson unfolded
                             </p>
-                            <ol className="relative space-y-2 border-l border-border/60 pl-4">
+                            <ol className="relative space-y-3 border-l border-hec-line pl-4">
                               {lr.chronology.map((c: any, i: number) => (
                                 <li key={i} className="relative">
-                                  <span className="absolute -left-[21px] top-1 h-2 w-2 rounded-full bg-blue-500/70 ring-2 ring-background" />
-                                  <p className="font-semibold text-foreground/90">{c.phase}</p>
-                                  <p className="text-muted-foreground text-[13px] leading-relaxed">{c.detail}</p>
+                                  <span className="absolute -left-[21px] top-2 h-2 w-2 rounded-full bg-hec-brass ring-2 ring-hec-surface" />
+                                  <p className="font-semibold text-hec-ink">{c.phase}</p>
+                                  <p className="text-hec-ink-soft text-hec-small">{c.detail}</p>
                                 </li>
                               ))}
                             </ol>
@@ -1229,19 +1235,19 @@ export default function TeacherTranscripts() {
 
                         {Array.isArray(lr.engagement) && lr.engagement.length > 0 && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <MessageSquareText className="h-3.5 w-3.5 text-violet-500" /> Student moments
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <MessageSquareText className="h-4 w-4 shrink-0 text-hec-ink-soft" /> Student moments
                             </p>
                             <ul className="space-y-2">
                               {lr.engagement.map((e: any, i: number) => (
-                                <li key={i} className="rounded-lg bg-muted/40 px-3 py-2 ring-1 ring-border/50">
-                                  <p className="text-[13px] italic text-foreground/90">
+                                <li key={i} className="rounded-hec-md border border-hec-line bg-hec-sunken px-3 py-2">
+                                  <p className="text-hec-small italic text-hec-ink">
                                     "{e.quote}"
                                     {e.student && (
-                                      <span className="not-italic font-semibold text-muted-foreground"> — {e.student}</span>
+                                      <span className="not-italic font-semibold text-hec-ink-soft"> — {e.student}</span>
                                     )}
                                   </p>
-                                  {e.note && <p className="text-xs text-muted-foreground mt-0.5">{e.note}</p>}
+                                  {e.note && <p className="text-hec-small text-hec-ink-soft mt-1">{e.note}</p>}
                                 </li>
                               ))}
                             </ul>
@@ -1250,13 +1256,13 @@ export default function TeacherTranscripts() {
 
                         {Array.isArray(lr.misconceptions) && lr.misconceptions.length > 0 && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Misconceptions & confusions
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <AlertTriangle className="h-4 w-4 shrink-0 text-hec-warn" /> Misconceptions & confusions
                             </p>
                             <ul className="space-y-1">
                               {lr.misconceptions.map((m: string, i: number) => (
-                                <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
-                                  <span className="text-amber-500 mt-0.5">•</span>
+                                <li key={i} className="flex items-start gap-2 text-hec-ink-soft">
+                                  <span className="text-hec-warn" aria-hidden="true">•</span>
                                   <span>{m}</span>
                                 </li>
                               ))}
@@ -1266,13 +1272,13 @@ export default function TeacherTranscripts() {
 
                         {Array.isArray(lr.interventions) && lr.interventions.length > 0 && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <Lightbulb className="h-3.5 w-3.5 text-yellow-500" /> Teacher feedback & interventions
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <Lightbulb className="h-4 w-4 shrink-0 text-hec-ink-soft" /> Teacher feedback & interventions
                             </p>
                             <ul className="space-y-1">
                               {lr.interventions.map((it: string, i: number) => (
-                                <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
-                                  <span className="text-yellow-500 mt-0.5">•</span>
+                                <li key={i} className="flex items-start gap-2 text-hec-ink-soft">
+                                  <span className="text-hec-ink-faint" aria-hidden="true">•</span>
                                   <span>{it}</span>
                                 </li>
                               ))}
@@ -1282,22 +1288,22 @@ export default function TeacherTranscripts() {
 
                         {lr.general_understanding && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <GraduationCap className="h-3.5 w-3.5 text-teal-500" /> General understanding
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <GraduationCap className="h-4 w-4 shrink-0 text-hec-ink-soft" /> General understanding
                             </p>
-                            <p className="text-muted-foreground text-[13px] leading-relaxed">{lr.general_understanding}</p>
+                            <p className="text-hec-ink-soft text-hec-small">{lr.general_understanding}</p>
                           </section>
                         )}
 
                         {Array.isArray(lr.next_steps) && lr.next_steps.length > 0 && (
                           <section>
-                            <p className="text-xs font-bold flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                              <ArrowRight className="h-3.5 w-3.5 text-pink-500" /> Next steps
+                            <p className="text-hec-small font-semibold flex items-center gap-2 text-hec-ink mb-2">
+                              <ArrowRight className="h-4 w-4 shrink-0 text-hec-ink-soft" /> Next steps
                             </p>
                             <ul className="space-y-1">
                               {lr.next_steps.map((n: string, i: number) => (
-                                <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
-                                  <span className="text-pink-500 mt-0.5">→</span>
+                                <li key={i} className="flex items-start gap-2 text-hec-ink-soft">
+                                  <span className="text-hec-ink-faint" aria-hidden="true">→</span>
                                   <span>{n}</span>
                                 </li>
                               ))}
@@ -1314,12 +1320,12 @@ export default function TeacherTranscripts() {
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div>
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <ImageIcon className="h-4 w-4 text-pink-500" />
+                        <CardTitle className="flex flex-wrap items-center gap-2">
+                          <ImageIcon className="h-5 w-5 shrink-0 text-hec-ink-soft" />
                           Resources used
-                          {resources.length > 0 && <Badge variant="secondary">{resources.length}</Badge>}
+                          {resources.length > 0 && <Badge variant="secondary" className="tabular-nums">{resources.length}</Badge>}
                         </CardTitle>
-                        <CardDescription className="text-xs mt-1">
+                        <CardDescription className="mt-1">
                           Photos of the book pages, handouts or board work from this lesson.
                           Students see these inside the lesson.
                         </CardDescription>
@@ -1337,8 +1343,8 @@ export default function TeacherTranscripts() {
                             e.target.value = "";
                           }}
                         />
-                        <span className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors hover:bg-muted ${resourceUploading ? "opacity-50 pointer-events-none" : ""}`}>
-                          {resourceUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+                        <span className={`inline-flex min-h-hec-target items-center gap-2 rounded-hec-md border border-hec-line-strong bg-hec-raised px-4 text-hec-body font-medium text-hec-ink cursor-pointer transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken ${resourceUploading ? "opacity-50 pointer-events-none" : ""}`}>
+                          {resourceUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
                           Add photos
                         </span>
                       </label>
@@ -1346,30 +1352,30 @@ export default function TeacherTranscripts() {
                   </CardHeader>
                   <CardContent>
                     {resources.length === 0 ? (
-                      <p className="text-xs text-muted-foreground py-2">
+                      <p className="text-hec-small text-hec-ink-soft py-2">
                         No resource photos yet — add the pages or handouts you used and they'll appear on every student's lesson page.
                       </p>
                     ) : (
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {resources.map((r) => (
-                          <div key={r.id} className="relative group rounded-xl border overflow-hidden">
+                          <div key={r.id} className="relative group rounded-hec-md border border-hec-line overflow-hidden">
                             {r.url ? (
                               <a href={r.url} target="_blank" rel="noreferrer">
                                 <img src={r.url} alt={r.caption || "resource"} loading="lazy" className="h-24 w-full object-cover" />
                               </a>
                             ) : (
-                              <div className="h-24 w-full bg-muted flex items-center justify-center">
-                                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                              <div className="h-24 w-full bg-hec-sunken flex items-center justify-center">
+                                <ImageIcon className="h-5 w-5 text-hec-ink-faint" />
                               </div>
                             )}
                             <Tooltip>
                             <TooltipTrigger asChild>
                             <button
                               onClick={() => deleteResourceMutation.mutate(r)}
-                              className="absolute top-1 right-1 rounded-md bg-black/60 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute top-1 right-1 flex min-h-hec-target min-w-hec-target items-center justify-center rounded-hec-md bg-hec-raised text-hec-danger shadow-hec-1 opacity-0 transition-opacity duration-hec-1 ease-hec group-hover:opacity-100 group-focus-within:opacity-100 hover:bg-hec-danger-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                               aria-label="Remove"
                             >
-                              <XCircle className="h-3.5 w-3.5" />
+                              <XCircle className="h-5 w-5" />
                             </button>
                             </TooltipTrigger>
                             <TooltipContent>Remove</TooltipContent>
@@ -1383,18 +1389,18 @@ export default function TeacherTranscripts() {
 
                 {/* Deciphered point awards — teacher reviews, then applies */}
                 {pointSuggestions.length > 0 && (
-                  <Card className="border-amber-500/25">
+                  <Card>
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <div>
-                          <CardTitle className="text-sm flex items-center gap-2">
-                            <Coins className="h-4 w-4 text-amber-500" />
+                          <CardTitle className="flex flex-wrap items-center gap-2">
+                            <Coins className="h-5 w-5 shrink-0 text-hec-brass" />
                             Points called out in class
-                            <Badge variant="secondary">
+                            <Badge variant="secondary" className="tabular-nums">
                               {pointSuggestions.filter((s) => s.status === "suggested").length} pending
                             </Badge>
                           </CardTitle>
-                          <CardDescription className="text-xs mt-1">
+                          <CardDescription className="mt-1">
                             Awards the teacher announced during the lesson. Only students marked
                             present that day are eligible — nothing is granted until you apply it.
                           </CardDescription>
@@ -1402,14 +1408,14 @@ export default function TeacherTranscripts() {
                         {eligibleSuggestions.length > 0 && (
                           <Button
                             size="sm"
-                            className="gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600"
+                            className="w-full gap-2 sm:w-auto"
                             disabled={applyAllMutation.isPending}
                             onClick={() => applyAllMutation.mutate()}
                           >
                             {applyAllMutation.isPending ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              <CheckCircle2 className="h-4 w-4" />
                             )}
                             Apply all present ({eligibleSuggestions.length})
                           </Button>
@@ -1423,67 +1429,69 @@ export default function TeacherTranscripts() {
                         return (
                           <div
                             key={s.id}
-                            className={`rounded-xl border p-2.5 flex items-start gap-3 ${
-                              s.status === "applied" ? "opacity-70 bg-emerald-500/5 border-emerald-500/25"
-                              : s.status === "dismissed" ? "opacity-45"
-                              : "bg-card"
+                            className={`rounded-hec-md border p-3 flex flex-wrap items-start gap-3 ${
+                              s.status === "applied" ? "border-hec-leaf/30 bg-hec-leaf-tint"
+                              : s.status === "dismissed" ? "border-dashed border-hec-line bg-hec-sunken"
+                              : "border-hec-line bg-hec-surface"
                             }`}
                           >
                             <span
-                              className={`shrink-0 rounded-lg px-2 py-1 text-sm font-black tabular-nums ${
+                              className={`shrink-0 whitespace-nowrap rounded-hec-sm px-2 py-1 text-hec-small font-semibold tabular-nums ${
                                 s.points > 0
-                                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                                  : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                                  ? "bg-hec-leaf-tint text-hec-leaf"
+                                  : "bg-hec-danger-tint text-hec-danger"
                               }`}
                             >
                               {s.points > 0 ? `+${s.points}` : s.points}
                             </span>
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1 basis-48">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-sm font-semibold">
+                                <span className="min-w-0 whitespace-normal break-words text-hec-small font-semibold text-hec-ink">
                                   {s.students?.full_name || (
-                                    <span className="text-muted-foreground">“{s.speaker_label}” — not on roster</span>
+                                    <span className="text-hec-ink-soft">“{s.speaker_label}” — not on roster</span>
                                   )}
                                 </span>
                                 {attended(s) ? (
-                                  <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40">
+                                  <Badge variant="outline" className="border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">
                                     {s.attendance_status}
                                   </Badge>
                                 ) : (
-                                  <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/40 gap-1">
+                                  <Badge variant="outline" className="gap-1 border-hec-warn/30 bg-hec-warn-tint text-hec-warn">
                                     <AlertTriangle className="h-3 w-3" />
                                     {s.attendance_status === "no_session" ? "no session that day" : s.attendance_status}
                                   </Badge>
                                 )}
                                 {s.status === "applied" && (
-                                  <Badge className="text-[10px] bg-emerald-500/15 text-emerald-600 border-emerald-500/30">applied</Badge>
+                                  <Badge className="border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf">applied</Badge>
                                 )}
                                 {s.status === "dismissed" && (
-                                  <Badge variant="outline" className="text-[10px]">dismissed</Badge>
+                                  <Badge variant="outline" className="text-hec-ink-soft">dismissed</Badge>
                                 )}
                               </div>
-                              <p className="text-xs text-muted-foreground italic mt-0.5 truncate" title={s.quote}>
+                              <p className="text-hec-small text-hec-ink-soft italic mt-1 truncate" title={s.quote}>
                                 “{s.quote}”{s.reason ? ` — ${s.reason}` : ""}
                               </p>
                             </div>
                             {isPending && (
-                              <div className="flex gap-1 shrink-0">
+                              <div className="flex gap-2 shrink-0">
                                 <Button
                                   size="sm"
-                                  className="h-7 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  variant="outline"
+                                  className="gap-2"
                                   disabled={!canApply || applyMutation.isPending}
                                   title={!s.student_id ? "No roster match" : !canApply ? "Student wasn't present" : "Create the point transaction"}
                                   onClick={() => applyMutation.mutate(s)}
                                 >
-                                  <CheckCircle2 className="h-3 w-3" />Apply
+                                  <CheckCircle2 className="h-4 w-4" />Apply
                                 </Button>
                                 <Button
                                   size="sm" variant="ghost"
-                                  className="h-7 gap-1 text-xs text-muted-foreground"
+                                  className="text-hec-ink-soft"
+                                  aria-label="Dismiss"
                                   disabled={dismissMutation.isPending}
                                   onClick={() => dismissMutation.mutate(s)}
                                 >
-                                  <XCircle className="h-3 w-3" />
+                                  <XCircle className="h-5 w-5" />
                                 </Button>
                               </div>
                             )}
@@ -1497,14 +1505,14 @@ export default function TeacherTranscripts() {
                 {/* Talk-share / engagement balance */}
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-blue-500" />Engagement balance
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 shrink-0 text-hec-ink-soft" />Engagement balance
                     </CardTitle>
-                    <CardDescription className="text-xs">
+                    <CardDescription>
                       Share of student talk. Quiet students stand out immediately.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-2">
+                  <CardContent className="space-y-3">
                     {studentMetrics.map((m, i) => {
                       const share = m.participation_share || 0;
                       const isQuiet = share < 0.5 / Math.max(studentMetrics.length, 1);
@@ -1514,24 +1522,24 @@ export default function TeacherTranscripts() {
                           initial={{ opacity: 0, x: -8 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.04 }}
-                          className="flex items-center gap-3"
+                          className="flex flex-wrap items-center gap-x-3 gap-y-1"
                         >
-                          <span className="w-32 truncate text-sm font-medium shrink-0">
+                          <span className="w-full shrink-0 whitespace-normal break-words text-hec-small font-medium text-hec-ink sm:w-40">
                             {m.students?.full_name || m.speaker_label}
                           </span>
-                          <div className="flex-1 h-5 rounded-full bg-muted overflow-hidden">
+                          <div className="min-w-0 flex-1 h-2 rounded-full bg-hec-sunken overflow-hidden">
                             <motion.div
-                              initial={{ width: 0 }}
+                              initial={false}
                               animate={{ width: `${(share / maxShare) * 100}%` }}
                               transition={{ duration: 0.5, delay: i * 0.04 }}
-                              className={`h-full rounded-full ${isQuiet ? "bg-amber-400" : "bg-gradient-to-r from-cyan-500 to-blue-500"}`}
+                              className={`h-full rounded-full ${isQuiet ? "bg-hec-warn" : "bg-hec-brass"}`}
                             />
                           </div>
-                          <span className="w-12 text-right text-xs text-muted-foreground shrink-0">
+                          <span className="w-12 shrink-0 text-right text-hec-small text-hec-ink-soft tabular-nums">
                             {Math.round(share * 100)}%
                           </span>
                           {m.cefr_estimate && (
-                            <Badge variant="outline" className={`shrink-0 text-[10px] ${CEFR_COLORS[m.cefr_estimate] || ""}`}>
+                            <Badge variant="outline" className={`shrink-0 ${CEFR_COLORS[m.cefr_estimate] || ""}`}>
                               {m.cefr_estimate}
                             </Badge>
                           )}
@@ -1539,11 +1547,11 @@ export default function TeacherTranscripts() {
                       );
                     })}
                     {studentMetrics.length === 0 && (
-                      <p className="text-xs text-muted-foreground py-3">No student speech matched in this transcript.</p>
+                      <p className="text-hec-small text-hec-ink-soft py-3">No student speech matched in this transcript.</p>
                     )}
                     {unknownPct > 0 && (
-                      <p className="text-[11px] text-muted-foreground pt-1 flex items-center gap-1.5">
-                        <HelpCircle className="h-3 w-3 shrink-0" />
+                      <p className="text-hec-caption text-hec-ink-soft pt-1 flex items-start gap-2">
+                        <HelpCircle className="h-4 w-4 shrink-0" />
                         {unknownPct}% of the audio couldn't be attributed to a specific speaker
                         (overlapping voices / mono recorder) and is excluded from these shares.
                       </p>
@@ -1552,15 +1560,15 @@ export default function TeacherTranscripts() {
                 </Card>
 
                 {/* Per-student stat cards */}
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid sm:grid-cols-2 gap-4">
                   {studentMetrics.map((m) => (
                     <Card key={`card-${m.id}`}>
-                      <CardContent className="pt-4 space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-semibold text-sm truncate">{m.students?.full_name || m.speaker_label}</p>
+                      <CardContent className="pt-4 space-y-3">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <p className="min-w-0 flex-1 basis-40 whitespace-normal break-words text-hec-body font-semibold text-hec-ink">{m.students?.full_name || m.speaker_label}</p>
                           <div className="flex items-center gap-1 shrink-0">
                             {m.edited_by_teacher && (
-                              <Badge variant="outline" className="text-[10px] text-violet-600 border-violet-500/40">edited</Badge>
+                              <Badge variant="outline" className="text-hec-ink-soft">edited</Badge>
                             )}
                             {m.cefr_estimate && (
                               <Badge variant="outline" className={CEFR_COLORS[m.cefr_estimate] || ""}>
@@ -1571,7 +1579,7 @@ export default function TeacherTranscripts() {
                               <Tooltip>
                               <TooltipTrigger asChild>
                               <Button
-                                variant="ghost" size="icon" className="h-6 w-6"
+                                variant="ghost" size="icon" className="text-hec-ink-soft"
                                 aria-label="Correct this feedback"
                                 onClick={() => {
                                   setMetricDraft({
@@ -1582,7 +1590,7 @@ export default function TeacherTranscripts() {
                                   setEditingMetricId(m.id);
                                 }}
                               >
-                                <Pencil className="h-3 w-3" />
+                                <Pencil className="h-4 w-4" />
                               </Button>
                               </TooltipTrigger>
                               <TooltipContent>Correct this feedback</TooltipContent>
@@ -1593,16 +1601,16 @@ export default function TeacherTranscripts() {
 
                         {/* Couldn't be matched to the roster — let the teacher say who it was */}
                         {!m.student_id && (
-                          <div className="rounded-lg bg-amber-500/5 ring-1 ring-amber-500/25 p-2 space-y-1.5">
-                            <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" />
+                          <div className="rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3 space-y-2">
+                            <p className="text-hec-small text-hec-warn font-semibold flex items-start gap-2">
+                              <AlertTriangle className="h-4 w-4 shrink-0 mt-1" />
                               "{m.speaker_label}" isn't on the roster — who was this?
                             </p>
                             <Select
                               onValueChange={(sid) => assignSpeakerMutation.mutate({ metric: m, studentId: sid })}
                               disabled={assignSpeakerMutation.isPending}
                             >
-                              <SelectTrigger className="h-8 text-xs">
+                              <SelectTrigger aria-label={`Who was "${m.speaker_label}"?`}>
                                 <SelectValue placeholder="Assign to a student…" />
                               </SelectTrigger>
                               <SelectContent>
@@ -1614,27 +1622,27 @@ export default function TeacherTranscripts() {
                           </div>
                         )}
                         <div className="grid grid-cols-3 gap-2 text-center">
-                          <div className="rounded-xl bg-muted/50 p-2">
-                            <MessageSquareText className="h-3.5 w-3.5 mx-auto text-blue-500" />
-                            <p className="text-sm font-bold mt-0.5">{m.utterance_count}</p>
-                            <p className="text-[10px] text-muted-foreground">turns</p>
+                          <div className="rounded-hec-md bg-hec-sunken p-2">
+                            <MessageSquareText className="h-4 w-4 mx-auto text-hec-ink-soft" />
+                            <p className="text-hec-body font-semibold text-hec-ink tabular-nums mt-1">{m.utterance_count}</p>
+                            <p className="text-hec-caption text-hec-ink-soft">turns</p>
                           </div>
-                          <div className="rounded-xl bg-muted/50 p-2">
-                            <HelpCircle className="h-3.5 w-3.5 mx-auto text-violet-500" />
-                            <p className="text-sm font-bold mt-0.5">{m.questions_asked}</p>
-                            <p className="text-[10px] text-muted-foreground">questions</p>
+                          <div className="rounded-hec-md bg-hec-sunken p-2">
+                            <HelpCircle className="h-4 w-4 mx-auto text-hec-ink-soft" />
+                            <p className="text-hec-body font-semibold text-hec-ink tabular-nums mt-1">{m.questions_asked}</p>
+                            <p className="text-hec-caption text-hec-ink-soft">questions</p>
                           </div>
-                          <div className="rounded-xl bg-muted/50 p-2">
-                            <AlertTriangle className="h-3.5 w-3.5 mx-auto text-amber-500" />
-                            <p className="text-sm font-bold mt-0.5">{m.errors_count}</p>
-                            <p className="text-[10px] text-muted-foreground">errors</p>
+                          <div className="rounded-hec-md bg-hec-sunken p-2">
+                            <AlertTriangle className="h-4 w-4 mx-auto text-hec-ink-soft" />
+                            <p className="text-hec-body font-semibold text-hec-ink tabular-nums mt-1">{m.errors_count}</p>
+                            <p className="text-hec-caption text-hec-ink-soft">errors</p>
                           </div>
                         </div>
                         {Array.isArray(m.highlights) && m.highlights.length > 0 && (
                           <div className="pt-1 space-y-1">
                             {m.highlights.map((h: string, i: number) => (
-                              <p key={i} className="text-xs text-muted-foreground flex gap-1.5">
-                                <Star className="h-3 w-3 text-amber-400 shrink-0 mt-0.5" />{h}
+                              <p key={i} className="text-hec-small text-hec-ink-soft flex gap-2">
+                                <Star className="h-4 w-4 text-hec-brass shrink-0 mt-1" />{h}
                               </p>
                             ))}
                           </div>
@@ -1644,39 +1652,42 @@ export default function TeacherTranscripts() {
                         {editingMetricId === m.id ? (
                           <div className="space-y-2">
                             <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Contribution</p>
+                              <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft mb-1">Contribution</p>
                               <Textarea
+                                aria-label="Contribution"
                                 value={metricDraft.contribution}
                                 onChange={(e) => setMetricDraft((d) => ({ ...d, contribution: e.target.value }))}
-                                className="min-h-[56px] text-xs"
+                                className="min-h-[56px]"
                               />
                             </div>
                             <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Teacher feedback</p>
+                              <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft mb-1">Teacher feedback</p>
                               <Textarea
+                                aria-label="Teacher feedback"
                                 value={metricDraft.teacher_feedback}
                                 onChange={(e) => setMetricDraft((d) => ({ ...d, teacher_feedback: e.target.value }))}
-                                className="min-h-[64px] text-xs"
+                                className="min-h-[64px]"
                               />
                             </div>
                             <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Next step</p>
+                              <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft mb-1">Next step</p>
                               <Textarea
+                                aria-label="Next step"
                                 value={metricDraft.recommendation}
                                 onChange={(e) => setMetricDraft((d) => ({ ...d, recommendation: e.target.value }))}
-                                className="min-h-[44px] text-xs"
+                                className="min-h-[44px]"
                               />
                             </div>
                             <div className="flex gap-2">
                               <Button
-                                size="sm" className="h-7 text-xs gap-1"
+                                size="sm" className="gap-2"
                                 disabled={saveMetricMutation.isPending}
                                 onClick={() => saveMetricMutation.mutate(m.id)}
                               >
-                                {saveMetricMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                                {saveMetricMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                                 Save
                               </Button>
-                              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditingMetricId(null)}>
+                              <Button variant="ghost" size="sm" onClick={() => setEditingMetricId(null)}>
                                 Cancel
                               </Button>
                             </div>
@@ -1684,22 +1695,22 @@ export default function TeacherTranscripts() {
                         ) : (
                         <>
                         {m.contribution && (
-                          <p className="text-xs text-muted-foreground pt-1">
-                            <span className="font-semibold text-foreground">Contribution:</span> {m.contribution}
+                          <p className="text-hec-small text-hec-ink-soft pt-1">
+                            <span className="font-semibold text-hec-ink">Contribution:</span> {m.contribution}
                           </p>
                         )}
                         {m.teacher_feedback && (
-                          <div className="rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/5 ring-1 ring-blue-500/20 px-2.5 py-2">
-                            <p className="text-[10px] uppercase tracking-wide font-bold text-blue-600 dark:text-blue-300 flex items-center gap-1">
-                              <Sparkles className="h-3 w-3" />Teacher feedback
+                          <div className="rounded-hec-md border border-hec-line bg-hec-sunken px-3 py-2">
+                            <p className="text-hec-caption uppercase tracking-wider font-medium text-hec-ink-soft flex items-center gap-1">
+                              <Sparkles className="h-4 w-4" />Teacher feedback
                             </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{m.teacher_feedback}</p>
+                            <p className="text-hec-small text-hec-ink mt-1">{m.teacher_feedback}</p>
                           </div>
                         )}
                         {m.recommendation && (
-                          <p className="text-xs pt-0.5">
-                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">Next step:</span>{" "}
-                            <span className="text-muted-foreground">{m.recommendation}</span>
+                          <p className="text-hec-small pt-1">
+                            <span className="font-semibold text-hec-ink">Next step:</span>{" "}
+                            <span className="text-hec-ink-soft">{m.recommendation}</span>
                           </p>
                         )}
                         </>
@@ -1713,12 +1724,12 @@ export default function TeacherTranscripts() {
                 {errors.length > 0 && (
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      <CardTitle className="flex flex-wrap items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 shrink-0 text-hec-warn" />
                         Flagged errors → flashcards
-                        <Badge variant="secondary">{errors.length}</Badge>
+                        <Badge variant="secondary" className="tabular-nums">{errors.length}</Badge>
                       </CardTitle>
-                      <CardDescription className="text-xs">
+                      <CardDescription>
                         Each error was logged and turned into a spaced-repetition card on the student's deck.
                       </CardDescription>
                     </CardHeader>
@@ -1726,18 +1737,18 @@ export default function TeacherTranscripts() {
                       <ScrollArea className="max-h-72">
                         <div className="space-y-2 pr-3">
                           {errors.map((e) => (
-                            <div key={e.id} className="rounded-xl border p-2.5 text-sm">
+                            <div key={e.id} className="rounded-hec-md border border-hec-line p-3 text-hec-small">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-medium text-xs">{e.students?.full_name}</span>
-                                <Badge variant="outline" className="text-[10px] capitalize">{e.error_type}</Badge>
+                                <span className="min-w-0 whitespace-normal break-words font-medium text-hec-ink">{e.students?.full_name}</span>
+                                <Badge variant="outline" className="capitalize">{e.error_type}</Badge>
                                 {e.cefr_topic && (
-                                  <Badge variant="outline" className="text-[10px] text-blue-600 border-blue-500/40">
+                                  <Badge variant="outline" className="text-hec-ink-soft">
                                     {e.cefr_topic}
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-red-500/90 line-through text-xs mt-1">{e.error_text}</p>
-                              <p className="text-emerald-600 text-xs">{e.corrected_text}</p>
+                              <p className="text-hec-danger line-through mt-1">{e.error_text}</p>
+                              <p className="text-hec-leaf">{e.corrected_text}</p>
                             </div>
                           ))}
                         </div>

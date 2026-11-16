@@ -175,19 +175,19 @@ export function PayrollMonthLock({ month, live }: PayrollMonthLockProps) {
   const label = dayjs(`${month}-01`).format("MMMM YYYY");
 
   return (
-    <div className="rounded-lg border p-3 space-y-3">
+    <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          {locked ? <Lock className="h-4 w-4 text-muted-foreground" /> : <LockOpen className="h-4 w-4 text-muted-foreground" />}
-          <span className="text-sm font-medium">{label}</span>
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {locked ? <Lock className="h-4 w-4 text-hec-ink-soft" /> : <LockOpen className="h-4 w-4 text-hec-ink-soft" />}
+          <span className="text-hec-small font-medium text-hec-ink">{label}</span>
           <Badge variant={locked ? "secondary" : "outline"}>{locked ? "Closed" : "Open"}</Badge>
           {locked && period?.locked_at && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-hec-caption text-hec-ink-soft">
               closed {dayjs(period.locked_at).format("D MMM YYYY")}
             </span>
           )}
           {period?.reopened_at && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-hec-caption text-hec-ink-soft">
               · reopened {dayjs(period.reopened_at).format("D MMM")}
               {period.reopen_reason ? `: ${period.reopen_reason}` : ""}
             </span>
@@ -212,24 +212,24 @@ export function PayrollMonthLock({ month, live }: PayrollMonthLockProps) {
       </div>
 
       {!locked && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-hec-small tabular-nums text-hec-ink-soft">
           Closing records {vnd(earned)} against {live.filter((s) => s.totalEarned > 0).length} member(s) of staff,
           books it to expenditures once, and stops these figures changing. Sessions and attendance stay editable.
         </p>
       )}
 
       {showReopen && locked && (
-        <div className="space-y-2 rounded border border-amber-500/50 bg-amber-500/10 p-3">
-          <p className="flex items-center gap-1.5 text-xs font-semibold">
-            <TriangleAlert className="h-4 w-4 text-amber-600" />
+        <div className="space-y-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3">
+          <p className="flex items-start gap-2 text-hec-small font-semibold text-hec-ink">
+            <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-hec-warn" />
             Reopening rewrites the record of what was paid.
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-hec-small text-hec-ink-soft">
             If the month has already gone out, carry the difference into a later month instead — the button below
             does that. Reopen is for a month closed by mistake.
           </p>
           <div>
-            <Label htmlFor={`reopen-${month}`} className="text-xs">Reason (required)</Label>
+            <Label htmlFor={`reopen-${month}`} className="text-hec-small font-medium text-hec-ink">Reason (required)</Label>
             <Input
               id={`reopen-${month}`}
               value={reason}
@@ -249,20 +249,20 @@ export function PayrollMonthLock({ month, live }: PayrollMonthLockProps) {
       )}
 
       {locked && drift.length > 0 && (
-        <div className="space-y-2 rounded border border-amber-500/50 bg-amber-500/10 p-3">
-          <p className="flex items-center gap-1.5 text-xs font-semibold">
-            <TriangleAlert className="h-4 w-4 text-amber-600" />
+        <div className="space-y-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-3">
+          <p className="flex items-start gap-2 text-hec-small font-semibold text-hec-ink">
+            <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-hec-warn" />
             {drift.length} figure{drift.length === 1 ? " has" : "s have"} moved since this month was closed.
           </p>
           <div className="space-y-0.5">
             {drift.map((d) => (
-              <p key={d.id} className="text-xs">
+              <p key={d.id} className="text-hec-small tabular-nums text-hec-ink">
                 <span className="font-medium">{d.name}</span> — paid {vnd(d.paid)}, now computes {vnd(d.totalEarned)}
                 {" "}(<span className="font-medium">{signed(d.delta)}</span>)
               </p>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-hec-small text-hec-ink-soft">
             {label} keeps what it was paid at. The difference is paid in{" "}
             {dayjs(`${nextOpenMonth(month)}-01`).format("MMMM YYYY")}.
           </p>
@@ -274,7 +274,7 @@ export function PayrollMonthLock({ month, live }: PayrollMonthLockProps) {
       )}
 
       {locked && drift.length === 0 && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-hec-small text-hec-ink-soft">
           The figures below are what this month was closed at. Nothing has moved since.
         </p>
       )}

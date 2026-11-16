@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Disc3, Trash2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { useIvory } from "@/hooks/useIvory";
 import {
   ActionButton,
   QuietButton,
@@ -143,6 +144,7 @@ export function WheelSpinner() {
   const [projecting, setProjecting] = useState(false);
   const viewport = useViewport();
   const frameRef = useRef<number | null>(null);
+  const ivory = useIvory();
 
   const entries = useMemo(() => parseEntries(raw), [raw]);
 
@@ -215,7 +217,7 @@ export function WheelSpinner() {
       >
         <Stage className="mb-4 min-h-[240px] py-4">
           {entries.length < 2 ? (
-            <p className="px-6 text-center text-sm text-ink-faint">
+            <p className={ivory ? "px-6 text-center text-hec-small text-hec-ink-soft" : "px-6 text-center text-sm text-ink-faint"}>
               Add at least two names below.
             </p>
           ) : (
@@ -224,12 +226,13 @@ export function WheelSpinner() {
         </Stage>
 
         {winner && !spinning && (
-          <div className="studio-pop mb-3 flex items-center justify-between gap-2 rounded-2xl bg-[hsl(var(--studio-ink))] px-4 py-2.5 text-[hsl(var(--studio-card))]">
-            <span className="truncate">
-              <span className="text-[0.6875rem] font-bold uppercase tracking-widest opacity-60">
+          <div className={ivory ? "mb-3 flex items-start justify-between gap-2 rounded-hec-md bg-hec-action px-4 py-3 text-hec-on-action animate-in fade-in slide-in-from-bottom-2 duration-hec-2" : "studio-pop mb-3 flex items-center justify-between gap-2 rounded-2xl bg-[hsl(var(--studio-ink))] px-4 py-2.5 text-[hsl(var(--studio-card))]"}>
+            <span className={ivory ? "min-w-0 flex-1" : "truncate"}>
+              <span className={ivory ? "text-hec-caption font-medium uppercase tracking-wider text-hec-on-action/80" : "text-[0.6875rem] font-bold uppercase tracking-widest opacity-60"}>
                 Picked
               </span>
-              <span className="studio-title block truncate text-xl text-[hsl(var(--studio-card))]">
+              {/* The picked child's whole name: it wraps, never cut. */}
+              <span className={ivory ? "block whitespace-normal break-words hyphens-none text-balance font-display text-hec-h2 font-medium text-hec-on-action" : "studio-title block truncate text-xl text-[hsl(var(--studio-card))]"}>
                 {winner}
               </span>
             </span>
@@ -237,7 +240,12 @@ export function WheelSpinner() {
               type="button"
               onClick={removeWinner}
               aria-label={`Remove ${winner} from the wheel`}
-              className="studio-focus shrink-0 rounded-full p-2 opacity-70 transition-opacity hover:opacity-100"
+              className={
+                ivory
+                  ? // On the ink panel the ring is drawn in the panel's own text colour (brass is under 3:1 there).
+                    "inline-flex min-h-hec-target min-w-hec-target shrink-0 items-center justify-center rounded-hec-md text-hec-on-action/80 transition-colors duration-hec-1 ease-hec hover:bg-hec-on-action/10 hover:text-hec-on-action focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+                  : "studio-focus shrink-0 rounded-full p-2 opacity-70 transition-opacity hover:opacity-100"
+              }
             >
               <Trash2 className="h-4 w-4" aria-hidden />
             </button>
@@ -252,7 +260,11 @@ export function WheelSpinner() {
           type="button"
           onClick={() => setEditing((v) => !v)}
           aria-expanded={editing}
-          className="studio-focus mt-3 self-start rounded-full px-1 text-xs font-semibold text-ink-faint underline-offset-4 hover:text-ink hover:underline"
+          className={
+            ivory
+              ? "mt-3 inline-flex min-h-hec-target items-center self-start rounded-hec-sm px-1 text-hec-small font-medium tabular-nums text-hec-brass underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+              : "studio-focus mt-3 self-start rounded-full px-1 text-xs font-semibold text-ink-faint underline-offset-4 hover:text-ink hover:underline"
+          }
         >
           {editing ? "Hide the list" : `Edit names (${entries.length})`}
         </button>
@@ -262,7 +274,7 @@ export function WheelSpinner() {
             onChange={(e) => setRaw(e.target.value)}
             rows={4}
             placeholder="One name per line, or separated by commas"
-            className="mt-2 resize-none rounded-2xl border-studio bg-studio-stage text-sm text-ink focus-visible:ring-0 focus-visible:ring-offset-0"
+            className={ivory ? "mt-2 resize-none" : "mt-2 resize-none rounded-2xl border-studio bg-studio-stage text-sm text-ink focus-visible:ring-0 focus-visible:ring-offset-0"}
           />
         )}
       </ToolCard>
@@ -275,11 +287,11 @@ export function WheelSpinner() {
             size={Math.max(240, Math.min(viewport.w * 0.6, viewport.h * 0.62))}
           />
           {winner && !spinning && (
-            <p className="studio-pop studio-title text-[clamp(2rem,7vw,4.5rem)] leading-none">
+            <p className={ivory ? "max-w-full whitespace-normal break-words hyphens-none text-balance text-center font-display text-[clamp(2rem,7vw,4.5rem)] font-medium leading-snug text-hec-ink animate-in fade-in slide-in-from-bottom-2 duration-hec-2" : "studio-pop studio-title text-[clamp(2rem,7vw,4.5rem)] leading-none"}>
               {winner}
             </p>
           )}
-          <div className="flex gap-3">
+          <div className={ivory ? "flex flex-wrap justify-center gap-3" : "flex gap-3"}>
             <ActionButton
               onClick={spin}
               disabled={spinning || entries.length < 2}

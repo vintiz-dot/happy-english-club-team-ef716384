@@ -282,7 +282,7 @@ export default function RecurringSessionsManager({ classId }: RecurringSessionsM
                         handleSaveEdit(index, updated);
                       }}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger aria-label="Day of Week">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -295,6 +295,7 @@ export default function RecurringSessionsManager({ classId }: RecurringSessionsM
                     </Select>
                     <Input
                       type="time"
+                      aria-label="Start Time"
                       value={slot.startTime}
                       onChange={(e) => {
                         const updated = { ...slot, startTime: e.target.value };
@@ -303,6 +304,7 @@ export default function RecurringSessionsManager({ classId }: RecurringSessionsM
                     />
                     <Input
                       type="time"
+                      aria-label="End Time"
                       value={slot.endTime}
                       onChange={(e) => {
                         const updated = { ...slot, endTime: e.target.value };
@@ -363,9 +365,9 @@ export default function RecurringSessionsManager({ classId }: RecurringSessionsM
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
-              <Label className="text-xs">Day of Week</Label>
+              <Label htmlFor="new-session-day" className="text-xs">Day of Week</Label>
               <Select value={newSession.dayOfWeek} onValueChange={(v) => setNewSession({ ...newSession, dayOfWeek: v })}>
-                <SelectTrigger>
+                <SelectTrigger id="new-session-day">
                   <SelectValue placeholder="Select day" />
                 </SelectTrigger>
                 <SelectContent>
@@ -378,25 +380,27 @@ export default function RecurringSessionsManager({ classId }: RecurringSessionsM
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Start Time</Label>
+              <Label htmlFor="new-session-start" className="text-xs">Start Time</Label>
               <Input
+                id="new-session-start"
                 type="time"
                 value={newSession.startTime}
                 onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
               />
             </div>
             <div>
-              <Label className="text-xs">End Time</Label>
+              <Label htmlFor="new-session-end" className="text-xs">End Time</Label>
               <Input
+                id="new-session-end"
                 type="time"
                 value={newSession.endTime}
                 onChange={(e) => setNewSession({ ...newSession, endTime: e.target.value })}
               />
             </div>
             <div>
-              <Label className="text-xs">Teacher (Optional)</Label>
+              <Label htmlFor="new-session-teacher" className="text-xs">Teacher (Optional)</Label>
               <Select value={newSession.teacherId || "default"} onValueChange={(v) => setNewSession({ ...newSession, teacherId: v === "default" ? "" : v })}>
-                <SelectTrigger>
+                <SelectTrigger id="new-session-teacher">
                   <SelectValue placeholder="Default" />
                 </SelectTrigger>
                 <SelectContent>

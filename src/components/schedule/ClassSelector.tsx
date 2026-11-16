@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Clock, User, ChevronRight, Sparkles } from "lucide-react";
+import { Clock, User, ChevronRight } from "lucide-react";
 import { dayjs } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { getSessionDisplayStatus } from "@/lib/sessionStatus";
@@ -22,28 +22,26 @@ const getStatusStyle = (session: any) => {
   
   switch (displayStatus) {
     case "Held":
-      return { bg: "bg-muted/60", border: "border-muted-foreground/20", icon: "✓" };
+      return { bg: "bg-hec-sunken", border: "border-hec-line", icon: "✓" };
     case "Canceled":
-      return { bg: "bg-destructive/10", border: "border-destructive/30", icon: "✕" };
+      return { bg: "bg-hec-danger-tint", border: "border-hec-danger/30", icon: "✕" };
     case "Holiday":
-      return { bg: "bg-accent/10", border: "border-accent/30", icon: "🎉" };
+      return { bg: "bg-hec-sunken", border: "border-hec-line", icon: "🎉" };
     default:
-      return { bg: "bg-success/10", border: "border-success/30", icon: "✨" };
+      return { bg: "bg-hec-surface", border: "border-hec-line-strong", icon: "✨" };
   }
 };
 
 export default function ClassSelector({ date, sessions, onSelectSession, onClose }: ClassSelectorProps) {
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md glass-lg border-primary/10 overflow-hidden p-0">
-        {/* Header with gradient */}
-        <div className="relative px-6 pt-6 pb-4 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
+      <DialogContent className="overflow-hidden p-0 sm:max-w-md">
+        <div className="px-6 pb-4 pt-6">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
+            <DialogTitle className="flex items-center gap-2">
               Select Class
             </DialogTitle>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="mt-1 text-hec-small tabular-nums text-hec-ink-soft">
               {dayjs(date).format("dddd, MMMM D, YYYY")} • {sessions.length} {sessions.length === 1 ? 'class' : 'classes'}
             </p>
           </DialogHeader>
@@ -60,18 +58,18 @@ export default function ClassSelector({ date, sessions, onSelectSession, onClose
                   key={session.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ delay: index * 0.05, duration: 0.2 }}
-                  whileHover={{ scale: 1.01, x: 4 }}
+                  whileHover={{ x: 4 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => {
                     onSelectSession(session);
                     onClose();
                   }}
                   className={cn(
-                    "w-full text-left p-4 rounded-2xl border mb-3 transition-all duration-300",
-                    "group cursor-pointer flex items-center justify-between",
-                    "hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                    "mb-3 w-full min-h-hec-target rounded-hec-md border p-4 text-left text-hec-ink transition-shadow duration-hec-1 ease-hec",
+                    "group flex cursor-pointer items-center justify-between gap-3",
+                    "hover:shadow-hec-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
                     statusStyle.bg,
                     statusStyle.border
                   )}
@@ -79,23 +77,23 @@ export default function ClassSelector({ date, sessions, onSelectSession, onClose
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm">{statusStyle.icon}</span>
-                      <h3 className="font-semibold text-foreground truncate">
+                      <h3 className="min-w-0 whitespace-normal break-words text-hec-body font-semibold text-hec-ink">
                         {session.classes?.name}
                       </h3>
                     </div>
                     
-                    <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-hec-small text-hec-ink-soft">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 shrink-0" />
+                        <span className="tabular-nums">
                           {session.start_time?.slice(0, 5)} - {session.end_time?.slice(0, 5)}
                         </span>
                       </div>
                       
                       {session.teachers?.full_name && (
-                        <div className="flex items-center gap-1.5">
-                          <User className="h-3.5 w-3.5" />
-                          <span className="truncate max-w-[120px]">{session.teachers.full_name}</span>
+                        <div className="flex min-w-0 items-start gap-2">
+                          <User className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span className="min-w-0 whitespace-normal break-words">{session.teachers.full_name}</span>
                         </div>
                       )}
                     </div>
@@ -104,9 +102,9 @@ export default function ClassSelector({ date, sessions, onSelectSession, onClose
                   <motion.div
                     initial={{ opacity: 0.5, x: -5 }}
                     whileHover={{ opacity: 1, x: 0 }}
-                    className="ml-3"
+                    className="shrink-0"
                   >
-                    <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                    <ChevronRight className="h-5 w-5 text-hec-ink-faint transition-colors duration-hec-1 ease-hec group-hover:text-hec-brass" />
                   </motion.div>
                 </motion.button>
               );
@@ -119,7 +117,7 @@ export default function ClassSelector({ date, sessions, onSelectSession, onClose
           <Button 
             variant="outline" 
             onClick={onClose} 
-            className="w-full h-11 rounded-xl hover:bg-muted/50"
+            className="w-full"
           >
             Cancel
           </Button>

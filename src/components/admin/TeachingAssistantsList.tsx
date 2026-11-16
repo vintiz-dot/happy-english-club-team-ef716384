@@ -41,7 +41,7 @@ export function TeachingAssistantsList() {
   });
 
   if (isLoading) {
-    return <p className="text-muted-foreground">Loading teaching assistants...</p>;
+    return <p className="text-hec-body text-hec-ink-soft">Loading teaching assistants...</p>;
   }
 
   return (
@@ -49,45 +49,46 @@ export function TeachingAssistantsList() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5" />
+            <GraduationCap className="h-5 w-5 shrink-0" aria-hidden />
             All Teaching Assistants
           </CardTitle>
           <CardDescription>Click a teaching assistant to view profile & assign to classes</CardDescription>
         </CardHeader>
         <CardContent>
           {assistants?.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No teaching assistants found</p>
+            <p className="py-8 text-center text-hec-body text-hec-ink-soft">No teaching assistants found</p>
           ) : (
-            <div className="space-y-3">
+            <div className="rounded-hec-lg border border-hec-line bg-hec-surface">
               {assistants?.map((ta) => (
                 <div
                   key={ta.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                  className="flex min-h-hec-target cursor-pointer items-start gap-3 border-b border-hec-line px-4 py-3 transition-colors duration-hec-1 ease-hec last:border-b-0 hover:bg-hec-sunken/60"
                   onClick={() => setSelectedTA(ta)}
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{ta.full_name}</p>
-                      <Badge variant={ta.is_active ? "default" : "secondary"}>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-start gap-2">
+                      <p className="min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{ta.full_name}</p>
+                      <Badge variant={ta.is_active ? "success" : "secondary"} className="shrink-0">
                         {ta.is_active ? "Active" : "Inactive"}
                       </Badge>
                       {ta.user_id && (
-                        <Badge variant="outline" className="text-xs">Has Account</Badge>
+                        <Badge variant="outline" className="shrink-0">Has Account</Badge>
                       )}
                     </div>
-                    {ta.email && <p className="text-sm text-muted-foreground">{ta.email}</p>}
-                    {ta.phone && <p className="text-sm text-muted-foreground">📱 {ta.phone}</p>}
-                    <p className="text-sm font-medium text-primary">
+                    {ta.email && <p className="break-all text-hec-small text-hec-ink-soft">{ta.email}</p>}
+                    {ta.phone && <p className="text-hec-small text-hec-ink-soft">📱 {ta.phone}</p>}
+                    <p className="text-hec-small font-medium tabular-nums text-hec-ink">
                       {describeRate(ta)}
                     </p>
-                    {ta.bio && <p className="text-xs text-muted-foreground line-clamp-1">{ta.bio}</p>}
+                    {ta.bio && <p className="line-clamp-1 text-hec-caption text-hec-ink-soft">{ta.bio}</p>}
                   </div>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    onClick={(e) => { e.stopPropagation(); toggleActive.mutate({ id: ta.id, isActive: ta.is_active }); }}
+                    size="icon"
+                    className="shrink-0"
+                    aria-label={ta.is_active ? `Deactivate ${ta.full_name}` : `Activate ${ta.full_name}`}                    onClick={(e) => { e.stopPropagation(); toggleActive.mutate({ id: ta.id, isActive: ta.is_active }); }}
                   >
-                    {ta.is_active ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-muted-foreground" />}
+                    {ta.is_active ? <ToggleRight className="h-5 w-5 text-hec-leaf" aria-hidden /> : <ToggleLeft className="h-5 w-5 text-hec-ink-faint" aria-hidden />}
                   </Button>
                 </div>
               ))}

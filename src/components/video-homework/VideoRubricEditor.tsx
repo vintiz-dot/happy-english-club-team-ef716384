@@ -96,75 +96,76 @@ export function VideoRubricEditor({ homeworkId, onClose }: { homeworkId: string 
 
   return (
     <Dialog open={!!homeworkId} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[85dvh] w-[calc(100vw-2rem)] max-w-xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex flex-wrap items-center gap-2">
             Video rubric
             {rubric?.status === "approved" ? (
-              <Badge className="bg-emerald-600 gap-1"><CheckCircle2 className="h-3 w-3" /> Approved</Badge>
-            ) : rubric ? <Badge variant="secondary">Draft</Badge> : null}
+              <Badge variant="success" className="gap-1 font-sans"><CheckCircle2 className="h-3 w-3" aria-hidden="true" /> Approved</Badge>
+            ) : rubric ? <Badge variant="secondary" className="font-sans">Draft</Badge> : null}
           </DialogTitle>
           <DialogDescription>What each video is scored on. Children see the labels; never the weights.</DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
+          <div className="flex items-center gap-2 text-hec-small text-hec-ink-soft"><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Loading…</div>
         ) : (
           <div className="space-y-4">
-            <div className="flex gap-2 items-end">
-              <div className="flex-1 space-y-1">
-                <Label className="text-xs">Grade (helps the AI pitch it)</Label>
-                <Input value={gradeBand} onChange={(e) => setGradeBand(e.target.value)} placeholder="e.g. Grade 3" className="h-9" />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <div className="min-w-0 flex-1 space-y-2">
+                <Label htmlFor="rubric-grade" className="text-hec-small font-medium text-hec-ink">Grade (helps the AI pitch it)</Label>
+                <Input id="rubric-grade" value={gradeBand} onChange={(e) => setGradeBand(e.target.value)} placeholder="e.g. Grade 3" className="text-hec-body" />
               </div>
-              <Button variant="outline" onClick={() => draft.mutate()} disabled={draft.isPending}>
-                {draft.isPending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1.5" />}
+              <Button variant="outline" className="min-h-hec-target w-full sm:w-auto" onClick={() => draft.mutate()} disabled={draft.isPending}>
+                {draft.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
                 {rubric ? "Redraft with AI" : "Draft with AI"}
               </Button>
             </div>
 
             {criteria.map((c, i) => (
-              <div key={i} className="rounded-lg border p-3 space-y-2">
-                <div className="flex gap-2">
-                  <Input value={c.label} onChange={(e) => set(i, { label: e.target.value })} placeholder="Label" className="h-9 font-medium" />
+              <div key={i} className="space-y-2 rounded-hec-md border border-hec-line p-3">
+                {/* Below sm the label takes its own line (beside the weight and remove it was 123 px and cut). */}
+                <div className="flex flex-wrap gap-2">
+                  <Input value={c.label} onChange={(e) => set(i, { label: e.target.value })} placeholder="Label" aria-label="Criterion label" className="min-w-0 flex-1 basis-full text-hec-body font-medium sm:basis-0" />
                   <select
                     value={c.weight}
                     onChange={(e) => set(i, { weight: Number(e.target.value) })}
-                    className="h-9 rounded-md border bg-background px-2 text-sm"
+                    className="min-h-hec-target shrink-0 rounded-hec-md border border-hec-line-strong bg-hec-raised px-2 text-hec-body text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                     aria-label="Weight"
                   >
                     <option value={1}>×1</option>
                     <option value={2}>×2</option>
                     <option value={3}>×3</option>
                   </select>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => setCriteria((p) => p.filter((_, j) => j !== i))} disabled={criteria.length <= 2}>
-                    <Trash2 className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" className="min-h-hec-target min-w-hec-target shrink-0 text-hec-danger hover:bg-hec-danger-tint hover:text-hec-danger" onClick={() => setCriteria((p) => p.filter((_, j) => j !== i))} disabled={criteria.length <= 2} aria-label={`Remove ${c.label || "this criterion"}`}>
+                    <Trash2 className="h-5 w-5" aria-hidden="true" />
                   </Button>
                 </div>
-                <Textarea value={c.description} onChange={(e) => set(i, { description: e.target.value })} rows={2} placeholder="What a 4/4 looks like" className="text-sm" />
+                <Textarea value={c.description} onChange={(e) => set(i, { description: e.target.value })} rows={2} placeholder="What a 4/4 looks like" aria-label="What a 4/4 looks like" className="text-hec-body" />
               </div>
             ))}
             {criteria.length < 6 && (
-              <Button variant="ghost" size="sm" onClick={() => setCriteria((p) => [...p, { key: `c${p.length + 1}`, label: "", description: "", weight: 1 }])}>
-                <Plus className="h-4 w-4 mr-1" /> Add a criterion
+              <Button variant="ghost" size="sm" className="min-h-hec-target" onClick={() => setCriteria((p) => [...p, { key: `c${p.length + 1}`, label: "", description: "", weight: 1 }])}>
+                <Plus className="h-4 w-4" aria-hidden="true" /> Add a criterion
               </Button>
             )}
 
-            <div className="space-y-1">
-              <Label className="text-xs">Target words (comma-separated)</Label>
-              <Input value={vocab} onChange={(e) => setVocab(e.target.value)} className="h-9" />
+            <div className="space-y-2">
+              <Label htmlFor="rubric-vocab" className="text-hec-small font-medium text-hec-ink">Target words (comma-separated)</Label>
+              <Input id="rubric-vocab" value={vocab} onChange={(e) => setVocab(e.target.value)} className="text-hec-body" />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Target grammar (comma-separated)</Label>
-              <Input value={grammar} onChange={(e) => setGrammar(e.target.value)} className="h-9" />
+            <div className="space-y-2">
+              <Label htmlFor="rubric-grammar" className="text-hec-small font-medium text-hec-ink">Target grammar (comma-separated)</Label>
+              <Input id="rubric-grammar" value={grammar} onChange={(e) => setGrammar(e.target.value)} className="text-hec-body" />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">For the child: "Your teacher is looking for…"</Label>
-              <Textarea value={kidSummary} onChange={(e) => setKidSummary(e.target.value)} rows={2} className="text-sm" />
+            <div className="space-y-2">
+              <Label htmlFor="rubric-kid" className="text-hec-small font-medium text-hec-ink">For the child: "Your teacher is looking for…"</Label>
+              <Textarea id="rubric-kid" value={kidSummary} onChange={(e) => setKidSummary(e.target.value)} rows={2} className="text-hec-body" />
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => save.mutate(false)} disabled={save.isPending}>Save draft</Button>
-              <Button className="flex-1" onClick={() => save.mutate(true)} disabled={save.isPending}>Approve rubric</Button>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+              <Button variant="outline" className="min-h-hec-target flex-1" onClick={() => save.mutate(false)} disabled={save.isPending}>Save draft</Button>
+              <Button className="min-h-hec-target flex-1" onClick={() => save.mutate(true)} disabled={save.isPending}>Approve rubric</Button>
             </div>
           </div>
         )}

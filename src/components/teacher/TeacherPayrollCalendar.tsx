@@ -1,15 +1,11 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
-import { dayjs } from "@/lib/date";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
 import ClassSelector from "@/components/schedule/ClassSelector";
-import { sessionPayVnd, type StaffPayRate } from "@/lib/payRate";
-import { durationMinutes } from "@/lib/sessionDuration";
+import type { TeacherPayrollSession } from "@/lib/teacherPayrollView";
 
-const TIMEZONE = "Asia/Bangkok";
-
+/** The shape ClassSelector reads. */
 interface Session {
   id: string;
   date: string;
@@ -20,48 +16,55 @@ interface Session {
 }
 
 interface TeacherPayrollCalendarProps {
-  sessions: Session[];
-  /** The whole pay rate, not a bare number: a per-session teacher's daily
-      figure is a flat fee and does not scale with the hours shown. */
-  payRate: StaffPayRate;
+  /** calculate-payroll's lessons, mapped by teacherPayrollView. */
+  sessions: TeacherPayrollSession[];
+  /**
+   * YYYY-MM-DD -> what that day's paid lessons come to, as calculate-payroll
+   * priced them (teacherPayrollView). Null = figure unavailable. Nothing on
+   * this calendar prices a lesson: it used to, at today's rate, and so
+   * disagreed with the function after any change of rate.
+   */
+  earnedByDate: Map<string, number | null>;
   month: Date;
   onMonthChange: (date: Date) => void;
 }
 
+const toSelectorSession = (s: TeacherPayrollSession): Session => ({
+  id: s.id,
+  date: s.date,
+  start_time: s.startTime,
+  end_time: s.endTime,
+  status: s.status,
+  classes: { name: s.className },
+});
+
 export default function TeacherPayrollCalendar({
-  sessions,
-  payRate,
+  sessions: payrollSessions,
+  earnedByDate,
   month,
 }: TeacherPayrollCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showClassSelector, setShowClassSelector] = useState(false);
 
-  const now = toZonedTime(new Date(), TIMEZONE);
+  const sessions = payrollSessions.map(toSelectorSession);
 
   const days = eachDayOfInterval({
     start: startOfMonth(month),
     end: endOfMonth(month),
   });
 
-  const calculateSessionAmount = (session: Session) =>
-    sessionPayVnd(payRate, durationMinutes(session.start_time, session.end_time) ?? 0);
-
+  // Session dates are calendar dates (YYYY-MM-DD); compared as text so no
+  // timezone can move a lesson onto the next or previous day.
   const getSessionsForDate = (date: Date) => {
-    return sessions.filter((s) =>
-      isSameDay(new Date(s.date), date)
-    );
+    const key = format(date, "yyyy-MM-dd");
+    return sessions.filter((s) => s.date === key);
   };
 
-  const getSessionStatus = (session: Session) => {
-    const sessionDateTime = new Date(`${session.date}T${session.start_time}`);
-    const nowBangkok = toZonedTime(new Date(), TIMEZONE);
-    
-    if (sessionDateTime > nowBangkok) {
-      return "Scheduled";
-    }
-    
-    return session.status;
-  };
+  // The status the function priced the lesson on. It used to be switched to
+  // "Scheduled" for any lesson after the browser's clock, so a Held lesson
+  // dated ahead showed Scheduled beside the money calculate-payroll pays
+  // for it.
+  const getSessionStatus = (session: Session) => session.status;
 
   const handleDateClick = (date: Date) => {
     const dateSessions = getSessionsForDate(date);
@@ -81,12 +84,12 @@ export default function TeacherPayrollCalendar({
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Calendar View</CardTitle>
+          <CardTitle className="text-hec-h2">Calendar View</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-7 gap-2">
+        <CardContent className="px-1 sm:px-6">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-2">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
+              <div key={day} className="py-2 text-center text-hec-caption font-medium text-hec-ink-soft">
                 {day}
               </div>
             ))}
@@ -97,22 +100,24 @@ export default function TeacherPayrollCalendar({
             
             {days.map((day, index) => {
               const dateSessions = getSessionsForDate(day);
-              const heldSessions = dateSessions.filter(s => getSessionStatus(s) === "Held");
-              const totalEarned = heldSessions.reduce((sum, s) => sum + calculateSessionAmount(s), 0);
-              
+              const dayKey = format(day, "yyyy-MM-dd");
+              // undefined: no paid lesson that day. null: there is one but
+              // its figure is unavailable (see teacherPayrollView).
+              const totalEarned = earnedByDate.get(dayKey);
+
               return (
                 <button
                   key={index}
                   onClick={() => dateSessions.length > 0 && handleDateClick(day)}
                   className={`
-                    min-h-[80px] p-2 border rounded-lg text-left transition-all
+                    flex flex-col justify-start min-h-[80px] min-w-0 p-1 sm:p-2 border border-hec-line rounded-hec-md text-left text-hec-ink transition-shadow duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring
                     ${!isSameMonth(day, month) ? "opacity-30" : ""}
-                    ${isToday(day) ? "border-primary border-2" : ""}
-                    ${dateSessions.length > 0 ? "hover:shadow-md cursor-pointer bg-muted/50" : ""}
+                    ${isToday(day) ? "border-hec-brass" : ""}
+                    ${dateSessions.length > 0 ? "hover:shadow-hec-2 cursor-pointer bg-hec-sunken" : ""}
                   `}
                   disabled={dateSessions.length === 0}
                 >
-                  <div className={`text-sm font-medium mb-1 ${isToday(day) ? "text-primary" : ""}`}>
+                  <div className={`mb-1 text-hec-small font-medium tabular-nums ${isToday(day) ? "text-hec-brass" : ""}`}>
                     {format(day, "d")}
                   </div>
                   
@@ -123,15 +128,15 @@ export default function TeacherPayrollCalendar({
                         return (
                           <div
                             key={session.id}
-                            className="text-xs p-1 rounded bg-background border"
+                            className="rounded-hec-sm border border-hec-line bg-hec-surface p-1 text-hec-caption"
                           >
-                            <div className="font-medium truncate">{session.classes.name}</div>
-                            <div className="text-muted-foreground">
+                            <div className="whitespace-normal break-words hyphens-none font-medium">{session.classes.name}</div>
+                            <div className="tabular-nums text-hec-ink-soft">
                               {session.start_time.slice(0, 5)}
                             </div>
                             <Badge
                               variant={displayStatus === "Held" ? "default" : "secondary"}
-                              className="text-[10px] px-1 py-0 mt-1"
+                              className="mt-1 px-1 py-0"
                             >
                               {displayStatus}
                             </Badge>
@@ -139,13 +144,19 @@ export default function TeacherPayrollCalendar({
                         );
                       })}
                       {dateSessions.length > 2 && (
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-hec-caption text-hec-ink-soft">
                           +{dateSessions.length - 2} more
                         </div>
                       )}
-                      {totalEarned > 0 && (
-                        <div className="text-xs font-semibold text-success mt-1">
+                      {typeof totalEarned === "number" && totalEarned > 0 && (
+                        <div className="mt-1 text-hec-caption font-semibold tabular-nums text-hec-ink">
                           {totalEarned.toLocaleString()} ₫
+                        </div>
+                      )}
+                      {totalEarned === null && (
+                        <div className="mt-1 text-hec-caption text-hec-ink-soft" title="Figure unavailable">
+                          <span aria-hidden="true">—</span>
+                          <span className="sr-only">Figure unavailable</span>
                         </div>
                       )}
                     </div>

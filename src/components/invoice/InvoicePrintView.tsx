@@ -21,7 +21,7 @@ export function InvoicePrintView({ invoice, bankInfo }: InvoicePrintViewProps) {
   }, [bankInfo?.vietqr_storage_key]);
 
   return (
-    <div className="invoice-print-view bg-white text-black p-8 max-w-[210mm] mx-auto relative min-h-[297mm]" style={{ paddingTop: '20%' }}>
+    <div data-hec-document="" className="invoice-print-view bg-white text-black p-8 max-w-[210mm] mx-auto relative min-h-[297mm]" style={{ paddingTop: '20%' }}>
       {/* Background */}
       <div 
         className="absolute inset-0 opacity-95 pointer-events-none"

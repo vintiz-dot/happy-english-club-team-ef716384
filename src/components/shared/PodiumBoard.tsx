@@ -29,6 +29,11 @@ import { getAvatarUrl, getRandomAvatarUrl } from "@/lib/avatars";
 import { BookOpen, Flame, Sparkles, SpellCheck, Star, Trophy, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogSpendButton } from "@/components/shared/EconomyActions";
+import { useIvory } from "@/hooks/useIvory";
+
+/** The `FOCUS` ring of docs/DESIGN_SYSTEM.md s.15. */
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring";
 
 export interface BoardEntry {
   id: string;
@@ -100,6 +105,38 @@ const TIERS: Record<
 };
 
 /**
+ * TIERS in the "Ivory" system (DESIGN_SYSTEM s.3, s.15 brass badge): the
+ * podium is drawn in the system's tokens instead of the studio metals. First
+ * place is the brass fill (a reward, the one brass thing in the podium);
+ * second and third are quiet ink on sunken / hairline tones, told apart by
+ * the number on the medal and the plinth height, not by colour. Same keys,
+ * plinth heights and order as TIERS.
+ */
+const TIERS_IVORY: typeof TIERS = {
+  1: {
+    tone: "hsl(var(--hec-brass-fill))",
+    ink: "hsl(var(--hec-on-brass))",
+    inkSoft: "hsl(var(--hec-brass))",
+    plinth: "h-14 sm:h-20",
+    order: "order-2",
+  },
+  2: {
+    tone: "hsl(var(--hec-sunken))",
+    ink: "hsl(var(--hec-ink))",
+    inkSoft: "hsl(var(--hec-brass))",
+    plinth: "h-9 sm:h-14",
+    order: "order-1",
+  },
+  3: {
+    tone: "hsl(var(--hec-line))",
+    ink: "hsl(var(--hec-ink))",
+    inkSoft: "hsl(var(--hec-brass))",
+    plinth: "h-6 sm:h-10",
+    order: "order-3",
+  },
+};
+
+/**
  * Points → level. Each level costs 25 more than the last, so the first
  * few arrive quickly and the curve stretches afterwards.
  */
@@ -112,11 +149,12 @@ function levelFromPoints(p: number) {
 }
 
 function Medal({ rank, size = 28 }: { rank: number; size?: number }) {
-  const tier = TIERS[rank as 1 | 2 | 3];
+  const ivory = useIvory();
+  const tier = (ivory ? TIERS_IVORY : TIERS)[rank as 1 | 2 | 3];
   if (!tier) return null;
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden>
-      <circle cx="20" cy="20" r="18" style={{ fill: "hsl(var(--studio-card))" }} />
+      <circle cx="20" cy="20" r="18" style={{ fill: ivory ? "hsl(var(--hec-surface))" : "hsl(var(--studio-card))" }} />
       <circle cx="20" cy="20" r="15" style={{ fill: tier.tone }} />
       <circle
         cx="20"
@@ -133,7 +171,7 @@ function Medal({ rank, size = 28 }: { rank: number; size?: number }) {
         y="21"
         textAnchor="middle"
         dominantBaseline="central"
-        style={{ fill: tier.ink, fontSize: 15, fontWeight: 800 }}
+        style={{ fill: tier.ink, fontSize: 15, fontWeight: ivory ? 600 : 800 }}
       >
         {rank}
       </text>
@@ -150,13 +188,15 @@ function Avatar48({
   className?: string;
   ring?: string;
 }) {
+  const ivory = useIvory();
   return (
-    <Avatar className={cn("border-[3px] bg-studio-stage", className)} style={{ borderColor: ring }}>
+    <Avatar className={cn(ivory ? "border-2 bg-hec-sunken" : "border-[3px] bg-studio-stage", className)} style={{ borderColor: ring }}>
       <AvatarImage
         src={getAvatarUrl(entry.students?.avatar_url) || getRandomAvatarUrl(entry.student_id)}
+        alt={ivory ? "" : undefined}
         className="object-cover"
       />
-      <AvatarFallback className="bg-studio-stage font-bold text-ink">
+      <AvatarFallback className={ivory ? "bg-hec-sunken font-semibold text-hec-ink" : "bg-studio-stage font-bold text-ink"}>
         {entry.students?.full_name?.[0] ?? "?"}
       </AvatarFallback>
     </Avatar>
@@ -165,14 +205,15 @@ function Avatar48({
 
 /** Marks this month's class monitor. */
 function MonitorStar({ size = 16 }: { size?: number }) {
+  const ivory = useIvory();
   return (
     <span
       title="Class monitor"
-      className="grid place-items-center rounded-full bg-[hsl(var(--studio-butter))] p-1 shadow-studio"
+      className={ivory ? "grid shrink-0 place-items-center rounded-full bg-hec-brass-fill p-1 shadow-hec-1" : "grid place-items-center rounded-full bg-[hsl(var(--studio-butter))] p-1 shadow-studio"}
       style={{ width: size + 8, height: size + 8 }}
     >
       <Star
-        className="fill-current text-[hsl(var(--studio-butter-ink))]"
+        className={ivory ? "fill-current text-hec-on-brass" : "fill-current text-[hsl(var(--studio-butter-ink))]"}
         style={{ width: size, height: size }}
         aria-hidden
       />
@@ -183,12 +224,14 @@ function MonitorStar({ size = 16 }: { size?: number }) {
 
 /** Thin bar showing progress toward the next level. */
 function ProgressBead({ pct, color }: { pct: number; color: string }) {
+  const ivory = useIvory();
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[hsl(var(--studio-ink)/0.1)]">
+    <div className={ivory ? "h-2 w-full overflow-hidden rounded-full bg-hec-sunken" : "h-1.5 w-full overflow-hidden rounded-full bg-[hsl(var(--studio-ink)/0.1)]"}>
       <motion.div
-        initial={{ width: 0 }}
+        // Ivory: no width animation on load (DESIGN_SYSTEM s.9: nothing that changes layout).
+        initial={ivory ? false : { width: 0 }}
         animate={{ width: `${pct}%` }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
+        transition={ivory ? { duration: 0 } : { duration: 0.8, ease: "easeOut" }}
         className="h-full rounded-full"
         style={{ background: color }}
       />
@@ -211,7 +254,8 @@ function PodiumPlace({
   isMonitor: boolean;
   onClick: () => void;
 }) {
-  const tier = TIERS[entry.rank as 1 | 2 | 3];
+  const ivory = useIvory();
+  const tier = (ivory ? TIERS_IVORY : TIERS)[entry.rank as 1 | 2 | 3];
   const { level, pct } = levelFromPoints(entry.total_points);
   const first = entry.rank === 1;
 
@@ -219,24 +263,26 @@ function PodiumPlace({
     <motion.button
       type="button"
       onClick={onClick}
-      initial={{ opacity: 0, y: 24 }}
+      initial={ivory ? { opacity: 0, y: 8 } : { opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 240, damping: 22, delay: first ? 0 : 0.1 }}
-      whileHover={{ y: -3 }}
-      whileTap={{ scale: 0.98 }}
-      className="studio-focus group flex w-full min-w-0 flex-col items-center justify-end text-center"
+      transition={ivory ? { duration: 0.24, ease: [0.22, 1, 0.36, 1], delay: first ? 0 : 0.06 } : { type: "spring", stiffness: 240, damping: 22, delay: first ? 0 : 0.1 }}
+      whileHover={ivory ? undefined : { y: -3 }}
+      whileTap={ivory ? undefined : { scale: 0.98 }}
+      className={ivory ? cn("group flex w-full min-w-0 flex-col items-center justify-end rounded-hec-lg text-center", FOCUS) : "studio-focus group flex w-full min-w-0 flex-col items-center justify-end text-center"}
     >
       {/* Card */}
       <div
         className={cn(
-          "relative w-full rounded-2xl border border-studio bg-studio-card px-2 pb-3 pt-6 shadow-studio",
-          first && "shadow-studio-lg",
-          isSelf && "ring-2 ring-[hsl(var(--studio-ink))]",
+          ivory
+            ? "relative w-full rounded-hec-lg border border-hec-line bg-hec-surface px-2 pb-3 pt-6 shadow-hec-1 transition-shadow duration-hec-1 ease-hec group-hover:shadow-hec-2"
+            : "relative w-full rounded-2xl border border-studio bg-studio-card px-2 pb-3 pt-6 shadow-studio",
+          first && (ivory ? "shadow-hec-2" : "shadow-studio-lg"),
+          isSelf && (ivory ? "border-hec-brass ring-1 ring-hec-brass" : "ring-2 ring-[hsl(var(--studio-ink))]"),
         )}
       >
         {first && (
           <Sparkles
-            className="absolute left-1/2 top-2 h-4 w-4 -translate-x-1/2 text-[hsl(var(--studio-butter-ink))]"
+            className={ivory ? "absolute left-1/2 top-2 h-4 w-4 -translate-x-1/2 text-hec-brass" : "absolute left-1/2 top-2 h-4 w-4 -translate-x-1/2 text-[hsl(var(--studio-butter-ink))]"}
             aria-hidden
           />
         )}
@@ -262,10 +308,12 @@ function PodiumPlace({
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0, opacity: 0 }}
                 className={cn(
-                  "absolute -left-1 -top-1 grid h-5 w-5 place-items-center rounded-full text-[10px] font-black",
+                  ivory
+                    ? "absolute -left-1 -top-1 grid h-6 w-6 place-items-center rounded-full border text-hec-caption font-semibold leading-none"
+                    : "absolute -left-1 -top-1 grid h-5 w-5 place-items-center rounded-full text-[10px] font-black",
                   movement === "up"
-                    ? "bg-[hsl(var(--studio-sage))] text-[hsl(var(--studio-sage-ink))]"
-                    : "bg-[hsl(var(--studio-clay))] text-[hsl(var(--studio-clay-ink))]",
+                    ? ivory ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf" : "bg-[hsl(var(--studio-sage))] text-[hsl(var(--studio-sage-ink))]"
+                    : ivory ? "border-hec-line bg-hec-sunken text-hec-ink-soft" : "bg-[hsl(var(--studio-clay))] text-[hsl(var(--studio-clay-ink))]",
                 )}
               >
                 {movement === "up" ? "▲" : "▼"}
@@ -276,24 +324,30 @@ function PodiumPlace({
 
         <p
           className={cn(
-            "studio-title truncate px-1",
-            first ? "text-base sm:text-lg" : "text-sm sm:text-base",
+            ivory
+              ? "whitespace-normal break-words hyphens-none text-balance px-1 text-hec-ink"
+              : "studio-title truncate px-1",
+            first
+              ? ivory ? "text-hec-h3" : "text-base sm:text-lg"
+              : ivory ? "text-hec-small font-semibold sm:text-hec-body" : "text-sm sm:text-base",
           )}
         >
           {entry.students?.full_name}
-          {isSelf && <span className="ml-1 text-ink-faint">(you)</span>}
+          {isSelf && <span className={ivory ? "ml-1 inline-block whitespace-nowrap font-normal text-hec-ink-soft" : "ml-1 text-ink-faint"}>(you)</span>}
         </p>
 
         <p
           className={cn(
-            "studio-title tabular-nums",
-            first ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl",
+            ivory ? "mt-1 whitespace-nowrap font-sans font-semibold tabular-nums text-hec-ink" : "studio-title tabular-nums",
+            first
+              ? ivory ? "text-hec-h1" : "text-2xl sm:text-3xl"
+              : ivory ? "text-hec-h2" : "text-xl sm:text-2xl",
           )}
-          style={{ color: tier.ink }}
+          style={ivory ? undefined : { color: tier.ink }}
         >
           {entry.total_points}
         </p>
-        <p className="mb-2 text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-ink-faint">
+        <p className={ivory ? "mb-2 text-hec-caption font-medium tabular-nums text-hec-ink-soft" : "mb-2 text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-ink-faint"}>
           points · level {level}
         </p>
         <div className="mx-auto w-3/4">
@@ -305,17 +359,20 @@ function PodiumPlace({
           here just looked like the card had failed to finish rendering. */}
       <div
         className={cn(
-          "grid w-[86%] place-items-center rounded-b-xl",
+          ivory ? "grid w-[86%] place-items-center rounded-b-hec-md border-x border-b border-hec-line" : "grid w-[86%] place-items-center rounded-b-xl",
           tier.plinth,
         )}
-        style={{
+        style={
+          ivory
+            ? { background: tier.tone }
+            : {
           background: tier.tone,
           boxShadow: "inset 0 2px 0 hsl(0 0% 100% / 0.35), inset 0 -6px 12px hsl(34 30% 30% / 0.14)",
         }}
       >
         <span
-          className="font-studio text-xl font-semibold leading-none sm:text-2xl"
-          style={{ color: tier.ink, opacity: 0.55 }}
+          className={ivory ? "font-sans text-hec-h2 font-semibold leading-none tabular-nums" : "font-studio text-xl font-semibold leading-none sm:text-2xl"}
+          style={ivory ? { color: tier.ink } : { color: tier.ink, opacity: 0.55 }}
           aria-hidden
         >
           {entry.rank}
@@ -356,25 +413,28 @@ function BoardRow({
   onToggleSelect: (e: React.MouseEvent) => void;
   classId: string;
 }) {
+  const ivory = useIvory();
   const { level, pct } = levelFromPoints(entry.total_points);
 
   return (
     <motion.div
-      layout
+      layout={!ivory}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.02, 0.25), duration: 0.22 }}
       onClick={onClick}
       className={cn(
-        "flex cursor-pointer items-center gap-3 rounded-2xl border border-studio bg-studio-card px-3 py-2.5 transition-all",
-        "hover:-translate-y-0.5 hover:shadow-studio",
-        isSelf && "ring-2 ring-[hsl(var(--studio-ink))]",
-        isSelected && !isSelf && "ring-2 ring-[hsl(var(--studio-sky-ink))]",
+        ivory
+          ? "flex min-h-hec-target cursor-pointer items-start gap-3 rounded-hec-md border border-hec-line bg-hec-surface px-3 py-3 transition-shadow duration-hec-1 ease-hec"
+          : "flex cursor-pointer items-center gap-3 rounded-2xl border border-studio bg-studio-card px-3 py-2.5 transition-all",
+        ivory ? "hover:shadow-hec-2" : "hover:-translate-y-0.5 hover:shadow-studio",
+        isSelf && (ivory ? "border-hec-brass ring-1 ring-hec-brass" : "ring-2 ring-[hsl(var(--studio-ink))]"),
+        isSelected && !isSelf && (ivory ? "border-hec-brass ring-1 ring-hec-brass" : "ring-2 ring-[hsl(var(--studio-sky-ink))]"),
       )}
     >
       {canManagePoints && (
         <div
-          className="shrink-0"
+          className={ivory ? "-m-3 grid min-h-hec-target min-w-hec-target shrink-0 cursor-pointer place-items-center self-center" : "shrink-0"}
           onClick={(e) => {
             e.stopPropagation();
             onToggleSelect(e);
@@ -383,24 +443,26 @@ function BoardRow({
           <Checkbox
             checked={isSelected}
             aria-label={`Select ${entry.students?.full_name ?? "student"}`}
-            className="h-5 w-5 rounded-md border-2 border-[hsl(var(--studio-ink)/0.3)] data-[state=checked]:border-[hsl(var(--studio-ink))] data-[state=checked]:bg-[hsl(var(--studio-ink))]"
+            className={ivory ? "h-5 w-5 rounded-hec-sm border-2 border-hec-line-strong data-[state=checked]:border-hec-action data-[state=checked]:bg-hec-action data-[state=checked]:text-hec-on-action" : "h-5 w-5 rounded-md border-2 border-[hsl(var(--studio-ink)/0.3)] data-[state=checked]:border-[hsl(var(--studio-ink))] data-[state=checked]:bg-[hsl(var(--studio-ink))]"}
           />
         </div>
       )}
 
-      <span className="w-7 shrink-0 text-center text-sm font-bold tabular-nums text-ink-faint">
+      <span className={ivory ? "w-8 shrink-0 self-center text-center text-hec-small font-semibold tabular-nums text-hec-ink-soft" : "w-7 shrink-0 text-center text-sm font-bold tabular-nums text-ink-faint"}>
         {entry.rank}
       </span>
 
-      <div className="relative shrink-0">
-        <Avatar48 entry={entry} ring="hsl(var(--studio-line))" className="h-10 w-10" />
+      <div className={ivory ? "relative shrink-0 self-center" : "relative shrink-0"}>
+        <Avatar48 entry={entry} ring={ivory ? "hsl(var(--hec-line))" : "hsl(var(--studio-line))"} className="h-10 w-10" />
         {movement && (
           <span
             className={cn(
-              "absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full text-[9px] font-black",
+              ivory
+                ? "absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full border text-hec-caption font-semibold leading-none"
+                : "absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full text-[9px] font-black",
               movement === "up"
-                ? "bg-[hsl(var(--studio-sage))] text-[hsl(var(--studio-sage-ink))]"
-                : "bg-[hsl(var(--studio-clay))] text-[hsl(var(--studio-clay-ink))]",
+                ? ivory ? "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf" : "bg-[hsl(var(--studio-sage))] text-[hsl(var(--studio-sage-ink))]"
+                : ivory ? "border-hec-line bg-hec-sunken text-hec-ink-soft" : "bg-[hsl(var(--studio-clay))] text-[hsl(var(--studio-clay-ink))]",
             )}
           >
             {movement === "up" ? "▲" : "▼"}
@@ -409,35 +471,35 @@ function BoardRow({
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <span className="truncate font-bold text-ink">{entry.students?.full_name}</span>
+        <div className={ivory ? "flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1" : "flex min-w-0 items-center gap-1.5"}>
+          <span className={ivory ? "min-w-0 whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink" : "truncate font-bold text-ink"}>{entry.students?.full_name}</span>
           {isMonitor && <MonitorStar size={10} />}
-          {isSelf && <span className="shrink-0 text-xs text-ink-faint">(you)</span>}
+          {isSelf && <span className={ivory ? "shrink-0 text-hec-caption text-hec-ink-soft" : "shrink-0 text-xs text-ink-faint"}>(you)</span>}
           {pendingCount > 0 && (
-            <span className="shrink-0 rounded-full bg-[hsl(var(--studio-butter))] px-1.5 py-0.5 text-[0.625rem] font-bold text-[hsl(var(--studio-butter-ink))]">
+            <span className={ivory ? "shrink-0 rounded-full border border-hec-warn/30 bg-hec-warn-tint px-2 text-hec-caption font-medium tabular-nums text-hec-warn" : "shrink-0 rounded-full bg-[hsl(var(--studio-butter))] px-1.5 py-0.5 text-[0.625rem] font-bold text-[hsl(var(--studio-butter-ink))]"}>
               {pendingCount} pending
             </span>
           )}
         </div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[0.6875rem] text-ink-soft">
+        <div className={ivory ? "mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-hec-caption tabular-nums text-hec-ink-soft" : "mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[0.6875rem] text-ink-soft"}>
           <span className="inline-flex items-center gap-1" title="Homework">
-            <BookOpen className="h-3 w-3" aria-hidden /> {entry.homework_points}
+            <BookOpen className={ivory ? "h-3.5 w-3.5" : "h-3 w-3"} aria-hidden /> {entry.homework_points}
           </span>
           <span className="inline-flex items-center gap-1" title="Participation">
-            <Zap className="h-3 w-3" aria-hidden /> {entry.participation_points}
+            <Zap className={ivory ? "h-3.5 w-3.5" : "h-3 w-3"} aria-hidden /> {entry.participation_points}
           </span>
           {entry.reading_theory_points > 0 && (
             <span className="inline-flex items-center gap-1" title="Reading">
-              <Flame className="h-3 w-3" aria-hidden /> {entry.reading_theory_points}
+              <Flame className={ivory ? "h-3.5 w-3.5" : "h-3 w-3"} aria-hidden /> {entry.reading_theory_points}
             </span>
           )}
           {(entry.vocabulary_quiz_points ?? 0) > 0 && (
             <span className="inline-flex items-center gap-1" title="Vocabulary">
-              <SpellCheck className="h-3 w-3" aria-hidden /> {entry.vocabulary_quiz_points}
+              <SpellCheck className={ivory ? "h-3.5 w-3.5" : "h-3 w-3"} aria-hidden /> {entry.vocabulary_quiz_points}
             </span>
           )}
           {isEconomyMode && (
-            <span className="inline-flex items-center gap-1 font-semibold text-[hsl(var(--studio-sage-ink))]">
+            <span className={ivory ? "inline-flex items-center gap-1 whitespace-nowrap font-semibold text-hec-ink" : "inline-flex items-center gap-1 font-semibold text-[hsl(var(--studio-sage-ink))]"}>
               ₫{cash}
             </span>
           )}
@@ -446,13 +508,13 @@ function BoardRow({
 
       {/* Level, in a fixed column. Letting the bar fill the row turned a
           small progress indicator into the widest thing on the board. */}
-      <div className="hidden w-24 shrink-0 sm:block">
-        <ProgressBead pct={pct} color="hsl(var(--studio-ink) / 0.26)" />
-        <p className="mt-1 text-right text-[0.625rem] text-ink-faint">Level {level}</p>
+      <div className={ivory ? "hidden w-24 shrink-0 self-center sm:block" : "hidden w-24 shrink-0 sm:block"}>
+        <ProgressBead pct={pct} color={ivory ? "hsl(var(--hec-brass))" : "hsl(var(--studio-ink) / 0.26)"} />
+        <p className={ivory ? "mt-1 text-right text-hec-caption tabular-nums text-hec-ink-soft" : "mt-1 text-right text-[0.625rem] text-ink-faint"}>Level {level}</p>
       </div>
 
-      <div className="shrink-0 text-right">
-        <span className="studio-title text-xl tabular-nums sm:text-2xl">
+      <div className={ivory ? "shrink-0 self-center text-right" : "shrink-0 text-right"}>
+        <span className={ivory ? "whitespace-nowrap font-sans text-hec-h2 font-semibold tabular-nums text-hec-ink" : "studio-title text-xl tabular-nums sm:text-2xl"}>
           {entry.total_points}
         </span>
         {isEconomyMode && canManagePoints && cash > 0 && (
@@ -485,6 +547,7 @@ export function PodiumBoard({
   onOpenAnalytics,
   monitorStudentId,
 }: PodiumBoardProps) {
+  const ivory = useIvory();
   const previousRanksRef = useRef<Map<string, number>>(new Map());
   const [movement, setMovement] = useState<Map<string, "up" | "down">>(new Map());
 
@@ -518,11 +581,11 @@ export function PodiumBoard({
 
   if (entries.length === 0) {
     return (
-      <div className="studio-stage m-3 grid min-h-[260px] place-items-center p-8 text-center sm:m-6">
+      <div className={ivory ? "m-4 grid min-h-[260px] place-items-center rounded-hec-md border border-dashed border-hec-line bg-hec-sunken/40 p-8 text-center sm:m-6" : "studio-stage m-3 grid min-h-[260px] place-items-center p-8 text-center sm:m-6"}>
         <div>
-          <Trophy className="mx-auto mb-3 h-10 w-10 text-ink-faint" aria-hidden />
-          <p className="studio-title text-xl">Nothing on the board yet</p>
-          <p className="mt-1 text-sm text-ink-soft">
+          <Trophy className={ivory ? "mx-auto mb-3 h-10 w-10 text-hec-ink-faint" : "mx-auto mb-3 h-10 w-10 text-ink-faint"} aria-hidden />
+          <p className={ivory ? "font-display text-hec-h2 font-medium text-hec-ink" : "studio-title text-xl"}>Nothing on the board yet</p>
+          <p className={ivory ? "mt-1 text-hec-small text-hec-ink-soft" : "mt-1 text-sm text-ink-soft"}>
             Points awarded this month will show up here.
           </p>
         </div>
@@ -531,11 +594,11 @@ export function PodiumBoard({
   }
 
   return (
-    <div className="px-3 pb-6 pt-2 sm:px-6">
+    <div className={ivory ? "px-4 pb-6 pt-2 sm:px-6" : "px-3 pb-6 pt-2 sm:px-6"}>
       {/* Podium — second, first, third, left to right. */}
       <div className="mb-6 flex items-end justify-center gap-2 sm:gap-4">
         {top3.map((entry) => (
-          <div key={entry.student_id} className={cn("min-w-0 flex-1", TIERS[entry.rank as 1 | 2 | 3]?.order)}>
+          <div key={entry.student_id} className={cn("min-w-0 flex-1", (ivory ? TIERS_IVORY : TIERS)[entry.rank as 1 | 2 | 3]?.order)}>
             <PodiumPlace
               entry={entry}
               movement={movement.get(entry.student_id)}
@@ -549,9 +612,9 @@ export function PodiumBoard({
 
       {rest.length > 0 && (
         <>
-          <div className="mb-2 flex items-baseline justify-between px-1">
-            <h3 className="studio-title text-base">Everyone else</h3>
-            <span className="text-xs text-ink-faint">
+          <div className={ivory ? "mb-2 flex items-baseline justify-between gap-2 px-1" : "mb-2 flex items-baseline justify-between px-1"}>
+            <h3 className={ivory ? "text-hec-h3 text-hec-ink" : "studio-title text-base"}>Everyone else</h3>
+            <span className={ivory ? "text-hec-caption tabular-nums text-hec-ink-soft" : "text-xs text-ink-faint"}>
               {rest.length} {rest.length === 1 ? "student" : "students"}
             </span>
           </div>
@@ -594,33 +657,38 @@ export function PodiumBoard({
 }
 
 function SelfCard({ entry, onClick }: { entry: BoardEntry; onClick: () => void }) {
+  const ivory = useIvory();
   const { level, pct, toNext } = levelFromPoints(entry.total_points);
   return (
     <motion.button
       type="button"
       onClick={onClick}
-      initial={{ y: 40, opacity: 0 }}
+      initial={ivory ? { y: 8, opacity: 0 } : { y: 40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 210, damping: 24, delay: 0.35 }}
-      className="studio-focus sticky bottom-3 z-20 mt-4 flex w-full items-center gap-3 rounded-2xl bg-[hsl(var(--studio-ink))] px-3 py-2.5 text-left shadow-studio-lg"
+      transition={ivory ? { duration: 0.24, ease: [0.22, 1, 0.36, 1], delay: 0.2 } : { type: "spring", stiffness: 210, damping: 24, delay: 0.35 }}
+      className={
+        ivory
+          ? cn("sticky bottom-3 z-20 mt-4 flex min-h-hec-target w-full items-center gap-3 rounded-hec-lg border border-hec-brass/40 bg-hec-raised px-4 py-3 text-left shadow-hec-2", FOCUS)
+          : "studio-focus sticky bottom-3 z-20 mt-4 flex w-full items-center gap-3 rounded-2xl bg-[hsl(var(--studio-ink))] px-3 py-2.5 text-left shadow-studio-lg"
+      }
     >
-      <Avatar48 entry={entry} ring="hsl(var(--studio-butter))" className="h-10 w-10 shrink-0" />
+      <Avatar48 entry={entry} ring={ivory ? "hsl(var(--hec-brass))" : "hsl(var(--studio-butter))"} className="h-10 w-10 shrink-0" />
       <div className="min-w-0 flex-1">
-        <p className="text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[hsl(var(--studio-butter))]">
+        <p className={ivory ? "text-hec-caption font-semibold uppercase tracking-wider text-hec-brass" : "text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[hsl(var(--studio-butter))]"}>
           You · {entry.rank}
           {entry.rank === 1 ? "st" : entry.rank === 2 ? "nd" : entry.rank === 3 ? "rd" : "th"}
         </p>
-        <p className="truncate text-xs text-[hsl(var(--studio-card)/0.75)]">
+        <p className={ivory ? "text-hec-small tabular-nums text-hec-ink-soft" : "truncate text-xs text-[hsl(var(--studio-card)/0.75)]"}>
           Level {level} · {toNext} to the next one
         </p>
-        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[hsl(var(--studio-card)/0.18)]">
+        <div className={ivory ? "mt-1 h-2 w-full overflow-hidden rounded-full bg-hec-sunken" : "mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[hsl(var(--studio-card)/0.18)]"}>
           <div
-            className="h-full rounded-full bg-[hsl(var(--studio-butter))]"
+            className={ivory ? "h-full rounded-full bg-hec-brass" : "h-full rounded-full bg-[hsl(var(--studio-butter))]"}
             style={{ width: `${pct}%` }}
           />
         </div>
       </div>
-      <span className="shrink-0 font-studio text-xl font-semibold tabular-nums text-[hsl(var(--studio-card))]">
+      <span className={ivory ? "shrink-0 whitespace-nowrap font-sans text-hec-h2 font-semibold tabular-nums text-hec-ink" : "shrink-0 font-studio text-xl font-semibold tabular-nums text-[hsl(var(--studio-card))]"}>
         {entry.total_points}
       </span>
     </motion.button>

@@ -229,7 +229,7 @@ export default function TeacherVocabularyAudit() {
     return (
       <Layout title="Vocabulary Audit">
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-hec-ink-soft" />
         </div>
       </Layout>
     );
@@ -239,8 +239,8 @@ export default function TeacherVocabularyAudit() {
     return (
       <Layout title="Vocabulary Audit">
         <div className="text-center py-20 space-y-3">
-          <h2 className="text-xl font-bold">Teachers only</h2>
-          <p className="text-muted-foreground">This page is reserved for class teachers.</p>
+          <h2 className="font-display text-hec-h2 font-medium text-hec-ink">Teachers only</h2>
+          <p className="text-hec-body text-hec-ink-soft">This page is reserved for class teachers.</p>
         </div>
       </Layout>
     );
@@ -251,20 +251,20 @@ export default function TeacherVocabularyAudit() {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-500/10 flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-blue-600" />
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="h-12 w-12 shrink-0 rounded-hec-lg bg-hec-sunken flex items-center justify-center">
+              <GraduationCap className="w-6 h-6 text-hec-ink-soft" />
             </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Vocabulary Audit</h1>
-              <p className="text-muted-foreground text-sm">Monthly view of your students' vocab activity.</p>
+            <div className="min-w-0">
+              <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Vocabulary Audit</h1>
+              <p className="text-hec-small text-hec-ink-soft">Monthly view of your students' vocab activity.</p>
             </div>
           </div>
 
           {/* Class + month picker */}
           <div className="flex items-center gap-2 flex-wrap">
             <Select value={selectedClass} onValueChange={setSelectedClass}>
-              <SelectTrigger className="w-[180px] h-10 rounded-xl">
+              <SelectTrigger className="w-full sm:w-[220px]" aria-label="Class">
                 <SelectValue placeholder={loadingClasses ? "Loading…" : "Select class"} />
               </SelectTrigger>
               <SelectContent>
@@ -274,23 +274,22 @@ export default function TeacherVocabularyAudit() {
               </SelectContent>
             </Select>
 
-            <div className="flex items-center gap-1 bg-white dark:bg-slate-800 border rounded-xl px-1 h-10">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setMonth((m) => shiftMonth(m, -1))} aria-label="Previous month">
-                <ChevronLeft className="w-4 h-4" />
+            <div className="flex items-center gap-1 rounded-hec-md border border-hec-line-strong bg-hec-raised px-1">
+              <Button variant="ghost" size="icon" onClick={() => setMonth((m) => shiftMonth(m, -1))} aria-label="Previous month">
+                <ChevronLeft className="w-5 h-5" />
               </Button>
-              <div className="flex items-center gap-1 px-2 text-sm font-medium">
-                <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+              <div className="flex items-center gap-2 px-2 text-hec-body font-medium text-hec-ink tabular-nums">
+                <Calendar className="w-4 h-4 text-hec-ink-soft" />
                 {month}
               </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
                 onClick={() => setMonth((m) => shiftMonth(m, 1))}
                 disabled={month >= currentYyyyMm()}
                 aria-label="Next month"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-5 h-5" />
               </Button>
             </div>
           </div>
@@ -298,9 +297,9 @@ export default function TeacherVocabularyAudit() {
 
         {/* No classes */}
         {!loadingClasses && classes.length === 0 && (
-          <div className="text-center py-20 space-y-2">
-            <h3 className="text-lg font-bold">No classes assigned</h3>
-            <p className="text-muted-foreground">You don't have any classes set up as their primary teacher yet.</p>
+          <div className="text-center py-16 space-y-2">
+            <h3 className="font-display text-hec-h2 font-medium text-hec-ink">No classes assigned</h3>
+            <p className="text-hec-body text-hec-ink-soft">You don't have any classes set up as their primary teacher yet.</p>
           </div>
         )}
 
@@ -308,13 +307,13 @@ export default function TeacherVocabularyAudit() {
         {classes.length > 0 && (
           <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "macro" | "micro")}>
             <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-              <TabsTrigger value="macro" className="gap-1.5"><Users className="w-4 h-4" /> Whole Class</TabsTrigger>
-              <TabsTrigger value="micro" className="gap-1.5"><User className="w-4 h-4" /> Individual Student</TabsTrigger>
+              <TabsTrigger value="macro" className="gap-2"><Users className="w-4 h-4" /> Whole Class</TabsTrigger>
+              <TabsTrigger value="micro" className="gap-2"><User className="w-4 h-4" /> Individual Student</TabsTrigger>
             </TabsList>
 
             <TabsContent value="macro" className="mt-6">
               {loadingData ? (
-                <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
+                <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-hec-ink-soft" /></div>
               ) : (
                 <MacroView stats={macroStats} members={members} />
               )}
@@ -323,7 +322,7 @@ export default function TeacherVocabularyAudit() {
             <TabsContent value="micro" className="mt-6">
               <div className="space-y-4">
                 <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-                  <SelectTrigger className="w-full sm:w-[280px] h-10 rounded-xl">
+                  <SelectTrigger className="w-full sm:w-[280px]" aria-label="Student">
                     <SelectValue placeholder="Select a student" />
                   </SelectTrigger>
                   <SelectContent>
@@ -333,7 +332,7 @@ export default function TeacherVocabularyAudit() {
                   </SelectContent>
                 </Select>
                 {loadingData ? (
-                  <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
+                  <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-hec-ink-soft" /></div>
                 ) : (
                   <MicroView entries={microData.entries} activity={microData.activity} />
                 )}
@@ -376,28 +375,25 @@ function MacroView({
 
       <Card>
         <CardContent className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold">Monthly Leaderboard</h3>
-            <Badge variant="outline">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-hec-h3 font-semibold text-hec-ink">Monthly Leaderboard</h3>
+            <Badge variant="outline" className="tabular-nums">
               Accuracy {stats.accuracy.toFixed(0)}%
             </Badge>
           </div>
           {stats.leaderboard.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-4">No activity for this month yet.</p>
+            <p className="text-hec-small text-hec-ink-soft py-4">No activity for this month yet.</p>
           ) : (
-            <div className="space-y-1.5">
+            <div>
               {stats.leaderboard.map((row, i) => (
-                <div key={row.studentId} className="flex items-center gap-3 py-2 border-b last:border-b-0">
+                <div key={row.studentId} className="flex flex-wrap items-start gap-x-3 gap-y-1 py-3 border-b border-hec-line last:border-b-0">
                   <span className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
-                    i === 0 ? "bg-amber-100 text-amber-700"
-                      : i === 1 ? "bg-slate-200 text-slate-700"
-                      : i === 2 ? "bg-orange-100 text-orange-700"
-                      : "bg-slate-50 text-slate-500",
+                    "mt-1 w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-hec-caption font-semibold tabular-nums",
+                    i < 3 ? "border border-hec-brass/40 text-hec-brass" : "bg-hec-sunken text-hec-ink-soft",
                   )}>{i + 1}</span>
-                  <span className="flex-1 font-medium">{memberName(row.studentId)}</span>
-                  <span className="text-xs text-muted-foreground">{row.saves} saves · {row.correct}/{row.correct + row.incorrect} correct</span>
-                  <Badge className="bg-blue-600 hover:bg-blue-600 text-white">+{row.points} pts</Badge>
+                  <span className="min-w-0 flex-1 basis-40 whitespace-normal break-words font-medium text-hec-body text-hec-ink">{memberName(row.studentId)}</span>
+                  <span className="mt-1 text-hec-small text-hec-ink-soft tabular-nums">{row.saves} saves · {row.correct}/{row.correct + row.incorrect} correct</span>
+                  <Badge className="shrink-0 border-hec-brass/40 bg-transparent text-hec-brass tabular-nums whitespace-nowrap">+{row.points} pts</Badge>
                 </div>
               ))}
             </div>
@@ -416,19 +412,20 @@ function StatCard({
   value: number;
   accent: "violet" | "emerald" | "rose" | "amber";
 }) {
+  // Words carry the meaning; colour only repeats it: correct = leaf, incorrect = warn (a thing to look at), points = brass (reward).
   const colors: Record<string, string> = {
-    violet: "bg-blue-50 text-blue-700 dark:bg-blue-950/30",
-    emerald: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30",
-    rose: "bg-rose-50 text-rose-700 dark:bg-rose-950/30",
-    amber: "bg-amber-50 text-amber-700 dark:bg-amber-950/30",
+    violet: "text-hec-ink-soft",
+    emerald: "bg-hec-leaf-tint text-hec-leaf",
+    rose: "bg-hec-warn-tint text-hec-warn",
+    amber: "text-hec-brass",
   };
   return (
     <Card>
-      <CardContent className={cn("p-4 rounded-lg", colors[accent])}>
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
+      <CardContent className={cn("h-full p-4 rounded-hec-lg", colors[accent])}>
+        <div className="flex items-center gap-2 text-hec-caption font-medium uppercase tracking-wider">
           {icon}{label}
         </div>
-        <p className="text-3xl font-black mt-1">{value}</p>
+        <p className="mt-1 font-sans text-hec-h1 font-semibold tabular-nums text-hec-ink">{value}</p>
       </CardContent>
     </Card>
   );
@@ -458,35 +455,35 @@ function MicroView({
 
       <Card>
         <CardContent className="p-4 space-y-3">
-          <h3 className="font-bold">Words Saved This Month</h3>
+          <h3 className="text-hec-h3 font-semibold text-hec-ink">Words Saved This Month</h3>
           {entries.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-4">No words saved this month.</p>
+            <p className="text-hec-small text-hec-ink-soft py-4">No words saved this month.</p>
           ) : (
             <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
               {entries.map((e) => (
-                <div key={e.id} className="rounded-lg border p-3 flex gap-3">
+                <div key={e.id} className="rounded-hec-md border border-hec-line p-3 flex gap-3">
                   {e.image_url && (
                     <img
                       src={e.image_url}
                       alt=""
                       width={56}
                       height={56}
-                      className="w-14 h-14 rounded-md object-cover shrink-0"
+                      className="w-14 h-14 rounded-hec-sm object-cover shrink-0"
                       loading="lazy"
                       decoding="async"
                     />
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold capitalize">{e.word}</h4>
-                      {e.cefr && <Badge variant="outline" className="text-[10px]">CEFR {e.cefr}</Badge>}
-                      <span className="text-[10px] text-muted-foreground ml-auto">{new Date(e.created_at).toLocaleDateString()}</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-hec-body font-semibold text-hec-ink capitalize">{e.word}</h4>
+                      {e.cefr && <Badge variant="outline">CEFR {e.cefr}</Badge>}
+                      <span className="text-hec-caption text-hec-ink-soft ml-auto tabular-nums">{new Date(e.created_at).toLocaleDateString()}</span>
                     </div>
-                    {e.definition_vi && <p className="text-xs text-muted-foreground mt-0.5">🇻🇳 {e.definition_vi}</p>}
+                    {e.definition_vi && <p className="text-hec-small text-hec-ink-soft mt-1">🇻🇳 {e.definition_vi}</p>}
                     {Array.isArray(e.user_examples) && e.user_examples.length > 0 && (
-                      <ul className="mt-1.5 space-y-0.5 text-xs">
+                      <ul className="mt-2 space-y-1 text-hec-small">
                         {e.user_examples.map((ex, i) => (
-                          <li key={i} className="text-foreground italic">"{ex}"</li>
+                          <li key={i} className="text-hec-ink italic">"{ex}"</li>
                         ))}
                       </ul>
                     )}

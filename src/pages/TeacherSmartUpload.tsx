@@ -65,17 +65,18 @@ function AssignStudentCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="h-8 w-full justify-between text-xs font-normal"
+          aria-label={selected ? `Assigned student: ${selected.full_name}` : "Assign student"}
+          className="h-auto w-full justify-between py-2 font-normal"
         >
-          <span className={cn("truncate", !selected && "text-muted-foreground")}>
+          <span className={cn("min-w-0 flex-1 whitespace-normal break-words text-left", selected ? "text-hec-ink" : "text-hec-ink-faint")}>
             {selected ? selected.full_name : "Assign student…"}
           </span>
-          <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+          <ChevronsUpDown className="h-4 w-4 shrink-0 text-hec-ink-soft" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" aria-label="Choose the student">
         <Command>
-          <CommandInput placeholder="Search students…" className="h-9" />
+          <CommandInput placeholder="Search students…" className="h-11 text-hec-body" />
           <CommandList>
             <CommandEmpty>
               {students.length === 0 ? "Loading roster…" : "No student found."}
@@ -86,8 +87,9 @@ function AssignStudentCombobox({
                   key={s.id}
                   value={s.full_name}
                   onSelect={() => { onChange(s.id); setOpen(false); }}
+                  className="min-h-hec-target text-hec-body"
                 >
-                  <Check className={cn("mr-2 h-3.5 w-3.5", value === s.id ? "opacity-100" : "opacity-0")} />
+                  <Check className={cn("mr-2 h-4 w-4 shrink-0", value === s.id ? "opacity-100" : "opacity-0")} />
                   {s.full_name}
                 </CommandItem>
               ))}
@@ -114,23 +116,23 @@ function TeamPicker({
   const label =
     value.length === 0 ? "Pick team members…" : `${value.length} student${value.length === 1 ? "" : "s"} selected`;
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" role="combobox" disabled={disabled} className="w-full justify-between font-normal">
-            <span className={cn(value.length === 0 && "text-muted-foreground")}>{label}</span>
-            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+          <Button variant="outline" role="combobox" disabled={disabled} aria-label={`Team members: ${label}`} className="w-full justify-between font-normal">
+            <span className={cn("min-w-0 whitespace-normal text-left", value.length === 0 ? "text-hec-ink-faint" : "text-hec-ink")}>{label}</span>
+            <ChevronsUpDown className="h-4 w-4 shrink-0 text-hec-ink-soft" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" aria-label="Choose the team members">
           <Command>
-            <CommandInput placeholder="Search students…" className="h-9" />
+            <CommandInput placeholder="Search students…" className="h-11 text-hec-body" />
             <CommandList>
               <CommandEmpty>{students.length === 0 ? "Select a class first" : "No student found."}</CommandEmpty>
               <CommandGroup>
                 {students.map((s) => (
-                  <CommandItem key={s.id} value={s.full_name} onSelect={() => toggle(s.id)}>
-                    <Check className={cn("mr-2 h-3.5 w-3.5", value.includes(s.id) ? "opacity-100" : "opacity-0")} />
+                  <CommandItem key={s.id} value={s.full_name} onSelect={() => toggle(s.id)} className="min-h-hec-target text-hec-body">
+                    <Check className={cn("mr-2 h-4 w-4 shrink-0", value.includes(s.id) ? "opacity-100" : "opacity-0")} />
                     {s.full_name}
                   </CommandItem>
                 ))}
@@ -140,14 +142,19 @@ function TeamPicker({
         </PopoverContent>
       </Popover>
       {value.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-2">
           {value.map((id) => {
             const s = students.find((x) => x.id === id);
             return (
-              <Badge key={id} variant="secondary" className="gap-1 font-normal">
+              <Badge key={id} variant="secondary" className="gap-1 whitespace-normal py-0 pr-0 font-normal text-hec-ink">
                 {s?.full_name || "…"}
-                <button type="button" onClick={() => toggle(id)} className="hover:text-destructive">
-                  <XCircle className="h-3 w-3" />
+                <button
+                  type="button"
+                  onClick={() => toggle(id)}
+                  aria-label={`Remove ${s?.full_name || "student"}`}
+                  className="inline-flex min-h-hec-target min-w-hec-target shrink-0 items-center justify-center rounded-full text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:text-hec-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
+                >
+                  <XCircle className="h-4 w-4" />
                 </button>
               </Badge>
             );
@@ -567,12 +574,12 @@ export default function TeacherSmartUpload() {
     <Layout title="Smart Upload">
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-md">
-            <ScanText className="h-6 w-6 text-white" />
+          <div className="h-11 w-11 shrink-0 rounded-hec-lg bg-hec-sunken flex items-center justify-center">
+            <ScanText className="h-6 w-6 text-hec-ink-soft" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Smart Upload</h1>
-            <p className="text-sm text-muted-foreground">
+          <div className="min-w-0">
+            <h1 className="font-display text-hec-h1 font-medium text-hec-ink">Smart Upload</h1>
+            <p className="text-hec-small text-hec-ink-soft">
               Photograph student work — Cloud Vision reads it, routes it, and indexes it for reports.
             </p>
           </div>
@@ -580,15 +587,15 @@ export default function TeacherSmartUpload() {
 
         {/* Context pickers */}
         <Card>
-          <CardContent className="pt-6 flex flex-col md:flex-row gap-3">
-            <div className="flex-1">
-              <p className="text-xs font-semibold text-muted-foreground mb-1.5">Class</p>
+          <CardContent className="pt-6 flex flex-col md:flex-row gap-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-hec-small font-medium text-hec-ink mb-2">Class</p>
               <Select
                 value={classId}
                 onValueChange={(v) => { setClassId(v); setStudentId(""); }}
                 disabled={classesLoading || classes.length === 0}
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label="Class">
                   <SelectValue
                     placeholder={classesLoading ? "Loading your classes" : "Select class"}
                   />
@@ -602,25 +609,25 @@ export default function TeacherSmartUpload() {
                   is scoped it can legitimately be empty, and an unexplained
                   dead dropdown reads as a broken page. */}
               {!classesLoading && classes.length === 0 && (
-                <p className="text-[11px] text-muted-foreground mt-1.5">
+                <p className="text-hec-caption text-hec-ink-soft mt-2">
                   You are not assigned to any classes at the moment, so there is nothing to
                   upload against. Ask an admin to put you on a class.
                 </p>
               )}
             </div>
-            <div className="flex-1">
-              <p className="text-xs font-semibold text-muted-foreground mb-1.5">
-                Student <span className="font-normal">(required for vocab scans)</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-hec-small font-medium text-hec-ink mb-2">
+                Student <span className="font-normal text-hec-ink-soft">(required for vocab scans)</span>
               </p>
               <Select value={studentId} onValueChange={setStudentId} disabled={!classId}>
-                <SelectTrigger><SelectValue placeholder="Auto-detect from the page" /></SelectTrigger>
+                <SelectTrigger aria-label="Student"><SelectValue placeholder="Auto-detect from the page" /></SelectTrigger>
                 <SelectContent>
                   {students.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
-                      <span className="flex items-center gap-2">
+                      <span className="flex flex-wrap items-center gap-x-2">
                         {s.full_name}
                         {!s.linked_user_id && (
-                          <span className="text-[10px] text-muted-foreground">no app login yet</span>
+                          <span className="text-hec-caption text-hec-ink-soft">no app login yet</span>
                         )}
                       </span>
                     </SelectItem>
@@ -628,7 +635,7 @@ export default function TeacherSmartUpload() {
                 </SelectContent>
               </Select>
               {studentId && !students.find((s) => s.id === studentId)?.linked_user_id && (
-                <p className="text-[11px] text-muted-foreground mt-1.5">
+                <p className="text-hec-caption text-hec-ink-soft mt-2">
                   This student has no app account yet — scans are still saved to their name and
                   will appear in their word bank as soon as an account is linked.
                 </p>
@@ -639,41 +646,43 @@ export default function TeacherSmartUpload() {
 
         <Tabs defaultValue="general">
           <TabsList className="grid grid-cols-2 w-full md:w-96">
-            <TabsTrigger value="general" className="gap-1.5">
+            <TabsTrigger value="general" className="gap-2">
               <ScanText className="h-4 w-4" />Student Work
             </TabsTrigger>
-            <TabsTrigger value="vocab" className="gap-1.5">
+            <TabsTrigger value="vocab" className="gap-2">
               <BookMarked className="h-4 w-4" />Vocab Scan
             </TabsTrigger>
           </TabsList>
 
           {/* ── Student Work: individual (OCR auto-routes) or team ───────── */}
-          <TabsContent value="general" className="space-y-3">
+          <TabsContent value="general" className="space-y-4">
             {/* Individual / Team mode */}
-            <div className="mt-2 inline-flex rounded-xl bg-muted/60 p-1">
+            <div className="mt-2 inline-flex rounded-hec-md bg-hec-sunken p-1">
               <button
                 onClick={() => setWorkMode("individual")}
+                aria-pressed={workMode === "individual"}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
-                  workMode === "individual" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground",
+                  "flex min-h-hec-target items-center gap-2 rounded-hec-sm px-4 text-hec-small font-medium transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+                  workMode === "individual" ? "bg-hec-raised text-hec-ink shadow-hec-1" : "text-hec-ink-soft hover:text-hec-ink",
                 )}
               >
-                <User className="h-3.5 w-3.5" />Individual
+                <User className="h-4 w-4" />Individual
               </button>
               <button
                 onClick={() => setWorkMode("team")}
+                aria-pressed={workMode === "team"}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
-                  workMode === "team" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground",
+                  "flex min-h-hec-target items-center gap-2 rounded-hec-sm px-4 text-hec-small font-medium transition-colors duration-hec-1 ease-hec focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring",
+                  workMode === "team" ? "bg-hec-raised text-hec-ink shadow-hec-1" : "text-hec-ink-soft hover:text-hec-ink",
                 )}
               >
-                <Users className="h-3.5 w-3.5" />Team
+                <Users className="h-4 w-4" />Team
               </button>
             </div>
 
             {workMode === "team" && (
               <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-1.5">Team members (2 or more)</p>
+                <p className="text-hec-small font-medium text-hec-ink mb-2">Team members (2 or more)</p>
                 <TeamPicker students={students} value={teamIds} onChange={setTeamIds} disabled={!classId} />
               </div>
             )}
@@ -689,8 +698,8 @@ export default function TeacherSmartUpload() {
               return (
                 <label
                   className={cn(
-                    "flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-3xl p-10 transition-colors",
-                    isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-violet-400 hover:bg-violet-500/5",
+                    "flex flex-col items-center justify-center gap-3 rounded-hec-lg border border-dashed border-hec-line-strong bg-hec-surface p-8 transition-colors duration-hec-1 ease-hec sm:p-12",
+                    isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-hec-brass hover:bg-hec-sunken",
                   )}
                   onClick={(e) => {
                     if (isDisabled) { e.preventDefault(); toast.error(disabledReason!); }
@@ -710,19 +719,19 @@ export default function TeacherSmartUpload() {
                       e.target.value = "";
                     }}
                   />
-                  <UploadCloud className={cn("h-10 w-10", isDisabled ? "text-muted-foreground" : "text-violet-500")} />
+                  <UploadCloud className={cn("h-10 w-10", isDisabled ? "text-hec-ink-faint" : "text-hec-brass")} />
                   <div className="text-center">
-                    <p className="font-semibold">
+                    <p className="text-hec-body font-semibold text-hec-ink">
                       {isTeam ? "Upload the team's work" : "Upload photos of student work"}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-hec-small text-hec-ink-soft mt-1">
                       {isTeam
                         ? "The photo is attributed to every selected member and appears on each of their profiles once approved."
                         : "The student's name is detected on the page and the file is routed to their folder for your approval."}
                     </p>
                     {disabledReason && (
-                      <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mt-2 flex items-center justify-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />{disabledReason}
+                      <p className="text-hec-small font-medium text-hec-warn mt-2 flex items-center justify-center gap-1">
+                        <AlertTriangle className="h-4 w-4 shrink-0" />{disabledReason}
                       </p>
                     )}
                   </div>
@@ -731,12 +740,12 @@ export default function TeacherSmartUpload() {
             })()}
 
             {/* Or add a link */}
-            <div className="rounded-2xl border p-3 space-y-2">
-              <p className="text-xs font-semibold flex items-center gap-1.5">
-                <Link2 className="h-3.5 w-3.5 text-violet-500" />
+            <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 space-y-2">
+              <p className="text-hec-small font-semibold text-hec-ink flex items-center gap-2">
+                <Link2 className="h-4 w-4 shrink-0 text-hec-ink-soft" />
                 …or add a link {workMode === "team" ? "(the team's)" : "(a student's)"} work
               </p>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-hec-caption text-hec-ink-soft">
                 Google Doc/Slides, Canva, a shared photo — anything with a URL.
                 {workMode === "individual" && " Assign the student below or in the review queue."}
               </p>
@@ -754,7 +763,7 @@ export default function TeacherSmartUpload() {
                   className="flex-1"
                 />
                 <Button
-                  className="gap-1.5"
+                  className="w-full gap-2 sm:w-auto"
                   disabled={submitLinkMutation.isPending || !classId || !linkUrl.trim()}
                   onClick={() => submitLinkMutation.mutate()}
                 >
@@ -777,8 +786,8 @@ export default function TeacherSmartUpload() {
               return (
                 <label
                   className={cn(
-                    "mt-2 flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-3xl p-10 transition-colors",
-                    isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-violet-400 hover:bg-violet-500/5",
+                    "mt-2 flex flex-col items-center justify-center gap-3 rounded-hec-lg border border-dashed border-hec-line-strong bg-hec-surface p-8 transition-colors duration-hec-1 ease-hec sm:p-12",
+                    isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-hec-brass hover:bg-hec-sunken",
                   )}
                   onClick={(e) => {
                     if (isDisabled) { e.preventDefault(); toast.error(disabledReason!); }
@@ -796,15 +805,15 @@ export default function TeacherSmartUpload() {
                       e.target.value = "";
                     }}
                   />
-                  <UploadCloud className={cn("h-10 w-10", isDisabled ? "text-muted-foreground" : "text-violet-500")} />
+                  <UploadCloud className={cn("h-10 w-10", isDisabled ? "text-hec-ink-faint" : "text-hec-brass")} />
                   <div className="text-center">
-                    <p className="font-semibold">Upload handwritten vocabulary pages</p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-hec-body font-semibold text-hec-ink">Upload handwritten vocabulary pages</p>
+                    <p className="text-hec-small text-hec-ink-soft mt-1">
                       Words, meanings &amp; example sentences are extracted, validated, illustrated and saved — points awarded automatically.
                     </p>
                     {disabledReason && (
-                      <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mt-2 flex items-center justify-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />{disabledReason}
+                      <p className="text-hec-small font-medium text-hec-warn mt-2 flex items-center justify-center gap-1">
+                        <AlertTriangle className="h-4 w-4 shrink-0" />{disabledReason}
                       </p>
                     )}
                   </div>
@@ -820,22 +829,22 @@ export default function TeacherSmartUpload() {
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-violet-500" />Pipeline activity
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 shrink-0 text-hec-ink-soft" />Pipeline activity
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {activeJobs.map((j, i) => (
-                    <div key={`${j.fileName}-${i}`} className="flex items-center gap-3 text-sm">
+                    <div key={`${j.fileName}-${i}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-hec-small">
                       {j.status === "done" ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <CheckCircle2 className="h-4 w-4 text-hec-leaf shrink-0" />
                       ) : j.status === "failed" ? (
-                        <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+                        <XCircle className="h-4 w-4 text-hec-danger shrink-0" />
                       ) : (
-                        <Loader2 className="h-4 w-4 animate-spin text-violet-500 shrink-0" />
+                        <Loader2 className="h-4 w-4 animate-spin text-hec-ink-soft shrink-0" />
                       )}
-                      <span className="font-medium truncate max-w-[180px]">{j.fileName}</span>
-                      <span className="text-muted-foreground text-xs truncate">{j.message}</span>
+                      <span className="font-medium text-hec-ink truncate max-w-[180px]">{j.fileName}</span>
+                      <span className="min-w-0 break-words text-hec-ink-soft">{j.message}</span>
                     </div>
                   ))}
                   {/* A clear, itemised word list for each vocab scan, with a
@@ -849,14 +858,14 @@ export default function TeacherSmartUpload() {
                       rejected: words.filter((w) => w.status === "rejected").length,
                     };
                     return (
-                      <div key={`words-${i}`} className="rounded-xl border border-border/60 bg-muted/20 p-3 mt-1">
+                      <div key={`words-${i}`} className="rounded-hec-md border border-hec-line bg-hec-sunken p-3 mt-2">
                         <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
-                          <div className="flex items-center gap-2 text-xs">
-                            <BookMarked className="h-3.5 w-3.5 text-violet-500" />
-                            <span className="font-semibold">{words.length} word{words.length === 1 ? "" : "s"} from “{j.fileName}”</span>
+                          <div className="flex min-w-0 flex-wrap items-center gap-2 text-hec-small">
+                            <BookMarked className="h-4 w-4 shrink-0 text-hec-ink-soft" />
+                            <span className="min-w-0 break-words font-semibold text-hec-ink">{words.length} word{words.length === 1 ? "" : "s"} from “{j.fileName}”</span>
                             {typeof j.vocabResult.points_awarded === "number" && j.vocabResult.points_awarded > 0 && (
-                              <span className="flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-medium">
-                                <Coins className="h-3 w-3" />+{j.vocabResult.points_awarded}
+                              <span className="flex items-center gap-1 text-hec-brass font-medium tabular-nums">
+                                <Coins className="h-4 w-4" />+{j.vocabResult.points_awarded}
                               </span>
                             )}
                           </div>
@@ -864,7 +873,7 @@ export default function TeacherSmartUpload() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-7 gap-1.5 text-xs"
+                              className="gap-2"
                               disabled={j.rescanning}
                               onClick={() => rescanVocab(j)}
                             >
@@ -876,47 +885,47 @@ export default function TeacherSmartUpload() {
                           )}
                         </div>
 
-                        <div className="flex flex-wrap gap-1.5 mb-2 text-[11px]">
-                          {counts.added > 0 && <span className="text-emerald-600 dark:text-emerald-400">{counts.added} added</span>}
-                          {counts.corrected > 0 && <span className="text-amber-600 dark:text-amber-400">{counts.corrected} corrected</span>}
-                          {counts.duplicate > 0 && <span className="text-muted-foreground">{counts.duplicate} already known</span>}
-                          {counts.rejected > 0 && <span className="text-red-500">{counts.rejected} skipped</span>}
+                        <div className="flex flex-wrap gap-3 mb-2 text-hec-caption tabular-nums">
+                          {counts.added > 0 && <span className="text-hec-leaf">{counts.added} added</span>}
+                          {counts.corrected > 0 && <span className="text-hec-warn">{counts.corrected} corrected</span>}
+                          {counts.duplicate > 0 && <span className="text-hec-ink-soft">{counts.duplicate} already known</span>}
+                          {counts.rejected > 0 && <span className="text-hec-danger">{counts.rejected} skipped</span>}
                         </div>
 
                         {words.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-hec-small text-hec-ink-soft">
                             No vocabulary was read from this page. Try a clearer, well-lit photo and Rescan.
                           </p>
                         ) : (
-                          <ul className="space-y-1.5">
+                          <ul className="space-y-2">
                             {words.map((w: any, k: number) => (
-                              <li key={k} className="flex items-start gap-2 text-xs">
+                              <li key={k} className="flex items-start gap-2 text-hec-small">
                                 <span
                                   className={cn(
-                                    "mt-1 h-1.5 w-1.5 rounded-full shrink-0",
-                                    w.status === "added" ? "bg-emerald-500"
-                                    : w.status === "corrected" ? "bg-amber-500"
-                                    : w.status === "duplicate" ? "bg-muted-foreground/40"
-                                    : "bg-red-500",
+                                    "mt-2 h-2 w-2 rounded-full shrink-0",
+                                    w.status === "added" ? "bg-hec-leaf"
+                                    : w.status === "corrected" ? "bg-hec-warn"
+                                    : w.status === "duplicate" ? "bg-hec-line-strong"
+                                    : "bg-hec-danger",
                                   )}
                                 />
                                 <div className="min-w-0">
                                   <span className={cn(
-                                    "font-semibold",
-                                    w.status === "duplicate" && "text-muted-foreground",
-                                    w.status === "rejected" && "text-red-500 line-through",
+                                    "font-semibold text-hec-ink",
+                                    w.status === "duplicate" && "text-hec-ink-soft",
+                                    w.status === "rejected" && "text-hec-danger line-through",
                                   )}>
                                     {w.word}
                                   </span>
-                                  {w.meaning && <span className="text-muted-foreground"> — {w.meaning}</span>}
-                                  {w.images?.length > 0 && <ImageIcon className="inline h-3 w-3 ml-1 text-pink-500" />}
+                                  {w.meaning && <span className="text-hec-ink-soft"> — {w.meaning}</span>}
+                                  {w.images?.length > 0 && <ImageIcon className="inline h-4 w-4 ml-1 text-hec-ink-soft" />}
                                   {w.status === "corrected" && w.corrected_example && (
-                                    <span className="block text-[11px] text-amber-600 dark:text-amber-400">
+                                    <span className="block text-hec-caption text-hec-warn">
                                       ✎ {w.corrected_example}
                                     </span>
                                   )}
                                   {w.status === "rejected" && w.reason && (
-                                    <span className="block text-[11px] text-red-500/80">skipped: {w.reason}</span>
+                                    <span className="block text-hec-caption text-hec-danger">skipped: {w.reason}</span>
                                   )}
                                 </div>
                               </li>
@@ -935,10 +944,10 @@ export default function TeacherSmartUpload() {
         {/* Review & approve queue */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Eye className="h-4 w-4 text-violet-500" />
+            <CardTitle className="flex flex-wrap items-center gap-2">
+              <Eye className="h-5 w-5 shrink-0 text-hec-ink-soft" />
               Review queue
-              {reviewQueue.length > 0 && <Badge variant="secondary">{reviewQueue.length}</Badge>}
+              {reviewQueue.length > 0 && <Badge variant="secondary" className="tabular-nums">{reviewQueue.length}</Badge>}
             </CardTitle>
             <CardDescription>
               Approve to publish onto the student's profile (with your notes). Unmatched pages can be assigned manually.
@@ -946,20 +955,20 @@ export default function TeacherSmartUpload() {
           </CardHeader>
           <CardContent>
             {reviewQueue.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
+              <p className="text-hec-small text-hec-ink-soft text-center py-8">
                 Nothing waiting for review. Uploaded work appears here seconds after OCR completes.
               </p>
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
                 {reviewQueue.map((w) => (
-                  <div key={w.id} className="border rounded-2xl p-3 space-y-2 bg-card">
+                  <div key={w.id} className="min-w-0 rounded-hec-lg border border-hec-line bg-hec-surface p-4 space-y-3">
                     <div className="flex items-start gap-3">
                       {signedUrls.data?.[w.id] ? (
-                        <a href={signedUrls.data[w.id]} target="_blank" rel="noreferrer" className="shrink-0">
+                        <a href={signedUrls.data[w.id]} target="_blank" rel="noreferrer" className="shrink-0 rounded-hec-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring">
                           <img
                             src={signedUrls.data[w.id]}
                             alt={w.original_filename || "student work"}
-                            className="h-20 w-20 object-cover rounded-xl border"
+                            className="h-20 w-20 object-cover rounded-hec-md border border-hec-line"
                           />
                         </a>
                       ) : w.external_url ? (
@@ -967,49 +976,49 @@ export default function TeacherSmartUpload() {
                           href={safeHttpUrl(w.external_url)}
                           target="_blank"
                           rel="noreferrer"
-                          className="h-20 w-20 rounded-xl border bg-violet-500/5 flex flex-col items-center justify-center gap-1 shrink-0 hover:bg-violet-500/10"
+                          className="h-20 w-20 rounded-hec-md border border-hec-line bg-hec-sunken flex flex-col items-center justify-center gap-1 shrink-0 transition-colors duration-hec-1 ease-hec hover:bg-hec-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                           title={w.external_url}
                         >
-                          <Link2 className="h-6 w-6 text-violet-500" />
-                          <span className="text-[9px] text-violet-600 font-semibold">Open link</span>
+                          <Link2 className="h-6 w-6 text-hec-brass" />
+                          <span className="text-hec-caption text-hec-brass font-medium">Open link</span>
                         </a>
                       ) : (
-                        <div className="h-20 w-20 rounded-xl border bg-muted flex items-center justify-center shrink-0">
-                          <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                        <div className="h-20 w-20 rounded-hec-md border border-hec-line bg-hec-sunken flex items-center justify-center shrink-0">
+                          <ImageIcon className="h-6 w-6 text-hec-ink-faint" />
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline" className="text-[10px] uppercase">{w.workflow}</Badge>
+                          <Badge variant="outline" className="uppercase tracking-wider">{w.workflow}</Badge>
                           {w.is_teamwork && (
-                            <Badge className="bg-cyan-500/15 text-cyan-700 border-cyan-500/30 gap-1 text-[10px]">
+                            <Badge className="gap-1 border-hec-line bg-hec-sunken text-hec-ink-soft tabular-nums">
                               <Users className="h-3 w-3" />team of {(w.member_student_ids || []).length}
                             </Badge>
                           )}
                           {w.external_url && (
-                            <Badge className="bg-violet-500/15 text-violet-700 border-violet-500/30 gap-1 text-[10px]">
+                            <Badge className="gap-1 border-hec-line bg-hec-sunken text-hec-ink-soft">
                               <Link2 className="h-3 w-3" />link
                             </Badge>
                           )}
                           {w.status === "processing" && (
-                            <Badge className="bg-violet-500/15 text-violet-600 border-violet-500/30 gap-1">
+                            <Badge className="gap-1 border-hec-line bg-hec-sunken text-hec-ink-soft">
                               <Loader2 className="h-3 w-3 animate-spin" />OCR running
                             </Badge>
                           )}
                           {w.status === "failed" && (
-                            <Badge className="bg-red-500/15 text-red-600 border-red-500/30 gap-1">
+                            <Badge className="gap-1 border-hec-danger/30 bg-hec-danger-tint text-hec-danger">
                               <AlertTriangle className="h-3 w-3" />{w.error_message?.slice(0, 40) || "failed"}
                             </Badge>
                           )}
                           {w.detected_student_name && (
-                            <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 gap-1">
-                              <User className="h-3 w-3" />
+                            <Badge className="gap-1 whitespace-normal border-hec-leaf/30 bg-hec-leaf-tint text-left text-hec-leaf">
+                              <User className="h-3 w-3 shrink-0" />
                               {w.detected_student_name} · {Math.round((w.match_confidence || 0) * 100)}%
                             </Badge>
                           )}
                         </div>
                         {w.ocr_text && (
-                          <p className="text-xs text-muted-foreground mt-1.5 line-clamp-3" title={w.ocr_text}>
+                          <p className="text-hec-small text-hec-ink-soft mt-2 line-clamp-3" title={w.ocr_text}>
                             {w.ocr_text}
                           </p>
                         )}
@@ -1019,12 +1028,12 @@ export default function TeacherSmartUpload() {
                     {w.status === "needs_review" && (
                       <>
                         {w.is_teamwork ? (
-                          <div className="flex flex-wrap gap-1 rounded-lg bg-muted/40 px-2.5 py-2">
-                            <span className="text-[11px] font-semibold text-muted-foreground mr-1">Team:</span>
+                          <div className="flex flex-wrap items-center gap-1 rounded-hec-md bg-hec-sunken px-3 py-2">
+                            <span className="text-hec-caption font-medium text-hec-ink-soft mr-1">Team:</span>
                             {(w.member_student_ids || []).map((id: string) => {
                               const s = assignableStudents.find((x) => x.id === id);
                               return (
-                                <Badge key={id} variant="secondary" className="text-[10px] font-normal">
+                                <Badge key={id} variant="secondary" className="whitespace-normal bg-hec-surface font-normal text-hec-ink">
                                   {s?.full_name || "…"}
                                 </Badge>
                               );
@@ -1040,7 +1049,7 @@ export default function TeacherSmartUpload() {
                         <div className="relative">
                           <Textarea
                             placeholder="Teacher notes for the student — or let AI draft them…"
-                            className="min-h-[64px] text-xs pr-9"
+                            className="min-h-[64px] pr-12"
                             value={reviewNotes[w.id] ?? w.ai_feedback ?? ""}
                             onChange={(e) => setReviewNotes((p) => ({ ...p, [w.id]: e.target.value }))}
                           />
@@ -1052,12 +1061,12 @@ export default function TeacherSmartUpload() {
                               aria-label="Draft personalized feedback with AI"
                               disabled={feedbackMutation.isPending}
                               onClick={() => feedbackMutation.mutate(w)}
-                              className="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-lg text-white bg-gradient-to-br from-violet-500 to-indigo-600 shadow-[0_3px_10px_-3px_rgba(139,92,246,0.7)] transition-transform hover:scale-110 active:scale-95 disabled:opacity-50"
+                              className="absolute top-1 right-1 flex min-h-hec-target min-w-hec-target items-center justify-center rounded-hec-md text-hec-ink-soft transition-colors duration-hec-1 ease-hec hover:bg-hec-sunken hover:text-hec-ink disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                             >
                               {feedbackForId === w.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <Loader2 className="h-5 w-5 animate-spin" />
                               ) : (
-                                <Sparkles className="h-3.5 w-3.5" />
+                                <Sparkles className="h-5 w-5" />
                               )}
                             </button>
                             </TooltipTrigger>
@@ -1067,22 +1076,22 @@ export default function TeacherSmartUpload() {
                             </Tooltip>
                           )}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row">
                           <Button
                             size="sm"
-                            className="flex-1 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                            className="flex-1 gap-2"
                             disabled={reviewMutation.isPending}
                             onClick={() => reviewMutation.mutate({ work: w, decision: "approved" })}
                           >
-                            <CheckCircle2 className="h-3.5 w-3.5" />Approve & publish
+                            <CheckCircle2 className="h-4 w-4" />Approve & publish
                           </Button>
                           <Button
                             size="sm" variant="outline"
-                            className="gap-1 text-red-600 hover:text-red-700"
+                            className="gap-2 border-hec-danger text-hec-danger hover:bg-hec-danger-tint hover:text-hec-danger"
                             disabled={reviewMutation.isPending}
                             onClick={() => reviewMutation.mutate({ work: w, decision: "rejected" })}
                           >
-                            <XCircle className="h-3.5 w-3.5" />Reject
+                            <XCircle className="h-4 w-4" />Reject
                           </Button>
                         </div>
                       </>

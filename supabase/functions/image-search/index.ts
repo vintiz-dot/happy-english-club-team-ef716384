@@ -35,6 +35,12 @@
 
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 
+import { isStaff, requireSpender, type SpendGate } from "../_lib/ai-gate.ts";
+
+// A signed-in account holding a role, and no more than 90 calls per
+// account in each window: Pixabay / Pexels / Google CSE / Unsplash per uncached query.
+const GATE: SpendGate = { name: "image-search", limit: 90, windowMs: 5 * 60_000 };
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -241,6 +247,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Who is asking, before anything is read or spent (audit F-02).
+  const spender = await requireSpender(req, corsHeaders, GATE);
+  if (spender instanceof Response) return spender;
   const respond = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
       status,
@@ -256,6 +266,13 @@ Deno.serve(async (req) => {
 
     if (!query) {
       return respond({ error: "query is required", images: [], source: "none" }, 400);
+    }
+
+    // `provider` and `skip_cache` go straight to a vendor, past the cache
+    // that keeps the quotas alive. They are a diagnostic; the app never sends
+    // them. Staff only.
+    if ((requestedProvider || skipCache) && !isStaff(spender)) {
+      return respond({ error: "This option is restricted to: teacher, admin.", images: [], source: "none" }, 403);
     }
 
     // Single-provider short-circuit (admin diagnostic only — UI no longer uses it).

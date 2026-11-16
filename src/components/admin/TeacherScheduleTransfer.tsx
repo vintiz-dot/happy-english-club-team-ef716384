@@ -206,20 +206,20 @@ export function TeacherScheduleTransfer() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Step indicator */}
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-hec-small">
           {["select", "review", "done"].map((s, i) => (
             <div key={s} className="flex items-center gap-2">
-              {i > 0 && <div className="w-8 h-px bg-border" />}
+              {i > 0 && <div className="h-px w-6 bg-hec-line" />}
               <div
-                className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold transition-colors ${
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-hec-caption font-semibold tabular-nums transition-colors duration-hec-1 ease-hec ${
                   step === s || (step === "conflicts" && s === "review")
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
+                    ? "bg-hec-action text-hec-on-action"
+                    : "bg-hec-sunken text-hec-ink-soft"
                 }`}
               >
                 {i + 1}
               </div>
-              <span className="capitalize text-muted-foreground">{s === "review" ? "Review" : s}</span>
+              <span className="capitalize text-hec-ink-soft">{s === "review" ? "Review" : s}</span>
             </div>
           ))}
         </div>
@@ -229,9 +229,9 @@ export function TeacherScheduleTransfer() {
           <div className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>From Teacher</Label>
+                <Label htmlFor="transfer-from-teacher">From Teacher</Label>
                 <Select value={sourceTeacherId} onValueChange={(v) => { setSourceTeacherId(v); setTargetTeacherId(""); }}>
-                  <SelectTrigger>
+                  <SelectTrigger id="transfer-from-teacher">
                     <SelectValue placeholder="Select source teacher" />
                   </SelectTrigger>
                   <SelectContent>
@@ -242,9 +242,9 @@ export function TeacherScheduleTransfer() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>To Teacher</Label>
+                <Label htmlFor="transfer-to-teacher">To Teacher</Label>
                 <Select value={targetTeacherId} onValueChange={setTargetTeacherId} disabled={!sourceTeacherId}>
-                  <SelectTrigger>
+                  <SelectTrigger id="transfer-to-teacher">
                     <SelectValue placeholder="Select target teacher" />
                   </SelectTrigger>
                   <SelectContent>
@@ -258,35 +258,37 @@ export function TeacherScheduleTransfer() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>From Date</Label>
+                <Label htmlFor="transfer-date-from">From Date</Label>
                 <input
+                  id="transfer-date-from"
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="min-h-hec-target w-full rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 text-hec-body text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                 />
               </div>
               <div className="space-y-2">
-                <Label>To Date</Label>
+                <Label htmlFor="transfer-date-to">To Date</Label>
                 <input
+                  id="transfer-date-to"
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="min-h-hec-target w-full rounded-hec-md border border-hec-line-strong bg-hec-raised px-3 text-hec-body text-hec-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hec-ring"
                 />
               </div>
             </div>
 
             {sourceTeacherId && targetTeacherId && (
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border">
-                <div className="flex-1 text-center">
-                  <p className="font-semibold">{sourceTeacher?.full_name}</p>
-                  <p className="text-sm text-muted-foreground">{sourceSessions?.length ?? "..."} sessions</p>
+              <div className="flex items-center gap-3 rounded-hec-md border border-hec-line bg-hec-sunken p-4">
+                <div className="min-w-0 flex-1 text-center">
+                  <p className="whitespace-normal break-words text-hec-body font-semibold text-hec-ink">{sourceTeacher?.full_name}</p>
+                  <p className="text-hec-small tabular-nums text-hec-ink-soft">{sourceSessions?.length ?? "..."} sessions</p>
                 </div>
-                <ArrowRight className="h-5 w-5 text-muted-foreground shrink-0" />
-                <div className="flex-1 text-center">
-                  <p className="font-semibold">{targetTeacher?.full_name}</p>
-                  <p className="text-sm text-muted-foreground">{targetSessions?.length ?? "..."} existing sessions</p>
+                <ArrowRight className="h-5 w-5 shrink-0 text-hec-ink-soft" />
+                <div className="min-w-0 flex-1 text-center">
+                  <p className="whitespace-normal break-words text-hec-body font-semibold text-hec-ink">{targetTeacher?.full_name}</p>
+                  <p className="text-hec-small tabular-nums text-hec-ink-soft">{targetSessions?.length ?? "..."} existing sessions</p>
                 </div>
               </div>
             )}
@@ -304,7 +306,7 @@ export function TeacherScheduleTransfer() {
             </Button>
 
             {sourceSessions && sourceSessions.length === 0 && sourceTeacherId && (
-              <p className="text-sm text-muted-foreground text-center">No future sessions found for this teacher in the selected date range.</p>
+              <p className="text-center text-hec-small text-hec-ink-soft">No future sessions found for this teacher in the selected date range.</p>
             )}
           </div>
         )}
@@ -312,11 +314,11 @@ export function TeacherScheduleTransfer() {
         {/* STEP 2: Review (no conflicts) */}
         {step === "review" && (
           <div className="space-y-4">
-            <div className="flex items-center gap-2 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-              <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
-              <div>
-                <p className="font-semibold text-green-700 dark:text-green-400">No Conflicts Detected!</p>
-                <p className="text-sm text-muted-foreground">
+            <div className="flex items-start gap-2 rounded-hec-md border border-hec-leaf/30 bg-hec-leaf-tint p-4">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-hec-leaf" />
+              <div className="min-w-0">
+                <p className="font-semibold text-hec-leaf">No Conflicts Detected!</p>
+                <p className="text-hec-small text-hec-ink-soft">
                   All {transferableSessions.length} sessions can be safely transferred.
                 </p>
               </div>
@@ -324,7 +326,7 @@ export function TeacherScheduleTransfer() {
 
             <SessionList sessions={transferableSessions} label="Sessions to transfer" />
 
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
               <Button variant="outline" onClick={() => setStep("select")}>Back</Button>
               <Button className="flex-1" onClick={() => setShowConfirmDialog(true)}>
                 Transfer {transferableSessions.length} Sessions
@@ -337,17 +339,17 @@ export function TeacherScheduleTransfer() {
         {step === "conflicts" && (
           <div className="space-y-5">
             {transferableSessions.length > 0 && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-                <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
-                <p className="text-sm">
+              <div className="flex items-start gap-2 rounded-hec-md border border-hec-leaf/30 bg-hec-leaf-tint p-4">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-hec-leaf" />
+                <p className="text-hec-small text-hec-ink">
                   <span className="font-semibold">{transferableSessions.length}</span> sessions can transfer without issues.
                 </p>
               </div>
             )}
 
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-              <p className="text-sm">
+            <div className="flex items-start gap-2 rounded-hec-md border border-hec-warn/30 bg-hec-warn-tint p-4">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-hec-warn" />
+              <p className="text-hec-small text-hec-ink">
                 <span className="font-semibold">{conflicts.length}</span> session(s) have time conflicts. Resolve each below:
               </p>
             </div>
@@ -358,21 +360,21 @@ export function TeacherScheduleTransfer() {
                 return (
                   <div
                     key={conflict.sourceSession.id}
-                    className={`p-4 rounded-lg border transition-colors ${
-                      res ? "border-primary/30 bg-primary/5" : "border-amber-500/30 bg-amber-500/5"
+                    className={`rounded-hec-md border p-4 transition-colors duration-hec-1 ease-hec ${
+                      res ? "border-hec-brass bg-hec-surface" : "border-hec-warn/30 bg-hec-warn-tint"
                     }`}
                   >
-                    <div className="flex flex-col sm:flex-row gap-3 mb-3">
-                      <div className="flex-1 space-y-1">
-                        <p className="font-semibold text-sm">{conflict.sourceSession.classes.name}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
+                    <div className="mb-3 flex flex-col gap-3 sm:flex-row">
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <p className="whitespace-normal break-words text-hec-small font-semibold text-hec-ink">{conflict.sourceSession.classes.name}</p>
+                        <div className="flex flex-wrap items-center gap-2 text-hec-caption tabular-nums text-hec-ink-soft">
+                          <Calendar className="h-4 w-4" />
                           {dayjs(conflict.sourceSession.date).format("ddd, MMM D")}
-                          <Clock className="h-3 w-3 ml-1" />
+                          <Clock className="ml-1 h-4 w-4" />
                           {conflict.sourceSession.start_time.slice(0, 5)}–{conflict.sourceSession.end_time.slice(0, 5)}
                         </div>
                       </div>
-                      <div className="text-xs px-2 py-1 rounded bg-destructive/10 text-destructive self-start">
+                      <div className="self-start whitespace-normal break-words rounded-hec-sm border border-hec-danger/30 bg-hec-danger-tint px-2 py-1 text-hec-caption text-hec-danger sm:max-w-[50%]">
                         Overlaps with: <strong>{conflict.targetSession.classes.name}</strong>{" "}
                         ({conflict.targetSession.start_time.slice(0, 5)}–{conflict.targetSession.end_time.slice(0, 5)})
                       </div>
@@ -384,14 +386,14 @@ export function TeacherScheduleTransfer() {
                         variant={res?.action === "reschedule" ? "default" : "outline"}
                         onClick={() => resolveConflict(conflict.sourceSession.id, "reschedule")}
                       >
-                        <RefreshCw className="h-3 w-3 mr-1" /> Keep with {sourceTeacher?.full_name?.split(" ")[0]}
+                        <RefreshCw className="h-4 w-4 mr-1" /> Keep with {sourceTeacher?.full_name?.split(" ")[0]}
                       </Button>
                       <Button
                         size="sm"
                         variant={res?.action === "reassign" ? "default" : "outline"}
                         onClick={() => resolveConflict(conflict.sourceSession.id, "reassign")}
                       >
-                        <Users className="h-3 w-3 mr-1" /> Assign to another teacher
+                        <Users className="h-4 w-4 mr-1" /> Assign to another teacher
                       </Button>
                     </div>
 
@@ -420,10 +422,10 @@ export function TeacherScheduleTransfer() {
               })}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
               <Button variant="outline" onClick={() => setStep("select")}>Back</Button>
               <Button
-                className="flex-1"
+                className="flex-1 whitespace-normal"
                 disabled={!allConflictsResolved}
                 onClick={() => setShowConfirmDialog(true)}
               >
@@ -438,10 +440,10 @@ export function TeacherScheduleTransfer() {
         {/* STEP 3: Done */}
         {step === "done" && (
           <div className="text-center space-y-4 py-6">
-            <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
+            <CheckCircle2 className="mx-auto h-12 w-12 text-hec-leaf" />
             <div>
-              <p className="text-lg font-semibold">Transfer Complete</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-hec-h3 text-hec-ink">Transfer Complete</p>
+              <p className="text-hec-small text-hec-ink-soft">
                 Sessions have been reassigned successfully.
               </p>
             </div>
@@ -494,16 +496,16 @@ function SessionList({ sessions, label }: { sessions: Session[]; label: string }
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-muted-foreground">{label} ({sessions.length})</p>
+      <p className="text-hec-small font-medium text-hec-ink-soft">{label} ({sessions.length})</p>
       <div className="max-h-60 overflow-y-auto space-y-1 pr-1">
         {grouped.map(([date, items]) => (
-          <div key={date} className="flex items-start gap-3 py-1.5 border-b border-border/50 last:border-0">
-            <span className="text-xs font-mono text-muted-foreground w-20 shrink-0 pt-0.5">
+          <div key={date} className="flex items-start gap-3 border-b border-hec-line py-2 last:border-0">
+            <span className="w-20 shrink-0 pt-1 text-hec-caption tabular-nums text-hec-ink-soft">
               {dayjs(date).format("ddd M/D")}
             </span>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex min-w-0 flex-wrap gap-2">
               {items.map((s) => (
-                <Badge key={s.id} variant="secondary" className="text-xs">
+                <Badge key={s.id} variant="secondary" className="whitespace-normal break-words">
                   {s.classes.name} {s.start_time.slice(0, 5)}
                 </Badge>
               ))}

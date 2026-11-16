@@ -90,7 +90,7 @@ const StudentDetail = () => {
     return (
       <Layout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold">Student not found</h2>
+          <h2 className="font-display text-hec-h2 font-medium text-hec-ink">Student not found</h2>
         </div>
       </Layout>
     );
@@ -99,25 +99,25 @@ const StudentDetail = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Avatar className="w-16 h-16 ring-2 ring-border">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-4">
+            <Avatar className="h-16 w-16 shrink-0 ring-1 ring-hec-line">
               <AvatarImage src={getAvatarUrl(student.avatar_url) || undefined} alt={student.full_name} className="object-cover" />
-              <AvatarFallback className="text-2xl bg-gradient-to-br from-primary/20 to-primary/10">
+              <AvatarFallback className="bg-hec-sunken text-hec-h2 text-hec-ink-soft">
                 {student.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight">{student.full_name}</h1>
+            <div className="min-w-0 flex-1 space-y-2">
+              <h1 className="whitespace-normal break-words hyphens-none text-balance font-display text-hec-h1 font-medium text-hec-ink">{student.full_name}</h1>
               <div className="flex flex-col gap-1">
-                <p className="text-sm text-muted-foreground">
+                <p className="break-words text-hec-small text-hec-ink-soft">
                   Family: {student.family?.name || "No family"}
                 </p>
                 {student.linked_user_id && student.linkedUserEmail && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">Registered Email:</span>
-                    <span className="font-medium text-foreground">{student.linkedUserEmail}</span>
-                    <Badge variant="outline" className="text-xs">
+                  <div className="flex flex-wrap items-center gap-2 text-hec-small">
+                    <span className="text-hec-ink-soft">Registered Email:</span>
+                    <span className="min-w-0 break-all font-medium text-hec-ink">{student.linkedUserEmail}</span>
+                    <Badge variant="outline">
                       Linked
                     </Badge>
                   </div>
@@ -125,7 +125,7 @@ const StudentDetail = () => {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             <AIReportDialog
               studentId={student.id}
               studentName={student.full_name}
@@ -145,7 +145,7 @@ const StudentDetail = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList>
+          <TabsList className="h-auto flex-wrap">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="enrollments">Enrollments</TabsTrigger>
             <TabsTrigger value="tuition">Tuition</TabsTrigger>
@@ -173,7 +173,7 @@ const StudentDetail = () => {
             {/* Read-only: this is a profile page, not a place to award points. */}
             {student.enrollments && student.enrollments.length > 0 && (
               <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Class Rankings</h2>
+                <h2 className="font-display text-hec-h2 font-medium text-hec-ink">Class Rankings</h2>
                 {student.enrollments.map((enrollment: any) => {
                   // Safely extract class data - handle both array and object responses
                   const classData = enrollment.class 
@@ -187,7 +187,7 @@ const StudentDetail = () => {
                   
                   return (
                     <div key={enrollment.id} className="space-y-2">
-                      <h3 className="text-lg font-semibold">{classData.name || 'Class'}</h3>
+                      <h3 className="whitespace-normal break-words text-hec-h3 font-medium text-hec-ink">{classData.name || 'Class'}</h3>
                       <ClassLeaderboardShared classId={classData.id} />
                     </div>
                   );
@@ -225,11 +225,11 @@ const StudentDetail = () => {
           <TabsContent value="account" className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-2">
               <div>
-                <h3 className="text-xl font-semibold mb-4">Edit Profile</h3>
+                <h3 className="mb-4 font-display text-hec-h2 font-medium text-hec-ink">Edit Profile</h3>
                 <StudentProfileEdit studentId={student.id} />
               </div>
               <div>
-                <h3 className="text-xl font-semibold mb-4">Account Information</h3>
+                <h3 className="mb-4 font-display text-hec-h2 font-medium text-hec-ink">Account Information</h3>
                 <StudentAccountInfo studentId={student.id} />
               </div>
             </div>

@@ -227,17 +227,17 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
 
   const paged = usePagedList(filteredSubmissions);
 
-  if (isLoading) return <div className="text-center py-8 text-muted-foreground">Loading submissions...</div>;
+  if (isLoading) return <div className="py-8 text-center text-hec-body text-hec-ink-soft">Loading submissions...</div>;
 
   const getStatusBadge = (submission: any) => {
     if (submission.grade !== null) {
-      return <Badge className="bg-green-500 hover:bg-green-600 rounded-full">✓ Graded</Badge>;
+      return <Badge variant="success">✓ Graded</Badge>;
     }
     if (submission.submitted_at) {
-      return <Badge className="bg-yellow-500 hover:bg-yellow-600 rounded-full">⏳ Submitted</Badge>;
+      return <Badge variant="warning">⏳ Submitted</Badge>;
     }
     return (
-      <Badge variant="secondary" className="bg-gray-500 hover:bg-gray-600 rounded-full text-white">
+      <Badge variant="secondary">
         ○ Not Submitted
       </Badge>
     );
@@ -245,15 +245,15 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
 
   if (filteredSubmissions.length === 0) {
     return (
-      <Card className="border-2 border-dashed">
+      <Card className="border-dashed">
         <CardContent className="py-16 text-center">
-          <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-            <Star className="h-8 w-8 text-muted-foreground" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-hec-sunken">
+            <Star className="h-8 w-8 text-hec-ink-faint" aria-hidden="true" />
           </div>
-          <p className="text-lg font-medium mb-1">
+          <p className="mb-1 font-display text-hec-h2 font-medium text-hec-ink">
             {statusFilter === "all" ? "No submissions yet" : `No ${statusFilter.replace("_", " ")} submissions`}
           </p>
-          <p className="text-sm text-muted-foreground">Submissions will appear here once students submit their work</p>
+          <p className="text-hec-small text-hec-ink-soft">Submissions will appear here once students submit their work</p>
         </CardContent>
       </Card>
     );
@@ -266,19 +266,19 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
           const homework = submission.homeworks;
 
           return (
-            <Card key={submission.id} className="overflow-hidden transition-all hover:shadow-lg border-2 long-list-item min-w-0">
-              <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 pb-3 p-3 sm:p-6 min-w-0">
+            <Card key={submission.id} className="long-list-item min-w-0 overflow-hidden">
+              <CardHeader className="min-w-0 p-4 pb-3 sm:p-6">
                 <div className="flex flex-col gap-3 min-w-0">
                   <div className="flex items-start gap-2 min-w-0">
                     <div className="flex-1 min-w-0 overflow-hidden space-y-1">
-                      <CardTitle className="text-base md:text-lg break-words [overflow-wrap:anywhere] flex items-start gap-2">
-                        <span className="text-2xl shrink-0">📚</span>
+                      <CardTitle className="flex items-start gap-2 break-words [overflow-wrap:anywhere]">
+                        <span className="shrink-0" aria-hidden="true">📚</span>
                         <span className="min-w-0 break-words">{homework?.title}</span>
                       </CardTitle>
-                      <p className="text-sm font-bold text-primary break-words">{submission.students?.full_name}</p>
-                      <p className="text-xs md:text-sm text-muted-foreground break-words">Class: {homework?.classes?.name}</p>
+                      <p className="whitespace-normal break-words hyphens-none text-balance text-hec-body font-medium text-hec-ink">{submission.students?.full_name}</p>
+                      <p className="break-words text-hec-small text-hec-ink-soft">Class: {homework?.classes?.name}</p>
                       {submission.submitted_at && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-hec-caption text-hec-ink-faint tabular-nums">
                           📅 Submitted {format(new Date(submission.submitted_at), "MMM d, yyyy")}
                         </p>
                       )}
@@ -299,8 +299,8 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
 
               <CardContent className="pt-4 space-y-3">
                 {submission.submission_text && (
-                  <div className="bg-muted/50 p-3 rounded-lg">
-                    <p className="text-sm whitespace-pre-wrap line-clamp-3">{submission.submission_text}</p>
+                  <div className="rounded-hec-md bg-hec-sunken p-3">
+                    <p className="line-clamp-3 whitespace-pre-wrap break-words text-hec-small text-hec-ink">{submission.submission_text}</p>
                   </div>
                 )}
 
@@ -308,7 +308,7 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full sm:w-auto"
+                    className="min-h-hec-target w-full sm:w-auto"
                     onClick={() => downloadFile(submission.storage_key, submission.file_name)}
                   >
                     <Download className="h-4 w-4 mr-2" />
@@ -317,15 +317,15 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
                 )}
 
                 {submission.grade && (
-                  <div className="space-y-2 border-t pt-3 bg-green-50 dark:bg-green-950/20 p-3 rounded-lg">
+                  <div className="space-y-2 rounded-hec-md border border-hec-leaf/30 bg-hec-leaf-tint p-3">
                     <div className="flex items-center gap-2">
-                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                      <p className="text-sm font-bold">Grade: {submission.grade}</p>
+                      <Star className="h-4 w-4 fill-current text-hec-leaf" aria-hidden="true" />
+                      <p className="text-hec-small font-semibold text-hec-ink">Grade: {submission.grade}</p>
                     </div>
                     {submission.teacher_feedback && (
-                      <p className="text-sm text-muted-foreground">💬 {submission.teacher_feedback}</p>
+                      <p className="break-words text-hec-small text-hec-ink-soft">💬 {submission.teacher_feedback}</p>
                     )}
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-hec-caption text-hec-ink-soft tabular-nums">
                       Graded: {format(new Date(submission.graded_at), "MMM d, yyyy")}
                     </p>
                   </div>
@@ -335,7 +335,7 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
                   <Button
                     variant="default"
                     size="lg"
-                    className="w-full min-h-[44px] rounded-xl font-semibold"
+                    className="min-h-hec-target w-full"
                     onClick={() => {
                       setSelectedSubmission(submission);
                       setGrade("");
@@ -362,28 +362,28 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
 
       {selectedSubmission && (
         <Dialog open={!!selectedSubmission} onOpenChange={() => setSelectedSubmission(null)}>
-          <DialogContent className="max-w-md max-h-[92vh] overflow-y-auto">
+          <DialogContent className="max-h-[85dvh] max-w-md overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-xl">Grade Submission</DialogTitle>
-              <p className="text-sm text-muted-foreground break-words">{selectedSubmission.students?.full_name}</p>
+              <DialogTitle>Grade Submission</DialogTitle>
+              <p className="whitespace-normal break-words hyphens-none text-balance text-hec-body text-hec-ink-soft">{selectedSubmission.students?.full_name}</p>
             </DialogHeader>
 
             <div className="space-y-4 pt-2">
               {selectedSubmission?.assignment_instructions && (
-                <div className="space-y-2 pb-4 mb-4 border-b">
-                  <Label className="text-base font-semibold">Original Assignment Instructions</Label>
+                <div className="mb-4 space-y-2 border-b border-hec-line pb-4">
+                  <Label className="text-hec-small font-semibold text-hec-ink">Original Assignment Instructions</Label>
                   <div 
-                    className="p-4 bg-muted/50 rounded-md prose prose-sm max-w-none [&_p]:text-muted-foreground [&_strong]:text-foreground [&_em]:text-foreground [&_ul]:text-muted-foreground [&_ol]:text-muted-foreground [&_li]:text-muted-foreground"
+                    className="prose prose-sm max-w-none break-words rounded-hec-md bg-hec-sunken p-4 text-hec-ink-soft [&_p]:text-hec-ink-soft [&_strong]:text-hec-ink [&_em]:text-hec-ink [&_ul]:text-hec-ink-soft [&_ol]:text-hec-ink-soft [&_li]:text-hec-ink-soft"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedSubmission.assignment_instructions) }}
                   />
                 </div>
               )}
 
               {selectedSubmission?.submission_text && (
-                <div className="space-y-2 pb-4 mb-4 border-b">
-                  <Label className="text-base font-semibold">Student Submission</Label>
+                <div className="mb-4 space-y-2 border-b border-hec-line pb-4">
+                  <Label className="text-hec-small font-semibold text-hec-ink">Student Submission</Label>
                   <div 
-                    className="p-4 bg-background border rounded-md prose prose-sm max-w-none [&_p]:text-foreground [&_strong]:text-foreground [&_em]:text-foreground [&_ul]:text-foreground [&_ol]:text-foreground [&_li]:text-foreground"
+                    className="prose prose-sm max-w-none break-words rounded-hec-md border border-hec-line bg-hec-surface p-4 text-hec-ink [&_p]:text-hec-ink [&_strong]:text-hec-ink [&_em]:text-hec-ink [&_ul]:text-hec-ink [&_ol]:text-hec-ink [&_li]:text-hec-ink"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedSubmission.submission_text) }}
                   />
                 </div>
@@ -396,7 +396,7 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
                   value={grade}
                   onChange={(e) => setGrade(e.target.value)}
                   placeholder="e.g., A, 95/100, Excellent"
-                  className="text-base"
+                  className="text-hec-body"
                 />
               </div>
 
@@ -412,9 +412,9 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
                   value={points}
                   onChange={(e) => setPoints(e.target.value)}
                   placeholder="Max 100 points"
-                  className="text-base"
+                  className="text-hec-body"
                 />
-                <p className="text-xs text-muted-foreground">⭐ Homework points (max 100) for leaderboard</p>
+                <p className="text-hec-caption text-hec-ink-soft">⭐ Homework points (max 100) for leaderboard</p>
               </div>
 
               <div className="space-y-2">
@@ -425,7 +425,7 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
                   onChange={(e) => setFeedback(e.target.value)}
                   placeholder="Provide feedback for the student..."
                   rows={4}
-                  className="text-base resize-none"
+                  className="resize-none text-hec-body"
                 />
               </div>
 
@@ -449,15 +449,15 @@ export function HomeworkGradingList({ statusFilter = "all", classFilter = "all" 
                     });
                   }}
                   disabled={!grade || gradeMutation.isPending}
-                  className="w-full min-h-[48px] text-base font-semibold rounded-xl"
+                  className="min-h-hec-target w-full"
                 >
                   {gradeMutation.isPending ? "Submitting..." : "Submit Grade"}
                 </Button>
 
                 <Button
-                  variant="outline"
+                  variant="destructive-quiet"
                   size="sm"
-                  className="w-full text-destructive hover:text-destructive"
+                  className="min-h-hec-target w-full"
                   onClick={() => {
                     reverseEarlyBonusMutation.mutate({
                       homeworkId: selectedSubmission.homework_id,

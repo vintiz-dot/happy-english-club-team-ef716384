@@ -35,6 +35,14 @@ import {
 import { EditDiscountModal } from "./discount/EditDiscountModal";
 import { dayjs } from "@/lib/date";
 import { PlaceholderCard } from "@/components/ui/loading";
+import { useIvory } from "@/hooks/useIvory";
+
+// Ivory badge classes per status label (DESIGN_SYSTEM s.15); the word carries the state.
+const IVORY_STATUS: Record<string, string> = {
+  Ended: "border-hec-line bg-hec-sunken text-hec-ink-soft",
+  Scheduled: "border-hec-line bg-hec-sunken text-hec-ink",
+  Active: "border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf",
+};
 
 interface FamilyDiscount {
   id: string;
@@ -89,6 +97,8 @@ export function DiscountManager() {
   const [bulkEndDialogOpen, setBulkEndDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const ivory = useIvory();
+  const iv = (n: string, o: string) => (ivory ? n : o);
 
   // Fetch family discounts (sibling discounts)
   const { data: familyDiscounts, isLoading: loadingFamily } = useQuery({
@@ -275,8 +285,8 @@ export function DiscountManager() {
     if (!familyDiscounts || familyDiscounts.length === 0) {
       return (
         <div className="text-center py-8">
-          <p className="text-muted-foreground">No active family discounts</p>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className={iv("text-hec-body text-hec-ink-soft", "text-muted-foreground")}>No active family discounts</p>
+          <p className={iv("text-hec-small text-hec-ink-soft mt-2", "text-sm text-muted-foreground mt-2")}>
             Family sibling discounts are applied automatically based on enrollment count
           </p>
         </div>
@@ -298,13 +308,13 @@ export function DiscountManager() {
             const siblingPercent = family.sibling_percent_override || 5;
             return (
               <TableRow key={family.id}>
-                <TableCell className="font-medium">{family.name}</TableCell>
-                <TableCell>
+                <TableCell className={iv("font-medium whitespace-normal break-words hyphens-none", "font-medium")}>{family.name}</TableCell>
+                <TableCell className={ivory ? "whitespace-normal break-words hyphens-none" : undefined}>
                   {family.students.map((s: any) => s.full_name).join(", ")}
                 </TableCell>
-                <TableCell>{siblingPercent}%</TableCell>
+                <TableCell className={ivory ? "whitespace-nowrap tabular-nums" : undefined}>{siblingPercent}%</TableCell>
                 <TableCell>
-                  <Badge className="bg-green-500 text-white">Active</Badge>
+                  <Badge className={iv(IVORY_STATUS.Active, "bg-green-500 text-white")}>Active</Badge>
                 </TableCell>
               </TableRow>
             );
@@ -324,7 +334,7 @@ export function DiscountManager() {
     if (!assignments || assignments.length === 0) {
       return (
         <div className="text-center py-8">
-          <p className="text-muted-foreground">{emptyMessage}</p>
+          <p className={iv("text-hec-body text-hec-ink-soft", "text-muted-foreground")}>{emptyMessage}</p>
         </div>
       );
     }
@@ -342,6 +352,7 @@ export function DiscountManager() {
               variant="destructive"
               size="sm"
               onClick={() => setBulkEndDialogOpen(true)}
+              className={ivory ? "border border-hec-danger bg-transparent text-hec-danger hover:bg-hec-danger-tint" : undefined}
             >
               <XCircle className="h-4 w-4 mr-2" />
               End Selected ({selectedAssignments.length})
@@ -353,6 +364,8 @@ export function DiscountManager() {
             <TableRow>
               <TableHead className="w-[40px]">
                 <Checkbox
+                  aria-label={ivory ? "Select every active discount" : undefined}
+                  className={ivory ? "relative after:absolute after:-inset-3.5 after:content-['']" : undefined}
                   checked={
                     activeAssignments.length > 0 &&
                     activeAssignments.every((a) => selectedAssignments.includes(a.id))
@@ -388,6 +401,8 @@ export function DiscountManager() {
                   <TableCell>
                     {isActive && (
                       <Checkbox
+                        aria-label={ivory ? `Select ${assignment.students.full_name}` : undefined}
+                        className={ivory ? "relative after:absolute after:-inset-3.5 after:content-['']" : undefined}
                         checked={selectedAssignments.includes(assignment.id)}
                         onCheckedChange={(checked) => {
                           if (checked) {
@@ -401,29 +416,29 @@ export function DiscountManager() {
                       />
                     )}
                   </TableCell>
-                  <TableCell className="font-medium">
+                  <TableCell className={iv("font-medium whitespace-normal break-words hyphens-none", "font-medium")}>
                     {assignment.students.full_name}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className={ivory ? "whitespace-normal break-words" : undefined}>
                     {table === "discount_assignments" ? discountInfo.name : "Referral Bonus"}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className={ivory ? "tabular-nums" : undefined}>
                     {discountInfo.value}
                     {discountInfo.type === "percent" ? "%" : " VND"} - {discountInfo.cadence}
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm">
+                    <div className={iv("text-hec-small tabular-nums", "text-sm")}>
                       {assignment.effective_from}
                       {assignment.effective_to && ` to ${assignment.effective_to}`}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={status.color}>{status.label}</Badge>
+                    <Badge className={ivory ? IVORY_STATUS[status.label] : status.color}>{status.label}</Badge>
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" aria-label={ivory ? "Discount actions" : undefined}>
                           <Settings className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -442,7 +457,7 @@ export function DiscountManager() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setRemovingAssignment(assignment.id)}
-                          className="text-destructive"
+                          className={iv("text-hec-danger", "text-destructive")}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Remove Assignment
@@ -462,7 +477,7 @@ export function DiscountManager() {
   return (
     <div className="space-y-6">
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className={iv("grid w-full grid-cols-1 min-[480px]:grid-cols-3 h-auto", "grid w-full grid-cols-3")}>
           <TabsTrigger value="family">Family Discounts</TabsTrigger>
           <TabsTrigger value="special">Special Discounts</TabsTrigger>
           <TabsTrigger value="referral">Referral Bonuses</TabsTrigger>
@@ -539,8 +554,9 @@ export function DiscountManager() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{ivory ? "Keep the discount" : "Cancel"}</AlertDialogCancel>
             <AlertDialogAction
+              className={ivory ? "bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90" : undefined}
               onClick={() =>
                 endingAssignment &&
                 endAssignmentMutation.mutate({
@@ -550,7 +566,7 @@ export function DiscountManager() {
                 })
               }
             >
-              End Now
+              {ivory ? "End the discount" : "End Now"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -569,7 +585,7 @@ export function DiscountManager() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{ivory ? "Keep the assignment" : "Cancel"}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() =>
                 removingAssignment &&
@@ -579,9 +595,9 @@ export function DiscountManager() {
                     selectedTab === "special" ? "discount_assignments" : "referral_bonuses",
                 })
               }
-              className="bg-destructive text-destructive-foreground"
+              className={iv("bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90", "bg-destructive text-destructive-foreground")}
             >
-              Remove
+              {ivory ? "Remove the assignment" : "Remove"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -598,9 +614,12 @@ export function DiscountManager() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => bulkEndMutation.mutate(selectedAssignments)}>
-              End Selected
+            <AlertDialogCancel>{ivory ? "Keep the discounts" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction
+              className={ivory ? "bg-hec-danger-fill text-hec-on-danger hover:bg-hec-danger-fill/90" : undefined}
+              onClick={() => bulkEndMutation.mutate(selectedAssignments)}
+            >
+              {ivory ? "End the selected discounts" : "End Selected"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
