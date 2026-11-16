@@ -1,5 +1,8 @@
-// D4 apply chain: steps 2 (20261114092000), 3A (093000) and 3B (094000) on top
-// of 1a + 1b as live (docs/evidence/D4-2-3A-3B-live-apply-brief.md).
+// D4 apply chain: steps 2 (20261114092000), 3A (093000), 3B (094000) and 4
+// (095000, approvals) on top of 1a + 1b as live
+// (docs/evidence/D4-2-3A-3B-live-apply-brief.md; step 4: D4-build-4.md).
+// Step 4 comes after 3A and 3B: its preflight pins their bodies, so it is
+// pasted last in every order, and pasted early it is refused whole.
 //
 // Each migration's preflight pins the CR-stripped md5 of the bodies it relies
 // on. This suite proves, on the real files, that:
@@ -37,8 +40,10 @@ const STEP = {
   '2': '20261114092000_d4_class_fee_history.sql',
   '3A': '20261114093000_d4_lesson_pay_guard.sql',
   '3B': '20261114094000_d4_money_inputs_guard.sql',
+  '4': '20261114095000_d4_change_approvals.sql',
 };
 const ROLLBACK = {
+  '4': 'scripts/ROLLBACK-d4-6-approvals.sql',
   '3B': 'scripts/ROLLBACK-d4-5-money-inputs.sql',
   '3A': 'scripts/ROLLBACK-d4-4-lesson-pay.sql',
   '2': 'scripts/ROLLBACK-d4-3-class-fee.sql',
@@ -55,9 +60,15 @@ const D4_JSON = 'docs/evidence/D4-release-fingerprint.expected.json';
 const D_SQL = 'docs/evidence/D-release-fingerprint.sql';
 const D_JSON = 'docs/evidence/D-release-fingerprint.expected.json';
 // Objects per step (functions / triggers / relations), from the build docs.
-const COUNT = { base: [41, 19, 6], '2': [8, 5, 1], '3A': [9, 3, 0], '3B': [41, 19, 0] };
+const COUNT = { base: [41, 19, 6], '2': [8, 5, 1], '3A': [9, 3, 0], '3B': [41, 19, 0], '4': [30, 11, 4] };
 // The 1b bodies a later step replaces (and its rollback leaves, by design).
-const REPLACES = { '3A': 'public.d4_guard_status()', '3B': 'public._money_enrollment_rpc_call()' };
+const REPLACES = { '3A': ['public.d4_guard_status()'], '3B': ['public._money_enrollment_rpc_call()'],
+  '4': ['public._change_request_claim(p_kind text, p_fingerprint text)', 'public._money_change_full_plan(p_entity text, p_op text, p_args jsonb, p_uid uuid, p_via text)',
+        'public.change_approval_needed(p_impact jsonb, p_actor uuid)'] };
+// Of those, the two 1b stubs: 1b creates them only if missing, so re-pasting 1b does not put them back.
+const STUBS = ['function public._change_request_claim(p_kind text, p_fingerprint text)', 'function public.change_approval_needed(p_impact jsonb, p_actor uuid)'];
+const APPROVAL_TRIGGERS = ['trigger payroll_adjustments.zz_pay_adjustment_approval', 'trigger session_cancel_overrides.zz_session_override_approval',
+  'trigger user_roles.zz_admin_grant_guard'];
 
 const lf = (s) => s.replace(/\r\n/g, '\n');
 const crlf = (s) => lf(s).replace(/\n/g, '\r\n');
@@ -100,6 +111,8 @@ async function scenario(name) {
   const md5Of = async (sig) => (await db.query(`SELECT md5(replace(prosrc, E'\\r', '')) m FROM pg_proc WHERE oid = to_regprocedure($1)`, [sig])).rows[0]?.m ?? null;
   const pinsHold = async (step) => {
     const bad = [];
+    // step 4 pins 2 / 3A / 3B bodies: its pins hold once those are in
+    if (step === '4' && !['2', '3A', '3B'].every((x) => applied.includes(x))) return bad;
     for (const [sig, md5s] of pinsOf(fileText(`supabase/migrations/${STEP[step]}`))) {
       const m = await md5Of(sig);
       if (!md5s.includes(m)) bad.push(`${sig}=${m} (wants ${md5s.join('|')})`);
@@ -136,7 +149,7 @@ async function scenario(name) {
   const want = JSON.parse(fileText(D4_JSON));
   const fullFp = async (applied, label) => {
     const r = compare(want, await fp(fileText(D4_SQL)));
-    const notYet = Object.keys(REPLACES).filter((s) => !applied.includes(s)).map((s) => `function ${REPLACES[s]}`);
+    const notYet = Object.keys(REPLACES).filter((s) => !applied.includes(s)).flatMap((s) => REPLACES[s].map((x) => `function ${x}`));
     const expCounts = [0, 1, 2].map((i) => COUNT.base[i] + applied.reduce((n, s) => n + COUNT[s][i], 0));
     ok(`${label}: every object present is the expected one (only 1b bodies a step not yet pasted would replace differ: ${notYet.join(', ') || 'none'})`,
        JSON.stringify(r.differ.sort()) === JSON.stringify(notYet.sort()) && r.extra.length === 0, r);
@@ -144,9 +157,10 @@ async function scenario(name) {
   };
 
   const orders = {
-    plan: ['2', '3A', '3B'], 'alone-2': ['2'], 'alone-3A': ['3A'], 'alone-3B': ['3B'],
-    'order-3A-2-3B': ['3A', '2', '3B'], 'order-2-3B-3A': ['2', '3B', '3A'], 'order-3B-2-3A': ['3B', '2', '3A'],
-    'order-3A-3B-2': ['3A', '3B', '2'], 'order-3B-3A-2': ['3B', '3A', '2'], 'plan-crlf': ['2', '3A', '3B'],
+    plan: ['2', '3A', '3B', '4'], 'alone-2': ['2'], 'alone-3A': ['3A'], 'alone-3B': ['3B'],
+    'order-3A-2-3B': ['3A', '2', '3B', '4'], 'order-2-3B-3A': ['2', '3B', '3A', '4'], 'order-3B-2-3A': ['3B', '2', '3A', '4'],
+    'order-3A-3B-2': ['3A', '3B', '2', '4'], 'order-3B-3A-2': ['3B', '3A', '2', '4'], 'plan-crlf': ['2', '3A', '3B', '4'],
+    'early-4': ['2', '3A'],
   };
   const order = orders[name];
   const asCrlf = name === 'plan-crlf';
@@ -160,8 +174,22 @@ async function scenario(name) {
     applied.push(step);
     await fullFp(applied, `after ${applied.join(' -> ')}`);
   }
-  if (applied.length === 3) {
-    for (const s of ['2', '3A', '3B']) {
+  if (name === 'early-4') {
+    // step 4 before 3B: refused, installs nothing
+    const before = await fp(fileText(D4_SQL));
+    const e4 = await exec(mig(STEP['4']));
+    await exec('ROLLBACK');
+    ok('step 4 pasted before 3B is refused (its preflight names what is missing)', /d4_change_approvals cannot be installed/.test(e4 ?? ''), e4);
+    const after = await fp(fileText(D4_SQL));
+    ok('  and installs nothing (the fingerprint is unchanged)', JSON.stringify(sortKeys(before)) === JSON.stringify(sortKeys(after)));
+    await paste('3B');
+    applied.push('3B');
+    await paste('4', { label: 'then after 3B: ' });
+    applied.push('4');
+    await fullFp(applied, 'after 2 -> 3A -> (4 refused) -> 3B -> 4');
+  }
+  if (applied.length === 4) {
+    for (const s of ['2', '3A', '3B', '4']) {
       const bad = await pinsHold(s);
       ok(`after all three: step ${s}'s pins still match (a second paste is accepted)`, bad.length === 0, bad);
       await paste(s, { label: 'second paste: ' });
@@ -187,25 +215,36 @@ async function scenario(name) {
     const fee = await code(`UPDATE public.classes SET session_rate_vnd = 160000 WHERE id = $1`, [c2]);
     ok('  the fee typed on the class by the owner passes step 2\'s mirror guard (owner lane); 3B has no UPDATE trigger on classes', fee === 'ok', fee);
 
+    // Rollback 6 alone: exactly the three approval triggers go; then step 4 pastes again.
+    await rollback('4');
+    const r6 = compare(want, await fp(fileText(D4_SQL)));
+    ok('rollback 6 alone: only the three approval triggers are gone; every other object is as expected',
+       JSON.stringify(r6.missing.sort()) === JSON.stringify(APPROVAL_TRIGGERS) && !r6.differ.length && !r6.extra.length, r6);
+    await paste('4', { label: 're-install after rollback 6: ' });
+    await fullFp(applied, 'after rollback 6 and step 4 again');
+
     // The rollback chain, newest first, back to 1b.
-    for (const s of ['3B', '3A', '2']) await rollback(s);
+    for (const s of ['4', '3B', '3A', '2']) await rollback(s);
     const left = (await db.query(`SELECT count(*)::int n FROM pg_trigger WHERE NOT tgisinternal AND tgname = ANY($1)`,
       [['zz_class_fee_money_guard', 'zz_class_fee_mirror_guard', 'zz2_session_pay_guard', 'zz_session_insert_guard', 'zz_session_staff_guard',
         'zz_enrollment_money_guard', 'zz_discount_money_guard', 'zz_discount_definition_guard', 'zz_pay_rate_money_guard', 'zz_staff_pay_mirror_guard',
         'zz_invoice_unfreeze_guard', 'zz_invoice_frozen_keep_guard', 'zz_invoice_frozen_delete_guard', 'zz_family_link_guard',
-        'zz_student_delete_guard', 'zz_class_delete_guard']])).rows[0].n;
-    ok('rollbacks 5, 4, 3: none of the guard triggers of steps 2 / 3A / 3B is left', left === 0, left);
+        'zz_student_delete_guard', 'zz_class_delete_guard', 'zz_session_override_approval', 'zz_admin_grant_guard', 'zz_pay_adjustment_approval']])).rows[0].n;
+    ok('rollbacks 6, 5, 4, 3: none of the guard triggers of steps 2 / 3A / 3B / 4 is left', left === 0, left);
     const back = compare(JSON.parse(fileText(ONE_B_JSON)), await fp(fileText(ONE_B_SQL)));
-    ok('rollbacks 5, 4, 3: the 1b fingerprint again, every 1a / 1b trigger as live; only the two 1b bodies 3A and 3B replaced differ (d4_guard_status, _money_enrollment_rpc_call: left by design)',
-       JSON.stringify(back.differ.sort()) === JSON.stringify(['function public._money_enrollment_rpc_call()', 'function public.d4_guard_status()']) &&
+    ok('rollbacks 6, 5, 4, 3: the 1b fingerprint again, every 1a / 1b trigger as live; only the 1b bodies 3A, 3B and 4 replaced differ (left by design)',
+       JSON.stringify(back.differ.sort()) === JSON.stringify(['function public._change_request_claim(p_kind text, p_fingerprint text)',
+         'function public._money_change_full_plan(p_entity text, p_op text, p_args jsonb, p_uid uuid, p_via text)', 'function public._money_enrollment_rpc_call()',
+         'function public.change_approval_needed(p_impact jsonb, p_actor uuid)', 'function public.d4_guard_status()']) &&
        !back.missing.length && JSON.stringify(back.counts) === JSON.stringify(COUNT.base), back);
     err = await exec(mig(F1B));
     ok('then 20261114091000 pasted again (optional, to put the 1b text back): it pastes', err === null, err);
     const exact = compare(JSON.parse(fileText(ONE_B_JSON)), await fp(fileText(ONE_B_SQL)));
-    ok('  and the 1b fingerprint is exact: every object identical', !exact.differ.length && !exact.missing.length, exact);
-    for (const s of ['2', '3A', '3B']) await paste(s, { label: 're-install after the rollback: ' });
-    await fullFp(['2', '3A', '3B'], 're-installed');
-    for (const s of ['3B', '3A', '2', '1b', '1a']) await rollback(s);
+    ok("  and the 1b fingerprint is exact, but for the two step 4 bodies of the 1b stubs (1b creates them only if missing; they read as off without step 4's trigger)",
+       JSON.stringify(exact.differ.sort()) === JSON.stringify(STUBS) && !exact.missing.length, exact);
+    for (const s of ['2', '3A', '3B', '4']) await paste(s, { label: 're-install after the rollback: ' });
+    await fullFp(['2', '3A', '3B', '4'], 're-installed');
+    for (const s of ['4', '3B', '3A', '2', '1b', '1a']) await rollback(s);
     err = await exec(mig(D2));
     ok('rollbacks 5, 4, 3, 2, 1 then D2 again: D2 pastes', err === null, err);
     const d = compare(JSON.parse(fileText(D_JSON)), await fp(fileText(D_SQL)));
@@ -215,7 +254,7 @@ async function scenario(name) {
     const step = order[0];
     await rollback(step);
     const back = compare(JSON.parse(fileText(ONE_B_JSON)), await fp(fileText(ONE_B_SQL)));
-    const kept = REPLACES[step] ? [`function ${REPLACES[step]}`] : [];
+    const kept = (REPLACES[step] ?? []).map((x) => `function ${x}`);
     ok(`rollback of step ${step} alone: the 1b fingerprint again (differing only: ${kept.join(', ') || 'nothing'})`,
        JSON.stringify(back.differ) === JSON.stringify(kept) && !back.missing.length, back);
   }
@@ -224,7 +263,7 @@ async function scenario(name) {
 }
 
 // ------------------------------------------------------------------ parent
-const SCENARIOS = ['plan', 'alone-2', 'alone-3A', 'alone-3B', 'order-3A-2-3B', 'order-2-3B-3A', 'order-3B-2-3A', 'order-3A-3B-2', 'order-3B-3A-2', 'plan-crlf'];
+const SCENARIOS = ['plan', 'alone-2', 'alone-3A', 'alone-3B', 'order-3A-2-3B', 'order-2-3B-3A', 'order-3B-2-3A', 'order-3A-3B-2', 'order-3B-3A-2', 'plan-crlf', 'early-4'];
 const si = process.argv.indexOf('--scenario');
 if (si > 0) {
   await scenario(process.argv[si + 1]);

@@ -335,7 +335,9 @@ const SUITES = [
   // each alone and in every order; every later file's preflight pins still
   // match; the fingerprint after each; the rollback chain back to 1b and to
   // the D release. Builds its own databases (one child process per scenario).
-  { name: "d4 apply chain", file: "d4-apply-chain.test.mjs", expect: 238, migrations: [] },
+  // Step 4 (approvals) extends it: 2 -> 3A -> 3B -> 4 in every order of the
+  // first three, step 4 refused when early, rollback 6 alone (238 before step 4).
+  { name: "d4 apply chain", file: "d4-apply-chain.test.mjs", expect: 344, migrations: [] },
   // D4 step 4: two-administrator approval, built OFF. Builds its databases
   // from guard-fingerprint.mjs D4_BUILD (D1, D2, every D4 file 1a..3B and
   // file 6, real files); OFF is proved by running one scenario with and
