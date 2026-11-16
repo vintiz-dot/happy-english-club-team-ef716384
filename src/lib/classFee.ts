@@ -34,9 +34,48 @@ export function nextMonth(todayIso: string): string {
   return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
 }
 
-/** Is YYYY-MM before the month of today (a correction, not a new fee)? Wording only; the server decides the tier. */
-export function isPastMonth(month: string, todayIso: string): boolean {
-  return month < todayIso.slice(0, 7);
+/**
+ * The earliest month the "New fee from" box offers (YYYY-MM): the month of the
+ * class's first lesson or of its creation, whichever is earlier, and never
+ * before 2000-01 - so the 1900 starting fee cannot be reached by a typed year
+ * (it can only be corrected on purpose, from the SQL editor or a later tool).
+ */
+export function feeMonthMin(createdAt: string | null | undefined, firstLesson: string | null | undefined): string {
+  const months = [createdAt, firstLesson].map((d) => String(d ?? "").slice(0, 7)).filter((m) => /^\d{4}-\d{2}$/.test(m)).sort();
+  const m = months[0] ?? "2000-01";
+  return m < "2000-01" ? "2000-01" : m;
+}
+
+/** A month the box may send: YYYY-MM, not before the minimum. */
+export function feeMonthAllowed(month: string, min: string): boolean {
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(String(month ?? "")) && month >= min;
+}
+
+/**
+ * Does this change go through the dialog? Every Remove; every change the
+ * server says needs anything (a tier, an approval); and every change whose
+ * plan reaches a bill already worked out (`invoices_before` / `refresh_pairs`),
+ * even at tier 0 - the admin sees those bills before anything is saved. Only a
+ * new fee that reaches no bill at all is saved straight away (one recorded
+ * change all the same). Decided from the plan alone, never from the calendar.
+ */
+export function feeNeedsDialog(op: string, plan: any): boolean {
+  if (op !== "set") return true;
+  if (!plan || Number(plan.tier ?? 3) !== 0 || plan.approval?.required) return true;
+  const bills = Array.isArray(plan.invoices_before) ? plan.invoices_before.length : 0;
+  const pairs = Array.isArray(plan.refresh_pairs) ? plan.refresh_pairs.length : 0;
+  return bills > 0 || pairs > 0;
+}
+
+/** The dialog's opening paragraph, from the plan's own figures. */
+export function feeDialogIntro(plan: any, fmt: (n: number | null | undefined) => string): string {
+  const summary = feeChangeSummary(plan, fmt);
+  const n = Array.isArray(plan?.refresh_pairs) ? plan.refresh_pairs.length : 0;
+  const bills = n > 0
+    ? ` It reaches ${n} bill${n === 1 ? "" : "s"} already worked out, listed below as they stand; they are worked out again at the new fee after you confirm.`
+    : " No bill already worked out changes.";
+  const reason = Number(plan?.tier ?? 0) >= 1 ? " The change is kept with your reason." : " The change is recorded with your name.";
+  return `${summary}${bills}${reason}`;
 }
 
 /** The value sent as effective_from: the first of the chosen month. */
@@ -77,15 +116,11 @@ export const CLASS_FEE_COPY = {
   heading: "Fee history",
   explain: "A lesson is charged the fee in force on its date. A new fee applies from the first of a month; months before it keep their fee.",
   newFee: (month: string) => `New fee from ${feeMonthLabel(month)}`,
-  pastWarning: (month: string) =>
-    `${feeMonthLabel(month)} is in the past: this corrects bills already worked out for that month and after. You will be asked why.`,
-  futureNote: (month: string) => `Nothing already billed changes. It applies from ${feeMonthLabel(month)}.`,
-  thisMonthNote: (month: string) =>
-    `It applies to every lesson of ${feeMonthLabel(month)}: this month's bills are worked out again. Earlier months keep their fee.`,
+  checkedFirst: "Before anything is saved, the bills this reaches are checked; if it reaches any, you will see them and confirm.",
+  beforeStart: (min: string) => `Choose ${feeMonthLabel(min)} or later. The starting fee of the class is not changed from here.`,
+  noBillReached: "No bill already worked out changes.",
   removeTitle: "Remove a class fee",
   setTitle: "Change the class fee",
-  intro: (summary: string) =>
-    `${summary} Bills already worked out for these months are listed below as they stand; they are worked out again after you confirm, and the change is kept with your reason.`,
   submitSet: "Save the fee",
   submitRemove: "Remove the fee",
   saved: (month: string) => `Saved. The fee applies from ${feeMonthLabel(month)}.`,

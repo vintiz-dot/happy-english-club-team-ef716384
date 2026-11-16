@@ -10,10 +10,12 @@ import { moneyErrorText } from "@/lib/moneyGuard";
 import {
   CLASS_FEE_COPY,
   CLASS_FEE_REFUSALS,
-  feeChangeSummary,
+  feeDialogIntro,
+  feeMonthAllowed,
+  feeMonthMin,
+  feeNeedsDialog,
   feeRowsForList,
   firstOfMonth,
-  isPastMonth,
   nextMonth,
   parseFee,
   type FeeRow,
@@ -25,11 +27,14 @@ import { MoneyGuardDialog } from "@/components/admin/money-guard/MoneyGuardDialo
 /**
  * A class's fee as a HISTORY (D4 step 2): one fee per month it changed, plus
  * the fee the class started with. Every change goes through the money guard
- * as ('class_fee', 'set' | 'remove'): a fee from a later month reaches no bill
- * and is saved at once (still one recorded change); one dated in a month
- * already billed opens the guard's dialog with the bills it reaches, a reason
- * and a tick. No figure is worked out here: the tier and the reached bills
- * come from money_change_preview; the bills are worked out again on the server.
+ * as ('class_fee', 'set' | 'remove'). The preview decides (feeNeedsDialog):
+ * a new fee that reaches no bill at all is saved at once (still one recorded
+ * change); every Remove, and every change that reaches a bill already worked
+ * out - whatever its tier - opens the guard's dialog with those bills (and,
+ * from tier 1, a reason and a tick). The wording comes from the plan, never
+ * from the browser's calendar. No figure is worked out here: the tier and the
+ * reached bills come from money_change_preview; the bills are worked out
+ * again on the server.
  */
 const feeTable = () => (supabase as any).from("class_fee_history");
 const todayHanoi = () => new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
@@ -60,6 +65,19 @@ export default function ClassFeeHistory({ classId }: { classId: string }) {
     },
   });
 
+  // The box's earliest month: the class's first lesson or creation (decision 7).
+  const bounds = useQuery({
+    queryKey: ["class-fee-min", classId],
+    queryFn: async () => {
+      const [c, s] = await Promise.all([
+        supabase.from("classes").select("created_at").eq("id", classId).maybeSingle(),
+        supabase.from("sessions").select("date").eq("class_id", classId).order("date", { ascending: true }).limit(1),
+      ]);
+      return feeMonthMin((c.data as any)?.created_at ?? null, (s.data as any)?.[0]?.date ?? null);
+    },
+  });
+  const minMonth = bounds.data ?? "2000-01";
+
   const afterChange = (text: string) => {
     setMessage(text);
     queryClient.invalidateQueries({ queryKey: ["class-fee-history", classId] });
@@ -85,7 +103,7 @@ export default function ClassFeeHistory({ classId }: { classId: string }) {
     setNames(Object.fromEntries((data ?? []).map((s: any) => [s.id, s.full_name])));
   };
 
-  /** Preview; at tier 0 confirm at once (one recorded change, no dialog); above it, the dialog. */
+  /** Preview; straight through only when the plan reaches no bill at all (feeNeedsDialog); else the dialog. */
   const run = async (req: MoneyRequest, text: { title: string; submit: string; done: string }) => {
     setBusy(true);
     setMessage(null);
@@ -100,13 +118,13 @@ export default function ClassFeeHistory({ classId }: { classId: string }) {
         setMessage(refusal(plan.refuse_code));
         return;
       }
-      if (plan.tier === 0 && !plan.approval?.required) {
+      if (!feeNeedsDialog(req.op, plan)) {
         const r = await confirmMoneyChange(req.entity, req.op, req.args, { reason: null, token: plan.token, confirm: false, correction_reason: null });
         if ("error" in r) {
           setMessage(refusal(r.error.code, r.error.kind, r.error.message));
           return;
         }
-        let done = text.done;
+        let done = `${text.done} ${CLASS_FEE_COPY.noBillReached}`;
         if (r.result?.override_id && Array.isArray(r.result?.refresh_pairs) && r.result.refresh_pairs.length > 0) {
           const t = await refreshMoneyChange(r.result.override_id);
           done += ` ${"tuition" in t && t.tuition?.status === "refreshed" ? CLASS_FEE_COPY.refreshed : CLASS_FEE_COPY.refreshPartial}`;
@@ -118,7 +136,7 @@ export default function ClassFeeHistory({ classId }: { classId: string }) {
         return;
       }
       await loadNames(Array.isArray(plan.student_ids) ? plan.student_ids : []);
-      setDialogText({ ...text, intro: CLASS_FEE_COPY.intro(feeChangeSummary(plan, formatVnd)) });
+      setDialogText({ ...text, intro: feeDialogIntro(plan, formatVnd) });
       guard.open(req, plan);
     } finally {
       setBusy(false);
@@ -126,10 +144,14 @@ export default function ClassFeeHistory({ classId }: { classId: string }) {
   };
 
   const fee = parseFee(feeText);
-  const canSave = !busy && !!month && fee !== null && !history.data?.missing;
+  const canSave = !busy && feeMonthAllowed(month, minMonth) && fee !== null && !history.data?.missing;
 
   const save = () => {
     if (fee === null) return;
+    if (!feeMonthAllowed(month, minMonth)) {
+      setMessage(CLASS_FEE_COPY.beforeStart(firstOfMonth(minMonth)));
+      return;
+    }
     const from = firstOfMonth(month);
     run(
       { entity: "class_fee", op: "set", args: { class_id: classId, effective_from: from, session_rate_vnd: fee, note: note.trim() || null } },
@@ -184,7 +206,7 @@ export default function ClassFeeHistory({ classId }: { classId: string }) {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label htmlFor={`fee-month-${classId}`}>From the month</Label>
-              <Input id={`fee-month-${classId}`} type="month" value={month} onChange={(e) => setMonth(e.target.value || nextMonth(today))} />
+              <Input id={`fee-month-${classId}`} type="month" min={minMonth} value={month} onChange={(e) => setMonth(e.target.value || nextMonth(today))} />
             </div>
             <div className="space-y-1">
               <Label htmlFor={`fee-amount-${classId}`}>Fee per lesson (VND)</Label>
@@ -195,11 +217,7 @@ export default function ClassFeeHistory({ classId }: { classId: string }) {
             <Label htmlFor={`fee-note-${classId}`}>Note <span className="font-normal text-muted-foreground">(optional)</span></Label>
             <Input id={`fee-note-${classId}`} value={note} onChange={(e) => setNote(e.target.value)} placeholder="New term" maxLength={500} />
           </div>
-          <p className="text-xs text-muted-foreground">
-            {isPastMonth(month, today) ? CLASS_FEE_COPY.pastWarning(firstOfMonth(month))
-              : month === today.slice(0, 7) ? CLASS_FEE_COPY.thisMonthNote(firstOfMonth(month))
-              : CLASS_FEE_COPY.futureNote(firstOfMonth(month))}
-          </p>
+          <p className="text-xs text-muted-foreground">{CLASS_FEE_COPY.checkedFirst}</p>
           <Button onClick={save} disabled={!canSave} className="w-full">
             {busy ? "Checking..." : CLASS_FEE_COPY.newFee(firstOfMonth(month))}
           </Button>
