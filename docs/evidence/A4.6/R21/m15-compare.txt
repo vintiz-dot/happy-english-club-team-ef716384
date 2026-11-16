@@ -1,0 +1,46 @@
+stars-children-1280-dark: req eq | main eq (14) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-children-1280-light: req eq | main eq (14) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-children-375-dark: req eq | main eq (14) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-children-375-light: req eq | main eq (14) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-classes-1280-dark: req eq | main eq (14) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-classes-1280-light: req eq | main eq (14) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-classes-375-dark: req eq | main eq (14) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-classes-375-light: req eq | main eq (14) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-records-1280-dark: req eq | main DIFF (55) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+   only before: 12:23 | only after: 12:32
+stars-records-1280-light: req eq | main DIFF (55) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+   only before: 12:22 | only after: 12:31
+stars-records-375-dark: req eq | main DIFF (51) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+   only before: 12:22 | only after: 12:31
+stars-records-375-light: req eq | main DIFF (51) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+   only before: 12:22 | only after: 12:31
+stars-settle-1280-dark: req eq | main eq (11) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-settle-1280-light: req eq | main eq (11) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-settle-375-dark: req eq | main eq (11) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-settle-375-light: req eq | main eq (11) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-setup-1280-dark: req eq | main eq (14) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-setup-1280-light: req eq | main eq (14) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-setup-375-dark: req eq | main eq (14) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-setup-375-light: req eq | main eq (14) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-tabs-1280-dark: req eq | main DIFF (55) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+   only before: 12:17 | only after: 12:26
+stars-tabs-1280-light: req eq | main DIFF (55) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+   only before: 12:17 | only after: 12:25
+stars-tabs-375-dark: req eq | main DIFF (51) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+   only before: 12:17 | only after: 12:25
+stars-tabs-375-light: req eq | main DIFF (51) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+   only before: 12:16 | only after: 12:25
+stars-tools-1280-dark: req eq | main eq (29) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-tools-1280-light: req eq | main eq (29) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-tools-375-dark: req eq | main eq (29) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-tools-375-light: req eq | main eq (29) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+stars-top-1280-dark: req eq | main DIFF (55) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+   only before: 12:16 | only after: 12:25
+stars-top-1280-light: req eq | main DIFF (55) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+   only before: 12:16 | only after: 12:24
+stars-top-375-dark: req eq | main DIFF (51) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+   only before: 12:16 | only after: 12:24
+stars-top-375-light: req eq | main DIFF (51) | dialog eq (0) | amounts 0 serif 0 non-tab 0
+   only before: 12:15 | only after: 12:24
+runs 32: requests equal 32, <main> numbers equal 20, dialog numbers equal 32; amount nodes after 0: serif 0, not tabular 0; runs with an error/action error on either side 0
+amount colours after: []
