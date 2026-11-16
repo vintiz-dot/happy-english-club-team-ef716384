@@ -229,6 +229,30 @@ const SUITES = [
       "20261114094000_d4_money_inputs_guard.sql",
     ],
   },
+  {
+    name: "d4 reach oracle",
+    file: "d4-reach-oracle.test.mjs",
+    expect: 187,
+    migrations: [
+      "20261009130000_audit_every_admin_action.sql",
+      "20261027090000_cancelled_lesson_attendance_guard.sql",
+      "20261106090000_attendance_enrollment_guard.sql",
+      "20261112090000_session_held_evidence.sql",
+      "20261112091000_session_cancel_guard.sql",
+      "20261106120000_invoice_tuition_freeze.sql",
+      "20261114090000_d4_floors.sql",
+      "20261114091000_d4_core_register.sql",
+      "20261106100000_attendance_guard_no_auto_changes.sql",
+      "20261106100001_date_aware_enrollment_changes.sql",
+      "20261113120000_pause_enrollment_admin_only.sql",
+      "20260403051502_c6a09ad3-08c3-4ee2-ac06-2637acd66dff.sql",
+      "20261114094000_d4_money_inputs_guard.sql",
+    ],
+  },
+  // The wording of the money-input dialogs, and the static scans (no raw
+  // writer of a money input left in src, no service-key writer off the
+  // allow-list, nothing in the MCP tools).
+  { name: "money inputs lib", file: "money-inputs-lib.test.mjs", expect: 40, migrations: [] },
   // Not a database test: it asserts that the modules duplicated between
   // src/ and supabase/functions/_lib/ are still identical. Listed first
   // because a drifted mirror makes everything below it meaningless.
