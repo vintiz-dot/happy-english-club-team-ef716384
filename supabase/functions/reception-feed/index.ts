@@ -195,8 +195,11 @@ Deno.serve(async (req) => {
 
     const [feedbackQr, zaloQr, googleQr] = await Promise.all([qr(settings.feedback_url), qr(settings.zalo_url), qr(settings.google_review_url)]);
 
-    // The screen checks in on every refresh; the dashboard shows when it last did.
-    await db.from("reception_settings").update({ last_seen_at: new Date().toISOString() }).eq("id", true);
+    // The TV checks in on every refresh; the dashboard shows when it last did.
+    // Only the packaged app says screen: "tv", so the admin preview does not count.
+    if (body?.screen === "tv") {
+      await db.from("reception_settings").update({ last_seen_at: new Date().toISOString() }).eq("id", true);
+    }
 
     return json({
       generated_at: new Date().toISOString(),

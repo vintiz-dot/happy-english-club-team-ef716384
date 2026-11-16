@@ -58,12 +58,29 @@ function log(msg) {
 
 // ------------------------------------------------------------------ LG CLI
 const ARES_PKG = "@webos-tools/cli@3.2.1";
+// The LG CLI's dependencies call util.isDate and friends, which Node 23
+// removed ("isDate is not a function" on install). Put them back for it.
+const SHIM = join(HOME, "node-util-shim.cjs");
+writeFileSync(SHIM, `const u = require("util");
+const add = (k, f) => { if (typeof u[k] !== "function") u[k] = f; };
+add("isDate", (x) => x instanceof Date); add("isRegExp", (x) => x instanceof RegExp);
+add("isError", (x) => x instanceof Error); add("isArray", Array.isArray);
+add("isFunction", (x) => typeof x === "function"); add("isString", (x) => typeof x === "string");
+add("isNumber", (x) => typeof x === "number"); add("isBoolean", (x) => typeof x === "boolean");
+add("isSymbol", (x) => typeof x === "symbol"); add("isUndefined", (x) => x === undefined);
+add("isNull", (x) => x === null); add("isNullOrUndefined", (x) => x == null);
+add("isObject", (x) => x !== null && typeof x === "object"); add("isBuffer", (x) => Buffer.isBuffer(x));
+add("isPrimitive", (x) => x === null || (typeof x !== "object" && typeof x !== "function"));
+`);
+// NODE_OPTIONS takes the path literally: forward slashes, quoted only if it must be.
+const shimArg = /\s/.test(SHIM) ? JSON.stringify(SHIM.replace(/\\/g, "/")) : SHIM.replace(/\\/g, "/");
 function ares(cmd, args, opts = {}) {
   const bin = join(TOOLS, "node_modules", ".bin", platform() === "win32" ? `${cmd}.cmd` : cmd);
   if (!existsSync(bin)) throw new Error(`LG CLI not installed. Run: node scripts/reception-tv.mjs setup`);
   // .cmd shims need a shell on Windows; quote every argument ourselves.
   const r = spawnSync(platform() === "win32" ? `"${bin}"` : bin, args.map((a) => (platform() === "win32" ? `"${a}"` : a)), {
     encoding: "utf8", shell: platform() === "win32", timeout: opts.timeout ?? 120000, input: opts.input,
+    env: { ...process.env, NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ""} --require ${shimArg}`.trim() },
   });
   const out = `${r.stdout ?? ""}${r.stderr ?? ""}`.trim();
   if (r.status !== 0 && !opts.allowFail) throw new Error(`${cmd} failed: ${out}`);
@@ -85,8 +102,11 @@ function setup() {
     console.log(`\nTV added as "${DEVICE}". Now open the Developer Mode app on the TV, turn on Key Server, and run:\n  node scripts/reception-tv.mjs setup <PASSPHRASE shown on the TV>`);
     return;
   }
-  console.log(ares("ares-novacom", ["--device", DEVICE, "--getkey"], { input: `${passphrase}\n` }));
-  console.log(ares("ares-device", ["--device-info", "--device", DEVICE], { allowFail: true }));
+  // --getkey saves ~/.ssh/<device>_webos, then asks for the passphrase on a
+  // prompt that ignores piped input; record the key and passphrase directly.
+  console.log(ares("ares-novacom", ["--device", DEVICE, "--getkey"], { input: `${passphrase}\n`, allowFail: true, timeout: 60000 }));
+  ares("ares-setup-device", ["--modify", DEVICE, "--info", `privatekey=${DEVICE}_webos`, "--info", `passphrase=${passphrase}`]);
+  console.log(ares("ares-device", ["-i", "-d", DEVICE]));
 }
 
 // ------------------------------------------------------------------ package / install
@@ -99,7 +119,7 @@ function pkg() {
   rmSync(BUILD, { recursive: true, force: true });
   mkdirSync(app, { recursive: true });
   cpSync(SRC, app, { recursive: true, filter: (p) => !/demo-feed\.js$/.test(p) });
-  const conf = readFileSync(join(SRC, "config.js"), "utf8").replace(/token:\s*""/, `token: "${token}"`);
+  const conf = readFileSync(join(SRC, "config.js"), "utf8").replace(/token:\s*""/, `token: "${token}"`).replace(/screen:\s*""/, 'screen: "tv"');
   if (!conf.includes(token)) throw new Error("Could not write the token into config.js");
   writeFileSync(join(app, "config.js"), conf);
   const out = ares("ares-package", [app, "--outdir", BUILD, "--no-minify"]);
@@ -237,7 +257,8 @@ function autostart() {
   if (platform() === "win32") {
     // wscript runs node with no console window.
     const vbs = join(HOME, "helper.vbs");
-    writeFileSync(vbs, `CreateObject("WScript.Shell").Run """${process.execPath}"" ""${dest}"" watch", 0, False
+    writeFileSync(vbs, `CreateObject("WScript.Shell").Run """${process.execPath}"" ""${dest}"" watch", 0, False
+
 `);
     const task = "HEC Reception TV helper";
     execFileSync("schtasks", ["/Create", "/TN", task, "/SC", "ONLOGON", "/RL", "LIMITED", "/F", "/TR", `wscript.exe "${vbs}"`], { stdio: "inherit" });

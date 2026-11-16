@@ -101,7 +101,7 @@
       done(data && !data.error ? data : null);
     };
     xhr.ontimeout = function () { done(null); };
-    xhr.send(JSON.stringify({ token: CFG.token || "" }));
+    xhr.send(JSON.stringify({ token: CFG.token || "", screen: CFG.screen || "browser" }));
   }
   function refresh() {
     load(function (data) {
