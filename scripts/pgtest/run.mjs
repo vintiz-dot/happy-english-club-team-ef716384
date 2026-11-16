@@ -520,6 +520,9 @@ const SUITES = [
     migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261021090000_staff_pay_rate_history.sql",
       "20261116093000_staff_pay_not_for_every_account.sql", "20261116094000_teacher_storage_by_class.sql", "20261113140000_creator_rows_need_class_staff.sql"],
   },
+  // F-23: public/_headers (the inline-script hash, the hosts the code fetches from, the service
+  // worker's exemption) and the /csp-report Pages Function. docs/evidence/CSP.md.
+  { name: "content security policy (F-23)", file: "csp-headers.test.mjs", migrations: [], expect: 30 },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",
