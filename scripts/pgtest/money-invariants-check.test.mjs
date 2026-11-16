@@ -236,7 +236,7 @@ console.log('\n1. the script is one read-only statement');
   ok('the only function of public it calls is invoice_paid_label (IMMUTABLE)', fns.length === 1 && fns[0] === 'public.invoice_paid_label', fns);
   ok('invoice_paid_label is declared IMMUTABLE in its migration', /invoice_paid_label\([\s\S]*?IMMUTABLE/.test(mig('20261113090000_invoice_paid_label.sql')));
   const ids = [...SCRIPT.matchAll(/'(M\d\d)' AS check_id|SELECT '(M\d\d)'/g)].map((m) => m[1] ?? m[2]);
-  ok('40 checks, numbered M01..M40 once each', ids.length === 40 && new Set(ids).size === 40
+  ok('42 checks, numbered M01..M42 once each', ids.length === 42 && new Set(ids).size === 42
      && ids.every((id, i) => id === `M${String(i + 1).padStart(2, '0')}`), ids);
 }
 
@@ -277,8 +277,45 @@ console.log('\n2. the fixture tables carry the live columns only');
   await db.close();
 }
 
+// Fix round 1: the July bill as live has it. Priced 1,620,000; the 28 Oct
+// service-key reprice took it to 0; frozen at 0 on 6 Nov; on 9 Nov 01:22 UTC
+// the owner's restore in the SQL editor (no actor) put 1,620,000 back while frozen.
+const B_JUL = U(64);
+const restoreCase = ({ actor = null, at = '2026-11-09T01:22:00Z', to = 1620000 } = {}) => `
+  INSERT INTO public.invoices(id, student_id, month, status, base_amount, total_amount, recorded_payment, tuition_frozen,
+    carry_in_credit, carry_in_debt, carry_out_credit, carry_out_debt)
+  VALUES ('${B_JUL}', '${S2}', '2026-06', 'issued', ${to}, ${to}, 0, true, 0, 0, 0, ${to});
+  INSERT INTO public.audit_log(entity, entity_id, operation, changed_fields, actor_user_id, occurred_at, diff) VALUES
+   ('invoices', '${B_JUL}', 'INSERT', NULL, '${ADMIN}', '2026-07-05T00:00:00Z',
+    '{"new":{"tuition_frozen":false,"base_amount":1620000,"discount_amount":0,"total_amount":1620000}}'),
+   ('invoices', '${B_JUL}', 'UPDATE', ARRAY['base_amount','total_amount'], NULL, '2026-10-28T03:00:00Z',
+    '{"old":{"tuition_frozen":false,"base_amount":1620000,"total_amount":1620000},"new":{"tuition_frozen":false,"base_amount":0,"discount_amount":0,"total_amount":0}}'),
+   ('invoices', '${B_JUL}', 'UPDATE', ARRAY['frozen_reason','tuition_frozen'], '${ADMIN}', '2026-11-06T00:00:00Z',
+    '{"old":{"tuition_frozen":false,"base_amount":0,"total_amount":0},"new":{"tuition_frozen":true,"base_amount":0,"discount_amount":0,"total_amount":0}}'),
+   ('invoices', '${B_JUL}', 'UPDATE', ARRAY['base_amount','total_amount'], ${actor ? `'${actor}'` : 'NULL'}, '${at}',
+    '{"old":{"tuition_frozen":true,"base_amount":0,"total_amount":0},"new":{"tuition_frozen":true,"base_amount":${to},"discount_amount":0,"total_amount":${to}}}')`;
+
 // =================================================================== 3, 4
 const CASES = [
+  ['M41 (fix round 1) an old single-leg AR credit of Oct 2025, unkeyed: reports, does not alarm',
+   `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month, created_at) VALUES ('${tx(110)}', ${acct(S1, 'AR')}, 0, 500000, '2025-10', '2025-10-13T03:00:00Z')`, ['M41']],
+  ['M01 (fix round 1) an unbalanced transaction made today with no key still alarms',
+   `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month) VALUES ('${tx(111)}', ${acct(S1, 'AR')}, 0, 220000, '2026-11')`, ['M01']],
+  ['M01 (fix round 1) an OLD-dated unbalanced transaction that carries a key still alarms',
+   `INSERT INTO public.ledger_entries(tx_id, tx_key, account_id, debit, credit, month, created_at) VALUES ('${tx(112)}', 'k112', ${acct(S1, 'AR')}, 0, 220000, '2025-10', '2025-10-13T03:00:00Z')`, ['M01']],
+  ['M01 (fix round 1) an old unkeyed leg completed by a NEW leg that leaves it unbalanced still alarms',
+   `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month, created_at) VALUES
+      ('${tx(113)}', ${acct(S1, 'AR')}, 0, 500000, '2025-10', '2025-10-13T03:00:00Z'), ('${tx(113)}', ${acct(S1, 'REVENUE')}, 100, 0, '2025-10', now())`, ['M01']],
+  ['M42 (restore) the 9 Nov restore to the pre-wipe total, no actor: reports, M13 / M14 do not alarm', restoreCase(), ['M42']],
+  ['M13/M14 (restore) the same restore made BY A PERSON still alarms', restoreCase({ actor: ADMIN }), ['M13', 'M14']],
+  ['M13/M14 (restore) the same restore on ANOTHER DAY (11 Nov) still alarms', restoreCase({ at: '2026-11-11T01:22:00Z' }), ['M13', 'M14']],
+  ['M13/M14 (restore) the same restore an hour before the window (8 Nov 23:00 Hanoi) still alarms', restoreCase({ at: '2026-11-08T16:00:00Z' }), ['M13', 'M14']],
+  ['M13/M14 (restore) a restore to a DIFFERENT figure (1,700,000) still alarms', restoreCase({ to: 1700000 }), ['M13', 'M14']],
+  ['M13/M14 (restore) the restore, then a later change while frozen (another day, an actor) alarms for the later change', `${restoreCase()};
+     UPDATE public.invoices SET total_amount = 1500000, base_amount = 1500000, carry_out_debt = 1500000 WHERE id = '${B_JUL}';
+     INSERT INTO public.audit_log(entity, entity_id, operation, changed_fields, actor_user_id, occurred_at, diff) VALUES
+      ('invoices', '${B_JUL}', 'UPDATE', ARRAY['base_amount','total_amount'], '${ADMIN}', '2026-11-12T00:00:00Z',
+       '{"old":{"tuition_frozen":true,"base_amount":1620000,"total_amount":1620000},"new":{"tuition_frozen":true,"base_amount":1500000,"discount_amount":0,"total_amount":1500000}}')`, ['M13', 'M14', 'M42']],
   // [label, mutation SQL, checks that must move]
   ['M01 a one-legged ledger transaction', `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month) VALUES ('${tx(100)}', ${acct(S1, 'AR')}, 500, 0, '2026-10')`, ['M01']],
   ['M02 a ledger row with neither side', `INSERT INTO public.ledger_entries(tx_id, account_id, debit, credit, month) VALUES ('${tx(101)}', ${acct(S1, 'AR')}, 0, 0, '2026-10')`, ['M02']],
@@ -386,7 +423,7 @@ const db = await freshDb();
 const base = await runReadOnly(db);
 {
   const ids = Object.keys(base);
-  ok('the script runs read-only and returns its 40 rows', ids.length === 40, ids);
+  ok('the script runs read-only and returns its 42 rows', ids.length === 42, ids);
   const nonZero = Object.entries(base).filter(([id, v]) => (id === 'M40' ? v.n !== 1 : v.n !== 0));
   ok('every check is 0 on the consistent world, M40 is 1', nonZero.length === 0, nonZero);
   ok('every row says its kind', Object.values(base).every((v) => v.kind === 'must be 0' || v.kind === 'report'));
@@ -411,7 +448,7 @@ for (const [label, sql, expect] of CASES) {
 }
 {
   const missing = Object.keys(base).filter((id) => !covered.has(id));
-  ok('every one of the 40 checks has a case that makes it move', missing.length === 0, missing);
+  ok('every one of the 42 checks has a case that makes it move', missing.length === 0, missing);
 }
 // The totals mean what they say on two cases.
 {
@@ -431,7 +468,7 @@ console.log('\n5. everything broken at once, read-only: every "must be 0" check 
 {
   await db.exec('BEGIN');
   for (const [label, sql, expect] of CASES) {
-    if (expect.length === 0 || label.startsWith('M40') || label.startsWith('M14')) continue;
+    if (expect.length === 0 || label.startsWith('M40') || label.startsWith('M14') || label.includes('(restore)')) continue;
     await db.exec(sql).catch((e) => ok(`${label}: applies in the combined world`, false, e.message));
   }
   await db.exec(`UPDATE public.invoices SET total_amount = total_amount + 1 WHERE id = '${B_SEP}'`);   // M14 by total, with the rest

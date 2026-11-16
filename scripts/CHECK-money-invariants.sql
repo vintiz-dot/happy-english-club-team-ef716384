@@ -28,14 +28,66 @@
 --   2026-11-16 00:00  Settle Bill / voluntary contributions removed that day
 --   2026-11-17 00:00  overpayment-as-credit: a family payment's allocations
 --                     add up to the whole payment from that day
+--   2026-10-28 00:00  the bulk-cancel wipe repriced some bills to 0 that day;
+--                     a bill's total BEFORE it is the one a restore may bring back
+--   2026-11-09 00:00 - 2026-11-10 00:00  the owner's July restore in the SQL
+--                     editor (no actor): the one window M13 / M14 exempt
+--
+-- History explained on live (fix round 1, 17 Nov), reported, never hidden:
+--   M41  ledger transactions unbalanced from BEFORE the first keyed ledger
+--        write (3 single-leg AR credits of Oct 2025). M01 counts every other one.
+--   M13 / M14 exempt exactly one pattern: a frozen bill's figures put back,
+--        with no actor, inside the restore window, to the total an audit row
+--        showed BEFORE the 28 Oct wipe. Any other day, any actor, any other
+--        total still counts.
 WITH
 params AS (
   SELECT (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date        AS today,
          timestamptz '2026-11-13 08:00:00+07'                  AS t4_live,
          timestamptz '2026-11-16 00:00:00+07'                  AS settle_removed,
          timestamptz '2026-11-17 00:00:00+07'                  AS overpay_live,
+         timestamptz '2026-10-28 00:00:00+07'                  AS wipe_day,
+         timestamptz '2026-11-09 00:00:00+07'                  AS restore_from,
+         timestamptz '2026-11-10 00:00:00+07'                  AS restore_to,
          (SELECT min(e.created_at) FROM public.session_cancel_override_events e
-           WHERE e.kind = 'guard_installed')                   AS guard_on
+           WHERE e.kind = 'guard_installed')                   AS guard_on,
+         -- The first keyed ledger write (tx_key arrived with 20251024050029).
+         -- No keyed row at all: -infinity, so every transaction counts in M01.
+         coalesce((SELECT min(e.created_at) FROM public.ledger_entries e WHERE e.tx_key IS NOT NULL),
+                  timestamptz '-infinity')                    AS first_keyed
+),
+-- Unbalanced transactions, split: "before keys" = every leg unkeyed AND every
+-- leg created before the first keyed write. Every writer since keys at least
+-- one leg of each transaction, but the split does not rely on that: an
+-- unkeyed transaction written today is after first_keyed, so it is in M01.
+unbalanced AS (
+  SELECT e.tx_id, sum(e.debit - e.credit) AS d,
+         bool_and(e.tx_key IS NULL) AND max(e.created_at) < (SELECT first_keyed FROM params) AS before_keys
+    FROM public.ledger_entries e
+   GROUP BY e.tx_id
+  HAVING sum(e.debit) <> sum(e.credit)
+),
+-- The total each bill had before the 28 Oct wipe: its last audit image before that day.
+pre_wipe AS (
+  SELECT DISTINCT ON (a.entity_id) a.entity_id,
+         coalesce(a.diff -> 'new' ->> 'total_amount', a.diff -> 'old' ->> 'total_amount') AS total
+    FROM public.audit_log a, params
+   WHERE a.entity = 'invoices' AND a.occurred_at < params.wipe_day
+   ORDER BY a.entity_id, a.occurred_at DESC, a.id DESC
+),
+-- Audit rows where a bill stayed frozen and a charged figure moved.
+frozen_moves AS (
+  SELECT a.id, a.entity_id, a.occurred_at, a.diff -> 'new' AS n,
+         (a.actor_user_id IS NULL
+          AND a.occurred_at >= params.restore_from AND a.occurred_at < params.restore_to
+          AND EXISTS (SELECT 1 FROM pre_wipe w
+                       WHERE w.entity_id = a.entity_id AND w.total IS NOT NULL
+                         AND (a.diff -> 'new' ->> 'total_amount')::numeric = w.total::numeric)) AS is_restore
+    FROM public.audit_log a, params
+   WHERE a.entity = 'invoices' AND a.operation = 'UPDATE'
+     AND coalesce((a.diff -> 'old' ->> 'tuition_frozen')::boolean, false)
+     AND coalesce((a.diff -> 'new' ->> 'tuition_frozen')::boolean, false)
+     AND a.changed_fields && ARRAY['base_amount', 'discount_amount', 'total_amount', 'class_breakdown']
 ),
 -- Ledger money received per child and month: CASH and BANK, debit - credit.
 cash AS (
@@ -88,13 +140,23 @@ labels AS (
 -- The audit row that last froze each bill (an INSERT born frozen, or an
 -- UPDATE false -> true).
 freeze_rec AS (
-  SELECT DISTINCT ON (a.entity_id) a.entity_id, a.diff -> 'new' AS at_freeze
+  SELECT DISTINCT ON (a.entity_id) a.entity_id, a.occurred_at, a.id, a.diff -> 'new' AS at_freeze
     FROM public.audit_log a
    WHERE a.entity = 'invoices'
      AND coalesce((a.diff -> 'new' ->> 'tuition_frozen')::boolean, false)
      AND (a.operation = 'INSERT'
           OR (a.operation = 'UPDATE' AND NOT coalesce((a.diff -> 'old' ->> 'tuition_frozen')::boolean, false)))
    ORDER BY a.entity_id, a.occurred_at DESC, a.id DESC
+),
+-- What a frozen bill must still show: the freeze, or an exempt restore made after it.
+freeze_ref AS (
+  SELECT DISTINCT ON (r.entity_id) r.entity_id, r.figures
+    FROM (SELECT f.entity_id, f.occurred_at, f.id, f.at_freeze AS figures FROM freeze_rec f
+          UNION ALL
+          SELECT m.entity_id, m.occurred_at, m.id, m.n FROM frozen_moves m
+            JOIN freeze_rec f ON f.entity_id = m.entity_id AND m.occurred_at >= f.occurred_at
+           WHERE m.is_restore) r
+   ORDER BY r.entity_id, r.occurred_at DESC, r.id DESC
 ),
 fam_pay AS (
   SELECT p.id, p.amount::bigint AS amount, p.created_at,
@@ -133,9 +195,8 @@ SELECT check_id, check_name, kind, violations, total_vnd, meaning FROM (
 -- ------------------------------------------------------------ the ledger
 SELECT 'M01' AS check_id, 'ledger_transactions_unbalanced' AS check_name, 'must be 0' AS kind,
        count(*)::bigint AS violations, coalesce(sum(abs(d)), 0)::bigint AS total_vnd,
-       'ledger transactions (tx_id) whose debits and credits differ; every writer posts both legs in one insert' AS meaning
-  FROM (SELECT sum(e.debit - e.credit) AS d FROM public.ledger_entries e GROUP BY e.tx_id
-        HAVING sum(e.debit) <> sum(e.credit)) x
+       'ledger transactions (tx_id) whose debits and credits differ, apart from the pre-key history in M41; every writer posts both legs in one insert' AS meaning
+  FROM unbalanced WHERE NOT before_keys
 UNION ALL
 SELECT 'M02', 'ledger_entries_malformed', 'must be 0', count(*)::bigint, NULL,
        'ledger rows with a negative side, both sides, or neither side'
@@ -200,23 +261,19 @@ SELECT 'M12', 'label_disagrees_written_since_t4', 'report', count(*)::bigint, NU
 -- --------------------------------------------------------- frozen bills
 UNION ALL
 SELECT 'M13', 'frozen_figures_changed_while_frozen', 'must be 0', count(*)::bigint, NULL,
-       'audit rows where a bill stayed frozen and its base, discount, total or class breakdown changed (keep_frozen_invoice_amounts)'
-  FROM public.audit_log a
- WHERE a.entity = 'invoices' AND a.operation = 'UPDATE'
-   AND coalesce((a.diff -> 'old' ->> 'tuition_frozen')::boolean, false)
-   AND coalesce((a.diff -> 'new' ->> 'tuition_frozen')::boolean, false)
-   AND a.changed_fields && ARRAY['base_amount', 'discount_amount', 'total_amount', 'class_breakdown']
+       'audit rows where a bill stayed frozen and its base, discount, total or class breakdown changed (keep_frozen_invoice_amounts); the 9 Nov restore to the pre-wipe total is exempt (M42)'
+  FROM frozen_moves WHERE NOT is_restore
 UNION ALL
 SELECT 'M14', 'frozen_bill_differs_from_when_frozen', 'must be 0', count(*)::bigint,
-       coalesce(sum(abs(coalesce(i.total_amount, 0) - coalesce((f.at_freeze ->> 'total_amount')::numeric, 0))), 0)::bigint,
-       'frozen bills whose charged figures now differ from the audit row that froze them'
+       coalesce(sum(abs(coalesce(i.total_amount, 0) - coalesce((f.figures ->> 'total_amount')::numeric, 0))), 0)::bigint,
+       'frozen bills whose charged figures now differ from the audit row that froze them (or from the exempt 9 Nov restore made after it)'
   FROM public.invoices i
-  JOIN freeze_rec f ON f.entity_id = i.id::text
+  JOIN freeze_ref f ON f.entity_id = i.id::text
  WHERE i.tuition_frozen
-   AND (coalesce(i.base_amount, 0)     <> coalesce((f.at_freeze ->> 'base_amount')::numeric, 0)
-     OR coalesce(i.discount_amount, 0) <> coalesce((f.at_freeze ->> 'discount_amount')::numeric, 0)
-     OR coalesce(i.total_amount, 0)    <> coalesce((f.at_freeze ->> 'total_amount')::numeric, 0)
-     OR i.class_breakdown IS DISTINCT FROM (f.at_freeze -> 'class_breakdown'))
+   AND (coalesce(i.base_amount, 0)     <> coalesce((f.figures ->> 'base_amount')::numeric, 0)
+     OR coalesce(i.discount_amount, 0) <> coalesce((f.figures ->> 'discount_amount')::numeric, 0)
+     OR coalesce(i.total_amount, 0)    <> coalesce((f.figures ->> 'total_amount')::numeric, 0)
+     OR jsonb_strip_nulls(i.class_breakdown) IS DISTINCT FROM (f.figures -> 'class_breakdown'))
 UNION ALL
 SELECT 'M15', 'frozen_bill_without_freeze_record', 'report', count(*)::bigint, NULL,
        'frozen bills with no audit row of the freeze (frozen by a trigger-made write, or before the audit trigger): M14 cannot check them'
@@ -407,6 +464,17 @@ SELECT 'M39', 'finance_snapshot_differs_from_bill', 'report', count(*)::bigint,
 UNION ALL
 SELECT 'M40', 'guard_installed', 'report', (SELECT count(*) FROM params WHERE guard_on IS NOT NULL)::bigint, NULL,
        '1 when the D2 guard_installed event exists (M20-M22 read nothing before it; 0 means they checked nothing)'
+
+-- -------------------------- history explained on live (fix round 1), reported
+UNION ALL
+SELECT 'M41', 'ledger_unbalanced_before_keys', 'report', count(*)::bigint, coalesce(sum(abs(d)), 0)::bigint,
+       'unbalanced ledger transactions wholly from before the first keyed ledger write (3 / 920,000 on live: single-leg AR credits of Oct 2025); M01 counts every other one'
+  FROM unbalanced WHERE before_keys
+UNION ALL
+SELECT 'M42', 'frozen_bill_restored_to_pre_wipe_total', 'report', count(*)::bigint,
+       coalesce(sum((n ->> 'total_amount')::numeric), 0)::bigint,
+       'frozen bills put back to the total they had before the 28 Oct wipe, with no actor, on 9 Nov (Hanoi): the owner''s July restore (1 / 1,620,000 on live); exempt from M13 / M14'
+  FROM frozen_moves WHERE is_restore
 
 ) checks
 ORDER BY check_id;
