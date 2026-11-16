@@ -113,7 +113,17 @@ export function normalise(text) {
       disposition: r.disposition === "enforce" ? "enforce" : "report",
     }))
     .filter((r) => !fromExtension(r))
-    .map(({ rawSource, ...r }) => r);
+    .map(({ rawSource, ...r }) => (knownProbe(r) ? { ...r, known: "global-this-probe" } : r));
+}
+
+/**
+ * The HEC Docs engine (nunjucks' browser build) finds the global object with
+ * `try { Function("return this")() } catch { window }`. The policy refuses that
+ * Function call and the catch takes over, so nothing breaks; the browser still
+ * reports it once per engine load. Tagged, not hidden. docs/evidence/CSP.md.
+ */
+function knownProbe(r) {
+  return r.directive === "script-src" && r.blocked === "eval" && /\/assets\/engine\.generated-[\w-]+\.js$/.test(r.source || "");
 }
 
 export async function onRequestPost({ request, env }) {

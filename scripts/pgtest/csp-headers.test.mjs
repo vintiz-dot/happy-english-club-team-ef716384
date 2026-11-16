@@ -48,6 +48,22 @@ for (const s of inline) {
 ok("index.html has no inline event handler (on...=)", !/<[^>]+\son[a-z]+\s*=/i.test(html));
 ok("index.html loads no third-party script", [...html.matchAll(/<script[^>]*\bsrc="([^"]+)"/g)].every((m) => m[1].startsWith("/")));
 
+// inline event handlers written as HTML strings in src/ (they run only if script-src lists their hash with 'unsafe-hashes')
+const { readdirSync, statSync } = await import("node:fs");
+const walk = (d) => readdirSync(d).flatMap((n) => { const p = resolve(d, n); return statSync(p).isDirectory() ? walk(p) : /\.(tsx?|jsx?)$/.test(n) && !/generated/.test(n) ? [p] : []; });
+const handlers = new Map();
+for (const f of walk(resolve(repo, "src"))) {
+  for (const m of readFileSync(f, "utf8").matchAll(/\son[a-z]+="([^"]+)"/g)) handlers.set(m[1], f.slice(repo.length + 1));
+}
+const scriptSrc = p["script-src"] || [];
+ok("found the one inline handler in src/ (the fallback homework PDF's logo onerror)", handlers.size === 1, [...handlers]);
+for (const [code, file] of handlers) {
+  const h = `'sha256-${createHash("sha256").update(code, "utf8").digest("base64")}'`;
+  ok(`script-src allows the inline handler ${JSON.stringify(code)} (${file}) by ${h}`, scriptSrc.includes("'unsafe-hashes'") && scriptSrc.includes(h), scriptSrc);
+}
+const allowedHashes = new Set([...inline, ...handlers.keys()].map((s) => `'sha256-${createHash("sha256").update(s, "utf8").digest("base64")}'`));
+ok("script-src lists no hash that matches nothing in index.html or src/", scriptSrc.filter((s) => s.startsWith("'sha256-")).every((s) => allowedHashes.has(s)), scriptSrc);
+
 // the hard parts of the policy
 ok("script-src has no 'unsafe-eval' and no 'unsafe-inline'", !(p["script-src"] || []).some((s) => s === "'unsafe-eval'" || s === "'unsafe-inline'"));
 ok("script-src names no remote host", (p["script-src"] || []).every((s) => /^'|^blob:$/.test(s)), p["script-src"]);
@@ -105,6 +121,9 @@ const modern = JSON.stringify([
 const b = fn.normalise(modern);
 ok("report-to format: the csp-violation kept, the extension and the other report type dropped", b.length === 1 && b[0].blocked === "inline" && b[0].disposition === "enforce" && b[0].screen === "/admin", b);
 ok("blob:/data: blocked URLs are reported as the scheme only", fn.blockedOf("blob:https://user.hanoienglish.com/1234") === "blob:" && fn.blockedOf("data:image/png;base64,AAAA") === "data:");
+const probe = fn.normalise(JSON.stringify({ "csp-report": { "document-uri": "https://user.hanoienglish.com/teacher/assignments", "effective-directive": "script-src", "blocked-uri": "eval", "source-file": "https://user.hanoienglish.com/assets/engine.generated-CSr67a5e.js", "line-number": 2 } }));
+const realEval = fn.normalise(JSON.stringify({ "csp-report": { "document-uri": "https://user.hanoienglish.com/admin", "effective-directive": "script-src", "blocked-uri": "eval", "source-file": "https://user.hanoienglish.com/assets/index-abc.js" } }));
+ok("the HEC Docs engine's global-object probe is tagged known; an eval anywhere else is not", probe[0]?.known === "global-this-probe" && realEval.length === 1 && !realEval[0].known, { probe, realEval });
 ok("garbage is ignored", fn.normalise("not json").length === 0 && fn.normalise("{}").length === 0);
 
 const kv = new Map();
