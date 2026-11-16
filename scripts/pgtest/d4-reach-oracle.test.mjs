@@ -401,6 +401,92 @@ ok(`the oracle is not vacuous: ${stats.movedGuarded} of ${stats.edits} edits mov
 ok(`and it is not "everything is tier 1": ${stats.t0} edits were tier 0, ${stats.t0MovedThisMonthOnly} of which moved only this month's unsigned bill`,
    stats.t0 >= 8 && stats.tiered >= 25, stats);
 
+// ------------------------------------------------------------ refused outright (review B-1, B-2)
+// Edits no reach rule prices, because there is no checked path for them:
+// which of two overlapping enrolments of a class was created first (B-1:
+// that row prices the lesson), and a frozen bill deleted or moved to another
+// month (B-2: calculate-tuition then writes a new, unfrozen bill). For each:
+// the raw statement by an admin is refused with the named code; with the
+// guard on, recalculating moves no past or signed-off bill; and the same
+// statement made with the guard switched off DOES move one (the refusal is
+// not vacuous). Ported from the reviewer's review3b-oracle.mjs (O1-O5).
+const movedBills = (before, now) => {
+  const out = [];
+  for (const [key, was] of before) {
+    const is = now.get(key);
+    if (!is || ['base_amount', 'discount_amount', 'total_amount'].some((f) => is[f] !== was[f]) || is.tuition_frozen !== was.tuition_frozen) {
+      const [sid, month] = key.split(':');
+      if (PAST[month] || signedOff(was)) out.push({ kid: sid === A ? 'A' : 'B', month, was: was.total_amount, is: is?.total_amount ?? null, frozen_was: was.tuition_frozen, frozen_is: is?.tuition_frozen ?? null });
+    }
+  }
+  return out;
+};
+async function refusedOutright(label, setup, raw, code, guard) {
+  let refusedCode = null, movedOn = null, movedOff = null, failure = null;
+  await db.exec('BEGIN');
+  try {
+    for (const s of setup) await db.exec(s);
+    await calcAll();
+    const before = await bills();
+    await db.exec('SAVEPOINT raw_attempt');
+    try {
+      await db.exec(`SELECT set_config('test.uid', '${ADMIN}', true), set_config('test.jwt_role', 'authenticated', true); SET LOCAL ROLE authenticated; ${raw};`);
+    } catch (x) { refusedCode = x.code; }
+    await db.exec(`ROLLBACK TO SAVEPOINT raw_attempt; RESET ROLE; SELECT set_config('test.uid', '', true), set_config('test.jwt_role', '', true);`);
+    await calcAll();
+    movedOn = movedBills(before, await bills());
+    // the same statement by the same admin, with only the named guard switched off
+    // (as the admin: the live freeze trigger keeps a bill frozen for anyone else)
+    for (const [table, trigger] of guard) await db.exec(`ALTER TABLE public.${table} DISABLE TRIGGER ${trigger}`);
+    await db.exec(`SELECT set_config('test.uid', '${ADMIN}', true), set_config('test.jwt_role', 'authenticated', true); SET LOCAL ROLE authenticated; ${raw};`);
+    await db.exec(`RESET ROLE; SELECT set_config('test.uid', '', true), set_config('test.jwt_role', '', true);`);
+    await calcAll();
+    movedOff = movedBills(before, await bills());
+  } catch (x) { failure = `${x.code ?? ''} ${x.message}`; }
+  await db.exec('ROLLBACK').catch(() => {});
+  await db.exec('RESET ROLE').catch(() => {});
+  ok(`${label}: an admin's raw statement is refused, ${code}`, !failure && refusedCode === code, { refusedCode, failure });
+  ok(`  with the guard on, recalculating moves no past or signed-off bill`, Array.isArray(movedOn) && movedOn.length === 0, movedOn);
+  ok(`  not vacuous: with the guard switched off the same statement moves ${movedOff?.length ?? 0} past / signed-off bill(s)`,
+     Array.isArray(movedOff) && movedOff.length >= 1, movedOff);
+}
+const overlapping = [`INSERT INTO enrollments(class_id, student_id, start_date, rate_override_vnd, created_at)
+  VALUES ('${C1}', '${B}', '${first(0)}', 50000, now() + interval '1 hour')`];
+await refusedOutright('O1 (B-1) a later, overlapping enrolment of the sibling re-dated to be created first', overlapping,
+  `UPDATE enrollments SET created_at = '2000-01-01' WHERE student_id = '${B}' AND rate_override_vnd = 50000`, 'HC121',
+  [['enrollments', 'zz_enrollment_money_guard']]);
+const historyCorrected = [`UPDATE enrollments SET rate_override_vnd = 60000 WHERE id = '${EA}'`];   // the frozen month keeps its figure
+await refusedOutright(`O3 (B-2) the frozen bill of ${MONTHS[0]} deleted after a history correction`, historyCorrected,
+  `DELETE FROM invoices WHERE student_id = '${A}' AND month = '${MONTHS[0]}'`, 'HC120',
+  [['invoices', 'zz_invoice_frozen_delete_guard']]);
+await refusedOutright(`O4 (B-2) the frozen bill of ${MONTHS[0]} moved to another month`, historyCorrected,
+  `UPDATE invoices SET month = '2001-01' WHERE student_id = '${A}' AND month = '${MONTHS[0]}'`, 'HC120',
+  [['invoices', 'zz_invoice_frozen_keep_guard']]);
+await refusedOutright(`O5 (control) the frozen bill of ${MONTHS[0]} unfrozen raw`, historyCorrected,
+  `UPDATE invoices SET tuition_frozen = false WHERE student_id = '${A}' AND month = '${MONTHS[0]}'`, 'HC120',
+  [['invoices', 'zz_invoice_unfreeze_guard']]);
+{
+  // B-2's triggers compare month / student_id BY VALUE: the real calculator's
+  // upsert re-sets both to the same values on every frozen bill, and must pass.
+  let failure = null, touched = false, kept = false, installed = 0;
+  await db.exec('BEGIN');
+  try {
+    installed = (await q1(`SELECT count(*)::int n FROM pg_trigger WHERE tgrelid = 'public.invoices'::regclass AND tgenabled = 'O'
+                             AND tgname IN ('zz_invoice_frozen_keep_guard', 'zz_invoice_frozen_delete_guard')`)).n;
+    await db.exec(historyCorrected[0]);
+    await db.exec(`UPDATE invoices SET updated_at = '2000-01-01' WHERE month = '${MONTHS[0]}' AND student_id = ANY ('{${KIDS.join(',')}}')`);
+    const before = await bills();
+    await calcAll();
+    const now = await bills();
+    touched = (await q1(`SELECT bool_and(updated_at > '2000-01-02') t FROM invoices WHERE month = '${MONTHS[0]}' AND student_id = ANY ('{${KIDS.join(',')}}')`)).t === true;
+    kept = KIDS.every((k) => { const key = `${k}:${MONTHS[0]}`; const b = before.get(key), n = now.get(key);
+      return b.tuition_frozen && n.tuition_frozen && ['base_amount', 'discount_amount', 'total_amount'].every((f) => b[f] === n[f]); });
+  } catch (x) { failure = `${x.code ?? ''} ${x.message}`; }
+  await db.exec('ROLLBACK').catch(() => {});
+  ok('B-2: the real calculate-tuition still saves both frozen bills through the new triggers (its upsert reached the rows), and they keep their figures',
+     !failure && installed === 2 && touched && kept, { failure, installed, touched, kept });
+}
+
 // ------------------------------------------------------------ pay rates
 // The rate a lesson is paid at is resolved in SQL by teacher_rate_on (the same
 // rule calculate-payroll's resolver mirrors). The oracle: change a rate

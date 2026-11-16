@@ -7,8 +7,8 @@
 -- by rolling back; tell the conductor.
 --
 -- TWO STEPS, BOTH REQUIRED:
---   1. Paste this file: it drops the nine money-input guard triggers (on
---      twelve tables) and nothing else.
+--   1. Paste this file: it drops the money-input guard triggers (fourteen
+--      triggers under eleven names, on eleven tables) and nothing else.
 --   2. At once, redeploy the PREVIOUS update-enrollment-rate and
 --      create-family (the versions live before step 3B) and publish the
 --      previous screens. NOT optional: with the triggers gone
@@ -20,7 +20,8 @@
 -- WHAT STAYS, on purpose (scripts/pgtest/d4-money-inputs.test.mjs checks it):
 --   * money_change_overrides / money_change_events with their rows: the
 --     record of who changed what with which reason. Never dropped.
---   * audit_families (an audit trigger, not a guard).
+--   * audit_families, audit_referral_bonuses, audit_discount_definitions,
+--     audit_teachers, audit_teaching_assistants (audit triggers, not guards).
 --   * every function of the file, change_enrollment_terms included (it is
 --     an ordinary dated RPC like change_enrollment_days).
 --   * the step 3B body of _money_enrollment_rpc_call(). With the enrolment
@@ -42,6 +43,8 @@ DROP TRIGGER IF EXISTS zz_pay_rate_money_guard      ON public.staff_pay_rates;
 DROP TRIGGER IF EXISTS zz_staff_pay_mirror_guard    ON public.teachers;
 DROP TRIGGER IF EXISTS zz_staff_pay_mirror_guard    ON public.teaching_assistants;
 DROP TRIGGER IF EXISTS zz_invoice_unfreeze_guard    ON public.invoices;
+DROP TRIGGER IF EXISTS zz_invoice_frozen_keep_guard   ON public.invoices;
+DROP TRIGGER IF EXISTS zz_invoice_frozen_delete_guard ON public.invoices;
 DROP TRIGGER IF EXISTS zz_family_link_guard         ON public.students;
 DROP TRIGGER IF EXISTS zz_family_link_guard         ON public.families;
 DROP TRIGGER IF EXISTS zz_student_delete_guard      ON public.students;
@@ -53,4 +56,5 @@ SELECT count(*) AS d4_money_input_triggers_left
  WHERE NOT tgisinternal
    AND tgname IN ('zz_enrollment_money_guard', 'zz_discount_money_guard', 'zz_discount_definition_guard',
                   'zz_pay_rate_money_guard', 'zz_staff_pay_mirror_guard', 'zz_invoice_unfreeze_guard',
+                  'zz_invoice_frozen_keep_guard', 'zz_invoice_frozen_delete_guard',
                   'zz_family_link_guard', 'zz_student_delete_guard', 'zz_class_delete_guard');

@@ -191,7 +191,7 @@ const SUITES = [
   {
     name: "d4 money inputs",
     file: "d4-money-inputs.test.mjs",
-    expect: 262,
+    expect: 306,
     migrations: [
       "20261009130000_audit_every_admin_action.sql",
       "20261027090000_cancelled_lesson_attendance_guard.sql",
@@ -232,7 +232,7 @@ const SUITES = [
   {
     name: "d4 reach oracle",
     file: "d4-reach-oracle.test.mjs",
-    expect: 187,
+    expect: 200,
     migrations: [
       "20261009130000_audit_every_admin_action.sql",
       "20261027090000_cancelled_lesson_attendance_guard.sql",

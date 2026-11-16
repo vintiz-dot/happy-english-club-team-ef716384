@@ -125,7 +125,14 @@ export function StudentLinkDialog({
         message += ` (${data.siblingsLinked} sibling${data.siblingsLinked > 1 ? 's' : ''} also linked)`;
       }
       
-      if (data?.warning) {
+      if (data?.familyError) {
+        // the account is linked; the family step was refused or failed (never silent)
+        toast({
+          title: `${message}, but the family was not set up`,
+          description: data.familyError,
+          variant: "destructive",
+        });
+      } else if (data?.warning) {
         toast({ 
           title: message, 
           description: data.warning,

@@ -11,9 +11,13 @@
 --             staff_pay_rates.zz_pay_rate_money_guard           (G-17)
 --             teachers / teaching_assistants.zz_staff_pay_mirror_guard (G-17)
 --             invoices.zz_invoice_unfreeze_guard                (G-18)
+--             invoices.zz_invoice_frozen_keep_guard / zz_invoice_frozen_delete_guard
+--                       (G-18: a frozen bill is not deleted or re-keyed; review B-2)
 --             students / families.zz_family_link_guard          (G-19)
 --             students.zz_student_delete_guard, classes.zz_class_delete_guard (G-21)
---             families.audit_families (the table was not in the audit list)
+--             families.audit_families (the table was not in the audit list), and
+--             audit_referral_bonuses / _discount_definitions / _teachers /
+--             _teaching_assistants where missing (review N-1)
 --   RPC       change_enrollment_terms(enrollment, terms, effective_date)  (G-14,
 --             "from this date" for a rate or a discount; admin JWT only)
 --   entities  the plan / exec pairs of enrollment, discount_assignment,
@@ -116,8 +120,9 @@ BEGIN
       ('teaching_assistants',  ARRAY['id','pay_rate_type','hourly_rate_vnd','per_session_rate_vnd']),
       ('invoices',             ARRAY['id','student_id','month','status','recorded_payment','confirmation_status','tuition_frozen']),
       ('invoice_state_floor',  ARRAY['student_id','month','ever_paid','ever_signed','ever_frozen','max_recorded_payment']),
-      ('students',             ARRAY['id','family_id','sibling_discount_from']),
-      ('families',             ARRAY['id','sibling_percent_override']),
+      ('students',             ARRAY['id','family_id','sibling_discount_from','is_active']),
+      ('families',             ARRAY['id','sibling_percent_override','is_active']),
+      ('sibling_discount_state', ARRAY['family_id','month','status','winner_student_id']),
       ('classes',              ARRAY['id']),
       ('payments',             ARRAY['id','student_id']),
       ('attendance',           ARRAY['session_id','student_id','status','marked_by']),
@@ -363,12 +368,27 @@ $fn$;
 
 -- The reach of a family change: the moved child, every child of the old and
 -- of the new family, from the moved child's earliest enrolment (R-14).
+-- A child that is alone in BOTH its old and its new family (no other child,
+-- active or not, in either) reaches nothing: a family of one has no sibling
+-- discount, so no figure can move (review M-1: link-student-user's "a new
+-- family for this child"). Unless a stored sibling state of either family
+-- still names the child as the winner of an assigned discount (a state
+-- computed while it had a sibling): then the full reach, fail closed.
 CREATE OR REPLACE FUNCTION public._money_family_reach(p_child uuid, p_old_family uuid, p_new_family uuid)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $fn$
 DECLARE
   v_kids uuid[];
   v_from date;
 BEGIN
+  IF p_child IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM public.students s WHERE s.id <> p_child
+                       AND ((p_old_family IS NOT NULL AND s.family_id = p_old_family)
+                         OR (p_new_family IS NOT NULL AND s.family_id = p_new_family)))
+     AND NOT EXISTS (SELECT 1 FROM public.sibling_discount_state d
+                      WHERE d.winner_student_id = p_child AND d.status = 'assigned'
+                        AND (d.family_id = p_old_family OR d.family_id = p_new_family)) THEN
+    RETURN public._money_tuition_reach(ARRAY[p_child], NULL, DATE '9999-12-31', DATE '9999-12-30');   -- the empty reach: T0
+  END IF;
   SELECT COALESCE(array_agg(DISTINCT s.id), ARRAY[]::uuid[]) INTO v_kids FROM public.students s
    WHERE s.id = p_child OR (p_old_family IS NOT NULL AND s.family_id = p_old_family)
       OR (p_new_family IS NOT NULL AND s.family_id = p_new_family);
@@ -537,6 +557,9 @@ BEGIN
                                           AND a ->> 'target_id' = v_id::text
           ELSE false END
         END;
+      -- and the row is the planned child's: an acknowledgement for one child
+      -- never covers a sibling's enrolment (review N-5)
+      v_ok := v_ok AND COALESCE(a -> 'change' ->> 'student_id', a -> 'change' -> 'row' ->> 'student_id') = v_kid::text;
     END IF;
   END IF;
   PERFORM public._money_input_gate('enrollment', 'enrollments', TG_OP, v_id, v_tier, v_ok,
@@ -907,6 +930,11 @@ BEGIN
   ELSE
     RETURN jsonb_build_object('refuse_code', 'bad_op');
   END IF;
+  IF v_kid IS NOT NULL THEN
+    -- the one child this change is for: the trigger lets the acknowledgement
+    -- cover that child's rows only, not a sibling's (review N-5)
+    v_change := v_change || jsonb_build_object('student_id', v_kid);
+  END IF;
 
   r := public._money_tuition_reach(CASE WHEN v_kid IS NULL THEN ARRAY[]::uuid[] ELSE ARRAY[v_kid] END, v_classes[1], v_from, v_to);
   FOREACH c IN ARRAY v_classes[2:] LOOP
@@ -1033,6 +1061,10 @@ BEGIN
         WHEN TG_OP = 'DELETE' THEN v_op = 'remove' AND a ->> 'target_id' = v_id::text
         ELSE a ->> 'target_id' = v_id::text
              AND (v_op = 'edit' OR (v_op = 'set_end' AND v_cols <@ ARRAY['effective_to'])) END;
+      IF TG_OP = 'INSERT' THEN
+        -- an assign is for the child the plan named, not a sibling (review N-5)
+        v_ok := v_ok AND a ->> 'target_id' = v_kid::text;
+      END IF;
     END IF;
   END IF;
   PERFORM public._money_input_gate(v_entity, TG_TABLE_NAME, TG_OP, v_id, v_tier, v_ok,
@@ -1568,6 +1600,31 @@ CREATE TRIGGER zz_invoice_unfreeze_guard BEFORE UPDATE ON public.invoices
   FOR EACH ROW WHEN (OLD.tuition_frozen AND NOT NEW.tuition_frozen)
   EXECUTE FUNCTION public._invoice_unfreeze_guard();
 
+-- A frozen bill deleted, or moved to another child or month, is unfrozen by
+-- another route: the month has no bill and calculate-tuition writes a new,
+-- unfrozen one at today's price. Gated like an unfreeze, at the same tier,
+-- with no acknowledgement path (unfreeze it first); the owner lane passes
+-- with an event. The UPDATE trigger compares the two key columns BY VALUE:
+-- calculate-tuition's upsert sets every column it sends (month and
+-- student_id included, to the same values), so `UPDATE OF month,
+-- student_id` would refuse the calculator on every frozen bill.
+CREATE OR REPLACE FUNCTION public._invoice_frozen_keep_guard()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
+BEGIN
+  PERFORM public._money_input_gate('invoice_freeze', 'invoices', TG_OP, OLD.id, public._money_unfreeze_tier(OLD.id), false,
+    'A frozen bill is not deleted or moved. Unfreeze it first, from the child''s bill, with a reason.');
+  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+END $fn$;
+
+DROP TRIGGER IF EXISTS zz_invoice_frozen_keep_guard ON public.invoices;
+CREATE TRIGGER zz_invoice_frozen_keep_guard BEFORE UPDATE ON public.invoices
+  FOR EACH ROW WHEN (OLD.tuition_frozen AND (OLD.student_id IS DISTINCT FROM NEW.student_id OR OLD.month IS DISTINCT FROM NEW.month))
+  EXECUTE FUNCTION public._invoice_frozen_keep_guard();
+DROP TRIGGER IF EXISTS zz_invoice_frozen_delete_guard ON public.invoices;
+CREATE TRIGGER zz_invoice_frozen_delete_guard BEFORE DELETE ON public.invoices
+  FOR EACH ROW WHEN (OLD.tuition_frozen)
+  EXECUTE FUNCTION public._invoice_frozen_keep_guard();
+
 CREATE OR REPLACE FUNCTION public._money_plan__invoice_freeze(p_op text, p_args jsonb, p_uid uuid)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $fn$
 DECLARE
@@ -1634,12 +1691,18 @@ DECLARE
   v_tier int;
   v_ok boolean := false;
 BEGIN
+  -- is_active (N-2): the sibling count reads students.is_active and
+  -- families.is_active (compute-sibling-discounts, projected-per-class), for
+  -- every month it is worked out for, past ones included: the same reach as
+  -- a family link. Each acknowledged op covers its own column(s) only.
   IF TG_TABLE_NAME = 'families' THEN
     r := public._money_family_reach(NULL, OLD.id, NULL);
     v_tier := COALESCE((r ->> 'tier')::int, 3);
     IF v_tier > 0 THEN
       a := public._money_input_ack('family_link', NULL, (r ->> 'from')::date, (r ->> 'to')::date, v_tier);
-      v_ok := a IS NOT NULL AND a ->> 'op' = 'set_sibling_percent' AND a ->> 'target_id' = OLD.id::text;
+      v_ok := a IS NOT NULL AND a ->> 'target_id' = OLD.id::text
+              AND ((a ->> 'op' = 'set_sibling_percent' AND NEW.is_active IS NOT DISTINCT FROM OLD.is_active)
+                OR (a ->> 'op' = 'set_active' AND NEW.sibling_percent_override IS NOT DISTINCT FROM OLD.sibling_percent_override));
     END IF;
   ELSE
     r := public._money_family_reach(OLD.id, OLD.family_id, NEW.family_id);
@@ -1647,8 +1710,12 @@ BEGIN
     IF v_tier > 0 THEN
       a := public._money_input_ack('family_link', OLD.id, (r ->> 'from')::date, (r ->> 'to')::date, v_tier);
       v_ok := a IS NOT NULL AND a ->> 'target_id' = OLD.id::text
-              AND ((a ->> 'op' = 'set_family' AND NEW.sibling_discount_from IS NOT DISTINCT FROM OLD.sibling_discount_from)
-                OR (a ->> 'op' = 'set_sibling_from' AND NEW.family_id IS NOT DISTINCT FROM OLD.family_id));
+              AND ((a ->> 'op' = 'set_family' AND NEW.sibling_discount_from IS NOT DISTINCT FROM OLD.sibling_discount_from
+                    AND NEW.is_active IS NOT DISTINCT FROM OLD.is_active)
+                OR (a ->> 'op' = 'set_sibling_from' AND NEW.family_id IS NOT DISTINCT FROM OLD.family_id
+                    AND NEW.is_active IS NOT DISTINCT FROM OLD.is_active)
+                OR (a ->> 'op' = 'set_active' AND NEW.family_id IS NOT DISTINCT FROM OLD.family_id
+                    AND NEW.sibling_discount_from IS NOT DISTINCT FROM OLD.sibling_discount_from));
     END IF;
   END IF;
   PERFORM public._money_input_gate('family_link', TG_TABLE_NAME, TG_OP, OLD.id, v_tier, v_ok,
@@ -1659,11 +1726,13 @@ END $fn$;
 DROP TRIGGER IF EXISTS zz_family_link_guard ON public.students;
 CREATE TRIGGER zz_family_link_guard BEFORE UPDATE ON public.students
   FOR EACH ROW
-  WHEN (OLD.family_id IS DISTINCT FROM NEW.family_id OR OLD.sibling_discount_from IS DISTINCT FROM NEW.sibling_discount_from)
+  WHEN (OLD.family_id IS DISTINCT FROM NEW.family_id OR OLD.sibling_discount_from IS DISTINCT FROM NEW.sibling_discount_from
+        OR OLD.is_active IS DISTINCT FROM NEW.is_active)
   EXECUTE FUNCTION public._family_link_guard();
 DROP TRIGGER IF EXISTS zz_family_link_guard ON public.families;
 CREATE TRIGGER zz_family_link_guard BEFORE UPDATE ON public.families
-  FOR EACH ROW WHEN (OLD.sibling_percent_override IS DISTINCT FROM NEW.sibling_percent_override)
+  FOR EACH ROW WHEN (OLD.sibling_percent_override IS DISTINCT FROM NEW.sibling_percent_override
+                     OR OLD.is_active IS DISTINCT FROM NEW.is_active)
   EXECUTE FUNCTION public._family_link_guard();
 
 CREATE OR REPLACE FUNCTION public._money_plan__family_link(p_op text, p_args jsonb, p_uid uuid)
@@ -1726,6 +1795,33 @@ BEGIN
     RETURN public._money_input_plan('family_link', p_op, f.id,
       jsonb_build_array(jsonb_build_object('id', f.id, 'sibling_percent_override', f.sibling_percent_override)),
       jsonb_build_object('family_id', f.id, 'percent', v_pct, 'old_percent', f.sibling_percent_override), r, 0, NULL);
+
+  ELSIF p_op = 'set_active' THEN
+    -- a child, or a family, made active / inactive (N-2: both feed the sibling count)
+    IF jsonb_typeof(p_args -> 'is_active') IS DISTINCT FROM 'boolean'
+       OR ((p_args ? 'student_id') = (p_args ? 'family_id')) THEN
+      RETURN v_bad;
+    END IF;
+    IF p_args ? 'student_id' THEN
+      v_kid := public._money_uuid(p_args ->> 'student_id');
+      IF v_kid IS NULL THEN RETURN v_bad; END IF;
+      SELECT * INTO s FROM public.students x WHERE x.id = v_kid;
+      IF NOT FOUND THEN RAISE EXCEPTION 'child not found' USING ERRCODE = 'P0002'; END IF;
+      IF (p_args ->> 'is_active')::boolean IS NOT DISTINCT FROM s.is_active THEN RETURN v_same; END IF;
+      r := public._money_family_reach(s.id, s.family_id, s.family_id);
+      RETURN public._money_input_plan('family_link', p_op, s.id,
+        jsonb_build_array(jsonb_build_object('id', s.id, 'family_id', s.family_id, 'is_active', s.is_active)),
+        jsonb_build_object('student_id', s.id, 'is_active', (p_args ->> 'is_active')::boolean, 'old_is_active', s.is_active), r, 0, NULL);
+    END IF;
+    v_fam := public._money_uuid(p_args ->> 'family_id');
+    IF v_fam IS NULL THEN RETURN v_bad; END IF;
+    SELECT * INTO f FROM public.families x WHERE x.id = v_fam;
+    IF NOT FOUND THEN RAISE EXCEPTION 'family not found' USING ERRCODE = 'P0002'; END IF;
+    IF (p_args ->> 'is_active')::boolean IS NOT DISTINCT FROM f.is_active THEN RETURN v_same; END IF;
+    r := public._money_family_reach(NULL, f.id, NULL);
+    RETURN public._money_input_plan('family_link', p_op, f.id,
+      jsonb_build_array(jsonb_build_object('id', f.id, 'is_active', f.is_active)),
+      jsonb_build_object('family_id', f.id, 'is_active', (p_args ->> 'is_active')::boolean, 'old_is_active', f.is_active), r, 0, NULL);
   END IF;
   RETURN jsonb_build_object('refuse_code', 'bad_op');
 END $fn$;
@@ -1752,6 +1848,15 @@ BEGIN
     UPDATE public.families SET sibling_percent_override = (ch ->> 'percent')::numeric
      WHERE id = (ch ->> 'family_id')::uuid
        AND sibling_percent_override IS NOT DISTINCT FROM (b ->> 'sibling_percent_override')::numeric;
+    v_trg := 'families.zz_family_link_guard';
+  ELSIF v_op = 'set_active' AND ch ? 'student_id' THEN
+    -- a child made inactive: the deactivation trigger also ends its open
+    -- enrolments today, which the enrolment guard judges on its own (end_all first)
+    UPDATE public.students SET is_active = (ch ->> 'is_active')::boolean
+     WHERE id = (ch ->> 'student_id')::uuid AND is_active IS NOT DISTINCT FROM (b ->> 'is_active')::boolean;
+  ELSIF v_op = 'set_active' THEN
+    UPDATE public.families SET is_active = (ch ->> 'is_active')::boolean
+     WHERE id = (ch ->> 'family_id')::uuid AND is_active IS NOT DISTINCT FROM (b ->> 'is_active')::boolean;
     v_trg := 'families.zz_family_link_guard';
   ELSE
     RAISE EXCEPTION 'bad_op' USING ERRCODE = 'HC015';
@@ -1804,6 +1909,31 @@ DROP TRIGGER IF EXISTS audit_families ON public.families;
 CREATE TRIGGER audit_families AFTER INSERT OR UPDATE OR DELETE ON public.families
   FOR EACH ROW EXECUTE FUNCTION public.audit_row_change();
 
+-- Review N-1: the other money inputs with no audit trigger in the
+-- 20261009130000 list, so a tier-0 write to them through the API left no row
+-- at all. teachers / teaching_assistants got audit_<table> from 20261020091000
+-- where that was pasted; each is created here only if it is missing, so an
+-- existing trigger is never replaced.
+DO $audit$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'public.referral_bonuses'::regclass AND tgname = 'audit_referral_bonuses') THEN
+    CREATE TRIGGER audit_referral_bonuses AFTER INSERT OR UPDATE OR DELETE ON public.referral_bonuses
+      FOR EACH ROW EXECUTE FUNCTION public.audit_row_change();
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'public.discount_definitions'::regclass AND tgname = 'audit_discount_definitions') THEN
+    CREATE TRIGGER audit_discount_definitions AFTER INSERT OR UPDATE OR DELETE ON public.discount_definitions
+      FOR EACH ROW EXECUTE FUNCTION public.audit_row_change();
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'public.teachers'::regclass AND tgname = 'audit_teachers') THEN
+    CREATE TRIGGER audit_teachers AFTER INSERT OR UPDATE OR DELETE ON public.teachers
+      FOR EACH ROW EXECUTE FUNCTION public.audit_row_change();
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'public.teaching_assistants'::regclass AND tgname = 'audit_teaching_assistants') THEN
+    CREATE TRIGGER audit_teaching_assistants AFTER INSERT OR UPDATE OR DELETE ON public.teaching_assistants
+      FOR EACH ROW EXECUTE FUNCTION public.audit_row_change();
+  END IF;
+END $audit$;
+
 -- ---------------------------------------------------------------- 9
 -- Grants: nobody, except the one new public RPC (it checks admin inside;
 -- service_role has no grant).
@@ -1843,6 +1973,7 @@ REVOKE ALL ON FUNCTION
   public._money_exec__pay_rate(jsonb, uuid),
   public._money_unfreeze_tier(uuid),
   public._invoice_unfreeze_guard(),
+  public._invoice_frozen_keep_guard(),
   public._money_plan__invoice_freeze(text, jsonb, uuid),
   public._money_exec__invoice_freeze(jsonb, uuid),
   public._family_link_guard(),
@@ -1868,4 +1999,5 @@ SELECT string_agg(c.relname || '.' || t.tgname || '=' || t.tgenabled::text, ', '
  WHERE NOT t.tgisinternal AND c.relnamespace = 'public'::regnamespace
    AND t.tgname IN ('zz_enrollment_money_guard', 'zz_discount_money_guard', 'zz_discount_definition_guard',
                     'zz_pay_rate_money_guard', 'zz_staff_pay_mirror_guard', 'zz_invoice_unfreeze_guard',
+                    'zz_invoice_frozen_keep_guard', 'zz_invoice_frozen_delete_guard',
                     'zz_family_link_guard', 'zz_student_delete_guard', 'zz_class_delete_guard');

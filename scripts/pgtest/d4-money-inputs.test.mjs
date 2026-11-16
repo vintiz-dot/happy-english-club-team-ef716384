@@ -23,10 +23,13 @@ const H = harness(() => db);
 const { ok, section, as, tryIt, clock } = H;
 
 const TRIGGERS = ['classes.zz_class_delete_guard', 'discount_assignments.zz_discount_money_guard',
-  'discount_definitions.zz_discount_definition_guard', 'enrollments.zz_enrollment_money_guard', 'families.audit_families',
-  'families.zz_family_link_guard', 'invoices.zz_invoice_unfreeze_guard', 'referral_bonuses.zz_discount_money_guard',
+  'discount_definitions.audit_discount_definitions', 'discount_definitions.zz_discount_definition_guard',
+  'enrollments.zz_enrollment_money_guard', 'families.audit_families',
+  'families.zz_family_link_guard', 'invoices.zz_invoice_frozen_delete_guard', 'invoices.zz_invoice_frozen_keep_guard',
+  'invoices.zz_invoice_unfreeze_guard', 'referral_bonuses.audit_referral_bonuses', 'referral_bonuses.zz_discount_money_guard',
   'staff_pay_rates.zz_pay_rate_money_guard', 'students.zz_family_link_guard', 'students.zz_student_delete_guard',
-  'teachers.zz_staff_pay_mirror_guard', 'teaching_assistants.zz_staff_pay_mirror_guard'];
+  'teachers.audit_teachers', 'teachers.zz_staff_pay_mirror_guard',
+  'teaching_assistants.audit_teaching_assistants', 'teaching_assistants.zz_staff_pay_mirror_guard'];
 
 // ------------------------------------------------------------ preflight
 await section('preflight', async () => {
@@ -58,6 +61,19 @@ await section('preflight', async () => {
   try { await y.exec(crlf); await y.exec(crlf); } catch (e) { msg = e.message; }
   ok('the file pasted with CRLF, twice, is accepted (the md5 of its own helper body is of the CR-stripped text)', msg === null, msg);
   await y.close();
+
+  // N-1: where 20261020091000 already put audit_teachers / audit_teaching_assistants, they are kept as they are
+  const z = await makeInputsDb(base);
+  await z.exec(`CREATE TRIGGER audit_teachers AFTER INSERT OR UPDATE OR DELETE ON public.teachers FOR EACH ROW EXECUTE FUNCTION public.audit_row_change();`);
+  const oidOf = async () => (await z.query(`SELECT oid::text o FROM pg_trigger WHERE tgname = 'audit_teachers'`)).rows.map((x) => x.o);
+  const was = await oidOf();
+  msg = null;
+  try { await z.exec(sqlOf(inputsF)); } catch (e) { msg = e.message; }
+  ok('N-1 an audit trigger that already exists (audit_teachers from 20261020091000) is not replaced; the missing ones are added',
+     msg === null && JSON.stringify(await oidOf()) === JSON.stringify(was) &&
+     (await z.query(`SELECT count(*)::int n FROM pg_trigger WHERE tgname IN ('audit_teaching_assistants', 'audit_referral_bonuses', 'audit_discount_definitions')`)).rows[0].n === 3,
+     { msg, was });
+  await z.close();
 });
 
 db = await makeInputsDb(base);
@@ -109,7 +125,7 @@ await section('install', async () => {
       '_money_change_apply(text,text,jsonb,text,text,boolean,text,jsonb,text,uuid)'].every((k) => fnsBefore.get(k)?.m === after.get(k)?.m));
   const trgAfter = await trgRows();
   const added = trgAfter.filter((x) => !trgBefore.some((y) => y.k === x.k)).map((x) => x.k).sort();
-  ok('every trigger that existed is unchanged; added: the nine guards (on twelve tables) and audit_families',
+  ok('every trigger that existed is unchanged; added: the eleven guards (fourteen triggers) and the audit triggers',
      trgBefore.every((x) => JSON.stringify(trgAfter.find((y) => y.k === x.k)) === JSON.stringify(x)) &&
      JSON.stringify(added) === JSON.stringify(TRIGGERS), added);
   const fresh = [...after.entries()].filter(([k]) => !fnsBefore.has(k)).map(([, v]) => v);
@@ -433,7 +449,8 @@ await section('G-13 the acknowledgement covers one change, exactly', async () =>
   const id = await enrol(k, c), id2 = await enrol(k, c2), idOther = await enrol(other, c);
   await inv(k, OLD.month, { recorded: 540000, status: 'paid' });
   await inv(other, OLD.month, { recorded: 540000, status: 'paid' });
-  const ack = { entity: 'enrollment', op: 'set_rate', target: id, students: [k], tier: 2, change: { class_ids: [c.cid] } };
+  // the change as a real plan stores it: the class(es) and (review N-5) the one child it is for
+  const ack = { entity: 'enrollment', op: 'set_rate', target: id, students: [k], tier: 2, change: { class_ids: [c.cid], student_id: k } };
   let r = await withAck(ack, `UPDATE enrollments SET rate_override_vnd = 1 WHERE id='${id}'`);
   ok('an acknowledged set_rate of this enrolment passes', r.ok === true, r);
   r = await withAck(ack, `UPDATE enrollments SET rate_override_vnd = 1 WHERE id='${id2}'`);
@@ -452,7 +469,7 @@ await section('G-13 the acknowledgement covers one change, exactly', async () =>
   ok('  a replay: the flag names a real row of an EARLIER transaction: HC120', refused(r, 'HC120'), r);
   r = await withAck({ ...ack, entity: 'discount_assignment' }, `UPDATE enrollments SET rate_override_vnd = 1 WHERE id='${id}'`);
   ok('  an acknowledgement of another entity: HC120', refused(r, 'HC120'), r);
-  const tr = { entity: 'enrollment', op: 'transfer', target: k, students: [k], tier: 2, change: { class_ids: [c.cid, c2.cid] } };
+  const tr = { entity: 'enrollment', op: 'transfer', target: k, students: [k], tier: 2, change: { class_ids: [c.cid, c2.cid], student_id: k } };
   r = await withAck(tr, `UPDATE enrollments SET end_date = '${OLDER.date}' WHERE id='${id}'`);
   ok('a transfer\'s acknowledgement lets the old class\'s enrolment end', r.ok === true, r);
   const c3 = await mkClass();
@@ -935,6 +952,46 @@ await section('G-18 unfreezing a bill (P19)', async () => {
   r = await withAck({ entity: 'invoice_freeze', op: 'unfreeze', target: bill2, tier: 3, from: OLD.month + '-01', to: OLD.month + '-01',
     students: [(await q1(`SELECT student_id s FROM invoices WHERE id=$1`, [bill3])).s] }, `UPDATE invoices SET tuition_frozen = false WHERE id='${bill3}'`);
   ok('an acknowledgement for another bill does not unfreeze this one: HC120', refused(r, 'HC120'), r);
+
+  // Review B-2: deleting a frozen bill, or moving it to another child or
+  // month, leaves the month with no bill; calculate-tuition then writes a
+  // new, unfrozen one at today's price. Gated like an unfreeze.
+  const kz = await mkKid();
+  const fz = await inv(kz, OLDER.month, { frozen: true });
+  const fzRow = async () => q1(`SELECT student_id::text s, month m, tuition_frozen f, total_amount t FROM invoices WHERE id=$1`, [fz]);
+  const fzBefore = JSON.stringify(await fzRow());
+  r = await tryIt(async () => asAdmin(`UPDATE invoices SET month = '2001-01' WHERE id=$1`, [fz]));
+  ok('B-2 an admin moves a frozen bill to another month: HC120 entity=invoice_freeze tier=2, "unfreeze it first"',
+     refused(r, 'HC120', /entity=invoice_freeze; tier=2; .*not deleted or moved\. Unfreeze it first/), r);
+  r = await tryIt(async () => asAdmin(`UPDATE invoices SET student_id = $2 WHERE id=$1`, [fz, await mkKid()]));
+  ok('B-2   to another child: HC120', refused(r, 'HC120', /entity=invoice_freeze/), r);
+  r = await tryIt(async () => asAdmin(`DELETE FROM invoices WHERE id=$1`, [fz]));
+  ok('B-2 an admin deletes a frozen bill: HC120', refused(r, 'HC120', /entity=invoice_freeze; tier=2/), r);
+  r = await tryIt(async () => asService(`DELETE FROM invoices WHERE id=$1`, [fz]));
+  ok('B-2   service lane: HC120', refused(r, 'HC120'), r);
+  r = await tryIt(async () => asService(`UPDATE invoices SET month = '2001-01' WHERE id=$1`, [fz]));
+  ok('B-2   service lane re-key: HC120', refused(r, 'HC120'), r);
+  ok('B-2   the bill is where it was, frozen, with its figures', JSON.stringify(await fzRow()) === fzBefore);
+  r = await tryIt(async () => asService(`INSERT INTO invoices(student_id, month, status, total_amount, base_amount, recorded_payment, confirmation_status)
+      VALUES ($1, $2, 'issued', 1, 1, 0, 'auto_approved')
+      ON CONFLICT (student_id, month) DO UPDATE SET student_id = EXCLUDED.student_id, month = EXCLUDED.month, status = EXCLUDED.status,
+        total_amount = EXCLUDED.total_amount, base_amount = EXCLUDED.base_amount, confirmation_status = EXCLUDED.confirmation_status`, [kz, OLDER.month]));
+  ok('B-2 calculate-tuition\'s upsert of a frozen bill (month and child set to the SAME values): passes, the bill keeps its freeze and figures',
+     r.ok !== undefined && (await fzRow()).f === true && (await fzRow()).t === 540000, r);
+  const fzPaid = await inv(await mkKid(), OLDER.month, { frozen: true, recorded: 540000, status: 'paid' });
+  r = await tryIt(async () => asAdmin(`DELETE FROM invoices WHERE id=$1`, [fzPaid]));
+  ok('B-2 a frozen bill with money on it, deleted: HC120 tier=3', refused(r, 'HC120', /tier=3/), r);
+  r = await withAck({ entity: 'invoice_freeze', op: 'unfreeze', target: fz, students: [kz], tier: 3, from: OLDER.month + '-01', to: OLDER.month + '-01' },
+    `DELETE FROM invoices WHERE id='${fz}'`);
+  ok('B-2 an unfreeze acknowledgement of THAT bill does not cover deleting it (there is no checked delete): HC120', refused(r, 'HC120'), r);
+  const ev = await nEvents('owner_lane');
+  const fzOwner = await inv(await mkKid(), OLDER.month, { frozen: true });
+  r = await tryIt(async () => asSuper(`DELETE FROM invoices WHERE id=$1`, [fzOwner]));
+  ok('B-2 owner lane: the delete passes with one owner_lane event', r.ok !== undefined && (await nEvents('owner_lane')) === ev + 1, r);
+  p = await preview('invoice_freeze', 'unfreeze', { invoice_id: fz });
+  await checked('invoice_freeze', 'unfreeze', { invoice_id: fz }, { reason: R, token: p.token, confirm: true });
+  r = await tryIt(async () => asAdmin(`DELETE FROM invoices WHERE id=$1`, [fz]));
+  ok('B-2 unfrozen first (with a reason), the bill may be deleted: not judged by this guard', r.ok !== undefined, r);
 });
 
 // ---------------------------------------------------------------- G-19
@@ -1034,6 +1091,166 @@ await section('G-21 hard deletes (P22)', async () => {
   ok('a class with no enrolment and no lesson: deleted', r.ok !== undefined, r);
 });
 
+// ---------------------------------------------------------------- review round 1
+await section('review M-1: a child alone in an empty family moves no figure', async () => {
+  const c = await mkClass();
+  const lone = await mkKid();
+  await enrol(lone, c);
+  await inv(lone, OLD.month, { recorded: 540000, status: 'paid', conf: 'confirmed' });
+  const empty = await mkFamily();
+  let p = await preview('family_link', 'set_family', { student_id: lone, family_id: empty });
+  ok('M-1 a lone child with a confirmed, paid past month, into a NEW family with no other child: T0', p.tier === 0 && p.allowed, p);
+  let r = await tryIt(async () => asService(`UPDATE students SET family_id = $2 WHERE id=$1`, [lone, empty]));
+  ok('M-1   link-student-user\'s write (service lane, raw): passes', r.ok !== undefined && (await q1(`SELECT family_id f FROM students WHERE id=$1`, [lone])).f === empty, r);
+  r = await tryIt(async () => asAdmin(`UPDATE students SET family_id = NULL WHERE id=$1`, [lone]));
+  ok('M-1   and out of it again (the family had no one else): passes', r.ok !== undefined, r);
+  // a real sibling case still asks
+  const fam = await mkFamily();
+  const a = await mkKid(fam), b = await mkKid(fam);
+  await enrol(a, c);
+  await enrol(b, c);
+  await inv(b, OLD.month, { recorded: 540000, status: 'paid' });
+  r = await tryIt(async () => asService(`UPDATE students SET family_id = $2 WHERE id=$1`, [a, await mkFamily()]));
+  ok('M-1 a child leaving a family that has another child, into an empty one: still HC120 (the sibling\'s discount can move)',
+     refused(r, 'HC120', /entity=family_link/), r);
+  r = await tryIt(async () => asAdmin(`UPDATE students SET family_id = $2 WHERE id=$1`, [lone, fam]));
+  ok('M-1 a lone child joining a family that has children: still HC120', refused(r, 'HC120', /entity=family_link/), r);
+  // a stored sibling state that still names the child as the winner: fail closed
+  const fam1 = await mkFamily();
+  const was = await mkKid(fam1);
+  await enrol(was, c);
+  await inv(was, OLD.month, { recorded: 540000, status: 'paid' });
+  await asSuper(`INSERT INTO sibling_discount_state(family_id, month, status, winner_student_id, sibling_percent) VALUES ($1,$2,'assigned',$3,5)`,
+    [fam1, OLD.month, was]);
+  r = await tryIt(async () => asAdmin(`UPDATE students SET family_id = NULL WHERE id=$1`, [was]));
+  ok('M-1 alone in its family, but a stored sibling state still names it the winner of a discount: the full reach, HC120',
+     refused(r, 'HC120', /entity=family_link/), r);
+});
+
+await section('review N-1: the money inputs with no audit trigger now have one', async () => {
+  const k = await mkKid();
+  const n0 = (await q1(`SELECT count(*)::int n FROM audit_log`)).n;
+  await asAdmin(`INSERT INTO referral_bonuses(student_id, type, cadence, value, effective_from) VALUES ($1,'amount','once',1000,$2)`, [k, TODAY]);
+  await asAdmin(`INSERT INTO discount_definitions(name,type,cadence,value,start_month) VALUES ('n1','amount','once',5,'2030-01')`);
+  const t = (await q1(`INSERT INTO teachers(full_name) VALUES ('n1') RETURNING id`)).id;
+  await asAdmin(`UPDATE teachers SET full_name = 'n1 renamed' WHERE id=$1`, [t]);
+  const ta = (await q1(`INSERT INTO teaching_assistants(full_name) VALUES ('n1') RETURNING id`)).id;
+  await asAdmin(`UPDATE teaching_assistants SET full_name = 'n1 renamed' WHERE id=$1`, [ta]);
+  const by = (await asSuper(`SELECT entity, count(*)::int n FROM audit_log GROUP BY entity`)).rows;
+  const has = (e) => by.some((x) => x.entity === e && x.n >= 1);
+  ok('N-1 a T0 write by an admin to referral_bonuses, discount_definitions, teachers and teaching_assistants leaves an audit row each',
+     ['referral_bonuses', 'discount_definitions', 'teachers', 'teaching_assistants'].every(has) &&
+     (await q1(`SELECT count(*)::int n FROM audit_log`)).n >= n0 + 4, by);
+});
+
+await section('review N-2: families.is_active and students.is_active feed the sibling count', async () => {
+  const c = await mkClass();
+  const fam = await mkFamily();
+  const a = await mkKid(fam), b = await mkKid(fam);
+  await enrol(a, c);
+  await enrol(b, c);
+  await inv(a, OLD.month, { recorded: 540000, status: 'paid', conf: 'confirmed' });
+  let r = await tryIt(async () => asAdmin(`UPDATE families SET is_active = false WHERE id=$1`, [fam]));
+  ok('N-2 (probe P4a) an admin deactivates a family with a confirmed, paid past month, raw: HC120 entity=family_link tier=3',
+     refused(r, 'HC120', /entity=family_link; tier=3/) && (await q1(`SELECT is_active a FROM families WHERE id=$1`, [fam])).a === true, r);
+  r = await tryIt(async () => asService(`UPDATE families SET is_active = false WHERE id=$1`, [fam]));
+  ok('N-2   service lane: HC120', refused(r, 'HC120'), r);
+  r = await tryIt(async () => asAdmin(`UPDATE students SET is_active = false WHERE id=$1`, [b]));
+  ok('N-2 deactivating a child whose SIBLING has a confirmed past month, raw: HC120 entity=family_link (the sibling count moves)',
+     refused(r, 'HC120', /entity=family_link/) && (await q1(`SELECT is_active a FROM students WHERE id=$1`, [b])).a === true, r);
+  r = await withAck({ entity: 'family_link', op: 'set_sibling_percent', target: fam, students: [a, b], tier: 3 }, `UPDATE families SET is_active = false WHERE id='${fam}'`);
+  ok('N-2 an acknowledged set_sibling_percent does not cover deactivating the family: HC120', refused(r, 'HC120'), r);
+  r = await withAck({ entity: 'family_link', op: 'set_active', target: b, students: [a, b], tier: 3 }, `UPDATE students SET family_id = NULL WHERE id='${b}'`);
+  ok('N-2 an acknowledged set_active does not cover moving the child: HC120', refused(r, 'HC120'), r);
+  r = await withAck({ entity: 'family_link', op: 'set_active', target: fam, students: [a, b], tier: 3 }, `UPDATE families SET is_active = false WHERE id='${fam}'`);
+  ok('N-2   one for THIS family covers its is_active', r.ok === true, r);
+  let p = await preview('family_link', 'set_active', { family_id: fam, is_active: false });
+  ok('N-2 preview set_active of the family: T3, both children in reach', p.tier === 3 && p.allowed && p.student_ids.includes(a) && p.student_ids.includes(b), p);
+  let done = await checked('family_link', 'set_active', { family_id: fam, is_active: false }, { reason: R, token: p.token, confirm: true, corr: CORR });
+  ok('N-2   confirmed: the family is inactive, op set_active on the record',
+     (await q1(`SELECT is_active a FROM families WHERE id=$1`, [fam])).a === false && (await override(done.override_id)).op === 'set_active', done);
+  p = await preview('family_link', 'set_active', { student_id: b, is_active: false });
+  ok('N-2 preview set_active of a child with a sibling: T3', p.tier === 3 && p.allowed, p);
+  done = await checked('family_link', 'set_active', { student_id: b, is_active: false }, { reason: R, token: p.token, confirm: true, corr: CORR });
+  ok('N-2   confirmed: the child is inactive and its open enrolment ended today (the deactivation trigger, T0 for the enrolment)',
+     (await q1(`SELECT is_active a FROM students WHERE id=$1`, [b])).a === false &&
+     (await q1(`SELECT end_date::text d FROM enrollments WHERE student_id=$1`, [b])).d === TODAY, done);
+  ok('N-2 set_active with nothing to change: nothing_to_change', (await preview('family_link', 'set_active', { student_id: b, is_active: false })).refuse_code === 'nothing_to_change');
+  ok('N-2 set_active naming both a child and a family: bad_args', (await preview('family_link', 'set_active', { student_id: b, family_id: fam, is_active: true })).refuse_code === 'bad_args');
+  const lone = await mkKid();
+  await enrol(lone, c);
+  await inv(lone, OLD.month, { recorded: 540000, status: 'paid' });
+  r = await tryIt(async () => asAdmin(`UPDATE students SET is_active = false WHERE id=$1`, [lone]));
+  ok('N-2 a child with no family (no sibling count): deactivating raw stays T0, as before', r.ok !== undefined, r);
+});
+
+await section('review N-5: an acknowledgement covers the child the plan named, not a sibling', async () => {
+  const c = await mkClass();
+  const fam = await mkFamily();
+  const a = await mkKid(fam), b = await mkKid(fam);
+  await inv(a, OLD.month, { recorded: 540000, status: 'paid' });
+  const enrollA = { entity: 'enrollment', op: 'enroll', target: a, students: [a, b], tier: 3,
+    change: { class_ids: [c.cid], row: { student_id: a, class_id: c.cid, start_date: OLDER.date }, student_id: a } };
+  let r = await withAck(enrollA, `INSERT INTO enrollments(class_id, student_id, start_date) VALUES ('${c.cid}', '${b}', '${OLDER.date}')`);
+  ok('N-5 (probe P6) an enrol acknowledgement for child A does not cover an insert for sibling B: HC120', refused(r, 'HC120'), r);
+  r = await withAck(enrollA, `INSERT INTO enrollments(class_id, student_id, start_date) VALUES ('${c.cid}', '${a}', '${OLDER.date}')`);
+  ok('N-5   it covers A\'s', r.ok === true, r);
+  const def = (await q1(`INSERT INTO discount_definitions(name,type,cadence,value,start_month) VALUES ('n5','percent','monthly',10,'2025-01') RETURNING id`)).id;
+  const assignA = { entity: 'discount_assignment', op: 'assign', target: a, students: [a, b], tier: 3 };
+  r = await withAck(assignA, `INSERT INTO discount_assignments(student_id, discount_def_id, effective_from) VALUES ('${b}', '${def}', '${OLDER.date}')`);
+  ok('N-5 a discount assign acknowledged for A does not cover one for sibling B: HC120', refused(r, 'HC120'), r);
+  r = await withAck(assignA, `INSERT INTO discount_assignments(student_id, discount_def_id, effective_from) VALUES ('${a}', '${def}', '${OLDER.date}')`);
+  ok('N-5   it covers A\'s', r.ok === true, r);
+  const p = await preview('enrollment', 'set_rate', { enrollment_id: await enrol(a, c), rate_override_vnd: 1 });
+  ok('N-5 every enrolment plan names its child (change.student_id)', p.change.student_id === a, p.change);
+});
+
+await section('review test gaps (mutants R01, R02, R05, R09, R13)', async () => {
+  const c = await mkClass();
+  const k = await mkKid();
+  const id = await enrol(k, c);
+  await inv(k, OLD.month, { recorded: 540000, status: 'paid' });
+  // R01: the unknown lane (a definer function run for an anonymous or role-only caller) is refused like any other
+  const ev = await nEvents('owner_lane');
+  for (const role of ['anon', 'authenticated']) {
+    const r = await tryIt(async () => as(null, role, null, `UPDATE enrollments SET rate_override_vnd = 1 WHERE id=$1`, [id]));
+    ok(`R01 the unknown lane (JWT role ${role}, no user, inside a definer): HC120, no owner_lane event`,
+       refused(r, 'HC120') && (await nEvents('owner_lane')) === ev && (await enr(id)).rate_override_vnd === null, r);
+  }
+  // R02: a child whose only past bill was deleted (the bill floor remembers it) in a class with no earlier lesson
+  const cid = randomUUID();
+  await asSuper(`INSERT INTO classes(id, default_teacher_user, name) VALUES ($1, gen_random_uuid(), 'new class')`, [cid]);
+  await asSuper(`INSERT INTO sessions(class_id,date,start_time,end_time,status,teacher_id) VALUES ($1,$2,'17:30','19:00','Scheduled',$3)`, [cid, TODAY, c.teacherId]);
+  const kf = await mkKid();
+  const idf = (await q1(`INSERT INTO enrollments(class_id, student_id, start_date) VALUES ($1,$2,'2025-01-01') RETURNING id`, [cid, kf])).id;
+  const bill = await inv(kf, OLD.month, { recorded: 540000, status: 'paid' });
+  await asSuper(`DELETE FROM invoices WHERE id=$1`, [bill]);
+  ok('R02 fixture: the bill is gone, its floor row stays',
+     (await q1(`SELECT count(*)::int n FROM invoices WHERE student_id=$1`, [kf])).n === 0 &&
+     (await q1(`SELECT count(*)::int n FROM invoice_state_floor WHERE student_id=$1 AND ever_paid`, [kf])).n === 1);
+  let r = await tryIt(async () => asAdmin(`UPDATE enrollments SET rate_override_vnd = 1 WHERE id=$1`, [idf]));
+  ok('R02 a rate on that enrolment: HC120 - the floor marks the first reachable month, not the class\'s first lesson', refused(r, 'HC120'), r);
+  // R05: a discount re-pointed at another definition
+  const d1 = (await q1(`INSERT INTO discount_definitions(name,type,cadence,value,start_month) VALUES ('r05a','percent','monthly',10,'2025-01') RETURNING id`)).id;
+  const d2 = (await q1(`INSERT INTO discount_definitions(name,type,cadence,value,start_month) VALUES ('r05b','percent','monthly',50,'2025-01') RETURNING id`)).id;
+  const asg = (await q1(`INSERT INTO discount_assignments(student_id, discount_def_id, effective_from) VALUES ($1,$2,$3) RETURNING id`, [k, d1, OLDER.date])).id;
+  r = await tryIt(async () => asAdmin(`UPDATE discount_assignments SET discount_def_id = $2 WHERE id=$1`, [asg, d2]));
+  ok('R05 a discount assignment over a paid month re-pointed at another definition, raw: HC120 entity=discount_assignment',
+     refused(r, 'HC120', /entity=discount_assignment/), r);
+  // R09: the per-lesson mirror rate of someone with taught lessons and no dated rate
+  r = await tryIt(async () => asAdmin(`UPDATE teachers SET per_session_rate_vnd = 300000 WHERE id=$1`, [c.teacherId]));
+  ok('R09 a teacher\'s per-lesson mirror rate (no dated rate, lessons taught), raw: HC120 entity=pay_rate', refused(r, 'HC120', /entity=pay_rate/), r);
+  // R13: a definition whose only assignment starts on the 1st of NEXT month, and this month's bill is confirmed
+  const k13 = await mkKid();
+  await enrol(k13, c, TODAY);
+  await inv(k13, NOW.month, { conf: 'confirmed' });
+  const d13 = (await q1(`INSERT INTO discount_definitions(name,type,cadence,value,start_month) VALUES ('r13','percent','monthly',10,'2025-01') RETURNING id`)).id;
+  await asSuper(`INSERT INTO discount_assignments(student_id, discount_def_id, effective_from) VALUES ($1,$2,$3)`, [k13, d13, NEXT_MONTH_1]);
+  r = await tryIt(async () => asAdmin(`UPDATE discount_definitions SET value = 40 WHERE id=$1`, [d13]));
+  ok('R13 its value while this month\'s bill is confirmed (the calculator reads a 1st-of-next-month assignment for this month): HC121 definition_in_use',
+     refused(r, 'HC121', /definition_in_use/), r);
+});
+
 // ---------------------------------------------------------------- step 1b
 await section('step 1b\'s register guard, with file 5 over it', async () => {
   const c = await mkClass();
@@ -1077,7 +1294,8 @@ await section('rollback 5', async () => {
   let e = null; try { await db.exec(sqlOf(rb5F)); } catch (x) { e = x.message; }
   ok('the rollback script runs', e === null, e);
   const left = (await trgRows()).map((x) => x.k).filter((x) => TRIGGERS.includes(x));
-  ok('the nine guard triggers are gone from all twelve tables; audit_families stays', JSON.stringify(left) === JSON.stringify(['families.audit_families']), left);
+  ok('the guard triggers (fourteen, on eleven tables) are gone; the audit triggers stay',
+     JSON.stringify(left) === JSON.stringify(TRIGGERS.filter((x) => /\.audit_/.test(x))), left);
   ok('nothing else is dropped: the override and event rows, every function, the 1b register guard',
      (await nOverrides()) === nO && (await q1(`SELECT count(*)::int n FROM money_change_events`)).n === nE &&
      (await q1(`SELECT to_regprocedure('public.change_enrollment_terms(uuid, jsonb, date)') IS NOT NULL a, to_regprocedure('public._money_plan__enrollment(text, jsonb, uuid)') IS NOT NULL b`)).a === true &&

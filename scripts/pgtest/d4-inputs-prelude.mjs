@@ -12,6 +12,7 @@
 //   staff_pay_rates       20261021090000:66-98 with the PLAIN unique indexes of 20261021094000
 //   teachers / assistants the three mirror columns (types.ts)
 //   payments              20251012022547:55 (the columns the delete guard reads)
+//   sibling_discount_state 20251012080009:2-11 + the two later columns (types.ts)
 //   policies              "Admins manage ..." FOR ALL on each, as live
 import { PGlite } from '@electric-sql/pglite';
 import { D2_PRELUDE, D4_PEOPLE, D4_EVIDENCE_RLS, D4_ENROLMENT_RPCS, sqlOf, migPath } from './d4-prelude.mjs';
@@ -87,6 +88,15 @@ export const D4_INPUTS = `
     family_id uuid, amount integer NOT NULL DEFAULT 0, method text NOT NULL DEFAULT 'cash', memo text,
     occurred_at timestamptz NOT NULL DEFAULT now(), created_at timestamptz NOT NULL DEFAULT now(), created_by uuid);
 
+  -- 20251012080009:2-11 (+ winner_class_id, projected_base_snapshot from types.ts): the stored
+  -- family discount the family guard reads (review M-1: a lone child still named as the winner)
+  CREATE TABLE public.sibling_discount_state (
+    family_id uuid NOT NULL REFERENCES public.families(id) ON DELETE CASCADE, month text NOT NULL,
+    status text NOT NULL CHECK (status IN ('assigned', 'pending', 'none')),
+    winner_student_id uuid REFERENCES public.students(id) ON DELETE SET NULL, winner_class_id uuid,
+    sibling_percent int NOT NULL, projected_base_snapshot integer, reason text,
+    computed_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (family_id, month));
+
   -- what manage-demo-student touches besides the guarded tables
   CREATE TABLE public.users (id uuid PRIMARY KEY, role text);
   CREATE TABLE public.demo_access (id boolean PRIMARY KEY DEFAULT true, enabled boolean NOT NULL DEFAULT false,
@@ -100,7 +110,7 @@ export const D4_INPUTS = `
   BEGIN
     FOREACH t IN ARRAY ARRAY['enrollments', 'discount_definitions', 'discount_assignments', 'referral_bonuses',
                              'staff_pay_rates', 'teachers', 'teaching_assistants', 'students', 'families', 'classes',
-                             'invoices', 'payments', 'pause_windows'] LOOP
+                             'invoices', 'payments', 'pause_windows', 'sibling_discount_state'] LOOP
       EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
       EXECUTE format('CREATE POLICY %I ON public.%I FOR ALL TO authenticated
                         USING (public.has_role(auth.uid(), ''admin'')) WITH CHECK (public.has_role(auth.uid(), ''admin''))',
