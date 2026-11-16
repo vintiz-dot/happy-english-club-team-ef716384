@@ -565,6 +565,18 @@ const SUITES = [
     migrations: ["20261116090000_bank_info_family_logins.sql"],
     expect: 27,
   },
+  // D-26 (docs/evidence/FIX-analyze-transcript.md): the transcript analysis
+  // writes staff-only drafts; a family, a child or another class's staff
+  // reads none of them; only the teacher's approval publishes, exactly once,
+  // and a low-confidence suggestion never lands on a child. Also drives the
+  // real analyze-transcript and loads what it wrote into the schema.
+  {
+    name: "transcript drafts (D-26)",
+    file: "transcript-drafts.test.mjs",
+    expect: 141,
+    migrations: ["20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261113140000_creator_rows_need_class_staff.sql",
+      "20261117100000_transcript_analysis_drafts.sql"],
+  },
   // F-02: the nine AI / speech / image-search functions, handler by handler:
   // no session, wrong role, right role, the per-account limit.
   { name: "ai spend gate (F-02)", file: "ai-gate.test.mjs", migrations: [] },
