@@ -8,6 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useIvory } from "@/hooks/useIvory";
+
+// Ivory: Quill paints its toolbar #444 and its picker menu white, unreadable in dark. These selectors are one class
+// more specific than quill.snow.css's own, so they win without !important and Quill's hover / active / open states
+// (more specific still) keep showing. Same treatment as ExamReportEditor (PC2-harvest).
+const IVORY_QUILL = "rounded-hec-md bg-hec-raised [&_.ql-toolbar.ql-snow]:border-hec-line-strong [&_.ql-container.ql-snow]:border-hec-line-strong [&_.ql-toolbar_.ql-stroke]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-stroke-miter]:stroke-hec-ink-soft [&_.ql-toolbar_.ql-formats_.ql-fill]:fill-hec-ink-soft [&_.ql-toolbar_.ql-picker]:text-hec-ink-soft [&_.ql-toolbar_.ql-picker-options]:bg-hec-raised [&_.ql-editor.ql-blank::before]:text-hec-ink-faint";
 
 type JournalType = "personal" | "student" | "class" | "collab_student_teacher";
 
@@ -21,6 +27,7 @@ interface JournalEditorProps {
 }
 
 export function JournalEditor({ type: initialType, studentId: initialStudentId, classId: initialClassId, entryId, onSave, onCancel }: JournalEditorProps) {
+  const ivory = useIvory();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
@@ -197,9 +204,9 @@ export function JournalEditor({ type: initialType, studentId: initialStudentId, 
       <CardContent className="space-y-4">
         {!entryId && !initialType && (
           <div className="space-y-2">
-            <Label>Journal Type</Label>
+            <Label htmlFor="journal-editor-type">Journal Type</Label>
             <Select value={journalType} onValueChange={(v) => setJournalType(v as JournalType)}>
-              <SelectTrigger>
+              <SelectTrigger id="journal-editor-type">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -214,9 +221,9 @@ export function JournalEditor({ type: initialType, studentId: initialStudentId, 
 
         {journalType === "student" && !entryId && (
           <div className="space-y-2">
-            <Label>Student</Label>
+            <Label htmlFor="journal-editor-student">Student</Label>
             <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-              <SelectTrigger>
+              <SelectTrigger id="journal-editor-student">
                 <SelectValue placeholder="Select a student" />
               </SelectTrigger>
               <SelectContent>
@@ -230,9 +237,9 @@ export function JournalEditor({ type: initialType, studentId: initialStudentId, 
 
         {journalType === "class" && !entryId && (
           <div className="space-y-2">
-            <Label>Class</Label>
+            <Label htmlFor="journal-editor-class">Class</Label>
             <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-              <SelectTrigger>
+              <SelectTrigger id="journal-editor-class">
                 <SelectValue placeholder="Select a class" />
               </SelectTrigger>
               <SelectContent>
@@ -246,9 +253,9 @@ export function JournalEditor({ type: initialType, studentId: initialStudentId, 
 
         {journalType === "collab_student_teacher" && !entryId && (
           <div className="space-y-2">
-            <Label>Invite Teacher</Label>
+            <Label htmlFor="journal-editor-teacher">Invite Teacher</Label>
             <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
-              <SelectTrigger>
+              <SelectTrigger id="journal-editor-teacher">
                 <SelectValue placeholder="Select a teacher" />
               </SelectTrigger>
               <SelectContent>
@@ -261,8 +268,9 @@ export function JournalEditor({ type: initialType, studentId: initialStudentId, 
         )}
 
         <div className="space-y-2">
-          <Label>Title</Label>
+          <Label htmlFor="journal-editor-title">Title</Label>
           <Input
+            id="journal-editor-title"
             placeholder="Entry title..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -271,7 +279,7 @@ export function JournalEditor({ type: initialType, studentId: initialStudentId, 
 
         <div className="space-y-2">
           <Label>Content</Label>
-          <div className="min-h-[300px]">
+          <div className={ivory ? `min-h-[300px] ${IVORY_QUILL}` : "min-h-[300px]"}>
             <ReactQuill
               theme="snow"
               value={content}
@@ -282,7 +290,7 @@ export function JournalEditor({ type: initialType, studentId: initialStudentId, 
           </div>
         </div>
 
-        <div className="flex gap-2 pt-12">
+        <div className={ivory ? "flex flex-wrap gap-2 pt-12" : "flex gap-2 pt-12"}>
           <Button onClick={handleSave} disabled={loading}>
             {loading ? "Saving..." : "Save Entry"}
           </Button>
