@@ -160,9 +160,18 @@ class Monitor:
         self.th.join()
         self.wall = time.perf_counter() - self.t0
         self.cpu = own_cpu_s() - self.c0
+        b, T = sys_times()
+        self.machine_whole = 100 * (b - self.b0) / (T - self.T0) if T > self.T0 else 0.0
+        self.free1 = free_ram_gb()
 
     def summary(self) -> dict:
-        s = np.array(self.samples) if self.samples else np.zeros((1, 5))
+        # A native call that keeps the Python lock (sherpa-onnx's diarizer does) starves the sampling
+        # thread; then the whole-interval figures from start/end counters are used instead.
+        if self.samples:
+            s = np.array(self.samples)
+        else:
+            own = 100 * self.cpu / (self.wall * self.ncpu)
+            s = np.array([[self.machine_whole, own, max(0.0, self.machine_whole - own), min(self.free0, self.free1), 0.0]])
         mem = proc_mem()
         return {"wall_s": round(self.wall, 2), "process_cpu_s": round(self.cpu, 1),
                 "process_cpu_pct_of_machine": round(100 * self.cpu / (self.wall * self.ncpu), 1),
