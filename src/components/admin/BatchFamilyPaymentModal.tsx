@@ -282,10 +282,7 @@ export function BatchFamilyPaymentModal({ open, onClose }: BatchFamilyPaymentMod
             occurredAt: new Date(sharedSettings.occurredAt).toISOString(),
             memo: sharedSettings.memo || `Batch payment – ${family.familyName}`,
             month: sharedSettings.month,
-            // Money beyond the family's debt goes on the first child's bill
-            // and shows as credit on their next bill (OVERPAYMENT). Sent only
-            // when this screen showed that line, so an extra it did not show
-            // is refused by the function rather than placed.
+            // Only when the extra-credit line was shown (OVERPAYMENT).
             leftoverHandling: amount > family.totalDebt ? "credit_next_bill" : undefined,
           },
         });
