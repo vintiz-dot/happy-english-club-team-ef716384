@@ -54,7 +54,8 @@ ok("script-src names no remote host", (p["script-src"] || []).every((s) => /^'|^
 ok("object-src 'none', base-uri 'self', form-action 'self', frame-ancestors 'self'",
   p["object-src"]?.join() === "'none'" && p["base-uri"]?.join() === "'self'" && p["form-action"]?.join() === "'self'" && p["frame-ancestors"]?.join() === "'self'");
 ok("default-src 'self'", p["default-src"]?.join() === "'self'");
-ok("reports go to /csp-report (report-uri and report-to)", p["report-uri"]?.join() === "/csp-report" && p["report-to"]?.join() === "csp" && /csp="\/csp-report"/.test(page["reporting-endpoints"] || ""));
+// report-to would make Chrome stop using report-uri, and its Reporting API path delivered nothing in the harness
+ok("reports go to /csp-report by report-uri, and there is no report-to", p["report-uri"]?.join() === "/csp-report" && !p["report-to"] && !page["reporting-endpoints"]);
 
 // connect-src covers every host the app's own code calls, read from the code
 const connect = p["connect-src"] || [];
