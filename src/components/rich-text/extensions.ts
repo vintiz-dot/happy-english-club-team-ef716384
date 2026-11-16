@@ -7,6 +7,7 @@
  * Only MIT Tiptap packages; no Pro extensions, no cloud service.
  */
 import { Extension, Mark, mergeAttributes, type AnyExtension } from "@tiptap/core";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
@@ -199,9 +200,51 @@ export const SafeLink = Mark.create({
 });
 
 export interface SchemaOptions {
-  /** Include the image node (only when the host passes an upload adapter). */
+  /** Kept for callers; the picture node is always in the schema (old rows hold pictures). */
   images?: boolean;
 }
+
+/** Transaction meta: "this replaces the content from outside" - never refused by the limit. */
+export const LOAD_META = "rteLoad";
+
+/**
+ * maxLength without ever losing words already written. CharacterCount's own
+ * limit trims an over-long row on its first transaction and refuses one set
+ * after mount; here only GROWTH past the limit is stopped (typing, or a paste,
+ * which is cut to fit). A longer existing text loads whole and can be shortened.
+ */
+export const TextLimit = Extension.create<{ limit: number | null }>({
+  name: "textLimit",
+  addOptions() {
+    return { limit: null };
+  },
+  addProseMirrorPlugins() {
+    const limit = this.options.limit;
+    const size = (doc: any) => doc.textBetween(0, doc.content.size, undefined, " ").length;
+    return [
+      new Plugin({
+        key: new PluginKey("textLimit"),
+        filterTransaction: (tr, state) => {
+          if (!limit || !tr.docChanged || tr.getMeta(LOAD_META)) return true;
+          const before = size(state.doc);
+          const after = size(tr.doc);
+          if (after <= limit || after <= before) return true;
+          if (!tr.getMeta("paste")) {
+            // Replacing the whole document is loading a row (setContent), not typing.
+            const end = state.doc.content.size;
+            return tr.steps.some((s: any) => s.from === 0 && s.to === end);
+          }
+          // A paste: keep what fits.
+          const room = Math.max(0, limit - before);
+          const pos = tr.selection.$head.pos;
+          const grown = after - before;
+          tr.deleteRange(Math.max(0, pos - (grown - room)), pos);
+          return size(tr.doc) <= Math.max(limit, before);
+        },
+      }),
+    ];
+  },
+});
 
 export interface EditorExtensionOptions extends SchemaOptions {
   placeholder?: () => string;
@@ -240,7 +283,10 @@ export function schemaExtensions({ images = false }: SchemaOptions = {}): AnyExt
 
     BlockFormat,
   ];
-  if (images) list.push(Image.configure({ inline: false, allowBase64: false }));
+  // Inline, like the old editor's <p><img></p>, so a stored picture round-trips byte for byte.
+  // base64 is parsed only after sanitizeRichHtml has passed it (png/jpeg/gif/webp, size-capped).
+  list.push(Image.configure({ inline: true, allowBase64: true }));
+  void images;
   return list;
 }
 
@@ -251,6 +297,8 @@ export function editorExtensions(options: EditorExtensionOptions = {}): AnyExten
     ListKeymap,
     UndoRedo,
     Placeholder.configure({ placeholder: () => options.placeholder?.() ?? "" }),
-    CharacterCount.configure({ limit: options.maxLength && options.maxLength > 0 ? options.maxLength : null }),
+    // Counting only (no limit: its trim/refuse would lose existing words); TextLimit stops growth.
+    CharacterCount.configure({ limit: null }),
+    TextLimit.configure({ limit: options.maxLength && options.maxLength > 0 ? options.maxLength : null }),
   ];
 }
