@@ -117,6 +117,6 @@ Option (a) (extract the audio in the browser before upload) was not taken becaus
 5. Publish the app for the review panel's label (optional; the function works without it).
 
 ## Checks (16 Nov 2026, on the final code)
-- `node scripts/pgtest/run.mjs`: @@TOTAL@@ (attendance streaks 95, bank info family logins 27, stars sync core 65, edge functions typecheck 5, app typecheck 3, d4 functions register 34 - it loads the real mark-attendance).
+- `node scripts/pgtest/run.mjs`: 6225 assertions across 64 suites, 0 suite(s) failed, after the Held-only change (attendance streaks 95, bank info family logins 27, stars sync core 65, edge functions typecheck 5, app typecheck 3, d4 functions register 34 - it loads the real mark-attendance).
 - `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json`: exit 0.
 - `npm run test:bun`: 180 pass, 0 fail across 14 files (geminiTranscript.test.ts: 14).
