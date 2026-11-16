@@ -2,7 +2,7 @@
  * The editor itself. Loaded on demand by RichTextEditor (its own chunk), so a
  * page that only shows rich text never downloads ProseMirror.
  */
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useEditor, EditorContent, useEditorState, type Editor } from "@tiptap/react";
 import {
   AlignCenter, AlignJustify, AlignLeft, AlignRight, Baseline, Bold, Heading1, Heading2, Heading3, Highlighter,
@@ -159,6 +159,15 @@ export default function EditorImpl({
   const [uploading, setUploading] = useState<"idle" | "busy" | "failed">("idle");
   const fileInput = useRef<HTMLInputElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  // The hec tokens live under data-hec-theme. Inside a themed page the editor
+  // inherits them (and the page's "young" scale); anywhere else it brings the
+  // scope itself, so it is never drawn without its tokens. Decided before paint.
+  const [ownTheme, setOwnTheme] = useState(true);
+  useLayoutEffect(() => {
+    const inherited = !!rootRef.current?.parentElement?.closest('[data-hec-theme="ivory"]');
+    setOwnTheme(!inherited);
+  }, []);
   const [focusIndex, setFocusIndex] = useState(0);
 
   const describedBy = [maxLength ? counterId : null, ariaDescribedBy].filter(Boolean).join(" ") || undefined;
@@ -391,7 +400,8 @@ export default function EditorImpl({
   return (
     <div
       className={["rte", disabled ? "rte-disabled" : "", className || ""].filter(Boolean).join(" ")}
-      data-hec-theme="ivory"
+      ref={rootRef}
+      data-hec-theme={ownTheme ? "ivory" : undefined}
       style={style}
     >
       <div
