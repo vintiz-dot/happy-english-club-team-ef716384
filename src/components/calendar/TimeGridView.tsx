@@ -132,6 +132,9 @@ function EventBlock({
         </div>
         {variance && <AlertTriangle className={ivory ? "h-3.5 w-3.5 shrink-0 text-hec-warn" : "h-3 w-3 shrink-0 text-warning"} aria-hidden />}
       </div>
+      {/* A space between the lines, so their text does not run together
+          ("...Nguyên17:30") for WCAG 2.5.3. White space between blocks is not drawn. */}
+      {" "}
       {showMeta && (
         <div
           className={cn(
@@ -144,6 +147,7 @@ function EventBlock({
           {metaText}
         </div>
       )}
+      {" "}
       {showTeacher && event.teacher_name && (
         <div className={ivory ? "truncate text-hec-caption leading-tight text-hec-ink-soft" : "truncate text-[10px] leading-tight opacity-60"}>{event.teacher_name}</div>
       )}

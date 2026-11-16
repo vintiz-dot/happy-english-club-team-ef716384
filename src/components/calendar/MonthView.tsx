@@ -148,9 +148,13 @@ function EventChip({ event, onSelect, draggable, compact, colorFor }: ChipProps)
       <span className={ivory ? "shrink-0 text-hec-caption font-semibold leading-none tabular-nums text-hec-ink-soft" : "shrink-0 text-[10px] font-semibold tabular-nums opacity-70"}>
         {formatTime(event.start_time)}
       </span>
+      {/* A space between the pieces, so their text reads "17:30 Starters 1", not
+          "17:30Starters 1" (WCAG 2.5.3). White space between flex items is not drawn. */}
+      {" "}
       <span className={cn(ivory ? "truncate text-hec-caption font-medium leading-none" : "truncate text-[11px] font-medium leading-none", color.text, treatment.label)}>
         {event.class_name}
       </span>
+      {" "}
       <span className="ml-auto flex shrink-0 items-center gap-1">
         {variance && (
           <AlertTriangle
