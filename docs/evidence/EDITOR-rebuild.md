@@ -6,7 +6,7 @@ Branch: `editor-rebuild` (from `claude/hec-conductor-setup-efbaa5` at d35ba69a; 
 
 ## Where I am / next step
 
-Done: editor built, every caller and renderer switched, Quill removed, lockfiles agree, unit tests, harness before/after, bundle sizes, checks (see below). Next: the conductor reviews and merges; nothing pushed.
+Done: editor built, review round fixed (B1, B2, B3, N1, N4-N7; see "Review fix round"). Next: the conductor merges; nothing pushed or deployed.
 
 ## Technology: Tiptap 3.32.2 (ProseMirror), MIT packages only
 
@@ -55,6 +55,26 @@ Added to the harness (nothing existing changed): `editor-patch.mjs` (builds `pre
 - Old rows in production: the fixtures are invented; no production row was read.
 - Today's renderers number a Quill 2 numbered list that has bullet items between its numbers by counting the bullets too ("4." after 1 + 2 bullets); unchanged, as asked ("renders the same as today").
 
+## Review fix round (review: `docs/evidence/EDITOR-review.md`, SHIP WITH CHANGES)
+
+Merged `review-editor` (496ad4a2, fast-forward, contains the conductor merge). Fix commits `EDITOR fix: ...` from c48c8871. Items that share a file were committed by file, each message naming its items.
+
+| Finding | Change | Proof |
+| --- | --- | --- |
+| B1 toolbar arrows dead-end at a disabled button; tab stop lost | Unavailable buttons keep focus with `aria-disabled="true"` (no `disabled`); `run()` does nothing for them; styled dimmed | Harness `toolbar-walk` (AssignmentUpload, full preset, real Chrome, 375+1280, light+dark): Tab from Title lands on the toolbar; ArrowRight visits all 24 buttons and wraps; End/Left/Home correct; after Outdent goes unavailable it keeps the tab stop (`tabIndex 0`, `aria-disabled`), Enter/Space on it change nothing, ArrowRight moves on to Indent, Tab still reaches the toolbar. axe 0 in all 4 |
+| B2 old pictures lost on edit | Store mode keeps `<img>` whose src is http(s) or `data:image/(png|jpeg|gif|webp);base64` up to 2 MB, `alt` kept, nothing else; inline Tiptap image node (3.32.2) in the schema; render mode unchanged (no picture for readers); paste unchanged (no new pictures); a row with a picture the editor cannot keep opens read-only with a notice (`role=status`, EN/VI), so a save writes it back untouched | Unit: base64 row open -> type -> save keeps `<img src="data:...">` byte for byte; render and `cleanRichHtml` still strip it; over-cap and svg pictures are reported and would be dropped. Harness `picture-row` (EditHomeworkDialog): picture shown to the teacher, typed text saved, picture byte-identical in the `homeworks` update payload (4/4). `picture-big` (2.2 MB): notice shown, `contenteditable=false`, all toolbar buttons unavailable, typing ignored, saved `body` === original (2,200,081 chars) (4/4) |
+| B3 maxLength trims/refuses existing text | CharacterCount counts only; new `TextLimit` stops only growth past the limit (paste cut to fit); whole-document replacement (loading a row) always passes | Reviewer's two probes flipped and green (row stays whole after a click; `setContent` of a longer row loads whole); new tests: typing past the limit refused, deleting allowed, short text grows to the limit only |
+| N1 aria-* kept | `ALLOW_ARIA_ATTR: false`, all modes | Reviewer probe flipped; `<p aria-hidden aria-label>t</p>` -> `<p>t</p>` in store/paste/render |
+| N2 dompurify 3.4.16 advisories | Not changed (note only): no hooks on our instance, no SAFE_FOR_TEMPLATES/xhtml; bump to a fixed 3.4.x once it is two weeks old | - |
+| N3 scheme-less Quill links | Not changed (note only): they were relative and already broken; they now render as plain text | - |
+| N4 label click did not focus | The editor listens for clicks on its `aria-labelledby` element and `label[for=id]` and focuses the text | Harness `toolbar-walk`: clicking "Description" puts focus on the textbox (4/4) |
+| N5 Ctrl+K in the link box opened the palette | The link panel stops Ctrl/Cmd+K | Harness: link box open, Ctrl+K inside it, no palette (4/4) |
+| N6 `img` max-width | `.rte-content img { max-width: 100%; height: auto }` (inline) | CSS; picture row at 375 |
+| N7 README said happy-dom | README says jsdom; pictures and maxLength documented | README |
+
+Re-run of every touched screen (8 earlier scenarios + 3 new, 375/1280, light/dark, 44 runs, `C:\Users\Dell\hec-tools\editor-out\fix-*`, compare `compare-fix.jsonl` against the first after-run): page-load requests identical in all 32 repeated runs; whole-run identical in 31 (the `assign-edit-1280-light` background `video_submissions` refetch, 2 -> 1, the same one that varied before); save payload shapes identical; axe critical/serious 0 in every light run and in every new scenario; dark runs keep the single author-colour finding described above, nothing from the editor's controls.
+
+Checks after the fix round: `tsc -p tsconfig.app.json` exit 0; `npm run test:bun` 250 pass, 0 fail, 18 files (incl. the reviewer's 13 probes); `design-tokens-check` PASS; vite build exit 0 (EditorImpl 379.0 / 114.5 kB gzip, +1.2 kB raw for the image node; RichTextView 4.1 / 2.0). pgtest not re-run (no SQL, function or shared module touched since the green run). The editor suite's beforeAll timed out once at bun's 5 s default under load; its hook timeout is now 120 s.
 ## Overlap check
 
 Start and finish: no file on this branch is changed by `worktree-agent-a2e9e781ed074eebd`, `worktree-agent-a691e69d8dce8ffe6`, `worktree-agent-abb38f42ad67d0fe0`, `worktree-agent-ae3a47575e6e4c362`, `origin/pc2/d4-3b`, `origin/pc2/r22-r23` or `d4-3a-lessons`.
@@ -81,7 +101,7 @@ Removed: `react-quill-new` (and with it `quill`, `parchment`, ...), every `quill
 ## Deliberate differences (each is a fix; no text a person reads changed except the editor's own controls)
 
 1. An empty editor reports `""`. Quill reported `<p><br></p>` once something had been typed and deleted, so the student's "Send to my teacher" lit up for an empty answer and `ClassHomework` saved `<p><br></p>` as the notes; now the button stays off and the column gets `null`, exactly as when nothing was typed.
-2. The Quill "image" button is gone from ClassHomework / AssignmentUpload / EditHomeworkDialog. Quill embedded the picture as a base64 `data:` URL inside the HTML (rows of hundreds of kB), and no renderer ever showed it (`img` was never in any allow-list). The editor has an `onUploadImage(file) => url` adapter; no caller passes one because a new upload path needs a storage policy case (supabase/, not in scope).
+2. The Quill "image" button is gone from ClassHomework / AssignmentUpload / EditHomeworkDialog. Quill embedded the picture as a base64 `data:` URL inside the HTML (rows of hundreds of kB), and no renderer ever showed it (`img` was never in any allow-list). The editor has an `onUploadImage(file) => url` adapter; no caller passes one because a new upload path needs a storage policy case (supabase/, not in scope). Pictures an old row already holds are KEPT since the review round (B2): the teacher sees them in the editor and a save writes them back byte for byte; children and families still see no picture (render mode unchanged).
 3. Renderers that used `sanitizeHtml` (teacher grading, exam reports, journal viewer, homework lists) drew Quill 2 bullet lists as 1. 2. 3. (`data-list` was stripped) and ignored `ql-indent`; through `RichTextView` they draw bullets and indents as the student homework reader already did. Pasted layout styles (font, size, margins) no longer reach those screens either.
 4. Stored links are http(s) only (`safeHttpUrl`); a `mailto:` or `javascript:` link keeps its text and loses the link. Same rule at render.
 5. Quill check lists (`data-list="checked"`, never offered by any toolbar here) open as bullet lists; the tick is not kept. The reader still draws old rows with ticks.
