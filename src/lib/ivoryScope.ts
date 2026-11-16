@@ -59,9 +59,63 @@ export const IVORY_ROUTES: IvoryRoute[] = [
   { path: "/student/defend-level" },
   { path: "/student/vocabulary" },
   { path: "/vocabulary" },
-  // Shared with the admin's tuition list (staff area, not flipped yet) and a
-  // teacher's "access denied": only the student / parent view is in the system.
+  // Shared with the admin's tuition list and a teacher's "access denied": the
+  // student / parent view flipped with R08, the staff view with R21 (below).
   { path: "/tuition", roles: ["student", "family"] },
+
+  // R21, the staff flip: every admin and teacher route. The admin dashboard is
+  // listed per ?tab= so that a tab whose owner has not released it (audit
+  // clips) keeps today's look; "" and "overview" are the default view.
+  { path: "/admin", tab: "" },
+  { path: "/admin", tab: "overview" },
+  { path: "/admin", tab: "classes" },
+  { path: "/admin", tab: "assignments" },
+  { path: "/admin", tab: "journal" },
+  { path: "/admin", tab: "exam-reports" },
+  { path: "/admin", tab: "finance" },
+  { path: "/admin", tab: "payroll" },
+  { path: "/admin", tab: "reports" },
+  { path: "/admin", tab: "account" },
+  { path: "/admin", tab: "automation" },
+  { path: "/admin", tab: "data" },
+  { path: "/admin", tab: "activity" },
+  { path: "/admin", tab: "announcements" },
+  { path: "/admin", tab: "stars-sync" },
+  { path: "/admin", tab: "ai-actions" },
+  { path: "/admin/classes/:id" },
+  { path: "/admin/tuition-review" },
+  { path: "/students" },
+  { path: "/students/:id" },
+  { path: "/students/:id/tuition" },
+  { path: "/teachers" },
+  { path: "/teachers/:id" },
+  { path: "/classes" },
+  { path: "/families" },
+  { path: "/families/:id" },
+  { path: "/teacher/dashboard" },
+  { path: "/teacher/classes/:id" },
+  { path: "/teacher/payroll" },
+  { path: "/teacher/attendance" },
+  { path: "/teacher/assignments" },
+  { path: "/teacher/journal" },
+  { path: "/teacher/exam-reports" },
+  { path: "/teacher/leaderboards" },
+  { path: "/teacher/resources" },
+  { path: "/teacher/vocabulary-audit" },
+  { path: "/teacher/books" },
+  { path: "/teacher/language-support" },
+  { path: "/teacher/smart-upload" },
+  { path: "/teacher/transcripts" },
+  { path: "/teacher/videos" },
+  { path: "/board-window/:classId" },
+  // Shared with the student and the parent: only the staff roles here. A
+  // family's /schedule flips with the parent area (R23).
+  { path: "/schedule", roles: ["admin", "teacher"] },
+  { path: "/tuition", roles: ["admin", "teacher"] },
+  { path: "/dashboard", roles: ["admin", "teacher"] },
+  // Not listed on purpose: /teacher/recorder and /admin?tab=audit-clips (the
+  // recorder and audit-clips screens stay outside the system until their
+  // owners release them, DESIGN_SYSTEM s.17).
 ];
 
 const trimSlash = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p);
