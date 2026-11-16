@@ -93,6 +93,11 @@ export function ClassScreen({
     if (!open) return;
     const el = hostRef.current;
     if (!el?.requestFullscreen) return;
+    // Already inside the fullscreen element (a book presented fullscreen with
+    // the tools on it): the overlay already fills the display, so ask for
+    // nothing. A second, nested request unmounted the screen and dropped
+    // fullscreen altogether.
+    if (document.fullscreenElement?.contains(el)) return;
     el.requestFullscreen().catch(() => {
       /* refused (iOS, permissions policy) — overlay still stands */
     });

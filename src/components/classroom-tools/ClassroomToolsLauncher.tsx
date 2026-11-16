@@ -54,8 +54,7 @@ const AttendanceTool = lazyRetry(() => import("./AttendanceTool").then((m) => ({
 const LeaderboardTool = lazyRetry(() => import("./LeaderboardTool").then((m) => ({ default: m.LeaderboardTool })));
 const BackgroundMusic = lazyRetry(() => import("./BackgroundMusic").then((m) => ({ default: m.BackgroundMusic })));
 import { Deferred } from "./studio/Deferred";
-import { CLASS_SCREEN_ATTR, ClassScreenContainerContext, keepOpenForClassScreen } from "./studio/ClassScreen";
-import { useFullscreenContainer } from "@/hooks/useFullscreenContainer";
+import { ClassScreenContainerContext, keepOpenForClassScreen } from "./studio/ClassScreen";
 import {
   ToolCard,
 } from "./studio/StudioKit";
@@ -143,15 +142,6 @@ export function ClassroomToolsLauncher() {
   const noiseLive = noiseStatus === "running";
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [panelEl, setPanelEl] = useState<HTMLDivElement | null>(null);
-  // While one of this panel's class screens is fullscreen, the panel stays
-  // where it already is (a book presented fullscreen, or the page). ui/sheet
-  // will not move into the class screen and would otherwise fall back to
-  // <body>, which unmounts the class screen inside the panel and drops
-  // fullscreen. Undefined otherwise, so ui/sheet decides as before.
-  const fsEl = useFullscreenContainer();
-  const panelParent = panelEl?.parentElement;
-  const sheetContainer =
-    fsEl?.closest(`[${CLASS_SCREEN_ATTR}]`) && panelParent && panelParent !== document.body ? panelParent : undefined;
   const ivory = useIvory();
   // DESIGN_SYSTEM s.10: the one focus ring (listed routes only).
   const FOCUS =
@@ -243,7 +233,6 @@ export function ClassroomToolsLauncher() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
           ref={setPanelEl}
-          container={sheetContainer}
           side="right"
           onInteractOutside={keepOpenForClassScreen}
           onPointerDownOutside={keepOpenForClassScreen}
