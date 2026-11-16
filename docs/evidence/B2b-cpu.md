@@ -62,3 +62,29 @@ Reading:
 - n is small (2 mixes, 6 clips, one 3-minute slice): these settle the configuration, not a ranking against vendors.
 
 Timings of these runs (all UNDER LOAD; for the record only): RTF 2.0 (B1 config) and 3.5 (adopted config) at 4 threads, other processes 84-85 % of the machine, free RAM falling to 0.02-0.13 GB; the process got 1.2-1.3 cores. Per-file RTF swung from 0.4 to 7.7 with the other agents' load, so none of these numbers is a speed figure.
+
+## 4. Transcription: model size (select set, adopted settings, 4 threads, int8, beam 5)
+
+Quality (agreement with the B1 vendors, UNCHECKED, same files as section 3):
+
+| model | synth (2) agreement | synth words ratio | clips (6) agreement | L2 180 s agreement | Vietnamese text |
+|---|---|---|---|---|---|
+| small | 0.304 | 0.67 | 0.849 | 0.802 | 0 % |
+| medium | 0.339 | 0.59 | 0.854 | 0.827 | 0 % |
+| large-v3-turbo | 0.336 | 0.50 | **0.874** | **0.841** | 0 % |
+| vendors among themselves, same files | 0.422 (0.29-0.54) | - | 0.863 (0.81-0.91) | 0.818 (0.75-0.87) | Gemini only (B1) |
+
+Cost (UNDER LOAD - see the load columns; wall RTF is not a speed figure):
+
+| model | wall RTF | process CPU-seconds per audio second | cores it got | others' CPU (mean, p10-p90) | free RAM min / mean | peak working set | peak private (committed) | model load s |
+|---|---|---|---|---|---|---|---|---|
+| small (B1 config) | 2.00 | 2.55 | 1.28 | 84 % (74-92) | 0.02 / 3.75 GB | 1.04 GB | 3.14 GB | 70 |
+| small, English VAD 0.5 (same output as above) | 3.74 | 3.09 | 0.83 | 90 % (81-95) | 0.00 / 2.66 GB | 1.04 GB | 3.15 GB | 43 |
+| small (adopted) | 3.46 | 4.25 | 1.23 | 85 % (76-92) | 0.13 / 4.48 GB | 1.05 GB | 3.15 GB | 49 |
+| medium (adopted) | 7.85 | 7.72 | 0.98 | 88 % (79-94) | 0.00 / 2.35 GB | 2.21 GB | 6.04 GB | 64 |
+| large-v3-turbo (adopted) | 4.47 | 5.64 | 1.26 | 84 % (72-95) | 0.00 / 3.39 GB | 1.93 GB | 4.03 GB | 33 |
+
+Reading:
+- large-v3-turbo is the best local model on every real-speech input (clips 0.874, lesson slice 0.841: at or above the vendors' own mutual agreement), and cheaper than medium (5.6 vs 7.7 CPU-seconds per audio second). Medium is dominated: slower than turbo and not better. On the synthetic mixes turbo writes fewer words (half the vendors'); all local models stay below the vendors there.
+- CPU-seconds per audio second are steadier than wall RTF under load, but NOT load-free: the same small configuration with identical output cost 2.55 and 3.09 CPU-s/s in two runs (hyper-thread siblings and caches shared with other agents make each CPU-second do less work). Treat them as upper bounds with about +-25 % noise.
+- Peak private memory (3-6 GB) is far above the working set (1-2 GB) because free RAM hit zero during every run and Windows trimmed the process; the private figure is what a server must reserve. An 8 GB machine runs turbo; 4 GB would be tight.
