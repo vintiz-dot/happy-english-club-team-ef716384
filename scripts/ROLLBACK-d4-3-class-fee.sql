@@ -17,6 +17,12 @@
 --      the behaviour before step 2 (the reason it was built).
 --   2. drops the two fee guard triggers and nothing else.
 --
+-- AFTER IT (review F-2): with the step-2 functions deployed the fee is the
+-- history: change it by inserting a class_fee_history row (the SQL editor;
+-- classes.session_rate_vnd then prices NO bill - updating it alone changes
+-- nothing, silently). Putting the old class screen back requires putting the
+-- old calculators back in the same sitting.
+--
 -- THEN: redeploy the previous calculate-tuition / calculate-tuition-bulk (and
 -- the functions that import _lib/projected-per-class.ts:
 -- watch-sibling-threshold) ONLY if the resolver itself is at fault. The step 2
