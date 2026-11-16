@@ -300,6 +300,35 @@ export const D4_CLASS_FEE = `
 `;
 
 /**
+ * D4 step 4: the live payroll_adjustments table (20261021093000:130-158,
+ * its RLS and grants :228-282; the FK to auth.users left out). The real
+ * migration does not load over D2's prelude (D4-build-1a.md "Step 0");
+ * file 6's preflight requires the table and puts its approval hook on it.
+ * Idempotent.
+ */
+export const D4_PAYROLL_ADJ = `
+  CREATE TABLE IF NOT EXISTS public.payroll_adjustments (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    month text NOT NULL CHECK (month ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),
+    origin_month text NOT NULL CHECK (origin_month ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),
+    teacher_id uuid REFERENCES public.teachers(id) ON DELETE RESTRICT,
+    assistant_id uuid REFERENCES public.teaching_assistants(id) ON DELETE RESTRICT,
+    amount_vnd integer NOT NULL,
+    reason text NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    created_by uuid,
+    CONSTRAINT payroll_adjustments_one_subject_check CHECK ((teacher_id IS NOT NULL) <> (assistant_id IS NOT NULL)),
+    CONSTRAINT payroll_adjustments_nonzero_check CHECK (amount_vnd <> 0),
+    CONSTRAINT payroll_adjustments_not_self_check CHECK (month <> origin_month));
+  ALTER TABLE public.payroll_adjustments ENABLE ROW LEVEL SECURITY;
+  DROP POLICY IF EXISTS "Admins manage payroll adjustments" ON public.payroll_adjustments;
+  CREATE POLICY "Admins manage payroll adjustments" ON public.payroll_adjustments FOR ALL TO authenticated
+    USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+  GRANT SELECT, INSERT, UPDATE, DELETE ON public.payroll_adjustments TO authenticated;
+  GRANT ALL ON public.payroll_adjustments TO service_role;
+`;
+
+/**
  * A fresh pglite with D2's prelude, the D4 blocks asked for, then the named
  * migration files in order (real files, read as they are on disk).
  */

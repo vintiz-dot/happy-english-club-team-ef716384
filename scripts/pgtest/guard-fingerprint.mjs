@@ -29,7 +29,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { D2_PRELUDE, D4_PEOPLE, D4_CLASS_FEE, D4_ENROLMENT_RPCS } from './d4-prelude.mjs';
+import { D2_PRELUDE, D4_PEOPLE, D4_CLASS_FEE, D4_ENROLMENT_RPCS, D4_PAYROLL_ADJ } from './d4-prelude.mjs';
 import { D4_INPUTS, ENROL_NO_AUTO, ENROL_RPCS, PAUSE, DEACTIVATE } from './d4-inputs-prelude.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -40,7 +40,7 @@ const AUDIT = '20261009130000_audit_every_admin_action.sql';
 const CANCEL = '20261027090000_cancelled_lesson_attendance_guard.sql';
 const D1 = '20261112090000_session_held_evidence.sql';
 const D2 = '20261112091000_session_cancel_guard.sql';
-const D4_FILES = ['20261114090000_d4_floors.sql', '20261114091000_d4_core_register.sql', '20261114092000_d4_class_fee_history.sql', '20261114093000_d4_lesson_pay_guard.sql', '20261114094000_d4_money_inputs_guard.sql'];   // each D4 step appends its file here
+const D4_FILES = ['20261114090000_d4_floors.sql', '20261114091000_d4_core_register.sql', '20261114092000_d4_class_fee_history.sql', '20261114093000_d4_lesson_pay_guard.sql', '20261114094000_d4_money_inputs_guard.sql', '20261114095000_d4_change_approvals.sql'];   // each D4 step appends its file here
 const ENROL = '20261106090000_attendance_enrollment_guard.sql';   // student_enrolled_on, read by D4 file 2
 const FREEZE = '20261106120000_invoice_tuition_freeze.sql';   // tuition_frozen, read by D4 file 5
 // D4 step 3B (file 5): the money-input tables (D4_INPUTS, after D4_ENROLMENT_RPCS), and the live
@@ -63,7 +63,7 @@ const RELEASES = {
   },
   d4: {
     label: 'D4 release',
-    prelude: D2_PRELUDE + D4_PEOPLE + D4_INPUT_PRELUDE + D4_CLASS_FEE,
+    prelude: D2_PRELUDE + D4_PEOPLE + D4_INPUT_PRELUDE + D4_CLASS_FEE + D4_PAYROLL_ADJ,   // step 4: the live payroll_adjustments
     baseline: [AUDIT, CANCEL, ENROL, D1, D2, ...INPUT_BASE],
     added: D4_FILES,
     triggerTables: null,          // every trigger the D4 files created or replaced
@@ -226,6 +226,7 @@ export async function checkUnchanged({ prelude = D2_PRELUDE + D4_PEOPLE, d4Files
   // D4 step 3B's tables, once, whatever prelude a caller passes (D4_INPUTS is not idempotent)
   if ((await db.query(`SELECT to_regclass('public.discount_definitions') IS NULL AS missing`)).rows[0].missing) await db.exec(D4_INPUT_PRELUDE);
   await db.exec(D4_CLASS_FEE);   // idempotent; D4 step 2's preflight needs classes.session_rate_vnd, whatever prelude a caller passes
+  await db.exec(D4_PAYROLL_ADJ); // idempotent; D4 step 4's preflight needs payroll_adjustments
   for (const f of [AUDIT, CANCEL, ENROL, D1, D2, ...INPUT_BASE, ...d4Files]) await db.exec(mig(f));
   if (after) await after(db);
   const live = (await db.query(statementOf(readFileSync(resolve(root, RELEASES.d.sqlPath), 'utf8')))).rows[0].fingerprint;
@@ -254,7 +255,7 @@ if (isMain) {
   if (process.argv.includes('--check-unchanged') && process.argv.includes('--after-rollback')) {
     // D4 rollback (design f.7): every D4 rollback script, newest first, then
     // 20261112091000 pasted again -> the 66 objects must all match.
-    const rollbacks = ['scripts/ROLLBACK-d4-5-money-inputs.sql', 'scripts/ROLLBACK-d4-4-lesson-pay.sql', 'scripts/ROLLBACK-d4-3-class-fee.sql', 'scripts/ROLLBACK-d4-2-register.sql', 'scripts/ROLLBACK-d4-1-floors.sql'];   // newest first
+    const rollbacks = ['scripts/ROLLBACK-d4-6-approvals.sql', 'scripts/ROLLBACK-d4-5-money-inputs.sql', 'scripts/ROLLBACK-d4-4-lesson-pay.sql', 'scripts/ROLLBACK-d4-3-class-fee.sql', 'scripts/ROLLBACK-d4-2-register.sql', 'scripts/ROLLBACK-d4-1-floors.sql'];   // newest first
     const { total, diff } = await checkUnchanged({ after: async (x) => {
       for (const r of rollbacks) await x.exec(readFileSync(resolve(root, r), 'utf8'));
       await x.exec(mig(D2));
