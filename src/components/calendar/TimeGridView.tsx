@@ -144,7 +144,10 @@ function EventBlock({
               : ivory ? "text-hec-ink-soft" : "opacity-70",
           )}
         >
-          {metaText}
+          {/* Rendered as before (one string here moved the dash by a sub-pixel); metaText is the same text. */}
+          {formatTime(event.start_time)}–{formatTime(event.end_time)}
+          {variance ? ` (${formatSignedMinutes(variance.deltaMinutes)})` : ""}
+          {event.enrolled_count ? ` · ${event.enrolled_count}` : ""}
         </div>
       )}
       {" "}
