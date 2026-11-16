@@ -1,0 +1,37 @@
+{% extends "layouts/page.njk" %}
+{% import "ui.njk" as ui %}
+{% set hw = data.homework %}
+{% set longDate = { year: "numeric", month: "long", day: "numeric" } %}
+{% set dueStr = (hw.due_date | date("en-US", longDate)) if hw.due_date else "No due date" %}
+{% set postedStr = (hw.created_at | date("en-US", longDate)) if hw.created_at else "—" %}
+{% set runningTitle = hw.title %}
+{% block body %}
+{{ ui.header(tenant, "Homework", "") }}
+
+<h1 class="doc-title">{{ hw.title }}</h1>
+<table class="t t--meta">
+  <tbody>
+    <tr><th scope="row">Class</th><td>{{ data.className or "—" }}</td><th scope="row">Teacher</th><td>{{ data.teacherName or "—" }}</td></tr>
+    <tr><th scope="row">Due Date</th><td>{{ dueStr }}</td><th scope="row">Posted</th><td>{{ postedStr }}</td></tr>
+  </tbody>
+</table>
+
+{% if hw.body %}
+  {% if variant == "prompt-card" %}
+    {{ ui.section("Instructions") }}
+    <div class="panel panel--outline panel--prompt">{{ ui.rich(hw.body) }}</div>
+  {% else %}
+    {{ ui.section("Instructions") }}
+    {{ ui.rich(hw.body) }}
+  {% endif %}
+{% endif %}
+
+{% if variant == "writing-space" %}
+  {{ ui.answer_lines(data.answerLines if data.answerLines is defined else 14) }}
+{% endif %}
+
+<div class="closing">
+  {{ ui.encourage(brand) }}
+  {% call ui.colophon() %}{{ tenant.name }} &bull; Generated on {{ doc.generatedAt | date("en-US", longDate) }}{% endcall %}
+</div>
+{% endblock %}

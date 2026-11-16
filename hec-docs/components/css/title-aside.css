@@ -1,0 +1,12 @@
+/* A secondary phrase set inline beside a document title, quieter and smaller,
+   wrapping with the title when the name is long. */
+.doc-title__aside {
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--size-md);
+  color: var(--color-muted);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.doc-lede { margin: 0 0 var(--space-2); font-size: var(--size-base); color: var(--color-ink-soft); }
+.table-note { margin: var(--space-1) 0 var(--space-2); font-size: var(--size-sm); color: var(--color-muted); }

@@ -1,0 +1,261 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>Tuition Invoice</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>:root {
+  --color-paper: #FBF8F1;
+  --color-surface: #F4EEE0;
+  --color-surface-strong: #ECE3CE;
+  --color-ink: #14213D;
+  --color-ink-soft: #34405E;
+  --color-muted: #59617A;
+  --color-accent: #FFF200;
+  --color-accent-deep: #E9B300;
+  --color-gold: #B8975A;
+  --color-gold-ink: #7A5C1E;
+  --color-rule: #DCCFB4;
+  --color-positive: #2E6A4C;
+  --color-negative: #9A2F2A;
+  --font-family-display: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-family-body: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --size-xs: 7.5pt;
+  --size-sm: 8.5pt;
+  --size-base: 9.5pt;
+  --size-md: 11.5pt;
+  --size-lg: 14.5pt;
+  --size-xl: 18pt;
+  --size-2xl: 22.5pt;
+  --size-3xl: 28pt;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
+  --leading-loose: 1.7;
+  --space-1: 8pt;
+  --space-2: 16pt;
+  --space-3: 24pt;
+  --space-4: 32pt;
+  --space-5: 40pt;
+  --space-6: 48pt;
+  --space-8: 64pt;
+  --space-0-5: 4pt;
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 20mm;
+  --page-margin-bottom: 22mm;
+  --page-margin-inner: 18mm;
+  --page-margin-outer: 18mm;
+  --border-hairline: 0.5pt;
+  --border-rule: 0.75pt;
+  --border-strong: 1.5pt;
+  --border-radius: 3pt;
+}
+</style>
+<link rel="stylesheet" href="/components/hec.css">
+<link rel="stylesheet" href="/components/css/addressee.css">
+<link rel="stylesheet" href="/components/css/avatar.css">
+<link rel="stylesheet" href="/components/css/bilingual.css">
+<link rel="stylesheet" href="/components/css/cell.css">
+<link rel="stylesheet" href="/components/css/closing-row.css">
+<link rel="stylesheet" href="/components/css/code-box.css">
+<link rel="stylesheet" href="/components/css/evidence-list.css">
+<link rel="stylesheet" href="/components/css/field.css">
+<link rel="stylesheet" href="/components/css/keepsake-card.css">
+<link rel="stylesheet" href="/components/css/level-badge.css">
+<link rel="stylesheet" href="/components/css/meta-stack.css">
+<link rel="stylesheet" href="/components/css/money-summary.css">
+<link rel="stylesheet" href="/components/css/money-table.css">
+<link rel="stylesheet" href="/components/css/ornament.css">
+<link rel="stylesheet" href="/components/css/payment-panel.css">
+<link rel="stylesheet" href="/components/css/prose.css">
+<link rel="stylesheet" href="/components/css/reorder-grid.css">
+<link rel="stylesheet" href="/components/css/sender.css">
+<link rel="stylesheet" href="/components/css/skill-matrix.css">
+<link rel="stylesheet" href="/components/css/stat-tile.css">
+<link rel="stylesheet" href="/components/css/steps.css">
+<link rel="stylesheet" href="/components/css/title-aside.css">
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+  background: #FBF8F1;
+  @top-left {
+    content: "";
+    width: 9mm;
+    margin-bottom: 4mm;
+    background: url("/tenant/assets/logo.svg") left bottom / contain no-repeat;
+  }
+  @top-right {
+    content: "INV-2026-11-11111111 · Nguyễn Đức Bảo";
+    vertical-align: bottom;
+    margin-bottom: 5mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    letter-spacing: 0.04em;
+    color: #59617A;
+  }
+  @bottom-left {
+    content: "Learning, an endless journey to perfection";
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-style: italic;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: #34405E;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    color: #59617A;
+  }
+}
+@page :first {
+  @top-left { content: none; background: none; }
+  @top-right { content: none; }
+}
+</style>
+</head>
+<body class="doc doc--invoice variant--standard">
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="/tenant/assets/logo.svg" alt="Happy English Club logo">
+    <div class="hdr__brand">
+      <div class="hdr__name">Happy English Club</div>
+<div class="hdr__sub" lang="vi">Câu lạc bộ Tiếng Anh</div>    </div>
+  </div>
+  <div class="hdr__doc">
+<div class="eyebrow">Tuition invoice</div>  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+
+
+<div>
+  <div class="split avoid">
+    <div class="sender">
+    </div>
+    <dl class="mstack ">
+  <div class="mstack__row mstack__row--lead"><dt>INVOICE #</dt><dd>INV-2026-11-11111111</dd></div>
+  <div class="mstack__row"><dt>ISSUE DATE</dt><dd>Nov 13, 2026</dd></div>
+  <div class="mstack__row"><dt>BILLING PERIOD</dt><dd>November 2026</dd></div>
+</dl>
+
+  </div>
+
+<section class="addressee " aria-label="Bill To:">
+  <div class="addressee__label">Bill To:</div>
+      <p class="addressee__lead">Parents/Guardians of <strong>Nguyễn Đức Bảo</strong></p>
+<p class="addressee__line">Gia đình Nguyễn Văn Hùng</p>    <p class="addressee__line">Dear Parents,</p>
+    <p class="addressee__note">This invoice includes all scheduled sessions for the month.</p>
+
+</section>
+
+  <section aria-label="Class Breakdown">
+    <h2 class="sec sec--2">Class Breakdown</h2>
+
+    <table class="t t--keep-start t--keep-end">
+      <thead>
+        <tr><th scope="col">Class</th><th scope="col" class="cell--center">Sessions</th><th scope="col" class="num">Gross</th><th scope="col" class="num">Net</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">5</td>
+          <td class="num cell--soft">1.000.000 ₫</td>
+          <td class="num">1.000.000 ₫</td>
+        </tr>
+        <tr class="cell--subtotal">
+          <td colspan="2">Subtotal</td>
+          <td class="num cell--soft">1.000.000 ₫</td>
+          <td class="num">1.000.000 ₫</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <dl class="msum " aria-label="Balance">
+  <div class="msum__row msum__row--strong"><dt class="msum__label">Current Month Charges</dt><dd class="msum__value">1.000.000 ₫</dd></div>
+  <div class="msum__row msum__row--credit"><dt class="msum__label">Prior Balance (Credit)</dt><dd class="msum__value">-0 ₫</dd></div>
+  <div class="msum__row msum__row--total"><dt class="msum__label">Final Payable</dt><dd class="msum__value">1.000.000 ₫</dd></div>
+  <div class="msum__row msum__row--credit"><dt class="msum__label">Current Month Recorded Payment</dt><dd class="msum__value">0 ₫</dd></div>
+  <div class="msum__row msum__row--due"><dt class="msum__label">Outstanding Balance</dt><dd class="msum__value">500.000 ₫</dd></div>
+</dl>
+
+
+  <section aria-label="Session Details">
+    <h2 class="sec sec--2">Session Details</h2>
+
+    <table class="t t--keep-start">
+      <thead>
+        <tr><th scope="col">Date</th><th scope="col">Class</th><th scope="col" class="cell--center">Status</th><th scope="col" class="num">Unit Price</th><th scope="col" class="num">Line Total</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="cell--date">03/11/2026</td>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">Present</td>
+          <td class="num">200.000 ₫</td>
+          <td class="num">200.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">05/11/2026</td>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">Present</td>
+          <td class="num">200.000 ₫</td>
+          <td class="num">200.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">10/11/2026</td>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">Absent</td>
+          <td class="num">200.000 ₫</td>
+          <td class="num">200.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">12/11/2026</td>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">Present</td>
+          <td class="num">200.000 ₫</td>
+          <td class="num">200.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">17/11/2026</td>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">200.000 ₫</td>
+          <td class="num">200.000 ₫</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="pay " aria-label="Payment Instructions:">
+  <h2 class="pay__title">Payment Instructions:</h2>
+  <p class="pay__empty">Bank information not configured. Please contact administration for payment details.</p>
+</section>
+
+
+  <div class="closing">
+<aside class="callout callout--note">
+  <div class="callout__body">Questions about this bill? Reply to us on Zalo or ask at the front desk; we are always happy to help.</div>
+</aside>
+    <div class="sign">
+  <div class="sign__closing">With warm regards,</div>
+  <div class="sign__name">Teacher Victor</div>
+  <div class="sign__role">Happy English Club</div>
+</div>
+
+<div class="colophon"><span>This is a computer-generated invoice.</span></div>
+  </div>
+</div>
+</body>
+</html>

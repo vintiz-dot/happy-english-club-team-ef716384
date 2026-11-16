@@ -1,0 +1,597 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>Tuition Invoice</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>:root {
+  --color-paper: #FBF8F1;
+  --color-surface: #F4EEE0;
+  --color-surface-strong: #ECE3CE;
+  --color-ink: #14213D;
+  --color-ink-soft: #34405E;
+  --color-muted: #59617A;
+  --color-accent: #FFF200;
+  --color-accent-deep: #E9B300;
+  --color-gold: #B8975A;
+  --color-gold-ink: #7A5C1E;
+  --color-rule: #DCCFB4;
+  --color-positive: #2E6A4C;
+  --color-negative: #9A2F2A;
+  --font-family-display: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-family-body: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --size-xs: 7.5pt;
+  --size-sm: 8.5pt;
+  --size-base: 9.5pt;
+  --size-md: 11.5pt;
+  --size-lg: 14.5pt;
+  --size-xl: 18pt;
+  --size-2xl: 22.5pt;
+  --size-3xl: 28pt;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
+  --leading-loose: 1.7;
+  --space-1: 8pt;
+  --space-2: 16pt;
+  --space-3: 24pt;
+  --space-4: 32pt;
+  --space-5: 40pt;
+  --space-6: 48pt;
+  --space-8: 64pt;
+  --space-0-5: 4pt;
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 20mm;
+  --page-margin-bottom: 22mm;
+  --page-margin-inner: 18mm;
+  --page-margin-outer: 18mm;
+  --border-hairline: 0.5pt;
+  --border-rule: 0.75pt;
+  --border-strong: 1.5pt;
+  --border-radius: 3pt;
+}
+</style>
+<link rel="stylesheet" href="/components/hec.css">
+<link rel="stylesheet" href="/components/css/addressee.css">
+<link rel="stylesheet" href="/components/css/avatar.css">
+<link rel="stylesheet" href="/components/css/bilingual.css">
+<link rel="stylesheet" href="/components/css/cell.css">
+<link rel="stylesheet" href="/components/css/closing-row.css">
+<link rel="stylesheet" href="/components/css/code-box.css">
+<link rel="stylesheet" href="/components/css/evidence-list.css">
+<link rel="stylesheet" href="/components/css/field.css">
+<link rel="stylesheet" href="/components/css/keepsake-card.css">
+<link rel="stylesheet" href="/components/css/level-badge.css">
+<link rel="stylesheet" href="/components/css/meta-stack.css">
+<link rel="stylesheet" href="/components/css/money-summary.css">
+<link rel="stylesheet" href="/components/css/money-table.css">
+<link rel="stylesheet" href="/components/css/ornament.css">
+<link rel="stylesheet" href="/components/css/payment-panel.css">
+<link rel="stylesheet" href="/components/css/prose.css">
+<link rel="stylesheet" href="/components/css/reorder-grid.css">
+<link rel="stylesheet" href="/components/css/sender.css">
+<link rel="stylesheet" href="/components/css/skill-matrix.css">
+<link rel="stylesheet" href="/components/css/stat-tile.css">
+<link rel="stylesheet" href="/components/css/steps.css">
+<link rel="stylesheet" href="/components/css/title-aside.css">
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+  background: #FBF8F1;
+  @top-left {
+    content: "";
+    width: 9mm;
+    margin-bottom: 4mm;
+    background: url("/tenant/assets/logo.svg") left bottom / contain no-repeat;
+  }
+  @top-right {
+    content: "INV-2026-11-11111111 · Trần Ngọc Bảo Châu Nguyễn Hoàng Phương Anh";
+    vertical-align: bottom;
+    margin-bottom: 5mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    letter-spacing: 0.04em;
+    color: #59617A;
+  }
+  @bottom-left {
+    content: "Learning, an endless journey to perfection";
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-style: italic;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: #34405E;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    color: #59617A;
+  }
+}
+@page :first {
+  @top-left { content: none; background: none; }
+  @top-right { content: none; }
+}
+</style>
+</head>
+<body class="doc doc--invoice variant--standard">
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="/tenant/assets/logo.svg" alt="Happy English Club logo">
+    <div class="hdr__brand">
+      <div class="hdr__name">Happy English Club</div>
+<div class="hdr__sub" lang="vi">Câu lạc bộ Tiếng Anh</div>    </div>
+  </div>
+  <div class="hdr__doc">
+<div class="eyebrow">Tuition invoice</div>  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+
+
+<div>
+  <div class="split avoid">
+    <div class="sender">
+<p class="sender__lines">Tầng 3, Số 12 ngõ 45 phố Ví Dụ, phường Mẫu, quận Hoàn Kiếm, Hà Nội
+Hotline: 0900 000 000 · Zalo: 0900 000 001
+Email: hello@example.test</p>    </div>
+    <dl class="mstack ">
+  <div class="mstack__row mstack__row--lead"><dt>INVOICE #</dt><dd>INV-2026-11-11111111</dd></div>
+  <div class="mstack__row"><dt>ISSUE DATE</dt><dd>Nov 13, 2026</dd></div>
+  <div class="mstack__row"><dt>BILLING PERIOD</dt><dd>November 2026</dd></div>
+</dl>
+
+  </div>
+
+<section class="addressee " aria-label="Bill To:">
+  <div class="addressee__label">Bill To:</div>
+      <p class="addressee__lead">Parents/Guardians of <strong>Trần Ngọc Bảo Châu Nguyễn Hoàng Phương Anh</strong></p>
+<p class="addressee__line">Gia đình Trần Quốc Đạt và Nguyễn Thị Phương Thảo</p>    <p class="addressee__line">Dear Parents,</p>
+    <p class="addressee__note">This invoice includes all scheduled sessions for the month.</p>
+
+</section>
+
+  <section aria-label="Class Breakdown">
+    <h2 class="sec sec--2">Class Breakdown</h2>
+
+    <table class="t t--keep-start t--keep-end">
+      <thead>
+        <tr><th scope="col">Class</th><th scope="col" class="cell--center">Sessions</th><th scope="col" class="num">Gross</th><th scope="col" class="num">Net</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">8</td>
+          <td class="num cell--soft">1.600.000 ₫</td>
+          <td class="num cell--positive">1.440.000 ₫</td>
+        </tr>
+        <tr>
+          <td>Phonics Fun – Thứ 7</td>
+          <td class="cell--center">4</td>
+          <td class="num cell--soft">700.000 ₫</td>
+          <td class="num">700.000 ₫</td>
+        </tr>
+        <tr>
+          <td>Flyers A – Chủ nhật</td>
+          <td class="cell--center">9</td>
+          <td class="num cell--soft">1.980.000 ₫</td>
+          <td class="num">1.980.000 ₫</td>
+        </tr>
+        <tr>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">13</td>
+          <td class="num cell--soft">3.250.000 ₫</td>
+          <td class="num cell--positive">2.950.000 ₫</td>
+        </tr>
+        <tr>
+          <td>Toán tư duy bằng tiếng Anh – Thứ 2/4</td>
+          <td class="cell--center">9</td>
+          <td class="num cell--soft">1.620.000 ₫</td>
+          <td class="num">1.620.000 ₫</td>
+        </tr>
+        <tr>
+          <td>Câu lạc bộ đọc sách – Thứ 5</td>
+          <td class="cell--center">4</td>
+          <td class="num cell--soft">600.000 ₫</td>
+          <td class="num">600.000 ₫</td>
+        </tr>
+        <tr class="cell--subtotal">
+          <td colspan="2">Subtotal</td>
+          <td class="num cell--soft">9.750.000 ₫</td>
+          <td class="num">9.290.000 ₫</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <dl class="msum " aria-label="Balance">
+  <div class="msum__row msum__row--line"><dt class="msum__label">Sibling discount 10% (Movers B – Thứ 3/5)</dt><dd class="msum__value">-160.000 ₫</dd></div>
+  <div class="msum__row msum__row--line"><dt class="msum__label">Học bổng chăm chỉ – Scholarship (Luyện nói IELTS Junior – Thứ 2/4/6)</dt><dd class="msum__value">-300.000 ₫</dd></div>
+  <div class="msum__row msum__row--strong"><dt class="msum__label">Current Month Charges</dt><dd class="msum__value">9.290.000 ₫</dd></div>
+  <div class="msum__row msum__row--credit"><dt class="msum__label">Prior Balance (Credit)</dt><dd class="msum__value">450.000 ₫</dd></div>
+  <div class="msum__row msum__row--total"><dt class="msum__label">Final Payable</dt><dd class="msum__value">8.840.000 ₫</dd></div>
+  <div class="msum__row msum__row--credit"><dt class="msum__label">Current Month Recorded Payment</dt><dd class="msum__value">2.500.000 ₫</dd></div>
+  <div class="msum__row msum__row--due"><dt class="msum__label">Outstanding Balance</dt><dd class="msum__value">6.340.000 ₫</dd></div>
+</dl>
+
+
+  <section aria-label="Session Details">
+    <h2 class="sec sec--2">Session Details</h2>
+
+    <table class="t t--keep-start">
+      <thead>
+        <tr><th scope="col">Date</th><th scope="col">Class</th><th scope="col" class="cell--center">Status</th><th scope="col" class="num">Unit Price</th><th scope="col" class="num">Line Total</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="cell--date">01/11/2026</td>
+          <td>Flyers A – Chủ nhật</td>
+          <td class="cell--center">Present</td>
+          <td class="num">220.000 ₫</td>
+          <td class="num">220.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">02/11/2026</td>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">Present</td>
+          <td class="num">250.000 ₫</td>
+          <td class="num">250.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">02/11/2026</td>
+          <td>Toán tư duy bằng tiếng Anh – Thứ 2/4</td>
+          <td class="cell--center">Present</td>
+          <td class="num">180.000 ₫</td>
+          <td class="num">180.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">03/11/2026</td>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">Absent</td>
+          <td class="num">200.000 ₫</td>
+          <td class="num">200.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">04/11/2026</td>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">Present</td>
+          <td class="num">250.000 ₫</td>
+          <td class="num">250.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">04/11/2026</td>
+          <td>Toán tư duy bằng tiếng Anh – Thứ 2/4</td>
+          <td class="cell--center">Present</td>
+          <td class="num">180.000 ₫</td>
+          <td class="num">180.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">05/11/2026</td>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">Present</td>
+          <td class="num">200.000 ₫</td>
+          <td class="num">200.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">05/11/2026</td>
+          <td>Câu lạc bộ đọc sách – Thứ 5</td>
+          <td class="cell--center">Present</td>
+          <td class="num">150.000 ₫</td>
+          <td class="num">150.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">06/11/2026</td>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">Present</td>
+          <td class="num">250.000 ₫</td>
+          <td class="num">250.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">07/11/2026</td>
+          <td>Phonics Fun – Thứ 7</td>
+          <td class="cell--center">Present</td>
+          <td class="num">175.000 ₫</td>
+          <td class="num">175.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">07/11/2026</td>
+          <td>Flyers A – Chủ nhật</td>
+          <td class="cell--center">Present</td>
+          <td class="num">220.000 ₫</td>
+          <td class="num">220.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">08/11/2026</td>
+          <td>Flyers A – Chủ nhật</td>
+          <td class="cell--center">Present</td>
+          <td class="num">220.000 ₫</td>
+          <td class="num">220.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">09/11/2026</td>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">Present</td>
+          <td class="num">250.000 ₫</td>
+          <td class="num">250.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">09/11/2026</td>
+          <td>Toán tư duy bằng tiếng Anh – Thứ 2/4</td>
+          <td class="cell--center">Present</td>
+          <td class="num">180.000 ₫</td>
+          <td class="num">180.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">10/11/2026</td>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">Absent</td>
+          <td class="num">200.000 ₫</td>
+          <td class="num">200.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">11/11/2026</td>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">Present</td>
+          <td class="num">250.000 ₫</td>
+          <td class="num">250.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">11/11/2026</td>
+          <td>Toán tư duy bằng tiếng Anh – Thứ 2/4</td>
+          <td class="cell--center">Present</td>
+          <td class="num">180.000 ₫</td>
+          <td class="num">180.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">12/11/2026</td>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">Present</td>
+          <td class="num">200.000 ₫</td>
+          <td class="num">200.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">12/11/2026</td>
+          <td>Câu lạc bộ đọc sách – Thứ 5</td>
+          <td class="cell--center">Present</td>
+          <td class="num">150.000 ₫</td>
+          <td class="num">150.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">13/11/2026</td>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">250.000 ₫</td>
+          <td class="num">250.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">14/11/2026</td>
+          <td>Phonics Fun – Thứ 7</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">175.000 ₫</td>
+          <td class="num">175.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">14/11/2026</td>
+          <td>Flyers A – Chủ nhật</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">220.000 ₫</td>
+          <td class="num">220.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">15/11/2026</td>
+          <td>Flyers A – Chủ nhật</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">220.000 ₫</td>
+          <td class="num">220.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">16/11/2026</td>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">250.000 ₫</td>
+          <td class="num">250.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">16/11/2026</td>
+          <td>Toán tư duy bằng tiếng Anh – Thứ 2/4</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">180.000 ₫</td>
+          <td class="num">180.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">17/11/2026</td>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">200.000 ₫</td>
+          <td class="num">200.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">18/11/2026</td>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">250.000 ₫</td>
+          <td class="num">250.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">18/11/2026</td>
+          <td>Toán tư duy bằng tiếng Anh – Thứ 2/4</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">180.000 ₫</td>
+          <td class="num">180.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">19/11/2026</td>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">200.000 ₫</td>
+          <td class="num">200.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">19/11/2026</td>
+          <td>Câu lạc bộ đọc sách – Thứ 5</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">150.000 ₫</td>
+          <td class="num">150.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">20/11/2026</td>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">250.000 ₫</td>
+          <td class="num">250.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">21/11/2026</td>
+          <td>Phonics Fun – Thứ 7</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">175.000 ₫</td>
+          <td class="num">175.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">21/11/2026</td>
+          <td>Flyers A – Chủ nhật</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">220.000 ₫</td>
+          <td class="num">220.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">22/11/2026</td>
+          <td>Flyers A – Chủ nhật</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">220.000 ₫</td>
+          <td class="num">220.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">23/11/2026</td>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">250.000 ₫</td>
+          <td class="num">250.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">23/11/2026</td>
+          <td>Toán tư duy bằng tiếng Anh – Thứ 2/4</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">180.000 ₫</td>
+          <td class="num">180.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">24/11/2026</td>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">200.000 ₫</td>
+          <td class="num">200.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">25/11/2026</td>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">250.000 ₫</td>
+          <td class="num">250.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">25/11/2026</td>
+          <td>Toán tư duy bằng tiếng Anh – Thứ 2/4</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">180.000 ₫</td>
+          <td class="num">180.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">26/11/2026</td>
+          <td>Movers B – Thứ 3/5</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">200.000 ₫</td>
+          <td class="num">200.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">26/11/2026</td>
+          <td>Câu lạc bộ đọc sách – Thứ 5</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">150.000 ₫</td>
+          <td class="num">150.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">27/11/2026</td>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">250.000 ₫</td>
+          <td class="num">250.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">28/11/2026</td>
+          <td>Phonics Fun – Thứ 7</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">175.000 ₫</td>
+          <td class="num">175.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">28/11/2026</td>
+          <td>Flyers A – Chủ nhật</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">220.000 ₫</td>
+          <td class="num">220.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">29/11/2026</td>
+          <td>Flyers A – Chủ nhật</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">220.000 ₫</td>
+          <td class="num">220.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">30/11/2026</td>
+          <td>Luyện nói IELTS Junior – Thứ 2/4/6</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">250.000 ₫</td>
+          <td class="num">250.000 ₫</td>
+        </tr>
+        <tr>
+          <td class="cell--date">30/11/2026</td>
+          <td>Toán tư duy bằng tiếng Anh – Thứ 2/4</td>
+          <td class="cell--center">Scheduled</td>
+          <td class="num">180.000 ₫</td>
+          <td class="num">180.000 ₫</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="pay " aria-label="Payment Instructions:">
+  <h2 class="pay__title">Payment Instructions:</h2>
+  <div class="pay__body">
+    <dl class="pay__details">
+      <div class="pay__row"><dt>Bank Name:</dt> <dd>Ngân hàng TMCP Ví Dụ (Example Bank)</dd></div>
+      <div class="pay__row"><dt>Account Number:</dt> <dd class="pay__strong">0000 1234 5678</dd></div>
+      <div class="pay__row"><dt>Account Name:</dt> <dd>CONG TY TNHH HAPPY ENGLISH CLUB (VI DU)</dd></div>
+    </dl>
+<div class="pay__qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAADwCAYAAAA+VemSAAAAAklEQVR4AewaftIAAAWdSURBVO3BgY1bSxIEwawG/Xe5TgYcOIvP0QNbmxHpH0haaZC01iBprUHSWoOktQZJaw2S1hokrTVIWuvFDyTht2rLE5Jw0paTJGzSlpMk/FZteWeQtNYgaa1B0lqDpLUGSWsNktYaJK01SFrrxSVt2SYJn0rCSVtO2nKShJO2PCUJJ215Qlu2ScKnBklrDZLWGiStNUhaa5C01iBprUHSWoOktV48KAlPacsT2nJDEk7a8pQk3JCEd9rylCQ8pS1PGCStNUhaa5C01iBprUHSWoOktQZJaw2S1nqhNZJwQ1tuaMtJEvT3DJLWGiStNUhaa5C01iBprUHSWoOktQZJa73QR5JwQ1tOkrBNW/T3DJLWGiStNUhaa5C01iBprUHSWoOktQZJa714UFv+NW05ScJJEm5oyw1tuSEJ77TlKW351wyS1hokrTVIWmuQtNYgaa1B0lqDpLUGSWu9uCQJv1ESTtpykoSTtpwk4aQtJ0k4acu3SMJvNEhaa5C01iBprUHSWoOktQZJaw2S1hokrZX+gf6qJJy0ZZskfKot+u8GSWsNktYaJK01SFprkLTWIGmtQdJaL34gCSdtOUnCSVtOknDSlpMknLTlCUk4actJEr5JW75FEk7ackMSTtryqUHSWoOktQZJaw2S1hokrTVIWmuQtNYgaa0XP9CWkySctOWbtOU3assNSXhCEk7actKWkyRsMkhaa5C01iBprUHSWoOktQZJaw2S1hokrfXiB5Jw0pYbknDSlpMk3NCWd5JwQ1tOknBDEk7a8oQknLTlKW3ZZJC01iBprUHSWoOktQZJaw2S1hokrTVIWiv9g4ck4aQtJ0m4oS0nSXinLd8kCSdt+RZJ+K3a8qlB0lqDpLUGSWsNktYaJK01SFprkLTWIGmt9A8uSMJT2nJDEr5FW06S8JS2PCEJJ225IQnbtOWdQdJag6S1BklrDZLWGiStNUhaa5C01iBprRdfpi03JOGkLSdJeEISbmjLDUnQf9eWkyR8apC01iBprUHSWoOktQZJaw2S1hokrTVIWuvFDyThpC03JOGkLTck4aQtmyThpC1PacunknDSlpO23JCEG9ryqUHSWoOktQZJaw2S1hokrTVIWmuQtNYgaa0XP9CWkyRs05aTJHyqLTck4aQtJ0m4oS2fSsINSbihLSdtOUnCSVs+NUhaa5C01iBprUHSWoOktQZJaw2S1hokrZX+wUESTtpykoSntOUkCSdteScJJ215ShJO2nJDEvT/teUkCSdteWeQtNYgaa1B0lqDpLUGSWsNktYaJK314gfackNbvklbvkUSbmjLU9pykoR32vKUJNzQlm8xSFprkLTWIGmtQdJag6S1BklrDZLWGiSt9eIHkvBbteWdtjylLSdJOGnLSRJO2vKEJJy05SlJOGnLSVs+NUhaa5C01iBprUHSWoOktQZJaw2S1hokrfXikrZsk4QnJOGGJJy05Ya2fIu2PKUtJ0k4ScINbXlnkLTWIGmtQdJag6S1BklrDZLWGiStNUha68WDkvCUtjwhCTe05YYk3NCWJyThX9SWkyR8apC01iBprUHSWoOktQZJaw2S1hokrTVIWuuFPtKWG5JwQ1tOknCShJO2nLTlnSTc0JaTJNzQlhva8qlB0lqDpLUGSWsNktYaJK01SFprkLTWIGmtF/pIEm5oyw1J2KQt3yQJJ225IQknbXlnkLTWIGmtQdJag6S1BklrDZLWGiStNUha68WD2vKvactJEm5IwklbTpLwlCR8i7Y8JQlPGCStNUhaa5C01iBprUHSWoOktQZJaw2S1npxSRJ+oyQ8pS03tOU3SsJJW06ScNKWkyR8apC01iBprUHSWoOktQZJaw2S1hokrTVIWiv9A0krDZLWGiStNUhaa5C01iBprUHSWoOktf4HX42o1bytDJEAAAAASUVORK5CYII=" alt="VietQR Payment Code"></div>  </div>
+</section>
+
+
+  <div class="closing">
+<aside class="callout callout--note">
+  <div class="callout__body">Questions about this bill? Reply to us on Zalo or ask at the front desk; we are always happy to help.</div>
+</aside>
+    <div class="sign">
+  <div class="sign__closing">With warm regards,</div>
+  <div class="sign__name">Teacher Victor</div>
+  <div class="sign__role">Happy English Club</div>
+</div>
+
+<div class="colophon"><span>Tầng 3, Số 12 ngõ 45 phố Ví Dụ, phường Mẫu, quận Hoàn Kiếm, Hà Nội
+Hotline: 0900 000 000 · Zalo: 0900 000 001
+Email: hello@example.test • </span><span>This is a computer-generated invoice.</span></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "type": "access-card",
+  "version": "1.0.0",
+  "title": "Access Card",
+  "description": "The bilingual family login card with a one-time code. Replaces src/components/access/AccessCardDocument.tsx.",
+  "output": "pdf",
+  "documentTitle": "{{ data.studentName }} - Access Card",
+  "lang": "en",
+  "variantField": "variant",
+  "defaultVariant": "standard",
+  "variants": {
+    "standard": {
+      "description": "English instructions with the Vietnamese line beneath each block, as in the original."
+    },
+    "bilingual-split": {
+      "description": "English and Vietnamese side by side, so a parent can read their own language without the English."
+    }
+  },
+  "filename": "access-card",
+  "keyField": "code",
+  "brandStrings": [
+    "Access Card",
+    "With warm regards, / Thân mến,"
+  ]
+}

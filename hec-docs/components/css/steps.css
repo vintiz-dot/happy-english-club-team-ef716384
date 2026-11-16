@@ -1,0 +1,4 @@
+/* steps: short numbered instructions. The number is real text, not a counter. */
+.steps { list-style: none; margin: 0; padding: 0; }
+.steps__item { display: flex; gap: var(--space-1); align-items: baseline; padding: 3pt 0; font-size: var(--size-md); line-height: var(--leading-body); break-inside: avoid; }
+.steps__n { flex: none; min-width: 1.4em; font-weight: var(--font-weight-bold); color: var(--color-gold-ink); font-variant-numeric: tabular-nums; }

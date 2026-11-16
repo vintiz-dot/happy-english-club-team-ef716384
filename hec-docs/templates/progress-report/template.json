@@ -1,0 +1,24 @@
+{
+  "type": "progress-report",
+  "version": "1.0.0",
+  "title": "Progress Report",
+  "description": "The AI student progress report: CEFR estimate, skill matrix, strengths and growth areas, learning styles, next steps, narrative and evidence counts. Replaces the bulk PDF/ZIP export (BulkReportExport.tsx + reportPdf.ts) and the browser-print copy (AIReportDialog.tsx); content from ReportDocument.tsx.",
+  "output": "pdf",
+  "documentTitle": "{{ data.studentName }} - Progress Report",
+  "lang": "en",
+  "variantField": "variant",
+  "defaultVariant": "full",
+  "variants": {
+    "full": {
+      "description": "Generous layout: two-column skill matrix, strengths and growth areas side by side, the narrative in its own panel. Original order throughout."
+    },
+    "compact": {
+      "description": "Tighter layout aimed at fewer pages: three-column skill matrix, learning styles beside next steps. Same text, same order."
+    }
+  },
+  "filename": "progress-report",
+  "keyField": "studentName",
+  "brandStrings": [
+    "Reporting period"
+  ]
+}
