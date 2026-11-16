@@ -254,3 +254,7 @@ verify_jwt = false
 # Class recorder retention: the nightly job (runner token) or an admin only.
 [functions.recorder-retention]
 verify_jwt = true
+
+# D4 step 1b: refreshes the bills a checked attendance change reached (admin JWT).
+[functions.guarded-change-refresh]
+verify_jwt = true
