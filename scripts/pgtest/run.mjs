@@ -68,6 +68,10 @@ const SUITES = [
   // scripts/CREDIT-past-unapplied-cash.sql (owner: credit the past leftovers) run for real,
   // with the real smart-family-payment and delete-payment over the same pglite.
   { name: "past leftover credit", file: "past-leftover-credit.test.mjs", expect: 29, migrations: [] },
+  // D5: scripts/CHECK-money-invariants.sql, the owner's read-only check of the
+  // money invariants on live data - one broken row per check, each caught;
+  // read-only; the fixture columns are the live ones; on the real triggers.
+  { name: "money invariants check", file: "money-invariants-check.test.mjs", expect: 94, migrations: [] },
   // The admin tuition list reads the calculator instead of summing invoice
   // rows itself: both real handlers beside the old browser sum, case by case.
   { name: "tuition prior balance", file: "tuition-prior-balance.test.mjs", migrations: [] },
